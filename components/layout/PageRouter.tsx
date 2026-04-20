@@ -5,21 +5,22 @@ import { permissionsService } from '../../services/auth/permissions';
 import { useSettings } from '../../context';
 import { LandingPage } from '../layout/LandingPage';
 import { PageSkeletonRegistry } from '../skeletons/PageSkeletonRegistry';
+import { type ViewState } from '../../types';
 import { batchService } from '../../services/inventory/batchService';
 
 interface PageRouterProps {
-  view: string;
+  view: ViewState;
   currentEmployeeId: string | null;
   isLoading: boolean;
   t: any;
   // Navigation
-  setView: (view: string) => void;
-  handleNavigate: (view: string) => void;
+  setView: (view: ViewState) => void;
+  handleNavigate: (view: ViewState) => void;
   handleLoginSuccess: () => void;
   navigationParams?: any;
-  // Data Handlers (Required by various pages)
-  handlers: any;
-  data: any;
+  // Data Handlers
+  handlers: Record<string, any>;
+  data: Record<string, any>;
   currentShift: any;
 }
 
@@ -104,7 +105,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
 
   const PageComponent = pageConfig.component;
 
-  // Build props object based on required props
+  // 1. Build base props object
   const props: any = {
     color: theme.primary,
     t: t,
@@ -116,69 +117,64 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     isLoading: isLoading,
   };
 
-  // Inject requested data and handlers
+  // 2. Define Data & Handler Mappings
+  const dataMap: Record<string, any> = {
+    sales: data.sales,
+    inventory: data.inventory,
+    customers: data.enrichedCustomers,
+    products: data.inventory,
+    suppliers: data.suppliers,
+    purchases: data.purchases,
+    purchaseReturns: data.purchaseReturns,
+    returns: data.returns,
+    drugs: data.inventory,
+    employees: data.employees,
+    batches: data.batches,
+    currentShift: currentShift,
+    activeOrgId: data.activeOrgId,
+    navigationParams: navigationParams,
+  };
+
+  const handlerMap: Record<string, any> = {
+    setInventory: handlers.setInventory,
+    setDrugs: handlers.setInventory,
+    setPurchases: handlers.setPurchases,
+    setPurchaseReturns: handlers.setPurchaseReturns,
+    onAddDrug: handlers.handleAddDrug,
+    onUpdateDrug: handlers.handleUpdateDrug,
+    onDeleteDrug: handlers.handleDeleteDrug,
+    onUpdateInventory: handlers.setInventory,
+    onBatchesChanged: () => handlers.setBatches(batchService.getAllBatches(data.activeBranchId)),
+    onCompleteSale: handlers.handleCompleteSale,
+    onUpdateSale: handlers.handleUpdateSale,
+    onProcessReturn: handlers.handleProcessReturn,
+    onAddCustomer: handlers.handleAddCustomer,
+    onUpdateCustomer: handlers.handleUpdateCustomer,
+    onDeleteCustomer: handlers.handleDeleteCustomer,
+    setSuppliers: handlers.setSuppliers,
+    onAddSupplier: handlers.handleAddSupplier,
+    onUpdateSupplier: handlers.handleUpdateSupplier,
+    onDeleteSupplier: handlers.handleDeleteSupplier,
+    onPurchaseComplete: handlers.handlePurchaseComplete,
+    onApprovePurchase: handlers.handleApprovePurchase,
+    onRejectPurchase: handlers.handleRejectPurchase,
+    onAddProduct: () => setView('add-product'),
+    onRestock: handlers.handleRestock,
+    onAddEmployee: handlers.handleAddEmployee,
+    onUpdateEmployee: handlers.handleUpdateEmployee,
+    onDeleteEmployee: handlers.handleDeleteEmployee,
+    onCreatePurchaseReturn: handlers.handleCreatePurchaseReturn,
+    onViewChange: handleNavigate,
+    onLoginSuccess: handleLoginSuccess,
+    getVerifiedDate: handlers.getVerifiedDate,
+  };
+
+  // 3. Inject requested props based on pageConfig
   const requiredProps = pageConfig.requiredProps || [];
-
-  // Data mapping
-  if (requiredProps.includes('sales')) props.sales = data.sales;
-  if (requiredProps.includes('inventory')) props.inventory = data.inventory;
-  if (requiredProps.includes('customers')) props.customers = data.enrichedCustomers;
-  if (requiredProps.includes('products')) props.products = data.inventory;
-  if (requiredProps.includes('suppliers')) props.suppliers = data.suppliers;
-  if (requiredProps.includes('purchases')) props.purchases = data.purchases;
-  if (requiredProps.includes('purchaseReturns')) props.purchaseReturns = data.purchaseReturns;
-  if (requiredProps.includes('returns')) props.returns = data.returns;
-  if (requiredProps.includes('drugs')) props.drugs = data.inventory;
-  if (requiredProps.includes('employees')) props.employees = data.employees;
-  if (requiredProps.includes('batches')) props.batches = data.batches;
-  if (requiredProps.includes('currentShift')) props.currentShift = currentShift;
-  if (requiredProps.includes('activeOrgId')) props.activeOrgId = data.activeOrgId;
-
-  // Handler mapping
-  if (requiredProps.includes('setInventory')) props.setInventory = handlers.setInventory;
-  if (requiredProps.includes('setDrugs')) props.setDrugs = handlers.setInventory;
-  if (requiredProps.includes('setPurchases')) props.setPurchases = handlers.setPurchases;
-  if (requiredProps.includes('setPurchaseReturns'))
-    props.setPurchaseReturns = handlers.setPurchaseReturns;
-  if (requiredProps.includes('onAddDrug')) props.onAddDrug = handlers.handleAddDrug;
-  if (requiredProps.includes('onUpdateDrug')) props.onUpdateDrug = handlers.handleUpdateDrug;
-  if (requiredProps.includes('onDeleteDrug')) props.onDeleteDrug = handlers.handleDeleteDrug;
-  if (requiredProps.includes('onUpdateInventory')) props.onUpdateInventory = handlers.setInventory;
-  if (requiredProps.includes('onBatchesChanged')) props.onBatchesChanged = () => handlers.setBatches(batchService.getAllBatches(data.activeBranchId));
-  if (requiredProps.includes('onCompleteSale')) props.onCompleteSale = handlers.handleCompleteSale;
-  if (requiredProps.includes('onUpdateSale')) props.onUpdateSale = handlers.handleUpdateSale;
-  if (requiredProps.includes('onProcessReturn'))
-    props.onProcessReturn = handlers.handleProcessReturn;
-  if (requiredProps.includes('onAddCustomer')) props.onAddCustomer = handlers.handleAddCustomer;
-  if (requiredProps.includes('onUpdateCustomer'))
-    props.onUpdateCustomer = handlers.handleUpdateCustomer;
-  if (requiredProps.includes('onDeleteCustomer'))
-    props.onDeleteCustomer = handlers.handleDeleteCustomer;
-  if (requiredProps.includes('setSuppliers')) props.setSuppliers = handlers.setSuppliers;
-  if (requiredProps.includes('onAddSupplier')) props.onAddSupplier = handlers.handleAddSupplier;
-  if (requiredProps.includes('onUpdateSupplier'))
-    props.onUpdateSupplier = handlers.handleUpdateSupplier;
-  if (requiredProps.includes('onDeleteSupplier'))
-    props.onDeleteSupplier = handlers.handleDeleteSupplier;
-  if (requiredProps.includes('onPurchaseComplete'))
-    props.onPurchaseComplete = handlers.handlePurchaseComplete;
-  if (requiredProps.includes('onApprovePurchase'))
-    props.onApprovePurchase = handlers.handleApprovePurchase;
-  if (requiredProps.includes('onRejectPurchase'))
-    props.onRejectPurchase = handlers.handleRejectPurchase;
-  if (requiredProps.includes('onAddProduct')) props.onAddProduct = () => setView('add-product');
-  if (requiredProps.includes('onRestock')) props.onRestock = handlers.handleRestock;
-  if (requiredProps.includes('onAddEmployee')) props.onAddEmployee = handlers.handleAddEmployee;
-  if (requiredProps.includes('onUpdateEmployee'))
-    props.onUpdateEmployee = handlers.handleUpdateEmployee;
-  if (requiredProps.includes('onDeleteEmployee'))
-    props.onDeleteEmployee = handlers.handleDeleteEmployee;
-  if (requiredProps.includes('onCreatePurchaseReturn'))
-    props.onCreatePurchaseReturn = handlers.handleCreatePurchaseReturn;
-  if (requiredProps.includes('onViewChange')) props.onViewChange = handleNavigate;
-  if (requiredProps.includes('onLoginSuccess')) props.onLoginSuccess = handleLoginSuccess;
-  if (requiredProps.includes('navigationParams')) props.navigationParams = navigationParams;
-  if (requiredProps.includes('getVerifiedDate')) props.getVerifiedDate = handlers.getVerifiedDate;
+  requiredProps.forEach((prop: string) => {
+    if (dataMap[prop] !== undefined) props[prop] = dataMap[prop];
+    if (handlerMap[prop] !== undefined) props[prop] = handlerMap[prop];
+  });
 
   // Special translations mapping
   const viewTranslations: Record<string, any> = {

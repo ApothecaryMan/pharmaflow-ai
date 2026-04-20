@@ -1,6 +1,9 @@
 import { useCallback, useState } from 'react';
 import { ROUTES } from '../config/routes';
 import { authService } from '../services/auth/authService';
+import { PHARMACY_MENU, MODULE_VIEW_MAPPING } from '../config/menuData';
+import { permissionsService } from '../services/auth/permissions';
+import type { ViewState } from '../types';
 
 interface SessionHandlersProps {
   employees: any[];
@@ -9,6 +12,7 @@ interface SessionHandlersProps {
   setProfileImage: (img: string | null) => void;
   setView: (view: any) => void;
   setActiveModule: (module: string) => void;
+  setNavigationParams: (params: any) => void;
   handleLogout: () => Promise<void>;
 }
 
@@ -22,6 +26,7 @@ export const useSessionHandlers = ({
   setProfileImage,
   setView,
   setActiveModule,
+  setNavigationParams,
   handleLogout,
 }: SessionHandlersProps) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -96,12 +101,30 @@ export const useSessionHandlers = ({
                 ? `Employee session started`
                 : `Switched from ${previousName || 'unknown'}`,
             });
+
+            // --- Smart Redirection: Find first allowed module ---
+            const firstAllowedModule = PHARMACY_MENU.find((m) => {
+              if (!m.permission) return true;
+              return permissionsService.can(m.permission, {
+                role: selectedEmployee.role,
+                orgRole: selectedEmployee.orgRole,
+              });
+            });
+
+            const targetView = (firstAllowedModule
+              ? MODULE_VIEW_MAPPING[firstAllowedModule.id]
+              : 'dashboard') as ViewState;
+            const targetModule = firstAllowedModule?.id || 'dashboard';
+
+            setNavigationParams(null); // Ensure no residual data from previous user
+            setView(targetView);
+            setActiveModule(targetModule);
           }
         }
       }
       setCurrentEmployeeId(id);
     },
-    [employees, currentEmployeeId, setCurrentEmployeeId]
+    [employees, currentEmployeeId, setCurrentEmployeeId, setNavigationParams, setView, setActiveModule]
   );
 
   // --- Optimized Logout Handler ---

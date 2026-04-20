@@ -32,12 +32,12 @@ export function usePersistedState<T>(
       // If the key matches and there is a new value
       if (e.key === key && e.newValue) {
         try {
-          // Check if value is actually different to avoid infinite loops
-          const currentJSON = JSON.stringify(state);
-          if (e.newValue === currentJSON) return;
-
           const newValue = JSON.parse(e.newValue);
-          setState(newValue);
+          // Use functional update to compare with latest state without dependency
+          setState((prev) => {
+            if (JSON.stringify(prev) === e.newValue) return prev;
+            return newValue;
+          });
         } catch (err) {
           console.error('Failed to parse storage update for', key);
         }
@@ -46,7 +46,7 @@ export function usePersistedState<T>(
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, [key, state, sync]);
+  }, [key, sync]);
 
   return [state, setState];
 }

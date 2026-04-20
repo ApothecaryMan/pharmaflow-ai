@@ -1,30 +1,10 @@
 import { useCallback, useMemo } from 'react';
-import { type MenuItem, PHARMACY_MENU } from '../config/menuData';
+import { type MenuItem, PHARMACY_MENU, MODULE_VIEW_MAPPING } from '../config/menuData';
 import { PAGE_REGISTRY } from '../config/pageRegistry';
 import { type UserRole } from '../config/permissions';
 import { permissionsService } from '../services/auth/permissions';
 import { useAlert } from '../context';
 import type { ViewState } from '../types';
-
-/**
- * Module ID to ViewState mapping.
- * Defined outside the hook to avoid re-creation on each render.
- */
-const MODULE_VIEW_MAPPING: Record<string, ViewState> = {
-  dashboard: 'dashboard',
-  inventory: 'inventory',
-  sales: 'pos',
-  purchase: 'purchases',
-  customers: 'customers',
-  'customer-overview': 'customer-overview',
-  prescriptions: 'dashboard',
-  finance: 'dashboard',
-  reports: 'dashboard',
-  hr: 'dashboard',
-  compliance: 'dashboard',
-  settings: 'dashboard',
-  'return-history': 'return-history',
-} as const;
 
 /**
  * Helper function to filter menu items based on activity status AND permissions.
@@ -172,7 +152,7 @@ export function useNavigation({
       }
       setMobileMenuOpen(false);
     },
-    [activeModule, resolveView, setView, setDashboardSubView, setMobileMenuOpen, error, onProtectedNavigation]
+    [activeModule, resolveView, setView, setDashboardSubView, setMobileMenuOpen, setNavigationParams, error, onProtectedNavigation]
   );
 
   // Handle direct navigation
@@ -201,7 +181,7 @@ export function useNavigation({
       }
       setMobileMenuOpen(false);
     },
-    [resolveView, setView, setMobileMenuOpen, error, onProtectedNavigation]
+    [resolveView, setView, setMobileMenuOpen, setNavigationParams, error, onProtectedNavigation]
   );
 
   // Handle module change
@@ -217,7 +197,7 @@ export function useNavigation({
   // Filter menu items based on permissions and settings
   const filteredMenuItems = useMemo(
     () => filterMenuItems(PHARMACY_MENU, hideInactiveModules, developerMode, currentEmployeeId),
-    [hideInactiveModules, developerMode, currentEmployeeId, activeBranchId, activeOrgId]
+    [hideInactiveModules, developerMode, currentEmployeeId]
   );
 
   return {

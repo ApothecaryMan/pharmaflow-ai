@@ -83,12 +83,6 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
         const isUserAuth = !!user;
         setUser(user);
         setIsAuthenticated(isUserAuth);
-
-        if (!isUserAuth) {
-          if (view !== ROUTES.LOGIN) {
-            setView(ROUTES.LOGIN);
-          }
-        }
       } catch (error) {
         if (import.meta.env.DEV) {
           console.error('Auth check failed:', error);
@@ -112,9 +106,7 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
           if (event === 'SIGNED_OUT') {
             setIsAuthenticated(false);
             setUser(null);
-            if (view !== ROUTES.LOGIN) {
-              setView(ROUTES.LOGIN);
-            }
+            setView(ROUTES.LOGIN);
           } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
             checkAuth();
           }
@@ -126,7 +118,7 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
     return () => {
       if (authListener) authListener.unsubscribe();
     };
-  }, [view, setView]); // Rebind if view/setView changes, though typically stable
+  }, [setView]); // Removed 'view' to prevent re-running on every navigation
 
   // Watch for view changes and redirect if needed
   useEffect(() => {
@@ -138,9 +130,7 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
         console.warn(`[Auth] Redirecting from ${view} to ${correctView}`);
       }
       if (import.meta.env.PROD && TEST_ROUTES.includes(view)) {
-        if (import.meta.env.PROD && TEST_ROUTES.includes(view)) {
-          error('Access Denied: Developer routes are disabled.');
-        }
+        error('Access Denied: Developer routes are disabled.');
       }
       setView(correctView);
     }

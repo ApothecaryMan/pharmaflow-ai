@@ -784,7 +784,47 @@ export type Language = 'EN' | 'AR';
 // import { PAGE_REGISTRY } from './pageRegistry';
 
 /** Current view state - used for page routing */
-export type ViewState = string;
+export type ViewState =
+  | 'dashboard'
+  | 'inventory'
+  | 'stock-movement'
+  | 'expiry-calendar'
+  | 'inventory-beta'
+  | 'pos'
+  | 'sales-history'
+  | 'return-history'
+  | 'suppliers'
+  | 'purchases'
+  | 'pending-approval'
+  | 'purchase-returns'
+  | 'barcode-printer'
+  | 'barcode-studio'
+  | 'customers'
+  | 'customer-overview'
+  | 'customer-history'
+  | 'loyalty-overview'
+  | 'loyalty-lookup'
+  | 'real-time-sales'
+  | 'add-product'
+  | 'cash-register'
+  | 'shift-history'
+  | 'stock-adjustment'
+  | 'receipt-designer'
+  | 'dashboard-experiments'
+  | 'purchases-test'
+  | 'advanced-sm-card'
+  | 'modal-tests'
+  | 'employee-list'
+  | 'employee-profile'
+  | 'login'
+  | 'intelligence'
+  | 'login-audit'
+  | 'landing'
+  | 'staff-overview'
+  | 'branch-management'
+  | 'medicine-search'
+  | 'customer-density-map'
+  | 'org-management';
 
 // Export Stock Movement types
 export * from '../services/inventory/stockMovement/types';

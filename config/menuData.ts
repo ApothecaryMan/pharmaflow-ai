@@ -18,6 +18,26 @@ export interface MenuItem {
   permission?: PermissionAction; // Added for RBAC
 }
 
+/**
+ * Module ID to ViewState mapping.
+ * Links menu module IDs to their corresponding application view components.
+ */
+export const MODULE_VIEW_MAPPING: Record<string, string> = {
+  dashboard: 'dashboard',
+  inventory: 'inventory',
+  sales: 'pos',
+  purchase: 'purchases',
+  customers: 'customers',
+  'customer-overview': 'customer-overview',
+  prescriptions: 'dashboard',
+  finance: 'dashboard',
+  reports: 'intelligence',
+  hr: 'staff-overview',
+  compliance: 'dashboard',
+  settings: 'org-management',
+  'return-history': 'return-history',
+} as const;
+
 export const PHARMACY_MENU: MenuItem[] = [
   {
     id: 'dashboard',

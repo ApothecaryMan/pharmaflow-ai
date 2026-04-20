@@ -230,6 +230,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     setProfileImage,
     setView,
     setActiveModule,
+    setNavigationParams,
     handleLogout,
   });
 
@@ -261,15 +262,6 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
         }
       }
     }
-
-    const handleHashChange = () => {
-      // If user manually changes hash, we might want to reload to trigger DataContext/AppState init
-      // or we can just let it be for now since full deep-linking requires more complex state management
-      // But at least if they refresh, the URL will work because of our parsing logic.
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
   }, [isAuthenticated, activeOrgId, activeBranchId, view]);
 
   // --- Memoized Props for PageRouter ---
@@ -472,21 +464,14 @@ const App: React.FC = () => {
   useTheme(theme.primary, darkMode, !authState.isAuthenticated);
 
   // 6. Stable Login Callbacks
-  const handleLoginSuccess = useCallback(() => {
-    authState.setIsAuthenticated(true);
-    appState.setActiveModule(ROUTES.DASHBOARD);
-    appState.setView(ROUTES.DASHBOARD);
-  }, [authState, appState]);
+  const { setIsAuthenticated } = authState;
+  const { setActiveModule, setView } = appState;
 
-  const handleViewChange = useCallback(
-    (view: string) => {
-      if (view === 'dashboard') {
-        authState.setIsAuthenticated(true);
-        appState.setView(ROUTES.DASHBOARD);
-      }
-    },
-    [authState, appState]
-  );
+  const handleLoginSuccess = useCallback(() => {
+    setIsAuthenticated(true);
+    setActiveModule(ROUTES.DASHBOARD);
+    setView(ROUTES.DASHBOARD);
+  }, [setIsAuthenticated, setActiveModule, setView]);
 
   // 7. Loading State for Auth/Onboarding Check
   if ((authState.isAuthChecking && !authState.isAuthenticated) || isCheckingOnboarding) {
