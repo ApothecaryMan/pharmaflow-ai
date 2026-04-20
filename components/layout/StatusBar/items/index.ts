@@ -4,5 +4,5 @@ export { AnnouncementBanner } from './AnnouncementBanner';
 export { ConnectionStatus } from './ConnectionStatus';
 export { DateTime } from './DateTime';
 export { NotificationBell } from './NotificationBell';
-export { UserInfo } from './UserInfo';
+export { QuickLogin } from './QuickLogin';
 export { VersionInfo } from './VersionInfo';

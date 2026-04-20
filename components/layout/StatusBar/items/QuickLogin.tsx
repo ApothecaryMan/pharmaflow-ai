@@ -15,7 +15,7 @@ import { StatusBarItem } from '../StatusBarItem';
  * This ensures proper text direction for Arabic language.
  */
 
-interface UserInfoProps {
+interface QuickLoginProps {
   userName?: string;
   roleLabel?: string;
   avatarUrl?: string;
@@ -25,7 +25,7 @@ interface UserInfoProps {
   language?: 'EN' | 'AR';
 }
 
-export const UserInfo: React.FC<UserInfoProps> = ({
+export const QuickLogin: React.FC<QuickLoginProps> = ({
   userName,
   roleLabel,
   avatarUrl,
@@ -97,12 +97,16 @@ export const UserInfo: React.FC<UserInfoProps> = ({
           (emp.username && emp.username.toLowerCase() === query)
       );
 
+      console.log('🔍 [UserInfo Auth] Search Query:', query);
+      console.log('🔍 [UserInfo Auth] Found Employee:', found);
+
       if (found) {
         setTempEmployee(found);
         setStep('password');
         setInputVal(''); // Clear for password
         setIsError(false);
       } else {
+        console.warn('❌ [UserInfo Auth] Employee not found in local list!');
         setIsError(true);
         playError();
       }
@@ -117,19 +121,24 @@ export const UserInfo: React.FC<UserInfoProps> = ({
         let isValid = false;
 
         if (tempEmployee.password) {
+          console.log('🔐 [UserInfo Auth] Verifying password hatch for:', tempEmployee.username);
           // Verify Hash
           isValid = await verifyPassword(inputPass, tempEmployee.password);
+          console.log('🔐 [UserInfo Auth] verification result:', isValid);
         } else {
+          console.warn('❌ [UserInfo Auth] No password hash exists for this employee!');
           // Security: If no password is set, authentication MUST fail.
           // This prevents unconfigured or legacy users from being bypassed.
           isValid = false;
         }
 
         if (isValid) {
+          console.log('✅ [UserInfo Auth] Login successful!');
           playSuccess();
           onSelectEmployee(tempEmployee.id);
           resetState();
         } else {
+          console.error('❌ [UserInfo Auth] Incorrect password or internal error!');
           setIsError(true);
           playError();
         }
@@ -325,4 +334,4 @@ export const UserInfo: React.FC<UserInfoProps> = ({
   );
 };
 
-export default UserInfo;
+export default QuickLogin;

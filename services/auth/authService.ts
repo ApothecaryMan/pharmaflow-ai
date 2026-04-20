@@ -40,6 +40,7 @@ export interface UserSession {
   branchId: string;
   department: 'sales' | 'pharmacy' | 'marketing' | 'hr' | 'it' | 'logistics';
   role:
+    | 'god'
     | 'admin'
     | 'pharmacist_owner'
     | 'pharmacist_manager'
@@ -226,6 +227,31 @@ export const authService = {
 
     // 1. Try Supabase Auth if configured
     if (isSupabaseConfigured) {
+      // --- DEV DIRECT BYPASS FOR SUPER USER ---
+      if (import.meta.env.DEV && (username === 'Super' || username === 'super')) {
+        const { supabase } = await import('../../lib/supabase');
+        // Because of the 'god' permissions policy, we actually need a valid JWT token
+        // to pass RLS, if they don't want to use auth. But to do "Direct Access",
+        // we can return a mock session if we strictly want a frontend bypass.
+        // Let's attempt to fetch the local employee:
+        const { data: godUser } = await supabase.from('employees').select('*').eq('role', 'god').maybeSingle();
+        if (godUser) {
+           console.log('⚡ Using Direct God Bypass for Dev');
+           const session: UserSession = {
+            userId: godUser.auth_user_id || 'dev-god-id',
+            username: godUser.username || 'Super',
+            employeeId: godUser.id,
+            branchId: godUser.branch_id || '',
+            orgId: godUser.org_id || '79e11c07-d632-4acc-b10e-8876cf4f41fa',
+            role: 'god',
+            orgRole: 'owner',
+            department: 'it',
+          };
+          localStorage.setItem('branch_pilot_session', JSON.stringify(session));
+          return session;
+        }
+      }
+
       try {
         const { supabase } = await import('../../lib/supabase');
         
@@ -247,12 +273,41 @@ export const authService = {
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
         
         if (authError) {
-          if (authError.message.toLowerCase().includes('confirmed') || authError.status === 400) {
-            if (authError.message.toLowerCase().includes('not confirmed')) {
-               throw new Error('Email not confirmed. Please check your inbox.');
+          // --- DEV SEEDING WORKAROUND FOR SUPABASE AUTH ---
+          // Since migrations cannot easily seed auth.users with encrypted passwords,
+          // if we are in DEV and Super login fails, we auto-register them in Supabase Auth.
+          if (
+            import.meta.env.DEV && 
+            (username === 'Super' || username === 'super') && 
+            authError.message.includes('Invalid')
+          ) {
+            console.log('🌱 Auto-registering Super user into Supabase Auth...');
+            const { error: signUpError } = await supabase.auth.signUp({ 
+              email: loginEmail, 
+              password,
+              options: { data: { username: 'Super', name: 'SUPER' } }
+            });
+            
+            if (!signUpError) {
+              // Retry login after successful signup
+              const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
+              if (retryError) throw retryError;
+              
+              // Remap variables to proceed with the normal flow
+              authData.user = retryData.user;
+              // Link this new auth.user.id to the pre-seeded public.employees record
+              await supabase.from('employees').update({ auth_user_id: retryData.user.id }).eq('username', 'Super');
+            } else {
+              throw signUpError;
             }
+          } else {
+            if (authError.message.toLowerCase().includes('confirmed') || authError.status === 400) {
+              if (authError.message.toLowerCase().includes('not confirmed')) {
+                 throw new Error('Email not confirmed. Please check your inbox.');
+              }
+            }
+            throw authError;
           }
-          throw authError;
         }
 
         if (!authData.user) throw new Error('No user data returned');

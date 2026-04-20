@@ -11,7 +11,7 @@ import { DateTime } from './items/DateTime';
 import { DynamicTicker } from './items/DynamicTicker';
 import { NotificationBell } from './items/NotificationBell';
 import { SettingsMenu } from './items/SettingsMenu';
-import { UserInfo } from './items/UserInfo';
+import { QuickLogin } from './items/QuickLogin';
 import { VersionInfo } from './items/VersionInfo';
 import { useStatusBar } from './StatusBarContext';
 import { StatusBarItem } from './StatusBarItem';
@@ -241,7 +241,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
           )}
 
           {/* User Info (Employee Selector) */}
-          <UserInfo
+          <QuickLogin
             userName={
               isLoading && currentEmployeeId
                 ? '...'
