@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { type React, useEffect, useState } from 'react';
 import { ROUTES } from '../config/routes';
 import { StorageKeys } from '../config/storageKeys';
 import type { ViewState } from '../types';

@@ -2,7 +2,11 @@
  * Core Role Definitions (The Single Source of Truth)
  */
 const ROLE_DEFINITIONS = {
-
+  god: { 
+    translationKey: 'god',
+    defaultLabelEN: 'God Mode',
+    defaultLabelAR: 'صلاحية مطلقة'
+  },
   pharmacist_owner: { 
     translationKey: 'pharmacist_owner',
     defaultLabelEN: 'Pharmacy Owner',
@@ -108,7 +112,7 @@ export const DEPARTMENT_ROLES: Record<string, UserRole[]> = {
   sales: ['cashier', 'senior_cashier'],
   marketing: ['manager', 'officeboy'],
   hr: ['hr_manager'],
-  it: ['admin'],
+  it: ['god', 'admin'],
   logistics: ['delivery', 'delivery_pharmacist'],
 };
 

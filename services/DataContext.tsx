@@ -258,23 +258,28 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         const currentSession = authService.getCurrentUserSync();
         const loggedInEmployee = emp.find(e => e.id === currentSession?.employeeId) || null;
 
-        const canSeed = currentSession?.orgRole === 'owner' || currentSession?.role === 'admin';
-        if (import.meta.env.DEV && session && canSeed && inv.length === 0 && initialInventory.length > 0 && !hasSeededThisSession) {
-          hasSeededThisSession = true;
-          console.log('🌱 Seeding initial inventory for development...');
-          // Ensure every seeded item has the correct branchId
-          const seededInventory = initialInventory.map(item => ({
-            ...item,
-            branchId: finalBranchId
-          }));
-          await inventoryService.save(seededInventory, finalBranchId);
-          const updatedBatches = await batchService.migrateInventoryToBatches(seededInventory);
-          // Update local 'bat' reference to reflect migrated stock
-          const branchSpecific = updatedBatches.filter(b => b.branchId === finalBranchId);
-          bat.length = 0;
-          bat.push(...branchSpecific);
+        if (import.meta.env.DEV && session && inv.length === 0 && initialInventory.length > 0 && !hasSeededThisSession) {
+          const isGod = loggedInEmployee?.role === 'god';
           
-          inv.push(...seededInventory);
+          if (isGod) {
+            hasSeededThisSession = true;
+            console.log('🌱 Seeding initial inventory for development (God Mode)...');
+            // Ensure every seeded item has the correct branchId
+            const seededInventory = initialInventory.map(item => ({
+              ...item,
+              branchId: finalBranchId
+            }));
+            await inventoryService.save(seededInventory, finalBranchId);
+            const updatedBatches = await batchService.migrateInventoryToBatches(seededInventory);
+            // Update local 'bat' reference to reflect migrated stock
+            const branchSpecific = updatedBatches.filter(b => b.branchId === finalBranchId);
+            bat.length = 0;
+            bat.push(...branchSpecific);
+            
+            inv.push(...seededInventory);
+          } else {
+            console.log('ℹ️ Automatic seeding skipped: Not a God Mode account.');
+          }
         }
 
         // Commit all states

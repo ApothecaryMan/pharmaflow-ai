@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { React, useCallback, useMemo } from 'react';
 import { type MenuItem, PHARMACY_MENU, MODULE_VIEW_MAPPING } from '../config/menuData';
 import { PAGE_REGISTRY } from '../config/pageRegistry';
 import { type UserRole } from '../config/permissions';
