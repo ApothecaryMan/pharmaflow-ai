@@ -426,7 +426,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
       </div>
 
       {/* Mobile: Hamburger Menu & Settings */}
-      {currentEmployeeId && (
+      {authService.getCurrentUserSync() && (
         <div className='md:hidden flex items-center gap-1'>
           <SettingsMenu
             dropDirection='down'
@@ -444,7 +444,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
       )}
 
       {/* Right Side Actions (Desktop) */}
-      {currentEmployeeId && (
+      {authService.getCurrentUserSync() && (
       <div className='hidden md:flex items-center gap-2 ltr:ml-4 rtl:mr-4'>
 
 
@@ -586,14 +586,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         <button
                           key={branch.id}
                           onClick={async () => {
-                            await switchBranch(branch.id);
-                             // Super Admin stays logged in across branches
-                             if (permissionsService.isGod()) {
-                               // Update session branchId to the new branch
-                               authService.updateSession({ branchId: branch.id });
-                             } else if (setCurrentEmployeeId) {
-                              setCurrentEmployeeId(null);
-                            }
+                            await switchBranch(branch.id);                           
                             setShowProfileMenu(false);
                           }}
                           className={`w-full p-2 text-sm font-medium rounded-lg flex items-center justify-between

@@ -190,6 +190,9 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   const [branches, setBranches] = useState<any[]>([]);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
 
+  // Track last loaded branch to prevent redundant refreshes
+  const lastLoadedBranchId = useRef<string>('');
+
   // Compute inventory from raw data and batches
   const inventory = useComputedInventory(rawInventory, batches, activeBranchId);
 
@@ -262,6 +265,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         setBranches(allBranches);
         setActiveBranchId(finalBranchId);
         setActiveOrgId(defaultOrgId);
+        lastLoadedBranchId.current = finalBranchId;
 
         // Sync settingsService with the active branch so idGenerator (which reads storage directly) is in sync
         await settingsService.setMultiple({ 
@@ -645,7 +649,6 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       setReturnsState(ret);
       setCustomersState(cust);
 
-      const allBranches = await branchService.getAll(activeOrgId);
       setBranches(allBranches);
       setEmployeesState(emp);
     } catch (error) {
@@ -653,7 +656,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [activeBranchId]);
+  }, [activeBranchId, activeOrgId]);
 
   // Switch to a different branch and reload all data
   const switchBranch = useCallback(
@@ -668,6 +671,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         
         // Update local state
         setActiveBranchId(branchId);
+        lastLoadedBranchId.current = branchId;
 
         // Update settings (for backward compatibility if anything else uses it)
         await settingsService.setMultiple({ branchCode: branchId });
@@ -693,8 +697,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         }
 
         // Reload all data (services will now filter by new branchId)
-        // refreshAll uses targetBranchId internally if passed
         await refreshAll(branchId);
+
+        // Manually update sync engine because useEffect might skip it during loading
+        syncEngine.updateBranch(branchId);
       } catch (error) {
         console.error('Error switching branch:', error);
         throw error;
@@ -731,13 +737,14 @@ export const DataProvider: React.FC<DataProviderProps> = ({
 
   // Trigger data reload when branch changes (not on initial load - that's handled in loadData)
   useEffect(() => {
-    if (activeBranchId && !isLoading) {
+    // Only trigger if branch changed AND it's not the one we just loaded manually
+    if (activeBranchId && !isLoading && activeBranchId !== lastLoadedBranchId.current) {
+      lastLoadedBranchId.current = activeBranchId;
       refreshAll();
       syncEngine.updateBranch(activeBranchId);
     }
-    // isLoading intentionally excluded: we only want to fire on branch switch, not when loading finishes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeBranchId]);
+  }, [activeBranchId, isLoading]);
 
 
   const value = useMemo<DataContextType>(

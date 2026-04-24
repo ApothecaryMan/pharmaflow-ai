@@ -386,7 +386,6 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
 
   const renderEmployeesView = () => {
     const filteredList = employees
-      .filter(emp => (emp.role as any) !== 'god' && emp.employeeCode !== 'EMP-000')
       .filter(emp => employeeView === 'all' || selectedEmployees.includes(emp.id))
       .filter(emp => {
         const search = employeeSearchTerm.toLowerCase();
