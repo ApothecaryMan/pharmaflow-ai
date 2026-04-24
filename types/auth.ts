@@ -28,7 +28,6 @@ export interface UserSession {
   
   /** System-wide functional role */
   role:
-    | 'god'
     | 'admin'
     | 'pharmacist_owner'
     | 'pharmacist_manager'

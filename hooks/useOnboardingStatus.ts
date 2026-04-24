@@ -41,7 +41,7 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
       const { employeeService } = await import('../services/hr/employeeService');
       const all = await employeeService.getAll('ALL', activeOrgId || undefined);
       const hasRealEmployees = !!user?.employeeId || all.some(
-        (e) => e.role !== 'god' && e.employeeCode !== 'EMP-000'
+        (e) => e.employeeCode !== 'EMP-000'
       );
 
       if (!hasRealEmployees) {

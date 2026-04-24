@@ -196,30 +196,6 @@ export const authService = {
 
     // 1. Try Supabase Auth if configured
     if (isSupabaseConfigured) {
-      // --- DEV DIRECT BYPASS FOR SUPER USER ---
-      if (import.meta.env.DEV && (username === 'Super' || username === 'super')) {
-        const { supabase } = await import('../../lib/supabase');
-        // Because of the 'god' permissions policy, we actually need a valid JWT token
-        // to pass RLS, if they don't want to use auth. But to do "Direct Access",
-        // we can return a mock session if we strictly want a frontend bypass.
-        // Let's attempt to fetch the local employee:
-        const { data: godUser } = await supabase.from('employees').select('*').eq('role', 'god').maybeSingle();
-        if (godUser) {
-           console.log('⚡ Using Direct God Bypass for Dev');
-           const session: UserSession = {
-            userId: godUser.auth_user_id || 'dev-god-id',
-            username: godUser.username || 'Super',
-            employeeId: godUser.id,
-            branchId: godUser.branch_id || '',
-            orgId: godUser.org_id || '79e11c07-d632-4acc-b10e-8876cf4f41fa',
-            role: 'god',
-            orgRole: 'owner',
-            department: 'it',
-          };
-          localStorage.setItem('branch_pilot_session', JSON.stringify(session));
-          return session;
-        }
-      }
 
       try {
         const { supabase } = await import('../../lib/supabase');

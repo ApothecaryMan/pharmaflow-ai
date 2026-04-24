@@ -291,27 +291,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         const loggedInEmployee = emp.find(e => e.id === currentSession?.employeeId) || null;
 
         if (import.meta.env.DEV && session && inv.length === 0 && initialInventory.length > 0 && !hasSeededThisSession) {
-          const isGod = loggedInEmployee?.role === 'god';
-          
-          if (isGod) {
-            hasSeededThisSession = true;
-            console.log('🌱 Seeding initial inventory for development (God Mode)...');
-            // Ensure every seeded item has the correct branchId
-            const seededInventory = initialInventory.map(item => ({
-              ...item,
-              branchId: finalBranchId
-            }));
-            await inventoryService.save(seededInventory, finalBranchId);
-            const updatedBatches = await batchService.migrateInventoryToBatches(seededInventory);
-            // Update local 'bat' reference to reflect migrated stock
-            const branchSpecific = updatedBatches.filter(b => b.branchId === finalBranchId);
-            bat.length = 0;
-            bat.push(...branchSpecific);
-            
-            inv.push(...seededInventory);
-          } else {
-            console.log('ℹ️ Automatic seeding skipped: Not a God Mode account.');
-          }
+          console.log('ℹ️ Automatic seeding skipped: Manual seeding required in current build.');
         }
 
         // Commit all states

@@ -142,7 +142,6 @@ const ALL_PERMISSIONS: PermissionAction[] = [
 ];
 
 export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
-  god: [...ALL_PERMISSIONS],
   admin: [...ALL_PERMISSIONS], // Absolute Power (Including IT/System)
 
   // --- Pharmacy Roles ---

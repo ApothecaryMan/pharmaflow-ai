@@ -30,10 +30,6 @@ export const permissionsService = {
     const effectiveRole = context?.role || session?.role;
     const effectiveOrgRole = context?.orgRole || session?.orgRole;
 
-    // 1. God Role check
-    if (effectiveRole === 'god') {
-      return true;
-    }
 
     // 2. Org-level Role Overrides
     if (effectiveOrgRole === 'owner') {
@@ -63,20 +59,13 @@ export const permissionsService = {
     return session?.role as UserRole | undefined;
   },
 
-  /**
-   * Check if user has God Mode
-   */
-  isGod(): boolean {
-    const session = authService.getCurrentUserSync();
-    return (session?.role as any) === 'god';
-  },
 
   /**
    * Check if user is an Org Owner or Admin
    */
   isOrgAdmin(): boolean {
     const session = authService.getCurrentUserSync();
-    return session?.orgRole === 'owner' || session?.orgRole === 'admin' || (session?.role as any) === 'god';
+    return session?.orgRole === 'owner' || session?.orgRole === 'admin';
   },
 
   /**
@@ -88,7 +77,6 @@ export const permissionsService = {
     return (
       session?.orgRole === 'owner' || 
       session?.orgRole === 'admin' || 
-      (role as any) === 'god' ||
       role === 'manager' || 
       role === 'pharmacist_manager' ||
       role === 'admin'
@@ -102,7 +90,7 @@ export const permissionsService = {
     const session = authService.getCurrentUserSync();
     if (!session) return [];
     
-    if ((session.role as any) === 'god' || session.orgRole === 'owner') {
+    if (session.orgRole === 'owner') {
       // Return a special flag or list of all (though usually 'can' check is preferred)
       // For simplicity, return the keys from a complete mapping
       return Object.values(ROLE_PERMISSIONS).flat(); 

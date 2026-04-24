@@ -72,25 +72,18 @@ export const useSessionHandlers = ({
             const stored = localStorage.getItem('branch_pilot_session');
             if (stored) {
               const storedSession = JSON.parse(stored);
-              const isGod = selectedEmployee.role === 'god';
-
-              if (isGod) {
-                // God Role: preserve max privileges, only set employeeId
-                storedSession.employeeId = selectedEmployee.id;
-              } else {
-                // Regular employee: save original credentials & sync employee's role
-                if (!storedSession._originalRole) {
-                  storedSession._originalRole = storedSession.role;
-                  storedSession._originalDepartment = storedSession.department;
-                  storedSession._originalOrgRole = storedSession.orgRole;
-                  storedSession._originalUsername = storedSession.username;
-                }
-                storedSession.role = selectedEmployee.role;
-                storedSession.department = selectedEmployee.department;
-                storedSession.orgRole = selectedEmployee.orgRole || 'member';
-                storedSession.username = selectedEmployee.username || selectedEmployee.name;
-                storedSession.employeeId = selectedEmployee.id;
+              // Save original credentials & sync employee's role
+              if (!storedSession._originalRole) {
+                storedSession._originalRole = storedSession.role;
+                storedSession._originalDepartment = storedSession.department;
+                storedSession._originalOrgRole = storedSession.orgRole;
+                storedSession._originalUsername = storedSession.username;
               }
+              storedSession.role = selectedEmployee.role;
+              storedSession.department = selectedEmployee.department;
+              storedSession.orgRole = selectedEmployee.orgRole || 'member';
+              storedSession.username = selectedEmployee.username || selectedEmployee.name;
+              storedSession.employeeId = selectedEmployee.id;
               localStorage.setItem('branch_pilot_session', JSON.stringify(storedSession));
             }
 
