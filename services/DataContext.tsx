@@ -13,6 +13,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import type {
@@ -631,7 +632,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     setIsLoading(true);
     try {
       const targetBranchId = branchId || activeBranchId;
-      const [inv, sal, sup, pur, pRet, ret, cust, emp] = await Promise.all([
+      const [inv, sal, sup, pur, pRet, ret, cust, emp, bat, allBranches] = await Promise.all([
         inventoryService.getAll(targetBranchId),
         salesService.getAll(targetBranchId),
         supplierService.getAll(targetBranchId),
@@ -640,6 +641,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         returnService.getAllSalesReturns(targetBranchId),
         customerService.getAll('all'),
         employeeService.getAll(targetBranchId),
+        batchService.getAllBatches(targetBranchId),
+        branchService.getAll(activeOrgId),
       ]);
       setRawInventory(inv);
       setSalesState(sal);
@@ -648,7 +651,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       setPurchaseReturnsState(pRet);
       setReturnsState(ret);
       setCustomersState(cust);
-
+      setBatchesState(bat);
       setBranches(allBranches);
       setEmployeesState(emp);
     } catch (error) {
@@ -770,6 +773,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       updateStock,
       setSales,
       addSale,
+      completeSale,
       setSuppliers,
       addSupplier,
       updateSupplier,
@@ -779,6 +783,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       rejectPurchase,
       setReturns,
       setPurchaseReturns,
+      processSalesReturn,
+      createPurchaseReturn,
       addReturn,
       setCustomers,
       addCustomer,
@@ -809,6 +815,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       customers,
       employees,
       currentEmployee,
+      batches,
       branches,
       isLoading,
       activeBranchId,
@@ -818,6 +825,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       updateStock,
       setSales,
       addSale,
+      completeSale,
       setSuppliers,
       addSupplier,
       updateSupplier,
@@ -827,6 +835,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       rejectPurchase,
       setReturns,
       setPurchaseReturns,
+      processSalesReturn,
+      createPurchaseReturn,
       addReturn,
       setCustomers,
       addCustomer,
@@ -838,6 +848,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       deleteEmployee,
       setBatches,
       syncBatches,
+      refreshAll,
       switchBranch,
       switchOrg,
       syncStatus,
