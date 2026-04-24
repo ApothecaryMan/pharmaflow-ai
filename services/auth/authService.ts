@@ -35,6 +35,7 @@ import {
   type UserSession, 
   type LoginAuditEntry,
 } from '../../types';
+import { isSupabaseConfigured } from '../../lib/supabase';
 
 const SESSION_KEY = 'branch_pilot_session';
 const AUDIT_KEY = 'pharmaflow_login_audit';
@@ -55,8 +56,7 @@ export const authService = {
   /**
    * Get the current user session from storage or Supabase
    */
-  getCurrentUser: async (): Promise<UserSession | null> => {
-    const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+  async getCurrentUser(): Promise<UserSession | null> {
     if (isSupabaseConfigured) {
       try {
         const { supabase } = await import('../../lib/supabase');
@@ -73,13 +73,13 @@ export const authService = {
     }
     
     // Fallback to local cache (contains role/branch metadata not in standard JWT)
-    return authService.getCurrentUserSync();
+    return this.getCurrentUserSync();
   },
 
   /**
    * Synchronous current user retrieval
    */
-  getCurrentUserSync: (): UserSession | null => {
+  getCurrentUserSync(): UserSession | null {
     try {
       const stored = localStorage.getItem(SESSION_KEY);
       if (stored) {
@@ -94,8 +94,8 @@ export const authService = {
   /**
    * Update current session with new metadata
    */
-  updateSession: (updates: Partial<UserSession>): UserSession | null => {
-    const current = authService.getCurrentUserSync();
+  updateSession(updates: Partial<UserSession>): UserSession | null {
+    const current = this.getCurrentUserSync();
     if (current) {
       const updated = { ...current, ...updates };
       localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
@@ -107,8 +107,7 @@ export const authService = {
   /**
    * Sign up a new user using Supabase
    */
-  signUp: async (name: string, username: string, email: string, password: string): Promise<{ success: boolean; message?: string }> => {
-    const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+  async signUp(name: string, username: string, email: string, password: string): Promise<{ success: boolean; message?: string }> {
     if (!isSupabaseConfigured) {
       return { success: false, message: 'Supabase is not configured. Local fallback does not support sign up yet.' };
     }
@@ -135,8 +134,7 @@ export const authService = {
   /**
    * Request password reset link via Supabase
    */
-  resetPassword: async (email: string): Promise<{ success: boolean; message?: string }> => {
-    const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+  async resetPassword(email: string): Promise<{ success: boolean; message?: string }> {
     if (!isSupabaseConfigured) {
       return { success: false, message: 'Supabase is not configured.' };
     }
@@ -156,8 +154,7 @@ export const authService = {
   /**
    * Resend signup confirmation email
    */
-  resendConfirmation: async (email: string): Promise<{ success: boolean; message?: string }> => {
-    const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+  async resendConfirmation(email: string): Promise<{ success: boolean; message?: string }> {
     if (!isSupabaseConfigured) return { success: false, message: 'Supabase not configured.' };
 
     try {
@@ -173,10 +170,8 @@ export const authService = {
     }
   },
 
-  login: async (username: string, password: string): Promise<UserSession | null> => {
-    // Check if Supabase is configured
-    const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
-    
+  async login(username: string, password: string): Promise<UserSession | null> {
+    // Check if Supabase is configured (already imported from lib/supabase)
     // Ensure Super Admin exists before any login attempt (local only)
     if (!isSupabaseConfigured) {
       await ensureSuperAdmin();
@@ -333,7 +328,7 @@ export const authService = {
       };
 
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-      authService.logAuditEvent({
+      this.logAuditEvent({
         username: session.username,
         role: session.role,
         branchId: session.branchId,
@@ -351,25 +346,23 @@ export const authService = {
   /**
    * Synchronous check for session existence
    */
-  hasSession: (): boolean => {
+  hasSession(): boolean {
     return !!localStorage.getItem(SESSION_KEY);
   },
 
   /**
    * Logout and clear session
    */
-  logout: async (): Promise<void> => {
-    const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
-
+  async logout(): Promise<void> {
     try {
       if (isSupabaseConfigured) {
         const { supabase } = await import('../../lib/supabase');
         await supabase.auth.signOut();
       }
 
-      const user = await authService.getCurrentUserSync();
+      const user = this.getCurrentUserSync();
       if (user) {
-        authService.logAuditEvent({
+        this.logAuditEvent({
           username: user.username,
           role: user.role,
           branchId: user.branchId,
@@ -385,9 +378,9 @@ export const authService = {
   /**
    * Log an audit event to localStorage
    */
-  logAuditEvent: (entry: Omit<LoginAuditEntry, 'id' | 'timestamp'>): void => {
+  logAuditEvent(entry: Omit<LoginAuditEntry, 'id' | 'timestamp'>): void {
     try {
-      const history = authService.getLoginHistory();
+      const history = this.getLoginHistory();
       const newEntry: LoginAuditEntry = {
         ...entry,
         id: Math.random().toString(36).substring(2, 11),
@@ -404,7 +397,7 @@ export const authService = {
   /**
    * Get login audit history
    */
-  getLoginHistory: (branchId?: string): LoginAuditEntry[] => {
+  getLoginHistory(branchId?: string): LoginAuditEntry[] {
     try {
       const stored = localStorage.getItem(AUDIT_KEY);
       if (stored) {
@@ -424,11 +417,11 @@ export const authService = {
   /**
    * Register Biometric Credential
    */
-  registerBiometric: async (
+  async registerBiometric(
     employeeId: string,
     credentialId: string,
     publicKey: string
-  ): Promise<boolean> => {
+  ): Promise<boolean> {
     try {
       // In a real app, this would be an API call to save to DB.
       // Since we are in pilot mode, this should be handled by the data context update.
@@ -443,10 +436,10 @@ export const authService = {
   /**
    * Login with Biometric (Mock for Pilot)
    */
-  loginWithBiometric: async (
+  async loginWithBiometric(
     credentialId: string,
     employees: any[]
-  ): Promise<{ session: UserSession; id: string } | null> => {
+  ): Promise<{ session: UserSession; id: string } | null> {
     // Find employee by credential ID
     const employee = employees.find((emp) => emp.biometricCredentialId === credentialId);
     if (!employee) return null;
@@ -466,7 +459,7 @@ export const authService = {
 
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
 
-    authService.logAuditEvent({
+    this.logAuditEvent({
       username: session.username,
       role: session.role,
       branchId: session.branchId,

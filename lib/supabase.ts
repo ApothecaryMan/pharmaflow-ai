@@ -12,10 +12,23 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 const isPlaceholder = !supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder.supabase.co');
 
+// Export configuration status for other services
 export const isSupabaseConfigured = !isPlaceholder;
 
+// Diagnostic logging for production debugging
+if (import.meta.env.PROD) {
+  console.log('Supabase Configuration Status:', {
+    configured: isSupabaseConfigured,
+    urlSet: !!supabaseUrl,
+    keySet: !!supabaseAnonKey,
+    isPlaceholder: isPlaceholder,
+    urlStart: supabaseUrl ? supabaseUrl.substring(0, 12) + '...' : 'none'
+  });
+}
+
 /**
- * A guarded supabase client that prevents network errors when unconfigured.
+ * Creates a guarded Supabase client.
+ that prevents network errors when unconfigured.
  * Returns no-op builders that resolve to empty/null values.
  */
 const createGuardedClient = (realClient: any) => {
