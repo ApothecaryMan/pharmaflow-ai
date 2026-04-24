@@ -1,4 +1,11 @@
-import { type OrgRole } from './index';
+/** Organization role — determines access scope across all branches */
+export type OrgRole = 'owner' | 'admin' | 'member';
+
+/** Subscription plan tiers */
+export type SubscriptionPlan = 'free' | 'starter' | 'pro' | 'enterprise';
+
+/** Subscription billing status */
+export type SubscriptionStatus = 'active' | 'trial' | 'past_due' | 'cancelled';
 
 /**
  * UserSession - Represents the currently logged in user and their context.

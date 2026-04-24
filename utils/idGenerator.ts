@@ -12,8 +12,7 @@
 
 import { StorageKeys } from '../config/storageKeys';
 import type { AppSettings } from '../services/settings/types';
-import { getAllShardKeys } from './sharding';
-import { storage } from './storage';
+import { supabase } from '../lib/supabase';
 
 // Supported Entity Types
 export type EntityType =
@@ -58,102 +57,7 @@ const extractSequence = (id: string): number => {
   return isNaN(seq) ? 0 : seq;
 };
 
-/**
- * Scans provided data to find the highest sequence number
- * Used for self-healing when sequence storage is lost or out of sync
- */
-const findMaxSequence = <T extends { id: string }>(data: T[]): number => {
-  if (!data || data.length === 0) return 0;
-  return data.reduce((max, item) => {
-    const seq = extractSequence(item.id);
-    return seq > max ? seq : max;
-  }, 0);
-};
-
-/**
- * Initializes or heals the sequence for a specific entity type within a branch
- * @param type The entity type to heal
- * @param branchCode The branch code to filter by (e.g., "B1")
- * @param currentSequence The currently known sequence
- */
-const healSequence = (type: EntityType, branchCode: string, currentSequence: number): number => {
-  let maxExisting = 0;
-  let data: any[] = [];
-
-  const filterByBranch = (items: any[]) => items.filter(val => {
-    if (!val.id) return false;
-    return val.id.startsWith(`${branchCode}-`);
-  });
-
-  try {
-    switch (type) {
-
-      case 'sales': {
-        const keys = getAllShardKeys(StorageKeys.SALES);
-        for (const key of keys) {
-          const shardData = storage.get<any[]>(key, []);
-          maxExisting = Math.max(maxExisting, findMaxSequence(filterByBranch(shardData)));
-        }
-        return Math.max(currentSequence, maxExisting);
-      }
-      case 'inventory':
-        data = filterByBranch(storage.get(StorageKeys.INVENTORY, []));
-        break;
-      case 'customers':
-      case 'customers-serial':
-        data = filterByBranch(storage.get(StorageKeys.CUSTOMERS, []));
-        break;
-      case 'suppliers':
-        data = filterByBranch(storage.get(StorageKeys.SUPPLIERS, []));
-        break;
-      case 'employees':
-        data = filterByBranch(storage.get(StorageKeys.EMPLOYEES, []));
-        break;
-      case 'purchases':
-        data = filterByBranch(storage.get(StorageKeys.PURCHASES, []));
-        break;
-      case 'returns': {
-        const salesReturns = filterByBranch(storage.get(StorageKeys.RETURNS, []));
-        const purchaseReturns = filterByBranch(storage.get(StorageKeys.PURCHASE_RETURNS, []));
-        data = [...salesReturns, ...purchaseReturns];
-        break;
-      }
-      case 'shifts': {
-        const keys = getAllShardKeys(StorageKeys.SHIFTS);
-        for (const key of keys) {
-          const shardData = storage.get<any[]>(key, []);
-          maxExisting = Math.max(maxExisting, findMaxSequence(filterByBranch(shardData)));
-        }
-        return Math.max(currentSequence, maxExisting);
-      }
-      case 'movement':
-        data = filterByBranch(storage.get(StorageKeys.STOCK_MOVEMENTS, []));
-        break;
-      case 'batch':
-        data = filterByBranch(storage.get(StorageKeys.STOCK_BATCHES, []));
-        break;
-      case 'notification':
-        data = filterByBranch(storage.get(StorageKeys.NOTIFICATIONS, []));
-        break;
-      case 'barcodes':
-        data = filterByBranch(storage.get(StorageKeys.LABEL_TEMPLATES, []));
-        break;
-      case 'receipts':
-        data = filterByBranch(storage.get(StorageKeys.RECEIPT_TEMPLATES, []));
-        break;
-      case 'branches':
-      case 'branches-code':
-        data = storage.get<any[]>(StorageKeys.BRANCHES, []).map(b => ({ ...b, id: b.id }));
-        break;
-    }
-
-    maxExisting = Math.max(maxExisting, findMaxSequence(data));
-  } catch (e) {
-    console.warn(`Failed to heal sequence for ${type} in branch ${branchCode}`, e);
-  }
-
-  return Math.max(currentSequence, maxExisting);
-};
+// Sequences are now handled atomically in Supabase via increment_sequence RPC
 
 export const idGenerator = {
   /**
@@ -172,61 +76,47 @@ export const idGenerator = {
   },
 
   /**
-   * Generates the next ID for a given entity type
+   * Generates the next ID for a given entity type (Online-Only version)
    * @param type The type of entity (e.g., 'sales', 'inventory')
-   * @param branchCode Optional branch code to use. If not provided, reads from settings.
+   * @param branchId The UUID of the branch (Required for DB sequence)
+   * @param branchCode Optional branch code prefix (e.g., "B1")
    * @returns Formatted ID string (e.g., "B1-1050")
    */
-  generate: (type: EntityType, branchCode?: string): string => {
-    // 1. Get Branch Code: parameter > storage > default
-    let effectiveBranchCode = branchCode;
-    
-    // Global entities use PF prefix
-    if (type === 'generic') {
-      effectiveBranchCode = GLOBAL_PREFIX;
-    } else if (!effectiveBranchCode) {
-      // 1. Try unified settings
-      const settings = storage.get<Partial<AppSettings>>(StorageKeys.SETTINGS, {});
-      effectiveBranchCode = settings.branchCode;
-      
-      // 2. Fallback to active branch ID and look up in branches list
-      if (!effectiveBranchCode) {
-        const activeBranchId = storage.get<string>('pharma_active_branch_id', settings.activeBranchId || '');
-        if (activeBranchId) {
-          const branches = storage.get<any[]>(StorageKeys.BRANCHES, []);
-          const matchedBranch = branches.find(b => b.id === activeBranchId);
-          effectiveBranchCode = matchedBranch?.code;
-        }
-      }
-      
-      // 3. Final safety default
-      effectiveBranchCode = effectiveBranchCode || 'XX';
+  generate: async (type: EntityType, branchId: string, branchCode?: string): Promise<string> => {
+    // For non-critical types, redirect to sync generator to save DB roundtrips
+    const nonCriticalTypes: EntityType[] = ['notification', 'generic', 'barcodes', 'receipts', 'tabs', 'movement'];
+    if (nonCriticalTypes.includes(type)) {
+      return idGenerator.generateSync(type, branchCode);
     }
 
-    // 2. Get current sequences for this specific branch
-    const seqKey = `${StorageKeys.SEQUENCES}_${effectiveBranchCode}`;
-    const sequences = storage.get<SequenceMap>(seqKey, {});
+    try {
+      // 1. Get next value from Supabase
+      const { data, error } = await supabase.rpc('increment_sequence', {
+        p_branch_id: branchId,
+        p_entity_type: type
+      });
 
-    // 3. Determine current sequence value
-    let currentSeq = sequences[type] || 0;
+      if (error) throw error;
 
-    // 4. Critical: Self-Healing Check
-    // If sequence is 0 (fresh start or cleared cache), try to heal for this branch
-    if (currentSeq === 0) {
-      currentSeq = healSequence(type, effectiveBranchCode!, 0);
+      // 2. Format with branch prefix
+      const prefix = branchCode || 'PF';
+      return `${prefix}-${data.toString().padStart(ID_PADDING, '0')}`;
+    } catch (err) {
+      console.warn(`[idGenerator] Online sequence failed for ${type}, falling back to timestamp`, err);
+      // Fallback to timestamp + random if DB is down to prevent UI crash
+      return idGenerator.generateSync(type, branchCode);
     }
+  },
 
-    // 5. Increment
-    const nextSeq = currentSeq + 1;
-
-    // 6. Save immediately to the branch-specific key
-    storage.set(seqKey, {
-      ...sequences,
-      [type]: nextSeq,
-    });
-
-    // 7. Format and Return
-    return `${effectiveBranchCode}-${nextSeq.toString().padStart(ID_PADDING, '0')}`;
+  /**
+   * Synchronous generator for non-critical IDs (tabs, notifications, etc.)
+   * Uses timestamp + random to ensure uniqueness without DB roundtrip.
+   */
+  generateSync: (type: EntityType, branchCode?: string): string => {
+    const prefix = branchCode || GLOBAL_PREFIX;
+    const ts = Date.now().toString().slice(-6);
+    const rand = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `${prefix}-${ts}${rand}`;
   },
 
   /**

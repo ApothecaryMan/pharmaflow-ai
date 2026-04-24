@@ -1,18 +1,13 @@
 /**
  * Stock Batch Service - FEFO (First Expiry First Out) Inventory Management
- *
- * Manages stock batches with different expiry dates for each drug.
- * Handles allocation, deallocation, and stock tracking.
+ * Online-Only implementation using Supabase.
  */
 
-import { StorageKeys } from '../../config/storageKeys';
-import type { BatchAllocation, Drug, StockBatch } from '../../types';
+import type { BatchAllocation, StockBatch } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
-import { storage } from '../../utils/storage';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
-import { syncQueueService } from '../syncQueueService';
-import { StockVersionConflictError } from '../../utils/errors';
 import { supabase } from '../../lib/supabase';
+import { settingsService } from '../settings/settingsService';
 
 const mapBatchToDb = (b: Partial<StockBatch>): any => {
   const db: any = {};
@@ -48,177 +43,112 @@ const mapDbToBatch = (db: any): StockBatch => ({
   version: db.version || 1,
 });
 
-// --- Storage Access ---
-const getAllBatchesRaw = (): StockBatch[] => {
-  return storage.get<StockBatch[]>(StorageKeys.STOCK_BATCHES, []);
-};
-
-const saveBatches = (batches: StockBatch[]): void => {
-  storage.set(StorageKeys.STOCK_BATCHES, batches);
-};
-
-// --- Core Functions ---
-
-export const fetchBatchesFromSupabase = async (branchId?: string): Promise<StockBatch[]> => {
-  try {
-    let query = supabase.from('stock_batches').select('*').limit(10000);
-    if (branchId) {
-      query = query.eq('branch_id', branchId);
+export const batchService = {
+  async fetchBatchesFromSupabase(branchId?: string, drugId?: string): Promise<StockBatch[]> {
+    try {
+      let query = supabase.from('stock_batches').select('*');
+      if (branchId) query = query.eq('branch_id', branchId);
+      if (drugId) query = query.eq('drug_id', drugId);
+      
+      const { data, error } = await query.order('expiry_date', { ascending: true });
+      if (error) throw error;
+      return (data || []).map(mapDbToBatch);
+    } catch (err) {
+      console.error('[BatchService] fetchBatches failed:', err);
+      return [];
     }
-    const { data, error } = await query;
-    if (!error && data) {
-      const mapped = data.map(mapDbToBatch);
-      const all = getAllBatchesRaw();
-      // Keep other branches intact
-      const preserved = branchId ? all.filter(b => b.branchId !== branchId) : [];
-      saveBatches([...preserved, ...mapped]);
-      return mapped;
-    }
-  } catch (err) {
-    if (import.meta.env.DEV) console.warn('Supabase fetch failed for stock_batches', err);
-  }
-  return getAllBatchesRaw();
-};
+  },
 
-export const getAllBatches = (branchId?: string, drugId?: string): StockBatch[] => {
-  const all = getAllBatchesRaw();
-  const effectiveBranchId = branchId; 
-  
-  let results = all;
-  if (effectiveBranchId) {
-    results = results.filter((b) => b.branchId === effectiveBranchId);
-  }
-  if (drugId) {
-    results = results.filter((b) => b.drugId === drugId);
-  }
-  return results;
-};
+  async getAllBatches(branchId?: string, drugId?: string): Promise<StockBatch[]> {
+    return this.fetchBatchesFromSupabase(branchId, drugId);
+  },
 
-export const getBatchById = (batchId: string): StockBatch | null => {
-  const all = getAllBatchesRaw();
-  return all.find((b) => b.id === batchId) || null;
-};
+  async getBatchById(batchId: string): Promise<StockBatch | null> {
+    const { data, error } = await supabase.from('stock_batches').select('*').eq('id', batchId).maybeSingle();
+    if (error || !data) return null;
+    return mapDbToBatch(data);
+  },
 
-export const createBatch = async (
-  batch: Omit<StockBatch, 'id'>, 
-  branchId?: string,
-  skipSync = false
-): Promise<StockBatch> => {
-  const all = getAllBatchesRaw();
-  const { settingsService } = await import('../settings/settingsService');
-  const settings = await settingsService.getAll();
-  const effectiveBranchId = branchId || batch.branchId || settings.activeBranchId;
-  
-  const newBatch: StockBatch = {
-    ...batch,
-    id: idGenerator.uuid(),
-    branchId: effectiveBranchId,
-    orgId: settings.orgId,
-    version: 1, 
-  };
+  async createBatch(batch: Omit<StockBatch, 'id'>, branchId?: string): Promise<StockBatch> {
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || batch.branchId || settings.activeBranchId;
+    
+    const newBatch: StockBatch = {
+      ...batch,
+      id: idGenerator.uuid(),
+      branchId: effectiveBranchId,
+      orgId: settings.orgId,
+      version: 1, 
+    };
 
-  try {
-    const dbBatch = mapBatchToDb(newBatch);
-    const { error } = await supabase.from('stock_batches').upsert(dbBatch, { onConflict: 'id' });
-    if (error && import.meta.env.DEV) console.warn('Supabase batch upsert failed', error);
-  } catch {}
+    const { error } = await supabase.from('stock_batches').insert(mapBatchToDb(newBatch));
+    if (error) throw error;
+    return newBatch;
+  },
 
-  all.push(newBatch);
-  saveBatches(all);
+  async updateBatchQuantity(batchId: string, delta: number): Promise<StockBatch | null> {
+    const batch = await this.getBatchById(batchId);
+    if (!batch) return null;
 
-  if (!skipSync) {
-    await syncQueueService.enqueue('STOCK_BATCH_UPDATE', { action: 'CREATE', batch: newBatch });
-  }
+    const newQty = Math.max(0, batch.quantity + delta);
+    const newVersion = (batch.version || 0) + 1;
 
-  return newBatch;
-};
-
-export const updateBatchQuantity = async (
-  batchId: string, 
-  delta: number,
-  skipSync = false
-): Promise<StockBatch | null> => {
-  const all = getAllBatchesRaw();
-  const index = all.findIndex((b) => b.id === batchId);
-
-  if (index === -1) return null;
-
-  all[index].quantity = Math.max(0, all[index].quantity + delta);
-  all[index].version = (all[index].version || 0) + 1; 
-
-  try {
     const { error } = await supabase
       .from('stock_batches')
-      .update({ quantity: all[index].quantity, version: all[index].version })
+      .update({ quantity: newQty, version: newVersion })
       .eq('id', batchId);
-    if (error && import.meta.env.DEV) console.warn('Supabase batch qty update failed', error);
-  } catch {}
+      
+    if (error) throw error;
+    return { ...batch, quantity: newQty, version: newVersion };
+  },
 
-  saveBatches(all);
-
-  if (!skipSync) {
-    await syncQueueService.enqueue('STOCK_BATCH_UPDATE', { action: 'UPDATE_QTY', id: batchId, delta });
-  }
-
-  return all[index];
-};
-
-export const updateBatch = async (batchId: string, updates: Partial<StockBatch>, skipSync = false): Promise<StockBatch | null> => {
-  const all = getAllBatchesRaw();
-  const index = all.findIndex((b) => b.id === batchId);
-  if (index === -1) return null;
-
-  all[index] = { ...all[index], ...updates };
-
-  try {
+  async updateBatch(batchId: string, updates: Partial<StockBatch>): Promise<StockBatch | null> {
     const { error } = await supabase
       .from('stock_batches')
       .update(mapBatchToDb(updates))
       .eq('id', batchId);
-    if (error && import.meta.env.DEV) console.warn('Supabase batch update failed', error);
-  } catch {}
+      
+    if (error) throw error;
+    return this.getBatchById(batchId);
+  },
 
-  saveBatches(all);
+  async allocateStockBulk(
+    requests: { drugId: string; quantity: number; name?: string }[],
+    branchId: string
+  ): Promise<{ drugId: string; allocations: BatchAllocation[] }[]> {
+    const result: { drugId: string; allocations: BatchAllocation[] }[] = [];
+    for (const req of requests) {
+      if (req.quantity <= 0) continue;
+      const allocs = await this.allocateStock(req.drugId, req.quantity, branchId);
+      if (!allocs) throw new Error(`Insufficient stock for: ${req.name || req.drugId}`);
+      result.push({ drugId: req.drugId, allocations: allocs });
+    }
+    return result;
+  },
 
-  if (!skipSync) {
-    await syncQueueService.enqueue('STOCK_BATCH_UPDATE', { action: 'UPDATE', id: batchId, updates });
-  }
+  async allocateStock(
+    drugId: string,
+    quantityNeeded: number,
+    branchId: string,
+    commitChanges: boolean = true
+  ): Promise<BatchAllocation[] | null> {
+    if (quantityNeeded <= 0) return null;
 
-  return all[index];
-};
-
-export const allocateStockBulk = async (
-  requests: { drugId: string; quantity: number; name?: string }[],
-  branchId: string,
-  skipSync = true 
-): Promise<{ drugId: string; allocations: BatchAllocation[] }[]> => {
-  const allBatches = getAllBatchesRaw();
-  const result: { drugId: string; allocations: BatchAllocation[] }[] = [];
-  const batchesToUpdate: StockBatch[] = [];
-
-  for (const req of requests) {
-    if (req.quantity <= 0 || !Number.isInteger(req.quantity)) continue;
-
-    const drugBatches = allBatches
-      .filter((b) => b.drugId === req.drugId && b.branchId === branchId)
+    const batches = await this.getAllBatches(branchId, drugId);
+    const validBatches = batches
       .filter((b) => {
         const exp = parseExpiryEndOfMonth(b.expiryDate);
         return !isNaN(exp.getTime()) && exp > new Date();
       })
       .sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime());
 
-    const totalAvailable = drugBatches.reduce((sum, b) => sum + b.quantity, 0);
-    if (totalAvailable < req.quantity) {
-      const drugName = req.name || req.drugId;
-      throw new Error(
-        `Insufficient stock for: ${drugName} (Available: ${totalAvailable}, Needed: ${req.quantity})`
-      );
-    }
+    const totalAvailable = validBatches.reduce((sum, b) => sum + b.quantity, 0);
+    if (totalAvailable < quantityNeeded) return null;
 
     const allocations: BatchAllocation[] = [];
-    let remaining = req.quantity;
+    let remaining = quantityNeeded;
 
-    for (const batch of drugBatches) {
+    for (const batch of validBatches) {
       if (remaining <= 0) break;
       const allocateFromThis = Math.min(batch.quantity, remaining);
       if (allocateFromThis > 0) {
@@ -228,342 +158,78 @@ export const allocateStockBulk = async (
           expiryDate: batch.expiryDate,
           batchNumber: batch.batchNumber,
         });
-
-        const rawBatch = allBatches.find((b) => b.id === batch.id);
-        if (rawBatch) {
-          if (rawBatch.version !== batch.version) {
-            throw new StockVersionConflictError(batch.id, req.drugId);
-          }
-          rawBatch.quantity -= allocateFromThis;
-          rawBatch.version = (rawBatch.version || 0) + 1;
-          batchesToUpdate.push(rawBatch);
-        }
-
         remaining -= allocateFromThis;
       }
     }
-    result.push({ drugId: req.drugId, allocations });
-  }
 
-  saveBatches(allBatches);
-
-  // Sync to Supabase in bulk
-  if (batchesToUpdate.length > 0) {
-    try {
-      const dbBatches = batchesToUpdate.map(b => mapBatchToDb(b));
-      await supabase.from('stock_batches').upsert(dbBatches, { onConflict: 'id' });
-    } catch (e) {
-      console.warn('Batch bulk alloc Supabase sync failed', e);
+    if (commitChanges && allocations.length > 0) {
+      for (const alloc of allocations) {
+        await this.updateBatchQuantity(alloc.batchId, -alloc.quantity);
+      }
     }
-  }
+    return allocations;
+  },
 
-  return result;
-};
-
-export const allocateStock = async (
-  drugId: string,
-  quantityNeeded: number,
-  branchId: string,
-  commitChanges: boolean = true,
-  skipSync = false
-): Promise<BatchAllocation[] | null> => {
-  if (quantityNeeded <= 0 || !Number.isInteger(quantityNeeded)) {
-    console.error('[BatchService] Invalid quantity needed:', quantityNeeded);
-    return null;
-  }
-
-  const batches = getAllBatches(branchId, drugId)
-    .filter((b) => {
-      const exp = parseExpiryEndOfMonth(b.expiryDate);
-      return !isNaN(exp.getTime()) && exp > new Date();
-    })
-    .sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime());
-
-  const totalAvailable = batches.reduce((sum, b) => sum + b.quantity, 0);
-  if (totalAvailable < quantityNeeded) {
-    return null; 
-  }
-
-  const allocations: BatchAllocation[] = [];
-  let remaining = quantityNeeded;
-
-  for (const batch of batches) {
-    if (remaining <= 0) break;
-    const allocateFromThis = Math.min(batch.quantity, remaining);
-    if (allocateFromThis > 0) {
-      allocations.push({
-        batchId: batch.id,
-        quantity: allocateFromThis,
-        expiryDate: batch.expiryDate,
-        batchNumber: batch.batchNumber,
-      });
-      remaining -= allocateFromThis;
-    }
-  }
-
-  if (commitChanges && allocations.length > 0) {
-    const all = getAllBatchesRaw();
-    const batchesToUpdate: StockBatch[] = [];
-    
+  async returnStock(allocations: BatchAllocation[], drugId?: string, branchId?: string): Promise<void> {
+    if (!allocations || allocations.length === 0) return;
     for (const alloc of allocations) {
-      const batch = all.find((b) => b.id === alloc.batchId);
+      const batch = await this.getBatchById(alloc.batchId);
       if (batch) {
-        const originalBatch = batches.find((b) => b.id === alloc.batchId);
-        if (originalBatch && batch.version !== originalBatch.version) {
-           throw new StockVersionConflictError(batch.id, drugId);
-        }
-        batch.quantity -= alloc.quantity;
-        batch.version = (batch.version || 0) + 1;
-        batchesToUpdate.push(batch);
+        await this.updateBatchQuantity(alloc.batchId, alloc.quantity);
+      } else if (drugId && branchId) {
+        await this.createBatch({
+          drugId,
+          quantity: alloc.quantity,
+          expiryDate: alloc.expiryDate,
+          costPrice: 0,
+          dateReceived: new Date().toISOString(),
+          batchNumber: 'RECREATED',
+          branchId: branchId,
+          orgId: (await settingsService.getAll()).orgId,
+          version: 1,
+        });
       }
     }
-    
-    saveBatches(all);
+  },
 
-    // Sync to Supabase
-    if (batchesToUpdate.length > 0) {
-      try {
-        const dbBatches = batchesToUpdate.map(b => mapBatchToDb(b));
-        await supabase.from('stock_batches').upsert(dbBatches, { onConflict: 'id' });
-      } catch (e) {
-        console.warn('Batch alloc Supabase sync failed', e);
-      }
-    }
+  async getTotalStock(drugId: string, branchId?: string): Promise<number> {
+    const batches = await this.getAllBatches(branchId, drugId);
+    return batches.reduce((sum, b) => sum + b.quantity, 0);
+  },
 
-    if (!skipSync) {
-      await syncQueueService.enqueue('STOCK_BATCH_UPDATE', { 
-        action: 'ALLOCATE', 
-        drugId, 
-        quantity: quantityNeeded,
-        allocations 
-      });
-    }
-  }
+  async getEarliestExpiry(drugId: string, branchId?: string): Promise<string | null> {
+    const batches = await this.getAllBatches(branchId, drugId);
+    const valid = batches
+      .filter((b) => b.quantity > 0)
+      .sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime());
+    return valid.length > 0 ? valid[0].expiryDate : null;
+  },
 
-  return allocations;
-};
+  async hasStock(drugId: string, quantityNeeded: number, branchId: string): Promise<boolean> {
+    const total = await this.getTotalStock(drugId, branchId);
+    return total >= quantityNeeded;
+  },
 
-export const returnStock = async (
-  allocations: BatchAllocation[], 
-  drugId?: string,
-  skipSync = false,
-  branchId?: string
-): Promise<void> => {
-  if (!allocations || allocations.length === 0) return;
-
-  const all = getAllBatchesRaw();
-  const batchesToUpdate: StockBatch[] = [];
-
-  for (const alloc of allocations) {
-    let batch = all.find((b) => b.id === alloc.batchId);
-    
-    if (!batch && drugId) {
-      batch = all.find((b) => b.drugId === drugId && b.expiryDate === alloc.expiryDate);
-    }
-
-    if (batch) {
-      batch.quantity += alloc.quantity;
-      batch.version = (batch.version || 0) + 1;
-      batchesToUpdate.push(batch);
-    } else if (drugId && branchId) {
-      const { settingsService } = await import('../settings/settingsService');
-      const settings = await settingsService.getAll();
-      const newBatch: StockBatch = {
-        id: idGenerator.uuid(),
-        drugId,
-        quantity: alloc.quantity,
-        expiryDate: alloc.expiryDate,
-        costPrice: 0, 
-        dateReceived: new Date().toISOString(),
-        batchNumber: 'RECREATED',
-        branchId: branchId,
-        orgId: settings.orgId,
-        version: 1,
-      };
-      all.push(newBatch);
-      batchesToUpdate.push(newBatch);
-      console.log(`[BatchService] Recreated missing batch for drug ${drugId} during return.`);
-    }
-  }
-
-  saveBatches(all);
-
-  if (batchesToUpdate.length > 0) {
-    try {
-      const dbBatches = batchesToUpdate.map(b => mapBatchToDb(b));
-      await supabase.from('stock_batches').upsert(dbBatches, { onConflict: 'id' });
-    } catch {}
-  }
-};
-
-export const getTotalStock = (drugId: string, branchId?: string): number => {
-  return getAllBatches(branchId, drugId).reduce((sum, b) => sum + b.quantity, 0);
-};
-
-export const getEarliestExpiry = (drugId: string, branchId?: string): string | null => {
-  const batches = getAllBatches(branchId, drugId)
-    .filter((b) => b.quantity > 0)
-    .sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime());
-  return batches.length > 0 ? batches[0].expiryDate : null;
-};
-
-export const getEarliestExpiriesBulk = (drugIds: string[]): Record<string, string | null> => {
-  const allBatches = getAllBatchesRaw();
-  const result: Record<string, string | null> = {};
-
-  const batchesByDrug = new Map<string, StockBatch[]>();
-  for (const batch of allBatches) {
-    if (batch.quantity > 0 && drugIds.includes(batch.drugId)) {
-      const arr = batchesByDrug.get(batch.drugId);
-      if (arr) arr.push(batch);
-      else batchesByDrug.set(batch.drugId, [batch]);
-    }
-  }
-
-  for (const drugId of drugIds) {
-    const drugBatches = batchesByDrug.get(drugId);
-    if (!drugBatches || drugBatches.length === 0) {
-      result[drugId] = null;
-      continue;
-    }
-    let earliest = drugBatches[0];
-    for (let i = 1; i < drugBatches.length; i++) {
-      if (parseExpiryEndOfMonth(drugBatches[i].expiryDate).getTime() < parseExpiryEndOfMonth(earliest.expiryDate).getTime()) {
-        earliest = drugBatches[i];
-      }
-    }
-    result[drugId] = earliest.expiryDate;
-  }
-
-  return result;
-};
-
-export const hasStock = (drugId: string, quantityNeeded: number, branchId: string): boolean => {
-  const total = getTotalStock(drugId, branchId);
-  return total >= quantityNeeded;
-};
-
-export const migrateInventoryToBatches = async (inventory: Drug[]): Promise<StockBatch[]> => {
-  const existingBatches = getAllBatchesRaw();
-  const existingDrugIds = new Set(existingBatches.map((b) => b.drugId));
-
-  let migratedCount = 0;
-  const newBatches: StockBatch[] = [...existingBatches];
-  const batchesToInsert: StockBatch[] = [];
-
-  for (const drug of inventory) {
-    if (existingDrugIds.has(drug.id) || drug.stock <= 0) continue;
-
-    const { settingsService } = await import('../settings/settingsService');
-    const settings = await settingsService.getAll();
-
-    const b: StockBatch = {
-      id: idGenerator.uuid(),
-      drugId: drug.id,
-      quantity: drug.stock,
-      expiryDate: drug.expiryDate,
-      costPrice: drug.costPrice,
-      purchaseId: 'MIGRATION',
-      dateReceived: new Date().toISOString(),
-      batchNumber: 'MIGRATED',
-      branchId: drug.branchId,
-      orgId: settings.orgId,
-      version: 1,
+  async getStockSummary(drugId: string, branchId?: string) {
+    const batches = await this.getAllBatches(branchId, drugId);
+    const activeBatches = batches.filter((b) => b.quantity > 0);
+    return {
+      totalStock: activeBatches.reduce((sum, b) => sum + b.quantity, 0),
+      batchCount: activeBatches.length,
+      earliestExpiry: await this.getEarliestExpiry(drugId, branchId),
+      batches: activeBatches.sort(
+        (a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime()
+      ),
     };
-    newBatches.push(b);
-    batchesToInsert.push(b);
-    migratedCount++;
-  }
+  },
 
-  if (migratedCount > 0) {
-    saveBatches(newBatches);
-    try {
-      if (batchesToInsert.length > 0) {
-        await supabase.from('stock_batches').insert(batchesToInsert.map(mapBatchToDb));
-      }
-    } catch {}
-  }
+  async deleteBatchById(batchId: string): Promise<boolean> {
+    const { error } = await supabase.from('stock_batches').delete().eq('id', batchId);
+    return !error;
+  },
 
-  return newBatches;
-};
-
-export const getStockSummary = (
-  drugId: string,
-  branchId?: string
-): {
-  totalStock: number;
-  batchCount: number;
-  earliestExpiry: string | null;
-  batches: StockBatch[];
-} => {
-  const batches = getAllBatches(branchId, drugId).filter((b) => b.quantity > 0);
-
-  return {
-    totalStock: batches.reduce((sum, b) => sum + b.quantity, 0),
-    batchCount: batches.length,
-    earliestExpiry: getEarliestExpiry(drugId, branchId),
-    batches: batches.sort(
-      (a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime()
-    ),
-  };
-};
-
-export const deleteBatchById = async (batchId: string, skipSync = false): Promise<boolean> => {
-  const all = getAllBatchesRaw();
-  const filtered = all.filter((b) => b.id !== batchId);
-  const removed = all.length > filtered.length;
-  if (removed) {
-    saveBatches(filtered);
-
-    try {
-      await supabase.from('stock_batches').delete().eq('id', batchId);
-    } catch {}
-
-    if (!skipSync) {
-      await syncQueueService.enqueue('STOCK_BATCH_UPDATE', { action: 'DELETE', id: batchId });
-    }
-  }
-  return removed;
-};
-
-export const deleteBatchesByDrugId = async (drugId: string, skipSync = false): Promise<number> => {
-  const all = getAllBatchesRaw();
-  const filtered = all.filter((b) => b.drugId !== drugId);
-  const removedCount = all.length - filtered.length;
-  if (removedCount > 0) {
-    saveBatches(filtered);
-
-    try {
-      await supabase.from('stock_batches').delete().eq('drug_id', drugId);
-    } catch {}
-
-    if (!skipSync) {
-      await syncQueueService.enqueue('STOCK_BATCH_UPDATE', { 
-        action: 'DELETE_BULK', 
-        drugId,
-        count: removedCount 
-      });
-    }
-  }
-  return removedCount;
-};
-
-export const batchService = {
-  fetchBatchesFromSupabase,
-  getAllBatches,
-  getBatchById,
-  createBatch,
-  updateBatchQuantity,
-  updateBatch,
-  allocateStock,
-  allocateStockBulk,
-  returnStock,
-  getTotalStock,
-  getEarliestExpiry,
-  getEarliestExpiriesBulk,
-  hasStock,
-  migrateInventoryToBatches,
-  getStockSummary,
-  deleteBatchById,
-  deleteBatchesByDrugId,
+  async deleteBatchesByDrugId(drugId: string): Promise<boolean> {
+    const { error } = await supabase.from('stock_batches').delete().eq('drug_id', drugId);
+    return !error;
+  },
 };

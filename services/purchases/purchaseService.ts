@@ -1,124 +1,190 @@
 /**
  * Purchase Service - Purchase order operations
+ * Online-Only implementation using Supabase
  */
 
-import { StorageKeys } from '../../config/storageKeys';
-import type { Purchase, PurchaseStatus } from '../../types';
+import { BaseDomainService } from '../core/BaseDomainService';
+import type { Purchase, PurchaseStatus, StockMovement, StockBatch } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
-
-import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
 import { inventoryService } from '../inventory/inventoryService';
 import { batchService } from '../inventory/batchService';
 import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
-import { syncQueueService } from '../syncQueueService';
 import * as stockOps from '../../utils/stockOperations';
+import { supabase } from '../../lib/supabase';
 import type { PurchaseFilters, PurchaseService, PurchaseStats } from './types';
-import type { StockMovement, StockBatch } from '../../types';
 
-const getRawAll = (): Purchase[] => {
-  return storage.get<Purchase[]>(StorageKeys.PURCHASES, []);
-};
+class PurchaseServiceImpl extends BaseDomainService<Purchase> implements PurchaseService {
+  protected tableName = 'purchases';
 
-export const createPurchaseService = (): PurchaseService => ({
-  getAll: async (branchId?: string): Promise<Purchase[]> => {
-    const all = getRawAll();
+  protected mapDbToDomain(db: any): Purchase {
+    return {
+      id: db.id,
+      orgId: db.org_id,
+      branchId: db.branch_id,
+      date: db.date,
+      supplierId: db.supplier_id,
+      supplierName: db.supplier_name_snapshot,
+      items: db.items || [],
+      subtotal: db.subtotal,
+      discount: db.discount,
+      totalTax: db.total_tax,
+      totalCost: db.total_cost,
+      paymentMethod: db.payment_type || 'cash',
+      status: db.status,
+      employeeId: db.employee_id,
+      approvedBy: db.approved_by,
+      approvalDate: db.approval_date,
+      externalInvoiceId: db.external_invoice_id,
+      invoiceId: db.invoice_id,
+      version: db.version,
+    };
+  }
+
+  protected mapDomainToDb(p: Partial<Purchase>): any {
+    const db: any = {};
+    if (p.id !== undefined) db.id = p.id;
+    if (p.orgId !== undefined) db.org_id = p.orgId;
+    if (p.branchId !== undefined) db.branch_id = p.branchId;
+    if (p.date !== undefined) db.date = p.date;
+    if (p.supplierId !== undefined) db.supplier_id = p.supplierId;
+    if (p.supplierName !== undefined) db.supplier_name_snapshot = p.supplierName;
+    if (p.items !== undefined) db.items = p.items;
+    if (p.subtotal !== undefined) db.subtotal = p.subtotal;
+    if (p.discount !== undefined) db.discount = p.discount;
+    if (p.totalTax !== undefined) db.total_tax = p.totalTax;
+    if (p.totalCost !== undefined) db.total_cost = p.totalCost;
+    if (p.paymentMethod !== undefined) db.payment_type = p.paymentMethod;
+    if (p.status !== undefined) db.status = p.status;
+    if (p.employeeId !== undefined) db.employee_id = p.employeeId;
+    if (p.approvedBy !== undefined) db.approved_by = p.approvedBy;
+    if (p.approvalDate !== undefined) db.approval_date = p.approvalDate;
+    if (p.externalInvoiceId !== undefined) db.external_invoice_id = p.externalInvoiceId;
+    if (p.invoiceId !== undefined) db.invoice_id = p.invoiceId;
+    if (p.version !== undefined) db.version = p.version;
+    return db;
+  }
+
+  async getAll(branchId?: string): Promise<Purchase[]> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    return all.filter((p) => p.branchId === effectiveBranchId);
-  },
-
-  getById: async (id: string, branchId?: string): Promise<Purchase | null> => {
-    const all = await purchaseService.getAll(branchId);
-    return all.find((p) => p.id === id) || null;
-  },
-
-  getBySupplier: async (supplierId: string, branchId?: string): Promise<Purchase[]> => {
-    const all = await purchaseService.getAll(branchId);
-    return all.filter((p) => p.supplierId === supplierId);
-  },
-
-  getByStatus: async (status: PurchaseStatus, branchId?: string): Promise<Purchase[]> => {
-    const all = await purchaseService.getAll(branchId);
-    return all.filter((p) => p.status === status);
-  },
-
-  getPending: async (branchId?: string): Promise<Purchase[]> => {
-    const all = await purchaseService.getAll(branchId);
-    return all.filter((p) => p.status === 'pending');
-  },
-
-  filter: async (filters: PurchaseFilters, branchId?: string): Promise<Purchase[]> => {
-    let results = await purchaseService.getAll(branchId);
-
-    if (filters.status) {
-      results = results.filter((p) => p.status === filters.status);
+    
+    try {
+      let query = supabase.from(this.tableName).select('*');
+      if (effectiveBranchId !== 'all') {
+        query = query.eq('branch_id', effectiveBranchId);
+      }
+      const { data, error } = await query.order('date', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(item => this.mapDbToDomain(item));
+    } catch (err) {
+      console.error('[PurchaseService] getAll failed:', err);
+      return [];
     }
-    if (filters.supplierId) {
-      results = results.filter((p) => p.supplierId === filters.supplierId);
-    }
-    if (filters.dateFrom) {
-      const from = new Date(filters.dateFrom);
-      results = results.filter((p) => new Date(p.date) >= from);
-    }
-    if (filters.dateTo) {
-      const to = new Date(filters.dateTo);
-      results = results.filter((p) => new Date(p.date) <= to);
-    }
-    return results;
-  },
+  }
 
-  create: async (purchase: Omit<Purchase, 'id'>, branchId?: string, skipSync = false): Promise<Purchase> => {
-    const all = getRawAll();
+  async getBySupplier(supplierId: string, branchId?: string): Promise<Purchase[]> {
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    
+    try {
+      let query = supabase.from(this.tableName)
+        .select('*')
+        .eq('supplier_id', supplierId);
+      
+      if (effectiveBranchId !== 'all') {
+        query = query.eq('branch_id', effectiveBranchId);
+      }
+      
+      const { data, error } = await query.order('date', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(item => this.mapDbToDomain(item));
+    } catch (err) {
+      console.error('[PurchaseService] getBySupplier failed:', err);
+      return [];
+    }
+  }
+
+  async getByStatus(status: PurchaseStatus, branchId?: string): Promise<Purchase[]> {
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    
+    try {
+      let query = supabase.from(this.tableName)
+        .select('*')
+        .eq('status', status);
+      
+      if (effectiveBranchId !== 'all') {
+        query = query.eq('branch_id', effectiveBranchId);
+      }
+      
+      const { data, error } = await query.order('date', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(item => this.mapDbToDomain(item));
+    } catch (err) {
+      console.error('[PurchaseService] getByStatus failed:', err);
+      return [];
+    }
+  }
+
+  async getPending(branchId?: string): Promise<Purchase[]> {
+    return this.getByStatus('pending', branchId);
+  }
+
+  async filter(filters: PurchaseFilters, branchId?: string): Promise<Purchase[]> {
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    
+    try {
+      let query = supabase.from(this.tableName).select('*');
+      
+      if (effectiveBranchId !== 'all') {
+        query = query.eq('branch_id', effectiveBranchId);
+      }
+      
+      if (filters.status) query = query.eq('status', filters.status);
+      if (filters.supplierId) query = query.eq('supplier_id', filters.supplierId);
+      if (filters.dateFrom) query = query.gte('date', filters.dateFrom);
+      if (filters.dateTo) query = query.lte('date', filters.dateTo);
+      
+      const { data, error } = await query.order('date', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(item => this.mapDbToDomain(item));
+    } catch (err) {
+      console.error('[PurchaseService] filter failed:', err);
+      return [];
+    }
+  }
+
+  async create(purchase: Omit<Purchase, 'id'>, branchId?: string): Promise<Purchase> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || (purchase as any).branchId || settings.activeBranchId || settings.branchCode;
+    
     const newPurchase: Purchase = {
       ...purchase,
       id: idGenerator.uuid(),
       status: (purchase as any).status || 'pending',
       branchId: effectiveBranchId,
       orgId: settings.orgId,
+      date: purchase.date || new Date().toISOString(),
     } as Purchase;
 
-    all.push(newPurchase);
-    storage.set(StorageKeys.PURCHASES, all);
-
-    if (!skipSync) {
-      await syncQueueService.enqueue('PURCHASE', { action: 'CREATE_PURCHASE', purchase: newPurchase });
-    }
+    const dbPurchase = this.mapDomainToDb(newPurchase);
+    const { error } = await supabase.from(this.tableName).insert(dbPurchase);
+    if (error) throw error;
 
     return newPurchase;
-  },
+  }
 
-  update: async (id: string, updates: Partial<Purchase>, skipSync = false): Promise<Purchase> => {
-    const all = getRawAll();
-    const index = all.findIndex((p) => p.id === id);
-    if (index === -1) throw new Error('Purchase not found');
-    all[index] = { ...all[index], ...updates };
-    storage.set(StorageKeys.PURCHASES, all);
-
-    if (!skipSync) {
-      await syncQueueService.enqueue('PURCHASE', { action: 'UPDATE_PURCHASE', id, updates });
-    }
-
-    return all[index];
-  },
-
-  approve: async (id: string, approverName: string, skipSync = false): Promise<Purchase> => {
-    const all = getRawAll();
-    const index = all.findIndex((p) => p.id === id);
-    if (index === -1) throw new Error('Purchase not found');
-    
-    const purchase = all[index];
+  async approve(id: string, approverName: string): Promise<Purchase> {
+    const purchase = await this.getById(id);
+    if (!purchase) throw new Error('Purchase not found');
     if (purchase.status === 'completed') return purchase;
 
     const settings = await settingsService.getAll();
-    const orgId = settings.orgId;
+    const branchId = purchase.branchId;
 
     // 1. Update Inventory and Create Batches
-    const movements: StockMovement[] = [];
-    const newBatches: StockBatch[] = [];
-
     for (const item of purchase.items) {
       const currentStock = await batchService.getTotalStock(item.drugId);
       const unitsToAdd = stockOps.resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack);
@@ -130,16 +196,15 @@ export const createPurchaseService = (): PurchaseService => ({
         costPrice: item.costPrice,
         purchaseId: purchase.id,
         dateReceived: new Date().toISOString(),
-        branchId: purchase.branchId,
-        orgId: purchase.orgId || orgId,
+        branchId: branchId,
+        orgId: purchase.orgId || settings.orgId,
         version: 1,
-      }, purchase.branchId, true);
-      newBatches.push(batch);
+      }, branchId);
 
-      const movement = await stockMovementService.logMovement({
+      await stockMovementService.logMovement({
         drugId: item.drugId,
         drugName: item.name,
-        branchId: purchase.branchId || '',
+        branchId: branchId || '',
         type: 'purchase',
         quantity: unitsToAdd,
         previousStock: currentStock,
@@ -149,9 +214,8 @@ export const createPurchaseService = (): PurchaseService => ({
         expiryDate: batch.expiryDate,
         performedBy: approverName,
         status: 'approved',
-        orgId: purchase.orgId || orgId,
-      }, true);
-      movements.push(movement);
+        orgId: purchase.orgId || settings.orgId,
+      });
     }
 
     await inventoryService.updateStockBulk(
@@ -159,98 +223,51 @@ export const createPurchaseService = (): PurchaseService => ({
         id: i.drugId, 
         quantity: stockOps.resolveUnits(i.quantity, !!i.isUnit, i.unitsPerPack) 
       })),
-      true
+      true // skipBatch: we already created batches above
     );
 
     // 2. Update Purchase Status
-    all[index] = {
-      ...purchase,
-      status: 'completed',
+    const updates = {
+      status: 'completed' as PurchaseStatus,
       approvedBy: approverName,
       approvalDate: new Date().toISOString(),
     };
-    storage.set(StorageKeys.PURCHASES, all);
-
-    // 3. Sync Atomic Transaction
-    if (!skipSync) {
-      await syncQueueService.enqueue('PURCHASE_TRANSACTION', {
-        action: 'APPROVE_PURCHASE',
-        purchase: all[index],
-        movements,
-        batches: newBatches,
-      });
-    }
-
-    return all[index];
-  },
-
-  reject: async (id: string, reason: string, skipSync = false): Promise<Purchase> => {
-    const all = getRawAll();
-    const index = all.findIndex((p) => p.id === id);
-    if (index === -1) throw new Error('Purchase not found');
-    all[index] = {
-      ...all[index],
-      status: 'rejected',
-    };
-    storage.set(StorageKeys.PURCHASES, all);
-
-    if (!skipSync) {
-      await syncQueueService.enqueue('PURCHASE', { action: 'UPDATE_PURCHASE', id, updates: { status: 'rejected' } });
-    }
-
-    return all[index];
-  },
-
-  delete: async (id: string, skipSync = false): Promise<boolean> => {
-    const all = getRawAll();
-    const initialLength = all.length;
-    const filtered = all.filter((p) => p.id !== id);
     
-    if (filtered.length !== initialLength) {
-      storage.set(StorageKeys.PURCHASES, filtered);
-      if (!skipSync) {
-        await syncQueueService.enqueue('PURCHASE', { action: 'DELETE_PURCHASE', id });
-      }
-      return true;
-    }
-    return false;
-  },
+    return this.update(id, updates);
+  }
 
-  getStats: async (branchId?: string): Promise<PurchaseStats> => {
-    const all = await purchaseService.getAll(branchId);
+  async reject(id: string, reason: string): Promise<Purchase> {
+    const updates = {
+      status: 'rejected' as PurchaseStatus,
+      notes: reason, // Reusing notes for rejection reason
+    };
+    return this.update(id, updates);
+  }
+
+  async getStats(branchId?: string): Promise<PurchaseStats> {
+    const all = await this.getAll(branchId);
     return {
       totalOrders: all.length,
       pendingOrders: all.filter((p) => p.status === 'pending').length,
       totalValue: all.reduce((sum, p) => sum + (p.totalCost || 0), 0),
     };
-  },
+  }
 
-  save: async (purchases: Purchase[], branchId?: string): Promise<void> => {
-    const all = getRawAll();
+  async save(purchases: Purchase[], branchId?: string): Promise<void> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     
-    // 1. Safety Guard: Only save if the data matches the branch (or is empty for a deliberate wipe)
-    // If the provided array is not empty, ensure its items match the branchId.
-    // If it is empty, we only proceed if we ARE sure we want to wipe this branch.
-    // (DataContext now handles this via isLoading and branch checks).
-
-    // 2. Keep items from OTHER branches
-    const otherBranchItems = all.filter((p) => p.branchId && p.branchId !== effectiveBranchId);
-    
-    // 3. Prepare Branch Items: Ensure they all have the correct branchId and orgId
-    const branchItems = purchases.map(p => ({ 
-      ...p, 
-      branchId: effectiveBranchId,
+    const dbPurchases = purchases.map(p => this.mapDomainToDb({
+      ...p,
+      branchId: p.branchId || effectiveBranchId,
       orgId: p.orgId || settings.orgId
     }));
-    
-    // 4. Merge and deduplicate by ID
-    const merged = [...otherBranchItems, ...branchItems];
-    const uniqueMerged = Array.from(new Map(merged.map((item) => [item.id, item])).values());
-    
-    storage.set(StorageKeys.PURCHASES, uniqueMerged);
-  },
-});
 
-export const purchaseService = createPurchaseService();
+    if (dbPurchases.length > 0) {
+      const { error } = await supabase.from(this.tableName).upsert(dbPurchases);
+      if (error) throw error;
+    }
+  }
+}
+
+export const purchaseService = new PurchaseServiceImpl();

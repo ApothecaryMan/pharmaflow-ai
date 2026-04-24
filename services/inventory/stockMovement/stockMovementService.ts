@@ -1,17 +1,14 @@
 import { BaseReportService, BaseReportFilters } from '../../core/BaseReportService';
-import { StorageKeys } from '../../../config/storageKeys';
 import { idGenerator } from '../../../utils/idGenerator';
-import { storage } from '../../../utils/storage';
 import { settingsService } from '../../settings/settingsService';
-import { syncQueueService } from '../../syncQueueService';
 import { supabase } from '../../../lib/supabase';
-import type {
-  StockMovement,
-  StockMovementFilters,
-  StockMovementService,
-  StockMovementSummary,
-  StockMovementKPISummary,
-  PaginatedStockMovements,
+import type { 
+  StockMovement, 
+  StockMovementFilters, 
+  StockMovementService, 
+  StockMovementSummary, 
+  StockMovementKPISummary, 
+  PaginatedStockMovements 
 } from './types';
 
 class StockMovementServiceImpl 
@@ -64,11 +61,11 @@ class StockMovementServiceImpl
     if (m.batchId) db.batch_id = m.batchId;
     if (m.performedBy) db.performed_by = m.performedBy;
     if (m.performedByName) db.performed_by_name_snapshot = m.performedByName;
+    if (m.timestamp) db.timestamp = m.timestamp;
     if (m.status) db.status = m.status;
     if (m.reviewedBy) db.reviewed_by = m.reviewedBy;
     if (m.reviewedAt) db.reviewed_at = m.reviewedAt;
     if (m.expiryDate) db.expiry_date = m.expiryDate;
-    if (m.timestamp) db.timestamp = m.timestamp;
     return db;
   }
 
@@ -78,7 +75,6 @@ class StockMovementServiceImpl
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     
-    // We can use the parent getHistory for simple fetches
     const results = await this.getHistory({ branchId: effectiveBranchId } as StockMovementFilters);
     return results as StockMovement[];
   }
@@ -89,8 +85,7 @@ class StockMovementServiceImpl
   }
 
   async logMovement(
-    movement: Omit<StockMovement, 'id' | 'timestamp'>,
-    skipSync = false
+    movement: Omit<StockMovement, 'id' | 'timestamp'>
   ): Promise<StockMovement> {
     const settings = await settingsService.getAll();
     const activeBranchId = settings.activeBranchId || settings.branchCode;
@@ -103,20 +98,9 @@ class StockMovementServiceImpl
       timestamp: new Date().toISOString(),
     };
 
-    try {
-      const dbMovement = this.mapDomainToDb(newMovement);
-      const { error } = await (supabase as any).from(this.tableName).insert(dbMovement);
-      if (error && import.meta.env.DEV) console.warn('Supabase log movement failed', error);
-    } catch (err) {}
-
-    // Update local storage
-    const all = storage.get<StockMovement[]>(StorageKeys.STOCK_MOVEMENTS, []);
-    all.push(newMovement);
-    storage.set(StorageKeys.STOCK_MOVEMENTS, all);
-
-    if (!skipSync) {
-      await syncQueueService.enqueue('STOCK_MOVEMENT_LOG', { action: 'LOG', movement: newMovement });
-    }
+    const dbMovement = this.mapDomainToDb(newMovement);
+    const { error } = await (supabase as any).from(this.tableName).insert(dbMovement);
+    if (error) throw error;
 
     return newMovement;
   }
@@ -165,24 +149,8 @@ class StockMovementServiceImpl
 
       return results;
     } catch (err) {
-      console.error('[StockMovementService] History fetch failed, falling back to local storage:', err);
-      // Fallback to local storage
-      const all = storage.get<StockMovement[]>(StorageKeys.STOCK_MOVEMENTS, []);
-      let results = all;
-      if (filters.drugId) results = results.filter(m => m.drugId === filters.drugId);
-      if (filters.branchId) results = results.filter(m => m.branchId === filters.branchId);
-      results.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-
-      if (filters.page !== undefined && filters.pageSize !== undefined) {
-        const from = (filters.page - 1) * filters.pageSize;
-        return {
-          data: results.slice(from, from + filters.pageSize),
-          total: results.length,
-          hasMore: results.length > (filters.page * filters.pageSize),
-        } as PaginatedStockMovements;
-      }
-
-      return results;
+      console.error('[StockMovementService] History fetch failed:', err);
+      return [];
     }
   }
 
@@ -191,14 +159,15 @@ class StockMovementServiceImpl
 
     const summary = history.reduce(
       (acc, m) => {
+        const qty = Math.abs(m.quantity);
         if (['purchase', 'return_customer', 'transfer_in', 'initial'].includes(m.type) || (m.type === 'adjustment' && m.quantity > 0)) {
-          acc.totalIn += Math.abs(m.quantity);
+          acc.totalIn += qty;
         } else if (['sale', 'return_supplier', 'transfer_out', 'damage'].includes(m.type) || (m.type === 'adjustment' && m.quantity < 0)) {
-          acc.totalOut += Math.abs(m.quantity);
+          acc.totalOut += qty;
         }
 
         if (m.type === 'return_customer' || m.type === 'return_supplier') {
-          acc.returns += Math.abs(m.quantity);
+          acc.returns += qty;
         }
         return acc;
       },
@@ -236,36 +205,24 @@ class StockMovementServiceImpl
     );
   }
 
-  async approveMovement(id: string, userId: string, skipSync = false): Promise<void> {
-    await this.updateMovementStatus(id, 'approved', userId, skipSync);
+  async approveMovement(id: string, userId: string): Promise<void> {
+    await this.updateMovementStatus(id, 'approved', userId);
   }
 
-  async rejectMovement(id: string, userId: string, skipSync = false): Promise<void> {
-    await this.updateMovementStatus(id, 'rejected', userId, skipSync);
+  async rejectMovement(id: string, userId: string): Promise<void> {
+    await this.updateMovementStatus(id, 'rejected', userId);
   }
 
-  private async updateMovementStatus(id: string, status: 'approved' | 'rejected', userId: string, skipSync: boolean): Promise<void> {
+  private async updateMovementStatus(id: string, status: 'approved' | 'rejected', userId: string): Promise<void> {
     const reviewedAt = new Date().toISOString();
     
-    try {
-      await (supabase as any).from(this.tableName).update({ status, reviewed_by: userId, reviewed_at: reviewedAt }).eq('id', id);
-    } catch {}
-
-    const all = storage.get<StockMovement[]>(StorageKeys.STOCK_MOVEMENTS, []);
-    const idx = all.findIndex(m => m.id === id);
-    if (idx !== -1) {
-      all[idx].status = status;
-      all[idx].reviewedBy = userId;
-      all[idx].reviewedAt = reviewedAt;
-      storage.set(StorageKeys.STOCK_MOVEMENTS, all);
-    }
-
-    if (!skipSync) {
-      await syncQueueService.enqueue('STOCK_MOVEMENT_LOG', { action: status.toUpperCase(), id, userId, timestamp: reviewedAt });
-    }
+    const { error } = await (supabase as any).from(this.tableName)
+      .update({ status, reviewed_by: userId, reviewed_at: reviewedAt })
+      .eq('id', id);
+    if (error) throw error;
   }
 
-  async logMovementsBulk(movements: Omit<StockMovement, 'id' | 'timestamp'>[], skipSync = false): Promise<void> {
+  async logMovementsBulk(movements: Omit<StockMovement, 'id' | 'timestamp'>[]): Promise<StockMovement[]> {
     const settings = await settingsService.getAll();
     const timestamp = new Date().toISOString();
     const activeBranchId = settings.activeBranchId || settings.branchCode;
@@ -278,17 +235,11 @@ class StockMovementServiceImpl
       timestamp,
     }));
 
-    try {
-      const dbMovements = newMovements.map(m => this.mapDomainToDb(m as StockMovement));
-      await (supabase as any).from(this.tableName).insert(dbMovements);
-    } catch {}
+    const dbMovements = newMovements.map(m => this.mapDomainToDb(m as StockMovement));
+    const { error } = await (supabase as any).from(this.tableName).insert(dbMovements);
+    if (error) throw error;
 
-    const all = storage.get<StockMovement[]>(StorageKeys.STOCK_MOVEMENTS, []);
-    storage.set(StorageKeys.STOCK_MOVEMENTS, [...all, ...newMovements]);
-
-    if (!skipSync) {
-      await syncQueueService.enqueue('STOCK_MOVEMENT_LOG', { action: 'LOG_BULK', count: movements.length });
-    }
+    return newMovements as StockMovement[];
   }
 
   calculateMovementValue(movement: StockMovement, drug: any): number {

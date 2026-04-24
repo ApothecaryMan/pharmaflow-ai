@@ -115,7 +115,7 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
     const newNotification: Notification = {
       ...notification,
-      id: idGenerator.generate('notification'),
+      id: idGenerator.generateSync('notification'),
       timestamp: timeService.getVerifiedDate(),
     };
     setState((prev) => ({

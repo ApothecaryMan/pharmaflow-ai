@@ -11,7 +11,7 @@ import { idGenerator } from '../utils/idGenerator';
 
 // Create new tab helper function (defined before use)
 const createNewTab = (index: number): SaleTab => ({
-  id: idGenerator.generate('tabs'),
+  id: idGenerator.generateSync('tabs'),
   name: `Tab ${index}`,
   cart: [],
   customerName: '',

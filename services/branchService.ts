@@ -1,111 +1,85 @@
-import type { Branch, Employee } from '../types';
-import { StorageKeys } from '../config/storageKeys';
-import { storage } from '../utils/storage';
+/**
+ * Branch Service - Handles CRUD operations for pharmacy branches.
+ * Online-Only implementation using Supabase.
+ */
+
+import { BaseDomainService } from './core/BaseDomainService';
+import type { Branch } from '../types';
 import { idGenerator } from '../utils/idGenerator';
 import { supabase } from '../lib/supabase';
-import { syncQueueService } from './syncQueueService';
 import { employeeService } from './hr/employeeService';
 
 const ACTIVE_BRANCH_KEY = 'pharma_active_branch_id';
 
-const mapBranchToDb = (b: Partial<Branch>): any => {
-  const db: any = {};
-  if (b.id !== undefined) db.id = b.id;
-  if (b.orgId !== undefined) db.org_id = b.orgId;
-  if (b.code !== undefined) db.code = b.code;
-  if (b.name !== undefined) db.name = b.name;
-  if (b.phone !== undefined) db.phone = b.phone;
-  if (b.address !== undefined) db.address = b.address;
-  if (b.governorate !== undefined) db.governorate = b.governorate;
-  if (b.city !== undefined) db.city = b.city;
-  if (b.area !== undefined) db.area = b.area;
-  if (b.status !== undefined) db.status = b.status;
-  return db;
-};
+class BranchServiceImpl extends BaseDomainService<Branch> {
+  protected tableName = 'branches';
 
-const mapDbToBranch = (db: any): Branch => ({
-  id: db.id,
-  orgId: db.org_id,
-  code: db.code,
-  name: db.name,
-  phone: db.phone || undefined,
-  address: db.address || undefined,
-  governorate: db.governorate || undefined,
-  city: db.city || undefined,
-  area: db.area || undefined,
-  status: db.status || 'active',
-  createdAt: db.created_at || new Date().toISOString(),
-  updatedAt: db.updated_at || new Date().toISOString(),
-});
+  protected mapDbToDomain(db: any): Branch {
+    return {
+      id: db.id,
+      orgId: db.org_id,
+      code: db.code,
+      name: db.name,
+      phone: db.phone || undefined,
+      address: db.address || undefined,
+      governorate: db.governorate || undefined,
+      city: db.city || undefined,
+      area: db.area || undefined,
+      status: db.status || 'active',
+      createdAt: db.created_at || new Date().toISOString(),
+      updatedAt: db.updated_at || new Date().toISOString(),
+    };
+  }
 
-/**
- * Branch Service - Handles CRUD operations for pharmacy branches.
- * Org-aware: branches are scoped to organizations via orgId.
- */
-export const branchService = {
-  /**
-   * Get all branches from storage.
-   * If orgId is provided, filters to only that org's branches.
-   */
+  protected mapDomainToDb(b: Partial<Branch>): any {
+    const db: any = {};
+    if (b.id !== undefined) db.id = b.id;
+    if (b.orgId !== undefined) db.org_id = b.orgId;
+    if (b.code !== undefined) db.code = b.code;
+    if (b.name !== undefined) db.name = b.name;
+    if (b.phone !== undefined) db.phone = b.phone;
+    if (b.address !== undefined) db.address = b.address;
+    if (b.governorate !== undefined) db.governorate = b.governorate;
+    if (b.city !== undefined) db.city = b.city;
+    if (b.area !== undefined) db.area = b.area;
+    if (b.status !== undefined) db.status = b.status;
+    return db;
+  }
+
   async getAll(orgId?: string): Promise<Branch[]> {
     try {
-      const { data, error } = await supabase.from('branches').select('*');
-      if (!error && data) {
-        const mapped = data.map(mapDbToBranch);
-        storage.set(StorageKeys.BRANCHES, mapped);
-        return orgId ? mapped.filter(b => b.orgId === orgId) : mapped;
+      let query = supabase.from(this.tableName).select('*');
+      if (orgId) {
+        query = query.eq('org_id', orgId);
       }
+      const { data, error } = await query.order('name', { ascending: true });
+      if (error) throw error;
+      return (data || []).map(item => this.mapDbToDomain(item));
     } catch (err) {
-      if (import.meta.env.DEV) {
-        console.warn('Failed to fetch branches from Supabase, falling back to cache', err);
-      }
+      console.error('[BranchService] getAll failed:', err);
+      return [];
     }
-    
-    const branches = storage.get<Branch[]>(StorageKeys.BRANCHES, []);
-    if (orgId) {
-      return branches.filter((b) => b.orgId === orgId);
-    }
-    return branches;
-  },
+  }
 
-  /**
-   * Get all branches belonging to a specific organization
-   */
   async getAllByOrg(orgId: string): Promise<Branch[]> {
     return this.getAll(orgId);
-  },
+  }
 
-  /**
-   * Get a single branch by ID
-   */
-  async getById(id: string): Promise<Branch | null> {
-    const branches = await this.getAll();
-    return branches.find((b) => b.id === id) || null;
-  },
-
-  /**
-   * Get the currently active branch
-   */
   async getActive(): Promise<Branch | null> {
     const activeId = localStorage.getItem(ACTIVE_BRANCH_KEY);
     if (!activeId) {
       return await this.ensureDefaultBranch();
     }
-    return (await this.getById(activeId)) || await this.ensureDefaultBranch();
-  },
+    const branch = await this.getById(activeId);
+    return branch || await this.ensureDefaultBranch();
+  }
 
-  /**
-   * Set the active branch ID
-   */
   setActive(branchId: string): void {
     localStorage.setItem(ACTIVE_BRANCH_KEY, branchId);
-  },
+  }
 
-  /**
-   * Generate a unique branch code
-   */
-  generateCode(): string {
-    const branches = storage.get<Branch[]>(StorageKeys.BRANCHES, []);
+  async generateCode(orgId: string): Promise<string> {
+    const branches = await this.getAllByOrg(orgId);
     const maxSerial = branches.reduce((max, b) => {
       const match = b.code.match(/BR-(\d+)/);
       if (match) {
@@ -115,150 +89,57 @@ export const branchService = {
       return max;
     }, 0);
     return `BR-${String(maxSerial + 1).padStart(3, '0')}`;
-  },
+  }
 
-  /**
-   * Create a new branch. Requires orgId for tenant association.
-   */
-  async create(data: Omit<Branch, 'id' | 'createdAt' | 'updatedAt'>, skipSync = false): Promise<Branch> {
-    const branches = await this.getAll();
+  async create(data: Omit<Branch, 'id' | 'createdAt' | 'updatedAt'>): Promise<Branch> {
+    const code = data.code || await this.generateCode(data.orgId);
     
-    // Auto-generate code if missing
-    const code = data.code || this.generateCode();
-
-    // Check if branch with same code already exists in this org
-    const existing = branches.find(
-      (b) => b.orgId === data.orgId && b.code.toLowerCase() === code.toLowerCase()
-    );
-
-    const now = new Date().toISOString();
-    const branchToSave: Branch = existing 
-      ? { ...existing, ...data, updatedAt: now }
-      : { ...data, code, id: idGenerator.uuid(), createdAt: now, updatedAt: now };
-
-    try {
-      const dbBranch = mapBranchToDb(branchToSave);
-      const { data: savedData, error } = await supabase
-        .from('branches')
-        .upsert(dbBranch, { onConflict: 'code' })
-        .select()
-        .single();
-        
-      if (error && import.meta.env.DEV) console.warn('Supabase branch upsert failed', error);
-      if (savedData) return mapDbToBranch(savedData);
-    } catch (err) {
-      if (import.meta.env.DEV) console.error('Error during branch upsert:', err);
-    }
-
-    // Fallback to local update if Supabase fails
-    const updatedBranches = existing 
-      ? branches.map(b => b.id === existing.id ? branchToSave : b)
-      : [...branches, branchToSave];
-      
-    storage.set(StorageKeys.BRANCHES, updatedBranches);
-
-    if (!skipSync) {
-      await syncQueueService.enqueue('CREATE_BRANCH', { action: 'CREATE_BRANCH', branch: branchToSave }); 
-    }
-
-    return branchToSave;
-  },
-
-  /**
-   * Update an existing branch
-   */
-  async update(id: string, data: Partial<Branch>, skipSync = false): Promise<Branch> {
-    const branches = await this.getAll();
-    const index = branches.findIndex((b) => b.id === id);
-    if (index === -1) throw new Error(`Branch with ID ${id} not found`);
-
-    const currentBranch = branches[index];
-
-    // Validate unique code if it's being updated
-    if (data.code && data.code.toLowerCase() !== currentBranch.code.toLowerCase()) {
-      const orgId = data.orgId || currentBranch.orgId;
-      const duplicate = branches.find(
-        (b) => b.id !== id && b.orgId === orgId && b.code.toLowerCase() === data.code?.toLowerCase()
-      );
-      if (duplicate) {
-        throw new Error(`كود الفرع "${data.code}" مستخدم بالفعل في هذه الشركة.`);
-      }
-    }
-
-    const updatedBranch: Branch = {
-      ...currentBranch,
+    const newBranch: Branch = {
       ...data,
+      id: idGenerator.uuid(),
+      code,
+      createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    };
+    } as Branch;
 
-    try {
-      const dbUpdates = mapBranchToDb(data);
-      const { error } = await supabase.from('branches').update(dbUpdates).eq('id', id);
-      if (error && import.meta.env.DEV) console.warn('Supabase branch update failed', error);
-    } catch {}
+    const dbBranch = this.mapDomainToDb(newBranch);
+    const { error } = await supabase.from(this.tableName).insert(dbBranch);
+    if (error) throw error;
 
-    branches[index] = updatedBranch;
-    storage.set(StorageKeys.BRANCHES, branches);
+    return newBranch;
+  }
 
-    if (!skipSync) {
-      await syncQueueService.enqueue('UPDATE_BRANCH', { action: 'UPDATE_BRANCH', id, updates: data });
-    }
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase.from(this.tableName).delete().eq('id', id);
+    if (error) throw error;
 
-    return updatedBranch;
-  },
-
-  /**
-   * Delete a branch by ID
-   */
-  async delete(id: string, skipSync = false): Promise<void> {
-    const branches = (await this.getAll()).filter((b) => b.id !== id);
-    
-    try {
-      const { error } = await supabase.from('branches').delete().eq('id', id);
-      if (error && import.meta.env.DEV) console.warn('Supabase branch delete failed', error);
-    } catch {}
-
-    storage.set(StorageKeys.BRANCHES, branches);
-    
-    if (!skipSync) {
-      await syncQueueService.enqueue('DELETE_BRANCH', { action: 'DELETE_BRANCH', id });
-    }
-
-    // Clear active branch if it was the one deleted
     const activeId = localStorage.getItem(ACTIVE_BRANCH_KEY);
     if (activeId === id) {
       localStorage.removeItem(ACTIVE_BRANCH_KEY);
     }
-  },
+  }
 
-  /**
-   * Assign employees to a branch
-   */
   async assignEmployees(branchId: string, employeeIds: string[]): Promise<void> {
     const allEmployees = await employeeService.getAll('ALL');
     
-    const updatedEmployees = allEmployees.map(emp => {
+    const employeesToUpdate = allEmployees.filter(emp => {
+      // If it's in the list, set its branchId to target
       if (employeeIds.includes(emp.id)) {
-        return { ...emp, branchId };
-      } else if (emp.branchId === branchId) {
-        return { ...emp, branchId: null };
+        return emp.branchId !== branchId;
+      } 
+      // If it's not in the list but was in this branch, clear it
+      else if (emp.branchId === branchId) {
+        return true;
       }
-      return emp;
-    }).filter(emp => {
-      const original = allEmployees.find(e => e.id === emp.id);
-      return original?.branchId !== emp.branchId;
+      return false;
     });
 
-    if (updatedEmployees.length > 0) {
-      await employeeService.save(updatedEmployees, 'ALL');
+    for (const emp of employeesToUpdate) {
+      const newBranchId = employeeIds.includes(emp.id) ? branchId : null;
+      await employeeService.update(emp.id, { branchId: newBranchId as any });
     }
-  },
+  }
 
-  /**
-   * Migration helper: ensures an active branch is selected if any exist.
-   * Optionally scoped by orgId for multi-tenant context.
-   * Returns null if no branches exist (triggers onboarding).
-   */
   async ensureDefaultBranch(orgId?: string): Promise<Branch | null> {
     const branches = orgId ? await this.getAllByOrg(orgId) : await this.getAll();
     
@@ -266,14 +147,17 @@ export const branchService = {
       return null;
     }
 
-    // If active branch is missing or invalid, pick the first one
     const activeId = localStorage.getItem(ACTIVE_BRANCH_KEY);
-    if (!activeId || !branches.some(b => b.id === activeId)) {
+    const activeExists = activeId && branches.some(b => b.id === activeId);
+    
+    if (!activeExists) {
       const firstBranch = branches[0];
       this.setActive(firstBranch.id);
       return firstBranch;
     }
 
     return branches.find(b => b.id === activeId) || null;
-  },
-};
+  }
+}
+
+export const branchService = new BranchServiceImpl();

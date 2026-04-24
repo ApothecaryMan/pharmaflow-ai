@@ -58,7 +58,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [expandedView, setExpandedView] = useState<ExpandedView>(null);
   const [showHelp, setShowHelp] = useState(false);
   const { textTransform } = useSettings();
-  const { activeBranchId } = useData();
+  const { activeBranchId, batches } = useData();
 
   const helpContent = DASHBOARD_HELP[language as 'EN' | 'AR'] || DASHBOARD_HELP.EN;
 
@@ -140,12 +140,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
     inventoryTooltip: inventoryTooltipData,
     profitTooltip: profitTooltipData,
     lowStockTooltip: lowStockTooltipData,
-  } = useDashboardAnalytics({ sales, inventory, totalExpenses, language, branchId: activeBranchId });
+  } = useDashboardAnalytics({ sales, inventory, batches, totalExpenses, language, branchId: activeBranchId });
 
-  const lowStockItems = useMemo(
-    () => inventory.filter((d) => batchService.getTotalStock(d.id, activeBranchId) <= 10),
-    [inventory, activeBranchId]
-  );
+  const lowStockItems = useMemo(() => {
+    return inventory.filter((d) => {
+      const drugBatches = batches.filter(b => b.drugId === d.id && b.branchId === activeBranchId);
+      const totalStock = drugBatches.reduce((sum, b) => sum + b.quantity, 0);
+      return totalStock <= 10;
+    });
+  }, [inventory, batches, activeBranchId]);
 
   const revenueTooltip = <InsightTooltip {...revenueTooltipData} language={language} />;
   const expensesTooltip = <InsightTooltip {...inventoryTooltipData} language={language} />;
@@ -246,36 +249,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const threeMonthsFromNow = new Date();
     threeMonthsFromNow.setMonth(today.getMonth() + 3);
 
-    // Get all expiring batches
-    const allBatches = batchService.getAllBatches(activeBranchId);
+    // Use batches from context
+    const branchBatches = batches.filter(b => b.branchId === activeBranchId && b.quantity > 0);
     
-    // Find drugs that have at least one batch expiring
     return inventory
       .filter((d) => {
-        const drugBatches = allBatches.filter(b => b.drugId === d.id && b.quantity > 0);
+        const drugBatches = branchBatches.filter(b => b.drugId === d.id);
         return drugBatches.some(b => {
           const expDate = parseExpiryEndOfMonth(b.expiryDate);
           return expDate >= today && expDate <= threeMonthsFromNow;
         });
       })
       .map(d => {
-         // Get the SOONEST expiry date for this drug for display purposes
-         const drugBatches = allBatches.filter(b => b.drugId === d.id && b.quantity > 0);
-         const soonestExpiry = drugBatches.reduce((min, b) => {
-            const date = parseExpiryEndOfMonth(b.expiryDate);
-            return date < min ? date : min;
-         }, threeMonthsFromNow);
-         
+         const drugBatches = branchBatches.filter(b => b.drugId === d.id);
          return {
            ...d,
-           // For display in the list, use the earliest expiry
            expiryDate: drugBatches.length > 0 ? drugBatches.sort((a, b) => 
              parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime()
            )[0].expiryDate : d.expiryDate
          };
       })
       .sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime());
-  }, [inventory, activeBranchId]);
+  }, [inventory, batches, activeBranchId]);
 
   // --- RECENT TRANSACTIONS (exclude fully returned orders) ---
   const recentSales = useMemo(() => {

@@ -137,7 +137,7 @@ export const addStock = async (
     branchId: ctx.branchId,
     orgId: ctx.orgId,
     version: 1,
-  }, ctx.branchId, true);
+  }, ctx.branchId);
 
   // 2. Log Movement
   stockMovementService.logMovement({
@@ -194,7 +194,7 @@ export const returnStock = async (
     }
     
     if (returnsToMake.length > 0) {
-      await batchService.returnStock(returnsToMake, drug.id, true, ctx.branchId);
+      await batchService.returnStock(returnsToMake, drug.id, ctx.branchId);
     }
   }
 
@@ -295,7 +295,7 @@ export const adjustStock = async (
   if (status === 'approved') {
     if (options?.batchId) {
       // Direct batch update
-      await batchService.updateBatchQuantity(options.batchId, diff, true);
+      await batchService.updateBatchQuantity(options.batchId, diff);
     } else {
       // Generic adjustment: create or deduct
       if (diff > 0) {
@@ -311,7 +311,7 @@ export const adjustStock = async (
           branchId: ctx.branchId,
           orgId: ctx.orgId,
           version: 1,
-        }, ctx.branchId, true);
+        }, ctx.branchId);
       } else {
         // Decrease: Deduct from existing batches (FEFO)
         const unitsToDeduct = Math.abs(diff);

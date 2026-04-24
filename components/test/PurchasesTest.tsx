@@ -793,7 +793,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
       return [
         ...prev,
         {
-          id: idGenerator.generate('generic'),
+          id: idGenerator.generateSync('generic'),
           drugId: drug.id,
           name: drug.name,
           quantity: 1,

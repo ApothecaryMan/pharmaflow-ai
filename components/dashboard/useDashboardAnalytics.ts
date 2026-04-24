@@ -1,14 +1,14 @@
 import React, { useMemo } from 'react';
-import type { Drug, Sale } from '../../types';
+import type { Drug, Sale, StockBatch } from '../../types';
 import { CalculationBlock, CurrencyValue, DetailMetric } from '../common/InsightTooltip';
-import { batchService } from '../../services/inventory/batchService';
 
 interface AnalyticsProps {
   sales: Sale[];
   inventory: Drug[];
+  batches: StockBatch[];
   totalExpenses: number;
   language?: string;
-  branchId?: string; // Add branchId for precise filtering
+  branchId?: string;
 }
 
 const translations = {
@@ -77,6 +77,7 @@ const translations = {
 export const useDashboardAnalytics = ({
   sales,
   inventory,
+  batches,
   totalExpenses,
   language = 'EN',
   branchId,
@@ -103,7 +104,6 @@ export const useDashboardAnalytics = ({
   const { totalCogs, inventoryValuation } = useMemo(() => {
     let cogs = 0;
 
-    // COGS Calculation (Weighted by actual sales and unit pricing)
     sales.forEach((sale) => {
       sale.items.forEach((item, idx) => {
         const drug = inventory.find((d) => d.id === item.id);
@@ -124,12 +124,12 @@ export const useDashboardAnalytics = ({
       });
     });
 
-    // IMPROVED Inventory Valuation: Sum of all batch values
-    const allBatchesForValuation = batchService.getAllBatches(branchId);
-    const valuation = allBatchesForValuation.reduce((sum, b) => sum + b.quantity * b.costPrice, 0);
+    // IMPROVED Inventory Valuation: Sum of all batch values for this branch
+    const branchBatches = branchId ? batches.filter(b => b.branchId === branchId) : batches;
+    const valuation = branchBatches.reduce((sum, b) => sum + (b.quantity || 0) * (b.costPrice || 0), 0);
 
     return { totalCogs: cogs, inventoryValuation: valuation };
-  }, [sales, inventory, branchId]);
+  }, [sales, inventory, batches, branchId]);
 
   // 3. Efficiency Metrics
   const { inventoryTurnoverRatio, daysOfInventory } = useMemo(() => {
@@ -172,14 +172,17 @@ export const useDashboardAnalytics = ({
       });
     });
 
-    // Helper to get stock precisely
-    const getStock = (drugId: string) => batchService.getTotalStock(drugId, branchId);
+    // Helper to get stock precisely from batches array
+    const getStock = (drugId: string) => {
+      const drugBatches = branchId ? batches.filter(b => b.drugId === drugId && b.branchId === branchId) : batches.filter(b => b.drugId === drugId);
+      return drugBatches.reduce((sum, b) => sum + (b.quantity || 0), 0);
+    };
 
     const critical = inventory.filter((d) => getStock(d.id) <= 3);
 
     // Revenue at Risk Forecast (1-week approximation)
     critical.forEach((d) => {
-      totalPotentialLoss += d.price * 5;
+      totalPotentialLoss += (d.price || 0) * 5;
     });
 
     return {
@@ -190,7 +193,7 @@ export const useDashboardAnalytics = ({
       ),
       revenueAtRisk: totalPotentialLoss,
     };
-  }, [sales, inventory, branchId]);
+  }, [sales, inventory, batches, branchId]);
 
   // 7. Health Grades
   const profitGrade = useMemo(() => {
@@ -366,12 +369,15 @@ export const useDashboardAnalytics = ({
         {
           icon: 'trending_down',
           label: t('totalLowStock'),
-          value: inventory.filter((d) => batchService.getTotalStock(d.id, branchId) <= 10).length,
+          value: inventory.filter((d) => {
+            const drugBatches = branchId ? batches.filter(b => b.drugId === d.id && b.branchId === branchId) : batches.filter(b => b.drugId === d.id);
+            return drugBatches.reduce((sum, b) => sum + (b.quantity || 0), 0) <= 10;
+          }).length,
           isCurrency: false,
         },
       ],
     }),
-    [movingItemsAnalysis, inventory, language]
+    [movingItemsAnalysis, inventory, batches, branchId, language]
   );
 
   return {

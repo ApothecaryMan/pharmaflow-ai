@@ -50,7 +50,7 @@ export const createMockApiClient = (): ApiClient => ({
     await new Promise((resolve) => setTimeout(resolve, 50));
     const key = `pharma_${endpoint.replace(/^\//, '').replace(/\//g, '_')}`;
     const items = storage.get<any[]>(key, []);
-    const newItem = { ...(data as object), id: idGenerator.generate('generic') };
+    const newItem = { ...(data as object), id: idGenerator.generateSync('generic') };
     items.push(newItem);
     storage.set(key, items);
     return { data: newItem as T, status: 201 };

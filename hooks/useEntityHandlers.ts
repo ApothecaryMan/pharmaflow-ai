@@ -235,7 +235,7 @@ export function useEntityHandlers({
       }
 
       try {
-        const result = await inventoryService.create(drug);
+        const result = await inventoryService.create(drug, activeBranchId);
         setInventory((prev) => [...prev, result]);
         
         // Log initial stock movement
@@ -248,7 +248,8 @@ export function useEntityHandlers({
         }
 
         // Update batches state
-        setBatches(batchService.getAllBatches(activeBranchId));
+        const updatedBatches = await batchService.getAllBatches(activeBranchId);
+        setBatches(updatedBatches);
 
         auditService.log('inventory.add', {
           userId: currentEmployeeId,
@@ -304,7 +305,7 @@ export function useEntityHandlers({
               status: 'approved',
             }
           );
-          setBatches(batchService.getAllBatches(activeBranchId));
+          const updatedBatches = await batchService.getAllBatches(activeBranchId); setBatches(updatedBatches);
         }
 
         auditService.log('inventory.update', {
@@ -354,11 +355,12 @@ export function useEntityHandlers({
         }
 
         // Clean up orphaned batches
-        batchService.deleteBatchesByDrugId(id);
+        await batchService.deleteBatchesByDrugId(id);
 
         await inventoryService.delete(id);
         setInventory((prev) => prev.filter((d) => d.id !== id));
-        setBatches(batchService.getAllBatches(activeBranchId));
+        const updatedBatches = await batchService.getAllBatches(activeBranchId);
+        setBatches(updatedBatches);
         
         auditService.log('inventory.delete', {
           userId: currentEmployeeId,
@@ -409,7 +411,7 @@ export function useEntityHandlers({
         );
         if (mutation) {
           setInventory((prev) => prev.map((d) => (d.id === id ? { ...d, stock: mutation.newStock } : d)));
-          setBatches(batchService.getAllBatches(activeBranchId));
+          const updatedBatches = await batchService.getAllBatches(activeBranchId); setBatches(updatedBatches);
         }
 
         auditService.log('inventory.update', {
@@ -438,7 +440,7 @@ export function useEntityHandlers({
         error('Permission denied: Cannot add suppliers');
         return;
       }
-      const newId = supplier.id || idGenerator.generate('suppliers', activeBranchId);
+      const newId = supplier.id || idGenerator.generateSync('suppliers', activeBranchId);
       setSuppliers((prev) => [...prev, { ...supplier, id: newId, branchId: activeBranchId, status: 'active' }]);
       success('Supplier added successfully');
       auditService.log('supplier.add', {
@@ -518,7 +520,7 @@ export function useEntityHandlers({
       // Ensure critical tracking fields are present
       const enhancedCustomer: Customer = {
         ...customer,
-        id: customer.id || idGenerator.generate('customers', activeBranchId),
+        id: customer.id || idGenerator.generateSync('customers', activeBranchId),
         branchId: activeBranchId,
         createdAt: customer.createdAt || getVerifiedDate().toISOString(),
         registeredByEmployeeId: customer.registeredByEmployeeId || currentEmployeeId || undefined,
@@ -621,7 +623,7 @@ export function useEntityHandlers({
         );
 
         const isNewEntry = !sameExpiryEntry;
-        const targetId = isNewEntry ? idGenerator.generate('inventory', branchCode) : sameExpiryEntry.id;
+        const targetId = isNewEntry ? idGenerator.generateSync('inventory', branchCode) : sameExpiryEntry.id;
         const targetDrug = isNewEntry ? sourceDrug : sameExpiryEntry;
 
         const mutation = await stockOps.addStock(
@@ -653,10 +655,10 @@ export function useEntityHandlers({
           });
           currentInventory.push(newEntries[newEntries.length - 1]);
         } else {
+          // --- PERSISTENCE: Immediate update ---
+          await inventoryService.updateStock(targetId, mutation.unitsChanged, true);
           currentInventory = currentInventory.map((d) => {
             if (d.id === targetId) {
-              // --- PERSISTENCE: Immediate update ---
-              inventoryService.updateStock(targetId, mutation.unitsChanged).catch(console.error);
               return {
                 ...d,
                 stock: mutation.newStock,
@@ -668,7 +670,7 @@ export function useEntityHandlers({
         }
       }
 
-      setBatches(batchService.getAllBatches(activeBranchId));
+      const updatedBatches = await batchService.getAllBatches(activeBranchId); setBatches(updatedBatches);
       setInventory(currentInventory);
     },
     [inventory, setInventory, setBatches, currentEmployeeId, employees, activeBranchId]
@@ -752,7 +754,7 @@ export function useEntityHandlers({
       }
 
       // 0. Shift Check for Cash Purchases
-      if (purchase.paymentType === 'cash' && !currentShift) {
+      if (purchase.paymentMethod === 'cash' && !currentShift) {
         error('Shift must be open to process cash purchase');
         return;
       }
@@ -836,7 +838,7 @@ export function useEntityHandlers({
       }
 
       const originalPurchase = purchases.find((p) => p.id === returnData.purchaseId);
-      if (originalPurchase?.paymentType === 'cash' && !currentShift) {
+      if (originalPurchase?.paymentMethod === 'cash' && !currentShift) {
         error('Shift must be open to process cash purchase return');
         return;
       }
@@ -1171,7 +1173,7 @@ export function useEntityHandlers({
         // Update inventory state
         const updatedInventory = restoreStockForCancelledSale(sale, inventory);
         setInventory(updatedInventory);
-        setBatches(batchService.getAllBatches(activeBranchId));
+        const updatedBatches = await batchService.getAllBatches(activeBranchId); setBatches(updatedBatches);
 
         // --- PERSISTENCE: Return items to IndexedDB ---
         try {
@@ -1193,7 +1195,7 @@ export function useEntityHandlers({
         if (currentShift && (sale.saleType === 'walk-in' || sale.status === 'completed')) {
            const type = sale.paymentMethod === 'visa' ? 'card_return' : 'return';
            addTransaction(currentShift.id, {
-             id: idGenerator.generate('transactions', activeBranchId),
+             id: idGenerator.generateSync('transactions', activeBranchId),
              branchId: activeBranchId,
              shiftId: currentShift.id,
              time: new Date().toISOString(),
@@ -1243,17 +1245,21 @@ export function useEntityHandlers({
             );
 
             // Update Drug.stock
-            setInventory((prev) =>
-              prev.map((drug) => {
-                if (drug.id === oldItem.id) {
-                  const unitsToRestore = stockOps.resolveUnits(oldItem.quantity, !!oldItem.isUnit, drug.unitsPerPack);
-                  // --- PERSISTENCE: Immediate update ---
-                  inventoryService.updateStock(oldItem.id, unitsToRestore).catch(console.error);
-                  return { ...drug, stock: validateStock(drug.stock + unitsToRestore) };
-                }
-                return drug;
-              })
-            );
+            const drugForOld = inventory.find((d) => d.id === oldItem.id);
+            if (drugForOld) {
+              const unitsToRestore = stockOps.resolveUnits(oldItem.quantity, !!oldItem.isUnit, drugForOld.unitsPerPack);
+              // --- PERSISTENCE: Immediate update ---
+              await inventoryService.updateStock(oldItem.id, unitsToRestore);
+              
+              setInventory((prev) =>
+                prev.map((drug) => {
+                  if (drug.id === oldItem.id) {
+                    return { ...drug, stock: validateStock(drug.stock + unitsToRestore) };
+                  }
+                  return drug;
+                })
+              );
+            }
 
             modifications.push({
               type: 'item_removed',
@@ -1296,13 +1302,15 @@ export function useEntityHandlers({
                   sale.id
                 );
                 
-                setBatches(batchService.getAllBatches(activeBranchId));
+                const updatedBatches = await batchService.getAllBatches(activeBranchId);
+                setBatches(updatedBatches);
+
+                // --- PERSISTENCE: Immediate update ---
+                await inventoryService.updateStock(oldItem.id, diff);
 
                 setInventory((prev) =>
                   prev.map((d) => {
                     if (d.id === oldItem.id) {
-                      // --- PERSISTENCE: Immediate update ---
-                      inventoryService.updateStock(oldItem.id, diff).catch(console.error);
                       return { ...d, stock: validateStock(d.stock + diff) };
                     }
                     return d;
@@ -1340,13 +1348,15 @@ export function useEntityHandlers({
                     ...(oldItem.batchAllocations || []),
                     ...(mutation.allocations || []),
                   ];
-                  setBatches(batchService.getAllBatches(activeBranchId));
+                  const updatedBatches = await batchService.getAllBatches(activeBranchId);
+                  setBatches(updatedBatches);
+
+                  // --- PERSISTENCE: Immediate update ---
+                  await inventoryService.updateStock(oldItem.id, -Math.abs(diff));
 
                   setInventory((prev) =>
                     prev.map((d) => {
                       if (d.id === oldItem.id) {
-                        // --- PERSISTENCE: Immediate update ---
-                        inventoryService.updateStock(oldItem.id, -Math.abs(diff)).catch(console.error);
                         return { ...d, stock: mutation.newStock };
                       }
                       return d;
@@ -1405,13 +1415,15 @@ export function useEntityHandlers({
 
               if (mutation) {
                 newItem.batchAllocations = mutation.allocations;
-                setBatches(batchService.getAllBatches(activeBranchId));
+                const updatedBatches = await batchService.getAllBatches(activeBranchId);
+                setBatches(updatedBatches);
+
+                // --- PERSISTENCE: Immediate update ---
+                await inventoryService.updateStock(newItem.id, -mutation.unitsChanged);
 
                 setInventory((prev) =>
                   prev.map((d) => {
                     if (d.id === newItem.id) {
-                      // --- PERSISTENCE: Immediate update ---
-                      inventoryService.updateStock(newItem.id, -mutation.unitsChanged).catch(console.error);
                       return { ...d, stock: mutation.newStock };
                     }
                     return d;
@@ -1438,7 +1450,7 @@ export function useEntityHandlers({
           const modifierName = employee?.name || 'System';
 
           const historyRecord: OrderModificationRecord = {
-            id: idGenerator.generate('generic', activeBranchId),
+            id: idGenerator.generateSync('generic', activeBranchId),
             timestamp,
             modifiedBy: modifierName,
             modifications,
@@ -1458,7 +1470,7 @@ export function useEntityHandlers({
         // BUG-C5: Use updated total if available (order may have been edited)
         const txAmount = (updates as any).total ?? sale.total;
         addTransaction(currentShift.id, {
-          id: idGenerator.generate('transactions', activeBranchId),
+          id: idGenerator.generateSync('transactions', activeBranchId),
           branchId: activeBranchId,
           shiftId: currentShift.id,
           time: new Date().toISOString(),
@@ -1481,9 +1493,11 @@ export function useEntityHandlers({
       setSales((prev) => prev.map((s) => (s.id === saleId ? { ...s, ...finalUpdates } : s)));
 
       // --- PERSISTENCE: Save modified/completed/cancelled sale to IndexedDB via salesService ---
-      salesService.update(saleId, finalUpdates).catch((e) => {
+      try {
+        await salesService.update(saleId, finalUpdates);
+      } catch (e) {
         console.error('[handleUpdateSale] Failed to persist sale updates:', e);
-      });
+      }
     },
     [
       sales,

@@ -688,7 +688,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
       return [
         ...prev,
         {
-          id: idGenerator.generate('generic', activeBranchId), // Unique ID for this row
+          id: idGenerator.generateSync('generic', activeBranchId), // Unique ID for this row
           drugId: drug.id,
           name: getDisplayName(drug, textTransform),
           quantity: 1,
@@ -775,7 +775,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     return currentId;
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!permissionsService.can('purchase.create')) {
       showToastError('Permission Denied: Cannot complete purchase');
       return;
@@ -825,7 +825,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     const uniqueOrderId = getUniqueOrderId();
 
     const purchase: Purchase = {
-      id: idGenerator.generate('purchases', activeBranchId),
+      id: idGenerator.uuid(),
       branchId: activeBranchId,
       date: getVerifiedDate().toISOString(),
       supplierId: selectedSupplierId,
@@ -836,7 +836,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
       status: 'completed',
       invoiceId: uniqueOrderId,
       externalInvoiceId,
-      paymentType: paymentMethod,
+      paymentMethod: paymentMethod,
     };
 
     onPurchaseComplete(purchase);
@@ -894,7 +894,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     const uniqueOrderId = getUniqueOrderId();
 
     const purchase: Purchase = {
-      id: idGenerator.generate('purchases', activeBranchId),
+      id: idGenerator.generateSync('purchases', activeBranchId),
       branchId: activeBranchId,
       date: getVerifiedDate().toISOString(),
       supplierId: selectedSupplierId,
@@ -905,7 +905,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
       status: 'pending',
       invoiceId: uniqueOrderId,
       externalInvoiceId,
-      paymentType: paymentMethod,
+      paymentMethod: paymentMethod,
       orgId: storage.get<string>(StorageKeys.ACTIVE_ORG_ID, 'org-1'),
     };
 
@@ -1855,7 +1855,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
               </p>
               {(() => {
                 const config =
-                  selectedPurchase.paymentType === 'cash'
+                  selectedPurchase.paymentMethod === 'cash'
                     ? { color: 'emerald', icon: 'payments', label: t.cash || 'Cash' }
                     : { color: 'blue', icon: 'credit_card', label: t.credit || 'Credit' };
                 return (

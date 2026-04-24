@@ -125,8 +125,9 @@ export const useCashRegister = ({
 
     const startUser = employees?.find((e) => e.id === currentEmployeeId);
     const userName = startUser ? startUser.name : 'Pharmacist';
-    const newShiftId = idGenerator.generate('shifts', activeBranchId);
+    const newShiftId = idGenerator.uuid();
     const activeBranch = branches.find(b => b.id === activeBranchId);
+    const branchCode = activeBranch?.code || 'PF';
 
     const newShift: Shift = {
       id: newShiftId,
@@ -143,7 +144,7 @@ export const useCashRegister = ({
       returns: 0,
       transactions: [
         {
-          id: idGenerator.generate('transactions', activeBranchId),
+          id: idGenerator.uuid(),
           branchId: activeBranchId,
           shiftId: newShiftId,
           time: getVerifiedDate().toISOString(),
@@ -189,7 +190,7 @@ export const useCashRegister = ({
     const shiftEnd = closeTs.getTime();
 
     const cashPurchases = purchases
-      .filter((p) => p.paymentType === 'cash' && new Date(p.date).getTime() >= shiftStart && new Date(p.date).getTime() <= shiftEnd)
+      .filter((p) => p.paymentMethod === 'cash' && new Date(p.date).getTime() >= shiftStart && new Date(p.date).getTime() <= shiftEnd)
       .reduce((sum, p) => sum + p.totalCost, 0);
 
     const cashPurchaseReturns = purchaseReturns

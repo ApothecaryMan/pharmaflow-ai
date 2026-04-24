@@ -39,7 +39,7 @@ interface SyncAction {
 ### `AuditEntry` (Consolidated)
 ```typescript
 interface AuditEntry {
-  id: string; // idGenerator.generate('generic', branchId)
+  id: string; // idGenerator.generateSync('generic', branchId)
   timestamp: string;
   userId: string;
   userName: string;

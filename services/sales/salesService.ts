@@ -1,164 +1,173 @@
 /**
  * Sales Service - Sales transaction operations
+ * Online-Only implementation using Supabase
  */
 
-import { StorageKeys } from '../../config/storageKeys';
+import { BaseDomainService } from '../core/BaseDomainService';
 import type { Sale } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
-import { getAllShardKeys, getPreviousShardKeys, getShardKey } from '../../utils/sharding';
-import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
-import { syncQueueService } from '../syncQueueService';
+import { supabase } from '../../lib/supabase';
 import type { SalesFilters, SalesService, SalesStats } from './types';
 
-const getShardForDate = (date: string | Date): Sale[] => {
-  const key = getShardKey(StorageKeys.SALES, date);
-  return storage.get<Sale[]>(key, []);
-};
+class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
+  protected tableName = 'sales';
 
-// Helper: Load Current Month + Previous Month only (Active Window)
-const loadActiveShards = (): Sale[] => {
-  const currentKey = getShardKey(StorageKeys.SALES, new Date());
-  // Load current + 1 month back for safety (returns, editing recent sales)
-  const prevKeys = getPreviousShardKeys(StorageKeys.SALES, 1);
-  const keysToCheck = [currentKey, ...prevKeys];
+  protected mapDbToDomain(db: any): Sale {
+    return {
+      id: db.id,
+      serialId: db.serial_id,
+      orgId: db.org_id,
+      branchId: db.branch_id,
+      date: db.date,
+      updatedAt: db.updated_at,
+      customerCode: db.customer_code,
+      customerName: db.customer_name,
+      customerPhone: db.customer_phone,
+      customerAddress: db.customer_address,
+      customerStreetAddress: db.customer_street_address,
+      items: db.items || [],
+      subtotal: db.subtotal,
+      globalDiscount: db.discount,
+      tax: db.tax,
+      total: db.total,
+      paymentMethod: db.payment_method,
+      status: db.status,
+      soldByEmployeeId: db.employee_id,
+      shiftId: db.shift_id,
+      notes: db.notes,
+      saleType: db.sale_type || 'walk-in',
+      deliveryFee: db.delivery_fee,
+      deliveryEmployeeId: db.delivery_employee_id,
+      processingTimeMinutes: db.processing_time_min,
+      shiftTransactionRecorded: db.shift_transaction_recorded,
+      modificationHistory: db.modification_history || [],
+      version: db.version,
+    };
+  }
 
-  // Deduplicate keys just in case
-  const uniqueKeys = Array.from(new Set(keysToCheck));
+  protected mapDomainToDb(s: Partial<Sale>): any {
+    const db: any = {};
+    if (s.id !== undefined) db.id = s.id;
+    if (s.serialId !== undefined) db.serial_id = s.serialId;
+    if (s.orgId !== undefined) db.org_id = s.orgId;
+    if (s.branchId !== undefined) db.branch_id = s.branchId;
+    if (s.date !== undefined) db.date = s.date;
+    if (s.updatedAt !== undefined) db.updated_at = s.updatedAt;
+    if (s.customerCode !== undefined) db.customer_code = s.customerCode;
+    if (s.customerName !== undefined) db.customer_name = s.customerName;
+    if (s.customerPhone !== undefined) db.customer_phone = s.customerPhone;
+    if (s.customerAddress !== undefined) db.customer_address = s.customerAddress;
+    if (s.customerStreetAddress !== undefined) db.customer_street_address = s.customerStreetAddress;
+    if (s.items !== undefined) db.items = s.items;
+    if (s.subtotal !== undefined) db.subtotal = s.subtotal;
+    if (s.globalDiscount !== undefined) db.discount = s.globalDiscount;
+    if (s.tax !== undefined) db.tax = s.tax;
+    if (s.total !== undefined) db.total = s.total;
+    if (s.paymentMethod !== undefined) db.payment_method = s.paymentMethod;
+    if (s.status !== undefined) db.status = s.status;
+    if (s.soldByEmployeeId !== undefined) db.employee_id = s.soldByEmployeeId;
+    if (s.shiftId !== undefined) db.shift_id = s.shiftId;
+    if (s.notes !== undefined) db.notes = s.notes;
+    if (s.saleType !== undefined) db.sale_type = s.saleType;
+    if (s.deliveryFee !== undefined) db.delivery_fee = s.deliveryFee;
+    if (s.deliveryEmployeeId !== undefined) db.delivery_employee_id = s.deliveryEmployeeId;
+    if (s.processingTimeMinutes !== undefined) db.processing_time_min = s.processingTimeMinutes;
+    if (s.shiftTransactionRecorded !== undefined) db.shift_transaction_recorded = s.shiftTransactionRecorded;
+    if (s.modificationHistory !== undefined) db.modification_history = s.modificationHistory;
+    if (s.version !== undefined) db.version = s.version;
+    return db;
+  }
 
-  return uniqueKeys.flatMap((key) => storage.get<Sale[]>(key, []));
-};
-
-export const createSalesService = (): SalesService => ({
-  getAll: async (branchId?: string): Promise<Sale[]> => {
-    const all = loadActiveShards();
+  async getAll(branchId?: string): Promise<Sale[]> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    if (branchId === 'all') return all;
-    return all.filter((s) => s.branchId === effectiveBranchId);
-  },
-
-  getById: async (id: string, branchId?: string): Promise<Sale | null> => {
-    // Resolve effective branch for tenant isolation
-    const settings = await settingsService.getAll();
-    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-
-    // 1. Try Active Shards first (Fast path)
-    const active = loadActiveShards();
-    const found = active.find((s) => s.id === id && s.branchId === effectiveBranchId);
-    if (found) return found;
-
-    // 2. Deep Search: Scan all history (Slow path, but necessary for returns)
-    const allKeys = getAllShardKeys(StorageKeys.SALES);
-    for (const key of allKeys) {
-      const shard = storage.get<Sale[]>(key, []);
-      const match = shard.find((s) => s.id === id && s.branchId === effectiveBranchId);
-      if (match) return match;
+    
+    try {
+      let query = supabase.from(this.tableName).select('*');
+      if (effectiveBranchId !== 'all') {
+        query = query.eq('branch_id', effectiveBranchId);
+      }
+      const { data, error } = await query.order('date', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(item => this.mapDbToDomain(item));
+    } catch (err) {
+      console.error('[SalesService] getAll failed:', err);
+      return [];
     }
+  }
 
-    return null;
-  },
+  async getByCustomer(customerId: string, branchId?: string): Promise<Sale[]> {
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    
+    try {
+      let query = supabase.from(this.tableName)
+        .select('*')
+        .eq('customer_code', customerId);
+      
+      if (effectiveBranchId !== 'all') {
+        query = query.eq('branch_id', effectiveBranchId);
+      }
+      
+      const { data, error } = await query.order('date', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(item => this.mapDbToDomain(item));
+    } catch (err) {
+      console.error('[SalesService] getByCustomer failed:', err);
+      return [];
+    }
+  }
 
-  getByCustomer: async (customerId: string, branchId?: string): Promise<Sale[]> => {
-    const all = await salesService.getAll(branchId);
-    return all.filter((s) => s.customerCode === customerId);
-  },
+  async getByDateRange(from: string, to: string, branchId?: string): Promise<Sale[]> {
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    
+    try {
+      let query = supabase.from(this.tableName)
+        .select('*')
+        .gte('date', from)
+        .lte('date', to);
+      
+      if (effectiveBranchId !== 'all') {
+        query = query.eq('branch_id', effectiveBranchId);
+      }
+      
+      const { data, error } = await query.order('date', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(item => this.mapDbToDomain(item));
+    } catch (err) {
+      console.error('[SalesService] getByDateRange failed:', err);
+      return [];
+    }
+  }
 
-  getByDateRange: async (from: string, to: string, branchId?: string): Promise<Sale[]> => {
-    const all = await salesService.getAll(branchId);
-    const fromDate = new Date(from);
-    const toDate = new Date(to);
-    return all.filter((s) => {
-      const saleDate = new Date(s.date);
-      return saleDate >= fromDate && saleDate <= toDate;
-    });
-  },
-
-  getToday: async (branchId?: string): Promise<Sale[]> => {
-    const all = await salesService.getAll(branchId);
+  async getToday(branchId?: string): Promise<Sale[]> {
     const today = new Date().toISOString().split('T')[0];
-    return all.filter((s) => s.date.startsWith(today));
-  },
+    return this.getByDateRange(`${today}T00:00:00`, `${today}T23:59:59`, branchId);
+  }
 
-  create: async (sale: Omit<Sale, 'id'> & { id?: string }, branchId?: string, skipSync = false): Promise<Sale> => {
-    // Priority: explicit param > entity's own branchId > settingsService fallback
+  async create(sale: Omit<Sale, 'id'>, branchId?: string): Promise<Sale> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || (sale as any).branchId || settings.activeBranchId || settings.branchCode;
+    
     const newSale: Sale = {
       ...sale,
-      id: (sale as any).id || idGenerator.uuid(),
+      id: idGenerator.uuid(),
       branchId: effectiveBranchId,
       orgId: settings.orgId,
+      date: sale.date || new Date().toISOString(),
     } as Sale;
 
-    // Write to specific shard based on Sale Date
-    const shardKey = getShardKey(StorageKeys.SALES, newSale.date);
-    const shard = storage.get<Sale[]>(shardKey, []);
-
-    shard.push(newSale);
-    storage.set(shardKey, shard);
-
-    if (!skipSync) {
-      await syncQueueService.enqueue('SALE', { action: 'CREATE_SALE', sale: newSale });
-    }
+    const dbSale = this.mapDomainToDb(newSale);
+    const { error } = await supabase.from(this.tableName).insert(dbSale);
+    if (error) throw error;
 
     return newSale;
-  },
+  }
 
-  update: async (id: string, updates: Partial<Sale>, skipSync = false): Promise<Sale> => {
-    // We need to find the sale first to know its date (and thus its shard)
-    const all = loadActiveShards();
-    const foundIndex = all.findIndex((s) => s.id === id);
-    let shardKey = '';
-
-    if (foundIndex === -1) {
-      throw new Error('Sale not found in recent history');
-    }
-
-    const sale = all[foundIndex];
-    shardKey = getShardKey(StorageKeys.SALES, sale.date);
-
-    // Re-read specific shard to ensure atomic write on that key
-    const shard = storage.get<Sale[]>(shardKey, []);
-    const shardIndex = shard.findIndex((s) => s.id === id);
-
-    if (shardIndex !== -1) {
-      shard[shardIndex] = { ...shard[shardIndex], ...updates };
-      storage.set(shardKey, shard);
-
-      if (!skipSync) {
-        await syncQueueService.enqueue('SALE', { action: 'UPDATE_SALE', id, updates });
-      }
-
-      return shard[shardIndex];
-    }
-
-    throw new Error('Concurrency Error: Sale not found in shard');
-  },
-
-  delete: async (id: string, skipSync = false): Promise<boolean> => {
-    const all = loadActiveShards();
-    const sale = all.find((s) => s.id === id);
-    if (!sale) return false;
-
-    const shardKey = getShardKey(StorageKeys.SALES, sale.date);
-    const shard = storage.get<Sale[]>(shardKey, []);
-    const filtered = shard.filter((s) => s.id !== id);
-
-    if (filtered.length !== shard.length) {
-      storage.set(shardKey, filtered);
-
-      if (!skipSync) {
-        await syncQueueService.enqueue('SALE', { action: 'DELETE_SALE', id });
-      }
-
-      return true;
-    }
-    return false;
-  },
-
-  getStats: async (branchId?: string): Promise<SalesStats> => {
-    const all = await salesService.getAll(branchId);
+  async getStats(branchId?: string): Promise<SalesStats> {
+    const all = await this.getAll(branchId);
     const today = new Date().toISOString().split('T')[0];
     const todaySales = all.filter((s) => s.date.startsWith(today));
 
@@ -170,61 +179,50 @@ export const createSalesService = (): SalesService => ({
       todaySales: todaySales.length,
       todayRevenue: todaySales.reduce((sum, s) => sum + s.total, 0),
     };
-  },
+  }
 
-  filter: async (filters: SalesFilters, branchId?: string): Promise<Sale[]> => {
-    let results = await salesService.getAll(branchId);
-
-    if (filters.dateFrom) {
-      const from = new Date(filters.dateFrom);
-      results = results.filter((s) => new Date(s.date) >= from);
-    }
-    if (filters.dateTo) {
-      const to = new Date(filters.dateTo);
-      results = results.filter((s) => new Date(s.date) <= to);
-    }
-    if (filters.customerCode) {
-      results = results.filter((s) => s.customerCode === filters.customerCode);
-    }
-    if (filters.paymentMethod) {
-      results = results.filter((s) => s.paymentMethod === filters.paymentMethod);
-    }
-    if (filters.minAmount !== undefined) {
-      results = results.filter((s) => s.total >= filters.minAmount!);
-    }
-    if (filters.maxAmount !== undefined) {
-      results = results.filter((s) => s.total <= filters.maxAmount!);
-    }
-    return results;
-  },
-
-  save: async (sales: Sale[], branchId?: string): Promise<void> => {
-    // 1. Group sales by Shard Key
-    const shards: Record<string, Sale[]> = {};
-
-    sales.forEach((sale) => {
-      const key = getShardKey(StorageKeys.SALES, sale.date);
-      if (!shards[key]) shards[key] = [];
-      shards[key].push(sale);
-    });
-
+  async filter(filters: SalesFilters, branchId?: string): Promise<Sale[]> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-
-    // 2. Process each relevant shard
-    Object.entries(shards).forEach(([key, branchSales]) => {
-      const currentShard = storage.get<Sale[]>(key, []);
-
-      // Keep items from OTHER branches
-      const otherBranchSales = currentShard.filter((s) => s.branchId && s.branchId !== effectiveBranchId);
-
-      // Combine and deduplicate by ID: Ensure orgId is present
-      const merged = [...otherBranchSales, ...branchSales.map(s => ({ ...s, orgId: s.orgId || settings.orgId }))];
-      const uniqueMerged = Array.from(new Map(merged.map((item) => [item.id, item])).values());
+    
+    try {
+      let query = supabase.from(this.tableName).select('*');
       
-      storage.set(key, uniqueMerged);
-    });
-  },
-});
+      if (effectiveBranchId !== 'all') {
+        query = query.eq('branch_id', effectiveBranchId);
+      }
+      
+      if (filters.dateFrom) query = query.gte('date', filters.dateFrom);
+      if (filters.dateTo) query = query.lte('date', filters.dateTo);
+      if (filters.customerCode) query = query.eq('customer_code', filters.customerCode);
+      if (filters.paymentMethod) query = query.eq('payment_method', filters.paymentMethod);
+      if (filters.minAmount !== undefined) query = query.gte('total', filters.minAmount);
+      if (filters.maxAmount !== undefined) query = query.lte('total', filters.maxAmount);
+      
+      const { data, error } = await query.order('date', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(item => this.mapDbToDomain(item));
+    } catch (err) {
+      console.error('[SalesService] filter failed:', err);
+      return [];
+    }
+  }
 
-export const salesService = createSalesService();
+  async save(sales: Sale[], branchId?: string): Promise<void> {
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    
+    const dbSales = sales.map(s => this.mapDomainToDb({
+      ...s,
+      branchId: s.branchId || effectiveBranchId,
+      orgId: s.orgId || settings.orgId
+    }));
+
+    if (dbSales.length > 0) {
+      const { error } = await supabase.from(this.tableName).upsert(dbSales);
+      if (error) throw error;
+    }
+  }
+}
+
+export const salesService = new SalesServiceImpl();

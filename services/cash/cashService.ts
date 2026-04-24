@@ -1,80 +1,147 @@
 /**
  * Cash Service - Cash register and shift operations
- *
- * Unified with useShift hook - uses same storage key and types.
- * Ready for future backend API integration.
+ * Unified with Supabase - Online-only implementation.
  */
 
-import { type CashTransaction, CashTransactionType, type Shift } from '../../types';
+import { type CashTransaction, type Shift, CashTransactionType } from '../../types';
+import { supabase } from '../../lib/supabase';
+import { BaseDomainService } from '../core/BaseDomainService';
 import { settingsService } from '../settings/settingsService';
 
-const SHIFTS_KEY = 'pharma_shifts';
+// --- Internal Shifts Service ---
+class ShiftsServiceImpl extends BaseDomainService<Shift> {
+  protected tableName = 'shifts';
+
+  protected mapDbToDomain(db: any): Shift {
+    return {
+      id: db.id,
+      branchId: db.branch_id,
+      orgId: db.org_id,
+      branchName: db.branch_name,
+      status: db.status,
+      openTime: db.open_time,
+      closeTime: db.close_time,
+      openedBy: db.opened_by,
+      closedBy: db.closed_by,
+      openingBalance: Number(db.opening_balance),
+      closingBalance: db.closing_balance ? Number(db.closing_balance) : undefined,
+      expectedBalance: db.expected_balance ? Number(db.expected_balance) : undefined,
+      cashIn: Number(db.cash_in || 0),
+      cashOut: Number(db.cash_out || 0),
+      cashSales: Number(db.cash_sales || 0),
+      cardSales: Number(db.card_sales || 0),
+      returns: Number(db.returns || 0),
+      notes: db.notes,
+      transactions: [], // Not loaded by default, use getTransactions
+    };
+  }
+
+  protected mapDomainToDb(s: Partial<Shift>): any {
+    const db: any = {};
+    if (s.id !== undefined) db.id = s.id;
+    if (s.branchId !== undefined) db.branch_id = s.branchId;
+    if (s.orgId !== undefined) db.org_id = s.orgId;
+    if (s.branchName !== undefined) db.branch_name = s.branchName;
+    if (s.status !== undefined) db.status = s.status;
+    if (s.openTime !== undefined) db.open_time = s.openTime;
+    if (s.closeTime !== undefined) db.close_time = s.closeTime;
+    if (s.openedBy !== undefined) db.opened_by = s.openedBy;
+    if (s.closedBy !== undefined) db.closed_by = s.closedBy;
+    if (s.openingBalance !== undefined) db.opening_balance = s.openingBalance;
+    if (s.closingBalance !== undefined) db.closing_balance = s.closingBalance;
+    if (s.expectedBalance !== undefined) db.expected_balance = s.expectedBalance;
+    if (s.cashIn !== undefined) db.cash_in = s.cashIn;
+    if (s.cashOut !== undefined) db.cash_out = s.cashOut;
+    if (s.cashSales !== undefined) db.cash_sales = s.cashSales;
+    if (s.cardSales !== undefined) db.card_sales = s.cardSales;
+    if (s.returns !== undefined) db.returns = s.returns;
+    if (s.notes !== undefined) db.notes = s.notes;
+    return db;
+  }
+}
+
+// --- Internal Transactions Service ---
+class CashTransactionsServiceImpl extends BaseDomainService<CashTransaction> {
+  protected tableName = 'cash_transactions';
+
+  protected mapDbToDomain(db: any): CashTransaction {
+    return {
+      id: db.id,
+      branchId: db.branch_id,
+      orgId: db.org_id,
+      shiftId: db.shift_id,
+      time: db.time,
+      type: db.type,
+      amount: Number(db.amount),
+      reason: db.reason,
+      userId: db.user_id,
+      relatedSaleId: db.related_sale_id,
+    };
+  }
+
+  protected mapDomainToDb(t: Partial<CashTransaction>): any {
+    const db: any = {};
+    if (t.id !== undefined) db.id = t.id;
+    if (t.branchId !== undefined) db.branch_id = t.branchId;
+    if (t.orgId !== undefined) db.org_id = t.orgId;
+    if (t.shiftId !== undefined) db.shift_id = t.shiftId;
+    if (t.time !== undefined) db.time = t.time;
+    if (t.type !== undefined) db.type = t.type;
+    if (t.amount !== undefined) db.amount = t.amount;
+    if (t.reason !== undefined) db.reason = t.reason;
+    if (t.userId !== undefined) db.user_id = t.userId;
+    if (t.relatedSaleId !== undefined) db.related_sale_id = t.relatedSaleId;
+    return db;
+  }
+}
+
+const shiftsInternal = new ShiftsServiceImpl();
+const transactionsInternal = new CashTransactionsServiceImpl();
 
 /**
  * Cash Service Interface
  */
 export interface CashServiceInterface {
-  // Shifts
-  getCurrentShift(): Promise<Shift | null>;
-  getAllShifts(): Promise<Shift[]>;
-  openShift(openingBalance: number, openedBy: string): Promise<Shift>;
-  closeShift(closingBalance: number, closedBy: string, notes?: string): Promise<Shift>;
-
-  // Transactions
-  addTransaction(
-    shiftId: string,
-    transaction: Omit<CashTransaction, 'id'>
-  ): Promise<CashTransaction>;
+  getCurrentShift(branchId?: string): Promise<Shift | null>;
+  getAllShifts(branchId?: string): Promise<Shift[]>;
+  openShift(openingBalance: number, openedBy: string, branchId?: string): Promise<Shift>;
+  closeShift(shiftId: string, closingBalance: number, closedBy: string, notes?: string): Promise<Shift>;
+  addTransaction(shiftId: string, transaction: Omit<CashTransaction, 'id'>): Promise<CashTransaction>;
   getTransactions(shiftId?: string): Promise<CashTransaction[]>;
-
-  // Save
-  saveShifts(shifts: Shift[]): Promise<void>;
 }
 
-import { StorageKeys } from '../../config/storageKeys';
-import { idGenerator } from '../../utils/idGenerator';
-import { storage } from '../../utils/storage';
-
-const getRawAll = (): Shift[] => {
-  return storage.get<Shift[]>(StorageKeys.SHIFTS, []);
-};
-
-// ... (interface remains same)
-
-export const createCashService = (): CashServiceInterface => ({
-  getCurrentShift: async (): Promise<Shift | null> => {
-    const all = await cashService.getAllShifts();
-    return all.find((s) => s.status === 'open') || null;
+export const cashService: CashServiceInterface = {
+  getCurrentShift: async (branchId?: string): Promise<Shift | null> => {
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    
+    const { data, error } = await supabase
+      .from('shifts')
+      .select('*')
+      .eq('branch_id', effectiveBranchId)
+      .eq('status', 'open')
+      .maybeSingle();
+      
+    if (error) {
+      console.error('[CashService] getCurrentShift failed:', error);
+      return null;
+    }
+    
+    return data ? (shiftsInternal as any).mapDbToDomain(data) : null;
   },
 
-  getAllShifts: async (): Promise<Shift[]> => {
-    const rawShifts = getRawAll();
-    const settings = await settingsService.getAll();
-    const activeBranchId = settings.activeBranchId || settings.branchCode;
-
-    // Filter and transform
-    const shifts = rawShifts.filter((s) => !s.branchId || s.branchId === activeBranchId);
-
-    // Parse and ensure all fields have defaults
-    return shifts.map((s: any) => ({
-      ...s,
-      cashSales: s.cashSales ?? 0,
-      cardSales: s.cardSales ?? 0,
-      returns: s.returns ?? 0,
-      transactions: s.transactions ?? [],
-    }));
+  getAllShifts: async (branchId?: string): Promise<Shift[]> => {
+    return shiftsInternal.getAll(branchId);
   },
 
-  openShift: async (openingBalance: number, openedBy: string): Promise<Shift> => {
-    const current = await cashService.getCurrentShift();
-    if (current) throw new Error('A shift is already open');
-
-    const all = getRawAll();
+  openShift: async (openingBalance: number, openedBy: string, branchId?: string): Promise<Shift> => {
     const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
 
-    const activeBranchId = settings.activeBranchId || settings.branchCode;
-    const newShift: Shift = {
-      id: idGenerator.generate('shifts', activeBranchId),
+    const current = await cashService.getCurrentShift(effectiveBranchId);
+    if (current) throw new Error('A shift is already open for this branch');
+
+    return shiftsInternal.create({
       status: 'open',
       openTime: new Date().toISOString(),
       openedBy,
@@ -84,120 +151,62 @@ export const createCashService = (): CashServiceInterface => ({
       cashSales: 0,
       cardSales: 0,
       returns: 0,
+      branchId: effectiveBranchId,
       transactions: [],
-      branchId: settings.activeBranchId || settings.branchCode,
-      orgId: settings.orgId,
-    };
-
-    // Add to beginning (newest first)
-    all.unshift(newShift);
-    storage.set(StorageKeys.SHIFTS, all);
-    return newShift;
+    }, effectiveBranchId);
   },
 
-  closeShift: async (closingBalance: number, closedBy: string, notes?: string): Promise<Shift> => {
-    const all = getRawAll();
-    // Re-filter to find open shift for current branch
-    const settings = await settingsService.getAll();
-    const activeBranchId = settings.activeBranchId || settings.branchCode;
-
-    const index = all.findIndex(
-      (s) => s.status === 'open' && (!s.branchId || s.branchId === activeBranchId)
-    );
-    if (index === -1) throw new Error('No open shift found');
-
-    const shift = all[index];
-    // BUG-013: Include ALL cash-affecting transaction types in expectedBalance
-    // Must stay synced with CashRegister.currentBalance and useShift.addTransaction
-    const expectedBalance =
-      shift.openingBalance +
-      shift.cashIn +
-      shift.cashSales +
-      (shift.cashPurchaseReturns || 0) -
-      shift.cashOut -
-      (shift.returns || 0) -
-      (shift.cashPurchases || 0);
-
-    all[index] = {
-      ...shift,
+  closeShift: async (shiftId: string, closingBalance: number, closedBy: string, notes?: string): Promise<Shift | any> => {
+    const shift = await shiftsInternal.getById(shiftId);
+    if (!shift) throw new Error('Shift not found');
+    
+    const expectedBalance = shift.openingBalance + shift.cashIn + shift.cashSales - shift.cashOut - shift.returns;
+    
+    return shiftsInternal.update(shiftId, {
       status: 'closed',
       closeTime: new Date().toISOString(),
       closedBy,
       closingBalance,
       expectedBalance,
       notes,
-    };
-
-    storage.set(StorageKeys.SHIFTS, all);
-    return all[index];
+    });
   },
 
-  addTransaction: async (
-    shiftId: string,
-    transaction: Omit<CashTransaction, 'id'>
-  ): Promise<CashTransaction> => {
-    const all = getRawAll();
-    const shiftIndex = all.findIndex((s) => s.id === shiftId);
-    if (shiftIndex === -1) throw new Error('Shift not found');
-
-    // BUG-014: Prevent transactions on closed shifts
-    if (all[shiftIndex].status !== 'open') {
-      throw new Error('Cannot add transaction to a closed shift');
-    }
-
-    const newTx: CashTransaction = {
-      id: idGenerator.generate('transactions', all[shiftIndex].branchId),
-      branchId: all[shiftIndex].branchId,
-      orgId: all[shiftIndex].orgId,
+  addTransaction: async (shiftId: string, transaction: Omit<CashTransaction, 'id'>): Promise<CashTransaction> => {
+    const newTx = await transactionsInternal.create({
       ...transaction,
-    };
+      shiftId,
+    } as CashTransaction);
 
-    // Add transaction to shift
-    all[shiftIndex].transactions = [newTx, ...all[shiftIndex].transactions];
-
-    // Update shift totals based on transaction type
-    switch (transaction.type) {
-      case 'in':
-        all[shiftIndex].cashIn += transaction.amount;
-        break;
-      case 'out':
-        all[shiftIndex].cashOut += transaction.amount;
-        break;
-      case 'sale':
-        all[shiftIndex].cashSales += transaction.amount;
-        break;
-      case 'card_sale':
-        all[shiftIndex].cardSales += transaction.amount;
-        break;
-      case 'return':
-        all[shiftIndex].returns += transaction.amount;
-        break;
+    // Update shift totals atomically using RPC or partial update
+    // For now, we'll fetch and update, but ideally this would be an atomic SQL increment
+    const shift = await shiftsInternal.getById(shiftId);
+    if (shift) {
+      const updates: Partial<Shift> = {};
+      switch (transaction.type) {
+        case 'in': updates.cashIn = (shift.cashIn || 0) + transaction.amount; break;
+        case 'out': updates.cashOut = (shift.cashOut || 0) + transaction.amount; break;
+        case 'sale': updates.cashSales = (shift.cashSales || 0) + transaction.amount; break;
+        case 'card_sale': updates.cardSales = (shift.cardSales || 0) + transaction.amount; break;
+        case 'return': updates.returns = (shift.returns || 0) + transaction.amount; break;
+      }
+      if (Object.keys(updates).length > 0) {
+        await shiftsInternal.update(shiftId, updates);
+      }
     }
 
-    storage.set(StorageKeys.SHIFTS, all);
     return newTx;
   },
 
   getTransactions: async (shiftId?: string): Promise<CashTransaction[]> => {
-    const all = await cashService.getAllShifts();
-
     if (shiftId) {
-      const shift = all.find((s) => s.id === shiftId);
-      return shift?.transactions ?? [];
+      const { data, error } = await supabase
+        .from('cash_transactions')
+        .select('*')
+        .eq('shift_id', shiftId);
+      if (error) throw error;
+      return (data || []).map(item => (transactionsInternal as any).mapDbToDomain(item));
     }
-
-    // Return all transactions from all shifts
-    return all.flatMap((s) => s.transactions);
-  },
-
-  saveShifts: async (shifts: Shift[]): Promise<void> => {
-    const all = getRawAll();
-    const settings = await settingsService.getAll();
-    const activeBranchId = settings.activeBranchId || settings.branchCode;
-    const otherBranchItems = all.filter((s) => s.branchId && s.branchId !== activeBranchId);
-    const merged = [...otherBranchItems, ...shifts.map(s => ({ ...s, orgId: s.orgId || settings.orgId }))];
-    storage.set(StorageKeys.SHIFTS, merged);
-  },
-});
-
-export const cashService = createCashService();
+    return transactionsInternal.getAll();
+  }
+};

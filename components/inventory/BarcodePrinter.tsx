@@ -229,7 +229,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
       }
 
       // Add new item
-      const newId = idGenerator.generate('barcodes');
+      const newId = idGenerator.generateSync('barcodes');
       const newItem: QueueItem = {
         id: newId,
         drug,

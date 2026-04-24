@@ -28,11 +28,12 @@ export interface InventoryService {
   getByBarcode(barcode: string): Promise<Drug | null>;
   search(query: string): Promise<Drug[]>;
   filter(filters: InventoryFilters): Promise<Drug[]>;
-  create(drug: Omit<Drug, 'id'>, branchId?: string, skipSync?: boolean): Promise<Drug>;
-  update(id: string, drug: Partial<Drug>, skipSync?: boolean): Promise<Drug>;
-  updateStock(id: string, quantity: number, skipSync?: boolean): Promise<Drug>;
-  updateStockBulk(mutations: { id: string; quantity: number }[], skipSync?: boolean): Promise<void>;
-  delete(id: string, skipSync?: boolean): Promise<boolean>;
+  create(drug: Omit<Drug, 'id'>, branchId?: string): Promise<Drug>;
+  update(id: string, drug: Partial<Drug>): Promise<Drug>;
+  updateStock(id: string, quantity: number, skipBatch?: boolean): Promise<Drug>;
+  updateStockCount(id: string, quantity: number): Promise<void>;
+  updateStockBulk(mutations: { id: string; quantity: number }[], skipBatch?: boolean): Promise<void>;
+  delete(id: string): Promise<boolean>;
   getStats(): Promise<InventoryStats>;
   getLowStock(threshold?: number): Promise<Drug[]>;
   getExpiringSoon(days?: number): Promise<Drug[]>;

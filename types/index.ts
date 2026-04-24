@@ -18,19 +18,11 @@
 
 export * from './auth';
 export * from './actions';
+import { OrgRole, SubscriptionPlan, SubscriptionStatus } from './auth';
 
 // ═══════════════════════════════════════════
-// Multi-Tenant Types
+// Multi-Tenant Types (Moved to auth.ts to avoid circular dependency)
 // ═══════════════════════════════════════════
-
-/** Organization role — determines access scope across all branches */
-export type OrgRole = 'owner' | 'admin' | 'member';
-
-/** Subscription plan tiers */
-export type SubscriptionPlan = 'free' | 'starter' | 'pro' | 'enterprise';
-
-/** Subscription billing status */
-export type SubscriptionStatus = 'active' | 'trial' | 'past_due' | 'cancelled';
 
 /**
  * Organization entity — the top-level tenant.
@@ -147,8 +139,6 @@ export interface Drug {
   branchId?: string;
   /** Organization this drug belongs to */
   orgId?: string;
-  /** External database ID (from CSV imports) */
-  dbId?: string;
   /** Product name in English */
   name: string;
   /** Product name in Arabic (الاسم عربي) */
@@ -167,8 +157,6 @@ export interface Drug {
   damagedStock?: number;
   /** Earliest expiry date (ISO string) */
   expiryDate: string;
-  /** Product description */
-  description?: string;
   /** Primary barcode */
   barcode?: string;
   /** Internal reference code */
@@ -179,24 +167,24 @@ export interface Drug {
   supplierId?: string;
   /** Maximum allowed discount percentage */
   maxDiscount?: number;
-  /** Additional barcodes for variants */
-  additionalBarcodes?: string[];
   /** Dosage form: Tablet, Capsule, Syrup, etc. */
   dosageForm?: string;
   /** Minimum stock alert threshold */
   minStock?: number;
-  /** Drug class/category from import */
-  class?: string;
   /** Origin: محلي (local) / مستورد (imported) */
   origin?: string;
-  /** Item popularity rank (شهرة الصنف) */
-  itemRank?: string;
   /** Manufacturer name (الشركة المنتجة) */
   manufacturer?: string;
   /** Value Added Tax percentage (VAT %) */
   tax?: number;
   /** Drug status for restock alerts */
   status?: 'active' | 'inactive' | 'discontinued';
+  /** Additional product description/notes */
+  description?: string;
+  /** Secondary barcodes for the same product */
+  additionalBarcodes?: string[];
+  /** Item classification/rank for prioritization */
+  itemRank?: 'normal' | 'fast' | 'slow' | 'essential';
   /** Minimum allowed selling price */
   /** ISO date of creation */
   createdAt?: string;
@@ -369,26 +357,19 @@ export interface StockMovement {
  * Used in delivery order editing to maintain audit trail.
  */
 export interface OrderModification {
-  /** Type of modification performed */
-  type: 'quantity_update' | 'item_removed' | 'item_added' | 'discount_update';
-  /** Drug ID that was modified */
-  itemId: string;
-  /** Drug name for display purposes */
-  itemName: string;
-  /** Dosage form for display (e.g., 'Tablet', 'Capsule') */
+  type: 'status_change' | 'item_added' | 'item_removed' | 'quantity_update' | 'price_update' | 'discount_update';
+  itemId?: string;
+  itemName?: string;
   dosageForm?: string;
-  /** Quantity before modification */
+  previousValue?: any;
+  newValue?: any;
   previousQuantity?: number;
-  /** Quantity after modification (0 means deleted) */
   newQuantity?: number;
-  /** Units returned to inventory (for reductions) */
   stockReturned?: number;
-  /** Units deducted from inventory (for increases) */
   stockDeducted?: number;
-  /** Previous discount percentage (for discount changes) */
   previousDiscount?: number;
-  /** New discount percentage (for discount changes) */
   newDiscount?: number;
+  notes?: string;
 }
 
 /**
@@ -396,13 +377,9 @@ export interface OrderModification {
  * Stores who made changes and when for audit purposes.
  */
 export interface OrderModificationRecord {
-  /** Unique record identifier */
   id: string;
-  /** ISO timestamp of when modifications were made */
   timestamp: string;
-  /** Name of employee who made the modifications */
-  modifiedBy?: string;
-  /** List of individual modifications in this record */
+  modifiedBy: string;
   modifications: OrderModification[];
 }
 
@@ -551,6 +528,8 @@ export interface Sale {
   updatedAt?: string;
   /** Employee who processed the sale */
   soldByEmployeeId?: string;
+  /** Shift ID during which sale occurred */
+  shiftId?: string;
   /** Sequential order number for the day (1, 2, 3...) */
   dailyOrderNumber?: number;
   /**
@@ -560,7 +539,9 @@ export interface Sale {
   items: CartItem[];
   total: number;
   subtotal?: number;
-  customerName: string;
+  /** Global tax amount */
+  tax?: number;
+  customerName?: string;
   customerCode?: string;
   customerPhone?: string;
   /** System-selected location (area, city, governorate) */
@@ -575,6 +556,10 @@ export interface Sale {
    * Formula: sum(item.price * item.quantity * (item.discount/100)) for all items
    */
   globalDiscount?: number;
+  /** Optional notes */
+  notes?: string;
+  /** Optimistic lock version */
+  version?: number;
   // ── @computed Return tracking ── (derived from `returns` table, NOT stored in DB)
   /** @computed Quick lookup: has this sale been returned? */
   hasReturns?: boolean;
@@ -587,16 +572,12 @@ export interface Sale {
   status: 'completed' | 'cancelled' | 'pending' | 'with_delivery' | 'on_way';
   /** Delivery driver assigned to this order */
   deliveryEmployeeId?: string;
-  /**
-   * Tracks all modifications made to delivery orders.
-   * Each record contains timestamp, modifier, and list of changes.
-   * Used for audit trail and order history display.
-   */
-  modificationHistory?: OrderModificationRecord[];
   /** Time in minutes from tab creation to checkout completion */
   processingTimeMinutes?: number;
   /** BUG-C1: Idempotency flag — true once shift transaction has been recorded for this sale */
   shiftTransactionRecorded?: boolean;
+  /** Audit log of changes made to the order (e.g., items added/removed, status changes) */
+  modificationHistory?: OrderModificationRecord[];
 }
 
 /** Type of return/refund operation */
@@ -692,18 +673,20 @@ export interface Purchase {
   items: PurchaseItem[];
   /** Total cost of purchase */
   totalCost: number;
+  /** Total subtotal before tax/discount */
+  subtotal?: number;
+  /** Discount amount */
+  discount?: number;
   /** Total tax amount */
   totalTax?: number;
   /** Order status */
   status: PurchaseStatus;
   /** Payment method */
-  paymentType?: 'cash' | 'credit';
+  paymentMethod: 'cash' | 'credit';
   /** Internal invoice ID */
   invoiceId?: string;
   /** Supplier's invoice number */
   externalInvoiceId?: string;
-  /** @computed Track returned quantities per drugId — derived from purchase_return_items, not stored in DB */
-  returnedQuantities?: Record<string, number>;
   /** Date purchase was approved */
   approvalDate?: string;
   /** Employee who approved */
@@ -712,6 +695,10 @@ export interface Purchase {
   createdAt?: string;
   /** ISO date of last update */
   updatedAt?: string;
+  /** Employee ID who created the record */
+  employeeId?: string;
+  /** Optimistic lock version */
+  version?: number;
 }
 
 /**

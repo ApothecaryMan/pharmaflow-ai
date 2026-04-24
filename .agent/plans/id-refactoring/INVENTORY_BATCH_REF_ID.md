@@ -14,7 +14,7 @@
 
 1. **Unify Stock Handlers:** Transition away from `setInventory` direct calls in the UI. Instead, use a centralized `inventoryService.updateStock(drugId, delta)` that internally handles batch allocation.
 2. **GUID Stability:** Ensure `drug.internalCode` is treated as a searchable metadata, while `drug.id` (GUID) remains the immutable database key.
-3. **Movement Tracking:** Every time a stock change occurs, record a `StockMovement` entry using `idGenerator.generate('movement')` and link it via `drugId` and `batchId`.
+3. **Movement Tracking:** Every time a stock change occurs, record a `StockMovement` entry using `idGenerator.generateSync('movement')` and link it via `drugId` and `batchId`.
 
 ## 4. Expected Outcome
 

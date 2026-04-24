@@ -154,7 +154,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   const handleCreateTemplate = () => {
     if (!newTemplateName.trim()) return;
     const newTemplate: SavedTemplate = {
-      id: idGenerator.generate('receipts'),
+      id: idGenerator.generateSync('receipts'),
       name: newTemplateName,
       isDefault: false,
       options: { ...options },

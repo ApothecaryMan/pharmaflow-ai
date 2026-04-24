@@ -13,10 +13,10 @@ export interface SupplierFilters {
 
 export interface SupplierService {
   getAll(branchId?: string): Promise<Supplier[]>;
-  getById(id: string): Promise<Supplier | null>;
-  search(query: string): Promise<Supplier[]>;
-  create(supplier: Omit<Supplier, 'id'>, branchId?: string, skipSync?: boolean): Promise<Supplier>;
-  update(id: string, supplier: Partial<Supplier>, skipSync?: boolean): Promise<Supplier>;
-  delete(id: string, skipSync?: boolean): Promise<boolean>;
+  getById(id: string, branchId?: string): Promise<Supplier | null>;
+  search(query: string, branchId?: string): Promise<Supplier[]>;
+  create(supplier: Omit<Supplier, 'id'>, branchId?: string): Promise<Supplier>;
+  update(id: string, updates: Partial<Supplier>): Promise<Supplier>;
+  delete(id: string): Promise<boolean>;
   save(suppliers: Supplier[], branchId?: string): Promise<void>;
 }
