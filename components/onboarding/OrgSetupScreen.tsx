@@ -20,8 +20,15 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
 
   // Default theme
   const [selectedTheme, setSelectedTheme] = useState(availableThemes[0]);
+  const [selectedPlan, setSelectedPlan] = useState<'free' | 'starter' | 'pro' | 'enterprise'>('starter');
 
   const isRTL = language === 'AR';
+
+  const plans = [
+    { id: 'free', name: isRTL ? 'مجاني' : 'Free', desc: isRTL ? 'فرع واحد، ٣ موظفين' : '1 Branch, 3 Employees', icon: 'person' },
+    { id: 'starter', name: isRTL ? 'بداية' : 'Starter', desc: isRTL ? 'فرع واحد، ١٠ موظفين' : '1 Branch, 10 Employees', icon: 'storefront', badge: isRTL ? 'الأكثر طلباً' : 'Recommended' },
+    { id: 'pro', name: isRTL ? 'احترافي' : 'Pro', desc: isRTL ? '٥ فروع، ٢٠ موظف' : '5 Branches, 20 Employees', icon: 'hub' },
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +41,7 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
       const ownerId = currentUser?.userId || import.meta.env.VITE_DEV_OWNER_ID as string;
 
       // Create organization (returns { org, membership, subscription })
-      const result = await orgService.create(orgName.trim(), ownerId);
+      const result = await orgService.create(orgName.trim(), ownerId, selectedPlan);
 
       // Set as active org
       orgService.setActiveOrgId(result.org.id);
@@ -54,7 +61,7 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-black p-4 ${isRTL ? 'font-arabic' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className={`min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-black p-4 pb-20 ${isRTL ? 'font-arabic' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes subtle-float {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
@@ -62,6 +69,15 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
         }
         .animate-float {
           animation: subtle-float 4s ease-in-out infinite;
+        }
+        .plan-card {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .plan-card-selected {
+          border-color: var(--theme-color) !important;
+          background: var(--theme-bg-soft);
+          transform: translateY(-2px);
+          box-shadow: 0 10px 20px -10px var(--theme-color-glow);
         }
       `}} />
 
@@ -126,6 +142,61 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
               placeholder={isRTL ? 'مثال: د. أحمد محمد' : 'e.g. Dr. Ahmed Ali'}
               style={{ '--tw-ring-color': selectedTheme.hex } as React.CSSProperties}
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">
+              {isRTL ? 'اختر خطة الاشتراك' : 'Choose Subscription Plan'}
+            </label>
+            <div className="space-y-2.5">
+              {plans.map((plan) => (
+                <button
+                  key={plan.id}
+                  type="button"
+                  onClick={() => setSelectedPlan(plan.id as any)}
+                  className={`plan-card w-full p-4 rounded-2xl border flex items-center text-right ${
+                    selectedPlan === plan.id 
+                      ? 'border-zinc-800 dark:border-white bg-zinc-50 dark:bg-zinc-800/50' 
+                      : 'border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700'
+                  }`}
+                  style={{ 
+                    '--theme-color': selectedTheme.hex,
+                    '--theme-color-glow': `${selectedTheme.hex}33`,
+                    '--theme-bg-soft': `${selectedTheme.hex}08`
+                  } as React.CSSProperties}
+                >
+                  <div 
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center ml-4 shrink-0 ${
+                      selectedPlan === plan.id ? 'text-white' : 'text-zinc-400 dark:text-zinc-500 bg-zinc-50 dark:bg-zinc-900'
+                    }`}
+                    style={{ backgroundColor: selectedPlan === plan.id ? selectedTheme.hex : undefined }}
+                  >
+                    <span className="material-symbols-rounded text-xl">{plan.icon}</span>
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-zinc-900 dark:text-zinc-100">{plan.name}</span>
+                      {plan.badge && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 whitespace-nowrap">
+                          {plan.badge}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{plan.desc}</p>
+                  </div>
+
+                  {selectedPlan === plan.id && (
+                    <div 
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-white shrink-0 mr-2"
+                      style={{ backgroundColor: selectedTheme.hex }}
+                    >
+                      <span className="material-symbols-rounded text-sm font-bold">check</span>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>

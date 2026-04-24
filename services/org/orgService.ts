@@ -47,7 +47,8 @@ export const orgService = {
    */
   async create(
     name: string,
-    ownerId: string
+    ownerId: string,
+    plan: string = 'starter'
   ): Promise<{ org: Organization; membership: OrgMember; subscription: Subscription }> {
     const slug = generateSlug(name) + '-' + Date.now().toString(36);
 
@@ -59,7 +60,8 @@ export const orgService = {
       const { data, error } = await supabase.rpc('setup_initial_organization', {
         p_name: name,
         p_slug: slug,
-        p_owner_id: ownerId
+        p_owner_id: ownerId,
+        p_plan: plan
       });
 
       if (error) {
