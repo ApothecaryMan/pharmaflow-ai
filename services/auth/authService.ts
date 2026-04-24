@@ -39,13 +39,7 @@ import {
 const SESSION_KEY = 'branch_pilot_session';
 const AUDIT_KEY = 'pharmaflow_login_audit';
 
-// Development credentials - ONLY visible/active in DEV mode
-const DEV_CREDENTIALS = {
-  username: import.meta.env.VITE_TEST_USER || 'test',
-  password: import.meta.env.VITE_TEST_PASS || 'test',
-  role: 'admin' as const,
-  department: 'it' as const,
-};
+
 
 /**
  * Ensures the Super Admin account exists in IndexedDB.
@@ -179,9 +173,6 @@ export const authService = {
     }
   },
 
-  /**
-   * Login function (Checks Dev credentials then Supabase or local Employees)
-   */
   login: async (username: string, password: string): Promise<UserSession | null> => {
     // Check if Supabase is configured
     const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
@@ -191,12 +182,11 @@ export const authService = {
       await ensureSuperAdmin();
     }
 
-    // Simulate API delay for local check
+    // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     // 1. Try Supabase Auth if configured
     if (isSupabaseConfigured) {
-
       try {
         const { supabase } = await import('../../lib/supabase');
         
@@ -218,41 +208,12 @@ export const authService = {
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
         
         if (authError) {
-          // --- DEV SEEDING WORKAROUND FOR SUPABASE AUTH ---
-          // Since migrations cannot easily seed auth.users with encrypted passwords,
-          // if we are in DEV and Super login fails, we auto-register them in Supabase Auth.
-          if (
-            import.meta.env.DEV && 
-            (username === 'Super' || username === 'super') && 
-            authError.message.includes('Invalid')
-          ) {
-            console.log('🌱 Auto-registering Super user into Supabase Auth...');
-            const { error: signUpError } = await supabase.auth.signUp({ 
-              email: loginEmail, 
-              password,
-              options: { data: { username: 'Super', name: 'SUPER' } }
-            });
-            
-            if (!signUpError) {
-              // Retry login after successful signup
-              const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
-              if (retryError) throw retryError;
-              
-              // Remap variables to proceed with the normal flow
-              authData.user = retryData.user;
-              // Link this new auth.user.id to the pre-seeded public.employees record
-              await supabase.from('employees').update({ auth_user_id: retryData.user.id }).eq('username', 'Super');
-            } else {
-              throw signUpError;
+          if (authError.message.toLowerCase().includes('confirmed') || authError.status === 400) {
+            if (authError.message.toLowerCase().includes('not confirmed')) {
+               throw new Error('Email not confirmed. Please check your inbox.');
             }
-          } else {
-            if (authError.message.toLowerCase().includes('confirmed') || authError.status === 400) {
-              if (authError.message.toLowerCase().includes('not confirmed')) {
-                 throw new Error('Email not confirmed. Please check your inbox.');
-              }
-            }
-            throw authError;
           }
+          throw authError;
         }
 
         if (!authData.user) throw new Error('No user data returned');
@@ -286,7 +247,6 @@ export const authService = {
         }
 
         const memberData = memberResponse.data;
-        
         const orgRole = memberData?.role || 'member';
         const orgId = memberData?.org_id;
 

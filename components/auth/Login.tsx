@@ -430,12 +430,7 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
               )}
             </button>
 
-            {/* Test credentials hint - DEV ONLY
-            {import.meta.env.DEV && !state.error && (
-                <div className="text-xs text-zinc-600 text-center p-2 bg-zinc-900/50 rounded-sm border border-zinc-800">
-                    💡 Test credentials: <code className="text-green-500">Admin / Admin@123</code>
-                </div>
-            )} */}
+
 
             <p className='text-center text-xs text-zinc-600 pt-2'>{t.authorizedUserNotice}</p>
             

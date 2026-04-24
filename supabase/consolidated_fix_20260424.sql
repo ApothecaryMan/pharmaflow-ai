@@ -219,17 +219,4 @@ FOR ALL USING (
   org_id IN (SELECT org_id FROM public.org_members WHERE user_id = auth.uid())
 );
 
--- ═══════════════════════════════════════════
--- 5. SEED DATA (SUPER ADMIN)
--- ═══════════════════════════════════════════
-DO $$
-DECLARE v_auth_id uuid := '00000000-0000-4000-a000-000000000001';
-BEGIN
-  INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, role, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES (v_auth_id, 'super@zinc.co', crypt('Super@123', gen_salt('bf', 10)), now(), 'authenticated', '{"provider":"email","providers":["email"]}', '{"username":"Super","name":"SUPER"}', now(), now())
-  ON CONFLICT (id) DO UPDATE SET encrypted_password = EXCLUDED.encrypted_password;
 
-  INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at)
-  VALUES (v_auth_id, v_auth_id, jsonb_build_object('sub', v_auth_id::text, 'email', 'super@zinc.co', 'email_verified', true), 'email', v_auth_id::text, now(), now(), now())
-  ON CONFLICT (provider, provider_id) DO NOTHING;
-END $$;

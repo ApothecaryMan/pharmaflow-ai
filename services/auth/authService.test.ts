@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { authService, UserSession } from './authService';
+import { authService } from './authService';
+import type { UserSession } from '../../types';
 
 describe('AuthService', () => {
   beforeEach(() => {
@@ -37,14 +38,7 @@ describe('AuthService', () => {
     expect(localStorage.getItem('branch_pilot_session')).toBeNull();
   });
 
-  it('login should work with dev credentials in DEV mode', async () => {
-    // Note: This relies on vite's import.meta.env.DEV being true in test env
-    // Default values from .env are Admin / Admin@123
-    const result = await authService.login('Admin', 'Admin@123');
-    expect(result).not.toBeNull();
-    expect(result?.username).toBe('Admin');
-    expect(localStorage.getItem('branch_pilot_session')).toBeTruthy();
-  });
+
   
   it('login should fail with wrong credentials', async () => {
       const result = await authService.login('wrong', 'pass');
