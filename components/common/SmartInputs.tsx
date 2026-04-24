@@ -1,4 +1,4 @@
-import { type InputHTMLAttributes, useEffect, useMemo, useRef, useState } from 'react';
+import React, { type InputHTMLAttributes, useEffect, useMemo, useRef, useState } from 'react';
 import { INPUT_BASE } from '../../utils/themeStyles';
 
 /**

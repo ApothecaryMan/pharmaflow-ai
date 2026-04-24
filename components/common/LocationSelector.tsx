@@ -27,7 +27,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   language,
   showLabels = true,
   color = 'primary',
-  variant = 'input'
+  variant = 'input' as 'minimal' | 'input'
 }) => {
   const isRTL = language === 'AR';
 

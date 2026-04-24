@@ -15,6 +15,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type Key,
 } from "react";
 import { createPortal } from "react-dom";
 import { X, Minus, Plus, Locate, Maximize, Loader2 } from "lucide-react";
@@ -890,7 +891,7 @@ const positionClasses = {
   "bottom-right": "bottom-10 right-2",
 };
 
-function ControlGroup({ children }: { children: React.ReactNode }) {
+function ControlGroup({ children }: { children: ReactNode }) {
   return (
     <div className="flex flex-col rounded-md border border-border bg-background shadow-sm overflow-hidden [&>button:not(:last-child)]:border-b [&>button:not(:last-child)]:border-border">
       {children}
@@ -906,7 +907,7 @@ function ControlButton({
 }: {
   onClick: () => void;
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
   disabled?: boolean;
 }) {
   return (
@@ -1394,6 +1395,8 @@ type MapClusterLayerProps<
     coordinates: [number, number],
     pointCount: number
   ) => void;
+  /** React key for reconciliation */
+  key?: Key;
 };
 
 function MapClusterLayer<
@@ -1407,6 +1410,7 @@ function MapClusterLayer<
   pointColor = "#3b82f6",
   onPointClick,
   onClusterClick,
+  key,
 }: MapClusterLayerProps<P>) {
   const { map, isLoaded } = useMap();
   const id = useId();

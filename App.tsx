@@ -136,6 +136,11 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     isLoading,
     activeBranchId,
     activeOrgId,
+    addPurchase,
+    approvePurchase,
+    completeSale,
+    processSalesReturn,
+    createPurchaseReturn,
   } = useData();
 
   // --- StatusBar Utilities ---
@@ -209,11 +214,17 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     setPurchaseReturns,
     currentEmployeeId,
     activeBranchId,
+    activeOrgId,
     employees,
     setEmployees, // Added setEmployees
     isLoading,
     batches,
     setBatches,
+    approvePurchase,
+    addPurchase,
+    completeSale,
+    processSalesReturn,
+    createPurchaseReturn,
     getVerifiedDate,
     validateTransactionTime,
     updateLastTransactionTime,
