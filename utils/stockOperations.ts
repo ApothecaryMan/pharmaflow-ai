@@ -8,6 +8,7 @@ import { validateStock, assertStockSufficient } from './inventory';
  */
 export interface StockOperationContext {
   branchId: string;
+  orgId?: string;
   performedBy: string;
   performedByName?: string;
 }
@@ -81,6 +82,7 @@ export const deductStock = async (
     drugId: drug.id,
     drugName: drug.name,
     branchId: ctx.branchId,
+    orgId: ctx.orgId,
     type,
     quantity: -unitsToDeduct,
     previousStock,
@@ -133,6 +135,7 @@ export const addStock = async (
     dateReceived: new Date().toISOString(),
     batchNumber: batchNumber || 'MANUAL',
     branchId: ctx.branchId,
+    orgId: ctx.orgId,
     version: 1,
   }, ctx.branchId, true);
 
@@ -141,6 +144,7 @@ export const addStock = async (
     drugId: drug.id,
     drugName: drug.name,
     branchId: ctx.branchId,
+    orgId: ctx.orgId,
     type,
     quantity: unitsToAdd,
     previousStock,
@@ -199,6 +203,7 @@ export const returnStock = async (
     drugId: drug.id,
     drugName: drug.name,
     branchId: ctx.branchId,
+    orgId: ctx.orgId,
     type,
     quantity: unitsToRestore,
     previousStock,
@@ -242,6 +247,7 @@ export const deductStockSimple = (
     drugId: drug.id,
     drugName: drug.name,
     branchId: ctx.branchId,
+    orgId: ctx.orgId,
     type,
     quantity: -unitsToRemove,
     previousStock,
@@ -303,6 +309,7 @@ export const adjustStock = async (
           dateReceived: new Date().toISOString(),
           batchNumber: 'MANUAL-ADJUST',
           branchId: ctx.branchId,
+          orgId: ctx.orgId,
           version: 1,
         }, ctx.branchId, true);
       } else {
@@ -318,6 +325,7 @@ export const adjustStock = async (
     drugId: drug.id,
     drugName: drug.name,
     branchId: ctx.branchId,
+    orgId: ctx.orgId,
     type: 'adjustment',
     quantity: diff,
     previousStock,
@@ -363,6 +371,7 @@ export const deductFromBatch = async (
     drugId: drug.id,
     drugName: drug.name,
     branchId: ctx.branchId,
+    orgId: ctx.orgId,
     type,
     quantity: -quantityUnits,
     previousStock,
@@ -398,6 +407,7 @@ export const logInitialStock = (
     drugId: drug.id,
     drugName: drug.name,
     branchId: ctx.branchId,
+    orgId: ctx.orgId,
     type: 'initial',
     quantity: drug.stock,
     previousStock: 0,

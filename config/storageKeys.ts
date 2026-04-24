@@ -46,6 +46,7 @@ export const StorageKeys = {
   // User/Session
   PROFILE_IMAGE: 'pharma_profileImage',
   CURRENT_EMPLOYEE_ID: 'pharma_currentEmployeeId',
+  ACTIVE_ORG_ID: 'pharma_active_org_id',
 
   // Misc
   MIGRATION_V1_UNITS: 'pharma_migration_v1_units',

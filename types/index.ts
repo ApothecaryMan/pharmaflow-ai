@@ -13,7 +13,11 @@
  *
  * @version 2.012
  * @author ZINC Team
+ *
  */
+
+export * from './auth';
+export * from './actions';
 
 // ═══════════════════════════════════════════
 // Multi-Tenant Types
@@ -59,7 +63,7 @@ export interface OrgMember {
   /** Unique identifier (UUID) */
   id: string;
   /** Organization ID */
-  orgId: string;
+  orgId?: string;
   /** Auth user ID */
   userId: string;
   /** Role within the organization */
@@ -76,7 +80,7 @@ export interface Subscription {
   /** Unique identifier (UUID) */
   id: string;
   /** Organization ID */
-  orgId: string;
+  orgId?: string;
   /** Current plan tier */
   plan: SubscriptionPlan;
   /** Billing status */
@@ -111,7 +115,7 @@ export interface Branch {
   /** Unique identifier (UUID) */
   id: string;
   /** Organization this branch belongs to — required for tenant isolation */
-  orgId: string;
+  orgId?: string;
   /** Branch name (e.g., 'Main Branch', 'Downtown Store') */
   name: string;
   /** Short code for reference (e.g., 'MN01') */
@@ -140,9 +144,9 @@ export interface Drug {
   /** Unique identifier (UUID) */
   id: string;
   /** Branch this drug belongs to — required for RLS isolation */
-  branchId: string;
+  branchId?: string;
   /** Organization this drug belongs to */
-  orgId: string;
+  orgId?: string;
   /** External database ID (from CSV imports) */
   dbId?: string;
   /** Product name in English */
@@ -210,7 +214,7 @@ export interface Supplier {
   /** Branch this supplier is associated with — required for RLS isolation */
   branchId: string;
   /** Organization this supplier belongs to */
-  orgId: string;
+  orgId?: string;
   /** Company/supplier name */
   name: string;
   /** Primary contact person name */
@@ -242,7 +246,7 @@ export interface Customer {
   /** Branch this customer belongs to — required for RLS isolation */
   branchId: string;
   /** Organization this customer belongs to */
-  orgId: string;
+  orgId?: string;
   /** System-generated primary key (internal, e.g. "B1-0001") */
   serialId: string;
   /** Customer-facing code printed on loyalty cards - given to customer */
@@ -282,7 +286,7 @@ export interface StockBatch {
   /** Branch this batch belongs to — required for RLS isolation */
   branchId: string;
   /** Organization this batch belongs to */
-  orgId: string;
+  orgId?: string;
   /** Drug this batch belongs to */
   drugId: string;
   /** Available quantity in this batch (in units) */
@@ -334,7 +338,7 @@ export interface StockMovement {
   drugId: string;
   drugName: string; // Snapshot name
   branchId: string;
-  orgId: string;
+  orgId?: string;
 
   type: StockMovementType;
   quantity: number; // Positive for add, Negative for remove
@@ -541,7 +545,7 @@ export interface Sale {
   /** Branch this sale belongs to — required for RLS isolation */
   branchId: string;
   /** Organization this sale belongs to */
-  orgId: string;
+  orgId?: string;
   date: string;
   /** ISO date of last update (essential for statistics timing) */
   updatedAt?: string;
@@ -645,7 +649,7 @@ export interface Return {
   /** Branch where return was processed — required for RLS isolation */
   branchId: string;
   /** Organization this return belongs to */
-  orgId: string;
+  orgId?: string;
   /** Original sale ID */
   saleId: string;
   /** Date of return (ISO string) */
@@ -677,7 +681,7 @@ export interface Purchase {
   /** Branch receiving the purchase — required for RLS isolation */
   branchId: string;
   /** Organization this purchase belongs to */
-  orgId: string;
+  orgId?: string;
   /** Purchase date (ISO string) */
   date: string;
   /** Supplier ID */
@@ -747,7 +751,7 @@ export interface PurchaseReturn {
   /** Branch making the return — required for RLS isolation */
   branchId: string;
   /** Organization this return belongs to */
-  orgId: string;
+  orgId?: string;
   /** Original purchase ID */
   purchaseId: string;
   /** Supplier ID */
@@ -902,7 +906,7 @@ export interface CashTransaction {
   /** Shift this transaction belongs to */
   shiftId: string;
   /** Organization this transaction belongs to */
-  orgId: string;
+  orgId?: string;
   /** Time of transaction (ISO string) */
   time: string;
   /** Type of cash movement */
@@ -927,7 +931,7 @@ export interface Shift {
   /** Branch this shift belongs to — required for RLS isolation */
   branchId: string;
   /** Organization this shift belongs to */
-  orgId: string;
+  orgId?: string;
   /** Branch name for display/receipts */
   branchName?: string;
   /** Current shift status */

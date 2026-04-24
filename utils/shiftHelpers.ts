@@ -43,6 +43,7 @@ export function addTransactionToOpenShift(params: AddShiftTransactionParams): bo
     const newTransaction: CashTransaction = {
       id: idGenerator.generate('transactions', openShift.branchId),
       branchId: openShift.branchId,
+      orgId: openShift.orgId,
       shiftId: openShift.id,
       time: now.toISOString(),
       type,
