@@ -142,7 +142,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
         <button
           type="button"
           onClick={onBack}
-          className={`absolute top-8 ${isRTL ? 'right-6' : 'left-6'} z-50 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-all active:scale-95 shadow-lg backdrop-blur-md border border-white/20`}
+          className={`absolute top-4 ${isRTL ? 'right-4' : 'left-4'} z-50 w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-all active:scale-95 shadow-lg backdrop-blur-md border border-white/20`}
           title={isRTL ? 'الرجوع' : 'Go Back'}
         >
           <span className="material-symbols-rounded text-2xl">
@@ -151,34 +151,32 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
         </button>
 
         <div 
-          className="p-10 text-center relative overflow-hidden"
+          className="p-6 relative overflow-hidden"
           style={{ 
             backgroundColor: activeColor,
             backgroundImage: `linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1))` 
           }}
         >
-          {/* Subtle pattern or glow */}
           <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none bg-[radial-gradient(circle_at_50%_-20%,#ffffff,transparent)]"></div>
 
-          <div className="mb-6 flex justify-center relative z-10">
-            <span 
-              className="material-symbols-rounded text-white"
-              style={{ fontSize: '72px', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.1))' }}
-            >
-              manage_accounts
-            </span>
+          <div className="relative z-10 flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
+                <span className="material-symbols-rounded text-2xl">manage_accounts</span>
+              </div>
+              <h1 className="text-xl font-bold text-white">
+                {isRTL ? 'إعداد الحساب' : 'Account Setup'}
+              </h1>
+            </div>
+            <div className={`scale-90 ${isRTL ? 'origin-left' : 'origin-right'}`}>
+              <OnboardingStepper currentStep={3} language={language} />
+            </div>
           </div>
           
-          <h1 className="text-2xl font-bold text-white mb-2 relative z-10">
-            {isRTL ? 'إعداد حساب المدير' : 'Create Admin Account'}
-          </h1>
-          
-          <OnboardingStepper currentStep={3} language={language} />
-          
-          <p className="text-white/80 relative z-10 text-sm">
+          <p className="text-white/80 relative z-10 text-xs font-medium bg-black/10 p-2.5 rounded-xl border border-white/10">
             {isRTL 
-              ? 'يرجى إنشاء حساب المدير الأول للفرع. ستستخدم هذه البيانات لتسجيل الدخول.' 
-              : 'Please set up the first admin account for this branch. You will use this to sign in.'}
+              ? 'الخطوة ٣: يرجى إنشاء حساب المدير الأول للفرع للبدء في استخدام النظام.' 
+              : 'Step 3: Create the first admin account for this branch to start using the system.'}
           </p>
         </div>
 

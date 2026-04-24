@@ -83,7 +83,7 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
 
       <div className="max-w-md w-full bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
         <div 
-          className="p-10 text-center relative overflow-hidden"
+          className="p-6 relative overflow-hidden"
           style={{ 
             backgroundColor: selectedTheme.hex,
             backgroundImage: `linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1))` 
@@ -91,27 +91,24 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
         >
           <div className="absolute top-0 left-0 w-full h-full opacity-30 pointer-events-none bg-[radial-gradient(circle_at_50%_-20%,#ffffff,transparent)]"></div>
 
-          <div className="mb-6 flex justify-center relative z-10">
-            <div className="animate-float">
-              <span 
-                className="material-symbols-rounded text-white"
-                style={{ fontSize: '76px', filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.15))' }}
-              >
-                corporate_fare
-              </span>
+          <div className="relative z-10 flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
+                <span className="material-symbols-rounded text-2xl">corporate_fare</span>
+              </div>
+              <h1 className="text-xl font-bold text-white">
+                {isRTL ? 'إنشاء منظمة' : 'Create Organization'}
+              </h1>
+            </div>
+            <div className={`scale-90 ${isRTL ? 'origin-left' : 'origin-right'}`}>
+              <OnboardingStepper currentStep={1} language={language} />
             </div>
           </div>
           
-          <h1 className="text-2xl font-bold text-white mb-2 relative z-10 text-center leading-relaxed">
-            {isRTL ? 'إنشاء منظمة جديدة' : 'Create New Organization'}
-          </h1>
-          
-          <OnboardingStepper currentStep={1} language={language} />
-          
-          <p className="text-white/80 relative z-10 text-sm font-medium mt-4">
+          <p className="text-white/80 relative z-10 text-xs font-medium bg-black/10 p-2.5 rounded-xl border border-white/10">
             {isRTL 
-              ? 'ابدأ بتعريف اسم صيدليتك أو مؤسستك' 
-              : 'Start by defining your pharmacy or organization name'}
+              ? 'الخطوة ١: ابدأ بتعريف اسم صيدليتك أو مؤسستك لتخصيص بيئة العمل.' 
+              : 'Step 1: Define your pharmacy name to customize your workspace.'}
           </p>
         </div>
 
