@@ -117,7 +117,7 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
     } finally {
       setIsLoading(false);
     }
-  }, [selectedDrug, dateRange, activeFilters]);
+  }, [selectedDrug, dateRange, activeFilters, activeBranchId]);
 
   useEffect(() => {
     fetchData();
