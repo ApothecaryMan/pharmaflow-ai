@@ -19,7 +19,7 @@ export interface StockMovement {
   drugId: string;
   drugName: string; // Snapshot name
   branchId: string;
-  orgId: string;
+  orgId?: string;
 
   type: StockMovementType;
   quantity: number; // Positive for add, Negative for remove

@@ -1,7 +1,8 @@
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { TRANSLATIONS } from '../../i18n/translations';
-import { authService, type UserSession } from '../../services/auth/authService';
+import { authService } from '../../services/auth/authService';
+import type { UserSession } from '../../types';
 
 interface LoginState {
   username: string;

@@ -21,8 +21,8 @@ export interface PurchaseStats {
 
 export interface PurchaseService {
   getAll(branchId?: string): Promise<Purchase[]>;
-  getById(id: string): Promise<Purchase | null>;
-  getBySupplier(supplierId: string): Promise<Purchase[]>;
+  getById(id: string, branchId?: string): Promise<Purchase | null>;
+  getBySupplier(supplierId: string, branchId?: string): Promise<Purchase[]>;
   getByStatus(status: 'pending' | 'completed' | 'rejected'): Promise<Purchase[]>;
   getPending(): Promise<Purchase[]>;
   filter(filters: PurchaseFilters): Promise<Purchase[]>;

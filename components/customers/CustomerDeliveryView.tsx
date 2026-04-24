@@ -63,6 +63,7 @@ function DeliveryTruckMarker({ longitude, latitude }: DeliveryTruckMarkerProps) 
 
 interface CustomerDeliveryViewProps {
   language?: string;
+  key?: React.Key;
 }
 
 export default function CustomerDeliveryView({ language = 'ar' }: CustomerDeliveryViewProps) {

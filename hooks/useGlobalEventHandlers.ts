@@ -72,10 +72,11 @@ export const useGlobalEventHandlers = ({
   // 3. Background Tasks (Inventory Migration)
   useEffect(() => {
     if (!isLoading && inventory.length > 0) {
-      const count = batchService.migrateInventoryToBatches(inventory);
-      if (count > 0) {
-        console.log(`[Batch System] Migrated ${count} items to batches.`);
-      }
+      batchService.migrateInventoryToBatches(inventory).then((newBatches) => {
+        if (newBatches.length > 0) {
+          console.log(`[Batch System] Migrated ${newBatches.length} items to batches.`);
+        }
+      });
     }
   }, [isLoading, inventory]);
 };
