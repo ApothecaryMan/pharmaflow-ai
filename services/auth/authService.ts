@@ -31,41 +31,10 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
-export interface UserSession {
-  userId?: string;
-  orgId?: string;
-  orgRole?: string; // added orgRole
-  username: string;
-  employeeId?: string; // Optional for dev admin
-  branchId: string;
-  department: 'sales' | 'pharmacy' | 'marketing' | 'hr' | 'it' | 'logistics';
-  role:
-    | 'god'
-    | 'admin'
-    | 'pharmacist_owner'
-    | 'pharmacist_manager'
-    | 'pharmacist'
-    | 'inventory_officer'
-    | 'assistant'
-    | 'hr_manager'
-    | 'cashier'
-    | 'senior_cashier'
-    | 'delivery'
-    | 'delivery_pharmacist'
-    | 'officeboy'
-    | 'manager';
-}
-
-export interface LoginAuditEntry {
-  id: string;
-  timestamp: string;
-  username: string;
-  role: string;
-  branchId: string;
-  action: 'login' | 'logout' | 'switch_user' | 'system_login' | 'system_logout' | 'switch_branch';
-  details?: string;
-  employeeId?: string;
-}
+import { 
+  type UserSession, 
+  type LoginAuditEntry,
+} from '../../types';
 
 const SESSION_KEY = 'branch_pilot_session';
 const AUDIT_KEY = 'pharmaflow_login_audit';

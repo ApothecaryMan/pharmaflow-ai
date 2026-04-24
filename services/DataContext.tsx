@@ -16,6 +16,8 @@ import {
   useState,
 } from 'react';
 import type {
+  ActionContext,
+  CartItem,
   Customer,
   Drug,
   Employee,
@@ -42,6 +44,8 @@ import { syncEngine, type SyncStatus } from './sync/syncEngine';
 import { useComputedInventory } from '../hooks/useComputedInventory';
 import { StorageKeys } from '../config/storageKeys';
 import { storage } from '../utils/storage';
+import { transactionService } from './transactions/transactionService';
+
 export interface DataState {
   inventory: Drug[];
   sales: Sale[];
@@ -68,6 +72,19 @@ export interface DataActions {
   // Sales
   setSales: (sales: Sale[] | ((prev: Sale[]) => Sale[])) => void;
   addSale: (sale: Omit<Sale, 'id'>) => Promise<Sale>;
+  completeSale: (
+    saleData: {
+      items: CartItem[];
+      customerName: string;
+      customerCode?: string;
+      paymentMethod: 'cash' | 'visa';
+      saleType?: 'walk-in' | 'delivery';
+      total: number;
+      subtotal: number;
+      globalDiscount: number;
+    },
+    context: ActionContext
+  ) => Promise<Sale>;
 
   // Suppliers
   setSuppliers: (suppliers: Supplier[] | ((prev: Supplier[]) => Supplier[])) => void;
@@ -76,8 +93,8 @@ export interface DataActions {
 
   // Purchases
   setPurchases: (purchases: Purchase[] | ((prev: Purchase[]) => Purchase[])) => void;
-  addPurchase: (purchase: Omit<Purchase, 'id'>) => Promise<Purchase>;
-  approvePurchase: (id: string, approver: string) => Promise<void>;
+  addPurchase: (purchase: Omit<Purchase, 'id'>, context?: ActionContext) => Promise<Purchase>;
+  approvePurchase: (id: string, context: ActionContext) => Promise<void>;
   rejectPurchase: (id: string) => Promise<void>;
 
   // Returns
@@ -85,6 +102,21 @@ export interface DataActions {
   setPurchaseReturns: (
     returns: PurchaseReturn[] | ((prev: PurchaseReturn[]) => PurchaseReturn[])
   ) => void;
+  processSalesReturn: (
+    returnData: {
+      id: string;
+      saleId: string;
+      items: { drugId: string; quantityReturned: number; isUnit?: boolean; refundAmount?: number }[];
+      totalRefund: number;
+      date: string;
+    },
+    sale: Sale,
+    context: ActionContext
+  ) => Promise<void>;
+  createPurchaseReturn: (
+    ret: Omit<PurchaseReturn, 'id'>,
+    context: ActionContext
+  ) => Promise<PurchaseReturn>;
   addReturn: (ret: Omit<Return, 'id'>) => Promise<Return>;
 
   // Customers
@@ -451,6 +483,24 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     return newSale;
   }, [activeBranchId]);
 
+  const completeSale = useCallback(async (saleData: any, context: ActionContext) => {
+    const result = await transactionService.processCheckout(saleData, rawInventory, context);
+    if (!result.success || !result.sale) throw new Error(result.error);
+    
+    // Refresh all related states
+    const [updatedSales, updatedInventory, updatedBatches] = await Promise.all([
+      salesService.getAll(activeBranchId),
+      inventoryService.getAll(activeBranchId),
+      batchService.getAllBatches(activeBranchId),
+    ]);
+    
+    setSalesState(updatedSales);
+    setRawInventory(updatedInventory);
+    setBatchesState(updatedBatches);
+    
+    return result.sale;
+  }, [activeBranchId, rawInventory]);
+
   const addSupplier = useCallback(async (supplier: Omit<Supplier, 'id'>) => {
     const newSupplier = await supplierService.create({ ...supplier, branchId: activeBranchId });
     setSuppliersState((prev) => [...prev, newSupplier]);
@@ -463,20 +513,48 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     return updated;
   }, []);
 
-  const addPurchase = useCallback(async (purchase: Omit<Purchase, 'id'>) => {
-    const newPurchase = await purchaseService.create({ ...purchase, branchId: activeBranchId });
-    setPurchasesState((prev) => [...prev, newPurchase]);
-    return newPurchase;
-  }, [activeBranchId]);
+  const addPurchase = useCallback(async (purchase: Omit<Purchase, 'id'>, context?: ActionContext) => {
+    if (purchase.status === 'completed' && context) {
+      const result = await transactionService.processDirectPurchaseTransaction(purchase, context);
+      if (!result.success) throw new Error(result.error);
+      
+      // Refresh all related states
+      const [updatedPurchases, updatedInventory, updatedBatches] = await Promise.all([
+        purchaseService.getAll(activeBranchId),
+        inventoryService.getAll(activeBranchId),
+        batchService.getAllBatches(activeBranchId),
+      ]);
+      setPurchasesState(updatedPurchases);
+      setRawInventory(updatedInventory);
+      setBatchesState(updatedBatches);
+      
+      return result.data!;
+    } else {
+      const newPurchase = await purchaseService.create({ 
+        ...purchase, 
+        branchId: activeBranchId,
+        orgId: activeOrgId
+      });
+      setPurchasesState((prev) => [newPurchase, ...prev]);
+      return newPurchase;
+    }
+  }, [activeBranchId, activeOrgId]);
 
-  const approvePurchase = useCallback(async (id: string, approver: string) => {
-    await purchaseService.approve(id, approver);
-    setPurchasesState((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, status: 'completed' as const, approvedBy: approver } : p
-      )
-    );
-  }, []);
+  const approvePurchase = useCallback(async (id: string, context: ActionContext) => {
+    const result = await transactionService.processPurchaseTransaction(id, context);
+    if (!result.success) throw new Error(result.error);
+
+    // Refresh state from services to ensure SSOT
+    const [updatedPurchases, updatedInventory, updatedBatches] = await Promise.all([
+      purchaseService.getAll(activeBranchId),
+      inventoryService.getAll(activeBranchId),
+      batchService.getAllBatches(activeBranchId),
+    ]);
+
+    setPurchasesState(updatedPurchases);
+    setRawInventory(updatedInventory);
+    setBatchesState(updatedBatches);
+  }, [activeBranchId]);
 
   const rejectPurchase = useCallback(async (id: string) => {
     await purchaseService.reject(id, '');
@@ -484,6 +562,42 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       prev.map((p) => (p.id === id ? { ...p, status: 'rejected' as const } : p))
     );
   }, []);
+
+  const processSalesReturn = useCallback(async (returnData: any, sale: Sale, context: ActionContext) => {
+    const result = await transactionService.processReturn(returnData, rawInventory, sale, context);
+    if (!result.success) throw new Error(result.error);
+
+    // Refresh all related states
+    const [updatedReturns, updatedInventory, updatedBatches, updatedSales] = await Promise.all([
+      returnService.getAllSalesReturns(activeBranchId),
+      inventoryService.getAll(activeBranchId),
+      batchService.getAllBatches(activeBranchId),
+      salesService.getAll(activeBranchId),
+    ]);
+
+    setReturnsState(updatedReturns);
+    setRawInventory(updatedInventory);
+    setBatchesState(updatedBatches);
+    setSalesState(updatedSales);
+  }, [activeBranchId, rawInventory]);
+
+  const createPurchaseReturn = useCallback(async (ret: Omit<PurchaseReturn, 'id'>, context: ActionContext) => {
+    const result = await transactionService.processPurchaseReturnTransaction(ret, context);
+    if (!result.success || !result.data) throw new Error(result.error);
+
+    // Refresh all related states
+    const [updatedPurchaseReturns, updatedInventory, updatedBatches] = await Promise.all([
+      returnService.getAllPurchaseReturns(activeBranchId),
+      inventoryService.getAll(activeBranchId),
+      batchService.getAllBatches(activeBranchId),
+    ]);
+
+    setPurchaseReturnsState(updatedPurchaseReturns);
+    setRawInventory(updatedInventory);
+    setBatchesState(updatedBatches);
+
+    return result.data;
+  }, [activeBranchId]);
 
   const addReturn = useCallback(async (ret: Omit<Return, 'id'>) => {
     const newReturn = await returnService.createSalesReturn({ ...ret, branchId: activeBranchId });

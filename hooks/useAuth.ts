@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ROUTES, TEST_ROUTES } from '../config/routes';
 import { useAlert } from '../context';
-import { authService, type UserSession } from '../services/auth/authService';
-import type { ViewState } from '../types';
+import { authService } from '../services/auth/authService';
+import type { ViewState, UserSession } from '../types';
 
 export interface AuthState {
   isAuthenticated: boolean;
