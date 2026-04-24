@@ -2,7 +2,7 @@
 |---|-----------|---------------|----------------|--------------|----------------------|
 | 1 | components/layout/PageRouter.tsx | PageRouter | ?? MEDIUM | Validation/permission rules | usePageRouter.ts |
 | 2 | components/auth/AuthPage.tsx | AuthPage | ?? MEDIUM | Validation/permission rules (parents: App.tsx) | useAuthPage.ts |
-| 3 | components/auth/ForgotPassword.tsx | ForgotPassword | ?? HIGH | Complex local state; Validation/permission rules (parents: components/auth/AuthPage.tsx) | auth.service.ts / useForgotPassword.ts |
+| 3 | components/auth/ForgotPassword.tsx | ForgotPassword | ✅ DONE | UI/logic split complete: state orchestration moved to useForgotPassword.ts; validation/reset delegation moved to forgotPassword.service.ts (parents: components/auth/AuthPage.tsx) | components/auth/useForgotPassword.ts / services/auth/forgotPassword.service.ts |
 | 4 | components/auth/Login.tsx | Login | ?? HIGH | Effect orchestration; Validation/permission rules (parents: components/auth/AuthPage.tsx) | auth.service.ts / useLogin.ts |
 | 5 | components/auth/SignUp.tsx | SignUp | ?? HIGH | Validation/permission rules (parents: components/auth/AuthPage.tsx) | auth.service.ts / useSignUp.ts |
 | 6 | components/common/AnimatedCounter.tsx | AnimatedCounter | ? SKIP | Pure UI primitive/barrel (parents: components/common/SmallCard.tsx, components/dashboard/RealTimeSalesMonitor.tsx) | - |
@@ -156,7 +156,7 @@
 | 154 | pages/IntelligenceDashboard.tsx | IntelligenceDashboard | ?? MEDIUM | Complex local state; Effect orchestration; Derived data/transformation; Entangled enough to consider rewrite | useIntelligenceDashboard.ts |
 
 ### Refactor Order (suggested sequence):
-1. ?? HIGH components/auth/ForgotPassword.tsx ? Complex local state; Validation/permission rules.
+1. ✅ DONE components/auth/ForgotPassword.tsx - UI/logic split complete.
 2. ?? HIGH components/auth/Login.tsx ? Effect orchestration; Validation/permission rules.
 3. ?? HIGH components/auth/SignUp.tsx ? Validation/permission rules.
 4. ?? HIGH components/common/DatePicker.tsx ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
