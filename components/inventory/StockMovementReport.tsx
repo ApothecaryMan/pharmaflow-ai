@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useData } from '../../services';
+import React, { useMemo } from 'react';
 import { useSettings } from '../../context';
-import { TRANSLATIONS } from '../../i18n/translations';
 import { stockMovementService } from '../../services/inventory/stockMovement/stockMovementService';
-import { StockMovement, StockMovementSummary, Drug } from '../../types';
-import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
-import { DatePicker, DateRangePicker } from '../common/DatePicker';
+import { StockMovement, Drug } from '../../types';
+import { SearchDropdown } from '../common/SearchDropdown';
+import { DateRangePicker } from '../common/DatePicker';
 import { TimelineItem } from './stockMovement';
 import { SmallCard } from '../common/SmallCard';
 import { CARD_LG } from '../../utils/themeStyles';
@@ -15,78 +13,58 @@ import { formatExpiryDate, checkExpiryStatus, getExpiryStatusConfig } from '../.
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SearchInput } from '../common/SearchInput';
 import { type FilterConfig } from '../common/FilterPill';
-
+import { useStockMovementReport } from './useStockMovementReport';
 
 interface StockMovementReportProps {
   onViewChange: (view: string, params?: any) => void;
 }
 
 const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange }) => {
-  const { inventory, isLoading: isDataLoading } = useData();
-  const { language, theme, textTransform } = useSettings();
-  const themeColor = theme.primary;
-  const t = TRANSLATIONS[language];
+  const { language } = useSettings();
   const isRTL = language === 'AR';
 
-  // --- State ---
-  const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
-  const [dateRange, setDateRange] = useState<{ start: string; end: string }>(() => {
-    const now = new Date();
-    const start = new Date(now);
-    start.setHours(0, 0, 0, 0);
-    return {
-      start: start.toISOString(),
-      end: now.toISOString()
-    };
-  });
-  const [history, setHistory] = useState<StockMovement[]>([]);
-  const [summary, setSummary] = useState<StockMovementSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [viewType, setViewType] = useState<'summary' | 'timeline'>('summary');
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
+  const {
+    // State
+    selectedDrug,
+    searchQuery,
+    showSearch,
+    dateRange,
+    history,
+    summary,
+    isLoading,
+    viewType,
+    expandedRows,
+    activeFilters,
+    filteredHistory,
+    searchResults,
+    suggestions,
+    highlightedIndex,
+    columns,
+    t,
+    themeColor,
+    textTransform,
+
+    // Handlers
+    setShowSearch,
+    setDateRange,
+    setViewType,
+    handleSelectDrug,
+    onKeyDown,
+    toggleRow,
+    exportCSV,
+    handleUpdateFilter,
+    handleSearchChange,
+    handleClearSearch,
+  } = useStockMovementReport({ onViewChange });
 
   // --- Column Configuration ---
-  const columns = useMemo(() => [
-    { id: 'date', label: isRTL ? 'التاريخ' : 'DATE', width: '12%' },
-    { id: 'type', label: isRTL ? 'النوع' : 'TYPE', width: '11%' },
-    { id: 'quantity', label: isRTL ? 'الكمية' : 'QUANTITY', width: '14%' },
-    { id: 'batch', label: isRTL ? 'التشغيلة / الصلاحية' : 'BATCH / EXPIRY', width: '21%' },
-    { id: 'value', label: isRTL ? 'القيمة' : 'VALUE', width: '10%' },
-    { id: 'stock', label: isRTL ? 'المخزون' : 'STOCK', width: '10%' },
-    { id: 'user', label: isRTL ? 'بواسطة' : 'USER', width: '17%' },
-    { id: 'actions', label: '', width: '5%' }
-  ], [isRTL]);
+  // moved to useStockMovementReport.ts
 
   // --- Data Filtering & Processing ---
-  const filteredHistory = useMemo(() => {
-    return history.filter(m => {
-      if (!m.timestamp || typeof m.timestamp !== 'string' || m.timestamp === 'DATE') return false;
-      const date = new Date(m.timestamp);
-      return !isNaN(date.getTime()) && (m.type as string) !== 'TYPE';
-    });
-  }, [history]);
+  // moved to useStockMovementReport.ts
 
   // --- Search Logic ---
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    return inventory.filter(d => {
-      if (!d) return false;
-      const query = searchQuery.toLowerCase();
-      const displayName = getDisplayName(d, textTransform).toLowerCase();
-      const nameMatch = d.name?.toLowerCase().includes(query) || displayName.includes(query);
-      const arabicMatch = d.nameArabic?.includes(searchQuery);
-      const idMatch = d.id?.toLowerCase().includes(query);
-      const barcodeMatch = d.barcode?.includes(searchQuery);
-      return nameMatch || arabicMatch || idMatch || barcodeMatch;
-    }).slice(0, 8);
-  }, [searchQuery, inventory, textTransform]);
-
-  const suggestions = useMemo(() => {
-    return inventory.map(d => getDisplayName(d, textTransform));
-  }, [inventory, textTransform]);
+  // moved to useStockMovementReport.ts
 
   const filterConfigs = useMemo<FilterConfig[]>(() => [
     {
@@ -116,79 +94,12 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
     }
   ], [isRTL]);
 
-  const handleSelectDrug = (drug: Drug) => {
-    setSelectedDrug(drug);
-    setSearchQuery(getDisplayName(drug, textTransform));
-    setShowSearch(false);
-  };
-
-  const { highlightedIndex, onKeyDown } = useSearchKeyboardNavigation({
-    results: searchResults,
-    onSelect: handleSelectDrug,
-    isOpen: showSearch
-  });
-
   // --- Data Fetching ---
-  const fetchData = useCallback(async () => {
-    if (!selectedDrug) return;
-    setIsLoading(true);
-    try {
-      const filters = {
-        drugId: selectedDrug.id,
-        startDate: dateRange.start,
-        endDate: dateRange.end,
-        type: activeFilters.type?.[0],
-        status: activeFilters.status?.[0],
-      };
-      
-      const moveHistory = await stockMovementService.getHistory(filters) as StockMovement[];
-      const moveSummary = await stockMovementService.getSummaryByDrug(selectedDrug.id, filters);
-      
-      setHistory(moveHistory);
-      setSummary(moveSummary);
-    } catch (error) {
-      console.error('Error fetching stock movement data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedDrug, dateRange, activeFilters]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  // moved to useStockMovementReport.ts
 
   // --- Helpers ---
-  const toggleRow = (id: string) => {
-    const newExpanded = new Set(expandedRows);
-    if (newExpanded.has(id)) newExpanded.delete(id);
-    else newExpanded.add(id);
-    setExpandedRows(newExpanded);
-  };
-
-  const exportCSV = () => {
-    if (history.length === 0) return;
-    const headers = ["Date", "Type", "Quantity", "Previous", "New", "Reason", "Performed By"];
-    const rows = history.map(m => [
-      new Date(m.timestamp).toLocaleString(),
-      m.type,
-      m.quantity,
-      m.previousStock,
-      m.newStock,
-      m.reason || "",
-      m.performedByName || m.performedBy
-    ]);
-    
-    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `stock_movement_${getDisplayName(selectedDrug as Drug, textTransform) || 'report'}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  // toggleRow moved to useStockMovementReport.ts
+  // exportCSV moved to useStockMovementReport.ts
 
   // --- Render Sections ---
   const renderEmptyState = () => (
@@ -216,21 +127,15 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
               <SearchInput
                 placeholder={isRTL ? 'البحث عن صنف...' : 'Search for drug...'}
                 value={searchQuery}
-                onSearchChange={(val) => {
-                  setSearchQuery(val);
-                  setShowSearch(true);
-                }}
+                onSearchChange={handleSearchChange}
                 onFocus={() => setShowSearch(true)}
                 onKeyDown={onKeyDown}
-                onClear={() => {
-                  setSearchQuery('');
-                  setSelectedDrug(null);
-                }}
+                onClear={handleClearSearch}
                 enableAutocomplete
                 suggestions={suggestions}
                 filterConfigs={filterConfigs}
                 activeFilters={activeFilters}
-                onUpdateFilter={(id, vals) => setActiveFilters(prev => ({ ...prev, [id]: vals }))}
+                onUpdateFilter={handleUpdateFilter}
                 className="border-none ring-0 focus:ring-0 shadow-none bg-transparent"
                 wrapperClassName="w-full bg-gray-50 dark:bg-(--bg-input) rounded-2xl border-none ring-1 ring-gray-200 dark:ring-(--border-divider) focus-within:ring-2 focus-within:ring-blue-500 transition-all"
               />
@@ -406,7 +311,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                         status={m.status}
                         batchId={m.batchId}
                         expiryDate={m.expiryDate}
-                        value={getMovementValue(m, selectedDrug)}
+                        value={stockMovementService.calculateMovementValue(m, selectedDrug)}
                       />
                     ))}
                   </div>
@@ -487,14 +392,9 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                 </div>
                               </td>
                               <td style={{ width: columns[4].width }} className="py-2">
-                                {(() => {
-                                  const val = getMovementValue(m, selectedDrug);
-                                  return (
-                                    <span className={`text-sm font-medium tabular-nums text-(--text-secondary)`}>
-                                      {formatCurrency(Math.abs(val))}
-                                    </span>
-                                  );
-                                })()}
+                                <span className={`text-sm font-medium tabular-nums text-(--text-secondary)`}>
+                                  {formatCurrency(Math.abs(stockMovementService.calculateMovementValue(m, selectedDrug)))}
+                                </span>
                               </td>
                               <td style={{ width: columns[5].width }} className="py-2">
                                 <div className="text-xs text-gray-500 flex items-center gap-1">
@@ -576,16 +476,6 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
   );
 };
 
-  const getMovementValue = (movement: StockMovement, drug: Drug | null): number => {
-    if (!drug) return 0;
-    
-    // Sales and Customer Returns use Selling Price (Revenue)
-    if (movement.type === 'sale' || movement.type === 'return_customer') {
-      return movement.quantity * drug.price;
-    }
-    
-    // All other movements (Purchase, Damage, Adjustment) use Cost Price (Asset Value)
-    return movement.quantity * drug.costPrice;
-  };
+// getMovementValue moved to stockMovementService.calculateMovementValue
 
 export default StockMovementReport;

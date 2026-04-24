@@ -89,4 +89,5 @@ export interface StockMovementService {
   getKPISummary: (filters: StockMovementFilters) => Promise<StockMovementKPISummary>;
   approveMovement: (id: string, userId: string, skipSync?: boolean) => Promise<void>;
   rejectMovement: (id: string, userId: string, skipSync?: boolean) => Promise<void>;
+  calculateMovementValue: (movement: StockMovement, drug: any) => number;
 }

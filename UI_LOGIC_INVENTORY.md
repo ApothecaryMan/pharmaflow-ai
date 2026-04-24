@@ -154,13 +154,15 @@
 | 152 | components/test/ModalTests.tsx | ModalTests | ?? MEDIUM | Mostly clean | useModalTests.ts |
 | 153 | components/test/PurchasesTest.tsx | PurchasesTest | ?? HIGH | Direct Supabase/query logic; Storage side effects; Complex local state; Effect orchestration | domain.service.ts / usePurchasesTest.ts |
 | 154 | pages/IntelligenceDashboard.tsx | IntelligenceDashboard | ?? MEDIUM | Complex local state; Effect orchestration; Derived data/transformation; Entangled enough to consider rewrite | useIntelligenceDashboard.ts |
+| 155 | components/inventory/StockMovementReport.tsx | StockMovementReport | ✅ DONE | UI/logic split complete: complex state, search, and CSV export moved to useStockMovementReport.ts; monetary calculations moved to stockMovementService.ts. | components/inventory/useStockMovementReport.ts / services/inventory/stockMovement/stockMovementService.ts |
 
 ### Refactor Order (suggested sequence):
 1. ✅ DONE components/auth/ForgotPassword.tsx - UI/logic split complete.
-2. ?? HIGH components/auth/Login.tsx ? Effect orchestration; Validation/permission rules.
-3. ?? HIGH components/auth/SignUp.tsx ? Validation/permission rules.
-4. ?? HIGH components/common/DatePicker.tsx ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
-5. ?? HIGH components/common/ErrorBoundary.tsx ? Validation/permission rules.
+2. ✅ DONE components/inventory/StockMovementReport.tsx - UI/logic split complete.
+3. ?? HIGH components/auth/Login.tsx ? Effect orchestration; Validation/permission rules.
+4. ?? HIGH components/auth/SignUp.tsx ? Validation/permission rules.
+5. ?? HIGH components/common/DatePicker.tsx ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
+6. ?? HIGH components/common/ErrorBoundary.tsx ? Validation/permission rules.
 6. ?? HIGH components/common/SecureGate.tsx ? Storage side effects; Complex local state; Effect orchestration; Validation/permission rules.
 7. ?? HIGH components/common/SmartInputs.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
 8. ?? HIGH components/common/TanStackTable.tsx ? Storage side effects; Complex local state; Effect orchestration; Derived data/transformation.

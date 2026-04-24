@@ -351,6 +351,18 @@ export const createStockMovementService = (): StockMovementService => ({
       });
     }
   },
+
+  calculateMovementValue: (movement: StockMovement, drug: any): number => {
+    if (!drug) return 0;
+    
+    // Sales and Customer Returns use Selling Price (Revenue)
+    if (movement.type === 'sale' || movement.type === 'return_customer') {
+      return movement.quantity * (drug.price || 0);
+    }
+    
+    // All other movements (Purchase, Damage, Adjustment) use Cost Price (Asset Value)
+    return movement.quantity * (drug.costPrice || 0);
+  },
 });
 
 export const stockMovementService = createStockMovementService();
