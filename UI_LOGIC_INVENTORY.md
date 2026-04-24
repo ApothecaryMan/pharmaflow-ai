@@ -116,7 +116,7 @@
 | 114 | components/purchases/Purchases.tsx | Purchases | ?? HIGH | Direct Supabase/query logic; Storage side effects; Complex local state; Effect orchestration | purchases.service.ts / usePurchases.ts |
 | 115 | components/purchases/SuppliersList.tsx | SuppliersList | ?? HIGH | Direct Supabase/query logic; Complex local state; Derived data/transformation; Validation/permission rules | purchases.service.ts / useSuppliersList.ts |
 | 116 | components/reports/LoginAuditList.tsx | LoginAuditList | ?? HIGH | Derived data/transformation; Validation/permission rules | domain.service.ts / useLoginAuditList.ts |
-| 117 | components/sales/CashRegister.tsx | CashRegister | ?? HIGH | Complex local state; Derived data/transformation; Validation/permission rules | sales.service.ts / useCashRegister.ts |
+| 117 | components/sales/CashRegister.tsx | CashRegister | ✅ DONE | UI/logic split complete: state orchestration, shift handling, and printing logic moved to useCashRegister.ts. | components/sales/useCashRegister.ts |
 | 118 | components/sales/InvoiceTemplate.ts | defaultOptions | ?? MEDIUM | Mostly clean (parents: components/sales/pos/DeliveryOrdersModal.tsx, components/sales/pos/hooks/usePOSCheckout.ts, components/sales/ReceiptDesigner.tsx, components/sales/SaleDetailModal.tsx, components/sales/SalesHistory.tsx) | useInvoiceTemplate.ts |
 | 119 | components/sales/ReceiptDesigner.tsx | ReceiptDesigner | ?? HIGH | Storage side effects; Complex local state; Effect orchestration; Derived data/transformation | sales.service.ts / useReceiptDesigner.ts |
 | 120 | components/sales/ReturnHistory.tsx | ReturnHistory | ?? MEDIUM | Complex local state; Effect orchestration; Derived data/transformation | useReturnHistory.ts |
@@ -163,104 +163,104 @@
 4. ?? HIGH components/auth/SignUp.tsx ? Validation/permission rules.
 5. ?? HIGH components/common/DatePicker.tsx ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
 6. ?? HIGH components/common/ErrorBoundary.tsx ? Validation/permission rules.
-6. ?? HIGH components/common/SecureGate.tsx ? Storage side effects; Complex local state; Effect orchestration; Validation/permission rules.
-7. ?? HIGH components/common/SmartInputs.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
-8. ?? HIGH components/common/TanStackTable.tsx ? Storage side effects; Complex local state; Effect orchestration; Derived data/transformation.
-9. ?? HIGH components/customers/CustomerDensityMap.tsx ? Direct Supabase/query logic; Effect orchestration.
-10. ?? HIGH components/customers/CustomerLoyaltyOverview.tsx ? Direct Supabase/query logic; Derived data/transformation.
-11. ?? HIGH components/customers/CustomerManagement.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
-12. ?? HIGH components/customers/CustomerOverview.tsx ? Derived data/transformation; Validation/permission rules.
-13. ?? HIGH components/dashboard/Dashboard.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
-14. ?? HIGH components/dashboard/RealTimeSalesMonitor.tsx ? Complex local state; Effect orchestration; Derived data/transformation.
-15. ?? HIGH components/dashboard/useDashboardAnalytics.ts ? Derived data/transformation.
-16. ?? HIGH components/dashboard/useRealTimeSalesAnalytics.ts ? Derived data/transformation.
-17. ?? HIGH components/experiments/ExpandedChartModal.tsx ? Direct Supabase/query logic; Complex local state; Derived data/transformation.
-18. ?? HIGH components/experiments/ExpandedProgressModal.tsx ? Direct Supabase/query logic; Derived data/transformation.
-19. ?? HIGH components/hr/EmployeeList.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
-20. ?? HIGH components/hr/EmployeeProfile.tsx ? Direct Supabase/query logic; Storage side effects; Complex local state; Effect orchestration.
-21. ?? HIGH components/inventory/AddProduct.tsx ? Effect orchestration; Derived data/transformation; Validation/permission rules.
-22. ?? HIGH components/inventory/BarcodePrinter.tsx ? Complex local state; Effect orchestration; Derived data/transformation.
-23. ?? HIGH components/inventory/BarcodeStudio.tsx ? Complex local state; Effect orchestration; Derived data/transformation.
-24. ?? HIGH components/inventory/Inventory.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
-25. ?? HIGH components/inventory/StockAdjustment.tsx ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
-26. ?? HIGH components/layout/MobileNavigation.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
-27. ?? HIGH components/layout/Navbar.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
-28. ?? HIGH components/layout/StatusBar/items/SettingsMenu.tsx ? Complex local state; Effect orchestration; Validation/permission rules.
-29. ?? HIGH components/mobile/MobileMedicineSearch.tsx ? Complex local state; Effect orchestration; Derived data/transformation.
-30. ?? HIGH components/mobile/MobileSearchCartDrawer.tsx ? Direct Supabase/query logic; Derived data/transformation; Validation/permission rules.
-31. ?? HIGH components/onboarding/BranchSetupScreen.tsx ? Complex local state; Validation/permission rules.
-32. ?? HIGH components/onboarding/EmployeeSetupScreen.tsx ? Complex local state; Effect orchestration; Validation/permission rules.
-33. ?? HIGH components/onboarding/OrgSetupScreen.tsx ? Complex local state; Validation/permission rules.
-34. ?? HIGH components/org/OrganizationManagementPage.tsx ? Direct Supabase/query logic; Complex local state; Effect orchestration; Validation/permission rules.
-35. ?? HIGH components/purchases/PendingApproval.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
-36. ?? HIGH components/purchases/PurchaseReturns.tsx ? Complex local state; Derived data/transformation; Validation/permission rules.
-37. ?? HIGH components/purchases/Purchases.tsx ? Direct Supabase/query logic; Storage side effects; Complex local state; Effect orchestration.
-38. ?? HIGH components/purchases/SuppliersList.tsx ? Direct Supabase/query logic; Complex local state; Derived data/transformation; Validation/permission rules.
-39. ?? HIGH components/reports/LoginAuditList.tsx ? Derived data/transformation; Validation/permission rules.
-40. ?? HIGH components/sales/CashRegister.tsx ? Complex local state; Derived data/transformation; Validation/permission rules.
-41. ?? HIGH components/sales/ReceiptDesigner.tsx ? Storage side effects; Complex local state; Effect orchestration; Derived data/transformation.
-42. ?? HIGH components/sales/ReturnModal.tsx ? Direct Supabase/query logic; Complex local state; Derived data/transformation; Validation/permission rules.
-43. ?? HIGH components/sales/SaleDetailModal.tsx ? Direct Supabase/query logic; Derived data/transformation; Validation/permission rules.
-44. ?? HIGH components/sales/SalesHistory.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
-45. ?? HIGH components/sales/ShiftHistory.tsx ? Complex local state; Derived data/transformation.
-46. ?? HIGH components/sales/pos/DeliveryOrdersModal.tsx ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
-47. ?? HIGH components/sales/pos/POS.tsx ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
-48. ?? HIGH components/sales/pos/hooks/usePOSCart.ts ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
-49. ?? HIGH components/settings/BranchSettings.tsx ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
-50. ?? HIGH components/test/PurchasesTest.tsx ? Direct Supabase/query logic; Storage side effects; Complex local state; Effect orchestration.
-51. ?? MEDIUM components/layout/PageRouter.tsx ? Validation/permission rules.
-52. ?? MEDIUM components/auth/AuthPage.tsx ? Validation/permission rules.
-53. ?? MEDIUM components/common/LocationSelector.tsx ? Effect orchestration; Derived data/transformation.
-54. ?? MEDIUM components/customers/CustomerHistory.tsx ? Effect orchestration; Derived data/transformation.
-55. ?? MEDIUM components/customers/CustomerLoyaltyLookup.tsx ? Effect orchestration; Derived data/transformation.
-56. ?? MEDIUM components/experiments/AdvancedSmCard.tsx ? Mostly clean.
-57. ?? MEDIUM components/experiments/DashboardExperiments.tsx ? Derived data/transformation.
-58. ?? MEDIUM components/hr/StaffOverview.tsx ? Derived data/transformation.
-59. ?? MEDIUM components/hr/hooks/useStaffAnalytics.tsx ? Derived data/transformation.
-60. ?? MEDIUM components/intelligence/audit/AuditPage.tsx ? Mostly clean.
-61. ?? MEDIUM components/intelligence/audit/TransactionDetailModal.tsx ? Mostly clean.
-62. ?? MEDIUM components/intelligence/financials/FinancialsPage.tsx ? Mostly clean.
-63. ?? MEDIUM components/intelligence/procurement/GeneratePOModal.tsx ? Mostly clean.
-64. ?? MEDIUM components/intelligence/procurement/ProcurementPage.tsx ? Effect orchestration.
-65. ?? MEDIUM components/intelligence/risk/CreateDiscountModal.tsx ? Mostly clean.
-66. ?? MEDIUM components/intelligence/risk/ExpiryRiskGrid.tsx ? Mostly clean.
-67. ?? MEDIUM components/intelligence/risk/RiskPage.tsx ? Effect orchestration.
-68. ?? MEDIUM components/inventory/BarcodePreview.tsx ? Derived data/transformation.
-69. ?? MEDIUM components/inventory/InventoryManagement.tsx ? Effect orchestration.
-70. ?? MEDIUM components/inventory/LabelPrinter.ts ? Validation/permission rules.
-71. ?? MEDIUM components/inventory/StockAdjustmentPrint.tsx ? Effect orchestration.
-72. ?? MEDIUM components/inventory/studio/PropertyInspector.tsx ? Mostly clean.
-73. ?? MEDIUM components/layout/MainLayout.tsx ? Validation/permission rules.
-74. ?? MEDIUM components/layout/MobileDrawer.tsx ? Effect orchestration.
-75. ?? MEDIUM components/layout/PageRouter.tsx ? Validation/permission rules.
-76. ?? MEDIUM components/layout/SidebarContent.tsx ? Mostly clean.
-77. ?? MEDIUM components/layout/SidebarDropdown.tsx ? Derived data/transformation.
-78. ?? MEDIUM components/layout/SidebarMenu.tsx ? Effect orchestration; Derived data/transformation.
-79. ?? MEDIUM components/layout/TabBar.tsx ? Effect orchestration.
-80. ?? MEDIUM components/mobile/InlineBarcodeScanner.tsx ? Complex local state; Effect orchestration.
-81. ?? MEDIUM components/org/MemberPermissionMatrix.tsx ? Derived data/transformation; Validation/permission rules.
-82. ?? MEDIUM components/sales/InvoiceTemplate.ts ? Mostly clean.
-83. ?? MEDIUM components/sales/ReturnHistory.tsx ? Complex local state; Effect orchestration; Derived data/transformation.
-84. ?? MEDIUM components/sales/pos/CartItemControls.tsx ? Validation/permission rules.
-85. ?? MEDIUM components/sales/pos/SortableCartItem.tsx ? Validation/permission rules.
-86. ?? MEDIUM components/sales/pos/hooks/useBarcodeScanner.ts ? Effect orchestration.
-87. ?? MEDIUM components/sales/pos/hooks/usePOSCheckout.ts ? Complex local state; Effect orchestration; Validation/permission rules.
-88. ?? MEDIUM components/sales/pos/hooks/usePOSCustomer.ts ? Complex local state; Effect orchestration.
-89. ?? MEDIUM components/sales/pos/hooks/usePOSSearchAndFilters.ts ? Derived data/transformation.
-90. ?? MEDIUM components/sales/pos/hooks/usePOSSearchWorker.ts ? Effect orchestration.
-91. ?? MEDIUM components/sales/pos/hooks/usePOSSidebarResizer.ts ? Effect orchestration.
-92. ?? MEDIUM components/sales/pos/ui/ClosedTabsHistoryModal.tsx ? Mostly clean.
-93. ?? MEDIUM components/sales/pos/ui/POSCartSidebar.tsx ? Derived data/transformation; Validation/permission rules.
-94. ?? MEDIUM components/sales/pos/ui/POSCustomerHistoryModal.tsx ? Effect orchestration; Derived data/transformation.
-95. ?? MEDIUM components/sales/pos/ui/POSCustomerPanel.tsx ? Mostly clean.
-96. ?? MEDIUM components/sales/pos/ui/POSDrugAnalytics.tsx ? Effect orchestration.
-97. ?? MEDIUM components/sales/pos/ui/POSDrugBranches.tsx ? Effect orchestration.
-98. ?? MEDIUM components/sales/pos/ui/POSDrugOverview.tsx ? Derived data/transformation; Validation/permission rules.
-99. ?? MEDIUM components/sales/pos/ui/POSPageHeader.tsx ? Mostly clean.
-100. ?? MEDIUM components/sales/pos/utils/POSUtils.ts ? Validation/permission rules.
-101. ?? MEDIUM components/settings/PrinterSettings.tsx ? Complex local state; Effect orchestration.
-102. ?? MEDIUM components/test/ModalTests.tsx ? Mostly clean.
-103. ?? MEDIUM pages/IntelligenceDashboard.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Entangled enough to consider rewrite.
+7. ?? HIGH components/common/SecureGate.tsx ? Storage side effects; Complex local state; Effect orchestration; Validation/permission rules.
+8. ?? HIGH components/common/SmartInputs.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
+9. ?? HIGH components/common/TanStackTable.tsx ? Storage side effects; Complex local state; Effect orchestration; Derived data/transformation.
+10. ?? HIGH components/customers/CustomerDensityMap.tsx ? Direct Supabase/query logic; Effect orchestration.
+11. ?? HIGH components/customers/CustomerLoyaltyOverview.tsx ? Direct Supabase/query logic; Derived data/transformation.
+12. ?? HIGH components/customers/CustomerManagement.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
+13. ?? HIGH components/customers/CustomerOverview.tsx ? Derived data/transformation; Validation/permission rules.
+14. ?? HIGH components/dashboard/Dashboard.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
+15. ?? HIGH components/dashboard/RealTimeSalesMonitor.tsx ? Complex local state; Effect orchestration; Derived data/transformation.
+16. ?? HIGH components/dashboard/useDashboardAnalytics.ts ? Derived data/transformation.
+17. ?? HIGH components/dashboard/useRealTimeSalesAnalytics.ts ? Derived data/transformation.
+18. ?? HIGH components/experiments/ExpandedChartModal.tsx ? Direct Supabase/query logic; Complex local state; Derived data/transformation.
+19. ?? HIGH components/experiments/ExpandedProgressModal.tsx ? Direct Supabase/query logic; Derived data/transformation.
+20. ?? HIGH components/hr/EmployeeList.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
+21. ?? HIGH components/hr/EmployeeProfile.tsx ? Direct Supabase/query logic; Storage side effects; Complex local state; Effect orchestration.
+22. ?? HIGH components/inventory/AddProduct.tsx ? Effect orchestration; Derived data/transformation; Validation/permission rules.
+23. ?? HIGH components/inventory/BarcodePrinter.tsx ? Complex local state; Effect orchestration; Derived data/transformation.
+24. ?? HIGH components/inventory/BarcodeStudio.tsx ? Complex local state; Effect orchestration; Derived data/transformation.
+25. ?? HIGH components/inventory/Inventory.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
+26. ?? HIGH components/inventory/StockAdjustment.tsx ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
+27. ?? HIGH components/layout/MobileNavigation.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
+28. ?? HIGH components/layout/Navbar.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
+29. ?? HIGH components/layout/StatusBar/items/SettingsMenu.tsx ? Complex local state; Effect orchestration; Validation/permission rules.
+30. ?? HIGH components/mobile/MobileMedicineSearch.tsx ? Complex local state; Effect orchestration; Derived data/transformation.
+31. ?? HIGH components/mobile/MobileSearchCartDrawer.tsx ? Direct Supabase/query logic; Derived data/transformation; Validation/permission rules.
+32. ?? HIGH components/onboarding/BranchSetupScreen.tsx ? Complex local state; Validation/permission rules.
+33. ?? HIGH components/onboarding/EmployeeSetupScreen.tsx ? Complex local state; Effect orchestration; Validation/permission rules.
+34. ?? HIGH components/onboarding/OrgSetupScreen.tsx ? Complex local state; Validation/permission rules.
+35. ?? HIGH components/org/OrganizationManagementPage.tsx ? Direct Supabase/query logic; Complex local state; Effect orchestration; Validation/permission rules.
+36. ?? HIGH components/purchases/PendingApproval.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
+37. ?? HIGH components/purchases/PurchaseReturns.tsx ? Complex local state; Derived data/transformation; Validation/permission rules.
+38. ?? HIGH components/purchases/Purchases.tsx ? Direct Supabase/query logic; Storage side effects; Complex local state; Effect orchestration.
+39. ?? HIGH components/purchases/SuppliersList.tsx ? Direct Supabase/query logic; Complex local state; Derived data/transformation; Validation/permission rules.
+40. ?? HIGH components/reports/LoginAuditList.tsx ? Derived data/transformation; Validation/permission rules.
+41. ✅ DONE components/sales/CashRegister.tsx - UI/logic split complete.
+42. ?? HIGH components/sales/ReceiptDesigner.tsx ? Storage side effects; Complex local state; Effect orchestration; Derived data/transformation.
+43. ?? HIGH components/sales/ReturnModal.tsx ? Direct Supabase/query logic; Complex local state; Derived data/transformation; Validation/permission rules.
+44. ?? HIGH components/sales/SaleDetailModal.tsx ? Direct Supabase/query logic; Derived data/transformation; Validation/permission rules.
+45. ?? HIGH components/sales/SalesHistory.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
+46. ?? HIGH components/sales/ShiftHistory.tsx ? Complex local state; Derived data/transformation.
+47. ?? HIGH components/sales/pos/DeliveryOrdersModal.tsx ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
+48. ?? HIGH components/sales/pos/POS.tsx ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
+49. ?? HIGH components/sales/pos/hooks/usePOSCart.ts ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
+50. ?? HIGH components/settings/BranchSettings.tsx ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
+51. ?? HIGH components/test/PurchasesTest.tsx ? Direct Supabase/query logic; Storage side effects; Complex local state; Effect orchestration.
+52. ?? MEDIUM components/layout/PageRouter.tsx ? Validation/permission rules.
+53. ?? MEDIUM components/auth/AuthPage.tsx ? Validation/permission rules.
+54. ?? MEDIUM components/common/LocationSelector.tsx ? Effect orchestration; Derived data/transformation.
+55. ?? MEDIUM components/customers/CustomerHistory.tsx ? Effect orchestration; Derived data/transformation.
+56. ?? MEDIUM components/customers/CustomerLoyaltyLookup.tsx ? Effect orchestration; Derived data/transformation.
+57. ?? MEDIUM components/experiments/AdvancedSmCard.tsx ? Mostly clean.
+58. ?? MEDIUM components/experiments/DashboardExperiments.tsx ? Derived data/transformation.
+59. ?? MEDIUM components/hr/StaffOverview.tsx ? Derived data/transformation.
+60. ?? MEDIUM components/hr/hooks/useStaffAnalytics.tsx ? Derived data/transformation.
+61. ?? MEDIUM components/intelligence/audit/AuditPage.tsx ? Mostly clean.
+62. ?? MEDIUM components/intelligence/audit/TransactionDetailModal.tsx ? Mostly clean.
+63. ?? MEDIUM components/intelligence/financials/FinancialsPage.tsx ? Mostly clean.
+64. ?? MEDIUM components/intelligence/procurement/GeneratePOModal.tsx ? Mostly clean.
+65. ?? MEDIUM components/intelligence/procurement/ProcurementPage.tsx ? Effect orchestration.
+66. ?? MEDIUM components/intelligence/risk/CreateDiscountModal.tsx ? Mostly clean.
+67. ?? MEDIUM components/intelligence/risk/ExpiryRiskGrid.tsx ? Mostly clean.
+68. ?? MEDIUM components/intelligence/risk/RiskPage.tsx ? Effect orchestration.
+69. ?? MEDIUM components/inventory/BarcodePreview.tsx ? Derived data/transformation.
+70. ?? MEDIUM components/inventory/InventoryManagement.tsx ? Effect orchestration.
+71. ?? MEDIUM components/inventory/LabelPrinter.ts ? Validation/permission rules.
+72. ?? MEDIUM components/inventory/StockAdjustmentPrint.tsx ? Effect orchestration.
+73. ?? MEDIUM components/inventory/studio/PropertyInspector.tsx ? Mostly clean.
+74. ?? MEDIUM components/layout/MainLayout.tsx ? Validation/permission rules.
+75. ?? MEDIUM components/layout/MobileDrawer.tsx ? Effect orchestration.
+76. ?? MEDIUM components/layout/PageRouter.tsx ? Validation/permission rules.
+77. ?? MEDIUM components/layout/SidebarContent.tsx ? Mostly clean.
+78. ?? MEDIUM components/layout/SidebarDropdown.tsx ? Derived data/transformation.
+79. ?? MEDIUM components/layout/SidebarMenu.tsx ? Effect orchestration; Derived data/transformation.
+80. ?? MEDIUM components/layout/TabBar.tsx ? Effect orchestration.
+81. ?? MEDIUM components/mobile/InlineBarcodeScanner.tsx ? Complex local state; Effect orchestration.
+82. ?? MEDIUM components/org/MemberPermissionMatrix.tsx ? Derived data/transformation; Validation/permission rules.
+83. ?? MEDIUM components/sales/InvoiceTemplate.ts ? Mostly clean.
+84. ?? MEDIUM components/sales/ReturnHistory.tsx ? Complex local state; Effect orchestration; Derived data/transformation.
+85. ?? MEDIUM components/sales/pos/CartItemControls.tsx ? Validation/permission rules.
+86. ?? MEDIUM components/sales/pos/SortableCartItem.tsx ? Validation/permission rules.
+87. ?? MEDIUM components/sales/pos/hooks/useBarcodeScanner.ts ? Effect orchestration.
+88. ?? MEDIUM components/sales/pos/hooks/usePOSCheckout.ts ? Complex local state; Effect orchestration; Validation/permission rules.
+89. ?? MEDIUM components/sales/pos/hooks/usePOSCustomer.ts ? Complex local state; Effect orchestration.
+90. ?? MEDIUM components/sales/pos/hooks/usePOSSearchAndFilters.ts ? Derived data/transformation.
+91. ?? MEDIUM components/sales/pos/hooks/usePOSSearchWorker.ts ? Effect orchestration.
+92. ?? MEDIUM components/sales/pos/hooks/usePOSSidebarResizer.ts ? Effect orchestration.
+93. ?? MEDIUM components/sales/pos/ui/ClosedTabsHistoryModal.tsx ? Mostly clean.
+94. ?? MEDIUM components/sales/pos/ui/POSCartSidebar.tsx ? Derived data/transformation; Validation/permission rules.
+95. ?? MEDIUM components/sales/pos/ui/POSCustomerHistoryModal.tsx ? Effect orchestration; Derived data/transformation.
+96. ?? MEDIUM components/sales/pos/ui/POSCustomerPanel.tsx ? Mostly clean.
+97. ?? MEDIUM components/sales/pos/ui/POSDrugAnalytics.tsx ? Effect orchestration.
+98. ?? MEDIUM components/sales/pos/ui/POSDrugBranches.tsx ? Effect orchestration.
+99. ?? MEDIUM components/sales/pos/ui/POSDrugOverview.tsx ? Derived data/transformation; Validation/permission rules.
+100. ?? MEDIUM components/sales/pos/ui/POSPageHeader.tsx ? Mostly clean.
+101. ?? MEDIUM components/sales/pos/utils/POSUtils.ts ? Validation/permission rules.
+102. ?? MEDIUM components/settings/PrinterSettings.tsx ? Complex local state; Effect orchestration.
+103. ?? MEDIUM components/test/ModalTests.tsx ? Mostly clean.
+104. ?? MEDIUM pages/IntelligenceDashboard.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Entangled enough to consider rewrite.
 
 ### Shared Utilities Needed:
 - Date/expiry formatting and age bucketing: repeated in inventory, POS, sales history, shift history, and intelligence views.

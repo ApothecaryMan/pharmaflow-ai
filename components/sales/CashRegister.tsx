@@ -1,26 +1,16 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
-import { useMemo, useState } from 'react';
-import { useStatusBar } from '../../components/layout/StatusBar';
-import { type UserRole } from '../../config/permissions';
-import { permissionsService } from '../../services/auth/permissions';
-import { useShift } from '../../hooks/useShift';
+import { useMemo } from 'react';
 import { CASH_REGISTER_HELP } from '../../i18n/helpInstructions';
-import type { CashTransaction, CashTransactionType, Employee, Language, Shift } from '../../types';
-import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
-import { BUTTON_BASE, CARD_BASE, INPUT_BASE, THEME_COLORS } from '../../utils/themeStyles';
+import type { CashTransaction, CashTransactionType, Employee, Language } from '../../types';
+import { formatCurrencyParts } from '../../utils/currency';
+import { CARD_BASE, INPUT_BASE } from '../../utils/themeStyles';
 import { HelpButton, HelpModal } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useSmartDirection } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
-import { useData } from '../../services';
-import { storage } from '../../utils/storage';
-import { StorageKeys } from '../../config/storageKeys';
-import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
-import { getPrinterSettings, printReceiptSilently } from '../../utils/qzPrinter';
-import { idGenerator } from '../../utils/idGenerator';
-import { branchService } from '../../services/branchService';
+import { useCashRegister } from './useCashRegister';
 
 interface CashRegisterProps {
   color: string;
@@ -37,36 +27,37 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
   employees,
   currentEmployeeId,
 }) => {
-  const { getVerifiedDate } = useStatusBar();
-  // Get help instructions based on language
   const helpContent = CASH_REGISTER_HELP[language];
 
-  // Use the shared shift hook
-  const { currentShift, shifts, isLoading, startShift, endShift, addTransaction } = useShift();
-  const { purchases, purchaseReturns, sales, activeBranchId, branches } = useData();
-
-  // Local UI State
-  const [modalMode, setModalMode] = useState<'open' | 'close' | 'in' | 'out' | null>(null);
-  const [amountInput, setAmountInput] = useState<string>('');
-  const [reasonInput, setReasonInput] = useState<string>('');
-  const [showHelp, setShowHelp] = useState(false);
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [filterType, setFilterType] = useState('all');
-
-  // Current balance calculation
-  // Expected balance = opening + sales + deposits - withdrawals - returns
-  const currentBalance = useMemo(() => {
-    if (!currentShift) return 0;
-    return (
-      currentShift.openingBalance +
-      currentShift.cashSales +
-      currentShift.cashIn +
-      (currentShift.cashPurchaseReturns || 0) -
-      currentShift.cashOut -
-      (currentShift.returns || 0) -
-      (currentShift.cashPurchases || 0)
-    );
-  }, [currentShift]);
+  const {
+    currentShift,
+    isLoading,
+    modalMode,
+    setModalMode,
+    amountInput,
+    setAmountInput,
+    reasonInput,
+    setReasonInput,
+    showHelp,
+    setShowHelp,
+    validationError,
+    setValidationError,
+    filterType,
+    setFilterType,
+    currentBalance,
+    permissions,
+    filteredTransactions,
+    counts,
+    handleOpenShift,
+    handleCloseShift,
+    handleCashTransaction,
+    closeModal,
+  } = useCashRegister({
+    t,
+    language,
+    employees,
+    currentEmployeeId,
+  });
 
   const columns = useMemo<ColumnDef<CashTransaction>[]>(
     () => [
@@ -186,348 +177,8 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         meta: { align: 'end' },
       },
     ],
-    [t, language]
+    [t, language, employees]
   );
-
-  // Filter Logic
-  const filteredTransactions = useMemo(() => {
-    if (!currentShift) return [];
-    return currentShift.transactions.filter((tx) => {
-      if (filterType === 'all') return true;
-      if (filterType === 'sales') return tx.type === 'sale' || tx.type === 'card_sale';
-      if (filterType === 'returns') return tx.type === 'return';
-      if (filterType === 'purchases') return tx.type === 'purchase' || tx.type === 'purchase_return';
-      if (filterType === 'operations') return ['in', 'out', 'opening', 'closing'].includes(tx.type);
-      return true;
-    });
-  }, [currentShift, filterType]);
-
-  const counts = useMemo(() => {
-    if (!currentShift) return { all: 0, sales: 0, returns: 0, operations: 0 };
-    return {
-      all: currentShift.transactions.length,
-      sales: currentShift.transactions.filter((tx) => tx.type === 'sale' || tx.type === 'card_sale')
-        .length,
-      returns: currentShift.transactions.filter((tx) => tx.type === 'return').length,
-      purchases: currentShift.transactions.filter(
-        (tx) => tx.type === 'purchase' || tx.type === 'purchase_return'
-      ).length,
-      operations: currentShift.transactions.filter((tx) =>
-        ['in', 'out', 'opening', 'closing'].includes(tx.type)
-      ).length,
-    };
-  }, [currentShift]);
-
-  // Check if current user has permission to view expected balance
-  const canViewExpectedBalance = useMemo(() => {
-    if (!currentEmployeeId || !employees) return false;
-    const user = employees.find((e) => e.id === currentEmployeeId);
-    if (!user) return false;
-
-    return permissionsService.can('shift.view_expected_balance');
-  }, [currentEmployeeId, employees]);
-
-  // Check if current user has permission to add/remove cash manually
-  const canAddCash = useMemo(() => {
-    if (!currentEmployeeId || !employees) return false;
-    const user = employees.find((e) => e.id === currentEmployeeId);
-    if (!user) return false;
-
-    return permissionsService.can('shift.cash_in');
-  }, [currentEmployeeId, employees]);
-
-  const canRemoveCash = useMemo(() => {
-    if (!currentEmployeeId || !employees) return false;
-    const user = employees.find((e) => e.id === currentEmployeeId);
-    if (!user) return false;
-
-    return permissionsService.can('shift.cash_out');
-  }, [currentEmployeeId, employees]);
-
-  // Check if current user has permission to open/close shift
-  const canOpenShift = useMemo(() => {
-    if (!currentEmployeeId || !employees) return false;
-    const user = employees.find((e) => e.id === currentEmployeeId);
-    if (!user) return false;
-
-    return permissionsService.can('shift.open');
-  }, [currentEmployeeId, employees]);
-
-  const canCloseShift = useMemo(() => {
-    if (!currentEmployeeId || !employees) return false;
-    const user = employees.find((e) => e.id === currentEmployeeId);
-    if (!user) return false;
-
-    return permissionsService.can('shift.close');
-  }, [currentEmployeeId, employees]);
-
-  // Actions
-  const handleOpenShift = () => {
-    const amount = parseFloat(amountInput);
-
-    // Validation
-    if (amountInput === '' || isNaN(amount)) {
-      setValidationError(t.cashRegister.validation.amountRequired);
-      return;
-    }
-    if (amount < 0) {
-      setValidationError(t.cashRegister.validation.negativeAmount);
-      return;
-    }
-
-    // CHECK AUTH & PERMISSIONS
-    if (!currentEmployeeId || !canOpenShift) {
-      setValidationError(
-        language === 'AR'
-          ? 'غير مصرح لك بفتح المناوبة'
-          : 'You do not have permission to open a shift'
-      );
-      return;
-    }
-
-    const startUser = employees?.find((e) => e.id === currentEmployeeId);
-    const userName = startUser ? startUser.name : 'Pharmacist';
-
-    const newShiftId = idGenerator.generate('shifts', activeBranchId);
-
-
-
-    const activeBranch = branches.find(b => b.id === activeBranchId);
-
-    const newShift: Shift = {
-      id: newShiftId,
-      branchId: activeBranchId,
-      branchName: activeBranch?.name,
-      status: 'open',
-      openTime: getVerifiedDate().toISOString(),
-      openedBy: userName,
-      openingBalance: amount,
-      cashIn: 0,
-      cashOut: 0,
-      cashSales: 0,
-      cardSales: 0,
-      returns: 0, // Initialize returns counter
-      transactions: [
-        {
-          id: idGenerator.generate('transactions', activeBranchId),
-          branchId: activeBranchId,
-          shiftId: newShiftId,
-          time: getVerifiedDate().toISOString(),
-          type: 'opening',
-          amount: amount,
-          reason: reasonInput || 'Start of shift',
-          userId: currentEmployeeId || 'System',
-        },
-      ],
-    };
-
-    startShift(newShift);
-    closeModal();
-  };
-
-  const handleCloseShift = () => {
-    if (!currentShift) return;
-    const amount = parseFloat(amountInput);
-
-    // Validation
-    if (amountInput === '' || isNaN(amount)) {
-      setValidationError(t.cashRegister.validation.amountRequired);
-      return;
-    }
-    if (amount < 0) {
-      setValidationError(t.cashRegister.validation.negativeAmount);
-      return;
-    }
-
-    // CHECK AUTH & PERMISSIONS
-    if (!currentEmployeeId || !canCloseShift) {
-      setValidationError(
-        language === 'AR'
-          ? 'غير مصرح لك بإغلاق المناوبة'
-          : 'You do not have permission to close a shift'
-      );
-      return;
-    }
-
-    const startUser = employees?.find((e) => e.id === currentEmployeeId);
-    const userName = startUser ? startUser.name : 'Pharmacist';
-
-    // Snapshot computations
-    const closeTs = getVerifiedDate();
-    const shiftStart = new Date(currentShift.openTime).getTime();
-    const shiftEnd = closeTs.getTime();
-
-    const cashPurchases = purchases
-      .filter((p) => p.paymentType === 'cash' && new Date(p.date).getTime() >= shiftStart && new Date(p.date).getTime() <= shiftEnd)
-      .reduce((sum, p) => sum + p.totalCost, 0);
-
-    const cashPurchaseReturns = purchaseReturns
-      .filter((pr) => new Date(pr.date).getTime() >= shiftStart && new Date(pr.date).getTime() <= shiftEnd)
-      .reduce((sum, pr) => sum + pr.totalRefund, 0);
-
-    const cashInvoiceCount = currentShift.transactions.filter((tx) => tx.type === 'sale').length;
-    const cardInvoiceCount = currentShift.transactions.filter((tx) => tx.type === 'card_sale').length;
-
-    const totalDiscounts = sales
-      .filter((s) => new Date(s.date).getTime() >= shiftStart && new Date(s.date).getTime() <= shiftEnd)
-      .reduce((sum, s) => sum + (s.globalDiscount || 0), 0);
-
-    const shiftDurationMinutes = Math.round((shiftEnd - shiftStart) / 60000);
-
-    const counterKey = `${StorageKeys.SHIFT_RECEIPT_COUNTER}_${currentShift.branchId || 'default'}`;
-    const prevCounter = storage.get<number>(counterKey, 0);
-    const handoverReceiptNumber = prevCounter + 1;
-    storage.set(counterKey, handoverReceiptNumber);
-
-    const closedShift: Shift = {
-      ...currentShift,
-      status: 'closed',
-      closeTime: closeTs.toISOString(),
-      closedBy: userName,
-      closingBalance: amount,
-      expectedBalance: currentBalance,
-      cashPurchases,
-      cashPurchaseReturns,
-      totalDiscounts,
-      cashInvoiceCount,
-      cardInvoiceCount,
-      shiftDurationMinutes,
-      handoverReceiptNumber,
-      notes: reasonInput,
-      printCount: 1, // First print
-      transactions: [
-        ...currentShift.transactions,
-        {
-          id: getVerifiedDate().getTime().toString() + '-close',
-          branchId: activeBranchId,
-          shiftId: currentShift.id,
-          time: getVerifiedDate().toISOString(),
-          type: 'closing',
-          amount: amount,
-          reason: 'End of shift',
-          userId: currentEmployeeId || 'System',
-        },
-      ],
-    };
-
-    endShift(closedShift);
-    closeModal();
-
-    // Trigger Print
-    setTimeout(async () => {
-      try {
-        const html = generateShiftReceiptHTML(closedShift, language);
-        
-        // Try QZ Tray silent printing first
-        const printerSettings = getPrinterSettings();
-        const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
-        let printedSilently = false;
-
-        if (shouldTrySilent && printerSettings.receiptPrinter) {
-          try {
-            const silentPrinted = await printReceiptSilently(html);
-            if (silentPrinted) {
-              console.log('Shift Receipt printed silently via QZ Tray');
-              printedSilently = true;
-            }
-          } catch (silentErr) {
-            console.warn('QZ Tray silent print failed, falling back to browser print:', silentErr);
-            if (printerSettings.silentMode !== 'fallback') {
-              return;
-            }
-          }
-        }
-
-        if (!printedSilently) {
-          const printWindow = window.open('', '_blank', 'width=400,height=600');
-          if (printWindow) {
-            printWindow.document.write(html);
-            printWindow.document.close();
-            printWindow.focus();
-            setTimeout(() => {
-              printWindow.print();
-              printWindow.close();
-            }, 500);
-          }
-        }
-      } catch (e) {
-        console.error('Auto-print failed:', e);
-      }
-    }, 500);
-  };
-
-  const handleCashTransaction = () => {
-    if (!currentShift || !modalMode) return;
-    const amount = parseFloat(amountInput);
-
-    // Validation
-    if (amountInput === '' || isNaN(amount)) {
-      setValidationError(t.cashRegister.validation.amountRequired);
-      return;
-    }
-    if (amount <= 0) {
-      setValidationError(t.cashRegister.validation.positiveAmount);
-      return;
-    }
-    // CHECK PERMISSIONS
-    if (modalMode === 'in' && !canAddCash) {
-      setValidationError(
-        language === 'AR' ? 'غير مصرح لك بإضافة نقدية' : 'You do not have permission to add cash'
-      );
-      return;
-    }
-    if (modalMode === 'out' && !canRemoveCash) {
-      setValidationError(
-        language === 'AR' ? 'غير مصرح لك بسحب نقدية' : 'You do not have permission to remove cash'
-      );
-      return;
-    }
-
-    if (modalMode === 'out') {
-      // Protect opening balance - can only withdraw from sales + deposits - returns
-      const withdrawableBalance =
-        currentShift.cashSales +
-        currentShift.cashIn -
-        currentShift.cashOut -
-        (currentShift.returns || 0);
-      if (amount > withdrawableBalance) {
-        setValidationError(t.cashRegister.validation.protectedBalance);
-        return;
-      }
-    }
-
-    if (!reasonInput.trim()) {
-      setValidationError(t.cashRegister.validation.reasonRequired);
-      return;
-    }
-
-    const type: CashTransactionType = modalMode === 'in' ? 'in' : 'out';
-    const transaction: CashTransaction = {
-      id: getVerifiedDate().getTime().toString(),
-      branchId: activeBranchId,
-      shiftId: currentShift.id,
-      time: getVerifiedDate().toISOString(),
-      type: type,
-      amount: amount,
-      reason: reasonInput,
-      userId: employees?.find((e) => e.id === currentEmployeeId)?.name || 'System',
-    };
-
-    addTransaction(currentShift.id, transaction, {
-      cashIn: type === 'in' ? currentShift.cashIn + amount : currentShift.cashIn,
-      cashOut: type === 'out' ? currentShift.cashOut + amount : currentShift.cashOut,
-    });
-    closeModal();
-  };
-
-  const closeModal = () => {
-    setModalMode(null);
-    setAmountInput('');
-    setReasonInput('');
-    setValidationError(null);
-  };
-
-  if (isLoading) return <div className='p-10 text-center'>{t.cashRegister.messages.loading}</div>;
 
   return (
     <div
@@ -546,7 +197,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         <div className='flex gap-3'>
           {currentShift ? (
             <>
-              {canAddCash && (
+              {permissions.canAddCash && (
                 <button
                   onClick={() => setModalMode('in')}
                   className={`px-4 py-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold transition-colors flex items-center gap-2`}
@@ -555,7 +206,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   {t.cashRegister.actions.addCash}
                 </button>
               )}
-              {canRemoveCash && (
+              {permissions.canRemoveCash && (
                 <button
                   onClick={() => setModalMode('out')}
                   className={`px-4 py-2 rounded-xl bg-orange-100 text-orange-700 hover:bg-orange-200 font-bold transition-colors flex items-center gap-2`}
@@ -564,7 +215,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   {t.cashRegister.actions.removeCash}
                 </button>
               )}
-              {canCloseShift && (
+              {permissions.canCloseShift && (
                 <button
                   onClick={() => setModalMode('close')}
                   className={`px-4 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-bold transition-colors flex items-center gap-2`}
@@ -575,7 +226,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
               )}
             </>
           ) : (
-            canOpenShift && (
+            permissions.canOpenShift && (
               <button
                 onClick={() => setModalMode('open')}
                 className={`px-6 py-2.5 rounded-xl bg-gray-900 dark:bg-zinc-800 text-white hover:bg-black dark:hover:bg-zinc-700 font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2`}
@@ -684,7 +335,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           {/* Balance Cards (Only if Open) */}
           {currentShift ? (
             <div className='space-y-3'>
-              {canViewExpectedBalance && (
+              {permissions.canViewExpectedBalance && (
                 <div
                   className={`p-5 rounded-3xl ${CARD_BASE} border-2 !border-gray-200 dark:!border-gray-800 relative overflow-hidden group transition-all hover:shadow-md`}
                 >
@@ -1047,7 +698,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
               />
             </div>
 
-            {modalMode === 'close' && currentShift && canViewExpectedBalance && (
+            {modalMode === 'close' && currentShift && permissions.canViewExpectedBalance && (
               <div className='p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-xl border border-yellow-100 dark:border-yellow-900/50 text-sm'>
                 <div className='flex justify-between'>
                   <span>{t.cashRegister.messages.expected}</span>
