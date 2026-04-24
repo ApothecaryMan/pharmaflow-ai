@@ -1,8 +1,10 @@
+import { BaseReportService, BaseReportFilters } from '../../core/BaseReportService';
 import { StorageKeys } from '../../../config/storageKeys';
 import { idGenerator } from '../../../utils/idGenerator';
 import { storage } from '../../../utils/storage';
 import { settingsService } from '../../settings/settingsService';
 import { syncQueueService } from '../../syncQueueService';
+import { supabase } from '../../../lib/supabase';
 import type {
   StockMovement,
   StockMovementFilters,
@@ -11,105 +13,88 @@ import type {
   StockMovementKPISummary,
   PaginatedStockMovements,
 } from './types';
-import { supabase } from '../../../lib/supabase';
 
-const mapMovementToDb = (m: Partial<StockMovement>): any => {
-  const db: any = {};
-  if (m.id) db.id = m.id;
-  if (m.orgId) db.org_id = m.orgId;
-  if (m.branchId) db.branch_id = m.branchId;
-  if (m.drugId) db.drug_id = m.drugId;
-  if (m.drugName) db.drug_name_snapshot = m.drugName;
-  if (m.type) db.type = m.type;
-  if (m.quantity !== undefined) db.quantity = m.quantity;
-  if (m.previousStock !== undefined) db.previous_stock = m.previousStock;
-  if (m.newStock !== undefined) db.new_stock = m.newStock;
-  if (m.reason) db.reason = m.reason;
-  if (m.notes) db.notes = m.notes;
-  if (m.referenceId) db.reference_id = m.referenceId;
-  if (m.transactionId) db.transaction_id = m.transactionId;
-  if (m.batchId) db.batch_id = m.batchId;
-  if (m.performedBy) db.performed_by = m.performedBy;
-  if (m.performedByName) db.performed_by_name_snapshot = m.performedByName;
-  if (m.status) db.status = m.status;
-  if (m.reviewedBy) db.reviewed_by = m.reviewedBy;
-  if (m.reviewedAt) db.reviewed_at = m.reviewedAt;
-  if (m.expiryDate) db.expiry_date = m.expiryDate;
-  if (m.timestamp) db.timestamp = m.timestamp;
-  return db;
-};
+class StockMovementServiceImpl 
+  extends BaseReportService<StockMovement, StockMovementFilters> 
+  implements StockMovementService {
+  
+  protected tableName = 'stock_movements';
 
-const mapDbToMovement = (db: any): StockMovement => ({
-  id: db.id,
-  orgId: db.org_id,
-  branchId: db.branch_id,
-  drugId: db.drug_id,
-  drugName: db.drug_name_snapshot,
-  type: db.type,
-  quantity: db.quantity,
-  previousStock: db.previous_stock,
-  newStock: db.new_stock,
-  reason: db.reason || undefined,
-  notes: db.notes || undefined,
-  referenceId: db.reference_id || undefined,
-  transactionId: db.transaction_id || undefined,
-  batchId: db.batch_id || undefined,
-  performedBy: db.performed_by,
-  performedByName: db.performed_by_name_snapshot || undefined,
-  timestamp: db.timestamp,
-  status: db.status,
-  reviewedBy: db.reviewed_by || undefined,
-  reviewedAt: db.reviewed_at || undefined,
-  expiryDate: db.expiry_date || undefined,
-});
+  protected mapDbToDomain(db: any): StockMovement {
+    return {
+      id: db.id,
+      orgId: db.org_id,
+      branchId: db.branch_id,
+      drugId: db.drug_id,
+      drugName: db.drug_name_snapshot,
+      type: db.type,
+      quantity: db.quantity,
+      previousStock: db.previous_stock,
+      newStock: db.new_stock,
+      reason: db.reason || undefined,
+      notes: db.notes || undefined,
+      referenceId: db.reference_id || undefined,
+      transactionId: db.transaction_id || undefined,
+      batchId: db.batch_id || undefined,
+      performedBy: db.performed_by,
+      performedByName: db.performed_by_name_snapshot || undefined,
+      timestamp: db.timestamp,
+      status: db.status,
+      reviewedBy: db.reviewed_by || undefined,
+      reviewedAt: db.reviewed_at || undefined,
+      expiryDate: db.expiry_date || undefined,
+    };
+  }
 
-const getRawMovements = (): StockMovement[] => {
-  return storage.get<StockMovement[]>(StorageKeys.STOCK_MOVEMENTS, []);
-};
+  protected mapDomainToDb(m: Partial<StockMovement>): any {
+    const db: any = {};
+    if (m.id) db.id = m.id;
+    if (m.orgId) db.org_id = m.orgId;
+    if (m.branchId) db.branch_id = m.branchId;
+    if (m.drugId) db.drug_id = m.drugId;
+    if (m.drugName) db.drug_name_snapshot = m.drugName;
+    if (m.type) db.type = m.type;
+    if (m.quantity !== undefined) db.quantity = m.quantity;
+    if (m.previousStock !== undefined) db.previous_stock = m.previousStock;
+    if (m.newStock !== undefined) db.new_stock = m.newStock;
+    if (m.reason) db.reason = m.reason;
+    if (m.notes) db.notes = m.notes;
+    if (m.referenceId) db.reference_id = m.referenceId;
+    if (m.transactionId) db.transaction_id = m.transactionId;
+    if (m.batchId) db.batch_id = m.batchId;
+    if (m.performedBy) db.performed_by = m.performedBy;
+    if (m.performedByName) db.performed_by_name_snapshot = m.performedByName;
+    if (m.status) db.status = m.status;
+    if (m.reviewedBy) db.reviewed_by = m.reviewedBy;
+    if (m.reviewedAt) db.reviewed_at = m.reviewedAt;
+    if (m.expiryDate) db.expiry_date = m.expiryDate;
+    if (m.timestamp) db.timestamp = m.timestamp;
+    return db;
+  }
 
-export const createStockMovementService = (): StockMovementService => ({
-  getAll: async (branchId?: string): Promise<StockMovement[]> => {
-    try {
-      let query = supabase.from('stock_movements').select('*').limit(1000);
-      const settings = await settingsService.getAll();
-      const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-      
-      if (effectiveBranchId) {
-        query = query.eq('branch_id', effectiveBranchId);
-      }
-      
-      const { data, error } = await query;
-      if (!error && data) {
-        const mapped = data.map(mapDbToMovement);
-        storage.set(StorageKeys.STOCK_MOVEMENTS, mapped);
-        return mapped;
-      }
-    } catch (err) {
-      if (import.meta.env.DEV) console.warn('Supabase fetch failed for stock_movements', err);
-    }
-    
-    const all = getRawMovements();
+  // --- Implementation of StockMovementService ---
+
+  async getAll(branchId?: string): Promise<StockMovement[]> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    return all.filter((m) => !m.branchId || m.branchId === effectiveBranchId);
-  },
+    
+    // We can use the parent getHistory for simple fetches
+    const results = await this.getHistory({ branchId: effectiveBranchId } as StockMovementFilters);
+    return results as StockMovement[];
+  }
 
-  getByDrugId: async (drugId: string): Promise<StockMovement[]> => {
-    const all = await stockMovementService.getAll();
-    return all
-      .filter((m) => m.drugId === drugId)
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  },
+  async getByDrugId(drugId: string): Promise<StockMovement[]> {
+    const results = await this.getHistory({ drugId } as StockMovementFilters);
+    return results as StockMovement[];
+  }
 
-  logMovement: async (
+  async logMovement(
     movement: Omit<StockMovement, 'id' | 'timestamp'>,
     skipSync = false
-  ): Promise<StockMovement> => {
-    const all = getRawMovements();
+  ): Promise<StockMovement> {
     const settings = await settingsService.getAll();
     const activeBranchId = settings.activeBranchId || settings.branchCode;
 
-    // Ensure accurate timestamp and ID
     const newMovement: StockMovement = {
       ...movement,
       id: idGenerator.uuid(),
@@ -119,15 +104,14 @@ export const createStockMovementService = (): StockMovementService => ({
     };
 
     try {
-      const dbMovement = mapMovementToDb(newMovement);
-      const { error } = await supabase.from('stock_movements').insert(dbMovement);
+      const dbMovement = this.mapDomainToDb(newMovement);
+      const { error } = await (supabase as any).from(this.tableName).insert(dbMovement);
       if (error && import.meta.env.DEV) console.warn('Supabase log movement failed', error);
-    } catch {}
+    } catch (err) {}
 
-    // Add to storage (prepend for newest first, or append? usually append is faster, sort on read)
+    // Update local storage
+    const all = storage.get<StockMovement[]>(StorageKeys.STOCK_MOVEMENTS, []);
     all.push(newMovement);
-
-    // Prune old history if needed? For now keep all.
     storage.set(StorageKeys.STOCK_MOVEMENTS, all);
 
     if (!skipSync) {
@@ -135,69 +119,81 @@ export const createStockMovementService = (): StockMovementService => ({
     }
 
     return newMovement;
-  },
+  }
 
-  getHistory: async (
-    filters: StockMovementFilters
-  ): Promise<StockMovement[] | PaginatedStockMovements> => {
-    let results = await stockMovementService.getAll();
+  /**
+   * Overriding getHistory to handle pagination and custom filters like drugId, status, type.
+   */
+  async getHistory(filters: StockMovementFilters): Promise<StockMovement[] | PaginatedStockMovements> {
+    try {
+      let query = (supabase as any).from(this.tableName).select('*', { count: 'exact' });
 
-    if (filters.drugId) {
-      results = results.filter((m) => m.drugId === filters.drugId);
-    }
-    if (filters.branchId) {
-      results = results.filter((m) => m.branchId === filters.branchId);
-    }
-    if (filters.type) {
-      results = results.filter((m) => m.type === filters.type);
-    }
-    if (filters.performedBy) {
-      results = results.filter((m) => m.performedBy === filters.performedBy);
-    }
-    if (filters.status) {
-      results = results.filter((m) => m.status === filters.status);
-    }
-    if (filters.startDate) {
-      const start = new Date(filters.startDate).getTime();
-      results = results.filter((m) => new Date(m.timestamp).getTime() >= start);
-    }
-    if (filters.endDate) {
-      const end = new Date(filters.endDate).getTime();
-      results = results.filter((m) => new Date(m.timestamp).getTime() <= end);
-    }
+      // Apply Base Filters
+      if (filters.branchId) query = query.eq('branch_id', filters.branchId);
+      if (filters.startDate) query = query.gte('timestamp', filters.startDate);
+      if (filters.endDate) query = query.lte('timestamp', filters.endDate);
 
-    // Default sort: Newest first
-    results.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      // Apply Custom Filters
+      if (filters.drugId) query = query.eq('drug_id', filters.drugId);
+      if (filters.type) query = query.eq('type', filters.type);
+      if (filters.status) query = query.eq('status', filters.status);
+      if (filters.performedBy) query = query.eq('performed_by', filters.performedBy);
 
-    // Pagination
-    if (filters.page !== undefined && filters.pageSize !== undefined) {
-      const startIdx = (filters.page - 1) * filters.pageSize;
-      const paginatedData = results.slice(startIdx, startIdx + filters.pageSize);
-      return {
-        data: paginatedData,
-        total: results.length,
-        hasMore: startIdx + filters.pageSize < results.length,
-      };
+      // Sorting
+      query = query.order('timestamp', { ascending: false });
+
+      // Pagination
+      if (filters.page !== undefined && filters.pageSize !== undefined) {
+        const from = (filters.page - 1) * filters.pageSize;
+        const to = from + filters.pageSize - 1;
+        query = query.range(from, to);
+      }
+
+      const { data, error, count } = await query;
+
+      if (error) throw error;
+
+      const results = (data || []).map(item => this.mapDbToDomain(item));
+
+      if (filters.page !== undefined && filters.pageSize !== undefined) {
+        return {
+          data: results,
+          total: count || 0,
+          hasMore: (count || 0) > (filters.page * filters.pageSize),
+        } as PaginatedStockMovements;
+      }
+
+      return results;
+    } catch (err) {
+      console.error('[StockMovementService] History fetch failed, falling back to local storage:', err);
+      // Fallback to local storage
+      const all = storage.get<StockMovement[]>(StorageKeys.STOCK_MOVEMENTS, []);
+      let results = all;
+      if (filters.drugId) results = results.filter(m => m.drugId === filters.drugId);
+      if (filters.branchId) results = results.filter(m => m.branchId === filters.branchId);
+      results.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+      if (filters.page !== undefined && filters.pageSize !== undefined) {
+        const from = (filters.page - 1) * filters.pageSize;
+        return {
+          data: results.slice(from, from + filters.pageSize),
+          total: results.length,
+          hasMore: results.length > (filters.page * filters.pageSize),
+        } as PaginatedStockMovements;
+      }
+
+      return results;
     }
+  }
 
-    return results;
-  },
-
-  getSummaryByDrug: async (
-    drugId: string,
-    filters: StockMovementFilters
-  ): Promise<any> => { // Using any for summary temporarily to match interface if needed
-    const history = (await stockMovementService.getHistory({
-      ...filters,
-      drugId,
-      page: undefined, // Get all for summary
-    })) as StockMovement[];
+  async getSummaryByDrug(drugId: string, filters: StockMovementFilters): Promise<StockMovementSummary> {
+    const history = await this.getHistory({ ...filters, drugId, page: undefined }) as StockMovement[];
 
     const summary = history.reduce(
       (acc, m) => {
-        if (m.type === 'purchase' || m.type === 'return_customer' || m.type === 'transfer_in' || (m.type === 'adjustment' && m.quantity > 0) || (m.type === 'initial')) {
+        if (['purchase', 'return_customer', 'transfer_in', 'initial'].includes(m.type) || (m.type === 'adjustment' && m.quantity > 0)) {
           acc.totalIn += Math.abs(m.quantity);
-        } else if (m.type === 'sale' || m.type === 'return_supplier' || m.type === 'transfer_out' || (m.type === 'adjustment' && m.quantity < 0) || (m.type === 'damage')) {
+        } else if (['sale', 'return_supplier', 'transfer_out', 'damage'].includes(m.type) || (m.type === 'adjustment' && m.quantity < 0)) {
           acc.totalOut += Math.abs(m.quantity);
         }
 
@@ -217,15 +213,12 @@ export const createStockMovementService = (): StockMovementService => ({
       netChange: summary.totalIn - summary.totalOut,
       currentStock,
     };
-  },
+  }
 
-  getKPISummary: async (filters: StockMovementFilters): Promise<any> => {
-    const history = (await stockMovementService.getHistory({
-      ...filters,
-      page: undefined,
-    })) as StockMovement[];
+  async getKPISummary(filters: StockMovementFilters): Promise<StockMovementKPISummary> {
+    const history = await this.getHistory({ ...filters, page: undefined }) as StockMovement[];
 
-    const summary = history.reduce(
+    return history.reduce(
       (acc, m) => {
         const qty = Math.abs(m.quantity);
         if (['purchase', 'return_customer', 'transfer_in', 'initial'].includes(m.type) || (m.type === 'adjustment' && m.quantity > 0)) {
@@ -241,128 +234,71 @@ export const createStockMovementService = (): StockMovementService => ({
       },
       { totalStockIn: 0, totalStockOut: 0, totalReturns: 0, inventoryValue: 0 }
     );
+  }
 
-    // Note: inventoryValue calculation usually requires current stock prices. 
-    // For KPI report within this service, we track the volume of movements.
-    // Real-time valuation should be pulled from inventoryService.
+  async approveMovement(id: string, userId: string, skipSync = false): Promise<void> {
+    await this.updateMovementStatus(id, 'approved', userId, skipSync);
+  }
 
-    return summary;
-  },
+  async rejectMovement(id: string, userId: string, skipSync = false): Promise<void> {
+    await this.updateMovementStatus(id, 'rejected', userId, skipSync);
+  }
 
-  approveMovement: async (id: string, userId: string, skipSync = false): Promise<void> => {
-    const all = getRawMovements();
-    const index = all.findIndex((m) => m.id === id);
-    if (index !== -1) {
-      all[index].status = 'approved';
-      all[index].reviewedBy = userId;
-      all[index].reviewedAt = new Date().toISOString();
+  private async updateMovementStatus(id: string, status: 'approved' | 'rejected', userId: string, skipSync: boolean): Promise<void> {
+    const reviewedAt = new Date().toISOString();
+    
+    try {
+      await (supabase as any).from(this.tableName).update({ status, reviewed_by: userId, reviewed_at: reviewedAt }).eq('id', id);
+    } catch {}
 
-      try {
-        await supabase
-          .from('stock_movements')
-          .update({ 
-            status: 'approved', 
-            reviewed_by: userId, 
-            reviewed_at: all[index].reviewedAt 
-          })
-          .eq('id', id);
-      } catch {}
-
+    const all = storage.get<StockMovement[]>(StorageKeys.STOCK_MOVEMENTS, []);
+    const idx = all.findIndex(m => m.id === id);
+    if (idx !== -1) {
+      all[idx].status = status;
+      all[idx].reviewedBy = userId;
+      all[idx].reviewedAt = reviewedAt;
       storage.set(StorageKeys.STOCK_MOVEMENTS, all);
-      
-      if (!skipSync) {
-        await syncQueueService.enqueue('STOCK_MOVEMENT_LOG', { 
-          action: 'APPROVE', 
-          id, 
-          userId, 
-          timestamp: all[index].reviewedAt 
-        });
-      }
     }
-  },
 
-  rejectMovement: async (id: string, userId: string, skipSync = false): Promise<void> => {
-    const all = getRawMovements();
-    const index = all.findIndex((m) => m.id === id);
-    if (index !== -1) {
-      all[index].status = 'rejected';
-      all[index].reviewedBy = userId;
-      all[index].reviewedAt = new Date().toISOString();
-
-      try {
-        await supabase
-          .from('stock_movements')
-          .update({ 
-            status: 'rejected', 
-            reviewed_by: userId, 
-            reviewed_at: all[index].reviewedAt 
-          })
-          .eq('id', id);
-      } catch {}
-
-      storage.set(StorageKeys.STOCK_MOVEMENTS, all);
-
-      if (!skipSync) {
-        await syncQueueService.enqueue('STOCK_MOVEMENT_LOG', { 
-          action: 'REJECT', 
-          id, 
-          userId, 
-          timestamp: all[index].reviewedAt 
-        });
-      }
+    if (!skipSync) {
+      await syncQueueService.enqueue('STOCK_MOVEMENT_LOG', { action: status.toUpperCase(), id, userId, timestamp: reviewedAt });
     }
-  },
+  }
 
-  logMovementsBulk: async (
-    movements: Omit<StockMovement, 'id' | 'timestamp'>[],
-    skipSync = false
-  ): Promise<void> => {
-    if (movements.length === 0) return;
-
-    const all = getRawMovements();
+  async logMovementsBulk(movements: Omit<StockMovement, 'id' | 'timestamp'>[], skipSync = false): Promise<void> {
     const settings = await settingsService.getAll();
     const timestamp = new Date().toISOString();
     const activeBranchId = settings.activeBranchId || settings.branchCode;
 
-    for (const movement of movements) {
-      const effectiveBranchId = movement.branchId || activeBranchId;
-      all.push({
-        ...movement,
-        id: idGenerator.uuid(),
-        branchId: effectiveBranchId,
-        orgId: movement.orgId || settings.orgId,
-        timestamp,
-      });
-    }
+    const newMovements = movements.map(m => ({
+      ...m,
+      id: idGenerator.uuid(),
+      branchId: m.branchId || activeBranchId,
+      orgId: m.orgId || settings.orgId,
+      timestamp,
+    }));
 
     try {
-      const lastN = all.slice(-movements.length);
-      const dbMovements = lastN.map(m => mapMovementToDb(m));
-      const { error } = await supabase.from('stock_movements').insert(dbMovements);
-      if (error && import.meta.env.DEV) console.warn('Supabase bulk log movement failed', error);
+      const dbMovements = newMovements.map(m => this.mapDomainToDb(m as StockMovement));
+      await (supabase as any).from(this.tableName).insert(dbMovements);
     } catch {}
 
-    storage.set(StorageKeys.STOCK_MOVEMENTS, all);
+    const all = storage.get<StockMovement[]>(StorageKeys.STOCK_MOVEMENTS, []);
+    storage.set(StorageKeys.STOCK_MOVEMENTS, [...all, ...newMovements]);
 
     if (!skipSync) {
-      await syncQueueService.enqueue('STOCK_MOVEMENT_LOG', { 
-        action: 'LOG_BULK', 
-        count: movements.length 
-      });
+      await syncQueueService.enqueue('STOCK_MOVEMENT_LOG', { action: 'LOG_BULK', count: movements.length });
     }
-  },
+  }
 
-  calculateMovementValue: (movement: StockMovement, drug: any): number => {
+  calculateMovementValue(movement: StockMovement, drug: any): number {
     if (!drug) return 0;
-    
-    // Sales and Customer Returns use Selling Price (Revenue)
-    if (movement.type === 'sale' || movement.type === 'return_customer') {
-      return movement.quantity * (drug.price || 0);
+    const qty = Math.abs(movement.quantity);
+    if (['sale', 'return_customer'].includes(movement.type)) {
+      return qty * (drug.price || 0);
     }
-    
-    // All other movements (Purchase, Damage, Adjustment) use Cost Price (Asset Value)
-    return movement.quantity * (drug.costPrice || 0);
-  },
-});
+    return qty * (drug.costPrice || 0);
+  }
+}
 
-export const stockMovementService = createStockMovementService();
+export const stockMovementService = new StockMovementServiceImpl();
