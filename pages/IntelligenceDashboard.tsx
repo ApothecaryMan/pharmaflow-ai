@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { storage } from '../utils/storage';
 import { StorageKeys } from '../config/storageKeys';
 import { SegmentedControl } from '../components/common/SegmentedControl';

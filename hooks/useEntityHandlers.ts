@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { permissionsService } from '../services/auth/permissions';
 import { StorageKeys } from '../config/storageKeys';
 import { useAlert } from '../context';
@@ -16,6 +16,7 @@ import { returnService } from '../services/returns/returnService';
 import * as stockOps from '../utils/stockOperations';
 import type { AppSettings } from '../services/settings/types';
 import type {
+  ActionContext,
   BatchAllocation,
   CartItem,
   Customer,
@@ -65,7 +66,7 @@ export interface EntityHandlers {
 
   // Purchase handlers
   handlePurchaseComplete: (purchase: Purchase) => void;
-  handleApprovePurchase: (purchaseId: string, approverName: string) => void;
+  handleApprovePurchase: (purchaseId: string) => Promise<void>;
   handleRejectPurchase: (purchaseId: string, reason?: string) => void;
 
   // Sale handlers
@@ -129,8 +130,16 @@ interface UseEntityHandlersParams {
   // Utilities
   currentEmployeeId: string | null;
   activeBranchId: string;
+  activeOrgId: string;
   isLoading: boolean;
 
+  // Actions
+  addPurchase?: (purchase: Omit<Purchase, 'id'>, context?: ActionContext) => Promise<Purchase>;
+  approvePurchase?: (id: string, context: ActionContext) => Promise<void>;
+
+  completeSale: (saleData: any, context: ActionContext) => Promise<Sale>;
+  processSalesReturn: (returnData: any, sale: Sale, context: ActionContext) => Promise<void>;
+  createPurchaseReturn: (ret: Omit<PurchaseReturn, 'id'>, context: ActionContext) => Promise<PurchaseReturn>;
   // Time utilities from StatusBar
   getVerifiedDate: () => Date;
   validateTransactionTime: (date: Date) => { valid: boolean; message?: string };
@@ -160,9 +169,15 @@ export function useEntityHandlers({
   setEmployees,
   currentEmployeeId,
   activeBranchId,
+  activeOrgId,
   isLoading,
   batches,
   setBatches,
+  addPurchase,
+  approvePurchase,
+  completeSale,
+  processSalesReturn,
+  createPurchaseReturn,
   getVerifiedDate,
   validateTransactionTime,
   updateLastTransactionTime,
@@ -673,78 +688,47 @@ export function useEntityHandlers({
       }
 
       try {
-        let finalPurchase = { ...purchase, branchId: activeBranchId };
+        // 1. Build Action Context (Required if status is completed)
+        const context: ActionContext = {
+          performerId: currentEmployeeId,
+          performerName: currentUser?.name || 'Unknown',
+          branchId: activeBranchId,
+          orgId: activeOrgId,
+          shiftId: currentShift?.id,
+          timestamp: new Date().toISOString(),
+        };
 
-        if (finalPurchase.status === 'completed') {
-          if (!permissionsService.can('purchase.approve')) {
-            error('Permission denied: Cannot complete/approve purchase (Created as pending instead)');
-            finalPurchase.status = 'pending';
-          } else if (finalPurchase.paymentType === 'cash' && !currentShift) {
-            error('Shift must be open to process cash purchase');
-            return;
+        // 2. Execute via DataContext
+        if (addPurchase) {
+          const result = await addPurchase(purchase, context);
+          
+          if (result.status === 'completed') {
+            success(`Direct Purchase PO #${result.invoiceId} completed and inventory updated`);
+          } else {
+            info(`Purchase Order PO #${result.invoiceId} saved as pending`);
           }
-        }
-
-        // --- PERSISTENCE: Save Purchase to Service layer ---
-        // We omit the ID if the service generates it, but if the UI already generated it, 
-        // the service's create method might overwrite it. To be safe, we use the service's result.
-        const { id: _, ...purchaseData } = finalPurchase;
-        const savedPurchase = await purchaseService.create(purchaseData as any, activeBranchId, false);
-
-        setPurchases((prev) => [savedPurchase, ...prev]);
-
-        if (savedPurchase.status === 'completed') {
-          // 1. Update Inventory
-          await applyPurchaseToInventory(savedPurchase);
-
-          // 2. Record Shift Transaction if Cash
-          if (savedPurchase.paymentType === 'cash' && currentShift) {
-            addTransaction(currentShift.id, {
-              id: idGenerator.generate('transactions', activeBranchId),
-              branchId: activeBranchId,
-              shiftId: currentShift.id,
-              time: new Date().toISOString(),
-              type: 'purchase',
-              amount: savedPurchase.totalCost,
-              reason: `Direct Purchase PO #${savedPurchase.invoiceId} from ${savedPurchase.supplierName}`,
-              userId: currentEmployeeId || 'System',
-            });
-          }
-
-          auditService.log('purchase.complete', {
-            userId: currentEmployeeId,
-            details: `Completed PO #${savedPurchase.invoiceId}`,
-            entityId: savedPurchase.id,
-            branchId: activeBranchId,
-          });
         } else {
-          info('Purchase Order Saved as Pending');
-          auditService.log('purchase.create', {
-            userId: currentEmployeeId,
-            details: `Created PO #${savedPurchase.invoiceId} (Pending)`,
-            entityId: savedPurchase.id,
-            branchId: activeBranchId,
-          });
+          throw new Error('Add purchase action not initialized');
         }
       } catch (err) {
         error(`Failed to process purchase: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
     [
-      setPurchases,
-      applyPurchaseToInventory,
-      info,
+      addPurchase,
       currentEmployeeId,
       employees,
-      error,
-      currentShift,
-      addTransaction,
       activeBranchId,
+      activeOrgId,
+      currentShift,
+      error,
+      success,
+      info
     ]
   );
 
   const handleApprovePurchase = useCallback(
-    async (purchaseId: string, approverName: string) => {
+    async (purchaseId: string) => {
       const currentUser = employees?.find((e) => e.id === currentEmployeeId);
       if (!currentUser) {
         error('Authentication required: Please log in to approve purchases');
@@ -774,64 +758,37 @@ export function useEntityHandlers({
       }
 
       try {
-        // 1. Update Purchase Status
-        setPurchases((prev) =>
-          prev.map((p) =>
-            p.id === purchaseId
-              ? {
-                  ...p,
-                  status: 'completed',
-                  approvalDate: new Date().toISOString(),
-                  approvedBy: approverName,
-                }
-              : p
-          )
-        );
-
-        // 2. Apply inventory logic (deduped)
-        await applyPurchaseToInventory({ ...purchase, status: 'completed' });
-
-        // --- PERSISTENCE: Update status in Service layer ---
-        await purchaseService.approve(purchaseId, approverName);
-
-        // 3. Record Shift Transaction
-        if (purchase.paymentType === 'cash' && currentShift) {
-          addTransaction(currentShift.id, {
-            id: idGenerator.generate('transactions', activeBranchId),
-            branchId: activeBranchId,
-            shiftId: currentShift.id,
-            time: new Date().toISOString(),
-            type: 'purchase',
-            amount: purchase.totalCost,
-            reason: `Purchase PO #${purchase.invoiceId} from ${purchase.supplierName}`,
-            userId: currentUser?.name || 'System',
-            relatedSaleId: purchase.invoiceId, // Using invoice ID as reference
-          });
-        }
-
-        auditService.log('purchase.approve', {
-          userId: currentEmployeeId,
-          details: `Approved PO #${purchase.invoiceId}`,
-          entityId: purchase.id,
+        // 1. Build Standard Action Context
+        const context: ActionContext = {
+          performerId: currentEmployeeId,
+          performerName: currentUser?.name || 'Unknown',
           branchId: activeBranchId,
-        });
+          orgId: activeOrgId,
+          shiftId: currentShift?.id,
+          timestamp: new Date().toISOString(),
+        };
 
-        success(`PO #${purchase.invoiceId} Approved Successfully`);
+        // 2. Execute Atomic Transaction via DataContext -> TransactionService
+        if (approvePurchase) {
+          await approvePurchase(purchaseId, context);
+          success(`PO #${purchase.invoiceId} Approved Successfully`);
+        } else {
+          throw new Error('Purchase approval action not initialized');
+        }
       } catch (err) {
         error(`Failed to approve: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
     [
       purchases,
-      setPurchases,
-      applyPurchaseToInventory,
+      approvePurchase,
       success,
       currentEmployeeId,
       employees,
       error,
       currentShift,
-      addTransaction,
       activeBranchId,
+      activeOrgId,
     ]
   );
 
@@ -906,55 +863,20 @@ export function useEntityHandlers({
       }
 
       try {
-        // --- PERSISTENCE: Save Return and handle inventory via Service layer ---
+        // 5. PROCESS TRANSACTION (ATOMIC)
         const { id: _, ...returnInput } = returnData;
-        const savedReturn = await returnService.createPurchaseReturn(returnInput as any, activeBranchId);
+        const context: ActionContext = {
+          performerId: currentEmployeeId,
+          performerName: employees?.find(e => e.id === currentEmployeeId)?.name || 'System',
+          branchId: activeBranchId,
+          orgId: activeOrgId,
+          shiftId: currentShift?.id,
+          timestamp: new Date().toISOString()
+        };
+
+        const savedReturn = await createPurchaseReturn(returnInput as any, context);
 
         setPurchaseReturns((prev) => [savedReturn, ...prev]);
-
-        const performer = employees?.find((e) => e.id === currentEmployeeId);
-
-        // Update local state for UI responsiveness
-        setInventory((prev) =>
-          prev.map((drug) => {
-            const returnedItem = savedReturn.items.find((i) => i.drugId === drug.id);
-            if (returnedItem) {
-              const isUnit = !!returnedItem.isUnit;
-              const unitsToDeduct = isUnit
-                ? returnedItem.quantityReturned
-                : returnedItem.quantityReturned * (drug.unitsPerPack || 1);
-
-              return {
-                ...drug,
-                stock: validateStock(drug.stock - unitsToDeduct),
-              };
-            }
-            return drug;
-          })
-        );
-        
-        setBatches(batchService.getAllBatches(activeBranchId));
-
-        if (originalPurchase?.paymentType === 'cash' && currentShift) {
-          addTransaction(currentShift.id, {
-            id: idGenerator.generate('transactions', activeBranchId),
-            branchId: activeBranchId,
-            shiftId: currentShift.id,
-            time: new Date().toISOString(),
-            type: 'purchase_return',
-            amount: savedReturn.totalRefund,
-            reason: `Purchase Return #${savedReturn.id} for PO #${originalPurchase.invoiceId}`,
-            userId: performer?.name || 'System',
-            relatedSaleId: originalPurchase.invoiceId,
-          });
-        }
-
-        auditService.log('purchase.return', {
-          userId: currentEmployeeId,
-          details: `Created purchase return #${savedReturn.id} for PO #${savedReturn.purchaseId}`,
-          entityId: savedReturn.id,
-          branchId: activeBranchId,
-        });
 
         success('Purchase return created successfully');
       } catch (err) {
@@ -972,8 +894,10 @@ export function useEntityHandlers({
       employees,
       error,
       activeBranchId,
+      activeOrgId,
       currentShift,
       addTransaction,
+      createPurchaseReturn,
     ]
   );
 
@@ -1131,89 +1055,16 @@ export function useEntityHandlers({
         }
 
         // 5. PROCESS TRANSACTION (ATOMIC)
-        const result = await transactionService.processCheckout(
-          saleData,
-          inventory,
-          activeBranchId,
-          currentEmployeeId,
-          saleDate
-        );
+        const context: ActionContext = {
+          performerId: currentEmployeeId,
+          performerName: currentUser?.name || 'System',
+          branchId: activeBranchId,
+          orgId: activeOrgId,
+          shiftId: currentShift?.id,
+          timestamp: saleDate.toISOString()
+        };
 
-        if (!result.success || !result.sale) {
-          error(result.error || 'Transaction failed');
-          return false;
-        }
-
-        const newSale = result.sale;
-
-        // 6. UPDATE STATES
-        
-        // Update Inventory State (Optimistic mirror)
-        const soldItemsMap = new Map<string, CartItem>(
-          newSale.items.map((item) => [item.id, item])
-        );
-        const soldDrugIds = newSale.items.map((item) => item.id);
-        const earliestExpiries = batchService.getEarliestExpiriesBulk(soldDrugIds);
-
-        setInventory((prev) =>
-          prev.map((drug) => {
-            const soldItem = soldItemsMap.get(drug.id);
-            if (soldItem) {
-              const quantityToDeduct = soldItem.isUnit
-                ? soldItem.quantity
-                : soldItem.quantity * (drug.unitsPerPack || 1);
-
-              return {
-                ...drug,
-                stock: validateStock(drug.stock - quantityToDeduct),
-                expiryDate: earliestExpiries[drug.id] || drug.expiryDate,
-              };
-            }
-            return drug;
-          })
-        );
-
-        // Update Sales State
-        setSales((prev) => [...prev, newSale]);
-
-        // Update Batches State
-        setBatches(batchService.getAllBatches(activeBranchId));
-
-        // Update Customer Points
-        if (saleData.customerCode || saleData.customerName !== 'Guest Customer') {
-          const pointsEarned = calculateLoyaltyPoints(saleData.total, saleData.items);
-          if (pointsEarned > 0) {
-            setCustomers((prev) =>
-              prev.map((c) => {
-                const isMatch =
-                  (saleData.customerCode &&
-                    (c.code === saleData.customerCode ||
-                      c.serialId?.toString() === saleData.customerCode)) ||
-                  (!saleData.customerCode && c.name === saleData.customerName);
-                if (isMatch) {
-                  return { ...c, points: (c.points || 0) + pointsEarned };
-                }
-                return c;
-              })
-            );
-          }
-        }
-
-        // Update Shift
-        const isImmediateComplete = !saleData.saleType || saleData.saleType === 'walk-in';
-        if (isImmediateComplete && currentShift) {
-          addTransaction(currentShift.id, {
-            id: idGenerator.generate('transactions', activeBranchId),
-            branchId: activeBranchId,
-            shiftId: currentShift.id,
-            time: new Date().toISOString(),
-            type: saleData.paymentMethod === 'cash' ? 'sale' : 'card_sale',
-            amount: saleData.total,
-            reason: `Sale #${newSale.serialId}`,
-            userId: currentUser?.name || 'System',
-            relatedSaleId: newSale.serialId.toString(),
-          });
-        }
+        const newSale = await completeSale(saleData, context);
 
         updateLastTransactionTime(saleDate.getTime());
         success(`Order #${newSale.serialId} completed!`);
@@ -1229,6 +1080,7 @@ export function useEntityHandlers({
       currentEmployeeId,
       employees,
       activeBranchId,
+      activeOrgId,
       inventory,
       getVerifiedDate,
       validateTransactionTime,
@@ -1241,6 +1093,7 @@ export function useEntityHandlers({
       updateLastTransactionTime,
       success,
       error,
+      completeSale,
     ]
   );
 
@@ -1700,113 +1553,16 @@ export function useEntityHandlers({
         }
 
         // 3. PROCESS TRANSACTION (ATOMIC)
-        const result = await transactionService.processReturn(
-          returnData,
-          inventory,
-          sale,
-          activeBranchId,
-          currentEmployeeId
-        );
-
-        if (!result.success) {
-          error(result.error || 'Return processing failed');
-          return false;
-        }
-
-        // 4. UPDATE STATES
-        
-        // Update Returns State
-        const returnWithBranch: Return = {
-          ...returnData,
+        const context: ActionContext = {
+          performerId: currentEmployeeId,
+          performerName: employee?.name || 'System',
           branchId: activeBranchId,
+          orgId: activeOrgId,
+          shiftId: currentShift?.id,
+          timestamp: returnDate.toISOString()
         };
-        setReturns((prev) => [returnWithBranch, ...prev]);
 
-        // Update Sales State
-        setSales((prev) =>
-          prev.map((s) => {
-            if (s.id === returnData.saleId) {
-              const existingReturns = s.returnIds || [];
-              // BUG-R5: netTotal = sale.total - cumulative refunds (simple and correct)
-              const cumulativeRefund = (s.total - (s.netTotal ?? s.total)) + returnData.totalRefund;
-              const updatedNetTotal = s.total - cumulativeRefund;
-              
-              const itemReturnedQuantities = { ...(s.itemReturnedQuantities || {}) };
-              returnData.items.forEach((item) => {
-                // BUG-R6: Use composite key for unit items to avoid pack/unit collision
-                const returnKey = item.isUnit ? `${item.drugId}_unit` : item.drugId;
-                itemReturnedQuantities[returnKey] =
-                  (itemReturnedQuantities[returnKey] || 0) + item.quantityReturned;
-              });
-
-              const updatedSale = {
-                ...s,
-                hasReturns: true,
-                returnIds: [...existingReturns, returnData.id],
-                netTotal: updatedNetTotal,
-                itemReturnedQuantities,
-              };
-
-              // --- PERSISTENCE: Save updated sale to IndexedDB ---
-              salesService.update(returnData.saleId, {
-                hasReturns: updatedSale.hasReturns,
-                returnIds: updatedSale.returnIds,
-                netTotal: updatedSale.netTotal,
-                itemReturnedQuantities: updatedSale.itemReturnedQuantities
-              }).catch((e) => console.error('[handleProcessReturn] Failed to persist sale update:', e));
-
-              return updatedSale;
-            }
-            return s;
-          })
-        );
-
-        // --- PERSISTENCE: Save Return locally ---
-        try {
-          const returnShardKey = getShardKey(StorageKeys.RETURNS, returnData.date || new Date().toISOString());
-          const shardReturns = storage.get<Return[]>(returnShardKey, []);
-          shardReturns.push(returnWithBranch);
-          storage.set(returnShardKey, shardReturns);
-        } catch (e) {
-          console.error('[handleProcessReturn] Failed to persist return:', e);
-        }
-
-        // Update Inventory State (Optimistic mirror)
-        const returnedItemsMap = new Map(returnData.items.map(i => [i.drugId, i]));
-        setInventory((prev) =>
-          prev.map((drug) => {
-            const returnedItem = returnedItemsMap.get(drug.id);
-            if (returnedItem) {
-              const drugInSale = sale.items.find(i => i.id === drug.id);
-              const unitsToRestore = stockOps.resolveUnits(returnedItem.quantityReturned, !!returnedItem.isUnit, drug.unitsPerPack);
-                
-              return {
-                ...drug,
-                stock: validateStock(drug.stock + unitsToRestore),
-              };
-            }
-            return drug;
-          })
-        );
-
-        // Update Batches State
-        setBatches(batchService.getAllBatches(activeBranchId));
-
-        // Update Shift
-        if (currentShift) {
-          addTransaction(currentShift.id, {
-            id: idGenerator.generate('transactions', activeBranchId),
-            branchId: activeBranchId,
-            shiftId: currentShift.id,
-            time: new Date().toISOString(),
-            // BUG-R3: Use card_return for card/visa sales so shift balance splits correctly
-            type: (sale.paymentMethod === 'visa' || sale.paymentMethod === 'credit') ? 'card_return' : 'return',
-            amount: returnData.totalRefund,
-            reason: `Return for Sale #${sale.serialId}`,
-            userId: employee?.name || 'System',
-            relatedSaleId: sale.serialId?.toString() || sale.id,
-          });
-        }
+        await processSalesReturn(returnData, sale, context);
 
         updateLastTransactionTime(returnDate.getTime());
         success(`Return processed successfully. Refund: ${returnData.totalRefund.toFixed(2)} L.E`);
@@ -1822,6 +1578,7 @@ export function useEntityHandlers({
       currentEmployeeId,
       employees,
       activeBranchId,
+      activeOrgId,
       sales,
       inventory,
       currentShift,
@@ -1834,6 +1591,7 @@ export function useEntityHandlers({
       updateLastTransactionTime,
       success,
       error,
+      processSalesReturn,
     ]
   );
 

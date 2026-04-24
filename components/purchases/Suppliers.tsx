@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useState } from 'react';
 import { permissionsService } from '../../services/auth/permissions';
 import { useStatusBar } from '../../components/layout/StatusBar';

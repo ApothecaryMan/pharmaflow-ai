@@ -276,13 +276,14 @@ export const Inventory: React.FC<InventoryProps> = ({
 
     // 2. Then apply Active Filters (Pills)
     Object.entries(activeFilters).forEach(([groupId, values]) => {
-      if (!values || values.length === 0) return;
+      const vals = values as any[];
+      if (!vals || vals.length === 0) return;
 
       if (groupId === 'stock_status') {
         result = result.filter((d) => {
-          if (values.includes('in_stock') && values.includes('out_of_stock')) return true;
-          if (values.includes('in_stock')) return d.stock > 0;
-          if (values.includes('out_of_stock')) return d.stock <= 0;
+          if (vals.includes('in_stock') && vals.includes('out_of_stock')) return true;
+          if (vals.includes('in_stock')) return d.stock > 0;
+          if (vals.includes('out_of_stock')) return d.stock <= 0;
           return true;
         });
       } else if (groupId === 'expiry_status') {
@@ -292,13 +293,13 @@ export const Inventory: React.FC<InventoryProps> = ({
         nearExpiredLimit.setMonth(currentMonthStart.getMonth() + 6);
 
         result = result.filter((d) => {
-          if (!d.expiryDate) return values.includes('all');
+          if (!d.expiryDate) return vals.includes('all');
           const expiry = parseExpiryEndOfMonth(d.expiryDate);
 
-          if (values.includes('expired')) {
+          if (vals.includes('expired')) {
             return expiry < currentMonthStart;
           }
-          if (values.includes('near_expired')) {
+          if (vals.includes('near_expired')) {
             return expiry >= currentMonthStart && expiry < nearExpiredLimit;
           }
           return true; // 'all' or other values
@@ -307,7 +308,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         // Generic filter for other columns if added later
         result = result.filter((d) => {
           const val = (d as any)[groupId];
-          return values.includes(val);
+          return vals.includes(val);
         });
       }
     });

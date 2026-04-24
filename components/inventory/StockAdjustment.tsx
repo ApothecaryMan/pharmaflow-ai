@@ -390,7 +390,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   } = useSearchKeyboardNavigation({
     results: searchResults,
     onSelect: (item) => {
-      handleAddItem(item);
+      handleAddItem(item as Drug);
     },
     isOpen: !!searchTerm,
     onEnterNoHighlight: () => {
@@ -501,6 +501,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
               performedBy: currentEmployee?.id || 'user',
               performedByName: currentEmployee?.name || 'User',
               branchId: activeBranchId,
+              orgId: storage.get<string>(StorageKeys.ACTIVE_ORG_ID, 'org-1'),
             },
             {
               batchId: item.batchId,

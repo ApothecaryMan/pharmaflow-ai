@@ -20,6 +20,8 @@ import { formatStock } from '../../utils/inventory';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { idGenerator } from '../../utils/idGenerator';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { FilterDropdown } from '../common/FilterDropdown';
@@ -41,7 +43,7 @@ interface PurchasesProps {
   onPurchaseComplete: (purchase: Purchase) => void;
   color: string;
   t: any;
-  onApprovePurchase?: (purchase: Purchase) => void;
+  onApprovePurchase?: (id: string) => Promise<void>;
   onRejectPurchase?: (purchase: Purchase) => void;
   language: 'EN' | 'AR';
   navigationParams?: any;
@@ -904,6 +906,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
       invoiceId: uniqueOrderId,
       externalInvoiceId,
       paymentType: paymentMethod,
+      orgId: storage.get<string>(StorageKeys.ACTIVE_ORG_ID, 'org-1'),
     };
 
     if (!permissionsService.can('purchase.create')) {
@@ -966,7 +969,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   } = useSearchKeyboardNavigation({
     results: filteredDrugs,
     onSelect: (drug) => {
-      handleAddItem(drug);
+      handleAddItem(drug as Drug);
       setSearch('');
       setShowSuggestions(false);
     },
@@ -988,7 +991,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   } = useSearchKeyboardNavigation({
     results: filteredSuppliers,
     onSelect: (supplier) => {
-      setSelectedSupplierId(supplier.id);
+      setSelectedSupplierId((supplier as any).id);
       setSupplierSearch('');
       setIsSupplierOpen(false);
     },

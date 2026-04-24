@@ -341,8 +341,8 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
               onSearchChange={setSearch}
               enableTopToolbar={false}
               searchPlaceholder={t.searchPlaceholder || 'Search supplier name, contact...'}
-              onRowClick={(row) => handleViewDetails(row)}
-              onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row))}
+              onRowClick={(row) => handleViewDetails(row as Supplier)}
+              onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row as Supplier))}
               color={color}
               enablePagination={true}
               enableVirtualization={false}

@@ -51,7 +51,7 @@ export const useRealTimeSalesAnalytics = ({
     const itemsSold = todaysSales.reduce((sum, s) => {
       let quantity = s.items.reduce((qSum, i) => qSum + i.quantity, 0);
       if (s.itemReturnedQuantities) {
-        Object.values(s.itemReturnedQuantities).forEach((qty: number) => {
+        (Object.values(s.itemReturnedQuantities) as number[]).forEach((qty: number) => {
           quantity -= qty;
         });
       }
@@ -285,8 +285,8 @@ export const useRealTimeSalesAnalytics = ({
     todaysSales.forEach((s) => {
       totalItems += s.items.reduce((sum, i) => sum + i.quantity, 0);
       if (s.itemReturnedQuantities) {
-        returnedItems += Object.values(s.itemReturnedQuantities).reduce(
-          (sum, qty) => sum + (qty as number),
+        returnedItems += (Object.values(s.itemReturnedQuantities) as number[]).reduce(
+          (sum, qty) => sum + qty,
           0
         );
       }

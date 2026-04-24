@@ -287,7 +287,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         // If it has returns, check if ALL items were returned (even if delivery fee remains)
         if (sale.hasReturns && sale.itemReturnedQuantities) {
           const totalItemsQty = sale.items.reduce((sum, item) => sum + item.quantity, 0);
-          const totalReturnedQty = Object.values(sale.itemReturnedQuantities).reduce(
+          const totalReturnedQty = (Object.values(sale.itemReturnedQuantities) as number[]).reduce(
             (sum, qty) => sum + qty,
             0
           );
@@ -309,7 +309,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         if (sale.hasReturns && sale.itemReturnedQuantities) {
           const totalItemsQty = sale.items.reduce((sum, item) => sum + item.quantity, 0);
-          const totalReturnedQty = Object.values(sale.itemReturnedQuantities).reduce(
+          const totalReturnedQty = (Object.values(sale.itemReturnedQuantities) as number[]).reduce(
             (sum, qty) => sum + qty,
             0
           );

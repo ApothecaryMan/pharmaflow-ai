@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { permissionsService } from '../../services/auth/permissions';
 import type { Drug, Purchase, PurchaseReturn, PurchaseReturnItem } from '../../types';
 import { useSettings } from '../../context';
@@ -13,6 +13,8 @@ import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useSmartDirection } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 
 interface PurchaseReturnsProps {
   purchases: Purchase[];
@@ -252,7 +254,8 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
       status: 'pending',
       notes,
       branchId: activeBranchId || '',
-    };
+      orgId: storage.get<string>(StorageKeys.ACTIVE_ORG_ID, 'org-1'),
+    } as PurchaseReturn;
 
     if (onCreatePurchaseReturn) {
       await onCreatePurchaseReturn(newReturn);
@@ -370,8 +373,8 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
           onSearchChange={setSearch}
           enableTopToolbar={false}
           searchPlaceholder={t.purchaseReturns?.searchPlaceholder || 'Search returns...'}
-          onRowClick={(row) => handleViewDetails(row)}
-          onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row))}
+          onRowClick={(row) => handleViewDetails(row as PurchaseReturn)}
+          onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row as PurchaseReturn))}
           color={color}
           enablePagination={true}
           enableVirtualization={false}

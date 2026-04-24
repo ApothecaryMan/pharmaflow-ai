@@ -84,7 +84,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
       const defaultNote = activeModal === 'damage' ? 'Damaged from Expiry Module' : 'Returned from Expiry Module';
       const entityType = activeModal === 'damage' ? 'generic' : 'returns';
       
-      const mutation = stockOps.deductFromBatch(
+      const mutation = await stockOps.deductFromBatch(
         selectedActionBatch.drug,
         selectedActionBatch.id,
         qty,
@@ -92,6 +92,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
         reasonStr,
         {
           branchId: branchCode, // Pulled from useSettings
+          orgId: storage.get<string>(StorageKeys.ACTIVE_ORG_ID, 'org-1'),
           performedBy: currentEmployeeId,
           performedByName: employee?.name || 'System User',
         },
@@ -107,7 +108,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
         `Successfully ${activeModal === 'damage' ? 'damaged' : 'returned'} stock`
       );
       
-      if (onUpdateInventory) {
+      if (onUpdateInventory && mutation) {
         onUpdateInventory({ ...selectedActionBatch.drug, stock: mutation.newStock }, selectedActionBatch); 
       }
       if (onBatchesChanged) {
@@ -287,7 +288,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
         header: t.expiryManagement?.table?.potentialLoss || 'Potential Loss',
         meta: { align: 'center' },
         cell: ({ getValue }) => {
-          const loss = getValue<number>();
+          const loss = getValue() as number;
           const parts = formatCompactCurrencyParts(loss);
           return (
             <span className="text-red-600 dark:text-red-400 font-bold">
@@ -421,7 +422,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
             enableShowAll={true}
             pageSize="auto"
             enableVirtualization={false}
-            onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row))}
+            onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row as BatchWithDrug))}
           />
         </div>
       </div>

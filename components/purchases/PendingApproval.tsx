@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { permissionsService } from '../../services/auth/permissions';
 import { useSettings } from '../../context';
 import { PENDING_APPROVAL_HELP } from '../../i18n/helpInstructions';
@@ -25,7 +25,7 @@ interface PendingApprovalProps {
   color: string;
   t: any;
   purchases: Purchase[];
-  onApprovePurchase: (id: string, approverName: string) => void;
+  onApprovePurchase: (id: string) => void;
   onRejectPurchase: (id: string, reason?: string) => void;
   language: string;
   currentShift: Shift | null;
@@ -58,7 +58,6 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   );
 
   // Approve State
-  const [approverName, setApproverName] = useState('');
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [purchaseToApprove, setPurchaseToApprove] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -105,26 +104,15 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   };
 
   const confirmApprove = () => {
-    if (purchaseToApprove && approverName.trim()) {
-      onApprovePurchase(purchaseToApprove, approverName);
+    if (purchaseToApprove) {
+      onApprovePurchase(purchaseToApprove);
       setIsApproveModalOpen(false);
       setPurchaseToApprove(null);
-      setApproverName('');
       if (selectedPurchase) setSelectedPurchase(null);
-    } else {
-      alert(t.enterNameError || "Please enter the approver's name.");
     }
   };
 
-  // Auto-fill effect
-  useEffect(() => {
-    if ((isApproveModalOpen || selectedPurchase) && !approverName) {
-      const currentEmployee = employees?.find(e => e.id === currentEmployeeId);
-      if (currentEmployee?.name) {
-        setApproverName(currentEmployee.name);
-      }
-    }
-  }, [isApproveModalOpen, !!selectedPurchase, currentEmployeeId, employees]);
+  // Removed Auto-fill effect for approverName as it is now handled by context
 
   return (
     <div className='h-full flex flex-col space-y-6 animate-fade-in overflow-hidden'>
@@ -270,14 +258,8 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                   { label: t.approvedBy || 'Approved By:', icon: 'person', value: (
                       <div className='flex items-center gap-2.5'>
                         <span className='font-bold text-gray-800 dark:text-white'>
-                          {approverName || t.unknown || 'Unknown'}
+                          {employees?.find(e => e.id === currentEmployeeId)?.name || t.unknown || 'Unknown'}
                         </span>
-                        {!approverName && (
-                          <div className='flex items-center gap-1 text-[8px] text-orange-500 font-bold animate-pulse uppercase'>
-                            <span className='material-symbols-rounded text-xs'>warning</span>
-                            {t.nameRequired || 'Login Required'}
-                          </div>
-                        )}
                       </div>
                     )
                   }
@@ -342,12 +324,9 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                 <>
                   <button
                     onClick={() => {
-                      if (approverName.trim()) {
-                        onApprovePurchase(selectedPurchase.id, approverName);
+                      if (purchaseToApprove || selectedPurchase) {
+                        onApprovePurchase(selectedPurchase!.id);
                         setSelectedPurchase(null);
-                        setApproverName('');
-                      } else {
-                        alert(t.enterNameError || "Please enter the approver's name.");
                       }
                     }}
                     className='flex-1 py-3.5 rounded-2xl font-bold text-white bg-green-600 hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm'
@@ -397,7 +376,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
             </label>
             <div className='flex items-center gap-2 justify-center py-2.5 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5'>
               <span className='material-symbols-rounded text-gray-400 text-base'>account_circle</span>
-              <span className='text-base font-bold'>{approverName || t.unknown || 'Unknown'}</span>
+              <span className='text-base font-bold'>{employees?.find(e => e.id === currentEmployeeId)?.name || t.unknown || 'Unknown'}</span>
             </div>
           </div>
 
@@ -410,10 +389,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
             </button>
             <button
               onClick={confirmApprove}
-              disabled={!approverName.trim()}
-              className={`flex-1 py-3 rounded-2xl font-bold text-sm ${
-                approverName.trim() ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              }`}
+              className='flex-1 py-3 rounded-2xl font-bold text-sm bg-green-600 text-white hover:bg-green-700'
             >
               {t.confirm || 'Confirm'}
             </button>

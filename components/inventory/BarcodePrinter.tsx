@@ -249,7 +249,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
     highlightedIndex: selectedSuggestionIndex,
     onKeyDown,
     setHighlightedIndex: setSelectedSuggestionIndex,
-  } = useSearchKeyboardNavigation({
+  } = useSearchKeyboardNavigation<Drug>({
     results: searchResults,
     onSelect: (drug) => {
       addToQueue(drug);
