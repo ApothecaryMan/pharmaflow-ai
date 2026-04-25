@@ -13,6 +13,7 @@ export { HelpButton, HelpModal } from './HelpModal';
 export { MaterialTabs } from './MaterialTabs';
 export { SearchInput } from './SearchInput';
 export { SegmentedControl } from './SegmentedControl';
+export { PageHeader } from './PageHeader';
 export {
   cleanPhone,
   isValidEmail,

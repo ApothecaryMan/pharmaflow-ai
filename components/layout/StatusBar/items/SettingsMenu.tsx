@@ -79,6 +79,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setShowTickerTopSeller,
     graphicStyle,
     setGraphicStyle,
+    graphicFontVariant,
+    setGraphicFontVariant,
     borderRadius,
     setBorderRadius,
     sidebarStyle,
@@ -845,23 +847,31 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         {t.graphicStyle}
                       </label>
                       <SegmentedControl
-                        value={graphicStyle}
-                        onChange={(val) => setGraphicStyle(val as boolean)}
+                        value={!graphicStyle ? 'off' : graphicFontVariant}
+                        onChange={(val) => {
+                          if (val === 'off') {
+                            setGraphicStyle(false);
+                          } else {
+                            setGraphicStyle(true);
+                            setGraphicFontVariant(val as 'serif' | 'sans');
+                          }
+                        }}
                         color={currentTheme.name.toLowerCase()}
                         size='xs'
                         fullWidth={true}
                         className='flex-1'
                         shape='pill'
                         options={[
+                          { label: 'إيقاف', value: 'off' },
                           { 
                             label: 'جرافيكي', 
-                            value: false,
-                            fontFamily: fontFamilyAR 
+                            value: 'serif',
+                            fontFamily: '"HeadingFont"' 
                           },
                           { 
-                            label: 'جرافيكي', 
-                            value: true,
-                            fontFamily: '"HeadingFont"' 
+                            label: 'مودرن', 
+                            value: 'sans',
+                            fontFamily: '"GraphicSansFont"' 
                           },
                         ]}
                       />

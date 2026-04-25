@@ -79,6 +79,7 @@ export interface SettingsState {
   showTickerCustomers: boolean;
   showTickerTopSeller: boolean;
   graphicStyle: boolean;
+  graphicFontVariant: 'serif' | 'sans';
   // Metadata
   activeBranchId: string;
   branchCode: string;
@@ -116,6 +117,7 @@ export interface SettingsContextType extends SettingsState {
   setShowTickerCustomers: (show: boolean) => void;
   setShowTickerTopSeller: (show: boolean) => void;
   setGraphicStyle: (graphic: boolean) => void;
+  setGraphicFontVariant: (variant: 'serif' | 'sans') => void;
   // Helpers
   availableThemes: ThemeColor[];
   availableLanguages: { code: Language; label: string }[];
@@ -149,6 +151,7 @@ const defaultSettings: SettingsState = {
   showTickerCustomers: false,
   showTickerTopSeller: false,
   graphicStyle: false,
+  graphicFontVariant: 'serif',
   activeBranchId: '',
   branchCode: '',
 };
@@ -212,6 +215,7 @@ const loadSettings = (): SettingsState => {
       hideInactiveModules: hideInactiveModules ?? defaultSettings.hideInactiveModules,
       developerMode: developerMode ?? defaultSettings.developerMode,
       graphicStyle: storage.get('pharma_graphicStyle', defaultSettings.graphicStyle),
+      graphicFontVariant: storage.get('pharma_graphicFontVariant', defaultSettings.graphicFontVariant) as 'serif' | 'sans',
       activeBranchId: storage.get('pharma_activeBranchId', defaultSettings.activeBranchId),
       branchCode: storage.get('pharma_branchCode', defaultSettings.branchCode),
     };
@@ -251,6 +255,15 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       document.body.classList.remove('graphic-mode');
     }
   }, [settings.graphicStyle]);
+
+  // Apply Graphic Font Variant to body
+  useEffect(() => {
+    if (settings.graphicFontVariant === 'sans') {
+      document.body.classList.add('graphic-mode-sans');
+    } else {
+      document.body.classList.remove('graphic-mode-sans');
+    }
+  }, [settings.graphicFontVariant]);
 
   // Apply Font Settings & Load Fonts
   useEffect(() => {
@@ -472,6 +485,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, graphicStyle }));
   }, []);
 
+  const setGraphicFontVariant = useCallback((graphicFontVariant: 'serif' | 'sans') => {
+    setSettings((prev) => ({ ...prev, graphicFontVariant }));
+  }, []);
+
   const value = useMemo<SettingsContextType>(
     () => ({
       ...settings,
@@ -498,6 +515,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setShowTickerCustomers,
       setShowTickerTopSeller,
       setGraphicStyle,
+      setGraphicFontVariant,
       setBorderRadius,
       setFontFamilyEN,
       setFontFamilyAR,
@@ -525,6 +543,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setShowTickerCustomers,
       setShowTickerTopSeller,
       setGraphicStyle,
+      setGraphicFontVariant,
       setBorderRadius,
       setFontFamilyEN,
       setFontFamilyAR,

@@ -2712,7 +2712,7 @@ export const TRANSLATIONS = {
       },
     },
     inventory: {
-      title: 'المخــــــــزون',
+      title: 'المخـــزون',
       subtitle: 'إدارة المخزون الدوائي',
       outOfStock: 'الخالص / نواقص',
       available: 'متوفر',
@@ -2877,7 +2877,7 @@ export const TRANSLATIONS = {
       },
     },
     stockAdjustment: {
-      title: 'جـــــــــرد المخزون',
+      title: 'جـــــرد المخزون',
       subtitle: 'تصحح مستويات المخزون',
       searchPlaceholder: 'بحث عن منتج للتعديل...',
       add: 'إضافة للتعديل',
@@ -2914,7 +2914,7 @@ export const TRANSLATIONS = {
     },
 
     barcodePrinter: {
-      title: 'طباعــــــــــــــــــة الباركود',
+      title: 'طباعــة الباركود',
       subtitle: 'قائمة انتظار وطباعة ملصقات المنتجات',
       searchPlaceholder: 'بحث عن منتج للطباعة...',
       addToQueue: 'إضافة للقائمة',
@@ -3064,7 +3064,7 @@ export const TRANSLATIONS = {
       },
     },
     purchases: {
-      title: 'شــــــــــراء جديد',
+      title: 'شـــــراء جديد',
       subtitle: 'إعادة تعبئة المخزون من الموردين',
       selectSupplier: 'اختر المورد',
       searchDrug: 'بحث عن دواء للشراء...',
@@ -3087,7 +3087,7 @@ export const TRANSLATIONS = {
       placeholders: {
         searchHistory: 'بحث برقم، مورد...',
         searchSupplier: 'بحث واختيار المورد...',
-        enterId: 'أدخــــل الرقم',
+        enterId: 'أدخـــــل الرقم',
         searchDrug: 'بحث عن دواء...',
       },
       pack: 'علبة',
@@ -3320,7 +3320,7 @@ export const TRANSLATIONS = {
       allStock: 'كل المخزون',
       inStock: 'متوفر',
       outOfStock: 'غير متوفر',
-      posTitle: 'نقطة البيـــــــــــــــــع',
+      posTitle: 'نقطة البيـــع',
       name: 'اسم الصنف',
       code: 'الكود',
       category: 'الفئة',
@@ -3437,7 +3437,7 @@ export const TRANSLATIONS = {
       guestCustomer: 'عميل غير مسجل',
     },
     salesHistory: {
-      title: 'سجل المبيعــــــــات',
+      title: 'سجل المبيعـــــات',
       subtitle: 'عرض وإدارة المعاملات السابقة',
       status: 'الحالة',
       completed: 'مكتمل',
@@ -3695,7 +3695,7 @@ export const TRANSLATIONS = {
       },
     },
     customerOverview: {
-      title: 'نظرة عــــامة على العمــــــــلاء',
+      title: 'نظرة عـــــامة على العمـــــلاء',
       subtitle: 'تحليلات ورؤى شاملة للعملاء',
       totalCustomers: 'إجمالي العملاء',
       active: 'نشط',
@@ -3742,7 +3742,7 @@ export const TRANSLATIONS = {
       exportCSV: 'تصدير',
     },
     dashboard: {
-      title: 'نظــــــــرة عــــامة',
+      title: 'نظـــــرة عـــــامة',
       revenue: 'إجمالي الإيرادات',
       expenses: 'إجمالي المصروفات',
       profit: 'صافي الربح',
@@ -3928,7 +3928,7 @@ export const TRANSLATIONS = {
       },
     },
     returnHistory: {
-      title: 'سجل المرتجعــــــــات',
+      title: 'سجل المرتجعـــــات',
       subtitle: 'عرض وإدارة المرتجعات التي تمت معالجتها',
       searchPlaceholder: 'بحث في المرتجعات، رقم البيع، أو العميل...',
       dateFrom: 'من',
@@ -3998,7 +3998,7 @@ export const TRANSLATIONS = {
       totalSuffix: 'إجمالي',
     },
     realTimeSales: {
-      title: 'مراقبــــة المبيعــــــــات الفورية',
+      title: 'مراقبـــــة المبيعـــــات الفورية',
       todayRevenue: 'إيرادات اليوم',
       totalTransactions: 'إجمالي المعاملات',
       itemsSold: 'الأصناف المباعة',
@@ -4091,7 +4091,7 @@ export const TRANSLATIONS = {
     },
 
     cashRegister: {
-      title: 'سجل النقديــــــــــــة',
+      title: 'سجل النقدية',
       subtitle: 'إدارة الورديات النقدية والمعاملات',
       status: {
         open: 'الوردية مفتوحة',
@@ -4163,7 +4163,7 @@ export const TRANSLATIONS = {
       help: '@@import(./cashRegisterHelp.json)',
     },
     shiftHistory: {
-      title: 'سجل الورديـــــــــات',
+      title: 'سجل الوردـــــات',
       subtitle: 'عرض ورديات سجل النقدية السابقة',
       searchPlaceholder: 'بحث برقم الوردية أو المستخدم...',
       dateFrom: 'من',
@@ -4330,7 +4330,7 @@ export const TRANSLATIONS = {
       details: {
         packs: 'علبة'
       },
-      title: 'إدارة الصلاحيــــــــات',
+      title: 'إدارة الصلاحيـــــات',
       subtitle: 'تتبع تواريخ انتهاء الصلاحية والتنبيهات',
       expiredItems: 'أصناف منتهية',
       nearExpiry30: 'ينتهي < 30 يوم',

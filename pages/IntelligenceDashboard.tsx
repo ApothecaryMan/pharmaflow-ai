@@ -4,6 +4,7 @@ import { StorageKeys } from '../config/storageKeys';
 import { SegmentedControl } from '../components/common/SegmentedControl';
 import { FilterDropdown } from '../components/common/FilterDropdown';
 import { SearchInput } from '../components/common/SearchInput';
+import { PageHeader } from '../components/common/PageHeader';
 import { AuditPage } from '../components/intelligence/audit/AuditPage';
 import { FinancialsPage } from '../components/intelligence/financials/FinancialsPage';
 import { ProcurementPage } from '../components/intelligence/procurement/ProcurementPage';
@@ -255,15 +256,9 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
       className='h-full flex flex-col overflow-hidden'
       dir={language === 'AR' ? 'rtl' : 'ltr'}
     >
-      {/* Header Section (Three-column layout) */}
-      <div className='mb-4 flex items-center justify-between shrink-0 px-1'>
-        {/* Left Side: Actions */}
-        <div className='flex-1 flex justify-start items-center min-w-0'>
-          {renderLeftActions()}
-        </div>
-
-        {/* Center: Main Switcher */}
-        <div className='flex-none mx-4'>
+      <PageHeader
+        leftContent={renderLeftActions()}
+        centerContent={
           <SegmentedControl
             value={activeTab}
             onChange={(val) => setActiveTab(val)}
@@ -271,6 +266,8 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
             iconSize='--icon-lg'
             variant='onPage'
             shape='pill'
+            useGraphicFont={true}
+            className="w-full sm:w-[540px]"
             options={[
               {
                 label: t.intelligence.dashboard.tabs.procurement,
@@ -295,16 +292,13 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
               },
             ]}
           />
-        </div>
-
-        {/* Right Side: Filters */}
-        <div className='flex-1 flex justify-end items-center min-w-0'>
-          {renderRightFilters()}
-        </div>
-      </div>
+        }
+        rightContent={renderRightFilters()}
+        dir={language === 'AR' ? 'rtl' : 'ltr'}
+      />
 
       {/* Tab Content */}
-      <div className='flex-1 overflow-hidden'>
+      <div className='flex-1 px-page pb-page overflow-y-auto main-content-scroll'>
         {activeTab === 'procurement' && (
           <ProcurementPage 
             t={t} 

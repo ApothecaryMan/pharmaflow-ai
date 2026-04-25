@@ -78,4 +78,14 @@ export const AVAILABLE_FONTS_AR: FontOption[] = [
     value: '"Noto Kufi Arabic"',
     url: 'https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@100..900&display=swap',
   },
+  {
+    label: 'ثمانية سيريف',
+    value: '"HeadingFont"',
+    url: '',
+  },
+  {
+    label: 'ثمانية سانس',
+    value: '"GraphicSansFont"',
+    url: '',
+  },
 ];

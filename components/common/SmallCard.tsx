@@ -21,6 +21,7 @@ export interface SmallCardProps {
   iconOverlay?: React.ReactNode;
   valueSuffix?: React.ReactNode;
   iconTooltip?: React.ReactNode;
+  isLoading?: boolean;
 }
 
 /**
@@ -49,6 +50,7 @@ export const SmallCard = ({
   iconOverlay,
   valueSuffix,
   iconTooltip,
+  isLoading,
 }: SmallCardProps) => {
   // Render value logic
   const formattedValue = useMemo(() => {
@@ -67,9 +69,13 @@ export const SmallCard = ({
   }, [value, type]);
 
   const iconContent = (
-    <div className={`shrink-0 text-${iconColor}-600 dark:text-${iconColor}-400 relative flex items-center justify-center`}>
-      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-2xl)', lineHeight: 1 }}>{icon}</span>
-      {iconOverlay}
+    <div className={`shrink-0 ${isLoading ? 'bg-zinc-100 dark:bg-zinc-800' : `text-${iconColor}-600 dark:text-${iconColor}-400`} relative flex items-center justify-center w-12 h-12 rounded-xl ${isLoading ? 'animate-pulse' : ''}`}>
+      {!isLoading && (
+        <>
+          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-2xl)', lineHeight: 1 }}>{icon}</span>
+          {iconOverlay}
+        </>
+      )}
     </div>
   );
 
@@ -92,23 +98,27 @@ export const SmallCard = ({
         </p>
 
         <div className='flex items-center gap-2'>
-          <h4 className='text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-baseline leading-none'>
-            {typeof value === 'number' && type !== 'currency' && value <= 10000 ? (
-              <AnimatedCounter value={value} fractionDigits={fractionDigits ?? 0} />
-            ) : (
-              formattedValue
-            )}
-            {type === 'currency' && (
-              <span className='text-sm font-medium text-gray-500 dark:text-gray-400 ms-1'>
-                {currencyLabel || 'L.E'}
-              </span>
-            )}
-            {valueSuffix && (
-              <span className='text-sm font-medium text-gray-500 dark:text-gray-400 ms-1'>
-                {valueSuffix}
-              </span>
-            )}
-          </h4>
+          {isLoading ? (
+            <div className='h-8 w-20 bg-zinc-100 dark:bg-zinc-800 rounded-lg animate-pulse mt-1' />
+          ) : (
+            <h4 className='text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-baseline leading-none'>
+              {typeof value === 'number' && type !== 'currency' && value <= 10000 ? (
+                <AnimatedCounter value={value} fractionDigits={fractionDigits ?? 0} />
+              ) : (
+                formattedValue
+              )}
+              {type === 'currency' && (
+                <span className='text-sm font-medium text-gray-500 dark:text-gray-400 ms-1'>
+                  {currencyLabel || 'L.E'}
+                </span>
+              )}
+              {valueSuffix && (
+                <span className='text-sm font-medium text-gray-500 dark:text-gray-400 ms-1'>
+                  {valueSuffix}
+                </span>
+              )}
+            </h4>
+          )}
 
           {/* Badge Next to Number (Includes Trend Value + Label/SubValue) */}
           {(trend || subValue) && (

@@ -6,7 +6,24 @@ interface BranchMasterMonitorProps {
   branches: Branch[];
   color?: string;
   language: 'en' | 'ar';
+  isLoading?: boolean;
 }
+
+const BranchRowSkeleton = () => (
+  <div className="flex items-center justify-between p-4 border-b border-zinc-100 dark:border-zinc-800 last:border-0 animate-pulse">
+    <div className="flex items-center gap-4">
+      <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800" />
+      <div className="space-y-2">
+        <div className="h-4 w-24 bg-zinc-100 dark:bg-zinc-800 rounded" />
+        <div className="h-3 w-16 bg-zinc-50 dark:bg-zinc-800/50 rounded" />
+      </div>
+    </div>
+    <div className="flex items-center gap-6">
+      <div className="h-4 w-16 bg-zinc-50 dark:bg-zinc-800/50 rounded-full" />
+      <div className="h-4 w-12 bg-zinc-50 dark:bg-zinc-800/50 rounded" />
+    </div>
+  </div>
+);
 
 const BranchRow: React.FC<{ branch: Branch; language: 'en' | 'ar'; color: string }> = ({ branch, language, color }) => {
   const isActive = branch.status === 'active';
@@ -48,7 +65,7 @@ const BranchRow: React.FC<{ branch: Branch; language: 'en' | 'ar'; color: string
   );
 };
 
-export const BranchMasterMonitor: React.FC<BranchMasterMonitorProps> = ({ branches, color = 'primary', language }) => {
+export const BranchMasterMonitor: React.FC<BranchMasterMonitorProps> = ({ branches, color = 'primary', language, isLoading }) => {
   return (
     <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col group h-full`}>
       <div className="flex justify-between items-center mb-4 shrink-0">
@@ -64,7 +81,11 @@ export const BranchMasterMonitor: React.FC<BranchMasterMonitorProps> = ({ branch
       </div>
       
       <div className="flex-1 overflow-y-auto scrollbar-hide space-y-0 divide-y divide-zinc-100 dark:divide-zinc-800">
-        {branches.length === 0 ? (
+        {isLoading ? (
+          <>
+            {[1, 2, 3, 4].map((i) => <BranchRowSkeleton key={i} />)}
+          </>
+        ) : branches.length === 0 ? (
           <div className="h-full flex items-center justify-center text-zinc-400 text-sm italic py-8">
             {language === 'ar' ? 'لا توجد فروع مضافة' : 'No branches added'}
           </div>

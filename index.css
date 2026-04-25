@@ -5,10 +5,36 @@ layer(base);
 @import url("https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,slnt,wdth,wght@8..144,-10..0,25..151,100..1000&display=swap")
 layer(base);
 
+/* ── Thmanyah Serif Display (Graphic Serif) ── */
 @font-face {
   font-family: "HeadingFont";
-  src: url("/fonts/DARK.ttf") format("truetype");
-  font-weight: normal;
+  src: url("/fonts/thmanyahserifdisplay-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "HeadingFont";
+  src: url("/fonts/thmanyahserifdisplay-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── Thmanyah Sans (Graphic Sans) ── */
+@font-face {
+  font-family: "GraphicSansFont";
+  src: url("/fonts/thmanyahsans-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "GraphicSansFont";
+  src: url("/fonts/thmanyahsans-Medium.woff2") format("woff2");
+  font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
@@ -16,6 +42,7 @@ layer(base);
 :root {
   --page-title-font-size: 1.5rem; /* text-2xl */
   --page-title-font-family: inherit;
+  --page-title-sans-font-family: inherit;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -50,9 +77,19 @@ layer(base);
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-.graphic-mode [dir='rtl'] .page-title,
-.graphic-mode[dir='rtl'] .page-title {
-  --page-title-font-family: "HeadingFont", sans-serif;
+.graphic-mode[dir='rtl'],
+.graphic-mode [dir='rtl'] {
+  --page-title-font-family-serif: "HeadingFont", sans-serif;
+  --page-title-font-family-sans: "GraphicSansFont", sans-serif;
+  
+  /* Default active font is Serif */
+  --page-title-font-family: var(--page-title-font-family-serif);
+}
+
+/* Switch to Sans when this class is present */
+.graphic-mode-sans[dir='rtl'],
+.graphic-mode-sans [dir='rtl'] {
+  --page-title-font-family: var(--page-title-font-family-sans) !important;
 }
 
 .page-title {

@@ -6,7 +6,21 @@ interface QuotaMonitorProps {
   metrics: OrgMetrics;
   color?: string;
   language: 'en' | 'ar';
+  isLoading?: boolean;
 }
+
+const ProgressBarSkeleton = () => (
+  <div className="flex flex-col gap-3 animate-pulse">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+        <div className="h-4 w-24 bg-zinc-100 dark:bg-zinc-800 rounded" />
+      </div>
+      <div className="h-4 w-12 bg-zinc-50 dark:bg-zinc-800/50 rounded" />
+    </div>
+    <div className="h-2 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full" />
+  </div>
+);
 
 const ProgressBar: React.FC<{ 
   label: string; 
@@ -46,14 +60,14 @@ const ProgressBar: React.FC<{
   );
 };
 
-export const QuotaMonitor: React.FC<QuotaMonitorProps> = ({ metrics, color = 'primary', language }) => {
+export const QuotaMonitor: React.FC<QuotaMonitorProps> = ({ metrics, color = 'primary', language, isLoading }) => {
   const quotaLimits = {
     branches: 15,
     staff: 50,
     storageGB: 5
   };
 
-  const mockStorageUsage = parseFloat((metrics.totalBranches * 0.25).toFixed(1));
+  const mockStorageUsage = parseFloat(((metrics?.totalBranches || 0) * 0.25).toFixed(1));
 
   return (
     <div className={`p-6 rounded-3xl ${CARD_BASE} flex flex-col group h-full`}>
@@ -65,30 +79,40 @@ export const QuotaMonitor: React.FC<QuotaMonitorProps> = ({ metrics, color = 'pr
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <ProgressBar 
-          label={language === 'ar' ? 'الفروع المسجلة' : 'Registered Branches'}
-          value={metrics.totalBranches}
-          max={quotaLimits.branches}
-          icon="store"
-          colorClass="bg-primary-500"
-        />
-        
-        <ProgressBar 
-          label={language === 'ar' ? 'طاقم العمل' : 'Staff Members'}
-          value={metrics.activeStaffCount}
-          max={quotaLimits.staff}
-          icon="group"
-          colorClass="bg-violet-500"
-        />
+        {isLoading ? (
+          <>
+            <ProgressBarSkeleton />
+            <ProgressBarSkeleton />
+            <ProgressBarSkeleton />
+          </>
+        ) : (
+          <>
+            <ProgressBar 
+              label={language === 'ar' ? 'الفروع المسجلة' : 'Registered Branches'}
+              value={metrics?.totalBranches || 0}
+              max={quotaLimits.branches}
+              icon="store"
+              colorClass="bg-primary-500"
+            />
+            
+            <ProgressBar 
+              label={language === 'ar' ? 'طاقم العمل' : 'Staff Members'}
+              value={metrics?.activeStaffCount || 0}
+              max={quotaLimits.staff}
+              icon="group"
+              colorClass="bg-violet-500"
+            />
 
-        <ProgressBar 
-          label={language === 'ar' ? 'مساحة التخزين' : 'Storage Space'}
-          value={mockStorageUsage}
-          max={quotaLimits.storageGB}
-          unit="GB"
-          icon="database"
-          colorClass="bg-orange-500"
-        />
+            <ProgressBar 
+              label={language === 'ar' ? 'مساحة التخزين' : 'Storage Space'}
+              value={mockStorageUsage}
+              max={quotaLimits.storageGB}
+              unit="GB"
+              icon="database"
+              colorClass="bg-orange-500"
+            />
+          </>
+        )}
       </div>
       
       <div className="mt-8 pt-4 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-center bg-zinc-50 dark:bg-zinc-800/30 -mx-6 -mb-6 px-6 py-4 rounded-b-3xl gap-4">
