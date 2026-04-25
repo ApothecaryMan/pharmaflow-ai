@@ -515,16 +515,12 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
         isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
         title={editingBranch?.id ? t.settings.branchManagement : t.settings.addBranch}
         className="max-w-xl" hideCloseButton={true}
-        headerActions={
-          <SegmentedControl
-            size="sm" iconSize="18px" variant="onPage"
-            value={modalView} onChange={(val) => setModalView(val as 'general' | 'employees')}
-            options={[
-              { label: language === 'AR' ? 'البيانات العامة' : 'General', value: 'general', icon: 'settings' },
-              { label: language === 'AR' ? 'تعيين الموظفين' : 'Employees', value: 'employees', icon: 'group_add' }
-            ]}
-          />
-        }
+        tabs={[
+          { label: language === 'AR' ? 'البيانات' : 'General', value: 'general' },
+          { label: language === 'AR' ? 'الموظفين' : 'Employees', value: 'employees' }
+        ]}
+        activeTab={modalView}
+        onTabChange={(val) => setModalView(val as 'general' | 'employees')}
       >
         <div className="space-y-6 min-h-[400px] py-2">
           {modalView === 'general' ? renderGeneralView() : renderEmployeesView()}
