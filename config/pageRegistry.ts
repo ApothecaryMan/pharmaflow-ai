@@ -23,6 +23,7 @@ import { InventoryManagement } from '../components/inventory/InventoryManagement
 import { StockAdjustment } from '../components/inventory/StockAdjustment';
 import { StockMovementReport, ExpiryManagement } from '../components/inventory';
 import { BranchSettings } from '../components/settings/BranchSettings';
+import { PricingPage } from '../components/settings/PricingPage';
 import { LandingPage } from '../components/layout/LandingPage';
 import { PendingApproval } from '../components/purchases/PendingApproval';
 import { PurchaseReturns } from '../components/purchases/PurchaseReturns';
@@ -586,6 +587,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     requiredProps: ['color', 't', 'language', 'employees', 'currentEmployeeId', 'activeOrgId'],
     permission: 'settings.view',
     layout: 'standard',
+  },
+  'services': {
+    id: 'services',
+    component: PricingPage,
+    menuLabel: 'Services & Pricing',
+    menuLabelAr: 'الخدمات والأسعار',
+    icon: 'sell',
+    category: 'settings',
+    requiredProps: ['color', 't', 'language'],
+    permission: 'settings.view',
+    layout: 'full-bleed',
   },
 };
 

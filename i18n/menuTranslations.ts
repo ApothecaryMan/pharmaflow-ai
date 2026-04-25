@@ -826,6 +826,7 @@ export const MENU_TRANSLATIONS = {
     // Settings
     'Company Profile': 'ملف الشركة',
     'Branch Management': 'إدارة الفروع',
+    'Services & Pricing': 'الخدمات والأسعار',
     'Business Hours': 'ساعات العمل',
     'Date/Time Format': 'تنسيق التاريخ/الوقت',
     'Language Settings': 'إعدادات اللغة',

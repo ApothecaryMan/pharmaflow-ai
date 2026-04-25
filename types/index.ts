@@ -849,6 +849,7 @@ export type ViewState =
   | 'branch-management'
   | 'medicine-search'
   | 'customer-density-map'
+  | 'services'
   | 'org-management';
 
 // Export Stock Movement types

@@ -62,7 +62,7 @@ export const getContentContainerClasses = (
 
   // 2. Full-bleed views (e.g. POS)
   if (layout === 'full-bleed') {
-    return `${base} w-full px-page`;
+    return `${base} w-full p-0`;
   }
 
   // 3. Standard / Dashboard views with Max Width and Padding
