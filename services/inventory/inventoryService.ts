@@ -144,7 +144,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
       id: idGenerator.uuid(),
       internalCode: drug.internalCode || idGenerator.code('DRUG'),
       branchId: effectiveBranchId,
-      orgId: settings.orgId,
+      orgId: (drug as any).orgId || settings.orgId,
       status: drug.status || 'active',
     } as Drug;
     
@@ -160,7 +160,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
       batchNumber: 'INITIAL',
       dateReceived: new Date().toISOString(),
       branchId: effectiveBranchId,
-      orgId: settings.orgId,
+      orgId: newDrug.orgId,
       version: 1,
     }, effectiveBranchId);
 

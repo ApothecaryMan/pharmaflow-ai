@@ -246,6 +246,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
         await settingsService.setMultiple({ 
           activeBranchId: finalBranchId,
           branchCode: allBranches.find(b => b.id === finalBranchId)?.code || '',
+          orgId: defaultOrgId,
         });
 
         await refreshAll(finalBranchId);
@@ -277,6 +278,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
       const { orgService } = await import('./org/orgService');
       orgService.setActiveOrgId(orgId);
       setActiveOrgId(orgId);
+      await settingsService.set('orgId', orgId);
       const branches = await branchService.getAll(orgId);
       if (branches.length > 0) await switchBranch(branches[0].id);
       else await refreshAll();

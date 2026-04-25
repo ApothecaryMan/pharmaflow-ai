@@ -73,7 +73,7 @@ export abstract class BaseDomainService<T extends { id: string; branchId?: strin
       ...data,
       id: idGenerator.uuid(),
       branchId: effectiveBranchId,
-      orgId: settings.orgId,
+      orgId: (data as any).orgId || settings.orgId,
     } as T;
 
     const dbData = this.mapDomainToDb(newEntity);

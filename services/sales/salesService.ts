@@ -167,7 +167,7 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
       ...sale,
       id: idGenerator.uuid(),
       branchId: effectiveBranchId,
-      orgId: settings.orgId,
+      orgId: (sale as any).orgId || settings.orgId,
       date: sale.date || new Date().toISOString(),
     } as Sale;
 
