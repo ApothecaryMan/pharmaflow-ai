@@ -11,6 +11,7 @@ import { inventoryService } from '../inventory/inventoryService';
 import { salesService } from '../sales/salesService';
 import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
 import { auditService } from '../auditService';
+import { money } from '../../utils/currency';
 import { returnService } from '../returns/returnService';
 import { settingsService } from '../settings/settingsService';
 import * as stockOps from '../../utils/stockOperations';
@@ -221,13 +222,14 @@ export const transactionService = {
     const batchReturnOps: { allocations: any[]; drugId: string }[] = [];
     
     try {
-      // Validation
-      const previouslyRefunded = sale.netTotal !== undefined ? (sale.total - sale.netTotal) : 0;
-      const remainingBalance = sale.total - previouslyRefunded;
-      if (returnData.totalRefund > remainingBalance + 0.01) {
+      // Validation using high-precision money engine
+      const previouslyRefunded = sale.netTotal !== undefined ? money.subtract(sale.total, sale.netTotal) : 0;
+      const remainingBalance = money.subtract(sale.total, previouslyRefunded);
+      
+      if (!money.isGte(remainingBalance, returnData.totalRefund)) {
         return {
           success: false,
-          error: `Refund amount exceeds remaining balance`,
+          error: `Refund amount (${returnData.totalRefund}) exceeds remaining balance (${remainingBalance})`,
         };
       }
 

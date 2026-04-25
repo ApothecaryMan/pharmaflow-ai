@@ -146,7 +146,7 @@ export const usePOSCart = ({
         ...prev,
         {
           ...drug,
-          price: drug.price,
+          price: stockOps.resolvePrice(drug.price, isUnitMode, drug.unitsPerPack, drug.unitPrice),
           quantity: initialQuantity,
           discount: prev.find((i) => i.id === drug.id && !!i.isUnit !== isUnitMode)?.discount || 0,
           isUnit: isUnitMode,
@@ -235,6 +235,7 @@ export const usePOSCart = ({
               quantity: packsTake,
               discount: currentItem.discount || 0,
               isUnit: false,
+              price: stockOps.resolvePrice(batch.price, false, unitsPerPack, batch.unitPrice),
               preferredBatchId: batch.id,
             });
             remainingPacks -= packsTake;
@@ -254,6 +255,7 @@ export const usePOSCart = ({
               quantity: unitsTake,
               discount: currentItem.discount || 0,
               isUnit: true,
+              price: stockOps.resolvePrice(batch.price, true, unitsPerPack, batch.unitPrice),
               preferredBatchId: batch.id,
             });
             remainingUnits -= unitsTake;
@@ -332,7 +334,12 @@ export const usePOSCart = ({
                 ...i, 
                 isUnit: newIsUnit, 
                 quantity: convertedQty,
-                price: i.basePackPrice || drug?.price || i.price
+                price: stockOps.resolvePrice(
+                  i.basePackPrice || drug?.price || i.price,
+                  newIsUnit,
+                  unitsPerPack,
+                  drug?.unitPrice
+                )
               } 
             : i
         );

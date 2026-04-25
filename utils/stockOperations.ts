@@ -2,6 +2,7 @@ import { batchService } from '../services/inventory/batchService';
 import { stockMovementService } from '../services/inventory/stockMovement/stockMovementService';
 import type { Drug, StockBatch, BatchAllocation, StockMovementType, CartItem } from '../types';
 import { validateStock, assertStockSufficient } from './inventory';
+import { money } from './currency';
 
 /**
  * Context for stock operations to ensure accurate movement logging.
@@ -34,23 +35,31 @@ export const resolveUnits = (qty: number, isUnit: boolean, unitsPerPack: number 
 
 /**
  * Resolves unit price based on input type.
- * Usually drug.price is for a FULL PACK.
- * If isUnit is true, it returns the price for a single unit.
+ * Priority: 
+ * 1. manualUnitPrice (if provided)
+ * 2. Calculated via money.divide (if not provided)
  */
-export const resolvePrice = (price: number, isUnit: boolean, unitsPerPack: number = 1): number => {
+export const resolvePrice = (
+  price: number, 
+  isUnit: boolean, 
+  unitsPerPack: number = 1,
+  manualUnitPrice?: number
+): number => {
   const perPack = unitsPerPack || 1;
-  if (perPack <= 1) return price;
-  const unitPrice = isUnit ? price / perPack : price;
-  return Math.round(unitPrice * 100) / 100; // Round to 2 decimal places for price
+  if (!isUnit) return price;
+  
+  // Use manual unit price if available (Bottom-Up)
+  if (manualUnitPrice !== undefined && manualUnitPrice > 0) return manualUnitPrice;
+  
+  // Fallback to safe division
+  return money.divide(price, perPack);
 };
 
 /**
  * Converts total units back to pack quantity.
  */
 export const convertToPacks = (totalUnits: number, unitsPerPack: number = 1): number => {
-  const perPack = unitsPerPack || 1;
-  const packs = totalUnits / perPack;
-  return Math.round(packs * 1000) / 1000; // Round to 3 decimal places for fractional packs
+  return money.divide(totalUnits, unitsPerPack || 1);
 };
 
 /**

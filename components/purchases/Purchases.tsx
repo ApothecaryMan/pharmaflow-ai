@@ -717,11 +717,14 @@ export const Purchases: React.FC<PurchasesProps> = ({
           name: getDisplayName(drug, textTransform),
           quantity: 1,
           costPrice: cost,
+          unitCostPrice: drug.unitCostPrice || 0,
           dosageForm: drug.dosageForm,
           salePrice: sale,
+          unitSalePrice: drug.unitPrice || 0,
           discount: parseFloat(initialDiscount.toFixed(2)),
           expiryDate: '',
           tax: initialTaxPercent, // Tax as percentage
+          unitsPerPack: drug.unitsPerPack || 1,
         },
       ];
     });
@@ -1519,6 +1522,32 @@ export const Purchases: React.FC<PurchasesProps> = ({
                         />
                       </div>
 
+                      {/* 3b. Unit Cost */}
+                      <div className='w-14'>
+                        <FloatingInput
+                          inputRef={(el) => {
+                            inputRefs.current[`${index}-unitCostPrice`] = el;
+                          }}
+                          onKeyDown={(e) => handleInputKeyDown(e, index, 'unitCostPrice')}
+                          label={language === 'AR' ? 'ت. شريط' : 'U. Cost'}
+                          type='number'
+                          value={item.unitCostPrice || 0}
+                          placeholder={item.costPrice && item.unitsPerPack ? (item.costPrice / item.unitsPerPack).toFixed(2) : ''}
+                          labelBgClassName={
+                            selectedCartIndex === index
+                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
+                          }
+                          onFocus={(e) => {
+                            setSelectedCartIndex(index);
+                            e.target.select();
+                          }}
+                          onChange={(e) =>
+                            updateItem(item.id, 'unitCostPrice', parseFloat(e.target.value) || 0)
+                          }
+                        />
+                      </div>
+
                       {/* 4. Discount */}
                       <div className='w-14'>
                         <FloatingInput
@@ -1567,6 +1596,32 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           }}
                           onChange={(e) =>
                             updateItem(item.id, 'salePrice', parseFloat(e.target.value) || 0)
+                          }
+                        />
+                      </div>
+
+                      {/* 5b. Unit Sale Price */}
+                      <div className='w-14'>
+                        <FloatingInput
+                          inputRef={(el) => {
+                            inputRefs.current[`${index}-unitSalePrice`] = el;
+                          }}
+                          onKeyDown={(e) => handleInputKeyDown(e, index, 'unitSalePrice')}
+                          label={language === 'AR' ? 'س. شريط' : 'U. Sale'}
+                          type='number'
+                          value={item.unitSalePrice || 0}
+                          placeholder={item.salePrice && item.unitsPerPack ? (item.salePrice / item.unitsPerPack).toFixed(2) : ''}
+                          labelBgClassName={
+                            selectedCartIndex === index
+                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
+                          }
+                          onFocus={(e) => {
+                            setSelectedCartIndex(index);
+                            e.target.select();
+                          }}
+                          onChange={(e) =>
+                            updateItem(item.id, 'unitSalePrice', parseFloat(e.target.value) || 0)
                           }
                         />
                       </div>

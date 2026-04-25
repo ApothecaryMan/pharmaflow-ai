@@ -25,9 +25,12 @@ import { getActiveReceiptSettings, printInvoice } from '../InvoiceTemplate';
 import { InsightTooltip } from '../../common/InsightTooltip';
 import { Tooltip } from '../../common/Tooltip';
 import { isToday, isAfter, subHours, parseISO } from 'date-fns';
+import { pricingService } from '../../../services/sales/pricingService';
+import * as stockOps from '../../../utils/stockOperations';
 import { idGenerator } from '../../../utils/idGenerator';
 import { useShift } from '../../../hooks/useShift';
 import { resolvePrice } from '../../../utils/stockOperations';
+import { money } from '../../../utils/money';
 
 const ShiftWarning = ({ t, compact = false }: { t: any; compact?: boolean }) => (
   <div className={`flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 ${compact ? 'h-7 px-2 w-full' : 'h-[42px] px-4'}`}>
@@ -349,13 +352,15 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // 3. Calculate Limits (Total Units)
       // drug.stock is typically stored as Total Units in the system (based on POS analysis)
       // Available Limit = Actual Stock in Inventory + What we already own in this Order
-      const totalOriginalUnitsOwned = originalPackQty * unitsPerPack + originalUnitQty;
+      const totalOriginalUnitsOwned = stockOps.resolveUnits(originalPackQty, false, unitsPerPack) + 
+                                     stockOps.resolveUnits(originalUnitQty, true, unitsPerPack);
       const maxUnitsAvailable = drug.stock + totalOriginalUnitsOwned;
 
       // 4. Calculate Proposed Total Usage
       const proposedPackQty = isUnit ? currentPendingPackQty : proposedQty;
       const proposedUnitQty = isUnit ? proposedQty : currentPendingUnitQty;
-      const proposedTotalUnits = proposedPackQty * unitsPerPack + proposedUnitQty;
+      const proposedTotalUnits = stockOps.resolveUnits(proposedPackQty, false, unitsPerPack) + 
+                                stockOps.resolveUnits(proposedUnitQty, true, unitsPerPack);
 
       // 5. Validation & Clamping
       let finalQty = proposedQty;
@@ -565,20 +570,11 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         }
       }
 
-      // Step 1: Calculate subtotal
-      const subtotal = updatedItems.reduce((sum, item) => {
-        // BUG-D2: Use resolvePrice for consistent rounding with POS cart
-        const basePrice = resolvePrice(item.price, !!item.isUnit, item.unitsPerPack);
-        const itemPrice = basePrice * item.quantity;
-        const afterItemDiscount = itemPrice * (1 - (item.discount || 0) / 100);
-        return sum + afterItemDiscount;
-      }, 0);
-
-      // Step 2: Apply global discount (percentage on subtotal)
-      const afterGlobalDiscount = subtotal * (1 - (selectedSale.globalDiscount || 0) / 100);
-
-      // Step 3: Add delivery fee to get final total
-      const finalTotal = afterGlobalDiscount + (selectedSale.deliveryFee || 0);
+      // Step 1: Calculate totals using unified pricing service
+      const totals = pricingService.calculateOrderTotals(updatedItems, selectedSale.globalDiscount || 0);
+      
+      const subtotal = totals.netSubtotal;
+      const finalTotal = money.add(totals.finalTotal, selectedSale.deliveryFee || 0);
 
       // Step 4: Generate Modifications for History
       const modifications: any[] = [];

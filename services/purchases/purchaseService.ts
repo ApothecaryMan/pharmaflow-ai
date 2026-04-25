@@ -263,6 +263,10 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
         performedBy: performedBy,
         status: 'approved',
         orgId: purchase.orgId || settings.orgId,
+        price: item.salePrice,
+        unitPrice: item.unitSalePrice,
+        costPrice: item.costPrice,
+        unitCostPrice: item.unitCostPrice,
       });
     }
 
@@ -273,6 +277,17 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
       })),
       true // skipBatch: we already created batches above
     );
+
+    // Update Drug pricing info from latest purchase
+    for (const item of purchase.items) {
+      await inventoryService.update(item.drugId, {
+        price: item.salePrice,
+        unitPrice: item.unitSalePrice,
+        costPrice: item.costPrice,
+        unitCostPrice: item.unitCostPrice,
+        expiryDate: item.expiryDate,
+      });
+    }
   }
 
   async reject(id: string, reason: string): Promise<Purchase> {

@@ -5,6 +5,8 @@ import type { Return, ReturnItem, ReturnReason, Sale, Shift } from '../../types'
 import { FilterDropdown } from '../common/FilterDropdown';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
+import { pricingService } from '../../services/sales/pricingService';
+import { money } from '../../utils/currency';
 import { useSmartDirection } from '../common/SmartInputs';
 import { idGenerator } from '../../utils/idGenerator';
 import { useData } from '../../services/DataContext';
@@ -143,21 +145,26 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
     selectedItems.forEach((quantity, lineKey) => {
       const item = availableItems.find((i) => i.lineKey === lineKey);
       if (item) {
-        const effectivePrice =
-          item.isUnit && item.unitsPerPack ? item.price / item.unitsPerPack : item.price;
-        const itemTotal = effectivePrice * quantity;
-        const withItemDiscount = itemTotal * (1 - (item.discount || 0) / 100);
-        // Apply global discount per-item to keep totalRefund = sum(line refunds)
-        const withGlobalDiscount = sale.globalDiscount && sale.globalDiscount > 0
-          ? withItemDiscount * (1 - sale.globalDiscount / 100)
-          : withItemDiscount;
-        total += withGlobalDiscount;
+        // Use pricingService for consistent per-item net price
+        const itemTotal = pricingService.calculateItemTotal({
+          ...item,
+          quantity: quantity
+        } as any);
+
+        // Apply global discount per-item (pro-rata)
+        let lineRefund = itemTotal;
+        if (sale.globalDiscount && sale.globalDiscount > 0) {
+          const globalDiscountAmount = money.multiply(itemTotal, sale.globalDiscount, 2);
+          lineRefund = money.subtract(itemTotal, globalDiscountAmount);
+        }
+
+        total = money.add(total, lineRefund);
       }
     });
     return total;
   }, [selectedItems, availableItems, sale.globalDiscount]);
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     // VALIDATION: Check shift status and balance
     try {
       if (!currentShift) {
@@ -219,11 +226,13 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
       }
 
       // BUG-010: Split balance check by payment method
-      // Cash refunds can only be fulfilled from cash balance, not card balance
       const isCashSale = sale.paymentMethod === 'cash';
       if (isCashSale) {
-        const cashBalance = (openShift.cashSales || 0) + (openShift.cashIn || 0) - (openShift.returns || 0);
-        if (calculateRefund > cashBalance) {
+        const cashBalance = money.subtract(
+          money.add(openShift.cashSales || 0, openShift.cashIn || 0),
+          openShift.returns || 0
+        );
+        if (money.toSmallestUnit(calculateRefund) > money.toSmallestUnit(cashBalance)) {
           setValidationError(
             t.returns.validation?.insufficientBalance ||
               'Cash refund amount exceeds available cash balance in the current shift'
@@ -231,9 +240,11 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           return;
         }
       } else {
-        // For card refunds, check the general balance (card refunds are processed via the POS terminal)
-        const totalBalance = (openShift.cashSales || 0) + (openShift.cardSales || 0) + (openShift.cashIn || 0) - (openShift.returns || 0);
-        if (calculateRefund > totalBalance) {
+        const totalBalance = money.subtract(
+          money.add(money.add(openShift.cashSales || 0, openShift.cardSales || 0), openShift.cashIn || 0),
+          openShift.returns || 0
+        );
+        if (money.toSmallestUnit(calculateRefund) > money.toSmallestUnit(totalBalance)) {
           setValidationError(
             t.returns.validation?.insufficientBalance ||
               'Return amount exceeds available sales balance'
@@ -273,8 +284,10 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
       }
     });
 
+    const returnId = await idGenerator.generate('returns', activeBranchId);
+
     const returnData: Return = {
-      id: idGenerator.generate('returns', activeBranchId),
+      id: returnId,
       branchId: activeBranchId,
       saleId: sale.id,
       date: getVerifiedDate().toISOString(),

@@ -29,7 +29,7 @@ import { SegmentedControl } from '../../common/SegmentedControl';
 import { SmartAutocomplete } from '../../common/SmartInputs';
 import { PriceDisplay, TanStackTable } from '../../common/TanStackTable';
 import { useStatusBar } from '../../layout/StatusBar';
-import { calculateItemTotal, SortableCartItem } from './SortableCartItem';
+import { SortableCartItem } from './SortableCartItem';
 
 import { POSPageHeader } from './ui/POSPageHeader';
 import { POSCustomerPanel } from './ui/POSCustomerPanel';
@@ -49,6 +49,7 @@ import { usePOSSearchWorker } from './hooks/usePOSSearchWorker';
 import { usePOSCart } from './hooks/usePOSCart';
 import { usePOSCheckout } from './hooks/usePOSCheckout';
 import { useBarcodeScanner } from './hooks/useBarcodeScanner';
+import { pricingService } from '../../../services/sales/pricingService';
 
 
 // --- Main POS Component ---
@@ -185,13 +186,12 @@ export const POS: React.FC<POSProps> = ({
   }, [setSearch]);
 
   const { grossSubtotal, cartTotal, subtotal } = useMemo(() => {
-    const gross = cart.reduce((sum, item) => {
-      const unitPrice = resolvePrice(item.price, !!item.isUnit, item.unitsPerPack);
-      return sum + unitPrice * item.quantity;
-    }, 0);
-    const net = cart.reduce((sum, item) => sum + calculateItemTotal(item), 0);
-    const total = net * (1 - (globalDiscount || 0) / 100);
-    return { grossSubtotal: gross, cartTotal: total, subtotal: gross };
+    const totals = pricingService.calculateOrderTotals(cart, globalDiscount || 0);
+    return { 
+      grossSubtotal: totals.grossSubtotal, 
+      cartTotal: totals.finalTotal, 
+      subtotal: totals.grossSubtotal 
+    };
   }, [cart, globalDiscount]);
 
   const {

@@ -43,6 +43,15 @@ export interface StockMovement {
   reviewedBy?: string;
   reviewedAt?: string;
   expiryDate?: string; // Optional: snapshot of expiry
+
+  /** Snapshot of pack selling price at movement time */
+  price?: number;
+  /** Snapshot of unit selling price at movement time */
+  unitPrice?: number;
+  /** Snapshot of pack cost price at movement time */
+  costPrice?: number;
+  /** Snapshot of unit cost price at movement time */
+  unitCostPrice?: number;
 }
 
 export interface StockMovementFilters {

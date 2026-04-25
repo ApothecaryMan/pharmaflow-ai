@@ -1,72 +1,104 @@
-# Implementation Plan: OOP Service Refactor - Phase 2
+# Implementation Plan: [FEATURE]
 
-**Branch**: `013-oop-service-refactor-p2` | **Date**: 2026-04-25 | **Spec**: [spec.md](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/specs/013-oop-service-refactor-p2/spec.md)
-**Input**: Feature specification from `/specs/013-oop-service-refactor-p2/spec.md`
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+
+**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-This feature completes the service layer transition to a robust OOP architecture. The primary focus is on standardizing entity management (Customers/Suppliers) through a new `BaseEntityService`, evolving the reporting layer (`Sales`/`Purchases`) with advanced analytics and server-side aggregations, and centralizing security via a refactored `PermissionsService`. This ensures consistency, reduces code duplication, and improves data integrity through automated workflows like batch creation.
+[Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
 
-**Language/Version**: TypeScript (ES2022 target)  
-**Primary Dependencies**: React 19+, Vite, Supabase, TanStack Table  
-**Storage**: Supabase (PostgreSQL), `StorageService`  
-**Testing**: Vitest  
-**Target Platform**: Web (Bilingual LTR/RTL)
-**Project Type**: Web application  
-**Performance Goals**: <500ms search/filter response, dashboard charts loading under 2s.  
-**Constraints**: No `any` types, strict i18n compliance, standard component usage.  
-**Scale/Scope**: 5 core services to be refactored or updated, covering Customers, Suppliers, Sales, Purchases, and Employees.
+<!--
+  ACTION REQUIRED: Replace the content in this section with the technical details
+  for the project. The structure here is presented in advisory capacity to guide
+  the iteration process.
+-->
+
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
+**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: [single/web/mobile - determines source structure]  
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
+**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- [x] **Strict Type Safety**: All new classes and interfaces will use specific types. `any` is forbidden.
-- [x] **Localization First**: Any new user-facing strings (e.g., error messages) will be added to `i18n/translations.ts`.
-- [x] **Service-Based Architecture**: Core logic is strictly isolated in `services/core` and `services/[domain]`.
-- [x] **Standard Component Usage**: No direct HTML tags in components; using `SmartInput`, `TanStackTable`, etc.
-- [x] **Secure Data Handling**: Using `idGenerator` for sequential IDs and `StorageService` for persistence.
+[Gates determined based on constitution file]
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/013-oop-service-refactor-p2/
-├── plan.md              # This file
-├── research.md          # Phase 0 output
-├── data-model.md        # Phase 1 output
-├── quickstart.md        # Phase 1 output
-├── contracts/           # Phase 1 output (Internal service contracts)
-└── tasks.md             # Phase 2 output
+specs/[###-feature]/
+├── plan.md              # This file (/speckit.plan command output)
+├── research.md          # Phase 0 output (/speckit.plan command)
+├── data-model.md        # Phase 1 output (/speckit.plan command)
+├── quickstart.md        # Phase 1 output (/speckit.plan command)
+├── contracts/           # Phase 1 output (/speckit.plan command)
+└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
 ```
 
 ### Source Code (repository root)
+<!--
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
+  for this feature. Delete unused options and expand the chosen structure with
+  real paths (e.g., apps/admin, packages/something). The delivered plan must
+  not include Option labels.
+-->
 
 ```text
-services/
-├── core/
-│   ├── BaseDomainService.ts    # Base for all services
-│   ├── BaseEntityService.ts    # NEW: Standardizes search/filter
-│   └── BaseReportService.ts    # Updated: Supports aggregations
-├── customers/
-│   └── customerService.ts      # Refactored: CustomerServiceImpl
-├── suppliers/
-│   └── supplierService.ts      # Refactored: SupplierServiceImpl
-├── sales/
-│   └── salesService.ts         # Updated: Analytics methods
-├── purchases/
-│   └── purchaseService.ts      # Updated: Auto-batch logic
-├── hr/
-│   └── employeeService.ts      # Updated: Profile management
-└── auth/
-    └── permissions.ts          # Refactored: PermissionsServiceImpl
+# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
+src/
+├── models/
+├── services/
+├── cli/
+└── lib/
+
+tests/
+├── contract/
+├── integration/
+└── unit/
+
+# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
+backend/
+├── src/
+│   ├── models/
+│   ├── services/
+│   └── api/
+└── tests/
+
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
+
+# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
+
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
-**Structure Decision**: Single project structure with centralized service layer. Core abstractions reside in `services/core/`.
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
 
 ## Complexity Tracking
 
-*No violations detected. The refactoring simplifies existing complexity.*
+> **Fill ONLY if Constitution Check has violations that must be justified**
+
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|-----------|------------|-------------------------------------|
+| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |

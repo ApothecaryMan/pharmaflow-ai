@@ -98,7 +98,9 @@ export const Inventory: React.FC<InventoryProps> = ({
     genericName: [], // Changed to array
     category: 'General',
     price: 0,
+    unitPrice: 0,
     costPrice: 0,
+    unitCostPrice: 0,
     stock: 0,
     expiryDate: '',
     description: '',
@@ -1377,6 +1379,39 @@ export const Inventory: React.FC<InventoryProps> = ({
                         value={formData.costPrice || 0}
                         onChange={(e) =>
                           setFormData({ ...formData, costPrice: parseFloat(e.target.value) || 0 })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className='grid grid-cols-2 gap-3'>
+                    <div>
+                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                        {currentLang === 'ar' ? 'سعر الشريط' : 'Unit Price'}
+                      </label>
+                      <input
+                        type='number'
+                        step='0.01'
+                        className='w-full px-3 py-2 rounded-xl border border-amber-200 dark:border-amber-900/30 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-amber-500 outline-hidden transition-all text-sm font-bold text-amber-600'
+                        value={formData.unitPrice || 0}
+                        placeholder={formData.price && formData.unitsPerPack ? (formData.price / formData.unitsPerPack).toFixed(2) : ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, unitPrice: parseFloat(e.target.value) || 0 })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                        {currentLang === 'ar' ? 'تكلفة الشريط' : 'Unit Cost'}
+                      </label>
+                      <input
+                        type='number'
+                        step='0.01'
+                        className='w-full px-3 py-2 rounded-xl border border-amber-200 dark:border-amber-900/30 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-amber-500 outline-hidden transition-all text-sm text-amber-700'
+                        value={formData.unitCostPrice || 0}
+                        placeholder={formData.costPrice && formData.unitsPerPack ? (formData.costPrice / formData.unitsPerPack).toFixed(2) : ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, unitCostPrice: parseFloat(e.target.value) || 0 })
                         }
                       />
                     </div>

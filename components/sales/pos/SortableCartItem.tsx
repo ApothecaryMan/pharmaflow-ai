@@ -8,7 +8,7 @@ import type { TRANSLATIONS } from '../../../i18n/translations';
 import type { CartItem, Drug } from '../../../types';
 import { getDisplayName } from '../../../utils/drugDisplayName';
 import { useSettings } from '../../../context';
-import { resolvePrice } from '../../../utils/stockOperations';
+import { pricingService } from '../../../services/sales/pricingService';
 
 import {
   CartItemExpiryBadge,
@@ -40,13 +40,6 @@ export interface SortableCartItemProps {
   onSearchInTable: (term: string) => void;
   isMobile?: boolean;
 }
-
-export const calculateItemTotal = (item: CartItem) => {
-  const unitPrice = resolvePrice(item.price, !!item.isUnit, item.unitsPerPack);
-  const baseTotal = unitPrice * item.quantity;
-  const discountAmount = baseTotal * ((item.discount || 0) / 100);
-  return baseTotal - discountAmount;
-};
 
 export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
   packItem,
@@ -328,8 +321,8 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
             <div className='text-xs font-bold text-gray-900 dark:text-white w-12 shrink-0 text-end tabular-nums'>
               $
               {(
-                (packItem ? calculateItemTotal(packItem) : 0) +
-                (unitItem ? calculateItemTotal(unitItem) : 0)
+                (packItem ? pricingService.calculateItemTotal(packItem) : 0) +
+                (unitItem ? pricingService.calculateItemTotal(unitItem) : 0)
               ).toFixed(2)}
             </div>
 

@@ -20,7 +20,9 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
       genericName: db.generic_name || [],
       category: db.category,
       price: db.price,
+      unitPrice: db.unit_price,
       costPrice: db.cost_price,
+      unitCostPrice: db.unit_cost_price,
       stock: db.stock,
       damagedStock: db.damaged_stock || 0,
       expiryDate: db.expiry_date || '',
@@ -51,7 +53,9 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
     if (d.genericName !== undefined) db.generic_name = d.genericName;
     if (d.category !== undefined) db.category = d.category;
     if (d.price !== undefined) db.price = d.price;
+    if (d.unitPrice !== undefined) db.unit_price = d.unitPrice;
     if (d.costPrice !== undefined) db.cost_price = d.costPrice;
+    if (d.unitCostPrice !== undefined) db.unit_cost_price = d.unitCostPrice;
     if (d.stock !== undefined) db.stock = d.stock;
     if (d.damagedStock !== undefined) db.damaged_stock = d.damagedStock;
     if (d.expiryDate !== undefined) {

@@ -51,7 +51,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
     category: 'General',
     dosageForm: '',
     price: 0,
+    unitPrice: 0,
     costPrice: 0,
+    unitCostPrice: 0,
     tax: 0,
     stock: 0,
     unitsPerPack: 1,
@@ -178,7 +180,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
       genericName: formData.genericName,
       category: formData.category || 'General',
       price: formData.price || 0,
+      unitPrice: formData.unitPrice || 0,
       costPrice: formData.costPrice || 0,
+      unitCostPrice: formData.unitCostPrice || 0,
       tax: formData.tax,
       stock: validateStock(stockOps.resolveUnits(formData.stock || 0, false, formData.unitsPerPack)),
       expiryDate: formData.expiryDate || '',
@@ -222,7 +226,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
       category: 'General',
       dosageForm: '',
       price: 0,
+      unitPrice: 0,
       costPrice: 0,
+      unitCostPrice: 0,
       tax: 0,
       stock: 0,
       unitsPerPack: 1,
@@ -611,6 +617,36 @@ export const AddProduct: React.FC<AddProductProps> = ({
                     className={INPUT_BASE}
                     value={formData.costPrice}
                     onChange={(e) => setFormData({ ...formData, costPrice: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1">
+                    {language === 'AR' ? 'سعر الشريط/الوحدة' : 'Unit Price'}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className={`${INPUT_BASE} border-amber-200 dark:border-amber-900/30 focus:border-amber-500`}
+                    value={formData.unitPrice}
+                    placeholder={formData.price && formData.unitsPerPack ? (formData.price / formData.unitsPerPack).toFixed(2) : ''}
+                    onChange={(e) => setFormData({ ...formData, unitPrice: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1">
+                    {language === 'AR' ? 'تكلفة الشريط/الوحدة' : 'Unit Cost'}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className={`${INPUT_BASE} border-amber-200 dark:border-amber-900/30 focus:border-amber-500`}
+                    value={formData.unitCostPrice}
+                    placeholder={formData.costPrice && formData.unitsPerPack ? (formData.costPrice / formData.unitsPerPack).toFixed(2) : ''}
+                    onChange={(e) => setFormData({ ...formData, unitCostPrice: parseFloat(e.target.value) || 0 })}
                   />
                 </div>
               </div>

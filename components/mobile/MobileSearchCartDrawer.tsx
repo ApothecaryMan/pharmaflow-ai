@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { POSCartSidebar, type POSCartSidebarProps } from '../sales/pos/ui/POSCartSidebar';
 import { useData } from '../../services/DataContext';
 import { useSettings } from '../../context/SettingsContext';
+import { pricingService } from '../../services/sales/pricingService';
 
 interface MobileSearchCartDrawerProps extends Partial<POSCartSidebarProps> {
   isOpen: boolean;
@@ -54,7 +55,8 @@ export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
   if (!isOpen) return null;
 
   // الإجمالي قبل الخصم (ممرر من الوالد أو محسوب هنا)
-  const rawSubtotal = grossSubtotal ?? cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const orderTotals = pricingService.calculateOrderTotals(cart, 0);
+  const rawSubtotal = grossSubtotal ?? orderTotals.grossSubtotal;
 
   // Grouping logic for POSCartSidebar
   const mergedIds = Array.from(new Set(cart.map(i => i.id)));

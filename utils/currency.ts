@@ -187,3 +187,6 @@ export const formatCompactCurrencyParts = (
     symbol: symbolPart,
   };
 };
+
+export { money, pricing, tax } from './money';
+

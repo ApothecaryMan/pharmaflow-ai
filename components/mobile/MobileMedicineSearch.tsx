@@ -11,6 +11,7 @@ import { MaterialTabs } from '../common/MaterialTabs';
 import { MobileSearchCartDrawer } from './MobileSearchCartDrawer';
 import { CartItemQuantityControl } from '../sales/pos/CartItemControls';
 import { usePosSounds } from '../common/hooks/usePosSounds';
+import * as stockOps from '../../utils/stockOperations';
 
 interface MobileMedicineSearchProps {
   inventory: Drug[];
@@ -369,7 +370,7 @@ const DrugActionPill: React.FC<{
 }> = ({ drug, cart, isExpanded, language, onAddToCart }) => {
   const currentQtyInCart = cart
     .filter(c => c.id === drug.id)
-    .reduce((sum, c) => sum + (c.isUnit ? c.quantity / (drug.unitsPerPack || 1) : c.quantity), 0);
+    .reduce((sum, c) => sum + (c.isUnit ? stockOps.convertToPacks(c.quantity, drug.unitsPerPack) : c.quantity), 0);
   const isOutOfStock = currentQtyInCart >= drug.stock;
   
   const parts = formatCurrencyParts(drug.price);
@@ -384,7 +385,7 @@ const DrugActionPill: React.FC<{
       }`}>
         {currentQtyInCart > 0 
           ? currentQtyInCart.toLocaleString('en-US', { maximumFractionDigits: 1 })
-          : (drug.stock <= 0 ? '0' : (drug.stock / (drug.unitsPerPack || 1)).toLocaleString('en-US', { maximumFractionDigits: 1 }))
+          : (drug.stock <= 0 ? '0' : (stockOps.convertToPacks(drug.stock, drug.unitsPerPack)).toLocaleString('en-US', { maximumFractionDigits: 1 }))
         }
       </div>
 
@@ -432,6 +433,7 @@ const MedicineSearchItem: React.FC<{
 }> = ({ drug, index, searchTerm, totalResults, isExpanded, onToggleExpand, onPointerDown, onPointerUp, highlightMatch, language, textTransform, cart, onAddToCart, onUpdateQuantity, inventory }) => {
   const displayName = getDisplayName(drug, textTransform);
   const genericNameStr = Array.isArray(drug.genericName) ? drug.genericName.join(' + ') : String(drug.genericName || '');
+  const t = TRANSLATIONS[language as keyof typeof TRANSLATIONS];
   
   return (
     <div className={index < 20 ? "animate-stagger-fade-in" : ""} style={{ '--index': index } as any}>
@@ -473,6 +475,8 @@ const MedicineSearchItem: React.FC<{
                   addToCart={onAddToCart}
                   allBatches={inventory.filter(b => b.name === drug.name && b.dosageForm === drug.dosageForm)}
                   isMobile={true}
+                  t={t}
+                  currentLang={language}
                 />
               </div>
               {drug.description && <p className="pt-2 mt-2 text-[10px] text-gray-400 italic leading-relaxed">{drug.description}</p>}

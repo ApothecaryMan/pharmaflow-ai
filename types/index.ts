@@ -149,8 +149,12 @@ export interface Drug {
   category: string;
   /** Selling price per pack */
   price: number;
+  /** Selling price per unit (strip/tablet) - Manual entry to avoid division errors */
+  unitPrice?: number;
   /** Purchase/cost price per pack */
   costPrice: number;
+  /** Purchase/cost price per unit (strip/tablet) */
+  unitCostPrice?: number;
   /** Available stock in units */
   stock: number;
   /** Damaged/unsellable stock count */
@@ -334,6 +338,15 @@ export interface StockMovement {
   previousStock: number;
   newStock: number;
 
+  /** Snapshot of pack selling price at movement time */
+  price?: number;
+  /** Snapshot of unit selling price at movement time */
+  unitPrice?: number;
+  /** Snapshot of pack cost price at movement time */
+  costPrice?: number;
+  /** Snapshot of unit cost price at movement time */
+  unitCostPrice?: number;
+
   reason?: string;
   notes?: string;
 
@@ -502,7 +515,11 @@ export interface PurchaseItem {
   /** Supplier discount percentage */
   discount?: number;
   /** Updated selling price (if price changes) */
-  salePrice?: number;
+  salePrice: number;
+  /** Manual unit selling price */
+  unitSalePrice?: number;
+  /** Manual unit cost price */
+  unitCostPrice?: number;
   /** Tax amount for this item */
   tax?: number;
   /** Whether quantity is in units (true) or packs (false) */
