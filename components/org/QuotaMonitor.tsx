@@ -1,6 +1,7 @@
 import React from 'react';
 import type { OrgMetrics } from '../../services/org/orgAggregationService';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { ProgressBarSkeleton } from '../skeletons/ManagementHubSkeletons';
 
 interface QuotaMonitorProps {
   metrics: OrgMetrics;
@@ -9,18 +10,6 @@ interface QuotaMonitorProps {
   isLoading?: boolean;
 }
 
-const ProgressBarSkeleton = () => (
-  <div className="flex flex-col gap-3 animate-pulse">
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-        <div className="h-4 w-24 bg-zinc-100 dark:bg-zinc-800 rounded" />
-      </div>
-      <div className="h-4 w-12 bg-zinc-50 dark:bg-zinc-800/50 rounded" />
-    </div>
-    <div className="h-2 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full" />
-  </div>
-);
 
 const ProgressBar: React.FC<{ 
   label: string; 

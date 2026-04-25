@@ -18,6 +18,7 @@ import { getLocationName } from '../../data/locations';
 import { PageHeader } from '../common/PageHeader';
 import { permissionsService } from '../../services/auth/permissions';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
+import { BranchCardSkeleton } from '../skeletons/ManagementHubSkeletons';
 
 interface BranchSettingsProps {
   language: 'EN' | 'AR';
@@ -58,28 +59,6 @@ interface BranchCardProps {
   isSubmitting: boolean;
 }
 
-const BranchCardSkeleton = () => (
-  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 flex flex-col gap-4 shadow-sm min-h-[220px] animate-pulse">
-    <div className="flex justify-between items-start">
-      <div className="space-y-2">
-        <div className="h-4 w-24 bg-zinc-100 dark:bg-zinc-800 rounded" />
-        <div className="h-3 w-16 bg-zinc-50 dark:bg-zinc-800/50 rounded" />
-      </div>
-      <div className="h-4 w-12 bg-zinc-50 dark:bg-zinc-800/50 rounded-full" />
-    </div>
-    <div className="flex -space-x-2">
-      {[1, 2, 3].map(i => <div key={i} className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 border-2 border-white dark:border-zinc-900" />)}
-    </div>
-    <div className="space-y-2 mt-auto">
-      <div className="h-3 w-full bg-zinc-50 dark:bg-zinc-800/50 rounded" />
-      <div className="h-3 w-2/3 bg-zinc-50 dark:bg-zinc-800/50 rounded" />
-    </div>
-    <div className="flex gap-2 pt-2">
-      <div className="h-8 flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg" />
-      <div className="h-8 w-8 bg-zinc-100 dark:bg-zinc-800 rounded-lg" />
-    </div>
-  </div>
-);
 
 const BranchCard: React.FC<BranchCardProps> = ({ branch, employees, language, onEdit, onDelete, isSubmitting }) => {
   const maxAvatars = 9;

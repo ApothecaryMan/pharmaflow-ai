@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Branch } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { BranchRowSkeleton } from '../skeletons/ManagementHubSkeletons';
 
 interface BranchMasterMonitorProps {
   branches: Branch[];
@@ -9,21 +10,6 @@ interface BranchMasterMonitorProps {
   isLoading?: boolean;
 }
 
-const BranchRowSkeleton = () => (
-  <div className="flex items-center justify-between p-4 border-b border-zinc-100 dark:border-zinc-800 last:border-0 animate-pulse">
-    <div className="flex items-center gap-4">
-      <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800" />
-      <div className="space-y-2">
-        <div className="h-4 w-24 bg-zinc-100 dark:bg-zinc-800 rounded" />
-        <div className="h-3 w-16 bg-zinc-50 dark:bg-zinc-800/50 rounded" />
-      </div>
-    </div>
-    <div className="flex items-center gap-6">
-      <div className="h-4 w-16 bg-zinc-50 dark:bg-zinc-800/50 rounded-full" />
-      <div className="h-4 w-12 bg-zinc-50 dark:bg-zinc-800/50 rounded" />
-    </div>
-  </div>
-);
 
 const BranchRow: React.FC<{ branch: Branch; language: 'en' | 'ar'; color: string }> = ({ branch, language, color }) => {
   const isActive = branch.status === 'active';
