@@ -21,11 +21,16 @@ export abstract class BaseDomainService<T extends { id: string; branchId?: strin
   async getAll(branchId?: string): Promise<T[]> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    const isAllBranch = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
 
     try {
       let query = (supabase as any).from(this.tableName).select('*');
-      if (effectiveBranchId) {
+      
+      if (effectiveBranchId && !isAllBranch) {
         query = query.eq('branch_id', effectiveBranchId);
+      } else if (isAllBranch && settings.orgId) {
+        // If fetching all branches, scope to the organization to maintain multi-tenancy
+        query = query.eq('org_id', settings.orgId);
       }
       
       const { data, error } = await query;

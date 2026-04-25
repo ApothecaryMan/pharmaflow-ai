@@ -23,12 +23,15 @@ export abstract class BaseEntityService<T extends { id: string; branchId?: strin
 
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    const isAllBranch = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
 
     try {
       let supabaseQuery = (supabase as any).from(this.tableName).select('*');
       
-      if (effectiveBranchId) {
+      if (effectiveBranchId && !isAllBranch) {
         supabaseQuery = supabaseQuery.eq('branch_id', effectiveBranchId);
+      } else if (isAllBranch && settings.orgId) {
+        supabaseQuery = supabaseQuery.eq('org_id', settings.orgId);
       }
 
       // Build OR filter for search columns
@@ -54,12 +57,15 @@ export abstract class BaseEntityService<T extends { id: string; branchId?: strin
   async filterByStatus(status: string, branchId?: string): Promise<T[]> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    const isAllBranch = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
 
     try {
       let query = (supabase as any).from(this.tableName).select('*').eq('status', status);
       
-      if (effectiveBranchId) {
+      if (effectiveBranchId && !isAllBranch) {
         query = query.eq('branch_id', effectiveBranchId);
+      } else if (isAllBranch && settings.orgId) {
+        query = query.eq('org_id', settings.orgId);
       }
 
       const { data, error } = await query;

@@ -75,7 +75,8 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
   async getAll(branchId?: string | 'ALL', orgId?: string): Promise<Employee[]> {
     const settings = await settingsService.getAll();
     const effectiveOrgId = orgId || settings.orgId;
-    const effectiveBranchId = branchId === 'ALL' ? undefined : (branchId || settings.activeBranchId || settings.branchCode);
+    const isAll = typeof branchId === 'string' && branchId.toLowerCase() === 'all';
+    const effectiveBranchId = isAll ? undefined : (branchId || settings.activeBranchId || settings.branchCode);
     
     try {
       let query = supabase.from(this.tableName).select('*');
@@ -114,7 +115,7 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
 
     // Generate employee code if missing
     if (!newEmployee.employeeCode) {
-      const all = await this.getAll('ALL', effectiveOrgId);
+      const all = await this.getAll('all', effectiveOrgId);
       const maxSerial = all.reduce((max, emp) => {
         const num = parseInt((emp.employeeCode || '').replace('EMP-', '') || '0');
         return Math.max(max, isNaN(num) ? 0 : num);

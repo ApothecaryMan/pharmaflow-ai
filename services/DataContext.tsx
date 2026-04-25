@@ -190,7 +190,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
         purchaseService.getAll(branchId),
         returnService.getAllPurchaseReturns(branchId),
         returnService.getAllSalesReturns(branchId),
-        customerService.getAll('all'),
+        customerService.getAll(branchId),
         employeeService.getAll(branchId),
         batchService.getAllBatches(branchId),
         branchService.getAll(activeOrgId),

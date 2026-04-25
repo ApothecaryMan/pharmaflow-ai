@@ -75,8 +75,12 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     
     try {
       let query = supabase.from(this.tableName).select('*');
-      if (effectiveBranchId !== 'all') {
+      const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+      
+      if (effectiveBranchId && !isAll) {
         query = query.eq('branch_id', effectiveBranchId);
+      } else if (isAll && settings.orgId) {
+        query = query.eq('org_id', settings.orgId);
       }
       const { data, error } = await query.order('date', { ascending: false });
       if (error) throw error;
@@ -96,8 +100,12 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
         .select('*')
         .eq('supplier_id', supplierId);
       
-      if (effectiveBranchId !== 'all') {
+      const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+      
+      if (effectiveBranchId && !isAll) {
         query = query.eq('branch_id', effectiveBranchId);
+      } else if (isAll && settings.orgId) {
+        query = query.eq('org_id', settings.orgId);
       }
       
       const { data, error } = await query.order('date', { ascending: false });
@@ -118,8 +126,12 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
         .select('*')
         .eq('status', status);
       
-      if (effectiveBranchId !== 'all') {
+      const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+      
+      if (effectiveBranchId && !isAll) {
         query = query.eq('branch_id', effectiveBranchId);
+      } else if (isAll && settings.orgId) {
+        query = query.eq('org_id', settings.orgId);
       }
       
       const { data, error } = await query.order('date', { ascending: false });
@@ -142,8 +154,12 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     try {
       let query = supabase.from(this.tableName).select('*');
       
-      if (effectiveBranchId !== 'all') {
+      const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+      
+      if (effectiveBranchId && !isAll) {
         query = query.eq('branch_id', effectiveBranchId);
+      } else if (isAll && settings.orgId) {
+        query = query.eq('org_id', settings.orgId);
       }
       
       if (filters.status) query = query.eq('status', filters.status);

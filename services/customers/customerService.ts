@@ -80,8 +80,12 @@ class CustomerServiceImpl extends BaseEntityService<Customer> implements Custome
         .select('*')
         .eq('phone', phone);
       
-      if (effectiveBranchId !== 'all') {
+      const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+      
+      if (effectiveBranchId && !isAll) {
         query = query.eq('branch_id', effectiveBranchId);
+      } else if (isAll && settings.orgId) {
+        query = query.eq('org_id', settings.orgId);
       }
       
       const { data, error } = await query.maybeSingle();
@@ -104,8 +108,12 @@ class CustomerServiceImpl extends BaseEntityService<Customer> implements Custome
     try {
       let query = supabase.from(this.tableName).select('*');
       
-      if (effectiveBranchId !== 'all') {
+      const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+      
+      if (effectiveBranchId && !isAll) {
         query = query.eq('branch_id', effectiveBranchId);
+      } else if (isAll && settings.orgId) {
+        query = query.eq('org_id', settings.orgId);
       }
       
       if (filters.isVip !== undefined) {

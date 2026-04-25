@@ -36,7 +36,7 @@ export abstract class BaseReportService<T, TFilters extends BaseReportFilters> {
     try {
       let query = supabase.from(this.tableName).select('*', { count: filters.page !== undefined ? 'exact' : undefined });
 
-      if (filters.branchId) {
+      if (filters.branchId && filters.branchId.toLowerCase() !== 'all') {
         query = query.eq(this.branchColumn, filters.branchId);
       }
 
@@ -106,7 +106,7 @@ export abstract class BaseReportService<T, TFilters extends BaseReportFilters> {
       const selectColumns = sumColumns.length > 0 ? sumColumns.join(',') : 'id';
       let query = supabase.from(this.tableName).select(selectColumns, { count: 'exact' });
 
-      if (filters.branchId) {
+      if (filters.branchId && filters.branchId.toLowerCase() !== 'all') {
         query = query.eq(this.branchColumn, filters.branchId);
       }
 
