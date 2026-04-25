@@ -26,6 +26,7 @@ interface PendingApprovalProps {
   t: any;
   purchases: Purchase[];
   onApprovePurchase: (id: string) => void;
+  onMarkAsReceived?: (id: string) => void;
   onRejectPurchase: (id: string, reason?: string) => void;
   language: string;
   currentShift: Shift | null;
@@ -38,6 +39,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   t,
   purchases,
   onApprovePurchase,
+  onMarkAsReceived,
   onRejectPurchase,
   language,
   currentShift,
@@ -210,7 +212,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                     {t.reject || 'Reject'}
                   </button>
                 )}
-                {purchase.paymentType === 'cash' && !currentShift ? (
+                {purchase.paymentMethod === 'cash' && !currentShift ? (
                   <div className='py-2.5 px-2 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 flex items-center justify-center gap-1.5 text-red-600 dark:text-red-400'>
                     <span className='material-symbols-rounded text-base'>warning</span>
                     <span className='text-[10px] font-bold leading-tight uppercase'>{t.noOpenShift || 'Open Shift First'}</span>
@@ -315,7 +317,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
             </div>
 
             <div className='pt-4 border-t border-gray-100 dark:border-white/5 flex gap-3 mt-4 overflow-visible'>
-              {selectedPurchase.paymentType === 'cash' && !currentShift ? (
+              {selectedPurchase.paymentMethod === 'cash' && !currentShift ? (
                  <div className='flex-1 py-3 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 flex items-center justify-center gap-2'>
                   <span className='material-symbols-rounded text-base animate-pulse'>warning</span>
                   <span className='font-bold text-xs uppercase'>{t.noOpenShift || 'Open Shift First'}</span>
@@ -367,7 +369,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
             {t.confirmApproval?.title || 'Confirm Approval'}
           </h3>
           <p className='text-xs text-gray-500 mb-6'>
-            {t.confirmApproval?.subtitle || 'Are you sure you want to approve this purchase? Inventory will be updated immediately.'}
+            {t.confirmApproval?.subtitle || 'Are you sure you want to approve this purchase? Order will transition to Approved and wait for physical receipt.'}
           </p>
 
           <div className='text-left mb-6'>

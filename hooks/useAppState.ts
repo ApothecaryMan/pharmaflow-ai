@@ -1,4 +1,4 @@
-import { type React, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ROUTES } from '../config/routes';
 import { StorageKeys } from '../config/storageKeys';
 import type { ViewState } from '../types';
@@ -29,8 +29,8 @@ export interface AppState {
   setProfileImage: React.Dispatch<React.SetStateAction<string | null>>;
   currentEmployeeId: string | null;
   setCurrentEmployeeId: React.Dispatch<React.SetStateAction<string | null>>;
-  windowedView: string | null;
-  setWindowedView: React.Dispatch<React.SetStateAction<string | null>>;
+  windowedView: ViewState | null;
+  setWindowedView: React.Dispatch<React.SetStateAction<ViewState | null>>;
 }
 
 /**
@@ -69,7 +69,7 @@ export function useAppState(): AppState {
     StorageKeys.CURRENT_EMPLOYEE_ID,
     null
   );
-  const [windowedView, setWindowedView] = useState<string | null>(null);
+  const [windowedView, setWindowedView] = useState<ViewState | null>(null);
 
   return {
     // View state

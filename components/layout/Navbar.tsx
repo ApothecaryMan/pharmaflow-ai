@@ -6,7 +6,7 @@ import { useSettings } from '../../context';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { authService } from '../../services/auth/authService';
-import { Language, ThemeColor } from '../../types';
+import { Language, ThemeColor, ViewState } from '../../types';
 import { ContextMenuTrigger } from '../common/ContextMenu';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
@@ -32,13 +32,13 @@ interface NavbarProps {
   profileImage: string | null;
   setProfileImage: (image: string | null) => void;
   onLogoClick?: () => void;
-  currentView?: string;
-  onNavigate?: (view: string) => void;
+  currentView?: ViewState;
+  onNavigate?: (view: ViewState) => void;
   employees?: Array<{ id: string; name: string; employeeCode: string }>;
   currentEmployeeId?: string | null;
   setCurrentEmployeeId?: (id: string | null) => void;
   onLogout?: () => void;
-  onOpenInWindow?: (view: string) => void;
+  onOpenInWindow?: (view: ViewState) => void;
 }
 
 /**

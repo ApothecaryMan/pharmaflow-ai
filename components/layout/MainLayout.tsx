@@ -4,6 +4,7 @@ import { getContentContainerClasses, LAYOUT_CONFIG } from '../../config/layoutCo
 import { type UserRole } from '../../config/permissions';
 import { ROUTES } from '../../config/routes';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
+import { type ViewState } from '../../types';
 import { THEMES, useSettings } from '../../context';
 import { ContextMenuProvider } from '../common/ContextMenu';
 import { MobileNavigation } from './MobileNavigation';
@@ -13,7 +14,7 @@ import { StatusBar } from './StatusBar';
 
 interface MainLayoutProps {
   children: React.ReactNode;
-  view: string;
+  view: ViewState;
   activeModule: string;
   t: any;
   // Handlers
@@ -33,7 +34,7 @@ interface MainLayoutProps {
   setCurrentEmployeeId: (id: string | null) => void;
   employees: any[];
   dashboardSubView: string;
-  onOpenInWindow: (view: string) => void;
+  onOpenInWindow: (view: ViewState) => void;
 }
 
 const STANDALONE_VIEWS = [ROUTES.LOGIN];

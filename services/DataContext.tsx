@@ -88,6 +88,7 @@ export interface DataActions {
   setPurchases: (purchases: Purchase[] | ((prev: Purchase[]) => Purchase[])) => void;
   addPurchase: (purchase: Omit<Purchase, 'id'>, context?: ActionContext) => Promise<Purchase>;
   approvePurchase: (id: string, context: ActionContext) => Promise<void>;
+  markAsReceived: (id: string, receiverName: string) => Promise<void>;
   rejectPurchase: (id: string) => Promise<void>;
 
   // Returns
@@ -154,15 +155,17 @@ export const useData = (): DataContextType => {
 
 interface DataProviderProps {
   children: ReactNode;
+  initialInventory?: Drug[];
+  initialSuppliers?: Supplier[];
 }
 
-export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
+export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInventory, initialSuppliers }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeOrgId, setActiveOrgId] = useState<string>('');
   const [activeBranchId, setActiveBranchId] = useState<string>('');
-  const [rawInventory, setRawInventory] = useState<Drug[]>([]);
+  const [rawInventory, setRawInventory] = useState<Drug[]>(initialInventory || []);
   const [sales, setSalesState] = useState<Sale[]>([]);
-  const [suppliers, setSuppliersState] = useState<Supplier[]>([]);
+  const [suppliers, setSuppliersState] = useState<Supplier[]>(initialSuppliers || []);
   const [purchases, setPurchasesState] = useState<Purchase[]>([]);
   const [purchaseReturns, setPurchaseReturnsState] = useState<PurchaseReturn[]>([]);
   const [returns, setReturnsState] = useState<Return[]>([]);
@@ -359,6 +362,11 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     await refreshAll();
   }, [refreshAll]);
 
+  const markAsReceived = useCallback(async (id: string, receiverName: string) => {
+    await purchaseService.markAsReceived(id, receiverName);
+    await refreshAll();
+  }, [refreshAll]);
+
   const rejectPurchase = useCallback(async (id: string) => {
     await purchaseService.reject(id, '');
     setPurchasesState((prev) => prev.map((p) => (p.id === id ? { ...p, status: 'rejected' } as any : p)));
@@ -423,7 +431,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       currentEmployee, batches, branches, isLoading,
       setInventory, addProduct, updateProduct, updateStock, setSales, addSale, completeSale,
       setSuppliers, addSupplier, updateSupplier, setPurchases, addPurchase, approvePurchase,
-      rejectPurchase, setReturns, setPurchaseReturns, processSalesReturn, createPurchaseReturn,
+      markAsReceived, rejectPurchase, setReturns, setPurchaseReturns, processSalesReturn, createPurchaseReturn,
       addReturn, setCustomers, addCustomer, updateCustomer, deleteCustomer,
       setEmployees, addEmployee, updateEmployee, deleteEmployee, setBatches, syncBatches,
       refreshAll, switchBranch, switchOrg, activeBranchId, activeOrgId,
@@ -433,7 +441,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       currentEmployee, batches, branches, isLoading, activeBranchId, activeOrgId,
       setInventory, addProduct, updateProduct, updateStock, setSales, addSale, completeSale,
       setSuppliers, addSupplier, updateSupplier, setPurchases, addPurchase, approvePurchase,
-      rejectPurchase, setReturns, setPurchaseReturns, processSalesReturn, createPurchaseReturn,
+      markAsReceived, rejectPurchase, setReturns, setPurchaseReturns, processSalesReturn, createPurchaseReturn,
       addReturn, setCustomers, addCustomer, updateCustomer, deleteCustomer,
       setEmployees, addEmployee, updateEmployee, deleteEmployee, setBatches, syncBatches,
       refreshAll, switchBranch, switchOrg

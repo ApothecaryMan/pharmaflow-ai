@@ -10,7 +10,7 @@
 - [ ] T001 Sync i18n keys for refactor in [i18n/translations.ts](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/i18n/translations.ts)
 
 ## Phase 2: Foundational
-- [ ] T002 Implement `BaseEntityService` in [services/core/BaseEntityService.ts](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/services/core/BaseEntityService.ts)
+- [x] T002 Implement `BaseEntityService` in [services/core/BaseEntityService.ts](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/services/core/BaseEntityService.ts)
 - [ ] T003 Enhance `BaseReportService` with `getAggregates` in [services/core/BaseReportService.ts](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/services/core/BaseReportService.ts)
 - [ ] T004 [P] Refactor `permissionsService` into `PermissionsServiceImpl` class in [services/auth/permissions.ts](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/services/auth/permissions.ts)
 
@@ -18,7 +18,7 @@
 **Goal**: Standardize search and filtering for customers and suppliers.
 **Independent Test**: Perform identical search and filtering operations on both Customer and Supplier lists.
 
-- [ ] T005 [P] [US1] Implement `CustomerServiceImpl` extending `BaseEntityService` in [services/customers/customerService.ts](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/services/customers/customerService.ts)
+- [x] T005 [P] [US1] Implement `CustomerServiceImpl` extending `BaseEntityService` in [services/customers/customerService.ts](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/services/customers/customerService.ts)
 - [ ] T006 [P] [US1] Implement `SupplierServiceImpl` extending `BaseEntityService` in [services/suppliers/supplierService.ts](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/services/suppliers/supplierService.ts)
 - [ ] T007 [US1] Update `CustomerManagement` UI to use new search/filter methods in [components/customers/CustomerManagement.tsx](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/components/customers/CustomerManagement.tsx)
 - [ ] T008 [US1] Update `SuppliersList` UI to use new search/filter methods in [components/purchases/SuppliersList.tsx](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/components/purchases/SuppliersList.tsx)
@@ -44,7 +44,7 @@
 
 - [ ] T014 [US4] Implement `updateProfile` in `EmployeeServiceImpl` in [services/hr/employeeService.ts](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/services/hr/employeeService.ts)
 - [ ] T015 [US4] Update profile UI to use new `updateProfile` method in [components/hr/EmployeeProfile.tsx](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/components/hr/EmployeeProfile.tsx)
-- [ ] T016 [US4] Integrate centralized permissions checks in `BaseDomainService` in [services/core/BaseDomainService.ts](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/services/core/BaseDomainService.ts)
+- [x] T016 [US4] Integrate centralized permissions checks in `BaseDomainService` in [services/core/BaseDomainService.ts](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/services/core/BaseDomainService.ts)
 
 ## Phase 7: Polish & Optimization
 - [ ] T017 End-to-end workflow verification: Purchase -> Receive -> Sell -> Return

@@ -1,14 +1,15 @@
 import type React from 'react';
 import { PHARMACY_MENU } from '../../config/menuData';
 import { SidebarMenu } from './SidebarMenu';
+import { type ViewState } from '../../types';
 
 interface SidebarContentProps {
   menuItems?: any[]; // Allow optional passed items, default to import if needed, but App.tsx passes it now.
   activeModule: string;
-  view: string;
+  view: ViewState;
   dashboardSubView: string;
-  onNavigate: (viewId: string) => void;
-  onViewChange: (viewId: string) => void;
+  onNavigate: (viewId: ViewState) => void;
+  onViewChange: (viewId: ViewState) => void;
   isMobile?: boolean;
   theme: any;
   t: any;

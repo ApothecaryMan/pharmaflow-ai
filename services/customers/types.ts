@@ -10,6 +10,7 @@ export interface CustomerFilters {
   search?: string;
   isVip?: boolean;
   hasCredit?: boolean;
+  status?: string;
 }
 
 export interface CustomerStats {

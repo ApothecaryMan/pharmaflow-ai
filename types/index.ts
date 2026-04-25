@@ -650,7 +650,7 @@ export interface Return {
 }
 
 /** Status of a purchase order */
-export type PurchaseStatus = 'completed' | 'pending' | 'rejected';
+export type PurchaseStatus = 'completed' | 'pending' | 'rejected' | 'received' | 'approved';
 
 /**
  * Purchase - order from supplier to receive inventory.
@@ -691,6 +691,10 @@ export interface Purchase {
   approvalDate?: string;
   /** Employee who approved */
   approvedBy?: string;
+  /** Date purchase was received */
+  receivedAt?: string;
+  /** Employee who received */
+  receivedBy?: string;
   /** ISO date of creation */
   createdAt?: string;
   /** ISO date of last update */
@@ -803,8 +807,16 @@ export type ViewState =
   | 'receipt-designer'
   | 'dashboard-experiments'
   | 'purchases-test'
-  | 'advanced-sm-card'
+  | 'pos-test'
   | 'modal-tests'
+  | 'advanced-sm-card'
+  | 'medicine-search'
+  | 'org-settings'
+  | 'login-test'
+  | 'branch-management'
+  | 'org-management'
+  | 'intelligence'
+  | 'landing'
   | 'employee-list'
   | 'employee-profile'
   | 'login'

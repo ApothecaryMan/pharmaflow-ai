@@ -44,6 +44,7 @@ export type PermissionAction =
   | 'purchase.view'
   | 'purchase.create'
   | 'purchase.approve'
+  | 'purchase.receive'
   | 'purchase.reject'
   | 'purchase.return'
 
@@ -106,6 +107,7 @@ const ALL_PERMISSIONS: PermissionAction[] = [
   'purchase.view',
   'purchase.create',
   'purchase.approve',
+  'purchase.receive',
   'purchase.reject',
   'purchase.return',
   'supplier.view',
@@ -166,6 +168,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'purchase.view',
     'purchase.create',
     'purchase.approve',
+    'purchase.receive',
     'purchase.reject',
     'purchase.return',
     'supplier.view',
@@ -217,6 +220,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'purchase.view',
     'purchase.create',
     'purchase.approve',
+    'purchase.receive',
     'purchase.reject',
     'purchase.return',
     'supplier.view',
@@ -276,6 +280,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'inventory.restock',
     'purchase.view',
     'purchase.create',
+    'purchase.receive',
     'purchase.return',
     'supplier.view',
     'supplier.add',

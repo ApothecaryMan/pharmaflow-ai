@@ -157,6 +157,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     onDeleteSupplier: handlers.handleDeleteSupplier,
     onPurchaseComplete: handlers.handlePurchaseComplete,
     onApprovePurchase: handlers.handleApprovePurchase,
+    onMarkAsReceived: handlers.handleMarkAsReceived,
     onRejectPurchase: handlers.handleRejectPurchase,
     onAddProduct: () => setView('add-product'),
     onRestock: handlers.handleRestock,

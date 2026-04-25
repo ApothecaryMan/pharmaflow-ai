@@ -1,4 +1,5 @@
 import React from 'react';
+import { type ViewState } from '../../types';
 import type { MenuItem } from '../../config/menuData';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { TRANSLATIONS } from '../../i18n/translations';
@@ -6,8 +7,8 @@ import { ContextMenuTrigger } from '../common/ContextMenu';
 
 interface SidebarDropdownProps {
   module: MenuItem;
-  currentView: string;
-  onNavigate: (viewId: string) => void;
+  currentView: ViewState | string;
+  onNavigate: (viewId: ViewState) => void;
   onClose: () => void;
   theme: string;
   hideInactiveModules?: boolean;
@@ -16,7 +17,7 @@ interface SidebarDropdownProps {
   blur?: boolean;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
-  onOpenInWindow?: (view: string) => void;
+  onOpenInWindow?: (view: ViewState) => void;
 }
 
 export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({

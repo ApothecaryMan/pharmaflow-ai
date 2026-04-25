@@ -15,7 +15,7 @@ import { usePosSounds } from '../common/hooks/usePosSounds';
 import { useContextMenu } from '../common/ContextMenu';
 import { useSmartDirection } from '../common/SmartInputs';
 import { formatCurrencyParts } from '../../utils/currency';
-import type { Employee, CartItem } from '../../types';
+import type { Employee, CartItem, ViewState } from '../../types';
 
 // ============================================================================
 // CONSTANTS
@@ -33,7 +33,7 @@ const MAX_RECURSION_DEPTH = 10;
 // ============================================================================
 
 interface ViewMetadata {
-  id: string;
+  id: ViewState;
   label: string;
   icon: string;
 }
@@ -68,10 +68,10 @@ interface MobileNavigationProps {
   filteredMenuItems: MenuItem[];
   activeModule: string;
   handleModuleChange: (id: string) => void;
-  view: string;
+  view: ViewState | string;
   dashboardSubView: string;
-  handleNavigate: (path: string) => void;
-  handleViewChange: (view: string) => void;
+  handleNavigate: (path: ViewState) => void;
+  handleViewChange: (view: ViewState) => void;
   theme: Theme;
   t: Translations;
   language: 'EN' | 'AR';
@@ -104,7 +104,7 @@ const buildViewLookupMap = (items: MenuItem[], depth = 0): Map<string, ViewMetad
       const viewId = item.view as string;
       if (!map.has(viewId)) {
         map.set(viewId, {
-          id: viewId,
+          id: viewId as ViewState,
           label: `${item.label || DEFAULT_LABEL}`,
           icon: `${'icon' in item && item.icon ? item.icon : DEFAULT_ICON}`,
         });
@@ -144,12 +144,12 @@ const VIEW_LOOKUP_MAP = buildViewLookupMap(PHARMACY_MENU);
 // UTILITY: Get Dynamic Tab
 // ============================================================================
 
-const getDynamicTab = (view: string, language: 'EN' | 'AR'): DynamicTab | null => {
+const getDynamicTab = (view: ViewState | string, language: 'EN' | 'AR'): DynamicTab | null => {
   if (STATIC_DOCK_VIEWS.includes(view as StaticDockView)) {
     return null;
   }
 
-  const metadata = VIEW_LOOKUP_MAP.get(view);
+  const metadata = VIEW_LOOKUP_MAP.get(view as string);
   if (!metadata) {
     return null;
   }
@@ -174,8 +174,8 @@ const getDynamicTab = (view: string, language: 'EN' | 'AR'): DynamicTab | null =
 // ============================================================================
 
 interface DockButtonProps {
-  view: string;
-  currentView: string;
+  view: ViewState | string;
+  currentView: ViewState | string;
   icon: string;
   label: string;
   theme: Theme;

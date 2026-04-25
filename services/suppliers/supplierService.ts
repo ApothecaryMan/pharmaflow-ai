@@ -3,15 +3,16 @@
  * Online-Only implementation using Supabase
  */
 
-import { BaseDomainService } from '../core/BaseDomainService';
+import { BaseEntityService } from '../core/BaseEntityService';
 import type { Supplier } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { settingsService } from '../settings/settingsService';
 import { supabase } from '../../lib/supabase';
 import type { SupplierService } from './types';
 
-class SupplierServiceImpl extends BaseDomainService<Supplier> implements SupplierService {
+class SupplierServiceImpl extends BaseEntityService<Supplier> implements SupplierService {
   protected tableName = 'suppliers';
+  protected searchColumns = ['name', 'contact_person', 'phone', 'email'];
 
   protected mapDbToDomain(db: any): Supplier {
     return {
@@ -41,36 +42,6 @@ class SupplierServiceImpl extends BaseDomainService<Supplier> implements Supplie
     if (s.address !== undefined) db.address = s.address;
     if (s.status !== undefined) db.status = s.status;
     return db;
-  }
-
-  async getAll(branchId?: string): Promise<Supplier[]> {
-    const settings = await settingsService.getAll();
-    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    
-    try {
-      let query = supabase.from(this.tableName).select('*');
-      if (effectiveBranchId !== 'all') {
-        query = query.eq('branch_id', effectiveBranchId);
-      }
-      const { data, error } = await query.order('name', { ascending: true });
-      if (error) throw error;
-      return (data || []).map(item => this.mapDbToDomain(item));
-    } catch (err) {
-      console.error('[SupplierService] getAll failed:', err);
-      return [];
-    }
-  }
-
-  async search(query: string, branchId?: string): Promise<Supplier[]> {
-    const all = await this.getAll(branchId);
-    const q = query.toLowerCase();
-    return all.filter(
-      (s) =>
-        s.name.toLowerCase().includes(q) ||
-        s.contactPerson?.toLowerCase().includes(q) ||
-        s.phone?.includes(q) ||
-        s.email?.toLowerCase().includes(q)
-    );
   }
 
   async create(supplier: Omit<Supplier, 'id'>, branchId?: string): Promise<Supplier> {

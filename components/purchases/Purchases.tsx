@@ -44,6 +44,7 @@ interface PurchasesProps {
   color: string;
   t: any;
   onApprovePurchase?: (id: string) => Promise<void>;
+  onMarkAsReceived?: (id: string) => Promise<void>;
   onRejectPurchase?: (purchase: Purchase) => void;
   language: 'EN' | 'AR';
   navigationParams?: any;
@@ -59,6 +60,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   color,
   t,
   onApprovePurchase,
+  onMarkAsReceived,
   onRejectPurchase,
   language,
   // @ts-ignore
@@ -279,7 +281,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit'>('credit');
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [statusFilter, setStatusFilter] = useState<
-    'all' | 'pending' | 'completed' | 'returned' | 'rejected'
+    'all' | 'pending' | 'completed' | 'returned' | 'rejected' | 'approved' | 'received'
   >('all');
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>({ from: '', to: '' });
   const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
@@ -350,8 +352,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
       }
       if (statusFilter === 'completed') {
         // Completed ONLY if NO returns exist (otherwise it fits 'returned' filter)
-        return p.status === 'completed' && !purchaseReturns.some((r) => r.purchaseId === p.id);
+        return (p.status === 'completed' || p.status === 'received') && !purchaseReturns.some((r) => r.purchaseId === p.id);
       }
+      if (statusFilter === 'approved') return p.status === 'approved';
       return p.status === statusFilter;
     });
   }, [purchases, statusFilter, purchaseReturns, dateRange, historySearch]);
@@ -467,6 +470,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
           const hasReturns = getPurchaseReturns(p.id).length > 0;
           if (p.status === 'rejected') return 'REJECTED';
           if (p.status === 'pending') return 'PENDING';
+          if (p.status === 'approved') return 'APPROVED';
+          if (p.status === 'received') return 'RECEIVED';
           if (hasReturns) return 'RETURNED';
           return 'COMPLETED';
         },
@@ -486,6 +491,18 @@ export const Purchases: React.FC<PurchasesProps> = ({
               color: 'purple',
               icon: 'assignment_return',
               label: t.tooltips?.returned || 'Returned',
+            };
+          else if (status === 'APPROVED')
+            config = {
+              color: 'blue',
+              icon: 'fact_check',
+              label: t.tooltips?.approved || 'Approved',
+            };
+          else if (status === 'RECEIVED')
+            config = {
+              color: 'emerald',
+              icon: 'inventory',
+              label: t.tooltips?.received || 'Received',
             };
 
           return (
@@ -551,6 +568,13 @@ export const Purchases: React.FC<PurchasesProps> = ({
       label: t.contextMenu?.copySupplier || 'Copy Supplier',
       icon: 'person',
       action: () => copyToClipboard(purchase.supplierName || ''),
+    },
+    { separator: true },
+    {
+      label: t.contextMenu?.markAsReceived || 'Mark as Received',
+      icon: 'inventory',
+      action: () => onMarkAsReceived?.(purchase.id),
+      disabled: purchase.status !== 'approved' && purchase.status !== 'pending',
     },
   ];
 
@@ -1904,6 +1928,20 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       color: 'red',
                       icon: 'cancel',
                       label: t.detailsModal?.rejected || 'Rejected',
+                    };
+                    break;
+                  case 'approved':
+                    config = {
+                      color: 'blue',
+                      icon: 'fact_check',
+                      label: t.detailsModal?.approved || 'Approved',
+                    };
+                    break;
+                  case 'received':
+                    config = {
+                      color: 'emerald',
+                      icon: 'inventory',
+                      label: t.detailsModal?.received || 'Received',
                     };
                     break;
                   case 'returned':

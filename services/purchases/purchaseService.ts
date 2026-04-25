@@ -35,6 +35,8 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
       employeeId: db.employee_id,
       approvedBy: db.approved_by,
       approvalDate: db.approval_date,
+      receivedBy: db.received_by,
+      receivedAt: db.received_at,
       externalInvoiceId: db.external_invoice_id,
       invoiceId: db.invoice_id,
       version: db.version,
@@ -59,6 +61,8 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     if (p.employeeId !== undefined) db.employee_id = p.employeeId;
     if (p.approvedBy !== undefined) db.approved_by = p.approvedBy;
     if (p.approvalDate !== undefined) db.approval_date = p.approvalDate;
+    if (p.receivedBy !== undefined) db.received_by = p.receivedBy;
+    if (p.receivedAt !== undefined) db.received_at = p.receivedAt;
     if (p.externalInvoiceId !== undefined) db.external_invoice_id = p.externalInvoiceId;
     if (p.invoiceId !== undefined) db.invoice_id = p.invoiceId;
     if (p.version !== undefined) db.version = p.version;
@@ -179,12 +183,42 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
   async approve(id: string, approverName: string): Promise<Purchase> {
     const purchase = await this.getById(id);
     if (!purchase) throw new Error('Purchase not found');
-    if (purchase.status === 'completed') return purchase;
+    
+    // Approval simply validates the order and moves it forward
+    // In the decoupled workflow, batch creation is deferred until 'received' status
+    const updates = {
+      status: 'approved' as PurchaseStatus,
+      approvedBy: approverName,
+      approvalDate: new Date().toISOString(),
+    };
+    
+    return this.update(id, updates);
+  }
 
+  async markAsReceived(id: string, receiverName: string): Promise<Purchase> {
+    const purchase = await this.getById(id);
+    if (!purchase) throw new Error('Purchase not found');
+    if (purchase.status === 'received' || purchase.status === 'completed') return purchase;
+
+    // Trigger automated batch creation
+    await this.processInventoryReceipt(purchase, receiverName);
+
+    const updates = {
+      status: 'received' as PurchaseStatus,
+      receivedBy: receiverName,
+      receivedAt: new Date().toISOString(),
+    };
+    
+    return this.update(id, updates);
+  }
+
+  /**
+   * Internal helper to handle the automated batch creation and stock updates
+   */
+  private async processInventoryReceipt(purchase: Purchase, performedBy: string): Promise<void> {
     const settings = await settingsService.getAll();
     const branchId = purchase.branchId;
 
-    // 1. Update Inventory and Create Batches
     for (const item of purchase.items) {
       const currentStock = await batchService.getTotalStock(item.drugId);
       const unitsToAdd = stockOps.resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack);
@@ -212,7 +246,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
         referenceId: purchase.id,
         batchId: batch.id,
         expiryDate: batch.expiryDate,
-        performedBy: approverName,
+        performedBy: performedBy,
         status: 'approved',
         orgId: purchase.orgId || settings.orgId,
       });
@@ -225,15 +259,6 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
       })),
       true // skipBatch: we already created batches above
     );
-
-    // 2. Update Purchase Status
-    const updates = {
-      status: 'completed' as PurchaseStatus,
-      approvedBy: approverName,
-      approvalDate: new Date().toISOString(),
-    };
-    
-    return this.update(id, updates);
   }
 
   async reject(id: string, reason: string): Promise<Purchase> {

@@ -137,6 +137,9 @@ export const TRANSLATIONS = {
       changePhoto: 'Change Photo',
       reset: 'Reset',
       signOut: 'Sign Out',
+      updateProfile: 'Update Profile',
+      avatar: 'Profile Avatar',
+      contactInfo: 'Contact Information',
     },
     global: {
       actions: {
@@ -771,6 +774,8 @@ export const TRANSLATIONS = {
       },
       // Empty states
       noHistory: 'No purchase history found',
+      markAsReceived: 'Mark as Received',
+      autoBatchCreated: 'Inventory batches created automatically',
     },
     purchaseReturns: {
       createReturn: 'Create Return',
@@ -1253,6 +1258,9 @@ export const TRANSLATIONS = {
       recentSales: 'Recent Transactions',
       sold: 'sold',
       days: 'days left',
+      topProducts: 'Top Products',
+      dailyRevenue: 'Daily Revenue',
+      analytics: 'Advanced Analytics',
       customerCode: 'Code',
       paymentMethod: 'Payment',
       cash: 'Cash',
@@ -2526,6 +2534,9 @@ export const TRANSLATIONS = {
       changePhoto: 'تغيير الصورة',
       reset: 'إعادة تعيين',
       signOut: 'تسجيل الخروج',
+      updateProfile: 'تحديث الملف الشخصي',
+      avatar: 'الصورة الشخصية',
+      contactInfo: 'معلومات الاتصال',
     },
     global: {
       actions: {
@@ -3183,6 +3194,8 @@ export const TRANSLATIONS = {
       },
       // Empty states
       noHistory: 'لا يوجد سجل مشتريات',
+      markAsReceived: 'تعليم كمستلم',
+      autoBatchCreated: 'تم إنشاء دفعات المخزون تلقائياً',
     },
     purchaseReturns: {
       createReturn: 'إنشاء إرجاع',
@@ -3727,6 +3740,9 @@ export const TRANSLATIONS = {
       recentSales: 'أحدث المعاملات',
       sold: 'مباع',
       days: 'أيام متبقية',
+      topProducts: 'أفضل المنتجات',
+      dailyRevenue: 'الإيرادات اليومية',
+      analytics: 'التحليلات المتقدمة',
       customerCode: 'كود',
       paymentMethod: 'دفع',
       cash: 'كاش',

@@ -92,4 +92,54 @@ export abstract class BaseReportService<T, TFilters extends BaseReportFilters> {
   protected applyCustomFilters(query: any, filters: TFilters): any {
     return query;
   }
+
+  /**
+   * Fetches aggregated data (sum, count) for specific columns.
+   * Optimized to only fetch the columns needed for aggregation.
+   */
+  async getAggregates(
+    filters: TFilters,
+    sumColumns: string[] = []
+  ): Promise<{ count: number; sums: Record<string, number> }> {
+    try {
+      // If we only need count, we can use head: true
+      const selectColumns = sumColumns.length > 0 ? sumColumns.join(',') : 'id';
+      let query = supabase.from(this.tableName).select(selectColumns, { count: 'exact' });
+
+      if (filters.branchId) {
+        query = query.eq(this.branchColumn, filters.branchId);
+      }
+
+      if (filters.startDate) {
+        query = query.gte(this.dateColumn, filters.startDate);
+      }
+
+      if (filters.endDate) {
+        query = query.lte(this.dateColumn, filters.endDate);
+      }
+
+      // Apply custom filters
+      query = this.applyCustomFilters(query, filters);
+
+      const { data, error, count } = await query;
+
+      if (error) {
+        console.error(`[BaseReportService] Error fetching aggregates from ${this.tableName}:`, error);
+        return { count: 0, sums: {} };
+      }
+
+      const sums: Record<string, number> = {};
+      sumColumns.forEach((col) => {
+        sums[col] = (data || []).reduce((acc, row: any) => acc + (Number(row[col]) || 0), 0);
+      });
+
+      return {
+        count: count || 0,
+        sums,
+      };
+    } catch (err) {
+      console.error(`[BaseReportService] Critical error in getAggregates for ${this.tableName}:`, err);
+      return { count: 0, sums: {} };
+    }
+  }
 }

@@ -67,6 +67,7 @@ export interface EntityHandlers {
   // Purchase handlers
   handlePurchaseComplete: (purchase: Purchase) => void;
   handleApprovePurchase: (purchaseId: string) => Promise<void>;
+  handleMarkAsReceived: (purchaseId: string) => Promise<void>;
   handleRejectPurchase: (purchaseId: string, reason?: string) => void;
 
   // Sale handlers
@@ -136,6 +137,7 @@ interface UseEntityHandlersParams {
   // Actions
   addPurchase?: (purchase: Omit<Purchase, 'id'>, context?: ActionContext) => Promise<Purchase>;
   approvePurchase?: (id: string, context: ActionContext) => Promise<void>;
+  markAsReceived?: (id: string, receiverName: string) => Promise<void>;
 
   completeSale: (saleData: any, context: ActionContext) => Promise<Sale>;
   processSalesReturn: (returnData: any, sale: Sale, context: ActionContext) => Promise<void>;
@@ -175,6 +177,7 @@ export function useEntityHandlers({
   setBatches,
   addPurchase,
   approvePurchase,
+  markAsReceived,
   completeSale,
   processSalesReturn,
   createPurchaseReturn,
@@ -792,6 +795,43 @@ export function useEntityHandlers({
       activeBranchId,
       activeOrgId,
     ]
+  );
+
+  const handleMarkAsReceived = useCallback(
+    async (purchaseId: string) => {
+      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
+      if (!currentUser) {
+        error('Authentication required: Please log in to mark as received');
+        return;
+      }
+
+      if (!permissionsService.can('purchase.receive')) {
+        error('Permission denied: Cannot mark as received');
+        return;
+      }
+      
+      const purchase = purchases.find((p) => p.id === purchaseId);
+      if (!purchase) {
+        error('Purchase Order not found');
+        return;
+      }
+
+      try {
+        if (markAsReceived) {
+          await markAsReceived(purchaseId, currentUser.name);
+          success(`PO #${purchase.invoiceId} marked as received. Batches created.`);
+          auditService.log('purchase.receive', {
+            userId: currentEmployeeId,
+            details: `Received PO ID: ${purchaseId}`,
+            entityId: purchaseId,
+            branchId: activeBranchId,
+          });
+        }
+      } catch (err) {
+        error(`Failed to mark as received: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    },
+    [purchases, markAsReceived, success, currentEmployeeId, employees, error, activeBranchId]
   );
 
   const handleRejectPurchase = useCallback(
@@ -1692,6 +1732,7 @@ export function useEntityHandlers({
     // Purchase handlers
     handlePurchaseComplete,
     handleApprovePurchase,
+    handleMarkAsReceived,
     handleRejectPurchase,
 
     // Sale handlers

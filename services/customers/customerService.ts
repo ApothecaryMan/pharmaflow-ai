@@ -3,15 +3,16 @@
  * Online-Only implementation using Supabase
  */
 
-import { BaseDomainService } from '../core/BaseDomainService';
+import { BaseEntityService } from '../core/BaseEntityService';
 import type { Customer } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { settingsService } from '../settings/settingsService';
 import { supabase } from '../../lib/supabase';
 import type { CustomerFilters, CustomerService, CustomerStats } from './types';
 
-class CustomerServiceImpl extends BaseDomainService<Customer> implements CustomerService {
+class CustomerServiceImpl extends BaseEntityService<Customer> implements CustomerService {
   protected tableName = 'customers';
+  protected searchColumns = ['name', 'phone', 'code', 'email'];
 
   protected mapDbToDomain(db: any): Customer {
     return {
@@ -70,24 +71,6 @@ class CustomerServiceImpl extends BaseDomainService<Customer> implements Custome
     return db;
   }
 
-  async getAll(branchId?: string): Promise<Customer[]> {
-    const settings = await settingsService.getAll();
-    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    
-    try {
-      let query = supabase.from(this.tableName).select('*');
-      if (effectiveBranchId !== 'all') {
-        query = query.eq('branch_id', effectiveBranchId);
-      }
-      const { data, error } = await query.order('name', { ascending: true });
-      if (error) throw error;
-      return (data || []).map(item => this.mapDbToDomain(item));
-    } catch (err) {
-      console.error('[CustomerService] getAll failed:', err);
-      return [];
-    }
-  }
-
   async getByPhone(phone: string, branchId?: string): Promise<Customer | null> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
@@ -110,19 +93,11 @@ class CustomerServiceImpl extends BaseDomainService<Customer> implements Custome
     }
   }
 
-  async search(query: string, branchId?: string): Promise<Customer[]> {
-    const all = await this.getAll(branchId);
-    const q = query.toLowerCase();
-    return all.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.phone?.includes(q) ||
-        c.email?.toLowerCase().includes(q) ||
-        c.code?.toLowerCase().includes(q)
-    );
-  }
-
   async filter(filters: CustomerFilters, branchId?: string): Promise<Customer[]> {
+    if (filters.search) {
+      return this.search(filters.search, branchId);
+    }
+
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     
@@ -133,15 +108,12 @@ class CustomerServiceImpl extends BaseDomainService<Customer> implements Custome
         query = query.eq('branch_id', effectiveBranchId);
       }
       
-      if (filters.search) {
-        const q = filters.search.toLowerCase();
-        // Since we can't easily do complex OR in a single .filter call with current search logic,
-        // we'll fetch all and filter in JS for now or use .or()
-        query = query.or(`name.ilike.%${q}%,phone.ilike.%${q}%,code.ilike.%${q}%`);
-      }
-      
       if (filters.isVip !== undefined) {
         query = query.eq('vip', filters.isVip);
+      }
+
+      if (filters.status) {
+        query = query.eq('status', filters.status);
       }
       
       const { data, error } = await query.order('name', { ascending: true });

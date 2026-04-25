@@ -1,4 +1,5 @@
 import type { PermissionAction } from './permissions';
+import { type ViewState } from '../types';
 
 export interface MenuItem {
   id: string;
@@ -12,7 +13,7 @@ export interface MenuItem {
     permission?: PermissionAction; // Added for RBAC
     items: (
       | string
-      | { label: string; view?: string; icon?: string; permission?: PermissionAction }
+      | { label: string; view?: ViewState; icon?: string; permission?: PermissionAction }
     )[];
   }[];
   permission?: PermissionAction; // Added for RBAC
@@ -22,7 +23,7 @@ export interface MenuItem {
  * Module ID to ViewState mapping.
  * Links menu module IDs to their corresponding application view components.
  */
-export const MODULE_VIEW_MAPPING: Record<string, string> = {
+export const MODULE_VIEW_MAPPING: Record<string, ViewState> = {
   dashboard: 'dashboard',
   inventory: 'inventory',
   sales: 'pos',

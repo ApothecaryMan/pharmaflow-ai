@@ -81,7 +81,7 @@ export abstract class BaseDomainService<T extends { id: string; branchId?: strin
   /**
    * Updates an existing record.
    */
-  async update(id: string, updates: Partial<T>): Promise<T | null> {
+  async update(id: string, updates: Partial<T>): Promise<T> {
     const dbUpdates = this.mapDomainToDb(updates);
     const { error } = await (supabase as any)
       .from(this.tableName)
@@ -89,7 +89,9 @@ export abstract class BaseDomainService<T extends { id: string; branchId?: strin
       .eq('id', id);
       
     if (error) throw error;
-    return this.getById(id);
+    const updated = await this.getById(id);
+    if (!updated) throw new Error(`Entity not found after update: ${id}`);
+    return updated;
   }
 
   /**

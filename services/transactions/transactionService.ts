@@ -351,9 +351,12 @@ export const transactionService = {
       }, context.branchId);
 
       const result = await transactionService.processPurchaseTransaction(newPurchase.id, context);
-      
       if (!result.success) throw new Error(result.error);
-      return { success: true, data: result.data };
+
+      // For direct purchases, we immediately mark as received to update inventory
+      const receivedPurchase = await purchaseService.markAsReceived(newPurchase.id, context.performerName);
+      
+      return { success: true, data: receivedPurchase };
     } catch (err: any) {
       console.error('[TransactionService] Direct purchase failed:', err);
       return { success: false, error: err.message || 'Direct purchase failed' };
