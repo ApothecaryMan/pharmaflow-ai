@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { orgAggregationService, type OrgData } from '../../services/org/orgAggregationService';
+import { orgService } from '../../services/org/orgService';
 import { OrgPulseGrid } from './OrgPulseGrid';
 import { BranchMasterMonitor } from './BranchMasterMonitor';
 import { QuotaMonitor } from './QuotaMonitor';
 import { MemberPermissionMatrix } from './MemberPermissionMatrix';
 import { employeeService } from '../../services/hr/employeeService';
 import { useData } from '../../services/DataContext';
+import { SegmentedControl } from '../common/SegmentedControl';
 import { HelpButton, HelpModal } from '../common/HelpModal';
 import { ORG_MANAGEMENT_HELP } from '../../i18n/helpInstructions';
 
@@ -26,6 +28,7 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
   const [error, setError] = useState<string | null>(null);
   const { currentEmployee } = useData();
   const [showHelp, setShowHelp] = useState(false);
+  const [activeMatrixTab, setActiveMatrixTab] = useState<'managers' | 'staff'>('managers');
 
   const t = TRANSLATIONS[language].orgManagement;
   const normalizedLang = language.toLowerCase() as 'en' | 'ar';
@@ -51,7 +54,19 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
 
   const handleUpdateEmployee = async (employeeId: string, updates: any) => {
     try {
-      await employeeService.update(employeeId, updates);
+      const employee = data?.employees.find(e => e.id === employeeId);
+      
+      // If updating orgRole, use orgService
+      if (updates.orgRole && employee?.userId) {
+        await orgService.updateMemberRole(activeOrgId, employee.userId, updates.orgRole);
+        delete updates.orgRole; // Don't try to save orgRole to employees table
+      }
+
+      // If there are other updates, use employeeService
+      if (Object.keys(updates).length > 0) {
+        await employeeService.update(employeeId, updates);
+      }
+
       // Re-fetch everything to ensure metrics and lists are consistent
       await fetchData();
     } catch (err) {
@@ -122,15 +137,19 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
         color={color}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Branch Monitoring Section */}
-        <BranchMasterMonitor 
-          branches={data.branches} 
-          language={normalizedLang} 
-          color={color}
-        />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        {/* Branch Monitoring Section - Constrained by the height of QuotaMonitor */}
+        <div className="relative min-h-[300px] lg:min-h-0">
+          <div className="lg:absolute lg:inset-0">
+            <BranchMasterMonitor 
+              branches={data.branches} 
+              language={normalizedLang} 
+              color={color}
+            />
+          </div>
+        </div>
 
-        {/* Quota & Subscription Section */}
+        {/* Quota & Subscription Section - This defines the row height */}
         <QuotaMonitor 
           metrics={data.metrics} 
           language={normalizedLang} 
@@ -139,14 +158,48 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
       </div>
 
       {/* Global Member & Permissions Matrix */}
-      <MemberPermissionMatrix 
-        employees={data.employees}
-        branches={data.branches}
-        language={language}
-        currentEmployeeId={currentEmployee?.id}
-        onUpdate={handleUpdateEmployee}
-        color={color}
-      />
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
+              <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-lg)' }}>
+                {activeMatrixTab === 'managers' ? 'admin_panel_settings' : 'badge'}
+              </span>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                {activeMatrixTab === 'managers' ? t.permissionsTitle : (language === 'AR' ? 'كافة الموظفين' : 'All Staff')}
+              </h3>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                {activeMatrixTab === 'managers' ? t.permissionsSubtitle : (language === 'AR' ? 'قائمة الموظفين المسجلين في كافة الفروع' : 'List of employees registered across all branches')}
+              </p>
+            </div>
+          </div>
+          
+          <div className="w-full sm:w-[280px]">
+            <SegmentedControl
+              options={[
+                { value: 'managers', label: language === 'AR' ? 'المدراء' : 'Managers', icon: 'admin_panel_settings' },
+                { value: 'staff', label: language === 'AR' ? 'الموظفين' : 'Staff', icon: 'group' }
+              ]}
+              value={activeMatrixTab}
+              onChange={(val) => setActiveMatrixTab(val as any)}
+              color={color}
+              iconSize="--icon-sm"
+            />
+          </div>
+        </div>
+
+        <MemberPermissionMatrix 
+          employees={activeMatrixTab === 'managers' ? (data.managers || []) : (data.staff || [])}
+          branches={data.branches}
+          language={language}
+          currentEmployeeId={currentEmployee?.id}
+          onUpdate={handleUpdateEmployee}
+          color={color}
+          hideHeader={true} // We'll add this prop to avoid duplicate headers
+        />
+      </div>
 
       <HelpButton 
         onClick={() => setShowHelp(true)}

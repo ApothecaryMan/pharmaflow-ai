@@ -99,7 +99,7 @@ export const TRANSLATIONS = {
     orgManagement: {
       title: 'Organization Management',
       subtitle: 'Centralized control for all branches and members',
-      permissionsTitle: 'Member Permission Matrix',
+      permissionsTitle: 'Manager Permissions',
       permissionsSubtitle: 'Manage access and roles across all branches',
       roleOwner: 'Owner',
       roleAdmin: 'Admin',
@@ -116,6 +116,7 @@ export const TRANSLATIONS = {
       multiBranchAccessNote: 'Roles (Owner/Admin) grant full access to all branches',
       searchPlaceholder: 'Search member...',
       lastOwnerWarning: 'Cannot change role: This is the last owner of the organization.',
+      noAccountNote: 'This employee does not have a system account and cannot be assigned a global role.',
     },
     organization: {
       inviteMember: 'Invite Member',
@@ -2511,7 +2512,7 @@ export const TRANSLATIONS = {
     orgManagement: {
       title: 'إدارة المنظمة',
       subtitle: 'تحكم مركزي لجميع الفروع والأعضاء',
-      permissionsTitle: 'مصفوفة صلاحيات الأعضاء',
+      permissionsTitle: 'صلاحيات المدراء',
       permissionsSubtitle: 'إدارة الوصول والأدوار عبر جميع الفروع',
       roleOwner: 'مالك',
       roleAdmin: 'مدير',
@@ -2528,6 +2529,7 @@ export const TRANSLATIONS = {
       multiBranchAccessNote: 'الأدوار (مالك/مدير) تمنح وصولاً كاملاً لجميع الفروع',
       searchPlaceholder: 'بحث عن موظف...',
       lastOwnerWarning: 'لا يمكن تغيير الدور: هذا هو المالك الوحيد للمنظمة.',
+      noAccountNote: 'هذا الموظف ليس لديه حساب نظام ولا يمكن تعيين دور عام له.',
     },
     organization: {
       inviteMember: 'دعوة عضو',

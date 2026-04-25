@@ -51,7 +51,7 @@ const BranchRow: React.FC<{ branch: Branch; language: 'en' | 'ar'; color: string
 export const BranchMasterMonitor: React.FC<BranchMasterMonitorProps> = ({ branches, color = 'primary', language }) => {
   return (
     <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col group h-full`}>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-4 shrink-0">
         <h3 className="text-base font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
           <span className="material-symbols-rounded text-primary-500" style={{ fontSize: 'var(--icon-lg)' }}>
             monitoring
@@ -63,7 +63,7 @@ export const BranchMasterMonitor: React.FC<BranchMasterMonitorProps> = ({ branch
         </span>
       </div>
       
-      <div className="flex-1 overflow-y-auto space-y-0 divide-y divide-zinc-100 dark:divide-zinc-800">
+      <div className="flex-1 overflow-y-auto scrollbar-hide space-y-0 divide-y divide-zinc-100 dark:divide-zinc-800">
         {branches.length === 0 ? (
           <div className="h-full flex items-center justify-center text-zinc-400 text-sm italic py-8">
             {language === 'ar' ? 'لا توجد فروع مضافة' : 'No branches added'}

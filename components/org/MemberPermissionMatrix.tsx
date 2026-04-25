@@ -15,6 +15,7 @@ interface MemberPermissionMatrixProps {
   color?: string;
   onUpdate: (employeeId: string, updates: Partial<Employee>) => Promise<void>;
   isLoading?: boolean;
+  hideHeader?: boolean;
 }
 
 export const MemberPermissionMatrix: React.FC<MemberPermissionMatrixProps> = ({
@@ -24,7 +25,8 @@ export const MemberPermissionMatrix: React.FC<MemberPermissionMatrixProps> = ({
   currentEmployeeId,
   color = 'primary',
   onUpdate,
-  isLoading = false
+  isLoading = false,
+  hideHeader = false
 }) => {
   const t = TRANSLATIONS[language].orgManagement;
   const ownersCount = employees.filter(e => e.orgRole === 'owner').length;
@@ -67,13 +69,24 @@ export const MemberPermissionMatrix: React.FC<MemberPermissionMatrixProps> = ({
       meta: { align: 'center' },
       cell: (info) => {
         const role = info.getValue() as string;
-        const employeeId = info.row.original.id;
+        const employee = info.row.original;
+        const employeeId = employee.id;
+        const hasAccount = !!employee.userId;
         const isLastOwner = role === 'owner' && ownersCount <= 1;
         
+        if (!hasAccount) {
+          return (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-dashed border-zinc-200 dark:border-zinc-700 text-zinc-400 text-[10px] font-bold uppercase tracking-widest cursor-help" title={t.noAccountNote}>
+              <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-xs)' }}>no_accounts</span>
+              {language === 'AR' ? 'بدون حساب' : 'NO ACCOUNT'}
+            </div>
+          );
+        }
+
         return (
           <div className="flex flex-col items-center gap-1">
             <select
-              value={role}
+              value={role || 'member'}
               disabled={isLastOwner}
               onMouseDown={(e) => e.stopPropagation()}
               onChange={(e) => onUpdate(employeeId, { orgRole: e.target.value as any })}
@@ -149,26 +162,28 @@ export const MemberPermissionMatrix: React.FC<MemberPermissionMatrixProps> = ({
 
   return (
     <div className={`rounded-3xl ${CARD_BASE} overflow-hidden group`}>
-      <div className="p-5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400">
-            <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-lg)' }}>group</span>
+      {!hideHeader && (
+        <div className="p-5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400">
+              <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-lg)' }}>group</span>
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 leading-tight">
+                {t.permissionsTitle}
+              </h3>
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-widest mt-0.5">
+                {t.permissionsSubtitle}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 leading-tight">
-              {t.permissionsTitle}
-            </h3>
-            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-widest mt-0.5">
-              {t.permissionsSubtitle}
-            </p>
+          
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[10px] font-bold uppercase tracking-wider border border-zinc-200 dark:border-zinc-700">
+            <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-sm)' }}>info</span>
+            {t.multiBranchAccessNote}
           </div>
         </div>
-        
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[10px] font-bold uppercase tracking-wider border border-zinc-200 dark:border-zinc-700">
-          <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-sm)' }}>info</span>
-          {t.multiBranchAccessNote}
-        </div>
-      </div>
+      )}
 
       <div className="p-0">
         <TanStackTable

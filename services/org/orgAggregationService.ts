@@ -2,6 +2,7 @@ import { branchService } from '../branchService';
 import { salesService } from '../sales/salesService';
 import { inventoryService } from '../inventory/inventoryService';
 import { employeeService } from '../hr/employeeService';
+import { orgService } from './orgService';
 
 export interface OrgMetrics {
   totalSales: number;
@@ -17,6 +18,8 @@ export interface OrgData {
   metrics: OrgMetrics;
   branches: any[];
   employees: any[];
+  managers: any[];
+  staff: any[];
 }
 
 const DB_NAME = 'PharmaFlow_OrgDB';
@@ -198,12 +201,30 @@ export const orgAggregationService = {
     
     // 3. Fetch all employees and filter by those belonging to the org's branches
     const allEmployees = await employeeService.getAll('ALL');
-    const employees = allEmployees.filter(e => e.branchId && branchIds.has(e.branchId));
+    const branchEmployees = allEmployees.filter(e => e.branchId && branchIds.has(e.branchId));
+    
+    // 4. Fetch org members to get their roles (owner/admin/member)
+    const members = await orgService.getMembers(orgId);
+    const memberRoleMap: Record<string, string> = {};
+    for (const m of members) {
+      memberRoleMap[m.userId] = m.role;
+    }
+    
+    // 5. Merge roles and split into Managers (has account) and Staff (no account)
+    const allMappedEmployees = branchEmployees.map(e => ({
+      ...e,
+      orgRole: e.userId ? memberRoleMap[e.userId] : undefined
+    }));
+
+    const managers = allMappedEmployees.filter(e => !!e.userId);
+    const staff = allMappedEmployees.filter(e => !e.userId);
     
     return {
       metrics,
       branches,
-      employees
+      employees: allMappedEmployees, // Keep original for backward compatibility
+      managers,
+      staff
     };
   }
 };

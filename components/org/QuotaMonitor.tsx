@@ -56,7 +56,7 @@ export const QuotaMonitor: React.FC<QuotaMonitorProps> = ({ metrics, color = 'pr
   const mockStorageUsage = parseFloat((metrics.totalBranches * 0.25).toFixed(1));
 
   return (
-    <div className={`p-6 rounded-3xl ${CARD_BASE} flex flex-col group`}>
+    <div className={`p-6 rounded-3xl ${CARD_BASE} flex flex-col group h-full`}>
       <div className="flex items-center gap-2 mb-6 border-b border-zinc-100 dark:border-zinc-800 pb-4">
         <span className="material-symbols-rounded text-amber-500" style={{ fontSize: 'var(--icon-lg)' }}>bolt</span>
         <h3 className="text-base font-semibold text-zinc-900 dark:text-white">

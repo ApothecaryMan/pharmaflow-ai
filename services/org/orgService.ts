@@ -156,6 +156,16 @@ export const orgService = {
     return mapMember(data);
   },
 
+  async updateMemberRole(orgId: string, userId: string, role: OrgRole): Promise<void> {
+    const { error } = await supabase
+      .from('org_members')
+      .update({ role })
+      .eq('org_id', orgId)
+      .eq('user_id', userId);
+
+    if (error) throw new Error(error.message);
+  },
+
   async removeMember(orgId: string, userId: string): Promise<void> {
     await supabase.from('org_members').delete().eq('org_id', orgId).eq('user_id', userId);
   },
