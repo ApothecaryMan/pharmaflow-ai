@@ -25,8 +25,6 @@ export const ProcurementKPIs: React.FC<ProcurementKPIsProps> = ({ summary, t }) 
         subValue={t?.intelligence?.procurement?.kpis?.items || 'items'}
         icon='warning'
         iconColor={summary.items_out_of_stock > 0 ? 'red' : 'emerald'}
-        icon='warning'
-        iconColor={summary.items_out_of_stock > 0 ? 'red' : 'emerald'}
       />
 
       <SmallCard
