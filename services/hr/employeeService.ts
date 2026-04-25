@@ -128,8 +128,17 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
     }
 
     const dbEmployee = this.mapDomainToDb(newEmployee);
+    
+    // Safety check for multi-tenant isolation
+    if (!dbEmployee.org_id) {
+      console.warn('[EmployeeService] Creating employee without org_id. This may fail RLS checks.');
+    }
+
     const { error } = await supabase.from(this.tableName).insert(dbEmployee);
-    if (error) throw error;
+    if (error) {
+      console.error('[EmployeeService] Create failed:', error);
+      throw error;
+    }
 
     return newEmployee;
   }

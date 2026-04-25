@@ -959,12 +959,13 @@ export function useEntityHandlers({
         return;
       }
 
-      // 3. Persist to IndexedDB
-      // The service will assign ID/Code if missing and inject branchId
-      const newEmployee = await employeeService.create({
-        ...employee,
-        branchId: activeBranchId,
-      });
+      // 3. Persist to Supabase
+      // The service will assign ID/Code if missing and inject branchId/orgId
+      const newEmployee = await employeeService.create(
+        employee,
+        employee.branchId || activeBranchId,
+        activeOrgId
+      );
 
       // 4. Update State with the result from service (to ensure IDs/Codes are present)
       setEmployees((prev) => [...prev, newEmployee]);
@@ -995,7 +996,7 @@ export function useEntityHandlers({
         return;
       }
 
-      // Persist to IndexedDB
+      // Persist to Supabase
       await employeeService.update(id, updates);
       setEmployees((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
       success('Employee updated successfully');
@@ -1044,7 +1045,7 @@ export function useEntityHandlers({
         return;
       }
 
-      // 4. Persist to IndexedDB
+      // 4. Persist to Supabase
       await employeeService.delete(id);
       setEmployees((prev) => prev.filter((e) => e.id !== id));
       success('Employee deleted successfully');
@@ -1215,7 +1216,7 @@ export function useEntityHandlers({
         setInventory(updatedInventory);
         const updatedBatches = await batchService.getAllBatches(activeBranchId); setBatches(updatedBatches);
 
-        // --- PERSISTENCE: Return items to IndexedDB ---
+        // --- PERSISTENCE: Return items to Supabase ---
         try {
           await Promise.all(
             sale.items.map((item) => {
@@ -1532,7 +1533,7 @@ export function useEntityHandlers({
 
       setSales((prev) => prev.map((s) => (s.id === saleId ? { ...s, ...finalUpdates } : s)));
 
-      // --- PERSISTENCE: Save modified/completed/cancelled sale to IndexedDB via salesService ---
+      // --- PERSISTENCE: Save modified/completed/cancelled sale to Supabase via salesService ---
       try {
         await salesService.update(saleId, finalUpdates);
       } catch (e) {
