@@ -240,4 +240,34 @@ export const authService = {
 
     return { session, id: employee.id };
   },
+  
+  /**
+   * Generate a random temporary password
+   */
+  generateTempPassword(length: number = 8): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  },
+
+  /**
+   * Handle forgot password request
+   */
+  async handleForgotPassword(email: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      // 1. Trigger Supabase standard reset link
+      const result = await this.resetPassword(email);
+      if (!result.success) throw new Error(result.message);
+      
+      // 2. Log or handle custom "Temporary Password" if needed
+      // Note: Real email sending with a specific temp password would require an Edge Function
+      
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Failed to handle request' };
+    }
+  },
 };

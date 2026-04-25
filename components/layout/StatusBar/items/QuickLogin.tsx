@@ -325,6 +325,33 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
               {language === 'AR' ? 'غير موجود' : 'Not found'}
             </span>
           )}
+          {step === 'password' && (
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                if (tempEmployee?.email) {
+                  const { authService } = await import('../../../../services/auth/authService');
+                  const res = await authService.handleForgotPassword(tempEmployee.email);
+                  if (res.success) {
+                    alert(language === 'AR' ? 'تم إرسال رابط إعادة التعيين لبريدك' : 'Reset link sent to your email');
+                  } else {
+                    alert(res.message);
+                  }
+                } else {
+                  alert(language === 'AR' ? 'تواصل مع المدير لإعادة تعيين كلمة المرور' : 'Contact manager to reset password');
+                }
+              }}
+              className='ml-auto text-gray-400 hover:text-primary-500 cursor-pointer'
+              title={language === 'AR' ? 'نسيت كلمة المرور؟' : 'Forgot Password?'}
+            >
+              <span 
+                className='material-symbols-rounded block' 
+                style={{ fontSize: 'var(--status-icon-size, 16px)' }}
+              >
+                help
+              </span>
+            </button>
+          )}
         </div>
       )}
     </div>
