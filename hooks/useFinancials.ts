@@ -10,11 +10,12 @@ import {
   intelligenceService,
 } from '../services/intelligence/intelligenceService';
 import { useData } from '../services/DataContext';
-import type { FinancialKPIs, ProductFinancialItem } from '../types/intelligence';
+import type { FinancialKPIs, ProductFinancialItem, CategoryFinancialItem } from '../types/intelligence';
 
 interface UseFinancialsResult {
   kpis: FinancialKPIs | null;
   products: ProductFinancialItem[];
+  categories: CategoryFinancialItem[];
   loading: boolean;
   error: string | null;
   refresh: () => void;
@@ -24,6 +25,7 @@ export function useFinancials(period: FinancialPeriod = 'this_month'): UseFinanc
   const { activeBranchId } = useData();
   const [kpis, setKpis] = useState<FinancialKPIs | null>(null);
   const [products, setProducts] = useState<ProductFinancialItem[]>([]);
+  const [categories, setCategories] = useState<CategoryFinancialItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,13 +34,15 @@ export function useFinancials(period: FinancialPeriod = 'this_month'): UseFinanc
     setError(null);
 
     try {
-      const [kpisData, productsData] = await Promise.all([
+      const [kpisData, productsData, categoriesData] = await Promise.all([
         intelligenceService.getFinancialKPIs(period, activeBranchId),
         intelligenceService.getProductFinancials(period, activeBranchId),
+        intelligenceService.getCategoryFinancials(period, activeBranchId),
       ]);
 
       setKpis(kpisData);
       setProducts(productsData);
+      setCategories(categoriesData);
     } catch (err) {
       console.error('[useFinancials] Error fetching data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load financial data');
@@ -54,6 +58,7 @@ export function useFinancials(period: FinancialPeriod = 'this_month'): UseFinanc
   return {
     kpis,
     products,
+    categories,
     loading,
     error,
     refresh: fetchData,

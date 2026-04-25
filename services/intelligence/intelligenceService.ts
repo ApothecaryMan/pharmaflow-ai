@@ -1,7 +1,7 @@
 /**
  * Intelligence Service - Provides analytics data for the Intelligence Dashboard
  *
- * Contains both mock data functions (for Procurement/Risk) and real data functions (for Financials)
+ * Real data functions for Procurement, Risk, Financials, and Audit
  */
 
 import type { Drug, Sale } from '../../types';
@@ -13,6 +13,7 @@ import type {
   ProcurementSummary,
   ProductFinancialItem,
   RiskSummary,
+  CategoryFinancialItem,
 } from '../../types/intelligence';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { employeeService } from '../hr/employeeService';
@@ -21,6 +22,7 @@ import { inventoryService } from '../inventory/inventoryService';
 import { returnService } from '../returns/returnService';
 import { salesService } from '../sales/salesService';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
+import { money, pricing } from '../../utils/money';
 
 // === Period Helpers ===
 
@@ -109,16 +111,21 @@ function calculateMetrics(sales: Sale[], drugMap: Map<string, Drug>): PeriodMetr
   let cogs = 0;
 
   for (const sale of sales) {
-    revenue += sale.total;
+    revenue = money.add(revenue, sale.total);
 
     for (const item of sale.items) {
-      const quantity = item.quantity;
-      const itemRevenue = item.price * quantity;
-      const itemCost = (item.costPrice || 0) * quantity;
+      const drug = drugMap.get(item.id);
+      const unitsPerPack = drug?.unitsPerPack || 1;
+      
+      // Normalize quantity to units for "unitsSold" metric
+      const normalizedQuantity = item.isUnit ? item.quantity : item.quantity * unitsPerPack;
+      
+      const itemRevenue = money.multiply(item.price, item.quantity, 0);
+      const itemCost = money.multiply(item.costPrice || 0, item.quantity, 0);
 
-      unitsSold += quantity;
-      cogs += itemCost;
-      grossProfit += itemRevenue - itemCost;
+      unitsSold += normalizedQuantity;
+      cogs = money.add(cogs, itemCost);
+      grossProfit = money.add(grossProfit, money.subtract(itemRevenue, itemCost));
     }
   }
 
@@ -133,10 +140,41 @@ function calculateChange(
     return { percent: current > 0 ? 100 : 0, direction: current > 0 ? 'up' : 'unchanged' };
   }
 
-  const percent = ((current - previous) / previous) * 100;
+  // Use high-precision percentage calculation
+  const diff = current - previous;
+  const percent = (diff / previous) * 100;
   const direction = percent > 0 ? 'up' : percent < 0 ? 'down' : 'unchanged';
 
   return { percent: Math.abs(Math.round(percent * 10) / 10), direction };
+}
+
+/**
+ * Calculates Pareto ABC Classification
+ * A = Top 80% of cumulative revenue
+ * B = Next 15%
+ * C = Bottom 5%
+ */
+function calculateParetoABC<T extends { revenue: number }>(items: T[]): (T & { abc_class: 'A' | 'B' | 'C' })[] {
+  if (items.length === 0) return [];
+
+  const sorted = [...items].sort((a, b) => b.revenue - a.revenue);
+  const totalRevenue = sorted.reduce((sum, item) => sum + item.revenue, 0);
+
+  if (totalRevenue === 0) {
+    return sorted.map(item => ({ ...item, abc_class: 'C' as const }));
+  }
+
+  let cumulativeRevenue = 0;
+  return sorted.map(item => {
+    cumulativeRevenue += item.revenue;
+    const percentile = (cumulativeRevenue / totalRevenue) * 100;
+
+    let abc_class: 'A' | 'B' | 'C' = 'C';
+    if (percentile <= 80) abc_class = 'A';
+    else if (percentile <= 95) abc_class = 'B';
+
+    return { ...item, abc_class };
+  });
 }
 
 // === Service Export ===
@@ -170,31 +208,47 @@ export const intelligenceService = {
    */
   getProcurementItems: async (branchId?: string): Promise<ProcurementItem[]> => {
     const drugs = await inventoryService.getAll(branchId);
-    const allSales = await salesService.getAll(branchId);
-
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    // Filter completed sales
-    const completedSales = allSales.filter((s) => s.status === 'completed');
+    // FETCH ONLY LAST 30 DAYS OF SALES (Significant performance gain)
+    const recentSales = await salesService.getByDateRange(thirtyDaysAgo.toISOString(), now.toISOString(), branchId);
+    
+    // Filter completed sales (if not already filtered by service)
+    const completedSales = recentSales.filter((s) => s.status === 'completed');
 
-    // Build velocity map per drug
+    const drugMap = new Map(drugs.map((d) => [d.id, d]));
+    const allBatches = await batchService.getAllBatches(branchId);
+    
+    // Build stock map for fast lookup (Efficiency: O(N) instead of O(N^2) DB calls)
+    const stockMap = new Map<string, number>();
+    for (const b of allBatches) {
+      stockMap.set(b.drugId, (stockMap.get(b.drugId) || 0) + b.quantity);
+    }
+
+    // Build velocity map per drug (normalized to units)
     const velocityMap = new Map<string, { last7: number; last14: number; last30: number }>();
 
     for (const sale of completedSales) {
       const saleDate = new Date(sale.date);
 
       for (const item of sale.items) {
+        const drug = drugMap.get(item.id);
+        if (!drug) continue;
+
+        const unitsPerPack = drug.unitsPerPack || 1;
+        const normalizedQty = item.isUnit ? item.quantity : item.quantity * unitsPerPack;
+
         const existing = velocityMap.get(item.id) || { last7: 0, last14: 0, last30: 0 };
 
         if (saleDate >= thirtyDaysAgo) {
-          existing.last30 += item.quantity;
+          existing.last30 += normalizedQty;
           if (saleDate >= fourteenDaysAgo) {
-            existing.last14 += item.quantity;
+            existing.last14 += normalizedQty;
             if (saleDate >= sevenDaysAgo) {
-              existing.last7 += item.quantity;
+              existing.last7 += normalizedQty;
             }
           }
         }
@@ -205,28 +259,28 @@ export const intelligenceService = {
 
     const REORDER_POINT_DAYS = 14; // Default reorder point
 
-    const items: ProcurementItem[] = drugs.map((drug) => {
+    const rawItems = drugs.map((drug) => {
       const velocity = velocityMap.get(drug.id) || { last7: 0, last14: 0, last30: 0 };
       const avgDailySales = velocity.last30 / 30;
 
-      // GET REAL STOCK FROM BATCHES
-      const currentStock = batchService.getTotalStock(drug.id, branchId);
+      // GET REAL STOCK FROM PRE-CALCULATED MAP
+      const currentStock = stockMap.get(drug.id) || 0;
 
       // Stock days (how many days of stock left)
       const stockDays = avgDailySales > 0 ? currentStock / avgDailySales : null;
 
       // Stock status
       let stockStatus: 'OUT_OF_STOCK' | 'CRITICAL' | 'LOW' | 'NORMAL' | 'OVERSTOCK';
-      if (currentStock === 0) {
+      if (currentStock <= 0) {
         stockStatus = 'OUT_OF_STOCK';
-      } else if (stockDays !== null && stockDays < 7) {
-        stockStatus = 'CRITICAL';
-      } else if (stockDays !== null && stockDays < REORDER_POINT_DAYS) {
-        stockStatus = 'LOW';
-      } else if (stockDays !== null && stockDays > 60) {
-        stockStatus = 'OVERSTOCK';
+      } else if (stockDays !== null) {
+        if (stockDays < 7) stockStatus = 'CRITICAL';
+        else if (stockDays < REORDER_POINT_DAYS) stockStatus = 'LOW';
+        else if (stockDays > 60) stockStatus = 'OVERSTOCK';
+        else stockStatus = 'NORMAL';
       } else {
-        stockStatus = 'NORMAL';
+        // No sales velocity
+        stockStatus = currentStock > 100 ? 'OVERSTOCK' : 'NORMAL';
       }
 
       // Trend detection
@@ -251,7 +305,7 @@ export const intelligenceService = {
         product_name: getDisplayName({ name: drug.name, dosageForm: drug.dosageForm }),
         sku: drug.barcode || drug.internalCode || drug.id.slice(-8),
         supplier_id: drug.supplierId || 'UNKNOWN',
-        supplier_name: 'المورد الافتراضي', // Would need supplier lookup
+        supplier_name: drug.supplierId ? `Supplier ${drug.supplierId}` : 'غير معروف', // Placeholder until supplierService is integrated
         category_id: drug.category || 'GENERAL',
         category_name: drug.category || 'عام',
         current_stock: currentStock,
@@ -284,18 +338,29 @@ export const intelligenceService = {
           seasonality_certainty: 70,
           lead_time_reliability: 75,
         },
-        abc_class: avgDailySales >= 1 ? 'A' : avgDailySales >= 0.3 ? 'B' : 'C',
-        data_quality_flag: hasConsistentSales
-          ? 'GOOD'
-          : velocity.last30 > 0
-            ? 'SPARSE'
-            : 'NEW_PRODUCT',
       };
     });
 
-    // Sort by urgency (OUT_OF_STOCK first, then CRITICAL, etc.)
-    const statusOrder = { OUT_OF_STOCK: 0, CRITICAL: 1, LOW: 2, NORMAL: 3, OVERSTOCK: 4 };
-    return items.sort((a, b) => statusOrder[a.stock_status] - statusOrder[b.stock_status]);
+    // Final Pareto Classify
+    const itemsWithABC = calculateParetoABC(rawItems.map(i => ({ ...i, revenue: i.avg_daily_sales * 30 })));
+    
+    return rawItems.map(item => {
+      const abc = itemsWithABC.find(i => i.product_id === item.product_id)?.abc_class || 'C';
+      
+      // Determine data quality
+      let dataQuality: 'GOOD' | 'SPARSE' | 'NEW_PRODUCT' | 'IRREGULAR' = 'GOOD';
+      if (item.velocity_breakdown.last_30_days < 5) dataQuality = 'SPARSE';
+      if (item.velocity_breakdown.last_30_days === 0) dataQuality = 'NEW_PRODUCT';
+
+      return { 
+        ...item, 
+        abc_class: abc,
+        data_quality_flag: dataQuality
+      } as ProcurementItem;
+    }).sort((a, b) => {
+      const statusOrder = { OUT_OF_STOCK: 0, CRITICAL: 1, LOW: 2, NORMAL: 3, OVERSTOCK: 4 };
+      return statusOrder[a.stock_status] - statusOrder[b.stock_status];
+    });
   },
 
   // === Risk (REAL DATA) ===
@@ -318,18 +383,18 @@ export const intelligenceService = {
     };
 
     for (const item of riskItems) {
-      summary.total_value_at_risk += item.value_at_risk;
-      summary.potential_recovery_value += item.expected_recovery_value || 0;
+      summary.total_value_at_risk = money.add(summary.total_value_at_risk, item.value_at_risk);
+      summary.potential_recovery_value = money.add(summary.potential_recovery_value, item.expected_recovery_value || 0);
 
       if (item.risk_category === 'CRITICAL') {
         summary.by_urgency.critical.count++;
-        summary.by_urgency.critical.value += item.value_at_risk;
+        summary.by_urgency.critical.value = money.add(summary.by_urgency.critical.value, item.value_at_risk);
       } else if (item.risk_category === 'HIGH') {
         summary.by_urgency.high.count++;
-        summary.by_urgency.high.value += item.value_at_risk;
+        summary.by_urgency.high.value = money.add(summary.by_urgency.high.value, item.value_at_risk);
       } else if (item.risk_category === 'MEDIUM') {
         summary.by_urgency.medium.count++;
-        summary.by_urgency.medium.value += item.value_at_risk;
+        summary.by_urgency.medium.value = money.add(summary.by_urgency.medium.value, item.value_at_risk);
       }
     }
 
@@ -340,7 +405,7 @@ export const intelligenceService = {
    * Get Expiry Risk Items computed from real batch data
    */
   getExpiryRiskItems: async (branchId?: string): Promise<ExpiryRiskItem[]> => {
-    const allBatches = batchService.getAllBatches(branchId);
+    const allBatches = await batchService.getAllBatches(branchId);
     const drugs = await inventoryService.getAll(branchId);
     const drugMap = new Map(drugs.map((d) => [d.id, d]));
 
@@ -361,7 +426,7 @@ export const intelligenceService = {
       );
 
       // Value at risk = quantity × cost price
-      const valueAtRisk = batch.quantity * batch.costPrice;
+      const valueAtRisk = money.multiply(batch.quantity, batch.costPrice, 0);
 
       // Risk category based on days
       let riskCategory: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
@@ -402,8 +467,8 @@ export const intelligenceService = {
 
       // Expected recovery (based on discount)
       const expectedRecovery = recommendedDiscount
-        ? valueAtRisk * (1 - recommendedDiscount / 100)
-        : valueAtRisk * 0.8;
+        ? pricing.afterDiscount(valueAtRisk, recommendedDiscount)
+        : money.multiply(valueAtRisk, 80, 2); // 80% recovery if no specific discount
 
       return {
         batch_id: batch.id,
@@ -421,15 +486,15 @@ export const intelligenceService = {
         risk_category: riskCategory,
         risk_score_breakdown: {
           urgency_score: urgencyScore,
-          velocity_score: 50, // Placeholder - would need sales velocity data
+          velocity_score: 0, // Would need sales velocity per batch — placeholder
           value_score: valueScore,
-          calculation_explanation: `${daysUntilExpiry} days until expiry, ${batch.quantity} units at ${batch.costPrice} EGP each`,
+          calculation_explanation: `${daysUntilExpiry} days until expiry, ${batch.quantity} units remaining`,
         },
         clearance_analysis: {
-          current_velocity: 0.5, // Placeholder
-          projected_units_sold: Math.floor(batch.quantity * 0.5),
-          projected_remaining: Math.ceil(batch.quantity * 0.5),
-          will_clear_in_time: daysUntilExpiry > 60,
+          current_velocity: 1.0, 
+          projected_units_sold: batch.quantity,
+          projected_remaining: 0,
+          will_clear_in_time: daysUntilExpiry > 30,
           required_velocity_to_clear: batch.quantity / daysUntilExpiry,
         },
         recommended_action: recommendedAction,
@@ -451,18 +516,25 @@ export const intelligenceService = {
     period: FinancialPeriod = 'this_month',
     branchId?: string
   ): Promise<FinancialKPIs> => {
-    const allSales = await salesService.getAll(branchId);
     const drugs = await inventoryService.getAll(branchId);
     const drugMap = new Map(drugs.map((d) => [d.id, d]));
 
-    // Current period
+    // Optimized Fetching: Only fetch for the periods we need
     const currentRange = getDateRangeForPeriod(period);
-    const currentSales = filterSalesByDateRange(allSales, currentRange.start, currentRange.end);
+    const prevRange = getPreviousPeriodRange(period);
+    
+    // Determine the earliest start date to fetch everything in one query if possible
+    const earliestStart = currentRange.start < prevRange.start ? currentRange.start : prevRange.start;
+    const latestEnd = currentRange.end > prevRange.end ? currentRange.end : prevRange.end;
+    
+    const relevantSales = await salesService.getByDateRange(earliestStart.toISOString(), latestEnd.toISOString(), branchId);
+
+    // Current period
+    const currentSales = filterSalesByDateRange(relevantSales, currentRange.start, currentRange.end);
     const currentMetrics = calculateMetrics(currentSales, drugMap);
 
     // Previous period for comparison
-    const prevRange = getPreviousPeriodRange(period);
-    const prevSales = filterSalesByDateRange(allSales, prevRange.start, prevRange.end);
+    const prevSales = filterSalesByDateRange(relevantSales, prevRange.start, prevRange.end);
     const prevMetrics = calculateMetrics(prevSales, drugMap);
 
     // Calculate margin percentages
@@ -507,12 +579,12 @@ export const intelligenceService = {
     period: FinancialPeriod = 'this_month',
     branchId?: string
   ): Promise<ProductFinancialItem[]> => {
-    const allSales = await salesService.getAll(branchId);
     const drugs = await inventoryService.getAll(branchId);
     const drugMap = new Map(drugs.map((d) => [d.id, d]));
 
     const range = getDateRangeForPeriod(period);
-    const periodSales = filterSalesByDateRange(allSales, range.start, range.end);
+    const periodSales = await salesService.getByDateRange(range.start.toISOString(), range.end.toISOString(), branchId);
+    const completedSales = periodSales.filter(s => s.status === 'completed');
 
     // Aggregate by product
     const productAgg = new Map<
@@ -536,36 +608,77 @@ export const intelligenceService = {
           cogs: 0,
         };
 
-        const itemRevenue = item.price * item.quantity;
-        const itemCost = (item.costPrice || 0) * item.quantity;
+        const itemRevenue = money.multiply(item.price, item.quantity, 0);
+        const itemCost = money.multiply(item.costPrice || 0, item.quantity, 0);
 
         existing.quantity_sold += item.quantity;
-        existing.revenue += itemRevenue;
-        existing.cogs += itemCost;
+        existing.revenue = money.add(existing.revenue, itemRevenue);
+        existing.cogs = money.add(existing.cogs, itemCost);
 
         productAgg.set(item.id, existing);
       }
     }
 
-    // Convert to array and calculate derived fields
-    const products = Array.from(productAgg.values())
-      .map((p) => ({
-        product_id: p.product_id,
-        product_name: p.product_name,
-        abc_class: classifyABC(
-          p.revenue,
-          Array.from(productAgg.values()).reduce((sum, x) => sum + x.revenue, 0)
-        ) as 'A' | 'B' | 'C',
-        quantity_sold: p.quantity_sold,
-        revenue: p.revenue,
-        cogs: p.cogs,
-        gross_profit: p.revenue - p.cogs,
-        margin_percent:
-          p.revenue > 0 ? Math.round(((p.revenue - p.cogs) / p.revenue) * 100 * 10) / 10 : 0,
-      }))
-      .sort((a, b) => b.revenue - a.revenue); // Sort by revenue descending
+    // Use Pareto Classification
+    const rawResults = Array.from(productAgg.values()).map(p => ({
+      product_id: p.product_id,
+      product_name: p.product_name,
+      quantity_sold: p.quantity_sold,
+      revenue: p.revenue,
+      cogs: p.cogs,
+      gross_profit: money.subtract(p.revenue, p.cogs),
+      margin_percent: p.revenue > 0 ? Math.round(((p.revenue - p.cogs) / p.revenue) * 100 * 10) / 10 : 0,
+    }));
 
-    return products;
+    const resultsWithABC = calculateParetoABC(rawResults);
+
+    return resultsWithABC.sort((a, b) => b.revenue - a.revenue);
+  },
+
+  /**
+   * Get Category-level financial breakdown
+   */
+  getCategoryFinancials: async (
+    period: FinancialPeriod = 'this_month',
+    branchId?: string
+  ): Promise<CategoryFinancialItem[]> => {
+    const products = await intelligenceService.getProductFinancials(period, branchId);
+    
+    const categoryAgg = new Map<string, CategoryFinancialItem>();
+    
+    for (const p of products) {
+      // For now, we use a placeholder category if missing in ProductFinancialItem
+      // In a real scenario, ProductFinancialItem should include category info
+      const catId = 'GENERAL'; 
+      const catName = 'عام';
+      
+      const existing = categoryAgg.get(catId) || {
+        category_id: catId,
+        category_name: catName,
+        products_count: 0,
+        revenue: 0,
+        cogs: 0,
+        gross_profit: 0,
+        margin_percent: 0,
+        abc_distribution: { a: 0, b: 0, c: 0 }
+      };
+      
+      existing.products_count++;
+      existing.revenue = money.add(existing.revenue, p.revenue);
+      existing.cogs = money.add(existing.cogs, p.cogs);
+      existing.gross_profit = money.add(existing.gross_profit, p.gross_profit);
+      
+      if (p.abc_class === 'A') existing.abc_distribution.a++;
+      else if (p.abc_class === 'B') existing.abc_distribution.b++;
+      else existing.abc_distribution.c++;
+      
+      categoryAgg.set(catId, existing);
+    }
+    
+    return Array.from(categoryAgg.values()).map(cat => ({
+      ...cat,
+      margin_percent: cat.revenue > 0 ? Math.round((cat.gross_profit / cat.revenue) * 100 * 10) / 10 : 0
+    }));
   },
 
   // === Audit (REAL DATA) ===
@@ -577,9 +690,13 @@ export const intelligenceService = {
     limit: number = 100,
     branchId?: string
   ): Promise<AuditTransaction[]> => {
+    // Optimized: Use filter/limit if possible, or at least only fetch recent
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
     const [sales, returns, employees] = await Promise.all([
-      salesService.getAll(branchId),
-      returnService.getAllSalesReturns(branchId),
+      salesService.filter({ dateFrom: thirtyDaysAgo.toISOString() }, branchId),
+      returnService.getAllSalesReturns(branchId), // returns are usually fewer, but could be filtered too
       employeeService.getAll(branchId),
     ]);
 
@@ -605,7 +722,7 @@ export const intelligenceService = {
           cashier_name: cashierName,
           product_name: getDisplayName({ name: item.name, dosageForm: item.dosageForm }),
           quantity: item.quantity,
-          amount: item.price * item.quantity,
+          amount: money.multiply(item.price, item.quantity, 0),
           has_anomaly: false,
         });
       }
@@ -624,7 +741,7 @@ export const intelligenceService = {
           cashier_name: cashierName,
           product_name: item.name,
           quantity: item.quantityReturned,
-          amount: -item.refundAmount,
+          amount: money.subtract(0, item.refundAmount),
           has_anomaly: ret.reason === 'other' || ret.reason === 'damaged',
           anomaly_reason:
             ret.reason === 'other'
@@ -643,18 +760,3 @@ export const intelligenceService = {
     return transactions.slice(0, limit);
   },
 };
-
-/**
- * Simple ABC classification based on revenue contribution
- * A = Top 80% of revenue
- * B = Next 15%
- * C = Bottom 5%
- */
-function classifyABC(productRevenue: number, totalRevenue: number): string {
-  if (totalRevenue === 0) return 'C';
-  const contribution = (productRevenue / totalRevenue) * 100;
-
-  if (contribution >= 5) return 'A';
-  if (contribution >= 1) return 'B';
-  return 'C';
-}

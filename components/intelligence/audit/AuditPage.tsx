@@ -27,6 +27,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({
   globalFilter = '',
 }) => {
   const { textTransform } = useSettings();
+  const [selectedTransaction, setSelectedTransaction] = useState<AuditTransaction | null>(null);
 
   const columnHelper = createColumnHelper<AuditTransaction>();
 
@@ -130,8 +131,17 @@ export const AuditPage: React.FC<AuditPageProps> = ({
           enableVirtualization={false}
           pageSize='auto'
           enableShowAll={true}
+          onRowClick={(row) => setSelectedTransaction(row)}
         />
       </div>
+
+      <TransactionDetailModal
+        isOpen={!!selectedTransaction}
+        onClose={() => setSelectedTransaction(null)}
+        transaction={selectedTransaction}
+        t={t}
+        language={language}
+      />
     </div>
   );
 };

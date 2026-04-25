@@ -17,9 +17,6 @@ export const ProcurementKPIs: React.FC<ProcurementKPIsProps> = ({ summary, t }) 
         subValue={t?.intelligence?.procurement?.kpis?.items || 'items'}
         icon='shopping_cart'
         iconColor='emerald'
-        trend='up'
-        trendValue='12'
-        trendLabel={t?.intelligence?.procurement?.kpis?.vsLastWeek || 'vs last week'}
       />
 
       <SmallCard
@@ -28,9 +25,8 @@ export const ProcurementKPIs: React.FC<ProcurementKPIsProps> = ({ summary, t }) 
         subValue={t?.intelligence?.procurement?.kpis?.items || 'items'}
         icon='warning'
         iconColor={summary.items_out_of_stock > 0 ? 'red' : 'emerald'}
-        trend='down'
-        trendValue='2'
-        trendLabel={t?.intelligence?.procurement?.kpis?.improved || 'improved'}
+        icon='warning'
+        iconColor={summary.items_out_of_stock > 0 ? 'red' : 'emerald'}
       />
 
       <SmallCard

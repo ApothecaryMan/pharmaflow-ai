@@ -1,71 +1,13 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
-import type { ProductFinancialItem, FinancialKPIs } from '../../../types/intelligence';
+import type { ProductFinancialItem, FinancialKPIs, CategoryFinancialItem } from '../../../types/intelligence';
 import { formatCurrency } from '../../../utils/currency';
 import { SmallCard } from '../../common/SmallCard';
 import { TanStackTable } from '../../common/TanStackTable';
 
-interface CategoryBreakdownItem {
-  category_id: string;
-  category_name: string;
-  products_count: number;
-  revenue: number;
-  cogs: number;
-  gross_profit: number;
-  margin_percent: number;
-  abc_distribution: {
-    a: number;
-    b: number;
-    c: number;
-  };
-}
 
-// Mock data
-const mockCategoryData: CategoryBreakdownItem[] = [
-  {
-    category_id: 'CAT-01',
-    category_name: 'مسكنات',
-    products_count: 45,
-    revenue: 125000,
-    cogs: 87500,
-    gross_profit: 37500,
-    margin_percent: 30,
-    abc_distribution: { a: 12, b: 18, c: 15 },
-  },
-  {
-    category_id: 'CAT-02',
-    category_name: 'مضادات حيوية',
-    products_count: 32,
-    revenue: 98000,
-    cogs: 68600,
-    gross_profit: 29400,
-    margin_percent: 30,
-    abc_distribution: { a: 8, b: 14, c: 10 },
-  },
-  {
-    category_id: 'CAT-03',
-    category_name: 'فيتامينات',
-    products_count: 28,
-    revenue: 45000,
-    cogs: 27000,
-    gross_profit: 18000,
-    margin_percent: 40,
-    abc_distribution: { a: 5, b: 12, c: 11 },
-  },
-  {
-    category_id: 'CAT-04',
-    category_name: 'مستحضرات تجميل',
-    products_count: 55,
-    revenue: 78000,
-    cogs: 46800,
-    gross_profit: 31200,
-    margin_percent: 40,
-    abc_distribution: { a: 15, b: 22, c: 18 },
-  },
-];
-
-const categoryColumnHelper = createColumnHelper<CategoryBreakdownItem>();
+const categoryColumnHelper = createColumnHelper<CategoryFinancialItem>();
 const productColumnHelper = createColumnHelper<ProductFinancialItem>();
 
 import { useFinancials } from '../../../hooks/useFinancials';
@@ -81,6 +23,7 @@ interface FinancialsPageProps {
   language?: string;
   kpis: FinancialKPIs | null;
   products: ProductFinancialItem[];
+  categories: CategoryFinancialItem[];
   loading: boolean;
   activeTab: 'products' | 'categories';
   setActiveTab: (tab: 'products' | 'categories') => void;
@@ -90,12 +33,13 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
   t,
   kpis,
   products,
+  categories,
   loading,
   activeTab,
 }) => {
   const { textTransform } = useSettings();
 
-  const categoryColumns = useMemo<ColumnDef<CategoryBreakdownItem, any>[]>(
+  const categoryColumns = useMemo<ColumnDef<CategoryFinancialItem, any>[]>(
     () => [
       categoryColumnHelper.accessor('category_name', {
         header: t?.intelligence?.financials?.categoryGrid?.columns?.category || 'Category',
@@ -318,7 +262,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
         ) : (
           <div className='h-full overflow-hidden'>
             <TanStackTable
-              data={mockCategoryData}
+              data={categories}
               columns={categoryColumns}
               lite={false}
               tableId='category-financials-table'

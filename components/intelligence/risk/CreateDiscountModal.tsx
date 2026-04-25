@@ -27,12 +27,18 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title='تطبيق سياسة تخفيض' size='md' icon='sell'>
+    <Modal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      title={t?.intelligence?.risk?.discount?.title || 'Apply Discount Policy'} 
+      size='md' 
+      icon='sell'
+    >
       <div className='space-y-5'>
         {/* Info Banner */}
-        <div className='bg-rose-50 dark:bg-rose-900/20 p-4 flex gap-3 text-rose-700 dark:text-rose-400'>
+        <div className='bg-rose-50 dark:bg-rose-900/20 p-4 flex gap-3 text-rose-700 dark:text-rose-400 rounded-xl'>
           <span className='material-symbols-rounded shrink-0' style={{ fontSize: 'var(--icon-lg)' }}>warning</span>
-          <p className='text-xs font-medium'>
+          <p className='text-xs font-medium leading-relaxed'>
             {t?.intelligence?.risk?.discount?.warning || 'Discounting items can help recover value, but ensure it complies with local regulations.'}
           </p>
         </div>
@@ -40,7 +46,7 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
         {/* Discount Type */}
         <div>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-            نوع التخفيض
+            {t?.intelligence?.risk?.discount?.type || 'Discount Type'}
           </label>
           <div className='flex gap-3'>
             <button
@@ -71,7 +77,9 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
         {/* Discount Value */}
         <div>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-            {discountType === 'PERCENTAGE' ? 'نسبة التخفيض (%)' : 'مبلغ التخفيض (ج.م)'}
+            {discountType === 'PERCENTAGE' 
+              ? (t?.intelligence?.risk?.discount?.percentageLabel || 'Discount Percentage (%)')
+              : (t?.intelligence?.risk?.discount?.fixedLabel || 'Discount Amount (EGP)')}
           </label>
           <input
             type='number'
@@ -82,7 +90,7 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
             className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-hidden transition-all text-lg font-bold text-center'
           />
           {discountType === 'PERCENTAGE' && (
-            <div className='flex gap-2 mt-2'>
+            <div className='flex gap-2 mt-3'>
               {[10, 15, 20, 25, 30].map((val) => (
                 <button
                   key={val}
@@ -104,7 +112,7 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
         {/* Validity Period */}
         <div>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-            مدة صلاحية العرض (أيام)
+            {t?.intelligence?.risk?.discount?.validity || 'Offer Validity (Days)'}
           </label>
           <input
             type='number'
@@ -120,13 +128,13 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
           <button
             type='button'
             onClick={onClose}
-            className='px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors font-medium'
+            className='px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors font-medium text-sm'
           >
-            إلغاء
+            {t?.common?.cancel || 'Cancel'}
           </button>
           <button
-            onClick={handleApply} // Changed from onClose to handleApply
-            className='flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2'
+            onClick={handleApply}
+            className='flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2'
           >
             <span className='material-symbols-rounded font-icon' style={{ fontSize: 'var(--icon-base)' }}>check_circle</span>
             {t?.settings?.common?.apply || 'Apply Discount'}

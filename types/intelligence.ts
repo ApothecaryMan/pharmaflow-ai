@@ -138,6 +138,21 @@ export interface ProductFinancialItem {
   margin_percent: number;
 }
 
+export interface CategoryFinancialItem {
+  category_id: string;
+  category_name: string;
+  products_count: number;
+  revenue: number;
+  cogs: number;
+  gross_profit: number;
+  margin_percent: number;
+  abc_distribution: {
+    a: number;
+    b: number;
+    c: number;
+  };
+}
+
 export interface FinancialKPIs {
   revenue: {
     value: number;
