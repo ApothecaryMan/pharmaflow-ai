@@ -179,7 +179,7 @@ export const transactionService = {
           type: saleData.paymentMethod === 'cash' ? 'sale' : 'card_sale',
           amount: saleData.total,
           reason: `Sale #${serialId}`,
-          userId: context.performerName || 'System',
+          userId: context.performerId || 'System',
           relatedSaleId: internalId,
         });
       }
@@ -277,7 +277,7 @@ export const transactionService = {
           type: 'return',
           amount: returnData.totalRefund,
           reason: `Return for Sale #${sale.serialId}`,
-          userId: context.performerName || 'System',
+          userId: context.performerId || 'System',
           relatedSaleId: sale.id,
         });
       }
@@ -382,7 +382,7 @@ export const transactionService = {
           type: 'purchase_return',
           amount: savedReturn.totalRefund,
           reason: `Purchase Return #${savedReturn.id} for PO #${originalPurchase.invoiceId || originalPurchase.id}`,
-          userId: context.performerName || 'System',
+          userId: context.performerId || 'System',
           relatedSaleId: originalPurchase.id,
         });
       }

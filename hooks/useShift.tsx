@@ -8,27 +8,27 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { StorageKeys } from '../config/storageKeys';
 import type { CashTransaction, Shift } from '../types';
-import { getPreviousShardKeys, getShardKey } from '../utils/sharding';
-import { storage } from '../utils/storage';
 import { useData } from '../services/DataContext';
+import { cashService } from '../services/cash/cashService';
+import { supabase } from '../lib/supabase';
 
 /**
  * ShiftContext
  *
  * Provides global shift state management across the app.
  * All components consuming this context will see the same state and updates in real-time.
+ * Synchronized with Supabase via cashService.
  */
 
 interface ShiftContextType {
   shifts: Shift[];
   currentShift: Shift | null;
   isLoading: boolean;
-  startShift: (newShift: Shift) => void;
-  endShift: (closedShift: Shift) => void;
-  addTransaction: (shiftId: string, transaction: CashTransaction, updates?: Partial<Shift>) => void;
-  refreshShifts: () => void;
+  startShift: (newShift: Shift) => Promise<void>;
+  endShift: (closedShift: Shift) => Promise<void>;
+  addTransaction: (shiftId: string, transaction: CashTransaction, updates?: Partial<Shift>) => Promise<void>;
+  refreshShifts: () => Promise<void>;
 }
 
 const ShiftContext = createContext<ShiftContextType | undefined>(undefined);
@@ -36,172 +36,137 @@ const ShiftContext = createContext<ShiftContextType | undefined>(undefined);
 export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { activeBranchId } = useData();
+  const { activeBranchId, employees } = useData();
 
   // --- Derived: Current Open Shift ---
   const currentShift = useMemo(() => {
     return shifts.find((s) => s.status === 'open' && s.branchId === activeBranchId) || null;
   }, [shifts, activeBranchId]);
 
-  // --- Load from storage on mount ---
-  useEffect(() => {
-    const loadShifts = () => {
-      // Load Current + Previous Month
-      const currentKey = getShardKey(StorageKeys.SHIFTS, new Date());
-      const prevKeys = getPreviousShardKeys(StorageKeys.SHIFTS, 1);
-      const keys = [currentKey, ...prevKeys];
-
-      const loadedShifts = keys.flatMap((key) => storage.get<Shift[]>(key, []));
-
+  // --- Load from database on mount ---
+  const refreshShifts = useCallback(async () => {
+    if (!activeBranchId) return;
+    
+    setIsLoading(true);
+    try {
+      const loadedShifts = await cashService.getAllShifts(activeBranchId);
+      
       // Sort by openTime descending
       loadedShifts.sort((a, b) => new Date(b.openTime).getTime() - new Date(a.openTime).getTime());
 
-      if (loadedShifts.length > 0) {
-        const parsed: Shift[] = loadedShifts.map((s: any) => ({
-          ...s,
-          branchId: s.branchId || activeBranchId, // Runtime fallback for legacy data
-          cardSales: s.cardSales ?? 0,
-          returns: s.returns ?? 0,
-        }));
-        setShifts(parsed);
+      // Fetch transactions for the open shift if it exists
+      const openShift = loadedShifts.find(s => s.status === 'open');
+      if (openShift) {
+        const txs = await cashService.getTransactions(openShift.id);
+        openShift.transactions = txs;
       }
+
+      setShifts(loadedShifts);
+    } catch (err) {
+      console.error('[ShiftProvider] Failed to load shifts:', err);
+    } finally {
       setIsLoading(false);
-    };
-    loadShifts();
+    }
   }, [activeBranchId]);
 
-  // --- Cross-tab sync via storage event ---
   useEffect(() => {
-    // Note: 'storage' event listener in usePersistedState handles this generally,
-    // but here we have specific parsing logic.
-    // The storage utility dispatches 'local-storage' event for same-tab updates,
-    // and we can listen to window 'storage' for other tabs.
+    refreshShifts();
 
-    const handleStorageChange = (e: StorageEvent) => {
-      // Listen to ANY active shift shard
-      const currentKey = getShardKey(StorageKeys.SHIFTS, new Date());
-      const prevKey = getPreviousShardKeys(StorageKeys.SHIFTS, 1)[0];
+    // Listen for realtime updates from Supabase
+    const channel = supabase.channel('shifts-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'shifts' },
+        () => {
+          refreshShifts();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'cash_transactions' },
+        () => {
+          refreshShifts();
+        }
+      )
+      .subscribe();
 
-      if ((e.key === currentKey || e.key === prevKey) && e.newValue) {
-        // Simply reload all if any active shard changes
-        // (Simpler than merging partial updates)
-        refreshShifts();
-      }
+    return () => {
+      supabase.removeChannel(channel);
     };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [shifts]);
-
-  // --- Persist to storage on change ---
-  // --- Persist to storage on change ---
-  useEffect(() => {
-    if (!isLoading) {
-      // Sharded Save: Group by Month
-      const shards: Record<string, Shift[]> = {};
-
-      shifts.forEach((shift) => {
-        // Default to current date if openTime missing (shouldn't happen)
-        const date = shift.openTime || new Date().toISOString();
-        const key = getShardKey(StorageKeys.SHIFTS, date);
-        if (!shards[key]) shards[key] = [];
-        shards[key].push(shift);
-      });
-
-      Object.entries(shards).forEach(([key, items]) => {
-        storage.set(key, items);
-      });
-    }
-  }, [shifts, isLoading]);
+  }, [refreshShifts]);
 
   // --- Actions ---
 
-  const startShift = useCallback((newShift: Shift) => {
-    setShifts((prev) => [newShift, ...prev]);
-  }, []);
+  const startShift = useCallback(async (newShift: Shift) => {
+    try {
+      const createdShift = await cashService.openShift(
+        newShift.openingBalance,
+        newShift.openedBy,
+        activeBranchId
+      );
+      
+      // If there was an opening transaction, it's handled by openShift service usually,
+      // but let's check if we need to add it explicitly.
+      // Looking at cashService.openShift, it creates the shift but doesn't add the 'opening' transaction record.
+      // Let's add it if provided in the newShift.
+      if (newShift.transactions && newShift.transactions.length > 0) {
+        const openingTx = newShift.transactions.find(t => t.type === 'opening');
+        if (openingTx) {
+          await cashService.addTransaction(createdShift.id, {
+            branchId: activeBranchId,
+            shiftId: createdShift.id,
+            time: openingTx.time,
+            type: 'opening',
+            amount: openingTx.amount,
+            reason: openingTx.reason,
+            userId: openingTx.userId,
+          });
+        }
+      }
 
-  const endShift = useCallback((closedShift: Shift) => {
-    setShifts((prev) => prev.map((s) => (s.id === closedShift.id ? closedShift : s)));
-  }, []);
+      await refreshShifts();
+    } catch (err) {
+      console.error('[ShiftProvider] startShift failed:', err);
+      throw err;
+    }
+  }, [activeBranchId, refreshShifts]);
+
+  const endShift = useCallback(async (closedShift: Shift) => {
+    try {
+      await cashService.closeShift(
+        closedShift.id,
+        closedShift.closingBalance || 0,
+        closedShift.closedBy || '',
+        closedShift.notes
+      );
+      await refreshShifts();
+    } catch (err) {
+      console.error('[ShiftProvider] endShift failed:', err);
+      throw err;
+    }
+  }, [refreshShifts]);
 
   const addTransaction = useCallback(
-    (shiftId: string, transaction: CashTransaction, updates: Partial<Shift> = {}) => {
-      setShifts((prev) =>
-        prev.map((s) => {
-          if (s.id !== shiftId) return s;
-
-          const updatedShift = { ...s, ...updates };
-          updatedShift.transactions = [transaction, ...s.transactions]; // Add new transaction to the beginning
-
-          // Initialize expectedBalance if it's undefined
-          if (updatedShift.expectedBalance === undefined) {
-            updatedShift.expectedBalance = updatedShift.openingBalance;
-          }
-
-          // Update counters based on transaction type
-          switch (transaction.type) {
-            case 'sale':
-              updatedShift.cashSales = (updatedShift.cashSales || 0) + transaction.amount;
-              updatedShift.expectedBalance += transaction.amount;
-              break;
-            case 'card_sale':
-              updatedShift.cardSales = (updatedShift.cardSales || 0) + transaction.amount;
-              // Card sales don't affect expected cash balance
-              break;
-            case 'card_return':
-              updatedShift.cardSales = (updatedShift.cardSales || 0) - transaction.amount;
-              // Card returns don't affect expected cash balance
-              break;
-            case 'return':
-              updatedShift.returns = (updatedShift.returns || 0) + transaction.amount;
-              updatedShift.expectedBalance -= transaction.amount;
-              break;
-            case 'purchase':
-              updatedShift.cashPurchases = (updatedShift.cashPurchases || 0) + transaction.amount;
-              updatedShift.expectedBalance -= transaction.amount;
-              break;
-            case 'purchase_return':
-              updatedShift.cashPurchaseReturns = (updatedShift.cashPurchaseReturns || 0) + transaction.amount;
-              updatedShift.expectedBalance += transaction.amount;
-              break;
-            case 'in':
-              updatedShift.cashIn = (updatedShift.cashIn || 0) + transaction.amount;
-              updatedShift.expectedBalance += transaction.amount;
-              break;
-            case 'out':
-              updatedShift.cashOut = (updatedShift.cashOut || 0) + transaction.amount;
-              updatedShift.expectedBalance -= transaction.amount;
-              break;
-          }
-
-          return updatedShift;
-        })
-      );
+    async (shiftId: string, transaction: CashTransaction, updates: Partial<Shift> = {}) => {
+      try {
+        await cashService.addTransaction(shiftId, {
+          branchId: activeBranchId,
+          shiftId: shiftId,
+          time: transaction.time,
+          type: transaction.type,
+          amount: transaction.amount,
+          reason: transaction.reason,
+          userId: transaction.userId,
+          relatedSaleId: transaction.relatedSaleId,
+        });
+        await refreshShifts();
+      } catch (err) {
+        console.error('[ShiftProvider] addTransaction failed:', err);
+        throw err;
+      }
     },
-    []
+    [activeBranchId, refreshShifts]
   );
-
-  const refreshShifts = useCallback(() => {
-    // Load Current + Previous Month
-    const currentKey = getShardKey(StorageKeys.SHIFTS, new Date());
-    const prevKeys = getPreviousShardKeys(StorageKeys.SHIFTS, 1);
-    const keys = [currentKey, ...prevKeys];
-
-    const loadedShifts = keys.flatMap((key) => storage.get<Shift[]>(key, []));
-
-    // Sort by openTime descending
-    loadedShifts.sort((a, b) => new Date(b.openTime).getTime() - new Date(a.openTime).getTime());
-
-    if (loadedShifts.length > 0) {
-      const parsed: Shift[] = loadedShifts.map((s: any) => ({
-        ...s,
-        branchId: s.branchId || activeBranchId,
-        cardSales: s.cardSales ?? 0,
-        returns: s.returns ?? 0,
-      }));
-      setShifts(parsed);
-    }
-  }, []);
 
   const branchShifts = useMemo(() => {
     return shifts.filter((s) => s.branchId === activeBranchId);

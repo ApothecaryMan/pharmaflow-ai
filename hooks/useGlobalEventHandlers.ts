@@ -68,15 +68,4 @@ export const useGlobalEventHandlers = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onToggleSidebar, onNavigate]);
-
-  // 3. Background Tasks (Inventory Migration)
-  useEffect(() => {
-    if (!isLoading && inventory.length > 0) {
-      batchService.migrateInventoryToBatches(inventory).then((newBatches) => {
-        if (newBatches.length > 0) {
-          console.log(`[Batch System] Migrated ${newBatches.length} items to batches.`);
-        }
-      });
-    }
-  }, [isLoading, inventory]);
 };

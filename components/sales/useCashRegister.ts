@@ -135,7 +135,7 @@ export const useCashRegister = ({
       branchName: activeBranch?.name,
       status: 'open',
       openTime: getVerifiedDate().toISOString(),
-      openedBy: userName,
+      openedBy: currentEmployeeId, // Use ID for DB
       openingBalance: amount,
       cashIn: 0,
       cashOut: 0,
@@ -156,9 +156,12 @@ export const useCashRegister = ({
       ],
     };
 
-    startShift(newShift);
-    closeModal();
-  }, [amountInput, currentEmployeeId, permissions.canOpenShift, t, language, employees, activeBranchId, branches, getVerifiedDate, reasonInput, startShift, closeModal]);
+    startShift(newShift).then(() => {
+      closeModal();
+    }).catch(err => {
+      setValidationError(err.message || 'Failed to open shift');
+    });
+  }, [amountInput, currentEmployeeId, permissions.canOpenShift, t, language, activeBranchId, branches, getVerifiedDate, reasonInput, startShift, closeModal]);
 
   const handleCloseShift = useCallback(() => {
     if (!currentShift) return;
@@ -215,7 +218,7 @@ export const useCashRegister = ({
       ...currentShift,
       status: 'closed',
       closeTime: closeTs.toISOString(),
-      closedBy: userName,
+      closedBy: currentEmployeeId, // Use ID for DB
       closingBalance: amount,
       expectedBalance: currentBalance,
       cashPurchases,
@@ -242,13 +245,16 @@ export const useCashRegister = ({
       ],
     };
 
-    endShift(closedShift);
-    closeModal();
+    endShift(closedShift).then(() => {
+      closeModal();
+    }).catch(err => {
+      setValidationError(err.message || 'Failed to close shift');
+    });
 
     // Printing Logic
     setTimeout(async () => {
       try {
-        const html = generateShiftReceiptHTML(closedShift, language);
+        const html = generateShiftReceiptHTML(closedShift, language, employees);
         const printerSettings = getPrinterSettings();
         const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
         let printedSilently = false;
@@ -330,11 +336,14 @@ export const useCashRegister = ({
       type: type,
       amount: amount,
       reason: reasonInput,
-      userId: employees?.find((e) => e.id === currentEmployeeId)?.name || 'System',
+      userId: currentEmployeeId || 'System',
     };
 
-    addTransaction(currentShift.id, transaction);
-    closeModal();
+    addTransaction(currentShift.id, transaction).then(() => {
+      closeModal();
+    }).catch(err => {
+      setValidationError(err.message || 'Failed to add transaction');
+    });
   }, [currentShift, modalMode, amountInput, permissions.canAddCash, permissions.canRemoveCash, t, language, reasonInput, getVerifiedDate, activeBranchId, employees, currentEmployeeId, addTransaction, closeModal]);
 
   return {

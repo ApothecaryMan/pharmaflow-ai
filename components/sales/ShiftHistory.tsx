@@ -39,14 +39,13 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   const { shifts: allShiftsFromHook, isLoading, endShift } = useShift();
 
   const handleReprintShift = async (shift: Shift) => {
-    // 1. Increment print count
+    // 1. Increment print count locally
     const updatedShift: Shift = {
       ...shift,
       printCount: (shift.printCount || 1) + 1,
     };
     
-    // 1.5. Audit reprint action
-    // BUG-SH-03: Add traceability for shift reprints
+    // 2. Audit reprint action
     auditService.log('shift.reprint', {
       details: { 
         shiftId: shift.id, 
@@ -57,13 +56,12 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
       entityType: 'shift'
     });
     
-    // 2. Persist update
-    endShift(updatedShift);
+    // 3. Update local selection for receipt generation
     setSelectedShift(updatedShift);
 
     // 3. Print
     try {
-      const html = generateShiftReceiptHTML(updatedShift, language as any);
+      const html = generateShiftReceiptHTML(updatedShift, language as any, employees);
       
       const printerSettings = getPrinterSettings();
       const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
@@ -226,7 +224,8 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   const filteredShifts = useMemo(() => {
     const searchRegex = createSearchRegex(searchTerm);
     return shifts.filter((shift) => {
-      const matchesTerm = searchRegex.test(shift.id) || searchRegex.test(shift.openedBy);
+      const openerName = employees?.find(e => e.id === shift.openedBy)?.name || shift.openedBy;
+      const matchesTerm = searchRegex.test(shift.id) || searchRegex.test(openerName);
 
       if (!matchesTerm) return false;
 
@@ -455,7 +454,9 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                 <p className='text-[10px] font-bold uppercase text-gray-500 mb-1'>
                   {t.shiftHistory?.details?.openedBy || 'Opened By'}
                 </p>
-                <p className='text-sm font-medium truncate'>{selectedShift.openedBy}</p>
+                <p className='text-sm font-medium truncate'>
+                  {employees?.find(e => e.id === selectedShift.openedBy)?.name || selectedShift.openedBy}
+                </p>
               </div>
               <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
                 <p className='text-[10px] font-bold uppercase text-gray-500 mb-1'>

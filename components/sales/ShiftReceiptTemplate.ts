@@ -1,7 +1,7 @@
-import type { Language, Shift } from '../../types';
+import type { Employee, Language, Shift } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 
-export const generateShiftReceiptHTML = (shift: Shift, language: Language = 'EN'): string => {
+export const generateShiftReceiptHTML = (shift: Shift, language: Language = 'EN', employees?: Employee[]): string => {
   const isAr = language === 'AR';
 
   // Format currency helpers - without currency symbol
@@ -33,6 +33,9 @@ export const generateShiftReceiptHTML = (shift: Shift, language: Language = 'EN'
   const durationText = isAr 
     ? `${durationHrs} س ${durationMins} د` 
     : `${durationHrs}h ${durationMins}m`;
+
+  const openedByName = employees?.find(e => e.id === shift.openedBy)?.name || shift.openedBy;
+  const closedByName = shift.closedBy ? (employees?.find(e => e.id === shift.closedBy)?.name || shift.closedBy) : '-';
 
   const cashSalesNum = shift.cashSales || 0;
   const cardSalesNum = shift.cardSales || 0;
@@ -192,11 +195,11 @@ export const generateShiftReceiptHTML = (shift: Shift, language: Language = 'EN'
   </div>
   <div class="info-row">
     <span class="info-label">${isAr ? 'فتح بواسطة:' : 'Opened By:'}</span>
-    <span class="info-value">${shift.openedBy}</span>
+    <span class="info-value">${openedByName}</span>
   </div>
   <div class="info-row">
     <span class="info-label">${isAr ? 'أغلق بواسطة:' : 'Closed By:'}</span>
-    <span class="info-value">${shift.closedBy || '-'}</span>
+    <span class="info-value">${closedByName}</span>
   </div>
   <div class="info-row">
     <span class="info-label">${isAr ? 'مدة الوردية:' : 'Duration:'}</span>

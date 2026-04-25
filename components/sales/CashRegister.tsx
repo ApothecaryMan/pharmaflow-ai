@@ -111,11 +111,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         accessorKey: 'userId',
         header: t.cashRegister?.transactions?.user || 'User',
         cell: (info) => {
-          const empId = info.getValue() as string;
-          const employee = employees?.find((e) => e.id === empId);
+          const empIdOrName = info.getValue() as string;
+          const employee = employees?.find((e) => e.id === empIdOrName);
           return (
             <span className='font-bold text-[10px] text-gray-500'>
-              {employee ? employee.name : empId || '-'}
+              {employee ? employee.name : empIdOrName || '-'}
             </span>
           );
         },
@@ -314,7 +314,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   </span>
                   <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-purple-700 dark:text-purple-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
                     <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>person</span>
-                    {currentShift.openedBy}
+                    {employees?.find((e) => e.id === currentShift.openedBy)?.name || currentShift.openedBy}
                   </span>
                 </div>
 
