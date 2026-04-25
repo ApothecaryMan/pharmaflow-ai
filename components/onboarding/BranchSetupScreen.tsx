@@ -39,13 +39,13 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
     setBranchName(name);
+    
+    // Only auto-generate if the code is empty
     if (!branchCode) {
-      // Alphanumeric only, max 4 chars (to allow + '01' = 6 total)
-      const cleaned = name.replace(/[^a-zA-Z0-9]/g, '');
-      const generatedCode = cleaned.substring(0, 4).toUpperCase();
-      if (generatedCode) {
-        setBranchCode(generatedCode + '01');
-      }
+      // Get Latin characters if they exist
+      const latinOnly = name.replace(/[^a-zA-Z0-9]/g, '');
+      const prefix = latinOnly.substring(0, 4).toUpperCase() || 'PH';
+      setBranchCode(prefix + '01');
     }
   };
 

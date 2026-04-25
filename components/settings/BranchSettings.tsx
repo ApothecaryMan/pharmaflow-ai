@@ -212,7 +212,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
     loadData();
   }, [loadData]);
 
-  const handleOpenModal = (branch?: Branch) => {
+  const handleOpenModal = async (branch?: Branch) => {
     if (branch) {
       setEditingBranch(branch);
       const branchEmployees = employees
@@ -220,9 +220,10 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
         .map(e => e.id);
       setSelectedEmployees(branchEmployees);
     } else {
+      const newCode = await branchService.generateCode();
       setEditingBranch({ 
         name: '', 
-        code: branchService.generateCode(), 
+        code: newCode, 
         status: 'active',
         governorate: '',
         city: '',
@@ -319,10 +320,11 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
         <SmartInput
           type="text"
           dir="ltr"
-          readOnly
+          readOnly={!!editingBranch?.id}
           value={editingBranch?.code || ''}
+          onChange={(e) => setEditingBranch(prev => ({ ...prev!, code: e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '') }))}
           placeholder="CODE-000"
-          className="opacity-60 cursor-not-allowed"
+          className={!!editingBranch?.id ? "opacity-60 cursor-not-allowed" : ""}
         />
       </FormField>
       

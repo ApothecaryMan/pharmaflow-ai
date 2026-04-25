@@ -83,16 +83,20 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
     localStorage.setItem(ACTIVE_BRANCH_KEY, branchId);
   }
 
-  async generateCode(orgId: string): Promise<string> {
-    const branches = await this.getAllByOrg(orgId);
+  async generateCode(orgId?: string): Promise<string> {
+    const effectiveOrgId = orgId || orgService.getActiveOrgId();
+    if (!effectiveOrgId) return '';
+
+    const branches = await this.getAllByOrg(effectiveOrgId);
     const maxSerial = branches.reduce((max, b) => {
-      const match = b.code.match(/BR-(\d+)/);
+      const match = (b.code || '').match(/BR-(\d+)/);
       if (match) {
         const num = parseInt(match[1]);
         return Math.max(max, num);
       }
       return max;
     }, 0);
+    
     return `BR-${String(maxSerial + 1).padStart(3, '0')}`;
   }
 
