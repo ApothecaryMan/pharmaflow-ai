@@ -8,6 +8,7 @@ import type { Employee } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { settingsService } from '../settings/settingsService';
 import { supabase } from '../../lib/supabase';
+import { orgService } from '../org/orgService';
 
 class EmployeeServiceImpl extends BaseDomainService<Employee> {
   protected tableName = 'employees';
@@ -74,11 +75,14 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
 
   async getAll(branchId?: string | 'ALL', orgId?: string): Promise<Employee[]> {
     const settings = await settingsService.getAll();
-    const effectiveOrgId = orgId || settings.orgId;
+    const effectiveOrgId = orgId !== undefined ? orgId : (orgService.getActiveOrgId() || settings.orgId);
     const isAll = typeof branchId === 'string' && branchId.toLowerCase() === 'all';
     const effectiveBranchId = isAll ? undefined : (branchId || settings.activeBranchId || settings.branchCode);
     
     try {
+      if (effectiveOrgId === '') return []; // Prevent fetching everything
+      if (!effectiveOrgId) return []; // Must have an org context
+      
       let query = supabase.from(this.tableName).select('*');
       
       if (effectiveOrgId) {

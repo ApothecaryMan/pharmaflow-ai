@@ -8,6 +8,7 @@ import type { Branch } from '../types';
 import { idGenerator } from '../utils/idGenerator';
 import { supabase } from '../lib/supabase';
 import { employeeService } from './hr/employeeService';
+import { orgService } from './org/orgService';
 
 const ACTIVE_BRANCH_KEY = 'pharma_active_branch_id';
 
@@ -48,10 +49,14 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
 
   async getAll(orgId?: string): Promise<Branch[]> {
     try {
+      // If orgId is provided as an empty string, return empty immediately.
+      // This prevents fetching ALL branches from the database if the caller passes an empty ID.
+      const effectiveOrgId = orgId !== undefined ? orgId : orgService.getActiveOrgId();
+      if (!effectiveOrgId) return [];
+
       let query = supabase.from(this.tableName).select('*');
-      if (orgId) {
-        query = query.eq('org_id', orgId);
-      }
+      query = query.eq('org_id', effectiveOrgId);
+      
       const { data, error } = await query.order('name', { ascending: true });
       if (error) throw error;
       return (data || []).map(item => this.mapDbToDomain(item));
@@ -109,7 +114,7 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
     return newBranch;
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string): Promise<boolean> {
     const { error } = await supabase.from(this.tableName).delete().eq('id', id);
     if (error) throw error;
 
@@ -117,6 +122,7 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
     if (activeId === id) {
       localStorage.removeItem(ACTIVE_BRANCH_KEY);
     }
+    return true;
   }
 
   async assignEmployees(branchId: string, employeeIds: string[]): Promise<void> {

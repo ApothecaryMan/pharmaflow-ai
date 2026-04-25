@@ -561,85 +561,42 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 </div>
               </div>
 
-              {/* Branch Management & Switcher (Admin Only) */}
-              {(permissionsService.isOrgAdmin()) && (
-                <div className='p-2 border-t border-(--border-divider)'>
-                  <div className='flex items-center justify-between px-2 mb-2'>
+              {/* Branch Management & Switcher (Single Organization Context) */}
+              <div className='p-2 border-t border-(--border-divider)'>
+                <div className='flex items-center justify-between px-2 mb-2'>
+                  <div className='flex items-center gap-1.5'>
+                    <span className='material-symbols-rounded text-gray-400' style={{ fontSize: '16px' }}>location_on</span>
                     <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
-                      {language === 'AR' ? 'الفروع' : 'Branches'}
+                      {language === 'AR' ? 'فروع الصيدلية' : 'Pharmacy Branches'}
                     </p>
+                  </div>
+                  {permissionsService.isOrgAdmin() && (
                     <button
                       onClick={() => {
                         if (onNavigate) onNavigate('branch-management');
                         setShowProfileMenu(false);
                       }}
-                       className='text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-(--bg-menu-hover) flex items-center gap-1 py-1 px-3 rounded-full border border-primary-100 dark:border-primary-900/50 hover:shadow-sm active:scale-95'
+                      className='text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-(--bg-menu-hover) flex items-center gap-1 py-1 px-3 rounded-full border border-primary-100 dark:border-primary-900/50 hover:shadow-sm active:scale-95'
                     >
                       <span className='material-symbols-rounded' style={{ fontSize: '13px' }}>settings</span>
-                      {language === 'AR' ? 'إدارة الفروع' : 'Manage Branches'}
+                      {language === 'AR' ? 'الإدارة' : 'Manage'}
                     </button>
-                  </div>
-
-                  {branches.length > 1 ? (
-                    <div className='space-y-1'>
-                      {branches.map((branch) => (
-                        <button
-                          key={branch.id}
-                          onClick={async () => {
-                            await switchBranch(branch.id);                           
-                            setShowProfileMenu(false);
-                          }}
-                          className={`w-full p-2 text-sm font-medium rounded-lg flex items-center justify-between
-                            ${
-                              activeBranchId === branch.id
-                                ? 'bg-primary-50 dark:bg-primary-500/15 text-primary-600 dark:text-primary-400'
-                                : 'text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover)'
-                            }
-                          `}
-                        >
-                          <div className='flex items-center gap-2'>
-                            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
-                              {activeBranchId === branch.id ? 'radio_button_checked' : 'radio_button_unchecked'}
-                            </span>
-                            {branch.name}
-                          </div>
-                          {branch.code && <span className='text-[10px] opacity-60'>{branch.code}</span>}
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className='px-2.5 py-2 mt-1 mx-1 text-xs text-gray-500 dark:text-gray-400 bg-(--bg-page-surface) rounded-lg border border-(--border-divider) flex items-center gap-2'>
-                      <span className='material-symbols-rounded text-[16px] text-gray-400'>info</span>
-                      {language === 'AR' ? 'يوجد فرع واحد فقط حالياً.' : 'Only one branch available.'}
-                    </div>
                   )}
                 </div>
-              )}
 
-              {/* Organization Switcher (If multiple) */}
-              {userOrgs.length > 1 && (
-                <div className='p-2 border-t border-(--border-divider)'>
-                  <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2 mb-2'>
-                    {language === 'AR' ? 'المنظمات' : 'Organizations'}
-                  </p>
-                  <div className='space-y-1'>
-                    {userOrgs.map((org) => (
+                {branches.length > 1 ? (
+                  <div className='space-y-1 max-h-[200px] overflow-y-auto scrollbar-hide'>
+                    {branches.map((branch) => (
                       <button
-                        key={org.id}
-                        disabled={isSwitchingOrg}
+                        key={branch.id}
                         onClick={async () => {
-                          if (org.id === activeOrgId) return;
-                          setIsSwitchingOrg(true);
-                          try {
-                            await switchOrg(org.id);
-                            setShowProfileMenu(false);
-                          } finally {
-                            setIsSwitchingOrg(false);
-                          }
+                          if (activeBranchId === branch.id) return;
+                          await switchBranch(branch.id);                           
+                          setShowProfileMenu(false);
                         }}
-                        className={`w-full p-2 text-sm font-medium rounded-lg flex items-center justify-between
+                        className={`w-full p-2 text-sm font-medium rounded-lg flex items-center justify-between transition-colors
                           ${
-                            activeOrgId === org.id
+                            activeBranchId === branch.id
                               ? 'bg-primary-50 dark:bg-primary-500/15 text-primary-600 dark:text-primary-400'
                               : 'text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover)'
                           }
@@ -647,16 +604,21 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                       >
                         <div className='flex items-center gap-2'>
                           <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
-                            {activeOrgId === org.id ? 'domain_verification' : 'domain'}
+                            {activeBranchId === branch.id ? 'radio_button_checked' : 'radio_button_unchecked'}
                           </span>
-                          {org.name}
+                          {branch.name}
                         </div>
-                        {activeOrgId === org.id && <span className='material-symbols-rounded text-primary-500' style={{ fontSize: '14px' }}>check_circle</span>}
+                        {branch.code && <span className='text-[10px] opacity-60'>{branch.code}</span>}
                       </button>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className='px-2.5 py-2 mt-1 mx-1 text-xs text-gray-500 dark:text-gray-400 bg-(--bg-page-surface) rounded-lg border border-(--border-divider) flex items-center gap-2'>
+                    <span className='material-symbols-rounded text-[16px] text-gray-400'>info</span>
+                    {language === 'AR' ? 'فرع واحد متاح.' : 'One branch available.'}
+                  </div>
+                )}
+              </div>
 
               {/* Management & Settings (Combined) */}
               {(permissionsService.isOrgAdmin() || permissionsService.can('settings.view')) && (

@@ -31,7 +31,7 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
       }
 
       // 2. Check Branches
-      const branches = await branchService.getAll();
+      const branches = await branchService.getAll(activeOrgId || undefined);
       if (branches.length === 0) {
         setActiveStep(2);
         return;
