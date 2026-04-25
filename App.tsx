@@ -81,6 +81,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   // Auth State
   isAuthenticated,
   isAuthChecking,
+  isRecoveringPassword,
   handleLogout,
   resolveView,
   setIsAuthenticated,
@@ -383,6 +384,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       employees={employees}
       dashboardSubView={dashboardSubView}
       onOpenInWindow={setWindowedView}
+      isRecoveringPassword={isRecoveringPassword}
     >
       <PageRouter
         view={view}

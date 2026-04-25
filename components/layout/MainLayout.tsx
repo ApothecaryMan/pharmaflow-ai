@@ -35,6 +35,7 @@ interface MainLayoutProps {
   employees: any[];
   dashboardSubView: string;
   onOpenInWindow: (view: ViewState) => void;
+  isRecoveringPassword?: boolean;
 }
 
 const STANDALONE_VIEWS = [ROUTES.LOGIN];
@@ -102,6 +103,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   employees,
   dashboardSubView,
   onOpenInWindow,
+  isRecoveringPassword,
 }) => {
   const {
     theme,
@@ -259,6 +261,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               t={t.statusBar}
               currentEmployeeId={currentEmployeeId}
               onSelectEmployee={setCurrentEmployeeId}
+              isRecoveringPassword={isRecoveringPassword}
             />
           )}
         </div>

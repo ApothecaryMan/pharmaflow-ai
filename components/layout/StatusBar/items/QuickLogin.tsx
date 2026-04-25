@@ -5,6 +5,7 @@ import { usePosSounds } from '../../../common/hooks/usePosSounds';
 
 import { useSmartDirection } from '../../../common/SmartInputs';
 import { StatusBarItem } from '../StatusBarItem';
+import { motion } from 'framer-motion';
 
 /*
  * RTL SUPPORT REMINDER
@@ -23,6 +24,7 @@ interface QuickLoginProps {
   currentEmployeeId?: string | null;
   onSelectEmployee?: (id: string | null) => void;
   language?: 'EN' | 'AR';
+  isRecoveringPassword?: boolean;
 }
 
 export const QuickLogin: React.FC<QuickLoginProps> = ({
@@ -33,11 +35,13 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
   currentEmployeeId,
   onSelectEmployee,
   language = 'EN',
+  isRecoveringPassword,
 }) => {
-  const [step, setStep] = React.useState<'idle' | 'username' | 'password'>('idle');
+  const [step, setStep] = React.useState<'idle' | 'username' | 'password' | 'new-password'>('idle');
   const [inputVal, setInputVal] = React.useState(''); // Shared input for username/password
   const [tempEmployee, setTempEmployee] = React.useState<Employee | null>(null);
   const [isError, setIsError] = React.useState(false);
+  const [hasRecovered, setHasRecovered] = React.useState(false);
 
   const containerRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -45,6 +49,14 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
 
   // Auto-detect direction
   const dir = useSmartDirection(inputVal, language === 'AR' ? 'كلمة المرور...' : 'Password...');
+
+  // Auto-trigger recovery mode
+  React.useEffect(() => {
+    if (isRecoveringPassword && step === 'idle' && !hasRecovered) {
+      setStep('new-password');
+      setInputVal('');
+    }
+  }, [isRecoveringPassword, step, hasRecovered]);
 
   // Focus input on step change
   React.useEffect(() => {
@@ -139,6 +151,23 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
           setIsError(true);
           playError();
         }
+      }
+    } else if (step === 'new-password') {
+      const newPass = inputVal.trim();
+      if (!newPass) return;
+      const { authService } = await import('../../../../services/auth/authService');
+      const res = await authService.updatePassword(newPass);
+      if (res.success) {
+        playSuccess();
+        setHasRecovered(true); // <--- Prevent re-triggering
+        alert(language === 'AR' ? 'تم تغيير كلمة المرور بنجاح' : 'Password updated successfully');
+        
+        // إجبار المتصفح على مسح الرابط الطويل والرجوع للرابط الأساسي
+        window.location.replace(window.location.origin + '/#/');
+      } else {
+        setIsError(true);
+        playError();
+        alert(res.message);
       }
     }
   };
@@ -291,67 +320,95 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
           )}
         </div>
       ) : (
-        <div className='flex items-center h-full px-2 gap-2 bg-white/50 dark:bg-gray-900/50 border-l border-r border-gray-300 dark:border-gray-700 min-w-[150px]'>
-          <span
-            className={`material-symbols-rounded ${isError ? 'text-red-500' : 'text-primary-500 dark:text-blue-400'}`}
-            style={{ fontSize: 'var(--status-icon-size, 16px)' }}
-          >
-            {step === 'username' ? 'badge' : 'lock'}
-          </span>
-          <input
-            ref={inputRef}
-            type={step === 'password' ? 'password' : 'text'}
-            value={inputVal}
-            onChange={(e) => {
-              setInputVal(e.target.value);
-              if (isError) setIsError(false);
-            }}
-            dir={dir}
-            onKeyDown={handleKeyDown}
-            placeholder={
-              step === 'username'
-                ? language === 'AR'
-                  ? 'اسم المستخدم...'
-                  : 'Username...'
-                : language === 'AR'
-                  ? 'كلمة المرور...'
-                  : 'Password...'
-            }
-            className={`bg-transparent border-none outline-hidden text-[11px] font-bold text-gray-800 dark:text-white placeholder-gray-500 w-24 focus:ring-0 ${isError ? 'text-red-500 dark:text-red-400' : ''}`}
-            autoComplete='off'
-          />
-          {step === 'username' && isError && (
-            <span className='text-[9px] text-red-500 ml-1 font-normal'>
-              {language === 'AR' ? 'غير موجود' : 'Not found'}
-            </span>
+        <div 
+          className={`relative flex items-center h-full w-fit overflow-hidden transition-all duration-300 ${
+            step === 'new-password' 
+              ? 'px-0 border-none' 
+              : 'px-2 gap-2 bg-white/50 dark:bg-gray-900/50 border-l border-r border-gray-300 dark:border-gray-700'
+          }`}
+        >
+          {step === 'new-password' && (
+            <>
+              {/* Spinning RGB Gradient - More professional colors */}
+              <motion.div
+                className="absolute inset-[-100%]"
+                style={{
+                  background: 'conic-gradient(from 0deg, #3b82f6, #8b5cf6, #ec4899, #ef4444, #f59e0b, #10b981, #3b82f6)'
+                }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+              />
+              {/* Inner Background Mask */}
+              <div className="absolute inset-[1.5px] bg-white dark:bg-gray-900 rounded-[1px] z-0" />
+            </>
           )}
-          {step === 'password' && (
-            <button
-              onClick={async (e) => {
-                e.stopPropagation();
-                if (tempEmployee?.email) {
-                  const { authService } = await import('../../../../services/auth/authService');
-                  const res = await authService.handleForgotPassword(tempEmployee.email);
-                  if (res.success) {
-                    alert(language === 'AR' ? 'تم إرسال رابط إعادة التعيين لبريدك' : 'Reset link sent to your email');
-                  } else {
-                    alert(res.message);
-                  }
-                } else {
-                  alert(language === 'AR' ? 'تواصل مع المدير لإعادة تعيين كلمة المرور' : 'Contact manager to reset password');
-                }
-              }}
-              className='ml-auto text-gray-400 hover:text-primary-500 cursor-pointer'
-              title={language === 'AR' ? 'نسيت كلمة المرور؟' : 'Forgot Password?'}
+
+          <div className={`relative z-10 flex items-center h-full w-full ${step === 'new-password' ? 'px-2 gap-2' : ''}`}>
+            <span
+              className={`material-symbols-rounded ${isError ? 'text-red-500' : 'text-primary-500 dark:text-blue-400'}`}
+              style={{ fontSize: 'var(--status-icon-size, 16px)' }}
             >
-              <span 
-                className='material-symbols-rounded block' 
-                style={{ fontSize: 'var(--status-icon-size, 16px)' }}
-              >
-                help
+              {step === 'username' ? 'badge' : step === 'new-password' ? 'key' : 'lock'}
+            </span>
+            <input
+              ref={inputRef}
+              type={step === 'password' || step === 'new-password' ? 'password' : 'text'}
+              value={inputVal}
+              onChange={(e) => {
+                setInputVal(e.target.value);
+                if (isError) setIsError(false);
+              }}
+              dir={dir}
+              onKeyDown={handleKeyDown}
+              placeholder={
+                step === 'username'
+                  ? language === 'AR'
+                    ? 'اسم المستخدم...'
+                    : 'Username...'
+                  : step === 'new-password'
+                  ? language === 'AR'
+                    ? 'كلمة المرور الجديدة...'
+                    : 'New Password...'
+                  : language === 'AR'
+                    ? 'كلمة المرور...'
+                    : 'Password...'
+              }
+              className={`bg-transparent border-none outline-hidden text-[11px] font-bold text-gray-800 dark:text-white placeholder-gray-500 ${step === 'new-password' ? 'w-32' : 'w-24'} focus:ring-0 ${isError ? 'text-red-500 dark:text-red-400' : ''}`}
+              autoComplete='off'
+            />
+            {step === 'username' && isError && (
+              <span className='text-[9px] text-red-500 ml-1 font-normal'>
+                {language === 'AR' ? 'غير موجود' : 'Not found'}
               </span>
-            </button>
-          )}
+            )}
+            {step === 'password' && (
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (tempEmployee?.email) {
+                    const { authService } = await import('../../../../services/auth/authService');
+                    const res = await authService.handleForgotPassword(tempEmployee.email);
+                    if (res.success) {
+                      alert(language === 'AR' ? 'تم إرسال رابط إعادة التعيين لبريدك' : 'Reset link sent to your email');
+                    } else {
+                      alert(res.message);
+                    }
+                  } else {
+                    alert(language === 'AR' ? 'تواصل مع المدير لإعادة تعيين كلمة المرور' : 'Contact manager to reset password');
+                  }
+                }}
+                className='ml-auto text-gray-400 hover:text-primary-500 cursor-pointer'
+                title={language === 'AR' ? 'نسيت كلمة المرور؟' : 'Forgot Password?'}
+              >
+                <span 
+                  className='material-symbols-rounded block' 
+                  style={{ fontSize: 'var(--status-icon-size, 16px)' }}
+                >
+                  help
+                </span>
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

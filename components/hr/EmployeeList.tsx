@@ -1119,97 +1119,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                             </span>
                           </button>
 
-                          {/* Forgot Password / Reset Section */}
-                          {editingEmployee && (
-                            <div className='flex flex-col gap-3 mt-4 pt-4 border-t border-(--border-divider)'>
-                              <div className='flex items-center justify-between'>
-                                <p className='text-xs font-medium text-gray-500'>
-                                  {t.employeeList.forgotPassword}
-                                </p>
-                              </div>
-                              
-                              <div className='flex gap-2'>
-                                <button
-                                  type='button'
-                                  disabled={isResetting}
-                                  onClick={async () => {
-                                    if (!editingEmployee.email) {
-                                      alert(language === 'AR' ? 'يجب إضافة بريد إلكتروني للموظف أولاً' : 'Employee must have an email address first');
-                                      return;
-                                    }
-                                    if (!confirm(t.employeeList.confirmReset)) return;
-                                    
-                                    setIsResetting(true);
-                                    try {
-                                      const res = await authService.handleForgotPassword(editingEmployee.email);
-                                      if (res.success) {
-                                        alert(t.employeeList.resetLinkSent);
-                                      } else {
-                                        alert(res.message);
-                                      }
-                                    } finally {
-                                      setIsResetting(false);
-                                    }
-                                  }}
-                                  className='flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-primary-200 text-primary-600 hover:bg-primary-50 text-xs font-bold transition-all disabled:opacity-50'
-                                >
-                                  <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>mail</span>
-                                  {t.employeeList.sendResetLink}
-                                </button>
 
-                                <button
-                                  type='button'
-                                  disabled={isResetting}
-                                  onClick={async () => {
-                                    if (!confirm(t.employeeList.confirmReset)) return;
-                                    
-                                    setIsResetting(true);
-                                    try {
-                                      const tempPass = authService.generateTempPassword();
-                                      const { hashPassword } = await import('../../services/auth/hashUtils');
-                                      const hashed = await hashPassword(tempPass);
-                                      
-                                      await onUpdateEmployee(editingEmployee.id, { password: hashed });
-                                      setGeneratedTempPassword(tempPass);
-                                      playSuccess();
-                                    } catch (err) {
-                                      console.error(err);
-                                      playError();
-                                    } finally {
-                                      setIsResetting(false);
-                                    }
-                                  }}
-                                  className='flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-amber-200 text-amber-600 hover:bg-amber-50 text-xs font-bold transition-all disabled:opacity-50'
-                                >
-                                  <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>vibration</span>
-                                  {t.employeeList.generateTempPassword}
-                                </button>
-                              </div>
-
-                              {generatedTempPassword && (
-                                <div className='mt-2 p-3 rounded-xl bg-amber-50 border border-amber-200 animate-in zoom-in-95 duration-300'>
-                                  <p className='text-[10px] text-amber-700 font-bold uppercase mb-1'>
-                                    {t.employeeList.tempPasswordGenerated}
-                                  </p>
-                                  <div className='flex items-center justify-between'>
-                                    <code className='text-sm font-mono font-bold text-amber-900 bg-white/50 px-2 py-1 rounded border border-amber-200/50'>
-                                      {generatedTempPassword}
-                                    </code>
-                                    <button
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(generatedTempPassword);
-                                        playBeep();
-                                      }}
-                                      className='p-1.5 text-amber-600 hover:text-amber-700 transition-colors'
-                                      title='Copy'
-                                    >
-                                      <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>content_copy</span>
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
                         </>
                       ) : (
                         /* Password change form */
@@ -1340,15 +1250,44 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                                 </div>
                               </div>
                               {passwordError && (
-                                <p className='text-xs text-red-500 dark:text-red-400 flex items-center gap-1 px-1 mt-1'>
-                                  <span 
-                                    className='material-symbols-rounded'
-                                    style={{ fontSize: 'var(--icon-md)' }}
+                                <div className='flex items-center justify-between mt-1 px-1 animate-in fade-in slide-in-from-top-1'>
+                                  <p className='text-xs text-red-500 dark:text-red-400 flex items-center gap-1'>
+                                    <span 
+                                      className='material-symbols-rounded'
+                                      style={{ fontSize: 'var(--icon-md)' }}
+                                    >
+                                      error
+                                    </span>
+                                    {passwordError}
+                                  </p>
+                                  <button
+                                    type='button'
+                                    disabled={isResetting}
+                                    onClick={async () => {
+                                      if (!editingEmployee.email) {
+                                        alert(language === 'AR' ? 'يجب إضافة بريد إلكتروني للموظف أولاً للاستعادة' : 'Employee must have an email address first to reset');
+                                        return;
+                                      }
+                                      if (!confirm(t.employeeList.confirmReset)) return;
+                                      
+                                      setIsResetting(true);
+                                      try {
+                                        const res = await authService.handleForgotPassword(editingEmployee.email);
+                                        if (res.success) {
+                                          alert(t.employeeList.resetLinkSent);
+                                        } else {
+                                          alert(res.message);
+                                        }
+                                      } finally {
+                                        setIsResetting(false);
+                                      }
+                                    }}
+                                    className='text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center gap-1 disabled:opacity-50 transition-colors'
                                   >
-                                    error
-                                  </span>
-                                  {passwordError}
-                                </p>
+                                    <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>mark_email_read</span>
+                                    {language === 'AR' ? 'استعادة بالإيميل؟' : 'Reset via Email?'}
+                                  </button>
+                                </div>
                               )}
                             </div>
                           ) : (

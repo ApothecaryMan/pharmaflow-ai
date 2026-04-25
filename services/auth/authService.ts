@@ -270,4 +270,53 @@ export const authService = {
       return { success: false, message: err.message || 'Failed to handle request' };
     }
   },
+
+  /**
+   * Update Employee Password (via Supabase Auth)
+   */
+  async updatePassword(newPassword: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      // 1. Update Supabase Auth Record
+      const { data, error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      if (error) throw error;
+
+      // 2. Sync hashed password to employee table
+      if (data.user) {
+        const userId = data.user.id;
+        const email = data.user.email;
+        
+        // Query the database directly instead of fetching all employees
+        let { data: empData, error: empError } = await supabase
+          .from('employees')
+          .select('id, username')
+          .eq('auth_user_id', userId)
+          .maybeSingle();
+
+        // Fallback to email if not found by userId
+        if (!empData && email) {
+          const { data: fallbackData } = await supabase
+            .from('employees')
+            .select('id, username')
+            .eq('email', email)
+            .maybeSingle();
+          empData = fallbackData;
+        }
+        
+        if (empData) {
+          const { hashPassword } = await import('./hashUtils');
+          const hashed = await hashPassword(newPassword);
+          await employeeService.update(empData.id, { password: hashed });
+          console.log(`[AuthService] Synced new password hash for employee ${empData.username}`);
+        } else {
+          console.warn(`[AuthService] Could not find employee record for userId ${userId} or email ${email} to sync password.`);
+        }
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Failed to update password' };
+    }
+  },
 };

@@ -53,6 +53,7 @@ export interface StatusBarProps {
   currentEmployeeId?: string | null;
   onSelectEmployee?: (id: string) => void;
   iconSize?: number | string;
+  isRecoveringPassword?: boolean;
 }
 
 const defaultTranslations: StatusBarTranslations = {
@@ -74,7 +75,7 @@ const defaultTranslations: StatusBarTranslations = {
 };
 
 export const StatusBar: React.FC<StatusBarProps> = React.memo(
-  ({ t = defaultTranslations, currentEmployeeId, onSelectEmployee, iconSize = 'var(--icon-base)' }) => {
+  ({ t = defaultTranslations, currentEmployeeId, onSelectEmployee, iconSize = 'var(--icon-base)', isRecoveringPassword }) => {
     /*
      * STATUS BAR ARCHITECTURE GUIDE
      * =============================
@@ -253,6 +254,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
             currentEmployeeId={currentEmployeeId}
             onSelectEmployee={onSelectEmployee}
             language={language}
+            isRecoveringPassword={isRecoveringPassword}
           />
 
           {/* Notifications */}

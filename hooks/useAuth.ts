@@ -7,6 +7,7 @@ import type { ViewState, UserSession } from '../types';
 export interface AuthState {
   isAuthenticated: boolean;
   isAuthChecking: boolean;
+  isRecoveringPassword: boolean;
   user: UserSession | null;
   handleLogout: () => Promise<void>;
   resolveView: (targetView: ViewState) => ViewState;
@@ -37,6 +38,9 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
     }
   });
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [isRecoveringPassword, setIsRecoveringPassword] = useState(() => {
+    return window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery');
+  });
 
   // Logout handler
   const handleLogout = useCallback(async () => {
@@ -103,7 +107,9 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
     if (isSupabaseConfigured) {
       import('../lib/supabase').then(({ supabase }) => {
         const { data } = supabase.auth.onAuthStateChange((event) => {
-          if (event === 'SIGNED_OUT') {
+          if (event === 'PASSWORD_RECOVERY') {
+            setIsRecoveringPassword(true);
+          } else if (event === 'SIGNED_OUT') {
             setIsAuthenticated(false);
             setUser(null);
             setView(ROUTES.LOGIN);
@@ -139,6 +145,7 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
   return {
     isAuthenticated,
     isAuthChecking,
+    isRecoveringPassword,
     user,
     handleLogout,
     resolveView,
