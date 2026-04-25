@@ -66,6 +66,7 @@ interface SegmentedControlProps<T> {
   variant?: SegmentedControlVariant; // 'onCard' (default) or 'onPage' - controls dark mode background
   iconSize?: string; // Optional custom icon size variable (e.g., '--icon-sm')
   disableAnimation?: boolean; // If true, removes all transitions and animations
+  useGraphicFont?: boolean; // If true, applies system graphic font to labels
   dir?: 'ltr' | 'rtl'; // Support explicit direction override
 }
 
@@ -101,6 +102,7 @@ export function SegmentedControl<T extends string | number | boolean>({
   variant = 'onCard',
   iconSize,
   disableAnimation = false,
+  useGraphicFont = false,
   dir,
 }: SegmentedControlProps<T>) {
   const isPill = shape === 'pill';
@@ -231,7 +233,13 @@ export function SegmentedControl<T extends string | number | boolean>({
               />
             )}
             {hasLabel && (
-              <span style={option.fontFamily ? { fontFamily: option.fontFamily } : {}}>
+              <span 
+                style={{ 
+                  fontFamily: option.fontFamily || (useGraphicFont ? 'var(--page-title-font-family)' : undefined),
+                  fontSize: useGraphicFont ? '1.05em' : undefined,
+                  letterSpacing: useGraphicFont ? '-0.01em' : undefined
+                }}
+              >
                 {option.label}
               </span>
             )}

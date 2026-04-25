@@ -53,7 +53,7 @@ export const getContentContainerClasses = (
 ): string => {
   // Initial common classes
   // Note: scrollbar-hide is replaced by standard Tailwind/CSS overflow control
-  const base = 'h-full overflow-y-auto main-content-scroll scrollbar-gutter-stable';
+  const base = 'h-full overflow-hidden flex flex-col main-content-scroll scrollbar-gutter-stable';
 
   // 1. Standalone / Auth views take full screen with no padding
   if (isStandalone || layout === 'auth' || layout === 'full-screen') {
@@ -65,7 +65,8 @@ export const getContentContainerClasses = (
     return `${base} w-full p-0`;
   }
 
-  // 3. Standard / Dashboard views with Max Width and Padding
-  // py-page ensures consistent vertical spacing from top/bottom
-  return `${base} w-full max-w-page mx-auto px-page py-page`;
+  // 3. Standard / Dashboard views with Max Width
+  // Note: Padding is now managed by individual pages or the PageHeader component
+  // to allow headers to be flush with the sidebar/navbar.
+  return `${base} w-full max-w-page mx-auto`;
 };

@@ -183,7 +183,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             border-2 dark:border border-(--border-search)
             ${isFocused ? 'border-gray-400 dark:border-gray-500 shadow-sm' : ''}
             ${rounded === 'full' ? 'rounded-full ps-4 pe-2' : 'rounded-3xl ps-4 pe-2'} 
-            h-12
+            h-11
             ${wrapperClassName}
          `}
         dir={dir}
