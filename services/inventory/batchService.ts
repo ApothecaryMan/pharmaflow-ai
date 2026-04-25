@@ -12,7 +12,6 @@ import { settingsService } from '../settings/settingsService';
 const mapBatchToDb = (b: Partial<StockBatch>): any => {
   const db: any = {};
   if (b.id !== undefined) db.id = b.id;
-  if (b.orgId !== undefined) db.org_id = b.orgId;
   if (b.branchId !== undefined) db.branch_id = b.branchId;
   if (b.drugId !== undefined) db.drug_id = b.drugId;
   if (b.quantity !== undefined) db.quantity = b.quantity;
@@ -87,19 +86,16 @@ export const batchService = {
   },
 
   async updateBatchQuantity(batchId: string, delta: number): Promise<StockBatch | null> {
-    const batch = await this.getBatchById(batchId);
-    if (!batch) return null;
-
-    const newQty = Math.max(0, batch.quantity + delta);
-    const newVersion = (batch.version || 0) + 1;
-
-    const { error } = await supabase
-      .from('stock_batches')
-      .update({ quantity: newQty, version: newVersion })
-      .eq('id', batchId);
-      
+    // Atomic: SET quantity = quantity + delta, version = version + 1
+    const { data, error } = await supabase.rpc('atomic_increment_batch', {
+      p_batch_id: batchId,
+      p_delta: delta,
+    });
     if (error) throw error;
-    return { ...batch, quantity: newQty, version: newVersion };
+    if (!data || data.length === 0) return null;
+
+    const batch = await this.getBatchById(batchId);
+    return batch;
   },
 
   async updateBatch(batchId: string, updates: Partial<StockBatch>): Promise<StockBatch | null> {

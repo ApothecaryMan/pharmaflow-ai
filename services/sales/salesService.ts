@@ -28,12 +28,12 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
       customerStreetAddress: db.customer_street_address,
       items: db.items || [],
       subtotal: db.subtotal,
-      globalDiscount: db.discount,
+      globalDiscount: db.global_discount,
       tax: db.tax,
       total: db.total,
       paymentMethod: db.payment_method,
       status: db.status,
-      soldByEmployeeId: db.employee_id,
+      soldByEmployeeId: db.sold_by_employee_id,
       shiftId: db.shift_id,
       notes: db.notes,
       saleType: db.sale_type || 'walk-in',
@@ -43,6 +43,7 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
       shiftTransactionRecorded: db.shift_transaction_recorded,
       modificationHistory: db.modification_history || [],
       version: db.version,
+      netTotal: db.net_total,
     };
   }
 
@@ -61,12 +62,12 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
     if (s.customerStreetAddress !== undefined) db.customer_street_address = s.customerStreetAddress;
     if (s.items !== undefined) db.items = s.items;
     if (s.subtotal !== undefined) db.subtotal = s.subtotal;
-    if (s.globalDiscount !== undefined) db.discount = s.globalDiscount;
+    if (s.globalDiscount !== undefined) db.global_discount = s.globalDiscount;
     if (s.tax !== undefined) db.tax = s.tax;
     if (s.total !== undefined) db.total = s.total;
     if (s.paymentMethod !== undefined) db.payment_method = s.paymentMethod;
     if (s.status !== undefined) db.status = s.status;
-    if (s.soldByEmployeeId !== undefined) db.employee_id = s.soldByEmployeeId;
+    if (s.soldByEmployeeId !== undefined) db.sold_by_employee_id = s.soldByEmployeeId;
     if (s.shiftId !== undefined) db.shift_id = s.shiftId;
     if (s.notes !== undefined) db.notes = s.notes;
     if (s.saleType !== undefined) db.sale_type = s.saleType;
@@ -165,7 +166,7 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
     
     const newSale: Sale = {
       ...sale,
-      id: idGenerator.uuid(),
+      id: (sale as any).id || idGenerator.uuid(),
       branchId: effectiveBranchId,
       orgId: (sale as any).orgId || settings.orgId,
       date: sale.date || new Date().toISOString(),

@@ -129,14 +129,15 @@ export const transactionService = {
         };
       });
 
-      // 3. Generate IDs
-      // Online-Only Strategy: Use atomic DB sequences via idGenerator
-      const serialId = await idGenerator.generate('sales', activeBranchId, branchCode);
-      const dailyOrderNumberStr = await idGenerator.generateSync('generic', activeBranchId); // Using generic for daily order fallback
-      const dailyOrderNumber = parseInt(dailyOrderNumberStr.split('-')[1], 10);
+      // 3. Generate IDs — run both sequence calls in parallel
       const internalId = idGenerator.uuid();
+      const [serialId, dailyOrderNumberStr] = await Promise.all([
+        idGenerator.generate('sales', activeBranchId, branchCode),
+        idGenerator.generateSync('generic', activeBranchId),
+      ]);
+      const dailyOrderNumber = parseInt(dailyOrderNumberStr.split('-')[1], 10);
 
-      movementEntries.forEach(m => m.referenceId = internalId); // Link to internal ID
+      movementEntries.forEach(m => m.referenceId = internalId);
 
       const newSale: Sale = {
         ...saleData,
@@ -152,26 +153,25 @@ export const transactionService = {
         items: processedItems,
       } as Sale;
 
-      // 4. Persistence Phase
-      // A. Update Stock
-      await inventoryService.updateStockBulk(stockMutations, true);
-      
+      // 4. Persistence Phase — run independent writes in parallel
+      // Register stock undo before parallel execution
       undoManager.push(async () => {
         await inventoryService.updateStockBulk(
           stockMutations.map(m => ({ id: m.id, quantity: -m.quantity }))
         );
       });
 
-      // B. Log Movements
-      await stockMovementService.logMovementsBulk(movementEntries);
+      // A+B+C: Stock update, movement log, and sale creation write to different tables
+      const [, , createdSale] = await Promise.all([
+        inventoryService.updateStockBulk(stockMutations, true),   // A. Update Stock
+        stockMovementService.logMovementsBulk(movementEntries),    // B. Log Movements
+        salesService.create(newSale, activeBranchId),              // C. Create Sale
+      ]);
 
-      // C. Create Sale
-      const createdSale = await salesService.create(newSale, activeBranchId);
-      
-      // D. Record Shift Transaction
+      // D. Shift Transaction + Audit — fire-and-forget (non-critical, shouldn't block checkout)
       const isImmediateComplete = !saleData.saleType || saleData.saleType === 'walk-in';
       if (isImmediateComplete && shiftId) {
-        await cashService.addTransaction(shiftId, {
+        cashService.addTransaction(shiftId, {
           branchId: activeBranchId,
           orgId: orgId,
           shiftId: shiftId,
@@ -181,7 +181,7 @@ export const transactionService = {
           reason: `Sale #${serialId}`,
           userId: context.performerId || 'System',
           relatedSaleId: internalId,
-        });
+        }).catch(err => console.warn('[TransactionService] Shift transaction failed (non-blocking):', err));
       }
 
       auditService.log('sale.complete', {

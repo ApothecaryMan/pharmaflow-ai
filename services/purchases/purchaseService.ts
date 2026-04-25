@@ -32,7 +32,6 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
       totalCost: db.total_cost,
       paymentMethod: db.payment_type || 'cash',
       status: db.status,
-      employeeId: db.employee_id,
       approvedBy: db.approved_by,
       approvalDate: db.approval_date,
       receivedBy: db.received_by,
@@ -58,7 +57,6 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     if (p.totalCost !== undefined) db.total_cost = p.totalCost;
     if (p.paymentMethod !== undefined) db.payment_type = p.paymentMethod;
     if (p.status !== undefined) db.status = p.status;
-    if (p.employeeId !== undefined) db.employee_id = p.employeeId;
     if (p.approvedBy !== undefined) db.approved_by = p.approvedBy;
     if (p.approvalDate !== undefined) db.approval_date = p.approvalDate;
     if (p.receivedBy !== undefined) db.received_by = p.receivedBy;

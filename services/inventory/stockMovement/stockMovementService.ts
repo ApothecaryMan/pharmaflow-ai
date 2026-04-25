@@ -46,7 +46,6 @@ class StockMovementServiceImpl
   protected mapDomainToDb(m: Partial<StockMovement>): any {
     const db: any = {};
     if (m.id) db.id = m.id;
-    if (m.orgId) db.org_id = m.orgId;
     if (m.branchId) db.branch_id = m.branchId;
     if (m.drugId) db.drug_id = m.drugId;
     if (m.drugName) db.drug_name_snapshot = m.drugName;

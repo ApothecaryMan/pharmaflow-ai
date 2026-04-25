@@ -74,7 +74,6 @@ class PurchaseReturnServiceImpl extends BaseDomainService<PurchaseReturn> {
   protected mapDomainToDb(r: Partial<PurchaseReturn>): any {
     const db: any = {};
     if (r.id !== undefined) db.id = r.id;
-    if (r.orgId !== undefined) db.org_id = r.orgId;
     if (r.branchId !== undefined) db.branch_id = r.branchId;
     if (r.date !== undefined) db.date = r.date;
     if (r.purchaseId !== undefined) db.purchase_id = r.purchaseId;

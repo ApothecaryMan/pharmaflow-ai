@@ -178,22 +178,19 @@ export const cashService: CashServiceInterface = {
       shiftId,
     } as CashTransaction);
 
-    // Update shift totals atomically using RPC or partial update
-    // For now, we'll fetch and update, but ideally this would be an atomic SQL increment
-    const shift = await shiftsInternal.getById(shiftId);
-    if (shift) {
-      const updates: Partial<Shift> = {};
-      switch (transaction.type) {
-        case 'in': updates.cashIn = (shift.cashIn || 0) + transaction.amount; break;
-        case 'out': updates.cashOut = (shift.cashOut || 0) + transaction.amount; break;
-        case 'sale': updates.cashSales = (shift.cashSales || 0) + transaction.amount; break;
-        case 'card_sale': updates.cardSales = (shift.cardSales || 0) + transaction.amount; break;
-        case 'return': updates.returns = (shift.returns || 0) + transaction.amount; break;
-      }
-      if (Object.keys(updates).length > 0) {
-        await shiftsInternal.update(shiftId, updates);
-      }
+    // Update shift totals atomically — safe for concurrent access from multiple devices
+    const incrementArgs: Record<string, number> = {
+      p_shift_id: shiftId as any,
+      p_cash_in: 0, p_cash_out: 0, p_cash_sales: 0, p_card_sales: 0, p_returns: 0,
+    };
+    switch (transaction.type) {
+      case 'in':        incrementArgs.p_cash_in = transaction.amount; break;
+      case 'out':       incrementArgs.p_cash_out = transaction.amount; break;
+      case 'sale':      incrementArgs.p_cash_sales = transaction.amount; break;
+      case 'card_sale': incrementArgs.p_card_sales = transaction.amount; break;
+      case 'return':    incrementArgs.p_returns = transaction.amount; break;
     }
+    await supabase.rpc('atomic_increment_shift', incrementArgs);
 
     return newTx;
   },

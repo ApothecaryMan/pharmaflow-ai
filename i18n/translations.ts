@@ -3477,7 +3477,7 @@ export const TRANSLATIONS = {
         date: 'التاريخ',
         customer: 'العميل',
         payment: 'طريقة الدفع',
-        items: 'العناصر المشتراة',
+        items: 'أصناف الفاتورة',
         subtotal: 'المجموع الفرعي',
         discount: 'الخصم العام',
         total: 'الإجمالي النهائي',

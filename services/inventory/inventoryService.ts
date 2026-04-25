@@ -168,41 +168,50 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
   }
 
   async updateStock(id: string, quantity: number, skipBatch: boolean = false): Promise<Drug> {
+    if (skipBatch) {
+      // Fast path: atomic increment, no read needed — safe for concurrent access
+      const { data, error } = await supabase.rpc('atomic_increment_stock', {
+        p_drug_id: id,
+        p_delta: quantity,
+      });
+      if (error) throw error;
+      // Return a minimal Drug object — caller usually discards it
+      return { id, stock: data } as any;
+    }
+
+    // Slow path: needs drug data for batch operations
     const drug = await this.getById(id);
     if (!drug) throw new Error('Drug not found');
     
     const settings = await settingsService.getAll();
     const branchId = drug.branchId || settings.activeBranchId || settings.branchCode;
     
-    if (!skipBatch) {
-      if (quantity > 0) {
-        await batchService.createBatch({
-          drugId: id,
-          quantity: quantity,
-          expiryDate: drug.expiryDate,
-          costPrice: drug.costPrice,
-          batchNumber: 'STOCK-UPDATE',
-          dateReceived: new Date().toISOString(),
-          branchId: branchId,
-          orgId: settings.orgId,
-          version: 1,
-        }, branchId);
-      } else if (quantity < 0) {
-        const allocResult = await batchService.allocateStock(id, Math.abs(quantity), branchId, true);
-        if (!allocResult) {
-          throw new Error(`Insufficient batch stock for drug ${id}`);
-        }
+    if (quantity > 0) {
+      await batchService.createBatch({
+        drugId: id,
+        quantity: quantity,
+        expiryDate: drug.expiryDate,
+        costPrice: drug.costPrice,
+        batchNumber: 'STOCK-UPDATE',
+        dateReceived: new Date().toISOString(),
+        branchId: branchId,
+        orgId: settings.orgId,
+        version: 1,
+      }, branchId);
+    } else if (quantity < 0) {
+      const allocResult = await batchService.allocateStock(id, Math.abs(quantity), branchId, true);
+      if (!allocResult) {
+        throw new Error(`Insufficient batch stock for drug ${id}`);
       }
     }
 
-    const updatedStock = Math.max(0, (drug.stock || 0) + quantity);
-    const { error } = await supabase.from(this.tableName)
-      .update({ stock: updatedStock })
-      .eq('id', id);
-      
+    const { data, error } = await supabase.rpc('atomic_increment_stock', {
+      p_drug_id: id,
+      p_delta: quantity,
+    });
     if (error) throw error;
 
-    return { ...drug, stock: updatedStock };
+    return { ...drug, stock: data };
   }
 
   async updateStockCount(id: string, quantity: number): Promise<void> {
@@ -218,8 +227,13 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
   }
 
   async updateStockBulk(mutations: { id: string; quantity: number }[], skipBatch: boolean = false): Promise<void> {
-    for (const m of mutations) {
-       await this.updateStock(m.id, m.quantity, skipBatch);
+    if (skipBatch) {
+      // When skipping batch ops, all updates are independent — run in parallel
+      await Promise.all(mutations.map(m => this.updateStock(m.id, m.quantity, true)));
+    } else {
+      for (const m of mutations) {
+        await this.updateStock(m.id, m.quantity, skipBatch);
+      }
     }
   }
 
