@@ -81,6 +81,8 @@ export const transactionService = {
           drugId: item.id,
           quantity: quantityToDeduct,
           name: item.name,
+          // Support explicit batch selection if available, else default to the item id (which may be the batch itself in the current UI)
+          preferredBatchId: item.preferredBatchId || item.id
         };
       });
 

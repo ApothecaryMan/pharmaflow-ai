@@ -12,6 +12,7 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartInput } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
 import { useStatusBar } from '../layout/StatusBar';
+import { useData } from '../../services/DataContext';
 import { useAlert, useSettings } from '../../context';
 import * as stockOps from '../../utils/stockOperations';
 import { idGenerator } from '../../utils/idGenerator';
@@ -42,12 +43,13 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
   onUpdateInventory,
   onBatchesChanged,
 }) => {
-  const { branchCode } = useSettings();
+  const { textTransform } = useSettings();
+  const { activeBranchId, activeOrgId, currentEmployee } = useData();
   const [loading, setLoading] = useState(true);
   const { getVerifiedDate } = useStatusBar();
   const { success, error } = useAlert();
   const { showMenu, hideMenu } = useContextMenu();
-  const { textTransform } = useSettings();
+
 
   const [filterMode, setFilterMode] = useState<'all' | 'expired' | 'near30' | 'near90'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -75,14 +77,11 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
     }
 
     try {
-      const currentEmployeeId = storage.get<string>(StorageKeys.CURRENT_EMPLOYEE_ID, 'user');
-      const employees = storage.get<any[]>(StorageKeys.EMPLOYEES, []);
-      const employee = employees.find(e => e.id === currentEmployeeId);
-      
       const typeStr = activeModal === 'damage' ? 'damage' : 'return_supplier';
       const reasonStr = activeModal === 'damage' ? 'expired' : 'other';
       const defaultNote = activeModal === 'damage' ? 'Damaged from Expiry Module' : 'Returned from Expiry Module';
       const entityType = activeModal === 'damage' ? 'generic' : 'returns';
+      const referenceId = idGenerator.generateSync(entityType as any, activeBranchId);
       
       const mutation = await stockOps.deductFromBatch(
         selectedActionBatch.drug,
@@ -91,14 +90,14 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
         typeStr as any,
         reasonStr,
         {
-          branchId: branchCode, // Pulled from useSettings
-          orgId: storage.get<string>(StorageKeys.ACTIVE_ORG_ID, 'org-1'),
-          performedBy: currentEmployeeId,
-          performedByName: employee?.name || 'System User',
+          branchId: activeBranchId,
+          orgId: activeOrgId,
+          performedBy: currentEmployee?.id || 'user',
+          performedByName: currentEmployee?.name || 'User',
         },
         {
           notes: actionNotes || defaultNote,
-          referenceId: idGenerator.generate(entityType, branchCode),
+          referenceId: referenceId,
           expiryDate: selectedActionBatch.expiryDate,
         }
       );

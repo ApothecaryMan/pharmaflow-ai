@@ -151,6 +151,7 @@ export const usePOSCart = ({
           discount: prev.find((i) => i.id === drug.id && !!i.isUnit !== isUnitMode)?.discount || 0,
           isUnit: isUnitMode,
           basePackPrice: drug.price, // Preserve base price for future toggles
+          preferredBatchId: drug.id,
         },
       ];
     });
@@ -234,6 +235,7 @@ export const usePOSCart = ({
               quantity: packsTake,
               discount: currentItem.discount || 0,
               isUnit: false,
+              preferredBatchId: batch.id,
             });
             remainingPacks -= packsTake;
           }
@@ -252,6 +254,7 @@ export const usePOSCart = ({
               quantity: unitsTake,
               discount: currentItem.discount || 0,
               isUnit: true,
+              preferredBatchId: batch.id,
             });
             remainingUnits -= unitsTake;
           }

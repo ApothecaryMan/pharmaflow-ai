@@ -71,7 +71,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const { error: showToastError } = useAlert();
   const { showMenu } = useContextMenu();
   const { textTransform } = useSettings();
-  const { activeBranchId } = useData();
+  const { activeBranchId, activeOrgId } = useData();
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
   const [supplierSearch, setSupplierSearch] = useState('');
@@ -930,7 +930,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
       invoiceId: uniqueOrderId,
       externalInvoiceId,
       paymentMethod: paymentMethod,
-      orgId: storage.get<string>(StorageKeys.ACTIVE_ORG_ID, 'org-1'),
+      orgId: activeOrgId,
     };
 
     if (!permissionsService.can('purchase.create')) {

@@ -72,6 +72,56 @@ export const batchService = {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || batch.branchId || settings.activeBranchId;
     
+    // 1. Check for existing batch with same drug, branch, and expiry
+    let query = supabase.from('stock_batches')
+      .select('*')
+      .eq('drug_id', batch.drugId)
+      .eq('branch_id', effectiveBranchId);
+      
+    if (batch.expiryDate) {
+      let expDate = batch.expiryDate;
+      if (expDate.length === 7 && /^\d{4}-\d{2}$/.test(expDate)) expDate = `${expDate}-01`;
+      query = query.eq('expiry_date', expDate);
+    } else {
+      query = query.is('expiry_date', null);
+    }
+
+    const { data: existingBatches, error: searchError } = await query;
+    if (searchError) throw searchError;
+
+    if (existingBatches && existingBatches.length > 0) {
+      // Merge into the first matching batch
+      const existing = existingBatches[0];
+      const oldQty = existing.quantity || 0;
+      const oldCost = existing.cost_price || 0;
+      const addedQty = batch.quantity || 0;
+      const addedCost = batch.costPrice || 0;
+      
+      const newQty = oldQty + addedQty;
+      let newCost = oldCost;
+      
+      if (newQty > 0) {
+         // Weighted average cost
+         newCost = ((oldQty * oldCost) + (addedQty * addedCost)) / newQty;
+      }
+      
+      // Use atomic increment for safety during merging
+      const { data, error } = await supabase.rpc('atomic_increment_batch', {
+        p_batch_id: existing.id,
+        p_delta: addedQty,
+      });
+      
+      if (error) throw error;
+      
+      // Update the cost price separately since RPC only updates quantity
+      await supabase.from('stock_batches')
+        .update({ cost_price: newCost, date_received: new Date().toISOString() })
+        .eq('id', existing.id);
+        
+      const updatedBatch = await this.getBatchById(existing.id);
+      return updatedBatch!;
+    }
+
     const newBatch: StockBatch = {
       ...batch,
       id: idGenerator.uuid(),
@@ -109,13 +159,13 @@ export const batchService = {
   },
 
   async allocateStockBulk(
-    requests: { drugId: string; quantity: number; name?: string }[],
+    requests: { drugId: string; quantity: number; name?: string; preferredBatchId?: string }[],
     branchId: string
   ): Promise<{ drugId: string; allocations: BatchAllocation[] }[]> {
     const result: { drugId: string; allocations: BatchAllocation[] }[] = [];
     for (const req of requests) {
       if (req.quantity <= 0) continue;
-      const allocs = await this.allocateStock(req.drugId, req.quantity, branchId);
+      const allocs = await this.allocateStock(req.drugId, req.quantity, branchId, true, req.preferredBatchId);
       if (!allocs) throw new Error(`Insufficient stock for: ${req.name || req.drugId}`);
       result.push({ drugId: req.drugId, allocations: allocs });
     }
@@ -126,17 +176,27 @@ export const batchService = {
     drugId: string,
     quantityNeeded: number,
     branchId: string,
-    commitChanges: boolean = true
+    commitChanges: boolean = true,
+    preferredBatchId?: string
   ): Promise<BatchAllocation[] | null> {
     if (quantityNeeded <= 0) return null;
 
     const batches = await this.getAllBatches(branchId, drugId);
-    const validBatches = batches
+    
+    let validBatches = [...batches]
       .filter((b) => {
         const exp = parseExpiryEndOfMonth(b.expiryDate);
         return !isNaN(exp.getTime()) && exp > new Date();
-      })
-      .sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime());
+      });
+      
+    // Sort logic: if preferredBatchId matches, it comes first. Otherwise sort by expiry.
+    validBatches.sort((a, b) => {
+      if (preferredBatchId) {
+        if (a.id === preferredBatchId) return -1;
+        if (b.id === preferredBatchId) return 1;
+      }
+      return parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime();
+    });
 
     const totalAvailable = validBatches.reduce((sum, b) => sum + b.quantity, 0);
     if (totalAvailable < quantityNeeded) return null;

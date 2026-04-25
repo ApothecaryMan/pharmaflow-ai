@@ -60,7 +60,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   t,
 }) => {
   const { branchCode, language, textTransform } = useSettings();
-  const { activeBranchId, branches, currentEmployee, inventory } = useData();
+  const { activeBranchId, activeOrgId, branches, currentEmployee, inventory } = useData();
   
   // Try to get pharmacy name from active branch, then storage/organization fallbacks
   const activeBranch = branches.find(b => b.id === activeBranchId);
@@ -132,17 +132,13 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       // 1. Update Service Status
       await stockMovementService.approveMovement(movement.id, currentEmployeeId);
 
-      // 2. Commit to Inventory (Batch or Total)
-      if (movement.batchId) {
-        await batchService.updateBatchQuantity(movement.batchId, movement.quantity);
-      }
-
-      // 3. Persist stock change to inventoryService (durable)
+      // 2. Persist stock change to inventoryService (durable)
       try {
         const { inventoryService } = await import('../../services/inventory/inventoryService');
         await inventoryService.updateStockBulk([{
           id: movement.drugId,
           quantity: movement.quantity, // The difference
+          batchId: movement.batchId,
         }]);
       } catch (persistErr) {
         console.error('Failed to persist stock to service:', persistErr);
@@ -485,7 +481,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       const status = isManager ? 'approved' : 'pending';
 
       const transactionId = idGenerator.generateSync('movement', activeBranchId);
-      const stockMutations: { id: string; quantity: number }[] = [];
+      const stockMutations: { id: string; quantity: number; batchId?: string }[] = [];
 
       for (const item of adjustments) {
         // Only log actual changes
@@ -501,7 +497,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
               performedBy: currentEmployee?.id || 'user',
               performedByName: currentEmployee?.name || 'User',
               branchId: activeBranchId,
-              orgId: storage.get<string>(StorageKeys.ACTIVE_ORG_ID, 'org-1'),
+              orgId: activeOrgId,
             },
             {
               batchId: item.batchId,
@@ -517,6 +513,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
             stockMutations.push({
               id: drug.id,
               quantity: item.difference, // The exact difference to add/subtract
+              batchId: item.batchId,
             });
           }
         }
@@ -525,7 +522,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       // PERSISTENCE: Apply immediately to local indexedDB if approved (in bulk)
       if (stockMutations.length > 0) {
         import('../../services/inventory/inventoryService').then(({ inventoryService }) => {
-          inventoryService.updateStockBulk(stockMutations).catch(console.error);
+          inventoryService.updateStockBulk(stockMutations, true).catch(console.error);
         });
       }
 

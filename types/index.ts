@@ -618,6 +618,11 @@ export interface ReturnItem {
   condition: ItemCondition;
   /** Dosage form for display */
   dosageForm?: string;
+  /**
+   * Optional manual override for batch selection during return.
+   * Allows restoring stock to the exact same batches originally sold.
+   */
+  batchAllocations?: BatchAllocation[];
 }
 
 /**

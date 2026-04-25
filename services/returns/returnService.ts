@@ -128,22 +128,47 @@ export const returnService: ReturnService = {
 
     // 1. Update Inventory and log movements
     for (const item of newReturn.items) {
-      const drugId = (item as any).drugId || (item as any).id;
+      const drugId = item.drugId;
       const currentStock = await batchService.getTotalStock(drugId, effectiveBranchId);
       
-      await stockMovementService.logMovement({
-        drugId,
-        drugName: (item as any).name || (item as any).nameSnapshot,
-        branchId: effectiveBranchId,
-        orgId: settings.orgId,
-        type: 'return_customer',
-        quantity: item.quantityReturned,
-        previousStock: currentStock,
-        newStock: currentStock + item.quantityReturned,
-        referenceId: newReturn.id,
-        performedBy: authService.getCurrentUserSync()?.employeeId || 'System',
-        status: 'approved'
-      });
+      // If we have specific batch allocations, restore them precisely
+      if (item.batchAllocations && item.batchAllocations.length > 0) {
+        await batchService.returnStock(item.batchAllocations, drugId, effectiveBranchId);
+        
+        // Log movement for each restored batch
+        for (const alloc of item.batchAllocations) {
+          await stockMovementService.logMovement({
+            drugId,
+            drugName: item.name,
+            branchId: effectiveBranchId,
+            orgId: settings.orgId,
+            type: 'return_customer',
+            quantity: alloc.quantity,
+            previousStock: currentStock, // Simplified, but okay for logging
+            newStock: currentStock + alloc.quantity,
+            referenceId: newReturn.id,
+            batchId: alloc.batchId,
+            expiryDate: alloc.expiryDate,
+            performedBy: authService.getCurrentUserSync()?.employeeId || 'System',
+            status: 'approved'
+          });
+        }
+      } else {
+        // Fallback: Just update total stock and log a general movement
+        await stockMovementService.logMovement({
+          drugId,
+          drugName: item.name,
+          branchId: effectiveBranchId,
+          orgId: settings.orgId,
+          type: 'return_customer',
+          quantity: item.quantityReturned,
+          previousStock: currentStock,
+          newStock: currentStock + item.quantityReturned,
+          referenceId: newReturn.id,
+          performedBy: authService.getCurrentUserSync()?.employeeId || 'System',
+          status: 'approved'
+        });
+      }
 
       await inventoryService.updateStock(drugId, item.quantityReturned, true);
     }
