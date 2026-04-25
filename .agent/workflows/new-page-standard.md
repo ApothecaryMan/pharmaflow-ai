@@ -2,99 +2,82 @@
 description: Standard workflow for creating new pages to ensure consistency and reuse of existing components.
 ---
 
-# Create New Page Standard
+# Create New Page Standard (Hub Pattern)
 
 Follow this workflow whenever you are asked to create a new page or module in PharmaFlow AI.
 
-## 1. Review Standards
+## 1. Component Props (Mandatory)
 
-- **Read**: `CONTRIBUTING.md` to refresh on mandatory components.
-- **Goal**: Create a page that matches the "Premium, Modern & Dynamic" design system.
-
-## 2. Component Selection (Mandatory)
-
-You **MUST** use the following components. Do not build custom alternatives.
-
-| Context           | Component                   | Path                                      |
-| :---------------- | :-------------------------- | :---------------------------------------- |
-| **Layout**        | `Navbar`, `Sidebar`         | `components/layout/`                      |
-| **Inputs**        | `SmartInput`, `SearchInput` | `components/common/`                      |
-| **Dropdowns**     | `FilterDropdown`         | `components/common/FilterDropdown.tsx` |
-| **Tabs/Segments** | `SegmentedControl`          | `components/common/SegmentedControl.tsx`  |
-| **Tables**        | `TanStackTable`             | `components/common/TanStackTable.tsx`     |
-| **Modals**        | `Modal`                     | `components/common/Modal.tsx`             |
-| **Icons**         | `material-symbols-rounded`  | (Span class)                              |
-
-## 3. Page Structure Template
-
-Start your new page file (e.g., `components/mymodule/MyPage.tsx`) with this structure:
+Pages are injected via `PageRouter`. They **MUST** support the following props:
 
 ```tsx
-import React, { useState } from "react";
-import { Navbar } from "../layout/Navbar";
-import { Sidebar } from "../layout/Sidebar";
-import { useTheme } from "../../hooks/useTheme";
-import { MENU_ITEMS } from "../../config/menuData";
-
-// Props must include these for layout to work
 interface MyPageProps {
-  activeModule: string;
-  onModuleChange: (id: string) => void;
-  // ... other props from App.tsx
+  color: any; // Theme primary
+  t: any; // Translations
+  language: 'EN' | 'AR';
+  isLoading?: boolean; // Managed by PageRouter
+  onViewChange?: (view: string) => void; // For switching views in a Hub
 }
+```
 
-export const MyPage: React.FC<MyPageProps> = (props) => {
-  const { theme, currentTheme } = useTheme();
+## 2. Page Structure Template
 
+Modern pages should NOT render Sidebar/Navbar. They render the content shell:
+
+```tsx
+import React from "react";
+import { PageHeader } from "../common/PageHeader";
+import { SegmentedControl } from "../common/SegmentedControl";
+import { MyPageSkeleton } from "../skeletons/MySkeletons";
+
+export const MyPage: React.FC<MyPageProps> = ({ 
+  color, t, language, isLoading, onViewChange 
+}) => {
   return (
-    <div
-      className={`min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col font-sans transition-colors duration-300 ease-in-out theme-${theme}`}
-    >
-      <Navbar {...props} />
+    <div className="h-full space-y-6 animate-fade-in overflow-y-auto">
+      <PageHeader
+        title={t.module.title}
+        centerContent={
+          <SegmentedControl
+            options={[
+              { value: 'view1', label: t.module.view1, icon: 'list' },
+              { value: 'view2', label: t.module.view2, icon: 'analytics' }
+            ]}
+            value="view1"
+            onChange={(val) => onViewChange?.(val)}
+            color={typeof color === 'string' ? color : color.name}
+            variant="onPage"
+            shape="pill"
+            className="w-full sm:w-[480px]"
+          />
+        }
+        rightContent={/* Filters / Actions */}
+      />
 
-      <div className="flex flex-1 overflow-hidden relative">
-        <Sidebar {...props} />
-
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6 w-full relative">
-          {/* Page Content Here */}
-          <div className="max-w-7xl mx-auto space-y-6">
-            {/* Use Standard Components here */}
-          </div>
-        </main>
-      </div>
+      {isLoading ? (
+        <MyPageSkeleton />
+      ) : (
+        <div className="space-y-6">
+          {/* Main Content Components */}
+        </div>
+      )}
     </div>
   );
 };
 ```
 
-## 4. Registration & Wiring
+## 3. Progressive Loading Rules
+- **NEVER** hide the entire page with a loading spinner.
+- Use **Centralized Skeletons** from `components/skeletons/`.
+- Ensure the `PageHeader` is visible even while data is loading.
 
-1.  **Register Page**: Add entry to `config/pageRegistry.ts`.
-2.  **Add Menu Item**: Update `config/menuData.ts`.
-3.  **Add Translations**:
-    - Add module name to `i18n/menuTranslations.ts` (EN + AR).
-    - Add UI strings to `i18n/translations.ts` (EN + AR).
+## 4. Registration
+1. Add to `config/pageRegistry.ts` with correct `requiredProps`.
+2. Add to `config/menuData.ts` if it's a top-level menu item.
 
-## 5. Documentation Update (MANDATORY)
-
-After creating the new page, **you MUST update** the project structure in `CONTRIBUTING.md`:
-
-1. Open `CONTRIBUTING.md` and find the "## 📂 Project Structure" section.
-2. Add your new file to the appropriate folder in the file tree.
-3. Include a brief comment describing the file's purpose.
-
-**Example:**
-
-```
-│   ├── inventory/      # Inventory Management
-│   │   ├── Inventory.tsx        # Main inventory view
-│   │   ├── MyNewPage.tsx        # <-- ADD YOUR NEW FILE HERE
-```
-
-## 6. Verification
-
-- [ ] Did you use `Navbar` and `Sidebar`?
-- [ ] Are all inputs "Smart"?
-- [ ] Is there any hardcoded English text? (If yes, fix it).
-- [ ] Did you add Arabic translations?
-- [ ] Did you update `CONTRIBUTING.md` with the new file?
+## 5. Verification Checklist
+- [x] Does the header show up immediately?
+- [x] Does it use `PageHeader` with slots (left/center/right)?
+- [x] Are skeletons used for content areas?
+- [x] Is `onViewChange` linked to the `SegmentedControl`?
+- [x] Are translations handled via the `t` prop?

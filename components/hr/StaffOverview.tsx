@@ -6,6 +6,8 @@ import { TanStackTable } from '../common/TanStackTable';
 import { useStaffAnalytics } from './hooks/useStaffAnalytics';
 import { StaffSpotlightTicker } from './StaffSpotlightTicker';
 import type { StaffOverviewProps } from './types/staffOverview.types';
+import { PageHeader } from '../common/PageHeader';
+import { SegmentedControl } from '../common/SegmentedControl';
 
 /**
  * Staff Overview - Dedicated dashboard for employee performance analytics
@@ -19,6 +21,8 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
   t,
   language,
   getVerifiedDate,
+  isLoading = false,
+  onViewChange
 }) => {
   const isRTL = language === 'AR';
 
@@ -63,17 +67,26 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
 
   return (
     <div className='h-full flex flex-col space-y-6 animate-fade-in' dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Page Header (Shrink-0) */}
-      <div className='flex items-center justify-between shrink-0'>
-        <div>
-          <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 page-title'>
-            {language === 'AR' ? 'نظرة عامة على البائعين' : 'Sellers Overview'}
-          </h1>
-          <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>
-            {language === 'AR' ? 'أداء الفريق اليوم' : "Today's Team Performance"}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        centerContent={
+          <SegmentedControl
+            options={[
+              { value: 'staff-overview', label: language === 'AR' ? 'نظرة عامة' : 'Overview', icon: 'supervisor_account' },
+              { value: 'employee-list', label: language === 'AR' ? 'قائمة الموظفين' : 'Employees', icon: 'badge' },
+              { value: 'employee-profile', label: language === 'AR' ? 'ملف الموظف' : 'Profile', icon: 'person' }
+            ]}
+            value="staff-overview"
+            onChange={(val) => onViewChange?.(val as any)}
+            color={color.name}
+            size="md"
+            iconSize="--icon-lg"
+            variant="onPage"
+            shape="pill"
+            className="w-full sm:w-[480px]"
+            useGraphicFont={true}
+          />
+        }
+      />
 
       {/* Main Content (Flex-1) */}
       <div className='flex-1 min-h-0 flex flex-col space-y-6'>
@@ -83,6 +96,7 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
             achievements={staffAnalysis.achievements}
             language={language}
             color={color}
+            isLoading={isLoading}
           />
         </div>
 
@@ -104,6 +118,7 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
               enableVirtualization={false}
               pageSize='auto'
               enableShowAll={true}
+              isLoading={isLoading}
             />
           </div>
         </div>

@@ -5,6 +5,7 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { InsightTooltip } from '../common/InsightTooltip';
 import { Tooltip } from '../common/Tooltip';
 import type { StaffSpotlightTickerProps } from './types/staffOverview.types';
+import { StaffMetricSkeleton } from '../skeletons/HRSkeletons';
 
 const AR_IMAGE_MAP: Record<string, string> = {
   revenue: 'ملك الايرادات',
@@ -22,6 +23,7 @@ export const StaffSpotlightTicker: React.FC<StaffSpotlightTickerProps> = ({
   achievements,
   language,
   color,
+  isLoading = false,
 }) => {
   const { darkMode } = useSettings();
   // We want to show cards side-by-side (grid)
@@ -29,7 +31,12 @@ export const StaffSpotlightTicker: React.FC<StaffSpotlightTickerProps> = ({
 
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4'>
-      {achievements.map((item, idx) => (
+      {isLoading ? (
+        <>
+          {[1, 2, 3, 4, 5].map(i => <StaffMetricSkeleton key={i} />)}
+        </>
+      ) : (
+        achievements.map((item, idx) => (
         <div
           key={item.id}
           className={`
@@ -129,7 +136,8 @@ export const StaffSpotlightTicker: React.FC<StaffSpotlightTickerProps> = ({
             </div>
           </div>
         </div>
-      ))}
+        ))
+      )}
     </div>
   );
 };

@@ -1,20 +1,4 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ComposedChart,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
 import { permissionsService } from '../../services/auth/permissions';
 import { COLOR_HEX_MAP } from '../../config/themeColors';
 import { useShift } from '../../hooks/useShift';
@@ -34,6 +18,8 @@ import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 import { ExpandedChartModal } from '../experiments/ExpandedChartModal';
+import { PageHeader } from '../common/PageHeader';
+import { EmployeeProfileSkeleton } from '../skeletons/HRSkeletons';
 
 // Filter Modes for the component
 type FilterMode = 'today' | 'week' | 'month' | 'year' | 'all';
@@ -329,11 +315,13 @@ const AIPerformanceSummary: React.FC<{
 
 interface EmployeeProfileProps {
   sales: Sale[];
-  employees?: Employee[]; // Optional if we load from localStorage within component, but better passed as prop
+  employees?: Employee[];
   color: ThemeColor;
   t: any;
   language: 'EN' | 'AR';
   currentEmployeeId: string | null;
+  isLoading?: boolean;
+  onViewChange?: (view: string) => void;
 }
 
 // Helper for compact currency formatting
@@ -355,6 +343,8 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   t,
   language,
   currentEmployeeId: initialEmployeeId,
+  isLoading = false,
+  onViewChange
 }) => {
   // --- Data Context ---
   const { employees: contextEmployees, sales: contextSales, currentEmployee } = useData();
@@ -871,114 +861,123 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
 
   return (
     <div className='h-full space-y-6 animate-fade-in overflow-y-auto'>
-      {/* Header Section */}
-      <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-xs border-2 border-gray-200 dark:border-transparent'>
-        <div className='flex items-center gap-4'>
-          {(() => {
-            const nameParts = selectedEmployee.name.trim().split(/\s+/);
-            const initials =
-              nameParts.length > 1
-                ? `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`
-                : selectedEmployee.name.slice(0, 2);
-            return (
-              <div className='relative'>
-                {selectedEmployee.image ? (
-                  <img
-                    src={selectedEmployee.image}
-                    alt={selectedEmployee.name}
-                    className={`w-16 h-16 rounded-2xl object-cover shadow-xs border border-primary-200 dark:border-primary-700/50`}
-                  />
-                ) : (
-                  <div
-                    className={`w-16 h-16 rounded-2xl bg-linear-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 flex items-center justify-center text-primary-600 dark:text-primary-400 text-xl font-bold uppercase shadow-xs border border-primary-200 dark:border-primary-700/50`}
-                  >
-                    {initials}
-                  </div>
-                )}
-                <div
-                  className={`absolute -bottom-1 -right-1 w-5 h-5 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center`}
-                >
-                  <div
-                    className={`w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-gray-900`}
-                  ></div>
+      <PageHeader
+        centerContent={
+          <SegmentedControl
+            options={[
+              { value: 'staff-overview', label: language === 'AR' ? 'نظرة عامة' : 'Overview', icon: 'supervisor_account' },
+              { value: 'employee-list', label: language === 'AR' ? 'قائمة الموظفين' : 'Employees', icon: 'badge' },
+              { value: 'employee-profile', label: language === 'AR' ? 'ملف الموظف' : 'Profile', icon: 'person' }
+            ]}
+            value="employee-profile"
+            onChange={(val) => onViewChange?.(val as any)}
+            color={color.name}
+            size="md"
+            iconSize="--icon-lg"
+            variant="onPage"
+            shape="pill"
+            className="w-full sm:w-[480px]"
+            useGraphicFont={true}
+          />
+        }
+        leftContent={
+          <div className='flex items-center gap-3.5'>
+            {(() => {
+              const nameParts = selectedEmployee.name.trim().split(/\s+/);
+              const initials =
+                nameParts.length > 1
+                  ? `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`
+                  : selectedEmployee.name.slice(0, 2);
+              return (
+                <div className='relative shrink-0'>
+                  {selectedEmployee.image ? (
+                    <img
+                      src={selectedEmployee.image}
+                      alt={selectedEmployee.name}
+                      className="w-10 h-10 rounded-xl object-cover border border-zinc-200 dark:border-zinc-700/80"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center text-primary-700 dark:text-primary-300 text-sm font-black uppercase border border-primary-100 dark:border-primary-800/50">
+                      {initials}
+                    </div>
+                  )}
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-zinc-900" />
                 </div>
-              </div>
-            );
-          })()}
-          <div>
-            <h1 className='text-2xl font-bold text-gray-900 dark:text-white tracking-tight leading-none mb-1.5 page-title'>
-              {selectedEmployee.name}
-            </h1>
-            <div className='flex items-center gap-2 flex-wrap'>
-              <div
-                className={`px-2.5 py-0.5 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 text-xs font-semibold border border-primary-100 dark:border-primary-700/30 flex items-center gap-1`}
-              >
-                <span className='material-symbols-rounded text-[14px]'>badge</span>
-                {selectedEmployee.role}
-              </div>
-              <div className='px-2 py-0.5 rounded-lg bg-gray-50 dark:bg-gray-700/30 text-gray-500 dark:text-gray-400 text-xs font-medium border border-gray-100 dark:border-gray-600/30 flex items-center gap-1 font-mono'>
-                <span className='opacity-50'>#</span>
-                {selectedEmployee.employeeCode}
+              );
+            })()}
+            <div className="min-w-0">
+              <h1 className="text-base font-bold text-zinc-900 dark:text-white tracking-tight leading-none mb-1.5 truncate">
+                {selectedEmployee.name}
+              </h1>
+              <div className="flex items-center gap-2 leading-none">
+                <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{selectedEmployee.role}</span>
+                <span className="w-0.5 h-0.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+                <span className="text-[9px] font-mono text-zinc-400 opacity-80">#{selectedEmployee.employeeCode}</span>
               </div>
             </div>
           </div>
-        </div>
-
-        <div className='flex items-center gap-3'>
-          {/* Employee Selector */}
-          {permissionsService.can('users.view') && (
-            <div className='w-56 h-9 relative z-10'>
-              <FilterDropdown
-                className='absolute top-0 left-0 w-full text-sm'
-                minHeight='36px'
-                items={employees}
-                selectedItem={selectedEmployee}
-                isOpen={isEmployeeDropdownOpen}
-                onToggle={() => setIsEmployeeDropdownOpen(!isEmployeeDropdownOpen)}
-                onSelect={(emp) => {
-                  setSelectedEmployeeId(emp.id);
-                  setIsEmployeeDropdownOpen(false);
-                }}
-                renderItem={(emp) => (
-                  <div className='flex flex-col py-1'>
-                    <span className='text-sm font-medium text-gray-900 dark:text-white'>
-                      {emp.name}
+        }
+        rightContent={
+          <div className='flex items-center gap-3'>
+            {/* Employee Selector */}
+            {permissionsService.can('users.view') && (
+              <div className='w-48 h-9 relative z-10'>
+                <FilterDropdown
+                  className='absolute top-0 left-0 w-full text-xs'
+                  minHeight='36px'
+                  items={employees}
+                  selectedItem={selectedEmployee}
+                  isOpen={isEmployeeDropdownOpen}
+                  onToggle={() => setIsEmployeeDropdownOpen(!isEmployeeDropdownOpen)}
+                  onSelect={(emp) => {
+                    setSelectedEmployeeId(emp.id);
+                    setIsEmployeeDropdownOpen(false);
+                  }}
+                  renderItem={(emp) => (
+                    <div className='flex flex-col py-1'>
+                      <span className='text-xs font-medium text-zinc-900 dark:text-white'>
+                        {emp.name}
+                      </span>
+                      <span className='text-[10px] text-zinc-500'>{emp.role}</span>
+                    </div>
+                  )}
+                  renderSelected={(emp) => (
+                    <span className='text-xs font-medium text-zinc-900 dark:text-zinc-200'>
+                      {emp ? emp.name : 'Select Employee'}
                     </span>
-                    <span className='text-xs text-gray-500'>{emp.role}</span>
-                  </div>
-                )}
-                renderSelected={(emp) => (
-                  <span className='text-sm font-medium text-gray-900 dark:text-gray-200'>
-                    {emp ? emp.name : 'Select Employee'}
-                  </span>
-                )}
-                keyExtractor={(emp) => emp.id}
-                variant='input'
-                color='primary'
-              />
+                  )}
+                  keyExtractor={(emp) => emp.id}
+                  variant='input'
+                  color='primary'
+                />
+              </div>
+            )}
+
+            {/* Date Filter */}
+            <div className='flex bg-zinc-100 dark:bg-zinc-800/50 rounded-xl p-1 border border-zinc-200/50 dark:border-zinc-700/50'>
+              {(['today', 'week', 'month', 'year', 'all'] as const).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setDateFilterMode(period as FilterMode)}
+                  className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                    dateFilterMode === period
+                      ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
+                  }`}
+                >
+                  {period}
+                </button>
+              ))}
             </div>
-          )}
-
-          {/* Date Filter */}
-          <div className='flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1'>
-            {(['today', 'week', 'month', 'year', 'all'] as const).map((period) => (
-              <button
-                key={period}
-                onClick={() => setDateFilterMode(period as FilterMode)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                  dateFilterMode === period
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                }`}
-              >
-                {period.charAt(0).toUpperCase() + period.slice(1)}
-              </button>
-            ))}
           </div>
-        </div>
-      </div>
+        }
+      />
 
-      {/* KPI Cards */}
+      {isLoading ? (
+        <EmployeeProfileSkeleton />
+      ) : (
+        <>
+          {/* KPI Cards */}
       {stats && (
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
           {(() => {
@@ -1312,6 +1311,8 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
           showDateRange: true,
         }}
       />
+        </>
+      )}
     </div>
   );
 };

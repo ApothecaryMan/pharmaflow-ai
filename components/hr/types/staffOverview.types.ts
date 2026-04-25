@@ -65,6 +65,7 @@ export interface StaffSpotlightTickerProps {
   achievements: Achievement[];
   language: 'AR' | 'EN';
   color: ThemeColor;
+  isLoading?: boolean;
 }
 
 /**
@@ -78,6 +79,8 @@ export interface StaffOverviewProps {
   t: TranslationFunction;
   language: 'AR' | 'EN';
   getVerifiedDate: () => Date;
+  isLoading?: boolean;
+  onViewChange?: (view: string) => void;
 }
 
 /**

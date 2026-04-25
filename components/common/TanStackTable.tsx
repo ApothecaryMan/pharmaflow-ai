@@ -389,21 +389,19 @@ export function TanStackTable<TData, TValue>({
   // We manage "Active Pills" as Column Filters
   const [columnFilters, setColumnFilters] = useState<{ id: string; value: any }[]>([]);
 
-  // Sync initialFilters to columnFilters on mount
+  // Sync initialFilters to columnFilters whenever they change
   React.useEffect(() => {
-    if (Object.keys(initialFilters).length > 0) {
-      const newFilters = Object.entries(initialFilters).map(([id, values]) => ({
-        id,
-        value: values,
-      }));
-      setColumnFilters(newFilters);
-
-      // Notify parent initially if needed
-      if (onFilterChange) {
-        onFilterChange(initialFilters);
-      }
-    }
-  }, [initialFilters, onFilterChange]);
+    const newFilters = Object.entries(initialFilters).map(([id, values]) => ({
+      id,
+      value: values,
+    }));
+    
+    // Only update if actually different to avoid cycles
+    setColumnFilters(prev => {
+      const isSame = JSON.stringify(prev) === JSON.stringify(newFilters);
+      return isSame ? prev : newFilters;
+    });
+  }, [initialFilters]);
 
   const [isShowAll, setIsShowAll] = useState(false);
   const [isJumping, setIsJumping] = useState(false);

@@ -21,6 +21,7 @@ import { Switch } from '../common/Switch';
 import { employeeService } from '../../services/hr/employeeService';
 import { orgService } from '../../services/org/orgService';
 import { INPUT_BASE } from '../../utils/themeStyles';
+import { SearchInput } from '../common/SearchInput';
 
 import { 
   DEPARTMENT_ROLES, 
@@ -28,6 +29,8 @@ import {
   getRoleLabel 
 } from '../../config/employeeRoles';
 import { RoleIcon } from './RoleIcon';
+import { PageHeader } from '../common/PageHeader';
+import { EmployeeRowSkeleton } from '../skeletons/HRSkeletons';
 
 interface EmployeeListProps {
   color: string;
@@ -38,6 +41,8 @@ interface EmployeeListProps {
   onAddEmployee: (employee: Employee) => Promise<void>;
   onUpdateEmployee: (id: string, updates: Partial<Employee>) => Promise<void>;
   onDeleteEmployee: (id: string) => Promise<void>;
+  isLoading?: boolean;
+  onViewChange?: (view: string) => void;
 }
 
 export const EmployeeList: React.FC<EmployeeListProps> = ({
@@ -49,6 +54,8 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   onAddEmployee,
   onUpdateEmployee,
   onDeleteEmployee,
+  isLoading = false,
+  onViewChange
 }) => {
   // --- Data Context ---
   const { branches } = useData();
@@ -74,6 +81,8 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
 
   // Global View State
   const [showAllBranches, setShowAllBranches] = useState(false);
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [allEmployeesFetched, setAllEmployeesFetched] = useState<Employee[]>([]);
   const [isFetchingGlobal, setIsFetchingGlobal] = useState(false);
 
@@ -235,7 +244,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
       id: 'status',
       label: t.employeeList.status,
       icon: 'rule',
-      mode: 'multiple',
+      mode: 'single',
       options: Object.entries(t.employeeList.statusOptions)
         .filter(([key]) => key !== 'all')
         .map(([key, label]) => ({
@@ -249,7 +258,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
       id: 'department',
       label: t.employeeList.department,
       icon: 'business',
-      mode: 'multiple',
+      mode: 'single',
       options: availableDepartments.map(d => ({
         label: d.label,
         value: d.key,
@@ -513,52 +522,69 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   // --- Render ---
   return (
     <div className='h-full flex flex-col space-y-4 animate-fade-in overflow-hidden'>
-      {/* Header */}
-      <div className='flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0'>
-        <div>
-          <h1 className='text-2xl font-bold tracking-tight page-title'>
-            {t.employeeList.title}
-          </h1>
-          <p className='text-sm text-gray-500 dark:text-gray-400'>{t.employeeList.subtitle}</p>
-        </div>
+      <PageHeader
+        leftContent={
+          <div className="w-full max-w-md">
+            <SearchInput
+              value={globalFilter}
+              onSearchChange={setGlobalFilter}
+              placeholder={language === 'AR' ? 'بحث عن موظف...' : 'Search employees...'}
+              color={color}
+              filterConfigs={employeeFilterConfigs}
+              activeFilters={activeFilters}
+              onUpdateFilter={(id, vals) => setActiveFilters(prev => ({ ...prev, [id]: vals }))}
+            />
+          </div>
+        }
+        centerContent={
+          <SegmentedControl
+            options={[
+              { value: 'staff-overview', label: language === 'AR' ? 'نظرة عامة' : 'Overview', icon: 'supervisor_account' },
+              { value: 'employee-list', label: language === 'AR' ? 'قائمة الموظفين' : 'Employees', icon: 'badge' },
+              { value: 'employee-profile', label: language === 'AR' ? 'ملف الموظف' : 'Profile', icon: 'person' }
+            ]}
+            value="employee-list"
+            onChange={(val) => onViewChange?.(val as any)}
+            color={color}
+            size="md"
+            iconSize="--icon-lg"
+            variant="onPage"
+            shape="pill"
+            className="w-full sm:w-[480px]"
+            useGraphicFont={true}
+          />
+        }
+        rightContent={
+          <div className="flex items-center gap-3">
+            {isSuperAdmin && (
+              <label className="flex items-center gap-3 px-3 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none shrink-0">
+                  {t.employeeList.globalView}
+                </span>
+                <Switch
+                  checked={showAllBranches}
+                  onChange={setShowAllBranches}
+                  activeColor={color}
+                />
+              </label>
+            )}
 
-        <div className='flex flex-col md:flex-row gap-3 w-full md:w-auto items-center'>
-          {isSuperAdmin && (
-            <label className='flex items-center gap-3 px-3 h-10 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-white/10 transition-colors mr-1'>
-              <span className='text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider select-none shrink-0'>
-                {t.employeeList.globalView}
-              </span>
-              <Switch
-                checked={showAllBranches}
-                onChange={setShowAllBranches}
-                activeColor={color}
-              />
-            </label>
-          )}
-
-          {permissionsService.can('users.manage') && (
-            <button
-              onClick={() => {
-                setFormData({});
-                setEditingEmployee(null);
-                setIsModalOpen(true);
-              }}
-              className={`flex items-center justify-center gap-2 px-5 h-10 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl shadow-lg shadow-zinc-900/10 dark:shadow-white/5 transition-all active:scale-95 whitespace-nowrap font-bold`}
-            >
-              <span 
-                className='material-symbols-rounded'
-                style={{ 
-                  fontSize: 'var(--icon-base)',
-                  fontVariationSettings: "'wght' 700" 
+            {permissionsService.can('users.manage') && (
+              <button
+                onClick={() => {
+                  setFormData({});
+                  setEditingEmployee(null);
+                  setIsModalOpen(true);
                 }}
+                className="flex items-center justify-center gap-2 px-6 h-10 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 rounded-xl shadow-sm transition-all active:scale-95 whitespace-nowrap font-bold text-xs uppercase tracking-wider"
               >
-                add
-              </span>
-              <span>{t.employeeList.addEmployee}</span>
-            </button>
-          )}
-        </div>
-      </div>
+                <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>add</span>
+                <span>{t.employeeList.addEmployee}</span>
+              </button>
+            )}
+          </div>
+        }
+      />
 
       {/* Main Content: Table */}
       <div className='flex-1 min-h-0 flex flex-col'>
@@ -569,7 +595,11 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
           color={color}
           emptyMessage='No employees found'
           onRowClick={handleView}
-          enableSearch={true}
+          isLoading={isLoading}
+          enableSearch={false}
+          globalFilter={globalFilter}
+          onSearchChange={setGlobalFilter}
+          initialFilters={activeFilters} // This will sync on mount, but we might need more for live sync
           enableTopToolbar={true}
           enablePagination={true}
           enableVirtualization={false}

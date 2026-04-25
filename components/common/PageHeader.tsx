@@ -39,7 +39,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   centerContent,
   rightContent,
   sticky = true,
-  border = true,
+  border = false,
   className = '',
   dir,
   mb = 'mb-6',
