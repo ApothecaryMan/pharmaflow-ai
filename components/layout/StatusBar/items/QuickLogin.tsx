@@ -1,20 +1,10 @@
-import React from 'react';
+import React, { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import type { Employee } from '../../../../types';
 import { useContextMenu } from '../../../common/ContextMenu';
 import { usePosSounds } from '../../../common/hooks/usePosSounds';
-
 import { useSmartDirection } from '../../../common/SmartInputs';
 import { StatusBarItem } from '../StatusBarItem';
 import { motion } from 'framer-motion';
-
-/*
- * RTL SUPPORT REMINDER
- * ====================
- * When creating StatusBar components, always add RTL support:
- *   dir={language === 'AR' ? 'rtl' : 'ltr'}
- *
- * This ensures proper text direction for Arabic language.
- */
 
 interface QuickLoginProps {
   userName?: string;
@@ -28,10 +18,111 @@ interface QuickLoginProps {
   isLoading?: boolean;
 }
 
+type Step = 'idle' | 'username' | 'password' | 'new-password';
+
+// --- Sub-components for flattening and modularity ---
+
+const PasskeyButton: React.FC<{ 
+  onClick: () => void; 
+  title: string;
+}> = ({ onClick, title }) => (
+  <button
+    onClick={onClick}
+    className="flex items-center justify-center h-full px-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+    title={title}
+  >
+    <span 
+      className="material-symbols-rounded text-primary-500 leading-none" 
+      style={{ fontSize: 'calc(var(--status-icon-size, 16px) + 2px)' }}
+    >
+      fingerprint
+    </span>
+  </button>
+);
+
+const LoginInputView: React.FC<{
+  step: Step;
+  inputVal: string;
+  setInputVal: (val: string) => void;
+  isError: boolean;
+  setIsError: (val: boolean) => void;
+  onKeyDown: (e: React.KeyboardEvent) => void;
+  onForgotPassword: () => void;
+  language: 'EN' | 'AR';
+  dir: 'rtl' | 'ltr';
+  inputRef: React.RefObject<HTMLInputElement | null>;
+}> = ({ step, inputVal, setInputVal, isError, setIsError, onKeyDown, onForgotPassword, language, dir, inputRef }) => {
+  const isNewPass = step === 'new-password';
+  const isAR = language === 'AR';
+
+  const placeholder = useMemo(() => {
+    if (step === 'username') return isAR ? 'اسم المستخدم...' : 'Username...';
+    if (isNewPass) return isAR ? 'كلمة المرور الجديدة...' : 'New Password...';
+    return isAR ? 'كلمــــة المـرور...' : 'Password...';
+  }, [step, isAR, isNewPass]);
+
+  return (
+    <div className={`relative flex items-center h-full w-fit overflow-hidden ${isNewPass ? 'px-0 border-none' : 'px-2 gap-2 bg-white/50 dark:bg-gray-900/50 border-x border-gray-300 dark:border-gray-700'}`}>
+      {isNewPass && (
+        <>
+          <motion.div
+            className="absolute inset-[-100%]"
+            style={{ background: 'conic-gradient(from 0deg, #3b82f6, #8b5cf6, #ec4899, #ef4444, #f59e0b, #10b981, #3b82f6)' }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+          />
+          <div className="absolute inset-[1.5px] bg-(--bg-menu) rounded-[1px] z-0" />
+        </>
+      )}
+
+      <div className={`relative z-10 flex items-center h-full w-full ${isNewPass ? 'px-2 gap-2' : ''}`}>
+        <span 
+          className={`material-symbols-rounded leading-none ${isError ? 'text-red-500' : 'text-primary-500 dark:text-blue-400'}`}
+          style={{ fontSize: 'var(--status-icon-size, 16px)' }}
+        >
+          {step === 'username' ? 'badge' : isNewPass ? 'key' : 'lock'}
+        </span>
+        <input
+          ref={inputRef}
+          type={step === 'password' || isNewPass ? 'password' : 'text'}
+          value={inputVal}
+          onChange={(e) => {
+            setInputVal(e.target.value);
+            if (isError) setIsError(false);
+          }}
+          dir={dir}
+          onKeyDown={onKeyDown}
+          placeholder={placeholder}
+          className={`bg-transparent border-none outline-hidden text-[11px] font-bold text-(--text-primary) placeholder-gray-500 ${isNewPass ? 'w-32' : 'w-24'} focus:ring-0 ${isError ? 'text-red-500 dark:text-red-400' : ''}`}
+          autoComplete="off"
+        />
+        {step === 'username' && isError && (
+          <span className="text-[9px] text-red-500 ml-1 font-normal">
+            {isAR ? 'غير موجود' : 'Not found'}
+          </span>
+        )}
+        {step === 'password' && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onForgotPassword(); }}
+            className="ml-auto text-gray-400 hover:text-primary-500 cursor-pointer"
+            title={isAR ? 'نسيت كلمة المرور؟' : 'Forgot Password?'}
+          >
+            <span 
+              className="material-symbols-rounded block leading-none" 
+              style={{ fontSize: 'var(--status-icon-size, 16px)' }}
+            >
+              help
+            </span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const QuickLogin: React.FC<QuickLoginProps> = ({
   userName,
   roleLabel,
-  avatarUrl,
   employees = [],
   currentEmployeeId,
   onSelectEmployee,
@@ -39,117 +130,70 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
   isRecoveringPassword,
   isLoading = false,
 }) => {
-  const [step, setStep] = React.useState<'idle' | 'username' | 'password' | 'new-password'>('idle');
-  const [inputVal, setInputVal] = React.useState(''); // Shared input for username/password
-  const [tempEmployee, setTempEmployee] = React.useState<Employee | null>(null);
-  const [isError, setIsError] = React.useState(false);
-  const [hasRecovered, setHasRecovered] = React.useState(false);
+  const [step, setStep] = useState<Step>('idle');
+  const [inputVal, setInputVal] = useState('');
+  const [tempEmployee, setTempEmployee] = useState<Employee | null>(null);
+  const [isError, setIsError] = useState(false);
+  const [hasRecovered, setHasRecovered] = useState(false);
 
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const inputRef = React.useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const { playSuccess, playError } = usePosSounds();
+  const { showMenu } = useContextMenu();
 
-  // Auto-detect direction
-  const dir = useSmartDirection(inputVal, language === 'AR' ? 'كلمة المرور...' : 'Password...');
+  const isAR = language === 'AR';
+  const dir = useSmartDirection(inputVal, isAR ? 'كلمة المرور...' : 'Password...');
 
-  // Auto-trigger recovery mode
-  React.useEffect(() => {
-    if (isRecoveringPassword && step === 'idle' && !hasRecovered) {
-      setStep('new-password');
-      setInputVal('');
-    }
-  }, [isRecoveringPassword, step, hasRecovered]);
+  // --- Smart Memoization ---
+  const tooltipText = useMemo(() => {
+    if (!currentEmployeeId) return isAR ? 'تسجيل الدخول' : 'Login';
+    return `${userName}${roleLabel ? ` (${roleLabel})` : ''}`;
+  }, [currentEmployeeId, userName, roleLabel, isAR]);
 
-  // Focus input on step change
-  React.useEffect(() => {
-    if (step !== 'idle' && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [step]);
+  const loginLabel = useMemo(() => {
+    if (isLoading && currentEmployeeId) return undefined;
+    if (currentEmployeeId) return userName;
+    return isAR ? 'تسجيــــل الدخـول' : 'Login';
+  }, [isLoading, currentEmployeeId, userName, isAR]);
 
-  // Click outside handler
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        if (step !== 'idle') {
-          resetState();
-        }
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [step]);
-
-  const resetState = () => {
+  // --- Logic Handlers ---
+  const resetState = useCallback(() => {
     setStep('idle');
     setInputVal('');
     setTempEmployee(null);
     setIsError(false);
-  };
+  }, []);
 
   const handleStartLogin = () => {
     if (!onSelectEmployee) return;
     setStep('username');
-    setInputVal(''); // Clear
+    setInputVal('');
     setIsError(false);
   };
 
-  /*
-   * Check Auth
-   */
   const checkAuth = async () => {
     if (step === 'username') {
-      // Validate Username
       const query = inputVal.trim();
       if (!query) return;
-
-      // Find employee by Username ONLY (Case-Sensitive Match)
-      const found = employees.find(
-        (emp) => emp.username === query
-      );
-
-      console.log('🔍 [QuickLogin Auth] Search Query:', query);
-      console.log('🔍 [QuickLogin Auth] Found Employee:', found);
-
+      const found = employees.find(emp => emp.username === query);
       if (found) {
         setTempEmployee(found);
         setStep('password');
-        setInputVal(''); // Clear for password
+        setInputVal('');
         setIsError(false);
       } else {
-        console.warn('❌ [QuickLogin Auth] Employee not found in local list!');
         setIsError(true);
         playError();
       }
     } else if (step === 'password') {
-      // Validate Password
       if (tempEmployee && onSelectEmployee) {
-        const inputPass = inputVal.trim();
-
-        // Dynamic Import for security util
         const { verifyPassword } = await import('../../../../services/auth/hashUtils');
-
-        let isValid = false;
-
-        if (tempEmployee.password) {
-          console.log('🔐 [QuickLogin Auth] Verifying password hatch for:', tempEmployee.username);
-          // Verify Hash
-          isValid = await verifyPassword(inputPass, tempEmployee.password);
-          console.log('🔐 [QuickLogin Auth] verification result:', isValid);
-        } else {
-          console.warn('❌ [QuickLogin Auth] No password hash exists for this employee!');
-          // Security: If no password is set, authentication MUST fail.
-          // This prevents unconfigured or legacy users from being bypassed.
-          isValid = false;
-        }
-
+        const isValid = tempEmployee.password ? await verifyPassword(inputVal.trim(), tempEmployee.password) : false;
         if (isValid) {
-          console.log('✅ [QuickLogin Auth] Login successful!');
           playSuccess();
           onSelectEmployee(tempEmployee.id);
           resetState();
         } else {
-          console.error('❌ [QuickLogin Auth] Incorrect password or internal error!');
           setIsError(true);
           playError();
         }
@@ -161,10 +205,8 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
       const res = await authService.updatePassword(newPass);
       if (res.success) {
         playSuccess();
-        setHasRecovered(true); // <--- Prevent re-triggering
-        alert(language === 'AR' ? 'تم تغيير كلمة المرور بنجاح' : 'Password updated successfully');
-        
-        // إجبار المتصفح على مسح الرابط الطويل والرجوع للرابط الأساسي
+        setHasRecovered(true);
+        alert(isAR ? 'تم تغيير كلمة المرور بنجاح' : 'Password updated successfully');
         window.location.replace(window.location.origin + '/#/');
       } else {
         setIsError(true);
@@ -174,82 +216,115 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      checkAuth();
-    } else if (e.key === 'Escape') {
-      resetState();
+  const handlePasskeyLogin = async () => {
+    try {
+      const { startAuthentication } = await import('@simplewebauthn/browser');
+      const { generateChallenge, bufferToBase64, isWebAuthnSupported } = await import('../../../../utils/webAuthnUtils');
+      const { authService } = await import('../../../../services/auth/authService');
+
+      if (!(await isWebAuthnSupported())) {
+        alert(isAR ? 'هذا المتصفح لا يدعم مفاتيح المرور (Passkeys). تأكد من استخدام HTTPS.' : 'Browser does not support Passkeys. Ensure you are on HTTPS.');
+        return;
+      }
+
+      const challengeBase64 = bufferToBase64(generateChallenge());
+      const asseResp = await startAuthentication({
+        optionsJSON: {
+          challenge: challengeBase64,
+          rpId: window.location.hostname,
+          userVerification: 'required' as UserVerificationRequirement,
+          timeout: 60000,
+        } as any,
+      });
+
+      if (asseResp && onSelectEmployee) {
+        const result = await authService.loginWithBiometric(asseResp.id, employees);
+        if (result) {
+          playSuccess();
+          onSelectEmployee(result.id);
+          resetState();
+        } else {
+          setIsError(true);
+          playError();
+        }
+      }
+    } catch (err) {
+      const { parseWebAuthnError } = await import('../../../../utils/webAuthnUtils');
+      setIsError(true);
+      playError();
+      alert(parseWebAuthnError(err, language as any));
     }
   };
-
-  const displayName = userName || (language === 'AR' ? 'تسجيل الدخول' : 'Login');
-  const displayRole =
-    roleLabel ||
-    (employees.length > 0 ? (language === 'AR' ? 'الموظف الحالي' : 'Current Employee') : '');
-
-  // Render Logic
-  if (!onSelectEmployee) {
-    // Static View (No interaction if no logic)
-    return (
-      <StatusBarItem
-        icon='person'
-        label={roleLabel ? `${userName} (${roleLabel})` : userName}
-        tooltip={roleLabel || userName}
-        variant='default'
-      />
-    );
-  }
-
-  /*
-   * Context Menu for Sign Out
-   */
-  const { showMenu } = useContextMenu();
 
   const handleContextMenu = (e: React.MouseEvent) => {
     if (!currentEmployeeId || !onSelectEmployee) return;
     e.preventDefault();
-
     showMenu(e.clientX, e.clientY, [
       {
-        label: language === 'AR' ? 'تسجيل الخروج' : 'Sign Out',
+        label: isAR ? 'تسجيل الخروج' : 'Sign Out',
         icon: 'logout',
         danger: true,
-        action: () => {
-          onSelectEmployee(null); // Sign Out
-          setStep('idle');
-        },
+        action: () => { onSelectEmployee(null); resetState(); },
       },
     ]);
   };
 
-  // Improved Tooltip Construction
-  let tooltipText = '';
-  if (currentEmployeeId) {
-    const roleText = roleLabel ? ` (${roleLabel})` : '';
-    tooltipText = `${userName}${roleText}`;
-  } else {
-    tooltipText = language === 'AR' ? 'تسجيل الدخول' : 'Login';
+  const handleForgotPassword = async () => {
+    if (tempEmployee?.email) {
+      const { authService } = await import('../../../../services/auth/authService');
+      const res = await authService.handleForgotPassword(tempEmployee.email);
+      if (res.success) {
+        alert(isAR ? 'تم إرسال رابط إعادة التعيين لبريدك' : 'Reset link sent to your email');
+      } else {
+        alert(res.message);
+      }
+    } else {
+      alert(isAR ? 'تواصل مع المدير لإعادة تعيين كلمة المرور' : 'Contact manager to reset password');
+    }
+  };
+
+  // --- Effects ---
+  useEffect(() => {
+    if (isRecoveringPassword && step === 'idle' && !hasRecovered) {
+      setStep('new-password');
+      setInputVal('');
+    }
+  }, [isRecoveringPassword, step, hasRecovered]);
+
+  useEffect(() => {
+    if (step !== 'idle' && inputRef.current) inputRef.current.focus();
+  }, [step]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node) && step !== 'idle') resetState();
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [step, resetState]);
+
+  if (!onSelectEmployee) {
+    return (
+      <StatusBarItem
+        icon="person"
+        label={roleLabel ? `${userName} (${roleLabel})` : userName}
+        tooltip={roleLabel || userName}
+        variant="default"
+      />
+    );
   }
 
   return (
-    <div
-      className='relative flex items-center h-full'
-      ref={containerRef}
-      dir={language === 'AR' ? 'rtl' : 'ltr'}
-    >
+    <div className="relative flex items-center h-full" ref={containerRef} dir={isAR ? 'rtl' : 'ltr'}>
       {step === 'idle' ? (
-        <div onContextMenu={handleContextMenu} className='h-full flex items-center'>
+        <div onContextMenu={handleContextMenu} className="h-full flex items-center">
           <StatusBarItem
-            icon='person'
-            label={
-              isLoading && currentEmployeeId
-                ? undefined  // Hide label during loading, show skeleton instead
-                : currentEmployeeId ? userName : language === 'AR' ? 'تسجيــــل الدخـول' : 'Login'
-            }
+            icon="person"
+            label={loginLabel}
             tooltip={tooltipText}
             onClick={handleStartLogin}
             variant={currentEmployeeId ? 'info' : 'warning'}
-            className='cursor-pointer hover:bg-black/5 dark:hover:bg-white/10'
+            className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/10"
           >
             {isLoading && currentEmployeeId && (
               <span className="inline-flex items-center gap-1">
@@ -258,170 +333,28 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
             )}
           </StatusBarItem>
           {!currentEmployeeId && (
-            <button
-              onClick={async () => {
-                try {
-                  const { startAuthentication } = await import('@simplewebauthn/browser');
-                  const {
-                    generateChallenge,
-                    bufferToBase64,
-                    isWebAuthnSupported,
-                    parseWebAuthnError,
-                  } = await import('../../../../utils/webAuthnUtils');
-                  const { authService } = await import('../../../../services/auth/authService');
-
-                  // Check if browser supports WebAuthn
-                  if (!(await isWebAuthnSupported())) {
-                    const msg =
-                      language === 'AR'
-                        ? 'هذا المتصفح لا يدعم مفاتيح المرور (Passkeys). تأكد من استخدام HTTPS.'
-                        : 'Browser does not support Passkeys. Ensure you are on HTTPS.';
-                    alert(msg);
-                    return;
-                  }
-
-                  // 1. Get Challenge from "Backend"
-                  const challengeBuffer = generateChallenge();
-                  const challengeBase64 = bufferToBase64(challengeBuffer);
-
-                  // 2. Options for Authentication (Mocked backend response)
-                  const publicKeyCredentialRequestOptions = {
-                    challenge: challengeBase64,
-                    rpId: window.location.hostname,
-                    userVerification: 'required' as UserVerificationRequirement,
-                    timeout: 60000,
-                  };
-
-                  // 3. Start Authentication via Library
-                  const asseResp = await startAuthentication({
-                    optionsJSON: publicKeyCredentialRequestOptions as any,
-                  });
-
-                  if (asseResp && onSelectEmployee) {
-                    // 4. Verify on Backend
-                    // For pilot, we check if the credential ID exists in our local list
-                    const credentialId = asseResp.id; // Library gives us base64url id directly
-
-                    const result = await authService.loginWithBiometric(credentialId, employees);
-                    if (result) {
-                      // User logged in
-                      playSuccess();
-                      onSelectEmployee(result.id);
-                      resetState();
-                    } else {
-                      console.warn('Credential ID not found in local records:', credentialId);
-                      setIsError(true);
-                      playError();
-                    }
-                  }
-                } catch (err: any) {
-                  console.error('Passkey login failed', err);
-                  const { parseWebAuthnError } = await import('../../../../utils/webAuthnUtils');
-                  setIsError(true);
-                  playError();
-                  alert(parseWebAuthnError(err, language as any));
-                }
-              }}
-              className='flex items-center justify-center h-full px-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors'
-              title={language === 'AR' ? 'تسجيل الدخول بمفتاح المرور' : 'Login with Passkey'}
-            >
-              <span className='material-symbols-rounded text-primary-500' style={{ fontSize: 'calc(var(--status-icon-size, 16px) + 2px)' }}>
-                fingerprint
-              </span>
-            </button>
+            <PasskeyButton 
+              onClick={handlePasskeyLogin} 
+              title={isAR ? 'تسجيل الدخول بمفتاح المرور' : 'Login with Passkey'} 
+            />
           )}
         </div>
       ) : (
-        <div 
-          className={`relative flex items-center h-full w-fit overflow-hidden ${
-            step === 'new-password' 
-              ? 'px-0 border-none' 
-              : 'px-2 gap-2 bg-white/50 dark:bg-gray-900/50 border-l border-r border-gray-300 dark:border-gray-700'
-          }`}
-        >
-          {step === 'new-password' && (
-            <>
-              {/* Spinning RGB Gradient - More professional colors */}
-              <motion.div
-                className="absolute inset-[-100%]"
-                style={{
-                  background: 'conic-gradient(from 0deg, #3b82f6, #8b5cf6, #ec4899, #ef4444, #f59e0b, #10b981, #3b82f6)'
-                }}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-              />
-              {/* Inner Background Mask */}
-              <div className="absolute inset-[1.5px] bg-white dark:bg-gray-900 rounded-[1px] z-0" />
-            </>
-          )}
-
-          <div className={`relative z-10 flex items-center h-full w-full ${step === 'new-password' ? 'px-2 gap-2' : ''}`}>
-            <span
-              className={`material-symbols-rounded ${isError ? 'text-red-500' : 'text-primary-500 dark:text-blue-400'}`}
-              style={{ fontSize: 'var(--status-icon-size, 16px)' }}
-            >
-              {step === 'username' ? 'badge' : step === 'new-password' ? 'key' : 'lock'}
-            </span>
-            <input
-              ref={inputRef}
-              type={step === 'password' || step === 'new-password' ? 'password' : 'text'}
-              value={inputVal}
-              onChange={(e) => {
-                setInputVal(e.target.value);
-                if (isError) setIsError(false);
-              }}
-              dir={dir}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                step === 'username'
-                  ? language === 'AR'
-                    ? 'اسم المستخدم...'
-                    : 'Username...'
-                  : step === 'new-password'
-                  ? language === 'AR'
-                    ? 'كلمة المرور الجديدة...'
-                    : 'New Password...'
-                  : language === 'AR'
-                    ? 'كلمــــة المـرور...'
-                    : 'Password...'
-              }
-              className={`bg-transparent border-none outline-hidden text-[11px] font-bold text-gray-800 dark:text-white placeholder-gray-500 ${step === 'new-password' ? 'w-32' : 'w-24'} focus:ring-0 ${isError ? 'text-red-500 dark:text-red-400' : ''}`}
-              autoComplete='off'
-            />
-            {step === 'username' && isError && (
-              <span className='text-[9px] text-red-500 ml-1 font-normal'>
-                {language === 'AR' ? 'غير موجود' : 'Not found'}
-              </span>
-            )}
-            {step === 'password' && (
-              <button
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  if (tempEmployee?.email) {
-                    const { authService } = await import('../../../../services/auth/authService');
-                    const res = await authService.handleForgotPassword(tempEmployee.email);
-                    if (res.success) {
-                      alert(language === 'AR' ? 'تم إرسال رابط إعادة التعيين لبريدك' : 'Reset link sent to your email');
-                    } else {
-                      alert(res.message);
-                    }
-                  } else {
-                    alert(language === 'AR' ? 'تواصل مع المدير لإعادة تعيين كلمة المرور' : 'Contact manager to reset password');
-                  }
-                }}
-                className='ml-auto text-gray-400 hover:text-primary-500 cursor-pointer'
-                title={language === 'AR' ? 'نسيت كلمة المرور؟' : 'Forgot Password?'}
-              >
-                <span 
-                  className='material-symbols-rounded block' 
-                  style={{ fontSize: 'var(--status-icon-size, 16px)' }}
-                >
-                  help
-                </span>
-              </button>
-            )}
-          </div>
-        </div>
+        <LoginInputView
+          step={step}
+          inputVal={inputVal}
+          setInputVal={setInputVal}
+          isError={isError}
+          setIsError={setIsError}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') checkAuth();
+            else if (e.key === 'Escape') resetState();
+          }}
+          onForgotPassword={handleForgotPassword}
+          language={language}
+          dir={dir}
+          inputRef={inputRef}
+        />
       )}
     </div>
   );
