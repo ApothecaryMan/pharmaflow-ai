@@ -1,6 +1,4 @@
-import type React from 'react';
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { AVAILABLE_FONTS_AR, AVAILABLE_FONTS_EN } from '../../../../config/fonts';
 import { permissionsService } from '../../../../services/auth/permissions';
 import { useSettings } from '../../../../context';
@@ -162,12 +160,11 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
         )
       )}
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className={menuContainerClasses}>
-            <div className="px-3 py-2 border-b border-(--border-divider) text-center">
-              <span className="text-xs font-bold text-(--text-primary)">{t.settings}</span>
-            </div>
+      {isOpen && (
+        <div className={menuContainerClasses}>
+          <div className="px-3 py-2 border-b border-(--border-divider) text-center">
+            <span className="text-xs font-bold text-(--text-primary)">{t.settings}</span>
+          </div>
 
             <div className="p-3 space-y-3" style={{ direction: isAR ? 'rtl' : 'ltr' }}>
               {/* --- Appearance Section --- */}
@@ -355,9 +352,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </div>
   );
 };

@@ -4,7 +4,6 @@ import { useContextMenu } from '../../../common/ContextMenu';
 import { usePosSounds } from '../../../common/hooks/usePosSounds';
 import { useSmartDirection } from '../../../common/SmartInputs';
 import { StatusBarItem } from '../StatusBarItem';
-import { motion } from 'framer-motion';
 
 interface QuickLoginProps {
   userName?: string;
@@ -65,11 +64,9 @@ const LoginInputView: React.FC<{
     <div className={`relative flex items-center h-full w-fit overflow-hidden ${isNewPass ? 'px-0 border-none' : 'px-2 gap-2 bg-white/50 dark:bg-gray-900/50 border-x border-gray-300 dark:border-gray-700'}`}>
       {isNewPass && (
         <>
-          <motion.div
-            className="absolute inset-[-100%]"
+          <div
+            className="absolute inset-[-100%] animate-spin-slow"
             style={{ background: 'conic-gradient(from 0deg, #3b82f6, #8b5cf6, #ec4899, #ef4444, #f59e0b, #10b981, #3b82f6)' }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
           />
           <div className="absolute inset-[1.5px] bg-(--bg-menu) rounded-[1px] z-0" />
         </>
