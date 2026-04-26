@@ -194,12 +194,16 @@ export const Modal: React.FC<ModalProps> = ({
 
   return ReactDOM.createPortal(
     <div
-      className={`fixed inset-0 flex items-center justify-center p-4 animate-fade-in`}
+      className={`fixed inset-0 flex items-center justify-center p-4`}
       style={{ zIndex: actualZIndex }}
     >
-      {/* Backdrop */}
+      {/* Backdrop with dedicated blur and animation */}
       <div
-        className='absolute inset-0 bg-white/10 dark:bg-black/40 backdrop-blur-md transition-opacity'
+        className='absolute inset-0 bg-black/10 dark:bg-black/60 animate-fade-in'
+        style={{ 
+          backdropFilter: 'blur(16px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(16px) saturate(180%)' 
+        }}
         onClick={closeOnBackdropClick ? onClose : undefined}
       />
 
