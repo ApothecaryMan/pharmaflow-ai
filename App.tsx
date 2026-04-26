@@ -4,13 +4,14 @@ import { StorageKeys } from './config/storageKeys';
 import { branchService } from './services/branchService';
 import { AuthPage } from './components/auth/AuthPage';
 import { Modal } from './components/common/Modal';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MainLayout } from './components/layout/MainLayout';
+import { LogoutOverlay } from './components/layout/LogoutOverlay';
 import { PageRouter } from './components/layout/PageRouter';
 import { useStatusBar } from './components/layout/StatusBar';
 import { OrgSetupScreen } from './components/onboarding/OrgSetupScreen';
 import { BranchSetupScreen } from './components/onboarding/BranchSetupScreen';
 import { EmployeeSetupScreen } from './components/onboarding/EmployeeSetupScreen';
-import { PageSkeletonRegistry } from './components/skeletons/PageSkeletonRegistry';
 import { PAGE_REGISTRY } from './config/pageRegistry';
 import { UserRole } from './config/permissions';
 import { SecureGate } from './components/common/SecureGate';
@@ -357,11 +358,16 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   );
 
   // --- TRANSITION SKELETON STATE ---
-  if (isLoggingOut) {
+  if (true || isLoggingOut) {
     return (
-      <div className='h-screen bg-(--bg-primary) p-4 overflow-hidden'>
-        <PageSkeletonRegistry view={view} />
-      </div>
+      <LogoutOverlay 
+        language={language}
+        currentEmployeeId={currentEmployeeId}
+        activeBranchId={activeBranchId}
+        employees={employees}
+        inventory={inventory}
+        sales={sales}
+      />
     );
   }
 
@@ -489,39 +495,6 @@ const App: React.FC = () => {
     setView(ROUTES.DASHBOARD);
   }, [setIsAuthenticated, setActiveModule, setView]);
 
-  // 7. Loading State for Auth/Onboarding Check
-  if ((authState.isAuthChecking && !authState.isAuthenticated) || isCheckingOnboarding) {
-    return (
-      <div
-        className='min-h-screen flex items-center justify-center'
-        style={{ backgroundColor: '#000000' }}
-      >
-        <div className='text-white'>
-          <svg className='animate-spin h-8 w-8 mx-auto' viewBox='0 0 24 24'>
-            <circle
-              className='opacity-25'
-              cx='12'
-              cy='12'
-              r='10'
-              stroke='currentColor'
-              strokeWidth='4'
-              fill='none'
-            />
-            <path
-              className='opacity-75'
-              fill='currentColor'
-              d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z'
-            />
-          </svg>
-          <p className='mt-2 text-sm text-zinc-400'>
-            {isCheckingOnboarding 
-              ? (TRANSLATIONS[language].global?.loading || 'Loading...') 
-              : (TRANSLATIONS[language].global?.checkingAuth || 'Checking authentication...')}
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   // 8. Not Authenticated -> Show Login
   if (!authState.isAuthenticated) {
