@@ -84,8 +84,68 @@ export const getCachedMetrics = async (orgId: string): Promise<OrgMetrics | null
 };
 
 /**
- * Aggregates heavy multibranch metrics without completely freezing the UI
- * by yielding to the event loop optionally, or doing it asynchronously.
+ * Computes metrics from pre-fetched data — ZERO additional network requests.
+ * Separated from data fetching so it can be reused without re-fetching.
+ */
+const computeMetrics = (
+  branches: any[],
+  allSales: any[],
+  allInventory: any[],
+  allEmployees: any[]
+): OrgMetrics => {
+  let totalSales = 0;
+  let totalRevenue = 0;
+  let todayRevenue = 0;
+  let totalInventoryValue = 0;
+
+  const today = new Date().toISOString().split('T')[0];
+
+  // Group data by branchId for O(1) lookups
+  const salesByBranch: Record<string, any[]> = {};
+  const inventoryByBranch: Record<string, any[]> = {};
+
+  for (const s of allSales) {
+    if (s.branchId) {
+      (salesByBranch[s.branchId] ??= []).push(s);
+    }
+  }
+
+  for (const i of allInventory) {
+    if (i.branchId) {
+      (inventoryByBranch[i.branchId] ??= []).push(i);
+    }
+  }
+
+  const branchIds = new Set(branches.map(b => b.id));
+
+  for (const branch of branches) {
+    const branchSales = salesByBranch[branch.id] || [];
+    totalSales += branchSales.length;
+    totalRevenue += branchSales.reduce((sum, sale) => sum + (sale.total || 0), 0);
+
+    const branchTodaySales = branchSales.filter(s => s.date && s.date.startsWith(today));
+    todayRevenue += branchTodaySales.reduce((sum, sale) => sum + (sale.total || 0), 0);
+
+    const branchInventory = inventoryByBranch[branch.id] || [];
+    totalInventoryValue += branchInventory.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || item.stock || 0)), 0);
+  }
+
+  const activeStaffCount = allEmployees.filter(e => e.branchId && branchIds.has(e.branchId)).length;
+
+  return {
+    totalSales,
+    totalRevenue,
+    todayRevenue,
+    totalBranches: branches.length,
+    activeStaffCount,
+    totalInventoryValue,
+    lastUpdated: new Date().toISOString()
+  };
+};
+
+/**
+ * Standalone metrics fetcher (used by components that only need metrics, not full org data).
+ * Uses stale-while-revalidate: returns cached metrics instantly, refreshes in background.
  */
 export const aggregateOrgMetrics = async (orgId: string, bypassCache = false): Promise<OrgMetrics> => {
   if (!bypassCache) {
@@ -95,136 +155,87 @@ export const aggregateOrgMetrics = async (orgId: string, bypassCache = false): P
       const now = new Date().getTime();
       const fiveMinutes = 5 * 60 * 1000;
 
-      // If cache is fresh (less than 5 mins old), use it
       if (now - lastUpdate < fiveMinutes) {
         return cached;
       }
-      
-      // If stale, return cached but trigger background refresh
-      setTimeout(() => calculateAndCacheMetrics(orgId), 100);
+
+      // Stale: return cached instantly, refresh in background
+      setTimeout(() => fetchAndComputeMetrics(orgId), 100);
       return cached;
     }
   }
 
-  return calculateAndCacheMetrics(orgId);
+  return fetchAndComputeMetrics(orgId);
 };
 
-const calculateAndCacheMetrics = async (orgId: string): Promise<OrgMetrics> => {
-  const branches = await branchService.getAll(orgId);
-  
-  let totalSales = 0;
-  let totalRevenue = 0;
-  let todayRevenue = 0;
-  let totalInventoryValue = 0;
-  
-  const today = new Date().toISOString().split('T')[0];
+/** Internal: fetch raw data + compute + cache. Only called when cache misses. */
+const fetchAndComputeMetrics = async (orgId: string): Promise<OrgMetrics> => {
+  const [branches, allSales, allInventory, allEmployees] = await Promise.all([
+    branchService.getAll(orgId),
+    salesService.getAll('all').catch(() => [] as any[]),
+    inventoryService.getAllBranches().catch(() => [] as any[]),
+    employeeService.getAll('ALL'),
+  ]);
 
-  // Fetch 'all' from sales and inventory once.
-  // Use try-catch for individual heavy fetches to prevent total failure
-  let allSales: any[] = [];
-  let allInventory: any[] = [];
-
-  try {
-    allSales = await salesService.getAll('all');
-  } catch (err) {
-    console.error('Failed to fetch sales for org metrics:', err);
-  }
-
-  try {
-    allInventory = await inventoryService.getAllBranches();
-  } catch (err) {
-    console.error('Failed to fetch inventory for org metrics:', err);
-  }
-
-  // Group data by branchId for O(1) lookups in the loop
-  const salesByBranch: Record<string, any[]> = {};
-  const inventoryByBranch: Record<string, any[]> = {};
-
-  for (const s of allSales) {
-    if (s.branchId) {
-      if (!salesByBranch[s.branchId]) salesByBranch[s.branchId] = [];
-      salesByBranch[s.branchId].push(s);
-    }
-  }
-
-  for (const i of allInventory) {
-    if (i.branchId) {
-      if (!inventoryByBranch[i.branchId]) inventoryByBranch[i.branchId] = [];
-      inventoryByBranch[i.branchId].push(i);
-    }
-  }
-
-  for (const branch of branches) {
-    const branchSales = salesByBranch[branch.id] || [];
-    totalSales += branchSales.length;
-    totalRevenue += branchSales.reduce((sum, sale) => sum + (sale.total || 0), 0);
-    
-    // Today's sales
-    const branchTodaySales = branchSales.filter(s => s.date && s.date.startsWith(today));
-    todayRevenue += branchTodaySales.reduce((sum, sale) => sum + (sale.total || 0), 0);
-
-    const branchInventory = inventoryByBranch[branch.id] || [];
-    totalInventoryValue += branchInventory.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || item.stock || 0)), 0);
-  }
-
-  // Active staff count (real count of employees across all org branches)
-  const allEmployees = await employeeService.getAll('ALL');
-  const branchIds = new Set(branches.map(b => b.id));
-  const activeStaffCount = allEmployees.filter(e => e.branchId && branchIds.has(e.branchId)).length;
-
-  const metrics: OrgMetrics = {
-    totalSales,
-    totalRevenue,
-    todayRevenue,
-    totalBranches: branches.length,
-    activeStaffCount,
-    totalInventoryValue,
-    lastUpdated: new Date().toISOString()
-  };
-
+  const metrics = computeMetrics(branches, allSales, allInventory, allEmployees);
   await cacheMetrics(orgId, metrics);
   return metrics;
 };
 
 /**
- * Aggregates all data for the Organization Management Page
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * MAIN ENTRY POINT — Organization Management Page
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *
+ * Single-fetch architecture:
+ * 1. ONE Promise.all fetches everything (branches, employees, sales, inventory, members)
+ * 2. Metrics are COMPUTED from already-fetched data — zero extra network calls
+ * 3. Cached metrics shown instantly; fresh data replaces them when ready
+ *
+ * Scaling: Even with 50 branches × 1000 sales each, the network round-trips
+ * are capped at exactly 5 parallel requests. All computation is client-side O(n).
  */
 export const orgAggregationService = {
   aggregateOrgMetrics,
   aggregateOrgData: async (orgId: string): Promise<OrgData> => {
-    // 1. Fetch metrics (forced bypass cache once to clear old mock data)
-    const metrics = await aggregateOrgMetrics(orgId, true);
-    
-    // 2. Fetch branches for this org
-    const branches = await branchService.getAll(orgId);
+    // ┌──────────────────────────────────────────────┐
+    // │  SINGLE parallel fetch — everything at once  │
+    // └──────────────────────────────────────────────┘
+    const [branches, allEmployees, members, allSales, allInventory] = await Promise.all([
+      branchService.getAll(orgId),
+      employeeService.getAll('ALL'),
+      orgService.getMembers(orgId),
+      salesService.getAll('all').catch(() => [] as any[]),
+      inventoryService.getAllBranches().catch(() => [] as any[]),
+    ]);
+
+    // Compute metrics from already-fetched data — NO extra network calls
+    const metrics = computeMetrics(branches, allSales, allInventory, allEmployees);
+
+    // Cache for future stale-while-revalidate (fire-and-forget)
+    cacheMetrics(orgId, metrics).catch(() => {});
+
+    // Build org-role lookup
     const branchIds = new Set(branches.map(b => b.id));
-    
-    // 3. Fetch all employees and filter by those belonging to the org's branches
-    const allEmployees = await employeeService.getAll('ALL');
     const branchEmployees = allEmployees.filter(e => e.branchId && branchIds.has(e.branchId));
-    
-    // 4. Fetch org members to get their roles (owner/admin/member)
-    const members = await orgService.getMembers(orgId);
+
     const memberRoleMap: Record<string, string> = {};
     for (const m of members) {
       memberRoleMap[m.userId] = m.role;
     }
-    
-    // 5. Merge roles and split into Managers (has account) and Staff (no account)
+
+    // Merge roles and split into Managers (has account) and Staff (no account)
     const allMappedEmployees = branchEmployees.map(e => ({
       ...e,
       orgRole: e.userId ? memberRoleMap[e.userId] : undefined
     }));
 
-    const managers = allMappedEmployees.filter(e => !!e.userId);
-    const staff = allMappedEmployees.filter(e => !e.userId);
-    
     return {
       metrics,
       branches,
-      employees: allMappedEmployees, // Keep original for backward compatibility
-      managers,
-      staff
+      employees: allMappedEmployees,
+      managers: allMappedEmployees.filter(e => !!e.userId),
+      staff: allMappedEmployees.filter(e => !e.userId),
     };
   }
 };
