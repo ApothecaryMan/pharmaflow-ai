@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import {
   Area,
   AreaChart,
@@ -30,6 +30,7 @@ import { useSettings } from '../../context';
 import { formatExpiryDate, parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { batchService } from '../../services/inventory/batchService';
 import { useData } from '../../services/DataContext';
+import { SegmentedControl } from '../common/SegmentedControl';
 
 interface DashboardProps {
   inventory: Drug[];
@@ -71,15 +72,38 @@ const getDaysUntilExpiry = (dateStr: string) => {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 };
 
-// Expand button component
-const ExpandButton = ({ onClick, title }: { onClick: () => void; title?: string }) => (
+const getRelativeTime = (d: Date, t: any, language: string) => {
+  const diff = new Date().getTime() - d.getTime();
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(mins / 60);
+  const isAR = language === 'AR';
+
+  if (mins < 1) return t.justNow || (isAR ? 'الآن' : 'Just now');
+  if (mins < 60) return isAR ? `منذ ${mins} د` : `${mins}m ago`;
+  if (hours < 24) return isAR ? `منذ ${hours} س` : `${hours}h ago`;
+  return d.toLocaleDateString(isAR ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' });
+};
+
+// --- Modular Private Components ---
+
+const ExpandButton: React.FC<{ onClick: () => void; title?: string }> = ({ onClick, title }) => (
   <button
     onClick={onClick}
-    className='w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95 opacity-0 group-hover:opacity-100'
+    className="w-10 h-10 flex items-center justify-center text-(--text-tertiary) hover:text-(--text-primary) transition-all rounded-xl hover:bg-(--bg-menu-hover) active:scale-95 opacity-0 group-hover:opacity-100"
     title={title || 'Expand'}
   >
-    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>open_in_full</span>
+    <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-md)' }}>open_in_full</span>
   </button>
+);
+
+const SectionHeader: React.FC<{ icon: string; title: string; onExpand?: () => void; iconColor?: string }> = ({ icon, title, onExpand, iconColor = 'text-primary-500' }) => (
+  <div className="flex justify-between items-center mb-3">
+    <h3 className="text-base font-semibold text-(--text-primary) flex items-center gap-2">
+      <span className={`material-symbols-rounded ${iconColor}`} style={{ fontSize: 'var(--icon-navbar-dropdown)' }}>{icon}</span>
+      {title}
+    </h3>
+    {onExpand && <ExpandButton onClick={onExpand} />}
+  </div>
 );
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -320,9 +344,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
           totalReturned += sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
         });
         const totalItems = sale.items.reduce((sum, item) => sum + item.quantity, 0);
-        return { ...sale, returnStats: { returned: totalReturned, total: totalItems } };
+        return { 
+          ...sale, 
+          returnStats: { returned: totalReturned, total: totalItems },
+          timeAgo: getRelativeTime(new Date(sale.date), t, language)
+        };
       });
-  }, [sales]);
+  }, [sales, t, language]);
 
   const recentSales20 = useMemo(() => {
     return [...sales]
@@ -350,19 +378,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
             sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
         });
         const totalItems = sale.items.reduce((sum, item) => sum + item.quantity, 0);
-        return { ...sale, returnStats: { returned: totalReturned, total: totalItems } };
+        return { 
+          ...sale, 
+          returnStats: { returned: totalReturned, total: totalItems },
+          timeAgo: getRelativeTime(new Date(sale.date), t, language)
+        };
       });
-  }, [sales]);
+  }, [sales, t, language]);
 
-  const handleRestockSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (restockDrug && restockQty > 0) {
-      onRestock(restockDrug.id, restockQty, restockIsUnit);
-      setRestockDrug(null);
-      setRestockQty(10);
-      setRestockIsUnit(false);
-    }
-  };
+  const handleRestockSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (restockDrug && restockQty > 0) {
+        onRestock(restockDrug.id, restockQty, restockIsUnit);
+        setRestockDrug(null);
+        setRestockQty(10);
+        setRestockIsUnit(false);
+      }
+    },
+    [restockDrug, restockQty, restockIsUnit, onRestock]
+  );
 
   // --- CUSTOM TOOLTIP ---
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -390,36 +425,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return 'flat';
   }, [salesData]);
 
-  const getChartColors = (status: string) => {
-    switch (status) {
-      case 'up':
-        return {
-          main: '#10b981', // emerald-500
-          start: '#34d399', // emerald-400
-          end: '#059669', // emerald-600
-        };
-      case 'down':
-        return {
-          main: '#ef4444', // red-500
-          start: '#f87171', // red-400
-          end: '#dc2626', // red-600
-        };
-      case 'flat':
-        return {
-          main: '#f97316', // orange-500
-          start: '#fb923c', // orange-400
-          end: '#ea580c', // orange-600
-        };
-      default:
-        return {
-          main: `var(--primary-500)`,
-          start: `var(--primary-400)`,
-          end: `var(--primary-600)`,
-        };
-    }
-  };
-
-  const chartColors = getChartColors(chartStatus);
+  const chartColors = useMemo(() => {
+    const colors: Record<string, any> = {
+      up: { main: '#10b981', start: '#34d399', end: '#059669' },
+      down: { main: '#ef4444', start: '#f87171', end: '#dc2626' },
+      flat: { main: '#f97316', start: '#fb923c', end: '#ea580c' },
+      default: {
+        main: `var(--primary-500)`,
+        start: `var(--primary-400)`,
+        end: `var(--primary-600)`,
+      },
+    };
+    return colors[chartStatus] || colors.default;
+  }, [chartStatus]);
 
   return (
     <div
@@ -521,15 +539,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Top Selling Products (1 Col) */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-80 flex flex-col group`}>
-          <div className='flex justify-between items-center mb-3'>
-            <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-              <span className='material-symbols-rounded text-yellow-500' style={{ fontSize: 'var(--icon-navbar-dropdown)' }}>
-                hotel_class
-              </span>
-              {t.topSelling}
-            </h3>
-            <ExpandButton onClick={() => setExpandedView('topSelling')} />
-          </div>
+          <SectionHeader 
+            icon="hotel_class" 
+            title={t.topSelling} 
+            onExpand={() => setExpandedView('topSelling')} 
+            iconColor="text-yellow-500" 
+          />
           <div className='flex-1 overflow-y-auto space-y-3 pe-1' dir='ltr'>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
@@ -644,15 +659,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
             }
           ].map((card) => (
             <div key={card.id} className={`p-5 rounded-3xl ${CARD_BASE} h-64 flex flex-col group`}>
-              <div className='flex justify-between items-center mb-2'>
-                <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-                  <span className={`material-symbols-rounded ${card.iconColor}`} style={{ fontSize: 'var(--icon-navbar-dropdown)' }}>
-                    {card.icon}
-                  </span>
-                  {card.title}
-                </h3>
-                <ExpandButton onClick={card.onExpand} />
-              </div>
+              <SectionHeader 
+                icon={card.icon} 
+                title={card.title} 
+                onExpand={card.onExpand} 
+                iconColor={card.iconColor} 
+              />
               <div className='flex-1 overflow-y-auto space-y-2 pe-1' dir='ltr'>
                 {isLoading ? (
                   Array.from({ length: 4 }).map((_, i) => (
@@ -681,15 +693,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Recent Transactions */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-auto max-h-[530px] flex flex-col group`}>
-          <div className='flex justify-between items-center mb-4'>
-            <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-              <span className='material-symbols-rounded text-primary-500' style={{ fontSize: 'var(--icon-navbar-dropdown)' }}>
-                receipt_long
-              </span>
-              {t.recentSales}
-            </h3>
-            <ExpandButton onClick={() => setExpandedView('recentSales')} />
-          </div>
+          <SectionHeader 
+            icon="receipt_long" 
+            title={t.recentSales} 
+            onExpand={() => setExpandedView('recentSales')} 
+          />
           <div className='flex-1 overflow-y-auto space-y-0 divide-y divide-gray-100 dark:divide-gray-800'>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
@@ -737,12 +745,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         )}
                       </p>
                       <p className='text-xs text-gray-500 flex items-center gap-2'>
-                        <span>
-                          {new Date(sale.date).toLocaleDateString()} •{' '}
-                          {new Date(sale.date).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                        <span className="text-(--text-tertiary)">
+                          {sale.timeAgo}
                         </span>
                         <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
                         <span className='text-xs'>#{sale.id}</span>
@@ -799,22 +803,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className='space-y-4'>
               <div className='flex items-center justify-between'>
                 <label className='text-xs font-bold text-gray-500 uppercase'>{t.modal.qty}</label>
-                <div className='flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg'>
-                  <button
-                    type='button'
-                    onClick={() => setRestockIsUnit(false)}
-                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${!restockIsUnit ? `bg-white dark:bg-gray-700 text-primary-600 shadow-xs` : 'text-gray-400'}`}
-                  >
-                    {t.pos?.pack || 'Pack'}
-                  </button>
-                  <button
-                    type='button'
-                    onClick={() => setRestockIsUnit(true)}
-                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${restockIsUnit ? `bg-white dark:bg-gray-700 text-primary-600 shadow-xs` : 'text-gray-400'}`}
-                  >
-                    {t.pos?.unit || 'Unit'}
-                  </button>
-                </div>
+                <SegmentedControl
+                  options={[
+                    { label: t.pos?.pack || 'Pack', value: 'pack' },
+                    { label: t.pos?.unit || 'Unit', value: 'unit' },
+                  ]}
+                  value={restockIsUnit ? 'unit' : 'pack'}
+                  onChange={(val) => setRestockIsUnit(val === 'unit')}
+                  size='sm'
+                />
               </div>
               <div className='flex items-center gap-3'>
                 <button
@@ -1398,7 +1395,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         )}
 
                         <span className='text-[9px] text-gray-400 font-normal shrink-0'>
-                          {getRelativeTime(new Date(sale.date))}
+                          {sale.timeAgo}
                         </span>
                       </div>
 
