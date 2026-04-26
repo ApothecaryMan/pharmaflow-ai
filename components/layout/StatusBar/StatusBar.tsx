@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useSettings } from '../../../context';
 import { useDynamicTickerData } from '../../../hooks/useDynamicTickerData';
 import { useShift } from '../../../hooks/useShift';
 import packageJson from '../../../package.json';
 import { useData } from '../../../services';
-// import { AnnouncementBanner } from './items/AnnouncementBanner';
 import { AlertsAndAds } from '../../features/alerts/AlertsAndAds';
 import { ConnectionStatus } from './items/ConnectionStatus';
 import { DateTime } from './items/DateTime';
@@ -13,7 +12,6 @@ import { NotificationBell } from './items/NotificationBell';
 import { SettingsMenu } from './items/SettingsMenu';
 import { QuickLogin } from './items/QuickLogin';
 import { VersionInfo } from './items/VersionInfo';
-import { useStatusBar } from './StatusBarContext';
 import { StatusBarItem } from './StatusBarItem';
 
 export interface StatusBarTranslations {
@@ -45,9 +43,6 @@ export interface StatusBarTranslations {
   };
 }
 
-import type { UserRole } from '../../../config/permissions';
-import { Language, ThemeColor } from '../../../types';
-
 export interface StatusBarProps {
   t?: StatusBarTranslations;
   currentEmployeeId?: string | null;
@@ -74,148 +69,105 @@ const defaultTranslations: StatusBarTranslations = {
   },
 };
 
+// --- Helper sub-components for better hierarchy ---
+const StatusBarSection: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
+  <div className={`flex items-center h-full ${className}`}>{children}</div>
+);
+
 export const StatusBar: React.FC<StatusBarProps> = React.memo(
   ({ t = defaultTranslations, currentEmployeeId, onSelectEmployee, iconSize = 'var(--icon-base)', isRecoveringPassword }) => {
-    /*
-     * STATUS BAR ARCHITECTURE GUIDE
-     * =============================
-     *
-     * 1. CONTAINER FIXED HEIGHT:
-     *    The bar is strictly locked to `h-6` (24px).
-     *    All chidren must inherit this height to ensure perfect vertical alignment.
-     *
-     * 2. NO GAPS STRATEGY:
-     *    We removed `gap-2` from items to allow items to flush against each other.
-     *    Spacing is strictly handled by the internal padding of `StatusBarItem` (px-2.5).
-     *
-     * 3. THREE-SECTION LAYOUT:
-     *    - Left: Connection & System Status
-     *    - Center: Announcements (Flex grow)
-     *    - Right: Notifications, Time, Version
-     */
-    const { state } = useStatusBar();
-
-    // --- Settings from Context ---
-    /**
-     * ARCHITECTURE NOTE:
-     * StatusBar is decoupled from configuration state. It only accepts functional props (t, userRole, etc.).
-     * Global settings are accessed via the `useSettings` hook to keep the component interface lean.
-     */
+    // 1. Precise destructuring: Only listen to what we actually use
     const {
       language,
-      theme: currentTheme,
-      setTheme,
-      darkMode,
-      setDarkMode,
-      setLanguage,
-      availableThemes,
-      availableLanguages,
-      textTransform,
-      setTextTransform,
-      hideInactiveModules,
-      setHideInactiveModules,
-      navStyle,
-      setNavStyle,
-      developerMode,
-      setDeveloperMode,
-      dropdownBlur,
-      setDropdownBlur,
-      sidebarBlur,
-      setSidebarBlur,
-      menuBlur,
-      setMenuBlur,
-      tooltipBlur,
-      setTooltipBlur,
       showTicker,
-      setShowTicker,
       showTickerSales,
-      setShowTickerSales,
       showTickerInventory,
-      setShowTickerInventory,
       showTickerCustomers,
-      setShowTickerCustomers,
       showTickerTopSeller,
-      setShowTickerTopSeller,
-      fontFamilyEN,
-      setFontFamilyEN,
-      fontFamilyAR,
-      setFontFamilyAR,
     } = useSettings();
 
-    // --- Real-time Data ---
     const tickerData = useDynamicTickerData();
     const { employees, isLoading } = useData();
-
-    // --- Shift Status Logic ---
     const { currentShift } = useShift();
 
-    const getShiftTooltip = (): string => {
-      if (!currentShift) {
-        return t.shiftClosed || 'Shift Closed';
-      }
+    const isAR = language === 'AR';
 
+    // 2. Smart Memoization: Prepare data outside JSX
+    const currentEmployee = useMemo(() => 
+      employees.find((e) => e.id === currentEmployeeId),
+      [employees, currentEmployeeId]
+    );
+
+    const shiftTooltip = useMemo(() => {
+      if (!currentShift) return t.shiftClosed || 'Shift Closed';
+      
       const openTime = new Date(currentShift.openTime);
       const now = new Date();
       const isSameDay = openTime.toDateString() === now.toDateString();
+      const locale = isAR ? 'ar-EG' : 'en-US';
 
-      const timeStr = openTime.toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', {
+      const timeStr = openTime.toLocaleTimeString(locale, {
         hour: '2-digit',
         minute: '2-digit',
         hour12: true,
       });
 
-      if (isSameDay) {
-        return `${t.shiftOpen || 'Shift Open'} ${t.shiftSince || 'Since'} ${timeStr}`;
-      } else {
-        const dateStr = openTime.toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-GB', {
-          day: 'numeric',
-          month: 'short',
-        });
-        return `${t.shiftOpen || 'Shift Open'} ${t.shiftSince || 'Since'} ${dateStr} ${timeStr}`;
-      }
-    };
+      const label = t.shiftOpen || 'Shift Open';
+      const since = t.shiftSince || 'Since';
+
+      if (isSameDay) return `${label} ${since} ${timeStr}`;
+      
+      const dateStr = openTime.toLocaleDateString(isAR ? 'ar-EG' : 'en-GB', {
+        day: 'numeric',
+        month: 'short',
+      });
+      return `${label} ${since} ${dateStr} ${timeStr}`;
+    }, [currentShift, t, isAR]);
+
+    const tickerProps = useMemo(() => ({
+      todaySales: t.ticker?.todaySales || 'Today',
+      invoices: t.ticker?.invoices || 'Invoices',
+      completed: t.ticker?.completed || 'Done',
+      pending: t.ticker?.pending || 'Pending',
+      lowStock: t.ticker?.lowStock || 'Low Stock',
+      shortages: t.ticker?.shortages || 'Shortages',
+      newCustomers: t.ticker?.newCustomers || 'New Customers',
+      topSeller: t.ticker?.topSeller || 'Top Seller',
+    }), [t.ticker]);
+
+    const notificationTranslations = useMemo(() => ({
+      notifications: t.notifications || 'Notifications',
+      noNotifications: t.noNotifications || 'No notifications',
+      clearAll: t.clearAll || 'Clear all',
+      dismiss: t.dismiss || 'Dismiss',
+      messages: t.messages,
+    }), [t]);
 
     return (
       <div
-        dir='ltr'
-        className='hidden md:flex items-center justify-between h-6 border-t shrink-0 select-none shadow-xs'
-        style={{
-          backgroundColor: 'var(--bg-statusbar)',
-          borderColor: 'var(--border-primary)',
-          '--status-icon-size': typeof iconSize === 'number' ? `${iconSize}px` : iconSize,
-        } as React.CSSProperties}
+        dir="ltr"
+        className="hidden md:flex items-center justify-between h-6 border-t shrink-0 select-none shadow-xs bg-(--bg-statusbar) border-(--border-primary)"
+        style={{ '--status-icon-size': typeof iconSize === 'number' ? `${iconSize}px` : iconSize } as React.CSSProperties}
       >
-        {/* Left Section */}
-        <div className='flex items-center h-full'>
-          {/* Version Info */}
+        {/* Left Section: System & Time */}
+        <StatusBarSection>
           <VersionInfo version={t.version} />
-
-          {/* Settings Menu */}
           {currentEmployeeId && <SettingsMenu />}
-
-          {/* Connection Status */}
           <ConnectionStatus onlineText={t.online} offlineText={t.offline} />
-
-          {/* Shift Status */}
           <StatusBarItem
             icon={currentShift ? 'check_circle' : 'lock'}
-            tooltip={getShiftTooltip()}
+            tooltip={shiftTooltip}
             variant={currentShift ? 'success' : 'error'}
           />
-
-          {/* Date Time */}
-          <DateTime hideIcon={true} />
-
-          {/* Alerts & Ads (Next to Time) */}
+          <DateTime hideIcon />
           <AlertsAndAds />
-        </div>
+        </StatusBarSection>
 
-        {/* Center Spacer (Visible only if needed, currently empty as we moved Ads) */}
-        <div className='flex-1' />
+        {/* Center Section: Flexible Spacer */}
+        <div className="flex-1" />
 
-        {/* Right Section */}
-        <div className='flex items-center h-full'>
-          {/* Dynamic Ticker - Rotating Stats */}
+        {/* Right Section: Interactive Items */}
+        <StatusBarSection>
           {showTicker && (
             <DynamicTicker
               language={language}
@@ -224,31 +176,14 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
               showInventory={showTickerInventory}
               showCustomers={showTickerCustomers}
               showTopSeller={showTickerTopSeller}
-              t={
-                t.ticker
-                  ? {
-                      todaySales: t.ticker.todaySales || 'Today',
-                      invoices: t.ticker.invoices || 'Invoices',
-                      completed: t.ticker.completed || 'Done',
-                      pending: t.ticker.pending || 'Pending',
-                      lowStock: t.ticker.lowStock || 'Low Stock',
-                      shortages: t.ticker.shortages || 'Shortages',
-                      newCustomers: t.ticker.newCustomers || 'New Customers',
-                      topSeller: t.ticker.topSeller || 'Top Seller',
-                    }
-                  : undefined
-              }
+              t={tickerProps}
             />
           )}
 
-          {/* User Info (Employee Selector) */}
           <QuickLogin
-            userName={
-              employees.find((e) => e.id === currentEmployeeId)?.name ||
-              (language === 'AR' ? 'المستخدم' : 'User')
-            }
+            userName={currentEmployee?.name || (isAR ? 'المستخدم' : 'User')}
             isLoading={isLoading}
-            roleLabel={employees.find((e) => e.id === currentEmployeeId)?.role}
+            roleLabel={currentEmployee?.role}
             employees={employees}
             currentEmployeeId={currentEmployeeId}
             onSelectEmployee={onSelectEmployee}
@@ -256,18 +191,11 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
             isRecoveringPassword={isRecoveringPassword}
           />
 
-          {/* Notifications */}
           <NotificationBell
             language={language}
-            t={{
-              notifications: t.notifications || 'Notifications',
-              noNotifications: t.noNotifications || 'No notifications',
-              clearAll: t.clearAll || 'Clear all',
-              dismiss: t.dismiss || 'Dismiss',
-              messages: t.messages,
-            }}
+            t={notificationTranslations}
           />
-        </div>
+        </StatusBarSection>
       </div>
     );
   }
