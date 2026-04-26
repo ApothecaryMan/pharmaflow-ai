@@ -38,6 +38,7 @@ interface PendingApprovalProps {
   hideHeader?: boolean;
   externalSearch?: string;
   onViewChange?: (view: string, params?: any) => void;
+  isLoading?: boolean;
 }
 
 export const PendingApproval: React.FC<PendingApprovalProps> = ({
@@ -54,6 +55,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   hideHeader = false,
   externalSearch = '',
   onViewChange,
+  isLoading,
 }) => {
   const { textTransform } = useSettings();
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
@@ -188,8 +190,36 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
         />
       )}
 
-      {/* Content */}
-      {filteredPendingPurchases.length === 0 ? (
+      {/* Loading & Content States */}
+      {isLoading && filteredPendingPurchases.length === 0 ? (
+        <div className='flex-1 overflow-auto p-4 lg:p-6'>
+          <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6'>
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className='bg-white dark:bg-(--bg-card) rounded-3xl border border-gray-100 dark:border-(--border-divider) p-5 space-y-4 animate-pulse'>
+                <div className='flex justify-between items-start'>
+                  <div className='space-y-2'>
+                    <div className='h-3 w-16 bg-gray-100 dark:bg-neutral-800 rounded' />
+                    <div className='h-5 w-32 bg-gray-200 dark:bg-neutral-800/50 rounded' />
+                  </div>
+                  <div className='h-8 w-8 bg-gray-100 dark:bg-neutral-800 rounded-full' />
+                </div>
+                <div className='space-y-3 pt-2'>
+                  {[1, 2, 3].map(j => (
+                    <div key={j} className='flex justify-between'>
+                      <div className='h-3 w-20 bg-gray-100 dark:bg-neutral-800 rounded' />
+                      <div className='h-3 w-12 bg-gray-100 dark:bg-neutral-800 rounded' />
+                    </div>
+                  ))}
+                </div>
+                <div className='pt-4 flex gap-3'>
+                  <div className='h-10 flex-1 bg-gray-100 dark:bg-neutral-800 rounded-xl' />
+                  <div className='h-10 flex-1 bg-gray-100 dark:bg-neutral-800 rounded-xl' />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : filteredPendingPurchases.length === 0 ? (
         <div className='flex-1 flex flex-col items-center justify-center text-gray-400 space-y-4 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800 m-4'>
           <div className='w-24 h-24 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center'>
             <span className='material-symbols-rounded text-5xl opacity-20'>
@@ -212,7 +242,9 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
           {filteredPendingPurchases.map((purchase) => (
             <div
               key={purchase.id}
-              className='bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-100 dark:border-gray-800 shadow-xs flex flex-col relative overflow-hidden group cursor-pointer hover:border-gray-200 dark:hover:border-blue-800 transition-colors'
+              className={`bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-100 dark:border-gray-800 shadow-xs flex flex-col relative overflow-hidden group cursor-pointer hover:border-gray-200 dark:hover:border-blue-800 transition-colors ${
+                isLoading ? 'animate-pulse pointer-events-none opacity-80' : ''
+              }`}
               onClick={() => setSelectedPurchase(purchase)}
             >
               <div className='absolute top-4 right-4 px-3 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5'>

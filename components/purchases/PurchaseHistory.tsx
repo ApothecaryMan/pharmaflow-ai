@@ -29,6 +29,7 @@ interface PurchaseHistoryProps {
   onViewChange?: (view: string, params?: any) => void;
   onMarkAsReceived?: (id: string) => Promise<void>;
   employees: Employee[];
+  isLoading?: boolean;
 }
 
 export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
@@ -43,6 +44,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
   onViewChange,
   onMarkAsReceived,
   employees,
+  isLoading,
 }) => {
   const { activeBranchId } = useData();
   const { textTransform } = useSettings();
@@ -407,6 +409,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
           onRowClick={(p) => setSelectedPurchase(p)}
           onRowContextMenu={(e, p) => showMenu(e.clientX, e.clientY, getRowContextActions(p))}
           tableId='purchases_history_v3'
+          isLoading={isLoading}
           enablePagination={true}
           pageSize='auto'
           enableVirtualization={true}

@@ -1144,6 +1144,25 @@ export function TanStackTable<TData, TValue>({
                           content = flexRender(cell.column.columnDef.cell, cell.getContext());
                         }
 
+                        // TIER 3: Inline loading skeleton for existing data (background refresh)
+                        if (isLoading && rows.length > 0) {
+                          const isActionColumn = cell.column.id === 'actions' || cell.column.id === 'status' || cell.column.id.includes('select');
+                          if (!isActionColumn) {
+                            content = (
+                              <div className="animate-pulse">
+                                <div className="h-3 w-3/4 bg-zinc-100 dark:bg-zinc-800/60 rounded" />
+                                <div className="h-2 w-1/2 bg-zinc-50 dark:bg-zinc-800/30 rounded mt-1" />
+                              </div>
+                            );
+                          } else {
+                            content = (
+                              <div className="animate-pulse opacity-50">
+                                {content}
+                              </div>
+                            );
+                          }
+                        }
+
                         return (
                           <td
                             key={cell.id}

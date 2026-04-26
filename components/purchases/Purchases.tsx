@@ -51,6 +51,7 @@ interface PurchasesProps {
   navigationParams?: any;
   onViewChange?: (view: string, params?: any) => void;
   currentShift: Shift | null;
+  isLoading?: boolean;
 }
 
 export const Purchases: React.FC<PurchasesProps> = ({
@@ -69,6 +70,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   navigationParams,
   onViewChange,
   currentShift,
+  isLoading,
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const { error: showToastError } = useAlert();
@@ -1017,7 +1019,25 @@ export const Purchases: React.FC<PurchasesProps> = ({
                              background: transparent;
                          }
                      `}</style>
-              {cart.length === 0 ? (
+              {isLoading && cart.length === 0 ? (
+                <div className="space-y-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="p-3 rounded-2xl bg-gray-50 dark:bg-(--bg-navbar) animate-pulse">
+                      <div className="flex gap-2 items-center">
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 w-3/4 bg-gray-200 dark:bg-neutral-800 rounded-md" />
+                          <div className="h-3 w-1/4 bg-gray-100 dark:bg-neutral-800/50 rounded-md" />
+                        </div>
+                        <div className="flex gap-1.5 items-center">
+                          {[1, 2, 3, 4, 5].map(j => (
+                            <div key={j} className={`${j === 1 ? 'w-12' : 'w-14'} h-8 bg-gray-200 dark:bg-neutral-800 rounded-lg`} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : cart.length === 0 ? (
                 <div className='text-center text-gray-400 py-10'>{t.emptyCart}</div>
               ) : (
                 cart.map((item, index) => (
@@ -1084,6 +1104,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           }}
                           onKeyDown={(e) => handleInputKeyDown(e, index, 'quantity')}
                           label={t.cartFields?.qty || 'Qty'}
+                          isLoading={isLoading}
                           type='number'
                           maxLength={4}
                           value={item.quantity}
@@ -1111,6 +1132,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           }}
                           onKeyDown={(e) => handleInputKeyDown(e, index, 'expiryDate')}
                           label={t.cartFields?.expiry || 'Expiry'}
+                          isLoading={isLoading}
                           type='text'
                           maxLength={4}
                           inputClassName={(() => {
@@ -1168,6 +1190,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           }}
                           onKeyDown={(e) => handleInputKeyDown(e, index, 'costPrice')}
                           label={t.cartFields?.cost || 'Cost'}
+                          isLoading={isLoading}
                           type='number'
                           value={item.costPrice}
                           labelBgClassName={
@@ -1193,6 +1216,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           }}
                           onKeyDown={(e) => handleInputKeyDown(e, index, 'unitCostPrice')}
                           label={language === 'AR' ? 'ت. شريط' : 'U. Cost'}
+                          isLoading={isLoading}
                           type='number'
                           value={item.unitCostPrice || 0}
                           placeholder={item.costPrice && item.unitsPerPack ? (item.costPrice / item.unitsPerPack).toFixed(2) : ''}
@@ -1219,6 +1243,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           }}
                           onKeyDown={(e) => handleInputKeyDown(e, index, 'discount')}
                           label={t.cartFields?.discount || 'Disc %'}
+                          isLoading={isLoading}
                           type='number'
                           min={0}
                           max={100}
@@ -1246,6 +1271,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           }}
                           onKeyDown={(e) => handleInputKeyDown(e, index, 'salePrice')}
                           label={t.cartFields?.sale || 'Sale'}
+                          isLoading={isLoading}
                           type='number'
                           value={item.salePrice || 0}
                           labelBgClassName={
@@ -1271,6 +1297,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           }}
                           onKeyDown={(e) => handleInputKeyDown(e, index, 'unitSalePrice')}
                           label={language === 'AR' ? 'س. شريط' : 'U. Sale'}
+                          isLoading={isLoading}
                           type='number'
                           value={item.unitSalePrice || 0}
                           placeholder={item.salePrice && item.unitsPerPack ? (item.salePrice / item.unitsPerPack).toFixed(2) : ''}
@@ -1297,6 +1324,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           }}
                           onKeyDown={(e) => handleInputKeyDown(e, index, 'tax')}
                           label={t.cartFields?.tax || 'Tax %'}
+                          isLoading={isLoading}
                           type='number'
                           min={0}
                           max={100}
@@ -1320,6 +1348,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       <div className='w-16'>
                         <FloatingInput
                           label={t.cartFields?.subtotal || 'Subtotal'}
+                          isLoading={isLoading}
                           type='number'
                           value={Number((item.costPrice * item.quantity).toFixed(2))}
                           onChange={() => {}} // Read only
@@ -1349,6 +1378,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                               ? `bg-primary-50 dark:bg-(--bg-navbar)`
                               : 'bg-gray-50 dark:bg-(--bg-navbar)'
                           }
+                          isLoading={isLoading}
                           className='opacity-75 pointer-events-none' // Visual cue
                         />
                       </div>
