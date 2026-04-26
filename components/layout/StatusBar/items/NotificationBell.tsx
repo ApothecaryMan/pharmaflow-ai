@@ -81,7 +81,12 @@ const NotificationItem: React.FC<{
       className="text-gray-400 hover:text-black dark:hover:text-white transition-colors"
       title={dismissText}
     >
-      <span className="material-symbols-rounded text-[calc(var(--status-icon-size,16px)-2px)]">close</span>
+      <span 
+        className="material-symbols-rounded"
+        style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 2px)' }}
+      >
+        close
+      </span>
     </button>
   </div>
 );
