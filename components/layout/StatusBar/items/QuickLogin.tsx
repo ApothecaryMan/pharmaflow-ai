@@ -25,6 +25,7 @@ interface QuickLoginProps {
   onSelectEmployee?: (id: string | null) => void;
   language?: 'EN' | 'AR';
   isRecoveringPassword?: boolean;
+  isLoading?: boolean;
 }
 
 export const QuickLogin: React.FC<QuickLoginProps> = ({
@@ -36,6 +37,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
   onSelectEmployee,
   language = 'EN',
   isRecoveringPassword,
+  isLoading = false,
 }) => {
   const [step, setStep] = React.useState<'idle' | 'username' | 'password' | 'new-password'>('idle');
   const [inputVal, setInputVal] = React.useState(''); // Shared input for username/password
@@ -239,12 +241,22 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
         <div onContextMenu={handleContextMenu} className='h-full flex items-center'>
           <StatusBarItem
             icon='person'
-            label={currentEmployeeId ? userName : language === 'AR' ? 'تسجيل الدخول' : 'Login'} // Show "Login" if no user
+            label={
+              isLoading && currentEmployeeId
+                ? undefined  // Hide label during loading, show skeleton instead
+                : currentEmployeeId ? userName : language === 'AR' ? 'تسجيــــل الدخـول' : 'Login'
+            }
             tooltip={tooltipText}
             onClick={handleStartLogin}
             variant={currentEmployeeId ? 'info' : 'warning'}
             className='cursor-pointer hover:bg-black/5 dark:hover:bg-white/10'
-          />
+          >
+            {isLoading && currentEmployeeId && (
+              <span className="inline-flex items-center gap-1">
+                <span className="w-12 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full" />
+              </span>
+            )}
+          </StatusBarItem>
           {!currentEmployeeId && (
             <button
               onClick={async () => {
@@ -310,7 +322,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
                   alert(parseWebAuthnError(err, language as any));
                 }
               }}
-              className='flex items-center justify-center h-full px-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors border-l border-gray-200 dark:border-gray-700'
+              className='flex items-center justify-center h-full px-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors'
               title={language === 'AR' ? 'تسجيل الدخول بمفتاح المرور' : 'Login with Passkey'}
             >
               <span className='material-symbols-rounded text-primary-500' style={{ fontSize: 'calc(var(--status-icon-size, 16px) + 2px)' }}>
@@ -321,7 +333,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
         </div>
       ) : (
         <div 
-          className={`relative flex items-center h-full w-fit overflow-hidden transition-all duration-300 ${
+          className={`relative flex items-center h-full w-fit overflow-hidden ${
             step === 'new-password' 
               ? 'px-0 border-none' 
               : 'px-2 gap-2 bg-white/50 dark:bg-gray-900/50 border-l border-r border-gray-300 dark:border-gray-700'
@@ -370,7 +382,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
                     ? 'كلمة المرور الجديدة...'
                     : 'New Password...'
                   : language === 'AR'
-                    ? 'كلمة المرور...'
+                    ? 'كلمــــة المـرور...'
                     : 'Password...'
               }
               className={`bg-transparent border-none outline-hidden text-[11px] font-bold text-gray-800 dark:text-white placeholder-gray-500 ${step === 'new-password' ? 'w-32' : 'w-24'} focus:ring-0 ${isError ? 'text-red-500 dark:text-red-400' : ''}`}

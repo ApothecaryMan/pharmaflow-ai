@@ -244,11 +244,10 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
           {/* User Info (Employee Selector) */}
           <QuickLogin
             userName={
-              isLoading && currentEmployeeId
-                ? '...'
-                : employees.find((e) => e.id === currentEmployeeId)?.name ||
-                  (language === 'AR' ? 'المستخدم' : 'User')
+              employees.find((e) => e.id === currentEmployeeId)?.name ||
+              (language === 'AR' ? 'المستخدم' : 'User')
             }
+            isLoading={isLoading}
             roleLabel={employees.find((e) => e.id === currentEmployeeId)?.role}
             employees={employees}
             currentEmployeeId={currentEmployeeId}
