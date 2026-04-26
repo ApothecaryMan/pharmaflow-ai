@@ -156,13 +156,16 @@ export const Modal: React.FC<ModalProps> = ({
     if (isOpen) {
       window.addEventListener('keydown', handleEsc);
       document.body.style.overflow = 'hidden';
+      document.body.classList.add('modal-blur-active');
     } else {
       document.body.style.overflow = '';
+      document.body.classList.remove('modal-blur-active');
     }
 
     return () => {
       window.removeEventListener('keydown', handleEsc);
       document.body.style.overflow = '';
+      document.body.classList.remove('modal-blur-active');
     };
   }, [isOpen, onClose]);
 
@@ -209,7 +212,7 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Modal Content Wrapper */}
       <div
-        className={`relative w-full ${maxWidthClass} bg-(--bg-card) rounded-lg shadow-2xl overflow-hidden flex flex-col animate-scale-in max-h-[95vh] border border-(--border-divider) select-none ${className}`}
+        className={`relative w-full ${maxWidthClass} bg-(--bg-card) rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col animate-scale-in max-h-[95vh] border border-zinc-400/40 dark:border-zinc-500/30 ring-1 ring-inset ring-white/20 dark:ring-white/10 select-none ${className}`}
         style={{ height: height || 'auto' }}
         onClick={(e) => e.stopPropagation()}
       >

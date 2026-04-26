@@ -836,3 +836,11 @@ html:not(.dark).none-border-mode .card-shadow {
   border-color: transparent !important;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
 }
+
+/* Fallback for older browsers (Chrome < 76) that don't support backdrop-filter */
+.modal-blur-active #root {
+  filter: blur(8px);
+  transition: filter 0.3s ease-out;
+  pointer-events: none;
+  user-select: none;
+}
