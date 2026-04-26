@@ -181,6 +181,7 @@ export const authService = {
   async logout(): Promise<void> {
     try {
       await supabase.auth.signOut();
+      this.clearEmployeeSession();
       
       // Clear all session and context keys using the smart storage utility
       const userId = storage.getUserId();
@@ -205,6 +206,36 @@ export const authService = {
     } catch (err) {
       console.error('Logout error:', err);
     }
+  },
+
+  clearEmployeeSession(): void {
+    storage.remove('pharma_currentEmployeeId');
+    // Also restore the original session if needed
+    const stored = localStorage.getItem(SESSION_KEY);
+    if (stored) {
+      try {
+        const session = JSON.parse(stored);
+        if (session._originalRole) {
+          session.role = session._originalRole;
+          session.department = session._originalDepartment;
+          session.orgRole = session._originalOrgRole;
+          session.username = session._originalUsername;
+          delete session._originalRole;
+          delete session._originalDepartment;
+          delete session._originalOrgRole;
+          delete session._originalUsername;
+        }
+        delete session.employeeId;
+        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      } catch (e) {
+        console.error('Failed to restore session:', e);
+      }
+    }
+    // Dispatch storage event manually for same-tab updates if needed
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'pharma_currentEmployeeId',
+      newValue: null
+    }));
   },
 
   hasSession(): boolean {

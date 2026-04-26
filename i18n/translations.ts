@@ -237,6 +237,7 @@ export const TRANSLATIONS = {
       shiftOpen: 'Shift Open',
       shiftClosed: 'Shift Closed',
       shiftSince: 'Since',
+      userLabel: 'User',
       messages: {
         outOfStock: 'Out of Stock: {{name}} {{form}}',
         saleComplete: 'Sale completed: {{total}} L.E',
@@ -2667,6 +2668,7 @@ export const TRANSLATIONS = {
       shiftOpen: 'المناوبة مفتوحة',
       shiftClosed: 'المناوبة مغلقة',
       shiftSince: 'منذ',
+      userLabel: 'المستخدم',
       messages: {
         outOfStock: 'نفذت الكمية: {{name}} {{form}}',
         saleComplete: 'تمت عملية بيع: {{total}} ج.م',

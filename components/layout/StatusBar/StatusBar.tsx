@@ -23,9 +23,10 @@ export interface StatusBarTranslations {
   noNotifications?: string;
   clearAll?: string;
   dismiss?: string;
-  shiftOpen?: string;
-  shiftClosed?: string;
-  shiftSince?: string;
+  shiftOpen: string;
+  shiftClosed: string;
+  shiftSince: string;
+  userLabel: string;
   messages?: {
     outOfStock?: string;
     saleComplete?: string;
@@ -46,7 +47,7 @@ export interface StatusBarTranslations {
 export interface StatusBarProps {
   t?: StatusBarTranslations;
   currentEmployeeId?: string | null;
-  onSelectEmployee?: (id: string) => void;
+  onSelectEmployee?: (id: string | null) => void;
   iconSize?: number | string;
   isRecoveringPassword?: boolean;
 }
@@ -63,6 +64,7 @@ const defaultTranslations: StatusBarTranslations = {
   shiftOpen: 'Shift Open',
   shiftClosed: 'Shift Closed',
   shiftSince: 'Since',
+  userLabel: 'User',
   messages: {
     outOfStock: 'Out of Stock: {{name}} {{form}}',
     saleComplete: 'Sale completed: {{total}} L.E',
@@ -183,7 +185,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
           )}
 
           <QuickLogin
-            userName={currentEmployee?.name || (isAR ? 'المستخدم' : 'User')}
+            userName={currentEmployee?.name}
             isLoading={isLoading}
             roleLabel={currentEmployee?.role}
             employees={employees}

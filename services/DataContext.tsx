@@ -263,6 +263,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
   const switchBranch = useCallback(async (branchId: string) => {
     setIsLoading(true);
     try {
+      // Clear employee session on branch switch to prevent leakage
+      setCurrentEmployee(null);
+      authService.clearEmployeeSession();
+
       await branchService.setActive(branchId);
       setActiveBranchId(branchId);
       lastLoadedBranchId.current = branchId;
@@ -277,6 +281,11 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
     setIsLoading(true);
     try {
       const { orgService } = await import('./org/orgService');
+      
+      // Clear employee session on org switch to prevent leakage
+      setCurrentEmployee(null);
+      authService.clearEmployeeSession();
+
       orgService.setActiveOrgId(orgId);
       setActiveOrgId(orgId);
       await settingsService.set('orgId', orgId);
