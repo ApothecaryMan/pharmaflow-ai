@@ -30,7 +30,7 @@ import {
 } from '../../config/employeeRoles';
 import { RoleIcon } from './RoleIcon';
 import { PageHeader } from '../common/PageHeader';
-import { EmployeeRowSkeleton } from '../skeletons/HRSkeletons';
+
 
 interface EmployeeListProps {
   color: string;
@@ -85,8 +85,6 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [allEmployeesFetched, setAllEmployeesFetched] = useState<Employee[]>([]);
   const [isFetchingGlobal, setIsFetchingGlobal] = useState(false);
-
-  const isSuperAdmin = permissionsService.isOrgAdmin();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -556,8 +554,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         }
         rightContent={
           <div className="flex items-center gap-3">
-            {isSuperAdmin && (
-              <label className="flex items-center gap-3 px-3 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+            <label className="flex items-center gap-3 px-3 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
                 <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none shrink-0">
                   {t.employeeList.globalView}
                 </span>
@@ -567,7 +564,6 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                   activeColor={color}
                 />
               </label>
-            )}
 
             {permissionsService.can('users.manage') && (
               <button

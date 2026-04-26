@@ -1,11 +1,8 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
-import { SearchInput } from '../../../components/common/SearchInput';
 import { TanStackTable } from '../../../components/common/TanStackTable';
-import { useAudit } from '../../../hooks/useAudit';
 import type { AuditTransaction } from '../../../types/intelligence';
-import { formatCurrency } from '../../../utils/currency';
 import { TransactionDetailModal } from './TransactionDetailModal';
 import { useSettings } from '../../../context';
 import { getDisplayName } from '../../../utils/drugDisplayName';
@@ -109,10 +106,6 @@ export const AuditPage: React.FC<AuditPageProps> = ({
     ],
     [columnHelper, t, language, textTransform]
   );
-
-  if (loading) {
-    return <DashboardPageSkeleton />;
-  }
 
   return (
     <div className='h-full flex flex-col overflow-hidden'>

@@ -182,10 +182,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
     [t, textTransform]
   );
 
-  // Loading skeleton
-  if (loading || !kpis) {
-    return <DashboardPageSkeleton />;
-  }
+  // Page renders immediately; individual parts handle their own loading states.
 
   return (
     <div className='h-full flex flex-col space-y-4 overflow-hidden'>
@@ -193,44 +190,47 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0'>
         <SmallCard
           title={t.intelligence.financials.kpis.revenue}
-          value={kpis.revenue.value}
+          value={kpis?.revenue?.value || 0}
           type='currency'
           currencyLabel={getCurrencySymbol()}
           icon='payments'
           iconColor='emerald'
-          trend={kpis.revenue.change_direction}
-          trendValue={`${kpis.revenue.change_percent}%`}
+          trend={kpis?.revenue?.change_direction}
+          trendValue={kpis?.revenue ? `${kpis.revenue.change_percent}%` : ''}
           trendLabel={t.intelligence.financials.kpis.compare}
+          isLoading={loading && !kpis}
         />
         <SmallCard
           title={t.intelligence.financials.kpis.grossProfit}
-          value={kpis.gross_profit.value}
+          value={kpis?.gross_profit?.value || 0}
           type='currency'
           currencyLabel={getCurrencySymbol()}
           icon='account_balance_wallet'
           iconColor='gray'
-          trend={kpis.gross_profit.change_direction}
-          trendValue={`${kpis.gross_profit.change_percent}%`}
+          trend={kpis?.gross_profit?.change_direction}
+          trendValue={kpis?.gross_profit ? `${kpis.gross_profit.change_percent}%` : ''}
           trendLabel={t.intelligence.financials.kpis.compare}
+          isLoading={loading && !kpis}
         />
         <SmallCard
           title={t.intelligence.financials.kpis.margin}
-          value={kpis.margin_percent.value}
+          value={kpis?.margin_percent?.value || 0}
           valueSuffix='%'
           fractionDigits={1}
           icon='percent'
           iconColor='amber'
-          trend={kpis.margin_percent.change_direction}
-          trendValue={`${Math.abs(kpis.margin_percent.change_points)} ${t.intelligence.financials.kpis.points}`}
+          trend={kpis?.margin_percent?.change_direction}
+          trendValue={kpis?.margin_percent ? `${Math.abs(kpis.margin_percent.change_points)} ${t.intelligence.financials.kpis.points}` : ''}
           trendLabel={t.intelligence.financials.kpis.compare}
+          isLoading={loading && !kpis}
         />
         <SmallCard
           title={t.intelligence.financials.kpis.unitsSold}
-          value={kpis.units_sold.value}
+          value={kpis?.units_sold?.value || 0}
           icon='shopping_cart'
           iconColor='purple'
-          trend={kpis.units_sold.change_direction}
-          trendValue={`${kpis.units_sold.change_percent}%`}
+          trend={kpis?.units_sold?.change_direction}
+          trendValue={kpis?.units_sold ? `${kpis.units_sold.change_percent}%` : ''}
           trendLabel={t.intelligence.financials.kpis.compare}
         />
       </div>
@@ -239,10 +239,11 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
       <div className='flex-1 min-h-0'>
         {activeTab === 'products' ? (
           <div className='h-full overflow-hidden'>
-            {products.length > 0 ? (
+            {products.length > 0 || loading ? (
               <TanStackTable
                 data={products}
                 columns={productColumns}
+                isLoading={loading}
                 lite={false}
                 tableId='product-financials-table'
                 enablePagination={true}
@@ -264,6 +265,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
             <TanStackTable
               data={categories}
               columns={categoryColumns}
+              isLoading={loading}
               lite={false}
               tableId='category-financials-table'
               enablePagination={true}

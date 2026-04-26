@@ -139,10 +139,8 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
     [columnHelper, handleGeneratePO, t, textTransform]
   );
 
-  // Loading skeleton
-  if (loading) {
-    return <DashboardPageSkeleton />;
-  }
+  // Page renders immediately; TanStackTable handles its own skeletons
+  // and maintains data during background refreshes.
 
   return (
     <div className='h-full flex flex-col space-y-4 overflow-hidden'>
@@ -154,11 +152,13 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
       />
 
       {/* KPIs */}
-      <div className='shrink-0'>{summary && <ProcurementKPIs summary={summary} />}</div>
+      <div className='shrink-0'>
+        <ProcurementKPIs summary={summary} t={t} isLoading={loading && !summary} />
+      </div>
 
       {/* Main Grid Container - Simplified since TanStackTable will provide card styling */}
       <div className='flex-1 min-h-0'>
-        {filteredItems.length > 0 ? (
+        {filteredItems.length > 0 || loading ? (
           <TanStackTable
             data={filteredItems}
             columns={columns}

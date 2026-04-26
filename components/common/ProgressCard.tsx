@@ -188,6 +188,7 @@ export interface SegmentedProgressCardProps {
   };
   className?: string; // For grid column spanning
   compact?: boolean;
+  isLoading?: boolean;
 }
 
 export const SegmentedProgressCard: React.FC<SegmentedProgressCardProps> = ({
@@ -196,10 +197,11 @@ export const SegmentedProgressCard: React.FC<SegmentedProgressCardProps> = ({
   sideStat,
   className = '',
   compact = false,
+  isLoading = false,
 }) => {
   return (
     <div
-      className={`${compact ? 'px-4 py-2 h-[84px] rounded-2xl' : 'p-6 rounded-3xl'} ${CARD_BASE} flex items-center ${compact ? 'gap-3' : 'gap-8'} ${className}`}
+      className={`${compact ? 'px-4 py-2 h-[84px] rounded-2xl' : 'p-6 rounded-3xl'} ${CARD_BASE} flex items-center ${compact ? 'gap-3' : 'gap-8'} ${className} ${isLoading ? 'animate-pulse' : ''}`}
     >
       {/* Main Content (Title + Progress Bar + Legend) */}
       <div className='flex-1 min-w-0 flex flex-col justify-center h-full'>
@@ -209,23 +211,31 @@ export const SegmentedProgressCard: React.FC<SegmentedProgressCardProps> = ({
           <div
             className={`flex gap-3 text-xs text-gray-400 ${compact ? 'items-center' : 'justify-end'}`}
           >
-            {segments.map((segment, index) => (
-              <span key={index} className='flex items-center gap-1.5'>
-                <span
-                  className={`${compact ? 'text-sm font-bold text-gray-700 dark:text-gray-300' : 'font-bold opacity-70'}`}
-                >
-                  {compact ? segment.value : `(${segment.value})`}
-                </span>
-                <span
-                  className={`${compact ? 'w-2.5 h-2.5' : 'w-2.5 h-2.5'} rounded-full ${segment.color}`}
-                />
-                {!compact && (
-                  <span className='font-semibold text-gray-600 dark:text-gray-300'>
-                    {segment.label}
+            {isLoading ? (
+              <div className='flex gap-2'>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className='h-3 w-8 bg-zinc-100 dark:bg-zinc-800 rounded' />
+                ))}
+              </div>
+            ) : (
+              segments.map((segment, index) => (
+                <span key={index} className='flex items-center gap-1.5'>
+                  <span
+                    className={`${compact ? 'text-sm font-bold text-gray-700 dark:text-gray-300' : 'font-bold opacity-70'}`}
+                  >
+                    {compact ? segment.value : `(${segment.value})`}
                   </span>
-                )}
-              </span>
-            ))}
+                  <span
+                    className={`${compact ? 'w-2.5 h-2.5' : 'w-2.5 h-2.5'} rounded-full ${segment.color}`}
+                  />
+                  {!compact && (
+                    <span className='font-semibold text-gray-600 dark:text-gray-300'>
+                      {segment.label}
+                    </span>
+                  )}
+                </span>
+              ))
+            )}
           </div>
 
           <h4
@@ -239,32 +249,47 @@ export const SegmentedProgressCard: React.FC<SegmentedProgressCardProps> = ({
         <div
           className={`flex gap-1 ${compact ? 'h-3' : 'h-3'} rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 w-full`}
         >
-          {segments.map((segment, index) => (
-            <div
-              key={index}
-              style={{ flex: segment.value }}
-              className={`${segment.color} h-full transition-all duration-500`}
-              title={segment.tooltip || `${segment.label}: ${segment.value}`}
-            />
-          ))}
+          {isLoading ? (
+            <div className='w-full h-full bg-zinc-50 dark:bg-zinc-800/30' />
+          ) : (
+            segments.map((segment, index) => (
+              <div
+                key={index}
+                style={{ flex: segment.value }}
+                className={`${segment.color} h-full transition-all duration-500`}
+                title={segment.tooltip || `${segment.label}: ${segment.value}`}
+              />
+            ))
+          )}
         </div>
       </div>
 
       {/* Side Statistic */}
-      {sideStat && (
+      {(sideStat || isLoading) && (
         <div
           className={`hidden sm:flex ltr:border-l rtl:border-r border-gray-200 dark:border-gray-700 flex-col items-end justify-center ${compact ? 'min-w-[90px] ltr:pl-5 rtl:pr-5' : 'min-w-[160px] ltr:pl-8 rtl:pr-8'} text-right h-full`}
         >
-          <div
-            className={`${compact ? 'text-[11px]' : 'text-xs'} font-bold text-gray-500 dark:text-gray-400 mb-0.5 whitespace-nowrap`}
-          >
-            {sideStat.label}
-          </div>
-          <div
-            className={`${compact ? 'text-2xl' : 'text-3xl'} font-bold tracking-tight ${sideStat.valueColor || 'text-gray-900 dark:text-white'}`}
-          >
-            {sideStat.value}
-          </div>
+          {isLoading ? (
+            <div className='space-y-2 flex flex-col items-end'>
+              <div className='h-3 w-16 bg-zinc-100 dark:bg-zinc-800 rounded' />
+              <div className='h-8 w-24 bg-zinc-100 dark:bg-zinc-800 rounded-lg' />
+            </div>
+          ) : (
+            sideStat && (
+              <>
+                <div
+                  className={`${compact ? 'text-[11px]' : 'text-xs'} font-bold text-gray-500 dark:text-gray-400 mb-0.5 whitespace-nowrap`}
+                >
+                  {sideStat.label}
+                </div>
+                <div
+                  className={`${compact ? 'text-2xl' : 'text-3xl'} font-bold tracking-tight ${sideStat.valueColor || 'text-gray-900 dark:text-white'}`}
+                >
+                  {sideStat.value}
+                </div>
+              </>
+            )
+          )}
         </div>
       )}
     </div>

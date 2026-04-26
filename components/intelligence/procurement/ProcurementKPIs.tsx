@@ -4,44 +4,49 @@ import { formatCurrency, getCurrencySymbol } from '../../../utils/currency';
 import { SmallCard } from '../../common/SmallCard';
 
 interface ProcurementKPIsProps {
-  summary: ProcurementSummary;
+  summary: ProcurementSummary | null;
   t?: any;
+  isLoading?: boolean;
 }
 
-export const ProcurementKPIs: React.FC<ProcurementKPIsProps> = ({ summary, t }) => {
+export const ProcurementKPIs: React.FC<ProcurementKPIsProps> = ({ summary, t, isLoading }) => {
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
       <SmallCard
         title={t?.intelligence?.procurement?.kpis?.needingOrder || 'Needing Order'}
-        value={summary.items_needing_order}
+        value={summary?.items_needing_order || 0}
         subValue={t?.intelligence?.procurement?.kpis?.items || 'items'}
         icon='shopping_cart'
         iconColor='emerald'
+        isLoading={isLoading}
       />
 
       <SmallCard
         title={t?.intelligence?.procurement?.kpis?.outOfStock || 'Out of Stock'}
-        value={summary.items_out_of_stock}
+        value={summary?.items_out_of_stock || 0}
         subValue={t?.intelligence?.procurement?.kpis?.items || 'items'}
         icon='warning'
-        iconColor={summary.items_out_of_stock > 0 ? 'red' : 'emerald'}
+        iconColor={summary?.items_out_of_stock && summary.items_out_of_stock > 0 ? 'red' : 'emerald'}
+        isLoading={isLoading}
       />
 
       <SmallCard
         title={t?.intelligence?.procurement?.kpis?.lostSales || 'Lost Sales'}
-        value={summary.estimated_lost_sales}
+        value={summary?.estimated_lost_sales || 0}
         type='currency'
         currencyLabel={getCurrencySymbol()}
         icon='money_off'
         iconColor='amber'
+        isLoading={isLoading}
       />
 
       <SmallCard
         title={t?.intelligence?.procurement?.kpis?.pendingPO || 'Pending PO'}
-        value={summary.pending_po_count}
-        subValue={`${t?.settings?.common?.value || 'Value'} ${formatCurrency(summary.pending_po_value)}`}
+        value={summary?.pending_po_count || 0}
+        subValue={summary ? `${t?.settings?.common?.value || 'Value'} ${formatCurrency(summary.pending_po_value)}` : ''}
         icon='pending_actions'
         iconColor='gray'
+        isLoading={isLoading}
       />
     </div>
   );

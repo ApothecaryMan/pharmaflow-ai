@@ -1,6 +1,5 @@
 import React from 'react';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
-import { GenericSkeleton } from './GenericSkeleton';
 
 /**
  * Registry mapping view IDs to Skeleton Components
@@ -9,7 +8,7 @@ import { GenericSkeleton } from './GenericSkeleton';
 
 export const PageSkeletonRegistry = ({ view }: { view: string }) => {
   const config = PAGE_REGISTRY[view];
-  const Skeleton = config?.skeleton || GenericSkeleton;
+  const Skeleton = config?.skeleton || (() => null);
   const skeletonProps = config?.skeletonProps || {};
 
   return (

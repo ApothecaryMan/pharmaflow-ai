@@ -1,6 +1,7 @@
 import React, { type ComponentType } from 'react';
 import { Login } from '../components/auth/Login';
 import { CustomerHistory } from '../components/customers/CustomerHistory';
+
 import { CustomerLoyaltyLookup } from '../components/customers/CustomerLoyaltyLookup';
 import { CustomerLoyaltyOverview } from '../components/customers/CustomerLoyaltyOverview';
 import { CustomerManagement } from '../components/customers/CustomerManagement';
@@ -301,7 +302,9 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'color',
       't',
       'language',
+      'isLoading',
       'onViewChange',
+      'navigationParams',
     ],
     permission: 'customer.view',
   },
@@ -312,7 +315,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'نظرة عامة على العملاء',
     icon: 'analytics',
     category: 'customer-dashboard',
-    requiredProps: ['customers', 'sales', 'color', 't', 'language'],
+    requiredProps: ['customers', 'sales', 'color', 't', 'language', 'isLoading', 'onViewChange'],
     permission: 'customer.view',
     layout: 'dashboard',
   },
@@ -323,7 +326,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'سجل العملاء',
     icon: 'manage_search',
     category: 'customers',
-    requiredProps: ['customers', 'sales', 'returns', 'color', 't', 'language', 'navigationParams'],
+    requiredProps: [
+      'customers',
+      'sales',
+      'returns',
+      'color',
+      't',
+      'language',
+      'navigationParams',
+      'isLoading',
+      'onViewChange',
+    ],
     permission: 'customer.view',
   },
   'loyalty-overview': {

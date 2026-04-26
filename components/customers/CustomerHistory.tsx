@@ -5,6 +5,8 @@ import type { Customer, Return, Sale } from '../../types';
 import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { TanStackTable } from '../common/TanStackTable';
+import { PageHeader } from '../common/PageHeader';
+import { DateRangePicker } from '../common/DatePicker';
 
 interface CustomerHistoryProps {
   color: string;
@@ -14,6 +16,9 @@ interface CustomerHistoryProps {
   sales: Sale[];
   returns: Return[];
   navigationParams?: Record<string, any> | null;
+  isLoading?: boolean;
+  onViewChange?: (view: string, params?: Record<string, any>) => void;
+  datePickerTranslations?: any;
 }
 
 export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
@@ -24,8 +29,14 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
   sales,
   returns,
   navigationParams,
+  isLoading,
+  onViewChange,
+  datePickerTranslations,
 }) => {
+  const locale = language === 'AR' ? 'ar-EG' : 'en-US';
   const [searchTerm, setSearchTerm] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'sales' | 'returns'>('sales');
 
@@ -34,19 +45,54 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
 
   const salesWithCustomer = useMemo(() => {
     return sales.filter((s) => {
-      // If no customer code, it's a guest - EXCLUDE it
-      if (!s.customerCode) return false;
-      // If it has a code, ensure it's in our registered set
-      return registeredCodes.has(s.customerCode);
+      // 1. Customer Filtering
+      const hasCorrectCustomer = s.customerCode && registeredCodes.has(s.customerCode);
+      if (!hasCorrectCustomer) return false;
+
+      // 2. Date Filtering
+      const saleDate = new Date(s.date);
+      const start = startDate ? new Date(startDate) : null;
+      const end = endDate ? new Date(endDate) : null;
+
+      if (start) {
+        start.setHours(0, 0, 0, 0);
+        if (saleDate < start) return false;
+      }
+      if (end) {
+        end.setHours(23, 59, 59, 999);
+        if (saleDate > end) return false;
+      }
+
+      return true;
     });
-  }, [sales, registeredCodes]);
+  }, [sales, registeredCodes, startDate, endDate]);
 
   const returnsWithCustomer = useMemo(() => {
     // Only include returns linked to sales of registered customers
     const registeredSaleIds = new Set(salesWithCustomer.map((s) => s.id));
 
     return returns
-      .filter((ret) => registeredSaleIds.has(ret.saleId))
+      .filter((ret) => {
+        // 1. Registered Customer Filtering
+        const isRegistered = registeredSaleIds.has(ret.saleId);
+        if (!isRegistered) return false;
+
+        // 2. Date Filtering
+        const returnDate = new Date(ret.date);
+        const start = startDate ? new Date(startDate) : null;
+        const end = endDate ? new Date(endDate) : null;
+
+        if (start) {
+          start.setHours(0, 0, 0, 0);
+          if (returnDate < start) return false;
+        }
+        if (end) {
+          end.setHours(23, 59, 59, 999);
+          if (returnDate > end) return false;
+        }
+
+        return true;
+      })
       .map((ret) => {
         const sale = sales.find((s) => s.id === ret.saleId);
         return {
@@ -56,7 +102,7 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
           customerPhone: sale?.customerPhone || '-',
         };
       });
-  }, [returns, sales, salesWithCustomer]);
+  }, [returns, sales, salesWithCustomer, startDate, endDate]);
 
   // Handle passed initial search from navigation (optional)
   React.useEffect(() => {
@@ -176,19 +222,10 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
   );
 
   return (
-    <div className='h-full flex flex-col space-y-6 animate-fade-in'>
-      <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4'>
-        <div>
-          <h1 className='text-2xl font-bold tracking-tight page-title'>
-            {t.customerHistory?.title || 'Customer History'}
-          </h1>
-          <p className='text-sm text-gray-500'>
-            {t.customerHistory?.subtitle || 'View detailed transaction history'}
-          </p>
-        </div>
-
-        <div className='flex items-center gap-3 self-end md:self-center'>
-          <div className='w-64 md:w-80'>
+    <div className='h-full flex flex-col space-y-6 overflow-hidden'>
+      <PageHeader
+        leftContent={
+          <div className='w-full max-w-md'>
             <SearchInput
               value={searchTerm}
               onSearchChange={setSearchTerm}
@@ -197,58 +234,95 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
               color={color}
             />
           </div>
+        }
+        centerContent={
           <SegmentedControl
-            value={activeTab}
-            onChange={(val) => setActiveTab(val as 'sales' | 'returns')}
-            color={color}
             options={[
-              {
-                label: t.customerHistory?.tabs.invoices || 'Invoices',
-                value: 'sales',
-                icon: 'receipt_long',
-              },
-              {
-                label: t.customerHistory?.tabs.returns || 'Returns',
-                value: 'returns',
-                icon: 'assignment_return',
-              },
+              { value: 'customers', label: t.allCustomers || 'List', icon: 'group' },
+              { value: 'add-customer', label: t.addCustomer || 'Add', icon: 'person_add' },
+              { value: 'customer-history', label: t.customerHistory?.title || 'History', icon: 'history' },
             ]}
+            value="customer-history"
+            onChange={(val) => {
+              if (val === 'add-customer') onViewChange?.('customers', { mode: 'add' });
+              else onViewChange?.(val);
+            }}
+            variant="onPage"
+            shape="pill"
+            color={color}
+            size="md"
+            iconSize="--icon-lg"
+            useGraphicFont={true}
+            className="w-full sm:w-[480px]"
           />
-        </div>
-      </div>
+        }
+        rightContent={
+          <div className='flex items-center gap-3'>
+            <DateRangePicker
+              startDate={startDate}
+              endDate={endDate}
+              onStartDateChange={setStartDate}
+              onEndDateChange={setEndDate}
+              color={color}
+              locale={locale}
+            />
+            <SegmentedControl
+              value={activeTab}
+              onChange={(val) => setActiveTab(val as 'sales' | 'returns')}
+              color={color}
+              options={[
+                {
+                  label: t.customerHistory?.tabs.invoices || 'Invoices',
+                  value: 'sales',
+                  icon: 'receipt_long',
+                },
+                {
+                  label: t.customerHistory?.tabs.returns || 'Returns',
+                  value: 'returns',
+                  icon: 'assignment_return',
+                },
+              ]}
+            />
+          </div>
+        }
+      />
 
-      {/* Unified Transactions Table */}
-      <div className='bg-white dark:bg-gray-800 rounded-xl shadow-xs border border-gray-100 dark:border-gray-700 overflow-hidden flex-1 flex flex-col min-h-[500px]'>
-        <div className='flex-1 p-0'>
-          {activeTab === 'sales' ? (
-            <TanStackTable
-              data={salesWithCustomer}
-              columns={salesColumns}
-              tableId='cust_history_sales_v2'
-              color={color}
-              globalFilter={searchTerm}
-              onSearchChange={setSearchTerm}
-              enableSearch={false}
-              enablePagination={true}
-              enableVirtualization={false}
-              pageSize='auto'
-              enableShowAll={true}
-            />
-          ) : (
-            <TanStackTable
-              data={returnsWithCustomer}
-              columns={returnsColumns}
-              tableId='cust_history_returns_v2'
-              color={color}
-              globalFilter={searchTerm}
-              onSearchChange={setSearchTerm}
-              enableSearch={false}
-              enablePagination={true}
-              enableVirtualization={false}
-              pageSize='auto'
-              enableShowAll={true}
-            />
-          )}
+      <div className='flex-1 min-h-0 flex flex-col'>
+        {/* Unified Transactions Table */}
+        <div className='bg-white dark:bg-gray-800 rounded-xl shadow-xs border border-gray-100 dark:border-gray-700 overflow-hidden flex-1 flex flex-col'>
+          <div className='flex-1 p-0'>
+            {activeTab === 'sales' ? (
+              <TanStackTable
+                data={salesWithCustomer}
+                columns={salesColumns}
+                tableId='cust_history_sales_v2'
+                color={color}
+                globalFilter={searchTerm}
+                onSearchChange={setSearchTerm}
+                enableSearch={false}
+                isLoading={isLoading}
+                enablePagination={true}
+                enableVirtualization={false}
+                pageSize='auto'
+                enableShowAll={true}
+              />
+            ) : (
+              <TanStackTable
+                data={returnsWithCustomer}
+                columns={returnsColumns}
+                tableId='cust_history_returns_v2'
+                color={color}
+                globalFilter={searchTerm}
+                onSearchChange={setSearchTerm}
+                enableSearch={false}
+                isLoading={isLoading}
+                enablePagination={true}
+                enableVirtualization={false}
+                pageSize='auto'
+                enableShowAll={true}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>

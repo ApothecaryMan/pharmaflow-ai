@@ -22,7 +22,6 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
 
   // Check if current user is Super Admin to show the toggle
   const currentUser = authService.getCurrentUserSync();
-  const isSuperAdmin = permissionsService.isOrgAdmin();
 
   const history: LoginAuditEntry[] = useMemo(
     () => authService.getLoginHistory(showAllBranches ? undefined : activeBranchId),
@@ -336,7 +335,6 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             {t.loginAudit.title}
           </h1>
 
-          {isSuperAdmin && (
             <label className='flex items-center gap-3 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-white/10 transition-colors'>
               <span className='text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider select-none'>
                 {t.loginAudit.globalView}
@@ -348,7 +346,6 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
                 activeColor={currentTheme.hex}
               />
             </label>
-          )}
         </div>
         <p className='text-gray-500 dark:text-gray-400 text-sm'>{t.loginAudit.subtitle}</p>
       </div>

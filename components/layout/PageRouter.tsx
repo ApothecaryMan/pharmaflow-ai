@@ -51,9 +51,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     return <LandingPage color={theme.primary} language={language} darkMode={darkMode} />;
   }
 
-  if (isLoading && view !== 'inventory' && view !== 'inventory-beta') {
-    return <PageSkeletonRegistry view={view} />;
-  }
+
 
   const pageConfig = PAGE_REGISTRY[view];
 

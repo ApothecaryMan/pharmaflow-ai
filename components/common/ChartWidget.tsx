@@ -131,6 +131,7 @@ interface ChartWidgetProps {
   chartClassName?: string;
   headerClassName?: string;
   chartMargin?: { top?: number; right?: number; bottom?: number; left?: number };
+  isLoading?: boolean;
 
   children?: React.ReactNode;
 }
@@ -157,6 +158,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
   headerClassName,
   chartClassName,
   chartMargin,
+  isLoading = false,
   children,
 }) => {
   const [internalChartType, setInternalChartType] = useState<'area' | 'bar'>('area');
@@ -264,10 +266,18 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
       {/* Chart Area */}
       <div
         ref={containerRef}
-        className={`w-full ${chartClassName || 'h-[250px]'}`}
+        className={`w-full relative ${chartClassName || 'h-[250px]'}`}
         style={{ minHeight: 200, minWidth: 100 }}
       >
-        {isReady && (
+        {isLoading && (
+          <div className="absolute inset-0 z-10 flex flex-col gap-4">
+             <div className="flex-1 w-full bg-zinc-400/10 dark:bg-zinc-100/5 rounded-2xl animate-pulse" />
+             <div className="h-6 w-full flex gap-4">
+                {[1,2,3,4,5,6].map(i => <div key={i} className="flex-1 bg-zinc-400/5 dark:bg-zinc-100/5 rounded-md animate-pulse" />)}
+             </div>
+          </div>
+        )}
+        {isReady && !isLoading && (
           <ResponsiveContainer width='100%' height='100%'>
             <ComposedChart
               data={data}

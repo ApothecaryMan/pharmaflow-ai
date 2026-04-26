@@ -32,75 +32,7 @@ export const RiskPage: React.FC<RiskPageProps> = ({ t, summary, items, loading }
     return () => window.removeEventListener('OPEN_DISCOUNT_MODAL' as any, handleGlobalDiscount);
   }, [items]);
 
-  // Loading skeleton
-  if (loading) {
-    return <DashboardPageSkeleton />;
-  }
-
-  // Empty state
-  if (!summary || items.length === 0) {
-    return (
-      <div className='space-y-6 animate-fade-in'>
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
-          <SmallCard
-            title={t?.intelligence?.risk?.kpis?.valueAtRisk || 'Value at Risk'}
-            value={0}
-            type='currency'
-            currencyLabel={getCurrencySymbol()}
-            subValue={t?.intelligence?.risk?.kpis?.total || 'Total'}
-            icon='trending_down'
-            iconColor='red'
-          />
-
-          <SmallCard
-            title={t?.intelligence?.risk?.kpis?.batchesAtRisk || 'Batches at Risk'}
-            value={0}
-            subValue={t?.intelligence?.risk?.kpis?.batch || 'batch'}
-            icon='inventory'
-            iconColor='amber'
-          />
-
-          <SegmentedProgressCard
-            title='توزيع المخاطر حسب الإلحاح'
-            className='col-span-1 lg:col-span-2'
-            compact={true}
-            segments={[
-              {
-                value: 0,
-                color: 'bg-red-500',
-                label: 'حرج',
-                tooltip: 'حرج (< 30 يوم)',
-              },
-              {
-                value: 0,
-                color: 'bg-amber-500',
-                label: 'عالي',
-                tooltip: 'عالي (30-60 يوم)',
-              },
-              {
-                value: 0,
-                color: 'bg-primary-400',
-                label: 'متوسط',
-                tooltip: 'متوسط (60-90 يوم)',
-              },
-            ]}
-            sideStat={{
-              label: 'فرصة استرداد',
-              value: formatCurrency(0),
-              valueColor: 'text-emerald-600 dark:text-emerald-400',
-            }}
-          />
-        </div>
-        <div className='p-8 text-center bg-transparent'>
-          <span className='material-symbols-rounded text-emerald-500 mb-4' style={{ fontSize: 'var(--icon-2xl)' }}>verified</span>
-          <h3 className='text-lg font-bold text-gray-900 dark:text-white mb-2'>
-            {t?.intelligence?.risk?.empty?.title || 'No risks identified'}
-          </h3>
-          <p className='text-gray-500'>{t?.intelligence?.risk?.empty?.subtitle || 'All batches are well within expiry'}</p>
-        </div>
-      </div>
-    );
-  }
+  // Page renders immediately; individual parts handle their own loading states.
 
   return (
     <div className='h-full flex flex-col space-y-4 overflow-hidden'>
@@ -114,41 +46,44 @@ export const RiskPage: React.FC<RiskPageProps> = ({ t, summary, items, loading }
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0'>
         <SmallCard
           title={t?.intelligence?.risk?.kpis?.valueAtRisk || 'Value at Risk'}
-          value={summary.total_value_at_risk}
+          value={summary?.total_value_at_risk || 0}
           type='currency'
           currencyLabel={getCurrencySymbol()}
           subValue={t?.intelligence?.risk?.kpis?.total || 'Total'}
           icon='trending_down'
           iconColor='red'
+          isLoading={loading && !summary}
         />
 
         <SmallCard
           title={t?.intelligence?.risk?.kpis?.batchesAtRisk || 'Batches at Risk'}
-          value={summary.total_batches_at_risk}
+          value={summary?.total_batches_at_risk || 0}
           subValue={t?.intelligence?.risk?.kpis?.batch || 'batch'}
           icon='inventory'
           iconColor='amber'
+          isLoading={loading && !summary}
         />
 
         <SegmentedProgressCard
           title='توزيع المخاطر حسب الإلحاح'
           className='col-span-1 lg:col-span-2'
           compact={true}
+          isLoading={loading && !summary}
           segments={[
             {
-              value: summary.by_urgency.critical.count,
+              value: summary?.by_urgency?.critical?.count || 0,
               color: 'bg-red-500',
               label: 'حرج',
               tooltip: 'حرج (< 30 يوم)',
             },
             {
-              value: summary.by_urgency.high.count,
+              value: summary?.by_urgency?.high?.count || 0,
               color: 'bg-amber-500',
               label: 'عالي',
               tooltip: 'عالي (30-60 يوم)',
             },
             {
-              value: summary.by_urgency.medium.count,
+              value: summary?.by_urgency?.medium?.count || 0,
               color: 'bg-primary-400',
               label: 'متوسط',
               tooltip: 'متوسط (60-90 يوم)',
@@ -156,7 +91,7 @@ export const RiskPage: React.FC<RiskPageProps> = ({ t, summary, items, loading }
           ]}
           sideStat={{
             label: 'فرصة استرداد',
-            value: formatCurrency(summary.potential_recovery_value),
+            value: formatCurrency(summary?.potential_recovery_value || 0),
             valueColor: 'text-emerald-600 dark:text-emerald-400',
           }}
         />
@@ -167,6 +102,7 @@ export const RiskPage: React.FC<RiskPageProps> = ({ t, summary, items, loading }
         <ExpiryRiskGrid
           data={items}
           t={t}
+          isLoading={loading}
           leftCustomControls={
             <h3 className='text-base font-bold text-gray-900 dark:text-white px-1'>
               {t?.intelligence?.risk?.sections?.expiryAnalysis || 'Expiry Analysis'}

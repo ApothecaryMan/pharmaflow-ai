@@ -907,7 +907,7 @@ export const Inventory: React.FC<InventoryProps> = ({
               filterableColumns={filterConfigs}
               onFilterChange={setActiveFilters}
               defaultHiddenColumns={[]} // Helpers are now hidden via metadata
-              isLoading={isLoading || !isDataSettled}
+              isLoading={!isDataSettled && groupedInventory.length === 0}
             />
           </div>
         </>

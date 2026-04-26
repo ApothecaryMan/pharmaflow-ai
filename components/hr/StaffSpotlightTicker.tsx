@@ -5,7 +5,7 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { InsightTooltip } from '../common/InsightTooltip';
 import { Tooltip } from '../common/Tooltip';
 import type { StaffSpotlightTickerProps } from './types/staffOverview.types';
-import { StaffMetricSkeleton } from '../skeletons/HRSkeletons';
+
 
 const AR_IMAGE_MAP: Record<string, string> = {
   revenue: 'ملك الايرادات',
@@ -26,19 +26,22 @@ export const StaffSpotlightTicker: React.FC<StaffSpotlightTickerProps> = ({
   isLoading = false,
 }) => {
   const { darkMode } = useSettings();
-  // We want to show cards side-by-side (grid)
-  // User requested "4 cards", so we use grid-cols-4 on large screens
+  // Define fixed spotlight types to ensure stable layout during loading
+  const placeholderAchievements = [
+    { type: 'revenue', icon: 'payments', color: 'blue', label: language === 'AR' ? 'ملك الإيرادات' : 'Revenue King' },
+    { type: 'invoices', icon: 'receipt_long', color: 'emerald', label: language === 'AR' ? 'ملك الفواتير' : 'Invoices King' },
+    { type: 'speed', icon: 'timer', color: 'amber', label: language === 'AR' ? 'سيد السرعة' : 'Speed Master' },
+    { type: 'csat', icon: 'star', color: 'purple', label: language === 'AR' ? 'بطل الرضا' : 'CSAT Champion' },
+    { type: 'loyalty', icon: 'group_add', color: 'pink', label: language === 'AR' ? 'جامع الولاء' : 'Loyalty Guru' },
+  ];
+
+  const itemsToRender = isLoading && achievements.length === 0 ? placeholderAchievements : achievements;
 
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4'>
-      {isLoading ? (
-        <>
-          {[1, 2, 3, 4, 5].map(i => <StaffMetricSkeleton key={i} />)}
-        </>
-      ) : (
-        achievements.map((item, idx) => (
+      {itemsToRender.map((item: any, idx) => (
         <div
-          key={item.id}
+          key={item.id || item.type}
           className={`
             relative p-4 rounded-3xl ${CARD_BASE}
             flex flex-col group overflow-hidden
@@ -87,57 +90,68 @@ export const StaffSpotlightTicker: React.FC<StaffSpotlightTickerProps> = ({
               <span className='text-[10px] text-gray-500 font-bold block mb-0.5'>
                 {language === 'AR' ? 'الموظف' : 'Employee'}
               </span>
-              <Tooltip
-                content={<InsightTooltip {...item.tooltip} language={language} />}
-                position='top'
-                triggerClassName='w-full text-left'
-                tooltipClassName='p-0 border-none'
-              >
-                <h4 className='text-sm font-bold text-gray-900 dark:text-gray-100 truncate hover:text-primary-500 transition-colors cursor-help'>
-                  {item.hero?.name || (language === 'AR' ? '—' : '—')}
-                </h4>
-              </Tooltip>
+              
+              {isLoading ? (
+                <div className="flex flex-col gap-2 [direction:ltr] items-start">
+                  {/* Name Skeleton */}
+                  <div className="h-4 w-24 bg-zinc-400/20 dark:bg-zinc-100/10 rounded-sm animate-pulse" />
+                  {/* Metric Skeleton */}
+                  <div className="h-3 w-16 bg-zinc-400/10 dark:bg-zinc-100/5 rounded-sm animate-pulse" />
+                </div>
+              ) : (
+                <>
+                  <Tooltip
+                    content={<InsightTooltip {...item.tooltip} language={language} />}
+                    position='top'
+                    triggerClassName='w-full text-left'
+                    tooltipClassName='p-0 border-none'
+                  >
+                    <h4 className='text-sm font-bold text-gray-900 dark:text-gray-100 truncate hover:text-primary-500 transition-colors cursor-help'>
+                      {item.hero?.name || (language === 'AR' ? '—' : '—')}
+                    </h4>
+                  </Tooltip>
 
-              {/* Primary Metric */}
-              <div className='mt-1 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400'>
-                {item.type === 'revenue' && (
-                  <span className='material-symbols-rounded text-sm'>payments</span>
-                )}
-                {item.type === 'speed' && (
-                  <span className='material-symbols-rounded text-sm'>timer</span>
-                )}
-                {item.type === 'invoices' && (
-                  <span className='material-symbols-rounded text-sm'>receipt_long</span>
-                )}
-                {item.type === 'csat' && (
-                  <span className='material-symbols-rounded text-sm'>star</span>
-                )}
-                {item.type === 'loyalty' && (
-                  <span className='material-symbols-rounded text-sm'>group_add</span>
-                )}
+                  {/* Primary Metric */}
+                  <div className='mt-1 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400'>
+                    {item.type === 'revenue' && (
+                      <span className='material-symbols-rounded text-sm'>payments</span>
+                    )}
+                    {item.type === 'speed' && (
+                      <span className='material-symbols-rounded text-sm'>timer</span>
+                    )}
+                    {item.type === 'invoices' && (
+                      <span className='material-symbols-rounded text-sm'>receipt_long</span>
+                    )}
+                    {item.type === 'csat' && (
+                      <span className='material-symbols-rounded text-sm'>star</span>
+                    )}
+                    {item.type === 'loyalty' && (
+                      <span className='material-symbols-rounded text-sm'>group_add</span>
+                    )}
 
-                <span>
-                  {item.type === 'revenue'
-                    ? formatCurrency(
-                        item.hero?.revenue || 0,
-                        'EGP',
-                        language === 'AR' ? 'ar' : 'en',
-                        0
-                      )
-                    : item.type === 'speed'
-                      ? `${(item.hero?.avgTime || 0).toFixed(1)}m`
-                      : item.type === 'csat'
-                        ? (item.hero?.csat || 0).toFixed(1)
-                        : item.type === 'loyalty'
-                          ? `${((item.hero?.repeatRatio || 0) * 100).toFixed(0)}%`
-                          : item.hero?.count || 0}
-                </span>
-              </div>
+                    <span>
+                      {item.type === 'revenue'
+                        ? formatCurrency(
+                            item.hero?.revenue || 0,
+                            'EGP',
+                            language === 'AR' ? 'ar' : 'en',
+                            0
+                          )
+                        : item.type === 'speed'
+                          ? `${(item.hero?.avgTime || 0).toFixed(1)}m`
+                          : item.type === 'csat'
+                            ? (item.hero?.csat || 0).toFixed(1)
+                            : item.type === 'loyalty'
+                              ? `${((item.hero?.repeatRatio || 0) * 100).toFixed(0)}%`
+                              : item.hero?.count || 0}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
-        ))
-      )}
+      ))}
     </div>
   );
 };

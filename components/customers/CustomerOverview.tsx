@@ -17,6 +17,9 @@ import type { Customer, Sale } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { ExpandedModal } from '../common/ExpandedModal';
 import { SmallCard } from '../common/SmallCard';
+import { PageHeader } from '../common/PageHeader';
+import { SegmentedControl } from '../common/SegmentedControl';
+
 
 interface CustomerOverviewProps {
   customers: Customer[];
@@ -24,6 +27,8 @@ interface CustomerOverviewProps {
   color: string;
   t: any;
   language: 'EN' | 'AR';
+  isLoading?: boolean;
+  onViewChange?: (view: string) => void;
 }
 
 type ExpandedView =
@@ -58,6 +63,8 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
   color,
   t,
   language,
+  isLoading,
+  onViewChange,
 }) => {
   const [expandedView, setExpandedView] = useState<ExpandedView>(null);
 
@@ -270,10 +277,13 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
 
 
   return (
-    <div className='h-full overflow-y-auto pe-2 space-y-4 pb-10'>
-      <h1 className='text-2xl font-bold tracking-tight mb-4 page-title'>
-        {t?.title || 'Customer Overview'}
-      </h1>
+    <div className='h-full space-y-6 overflow-y-auto pb-10 pe-2'>
+      <PageHeader
+        title={t.customerOverview || 'Customer Overview'}
+        subtitle={t.customerOverviewSubtitle || 'Analyze customer behavior and health insights'}
+      />
+
+      <div className="space-y-6 animate-fade-in">
 
       {/* Row 1: Key Metrics */}
       <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4'>
@@ -768,6 +778,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
           </div>
         </div>
       </div>
+    </div>
 
       {/* Expanded Modals */}
 

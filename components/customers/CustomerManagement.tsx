@@ -20,6 +20,8 @@ import { authService } from '../../services/auth/authService';
 import { Switch } from '../common/Switch';
 import { useSettings } from '../../context';
 import { branchService } from '../../services/branchService';
+import { PageHeader } from '../common/PageHeader';
+import { SearchInput } from '../common/SearchInput';
 
 interface CustomerManagementProps {
   customers: Customer[];
@@ -30,8 +32,10 @@ interface CustomerManagementProps {
   t: any;
   language: 'EN' | 'AR';
   darkMode?: boolean;
+  isLoading?: boolean;
   onViewChange?: (view: string, params?: Record<string, any>) => void;
   currentEmployeeId?: string;
+  navigationParams?: Record<string, any> | null;
 }
 
 export const CustomerManagement: React.FC<CustomerManagementProps> = ({
@@ -43,15 +47,34 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   t,
   language,
   darkMode,
+  isLoading,
   onViewChange,
   currentEmployeeId,
+  navigationParams,
 }) => {
   const { getVerifiedDate } = useStatusBar();
+  
+  useEffect(() => {
+    if (navigationParams?.mode === 'add') {
+      setMode('add');
+      setEditingCustomer(null);
+      setFormData({
+        status: 'active',
+        points: 0,
+        totalPurchases: 0,
+        lastVisit: getVerifiedDate().toISOString(),
+        preferredContact: 'phone',
+        chronicConditions: [],
+      });
+    } else {
+      setMode('list');
+    }
+  }, [navigationParams]);
+
   const { activeBranchId, branches } = useData();
   const { theme: currentTheme } = useSettings();
   const [showAllBranches, setShowAllBranches] = useState(false);
   const currentUser = authService.getCurrentUserSync();
-  const isSuperAdmin = permissionsService.isOrgAdmin();
   const [mode, setMode] = useState<'list' | 'add'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -687,144 +710,197 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   };
 
   return (
-    <div className='h-full flex flex-col space-y-4 animate-fade-in'>
-      {/* Header */}
-      <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4'>
-        <div>
-          <h1 className='text-2xl font-bold tracking-tight page-title'>
-            {mode === 'list' ? t.title : t.addCustomer || 'Add New Customer'}
-          </h1>
-          <p className='text-sm text-gray-500 dark:text-gray-400'>
-            {mode === 'list' ? t.subtitle : t.addCustomerSubtitle || 'Register a new customer'}
-          </p>
-        </div>
-
-        <div className='flex gap-4 items-center flex-wrap'>
-          {/* Customer Growth Metrics Card (Total, Monthly, Daily) */}
-          {mode === 'list' && (
-            <InteractiveCard
-              className={`flex flex-col min-w-[160px] px-5 py-2.5 rounded-2xl ${language === 'AR' ? 'items-end' : 'items-start'}`}
-              pages={[
-                {
-                  theme: 'bg-primary-50 dark:bg-primary-900/20',
-                  content: (
-                    <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
-                      <span className="text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400">
-                        {t.summary?.total || 'Total Customers'}
-                      </span>
-                      <span className="text-xl font-bold text-primary-900 dark:text-primary-100">
-                        {summaryStats.total}
-                      </span>
-                    </div>
-                  ),
-                },
-                {
-                  theme: 'bg-green-50 dark:bg-green-900/20',
-                  content: (
-                    <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
-                      <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400">
-                        {t.summary?.newThisMonth || 'New This Month'}
-                      </span>
-                      <span className="text-xl font-bold text-green-900 dark:text-green-100">
-                        {summaryStats.newThisMonth}
-                      </span>
-                    </div>
-                  ),
-                },
-                {
-                  theme: 'bg-cyan-50 dark:bg-cyan-900/20',
-                  content: (
-                    <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
-                      <span className="text-[10px] font-bold uppercase text-cyan-600 dark:text-cyan-400">
-                        {t.summary?.newToday || 'New Today'}
-                      </span>
-                      <span className="text-xl font-bold text-cyan-900 dark:text-cyan-100">
-                        {summaryStats.newToday}
-                      </span>
-                    </div>
-                  ),
-                }
-              ]}
-            />
-          )}
-
-          {mode === 'list' && (
-            <InteractiveCard
-              className={`flex flex-col min-w-[160px] px-5 py-2.5 rounded-2xl ${language === 'AR' ? 'items-end' : 'items-start'}`}
-              pages={[
-                {
-                  theme: 'bg-indigo-50 dark:bg-indigo-900/20',
-                  content: (
-                    <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
-                      <span className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">
-                        {t.summary?.activeTotal || 'Active (Yearly)'}
-                      </span>
-                      <span className="text-xl font-bold text-indigo-900 dark:text-indigo-100">
-                        {summaryStats.activeTotal}
-                      </span>
-                    </div>
-                  ),
-                },
-                {
-                  theme: 'bg-violet-50 dark:bg-violet-900/20',
-                  content: (
-                    <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
-                      <span className="text-[10px] font-bold uppercase text-violet-600 dark:text-violet-400">
-                        {t.summary?.activeRecently || 'Active (30 Days)'}
-                      </span>
-                      <span className="text-xl font-bold text-violet-900 dark:text-violet-100">
-                        {summaryStats.activeRecently}
-                      </span>
-                    </div>
-                  ),
-                }
-              ]}
-            />
-          )}
-
-          {permissionsService.can('customer.add') && (
-            <button
-              onClick={handleOpenKiosk}
-              className='flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-full transition-all text-xs font-bold'
-              title='Open Patient Self-Entry Mode'
-            >
-              <span className='material-symbols-rounded text-[18px]'>monitor_heart</span>
-              <span className='hidden md:inline'>{t.modal.kioskMode}</span>
-            </button>
-          )}
-
-          {isSuperAdmin && (
-            <label className='flex items-center gap-3 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'>
-              <span className='text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider select-none'>
-                {t.globalView}
-              </span>
-              <Switch
-                checked={showAllBranches}
-                onChange={setShowAllBranches}
-                theme={currentTheme.name.toLowerCase()}
-                activeColor={currentTheme.hex}
+    <div className='h-full flex flex-col space-y-6 overflow-hidden'>
+      <PageHeader
+        leftContent={
+          mode === 'list' ? (
+            <div className="w-full max-w-md">
+              <SearchInput
+                value={searchQuery}
+                onSearchChange={setSearchQuery}
+                placeholder={t.searchPlaceholder || 'Search customers...'}
+                color={color}
               />
-            </label>
-          )}
-
+            </div>
+          ) : null
+        }
+        centerContent={
           <SegmentedControl
-            value={mode}
-            onChange={(val) => {
-              if (val === 'list') setMode('list');
-              else if (val === 'add') handleOpenAdd();
-            }}
-            color={color}
-            shape='pill'
-            size='sm'
             options={[
-              { label: t.allCustomers, value: 'list' },
-              ...(permissionsService.can('customer.add')
-                ? [{ label: t.addCustomer, value: 'add' }]
-                : []),
+              { value: 'customers', label: t.allCustomers || 'List', icon: 'group' },
+              { value: 'add-customer', label: t.addCustomer || 'Add', icon: 'person_add' },
+              { value: 'customer-history', label: t.customerHistory?.title || 'History', icon: 'history' },
             ]}
+            value={mode === 'add' ? 'add-customer' : 'customers'}
+            onChange={(val) => {
+              if (val === 'add-customer') {
+                setMode('add');
+              } else if (val === 'customers') {
+                setMode('list');
+              } else {
+                onViewChange?.(val);
+              }
+            }}
+            variant="onPage"
+            shape="pill"
+            color={color}
+            size="md"
+            iconSize="--icon-lg"
+            useGraphicFont={true}
+            className="w-full sm:w-[480px]"
           />
-        </div>
-      </div>
+        }
+        rightContent={
+          mode === 'list' ? (
+            <div className='flex gap-2 items-center animate-fade-in'>
+              {permissionsService.can('customer.add') && (
+                <button
+                  onClick={handleOpenKiosk}
+                  className='flex items-center gap-2 px-4 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 rounded-full transition-all text-xs font-bold'
+                  title='Open Patient Self-Entry Mode'
+                >
+                  <span className='material-symbols-rounded text-[18px]'>monitor_heart</span>
+                  <span className='hidden md:inline'>{t.modal.kioskMode}</span>
+                </button>
+              )}
+                <label className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors'>
+                  <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none'>
+                    {t.globalView}
+                  </span>
+                  <Switch
+                    checked={showAllBranches}
+                    onChange={setShowAllBranches}
+                  />
+                </label>
+            </div>
+          ) : null
+        }
+      />
+
+      <div className="flex-1 min-h-0 flex flex-col space-y-6 animate-fade-in">
+          {/* Summary Stats Row */}
+          {mode === 'list' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <InteractiveCard
+                isLoading={isLoading}
+                className={`flex flex-col px-5 py-3.5 rounded-3xl ${language === 'AR' ? 'items-end' : 'items-start'}`}
+                pages={[
+                  {
+                    theme: 'bg-primary-50 dark:bg-primary-900/20',
+                    content: (
+                      <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
+                        <span className="text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400 mb-1">
+                          {t.summary?.total || 'Total Customers'}
+                        </span>
+                        <span className="text-2xl font-bold text-primary-900 dark:text-primary-100">
+                          {summaryStats.total}
+                        </span>
+                      </div>
+                    ),
+                  },
+                  {
+                    theme: 'bg-green-50 dark:bg-green-900/20',
+                    content: (
+                      <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
+                        <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400 mb-1">
+                          {t.summary?.newThisMonth || 'New This Month'}
+                        </span>
+                        <span className="text-2xl font-bold text-green-900 dark:text-green-100">
+                          {summaryStats.newThisMonth}
+                        </span>
+                      </div>
+                    ),
+                  },
+                  {
+                    theme: 'bg-cyan-50 dark:bg-cyan-900/20',
+                    content: (
+                      <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
+                        <span className="text-[10px] font-bold uppercase text-cyan-600 dark:text-cyan-400 mb-1">
+                          {t.summary?.newToday || 'New Today'}
+                        </span>
+                        <span className="text-2xl font-bold text-cyan-900 dark:text-cyan-100">
+                          {summaryStats.newToday}
+                        </span>
+                      </div>
+                    ),
+                  }
+                ]}
+              />
+
+              <InteractiveCard
+                isLoading={isLoading}
+                className={`flex flex-col px-5 py-3.5 rounded-3xl ${language === 'AR' ? 'items-end' : 'items-start'}`}
+                pages={[
+                  {
+                    theme: 'bg-indigo-50 dark:bg-indigo-900/20',
+                    content: (
+                      <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
+                        <span className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400 mb-1">
+                          {t.summary?.activeTotal || 'Active (Yearly)'}
+                        </span>
+                        <span className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">
+                          {summaryStats.activeTotal}
+                        </span>
+                      </div>
+                    ),
+                  },
+                  {
+                    theme: 'bg-violet-50 dark:bg-violet-900/20',
+                    content: (
+                      <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
+                        <span className="text-[10px] font-bold uppercase text-violet-600 dark:text-violet-400 mb-1">
+                          {t.summary?.activeRecently || 'Active (30 Days)'}
+                        </span>
+                        <span className="text-2xl font-bold text-violet-900 dark:text-violet-100">
+                          {summaryStats.activeRecently}
+                        </span>
+                      </div>
+                    ),
+                  }
+                ]}
+              />
+
+              <InteractiveCard
+                isLoading={isLoading}
+                className={`flex flex-col px-5 py-3.5 rounded-3xl ${language === 'AR' ? 'items-end' : 'items-start'}`}
+                pages={[
+                  {
+                    theme: 'bg-amber-50 dark:bg-amber-900/20',
+                    content: (
+                      <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
+                        <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400 mb-1">
+                          {language === 'AR' ? 'متوسط النقاط' : 'Avg. Points'}
+                        </span>
+                        <span className="text-2xl font-bold text-amber-900 dark:text-amber-100">
+                          {(summaryStats.total > 0 ? customers.reduce((acc, c) => acc + (c.points || 0), 0) / summaryStats.total : 0).toFixed(0)}
+                        </span>
+                      </div>
+                    ),
+                  }
+                ]}
+              />
+
+              <InteractiveCard
+                isLoading={isLoading}
+                className={`flex flex-col px-5 py-3.5 rounded-3xl ${language === 'AR' ? 'items-end' : 'items-start'}`}
+                pages={[
+                  {
+                    theme: 'bg-emerald-50 dark:bg-emerald-900/20',
+                    content: (
+                      <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
+                        <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 mb-1">
+                          {language === 'AR' ? 'متوسط المشتريات' : 'Avg. Purchases'}
+                        </span>
+                        <span className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">
+                          <PriceDisplay value={summaryStats.total > 0 ? customers.reduce((acc, c) => acc + (c.totalPurchases || 0), 0) / summaryStats.total : 0} />
+                        </span>
+                      </div>
+                    ),
+                  }
+                ]}
+              />
+            </div>
+          )}
 
       {/* Success Message */}
       {showSuccess && mode === 'add' && (
@@ -843,23 +919,27 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       {mode === 'list' ? (
         <>
           {/* Table Card */}
-          <TanStackTable
-            data={filteredCustomers}
-            columns={tableColumns}
-            onRowContextMenu={handleContextMenu}
-            onRowLongPress={handleLongPress}
-            tableId='customers_table'
-            searchPlaceholder={t.searchPlaceholder}
-            defaultHiddenColumns={['serialId']}
-            color={color}
-            enableTopToolbar={true}
-            globalFilter={searchQuery}
-            onSearchChange={setSearchQuery}
-            enablePagination={true}
-            enableVirtualization={false}
-            pageSize='auto'
-            enableShowAll={true}
-          />
+          <div className="flex-1 min-h-0">
+            <TanStackTable
+              data={filteredCustomers}
+              columns={tableColumns}
+              onRowContextMenu={handleContextMenu}
+              onRowLongPress={handleLongPress}
+              tableId='customers_table'
+              searchPlaceholder={t.searchPlaceholder}
+              defaultHiddenColumns={['serialId']}
+              color={color}
+              enableTopToolbar={true}
+              isLoading={isLoading && filteredCustomers.length === 0}
+              globalFilter={searchQuery}
+              onSearchChange={setSearchQuery}
+              enablePagination={true}
+              enableVirtualization={false}
+              pageSize='auto'
+              enableShowAll={true}
+              enableSearch={false}
+            />
+          </div>
         </>
       ) : (
         /* ADD CUSTOMER FORM VIEW - INLINE */
@@ -1103,12 +1183,13 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   >
                     {t.modal.cancel}
                   </button>
+                  </div>
                 </div>
               </div>
+            </form>
             </div>
-          </form>
+          )}
         </div>
-      )}
 
       {/* Admin Modal - ONLY FOR EDITING NOW */}
       <Modal

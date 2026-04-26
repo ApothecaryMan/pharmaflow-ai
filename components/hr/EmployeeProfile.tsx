@@ -19,20 +19,21 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 import { ExpandedChartModal } from '../experiments/ExpandedChartModal';
 import { PageHeader } from '../common/PageHeader';
-import { EmployeeProfileSkeleton } from '../skeletons/HRSkeletons';
+
 
 // Filter Modes for the component
 type FilterMode = 'today' | 'week' | 'month' | 'year' | 'all';
 
 // AI Performance Summary Sub-Component
 const AIPerformanceSummary: React.FC<{
-  employee: Employee;
+  employee: Employee | null;
   stats: EmployeeSalesStats | null;
   previousStats: EmployeeSalesStats | null;
   dateFilterMode: FilterMode;
   language: 'EN' | 'AR';
   color: string;
 }> = ({ employee, stats, language }) => {
+  const isSkeleton = !employee;
   const [shortSummary, setShortSummary] = useState<string | null>(null);
   const [detailedSummary, setDetailedSummary] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -45,7 +46,7 @@ const AIPerformanceSummary: React.FC<{
     setShortSummary(null);
     setDetailedSummary(null);
     setAiError(null);
-  }, [employee.id]);
+  }, [employee?.id]);
 
   // Generate static summary
   const staticSummary =
@@ -184,7 +185,7 @@ const AIPerformanceSummary: React.FC<{
           </div>
         </div>
 
-        {loading ? (
+        {loading || isSkeleton ? (
           <div className='flex items-center gap-2 text-white/70 text-sm'>
             <span className='animate-spin material-symbols-rounded text-lg'>progress_activity</span>
             {language === 'AR' ? 'جاري التحليل...' : 'Analyzing...'}
@@ -221,13 +222,13 @@ const AIPerformanceSummary: React.FC<{
         <div className='space-y-6'>
           {(() => {
             // Helper: Detect if name is Arabic
-            const isArabicName = /[\u0600-\u06FF]/.test(employee.name);
+            const isArabicName = /[\u0600-\u06FF]/.test(employee?.name || '');
             // Helper: Get 2 initials
-            const nameParts = employee.name.trim().split(/\s+/);
+            const nameParts = (employee?.name || '').trim().split(/\s+/);
             const initials =
-              nameParts.length >= 2
+              nameParts.length >= 2 && nameParts[0]
                 ? `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`
-                : employee.name.slice(0, 2);
+                : (employee?.name || '??').slice(0, 2);
 
             return (
               <div
@@ -239,9 +240,9 @@ const AIPerformanceSummary: React.FC<{
                 </div>
                 <div>
                   <h4 className='font-bold text-gray-900 dark:text-white text-lg'>
-                    {employee.name}
+                    {employee?.name || '...'}
                   </h4>
-                  <p className='text-sm text-gray-500 dark:text-gray-400'>{employee.role}</p>
+                  <p className='text-sm text-gray-500 dark:text-gray-400'>{employee?.role || '...'}</p>
                 </div>
               </div>
             );
@@ -851,7 +852,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   const shiftsData = chartDataResult.shiftsData;
   const activeEmployees = chartDataResult.activeEmployees || [];
 
-  if (!selectedEmployee) {
+  if (!selectedEmployee && !isLoading) {
     return (
       <div className='p-8 text-center text-gray-500'>
         {t.common?.noData || 'No employees found'}
@@ -883,14 +884,14 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
         leftContent={
           <div className='flex items-center gap-3.5'>
             {(() => {
-              const nameParts = selectedEmployee.name.trim().split(/\s+/);
+              const nameParts = (selectedEmployee?.name || '').trim().split(/\s+/);
               const initials =
-                nameParts.length > 1
+                nameParts.length > 1 && nameParts[0]
                   ? `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`
-                  : selectedEmployee.name.slice(0, 2);
+                  : (selectedEmployee?.name || '??').slice(0, 2);
               return (
                 <div className='relative shrink-0'>
-                  {selectedEmployee.image ? (
+                  {selectedEmployee?.image ? (
                     <img
                       src={selectedEmployee.image}
                       alt={selectedEmployee.name}
@@ -906,14 +907,23 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
               );
             })()}
             <div className="min-w-0">
-              <h1 className="text-base font-bold text-zinc-900 dark:text-white tracking-tight leading-none mb-1.5 truncate">
-                {selectedEmployee.name}
-              </h1>
-              <div className="flex items-center gap-2 leading-none">
-                <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{selectedEmployee.role}</span>
-                <span className="w-0.5 h-0.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-                <span className="text-[9px] font-mono text-zinc-400 opacity-80">#{selectedEmployee.employeeCode}</span>
-              </div>
+              {isLoading ? (
+                <div className="flex flex-col gap-2 [direction:ltr] items-start">
+                  <div className="h-4 w-32 bg-zinc-400/20 dark:bg-zinc-100/10 rounded-sm animate-pulse" />
+                  <div className="h-3 w-20 bg-zinc-400/10 dark:bg-zinc-100/5 rounded-sm animate-pulse" />
+                </div>
+              ) : (
+                <>
+                  <h1 className="text-base font-bold text-zinc-900 dark:text-white tracking-tight leading-none mb-1.5 truncate">
+                    {selectedEmployee?.name}
+                  </h1>
+                  <div className="flex items-center gap-2 leading-none">
+                    <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{selectedEmployee?.role}</span>
+                    <span className="w-0.5 h-0.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+                    <span className="text-[9px] font-mono text-zinc-400 opacity-80">#{selectedEmployee?.employeeCode}</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         }
@@ -973,11 +983,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
         }
       />
 
-      {isLoading ? (
-        <EmployeeProfileSkeleton />
-      ) : (
-        <>
-          {/* KPI Cards */}
+      {/* KPI Cards */}
       {stats && (
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
           {(() => {
@@ -995,6 +1001,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                 icon='payments'
                 iconColor='blue'
                 currencyLabel={t.global?.currency || (language === 'AR' ? 'ج.م' : 'L.E')}
+                isLoading={isLoading}
               />
             );
           })()}
@@ -1015,6 +1022,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                 icon='trending_up'
                 iconColor='emerald'
                 currencyLabel={t.global?.currency || (language === 'AR' ? 'ج.م' : 'L.E')}
+                isLoading={isLoading}
               />
             );
           })()}
@@ -1033,6 +1041,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                 trendLabel={itemsTrend.value ? 'vs prev' : undefined}
                 icon='shopping_basket'
                 iconColor='purple'
+                isLoading={isLoading}
               />
             );
           })()}
@@ -1056,6 +1065,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                 trendLabel={txTrend.value ? 'vs prev' : undefined}
                 icon='receipt_long'
                 iconColor='orange'
+                isLoading={isLoading}
               />
             );
           })()}
@@ -1090,6 +1100,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
           onExpand={() => setIsExpandedChartOpen(true)}
           // X-Axis Control: For 'all', show start/end only (interval=preserveStartEnd with sparse labels)
           xAxisInterval={dateFilterMode === 'all' ? 'preserveStartEnd' : 'equidistantPreserveStart'}
+          isLoading={isLoading}
         >
           {/* Shift Events Indicators - Only for Today view */}
           {dateFilterMode === 'today' && shiftsData.length > 0 && (
@@ -1311,8 +1322,6 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
           showDateRange: true,
         }}
       />
-        </>
-      )}
     </div>
   );
 };

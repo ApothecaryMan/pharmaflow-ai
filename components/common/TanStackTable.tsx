@@ -1020,13 +1020,19 @@ export function TanStackTable<TData, TValue>({
               </thead>
               {/* Enforce var(--icon-sm) on all material-symbols-rounded icons inside table cells using arbitrary variants, except action columns */}
               <tbody className='[&_td:not(.action-col):not(.empty-state)_.material-symbols-rounded]:!text-[length:var(--icon-sm)] [&_td:not(.action-col):not(.empty-state)_.material-symbols-rounded]:!text-sm'>
-                {isLoading ? (
+                {isLoading && rows.length === 0 ? (
                   <>
                     {[...Array(Math.max(5, typeof pageSize === 'number' ? pageSize : 10))].map((_, i) => (
                       <tr key={`skeleton-row-${i}`} className='animate-pulse border-b border-(--border-divider)'>
                         {table.getVisibleLeafColumns().map((col) => (
                           <td key={`skeleton-cell-${col.id}-${i}`} className={`${dense ? 'py-2' : 'py-4'} px-4`}>
-                            <div className='h-4 bg-gray-100 dark:bg-neutral-800/60 rounded-sm w-3/4' />
+                            <div className="flex flex-col gap-2 [direction:ltr] items-start">
+                              <div className='h-3 bg-gray-100 dark:bg-neutral-800/60 rounded-md w-24' />
+                              {/* Sub-line for some columns to look more natural */}
+                              {col.id.toLowerCase().includes('name') && (
+                                <div className='h-2 bg-gray-50 dark:bg-neutral-800/30 rounded-md w-16' />
+                              )}
+                            </div>
                           </td>
                         ))}
                       </tr>

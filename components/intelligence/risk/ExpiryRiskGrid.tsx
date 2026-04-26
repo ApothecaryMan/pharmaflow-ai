@@ -16,9 +16,10 @@ interface ExpiryRiskGridProps {
   data: ExpiryRiskItem[];
   t?: any;
   leftCustomControls?: React.ReactNode;
+  isLoading?: boolean;
 }
 
-export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t, leftCustomControls }) => {
+export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t, leftCustomControls, isLoading = false }) => {
   // Infer language from T object or default (hacky but works if T structure is consistent)
   const language = t?.metadata?.language || 'EN'; // Placeholder if needed, or just pass 'EN' if not critical.
   // Actually usually T comes from useTranslation which doesn't expose language directly often?
@@ -109,6 +110,7 @@ export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t, leftCus
       <TanStackTable
         data={data}
         columns={columns}
+        isLoading={isLoading}
         lite={false}
         tableId='expiry-risk-table'
         enableSearch={false}

@@ -12,6 +12,7 @@ export interface InteractiveCardProps {
   initialPage?: number;
   className?: string;
   onPageChange?: (index: number) => void;
+  isLoading?: boolean;
 }
 
 export const InteractiveCard: React.FC<InteractiveCardProps> = ({
@@ -19,6 +20,7 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
   initialPage = 0,
   className = '',
   onPageChange,
+  isLoading = false,
 }) => {
   const [activePage, setActivePage] = useState(initialPage);
   const [anim, setAnim] = useState({ x: 0, y: 0 });
@@ -84,14 +86,14 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
   return (
     <motion.div
       ref={containerRef}
-      drag={pages.length > 1}
+      drag={!isLoading && pages.length > 1}
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
       dragElastic={0.08}
       onDragEnd={onDragEnd}
-      onWheel={onWheel}
+      onWheel={!isLoading ? onWheel : undefined}
       role="region"
       aria-roledescription="pages"
-      className={`relative group overflow-hidden transition-colors duration-700 ${CARD_BASE} ${current.theme || ''} ${className}`}
+      className={`relative group overflow-hidden transition-colors duration-700 ${CARD_BASE} ${current.theme || ''} ${className} ${isLoading ? 'animate-pulse' : ''}`}
       style={{ touchAction: 'none' }}
     >
       <div className="grid grid-cols-1 grid-rows-1 w-full h-full">
@@ -101,18 +103,27 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
           </div>
         ))}
         <div className="row-start-1 col-start-1 h-full w-full">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={activePage}
-              initial={{ opacity: 0, x: anim.x, y: anim.y }}
-              animate={{ opacity: 1, x: 0, y: 0 }}
-              exit={{ opacity: 0, x: -anim.x, y: -anim.y }}
-              transition={{ type: 'spring', stiffness: 260, damping: 26, mass: 1 }}
-              className="h-full w-full"
-            >
-              {current.content}
-            </motion.div>
-          </AnimatePresence>
+          {isLoading ? (
+            <div className="h-full w-full flex flex-col justify-center space-y-2.5 [direction:ltr] items-start text-left">
+              {/* Title Skeleton */}
+              <div className="h-3 w-16 bg-zinc-400/20 dark:bg-zinc-100/10 rounded" />
+              {/* Value Skeleton */}
+              <div className="h-8 w-24 bg-zinc-400/20 dark:bg-zinc-100/10 rounded-lg" />
+            </div>
+          ) : (
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={activePage}
+                initial={{ opacity: 0, x: anim.x, y: anim.y }}
+                animate={{ opacity: 1, x: 0, y: 0 }}
+                exit={{ opacity: 0, x: -anim.x, y: -anim.y }}
+                transition={{ type: 'spring', stiffness: 260, damping: 26, mass: 1 }}
+                className="h-full w-full"
+              >
+                {current.content}
+              </motion.div>
+            </AnimatePresence>
+          )}
         </div>
       </div>
 
