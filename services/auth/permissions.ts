@@ -80,7 +80,13 @@ class PermissionsServiceImpl implements PermissionsService {
    */
   isOrgAdmin(): boolean {
     const session = authService.getCurrentUserSync();
-    return session?.orgRole === 'owner' || session?.orgRole === 'admin';
+    const role = session?.role;
+    return (
+      session?.orgRole === 'owner' || 
+      session?.orgRole === 'admin' ||
+      role === 'pharmacist_owner' ||
+      role === 'admin'
+    );
   }
 
   /**
