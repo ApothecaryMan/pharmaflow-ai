@@ -72,10 +72,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({
   return (
     <div className='h-full flex flex-col space-y-4 animate-fade-in'>
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
-        <div>
-          <h2 className='text-2xl font-medium tracking-tight'>{t.title}</h2>
-          <p className='text-sm text-gray-500 dark:text-gray-400'>{t.subtitle}</p>
-        </div>
+        <div />
         {permissionsService.can('supplier.add') && (
           <button
             onClick={handleOpenAdd}

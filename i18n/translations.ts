@@ -650,8 +650,10 @@ export const TRANSLATIONS = {
       },
       // Status filter options
       status: {
+        title: 'Status',
         all: 'All Status',
         pending: 'Pending',
+        approved: 'Approved',
         completed: 'Completed',
         returned: 'Returned',
         rejected: 'Rejected',
@@ -677,6 +679,7 @@ export const TRANSLATIONS = {
       // Status tooltips
       tooltips: {
         pending: 'Pending Approval',
+        approved: 'Approved',
         rejected: 'Rejected',
         returned: 'Returned',
         completed: 'Completed',
@@ -3078,8 +3081,10 @@ export const TRANSLATIONS = {
       },
       // Status filter options
       status: {
+        title: 'الحالة',
         all: 'كل الحالات',
         pending: 'معلق',
+        approved: 'مقبول',
         completed: 'مكتمل',
         returned: 'مرتجع',
         rejected: 'مرفوض',
@@ -3108,6 +3113,7 @@ export const TRANSLATIONS = {
       // Status tooltips
       tooltips: {
         pending: 'في انتظار الموافقة',
+        approved: 'مقبول',
         rejected: 'مرفوض',
         returned: 'مرتجع',
         completed: 'مكتمل',

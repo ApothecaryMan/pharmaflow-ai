@@ -1,0 +1,529 @@
+import type { ColumnDef } from '@tanstack/react-table';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { type Purchase, type PurchaseReturn, type Drug, type Supplier, type Employee, type Shift } from '../../types';
+import { parseSearchTerm } from '../../utils/searchUtils';
+import { formatExpiryDate } from '../../utils/expiryUtils';
+import { PageHeader } from '../common/PageHeader';
+import { SearchInput } from '../common/SearchInput';
+import { SegmentedControl } from '../common/SegmentedControl';
+import { DateRangePicker } from '../common/DatePicker';
+import { FilterPill, type FilterConfig } from '../common/FilterPill';
+import { TanStackTable } from '../common/TanStackTable';
+import { Modal } from '../common/Modal';
+import { useSmartDirection } from '../common/SmartInputs';
+import { Switch } from '../common/Switch';
+import { useSettings } from '../../context';
+import { useData } from '../../services/DataContext';
+import { getDisplayName } from '../../utils/drugDisplayName';
+import { useContextMenu } from '../common/ContextMenu';
+
+interface PurchaseHistoryProps {
+  purchases: Purchase[];
+  purchaseReturns: PurchaseReturn[];
+  inventory: Drug[];
+  suppliers: Supplier[];
+  color: string;
+  t: any;
+  language: 'EN' | 'AR';
+  navigationParams?: any;
+  onViewChange?: (view: string, params?: any) => void;
+  onMarkAsReceived?: (id: string) => Promise<void>;
+  employees: Employee[];
+}
+
+export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
+  purchases,
+  purchaseReturns,
+  inventory,
+  suppliers,
+  color,
+  t,
+  language,
+  navigationParams,
+  onViewChange,
+  onMarkAsReceived,
+  employees,
+}) => {
+  const { activeBranchId } = useData();
+  const { textTransform } = useSettings();
+  const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
+  const [statusFilter, setStatusFilter] = useState<
+    'all' | 'pending' | 'completed' | 'returned' | 'rejected' | 'approved' | 'received'
+  >('all');
+  const [dateRange, setDateRange] = useState<{ from: string; to: string }>({ from: '', to: '' });
+  const [historySearch, setHistorySearch] = useState('');
+  const [showAllBranches, setShowAllBranches] = useState(false);
+
+  const statusFilterConfig: FilterConfig = useMemo(() => ({
+    id: 'status',
+    label: t.status?.title || 'Status',
+    icon: 'rule',
+    mode: 'single',
+    options: [
+      { value: 'all', label: t.status?.all || 'All Status' },
+      { value: 'pending', label: t.status?.pending || 'Pending' },
+      { value: 'completed', label: t.status?.completed || 'Completed' },
+      { value: 'returned', label: t.status?.returned || 'Returned' },
+      { value: 'rejected', label: t.status?.rejected || 'Rejected' },
+      { value: 'approved', label: t.status?.approved || 'Approved' },
+    ],
+    defaultValue: 'all'
+  }), [t]);
+
+  const { showMenu } = useContextMenu();
+
+  // Helper: Format time with Arabic AM/PM
+  const formatTime = (date: Date): string => {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const hour12 = hours % 12 || 12;
+    const minuteStr = minutes.toString().padStart(2, '0');
+    const period = hours >= 12 ? t.time?.pm || 'PM' : t.time?.am || 'AM';
+    return `${hour12}:${minuteStr} ${period}`;
+  };
+
+  // Copy helper with fallback
+  const copyToClipboard = async (text: string) => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          document.execCommand('copy');
+        } catch (err) {
+          console.error('Fallback copy failed:', err);
+        }
+        document.body.removeChild(textArea);
+      }
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  // Handle Deep Linking
+  useEffect(() => {
+    if (navigationParams?.id) {
+      setHistorySearch(navigationParams.id);
+      const purchase = purchases.find((p) => p.id === navigationParams.id);
+      if (purchase) setSelectedPurchase(purchase);
+    }
+  }, [navigationParams, purchases]);
+
+  const getPurchaseReturns = (purchaseId: string) => {
+    return purchaseReturns.filter((r) => r.purchaseId === purchaseId);
+  };
+
+  const sortedHistory = useMemo(() => {
+    let data = [...purchases].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    // Branch Filter (unless Global View is ON)
+    if (!showAllBranches && activeBranchId) {
+      data = data.filter(p => p.branchId === activeBranchId);
+    }
+
+    // Date Filter
+    if (dateRange.from) {
+      const fromDate = new Date(dateRange.from).getTime();
+      data = data.filter((p) => new Date(p.date).getTime() >= fromDate);
+    }
+    if (dateRange.to) {
+      const toDate = new Date(dateRange.to).getTime();
+      data = data.filter((p) => new Date(p.date).getTime() <= toDate);
+    }
+
+    // Search Filter
+    if (historySearch.trim()) {
+      const { mode: searchMode, regex } = parseSearchTerm(historySearch);
+
+      if (searchMode === 'ingredient' || searchMode === 'generic') {
+        data = data.filter(
+          (p) => p.items && p.items.some((item) => item.name && regex.test(item.name))
+        );
+      } else {
+        data = data.filter(
+          (p) =>
+            (p.invoiceId && regex.test(p.invoiceId)) ||
+            (p.externalInvoiceId && regex.test(p.externalInvoiceId)) ||
+            (p.supplierName && regex.test(p.supplierName))
+        );
+      }
+    }
+
+    if (statusFilter === 'all') return data;
+
+    return data.filter((p) => {
+      if (statusFilter === 'returned') {
+        return purchaseReturns.some((r) => r.purchaseId === p.id);
+      }
+      if (statusFilter === 'rejected') return p.status === 'rejected';
+      if (statusFilter === 'completed') {
+        return (p.status === 'completed' || p.status === 'received') && 
+               !purchaseReturns.some((r) => r.purchaseId === p.id);
+      }
+      if (statusFilter === 'approved') return p.status === 'approved';
+      return p.status === statusFilter;
+    });
+  }, [purchases, showAllBranches, activeBranchId, dateRange, historySearch, statusFilter, purchaseReturns]);
+
+  const columns = useMemo<ColumnDef<Purchase>[]>(
+    () => [
+      {
+        header: t.tableHeaders?.orderId || 'Order #',
+        accessorKey: 'invoiceId',
+        meta: { align: 'start' },
+      },
+      {
+        header: t.tableHeaders?.invId || 'Inv #',
+        accessorKey: 'externalInvoiceId',
+        meta: { align: 'start' },
+      },
+      {
+        header: t.tableHeaders?.date || 'Date',
+        accessorKey: 'date',
+        meta: { align: 'center' },
+        cell: (info: any) => {
+          const date = new Date(info.getValue());
+          return (
+            <div className='flex flex-col items-center leading-tight'>
+              <span className='font-bold'>{date.toLocaleDateString()}</span>
+              <span className='text-[10px] text-gray-400 font-medium'>{formatTime(date)}</span>
+            </div>
+          );
+        }
+      },
+      {
+        header: t.tableHeaders?.supplier || 'Supplier',
+        accessorKey: 'supplierName',
+        meta: { align: 'start' },
+        cell: (info: any) => (
+          <span className='text-sm font-bold text-gray-800 dark:text-gray-100'>
+            {info.getValue()}
+          </span>
+        ),
+      },
+      {
+        header: t.tableHeaders?.payment || 'Payment',
+        accessorKey: 'paymentType',
+        meta: { align: 'center' },
+        cell: (info: any) => {
+          const type = info.getValue() as string;
+          const isCash = type === 'cash';
+          return (
+            <span
+              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-${isCash ? 'emerald' : 'blue'}-700 dark:text-${isCash ? 'emerald' : 'blue'}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
+            >
+              <span className='material-symbols-rounded text-xs'>{isCash ? 'payments' : 'credit_card'}</span>
+              {isCash ? t.cash || 'Cash' : t.credit || 'Credit'}
+            </span>
+          );
+        },
+      },
+      {
+        header: t.tableHeaders?.items || 'Items',
+        accessorFn: (row: any) => row.items?.length || 0,
+        meta: { align: 'center' },
+        cell: (info: any) => <span className='text-xs text-gray-500 font-medium'>{info.getValue()}</span>,
+      },
+      {
+        header: t.tableHeaders?.total || 'Total',
+        accessorKey: 'totalCost',
+        meta: { align: 'end' },
+        cell: (info: any) => {
+          const p = info.row.original;
+          const returns = getPurchaseReturns(p.id);
+          const totalReturned = returns.reduce((sum, r) => sum + r.totalRefund, 0);
+          return (
+            <div className='flex flex-col items-end'>
+              <span className='text-sm font-bold text-gray-900 dark:text-white'>
+                ${info.getValue().toFixed(2)}
+              </span>
+              {totalReturned > 0 && (
+                <span className='text-[10px] text-orange-600 dark:text-orange-400 font-medium'>
+                  -${totalReturned.toFixed(2)} {t.detailsModal?.returnedLabel || 'returned'}
+                </span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        header: t.status?.title || 'Status',
+        id: 'status',
+        meta: { align: 'center' },
+        accessorFn: (p: any) => {
+          const hasReturns = getPurchaseReturns(p.id).length > 0;
+          if (p.status === 'rejected') return 'rejected';
+          if (p.status === 'pending') return 'pending';
+          if (p.status === 'approved') return 'approved';
+          if (p.status === 'received' || p.status === 'completed') {
+            return hasReturns ? 'returned' : 'completed';
+          }
+          return p.status;
+        },
+        cell: (info: any) => {
+          const status = info.getValue() as string;
+          let config = { color: 'emerald', icon: 'check_circle', label: t.tooltips?.completed || 'Completed' };
+          if (status === 'pending') config = { color: 'amber', icon: 'pending', label: t.tooltips?.pending || 'Pending' };
+          else if (status === 'rejected') config = { color: 'red', icon: 'cancel', label: t.tooltips?.rejected || 'Rejected' };
+          else if (status === 'returned') config = { color: 'purple', icon: 'assignment_return', label: t.tooltips?.returned || 'Returned' };
+          else if (status === 'approved') config = { color: 'blue', icon: 'fact_check', label: t.tooltips?.approved || 'Approved' };
+          else if (status === 'received') config = { color: 'emerald', icon: 'task_alt', label: t.tooltips?.received || 'Received' };
+
+          return (
+            <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-${config.color}-50 dark:bg-${config.color}-900/20 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider`}>
+              <span className='material-symbols-rounded text-xs'>{config.icon}</span>
+              {config.label}
+            </span>
+          );
+        },
+      },
+    ],
+    [t, purchaseReturns, language]
+  );
+
+  // Helper: Get context menu actions for a purchase row
+  const getRowContextActions = (purchase: Purchase) => [
+    {
+      label: t.contextMenu?.viewDetails || 'View Details',
+      icon: 'visibility',
+      action: () => setSelectedPurchase(purchase),
+    },
+    { separator: true },
+    {
+      label: t.contextMenu?.copyInvoice || 'Copy Invoice',
+      icon: 'content_copy',
+      action: () => copyToClipboard(purchase.invoiceId || ''),
+    },
+    {
+      label: t.contextMenu?.copySupplier || 'Copy Supplier',
+      icon: 'person',
+      action: () => copyToClipboard(purchase.supplierName || ''),
+    },
+    { separator: true },
+    {
+      label: t.contextMenu?.markAsReceived || 'Mark as Received',
+      icon: 'inventory',
+      action: () => onMarkAsReceived?.(purchase.id),
+      disabled: purchase.status !== 'approved' && purchase.status !== 'pending',
+    },
+  ];
+
+  return (
+    <div className='h-full flex flex-col space-y-4 animate-fade-in overflow-hidden'>
+      <PageHeader
+        leftContent={
+          <div className='relative w-48 xl:w-140'>
+            <SearchInput
+              value={historySearch}
+              onSearchChange={setHistorySearch}
+              onClear={() => setHistorySearch('')}
+              placeholder={t.placeholders?.searchHistory || 'Search ID, Supplier...'}
+              rounded='full'
+              color={color}
+              className='h-9 text-sm'
+              filterConfigs={[statusFilterConfig]}
+              activeFilters={{ status: statusFilter === 'all' ? [] : [statusFilter] }}
+              onUpdateFilter={(gid, vals) => {
+                if (gid === 'status') {
+                  const newVal = vals[0] || 'all';
+                  // If adding from menu (which defaults to options[0] = 'all'), 
+                  // switch to 'pending' so the pill actually appears.
+                  if (statusFilter === 'all' && newVal === 'all') {
+                    setStatusFilter('pending');
+                  } else {
+                    setStatusFilter(newVal);
+                  }
+                }
+              }}
+            />
+          </div>
+        }
+        centerContent={
+          <SegmentedControl
+            options={[
+              { value: 'create', label: t.newPurchase || 'Purchase', icon: 'shopping_cart' },
+              { value: 'approve', label: t.pendingApproval?.title || 'Approve', icon: 'assignment_turned_in' },
+              { value: 'history', label: t.viewHistory || 'History', icon: 'history' },
+            ]}
+            value='history'
+            onChange={(val) => {
+              if (val === 'history') return;
+              if (val === 'approve') onViewChange?.('pending-approval');
+              else onViewChange?.('purchases', { mode: 'create' });
+            }}
+            variant="onPage"
+            shape="pill"
+            color={color}
+            size="md"
+            iconSize="--icon-lg"
+            useGraphicFont={true}
+            className="w-full sm:w-[520px]"
+          />
+        }
+        rightContent={
+          <div className='flex items-center gap-2'>
+            <DateRangePicker
+              startDate={dateRange.from}
+              endDate={dateRange.to}
+              onStartDateChange={(val) => setDateRange((prev) => ({ ...prev, from: val }))}
+              onEndDateChange={(val) => setDateRange((prev) => ({ ...prev, to: val }))}
+              color='gray'
+              locale={language === 'AR' ? 'ar-EG' : 'en-US'}
+            />
+            <label className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors h-9'>
+              <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none'>
+                {t.globalView || 'Global'}
+              </span>
+              <Switch
+                checked={showAllBranches}
+                onChange={setShowAllBranches}
+                activeColor={color}
+              />
+            </label>
+          </div>
+        }
+      />
+
+      <div className='flex-1 overflow-hidden'>
+        <TanStackTable
+          data={sortedHistory}
+          columns={columns}
+          color={color}
+          onRowClick={(p) => setSelectedPurchase(p)}
+          onRowContextMenu={(e, p) => showMenu(e.clientX, e.clientY, getRowContextActions(p))}
+          tableId='purchases_history_v3'
+          enablePagination={true}
+          pageSize='auto'
+          enableTopToolbar={true}
+          enableSearch={false}
+          manualFiltering={true}
+        />
+      </div>
+
+      {selectedPurchase && (
+        <Modal
+          isOpen={true}
+          onClose={() => setSelectedPurchase(null)}
+          size='4xl'
+          title={t.detailsModal?.title || 'Purchase Order Details'}
+          icon='receipt_long'
+          subtitle={`${selectedPurchase.invoiceId} • ${new Date(selectedPurchase.date).toLocaleDateString()} ${formatTime(new Date(selectedPurchase.date))}`}
+        >
+          <div className='p-6 space-y-6'>
+            {/* Detailed Grid Info */}
+            <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800'>
+              <div className='group relative'>
+                <p className='text-[10px] text-gray-500 uppercase font-bold mb-1 tracking-wider'>{t.detailsModal?.supplier || 'Supplier'}</p>
+                <div className='flex items-center gap-2'>
+                  <p className='font-bold text-gray-900 dark:text-white'>{selectedPurchase.supplierName}</p>
+                  <button 
+                    onClick={() => copyToClipboard(selectedPurchase.supplierName)}
+                    className='opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-gray-800 rounded transition-all'
+                  >
+                    <span className='material-symbols-rounded text-xs'>content_copy</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className='group relative border-s border-gray-200 dark:border-gray-800 ps-4'>
+                <p className='text-[10px] text-gray-500 uppercase font-bold mb-1 tracking-wider'>{t.detailsModal?.invNumber || 'Inv #'}</p>
+                <div className='flex items-center gap-2'>
+                  <p className='font-mono font-bold text-gray-900 dark:text-white'>{selectedPurchase.externalInvoiceId || '-'}</p>
+                  {selectedPurchase.externalInvoiceId && (
+                    <button 
+                      onClick={() => copyToClipboard(selectedPurchase.externalInvoiceId)}
+                      className='opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-gray-800 rounded transition-all'
+                    >
+                      <span className='material-symbols-rounded text-xs'>content_copy</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className='border-s border-gray-200 dark:border-gray-800 ps-4'>
+                <p className='text-[10px] text-gray-500 uppercase font-bold mb-1 tracking-wider'>{t.paymentMethod || 'Payment'}</p>
+                <div className='flex items-center gap-2'>
+                  <span className='material-symbols-rounded text-sm text-gray-400'>
+                    {selectedPurchase.paymentMethod === 'cash' ? 'payments' : 'credit_card'}
+                  </span>
+                  <p className='font-bold text-gray-900 dark:text-white capitalize'>{selectedPurchase.paymentMethod}</p>
+                </div>
+              </div>
+
+              <div className='border-s border-gray-200 dark:border-gray-800 ps-4'>
+                <p className='text-[10px] text-gray-500 uppercase font-bold mb-1 tracking-wider'>{t.tableHeaders?.date || 'Date'}</p>
+                <div className='flex items-center gap-2'>
+                  <span className='material-symbols-rounded text-sm text-gray-400'>calendar_today</span>
+                  <p className='font-bold text-gray-900 dark:text-white'>{new Date(selectedPurchase.date).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className='rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden'>
+              <table className='w-full text-left border-collapse'>
+                <thead>
+                  <tr className='bg-gray-50 dark:bg-gray-900/30 text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
+                    <th className='px-4 py-3'>{t.detailsModal?.item || 'Item'}</th>
+                    <th className='px-4 py-3 text-center'>{t.detailsModal?.qty || 'Qty'}</th>
+                    <th className='px-4 py-3 text-right'>{t.detailsModal?.cost || 'Cost'}</th>
+                    <th className='px-4 py-3 text-right'>{t.detailsModal?.total || 'Total'}</th>
+                  </tr>
+                </thead>
+                <tbody className='divide-y divide-gray-50 dark:divide-gray-900'>
+                  {selectedPurchase.items.map((item, idx) => (
+                    <tr key={idx} className='text-sm hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors'>
+                      <td className='px-4 py-3'>
+                        <div className='flex flex-col'>
+                          <span className='font-bold text-gray-900 dark:text-white'>{getDisplayName(item as any, textTransform)}</span>
+                          <span className='text-[10px] text-gray-400 font-mono'>{item.drugId}</span>
+                        </div>
+                      </td>
+                      <td className='px-4 py-3 text-center'>
+                        <span className='px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 font-mono font-bold text-gray-700 dark:text-gray-300'>
+                          {item.quantity}
+                        </span>
+                      </td>
+                      <td className='px-4 py-3 text-right font-mono text-gray-600 dark:text-gray-400'>${item.costPrice.toFixed(2)}</td>
+                      <td className='px-4 py-3 text-right font-bold font-mono text-gray-900 dark:text-white'>${(item.costPrice * item.quantity).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className='bg-gray-50/50 dark:bg-gray-900/30 font-bold'>
+                    <td colSpan={3} className='px-4 py-4 text-right text-gray-500 uppercase text-[10px] tracking-widest'>{t.summary?.totalCost || 'Grand Total'}</td>
+                    <td className='px-4 py-4 text-right text-lg text-primary-600 font-black'>${selectedPurchase.totalCost.toFixed(2)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {selectedPurchase.status === 'approved' && onMarkAsReceived && (
+              <div className='flex justify-end'>
+                <button
+                  onClick={() => {
+                    onMarkAsReceived(selectedPurchase.id);
+                    setSelectedPurchase(null);
+                  }}
+                  className='flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all shadow-lg shadow-emerald-200 dark:shadow-none'
+                >
+                  <span className='material-symbols-rounded'>inventory</span>
+                  {t.contextMenu?.markAsReceived || 'Mark as Received'}
+                </button>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+};

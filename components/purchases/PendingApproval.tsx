@@ -8,6 +8,9 @@ import { formatCurrencyParts } from '../../utils/currency';
 import { HelpButton, HelpModal } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
 import { useSmartDirection } from '../common/SmartInputs';
+import { PageHeader } from '../common/PageHeader';
+import { SearchInput } from '../common/SearchInput';
+import { SegmentedControl } from '../common/SegmentedControl';
 
 // --- Sub-components (SalesHistory Style) ---
 
@@ -32,6 +35,9 @@ interface PendingApprovalProps {
   currentShift: Shift | null;
   currentEmployeeId: string | null;
   employees: Employee[];
+  hideHeader?: boolean;
+  externalSearch?: string;
+  onViewChange?: (view: string, params?: any) => void;
 }
 
 export const PendingApproval: React.FC<PendingApprovalProps> = ({
@@ -45,6 +51,9 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   currentShift,
   currentEmployeeId,
   employees,
+  hideHeader = false,
+  externalSearch = '',
+  onViewChange,
 }) => {
   const { textTransform } = useSettings();
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
@@ -63,6 +72,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [purchaseToApprove, setPurchaseToApprove] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [search, setSearch] = useState('');
 
   // Helper: Format time with Arabic AM/PM
   const formatTime = (date: Date): string => {
@@ -79,6 +89,16 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   const helpContent = PENDING_APPROVAL_HELP[language as 'EN' | 'AR'] || PENDING_APPROVAL_HELP.EN;
 
   const pendingPurchases = purchases.filter((p) => p.status === 'pending');
+
+  const filteredPendingPurchases = pendingPurchases.filter((p) => {
+    const searchVal = externalSearch || search;
+    const searchLower = searchVal.toLowerCase();
+    return (
+      p.supplierName.toLowerCase().includes(searchLower) ||
+      p.invoiceId.toLowerCase().includes(searchLower) ||
+      (p.externalInvoiceId && p.externalInvoiceId.toLowerCase().includes(searchLower))
+    );
+  });
 
   // Reject Logic
   const handleOpenReject = (id: string, e?: React.MouseEvent) => {
@@ -119,20 +139,57 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   return (
     <div className='h-full flex flex-col space-y-6 animate-fade-in overflow-hidden'>
       {/* Header */}
-      <div className='flex items-center justify-between'>
-        <div>
-          <h1 className='text-2xl font-bold tracking-tight text-gray-800 dark:text-gray-100 page-title'>
-            {t.title || 'Pending Approvals'}
-          </h1>
-          <p className='text-gray-500 dark:text-gray-400 text-sm mt-1'>
-            {t.subtitle ||
-              'Review and approve incoming purchase orders. Orders must be approved before inventory is updated.'}
-          </p>
-        </div>
-      </div>
+      {!hideHeader && (
+        <PageHeader
+          leftContent={
+            <div className='w-48 xl:w-120'>
+              <SearchInput
+                value={search}
+                onSearchChange={setSearch}
+                placeholder={t.placeholders?.search || 'Search by supplier or ID...'}
+                rounded='full'
+                color={color}
+                className='h-9 text-sm'
+              />
+            </div>
+          }
+          centerContent={
+            <SegmentedControl
+              options={[
+                { value: 'create', label: t.newPurchase || 'New Purchase', icon: 'shopping_cart' },
+                { value: 'approve', label: t.pendingApproval?.title || 'Approve', icon: 'assignment_turned_in' },
+                { value: 'history', label: t.viewHistory || 'History', icon: 'history' },
+              ]}
+              value='approve'
+              onChange={(val) => {
+                if (val === 'approve') return;
+                if (val === 'history') onViewChange?.('purchase-history');
+                else onViewChange?.('purchases', { mode: val });
+              }}
+              variant="onPage"
+              shape="pill"
+              color={color}
+              size="md"
+              iconSize="--icon-lg"
+              useGraphicFont={true}
+              className="w-full sm:w-[520px]"
+            />
+          }
+          rightContent={
+            <div className='flex items-center gap-2'>
+              <div className='px-4 py-2 rounded-2xl bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 flex items-center gap-2'>
+                <span className='w-2 h-2 rounded-full bg-orange-500 animate-pulse'></span>
+                <span className='text-sm font-bold text-orange-600 dark:text-orange-400'>
+                  {pendingPurchases.length} {t.pendingReview || 'Pending'}
+                </span>
+              </div>
+            </div>
+          }
+        />
+      )}
 
       {/* Content */}
-      {pendingPurchases.length === 0 ? (
+      {filteredPendingPurchases.length === 0 ? (
         <div className='flex-1 flex flex-col items-center justify-center text-gray-400 space-y-4 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800 m-4'>
           <div className='w-24 h-24 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center'>
             <span className='material-symbols-rounded text-5xl opacity-20'>
@@ -141,16 +198,18 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
           </div>
           <div className='text-center'>
             <h3 className='text-lg font-medium text-gray-600 dark:text-gray-300'>
-              {t.allCaughtUp || 'All caught up!'}
+              {(search || externalSearch) ? t.noResults || 'No matches found' : t.allCaughtUp || 'All caught up!'}
             </h3>
             <p className='text-sm opacity-60'>
-              {t.noPendingOrders || 'No pending purchase orders requiring approval.'}
+              {(search || externalSearch)
+                ? t.tryDifferentSearch || 'Try searching for another supplier or ID.'
+                : t.noPendingOrders || 'No pending purchase orders requiring approval.'}
             </p>
           </div>
         </div>
       ) : (
         <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 flex-1 overflow-y-auto p-1'>
-          {pendingPurchases.map((purchase) => (
+          {filteredPendingPurchases.map((purchase) => (
             <div
               key={purchase.id}
               className='bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-100 dark:border-gray-800 shadow-xs flex flex-col relative overflow-hidden group cursor-pointer hover:border-gray-200 dark:hover:border-blue-800 transition-colors'

@@ -34,6 +34,7 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { useSmartDirection } from '../common/SmartInputs';
 import { FilterPill, type FilterConfig } from '../common/FilterPill';
 import { TanStackTable } from '../common/TanStackTable';
+import { PageHeader } from '../common/PageHeader';
 
 interface PurchasesProps {
   inventory: Drug[];
@@ -48,6 +49,7 @@ interface PurchasesProps {
   onRejectPurchase?: (purchase: Purchase) => void;
   language: 'EN' | 'AR';
   navigationParams?: any;
+  onViewChange?: (view: string, params?: any) => void;
   currentShift: Shift | null;
 }
 
@@ -65,6 +67,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   language,
   // @ts-ignore
   navigationParams,
+  onViewChange,
   currentShift,
 }) => {
   const { getVerifiedDate } = useStatusBar();
@@ -72,24 +75,15 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const { showMenu } = useContextMenu();
   const { textTransform } = useSettings();
   const { activeBranchId, activeOrgId } = useData();
-  const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
   const [supplierSearch, setSupplierSearch] = useState('');
 
-  // Handle Navigation Params (Deep Linking)
+  // Handle Navigation Params (Deep Linking Redirect)
   useEffect(() => {
     if (navigationParams?.id) {
-      setMode('history');
-      setHistorySearch(navigationParams.id);
-      // Wait for next tick/render to find purchase
-      setTimeout(() => {
-        const purchase = purchases.find(p => p.id === navigationParams.id);
-        if (purchase) {
-          setSelectedPurchase(purchase);
-        }
-      }, 100);
+      onViewChange?.('purchase-history', { id: navigationParams.id });
     }
-  }, [navigationParams, purchases]);
+  }, [navigationParams]);
 
   // Helper: Format time with Arabic AM/PM
   const formatTime = (date: Date): string => {
@@ -279,19 +273,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
     t.placeholders?.enterId || 'Enter ID'
   );
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit'>('credit');
-  const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
-  const [statusFilter, setStatusFilter] = useState<
-    'all' | 'pending' | 'completed' | 'returned' | 'rejected' | 'approved' | 'received'
-  >('all');
-  const [dateRange, setDateRange] = useState<{ from: string; to: string }>({ from: '', to: '' });
-  const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
-  const [historySearch, setHistorySearch] = useState('');
-  const historySearchDir = useSmartDirection(
-    historySearch,
-    t.placeholders?.searchHistory || 'Search ID, Supplier...'
-  );
-  const [isSearchSuggestionsOpen, setIsSearchSuggestionsOpen] = useState(false);
-  const searchSuggestionsRef = useRef<HTMLDivElement>(null);
 
   // Animation state for order ID (YouTube-style)
   const [isOrderIdAnimating, setIsOrderIdAnimating] = useState(false);
@@ -305,294 +286,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
       return () => clearTimeout(timer);
     }
   }, [invoiceId]);
-
-  // Filter Logic
-  const sortedHistory = useMemo(() => {
-    let data = [...purchases].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-
-    // Date Filter
-    if (dateRange.from) {
-      const fromDate = new Date(dateRange.from).getTime();
-      data = data.filter((p) => new Date(p.date).getTime() >= fromDate);
-    }
-    if (dateRange.to) {
-      const toDate = new Date(dateRange.to).getTime();
-      data = data.filter((p) => new Date(p.date).getTime() <= toDate);
-    }
-
-    // Search Filter
-    if (historySearch.trim()) {
-      const { mode: searchMode, regex } = parseSearchTerm(historySearch);
-
-      if (searchMode === 'ingredient' || searchMode === 'generic') {
-        data = data.filter(
-          (p) => p.items && p.items.some((item) => item.name && regex.test(item.name))
-        );
-      } else {
-        data = data.filter(
-          (p) =>
-            (p.invoiceId && regex.test(p.invoiceId)) ||
-            (p.externalInvoiceId && regex.test(p.externalInvoiceId)) ||
-            (p.supplierName && regex.test(p.supplierName))
-        );
-      }
-    }
-
-    if (statusFilter === 'all') return data;
-
-    return data.filter((p) => {
-      if (statusFilter === 'returned') {
-        // Check if any returns exist for this purchase
-        return purchaseReturns.some((r) => r.purchaseId === p.id);
-      }
-      if (statusFilter === 'rejected') {
-        return p.status === 'rejected';
-      }
-      if (statusFilter === 'completed') {
-        // Completed ONLY if NO returns exist (otherwise it fits 'returned' filter)
-        return (p.status === 'completed' || p.status === 'received') && !purchaseReturns.some((r) => r.purchaseId === p.id);
-      }
-      if (statusFilter === 'approved') return p.status === 'approved';
-      return p.status === statusFilter;
-    });
-  }, [purchases, statusFilter, purchaseReturns, dateRange, historySearch]);
-
-  const filteredSearchSuggestions = useMemo(() => {
-    const { mode, regex } = parseSearchTerm(historySearch);
-    if (mode !== 'ingredient' && mode !== 'generic') return [];
-    return (inventory || []).filter((d) => d.name && regex.test(d.name)).slice(0, 10);
-  }, [historySearch, inventory]);
-
-  const columns = useMemo<ColumnDef<Purchase>[]>(
-    () => [
-      {
-        header: t.tableHeaders?.orderId || 'Order #',
-        accessorKey: 'invoiceId',
-        meta: { align: 'start' },
-      },
-      {
-        header: t.tableHeaders?.invId || 'Inv #',
-        accessorKey: 'externalInvoiceId',
-        meta: { align: 'start' },
-      },
-      {
-        header: t.tableHeaders?.date || 'Date',
-        accessorKey: 'date',
-        meta: { align: 'center' },
-      },
-      {
-        header: t.tableHeaders?.supplier || 'Supplier',
-        accessorKey: 'supplierName',
-        cell: (info: any) => (
-          <span className='text-sm font-bold text-gray-800 dark:text-gray-100'>
-            {info.getValue()}
-          </span>
-        ),
-      },
-      {
-        header: t.tableHeaders?.payment || 'Payment',
-        accessorKey: 'paymentType',
-        cell: (info: any) => {
-          const type = info.getValue() as string;
-          const config =
-            type === 'cash'
-              ? { color: 'emerald', icon: 'payments', label: t.cash || 'Cash' }
-              : { color: 'blue', icon: 'credit_card', label: t.credit || 'Credit' };
-
-          return (
-            <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
-            >
-              <span className='material-symbols-rounded text-xs'>{config.icon}</span>
-              {config.label}
-            </span>
-          );
-        },
-      },
-      {
-        header: t.tableHeaders?.items || 'Items',
-        accessorFn: (row: any) => row.items?.length || 0,
-        cell: (info: any) => (
-          <span className='text-xs text-gray-500 font-medium'>{info.getValue()}</span>
-        ),
-      },
-      {
-        header: t.tableHeaders?.discount || 'Discount',
-        accessorFn: (p: any) => {
-          const totalSale = p.items.reduce(
-            (sum: number, i: any) => sum + i.salePrice * i.quantity,
-            0
-          );
-          const totalCost = p.totalCost;
-          const totalDiscount = totalSale - totalCost;
-          return totalSale > 0 ? (totalDiscount / totalSale) * 100 : 0;
-        },
-        cell: (info: any) => {
-          const val = info.getValue() as number;
-          return (
-            <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-emerald-700 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
-            >
-              <span className='material-symbols-rounded text-xs'>percent</span>
-              {val.toFixed(1)}
-            </span>
-          );
-        },
-      },
-      {
-        header: t.tableHeaders?.total || 'Total',
-        accessorKey: 'totalCost',
-        cell: (info: any) => {
-          const p = info.row.original;
-          const returns = getPurchaseReturns(p.id);
-          const hasReturns = returns.length > 0;
-          const totalReturned = returns.reduce((sum, r) => sum + r.totalRefund, 0);
-          return (
-            <div className='flex flex-col items-end'>
-              <span className='text-sm font-bold text-gray-900 dark:text-white'>
-                ${info.getValue().toFixed(2)}
-              </span>
-              {hasReturns && (
-                <span className='text-[10px] text-orange-600 dark:text-orange-400 font-medium'>
-                  -${totalReturned.toFixed(2)} {t.detailsModal?.returnedLabel || 'returned'}
-                </span>
-              )}
-            </div>
-          );
-        },
-      },
-      {
-        header: t.tableHeaders?.action || 'Status',
-        id: 'status',
-        accessorFn: (p: any) => {
-          const hasReturns = getPurchaseReturns(p.id).length > 0;
-          if (p.status === 'rejected') return 'REJECTED';
-          if (p.status === 'pending') return 'PENDING';
-          if (p.status === 'approved') return 'APPROVED';
-          if (p.status === 'received') return 'RECEIVED';
-          if (hasReturns) return 'RETURNED';
-          return 'COMPLETED';
-        },
-        cell: (info: any) => {
-          const status = info.getValue() as string;
-          let config = {
-            color: 'emerald',
-            icon: 'check_circle',
-            label: t.tooltips?.completed || 'Completed',
-          };
-          if (status === 'PENDING')
-            config = { color: 'amber', icon: 'pending', label: t.tooltips?.pending || 'Pending' };
-          else if (status === 'REJECTED')
-            config = { color: 'red', icon: 'cancel', label: t.tooltips?.rejected || 'Rejected' };
-          else if (status === 'RETURNED')
-            config = {
-              color: 'purple',
-              icon: 'assignment_return',
-              label: t.tooltips?.returned || 'Returned',
-            };
-          else if (status === 'APPROVED')
-            config = {
-              color: 'blue',
-              icon: 'fact_check',
-              label: t.tooltips?.approved || 'Approved',
-            };
-          else if (status === 'RECEIVED')
-            config = {
-              color: 'emerald',
-              icon: 'inventory',
-              label: t.tooltips?.received || 'Received',
-            };
-
-          return (
-            <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
-            >
-              <span className='material-symbols-rounded text-xs'>{config.icon}</span>
-              {config.label}
-            </span>
-          );
-        },
-      },
-    ],
-    [t, language, purchaseReturns]
-  );
-
-  // Helper: Get returns for a purchase
-  const getPurchaseReturns = (purchaseId: string) => {
-    return purchaseReturns.filter((r) => r.purchaseId === purchaseId);
-  };
-
-  // Copy helper with fallback
-  const copyToClipboard = async (text: string) => {
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(text);
-      } else {
-        // Fallback for older browsers or insecure contexts
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        try {
-          document.execCommand('copy');
-        } catch (err) {
-          console.error('Fallback copy failed:', err);
-        }
-        document.body.removeChild(textArea);
-      }
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  };
-
-  // Helper: Get context menu actions for a purchase row
-  const getRowContextActions = (purchase: Purchase) => [
-    {
-      label: t.contextMenu?.viewDetails || 'View Details',
-      icon: 'visibility',
-      action: () => setSelectedPurchase(purchase),
-    },
-    { separator: true },
-    {
-      label: t.contextMenu?.copyInvoice || 'Copy Invoice',
-      icon: 'content_copy',
-      action: () => copyToClipboard(purchase.invoiceId || ''),
-    },
-    {
-      label: t.contextMenu?.copySupplier || 'Copy Supplier',
-      icon: 'person',
-      action: () => copyToClipboard(purchase.supplierName || ''),
-    },
-    { separator: true },
-    {
-      label: t.contextMenu?.markAsReceived || 'Mark as Received',
-      icon: 'inventory',
-      action: () => onMarkAsReceived?.(purchase.id),
-      disabled: purchase.status !== 'approved' && purchase.status !== 'pending',
-    },
-  ];
-
-  // Row touch/long-press support
-  const currentTouchRow = useRef<Purchase | null>(null);
-
-  const {
-    onTouchStart: onRowTouchStart,
-    onTouchEnd: onRowTouchEnd,
-    onTouchMove: onRowTouchMove,
-  } = useLongPress({
-    onLongPress: (e) => {
-      if (currentTouchRow.current) {
-        const touch = e.touches[0];
-        showMenu(touch.clientX, touch.clientY, getRowContextActions(currentTouchRow.current));
-      }
-    },
-  });
 
   // Sidebar Resize Logic with branch-scoped persistence
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -681,12 +374,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
         !supplierDropdownRef.current.contains(event.target as Node)
       ) {
         setIsSupplierOpen(false);
-      }
-      if (
-        searchSuggestionsRef.current &&
-        !searchSuggestionsRef.current.contains(event.target as Node)
-      ) {
-        setIsSearchSuggestionsOpen(false);
       }
     };
 
@@ -1029,172 +716,148 @@ export const Purchases: React.FC<PurchasesProps> = ({
   return (
     <div className='h-full flex flex-col gap-2 animate-fade-in overflow-hidden'>
       {/* Header with toggle */}
-      <div className='flex justify-between items-center px-2 shrink-0'>
-        <div>
-          <div className='flex items-center gap-3'>
-            <h1 className='text-2xl font-bold tracking-tight page-title'>
-              {mode === 'create' ? t.title : t.historyTitle}
-            </h1>
-          </div>
-          <p className='text-sm text-gray-500'>{t.subtitle}</p>
-        </div>
-        <div className='flex items-center gap-2'>
-          {mode === 'create' && (
-            <div className='flex items-center gap-3'>
-              {/* Drug Search & Pill Filters */}
-              <div className='relative w-48 xl:w-120' ref={searchRef}>
-                <SearchInput
-                  ref={searchInputRef}
-                  value={search}
-                  onSearchChange={(val) => {
-                    setSearch(val);
-                    setShowSuggestions(true);
-                  }}
-                  onKeyDown={onDrugSearchKeyDown}
-                  placeholder={t.placeholders?.searchDrug || 'Search products...'}
-                  color={color}
-                  className='h-9 text-sm'
-                  rounded='full'
-                  filterConfigs={purchaseFilterConfigs}
-                  activeFilters={activeFilters}
-                  onUpdateFilter={(groupId, values) => setActiveFilters((prev) => ({ ...prev, [groupId]: values }))}
-                />
+      <PageHeader
+        leftContent={
+          <div className='relative w-48 xl:w-120' ref={searchRef}>
+            <SearchInput
+              ref={searchInputRef}
+              value={search}
+              onSearchChange={(val) => {
+                setSearch(val);
+                setShowSuggestions(true);
+              }}
+              onKeyDown={onDrugSearchKeyDown}
+              placeholder={t.placeholders?.searchDrug || 'Search products...'}
+              color={color}
+              className='h-9 text-sm'
+              rounded='full'
+              filterConfigs={purchaseFilterConfigs}
+              activeFilters={activeFilters}
+              onUpdateFilter={(groupId, values) => setActiveFilters((prev) => ({ ...prev, [groupId]: values }))}
+            />
 
-                <SearchDropdown
-                  results={filteredDrugs}
-                  onSelect={(drug) => {
-                    handleAddItem(drug);
-                    setSearch('');
-                  }}
-                  columns={[
-                    {
-                      header: t.headers?.codes || 'Codes',
-                      width: 'w-32 shrink-0',
-                      className: 'text-gray-900 dark:text-gray-400 justify-center text-center',
-                      render: (drug: Drug) => drug.barcode || drug.internalCode || '---',
-                    },
-                    {
-                      header: t.headers?.name || 'Name',
-                      width: 'flex-1',
-                      className: 'text-gray-900 dark:text-gray-400',
-                      render: (drug: Drug) => (
-                        <span className='truncate'>
-                          {getDisplayName(drug, textTransform)}
-                        </span>
-                      ),
-                    },
-                    {
-                      header: t.headers?.expiry || 'Expiry',
-                      width: 'w-24 shrink-0',
-                      className: 'justify-center text-center text-gray-900 dark:text-gray-400',
-                      render: (drug: Drug) => formatExpiryDate(drug.expiryDate),
-                    },
-                    {
-                      header: t.headers?.stock || 'Stock',
-                      width: 'w-[60px] shrink-0',
-                      className: 'justify-center text-center text-gray-900 dark:text-gray-400',
-                      render: (drug: Drug) => (
-                        <div className='tabular-nums border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-0.5 rounded-lg shrink-0 min-w-[36px] text-center'>
-                          {drug.stock}
-                        </div>
-                      ),
-                    },
-                  ]}
-                  isVisible={showSuggestions && !!search.trim()}
-                  highlightedIndex={selectedSuggestionIndex}
-                  emptyMessage={t.noResults}
-                  className="-start-1/2 w-[700px] lg:w-[900px]"
-                />
-              </div>
-
-              {/* Supplier Selection */}
-              <div className='relative w-48 xl:w-90' ref={supplierDropdownRef}>
-                <SearchInput
-                  value={
-                    supplierSearch ||
-                    (selectedSupplierId
-                      ? suppliers.find((s) => s.id === selectedSupplierId)?.name
-                      : '') ||
-                    ''
-                  }
-                  onSearchChange={(val) => {
-                    setSupplierSearch(val);
-                    setSelectedSupplierId('');
-                    if (!isSupplierOpen) setIsSupplierOpen(true);
-                  }}
-                  onFocus={() => setIsSupplierOpen(true)}
-                  onKeyDown={(e) => {
-                    if (!isSupplierOpen || filteredSuppliers.length === 0) return;
-                    onSupplierSearchKeyDown(e);
-                  }}
-                  dir={supplierSearchDir}
-                  placeholder={
-                    t.placeholders?.searchSupplier || 'Search and select supplier...'
-                  }
-                  color={color}
-                  className='h-9 text-sm'
-                  rounded='full'
-                  icon='store'
-                />
-
-                <SearchDropdown
-                  results={filteredSuppliers}
-                  onSelect={(supplier) => {
-                    setSelectedSupplierId(supplier.id);
-                    setSupplierSearch('');
-                    setIsSupplierOpen(false);
-                  }}
-                  columns={[
-                    {
-                      header: t.headers?.name || 'Name',
-                      width: 'flex-1',
-                      className: 'text-gray-900 dark:text-gray-400',
-                      render: (supplier: Supplier) => (
-                        <span className='truncate'>{supplier.name}</span>
-                      ),
-                    },
-                    {
-                      header: t.headers?.codes || 'Codes',
-                      width: 'w-24 shrink-0',
-                      className: 'text-gray-900 dark:text-gray-400 justify-center text-center',
-                      render: (supplier: Supplier) => supplier.id,
-                    },
-                  ]}
-                  isVisible={isSupplierOpen}
-                  highlightedIndex={selectedSupplierIndex}
-                  emptyMessage={t.noResults || 'No suppliers found'}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Status Filter (History Mode Only) */}
-          {mode === 'history' && (
-              <DateRangePicker
-                startDate={dateRange.from}
-                endDate={dateRange.to}
-                onStartDateChange={(val) => setDateRange((prev) => ({ ...prev, from: val }))}
-                onEndDateChange={(val) => setDateRange((prev) => ({ ...prev, to: val }))}
-                color='gray'
-                locale={language === 'AR' ? 'ar-EG' : 'en-US'}
+              <SearchDropdown
+                results={filteredDrugs}
+                onSelect={(drug) => {
+                  handleAddItem(drug);
+                  setSearch('');
+                }}
+                columns={[
+                  {
+                    header: t.headers?.codes || 'Codes',
+                    width: 'w-32 shrink-0',
+                    className: 'text-gray-900 dark:text-gray-400 justify-center text-center',
+                    render: (drug: Drug) => drug.barcode || drug.internalCode || '---',
+                  },
+                  {
+                    header: t.headers?.name || 'Name',
+                    width: 'flex-1',
+                    className: 'text-gray-900 dark:text-gray-400',
+                    render: (drug: Drug) => (
+                      <span className='truncate'>
+                        {getDisplayName(drug, textTransform)}
+                      </span>
+                    ),
+                  },
+                  {
+                    header: t.headers?.expiry || 'Expiry',
+                    width: 'w-24 shrink-0',
+                    className: 'justify-center text-center text-gray-900 dark:text-gray-400',
+                    render: (drug: Drug) => formatExpiryDate(drug.expiryDate),
+                  },
+                  {
+                    header: t.headers?.stock || 'Stock',
+                    width: 'w-[60px] shrink-0',
+                    className: 'justify-center text-center text-gray-900 dark:text-gray-400',
+                    render: (drug: Drug) => (
+                      <div className='tabular-nums border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-0.5 rounded-lg shrink-0 min-w-[36px] text-center'>
+                        {drug.stock}
+                      </div>
+                    ),
+                  },
+                ]}
+                isVisible={showSuggestions && !!search.trim()}
+                highlightedIndex={selectedSuggestionIndex}
+                emptyMessage={t.noResults}
+                className="start-0 w-[700px] lg:w-[900px]"
               />
-          )}
-
+            </div>
+          }
+        centerContent={
           <SegmentedControl
-            value={mode}
-            onChange={(val) => setMode(val as 'create' | 'history')}
-            color={color}
-            shape='pill'
-            size='sm'
             options={[
-              { label: t.newPurchase, value: 'create' },
-              { label: t.viewHistory, value: 'history' },
+              { value: 'create', label: t.newPurchase || 'Purchase', icon: 'shopping_cart' },
+              { value: 'approve', label: t.pendingApproval?.title || 'Approve', icon: 'assignment_turned_in' },
+              { value: 'history', label: t.viewHistory || 'History', icon: 'history' },
             ]}
+            value='create'
+            onChange={(val) => {
+              if (val === 'create') return;
+              if (val === 'approve') onViewChange?.('pending-approval');
+              else if (val === 'history') onViewChange?.('purchase-history');
+            }}
+            variant="onPage"
+            shape="pill"
+            color={color}
+            size="md"
+            iconSize="--icon-lg"
+            useGraphicFont={true}
+            className="w-full sm:w-[520px]"
           />
-        </div>
-      </div>
+        }
+        rightContent={
+          <div className='relative w-48 xl:w-120' ref={supplierDropdownRef}>
+            <SearchInput
+              value={
+                supplierSearch ||
+                (selectedSupplierId
+                  ? suppliers.find((s) => s.id === selectedSupplierId)?.name
+                  : '')
+              }
+              onSearchChange={(val) => {
+                setSupplierSearch(val);
+                setIsSupplierOpen(true);
+              }}
+              onKeyDown={onSupplierSearchKeyDown}
+              onClear={() => {
+                setSupplierSearch('');
+                setSelectedSupplierId('');
+              }}
+              placeholder={t.placeholders?.searchSupplier || 'Search and select supplier...'}
+              rounded='full'
+              color={color}
+              className='h-9 text-sm'
+            />
+            <SearchDropdown
+              results={filteredSuppliers}
+              onSelect={(supplier) => {
+                setSelectedSupplierId(supplier.id);
+                setSupplierSearch('');
+                setIsSupplierOpen(false);
+              }}
+              columns={[
+                {
+                  header: t.headers?.supplier || 'Supplier',
+                  width: 'flex-1',
+                  className: 'text-gray-900 dark:text-gray-100',
+                  render: (supplier: Supplier) => supplier.name,
+                },
+                {
+                  header: t.headers?.codes || 'Codes',
+                  width: 'w-24 shrink-0',
+                  className: 'text-gray-900 dark:text-gray-400 justify-center text-center',
+                  render: (supplier: Supplier) => supplier.id,
+                },
+              ]}
+              isVisible={isSupplierOpen}
+              highlightedIndex={selectedSupplierIndex}
+              emptyMessage={t.noResults || 'No suppliers found'}
+            />
+          </div>
+        }
+      />
 
-      {mode === 'create' ? (
+      
         <div className='flex flex-col gap-4 h-full overflow-hidden'>
           {/* BOTTOM: Order Cart */}
           <div className={`flex-1 ${CARD_BASE} p-5 rounded-3xl flex flex-col overflow-hidden`}>
@@ -1802,380 +1465,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
             </div>
           </div>
         </div>
-      ) : (
-        /* HISTORY VIEW */
-        <div className='flex flex-col flex-1 gap-4 overflow-hidden'>
-          <div className='flex items-center gap-3'>
-            <div className='relative w-[512px]' ref={searchSuggestionsRef}>
-              <SearchInput
-                value={historySearch}
-                onSearchChange={(val) => {
-                  setHistorySearch(val);
-                  setIsSearchSuggestionsOpen(true);
-                }}
-                onClear={() => setHistorySearch('')}
-                onFocus={() => setIsSearchSuggestionsOpen(true)}
-                placeholder={
-                  (t.placeholders?.searchHistory || 'Search ID, Supplier...') +
-                  ' (use @ to search medicine)'
-                }
-                className={`${historySearch.startsWith('@') ? 'text-left' : ''}`}
-                rounded='xl'
-                color={color}
-              />
-              <SearchDropdown
-                results={filteredSearchSuggestions}
-                onSelect={(drug) => {
-                  setHistorySearch(`@${drug.name}`);
-                  setIsSearchSuggestionsOpen(false);
-                }}
-                columns={[
-                  {
-                    header: t.headers?.barcode || 'Barcode',
-                    width: 'w-32 shrink-0',
-                    className: 'text-gray-900 dark:text-gray-400',
-                    render: (drug: Drug) => drug.barcode || drug.id || drug.internalCode || '---',
-                  },
-                  {
-                    header: t.headers?.name || 'Name',
-                    width: 'flex-1',
-                    className: 'text-gray-900 dark:text-gray-400',
-                    render: (drug: Drug) => (
-                      <span className='truncate'>{getDisplayName(drug, textTransform)}</span>
-                    ),
-                  },
-                ]}
-                isVisible={isSearchSuggestionsOpen && filteredSearchSuggestions.length > 0}
-              />
-            </div>
-
-            <FilterDropdown
-              items={[
-                { id: 'all', label: t.status?.all || 'All Status' },
-                { id: 'pending', label: t.status?.pending || 'Pending' },
-                { id: 'completed', label: t.status?.completed || 'Completed' },
-                { id: 'returned', label: t.status?.returned || 'Returned' },
-                { id: 'rejected', label: t.status?.rejected || 'Rejected' },
-              ]}
-              selectedItem={{
-                id: statusFilter,
-                label:
-                  statusFilter === 'all'
-                    ? t.status?.all || 'All Status'
-                    : t.status?.[statusFilter] ||
-                      statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1),
-              }}
-              isOpen={isStatusFilterOpen}
-              onToggle={() => setIsStatusFilterOpen(!isStatusFilterOpen)}
-              onSelect={(item) => {
-                setStatusFilter(item.id as any);
-                setIsStatusFilterOpen(false);
-              }}
-              keyExtractor={(item) => item.id}
-              renderItem={(item, isSelected) => (
-                <div className='flex items-center justify-between w-full'>
-                  <span>{item.label}</span>
-                  {isSelected && <span className='material-symbols-rounded text-sm'>check</span>}
-                </div>
-              )}
-              renderSelected={(item) => <span className='text-xs font-bold'>{item?.label}</span>}
-              className='w-40 h-[42px]'
-              variant='input'
-              color={color}
-            />
-          </div>
-
-          <div className={`flex-1 ${CARD_BASE} rounded-xl overflow-hidden flex flex-col`}>
-            <TanStackTable
-              data={sortedHistory}
-              columns={columns}
-              color={color}
-              onRowClick={(p) => setSelectedPurchase(p)}
-              tableId='purchases_history_v2'
-              manualFiltering={true}
-              enableSearch={false}
-              enablePagination={true}
-              enableVirtualization={false}
-              pageSize='auto'
-              enableShowAll={true}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Purchase Details Modal */}
-      {selectedPurchase && (
-        <Modal
-          isOpen={true}
-          onClose={() => setSelectedPurchase(null)}
-          size='4xl'
-          zIndex={50}
-          title={t.detailsModal?.title || 'Purchase Order Details'}
-          icon='receipt_long'
-          subtitle={`${selectedPurchase.invoiceId} • ${new Date(selectedPurchase.date).toLocaleDateString()} ${formatTime(new Date(selectedPurchase.date))}`}
-        >
-          {/* Info Bar */}
-          <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-2 bg-white dark:bg-gray-900 text-sm mb-4'>
-            <div>
-              <p className='text-xs text-gray-500 uppercase font-bold mb-1'>
-                {t.detailsModal?.supplier || 'Supplier'}
-              </p>
-              <p className='font-bold'>{selectedPurchase.supplierName}</p>
-            </div>
-            <div>
-              <p className='text-xs text-gray-500 uppercase font-bold mb-1'>
-                {t.detailsModal?.invNumber || 'Inv #'}
-              </p>
-              <p className='font-mono'>{selectedPurchase.externalInvoiceId || '-'}</p>
-            </div>
-            <div>
-              <p className='text-xs text-gray-500 uppercase font-bold mb-1'>
-                {t.detailsModal?.payment || 'Payment'}
-              </p>
-              {(() => {
-                const config =
-                  selectedPurchase.paymentMethod === 'cash'
-                    ? { color: 'emerald', icon: 'payments', label: t.cash || 'Cash' }
-                    : { color: 'blue', icon: 'credit_card', label: t.credit || 'Credit' };
-                return (
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
-                  >
-                    <span className='material-symbols-rounded text-xs'>{config.icon}</span>
-                    {config.label}
-                  </span>
-                );
-              })()}
-            </div>
-            <div>
-              <p className='text-xs text-gray-500 uppercase font-bold mb-1'>
-                {t.detailsModal?.totalCost || 'Total Cost'}
-              </p>
-              <p className={`font-bold text-lg text-primary-600`}>
-                ${selectedPurchase.totalCost.toFixed(2)}
-              </p>
-            </div>
-            <div>
-              <p className='text-xs text-gray-500 uppercase font-bold mb-1'>
-                {t.detailsModal?.status || 'Status'}
-              </p>
-              {(() => {
-                const status = selectedPurchase.status as string;
-                let config = { color: 'gray', icon: 'help', label: status };
-
-                switch (status) {
-                  case 'pending':
-                    config = {
-                      color: 'amber',
-                      icon: 'pending',
-                      label: t.detailsModal?.pendingApproval || 'Pending Approval',
-                    };
-                    break;
-                  case 'completed':
-                    config = {
-                      color: 'emerald',
-                      icon: 'check_circle',
-                      label: t.detailsModal?.completed || 'Completed',
-                    };
-                    break;
-                  case 'rejected':
-                    config = {
-                      color: 'red',
-                      icon: 'cancel',
-                      label: t.detailsModal?.rejected || 'Rejected',
-                    };
-                    break;
-                  case 'approved':
-                    config = {
-                      color: 'blue',
-                      icon: 'fact_check',
-                      label: t.detailsModal?.approved || 'Approved',
-                    };
-                    break;
-                  case 'received':
-                    config = {
-                      color: 'emerald',
-                      icon: 'inventory',
-                      label: t.detailsModal?.received || 'Received',
-                    };
-                    break;
-                  case 'returned':
-                    config = {
-                      color: 'orange',
-                      icon: 'assignment_return',
-                      label: t.detailsModal?.returned || 'Returned',
-                    };
-                    break;
-                }
-
-                return (
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
-                  >
-                    <span className='material-symbols-rounded text-xs'>{config.icon}</span>
-                    {config.label}
-                  </span>
-                );
-              })()}
-            </div>
-            {selectedPurchase.approvalDate && (
-              <div>
-                <p className='text-xs text-gray-500 uppercase font-bold mb-1'>
-                  {t.detailsModal?.approvedOn || 'Approved On'}
-                </p>
-                <p className='font-bold'>
-                  {new Date(selectedPurchase.approvalDate).toLocaleDateString()}{' '}
-                  {formatTime(new Date(selectedPurchase.approvalDate))}
-                </p>
-              </div>
-            )}
-
-            {selectedPurchase.approvedBy && (
-              <div>
-                <p className='text-xs text-gray-500 uppercase font-bold mb-1'>
-                  {t.detailsModal?.approvedBy || 'Approved By'}
-                </p>
-                <p className='font-bold text-gray-800 dark:text-gray-100 flex items-center gap-1'>
-                  <span className='material-symbols-rounded text-sm text-green-600'>
-                    verified_user
-                  </span>
-                  {selectedPurchase.approvedBy}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Items Table */}
-          <div className='bg-gray-50 dark:bg-black/20 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800'>
-            <table className='w-full text-left border-collapse'>
-              <thead className='sticky top-0 z-10 bg-gray-50 dark:bg-gray-900 shadow-xs'>
-                <tr className='border-b border-gray-200 dark:border-gray-700 text-xs text-gray-500 uppercase'>
-                  <th className='p-2 font-bold bg-gray-50 dark:bg-gray-900'>
-                    {t.detailsModal?.item || 'Item'}
-                  </th>
-                  <th className='p-2 font-bold text-center bg-gray-50 dark:bg-gray-900'>
-                    {t.detailsModal?.expiry || 'Expiry'}
-                  </th>
-                  <th className='p-2 font-bold text-center bg-gray-50 dark:bg-gray-900'>
-                    {t.detailsModal?.qty || 'Qty'}
-                  </th>
-                  <th className='p-2 font-bold text-center bg-gray-50 dark:bg-gray-900'>
-                    {t.detailsModal?.returned || 'Returned'}
-                  </th>
-                  <th className='p-2 font-bold text-right bg-gray-50 dark:bg-gray-900'>
-                    {t.detailsModal?.cost || 'Cost'}
-                  </th>
-                  <th className='p-2 font-bold text-right bg-gray-50 dark:bg-gray-900'>
-                    {t.detailsModal?.total || 'Total'}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className='text-sm'>
-                {selectedPurchase.items.map((item, idx) => {
-                  const itemReturns = getPurchaseReturns(selectedPurchase.id).flatMap((r) =>
-                    r.items.filter((ri) => ri.drugId === item.drugId)
-                  );
-                  const totalReturned = itemReturns.reduce(
-                    (sum, ri) => sum + ri.quantityReturned,
-                    0
-                  );
-                  const hasReturns = totalReturned > 0;
-                  const isPartialReturn = hasReturns && totalReturned < item.quantity;
-                  const isFullReturn = hasReturns && totalReturned >= item.quantity;
-
-                  return (
-                    <tr
-                      key={idx}
-                      className='border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-white dark:hover:bg-gray-800 transition-colors'
-                    >
-                      <td className='p-2'>
-                        <p className='font-bold text-gray-800 dark:text-gray-200'>
-                          {getDisplayName(item, textTransform)}
-                        </p>
-                        {hasReturns && (
-                          <div className='mt-1 space-y-1'>
-                            {itemReturns.map((ret, ridx) => {
-                              const returnRecord = getPurchaseReturns(selectedPurchase.id).find(
-                                (r) =>
-                                  r.items.some(
-                                    (ri) =>
-                                      ri.drugId === ret.drugId &&
-                                      ri.quantityReturned === ret.quantityReturned
-                                  )
-                              );
-                              return (
-                                <p
-                                  key={ridx}
-                                  className='text-[10px] text-orange-600 dark:text-orange-400 flex items-center gap-1'
-                                >
-                                  <span className='material-symbols-rounded text-[12px]'>
-                                    assignment_return
-                                  </span>
-                                  {ret.quantityReturned}{' '}
-                                  {t.detailsModal?.returnedLabel || 'returned'} - {ret.reason} (
-                                  {ret.condition})
-                                  {returnRecord && (
-                                    <span className='text-gray-500'>
-                                      • {new Date(returnRecord.date).toLocaleDateString()}
-                                    </span>
-                                  )}
-                                </p>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </td>
-                      <td className='p-2 text-center'>
-                        {item.expiryDate
-                          ? (() => {
-                              const status = checkExpiryStatus(item.expiryDate);
-                              const config = getExpiryStatusConfig(status);
-                              return (
-                                <span
-                                  className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
-                                >
-                                  {formatExpiryDate(item.expiryDate)}
-                                </span>
-                              );
-                            })()
-                          : '-'}
-                      </td>
-                      <td className='p-2 text-center font-bold'>{item.quantity}</td>
-                      <td className='p-2 text-center'>
-                        {hasReturns ? (
-                          <div className='flex flex-col items-center gap-1'>
-                            <span
-                              className={`font-bold ${isFullReturn ? 'text-red-600' : 'text-orange-600'}`}
-                            >
-                              {totalReturned}
-                            </span>
-                            <span
-                              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${isFullReturn ? 'red' : 'orange'}-200 dark:border-${isFullReturn ? 'red' : 'orange'}-900/50 text-${isFullReturn ? 'red' : 'orange'}-700 dark:text-${isFullReturn ? 'red' : 'orange'}-400 text-[9px] font-bold uppercase tracking-wider bg-transparent`}
-                            >
-                              <span className='material-symbols-rounded text-xs'>
-                                {isFullReturn ? 'assignment_return' : 'assignment_return'}
-                              </span>
-                              {isFullReturn
-                                ? t.detailsModal?.fullReturn || 'Full'
-                                : t.detailsModal?.partialReturn || 'Partial'}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className='text-gray-400'>-</span>
-                        )}
-                      </td>
-                      <td className='p-2 text-right'>${item.costPrice.toFixed(2)}</td>
-                      <td className='p-2 text-right font-bold'>
-                        ${(item.costPrice * item.quantity).toFixed(2)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Modal>
-      )}
+      
     </div>
   );
 };

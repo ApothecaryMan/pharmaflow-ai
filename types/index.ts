@@ -810,6 +810,7 @@ export type ViewState =
   | 'pos'
   | 'sales-history'
   | 'return-history'
+  | 'purchase-history'
   | 'suppliers'
   | 'purchases'
   | 'pending-approval'

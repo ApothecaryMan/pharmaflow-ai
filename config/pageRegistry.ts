@@ -27,6 +27,7 @@ import { BranchSettings } from '../components/settings/BranchSettings';
 import { PricingPage } from '../components/settings/PricingPage';
 import { LandingPage } from '../components/layout/LandingPage';
 import { PendingApproval } from '../components/purchases/PendingApproval';
+import { PurchaseHistory } from '../components/purchases/PurchaseHistory';
 import { PurchaseReturns } from '../components/purchases/PurchaseReturns';
 import { Purchases } from '../components/purchases/Purchases';
 import { SuppliersList } from '../components/purchases/SuppliersList';
@@ -223,6 +224,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'onMarkAsReceived',
       'onRejectPurchase',
       'navigationParams',
+      'onViewChange',
     ],
     permission: 'purchase.view',
   },
@@ -244,8 +246,31 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'currentShift',
       'currentEmployeeId',
       'employees',
+      'onViewChange',
     ],
     permission: 'purchase.approve',
+  },
+  'purchase-history': {
+    id: 'purchase-history',
+    component: PurchaseHistory,
+    menuLabel: 'Purchase History',
+    menuLabelAr: 'سجل المشتريات',
+    icon: 'history',
+    category: 'purchase',
+    requiredProps: [
+      'purchases',
+      'purchaseReturns',
+      'inventory',
+      'suppliers',
+      'color',
+      't',
+      'language',
+      'navigationParams',
+      'onViewChange',
+      'onMarkAsReceived',
+      'employees',
+    ],
+    permission: 'purchase.view',
   },
   'purchase-returns': {
     id: 'purchase-returns',

@@ -37,6 +37,7 @@ export const MODULE_VIEW_MAPPING: Record<string, ViewState> = {
   compliance: 'dashboard',
   settings: 'org-management',
   'return-history': 'return-history',
+  'purchase-history': 'purchase-history',
 } as const;
 
 export const PHARMACY_MENU: MenuItem[] = [
@@ -509,7 +510,7 @@ export const PHARMACY_MENU: MenuItem[] = [
             permission: 'purchase.approve',
           },
           { label: 'Approved PO', icon: 'verified' },
-          { label: 'PO History', icon: 'history' },
+          { label: 'PO History', view: 'purchase-history', icon: 'history' },
           { label: 'Cancel PO', icon: 'cancel' },
           { label: 'PO Templates', icon: 'file_copy' },
         ],

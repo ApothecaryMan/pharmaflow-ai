@@ -4,7 +4,6 @@ import { ROUTES } from '../../config/routes';
 import { permissionsService } from '../../services/auth/permissions';
 import { useSettings } from '../../context';
 import { LandingPage } from '../layout/LandingPage';
-import { PageSkeletonRegistry } from '../skeletons/PageSkeletonRegistry';
 import { type ViewState } from '../../types';
 import { batchService } from '../../services/inventory/batchService';
 
@@ -48,7 +47,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   const { language, theme, darkMode, textTransform } = useSettings();
 
   if (!currentEmployeeId) {
-    return <LandingPage color={theme.primary} language={language} darkMode={darkMode} />;
+    return <LandingPage language={language} darkMode={darkMode} />;
   }
 
 
@@ -184,9 +183,10 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     'sales-history': { ...t.salesHistory, datePickerTranslations: t.global.datePicker },
     'return-history': { ...t.returnHistory, datePickerTranslations: t.global.datePicker },
     suppliers: t.suppliers,
-    purchases: t.purchases,
-    'purchases-test': t.purchases,
-    'pending-approval': t.pendingApproval,
+    purchases: { ...t.purchases, pendingApproval: t.pendingApproval, datePickerTranslations: t.global.datePicker },
+    'purchases-test': { ...t.purchases, pendingApproval: t.pendingApproval, datePickerTranslations: t.global.datePicker },
+    'pending-approval': { ...t.purchases, pendingApproval: t.pendingApproval, datePickerTranslations: t.global.datePicker },
+    'purchase-history': { ...t.purchases, pendingApproval: t.pendingApproval, datePickerTranslations: t.global.datePicker },
     'barcode-studio': t.barcodeStudio,
     customers: t.customers,
     'customer-history': t.customers,
