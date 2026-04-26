@@ -42,6 +42,46 @@ interface DashboardProps {
   language: string;
 }
 
+// --- Helper Functions ---
+const exportToCSV = (data: any[], filename: string) => {
+  if (data.length === 0) return;
+
+  const headers = Object.keys(data[0]);
+  const csvContent = [
+    headers.join(','),
+    ...data.map((row) =>
+      headers
+        .map((header) => {
+          const value = row[header];
+          return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
+        })
+        .join(',')
+    ),
+  ].join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+};
+
+const getDaysUntilExpiry = (dateStr: string) => {
+  const diff = parseExpiryEndOfMonth(dateStr).getTime() - new Date().getTime();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+};
+
+// Expand button component
+const ExpandButton = ({ onClick, title }: { onClick: () => void; title?: string }) => (
+  <button
+    onClick={onClick}
+    className='w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95 opacity-0 group-hover:opacity-100'
+    title={title || 'Expand'}
+  >
+    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>open_in_full</span>
+  </button>
+);
+
 export const Dashboard: React.FC<DashboardProps> = ({
   inventory,
   sales,
@@ -59,6 +99,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showHelp, setShowHelp] = useState(false);
   const { textTransform } = useSettings();
   const { activeBranchId, batches, isLoading } = useData();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const helpContent = DASHBOARD_HELP[language as 'EN' | 'AR'] || DASHBOARD_HELP.EN;
 
@@ -92,29 +133,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   }, [subView]);
 
-  // --- Helper Functions ---
-  const exportToCSV = (data: any[], filename: string) => {
-    if (data.length === 0) return;
-
-    const headers = Object.keys(data[0]);
-    const csvContent = [
-      headers.join(','),
-      ...data.map((row) =>
-        headers
-          .map((header) => {
-            const value = row[header];
-            return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
-          })
-          .join(',')
-      ),
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-  };
+  // Scroll to top when subView changes
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [subView]);
 
   // --- STATS & ANALYTICS ---
   const totalExpenses = useMemo(
@@ -276,25 +300,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const recentSales = useMemo(() => {
     return [...sales]
       .filter((sale) => {
-        // If netTotal is 0, it's definitely fully returned
         if ((sale.netTotal ?? sale.total) === 0) return false;
-
-        // If it has returns, check if ALL items were returned (even if delivery fee remains)
         if (sale.hasReturns && sale.itemReturnedQuantities) {
           const totalItemsQty = sale.items.reduce((sum, item) => sum + item.quantity, 0);
           const totalReturnedQty = (Object.values(sale.itemReturnedQuantities) as number[]).reduce(
             (sum, qty) => sum + qty,
             0
           );
-
-          // If all items returned, exclude from list (even if delivery fee exists)
           if (totalReturnedQty >= totalItemsQty) return false;
         }
-
         return true;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 5);
+      .slice(0, 5)
+      .map(sale => {
+        let totalReturned = 0;
+        sale.items.forEach((item, idx) => {
+          const lineKey = `${item.id}_${idx}`;
+          totalReturned += sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
+        });
+        const totalItems = sale.items.reduce((sum, item) => sum + item.quantity, 0);
+        return { ...sale, returnStats: { returned: totalReturned, total: totalItems } };
+      });
   }, [sales]);
 
   const recentSales20 = useMemo(() => {
@@ -314,7 +341,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
         return true;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 20);
+      .slice(0, 20)
+      .map((sale) => {
+        let totalReturned = 0;
+        sale.items.forEach((item, idx) => {
+          const lineKey = `${item.id}_${idx}`;
+          totalReturned +=
+            sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
+        });
+        const totalItems = sale.items.reduce((sum, item) => sum + item.quantity, 0);
+        return { ...sale, returnStats: { returned: totalReturned, total: totalItems } };
+      });
   }, [sales]);
 
   const handleRestockSubmit = (e: React.FormEvent) => {
@@ -326,31 +363,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
       setRestockIsUnit(false);
     }
   };
-
-  const getDaysUntilExpiry = (dateStr: string) => {
-    const diff = parseExpiryEndOfMonth(dateStr).getTime() - new Date().getTime();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
-  };
-
-  // Expand button component
-  const ExpandButton = ({ onClick, title }: { onClick: () => void; title?: string }) => (
-    <button
-      onClick={onClick}
-      className='w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95 opacity-0 group-hover:opacity-100'
-      title={title || t.expand?.expand || 'Expand'}
-    >
-      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>open_in_full</span>
-    </button>
-  );
-
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  // Scroll to top when subView changes
-  useEffect(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [subView]);
 
   // --- CUSTOM TOOLTIP ---
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -418,81 +430,75 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Stats Cards Row */}
       <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3'>
-        {/* Revenue Card: Primary financial intake indicator */}
-        <HasPermission action='reports.view_financial'>
-          <div
-            onClick={() => setExpandedView('revenue')}
-            className='cursor-pointer transition-transform active:scale-95 touch-manipulation'
-          >
-            <SmallCard
-              title={t.revenue}
-              value={totalRevenue}
-              icon='payments'
-              iconColor={color === 'primary' ? 'primary' : color}
-              type='currency'
-              currencyLabel={getCurrencySymbol()}
-              fractionDigits={2}
-              iconTooltip={revenueTooltip} // Advanced analytics on hover
-              isLoading={isLoading}
-            />
-          </div>
-        </HasPermission>
+        {[
+          {
+            id: 'revenue',
+            title: t.revenue,
+            value: totalRevenue,
+            icon: 'payments',
+            iconColor: color === 'primary' ? 'primary' : color,
+            type: 'currency',
+            tooltip: revenueTooltip,
+            permission: 'reports.view_financial',
+          },
+          {
+            id: 'expenses',
+            title: t.expenses,
+            value: totalExpenses,
+            icon: 'shopping_cart_checkout',
+            iconColor: 'red',
+            type: 'currency',
+            tooltip: expensesTooltip,
+            permission: 'reports.view_financial',
+          },
+          {
+            id: 'profit',
+            title: t.profit,
+            value: netProfit,
+            icon: 'trending_up',
+            iconColor: 'emerald',
+            type: 'currency',
+            tooltip: profitTooltip,
+            permission: 'reports.view_financial',
+          },
+          {
+            id: 'lowStock',
+            title: t.lowStock,
+            value: lowStockItems.length,
+            icon: 'warning',
+            iconColor: 'orange',
+            type: 'number',
+            tooltip: lowStockTooltip,
+          },
+        ].map((card) => {
+          const cardContent = (
+            <div
+              key={card.id}
+              onClick={() => setExpandedView(card.id as ExpandedView)}
+              className='cursor-pointer transition-transform active:scale-95 touch-manipulation'
+            >
+              <SmallCard
+                title={card.title}
+                value={card.value}
+                icon={card.icon}
+                iconColor={card.iconColor}
+                type={card.type as any}
+                currencyLabel={card.type === 'currency' ? getCurrencySymbol() : undefined}
+                fractionDigits={card.type === 'currency' ? 2 : 0}
+                iconTooltip={card.tooltip}
+                isLoading={isLoading}
+              />
+            </div>
+          );
 
-        {/* Expenses Card: Direct spending on stock and operations */}
-        <HasPermission action='reports.view_financial'>
-          <div
-            onClick={() => setExpandedView('expenses')}
-            className='cursor-pointer transition-transform active:scale-95 touch-manipulation'
-          >
-            <SmallCard
-              title={t.expenses}
-              value={totalExpenses}
-              icon='shopping_cart_checkout'
-              iconColor='red'
-              type='currency'
-              currencyLabel={getCurrencySymbol()}
-              fractionDigits={2}
-              iconTooltip={expensesTooltip} // Advanced analytics on hover
-              isLoading={isLoading}
-            />
-          </div>
-        </HasPermission>
-
-        {/* Net Profit Card: Bottom-line pharmacy health */}
-        <HasPermission action='reports.view_financial'>
-          <div
-            onClick={() => setExpandedView('profit')}
-            className='cursor-pointer transition-transform active:scale-95 touch-manipulation'
-          >
-            <SmallCard
-              title={t.profit}
-              value={netProfit}
-              icon='trending_up'
-              iconColor='emerald'
-              type='currency'
-              currencyLabel={getCurrencySymbol()}
-              fractionDigits={2}
-              iconTooltip={profitTooltip} // Advanced analytics on hover
-              isLoading={isLoading}
-            />
-          </div>
-        </HasPermission>
-
-        {/* Low Stock Card: Operational critical alerts */}
-        <div
-          onClick={() => setExpandedView('lowStock')}
-          className='cursor-pointer transition-transform active:scale-95 touch-manipulation'
-        >
-          <SmallCard
-            title={t.lowStock}
-            value={lowStockItems.length}
-            icon='warning'
-            iconColor='orange'
-            fractionDigits={0}
-            iconTooltip={lowStockTooltip} // Advanced analytics on hover
-            isLoading={isLoading}
-          />
-        </div>
+          return card.permission ? (
+            <HasPermission key={card.id} action={card.permission as any}>
+              {cardContent}
+            </HasPermission>
+          ) : (
+            cardContent
+          );
+        })}
       </div>
 
       {/* Row 2: Chart & Top Selling */}
@@ -567,132 +573,110 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Row 3: Alerts & Recent Sales */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-        {/* Low Stock & Expiring Combined Area */}
+        {/* Alerts Area */}
         <div className='flex flex-col gap-4'>
-          {/* Low Stock List */}
-          <div className={`p-5 rounded-3xl ${CARD_BASE} h-64 flex flex-col group`}>
-            <div className='flex justify-between items-center mb-2'>
-              <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-                <span className='material-symbols-rounded text-orange-500' style={{ fontSize: 'var(--icon-navbar-dropdown)' }}>
-                  priority_high
-                </span>
-                {t.attention}
-              </h3>
-              <ExpandButton onClick={() => setExpandedView('lowStock')} />
-            </div>
-            <div className='flex-1 overflow-y-auto space-y-2 pe-1' dir='ltr'>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className='flex justify-between items-center p-2 animate-pulse'>
-                    <div className='flex items-center gap-3 overflow-hidden'>
-                      <div className='w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 shrink-0' />
-                      <div className='space-y-1.5'>
-                        <div className='h-3.5 w-24 bg-zinc-100 dark:bg-zinc-800 rounded' />
-                        <div className='h-2.5 w-16 bg-zinc-50 dark:bg-zinc-800/50 rounded' />
-                      </div>
+          {[
+            {
+              id: 'lowStock',
+              title: t.attention,
+              icon: 'priority_high',
+              iconColor: 'text-orange-500',
+              iconBg: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
+              data: lowStockItems.slice(0, 5),
+              emptyText: t.allGood,
+              onExpand: () => setExpandedView('lowStock'),
+              renderItem: (item: any) => (
+                <div key={item.id} className='flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'>
+                  <div className='flex items-center gap-3 overflow-hidden'>
+                    <div className='w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0'>
+                      <span className='material-symbols-rounded text-base'>warning</span>
                     </div>
-                    <div className='h-8 w-16 bg-zinc-100 dark:bg-zinc-800 rounded-lg ms-2' />
+                    <div className='min-w-0'>
+                      <p className='font-medium text-sm text-gray-700 dark:text-gray-200 truncate item-name'>
+                        {getDisplayName(item, textTransform)}
+                      </p>
+                      <p className='text-[10px] text-orange-600 dark:text-orange-400 font-bold uppercase'>
+                        {item.stock} {t.expand?.allItems || 'left'}
+                      </p>
+                    </div>
                   </div>
-                ))
-              ) : lowStockItems.length === 0 ? (
-                <div className='h-full flex items-center justify-center text-gray-400 text-sm'>
-                  {t.allGood}
-                </div>
-              ) : (
-                lowStockItems.slice(0, 5).map((item) => (
-                  <div
-                    key={item.id}
-                    className='flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+                  <button
+                    onClick={() => setRestockDrug(item)}
+                    className='text-xs px-2.5 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-medium hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-gray-700 transition-colors shrink-0 ms-2'
                   >
+                    {t.restock}
+                  </button>
+                </div>
+              )
+            },
+            {
+              id: 'expiring',
+              title: t.expiringSoon,
+              icon: 'event_busy',
+              iconColor: 'text-red-500',
+              data: expiringItems.slice(0, 5),
+              emptyText: t.noExpiring,
+              onExpand: () => setExpandedView('expiring'),
+              renderItem: (item: any) => {
+                const days = getDaysUntilExpiry(item.expiryDate);
+                const isExpired = days < 0;
+                return (
+                  <div key={item.id} className='flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'>
                     <div className='flex items-center gap-3 overflow-hidden'>
-                      <div className='w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0'>
-                        <span className='material-symbols-rounded text-base'>warning</span>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isExpired ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'}`}>
+                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-base)' }}>event_busy</span>
                       </div>
                       <div className='min-w-0'>
                         <p className='font-medium text-sm text-gray-700 dark:text-gray-200 truncate item-name'>
                           {getDisplayName(item, textTransform)}
                         </p>
-                        <p className='text-[10px] text-orange-600 dark:text-orange-400 font-bold uppercase'>
-                          {item.stock} {t.expand?.allItems || 'left'}
+                        <p className={`text-[10px] font-bold uppercase ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-500'}`}>
+                          {isExpired ? t.expired : `${days} ${t.days}`}
                         </p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => setRestockDrug(item)}
-                      className={`text-xs px-2.5 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-medium hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-gray-700 transition-colors shrink-0 ms-2`}
-                    >
-                      {t.restock}
-                    </button>
+                    <span className='text-xs text-gray-400 font-medium shrink-0 ms-2 bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded-lg'>
+                      {formatExpiryDate(item.expiryDate)}
+                    </span>
                   </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Expiring Soon List */}
-          <div className={`p-5 rounded-3xl ${CARD_BASE} h-64 flex flex-col group`}>
-            <div className='flex justify-between items-center mb-2'>
-              <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-                <span className='material-symbols-rounded text-red-500' style={{ fontSize: 'var(--icon-navbar-dropdown)' }}>
-                  event_busy
-                </span>
-                {t.expiringSoon}
-              </h3>
-              <ExpandButton onClick={() => setExpandedView('expiring')} />
-            </div>
-            <div className='flex-1 overflow-y-auto space-y-2 pe-1' dir='ltr'>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className='flex justify-between items-center p-2 animate-pulse'>
-                    <div className='flex items-center gap-3 overflow-hidden'>
-                      <div className='w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 shrink-0' />
-                      <div className='space-y-1.5'>
-                        <div className='h-3.5 w-24 bg-zinc-100 dark:bg-zinc-800 rounded' />
-                        <div className='h-2.5 w-12 bg-zinc-50 dark:bg-zinc-800/50 rounded' />
-                      </div>
-                    </div>
-                    <div className='h-6 w-16 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg ms-2' />
-                  </div>
-                ))
-              ) : expiringItems.length === 0 ? (
-                <div className='h-full flex items-center justify-center text-gray-400 text-sm'>
-                  {t.noExpiring}
-                </div>
-              ) : (
-                expiringItems.slice(0, 5).map((item) => {
-                  const days = getDaysUntilExpiry(item.expiryDate);
-                  const isExpired = days < 0;
-                  return (
-                    <div
-                      key={item.id}
-                      className='flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
-                    >
+                );
+              }
+            }
+          ].map((card) => (
+            <div key={card.id} className={`p-5 rounded-3xl ${CARD_BASE} h-64 flex flex-col group`}>
+              <div className='flex justify-between items-center mb-2'>
+                <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
+                  <span className={`material-symbols-rounded ${card.iconColor}`} style={{ fontSize: 'var(--icon-navbar-dropdown)' }}>
+                    {card.icon}
+                  </span>
+                  {card.title}
+                </h3>
+                <ExpandButton onClick={card.onExpand} />
+              </div>
+              <div className='flex-1 overflow-y-auto space-y-2 pe-1' dir='ltr'>
+                {isLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className='flex justify-between items-center p-2 animate-pulse'>
                       <div className='flex items-center gap-3 overflow-hidden'>
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isExpired ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'}`}
-                        >
-                          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-base)' }}>event_busy</span>
-                        </div>
-                        <div className='min-w-0'>
-                          <p className='font-medium text-sm text-gray-700 dark:text-gray-200 truncate item-name'>
-                            {getDisplayName(item, textTransform)}
-                          </p>
-                          <p
-                            className={`text-[10px] font-bold uppercase ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-500'}`}
-                          >
-                            {isExpired ? t.expired : `${days} ${t.days}`}
-                          </p>
+                        <div className='w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 shrink-0' />
+                        <div className='space-y-1.5'>
+                          <div className='h-3.5 w-24 bg-zinc-100 dark:bg-zinc-800 rounded' />
+                          <div className='h-2.5 w-16 bg-zinc-50 dark:bg-zinc-800/50 rounded' />
                         </div>
                       </div>
-                      <span className='text-xs text-gray-400 font-medium shrink-0 ms-2 bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded-lg'>
-                        {formatExpiryDate(item.expiryDate)}
-                      </span>
+                      <div className='h-8 w-16 bg-zinc-100 dark:bg-zinc-800 rounded-lg ms-2' />
                     </div>
-                  );
-                })
-              )}
+                  ))
+                ) : card.data.length === 0 ? (
+                  <div className='h-full flex items-center justify-center text-gray-400 text-sm'>
+                    {card.emptyText}
+                  </div>
+                ) : (
+                  card.data.map(card.renderItem)
+                )}
+              </div>
             </div>
-          </div>
+          ))}
         </div>
 
         {/* Recent Transactions */}
@@ -782,33 +766,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       {formatCurrency(sale.netTotal ?? sale.total)}
                     </p>
                     <p className='text-xs text-gray-500 flex items-center justify-end gap-1'>
-                      {sale.hasReturns &&
-                        (() => {
-                          // Calculate total returned items
-                          let totalReturned = 0;
-                          sale.items.forEach((item, idx) => {
-                            const lineKey = `${item.id}_${idx}`;
-                            totalReturned +=
-                              sale.itemReturnedQuantities?.[lineKey] ||
-                              sale.itemReturnedQuantities?.[item.id] ||
-                              0;
-                          });
-                          const totalItems = sale.items.reduce(
-                            (sum, item) => sum + item.quantity,
-                            0
-                          );
-                          return (
-                            <span className='text-orange-500 flex items-center gap-0.5'>
-                              <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-xs)' }}>
-                                keyboard_return
-                              </span>
-                              <span className='text-[10px]'>
-                                ({totalReturned}/{totalItems})
-                              </span>
-                            </span>
-                          );
-                        })()}
-                      {/* Item count moved to payment badge */}
+                      {sale.hasReturns && sale.returnStats && (
+                        <span className='text-orange-500 flex items-center gap-0.5'>
+                          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-xs)' }}>
+                            keyboard_return
+                          </span>
+                          <span className='text-[10px]'>
+                            ({sale.returnStats.returned}/{sale.returnStats.total})
+                          </span>
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -1454,31 +1421,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                         {/* Item Count / Returns Info */}
                         <div className='text-[10px] text-gray-400 flex items-center gap-1 min-w-[30px] justify-end'>
-                          {sale.hasReturns ? (
-                            (() => {
-                              let totalReturned = 0;
-                              sale.items.forEach((item, idx) => {
-                                const lineKey = `${item.id}_${idx}`;
-                                totalReturned +=
-                                  sale.itemReturnedQuantities?.[lineKey] ||
-                                  sale.itemReturnedQuantities?.[item.id] ||
-                                  0;
-                              });
-                              const totalItems = sale.items.reduce(
-                                (sum, item) => sum + item.quantity,
-                                0
-                              );
-                              return (
-                                <span
-                                  className='text-orange-500 flex items-center gap-0.5'
-                                  title={`${totalReturned}/${totalItems} returned`}
-                                >
-                                  <span className='material-symbols-rounded text-[14px]'>
-                                    keyboard_return
-                                  </span>
-                                </span>
-                              );
-                            })()
+                          {sale.hasReturns && sale.returnStats ? (
+                            <span
+                              className='text-orange-500 flex items-center gap-0.5'
+                              title={`${sale.returnStats.returned}/${sale.returnStats.total} returned`}
+                            >
+                              <span className='material-symbols-rounded text-[14px]'>
+                                keyboard_return
+                              </span>
+                            </span>
                           ) : (
                             <span>({sale.items.length})</span>
                           )}
