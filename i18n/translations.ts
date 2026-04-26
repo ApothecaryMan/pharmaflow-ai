@@ -95,6 +95,8 @@ export const TRANSLATIONS = {
       sidebarStyle: 'Sidebar Mode',
       sidebarFixed: 'Fixed',
       sidebarMini: 'Mini',
+      borderStyle: 'Border Style',
+      customCss: 'Custom CSS',
     },
     orgManagement: {
       title: 'Organization Management',
@@ -2512,6 +2514,8 @@ export const TRANSLATIONS = {
       sidebarStyle: 'شكل القائمة الجانبية',
       sidebarFixed: 'ثابت',
       sidebarMini: 'منكمش',
+      borderStyle: 'شكل البطاقة',
+      customCss: 'كود CSS للبطاقات',
     },
     orgManagement: {
       title: 'إدارة المنظمة',

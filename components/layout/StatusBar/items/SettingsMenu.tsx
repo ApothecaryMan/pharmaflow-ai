@@ -1,20 +1,67 @@
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AVAILABLE_FONTS_AR, AVAILABLE_FONTS_EN } from '../../../../config/fonts';
 import { permissionsService } from '../../../../services/auth/permissions';
 import { useSettings } from '../../../../context';
 import { useSmartPosition } from '../../../../hooks/useSmartPosition';
 import { TRANSLATIONS } from '../../../../i18n/translations';
-import { type Language, ThemeColor } from '../../../../types';
+import { type Language } from '../../../../types';
 import { SegmentedControl } from '../../../common/SegmentedControl';
 import { Switch } from '../../../common/Switch';
 import { StatusBarItem } from '../StatusBarItem';
 
-/**
- * ARCHITECTURE NOTE:
- * This component is self-contained. It consumes the `useSettings` hook directly to manage its toggles.
- * Never re-introduce passed-down setting props here; always use the central context.
- */
+// --- Utility Components for Cleaner Maestro ---
+
+const SettingsRow: React.FC<{
+  icon: string;
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ icon, label, children, className = '' }) => (
+  <div className={`flex items-center justify-between py-1 ${className}`}>
+    <div className="flex items-center gap-2">
+      <span 
+        className="material-symbols-rounded text-(--text-secondary) text-(--icon-base)"
+        style={{ fontSize: 'var(--status-icon-size, 16px)' }}
+      >
+        {icon}
+      </span>
+      <span className="text-xs font-medium text-(--text-primary)">{label}</span>
+    </div>
+    <div className="flex items-center gap-2">{children}</div>
+  </div>
+);
+
+const SubmenuWrapper: React.FC<{
+  isOpen: boolean;
+  isMobile: boolean;
+  settingsBlur: boolean;
+  pos: any;
+  children: React.ReactNode;
+  title?: string;
+}> = ({ isOpen, isMobile, settingsBlur, pos, children, title }) => {
+  if (!isOpen) return null;
+
+  const mobileClasses = `relative w-full mt-2 ${settingsBlur ? 'bg-(--bg-menu)/50 saturate-150 backdrop-blur-xl' : 'bg-(--bg-page-surface)'} border-none shadow-none p-4 space-y-4 rounded-xl`;
+  
+  const desktopClasses = `absolute w-64 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-4 space-y-4 ${pos.align === 'top' ? 'top-0' : 'bottom-0'} ${
+    settingsBlur ? 'backdrop-blur-2xl bg-(--bg-menu)/85 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]' : 'bg-(--bg-menu)'
+  }`;
+
+  const desktopStyle = {
+    [pos.side === 'left' ? 'right' : 'left']: '100%',
+    [pos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
+  };
+
+  return (
+    <div className={isMobile ? mobileClasses : desktopClasses} style={isMobile ? {} : desktopStyle}>
+      {title && <label className="text-[10px] font-bold uppercase mb-1 block text-(--text-tertiary)">{title}</label>}
+      {children}
+    </div>
+  );
+};
+
 export interface SettingsMenuProps {
   dropDirection?: 'up' | 'down';
   showTrigger?: boolean;
@@ -30,822 +77,234 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   triggerVariant = 'statusBar',
   triggerSize = 24,
 }) => {
+  const settings = useSettings();
   const {
-    language,
-    theme: currentTheme,
-    setTheme,
-    darkMode,
-    setDarkMode,
-    cardBorderLight,
-    setCardBorderLight,
-    customCardCss,
-    setCustomCardCss,
-    enableCustomCardCss,
-    setEnableCustomCardCss,
-    setLanguage,
-    availableThemes,
-    availableLanguages,
-    fontFamilyEN,
-    setFontFamilyEN,
-    fontFamilyAR,
-    setFontFamilyAR,
-    textTransform,
-    setTextTransform,
-    hideInactiveModules,
-    setHideInactiveModules,
-    navStyle,
-    setNavStyle,
-    developerMode,
-    setDeveloperMode,
-    dropdownBlur,
-    setDropdownBlur,
-    sidebarBlur,
-    setSidebarBlur,
-    menuBlur,
-    setMenuBlur,
-    tooltipBlur,
-    setTooltipBlur,
-    settingsBlur,
-    setSettingsBlur,
-    showTicker,
-    setShowTicker,
-    showTickerSales,
-    setShowTickerSales,
-    showTickerInventory,
-    setShowTickerInventory,
-    showTickerCustomers,
-    setShowTickerCustomers,
-    showTickerTopSeller,
-    setShowTickerTopSeller,
-    graphicStyle,
-    setGraphicStyle,
-    graphicFontVariant,
-    setGraphicFontVariant,
-    borderRadius,
-    setBorderRadius,
-    sidebarStyle,
-    setSidebarStyle,
-  } = useSettings();
+    language, darkMode, setDarkMode, setTheme, availableThemes, theme: currentTheme,
+    fontFamilyEN, setFontFamilyEN, fontFamilyAR, setFontFamilyAR,
+    textTransform, setTextTransform, hideInactiveModules, setHideInactiveModules,
+    navStyle, setNavStyle, developerMode, setDeveloperMode,
+    settingsBlur, setSettingsBlur, showTicker, setShowTicker,
+    showTickerSales, setShowTickerSales, showTickerInventory, setShowTickerInventory,
+    showTickerCustomers, setShowTickerCustomers, showTickerTopSeller, setShowTickerTopSeller,
+    borderRadius, setBorderRadius, sidebarStyle, setSidebarStyle,
+    dropdownBlur, setDropdownBlur, sidebarBlur, setSidebarBlur,
+    menuBlur, setMenuBlur, tooltipBlur, setTooltipBlur,
+    graphicStyle, setGraphicStyle, graphicFontVariant, setGraphicFontVariant,
+    cardBorderLight, setCardBorderLight, enableCustomCardCss, setEnableCustomCardCss,
+    customCardCss, setCustomCardCss
+  } = settings;
 
   const [isOpen, setIsOpen] = useState(false);
-  const [statusBarExpanded, setStatusBarExpanded] = useState(false);
+  const [expandedSubmenu, setExpandedSubmenu] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Translations
+  const isAR = language === 'AR';
   const t = TRANSLATIONS[language].settings;
 
-  const [themeExpanded, setThemeExpanded] = useState(false);
-  const [typographyExpanded, setTypographyExpanded] = useState(false);
-
-  // Use Custom Hook for Themes Position
-  const {
-    ref: themesRef,
-    position: themesPos,
-    checkPosition: checkThemesPos,
-    resetPosition: resetThemesPos,
-  } = useSmartPosition({ defaultAlign: 'top' });
-
-  // Use Custom Hook for Quick Statuses Position
-  const {
-    ref: quickStatusesRef,
-    position: quickStatusesPos,
-    checkPosition: checkInfoPos,
-    resetPosition: resetInfoPos,
-  } = useSmartPosition({ defaultAlign: 'bottom' });
-
-  // Use Custom Hook for Typography Position
-  const {
-    ref: typographyRef,
-    position: typographyPos,
-    checkPosition: checkTypographyPos,
-    resetPosition: resetTypographyPos,
-  } = useSmartPosition({ defaultAlign: 'top' });
-
-  // Use Custom Hook for Blur Options Position
-  const {
-    ref: blurOptionsRef,
-    position: blurOptionsPos,
-    checkPosition: checkBlurOptionsPos,
-    resetPosition: resetBlurOptionsPos,
-  } = useSmartPosition({ defaultAlign: 'top' });
-
-  const [blurOptionsExpanded, setBlurOptionsExpanded] = useState(false);
+  // Smart Positions
+  const themesPos = useSmartPosition({ defaultAlign: 'top' });
+  const quickStatusPos = useSmartPosition({ defaultAlign: 'bottom' });
+  const typographyPos = useSmartPosition({ defaultAlign: 'top' });
+  const blurPos = useSmartPosition({ defaultAlign: 'top' });
 
   // Mobile Detection
   const [isMobile, setIsMobile] = useState(false);
-
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.matchMedia('(max-width: 768px)').matches);
-    };
-
-    checkMobile(); // Initial check
+    const checkMobile = () => setIsMobile(window.matchMedia('(max-width: 768px)').matches);
+    checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Reset submenu when main menu is closed
-  useEffect(() => {
-    if (!isOpen) {
-      setStatusBarExpanded(false);
-      setThemeExpanded(false);
-      setTypographyExpanded(false);
-      setBlurOptionsExpanded(false);
-      resetThemesPos();
-      resetInfoPos();
-      resetTypographyPos();
-      resetBlurOptionsPos();
-    }
-  }, [isOpen, resetThemesPos, resetInfoPos, resetTypographyPos, resetBlurOptionsPos]);
+  const closeAllSubmenus = useCallback(() => {
+    setExpandedSubmenu(null);
+    themesPos.resetPosition();
+    quickStatusPos.resetPosition();
+    typographyPos.resetPosition();
+    blurPos.resetPosition();
+  }, [themesPos, quickStatusPos, typographyPos, blurPos]);
 
-  // Close dropdown when clicking outside
+  useEffect(() => { if (!isOpen) closeAllSubmenus(); }, [isOpen, closeAllSubmenus]);
+
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setIsOpen(false);
     };
-
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleToggle = () => {
-    setIsOpen(!isOpen);
+  const toggleSubmenu = (name: string, checkPos: () => void) => {
+    if (expandedSubmenu === name) {
+      setExpandedSubmenu(null);
+    } else {
+      closeAllSubmenus();
+      checkPos();
+      setExpandedSubmenu(name);
+    }
   };
 
-  const closeAllSubmenus = () => {
-    setThemeExpanded(false);
-    setTypographyExpanded(false);
-    setBlurOptionsExpanded(false);
-    setStatusBarExpanded(false);
-  };
+  const menuContainerClasses = useMemo(() => `
+    absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
+    ${align === 'start' ? 'inset-s-0 origin-top-start' : 'inset-e-0 origin-top-end'}
+    w-64 rounded-xl shadow-2xl border border-(--border-divider) z-110 animate-fade-in
+    ${settingsBlur ? 'backdrop-blur-2xl bg-(--bg-menu)/30 saturate-200' : 'bg-(--bg-menu)'}
+  `, [dropDirection, align, settingsBlur]);
 
   return (
-    <div
-      className={`relative ${showTrigger && triggerVariant === 'statusBar' ? 'h-full flex items-center' : ''}`}
-      ref={dropdownRef}
-    >
-      {/* Settings Button */}
-      {showTrigger &&
-        (triggerVariant === 'statusBar' ? (
-          <StatusBarItem
-            icon='settings'
-            tooltip={t.settings}
-            variant={isOpen ? 'info' : 'default'}
-            onClick={() => setIsOpen(!isOpen)}
-          />
+    <div className={`relative ${showTrigger && triggerVariant === 'statusBar' ? 'h-full flex items-center' : ''}`} ref={dropdownRef}>
+      {showTrigger && (
+        triggerVariant === 'statusBar' ? (
+          <StatusBarItem icon="settings" tooltip={t.settings} variant={isOpen ? 'info' : 'default'} onClick={() => setIsOpen(!isOpen)} />
         ) : (
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className={`flex items-center justify-center w-10 h-10 ${isOpen ? 'text-primary-500' : 'text-gray-600 dark:text-gray-300'}`}
-          >
-            <span className={`material-symbols-rounded text-[${triggerSize}px]`}>
-              settings
-            </span>
+          <button onClick={() => setIsOpen(!isOpen)} className={`flex items-center justify-center w-10 h-10 ${isOpen ? 'text-primary-500' : 'text-(--text-secondary)'}`}>
+            <span className="material-symbols-rounded" style={{ fontSize: `${triggerSize}px` }}>settings</span>
           </button>
-        ))}
+        )
+      )}
 
-      {/* Settings Dropdown */}
-      {isOpen && (
-        <div
-          className={`
-            absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
-            ${align === 'start' ? 'inset-s-0 origin-top-start' : 'inset-e-0 origin-top-end'}
-            w-64 rounded-xl shadow-2xl border border-(--border-divider) z-110 animate-fade-in
-            ${
-              settingsBlur
-                ? 'backdrop-blur-2xl bg-(--bg-menu)/30 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]'
-                : 'bg-(--bg-menu)'
-            }
-          `}
-        >
-          {/* Header */}
-          <div className='px-3 py-2 border-b border-(--border-divider) text-center'>
-            <span className='text-xs font-bold' style={{ color: 'var(--text-primary)' }}>
-              {t.settings}
-            </span>
-          </div>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className={menuContainerClasses}>
+            <div className="px-3 py-2 border-b border-(--border-divider) text-center">
+              <span className="text-xs font-bold text-(--text-primary)">{t.settings}</span>
+            </div>
 
-          {/* Settings Content */}
-          <div 
-            className='p-3 space-y-3' 
-            style={{ direction: language === 'AR' ? 'rtl' : 'ltr' }}
-            onClick={(e) => {
-              // If clicking on the container itself (empty space), close submenus
-              if (e.target === e.currentTarget) closeAllSubmenus();
-            }}
-          >
-            {/* --- Group 1: Appearance --- */}
-
-            {/* Themes Nested Menu (Replaces old selector) */}
-            <div className='space-y-1 relative' ref={themesRef}>
-              {/* Main Row */}
-              <div className='w-full flex items-center justify-between py-1 transition-colors'>
-                {/* Left Side: Icon + Label */}
-                <div className='flex items-center gap-2'>
-                  <span
-                    className='material-symbols-rounded text-(--icon-base)'
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    brightness_6
-                  </span>
-                  <span className='text-xs font-medium' style={{ color: 'var(--text-primary)' }}>
-                    {t.themesMenu}
-                  </span>
-                </div>
-
-                {/* Right Side: Arrow */}
-                <div className='flex items-center gap-2'>
-                  <button
-                    onClick={() => {
-                      const newState = !themeExpanded;
-                      closeAllSubmenus();
-                      if (newState) {
-                        checkThemesPos();
-                        setThemeExpanded(true);
-                      }
-                    }}
-                    className=''
-                    type='button'
-                  >
-                    <span
-                      className={`material-symbols-rounded transition-transform text-(--icon-base) ${themeExpanded ? 'rotate-180' : ''}`}
-                      style={{ color: 'var(--text-tertiary)' }}
-                    >
-                      {themesPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
+            <div className="p-3 space-y-3" style={{ direction: isAR ? 'rtl' : 'ltr' }}>
+              {/* --- Appearance Section --- */}
+              <div className="space-y-1 relative" ref={themesPos.ref}>
+                <SettingsRow icon="brightness_6" label={t.themesMenu}>
+                  <button type="button" onClick={() => toggleSubmenu('themes', themesPos.checkPosition)}>
+                    <span className={`material-symbols-rounded transition-transform text-(--icon-base) text-(--text-tertiary) ${expandedSubmenu === 'themes' ? 'rotate-180' : ''}`}>
+                      {themesPos.position.side === 'left' ? 'chevron_left' : 'chevron_right'}
                     </span>
                   </button>
-                </div>
-              </div>
+                </SettingsRow>
 
-              {/* Submenu (Hybrid: Pop-out on Desktop, Accordion on Mobile) */}
-              {themeExpanded && (
-                <div
-                  className={`
-                        ${
-                          isMobile
-                            ? `relative w-full mt-2 ${settingsBlur ? 'bg-(--bg-menu)/50 saturate-150 backdrop-blur-xl' : 'bg-(--bg-page-surface)'} border-none shadow-none p-4 space-y-4 rounded-xl`
-                            : `absolute w-64 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-4 space-y-4 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'} ${
-                                settingsBlur
-                                  ? 'backdrop-blur-2xl bg-(--bg-menu)/85 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]'
-                                  : 'bg-(--bg-menu)'
-                              }`
-                        }
-                    `}
-                  style={
-                    isMobile
-                      ? {}
-                      : {
-                          // Dynamic Horizontal
-                          [themesPos.side === 'left' ? 'right' : 'left']: '100%',
-                          [themesPos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
-                        }
-                  }
-                >
-                  {/* Theme Selector */}
-                    <div className='flex items-center gap-1.5'>
-                      <span
-                        className='material-symbols-rounded text-(--icon-sm)'
-                        style={{ color: 'var(--text-secondary)' }}
-                      >
-                        palette
-                      </span>
-                      <SegmentedControl
-                        value={currentTheme.name}
-                        onChange={(val) => {
-                          const theme = availableThemes.find((t) => t.name === val);
-                          if (theme) setTheme(theme);
-                        }}
-                        color={currentTheme?.name?.toLowerCase() || 'blue'}
-                        size='xs'
-                        fullWidth={true}
-                        className='flex-1'
-                        shape='pill'
-                        options={availableThemes.map((theme) => ({
-                          label: '',
-                          value: theme.name,
-                          dotColor: theme.hex,
-                        }))}
-                      />
-                    </div>
-
-
-                  {/* Dark Mode Toggle */}
-                  <div className='flex items-center justify-between'>
-                    <label
-                      className='text-xs font-medium flex items-center gap-1.5'
-                      style={{ color: 'var(--text-primary)' }}
-                    >
-                      <span
-                        className='material-symbols-rounded text-(--icon-sm)'
-                        style={{ color: 'var(--text-secondary)' }}
-                      >
-                        brightness_6
-                      </span>
-                      {t.darkMode}
-                    </label>
+                <SubmenuWrapper isOpen={expandedSubmenu === 'themes'} isMobile={isMobile} settingsBlur={settingsBlur} pos={themesPos.position}>
+                  <div className="flex items-center gap-1.5">
+                    <span className="material-symbols-rounded text-(--icon-sm) text-(--text-secondary)">palette</span>
                     <SegmentedControl
-                      value={darkMode}
-                      onChange={(val) => setDarkMode(val as boolean)}
-                      color={currentTheme?.name?.toLowerCase() || 'blue'}
-                      size='xs'
-                      iconSize='--icon-lg'
-                      fullWidth={false}
-                      shape='pill'
-                      options={[
-                        { label: '', value: false, icon: 'light_mode' },
-                        { label: '', value: true, icon: 'dark_mode' },
-                      ]}
+                      value={currentTheme.name}
+                      onChange={(val) => setTheme(availableThemes.find(th => th.name === val)!)}
+                      color={currentTheme.name.toLowerCase()} size="xs" fullWidth shape="pill"
+                      options={availableThemes.map(th => ({ label: '', value: th.name, dotColor: th.hex }))}
                     />
                   </div>
-
-                  {/* Border Radius Style (Developer Mode Only) */}
+                  <SettingsRow icon="brightness_6" label={t.darkMode}>
+                    <SegmentedControl value={darkMode} onChange={v => setDarkMode(v as boolean)} color={currentTheme.name.toLowerCase()} size="xs" iconSize="--icon-lg" shape="pill" options={[{ label: '', value: false, icon: 'light_mode' }, { label: '', value: true, icon: 'dark_mode' }]} />
+                  </SettingsRow>
                   {developerMode && (
-                    <div className='flex items-center justify-between'>
-                      <label
-                        className='text-xs font-medium flex items-center gap-1.5'
-                        style={{ color: 'var(--text-primary)' }}
-                      >
-                        <span
-                          className='material-symbols-rounded text-(--icon-sm)'
-                          style={{ color: 'var(--text-secondary)' }}
-                        >
-                          rounded_corner
-                        </span>
-                        {t.borderRadius}
-                      </label>
-                      <SegmentedControl
-                        value={borderRadius || 'default'}
-                        onChange={(val) => setBorderRadius?.(val as 'default' | 'sharp' | 'full')}
-                        color={currentTheme?.name?.toLowerCase() || 'blue'}
-                        size='xs'
-                        fullWidth={false}
-                        shape='pill'
-                        options={[
-                          { label: t.radiusSharp, value: 'sharp' },
-                          { label: t.radiusFull, value: 'full' },
-                          { label: t.radiusDefault, value: 'default' },
-                        ]}
-                      />
-                    </div>
+                    <SettingsRow icon="rounded_corner" label={t.borderRadius}>
+                      <SegmentedControl value={borderRadius || 'default'} onChange={v => setBorderRadius?.(v as any)} color={currentTheme.name.toLowerCase()} size="xs" shape="pill" options={[{ label: t.radiusSharp, value: 'sharp' }, { label: t.radiusFull, value: 'full' }, { label: t.radiusDefault, value: 'default' }]} />
+                    </SettingsRow>
                   )}
-
-                  {/* Card Border Style (Light Mode & Developer Mode Only) */}
-                  {!darkMode && developerMode && setCardBorderLight && (
-                    <div className='flex items-center justify-between'>
-                      <label
-                        className='text-xs font-medium flex items-center gap-1.5'
-                        style={{ color: 'var(--text-primary)' }}
-                      >
-                        <span
-                          className='material-symbols-rounded text-(--icon-sm)'
-                          style={{ color: 'var(--text-secondary)' }}
-                        >
-                          border_style
-                        </span>
-                        {(t as any).borderStyle || (language === 'AR' ? 'شكل البطاقة' : 'Card Style')}
-                      </label>
-                      <SegmentedControl
-                        value={cardBorderLight || 'default'}
-                        onChange={(val) => setCardBorderLight(val as 'default' | 'thin' | 'none')}
-                        color={currentTheme?.name?.toLowerCase() || 'blue'}
-                        size='xs'
-                        fullWidth={false}
-                        shape='pill'
-                        options={[
-                          { label: language === 'AR' ? 'سميك' : 'Thick', value: 'default' },
-                          { label: language === 'AR' ? 'نحيف' : 'Thin', value: 'thin' },
-                          { label: language === 'AR' ? 'بدون' : 'None', value: 'none' },
-                        ]}
-                      />
-                    </div>
-                  )}
-
-                  {/* Custom CSS Setting (Light Mode & Developer Mode Only) */}
-                  {!darkMode && developerMode && setCustomCardCss && (
-                    <div className='flex flex-col gap-1.5 py-1'>
-                      <label
-                        className='text-xs font-medium flex items-center justify-between'
-                        style={{ color: 'var(--text-primary)' }}
-                      >
-                        <div className='flex items-center gap-1.5'>
-                          <span
-                            className='material-symbols-rounded text-(--icon-sm)'
-                            style={{ color: 'var(--text-secondary)' }}
-                          >
-                            code
-                          </span>
-                          {(t as any).customCss || (language === 'AR' ? 'كود CSS للبطاقات' : 'Custom Card CSS')}
-                        </div>
-                        <Switch
-                          checked={enableCustomCardCss}
-                          onChange={setEnableCustomCardCss}
-                          theme={currentTheme.name.toLowerCase()}
-                          activeColor={currentTheme.hex}
+                  {!darkMode && developerMode && (
+                    <>
+                      <SettingsRow icon="border_style" label={t.borderStyle || (isAR ? 'شكل البطاقة' : 'Card Style')}>
+                        <SegmentedControl
+                          value={cardBorderLight || 'default'}
+                          onChange={v => setCardBorderLight?.(v as any)}
+                          color={currentTheme.name.toLowerCase()} size="xs" shape="pill"
+                          options={[
+                            { label: isAR ? 'سميك' : 'Thick', value: 'default' },
+                            { label: isAR ? 'نحيف' : 'Thin', value: 'thin' },
+                            { label: isAR ? 'بدون' : 'None', value: 'none' },
+                          ]}
                         />
-                      </label>
-                      <textarea
-                        value={customCardCss || ''}
-                        onChange={(e) => setCustomCardCss(e.target.value)}
-                        placeholder="box-shadow: 0px 4px 6px rgba(0,0,0,0.1);"
-                        className='w-full text-xs p-2 rounded-lg bg-(--bg-input) border border-(--border-divider) text-(--text-primary) outline-hidden font-mono min-h-[60px] resize-y scrollbar-none'
-                        spellCheck={false}
-                        dir="ltr"
-                      />
-                    </div>
+                      </SettingsRow>
+                      <div className="flex flex-col gap-1.5 py-1">
+                        <label className="text-xs font-medium flex items-center justify-between text-(--text-primary)">
+                          <div className="flex items-center gap-1.5">
+                            <span className="material-symbols-rounded text-(--icon-sm) text-(--text-secondary)">code</span>
+                            {t.customCss || (isAR ? 'كود CSS للبطاقات' : 'Custom Card CSS')}
+                          </div>
+                          <Switch checked={enableCustomCardCss} onChange={setEnableCustomCardCss} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
+                        </label>
+                        <textarea
+                          value={customCardCss || ''}
+                          onChange={(e) => setCustomCardCss?.(e.target.value)}
+                          placeholder="box-shadow: 0px 4px 6px rgba(0,0,0,0.1);"
+                          className="w-full text-xs p-2 rounded-lg bg-(--bg-input) border border-(--border-divider) text-(--text-primary) outline-hidden font-mono min-h-[60px] resize-y scrollbar-none"
+                          spellCheck={false}
+                          dir="ltr"
+                        />
+                      </div>
+                    </>
                   )}
-                </div>
-              )}
-            </div>
-
-            {/* Blur Options Nested Menu */}
-            <div className='space-y-1 relative' ref={blurOptionsRef}>
-              {/* Main Row */}
-              <div className='w-full flex items-center justify-between py-1 transition-colors'>
-                <div className='flex items-center gap-2'>
-                  <span
-                    className='material-symbols-rounded text-(--icon-base)'
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    blur_on
-                  </span>
-                  <span className='text-xs font-medium' style={{ color: 'var(--text-primary)' }}>
-                    {t.dropdownBlur}
-                  </span>
-                </div>
-
-                <div className='flex items-center gap-2'>
-                  <Switch
-                    checked={dropdownBlur || false}
-                    onChange={(val) => setDropdownBlur?.(val)}
-                    theme={currentTheme?.name?.toLowerCase() || 'blue'}
-                    activeColor={currentTheme.hex}
-                  />
-                  <button
-                    onClick={() => {
-                      const newState = !blurOptionsExpanded;
-                      closeAllSubmenus();
-                      if (newState) {
-                        checkBlurOptionsPos();
-                        setBlurOptionsExpanded(true);
-                      }
-                    }}
-                    className='transition-colors'
-                    type='button'
-                  >
-                    <span
-                      className={`material-symbols-rounded transition-transform text-(--icon-base) ${blurOptionsExpanded ? 'rotate-180' : ''}`}
-                      style={{ color: 'var(--text-tertiary)' }}
-                    >
-                      {blurOptionsPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
-                    </span>
-                  </button>
-                </div>
+                </SubmenuWrapper>
               </div>
 
-              {/* Blur Options Submenu */}
-              {blurOptionsExpanded && (
-                <div
-                  className={`
-                            ${
-                              isMobile
-                                ? `relative w-full mt-2 ${settingsBlur ? 'bg-(--bg-menu)/50 saturate-150 backdrop-blur-xl' : 'bg-(--bg-page-surface)'} border-none shadow-none p-3 space-y-1.5 rounded-lg`
-                                : `absolute w-64 rounded-lg shadow-xl border border-(--border-divider) z-120 p-3 space-y-1.5 ${blurOptionsPos.align === 'top' ? 'top-0' : 'bottom-0'} ${
-                                    settingsBlur
-                                      ? 'backdrop-blur-2xl bg-(--bg-menu)/85 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]'
-                                      : 'bg-(--bg-menu)'
-                                  }`
-                            }
-                        `}
-                  style={
-                    isMobile
-                      ? {}
-                      : {
-                          [blurOptionsPos.side === 'left' ? 'right' : 'left']: '100%',
-                          [blurOptionsPos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
-                        }
-                  }
-                >
-                  {/* Summary Label */}
-                  <label
-                    className='text-[10px] font-bold uppercase mb-1 block'
-                    style={{ color: 'var(--text-tertiary)' }}
-                  >
-                    {t.dropdownBlur}
-                  </label>
-
-                  {/* Sidebar Blur */}
-                  <div className='flex items-center justify-between py-1'>
-                    <span className='text-xs' style={{ color: 'var(--text-primary)' }}>
-                      {t.sidebarBlur}
+              {/* --- Blur Section --- */}
+              <div className="space-y-1 relative" ref={blurPos.ref}>
+                <SettingsRow icon="blur_on" label={t.dropdownBlur}>
+                  <Switch checked={dropdownBlur || false} onChange={setDropdownBlur} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
+                  <button type="button" onClick={() => toggleSubmenu('blur', blurPos.checkPosition)}>
+                    <span className={`material-symbols-rounded transition-transform text-(--icon-base) text-(--text-tertiary) ${expandedSubmenu === 'blur' ? 'rotate-180' : ''}`}>
+                      {blurPos.position.side === 'left' ? 'chevron_left' : 'chevron_right'}
                     </span>
-                    <Switch
-                      checked={sidebarBlur || false}
-                      onChange={(val) => setSidebarBlur?.(val)}
-                      theme={currentTheme.name.toLowerCase()}
-                      activeColor={currentTheme.hex}
-                    />
-                  </div>
+                  </button>
+                </SettingsRow>
+                <SubmenuWrapper isOpen={expandedSubmenu === 'blur'} isMobile={isMobile} settingsBlur={settingsBlur} pos={blurPos.position} title={t.dropdownBlur}>
+                  <SettingsRow icon="view_sidebar" label={t.sidebarBlur}><Switch checked={sidebarBlur || false} onChange={setSidebarBlur} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
+                  <SettingsRow icon="menu" label={t.menuBlur}><Switch checked={menuBlur || false} onChange={setMenuBlur} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
+                  <SettingsRow icon="chat_bubble" label={t.tooltipBlur}><Switch checked={tooltipBlur || false} onChange={setTooltipBlur} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
+                  <SettingsRow icon="settings" label={t.settingsBlur || 'Settings Blur'}><Switch checked={settingsBlur || false} onChange={setSettingsBlur} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
+                </SubmenuWrapper>
+              </div>
 
-                  {/* Menu Blur */}
-                  <div className='flex items-center justify-between py-1'>
-                    <span className='text-xs' style={{ color: 'var(--text-primary)' }}>
-                      {t.menuBlur}
-                    </span>
-                    <Switch
-                      checked={menuBlur || false}
-                      onChange={(val) => setMenuBlur?.(val)}
-                      theme={currentTheme.name.toLowerCase()}
-                      activeColor={currentTheme.hex}
-                    />
-                  </div>
+              <div className="border-t border-(--border-divider) my-1 opacity-50" />
 
-                  {/* Tooltip Blur */}
-                  <div className='flex items-center justify-between py-1'>
-                    <span className='text-xs' style={{ color: 'var(--text-primary)' }}>
-                      {t.tooltipBlur}
-                    </span>
-                    <Switch
-                      checked={tooltipBlur || false}
-                      onChange={(val) => setTooltipBlur?.(val)}
-                      theme={currentTheme.name.toLowerCase()}
-                      activeColor={currentTheme.hex}
-                    />
-                  </div>
-
-                  {/* Settings Blur */}
-                  <div className='flex items-center justify-between py-1'>
-                    <span className='text-xs' style={{ color: 'var(--text-primary)' }}>
-                      {(t as any).settingsBlur || 'Settings Blur'}
-                    </span>
-                    <Switch
-                      checked={settingsBlur || false}
-                      onChange={(val) => setSettingsBlur?.(val)}
-                      theme={currentTheme.name.toLowerCase()}
-                      activeColor={currentTheme.hex}
-                    />
-                  </div>
-                </div>
+              {/* --- Navigation & Language --- */}
+              {navStyle === 1 && (
+                <SettingsRow icon="view_sidebar" label={t.sidebarStyle}>
+                  <SegmentedControl value={sidebarStyle} onChange={v => setSidebarStyle(v as any)} color={currentTheme.name.toLowerCase()} size="xs" iconSize="--icon-md" shape="pill" options={[{ label: '', value: 1, icon: 'view_sidebar' }, { label: '', value: 2, icon: 'dock_to_left' }, { label: '', value: 3, icon: 'mouse' }]} />
+                </SettingsRow>
               )}
-            </div>
-
-            {/* Sidebar Style Selection - Only show if Sidebar is active */}
-            {navStyle === 1 && (
-                <div className='flex items-center justify-between'>
-                    <label
-                    className='text-xs font-medium flex items-center gap-1.5'
-                    style={{ color: 'var(--text-primary)' }}
-                    >
-                    <span
-                        className='material-symbols-rounded text-(--icon-sm)'
-                        style={{ color: 'var(--text-secondary)' }}
-                    >
-                        view_sidebar
-                    </span>
-                    {t.sidebarStyle}
-                    </label>
-                    <SegmentedControl
-                    value={sidebarStyle}
-                    onChange={(val) => setSidebarStyle(val as 1 | 2 | 3)}
-                    color={currentTheme.name.toLowerCase()}
-                    size='xs'
-                    iconSize='--icon-md'
-                    fullWidth={true}
-                    className='min-w-[124px]'
-                    shape='pill'
-                    options={[
-                        { label: '', value: 1, icon: 'view_sidebar' }, // Normal
-                        { label: '', value: 2, icon: 'dock_to_left' }, // Mini
-                        { label: '', value: 3, icon: 'mouse' },       // Auto-Expand
-                    ]}
-                    />
-                </div>
-            )}
-
-            {/* Nav Style Switch (Redesigned to be inline with icons) */}
-            {setNavStyle && (
-              <div className='flex items-center justify-between'>
-                <label
-                  className='text-xs font-medium flex items-center gap-1.5'
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  <span
-                    className='material-symbols-rounded text-(--icon-sm)'
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    dashboard_customize
-                  </span>
-                  {t.designStyle}
-                </label>
-                <SegmentedControl
-                  value={navStyle || 1}
-                  onChange={(val) => setNavStyle(val as 1 | 2 | 3)}
-                  color={currentTheme.name.toLowerCase()}
-                  size='xs'
-                  iconSize='--icon-lg'
-                  fullWidth={true}
-                  className='max-w-[100px]'
-                  shape='pill'
-                  options={[
-                    { label: '', value: 1, icon: 'view_sidebar' },
-                    { label: '', value: 2, icon: 'web_asset' },
-                  ]}
+              <SettingsRow icon="dashboard_customize" label={t.designStyle}>
+                <SegmentedControl value={navStyle || 1} onChange={v => setNavStyle(v as any)} color={currentTheme.name.toLowerCase()} size="xs" iconSize="--icon-lg" shape="pill" options={[{ label: '', value: 1, icon: 'view_sidebar' }, { label: '', value: 2, icon: 'web_asset' }]} />
+              </SettingsRow>
+              <SettingsRow icon="translate" label={t.language}>
+                <SegmentedControl value={language} onChange={v => settings.setLanguage(v as any)} color={currentTheme.name.toLowerCase()} size="xs" shape="pill" options={[{ label: 'EN', value: 'EN' }, { label: 'AR', value: 'AR' }]} />
+              </SettingsRow>
+              <SettingsRow icon="text_fields" label={t.textTransform}>
+                <Switch
+                  checked={textTransform === 'uppercase'}
+                  onChange={() => setTextTransform(textTransform === 'normal' ? 'uppercase' : 'normal')}
+                  theme={currentTheme.name.toLowerCase()}
+                  activeColor={currentTheme.hex}
                 />
-              </div>
-            )}
+              </SettingsRow>
 
-            {/* Separator */}
-            <div className='border-t border-(--border-divider) my-1 opacity-50' />
+              <div className="border-t border-(--border-divider) my-1 opacity-50" />
 
-            {/* --- Group 2: Language & Text --- */}
-            {/* Language Selector (Redesigned to be inline with icons) */}
-            <div className='flex items-center justify-between'>
-              <label
-                className='text-xs font-medium flex items-center gap-1.5'
-                style={{ color: 'var(--text-primary)' }}
-              >
-                <span
-                  className='material-symbols-rounded text-(--icon-sm)'
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  translate
-                </span>
-                {t.language}
-              </label>
-              <SegmentedControl
-                value={language}
-                onChange={(val) => setLanguage(val as Language)}
-                color={currentTheme.name.toLowerCase()}
-                size='xs'
-                fullWidth={true}
-                className='max-w-[100px]'
-                shape='pill'
-                options={[
-                  { label: 'EN', value: 'EN' },
-                  { label: 'AR', value: 'AR' },
-                ]}
-              />
-            </div>
-
-            {/* Text Transform Toggle */}
-            <div className='flex items-center justify-between'>
-              <label
-                className='text-xs font-medium flex items-center gap-1.5'
-                style={{ color: 'var(--text-primary)' }}
-              >
-                <span
-                  className='material-symbols-rounded text-(--icon-sm)'
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  text_fields
-                </span>
-                {t.textTransform}
-              </label>
-              <Switch
-                checked={textTransform === 'uppercase'}
-                onChange={() =>
-                  setTextTransform(textTransform === 'normal' ? 'uppercase' : 'normal')
-                }
-                theme={currentTheme.name.toLowerCase()}
-                activeColor={currentTheme.hex}
-              />
-            </div>
-
-            {/* Separator */}
-            <div className='border-t border-(--border-divider) my-1 opacity-50' />
-
-            {/* --- Group 3: Typography --- */}
-            <div className='space-y-1 relative' ref={typographyRef}>
-              {/* Main Row */}
-              <div className='w-full flex items-center justify-between py-1 transition-colors'>
-                <div className='flex items-center gap-2'>
-                  <span
-                    className='material-symbols-rounded text-(--icon-base)'
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    font_download
-                  </span>
-                  <span className='text-xs font-medium' style={{ color: 'var(--text-primary)' }}>
-                    {t.typography}
-                  </span>
-                </div>
-
-                <div className='flex items-center gap-2'>
-                  <button
-                    onClick={() => {
-                      const newState = !typographyExpanded;
-                      closeAllSubmenus();
-                      if (newState) {
-                        checkTypographyPos();
-                        setTypographyExpanded(true);
-                      }
-                    }}
-                    className='transition-colors'
-                    type='button'
-                  >
-                    <span
-                      className={`material-symbols-rounded transition-transform text-(--icon-base) ${typographyExpanded ? 'rotate-180' : ''}`}
-                      style={{ color: 'var(--text-tertiary)' }}
-                    >
-                      {typographyPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
+              {/* --- Typography Section --- */}
+              <div className="space-y-1 relative" ref={typographyPos.ref}>
+                <SettingsRow icon="font_download" label={t.typography}>
+                  <button type="button" onClick={() => toggleSubmenu('typography', typographyPos.checkPosition)}>
+                    <span className={`material-symbols-rounded transition-transform text-(--icon-base) text-(--text-tertiary) ${expandedSubmenu === 'typography' ? 'rotate-180' : ''}`}>
+                      {typographyPos.position.side === 'left' ? 'chevron_left' : 'chevron_right'}
                     </span>
                   </button>
-                </div>
-              </div>
-
-              {/* Typography Submenu */}
-              {typographyExpanded && (
-                <div
-                  className={`
-                            ${
-                              isMobile
-                                ? `relative w-full mt-2 ${settingsBlur ? 'bg-(--bg-menu)/50 saturate-150 backdrop-blur-xl' : 'bg-(--bg-page-surface)'} border-none shadow-none p-3 space-y-3 rounded-lg`
-                                : `absolute w-64 rounded-lg shadow-xl border border-(--border-divider) z-120 p-3 space-y-3 ${typographyPos.align === 'top' ? 'top-0' : 'bottom-0'} ${
-                                    settingsBlur
-                                      ? 'backdrop-blur-2xl bg-(--bg-menu)/85 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]'
-                                      : 'bg-(--bg-menu)'
-                                  }`
-                            }
-                        `}
-                  style={
-                    isMobile
-                      ? {}
-                      : {
-                          [typographyPos.side === 'left' ? 'right' : 'left']: '100%',
-                          [typographyPos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
-                        }
-                  }
-                >
-                  {/* English Font Selection */}
-                  <div className='space-y-2'>
-                    <label
-                      className='text-xs font-medium flex items-center gap-1.5'
-                      style={{ color: 'var(--text-primary)' }}
-                    >
-                      <span className='material-symbols-rounded text-(--icon-xs)'>text_fields</span>
-                      {t.fontEN}
-                    </label>
-                    <div className='flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none'>
-                      {AVAILABLE_FONTS_EN.map((font) => {
-                        const isSelected = fontFamilyEN === font.value;
-                        return (
-                          <button
-                            key={font.value}
-                            onClick={() => setFontFamilyEN(font.value)}
-                            className={`px-2.5 py-1.5 rounded-lg border text-xs active:scale-95 flex-shrink-0 ${isSelected ? 'shadow-md border-transparent text-white' : 'bg-transparent border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}`}
-                            style={{ fontFamily: font.value, backgroundColor: isSelected ? (darkMode ? 'var(--accent-primary)' : 'transparent') : 'transparent', color: isSelected ? (darkMode ? 'white' : 'black') : 'var(--text-primary)', borderColor: isSelected ? (darkMode ? 'var(--accent-primary)' : 'black') : '' }}
-                          >
-                            {font.label}
-                          </button>
-                        );
-                      })}
+                </SettingsRow>
+                <SubmenuWrapper isOpen={expandedSubmenu === 'typography'} isMobile={isMobile} settingsBlur={settingsBlur} pos={typographyPos.position}>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium flex items-center gap-1.5 text-(--text-primary)"><span className="material-symbols-rounded text-(--icon-xs)">text_fields</span>{t.fontEN}</label>
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                      {AVAILABLE_FONTS_EN.map(f => (
+                        <button key={f.value} onClick={() => setFontFamilyEN(f.value)} className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all ${fontFamilyEN === f.value ? 'bg-black text-white dark:bg-(--accent-primary)' : 'border-(--border-divider) text-(--text-primary)'}`} style={{ fontFamily: f.value }}>{f.label}</button>
+                      ))}
                     </div>
                   </div>
-
-                  {/* Arabic Font Selection */}
-                  <div className='space-y-2'>
-                    <label
-                      className='text-xs font-medium flex items-center gap-1.5'
-                      style={{ color: 'var(--text-primary)' }}
-                    >
-                      <span className='material-symbols-rounded text-(--icon-xs)'>translate</span>
-                      {t.fontAR}
-                    </label>
-                    <div className='flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none'>
-                      {AVAILABLE_FONTS_AR.map((font) => {
-                        const isSelected = fontFamilyAR === font.value;
-                        return (
-                          <button
-                            key={font.value}
-                            onClick={() => setFontFamilyAR(font.value)}
-                            className={`px-2.5 py-1.5 rounded-lg border text-sm transition-all duration-200 active:scale-95 flex-shrink-0 ${isSelected ? 'shadow-md border-transparent text-white' : 'bg-transparent border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}`}
-                            style={{ fontFamily: font.value, backgroundColor: isSelected ? (darkMode ? 'var(--accent-primary)' : 'transparent') : 'transparent', color: isSelected ? (darkMode ? 'white' : 'black') : 'var(--text-primary)', borderColor: isSelected ? (darkMode ? 'var(--accent-primary)' : 'black') : '' }}
-                          >
-                            {font.label}
-                          </button>
-                        );
-                      })}
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium flex items-center gap-1.5 text-(--text-primary)"><span className="material-symbols-rounded text-(--icon-xs)">translate</span>{t.fontAR}</label>
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                      {AVAILABLE_FONTS_AR.map(f => (
+                        <button key={f.value} onClick={() => setFontFamilyAR(f.value)} className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all ${fontFamilyAR === f.value ? 'bg-black text-white dark:bg-(--accent-primary)' : 'border-(--border-divider) text-(--text-primary)'}`} style={{ fontFamily: f.value }}>{f.label}</button>
+                      ))}
                     </div>
                   </div>
-
-                  {/* Graphic Style SegmentedControl - Only visible in Arabic */}
-                  {language === 'AR' && (
-                    <div className='flex items-center justify-between py-1'>
-                      <label
-                        className='text-xs font-medium flex items-center gap-1.5'
-                        style={{ color: 'var(--text-primary)' }}
-                      >
-                        <span
-                          className='material-symbols-rounded text-(--icon-sm)'
-                          style={{ color: 'var(--text-secondary)' }}
-                        >
-                          style
-                        </span>
-                        {t.graphicStyle}
-                      </label>
+                  {isAR && (
+                    <SettingsRow icon="style" label={t.graphicStyle}>
                       <SegmentedControl
                         value={!graphicStyle ? 'off' : graphicFontVariant}
                         onChange={(val) => {
@@ -856,249 +315,49 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                             setGraphicFontVariant(val as 'serif' | 'sans');
                           }
                         }}
-                        color={currentTheme.name.toLowerCase()}
-                        size='xs'
-                        fullWidth={true}
-                        className='flex-1'
-                        shape='pill'
+                        color={currentTheme.name.toLowerCase()} size="xs" fullWidth shape="pill"
                         options={[
                           { label: 'إيقاف', value: 'off' },
-                          { 
-                            label: 'جرافيكي', 
-                            value: 'serif',
-                            fontFamily: '"HeadingFont"' 
-                          },
-                          { 
-                            label: 'مودرن', 
-                            value: 'sans',
-                            fontFamily: '"GraphicSansFont"' 
-                          },
+                          { label: 'جرافيكي', value: 'serif', fontFamily: '"HeadingFont"' },
+                          { label: 'مودرن', value: 'sans', fontFamily: '"GraphicSansFont"' },
                         ]}
                       />
-                    </div>
+                    </SettingsRow>
                   )}
+                </SubmenuWrapper>
+              </div>
+
+              <div className="border-t border-(--border-divider) my-1 opacity-50" />
+
+              {/* --- Workspace & Status Bar --- */}
+              <SettingsRow icon="filter_center_focus" label={t.focusMode}><Switch checked={hideInactiveModules || false} onChange={setHideInactiveModules} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
+              {permissionsService.isOrgAdmin() && (
+                <SettingsRow icon="science" label={t.developerMode}><Switch checked={developerMode || false} onChange={setDeveloperMode} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
+              )}
+
+              {showTicker !== undefined && (
+                <div className="space-y-1 relative" ref={quickStatusPos.ref}>
+                  <label className="text-[10px] font-bold uppercase text-(--text-tertiary)">{t.statusBarSettings}</label>
+                  <SettingsRow icon="speed" label={t.quickStatuses}>
+                    <Switch checked={showTicker || false} onChange={setShowTicker} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
+                    <button type="button" onClick={() => toggleSubmenu('status', quickStatusPos.checkPosition)}>
+                      <span className={`material-symbols-rounded transition-transform text-(--icon-base) text-(--text-tertiary) ${expandedSubmenu === 'status' ? 'rotate-180' : ''}`}>
+                        {quickStatusPos.position.side === 'left' ? 'chevron_left' : 'chevron_right'}
+                      </span>
+                    </button>
+                  </SettingsRow>
+                  <SubmenuWrapper isOpen={expandedSubmenu === 'status' && showTicker} isMobile={isMobile} settingsBlur={settingsBlur} pos={quickStatusPos.position}>
+                    <SettingsRow icon="trending_up" label={t.showSales} className="hover:bg-(--bg-menu-hover) px-2 rounded-lg"><Switch checked={showTickerSales} onChange={setShowTickerSales} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
+                    <SettingsRow icon="inventory_2" label={t.showInventory} className="hover:bg-(--bg-menu-hover) px-2 rounded-lg"><Switch checked={showTickerInventory} onChange={setShowTickerInventory} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
+                    <SettingsRow icon="group" label={t.showCustomers} className="hover:bg-(--bg-menu-hover) px-2 rounded-lg"><Switch checked={showTickerCustomers} onChange={setShowTickerCustomers} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
+                    <SettingsRow icon="star" label={t.showTopSeller} className="hover:bg-(--bg-menu-hover) px-2 rounded-lg"><Switch checked={showTickerTopSeller} onChange={setShowTickerTopSeller} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
+                  </SubmenuWrapper>
                 </div>
               )}
             </div>
-
-            {/* Separator */}
-            <div className='border-t border-(--border-divider) my-1 opacity-50' />
-
-            {/* --- Group 4: Workspace --- */}
-            {/* Focus Mode Toggle */}
-            {setHideInactiveModules && (
-              <div className='flex items-center justify-between'>
-                <label
-                  className='text-xs font-medium flex items-center gap-1.5'
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  <span
-                    className='material-symbols-rounded text-(--icon-sm)'
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    filter_center_focus
-                  </span>
-                  {t.focusMode}
-                </label>
-                <Switch
-                  checked={hideInactiveModules || false}
-                  onChange={(val) => setHideInactiveModules(val)}
-                  theme={currentTheme.name.toLowerCase()}
-                  activeColor={currentTheme.hex}
-                />
-              </div>
-            )}
-
-            {/* Developer Mode Toggle */}
-            {setDeveloperMode && permissionsService.isOrgAdmin() && (
-              <div className='flex items-center justify-between'>
-                <label
-                  className='text-xs font-medium flex items-center gap-1.5'
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  <span
-                    className='material-symbols-rounded text-(--icon-sm)'
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    science
-                  </span>
-                  {t.developerMode}
-                </label>
-                <Switch
-                  checked={developerMode || false}
-                  onChange={(val) => setDeveloperMode(val)}
-                  theme={currentTheme.name.toLowerCase()}
-                  activeColor={currentTheme.hex}
-                />
-              </div>
-            )}
-
-            {/* Separator */}
-            {setShowTicker && (
-              <div className='border-t border-(--border-divider) my-1 opacity-50' />
-            )}
-
-            {/* --- Status Bar Settings (Collapsible) --- */}
-            {setShowTicker && (
-              <div className='space-y-1'>
-                {/* Section Header */}
-                <label
-                  className='text-[10px] font-bold uppercase'
-                  style={{ color: 'var(--text-tertiary)' }}
-                >
-                  {t.statusBarSettings}
-                </label>
-
-                {/* Quick Statuses Row with Arrow */}
-                <div className='space-y-1 relative' ref={quickStatusesRef}>
-                  {/* Main Row */}
-                  <div className='w-full flex items-center justify-between py-1'>
-                    {/* Left Side: Icon + Label */}
-                    <div className='flex items-center gap-2'>
-                      <span
-                        className='material-symbols-rounded text-(--icon-base)'
-                        style={{ color: 'var(--text-secondary)' }}
-                      >
-                        speed
-                      </span>
-                      <span
-                        className='text-xs font-medium'
-                        style={{ color: 'var(--text-primary)' }}
-                      >
-                        {t.quickStatuses}
-                      </span>
-                    </div>
-
-                    {/* Right Side: Switch + Arrow */}
-                    <div className='flex items-center gap-2'>
-                      <Switch
-                        checked={showTicker || false}
-                        onChange={(val) => setShowTicker(val)}
-                        theme={currentTheme.name.toLowerCase()}
-                        activeColor={currentTheme.hex}
-                      />
-                      <button
-                        onClick={() => {
-                          checkInfoPos();
-                          setStatusBarExpanded(!statusBarExpanded);
-                          if (!statusBarExpanded) setThemeExpanded(false);
-                        }}
-                        className=''
-                        type='button'
-                      >
-                        <span
-                          className={`material-symbols-rounded transition-transform text-(--icon-base) ${statusBarExpanded ? 'rotate-180' : ''}`}
-                          style={{ color: 'var(--text-tertiary)' }}
-                        >
-                          {quickStatusesPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Submenu (Hybrid: Pop-out on Desktop, Accordion on Mobile) */}
-                  {statusBarExpanded && showTicker && (
-                    <div
-                      className={`
-                            ${
-                              isMobile
-                                ? `relative w-full mt-2 ${settingsBlur ? 'bg-(--bg-menu)/50 saturate-150 backdrop-blur-xl' : 'bg-(--bg-search)'} border-none shadow-none p-2 space-y-1 rounded-lg`
-                                : `absolute w-64 rounded-lg shadow-xl border border-(--border-divider) z-120 p-2 space-y-1 ${quickStatusesPos.align === 'top' ? 'top-0' : 'bottom-0'} ${
-                                    settingsBlur
-                                      ? 'backdrop-blur-2xl bg-(--bg-menu)/85 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]'
-                                      : 'bg-(--bg-menu)'
-                                  }`
-                            }
-                        `}
-                      style={
-                        isMobile
-                          ? {}
-                          : {
-                              // Dynamic Horizontal
-                              [quickStatusesPos.side === 'left' ? 'right' : 'left']: '100%',
-                              [quickStatusesPos.side === 'left' ? 'marginRight' : 'marginLeft']:
-                                '12px',
-                            }
-                      }
-                    >
-                      {/* Sales */}
-                      {setShowTickerSales && permissionsService.can('sale.view_history') && (
-                        <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-(--bg-menu-hover)'>
-                          <span
-                            className='text-[11px] font-medium'
-                            style={{ color: 'var(--text-secondary)' }}
-                          >
-                            {t.showSales}
-                          </span>
-                          <Switch
-                            checked={showTickerSales ?? true}
-                            onChange={(val) => setShowTickerSales(val)}
-                            theme={currentTheme.name.toLowerCase()}
-                            activeColor={currentTheme.hex}
-                          />
-                        </div>
-                      )}
-                      {/* Inventory */}
-                      {setShowTickerInventory &&
-                        permissionsService.can('reports.view_inventory') && (
-                          <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-(--bg-menu-hover)'>
-                            <span
-                              className='text-[11px] font-medium'
-                              style={{ color: 'var(--text-secondary)' }}
-                            >
-                              {t.showInventory}
-                            </span>
-                            <Switch
-                              checked={showTickerInventory ?? true}
-                              onChange={(val) => setShowTickerInventory(val)}
-                              theme={currentTheme.name.toLowerCase()}
-                              activeColor={currentTheme.hex}
-                            />
-                          </div>
-                        )}
-                      {/* Customers */}
-                      {setShowTickerCustomers && permissionsService.can('customer.view') && (
-                        <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-(--bg-menu-hover)'>
-                          <span
-                            className='text-[11px] font-medium'
-                            style={{ color: 'var(--text-secondary)' }}
-                          >
-                            {t.showCustomers}
-                          </span>
-                          <Switch
-                            checked={showTickerCustomers ?? true}
-                            onChange={(val) => setShowTickerCustomers(val)}
-                            theme={currentTheme.name.toLowerCase()}
-                            activeColor={currentTheme.hex}
-                          />
-                        </div>
-                      )}
-                      {/* Top Seller */}
-                      {setShowTickerTopSeller &&
-                        permissionsService.can('reports.view_financial') && (
-                          <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-(--bg-menu-hover)'>
-                            <span
-                              className='text-[11px] font-medium'
-                              style={{ color: 'var(--text-secondary)' }}
-                            >
-                              {t.showTopSeller}
-                            </span>
-                            <Switch
-                              checked={showTickerTopSeller ?? true}
-                              onChange={(val) => setShowTickerTopSeller(val)}
-                              theme={currentTheme.name.toLowerCase()}
-                              activeColor={currentTheme.hex}
-                            />
-                          </div>
-                        )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
