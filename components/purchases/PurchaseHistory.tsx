@@ -8,7 +8,7 @@ import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { DateRangePicker } from '../common/DatePicker';
 import { FilterPill, type FilterConfig } from '../common/FilterPill';
-import { TanStackTable } from '../common/TanStackTable';
+import { TanStackTable, PriceDisplay } from '../common/TanStackTable';
 import { Modal } from '../common/Modal';
 import { useSmartDirection } from '../common/SmartInputs';
 import { Switch } from '../common/Switch';
@@ -117,6 +117,11 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
     }
   }, [navigationParams, purchases]);
 
+  // Optimization: Map of purchase IDs that have returns
+  const purchasesWithReturns = useMemo(() => {
+    return new Set(purchaseReturns.map(r => r.purchaseId));
+  }, [purchaseReturns]);
+
   const getPurchaseReturns = (purchaseId: string) => {
     return purchaseReturns.filter((r) => r.purchaseId === purchaseId);
   };
@@ -163,17 +168,17 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
 
     return data.filter((p) => {
       if (statusFilter === 'returned') {
-        return purchaseReturns.some((r) => r.purchaseId === p.id);
+        return purchasesWithReturns.has(p.id);
       }
       if (statusFilter === 'rejected') return p.status === 'rejected';
       if (statusFilter === 'completed') {
         return (p.status === 'completed' || p.status === 'received') && 
-               !purchaseReturns.some((r) => r.purchaseId === p.id);
+               !purchasesWithReturns.has(p.id);
       }
       if (statusFilter === 'approved') return p.status === 'approved';
       return p.status === statusFilter;
     });
-  }, [purchases, showAllBranches, activeBranchId, dateRange, historySearch, statusFilter, purchaseReturns]);
+  }, [purchases, showAllBranches, activeBranchId, dateRange, historySearch, statusFilter, purchasesWithReturns]);
 
   const columns = useMemo<ColumnDef<Purchase>[]>(
     () => [
@@ -213,11 +218,11 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
       },
       {
         header: t.tableHeaders?.payment || 'Payment',
-        accessorKey: 'paymentType',
+        accessorKey: 'paymentMethod',
         meta: { align: 'center' },
         cell: (info: any) => {
-          const type = info.getValue() as string;
-          const isCash = type === 'cash';
+          const method = info.getValue() as string;
+          const isCash = method === 'cash';
           return (
             <span
               className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-${isCash ? 'emerald' : 'blue'}-700 dark:text-${isCash ? 'emerald' : 'blue'}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
@@ -261,7 +266,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
         id: 'status',
         meta: { align: 'center' },
         accessorFn: (p: any) => {
-          const hasReturns = getPurchaseReturns(p.id).length > 0;
+          const hasReturns = purchasesWithReturns.has(p.id);
           if (p.status === 'rejected') return 'rejected';
           if (p.status === 'pending') return 'pending';
           if (p.status === 'approved') return 'approved';
@@ -404,6 +409,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
           tableId='purchases_history_v3'
           enablePagination={true}
           pageSize='auto'
+          enableVirtualization={true}
           enableTopToolbar={true}
           enableSearch={false}
           manualFiltering={true}
@@ -420,51 +426,52 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
           subtitle={`${selectedPurchase.invoiceId} • ${new Date(selectedPurchase.date).toLocaleDateString()} ${formatTime(new Date(selectedPurchase.date))}`}
         >
           <div className='p-6 space-y-6'>
-            {/* Detailed Grid Info */}
-            <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800'>
+            <div className='grid grid-cols-2 sm:grid-cols-4 gap-6 p-1'>
               <div className='group relative'>
-                <p className='text-[10px] text-gray-500 uppercase font-bold mb-1 tracking-wider'>{t.detailsModal?.supplier || 'Supplier'}</p>
+                <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>{t.tableHeaders?.supplier || 'Supplier'}</p>
                 <div className='flex items-center gap-2'>
-                  <p className='font-bold text-gray-900 dark:text-white'>{selectedPurchase.supplierName}</p>
+                  <p className='font-bold text-gray-900 dark:text-white truncate max-w-[150px]'>{selectedPurchase.supplierName}</p>
                   <button 
                     onClick={() => copyToClipboard(selectedPurchase.supplierName)}
-                    className='opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-gray-800 rounded transition-all'
+                    className='p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'
                   >
-                    <span className='material-symbols-rounded text-xs'>content_copy</span>
+                    <span className='material-symbols-rounded text-[14px]'>content_copy</span>
                   </button>
                 </div>
               </div>
 
-              <div className='group relative border-s border-gray-200 dark:border-gray-800 ps-4'>
-                <p className='text-[10px] text-gray-500 uppercase font-bold mb-1 tracking-wider'>{t.detailsModal?.invNumber || 'Inv #'}</p>
+              <div className='group relative'>
+                <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>{t.detailsModal?.invNumber || 'Inv #'}</p>
                 <div className='flex items-center gap-2'>
                   <p className='font-mono font-bold text-gray-900 dark:text-white'>{selectedPurchase.externalInvoiceId || '-'}</p>
                   {selectedPurchase.externalInvoiceId && (
                     <button 
                       onClick={() => copyToClipboard(selectedPurchase.externalInvoiceId)}
-                      className='opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-gray-800 rounded transition-all'
+                      className='p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'
                     >
-                      <span className='material-symbols-rounded text-xs'>content_copy</span>
+                      <span className='material-symbols-rounded text-[14px]'>content_copy</span>
                     </button>
                   )}
                 </div>
               </div>
 
-              <div className='border-s border-gray-200 dark:border-gray-800 ps-4'>
-                <p className='text-[10px] text-gray-500 uppercase font-bold mb-1 tracking-wider'>{t.paymentMethod || 'Payment'}</p>
+              <div>
+                <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>{t.paymentMethod || 'Payment'}</p>
                 <div className='flex items-center gap-2'>
-                  <span className='material-symbols-rounded text-sm text-gray-400'>
+                  <span className={`material-symbols-rounded text-sm ${selectedPurchase.paymentMethod === 'cash' ? 'text-emerald-500' : 'text-blue-500'}`}>
                     {selectedPurchase.paymentMethod === 'cash' ? 'payments' : 'credit_card'}
                   </span>
-                  <p className='font-bold text-gray-900 dark:text-white capitalize'>{selectedPurchase.paymentMethod}</p>
+                  <p className='font-bold text-gray-900 dark:text-white capitalize text-sm'>
+                    {selectedPurchase.paymentMethod === 'cash' ? (t.cash || 'Cash') : (t.credit || 'Credit')}
+                  </p>
                 </div>
               </div>
 
-              <div className='border-s border-gray-200 dark:border-gray-800 ps-4'>
-                <p className='text-[10px] text-gray-500 uppercase font-bold mb-1 tracking-wider'>{t.tableHeaders?.date || 'Date'}</p>
+              <div>
+                <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>{t.tableHeaders?.date || 'Date'}</p>
                 <div className='flex items-center gap-2'>
-                  <span className='material-symbols-rounded text-sm text-gray-400'>calendar_today</span>
-                  <p className='font-bold text-gray-900 dark:text-white'>{new Date(selectedPurchase.date).toLocaleDateString()}</p>
+                  <span className='material-symbols-rounded text-sm text-zinc-400'>calendar_today</span>
+                  <p className='font-bold text-gray-900 dark:text-white text-sm'>{new Date(selectedPurchase.date).toLocaleDateString()}</p>
                 </div>
               </div>
             </div>
@@ -493,15 +500,21 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
                           {item.quantity}
                         </span>
                       </td>
-                      <td className='px-4 py-3 text-right font-mono text-gray-600 dark:text-gray-400'>${item.costPrice.toFixed(2)}</td>
-                      <td className='px-4 py-3 text-right font-bold font-mono text-gray-900 dark:text-white'>${(item.costPrice * item.quantity).toFixed(2)}</td>
+                      <td className='px-4 py-3 text-right font-mono text-gray-600 dark:text-gray-400'>
+                        <PriceDisplay value={item.costPrice} size="sm" />
+                      </td>
+                      <td className='px-4 py-3 text-right font-bold text-gray-900 dark:text-white'>
+                        <PriceDisplay value={item.costPrice * item.quantity} size="sm" />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className='bg-gray-50/50 dark:bg-gray-900/30 font-bold'>
-                    <td colSpan={3} className='px-4 py-4 text-right text-gray-500 uppercase text-[10px] tracking-widest'>{t.summary?.totalCost || 'Grand Total'}</td>
-                    <td className='px-4 py-4 text-right text-lg text-primary-600 font-black'>${selectedPurchase.totalCost.toFixed(2)}</td>
+                  <tr className='bg-gray-50/50 dark:bg-gray-900/30 font-bold border-t border-gray-100 dark:border-gray-800'>
+                    <td colSpan={3} className='px-4 py-4 text-right text-gray-400 uppercase text-[10px] tracking-widest'>{t.summary?.totalCost || 'Grand Total'}</td>
+                    <td className='px-4 py-4 text-right'>
+                      <PriceDisplay value={selectedPurchase.totalCost} size="lg" />
+                    </td>
                   </tr>
                 </tfoot>
               </table>
