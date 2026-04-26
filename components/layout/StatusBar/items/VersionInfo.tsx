@@ -1,4 +1,4 @@
-import type React from 'react';
+import React from 'react';
 import packageJson from '../../../../package.json';
 import { StatusBarItem } from '../StatusBarItem';
 
@@ -12,16 +12,14 @@ export const VersionInfo: React.FC<VersionInfoProps> = ({
   version = `v${packageJson.version}`,
   onClick,
   tooltip,
-}) => {
-  return (
-    <StatusBarItem
-      icon='info'
-      label={version}
-      tooltip={tooltip || version}
-      onClick={onClick}
-      variant='default'
-    />
-  );
-};
+}) => (
+  <StatusBarItem
+    icon="info"
+    label={version}
+    tooltip={tooltip || version}
+    onClick={onClick}
+    variant="default"
+  />
+);
 
 export default VersionInfo;

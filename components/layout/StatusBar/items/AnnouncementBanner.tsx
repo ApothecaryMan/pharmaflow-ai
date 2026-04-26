@@ -1,60 +1,63 @@
-import type React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useStatusBar } from '../StatusBarContext';
+import { StatusBarItem } from '../StatusBarItem';
 
 interface AnnouncementBannerProps {
-  /** Speed in pixels per second */
-  scrollSpeed?: number;
-  /** Whether to show scroll animation */
+  scrollSpeed?: number; // Duration in seconds
   animated?: boolean;
 }
 
 export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
-  scrollSpeed = 50,
+  scrollSpeed = 20,
   animated = true,
 }) => {
   const { state, setAnnouncement } = useStatusBar();
   const [isHovered, setIsHovered] = useState(false);
 
-  if (!state.announcement) {
-    return null;
-  }
+  const isVisible = !!state.announcement;
+
+  const content = useMemo(() => (
+    <div
+      className={`flex items-center gap-2 text-[11px] whitespace-nowrap ${animated && !isHovered ? 'animate-marquee' : ''}`}
+      style={{ 
+        color: 'var(--text-secondary)',
+        animationDuration: `${scrollSpeed}s`
+      } as React.CSSProperties}
+    >
+      <span className="material-symbols-rounded text-amber-500" style={{ fontSize: '14px' }}>campaign</span>
+      <span className="font-medium">{state.announcement}</span>
+    </div>
+  ), [state.announcement, animated, isHovered, scrollSpeed]);
+
+  if (!isVisible) return null;
 
   return (
-    <div
-      className='flex-1 flex items-center justify-center overflow-hidden mx-4 relative'
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <StatusBarItem className="flex-1 overflow-hidden mx-4 relative group p-0 hover:bg-transparent">
       <div
-        className={`flex items-center gap-2 text-[11px] whitespace-nowrap ${
-          animated && !isHovered ? 'animate-marquee' : ''
-        }`}
-        style={{ color: 'var(--text-secondary)' }}
+        className="flex items-center justify-center w-full h-full"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        <span className='material-symbols-rounded text-amber-500' style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 2px)' }}>campaign</span>
-        <span>{state.announcement}</span>
-      </div>
+        {content}
 
-      {/* Close button */}
-      <button
-        onClick={() => setAnnouncement(null)}
-        className='absolute right-0 p-0.5 text-gray-400 hover:text-gray-600 transition-colors opacity-0 hover:opacity-100'
-        style={{ opacity: isHovered ? 1 : 0 }}
-      >
-        <span className='material-symbols-rounded' style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 4px)' }}>close</span>
-      </button>
+        <button
+          onClick={() => setAnnouncement(null)}
+          className="absolute right-0 p-1 text-(--text-tertiary) hover:text-(--text-primary) transition-all opacity-0 group-hover:opacity-100 flex items-center justify-center"
+        >
+          <span className="material-symbols-rounded" style={{ fontSize: '12px' }}>close</span>
+        </button>
+      </div>
 
       <style>{`
         @keyframes marquee {
-          0% { transform: translateX(100%); }
-          100% { transform: translateX(-100%); }
+          0% { transform: translateX(50%); }
+          100% { transform: translateX(-50%); }
         }
         .animate-marquee {
-          animation: marquee ${20}s linear infinite;
+          animation: marquee linear infinite;
         }
       `}</style>
-    </div>
+    </StatusBarItem>
   );
 };
 

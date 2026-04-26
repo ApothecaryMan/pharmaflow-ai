@@ -36,32 +36,14 @@
 
 ---
 
-## 7. سجل التعديلات (Refactoring Log) 📝
+## 7. report
 
-### مكوّن StatusBar (المايسترو)
-*   **المشكلة**: عمل Destructuring لأكثر من 30 متغير من `useSettings` رغم استخدام 6 فقط، مما يسبب Re-renders غير ضرورية.
-*   **الحل**: قصر الاستدعاء على المتغيرات المستخدمة فقط، مع عمل Memoization للمنطق الخاص بالوردية والإشعارات.
-*   **الـ Trade-off**: يتطلب تحديث قائمة المتغيرات يدوياً عند إضافة ميزات جديدة للشريط.
-
-### المكوّن الذري StatusBarItem
-*   **المشكلة**: وجود "Div Soup" وتداخل كبير في الـ JSX للفصل بين حالة وجود Tooltip وعدمه.
-*   **الحل**: توحيد هيكل الـ JSX وإلغاء الحاويات المتداخلة، مع تفعيل الـ Tooltip كغلاف شرطي فقط.
-*   **الـ Trade-off**: أصبح منطق الكلاسات (Classes) أكثر كثافة داخل الـ `useMemo`.
-
-### القوائم المعقدة (SettingsMenu)
-*   **المشكلة**: ملف ضخم (1100+ سطر) مع تكرار هيكلي كبير لصفوف الإعدادات ومنطق القوائم الفرعية.
-*   **الحل**: استخراج مكونات مساعدة (`SettingsRow`, `SubmenuWrapper`) داخل الملف وتسطيح الأقسام.
-*   **الـ Trade-off**: زيادة عدد الدوال الداخلية في الملف الواحد قبل التفكير في فصله لمجلد مستقل.
-
-### إدارة الحالة (StatusBarContext)
-*   **المشكلة**: تشتت إدارة الحالة بين `useState` متعددة وخلط منطق التخزين (Persistence) مع الأحداث.
-*   **الحل**: الانتقال إلى `useReducer` لتوحيد الانتقالات، وفصل منطق التخزين ومستمعي الأحداث في `useEffect` مستقلة.
-*   **الـ Trade-off**: زيادة الـ Boilerplate بسبب تعريف أنواع الـ Actions والـ Reducer.
-
-### معيار الأيقونات (Icon Styling)
-*   **المشكلة**: عدم دقة أحجام الأيقونات عند الاعتماد على Tailwind `text-[calc(...)]`.
-*   **الحل**: الاعتماد الحصري على `style={{ fontSize: ... }}` للأيقونات (Material Symbols).
-*   **الـ Trade-off**: الـ Inline Styles أصعب في التعديل الجماعي مقارنة بكلاسات Tailwind.
+```
+Summarize these changes concisely and honestly.
+For each change: state the problem that existed, the solution applied, and any trade-offs.
+No marketing language. No praise. No filler.
+If a change adds complexity without a clear benefit, say so.
+```
 
 ---
 
