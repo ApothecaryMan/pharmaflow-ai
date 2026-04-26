@@ -213,6 +213,35 @@
           "GRAD" 0,
           "opsz" 20;
       }
+
+      /* Global Icon Loading State - Prevents ligature text from showing before font loads */
+      html:not(.fonts-loaded) .material-symbols-rounded {
+        color: transparent !important;
+        position: relative;
+        overflow: hidden;
+        background: var(--border-divider);
+        border-radius: 6px;
+        min-width: 1em;
+        min-height: 1em;
+        max-width: 1em;
+        max-height: 1em;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        animation: icon-shimmer 1.5s infinite ease-in-out;
+        margin: 0.1em;
+      }
+
+      .dark html:not(.fonts-loaded) .material-symbols-rounded {
+        background: var(--bg-accent);
+        opacity: 0.4;
+      }
+
+      @keyframes icon-shimmer {
+        0%, 100% { opacity: 0.3; transform: scale(0.9); }
+        50% { opacity: 0.6; transform: scale(1); }
+      }
+
       .icon-filled {
         font-variation-settings:
           "FILL" 1,
@@ -254,6 +283,20 @@
           "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
           "qrcode": "https://aistudiocdn.com/qrcode@^1.5.3"
         }
+      }
+    </script>
+    <script>
+      // Force hide icon ligatures until font is actually ready to render
+      if ('fonts' in document) {
+        document.fonts.load('24px "Material Symbols Rounded"').then(function() {
+          document.documentElement.classList.add('fonts-loaded');
+        }).catch(function() {
+          // Fallback if loading fails, show text after 3s anyway
+          setTimeout(() => document.documentElement.classList.add('fonts-loaded'), 3000);
+        });
+      } else {
+        // Fallback for older browsers
+        document.documentElement.classList.add('fonts-loaded');
       }
     </script>
   </head>
