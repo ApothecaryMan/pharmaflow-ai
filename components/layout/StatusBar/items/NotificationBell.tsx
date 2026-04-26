@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { type Notification, useStatusBar } from '../StatusBarContext';
 import { StatusBarItem } from '../StatusBarItem';
 
@@ -18,6 +18,74 @@ interface NotificationBellProps {
   };
 }
 
+// Helpers moved outside for better performance and separation of concerns
+const getVariantIcon = (type: Notification['type']) => {
+  switch (type) {
+    case 'success': return 'check_circle';
+    case 'warning': return 'warning';
+    case 'error': return 'error';
+    case 'out_of_stock': return 'inventory_2';
+    default: return 'info';
+  }
+};
+
+const getVariantColor = (type: Notification['type']) => {
+  switch (type) {
+    case 'success': return 'text-emerald-500';
+    case 'warning': return 'text-amber-500';
+    case 'error': return 'text-red-500';
+    default: return 'text-primary-500';
+  }
+};
+
+const getNotificationMessage = (notification: Notification, messages?: NotificationBellProps['t']['messages']): string => {
+  if (notification.messageKey && messages) {
+    const template = messages[notification.messageKey];
+    if (template) {
+      let result = template;
+      if (notification.messageParams) {
+        Object.entries(notification.messageParams).forEach(([key, value]) => {
+          result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value || '');
+        });
+      }
+      return result.trim();
+    }
+  }
+  return notification.message || '';
+};
+
+// Extracted Notification Item for Flattening and Readability
+const NotificationItem: React.FC<{
+  notification: Notification;
+  messages?: NotificationBellProps['t']['messages'];
+  onRemove: (id: string) => void;
+  dismissText: string;
+}> = ({ notification, messages, onRemove, dismissText }) => (
+  <div className="px-3 py-2 transition-colors flex items-start gap-2 hover:bg-black/5 dark:hover:bg-white/5">
+    <span
+      className={`material-symbols-rounded mt-0.5 ${getVariantColor(notification.type)}`}
+      style={{ fontSize: 'var(--status-icon-size, 16px)' }}
+    >
+      {getVariantIcon(notification.type)}
+    </span>
+    <div className="flex-1 min-w-0">
+      <p className="text-xs leading-relaxed text-(--text-primary)">
+        {getNotificationMessage(notification, messages)}
+      </p>
+      <p className="text-[10px] mt-0.5 text-(--text-tertiary)">
+        {new Date(notification.timestamp).toLocaleTimeString('en-US')}
+      </p>
+    </div>
+    <button
+      onClick={() => onRemove(notification.id)}
+      className="text-gray-400 hover:text-black dark:hover:text-white transition-colors"
+      title={dismissText}
+    >
+      <span className="material-symbols-rounded text-[calc(var(--status-icon-size,16px)-2px)]">close</span>
+    </button>
+  </div>
+);
+
 export const NotificationBell: React.FC<NotificationBellProps> = ({
   language = 'EN',
   t = {
@@ -35,28 +103,10 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const unreadCount = state.notifications.filter((n) => !n.read).length;
+  // Smart Memoization: Avoid redundant calculations on every render
+  const unreadCount = useMemo(() => state.notifications.filter((n) => !n.read).length, [state.notifications]);
+  const displayedNotifications = useMemo(() => state.notifications.slice(0, 10), [state.notifications]);
   const isRTL = language === 'AR';
-
-  // Helper to resolve notification message
-  const getNotificationMessage = (notification: Notification): string => {
-    // If using new dynamic system with messageKey
-    if (notification.messageKey && t.messages) {
-      const template = t.messages[notification.messageKey];
-      if (template) {
-        // Interpolate params: replace {{param}} with value
-        let result = template;
-        if (notification.messageParams) {
-          Object.entries(notification.messageParams).forEach(([key, value]) => {
-            result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value || '');
-          });
-        }
-        return result.trim();
-      }
-    }
-    // Fallback to legacy message
-    return notification.message || '';
-  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -65,16 +115,13 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
         setIsOpen(false);
       }
     };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
+    if (isOpen) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
-    // Mark all as read when opening
+    // Batch marking as read when opening
     if (!isOpen) {
       state.notifications.forEach((n) => {
         if (!n.read) markAsRead(n.id);
@@ -82,113 +129,55 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
     }
   };
 
-  const getVariantIcon = (type: Notification['type']) => {
-    switch (type) {
-      case 'success':
-        return 'check_circle';
-      case 'warning':
-        return 'warning';
-      case 'error':
-        return 'error';
-      case 'out_of_stock':
-        return 'inventory_2'; // Distinct icon for out of stock
-      default:
-        return 'info';
-    }
-  };
-
-  const getVariantColor = (type: Notification['type']) => {
-    switch (type) {
-      case 'success':
-        return 'text-emerald-500';
-      case 'warning':
-        return 'text-amber-500';
-      case 'error':
-        return 'text-red-500';
-      default:
-        return 'text-primary-500';
-    }
-  };
-
-  const getNotificationStyle = (type: Notification['type']) => {
-    return 'hover:bg-black/5 dark:hover:bg-white/5';
-  };
-
   return (
-    <div className='relative flex items-center h-full' ref={dropdownRef}>
+    <div className="relative flex items-center h-full" ref={dropdownRef}>
       <StatusBarItem
-        icon='notifications'
+        icon="notifications"
         badge={unreadCount > 0 ? unreadCount : undefined}
         tooltip={t.notifications}
         variant={isOpen || unreadCount > 0 ? 'info' : 'default'}
         onClick={handleToggle}
       />
 
-      {/* Dropdown */}
+      {/* Dropdown Container */}
       {isOpen && (
         <div
-          className='absolute bottom-full right-0 mb-1 w-72 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-50'
+          className="absolute bottom-full right-0 mb-1 w-72 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-50 animate-scale-in origin-bottom-right"
           dir={isRTL ? 'rtl' : 'ltr'}
         >
-          {/* Arrow Indicator - Always right-aligned since StatusBar is LTR */}
-          <div
-            className='absolute bottom-[-5px] right-3 w-2.5 h-2.5 rotate-45 border-b border-r border-(--border-divider) bg-(--bg-menu) z-50'
-          />
+          {/* Arrow Indicator */}
+          <div className="absolute bottom-[-5px] right-3 w-2.5 h-2.5 rotate-45 border-b border-r border-(--border-divider) bg-(--bg-menu) z-50" />
 
-          {/* Header */}
-          <div
-            className='flex items-center justify-between px-3 py-2 border-b border-(--border-divider)'
-          >
-            <span className='text-sm font-semibold' style={{ color: 'var(--text-primary)' }}>
+          {/* Dropdown Header */}
+          <div className="flex items-center justify-between px-3 py-2 border-b border-(--border-divider)">
+            <span className="text-sm font-semibold text-(--text-primary)">
               {t.notifications}
             </span>
             {state.notifications.length > 0 && (
               <button
                 onClick={clearNotifications}
-                className='text-xs text-primary-500 hover:text-primary-600 transition-colors'
+                className="text-xs text-primary-500 hover:text-primary-600 transition-colors font-medium"
               >
                 {t.clearAll}
               </button>
             )}
           </div>
 
-          {/* Notifications List */}
-          <div className='divide-y divide-(--border-divider) max-h-80 overflow-y-auto rounded-b-lg'>
-            {state.notifications.length === 0 ? (
-              <div
-                className='px-3 py-4 text-center text-sm'
-                style={{ color: 'var(--text-tertiary)' }}
-              >
+          {/* Notifications Scroll Area */}
+          <div className="divide-y divide-(--border-divider) max-h-80 overflow-y-auto rounded-b-lg custom-scrollbar">
+            {displayedNotifications.length === 0 ? (
+              <div className="px-3 py-4 text-center text-sm text-(--text-tertiary)">
                 {t.noNotifications}
               </div>
             ) : (
-              state.notifications.slice(0, 10).map((notification) => (
-                <div
+              displayedNotifications.map((notification) => (
+                <NotificationItem
                   key={notification.id}
-                  className={`px-3 py-2 transition-colors flex items-start gap-2 ${getNotificationStyle(notification.type)}`}
-                >
-                  <span
-                    className={`material-symbols-rounded mt-0.5 ${getVariantColor(notification.type)}`}
-                    style={{ fontSize: 'var(--status-icon-size, 16px)' }}
-                  >
-                    {getVariantIcon(notification.type)}
-                  </span>
-                  <div className='flex-1 min-w-0'>
-                    <p className='text-xs leading-relaxed' style={{ color: 'var(--text-primary)' }}>
-                      {getNotificationMessage(notification)}
-                    </p>
-                    <p className='text-[10px] mt-0.5' style={{ color: 'var(--text-tertiary)' }}>
-                      {new Date(notification.timestamp).toLocaleTimeString('en-US')}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => removeNotification(notification.id)}
-                    className='text-gray-400 hover:text-black dark:hover:text-white transition-colors'
-                    title={t.dismiss}
-                  >
-                    <span className='material-symbols-rounded' style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 2px)' }}>close</span>
-                  </button>
-                </div>
+                  notification={notification}
+                  messages={t.messages}
+                  onRemove={removeNotification}
+                  dismissText={t.dismiss}
+                />
               ))
             )}
           </div>
