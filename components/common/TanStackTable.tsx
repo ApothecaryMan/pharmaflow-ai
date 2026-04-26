@@ -570,6 +570,14 @@ export function TanStackTable<TData, TValue>({
     [persistSettings, columnVisibility, columnAlignment]
   );
 
+  const [localLoading, setLocalLoading] = React.useState(data.length > 0);
+  
+  React.useEffect(() => {
+    // Smooth transition: Show skeleton for at least 100ms on mount
+    const timer = setTimeout(() => setLocalLoading(false), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   const table = useReactTable({
     data,
     columns,
@@ -1020,7 +1028,7 @@ export function TanStackTable<TData, TValue>({
               </thead>
               {/* Enforce var(--icon-sm) on all material-symbols-rounded icons inside table cells using arbitrary variants, except action columns */}
               <tbody className='[&_td:not(.action-col):not(.empty-state)_.material-symbols-rounded]:!text-[length:var(--icon-sm)] [&_td:not(.action-col):not(.empty-state)_.material-symbols-rounded]:!text-sm'>
-                {isLoading && rows.length === 0 ? (
+                {(isLoading || localLoading) && rows.length === 0 ? (
                   <>
                     {[...Array(Math.max(5, typeof pageSize === 'number' ? pageSize : 10))].map((_, i) => (
                       <tr key={`skeleton-row-${i}`} className='animate-pulse border-b border-(--border-divider)'>
@@ -1145,7 +1153,7 @@ export function TanStackTable<TData, TValue>({
                         }
 
                         // TIER 3: Inline loading skeleton for existing data (background refresh)
-                        if (isLoading && rows.length > 0) {
+                        if ((isLoading || localLoading) && rows.length > 0) {
                           const isActionColumn = cell.column.id === 'actions' || cell.column.id === 'status' || cell.column.id.includes('select');
                           if (!isActionColumn) {
                             content = (
