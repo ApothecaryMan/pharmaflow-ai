@@ -143,6 +143,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     completeSale,
     processSalesReturn,
     createPurchaseReturn,
+    switchBranch,
   } = useData();
 
   // --- StatusBar Utilities ---
@@ -246,6 +247,8 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     setActiveModule,
     setNavigationParams,
     handleLogout,
+    switchBranch,
+    branches,
   });
 
   // --- Global Event Handlers ---

@@ -14,6 +14,8 @@ interface SessionHandlersProps {
   setActiveModule: (module: string) => void;
   setNavigationParams: (params: any) => void;
   handleLogout: () => Promise<void>;
+  switchBranch: (branchId: string, skipClearEmployee?: boolean) => Promise<void>;
+  branches: any[];
 }
 
 /**
@@ -28,6 +30,8 @@ export const useSessionHandlers = ({
   setActiveModule,
   setNavigationParams,
   handleLogout,
+  switchBranch,
+  branches,
 }: SessionHandlersProps) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -102,6 +106,31 @@ export const useSessionHandlers = ({
                 : `Switched from ${previousName || 'unknown'}`,
             });
 
+            // --- Automatic Branch Redirection ---
+            let targetBranchId = selectedEmployee.branchId;
+
+            // Check if user is manager or admin to use "last visited" logic
+            const isManagerOrAdmin = permissionsService.isManager() || permissionsService.isOrgAdmin();
+            
+            if (isManagerOrAdmin) {
+              const lastBranchKey = `pharma_last_branch_${session.userId}_${selectedEmployee.id}`;
+              const lastBranchId = localStorage.getItem(lastBranchKey);
+              
+              if (lastBranchId && branches.some(b => b.id === lastBranchId)) {
+                targetBranchId = lastBranchId;
+              }
+            }
+
+            // Fallback to first branch if no branch is assigned or found
+            if (!targetBranchId && branches.length > 0) {
+              targetBranchId = branches[0].id;
+            }
+
+            // Perform branch switch if necessary
+            if (targetBranchId && targetBranchId !== session.branchId) {
+              await switchBranch(targetBranchId, true);
+            }
+
             // --- Smart Redirection: Find first allowed module ---
             const firstAllowedModule = PHARMACY_MENU.find((m) => {
               if (!m.permission) return true;
@@ -124,7 +153,7 @@ export const useSessionHandlers = ({
       }
       setCurrentEmployeeId(id);
     },
-    [employees, currentEmployeeId, setCurrentEmployeeId, setNavigationParams, setView, setActiveModule]
+    [employees, currentEmployeeId, setCurrentEmployeeId, setNavigationParams, setView, setActiveModule, switchBranch, branches]
   );
 
   // --- Optimized Logout Handler ---

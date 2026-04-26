@@ -15,6 +15,7 @@ interface QuickLoginProps {
   language?: 'EN' | 'AR';
   isRecoveringPassword?: boolean;
   isLoading?: boolean;
+  t?: any;
 }
 
 type Step = 'idle' | 'username' | 'password' | 'new-password';
@@ -50,15 +51,16 @@ const LoginInputView: React.FC<{
   language: 'EN' | 'AR';
   dir: 'rtl' | 'ltr';
   inputRef: React.RefObject<HTMLInputElement | null>;
-}> = ({ step, inputVal, setInputVal, isError, setIsError, onKeyDown, onForgotPassword, language, dir, inputRef }) => {
+  t?: any;
+}> = ({ step, inputVal, setInputVal, isError, setIsError, onKeyDown, onForgotPassword, language, dir, inputRef, t }) => {
   const isNewPass = step === 'new-password';
   const isAR = language === 'AR';
 
   const placeholder = useMemo(() => {
-    if (step === 'username') return isAR ? 'اسم المستخدم...' : 'Username...';
-    if (isNewPass) return isAR ? 'كلمة المرور الجديدة...' : 'New Password...';
-    return isAR ? 'كلمــــة المـرور...' : 'Password...';
-  }, [step, isAR, isNewPass]);
+    if (step === 'username') return t?.username || 'Username...';
+    if (isNewPass) return t?.newPassword || 'New Password...';
+    return t?.password || 'Password...';
+  }, [step, t, isNewPass]);
 
   return (
     <div className={`relative flex items-center h-full w-fit overflow-hidden ${isNewPass ? 'px-0 border-none' : 'px-2 gap-2 bg-white/50 dark:bg-gray-900/50 border-x border-gray-300 dark:border-gray-700'}`}>
@@ -95,14 +97,14 @@ const LoginInputView: React.FC<{
         />
         {step === 'username' && isError && (
           <span className="text-[9px] text-red-500 ml-1 font-normal">
-            {isAR ? 'غير موجود' : 'Not found'}
+            {t?.notFound || 'Not found'}
           </span>
         )}
         {step === 'password' && (
           <button
             onClick={(e) => { e.stopPropagation(); onForgotPassword(); }}
             className="ml-auto text-gray-400 hover:text-primary-500 cursor-pointer"
-            title={isAR ? 'نسيت كلمة المرور؟' : 'Forgot Password?'}
+            title={t?.forgotPassword || 'Forgot Password?'}
           >
             <span 
               className="material-symbols-rounded block leading-none" 
@@ -126,6 +128,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
   language = 'EN',
   isRecoveringPassword,
   isLoading = false,
+  t,
 }) => {
   const [step, setStep] = useState<Step>('idle');
   const [inputVal, setInputVal] = useState('');
@@ -139,19 +142,19 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
   const { showMenu } = useContextMenu();
 
   const isAR = language === 'AR';
-  const dir = useSmartDirection(inputVal, isAR ? 'كلمة المرور...' : 'Password...');
+  const dir = useSmartDirection(inputVal, t?.password || 'Password...');
 
   // --- Smart Memoization ---
   const tooltipText = useMemo(() => {
-    if (!currentEmployeeId) return isAR ? 'تسجيل الدخول' : 'Login';
+    if (!currentEmployeeId) return t?.login || 'Login';
     return `${userName}${roleLabel ? ` (${roleLabel})` : ''}`;
-  }, [currentEmployeeId, userName, roleLabel, isAR]);
+  }, [currentEmployeeId, userName, roleLabel, t]);
 
   const loginLabel = useMemo(() => {
     if (isLoading && currentEmployeeId) return undefined;
     if (currentEmployeeId) return userName;
-    return isAR ? 'تسجيــــل الدخـول' : 'Login';
-  }, [isLoading, currentEmployeeId, userName, isAR]);
+    return t?.login || 'Login';
+  }, [isLoading, currentEmployeeId, userName, t]);
 
   // --- Logic Handlers ---
   const resetState = useCallback(() => {
@@ -203,7 +206,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
       if (res.success) {
         playSuccess();
         setHasRecovered(true);
-        alert(isAR ? 'تم تغيير كلمة المرور بنجاح' : 'Password updated successfully');
+        alert(t?.changeSuccess || 'Password updated successfully');
         window.location.replace(window.location.origin + '/#/');
       } else {
         setIsError(true);
@@ -220,7 +223,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
       const { authService } = await import('../../../../services/auth/authService');
 
       if (!(await isWebAuthnSupported())) {
-        alert(isAR ? 'هذا المتصفح لا يدعم مفاتيح المرور (Passkeys). تأكد من استخدام HTTPS.' : 'Browser does not support Passkeys. Ensure you are on HTTPS.');
+        alert(t?.biometricUnsupported || 'Browser does not support Passkeys. Ensure you are on HTTPS.');
         return;
       }
 
@@ -258,7 +261,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
     e.preventDefault();
     showMenu(e.clientX, e.clientY, [
       {
-        label: isAR ? 'تسجيل الخروج' : 'Sign Out',
+        label: t?.signOut || (isAR ? 'تسجيل الخروج' : 'Sign Out'),
         icon: 'logout',
         danger: true,
         action: () => { onSelectEmployee(null); resetState(); },
@@ -271,12 +274,12 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
       const { authService } = await import('../../../../services/auth/authService');
       const res = await authService.handleForgotPassword(tempEmployee.email);
       if (res.success) {
-        alert(isAR ? 'تم إرسال رابط إعادة التعيين لبريدك' : 'Reset link sent to your email');
+        alert(t?.resetSent || 'Reset link sent to your email');
       } else {
         alert(res.message);
       }
     } else {
-      alert(isAR ? 'تواصل مع المدير لإعادة تعيين كلمة المرور' : 'Contact manager to reset password');
+      alert(t?.contactManager || 'Contact manager to reset password');
     }
   };
 
@@ -351,6 +354,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
           language={language}
           dir={dir}
           inputRef={inputRef}
+          t={t}
         />
       )}
     </div>

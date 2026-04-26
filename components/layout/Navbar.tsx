@@ -481,16 +481,21 @@ const NavbarComponent: React.FC<NavbarProps> = ({
               </div>
             )}
             <div className='hidden md:flex flex-col items-start'>
-              <span className='text-xs font-bold text-gray-700 dark:text-gray-200 leading-none mb-0.5'>
-                {authService.getCurrentUserSync()?.username || (language === 'AR' ? 'Zinc' : 'Zinc')}
-              </span>
-              <span className='text-[10px] text-gray-400 leading-none h-2.5 flex items-center'>
-                {isDataLoading || !activeBranch ? (
-                  <span className="w-16 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full" />
-                ) : (
-                  activeBranch.name
+                <span className='text-xs font-bold text-gray-700 dark:text-gray-200 leading-none mb-0.5'>
+                  {currentEmployeeId 
+                    ? (authService.getCurrentUserSync()?.username || (language === 'AR' ? 'Zinc' : 'Zinc'))
+                    : (language === 'AR' ? 'تسجيل دخول الموظف' : 'Employee Login')
+                  }
+                </span>
+                {currentEmployeeId && (
+                  <span className='text-[10px] text-gray-400 leading-none h-2.5 flex items-center'>
+                    {isDataLoading || !activeBranch ? (
+                      <span className="w-16 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full" />
+                    ) : (
+                      activeBranch.name
+                    )}
+                  </span>
                 )}
-              </span>
             </div>
             <span className='hidden md:block material-symbols-rounded text-gray-400' style={{ fontSize: 'var(--icon-base)' }}>
               expand_more
@@ -524,25 +529,30 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         </span>
                       </div>
                     )}
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      style={{
-                        WebkitAppearance: 'none',
-                        appearance: 'none',
-                        width: '20px',
-                        height: '20px',
-                        minWidth: '20px',
-                        minHeight: '20px',
-                      }}
-                      className='absolute bottom-0 right-0 w-5 h-5 bg-black/30 backdrop-blur-xs text-white rounded-full flex items-center justify-center hover:bg-black/50 shadow-xs'
-                      title='Change Photo'
-                    >
-                      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-xs)' }}>edit</span>
-                    </button>
+                    {currentEmployeeId && (
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                          WebkitAppearance: 'none',
+                          appearance: 'none',
+                          width: '20px',
+                          height: '20px',
+                          minWidth: '20px',
+                          minHeight: '20px',
+                        }}
+                        className='absolute bottom-0 right-0 w-5 h-5 bg-black/30 backdrop-blur-xs text-white rounded-full flex items-center justify-center hover:bg-black/50 shadow-xs'
+                        title='Change Photo'
+                      >
+                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-xs)' }}>edit</span>
+                      </button>
+                    )}
                   </div>
                   <div>
                     <h3 className='font-bold text-gray-900 dark:text-white'>
-                      {authService.getCurrentUserSync()?.username || (language === 'AR' ? 'Zinc' : 'Zinc')}
+                      {currentEmployeeId 
+                        ? (authService.getCurrentUserSync()?.username || (language === 'AR' ? 'Zinc' : 'Zinc'))
+                        : (language === 'AR' ? 'تسجيل دخول الموظف' : 'Employee Login')
+                      }
                     </h3>
                     <div className='flex items-center gap-2'>
                       <p className='text-xs text-gray-500 dark:text-gray-400'>
@@ -552,14 +562,18 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                           activeOrg.name
                         )}
                       </p>
-                      <span className='w-1 h-1 bg-gray-300 rounded-full' />
-                      <p className='text-xs text-gray-500 dark:text-gray-400'>
-                        {isDataLoading || !activeBranch ? (
-                          <span className="inline-block w-12 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full" />
-                        ) : (
-                          activeBranch.name
-                        )}
-                      </p>
+                      {currentEmployeeId && (
+                        <>
+                          <span className='w-1 h-1 bg-gray-300 rounded-full' />
+                          <p className='text-xs text-gray-500 dark:text-gray-400'>
+                            {isDataLoading || !activeBranch ? (
+                              <span className="inline-block w-12 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full" />
+                            ) : (
+                              activeBranch.name
+                            )}
+                          </p>
+                        </>
+                      )}
                       {profileImage && (
                         <button
                           onClick={() => setProfileImage(null)}
@@ -581,67 +595,69 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 </div>
               </div>
 
-              {/* Branch Management & Switcher (Single Organization Context) */}
-              <div className='p-2 border-t border-(--border-divider)'>
-                <div className='flex items-center justify-between px-2 mb-2'>
-                  <div className='flex items-center gap-1.5'>
-                    <span className='material-symbols-rounded text-gray-400' style={{ fontSize: '16px' }}>location_on</span>
-                    <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
-                      {language === 'AR' ? 'فروع الصيدلية' : 'Pharmacy Branches'}
-                    </p>
-                  </div>
-                  {permissionsService.isOrgAdmin() && (
-                    <button
-                      onClick={() => {
-                        if (onNavigate) onNavigate('branch-management');
-                        setShowProfileMenu(false);
-                      }}
-                      className='text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-(--bg-menu-hover) flex items-center gap-1 py-1 px-3 rounded-full border border-primary-100 dark:border-primary-900/50 hover:shadow-sm active:scale-95'
-                    >
-                      <span className='material-symbols-rounded' style={{ fontSize: '13px' }}>settings</span>
-                      {language === 'AR' ? 'الإدارة' : 'Manage'}
-                    </button>
-                  )}
-                </div>
-
-                {branches.length > 1 ? (
-                  <div className='space-y-1 max-h-[200px] overflow-y-auto scrollbar-hide'>
-                    {branches.map((branch) => (
+              {/* Branch Management & Switcher (Only show if employee is logged in) */}
+              {currentEmployeeId && (
+                <div className='p-2 border-t border-(--border-divider)'>
+                  <div className='flex items-center justify-between px-2 mb-2'>
+                    <div className='flex items-center gap-1.5'>
+                      <span className='material-symbols-rounded text-gray-400' style={{ fontSize: '16px' }}>location_on</span>
+                      <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
+                        {language === 'AR' ? 'فروع الصيدلية' : 'Pharmacy Branches'}
+                      </p>
+                    </div>
+                    {permissionsService.isOrgAdmin() && (
                       <button
-                        key={branch.id}
-                        onClick={async () => {
-                          if (activeBranchId === branch.id) return;
-                          await switchBranch(branch.id);                           
+                        onClick={() => {
+                          if (onNavigate) onNavigate('branch-management');
                           setShowProfileMenu(false);
                         }}
-                        className={`w-full p-2 text-sm font-medium rounded-lg flex items-center justify-between transition-colors
-                          ${
-                            activeBranchId === branch.id
-                              ? 'bg-primary-50 dark:bg-primary-500/15 text-primary-600 dark:text-primary-400'
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover)'
-                          }
-                        `}
+                        className='text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-(--bg-menu-hover) flex items-center gap-1 py-1 px-3 rounded-full border border-primary-100 dark:border-primary-900/50 hover:shadow-sm active:scale-95'
                       >
-                        <div className='flex items-center gap-2'>
-                          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
-                            {activeBranchId === branch.id ? 'radio_button_checked' : 'radio_button_unchecked'}
-                          </span>
-                          {branch.name}
-                        </div>
-                        {branch.code && <span className='text-[10px] opacity-60'>{branch.code}</span>}
+                        <span className='material-symbols-rounded' style={{ fontSize: '13px' }}>settings</span>
+                        {language === 'AR' ? 'الإدارة' : 'Manage'}
                       </button>
-                    ))}
+                    )}
                   </div>
-                ) : (
-                  <div className='px-2.5 py-2 mt-1 mx-1 text-xs text-gray-500 dark:text-gray-400 bg-(--bg-page-surface) rounded-lg border border-(--border-divider) flex items-center gap-2'>
-                    <span className='material-symbols-rounded text-[16px] text-gray-400'>info</span>
-                    {language === 'AR' ? 'فرع واحد متاح.' : 'One branch available.'}
-                  </div>
-                )}
-              </div>
+
+                  {branches.length > 1 ? (
+                    <div className='space-y-1 max-h-[200px] overflow-y-auto scrollbar-hide'>
+                      {branches.map((branch) => (
+                        <button
+                          key={branch.id}
+                          onClick={async () => {
+                            if (activeBranchId === branch.id) return;
+                            await switchBranch(branch.id);                           
+                            setShowProfileMenu(false);
+                          }}
+                          className={`w-full p-2 text-sm font-medium rounded-lg flex items-center justify-between transition-colors
+                            ${
+                              activeBranchId === branch.id
+                                ? 'bg-primary-50 dark:bg-primary-500/15 text-primary-600 dark:text-primary-400'
+                                : 'text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover)'
+                            }
+                          `}
+                        >
+                          <div className='flex items-center gap-2'>
+                            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
+                              {activeBranchId === branch.id ? 'radio_button_checked' : 'radio_button_unchecked'}
+                            </span>
+                            {branch.name}
+                          </div>
+                          {branch.code && <span className='text-[10px] opacity-60'>{branch.code}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className='px-2.5 py-2 mt-1 mx-1 text-xs text-gray-500 dark:text-gray-400 bg-(--bg-page-surface) rounded-lg border border-(--border-divider) flex items-center gap-2'>
+                      <span className='material-symbols-rounded text-[16px] text-gray-400'>info</span>
+                      {language === 'AR' ? 'فرع واحد متاح.' : 'One branch available.'}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Management & Settings (Combined) */}
-              {(permissionsService.isOrgAdmin() || permissionsService.can('settings.view')) && (
+              {currentEmployeeId && (permissionsService.isOrgAdmin() || permissionsService.can('settings.view')) && (
                 <div className='flex flex-col gap-1 p-2 border-t border-(--border-divider)'>
                   {permissionsService.isOrgAdmin() && (
                     <button
@@ -673,52 +689,56 @@ const NavbarComponent: React.FC<NavbarProps> = ({
               {/* Settings have been moved to StatusBar Settings Menu */}
 
               {/* Printer Settings Button */}
-              <div className='p-2 border-t border-(--border-divider)'>
-                <button
-                  onClick={() => {
-                    setShowPrinterSettings(true);
-                    setShowProfileMenu(false);
-                  }}
-                  className={`w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg flex items-center justify-center gap-2`}
-                >
-                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>print</span>
-                  {(t as any).printerSettings?.title || 'Printer Settings'}
-                </button>
-              </div>
+              {currentEmployeeId && (
+                <div className='p-2 border-t border-(--border-divider)'>
+                  <button
+                    onClick={() => {
+                      setShowPrinterSettings(true);
+                      setShowProfileMenu(false);
+                    }}
+                    className={`w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg flex items-center justify-center gap-2`}
+                  >
+                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>print</span>
+                    {(t as any).printerSettings?.title || 'Printer Settings'}
+                  </button>
+                </div>
+              )}
 
-              {/* Backup & Data Management */}
-              <div className='p-2 border-t border-(--border-divider) space-y-1'>
-                <button
-                  onClick={() => backupService.exportBackup()}
-                  className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg transition-colors flex items-center justify-center gap-2'
-                >
-                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>download</span>
-                  {t.settings.exportBackup}
-                </button>
-                <button
-                  onClick={() => {
-                    if (window.confirm(t.settings.importWarning)) {
-                      importRef.current?.click();
-                    }
-                  }}
-                  className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg flex items-center justify-center gap-2'
-                >
-                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>upload</span>
-                  {t.settings.importBackup}
-                </button>
-                <input 
-                  type="file" 
-                  ref={importRef} 
-                  className="hidden" 
-                  accept=".json"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      backupService.importBackup(file).catch(err => alert('Error: ' + err.message));
-                    }
-                  }}
-                />
-              </div>
+              {/* Backup & Data Management (Only for employee session) */}
+              {currentEmployeeId && (
+                <div className='p-2 border-t border-(--border-divider) space-y-1'>
+                  <button
+                    onClick={() => backupService.exportBackup()}
+                    className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg transition-colors flex items-center justify-center gap-2'
+                  >
+                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>download</span>
+                    {t.settings.exportBackup}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm(t.settings.importWarning)) {
+                        importRef.current?.click();
+                      }
+                    }}
+                    className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg flex items-center justify-center gap-2'
+                  >
+                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>upload</span>
+                    {t.settings.importBackup}
+                  </button>
+                  <input 
+                    type="file" 
+                    ref={importRef} 
+                    className="hidden" 
+                    accept=".json"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        backupService.importBackup(file).catch(err => alert('Error: ' + err.message));
+                      }
+                    }}
+                  />
+                </div>
+              )}
 
               {/* Sign Out */}
               <div className='p-2 border-t border-(--border-divider) bg-(--bg-page-surface)'>

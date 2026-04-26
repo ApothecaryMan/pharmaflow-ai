@@ -133,7 +133,7 @@ export interface DataActions {
   refreshAll: () => Promise<void>;
 
   // Switch to a different branch and reload all data
-  switchBranch: (branchId: string) => Promise<void>;
+  switchBranch: (branchId: string, skipClearEmployee?: boolean) => Promise<void>;
 
   // Switch to a different organization
   switchOrg: (orgId: string) => Promise<void>;
@@ -260,12 +260,21 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
     initData();
   }, []); // Only once on mount to avoid double-initialization loop with refreshAll
 
-  const switchBranch = useCallback(async (branchId: string) => {
+  const switchBranch = useCallback(async (branchId: string, skipClearEmployee: boolean = false) => {
     setIsLoading(true);
     try {
-      // Clear employee session on branch switch to prevent leakage
-      setCurrentEmployee(null);
-      authService.clearEmployeeSession();
+      // Clear employee session on branch switch to prevent leakage (unless skipped)
+      if (!skipClearEmployee) {
+        setCurrentEmployee(null);
+        authService.clearEmployeeSession();
+      } else if (currentEmployee?.id) {
+        // Record last visited branch for this specific employee (for manager redirection logic)
+        const session = authService.getCurrentUserSync();
+        if (session?.userId) {
+          const key = `pharma_last_branch_${session.userId}_${currentEmployee.id}`;
+          localStorage.setItem(key, branchId);
+        }
+      }
 
       await branchService.setActive(branchId);
       setActiveBranchId(branchId);
@@ -275,7 +284,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
     } finally {
       setIsLoading(false);
     }
-  }, [refreshAll]);
+  }, [refreshAll, currentEmployee]);
 
   const switchOrg = useCallback(async (orgId: string) => {
     setIsLoading(true);

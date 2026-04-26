@@ -42,6 +42,20 @@ export interface StatusBarTranslations {
     newCustomers?: string;
     topSeller?: string;
   };
+  quickLogin?: {
+    login: string;
+    username: string;
+    password: string;
+    newPassword: string;
+    forgotPassword: string;
+    notFound: string;
+    resetSent: string;
+    passwordUpdated: string;
+    changeSuccess: string;
+    biometricUnsupported: string;
+    contactManager: string;
+    passkeyTooltip: string;
+  };
 }
 
 export interface StatusBarProps {
@@ -65,6 +79,20 @@ const defaultTranslations: StatusBarTranslations = {
   shiftClosed: 'Shift Closed',
   shiftSince: 'Since',
   userLabel: 'User',
+  quickLogin: {
+    login: 'Login',
+    username: 'Username',
+    password: 'Password',
+    newPassword: 'New Password',
+    forgotPassword: 'Forgot Password?',
+    notFound: 'Not found',
+    resetSent: 'Reset link sent to your email',
+    passwordUpdated: 'Password updated successfully',
+    changeSuccess: 'Password changed successfully',
+    biometricUnsupported: 'Browser does not support Passkeys. Ensure you are on HTTPS.',
+    contactManager: 'Contact manager to reset password',
+    passkeyTooltip: 'Sign in with Passkey',
+  },
   messages: {
     outOfStock: 'Out of Stock: {{name}} {{form}}',
     saleComplete: 'Sale completed: {{total}} L.E',
@@ -157,12 +185,14 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
           <VersionInfo version={t.version} />
           {currentEmployeeId && <SettingsMenu />}
           <ConnectionStatus onlineText={t.online} offlineText={t.offline} />
-          <StatusBarItem
-            icon={isShiftLoading ? 'sync' : (currentShift ? 'check_circle' : 'lock')}
-            tooltip={shiftTooltip}
-            variant={isShiftLoading ? 'default' : (currentShift ? 'success' : 'error')}
-            className={isShiftLoading ? 'animate-spin-slow' : ''}
-          />
+          {currentEmployeeId && (
+            <StatusBarItem
+              icon={isShiftLoading ? 'sync' : (currentShift ? 'check_circle' : 'lock')}
+              tooltip={shiftTooltip}
+              variant={isShiftLoading ? 'default' : (currentShift ? 'success' : 'error')}
+              className={isShiftLoading ? 'animate-spin-slow' : ''}
+            />
+          )}
           <DateTime hideIcon />
           <AlertsAndAds />
         </StatusBarSection>
@@ -193,6 +223,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
             onSelectEmployee={onSelectEmployee}
             language={language}
             isRecoveringPassword={isRecoveringPassword}
+            t={t.quickLogin}
           />
 
           <NotificationBell

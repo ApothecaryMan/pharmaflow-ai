@@ -186,11 +186,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           >
             {/* Layout Wrapper with Static Curves */}
             <div
-              className={`flex-1 flex overflow-hidden ${isStandalone ? '' : 'rounded-tl-3xl rounded-tr-3xl border-t border-l border-r bg-(--bg-page-surface) shadow-inner m-0'}`}
+              className={`flex-1 flex overflow-hidden ${isStandalone || !currentEmployeeId ? '' : 'rounded-tl-3xl rounded-tr-3xl border-t border-l border-r bg-(--bg-page-surface) shadow-inner m-0'}`}
               style={{ borderColor: 'var(--border-divider)' }}
             >
               {/* Sidebar */}
-              {!isStandalone && (
+              {!isStandalone && currentEmployeeId && (
                 <motion.aside
                   initial={false}
                   animate={{ 

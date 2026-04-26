@@ -16,7 +16,7 @@ export const LandingPage: React.FC<{ language: 'EN' | 'AR'; darkMode: boolean }>
         </div>
         
         <div className="space-y-3">
-          <p className="text-[11px] font-bold uppercase tracking-[0.6em] text-zinc-500 dark:text-zinc-400 pl-[0.6em]">
+          <p className={`text-[11px] font-bold text-zinc-500 dark:text-zinc-400 ${language === 'EN' ? 'uppercase tracking-[0.6em] pl-[0.6em]' : ''}`}>
             {language === 'AR' ? 'مرحباً بك في نظام زينك' : 'WELCOME TO ZINC OS'}
           </p>
           <p className="text-[15px] text-zinc-400 dark:text-zinc-500 font-medium max-w-[420px] mx-auto leading-relaxed">
