@@ -10,6 +10,7 @@
 
 import { StorageKeys } from '../config/storageKeys';
 import { storage } from '../utils/storage';
+import { supabase } from '../lib/supabase';
 
 interface TimeResponse {
   datetime: string;
@@ -17,10 +18,7 @@ interface TimeResponse {
 }
 
 const TIME_PROVIDERS: string[] = [
-  // '/.netlify/functions/time', // Disabled for local dev to prevent 404
-  // External APIs removed to prevent connection errors and rely on local system time as the source of truth
-  // 'https://timeapi.io/api/Time/current/zone?timeZone=UTC',
-  // 'https://worldtimeapi.org/api/timezone/Etc/UTC',
+  '/.netlify/functions/time',
 ];
 
 class TimeService {
@@ -65,6 +63,30 @@ class TimeService {
 
     const systemTime = Date.now();
 
+    // 1. Try Supabase First (Source of Truth for the App)
+    try {
+      const { data, error } = await supabase.rpc('get_server_time');
+      
+      if (!error && data) {
+        const serverTime = new Date(data).getTime();
+        const endTime = Date.now();
+        const latency = (endTime - systemTime) / 2;
+        
+        this.offset = (serverTime + latency) - endTime;
+        this.lastSyncTime = endTime;
+
+        storage.set(StorageKeys.TIME_OFFSET, this.offset.toString());
+        storage.set(StorageKeys.LAST_SYNC, this.lastSyncTime.toString());
+
+        console.log(`Time synced via Supabase RPC. Offset: ${this.offset}ms`);
+        this.isSyncing = false;
+        return true;
+      }
+    } catch (err) {
+      console.warn('Supabase time sync failed:', err);
+    }
+
+    // 2. Fallback to Netlify Functions or other providers
     for (const provider of TIME_PROVIDERS) {
       let url = provider;
       if (provider.startsWith('/')) {
@@ -145,6 +167,7 @@ class TimeService {
     // Return false to signal that sync was NOT successful (using fallback)
     return false;
   }
+
 
   /**
    * Get verified current date (system time + offset)
