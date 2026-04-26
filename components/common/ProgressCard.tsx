@@ -123,6 +123,7 @@ export interface FlexDataCardProps {
   category: string;
   className?: string;
   onClick?: () => void;
+  isLoading?: boolean;
 }
 
 export const FlexDataCard: React.FC<FlexDataCardProps> = ({
@@ -130,37 +131,53 @@ export const FlexDataCard: React.FC<FlexDataCardProps> = ({
   category,
   className = '',
   onClick,
+  isLoading = false,
 }) => {
   return (
     <div
       onClick={onClick}
-      className={`p-4 rounded-3xl ${CARD_BASE} ${CARD_HOVER} flex items-center justify-between gap-4 ${onClick ? 'cursor-pointer' : 'cursor-default'} ${className}`}
+      className={`p-4 rounded-3xl ${CARD_BASE} ${CARD_HOVER} flex items-center justify-between gap-4 ${onClick ? 'cursor-pointer' : 'cursor-default'} ${className} ${isLoading ? 'animate-pulse' : ''}`}
     >
       {/* Category Label Section */}
       <div className='shrink-0'>
-        <span className='text-[10px] font-bold text-gray-400 uppercase tracking-widest writing-mode-vertical sm:writing-mode-horizontal'>
-          {category}
-        </span>
+        {isLoading ? (
+          <div className='h-4 w-12 bg-gray-100 dark:bg-gray-800 rounded' />
+        ) : (
+          <span className='text-[10px] font-bold text-gray-400 uppercase tracking-widest writing-mode-vertical sm:writing-mode-horizontal'>
+            {category}
+          </span>
+        )}
       </div>
 
       {/* Data Items Section */}
       <div className='flex-1 flex gap-6'>
-        {items.map((item, index) => (
+        {(isLoading ? Array.from({ length: 2 }) as any[] : items).map((item, index) => (
           <div key={index} className='flex-1 flex flex-col justify-center'>
             {/* Header: Value & Label */}
             <div className='flex justify-between items-end mb-2'>
-              <span className='text-xl font-bold text-gray-900 dark:text-white leading-none'>
-                {item.value}
-              </span>
-              <span className='text-xs text-gray-500 font-medium'>{item.label}</span>
+              {isLoading ? (
+                <>
+                  <div className='h-5 w-12 bg-gray-100 dark:bg-gray-800 rounded' />
+                  <div className='h-3 w-8 bg-gray-50 dark:bg-gray-800/50 rounded' />
+                </>
+              ) : (
+                <>
+                  <span className='text-xl font-bold text-gray-900 dark:text-white leading-none'>
+                    {item.value}
+                  </span>
+                  <span className='text-xs text-gray-500 font-medium'>{item.label}</span>
+                </>
+              )}
             </div>
 
             {/* Progress Bar */}
             <div className='relative w-full h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden'>
-              <div
-                className={`absolute ltr:left-0 rtl:right-0 top-0 h-full rounded-full bg-${item.color}-500`}
-                style={{ width: `${item.percentage}%` }}
-              />
+              {!isLoading && (
+                <div
+                  className={`absolute ltr:left-0 rtl:right-0 top-0 h-full rounded-full bg-${item.color}-500`}
+                  style={{ width: `${item.percentage}%` }}
+                />
+              )}
             </div>
           </div>
         ))}

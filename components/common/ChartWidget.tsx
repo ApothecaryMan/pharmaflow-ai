@@ -266,8 +266,8 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
       {/* Chart Area */}
       <div
         ref={containerRef}
-        className={`w-full relative ${chartClassName || 'h-[250px]'}`}
-        style={{ minHeight: 200, minWidth: 100 }}
+        className={`w-full relative min-w-0 ${chartClassName || 'h-[250px]'}`}
+        style={{ minHeight: 200, minWidth: 0 }}
       >
         {isLoading && (
           <div className="absolute inset-0 z-10 flex flex-col justify-end gap-6 p-2 mb-4">
@@ -288,7 +288,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
           </div>
         )}
         {isReady && !isLoading && (
-          <ResponsiveContainer width='100%' height='100%'>
+          <ResponsiveContainer width='100%' height='100%' debounce={50}>
             <ComposedChart
               data={data}
               margin={
@@ -379,8 +379,8 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                   animationDuration={500}
                 />
               )}
-            </ComposedChart>
-          </ResponsiveContainer>
+              </ComposedChart>
+            </ResponsiveContainer>
         )}
       </div>
 
