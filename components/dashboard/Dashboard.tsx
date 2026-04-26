@@ -58,7 +58,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [expandedView, setExpandedView] = useState<ExpandedView>(null);
   const [showHelp, setShowHelp] = useState(false);
   const { textTransform } = useSettings();
-  const { activeBranchId, batches } = useData();
+  const { activeBranchId, batches, isLoading } = useData();
 
   const helpContent = DASHBOARD_HELP[language as 'EN' | 'AR'] || DASHBOARD_HELP.EN;
 
@@ -433,6 +433,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               currencyLabel={getCurrencySymbol()}
               fractionDigits={2}
               iconTooltip={revenueTooltip} // Advanced analytics on hover
+              isLoading={isLoading}
             />
           </div>
         </HasPermission>
@@ -452,6 +453,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               currencyLabel={getCurrencySymbol()}
               fractionDigits={2}
               iconTooltip={expensesTooltip} // Advanced analytics on hover
+              isLoading={isLoading}
             />
           </div>
         </HasPermission>
@@ -471,6 +473,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               currencyLabel={getCurrencySymbol()}
               fractionDigits={2}
               iconTooltip={profitTooltip} // Advanced analytics on hover
+              isLoading={isLoading}
             />
           </div>
         </HasPermission>
@@ -487,6 +490,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             iconColor='orange'
             fractionDigits={0}
             iconTooltip={lowStockTooltip} // Advanced analytics on hover
+            isLoading={isLoading}
           />
         </div>
       </div>
@@ -506,6 +510,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           primaryLabel={t.totalSales || 'Sales'}
           className='h-80'
           chartClassName='h-[90%]'
+          isLoading={isLoading}
         />
 
         {/* Top Selling Products (1 Col) */}
@@ -520,7 +525,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <ExpandButton onClick={() => setExpandedView('topSelling')} />
           </div>
           <div className='flex-1 overflow-y-auto space-y-3 pe-1' dir='ltr'>
-            {topSelling.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className='flex items-center justify-between p-2 animate-pulse'>
+                  <div className='flex items-center gap-3 overflow-hidden'>
+                    <div className='w-6 h-6 rounded-full bg-zinc-100 dark:bg-zinc-800 shrink-0' />
+                    <div className='h-4 w-32 bg-zinc-100 dark:bg-zinc-800 rounded' />
+                  </div>
+                  <div className='h-6 w-16 bg-zinc-50 dark:bg-zinc-800/50 rounded-md' />
+                </div>
+              ))
+            ) : topSelling.length === 0 ? (
               <div className='h-full flex items-center justify-center text-gray-400 text-sm'>
                 {t.noResults || 'No sales data'}
               </div>
@@ -566,7 +581,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <ExpandButton onClick={() => setExpandedView('lowStock')} />
             </div>
             <div className='flex-1 overflow-y-auto space-y-2 pe-1' dir='ltr'>
-              {lowStockItems.length === 0 ? (
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className='flex justify-between items-center p-2 animate-pulse'>
+                    <div className='flex items-center gap-3 overflow-hidden'>
+                      <div className='w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 shrink-0' />
+                      <div className='space-y-1.5'>
+                        <div className='h-3.5 w-24 bg-zinc-100 dark:bg-zinc-800 rounded' />
+                        <div className='h-2.5 w-16 bg-zinc-50 dark:bg-zinc-800/50 rounded' />
+                      </div>
+                    </div>
+                    <div className='h-8 w-16 bg-zinc-100 dark:bg-zinc-800 rounded-lg ms-2' />
+                  </div>
+                ))
+              ) : lowStockItems.length === 0 ? (
                 <div className='h-full flex items-center justify-center text-gray-400 text-sm'>
                   {t.allGood}
                 </div>
@@ -613,7 +641,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <ExpandButton onClick={() => setExpandedView('expiring')} />
             </div>
             <div className='flex-1 overflow-y-auto space-y-2 pe-1' dir='ltr'>
-              {expiringItems.length === 0 ? (
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className='flex justify-between items-center p-2 animate-pulse'>
+                    <div className='flex items-center gap-3 overflow-hidden'>
+                      <div className='w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 shrink-0' />
+                      <div className='space-y-1.5'>
+                        <div className='h-3.5 w-24 bg-zinc-100 dark:bg-zinc-800 rounded' />
+                        <div className='h-2.5 w-12 bg-zinc-50 dark:bg-zinc-800/50 rounded' />
+                      </div>
+                    </div>
+                    <div className='h-6 w-16 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg ms-2' />
+                  </div>
+                ))
+              ) : expiringItems.length === 0 ? (
                 <div className='h-full flex items-center justify-center text-gray-400 text-sm'>
                   {t.noExpiring}
                 </div>
@@ -666,7 +707,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <ExpandButton onClick={() => setExpandedView('recentSales')} />
           </div>
           <div className='flex-1 overflow-y-auto space-y-0 divide-y divide-gray-100 dark:divide-gray-800'>
-            {recentSales.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className='py-3 flex items-center justify-between px-2 animate-pulse'>
+                  <div className='flex items-center gap-3'>
+                    <div className='w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 shrink-0' />
+                    <div className='space-y-2'>
+                      <div className='h-4 w-32 bg-zinc-100 dark:bg-zinc-800 rounded' />
+                      <div className='h-3 w-48 bg-zinc-50 dark:bg-zinc-800/50 rounded' />
+                    </div>
+                  </div>
+                  <div className='flex flex-col items-end gap-2'>
+                    <div className='h-4 w-20 bg-zinc-100 dark:bg-zinc-800 rounded' />
+                    <div className='h-3 w-12 bg-zinc-50 dark:bg-zinc-800/50 rounded' />
+                  </div>
+                </div>
+              ))
+            ) : recentSales.length === 0 ? (
               <div className='h-full flex items-center justify-center text-gray-400 text-sm'>
                 {t.noResults || 'No transactions yet'}
               </div>
