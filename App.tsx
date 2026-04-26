@@ -358,10 +358,11 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   );
 
   // --- TRANSITION SKELETON STATE ---
-  if (true || isLoggingOut) {
+  if (isLoggingOut) {
     return (
       <LogoutOverlay 
         language={language}
+        darkMode={darkMode}
         currentEmployeeId={currentEmployeeId}
         activeBranchId={activeBranchId}
         employees={employees}
