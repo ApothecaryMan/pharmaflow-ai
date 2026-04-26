@@ -206,7 +206,7 @@ const unifiedFilterFn: FilterFn<any> = (row, columnId, filterValue, addMeta) => 
 
 const EMPTY_ALIGNMENT = {};
 
-interface TanStackTableProps<TData, TValue> {
+export interface TanStackTableProps<TData extends { id: string | number }, TValue> {
   data: TData[];
   columns: ColumnDef<TData, TValue>[];
   tableId?: string; // Unique ID for localStorage persistence
@@ -300,7 +300,7 @@ const getSmartAlignment = (columnId: string): 'start' | 'end' | 'center' => {
   return 'start';
 };
 
-export function TanStackTable<TData, TValue>({
+export function TanStackTable<TData extends { id: string | number }, TValue>({
   data,
   columns,
   tableId = 'default',
@@ -571,12 +571,40 @@ export function TanStackTable<TData, TValue>({
   );
 
   const [localLoading, setLocalLoading] = React.useState(data.length > 0);
+  const [updatedRowIds, setUpdatedRowIds] = React.useState<Set<string | number>>(new Set());
+  const prevDataRef = React.useRef<any[]>(data);
   
   React.useEffect(() => {
     // Smooth transition: Show skeleton for at least 100ms on mount
     const timer = setTimeout(() => setLocalLoading(false), 100);
     return () => clearTimeout(timer);
   }, []);
+
+  // Row-level Change Detection (Live Sync Feel)
+  React.useEffect(() => {
+    if (prevDataRef.current !== data && data.length > 0 && prevDataRef.current.length > 0) {
+      const changedIds = new Set<string | number>();
+      
+      // Use a Map for O(1) lookup performance
+      const oldDataMap = new Map(prevDataRef.current.map(r => [r.id, r]));
+      
+      data.forEach((newRow) => {
+        const oldRow = oldDataMap.get(newRow.id);
+        if (oldRow && JSON.stringify(oldRow) !== JSON.stringify(newRow)) {
+          changedIds.add(newRow.id);
+        }
+      });
+
+      if (changedIds.size > 0) {
+        setUpdatedRowIds(changedIds);
+        const timer = setTimeout(() => {
+          setUpdatedRowIds(new Set());
+        }, 2000); // Pulse for 2 seconds
+        return () => clearTimeout(timer);
+      }
+    }
+    prevDataRef.current = data;
+  }, [data]);
 
   const table = useReactTable({
     data,
@@ -1082,9 +1110,11 @@ export function TanStackTable<TData, TValue>({
                         }
                       }}
                       className={`transition-colors overflow-visible group/row ${onRowClick ? 'cursor-pointer' : ''} ${
-                        activeIndex !== undefined && rowIndex === activeIndex
-                          ? `bg-primary-50 dark:bg-primary-900/20`
-                          : 'hover:bg-(--bg-hover)'
+                        updatedRowIds.has(row.original.id)
+                          ? 'bg-blue-50/50 dark:bg-blue-900/20 animate-pulse'
+                          : activeIndex !== undefined && rowIndex === activeIndex
+                            ? `bg-primary-50 dark:bg-primary-900/20`
+                            : 'hover:bg-(--bg-hover)'
                       }`}
                     >
                       {row.getVisibleCells().map((cell: any) => {
