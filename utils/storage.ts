@@ -3,76 +3,94 @@ import type { StorageKeys } from '../config/storageKeys';
 /**
  * Type-safe interface for storage operations
  */
+const SESSION_KEY = 'branch_pilot_session';
+
+// Keys that should be shared across all users on the same device (UI preferences)
+const GLOBAL_KEYS = [
+  'pharma_darkMode',
+  'pharma_language',
+  'pharma_theme',
+  'pharmaflow_time_offset',
+  'pharmaflow_last_sync',
+  'pharma_navStyle'
+];
+
 export const storage = {
   /**
+   * Internal helper to get current session user ID
+   */
+  getUserId: (): string | null => {
+    if (typeof localStorage === 'undefined') return null;
+    try {
+      const session = localStorage.getItem(SESSION_KEY);
+      return session ? JSON.parse(session).userId : null;
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * Internal helper to scope keys by user ID to prevent data leakage
+   */
+  getScopedKey: (key: string): string => {
+    if (typeof localStorage === 'undefined' || key === SESSION_KEY || GLOBAL_KEYS.includes(key)) return key;
+    
+    const userId = storage.getUserId();
+    return userId ? `${key}_${userId}` : key;
+  },
+
+  /**
    * Get a value from storage
-   * @param key The storage key
-   * @param defaultValue Default value if key doesn't exist or is invalid
    */
   get: <T>(key: StorageKeys | string, defaultValue: T): T => {
     if (typeof localStorage === 'undefined') return defaultValue;
 
-    const item = localStorage.getItem(key);
+    const scopedKey = storage.getScopedKey(key);
+    const item = localStorage.getItem(scopedKey);
     if (item === null) return defaultValue;
 
     try {
       return JSON.parse(item) as T;
     } catch (error) {
-      // Robustness check: if it's not valid JSON, return it as a raw string if possible
       return item as unknown as T;
     }
   },
 
   /**
    * Set a value in storage
-   * @param key The storage key
-   * @param value The value to store
    */
   set: <T>(key: StorageKeys | string, value: T): void => {
     if (typeof localStorage === 'undefined') return;
 
     try {
-      localStorage.setItem(key, JSON.stringify(value));
-
-      // Dispatch a custom event to notify other components/tabs if needed
-      // (The standard 'storage' event only fires in other tabs, not the current one)
-      // if (typeof window !== 'undefined') window.dispatchEvent(new Event('local-storage'));
+      const scopedKey = storage.getScopedKey(key);
+      localStorage.setItem(scopedKey, JSON.stringify(value));
     } catch (error) {
       console.error(`Error writing storage key "${key}":`, error);
-      const isQuotaError = error instanceof Error && 
-        (error.name === 'QuotaExceededError' || error.message.toLowerCase().includes('quota'));
-      if (isQuotaError) {
-        console.error('CRITICAL: LocalStorage Quota Exceeded. Data loss may occur.');
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('storage-quota-exceeded'));
-        }
-      }
     }
   },
 
   /**
    * Remove a value from storage
-   * @param key The storage key
    */
   remove: (key: StorageKeys | string): void => {
     if (typeof localStorage === 'undefined') return;
-    localStorage.removeItem(key);
+    const scopedKey = storage.getScopedKey(key);
+    localStorage.removeItem(scopedKey);
   },
 
   /**
    * Atomically read, increment, and write a numeric counter.
-   * Minimizes the race window between read and write (single synchronous call).
-   * @param key The storage key
-   * @param defaultValue Starting value if key doesn't exist (default: 0)
-   * @returns The NEW value after incrementing
+   * Scoped to the current user.
    */
   increment: (key: string, defaultValue: number = 0): number => {
     if (typeof localStorage === 'undefined') return defaultValue + 1;
     try {
-      const raw = localStorage.getItem(key);
+      const scopedKey = storage.getScopedKey(key);
+      const raw = localStorage.getItem(scopedKey);
       const current = raw !== null ? (JSON.parse(raw) as number) : defaultValue;
       const next = current + 1;
-      localStorage.setItem(key, JSON.stringify(next));
+      localStorage.setItem(scopedKey, JSON.stringify(next));
       return next;
     } catch (error) {
       console.error(`Error incrementing storage key "${key}":`, error);

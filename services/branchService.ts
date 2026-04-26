@@ -7,6 +7,7 @@ import { BaseDomainService } from './core/BaseDomainService';
 import type { Branch } from '../types';
 import { idGenerator } from '../utils/idGenerator';
 import { supabase } from '../lib/supabase';
+import { storage } from '../utils/storage';
 import { employeeService } from './hr/employeeService';
 import { orgService } from './org/orgService';
 
@@ -71,7 +72,8 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
   }
 
   async getActive(): Promise<Branch | null> {
-    const activeId = localStorage.getItem(ACTIVE_BRANCH_KEY);
+    const activeId = storage.get(ACTIVE_BRANCH_KEY, '');
+    
     if (!activeId) {
       return await this.ensureDefaultBranch();
     }
@@ -80,7 +82,7 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
   }
 
   setActive(branchId: string): void {
-    localStorage.setItem(ACTIVE_BRANCH_KEY, branchId);
+    storage.set(ACTIVE_BRANCH_KEY, branchId);
   }
 
   async generateCode(orgId?: string): Promise<string> {
@@ -122,9 +124,10 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
     const { error } = await supabase.from(this.tableName).delete().eq('id', id);
     if (error) throw error;
 
-    const activeId = localStorage.getItem(ACTIVE_BRANCH_KEY);
+    const activeId = storage.get(ACTIVE_BRANCH_KEY, '');
+    
     if (activeId === id) {
-      localStorage.removeItem(ACTIVE_BRANCH_KEY);
+      storage.remove(ACTIVE_BRANCH_KEY);
     }
     return true;
   }
@@ -157,7 +160,8 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
       return null;
     }
 
-    const activeId = localStorage.getItem(ACTIVE_BRANCH_KEY);
+    const activeId = storage.get(ACTIVE_BRANCH_KEY, '');
+    
     const activeExists = activeId && branches.some(b => b.id === activeId);
     
     if (!activeExists) {

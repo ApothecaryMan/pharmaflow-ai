@@ -1,6 +1,7 @@
 import { StorageKeys } from '../config/storageKeys';
 import type { CashTransaction, Shift } from '../types';
 import { idGenerator } from './idGenerator';
+import { storage } from './storage';
 
 /**
  * Transaction types for shift updates
@@ -25,14 +26,11 @@ export interface AddShiftTransactionParams {
  *
  * @returns true if transaction was added successfully, false if no open shift
  */
-export function addTransactionToOpenShift(params: AddShiftTransactionParams): boolean {
+export async function addTransactionToOpenShift(params: AddShiftTransactionParams): Promise<boolean> {
   const { type, amount, reason, userId, relatedSaleId, getVerifiedDate } = params;
 
   try {
-    const savedShifts = localStorage.getItem(StorageKeys.SHIFTS);
-    if (!savedShifts) return false;
-
-    const allShifts: Shift[] = JSON.parse(savedShifts);
+    const allShifts = storage.get<Shift[]>(StorageKeys.SHIFTS, []);
     const openShiftIndex = allShifts.findIndex((s) => s.status === 'open');
 
     if (openShiftIndex === -1) return false;
@@ -41,7 +39,7 @@ export function addTransactionToOpenShift(params: AddShiftTransactionParams): bo
     const now = getVerifiedDate();
 
     const newTransaction: CashTransaction = {
-      id: idGenerator.generate('transactions', openShift.branchId),
+      id: await idGenerator.generate('transactions', openShift.branchId),
       branchId: openShift.branchId,
       orgId: openShift.orgId,
       shiftId: openShift.id,
@@ -64,7 +62,7 @@ export function addTransactionToOpenShift(params: AddShiftTransactionParams): bo
     };
 
     allShifts[openShiftIndex] = updatedShift;
-    localStorage.setItem(StorageKeys.SHIFTS, JSON.stringify(allShifts));
+    storage.set(StorageKeys.SHIFTS, allShifts);
 
     return true;
   } catch (e) {

@@ -8,6 +8,7 @@ import {
   type LoginAuditEntry,
 } from '../../types';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { storage } from '../../utils/storage';
 import { employeeService } from '../hr/employeeService';
 import { orgService } from '../org/orgService';
 
@@ -180,7 +181,27 @@ export const authService = {
   async logout(): Promise<void> {
     try {
       await supabase.auth.signOut();
-      localStorage.removeItem(SESSION_KEY);
+      
+      // Clear all session and context keys using the smart storage utility
+      const userId = storage.getUserId();
+      
+      storage.remove(SESSION_KEY);
+      storage.remove('pharma_active_org_id');
+      storage.remove('pharma_active_branch_id');
+      storage.remove('area_unlocked');
+      
+      // Clear any other potentially leaked settings for this user
+      if (userId) {
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.endsWith(`_${userId}`)) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+      }
+
     } catch (err) {
       console.error('Logout error:', err);
     }

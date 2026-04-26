@@ -6,6 +6,7 @@
 import type { Organization, OrgMember, OrgRole, Subscription } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { supabase } from '../../lib/supabase';
+import { storage } from '../../utils/storage';
 
 const ACTIVE_ORG_KEY = 'pharma_active_org_id';
 
@@ -181,15 +182,15 @@ export const orgService = {
   },
 
   getActiveOrgId(): string | null {
-    return localStorage.getItem(ACTIVE_ORG_KEY);
+    return storage.get(ACTIVE_ORG_KEY, null);
   },
 
   setActiveOrgId(orgId: string): void {
-    localStorage.setItem(ACTIVE_ORG_KEY, orgId);
+    storage.set(ACTIVE_ORG_KEY, orgId);
   },
 
   clearActiveOrg(): void {
-    localStorage.removeItem(ACTIVE_ORG_KEY);
+    storage.remove(ACTIVE_ORG_KEY);
   },
 
   async claimOrganization(orgId: string, userId: string): Promise<void> {
