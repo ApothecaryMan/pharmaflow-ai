@@ -75,7 +75,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     developerMode,
   } = useSettings();
 
-  const { activeBranchId, switchBranch, activeOrgId, switchOrg, branches } = useData();
+  const { activeBranchId, switchBranch, activeOrgId, switchOrg, branches, isLoading: isDataLoading } = useData();
   
   const [userOrgs, setUserOrgs] = useState<Organization[]>([]);
   const [activeOrg, setActiveOrg] = useState<Organization | null>(null);
@@ -87,21 +87,29 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
   const theme = currentTheme.primary;
 
-  // Load organizations on mount/org switch
+  // Load organizations on mount and when user session changes
   useEffect(() => {
     const loadOrgContext = async () => {
       const currentUser = authService.getCurrentUserSync();
       if (currentUser?.userId) {
         const orgs = await orgService.getUserOrgs(currentUser.userId);
         setUserOrgs(orgs);
-        const current = orgs.find(o => o.id === activeOrgId) || orgs[0];
-        setActiveOrg(current);
+      } else {
+        setUserOrgs([]);
       }
     };
     loadOrgContext();
-  }, [activeOrgId]);
+  }, [activeOrgId]); // Re-run if org changes or session might have changed
 
-  const activeBranch = branches.find(b => b.id === activeBranchId) || branches[0];
+  // Update activeOrg when userOrgs or activeOrgId changes
+  useEffect(() => {
+    if (userOrgs.length > 0) {
+      const current = userOrgs.find(o => o.id === activeOrgId) || userOrgs[0];
+      setActiveOrg(current);
+    }
+  }, [userOrgs, activeOrgId]);
+
+  const activeBranch = branches.find(b => b.id === activeBranchId);
   const profileRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
@@ -476,8 +484,12 @@ const NavbarComponent: React.FC<NavbarProps> = ({
               <span className='text-xs font-bold text-gray-700 dark:text-gray-200 leading-none mb-0.5'>
                 {authService.getCurrentUserSync()?.username || (language === 'AR' ? 'Zinc' : 'Zinc')}
               </span>
-              <span className='text-[10px] text-gray-400 leading-none'>
-                {activeBranch?.name || (language === 'AR' ? 'الفرع الرئيسي' : 'Main Branch')}
+              <span className='text-[10px] text-gray-400 leading-none h-2.5 flex items-center'>
+                {isDataLoading || !activeBranch ? (
+                  <span className="w-16 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full" />
+                ) : (
+                  activeBranch.name
+                )}
               </span>
             </div>
             <span className='hidden md:block material-symbols-rounded text-gray-400' style={{ fontSize: 'var(--icon-base)' }}>
@@ -534,11 +546,19 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     </h3>
                     <div className='flex items-center gap-2'>
                       <p className='text-xs text-gray-500 dark:text-gray-400'>
-                        {activeOrg?.name || (language === 'AR' ? 'المنظمة' : 'Organization')}
+                        {isDataLoading || !activeOrg ? (
+                          <span className="inline-block w-20 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full" />
+                        ) : (
+                          activeOrg.name
+                        )}
                       </p>
                       <span className='w-1 h-1 bg-gray-300 rounded-full' />
                       <p className='text-xs text-gray-500 dark:text-gray-400'>
-                        {activeBranch?.name || (language === 'AR' ? 'الفرع الرئيسي' : 'Main Branch')}
+                        {isDataLoading || !activeBranch ? (
+                          <span className="inline-block w-12 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full" />
+                        ) : (
+                          activeBranch.name
+                        )}
                       </p>
                       {profileImage && (
                         <button

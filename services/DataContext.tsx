@@ -178,9 +178,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
   const lastLoadedBranchId = useRef<string>('');
   const inventory = useComputedInventory(rawInventory, batches, activeBranchId);
 
-  const refreshAll = useCallback(async (targetBranchId?: string) => {
+  const refreshAll = useCallback(async (targetBranchId?: string, targetOrgId?: string) => {
     const branchId = targetBranchId || activeBranchId;
-    if (!branchId) return;
+    const orgId = targetOrgId || activeOrgId;
+    if (!branchId || !orgId) return;
 
     try {
       const [inv, sal, sup, pur, pRet, ret, cust, emp, bat, allBranches] = await Promise.all([
@@ -193,7 +194,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
         customerService.getAll(branchId),
         employeeService.getAll(branchId),
         batchService.getAllBatches(branchId),
-        branchService.getAll(activeOrgId),
+        branchService.getAll(orgId),
       ]);
 
       const currentSession = authService.getCurrentUserSync();
@@ -249,7 +250,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
           orgId: defaultOrgId,
         });
 
-        await refreshAll(finalBranchId);
+        await refreshAll(finalBranchId, defaultOrgId);
       } catch (error) {
         console.error('Initialization Error:', error);
       } finally {
@@ -257,7 +258,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
       }
     };
     initData();
-  }, [refreshAll]);
+  }, []); // Only once on mount to avoid double-initialization loop with refreshAll
 
   const switchBranch = useCallback(async (branchId: string) => {
     setIsLoading(true);
