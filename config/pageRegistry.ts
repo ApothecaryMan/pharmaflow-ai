@@ -8,7 +8,6 @@ import { CustomerManagement } from '../components/customers/CustomerManagement';
 import { CustomerOverview } from '../components/customers/CustomerOverview';
 import { Dashboard } from '../components/dashboard/Dashboard';
 // Skeletons
-import { DashboardSkeleton } from '../components/dashboard/DashboardSkeletons';
 import { DashboardPageSkeleton } from '../components/intelligence/common/IntelligenceSkeletons';
 import { RealTimeSalesMonitor } from '../components/dashboard/RealTimeSalesMonitor';
 import { AdvancedSmCard } from '../components/experiments/AdvancedSmCard';
@@ -38,7 +37,6 @@ import { ReceiptDesigner } from '../components/sales/ReceiptDesigner';
 import { ReturnHistory } from '../components/sales/ReturnHistory';
 import { SalesHistory } from '../components/sales/SalesHistory';
 import { ShiftHistory } from '../components/sales/ShiftHistory';
-import { InventorySkeleton } from '../components/skeletons/InventorySkeleton';
 import { POSSkeleton } from '../components/skeletons/POSSkeleton';
 import { ModalTests } from '../components/test/ModalTests';
 import { PurchasesTest } from '../components/test/PurchasesTest';
@@ -80,7 +78,6 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'language',
       'onViewChange',
     ],
-    skeleton: DashboardSkeleton,
     permission: 'dashboard.view',
     layout: 'dashboard',
   },
@@ -101,7 +98,6 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       't',
       'language',
     ],
-    skeleton: InventorySkeleton,
     permission: 'inventory.view',
   },
   'stock-movement': {
@@ -133,7 +129,6 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'inventory',
 
     requiredProps: ['inventory', 'color', 't', 'language'],
-    skeleton: InventorySkeleton,
     permission: 'inventory.view_beta',
   },
   pos: {
