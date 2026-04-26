@@ -161,6 +161,7 @@ const GenericListItem: React.FC<{
   </div>
 );
 
+
 export const Dashboard: React.FC<DashboardProps> = ({
   inventory,
   sales,
@@ -182,34 +183,35 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const helpContent = DASHBOARD_HELP[language as 'EN' | 'AR'] || DASHBOARD_HELP.EN;
 
-  // Map subView to expandedView
   useEffect(() => {
     if (!subView) return;
 
+    let target: ExpandedView = null;
     switch (subView) {
       case 'Top Selling Products':
-        setExpandedView('topSelling');
+        target = 'topSelling';
         break;
       case 'Sales Trends (7 days)':
       case 'Sales Trends (30 days)':
-        setExpandedView('salesChart');
+        target = 'salesChart';
         break;
       case 'Slow Moving Products':
       case 'Low Stock Alerts':
-        setExpandedView('lowStock');
+        target = 'lowStock';
         break;
       case 'Expiring Soon':
-        setExpandedView('expiring');
+        target = 'expiring';
         break;
       case 'Recent Activities':
       case 'Real-time Sales Monitor':
-        setExpandedView('recentSales');
+        target = 'recentSales';
         break;
-      case 'Executive Summary':
       default:
-        setExpandedView(null);
+        target = null;
         break;
     }
+
+    setExpandedView(target);
   }, [subView]);
 
   // Scroll to top when subView changes
@@ -253,10 +255,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
     });
   }, [inventory, batches, activeBranchId]);
 
-  const revenueTooltip = <InsightTooltip {...revenueTooltipData} language={language} />;
-  const expensesTooltip = <InsightTooltip {...inventoryTooltipData} language={language} />;
-  const profitTooltip = <InsightTooltip {...profitTooltipData} language={language} />;
-  const lowStockTooltip = <InsightTooltip {...lowStockTooltipData} language={language} />;
+  const revenueTooltip = useMemo(() => <InsightTooltip {...revenueTooltipData} language={language} />, [revenueTooltipData, language]);
+  const expensesTooltip = useMemo(() => <InsightTooltip {...inventoryTooltipData} language={language} />, [inventoryTooltipData, language]);
+  const profitTooltip = useMemo(() => <InsightTooltip {...profitTooltipData} language={language} />, [profitTooltipData, language]);
+  const lowStockTooltip = useMemo(() => <InsightTooltip {...lowStockTooltipData} language={language} />, [lowStockTooltipData, language]);
 
   // --- CHART DATA (Sales by Date) ---
   const salesData = useMemo(() => {
@@ -454,22 +456,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     [restockDrug, restockQty, restockIsUnit, onRestock]
   );
 
-  // --- CUSTOM TOOLTIP ---
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className='bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700'>
-          <p className='text-xs font-medium text-gray-500 dark:text-gray-400 mb-1'>{label}</p>
-          <p className='text-lg font-bold text-gray-900 dark:text-gray-100'>
-            {formatCurrency(payload[0].value)}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  // --- CHART COLOR LOGIC ---
   const chartStatus = useMemo(() => {
     if (salesData.length < 2) return 'default';
     const first = salesData[0].sales;
@@ -493,6 +479,172 @@ export const Dashboard: React.FC<DashboardProps> = ({
     };
     return colors[chartStatus] || colors.default;
   }, [chartStatus]);
+
+
+  // --- Smart Expanded Views Registry ---
+  const dashboardViews = useMemo(() => {
+    const exportBtn = (view: string, data: any) => (
+      <button
+        onClick={() => exportToCSV(data, view)}
+        className='px-3 py-1.5 text-sm rounded-lg bg-(--bg-page-surface) hover:bg-(--bg-menu-hover) text-(--text-primary) border border-(--border-divider) transition-colors flex items-center gap-2'
+      >
+        <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>download</span>
+        {t.expand?.exportCSV || 'Export'}
+      </button>
+    );
+
+    const chartView = (id: string, mainVal: number) => (
+      <div className='space-y-6'>
+        <SummaryCard 
+          title={t[id]} 
+          value={mainVal} 
+          colorClass={id === 'expenses' ? 'bg-red-50 dark:bg-red-950/20 border-red-100' : 'bg-primary-50 dark:bg-primary-950/20 border-primary-100'}
+          footer={id === 'salesChart' ? t.trend : t.expand?.historicalTrend}
+        />
+        
+        <MetricsGrid items={
+          id === 'profit' ? [
+            { label: t.revenue, value: formatCurrency(totalRevenue) },
+            { label: t.expenses, value: formatCurrency(totalExpenses) },
+            { label: t.expand?.profitMargin || 'Margin', value: `${totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0'}%` }
+          ] : [
+            { label: t.expand?.metrics || 'Total Count', value: id === 'expenses' ? purchases.length : sales.length },
+            { label: t.expand?.amount || 'Average', value: formatCurrency((id === 'expenses' ? (purchases.length > 0 ? totalExpenses / purchases.length : 0) : (sales.length > 0 ? totalRevenue / sales.length : 0))) }
+          ]
+        } />
+
+        <div className='h-80'>
+          <ChartWidget
+            title={id === 'salesChart' ? t.trend : t.expand?.historicalTrend || ''}
+            data={salesData}
+            dataKeys={{ primary: 'sales' }}
+            color={chartColors.main}
+            language={language as 'AR' | 'EN'}
+            allowChartTypeSelection={false}
+            className='border-0! bg-transparent! p-0! shadow-none!'
+            chartClassName='h-[280px]!'
+            headerClassName='hidden'
+          />
+        </div>
+      </div>
+    );
+
+    return {
+      revenue: {
+        title: t.dashboard?.revenue || t.revenue,
+        actions: exportBtn('revenue', [{ metric: 'Total Revenue', value: totalRevenue }]),
+        children: chartView('revenue', totalRevenue)
+      },
+      expenses: {
+        title: t.dashboard?.expenses || t.expenses,
+        actions: exportBtn('expenses', [{ metric: 'Total Expenses', value: totalExpenses }]),
+        children: chartView('expenses', totalExpenses)
+      },
+      profit: {
+        title: t.dashboard?.netProfit || t.profit,
+        actions: exportBtn('profit', [{ metric: 'Profit', value: netProfit }]),
+        children: chartView('profit', netProfit)
+      },
+      lowStock: {
+        title: t.dashboard?.lowStockItems || t.lowStock,
+        actions: exportBtn('low_stock', lowStockItems),
+        children: (
+          <div className='grid gap-3'>
+            {lowStockItems.map(item => (
+              <GenericListItem 
+                key={item.id}
+                title={getDisplayName(item, textTransform)}
+                subtitle={item.category || ''}
+                badge={`${item.stock} ${t.expand?.allItems || 'left'}`}
+                badgeColor="text-orange-600"
+                onClick={() => { setRestockDrug(item); setExpandedView(null); }}
+                actionLabel={t.restock}
+              />
+            ))}
+          </div>
+        )
+      },
+      topSelling: {
+        title: t.dashboard?.topSelling || t.topSelling,
+        actions: exportBtn('top_selling', topSelling20),
+        children: (
+          <div className='space-y-3'>
+            {topSelling20.map((item, index) => (
+              <GenericListItem 
+                key={item.name}
+                icon="hotel_class"
+                title={getDisplayName(item, textTransform)}
+                subtitle={`${item.qty} ${t.sold} • ${formatCurrency(item.revenue)} ${t.revenue}`}
+                value={formatCurrency(item.revenue)}
+              />
+            ))}
+          </div>
+        )
+      },
+      expiring: {
+        title: t.expiringSoon,
+        actions: exportBtn('expiring_items', expiringItems),
+        children: (
+          <div className='space-y-3'>
+            {expiringItems.map(item => {
+              const days = getDaysUntilExpiry(item.expiryDate);
+              const isExpired = days < 0;
+              return (
+                <GenericListItem 
+                  key={item.id}
+                  icon="event_busy"
+                  title={getDisplayName(item, textTransform)}
+                  subtitle={`${item.category} • ${item.stock} in stock`}
+                  badge={isExpired ? t.expired : `${days} ${t.days}`}
+                  badgeColor={isExpired ? 'text-red-600' : 'text-yellow-600'}
+                  value={item.expiryDate}
+                />
+              );
+            })}
+          </div>
+        )
+      },
+      recentSales: {
+        title: t.recentSales,
+        actions: exportBtn('transactions', recentSales20),
+        children: (
+          <div className="relative space-y-4 py-1">
+            <div className={`absolute top-4 bottom-4 w-0.5 bg-gray-100 dark:bg-gray-800 z-0 ${language === 'AR' ? 'right-[11px]' : 'left-[11px]'}`} />
+            {recentSales20.map((sale, index) => (
+              <div key={sale.id} className="relative z-10">
+                <div className={`absolute top-6 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-sm z-10 ${sale.hasReturns ? 'bg-orange-400' : 'bg-primary-500'} ${language === 'AR' ? '-right-[18px]' : '-left-[18px]'}`} />
+                <MaterialTabs index={index} total={recentSales20.length} className='h-auto! py-2 flex-col! items-stretch! gap-1 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors shadow-xs'>
+                  <div className='flex items-center justify-between gap-3'>
+                    <div className='flex items-center gap-3'>
+                      <div className='w-8 h-8 rounded-full bg-primary-50 dark:bg-primary-950 flex items-center justify-center text-primary-600 shrink-0'>
+                        <span className='material-symbols-rounded text-lg'>shopping_bag</span>
+                      </div>
+                      <div>
+                        <p className='font-bold text-gray-900 dark:text-gray-100 text-xs'>{sale.customerName || 'Guest'} <span className='text-[10px] font-normal opacity-50'>#{sale.id}</span></p>
+                        <p className='text-[10px] text-gray-500'>{sale.timeAgo}</p>
+                      </div>
+                    </div>
+                    <div className='text-end'>
+                      <p className='font-bold text-sm'>{formatCurrency(sale.netTotal ?? sale.total)}</p>
+                      {sale.hasReturns && <p className='text-[10px] text-orange-500 font-bold uppercase'>{t.returned}</p>}
+                    </div>
+                  </div>
+                </MaterialTabs>
+              </div>
+            ))}
+          </div>
+        )
+      },
+      salesChart: {
+        title: t.trend,
+        actions: exportBtn('sales_trend', salesData),
+        children: chartView('salesChart', sales.length)
+      }
+    };
+  }, [sales, purchases, totalRevenue, totalExpenses, netProfit, lowStockItems, topSelling20, expiringItems, recentSales20, salesData, chartColors, t, language, textTransform]);
+
+
+  // --- CHART COLOR LOGIC ---
 
   return (
     <div
@@ -913,161 +1065,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </form>
         </Modal>
       )}
+
       {/* Unified Expanded View */}
-      {expandedView && (
-        <ExpandedModal
-          isOpen={!!expandedView}
-          onClose={() => setExpandedView(null)}
-          title={t.dashboard?.[expandedView] || t[expandedView] || 'View'}
-          color={color}
-          t={t}
-          actions={
-            <button
-              onClick={() => {
-                const dataMap: Record<string, any> = {
-                  revenue: [{ metric: 'Total Revenue', value: totalRevenue }],
-                  expenses: [{ metric: 'Total Expenses', value: totalExpenses }],
-                  profit: [
-                    { metric: 'Revenue', value: totalRevenue },
-                    { metric: 'Expenses', value: totalExpenses },
-                    { metric: 'Net Profit', value: netProfit }
-                  ],
-                  lowStock: lowStockItems,
-                  topSelling: topSelling20,
-                  expiring: expiringItems,
-                  recentSales: recentSales20,
-                  salesChart: salesData
-                };
-                exportToCSV(dataMap[expandedView] || [], expandedView);
-              }}
-              className='px-3 py-1.5 text-sm rounded-lg bg-(--bg-page-surface) hover:bg-(--bg-menu-hover) text-(--text-primary) border border-(--border-divider) transition-colors flex items-center gap-2'
-            >
-              <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>download</span>
-              {t.expand?.exportCSV || 'Export'}
-            </button>
-          }
-        >
-          <div className='space-y-6'>
-            {['revenue', 'expenses', 'profit', 'salesChart'].includes(expandedView) && (
-              <>
-                <SummaryCard 
-                  title={t[expandedView]} 
-                  value={expandedView === 'salesChart' ? sales.length : (expandedView === 'revenue' ? totalRevenue : expandedView === 'expenses' ? totalExpenses : netProfit)} 
-                  colorClass={expandedView === 'expenses' ? 'bg-red-50 dark:bg-red-950/20 border-red-100' : 'bg-primary-50 dark:bg-primary-950/20 border-primary-100'}
-                  footer={expandedView === 'salesChart' ? t.trend : t.expand?.historicalTrend}
-                />
-                
-                <MetricsGrid items={
-                  expandedView === 'profit' ? [
-                    { label: t.revenue, value: formatCurrency(totalRevenue) },
-                    { label: t.expenses, value: formatCurrency(totalExpenses) },
-                    { label: t.expand?.profitMargin || 'Margin', value: `${totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0'}%` }
-                  ] : [
-                    { label: t.expand?.metrics || 'Total Count', value: expandedView === 'expenses' ? purchases.length : sales.length },
-                    { label: t.expand?.amount || 'Average', value: formatCurrency((expandedView === 'expenses' ? (purchases.length > 0 ? totalExpenses / purchases.length : 0) : (sales.length > 0 ? totalRevenue / sales.length : 0))) }
-                  ]
-                } />
+      <ExpandedModal 
+        isOpen={!!expandedView} 
+        activeView={expandedView} 
+        views={dashboardViews as any} 
+        onClose={() => setExpandedView(null)} 
+        color={color}
+      />
 
-                <div className='h-80' dir='ltr'>
-                  <ResponsiveContainer width='100%' height='100%'>
-                    <AreaChart data={salesData}>
-                      <defs>
-                        <linearGradient id='colorExp' x1='0' y1='0' x2='0' y2='1'>
-                          <stop offset='5%' stopColor={chartColors.main} stopOpacity={0.8} />
-                          <stop offset='95%' stopColor={chartColors.main} stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='var(--border-divider)' />
-                      <XAxis dataKey='name' axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                      <Tooltip content={<CustomTooltip />} cursor={{ stroke: chartColors.main, strokeWidth: 2 }} />
-                      <Area type='monotone' dataKey='sales' stroke={chartColors.main} fillOpacity={1} fill='url(#colorExp)' strokeWidth={3} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </>
-            )}
-
-            {expandedView === 'lowStock' && (
-              <div className='grid gap-3'>
-                {lowStockItems.map(item => (
-                  <GenericListItem 
-                    key={item.id}
-                    title={getDisplayName(item, textTransform)}
-                    subtitle={item.category || ''}
-                    badge={`${item.stock} ${t.expand?.allItems || 'left'}`}
-                    badgeColor="text-orange-600"
-                    onClick={() => { setRestockDrug(item); setExpandedView(null); }}
-                    actionLabel={t.restock}
-                  />
-                ))}
-              </div>
-            )}
-
-            {expandedView === 'topSelling' && (
-              <div className='space-y-3'>
-                {topSelling20.map((item, index) => (
-                  <GenericListItem 
-                    key={item.name}
-                    icon="hotel_class"
-                    title={getDisplayName(item, textTransform)}
-                    subtitle={`${item.qty} ${t.sold} • ${formatCurrency(item.revenue)} ${t.revenue}`}
-                    value={formatCurrency(item.revenue)}
-                  />
-                ))}
-              </div>
-            )}
-
-            {expandedView === 'expiring' && (
-              <div className='space-y-3'>
-                {expiringItems.map(item => {
-                  const days = getDaysUntilExpiry(item.expiryDate);
-                  const isExpired = days < 0;
-                  return (
-                    <GenericListItem 
-                      key={item.id}
-                      icon="event_busy"
-                      title={getDisplayName(item, textTransform)}
-                      subtitle={`${item.category} • ${item.stock} in stock`}
-                      badge={isExpired ? t.expired : `${days} ${t.days}`}
-                      badgeColor={isExpired ? 'text-red-600' : 'text-yellow-600'}
-                      value={item.expiryDate}
-                    />
-                  );
-                })}
-              </div>
-            )}
-
-            {expandedView === 'recentSales' && (
-              <div className="relative space-y-4 py-1">
-                <div className={`absolute top-4 bottom-4 w-0.5 bg-gray-100 dark:bg-gray-800 z-0 ${language === 'AR' ? 'right-[11px]' : 'left-[11px]'}`} />
-                {recentSales20.map((sale, index) => (
-                  <div key={sale.id} className="relative z-10">
-                    <div className={`absolute top-6 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-sm z-10 ${sale.hasReturns ? 'bg-orange-400' : 'bg-primary-500'} ${language === 'AR' ? '-right-[18px]' : '-left-[18px]'}`} />
-                    <MaterialTabs index={index} total={recentSales20.length} className='h-auto! py-2 flex-col! items-stretch! gap-1 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors shadow-xs'>
-                      <div className='flex items-center justify-between gap-3'>
-                        <div className='flex items-center gap-3'>
-                          <div className='w-8 h-8 rounded-full bg-primary-50 dark:bg-primary-950 flex items-center justify-center text-primary-600 shrink-0'>
-                            <span className='material-symbols-rounded text-lg'>shopping_bag</span>
-                          </div>
-                          <div>
-                            <p className='font-bold text-gray-900 dark:text-gray-100 text-xs'>{sale.customerName || 'Guest'} <span className='text-[10px] font-normal opacity-50'>#{sale.id}</span></p>
-                            <p className='text-[10px] text-gray-500'>{sale.timeAgo}</p>
-                          </div>
-                        </div>
-                        <div className='text-end'>
-                          <p className='font-bold text-sm'>{formatCurrency(sale.netTotal ?? sale.total)}</p>
-                          {sale.hasReturns && <p className='text-[10px] text-orange-500 font-bold uppercase'>{t.returned}</p>}
-                        </div>
-                      </div>
-                    </MaterialTabs>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </ExpandedModal>
-      )}
 
       {/* Help */}
       <HelpButton

@@ -119,7 +119,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     quickStatusPos.resetPosition();
     typographyPos.resetPosition();
     blurPos.resetPosition();
-  }, [themesPos, quickStatusPos, typographyPos, blurPos]);
+  }, [themesPos.resetPosition, quickStatusPos.resetPosition, typographyPos.resetPosition, blurPos.resetPosition]);
 
   useEffect(() => { if (!isOpen) closeAllSubmenus(); }, [isOpen, closeAllSubmenus]);
 
