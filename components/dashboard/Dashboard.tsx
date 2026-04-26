@@ -106,6 +106,61 @@ const SectionHeader: React.FC<{ icon: string; title: string; onExpand?: () => vo
   </div>
 );
 
+const SummaryCard: React.FC<{ title: string; value: number | string; colorClass: string; footer?: string }> = ({ title, value, colorClass, footer }) => (
+  <div className={`p-6 rounded-2xl border ${colorClass}`}>
+    <p className="text-sm font-bold uppercase mb-1 opacity-80">{title}</p>
+    <p className="text-4xl font-bold">{typeof value === 'number' ? formatCurrency(value) : value}</p>
+    {footer && <p className="text-sm mt-2 opacity-60">{footer}</p>}
+  </div>
+);
+
+const MetricsGrid: React.FC<{ items: { label: string; value: string | number }[] }> = ({ items }) => (
+  <div className={`grid grid-cols-1 md:grid-cols-${items.length} gap-4`}>
+    {items.map((item, i) => (
+      <div key={i} className="p-4 rounded-xl bg-(--bg-page-surface) border border-(--border-divider)">
+        <p className="text-xs font-bold text-(--text-tertiary) uppercase mb-1">{item.label}</p>
+        <p className="text-2xl font-bold text-(--text-primary)">{item.value}</p>
+      </div>
+    ))}
+  </div>
+);
+
+const GenericListItem: React.FC<{ 
+  icon?: string; 
+  title: string; 
+  subtitle: string; 
+  value?: string; 
+  badge?: string; 
+  badgeColor?: string;
+  onClick?: () => void;
+  actionLabel?: string;
+}> = ({ icon, title, subtitle, value, badge, badgeColor = 'text-primary-600', onClick, actionLabel }) => (
+  <div className="p-4 rounded-xl bg-(--bg-page-surface) border border-(--border-divider) flex items-center justify-between hover:bg-(--bg-menu-hover) transition-colors">
+    <div className="flex items-center gap-4 min-w-0">
+      {icon && (
+        <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-950 flex items-center justify-center text-primary-600 shrink-0">
+          <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-md)' }}>{icon}</span>
+        </div>
+      )}
+      <div className="min-w-0">
+        <p className="font-bold text-(--text-primary) truncate">{title}</p>
+        <div className="flex items-center gap-2 mt-0.5">
+          <p className="text-xs text-(--text-tertiary)">{subtitle}</p>
+          {badge && <span className={`text-[10px] font-bold uppercase ${badgeColor}`}>{badge}</span>}
+        </div>
+      </div>
+    </div>
+    <div className="flex items-center gap-4">
+      {value && <p className="font-bold text-(--text-primary)">{value}</p>}
+      {onClick && (
+        <button onClick={onClick} className="px-4 py-2 rounded-full bg-(--bg-menu) text-primary-600 font-medium text-sm hover:bg-primary-50 transition-colors">
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  </div>
+);
+
 export const Dashboard: React.FC<DashboardProps> = ({
   inventory,
   sales,
@@ -858,728 +913,161 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </form>
         </Modal>
       )}
-
-      {/* Expanded Modals */}
-      {/* Revenue Expanded */}
-      <ExpandedModal
-        isOpen={expandedView === 'revenue'}
-        onClose={() => setExpandedView(null)}
-        title={t.dashboard?.revenue || 'Total Revenue'}
-        color={color}
-        t={t}
-        actions={
-          <button
-            onClick={() =>
-              exportToCSV([{ metric: 'Total Revenue', value: totalRevenue }], 'revenue')
-            }
-            className='px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2'
-          >
-            <span className='material-symbols-rounded text-[18px]'>download</span>
-            {t.expand?.exportCSV || 'Export'}
-          </button>
-        }
-      >
-        <div className='space-y-6'>
-          <div
-            className={`p-6 rounded-2xl bg-primary-50 dark:bg-primary-950/20 border border-primary-100 dark:border-primary-900`}
-          >
-            <p
-              className={`text-sm font-bold text-primary-800 dark:text-primary-300 uppercase mb-2`}
+      {/* Unified Expanded View */}
+      {expandedView && (
+        <ExpandedModal
+          isOpen={!!expandedView}
+          onClose={() => setExpandedView(null)}
+          title={t.dashboard?.[expandedView] || t[expandedView] || 'View'}
+          color={color}
+          t={t}
+          actions={
+            <button
+              onClick={() => {
+                const dataMap: Record<string, any> = {
+                  revenue: [{ metric: 'Total Revenue', value: totalRevenue }],
+                  expenses: [{ metric: 'Total Expenses', value: totalExpenses }],
+                  profit: [
+                    { metric: 'Revenue', value: totalRevenue },
+                    { metric: 'Expenses', value: totalExpenses },
+                    { metric: 'Net Profit', value: netProfit }
+                  ],
+                  lowStock: lowStockItems,
+                  topSelling: topSelling20,
+                  expiring: expiringItems,
+                  recentSales: recentSales20,
+                  salesChart: salesData
+                };
+                exportToCSV(dataMap[expandedView] || [], expandedView);
+              }}
+              className='px-3 py-1.5 text-sm rounded-lg bg-(--bg-page-surface) hover:bg-(--bg-menu-hover) text-(--text-primary) border border-(--border-divider) transition-colors flex items-center gap-2'
             >
-              {t.revenue}
-            </p>
-            <p className={`text-4xl font-bold text-primary-900 dark:text-primary-100`}>
-              {formatCurrency(totalRevenue)}
-            </p>
-            <p className='text-sm text-gray-500 mt-2'>
-              {t.expand?.historicalTrend || 'Based on all sales'}
-            </p>
-          </div>
-
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div className='p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
-              <p className='text-xs font-bold text-gray-500 uppercase mb-1'>
-                {t.expand?.metrics || 'Total Sales'}
-              </p>
-              <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>{sales.length}</p>
-            </div>
-            <div className='p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
-              <p className='text-xs font-bold text-gray-500 uppercase mb-1'>
-                {t.expand?.amount || 'Average Sale'}
-              </p>
-              <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
-                {sales.length > 0 ? formatCurrency(totalRevenue / sales.length) : formatCurrency(0)}
-              </p>
-            </div>
-          </div>
-
-          <div className='h-80' dir='ltr'>
-            <ResponsiveContainer width='100%' height='100%'>
-              <AreaChart data={salesData}>
-                <defs>
-                  <linearGradient id='colorSalesExpanded' x1='0' y1='0' x2='0' y2='1'>
-                    <stop offset='5%' stopColor={chartColors.main} stopOpacity={0.8} />
-                    <stop offset='95%' stopColor={chartColors.main} stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id='strokeSalesExpanded' x1='0' y1='0' x2='1' y2='0'>
-                    <stop offset='0%' stopColor={chartColors.start} stopOpacity={1} />
-                    <stop offset='100%' stopColor={chartColors.end} stopOpacity={1} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='#e2e8f0' />
-                <XAxis
-                  dataKey='name'
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#94a3b8', fontSize: 12 }}
+              <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>download</span>
+              {t.expand?.exportCSV || 'Export'}
+            </button>
+          }
+        >
+          <div className='space-y-6'>
+            {['revenue', 'expenses', 'profit', 'salesChart'].includes(expandedView) && (
+              <>
+                <SummaryCard 
+                  title={t[expandedView]} 
+                  value={expandedView === 'salesChart' ? sales.length : (expandedView === 'revenue' ? totalRevenue : expandedView === 'expenses' ? totalExpenses : netProfit)} 
+                  colorClass={expandedView === 'expenses' ? 'bg-red-50 dark:bg-red-950/20 border-red-100' : 'bg-primary-50 dark:bg-primary-950/20 border-primary-100'}
+                  footer={expandedView === 'salesChart' ? t.trend : t.expand?.historicalTrend}
                 />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <Tooltip
-                  content={<CustomTooltip />}
-                  cursor={{ stroke: chartColors.start, strokeWidth: 2 }}
-                />
-                <Area
-                  type='monotone'
-                  dataKey='sales'
-                  stroke='url(#strokeSalesExpanded)'
-                  fillOpacity={1}
-                  fill='url(#colorSalesExpanded)'
-                  strokeWidth={3}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </ExpandedModal>
+                
+                <MetricsGrid items={
+                  expandedView === 'profit' ? [
+                    { label: t.revenue, value: formatCurrency(totalRevenue) },
+                    { label: t.expenses, value: formatCurrency(totalExpenses) },
+                    { label: t.expand?.profitMargin || 'Margin', value: `${totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0'}%` }
+                  ] : [
+                    { label: t.expand?.metrics || 'Total Count', value: expandedView === 'expenses' ? purchases.length : sales.length },
+                    { label: t.expand?.amount || 'Average', value: formatCurrency((expandedView === 'expenses' ? (purchases.length > 0 ? totalExpenses / purchases.length : 0) : (sales.length > 0 ? totalRevenue / sales.length : 0))) }
+                  ]
+                } />
 
-      {/* Expenses Expanded */}
-      <ExpandedModal
-        isOpen={expandedView === 'expenses'}
-        onClose={() => setExpandedView(null)}
-        title={t.dashboard?.expenses || 'Expenses'}
-        color={color}
-        t={t}
-        actions={
-          <button
-            onClick={() =>
-              exportToCSV([{ metric: 'Total Expenses', value: totalExpenses }], 'expenses')
-            }
-            className='px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2'
-          >
-            <span className='material-symbols-rounded text-[18px]'>download</span>
-            {t.expand?.exportCSV || 'Export'}
-          </button>
-        }
-      >
-        <div className='space-y-6'>
-          <div className='p-6 rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900'>
-            <p className='text-sm font-bold text-red-800 dark:text-red-300 uppercase mb-2'>
-              {t.expenses}
-            </p>
-            <p className='text-4xl font-bold text-red-900 dark:text-red-100'>
-              {formatCurrency(totalExpenses)}
-            </p>
-            <p className='text-sm text-gray-500 mt-2'>
-              {t.expand?.historicalTrend || 'Based on all purchases'}
-            </p>
-          </div>
-
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div className='p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
-              <p className='text-xs font-bold text-gray-500 uppercase mb-1'>
-                {t.expand?.metrics || 'Total Purchases'}
-              </p>
-              <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
-                {purchases.length}
-              </p>
-            </div>
-            <div className='p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
-              <p className='text-xs font-bold text-gray-500 uppercase mb-1'>
-                {t.expand?.amount || 'Average Purchase'}
-              </p>
-              <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
-                {purchases.length > 0
-                  ? formatCurrency(totalExpenses / purchases.length)
-                  : formatCurrency(0)}
-              </p>
-            </div>
-          </div>
-
-          <div className='space-y-2'>
-            <h4 className='text-sm font-bold text-gray-700 dark:text-gray-300'>
-              {t.expand?.detailedView || 'Recent Purchases'}
-            </h4>
-            {purchases.slice(0, 10).map((purchase) => (
-              <div
-                key={purchase.id}
-                className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center'
-              >
-                <div>
-                  <p className='font-medium text-sm text-gray-900 dark:text-gray-100'>
-                    {purchase.supplierName}
-                  </p>
-                  <p className='text-xs text-gray-500'>
-                    {new Date(purchase.date).toLocaleDateString()}
-                  </p>
+                <div className='h-80' dir='ltr'>
+                  <ResponsiveContainer width='100%' height='100%'>
+                    <AreaChart data={salesData}>
+                      <defs>
+                        <linearGradient id='colorExp' x1='0' y1='0' x2='0' y2='1'>
+                          <stop offset='5%' stopColor={chartColors.main} stopOpacity={0.8} />
+                          <stop offset='95%' stopColor={chartColors.main} stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='var(--border-divider)' />
+                      <XAxis dataKey='name' axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                      <Tooltip content={<CustomTooltip />} cursor={{ stroke: chartColors.main, strokeWidth: 2 }} />
+                      <Area type='monotone' dataKey='sales' stroke={chartColors.main} fillOpacity={1} fill='url(#colorExp)' strokeWidth={3} />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
-                <p className='text-sm font-bold text-gray-900 dark:text-gray-100'>
-                  {formatCurrency(purchase.totalCost)}
-                </p>
+              </>
+            )}
+
+            {expandedView === 'lowStock' && (
+              <div className='grid gap-3'>
+                {lowStockItems.map(item => (
+                  <GenericListItem 
+                    key={item.id}
+                    title={getDisplayName(item, textTransform)}
+                    subtitle={item.category || ''}
+                    badge={`${item.stock} ${t.expand?.allItems || 'left'}`}
+                    badgeColor="text-orange-600"
+                    onClick={() => { setRestockDrug(item); setExpandedView(null); }}
+                    actionLabel={t.restock}
+                  />
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      </ExpandedModal>
+            )}
 
-      {/* Profit Expanded */}
-      <ExpandedModal
-        isOpen={expandedView === 'profit'}
-        onClose={() => setExpandedView(null)}
-        title={t.dashboard?.netProfit || 'Net Profit'}
-        color={color}
-        t={t}
-        actions={
-          <button
-            onClick={() =>
-              exportToCSV(
-                [
-                  { metric: 'Total Revenue', value: totalRevenue },
-                  { metric: 'Total Expenses', value: totalExpenses },
-                  { metric: 'Net Profit', value: netProfit },
-                ],
-                'profit'
-              )
-            }
-            className='px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2'
-          >
-            <span className='material-symbols-rounded text-[18px]'>download</span>
-            {t.expand?.exportCSV || 'Export'}
-          </button>
-        }
-      >
-        <div className='space-y-6'>
-          <div
-            className={`p-6 rounded-2xl ${netProfit >= 0 ? 'bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900' : 'bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900'}`}
-          >
-            <p
-              className={`text-sm font-bold uppercase mb-2 ${netProfit >= 0 ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-800 dark:text-red-300'}`}
-            >
-              {t.profit}
-            </p>
-            <p
-              className={`text-4xl font-bold ${netProfit >= 0 ? 'text-emerald-900 dark:text-emerald-100' : 'text-red-900 dark:text-red-100'}`}
-            >
-              {formatCurrency(netProfit)}
-            </p>
-            <p className='text-sm text-gray-500 mt-2'>
-              {t.expand?.breakdown || 'Revenue - Expenses'}
-            </p>
-          </div>
+            {expandedView === 'topSelling' && (
+              <div className='space-y-3'>
+                {topSelling20.map((item, index) => (
+                  <GenericListItem 
+                    key={item.name}
+                    icon="hotel_class"
+                    title={getDisplayName(item, textTransform)}
+                    subtitle={`${item.qty} ${t.sold} • ${formatCurrency(item.revenue)} ${t.revenue}`}
+                    value={formatCurrency(item.revenue)}
+                  />
+                ))}
+              </div>
+            )}
 
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-            <div className='p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
-              <p className='text-xs font-bold text-gray-500 uppercase mb-1'>{t.revenue}</p>
-              <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
-                {formatCurrency(totalRevenue)}
-              </p>
-            </div>
-            <div className='p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
-              <p className='text-xs font-bold text-gray-500 uppercase mb-1'>{t.expenses}</p>
-              <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
-                {formatCurrency(totalExpenses)}
-              </p>
-            </div>
-            <div className='p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
-              <p className='text-xs font-bold text-gray-500 uppercase mb-1'>
-                {t.expand?.profitMargin || 'Margin'}
-              </p>
-              <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
-                {totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0'}%
-              </p>
-            </div>
-          </div>
-        </div>
-      </ExpandedModal>
-
-      {/* Low Stock Expanded */}
-      <ExpandedModal
-        isOpen={expandedView === 'lowStock'}
-        onClose={() => setExpandedView(null)}
-        title={t.dashboard?.lowStockItems || 'Low Stock Items'}
-        color={color}
-        t={t}
-        actions={
-          <button
-            onClick={() =>
-              exportToCSV(
-                lowStockItems.map((item) => ({
-                  name: item.name,
-                  category: item.category,
-                  stock: item.stock,
-                  price: item.price,
-                })),
-                'low_stock_items'
-              )
-            }
-            className='px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2'
-          >
-            <span className='material-symbols-rounded text-[18px]'>download</span>
-            {t.expand?.exportCSV || 'Export'}
-          </button>
-        }
-      >
-        <div className='space-y-4'>
-          {lowStockItems.length === 0 ? (
-            <div className='text-center py-12 text-gray-400'>{t.allGood}</div>
-          ) : (
-            <div className='grid gap-3'>
-              {lowStockItems.map((item) => (
-                <div
-                  key={item.id}
-                  className='p-4 rounded-2xl bg-transparent border border-orange-200 dark:border-orange-800 flex justify-between items-center'
-                >
-                  <div className='flex-1'>
-                    <p className='font-medium text-gray-900 dark:text-gray-100'>
-                      {getDisplayName(item, textTransform)}
-                    </p>
-                    <p className='text-sm text-gray-500'>{item.category}</p>
-                    <p className='text-xs text-orange-600 dark:text-orange-400 font-bold uppercase mt-1'>
-                      {item.stock} {t.expand?.allItems || 'units left'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setRestockDrug(item);
-                      setExpandedView(null);
-                    }}
-                    className={`px-4 py-2 rounded-full bg-white dark:bg-gray-800 shadow-xs font-medium text-primary-600 hover:bg-primary-50 dark:hover:bg-gray-700 transition-colors`}
-                  >
-                    {t.restock}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </ExpandedModal>
-
-      {/* Top Selling Expanded */}
-      <ExpandedModal
-        isOpen={expandedView === 'topSelling'}
-        onClose={() => setExpandedView(null)}
-        title={t.dashboard?.topSelling || 'Top Selling Products'}
-        color={color}
-        t={t}
-        actions={
-          <button
-            onClick={() =>
-              exportToCSV(
-                topSelling20.map((item, i) => ({
-                  rank: i + 1,
-                  name: item.name,
-                  quantity: item.qty,
-                  revenue: item.revenue.toFixed(2),
-                })),
-                'top_selling_products'
-              )
-            }
-            className='px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2'
-          >
-            <span className='material-symbols-rounded text-[18px]'>download</span>
-            {t.expand?.exportCSV || 'Export'}
-          </button>
-        }
-      >
-        <div className='space-y-3'>
-          {topSelling20.length === 0 ? (
-            <div className='text-center py-12 text-gray-400'>
-              {t.expand?.noData || 'No sales data'}
-            </div>
-          ) : (
-            topSelling20.map((item, index) => (
-              <div
-                key={item.name}
-                className='p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors'
-              >
-                <div className='flex items-center gap-4 flex-1'>
-                  <div
-                    className={`w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-300 font-bold flex items-center justify-center shrink-0`}
-                  >
-                    {index + 1}
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <p className='font-medium text-gray-900 dark:text-gray-100 truncate item-name'>
-                      {getDisplayName(item, textTransform)}
-                    </p>
-                    <p className='text-sm text-gray-500'>
-                      {item.qty} {t.sold} • {formatCurrency(item.revenue)} {t.revenue}
-                    </p>
-                  </div>
-                </div>
-                <div className='text-end'>
-                  <div className='w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2'>
-                    <div
-                      className={`bg-primary-500 h-2 rounded-full`}
-                      style={{ width: `${(item.qty / topSelling20[0].qty) * 100}%` }}
+            {expandedView === 'expiring' && (
+              <div className='space-y-3'>
+                {expiringItems.map(item => {
+                  const days = getDaysUntilExpiry(item.expiryDate);
+                  const isExpired = days < 0;
+                  return (
+                    <GenericListItem 
+                      key={item.id}
+                      icon="event_busy"
+                      title={getDisplayName(item, textTransform)}
+                      subtitle={`${item.category} • ${item.stock} in stock`}
+                      badge={isExpired ? t.expired : `${days} ${t.days}`}
+                      badgeColor={isExpired ? 'text-red-600' : 'text-yellow-600'}
+                      value={item.expiryDate}
                     />
-                  </div>
-                </div>
+                  );
+                })}
               </div>
-            ))
-          )}
-        </div>
-      </ExpandedModal>
+            )}
 
-      {/* Expiring Items Expanded */}
-      <ExpandedModal
-        isOpen={expandedView === 'expiring'}
-        onClose={() => setExpandedView(null)}
-        title={`${t.expiringSoon} (${expiringItems.length})`}
-        color={color}
-        actions={
-          <button
-            onClick={() =>
-              exportToCSV(
-                expiringItems.map((item) => ({
-                  name: item.name,
-                  category: item.category,
-                  stock: item.stock,
-                  expiryDate: item.expiryDate,
-                  daysUntilExpiry: getDaysUntilExpiry(item.expiryDate),
-                })),
-                'expiring_items'
-              )
-            }
-            className='px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2'
-          >
-            <span className='material-symbols-rounded text-[18px]'>download</span>
-            {t.expand?.exportCSV || 'Export'}
-          </button>
-        }
-      >
-        <div className='space-y-3'>
-          {expiringItems.length === 0 ? (
-            <div className='text-center py-12 text-gray-400'>{t.noExpiring}</div>
-          ) : (
-            expiringItems.map((item) => {
-              const days = getDaysUntilExpiry(item.expiryDate);
-              const isExpired = days < 0;
-              return (
-                <div
-                  key={item.id}
-                  className={`p-4 rounded-2xl border ${isExpired ? 'bg-transparent border-red-200 dark:border-red-800' : 'bg-transparent border-yellow-200 dark:border-yellow-800'}`}
-                >
-                  <div className='flex justify-between items-start'>
-                    <div className='flex-1'>
-                      <p className='font-medium text-gray-900 dark:text-gray-100 item-name'>
-                        {getDisplayName(item, textTransform)}
-                      </p>
-                      <p className='text-sm text-gray-500'>
-                        {item.category} • {item.stock} in stock
-                      </p>
-                      <p
-                        className={`text-xs font-bold uppercase mt-1 ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-500'}`}
-                      >
-                        {isExpired ? t.expired : `${days} ${t.days}`}
-                      </p>
-                    </div>
-                    <span className='text-sm text-gray-500 dark:text-gray-400 font-medium'>
-                      {item.expiryDate}
-                    </span>
+            {expandedView === 'recentSales' && (
+              <div className="relative space-y-4 py-1">
+                <div className={`absolute top-4 bottom-4 w-0.5 bg-gray-100 dark:bg-gray-800 z-0 ${language === 'AR' ? 'right-[11px]' : 'left-[11px]'}`} />
+                {recentSales20.map((sale, index) => (
+                  <div key={sale.id} className="relative z-10">
+                    <div className={`absolute top-6 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-sm z-10 ${sale.hasReturns ? 'bg-orange-400' : 'bg-primary-500'} ${language === 'AR' ? '-right-[18px]' : '-left-[18px]'}`} />
+                    <MaterialTabs index={index} total={recentSales20.length} className='h-auto! py-2 flex-col! items-stretch! gap-1 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors shadow-xs'>
+                      <div className='flex items-center justify-between gap-3'>
+                        <div className='flex items-center gap-3'>
+                          <div className='w-8 h-8 rounded-full bg-primary-50 dark:bg-primary-950 flex items-center justify-center text-primary-600 shrink-0'>
+                            <span className='material-symbols-rounded text-lg'>shopping_bag</span>
+                          </div>
+                          <div>
+                            <p className='font-bold text-gray-900 dark:text-gray-100 text-xs'>{sale.customerName || 'Guest'} <span className='text-[10px] font-normal opacity-50'>#{sale.id}</span></p>
+                            <p className='text-[10px] text-gray-500'>{sale.timeAgo}</p>
+                          </div>
+                        </div>
+                        <div className='text-end'>
+                          <p className='font-bold text-sm'>{formatCurrency(sale.netTotal ?? sale.total)}</p>
+                          {sale.hasReturns && <p className='text-[10px] text-orange-500 font-bold uppercase'>{t.returned}</p>}
+                        </div>
+                      </div>
+                    </MaterialTabs>
                   </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </ExpandedModal>
-
-      {/* Recent Sales Expanded */}
-      <ExpandedModal
-        isOpen={expandedView === 'recentSales'}
-        onClose={() => setExpandedView(null)}
-        title={`${t.recentSales} (${recentSales20.length})`}
-        color={color}
-        actions={
-          <button
-            onClick={() =>
-              exportToCSV(
-                recentSales20.map((sale) => ({
-                  id: sale.id,
-                  date: new Date(sale.date).toLocaleString(),
-                  customer: sale.customerName || 'Guest',
-                  code: sale.customerCode || '-',
-                  payment: sale.paymentMethod === 'visa' ? 'Visa' : 'Cash',
-                  items: sale.items.length,
-                  total: sale.total.toFixed(2),
-                })),
-                'recent_transactions'
-              )
-            }
-            className='px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2'
-          >
-            <span className='material-symbols-rounded text-[18px]'>download</span>
-            {t.expand?.exportCSV || 'Export'}
-          </button>
-        }
-      >
-        <div className={`relative space-y-1 py-1 ${language === 'AR' ? 'pr-6' : 'pl-6'}`}>
-          {/* Vertical Timeline Rail */}
-          <div
-            className={`absolute top-4 bottom-4 w-0.5 bg-gray-200 dark:bg-gray-800 z-0 ${language === 'AR' ? 'right-[11px]' : 'left-[11px]'}`}
-          ></div>
-
-          {recentSales20.length === 0 ? (
-            <div className='text-center py-12 text-gray-400'>
-              {t.expand?.noData || 'No transactions yet'}
-            </div>
-          ) : (
-            recentSales20.map((sale, index) => {
-              // Determine node color based on status/returns
-              const hasReturns = sale.hasReturns;
-              const nodeColor = hasReturns ? 'orange' : sale.customerCode ? 'blue' : 'gray';
-
-              // Calculate relative time
-              const getRelativeTime = (d: Date) => {
-                const now = new Date();
-                const diff = now.getTime() - d.getTime();
-                const mins = Math.floor(diff / 60000);
-                const hours = Math.floor(mins / 60);
-
-                if (mins < 1) return t.justNow || 'Just now';
-                if (mins < 60)
-                  return language === 'AR'
-                    ? `${t.ago || 'منذ'} ${mins} د`
-                    : `${mins}m ${t.ago || 'ago'}`;
-                if (hours < 24)
-                  return language === 'AR'
-                    ? `${t.ago || 'منذ'} ${hours} س`
-                    : `${hours}h ${t.ago || 'ago'}`;
-                return d.toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', {
-                  day: 'numeric',
-                  month: 'short',
-                });
-              };
-
-              return (
-                <div key={sale.id} className='relative z-10'>
-                  {/* Timeline Node */}
-                  <div
-                    className={`absolute top-6 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-xs z-10 ${
-                      hasReturns ? 'bg-orange-400' : `bg-primary-500`
-                    } ${language === 'AR' ? '-right-[18px]' : '-left-[18px]'}`}
-                  ></div>
-
-                  <MaterialTabs
-                    index={index}
-                    total={recentSales20.length}
-                    className='h-auto! py-2 flex-col! items-stretch! gap-1 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors shadow-xs'
-                  >
-                    <div className='flex items-center justify-between gap-3 mb-1'>
-                      {/* Left Side: Icon, Name, Code, Time */}
-                      <div className='flex items-center gap-2 flex-1 min-w-0'>
-                        <div
-                          className={`w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 dark:text-primary-300 shrink-0`}
-                        >
-                          <span className='material-symbols-rounded text-[18px]'>shopping_bag</span>
-                        </div>
-
-                        <p className='font-bold text-gray-900 dark:text-gray-100 text-xs truncate'>
-                          {sale.customerName || 'Guest'}
-                        </p>
-
-                        {sale.customerCode && (
-                          <span className='text-[9px] bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-sm text-gray-500 font-mono border border-gray-200 dark:border-gray-700 shrink-0'>
-                            #{sale.customerCode}
-                          </span>
-                        )}
-
-                        <span className='text-[9px] text-gray-400 font-normal shrink-0'>
-                          {sale.timeAgo}
-                        </span>
-                      </div>
-
-                      {/* Right Side: Payment, Price, Returns */}
-                      <div className='flex items-center gap-3 shrink-0'>
-                        {/* Payment Icon */}
-                        <div
-                          className={`flex items-center justify-center w-6 h-6 rounded-full ${sale.paymentMethod === 'visa' ? 'bg-gray-50 text-primary-600 dark:bg-gray-800/20 dark:text-blue-400' : 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400'}`}
-                          title={sale.paymentMethod === 'visa' ? t.visa : t.cash}
-                        >
-                          <span className='material-symbols-rounded text-[14px]'>
-                            {sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}
-                          </span>
-                        </div>
-
-                        {/* Price */}
-                        <p className='text-sm font-bold text-gray-900 dark:text-gray-100'>
-                          {formatCurrency(sale.netTotal ?? sale.total)}
-                        </p>
-
-                        {/* Item Count / Returns Info */}
-                        <div className='text-[10px] text-gray-400 flex items-center gap-1 min-w-[30px] justify-end'>
-                          {sale.hasReturns && sale.returnStats ? (
-                            <span
-                              className='text-orange-500 flex items-center gap-0.5'
-                              title={`${sale.returnStats.returned}/${sale.returnStats.total} returned`}
-                            >
-                              <span className='material-symbols-rounded text-[14px]'>
-                                keyboard_return
-                              </span>
-                            </span>
-                          ) : (
-                            <span>({sale.items.length})</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div
-                      className='mt-1 pt-1 border-t border-gray-100 dark:border-gray-800'
-                      dir='ltr'
-                    >
-                      <div className='space-y-0.5'>
-                        {sale.items.map((item, idx) => {
-                          const lineKey = `${item.id}_${idx}`;
-                          const returnedQty =
-                            sale.itemReturnedQuantities?.[lineKey] ||
-                            sale.itemReturnedQuantities?.[item.id] ||
-                            0;
-                          const hasReturn = returnedQty > 0;
-
-                          return (
-                            <div
-                              key={idx}
-                              className={`flex justify-between text-xs ${
-                                hasReturn
-                                  ? returnedQty === item.quantity
-                                    ? 'bg-red-50 dark:bg-red-950/20 rounded-sm px-1.5 py-0.5 -mx-1.5' // Full return
-                                    : 'bg-orange-50 dark:bg-orange-950/20 rounded-sm px-1.5 py-0.5 -mx-1.5' // Partial return
-                                  : ''
-                              }`}
-                            >
-                              <span
-                                className={`${
-                                  hasReturn
-                                    ? returnedQty === item.quantity
-                                      ? 'text-red-700 dark:text-red-300'
-                                      : 'text-orange-700 dark:text-orange-300'
-                                    : 'text-gray-600 dark:text-gray-400'
-                                } item-name flex items-center gap-1`}
-                              >
-                                {hasReturn && (
-                                  <span
-                                    className={`material-symbols-rounded text-[10px] ${returnedQty === item.quantity ? 'text-red-500' : 'text-orange-500'}`}
-                                  >
-                                    keyboard_return
-                                  </span>
-                                )}
-                                <span>{getDisplayName(item, textTransform)}</span>
-                                <span className='text-gray-400 text-[10px]'>x{item.quantity}</span>
-                                {hasReturn && (
-                                  <span
-                                    className={`text-[9px] ${returnedQty === item.quantity ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}`}
-                                  >
-                                    ({returnedQty})
-                                  </span>
-                                )}
-                              </span>
-                              <span
-                                className='text-gray-900 dark:text-gray-100 font-medium text-[11px]'
-                                dir='ltr'
-                              >
-                                {formatCurrency(item.price * item.quantity)}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </MaterialTabs>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </ExpandedModal>
-
-      {/* Sales Chart Expanded */}
-      <ExpandedModal
-        isOpen={expandedView === 'salesChart'}
-        onClose={() => setExpandedView(null)}
-        title={t.trend}
-        color={color}
-        actions={
-          <button
-            onClick={() => exportToCSV(salesData, 'sales_trend')}
-            className='px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2'
-          >
-            <span className='material-symbols-rounded text-[18px]'>download</span>
-            {t.expand?.exportCSV || 'Export'}
-          </button>
-        }
-      >
-        <div className='space-y-6'>
-          <div className='h-96' dir='ltr'>
-            <ResponsiveContainer width='100%' height='100%'>
-              <AreaChart data={salesData}>
-                <defs>
-                  <linearGradient id='colorSalesChartExpanded' x1='0' y1='0' x2='0' y2='1'>
-                    <stop offset='5%' stopColor={chartColors.main} stopOpacity={0.8} />
-                    <stop offset='95%' stopColor={chartColors.main} stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id='strokeSalesChartExpanded' x1='0' y1='0' x2='1' y2='0'>
-                    <stop offset='0%' stopColor={chartColors.start} stopOpacity={1} />
-                    <stop offset='100%' stopColor={chartColors.end} stopOpacity={1} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='#e2e8f0' />
-                <XAxis
-                  dataKey='name'
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#94a3b8', fontSize: 13 }}
-                />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 13 }} />
-                <Tooltip
-                  content={<CustomTooltip />}
-                  cursor={{ stroke: chartColors.start, strokeWidth: 2 }}
-                />
-                <Area
-                  type='monotone'
-                  dataKey='sales'
-                  stroke='url(#strokeSalesChartExpanded)'
-                  fillOpacity={1}
-                  fill='url(#colorSalesChartExpanded)'
-                  strokeWidth={3}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+                ))}
+              </div>
+            )}
           </div>
-
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-            <div className='p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
-              <p className='text-xs font-bold text-gray-500 uppercase mb-1'>
-                {t.expand?.metrics || 'Total Sales'}
-              </p>
-              <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>{sales.length}</p>
-            </div>
-            <div className='p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
-              <p className='text-xs font-bold text-gray-500 uppercase mb-1'>{t.revenue}</p>
-              <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
-                {formatCurrency(totalRevenue)}
-              </p>
-            </div>
-            <div className='p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
-              <p className='text-xs font-bold text-gray-500 uppercase mb-1'>
-                {t.expand?.amount || 'Average'}
-              </p>
-              <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
-                {sales.length > 0 ? formatCurrency(totalRevenue / sales.length) : formatCurrency(0)}
-              </p>
-            </div>
-          </div>
-        </div>
-      </ExpandedModal>
+        </ExpandedModal>
+      )}
 
       {/* Help */}
       <HelpButton
