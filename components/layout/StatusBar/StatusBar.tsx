@@ -88,7 +88,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
 
     const tickerData = useDynamicTickerData();
     const { employees, isLoading } = useData();
-    const { currentShift } = useShift();
+    const { currentShift, isLoading: isShiftLoading } = useShift();
 
     const isAR = language === 'AR';
 
@@ -99,6 +99,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
     );
 
     const shiftTooltip = useMemo(() => {
+      if (isShiftLoading) return isAR ? 'جاري التحميل...' : 'Loading shift...';
       if (!currentShift) return t.shiftClosed || 'Shift Closed';
       
       const openTime = new Date(currentShift.openTime);
@@ -122,7 +123,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
         month: 'short',
       });
       return `${label} ${since} ${dateStr} ${timeStr}`;
-    }, [currentShift, t, isAR]);
+    }, [currentShift, isShiftLoading, t, isAR]);
 
     const tickerProps = useMemo(() => ({
       todaySales: t.ticker?.todaySales || 'Today',
@@ -155,9 +156,10 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
           {currentEmployeeId && <SettingsMenu />}
           <ConnectionStatus onlineText={t.online} offlineText={t.offline} />
           <StatusBarItem
-            icon={currentShift ? 'check_circle' : 'lock'}
+            icon={isShiftLoading ? 'sync' : (currentShift ? 'check_circle' : 'lock')}
             tooltip={shiftTooltip}
-            variant={currentShift ? 'success' : 'error'}
+            variant={isShiftLoading ? 'default' : (currentShift ? 'success' : 'error')}
+            className={isShiftLoading ? 'animate-spin-slow' : ''}
           />
           <DateTime hideIcon />
           <AlertsAndAds />
