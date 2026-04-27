@@ -16,6 +16,7 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartEmailInput, SmartPhoneInput, SmartInput, SmartTextarea, useSmartDirection } from '../common/SmartInputs';
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
 import { InteractiveCard } from '../common/InteractiveCard';
+import { type FilterConfig } from '../common/FilterPill';
 import { authService } from '../../services/auth/authService';
 import { Switch } from '../common/Switch';
 import { useSettings } from '../../context';
@@ -77,6 +78,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const currentUser = authService.getCurrentUserSync();
   const [mode, setMode] = useState<'list' | 'add'>('list');
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isKioskMode, setIsKioskMode] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -117,6 +119,17 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     { id: 'sms', label: t.contactOptions.sms, icon: 'sms' },
     { id: 'email', label: t.contactOptions.email, icon: 'mail' },
   ];
+ 
+  const statusFilterConfig = useMemo<FilterConfig>(() => ({
+    id: 'status',
+    label: t.headers?.status || 'Status',
+    icon: 'rule',
+    mode: 'single',
+    options: [
+      { label: t.status?.active || 'Active', value: 'active', icon: 'check_circle' },
+      { label: t.status?.inactive || 'Inactive', value: 'inactive', icon: 'cancel' },
+    ],
+  }), [t]);
 
   // Contact Options
 
@@ -720,6 +733,9 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 onSearchChange={setSearchQuery}
                 placeholder={t.searchPlaceholder || 'Search customers...'}
                 color={color}
+                filterConfigs={[statusFilterConfig]}
+                activeFilters={activeFilters}
+                onUpdateFilter={(gid, vals) => setActiveFilters(prev => ({ ...prev, [gid]: vals }))}
               />
             </div>
           ) : null
@@ -929,7 +945,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
               searchPlaceholder={t.searchPlaceholder}
               defaultHiddenColumns={['serialId']}
               color={color}
-              enableTopToolbar={true}
               isLoading={isLoading && filteredCustomers.length === 0}
               globalFilter={searchQuery}
               onSearchChange={setSearchQuery}
@@ -938,6 +953,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
               pageSize='auto'
               enableShowAll={true}
               enableSearch={false}
+              enableTopToolbar={false}
+              filterableColumns={[statusFilterConfig]}
+              initialFilters={activeFilters}
+              onFilterChange={setActiveFilters}
+              manualFiltering={false}
             />
           </div>
         </>

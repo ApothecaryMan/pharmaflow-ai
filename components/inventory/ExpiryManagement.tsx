@@ -11,6 +11,7 @@ import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartInput } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
+import { type FilterConfig } from '../common/FilterPill';
 import { useStatusBar } from '../layout/StatusBar';
 import { useData } from '../../services/DataContext';
 import { useAlert, useSettings } from '../../context';
@@ -51,7 +52,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
   const { showMenu, hideMenu } = useContextMenu();
 
 
-  const [filterMode, setFilterMode] = useState<'all' | 'expired' | 'near30' | 'near90'>('all');
+  const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modals & Action State
@@ -200,23 +201,20 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
       },
     };
   }, [batches, inventory, getVerifiedDate]);
+ 
+  const expiryFilterConfig = useMemo<FilterConfig>(() => ({
+    id: 'expiryDate',
+    label: t.expiryManagement?.expiryDate || 'Expiry Status',
+    icon: 'event_busy',
+    mode: 'single',
+    options: [
+      { label: t.expiryManagement?.expired || 'Expired', value: 'expired', icon: 'event_busy' },
+      { label: t.expiryManagement?.nearExpiry30 || '< 30 Days', value: 'near30', icon: 'warning' },
+      { label: t.expiryManagement?.nearExpiry90 || '< 90 Days', value: 'near90', icon: 'calendar_month' },
+    ],
+  }), [t]);
 
-  const filteredData = useMemo(() => {
-    const now = getVerifiedDate();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const near30Date = new Date(today);
-    near30Date.setDate(today.getDate() + 30);
-    const near90Date = new Date(today);
-    near90Date.setDate(today.getDate() + 90);
-
-    return enrichedBatches.filter((item) => {
-      const expiry = parseExpiryEndOfMonth(item.expiryDate);
-      if (filterMode === 'expired') return expiry < today;
-      if (filterMode === 'near30') return expiry >= today && expiry <= near30Date;
-      if (filterMode === 'near90') return expiry > near30Date && expiry <= near90Date;
-      return true;
-    });
-  }, [enrichedBatches, filterMode, getVerifiedDate]);
+  const filteredData = enrichedBatches;
 
   const columns = useMemo<ColumnDef<BatchWithDrug>[]>(() => {
     return [
@@ -391,6 +389,9 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
               onClear={() => setSearchQuery('')}
               placeholder={t.expiryManagement?.searchPlaceholder || 'Search batches...'}
               color={color}
+              filterConfigs={[expiryFilterConfig]}
+              activeFilters={activeFilters}
+              onUpdateFilter={(gid, vals) => setActiveFilters(prev => ({ ...prev, [gid]: vals }))}
             />
           </div>
 
@@ -401,8 +402,8 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
               { label: t.expiryManagement?.nearExpiry30 || '< 30 Days', value: 'near30' },
               { label: t.expiryManagement?.nearExpiry90 || '< 90 Days', value: 'near90' },
             ]}
-            value={filterMode}
-            onChange={(val) => setFilterMode(val as any)}
+            value={activeFilters['expiryDate']?.[0] || 'all'}
+            onChange={(val) => setActiveFilters(prev => ({ ...prev, expiryDate: val === 'all' ? [] : [val] }))}
             color={color}
           />
         </div>
@@ -415,7 +416,12 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
             color={color}
             enableTopToolbar={false}
             enableSearch={false}
+            filterableColumns={[expiryFilterConfig]}
+            initialFilters={activeFilters}
+            onFilterChange={setActiveFilters}
             globalFilter={searchQuery}
+            onSearchChange={setSearchQuery}
+            manualFiltering={false}
             emptyMessage={t.expiryManagement?.noRecords || 'No batches found matching criteria'}
             enablePagination={true}
             enableShowAll={true}

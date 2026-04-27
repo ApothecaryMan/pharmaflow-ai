@@ -3,10 +3,20 @@ import React, { ReactNode } from 'react';
 /**
  * PageHeader Component
  * 
- * A reusable, premium header for pages that supports a 3-column layout:
- * - Left: Actions or Title/Subtitle
- * - Center: Navigation components (e.g., SegmentedControl, Tabs)
- * - Right: Filters, Search, or secondary actions
+ * DESIGN PRINCIPLES & STANDARDS:
+ * 1. SLOTS ARCHITECTURE: 
+ *    - leftContent: Reserved for SEARCH (SearchInput) or NAVIGATION (Back buttons).
+ *    - centerContent: Reserved for primary VIEW SWITCHERS (SegmentedControl).
+ *      STRICT PROPS: variant="onPage", size="md", shape="pill", iconSize="--icon-lg", useGraphicFont={true}.
+ *    - rightContent: Reserved for PRIMARY ACTIONS (Add buttons, Print, Export).
+ * 
+ * 2. INTEGRATED HEADER PATTERN:
+ *    - Management pages (Inventory, Customers, Employees, Suppliers) MUST use this 3-slot pattern.
+ *    - Do NOT place the search bar inside the table; keep it in the PageHeader.leftContent.
+ * 
+ * 3. VISUAL HIERARCHY:
+ *    - title/subtitle should only be used if leftContent is empty, or as a secondary identity.
+ *    - sticky=true is the default to maintain context during scroll.
  */
 
 interface PageHeaderProps {

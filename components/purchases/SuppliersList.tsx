@@ -19,6 +19,9 @@ import {
 } from '../common/SmartInputs';
 import { LocationSelector } from '../common/LocationSelector';
 import { TanStackTable } from '../common/TanStackTable';
+import { GOVERNORATES } from '../../data/locations';
+import { PageHeader } from '../common/PageHeader';
+import { type FilterConfig } from '../common/FilterPill';
 
 interface SuppliersListProps {
   suppliers: Supplier[];
@@ -38,6 +41,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
   const { showMenu } = useContextMenu();
   const { activeBranchId } = useData();
   const [search, setSearch] = useState('');
+  const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
 
   // Mode and state
   const [mode, setMode] = useState<'list' | 'add'>('list');
@@ -67,6 +71,17 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
     editForm.contactPerson,
     t.form?.enterContactPerson || 'Enter contact person name'
   );
+
+  const governorateFilterConfig = useMemo<FilterConfig>(() => ({
+    id: 'governorate',
+    label: language === 'AR' ? 'المحافظة' : 'Governorate',
+    icon: 'location_on',
+    mode: 'multiple',
+    options: GOVERNORATES.map(gov => ({
+      label: language === 'AR' ? gov.name_ar : gov.name_en,
+      value: gov.name_en,
+    })),
+  }), [language]);
 
   // Copy helper
   const copyToClipboard = async (text: string) => {
@@ -134,11 +149,13 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
     }
   };
 
-  const handleAddNew = () => {
+  const handleAddNew = async () => {
     if (!permissionsService.can('supplier.add')) return;
+    
+    // Generate unique ID - branchId is required for DB sequence
+    const nextId = await idGenerator.generate('suppliers', activeBranchId || 'PF');
+    
     setMode('add');
-    // Generate unique ID
-    const nextId = idGenerator.generate('suppliers', activeBranchId);
     setEditForm({
       id: nextId,
       name: '',
@@ -267,6 +284,12 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
         ),
       },
       {
+        id: 'governorate',
+        accessorKey: 'governorate',
+        header: 'Governorate',
+        meta: { hideFromSettings: true },
+      },
+      {
         id: 'actions',
         header: t.headers?.action || 'Action',
         size: 80,
@@ -290,48 +313,44 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
 
   return (
     <div className='h-full flex flex-col space-y-4 animate-fade-in overflow-hidden'>
-      {/* Header */}
-      <div className='flex justify-between items-center shrink-0'>
-        <div>
-          <h1 className='text-2xl font-bold tracking-tight page-title'>
-            {mode === 'list'
-              ? t.suppliersList || 'Suppliers List'
-              : t.addNewSupplier || 'Add New Supplier'}
-          </h1>
-          <p className='text-sm text-gray-500'>
-            {mode === 'list'
-              ? t.manageSuppliers || 'Manage your suppliers'
-              : t.createNewRecord || 'Create a new supplier record'}
-          </p>
-        </div>
-        <SegmentedControl
-          value={mode}
-          onChange={(val) => {
-            if (val === 'list') setMode('list');
-            else if (val === 'add') handleAddNew();
-          }}
-          color={color}
-          shape='pill'
-          size='sm'
-          options={[
-            { label: t.allSuppliers || 'All Suppliers', value: 'list' },
-            ...(permissionsService.can('supplier.add') ? [{ label: t.addNewSupplier || 'Add New Supplier', value: 'add' }] : []),
-          ]}
-        />
-      </div>
-
-      {mode === 'list' ? (
-        <>
-          <div className='shrink-0'>
+      <PageHeader
+        leftContent={
+          <div className="w-full max-w-md">
             <SearchInput
               value={search}
               onSearchChange={setSearch}
               placeholder={t.searchPlaceholder || 'Search supplier name, contact...'}
-              wrapperClassName='w-full max-w-xl'
               color={color}
-              className='p-3'
+              filterConfigs={[governorateFilterConfig]}
+              activeFilters={activeFilters}
+              onUpdateFilter={(id, vals) => setActiveFilters(prev => ({ ...prev, [id]: vals }))}
             />
           </div>
+        }
+        centerContent={
+          <SegmentedControl
+            value={mode}
+            onChange={(val) => {
+              if (val === 'list') setMode('list');
+              else if (val === 'add') handleAddNew();
+            }}
+            color={color}
+            shape='pill'
+            variant="onPage"
+            size='md'
+            iconSize="--icon-lg"
+            useGraphicFont={true}
+            options={[
+              { label: t.allSuppliers || 'All Suppliers', value: 'list', icon: 'group' },
+              ...(permissionsService.can('supplier.add') ? [{ label: t.addNewSupplier || 'Add New Supplier', value: 'add', icon: 'person_add' }] : []),
+            ]}
+            className="w-full sm:w-[480px]"
+          />
+        }
+      />
+
+      {mode === 'list' ? (
+        <>
           <div className={`flex-1 overflow-hidden ${CARD_BASE} rounded-xl p-0 flex flex-col`}>
             <TanStackTable
               data={suppliers}
@@ -348,6 +367,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
               enableVirtualization={false}
               pageSize='auto'
               enableShowAll={true}
+              filterableColumns={[governorateFilterConfig]}
+              initialFilters={activeFilters}
+              onFilterChange={setActiveFilters}
             />
           </div>
         </>

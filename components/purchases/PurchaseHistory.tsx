@@ -49,9 +49,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
   const { activeBranchId } = useData();
   const { textTransform } = useSettings();
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
-  const [statusFilter, setStatusFilter] = useState<
-    'all' | 'pending' | 'completed' | 'returned' | 'rejected' | 'approved' | 'received'
-  >('all');
+  const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>({ from: '', to: '' });
   const [historySearch, setHistorySearch] = useState('');
   const [showAllBranches, setShowAllBranches] = useState(false);
@@ -166,21 +164,8 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
       }
     }
 
-    if (statusFilter === 'all') return data;
-
-    return data.filter((p) => {
-      if (statusFilter === 'returned') {
-        return purchasesWithReturns.has(p.id);
-      }
-      if (statusFilter === 'rejected') return p.status === 'rejected';
-      if (statusFilter === 'completed') {
-        return (p.status === 'completed' || p.status === 'received') && 
-               !purchasesWithReturns.has(p.id);
-      }
-      if (statusFilter === 'approved') return p.status === 'approved';
-      return p.status === statusFilter;
-    });
-  }, [purchases, showAllBranches, activeBranchId, dateRange, historySearch, statusFilter, purchasesWithReturns]);
+    return data;
+  }, [purchases, showAllBranches, activeBranchId, dateRange, historySearch]);
 
   const columns = useMemo<ColumnDef<Purchase>[]>(
     () => [
@@ -339,19 +324,8 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
               color={color}
               className='h-9 text-sm'
               filterConfigs={[statusFilterConfig]}
-              activeFilters={{ status: statusFilter === 'all' ? [] : [statusFilter] }}
-              onUpdateFilter={(gid, vals) => {
-                if (gid === 'status') {
-                  const newVal = vals[0] || 'all';
-                  // If adding from menu (which defaults to options[0] = 'all'), 
-                  // switch to 'pending' so the pill actually appears.
-                  if (statusFilter === 'all' && newVal === 'all') {
-                    setStatusFilter('pending');
-                  } else {
-                    setStatusFilter(newVal);
-                  }
-                }
-              }}
+              activeFilters={activeFilters}
+              onUpdateFilter={(gid, vals) => setActiveFilters(prev => ({ ...prev, [gid]: vals }))}
             />
           </div>
         }
@@ -415,7 +389,10 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
           enableVirtualization={true}
           enableTopToolbar={true}
           enableSearch={false}
-          manualFiltering={true}
+          filterableColumns={[statusFilterConfig]}
+          initialFilters={activeFilters}
+          onFilterChange={setActiveFilters}
+          manualFiltering={false}
         />
       </div>
 

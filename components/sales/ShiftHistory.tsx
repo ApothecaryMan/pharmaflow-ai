@@ -418,6 +418,9 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
           onRowClick={(shift) => setSelectedShift(shift)}
           manualFiltering={true}
           enableSearch={false}
+          enableTopToolbar={false}
+          globalFilter={searchTerm}
+          onSearchChange={setSearchTerm}
           lite={true}
           dense={true}
           initialSorting={[{ id: 'openTime', desc: true }]}
