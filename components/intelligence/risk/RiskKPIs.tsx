@@ -1,6 +1,6 @@
 import type React from 'react';
 import type { RiskSummary } from '../../../types/intelligence';
-import { formatCurrency, getCurrencySymbol } from '../../../utils/currency';
+import { formatCurrency } from '../../../utils/currency';
 import { SegmentedProgressCard } from '../../common/ProgressCard';
 import { SmallCard } from '../../common/SmallCard';
 
@@ -17,7 +17,6 @@ export const RiskKPIs: React.FC<RiskKPIsProps> = ({ summary, t, isLoading }) => 
         title={t?.intelligence?.risk?.kpis?.valueAtRisk || 'Value at Risk'}
         value={summary?.total_value_at_risk || 0}
         type='currency'
-        currencyLabel={getCurrencySymbol()}
         subValue={t?.intelligence?.risk?.kpis?.total || 'Total'}
         icon='trending_down'
         iconColor='red'

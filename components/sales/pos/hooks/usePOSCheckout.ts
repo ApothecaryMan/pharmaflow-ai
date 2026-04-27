@@ -5,6 +5,7 @@ import type { CartItem, Customer, Sale } from '../../../../types';
 import { generateInvoiceHTML, getActiveReceiptSettings } from '../../InvoiceTemplate';
 import { getPrinterSettings, printReceiptSilently } from '../../../../utils/qzPrinter';
 import { buildSalePayload } from '../utils/POSUtils';
+import { money, formatCurrency } from '../../../../utils/currency';
 
 interface UsePOSCheckoutProps {
   cart: CartItem[];
@@ -103,7 +104,7 @@ export const usePOSCheckout = ({
         deliveryFee,
         globalDiscount,
         subtotal,
-        total: cartTotal + deliveryFee,
+        total: money.add(cartTotal, deliveryFee),
         language: (language as 'EN' | 'AR') || 'EN',
         deliveryEmployeeId: isDelivery ? deliveryEmployeeId : undefined,
         status: (isPending ? 'pending' : isDelivery ? (deliveryEmployeeId ? 'with_delivery' : 'pending') : 'completed') as Sale['status'],
@@ -128,7 +129,7 @@ export const usePOSCheckout = ({
 
       addNotification({
         messageKey: 'saleComplete',
-        messageParams: { total: (cartTotal + deliveryFee).toFixed(2) },
+        messageParams: { total: formatCurrency(money.add(cartTotal, deliveryFee)) },
         type: 'success',
       });
 

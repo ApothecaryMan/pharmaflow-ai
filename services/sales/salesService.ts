@@ -4,6 +4,7 @@
  */
 
 import { BaseDomainService } from '../core/BaseDomainService';
+import { money } from '../../utils/currency';
 import type { Sale } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { settingsService } from '../settings/settingsService';
@@ -190,13 +191,16 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
     const today = new Date().toISOString().split('T')[0];
     const todaySales = all.filter((s) => s.date.startsWith(today));
 
+    const totalRev = all.reduce((sum, s) => money.add(sum, s.total), 0);
+    const todayRev = todaySales.reduce((sum, s) => money.add(sum, s.total), 0);
+
     return {
       totalSales: all.length,
-      totalRevenue: all.reduce((sum, s) => sum + s.total, 0),
+      totalRevenue: totalRev,
       averageTransaction:
-        all.length > 0 ? all.reduce((sum, s) => sum + s.total, 0) / all.length : 0,
+        all.length > 0 ? money.divide(totalRev, all.length) : 0,
       todaySales: todaySales.length,
-      todayRevenue: todaySales.reduce((sum, s) => sum + s.total, 0),
+      todayRevenue: todayRev,
     };
   }
 

@@ -11,7 +11,7 @@ import {
   type Sale,
 } from '../../../types';
 import { useAlert, useSettings } from '../../../context';
-import { formatCurrency } from '../../../utils/currency';
+import { formatCurrency, money, pricing } from '../../../utils/currency';
 import { getDisplayName } from '../../../utils/drugDisplayName';
 import { FilterDropdown } from '../../common/FilterDropdown';
 import { SmartInput, SmartTextarea } from '../../common/SmartInputs';
@@ -30,7 +30,6 @@ import * as stockOps from '../../../utils/stockOperations';
 import { idGenerator } from '../../../utils/idGenerator';
 import { useShift } from '../../../hooks/useShift';
 import { resolvePrice } from '../../../utils/stockOperations';
-import { money } from '../../../utils/money';
 
 const ShiftWarning = ({ t, compact = false }: { t: any; compact?: boolean }) => (
   <div className={`flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 ${compact ? 'h-7 px-2 w-full' : 'h-[42px] px-4'}`}>
@@ -230,18 +229,18 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
     pendingSales.forEach((s) => {
       const saleDate = parseISO(s.date);
-      stats.total += s.total;
+      stats.total = money.add(stats.total, s.total);
 
       if (isToday(saleDate)) {
-        stats.today.value += s.total;
+        stats.today.value = money.add(stats.today.value, s.total);
         stats.today.count += 1;
       }
 
       if (isAfter(saleDate, twentyFourHoursAgo)) {
-        stats.last24h.value += s.total;
+        stats.last24h.value = money.add(stats.last24h.value, s.total);
         stats.last24h.count += 1;
       } else {
-        stats.older.value += s.total;
+        stats.older.value = money.add(stats.older.value, s.total);
         stats.older.count += 1;
       }
     });
@@ -1248,7 +1247,10 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                       const unitsPerPack = common.unitsPerPack || 1;
                       const packPrice = common.price;
                       const unitPrice = common.price / unitsPerPack;
-                      const totalPrice = packQty * packPrice + unitQty * unitPrice;
+                      const totalPrice = money.add(
+                        money.multiply(packPrice, packQty, 0),
+                        money.multiply(unitPrice, unitQty, 0)
+                      );
 
                       const hasDualMode = unitsPerPack > 1;
 
@@ -1353,7 +1355,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                   const drug = inventory.find((d) => d.id === common.id);
                                   const cost = drug?.costPrice || 0;
                                   const price = common.price || 0;
-                                  const margin = price > 0 ? ((price - cost) / price) * 100 : 0;
+                                  const margin = pricing.actualMargin(cost, price);
                                   let calculatedMax = 10;
                                   if (margin < 20) calculatedMax = Math.floor(margin / 2);
                                   const effectiveMax =
@@ -1417,8 +1419,10 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                 </span>
                                 <span className='font-bold text-gray-900 dark:text-gray-100 text-sm'>
                                   {formatCurrency(
-                                    totalPrice *
-                                      (1 - getItemDiscount(common.id, common.discount || 0) / 100)
+                                    pricing.afterDiscount(
+                                      totalPrice,
+                                      getItemDiscount(common.id, common.discount || 0)
+                                    )
                                   )}
                                 </span>
                               </div>

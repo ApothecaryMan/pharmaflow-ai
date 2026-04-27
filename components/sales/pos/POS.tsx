@@ -19,6 +19,7 @@ import { formatStock } from '../../../utils/inventory';
 import { resolvePrice } from '../../../utils/stockOperations';
 import { parseSearchTerm } from '../../../utils/searchUtils';
 import { formatExpiryDate, parseExpiryEndOfMonth } from '../../../utils/expiryUtils';
+import { money, formatCurrency } from '../../../utils/currency';
 
 import { useContextMenu } from '../../common/ContextMenu';
 import { FilterDropdown } from '../../common/FilterDropdown';
@@ -205,11 +206,18 @@ export const POS: React.FC<POSProps> = ({
     activeBranchId,
   });
 
-  const { totalDiscountAmount, orderDiscountPercent, totalItems } = useMemo(() => ({
-    totalDiscountAmount: grossSubtotal - cartTotal,
-    orderDiscountPercent: grossSubtotal > 0 ? ((grossSubtotal - cartTotal) / grossSubtotal) * 100 : 0,
-    totalItems: mergedCartItems.filter((item) => (item.pack?.quantity || 0) + (item.unit?.quantity || 0) > 0).length,
-  }), [grossSubtotal, cartTotal, mergedCartItems]);
+  const { totalDiscountAmount, orderDiscountPercent, totalItems } = useMemo(() => {
+    const discountAmt = money.subtract(grossSubtotal, cartTotal);
+    const discountPct = grossSubtotal > 0 
+      ? money.multiply(money.divide(discountAmt, grossSubtotal), 100, 0)
+      : 0;
+    
+    return {
+      totalDiscountAmount: discountAmt,
+      orderDiscountPercent: discountPct,
+      totalItems: mergedCartItems.filter((item) => (item.pack?.quantity || 0) + (item.unit?.quantity || 0) > 0).length,
+    };
+  }, [grossSubtotal, cartTotal, mergedCartItems]);
 
   // Auto-scroll active item into view
   useEffect(() => {

@@ -3,6 +3,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { type Purchase, type PurchaseReturn, type Drug, type Supplier, type Employee, type Shift } from '../../types';
 import { parseSearchTerm } from '../../utils/searchUtils';
 import { formatExpiryDate } from '../../utils/expiryUtils';
+import { money } from '../../utils/money';
 import { PageHeader } from '../common/PageHeader';
 import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
@@ -488,7 +489,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
                         <PriceDisplay value={item.costPrice} size="sm" />
                       </td>
                       <td className='px-4 py-3 text-right font-bold text-gray-900 dark:text-white'>
-                        <PriceDisplay value={item.costPrice * item.quantity} size="sm" />
+                        <PriceDisplay value={money.multiply(item.costPrice, item.quantity, 2)} size="sm" />
                       </td>
                     </tr>
                   ))}

@@ -8,6 +8,7 @@ import { idGenerator } from '../../utils/idGenerator';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { supabase } from '../../lib/supabase';
 import { settingsService } from '../settings/settingsService';
+import { money } from '../../utils/currency';
 
 const mapBatchToDb = (b: Partial<StockBatch>): any => {
   const db: any = {};
@@ -102,8 +103,11 @@ export const batchService = {
       let newCost = oldCost;
       
       if (newQty > 0) {
-         // Weighted average cost
-         newCost = ((oldQty * oldCost) + (addedQty * addedCost)) / newQty;
+         // Weighted average cost using precision money engine
+         const oldTotalValue = money.multiply(oldCost, oldQty, 0);
+         const addedTotalValue = money.multiply(addedCost, addedQty, 0);
+         const totalValue = money.add(oldTotalValue, addedTotalValue);
+         newCost = money.divide(totalValue, newQty);
       }
       
       // Use atomic increment for safety during merging

@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { ar } from 'date-fns/locale/ar';
 import { enUS } from 'date-fns/locale/en-US';
 import { getDisplayName } from '../../../../utils/drugDisplayName';
-import { formatCurrency } from '../../../../utils/currency';
+import { formatCurrency, money, pricing } from '../../../../utils/currency';
 
 interface POSCustomerHistoryModalProps {
   isOpen: boolean;
@@ -256,7 +256,7 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                                     x{item.quantity}
                                   </span>
                                   <span className='font-black text-zinc-900 dark:text-zinc-100 min-w-[70px] text-right tabular-nums'>
-                                    {formatCurrency(item.quantity * item.price * (1 - (item.discount || 0) / 100))}
+                                    {formatCurrency(pricing.lineTotal(item.price, item.quantity, item.discount))}
                                   </span>
                                 </div>
                               </div>

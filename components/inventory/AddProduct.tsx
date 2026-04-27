@@ -14,6 +14,7 @@ import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs
 import { Tooltip } from '../common/Tooltip';
 import { CARD_LG, INPUT_BASE } from '../../utils/themeStyles';
 import * as stockOps from '../../utils/stockOperations';
+import { pricing } from '../../utils/currency';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { idGenerator } from '../../utils/idGenerator';
 import { validationService } from '../../services/validation/validationService';
@@ -145,10 +146,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
   };
 
   const margin = useMemo(() => {
-    if (!formData.price || !formData.costPrice) return 0;
-    // Calculation accounting for tax: profit = (price - cost) / price
-    const profit = formData.price - formData.costPrice;
-    return (profit / formData.price) * 100;
+    return pricing.actualMargin(formData.costPrice || 0, formData.price || 0);
   }, [formData.price, formData.costPrice]);
 
   const handleSubmit = async (e: React.FormEvent, addAnother: boolean = false) => {

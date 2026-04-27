@@ -22,6 +22,7 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
+import { money, pricing, tax } from '../../utils/money';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { FilterDropdown } from '../common/FilterDropdown';
@@ -392,7 +393,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
       // Auto-calculate discount if Sale > Cost
       if (sale > 0 && cost >= 0) {
-        initialDiscount = ((sale - cost) / sale) * 100;
+        initialDiscount = pricing.actualMargin(cost, sale);
       }
 
       // Initial tax percentage from settings
@@ -444,20 +445,18 @@ export const Purchases: React.FC<PurchasesProps> = ({
         // Interdependent Calculation Logic
         if (field === 'discount') {
           const disc = typeof value === 'number' ? value : 0;
-          updatedItem.costPrice = Number((i.salePrice * (1 - disc / 100)).toFixed(2));
+          updatedItem.costPrice = pricing.afterDiscount(i.salePrice, disc);
           // Tax percentage stays the same, just the calculated amount changes
         } else if (field === 'costPrice') {
           const cost = typeof value === 'number' ? value : 0;
           if (i.salePrice > 0) {
-            const disc = ((i.salePrice - cost) / i.salePrice) * 100;
-            updatedItem.discount = Number(disc.toFixed(2));
+            updatedItem.discount = pricing.actualMargin(cost, i.salePrice);
           }
           // Tax percentage stays the same
         } else if (field === 'salePrice') {
           const sale = typeof value === 'number' ? value : 0;
           if (sale > 0 && i.costPrice >= 0) {
-            const disc = ((sale - i.costPrice) / sale) * 100;
-            updatedItem.discount = Number(disc.toFixed(2));
+            updatedItem.discount = pricing.actualMargin(i.costPrice, sale);
           } else {
             updatedItem.discount = 0;
           }
@@ -547,8 +546,11 @@ export const Purchases: React.FC<PurchasesProps> = ({
       supplierId: selectedSupplierId,
       supplierName: supplier?.name || 'Unknown',
       items: cart,
-      totalCost: cart.reduce((sum, i) => sum + i.costPrice * i.quantity, 0),
-      totalTax: cart.reduce((sum, i) => sum + i.costPrice * i.quantity * ((i.tax || 0) / 100), 0),
+      totalCost: cart.reduce((sum, i) => money.add(sum, money.multiply(i.costPrice, i.quantity, 0)), 0),
+      totalTax: cart.reduce((sum, i) => {
+        const lineTotal = money.multiply(i.costPrice, i.quantity, 0);
+        return money.add(sum, tax.exclusiveAmount(lineTotal, i.tax || 0));
+      }, 0),
       status: 'completed',
       invoiceId: uniqueOrderId,
       externalInvoiceId,
@@ -616,8 +618,11 @@ export const Purchases: React.FC<PurchasesProps> = ({
       supplierId: selectedSupplierId,
       supplierName: supplier?.name || 'Unknown',
       items: cart,
-      totalCost: cart.reduce((sum, i) => sum + i.costPrice * i.quantity, 0),
-      totalTax: cart.reduce((sum, i) => sum + i.costPrice * i.quantity * ((i.tax || 0) / 100), 0),
+      totalCost: cart.reduce((sum, i) => money.add(sum, money.multiply(i.costPrice, i.quantity, 0)), 0),
+      totalTax: cart.reduce((sum, i) => {
+        const lineTotal = money.multiply(i.costPrice, i.quantity, 0);
+        return money.add(sum, tax.exclusiveAmount(lineTotal, i.tax || 0));
+      }, 0),
       status: 'pending',
       invoiceId: uniqueOrderId,
       externalInvoiceId,
@@ -1219,7 +1224,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           isLoading={isLoading}
                           type='number'
                           value={item.unitCostPrice || 0}
-                          placeholder={item.costPrice && item.unitsPerPack ? (item.costPrice / item.unitsPerPack).toFixed(2) : ''}
+                          placeholder={item.costPrice && item.unitsPerPack ? money.divide(item.costPrice, item.unitsPerPack).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
                           labelBgClassName={
                             selectedCartIndex === index
                               ? `bg-primary-50 dark:bg-(--bg-navbar)`
@@ -1300,7 +1305,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           isLoading={isLoading}
                           type='number'
                           value={item.unitSalePrice || 0}
-                          placeholder={item.salePrice && item.unitsPerPack ? (item.salePrice / item.unitsPerPack).toFixed(2) : ''}
+                          placeholder={item.salePrice && item.unitsPerPack ? money.divide(item.salePrice, item.unitsPerPack).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
                           labelBgClassName={
                             selectedCartIndex === index
                               ? `bg-primary-50 dark:bg-(--bg-navbar)`
@@ -1350,7 +1355,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           label={t.cartFields?.subtotal || 'Subtotal'}
                           isLoading={isLoading}
                           type='number'
-                          value={Number((item.costPrice * item.quantity).toFixed(2))}
+                          value={money.multiply(item.costPrice, item.quantity, 2)}
                           onChange={() => {}} // Read only
                           labelBgClassName={
                             selectedCartIndex === index
@@ -1366,12 +1371,11 @@ export const Purchases: React.FC<PurchasesProps> = ({
                         <FloatingInput
                           label={t.cartFields?.totalWithTax || 'Total+Tax'}
                           type='number'
-                          value={Number(
-                            (
-                              item.costPrice * item.quantity +
-                              item.costPrice * item.quantity * ((item.tax || 0) / 100)
-                            ).toFixed(2)
-                          )}
+                          value={(() => {
+                            const lineTotal = money.multiply(item.costPrice, item.quantity, 2);
+                            const taxAmount = tax.exclusiveAmount(lineTotal, item.tax || 0);
+                            return money.add(lineTotal, taxAmount);
+                          })()}
                           onChange={() => {}} // Read only
                           labelBgClassName={
                             selectedCartIndex === index
@@ -1402,10 +1406,10 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
                   {/* Discount */}
                   {(() => {
-                    const totalCost = cart.reduce((sum, i) => sum + i.costPrice * i.quantity, 0);
-                    const totalSale = cart.reduce((sum, i) => sum + i.salePrice * i.quantity, 0);
-                    const totalDiscount = totalSale - totalCost;
-                    const discountPercent = totalSale > 0 ? (totalDiscount / totalSale) * 100 : 0;
+                    const totalCost = cart.reduce((sum, i) => money.add(sum, pricing.lineTotal(i.costPrice, i.quantity, i.discount)), 0);
+                    const totalSale = cart.reduce((sum, i) => money.add(sum, money.multiply(i.salePrice, i.quantity, 2)), 0);
+                    const totalDiscount = money.subtract(totalSale, totalCost);
+                    const discountPercent = pricing.actualMargin(totalCost, totalSale);
 
                     return (
                       <div className='flex items-center gap-2'>
@@ -1427,8 +1431,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   {/* Tax */}
                   {(() => {
                     const totalTaxAmount = cart.reduce((sum, i) => {
-                      const subtotal = i.costPrice * i.quantity;
-                      return sum + subtotal * ((i.tax || 0) / 100);
+                      const lineTotal = pricing.lineTotal(i.costPrice, i.quantity, i.discount);
+                      return money.add(sum, money.multiply(lineTotal, i.tax || 0, 2));
                     }, 0);
                     return (
                       <div className='flex items-center gap-2'>
@@ -1449,16 +1453,16 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       {t.summary.totalCost}
                     </div>
                     {(() => {
-                      const subtotal = cart.reduce((sum, i) => sum + i.costPrice * i.quantity, 0);
+                      const subtotal = cart.reduce((sum, i) => money.add(sum, pricing.lineTotal(i.costPrice, i.quantity, i.discount)), 0);
                       const totalTax = cart.reduce((sum, i) => {
-                        const itemSubtotal = i.costPrice * i.quantity;
-                        return sum + itemSubtotal * ((i.tax || 0) / 100);
+                        const lineTotal = pricing.lineTotal(i.costPrice, i.quantity, i.discount);
+                        return money.add(sum, money.multiply(lineTotal, i.tax || 0, 2));
                       }, 0);
                       return (
                         <div
                           className={`text-2xl font-black ${paymentMethod === 'cash' ? 'text-green-600' : 'text-primary-600'}`}
                         >
-                          ${(subtotal + totalTax).toFixed(2)}
+                          ${money.add(subtotal, totalTax).toFixed(2)}
                         </div>
                       );
                     })()}

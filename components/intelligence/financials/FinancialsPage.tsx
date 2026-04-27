@@ -179,7 +179,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
               className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
             >
               <span className='material-symbols-rounded text-xs'>{config.icon}</span>
-              {val.toFixed(1)}%
+              {val.toLocaleString(undefined, { maximumFractionDigits: 1 })}%
             </span>
           );
         },

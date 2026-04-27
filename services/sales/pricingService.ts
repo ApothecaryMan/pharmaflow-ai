@@ -49,10 +49,20 @@ export const pricingService = {
       finalTotal = money.subtract(netSubtotal, globalDiscountAmount);
     }
 
+    // 4. Extract VAT if needed (Assuming prices are tax-inclusive)
+    const taxRate = 14; // Default VAT in Egypt, should ideally come from settings
+    const factor = 1 + taxRate / 100;
+    const subtotalExclTax = money.fromSmallestUnit(
+      Math.round(money.toSmallestUnit(finalTotal) / factor)
+    );
+    const taxAmount = money.subtract(finalTotal, subtotalExclTax);
+
     return {
       grossSubtotal,
       netSubtotal,
       finalTotal,
+      taxAmount,
+      subtotalExclTax,
       totalDiscountAmount: money.subtract(grossSubtotal, finalTotal),
     };
   }

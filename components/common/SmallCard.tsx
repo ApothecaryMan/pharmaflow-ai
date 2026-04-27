@@ -3,6 +3,8 @@ import { useMemo } from 'react';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { AnimatedCounter } from './AnimatedCounter';
 import { Tooltip } from './Tooltip';
+import { useSettings } from '../../context';
+import { formatCurrencyParts, formatCompactCurrencyParts, getCurrencySymbol } from '../../utils/currency';
 
 const CARD_HOVER = ''; // No animations
 
@@ -28,8 +30,11 @@ export interface SmallCardProps {
  * Formats a number with K/M suffixes
  * e.g. 1500 -> 1.5k, 1500000 -> 1.5M
  */
-const formatCompactNumber = (number: number) => {
-  return new Intl.NumberFormat('en-US', {
+/**
+ * Formats a number with K/M suffixes using specified locale
+ */
+const formatCompactNumber = (number: number, locale: string = 'en-US') => {
+  return new Intl.NumberFormat(locale, {
     notation: 'compact',
     maximumFractionDigits: 1,
   }).format(number);
@@ -52,21 +57,27 @@ export const SmallCard = ({
   iconTooltip,
   isLoading,
 }: SmallCardProps) => {
-  // Render value logic
-  const formattedValue = useMemo(() => {
-    if (typeof value !== 'number') return value;
+  const { language } = useSettings();
+  const isAR = language === 'AR';
+  const locale = isAR ? 'ar-EG' : 'en-US';
 
-    // For specific small number formatting preference (optional)
-    // If it's a currency type, let's prioritize compact notation for readability of large sums
-    if (type === 'currency' || value > 10000) {
-      return formatCompactNumber(value);
+  // Render value logic
+  const { displayValue, displaySymbol } = useMemo(() => {
+    if (typeof value !== 'number') return { displayValue: value, displaySymbol: '' };
+
+    if (type === 'currency') {
+      const parts = value > 10000 
+        ? formatCompactCurrencyParts(value, 'EGP', locale) 
+        : formatCurrencyParts(value, 'EGP', locale);
+      return { displayValue: parts.amount, displaySymbol: currencyLabel || parts.symbol };
     }
 
-    // Fallback/Default for smaller numbers or non-currency numbers if needed
-    // But since the user specifically asked for k/m for large prices, the above covers it.
-    // If we want to keep AnimatedCounter for small numbers we can.
-    return value;
-  }, [value, type]);
+    if (value > 10000) {
+      return { displayValue: formatCompactNumber(value, locale), displaySymbol: '' };
+    }
+
+    return { displayValue: value, displaySymbol: '' };
+  }, [value, type, locale, currencyLabel]);
 
   const iconContent = (
     <div className={`shrink-0 ${isLoading ? 'bg-zinc-100 dark:bg-zinc-800' : `text-${iconColor}-600 dark:text-${iconColor}-400`} relative flex items-center justify-center w-12 h-12 rounded-xl ${isLoading ? 'animate-pulse' : ''}`}>
@@ -105,11 +116,11 @@ export const SmallCard = ({
               {typeof value === 'number' && type !== 'currency' && value <= 10000 ? (
                 <AnimatedCounter value={value} fractionDigits={fractionDigits ?? 0} />
               ) : (
-                formattedValue
+                displayValue
               )}
-              {type === 'currency' && (
+              {displaySymbol && (
                 <span className='text-sm font-medium text-gray-500 dark:text-gray-400 ms-1'>
-                  {currencyLabel || 'L.E'}
+                  {displaySymbol}
                 </span>
               )}
               {valueSuffix && (

@@ -23,8 +23,9 @@ import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartInput, useSmartDirection } from '../common/SmartInputs';
 // UI Redesign Imports
-import { TanStackTable } from '../common/TanStackTable';
+import { TanStackTable, PriceDisplay } from '../common/TanStackTable';
 import { StockAdjustmentPrint } from './StockAdjustmentPrint';
+import { money } from '../../utils/currency';
 
 interface StockAdjustmentProps {
   onUpdateInventory: (drugs: Drug[]) => void;
@@ -35,6 +36,7 @@ interface StockAdjustmentProps {
 }
 
 interface AdjustmentItem {
+  id: string; // Added to satisfy TanStackTable constraint
   drugId: string;
   drugName: string;
   currentStock: number;
@@ -42,6 +44,7 @@ interface AdjustmentItem {
   difference: number;
   reason: string;
   notes: string;
+  costPrice: number; // Added for financial impact
   batchId?: string; // Optional: specific batch
   expiryDate?: string; // Optional: for display
 }
@@ -155,11 +158,11 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
       // 5. Refresh
       loadHistory();
-      success(language === 'AR' ? 'تم الموافقة على التعديل بنجاح' : 'Adjustment approved successfully');
+      success(language === 'AR' ? t.stockAdjustment.success : 'Adjustment approved successfully');
       playSuccess();
     } catch (err) {
       console.error('Approve failed', err);
-      alertError(language === 'AR' ? 'فشل في الموافقة على التعديل' : 'Failed to approve adjustment');
+      alertError(language === 'AR' ? t.common?.error || 'فشل في العملية' : 'Failed to approve adjustment');
       playError();
     }
   };
@@ -169,10 +172,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       const currentEmployeeId = currentEmployee?.id || 'user';
       await stockMovementService.rejectMovement(movement.id, currentEmployeeId);
       loadHistory();
-      info(language === 'AR' ? 'تم رفض التعديل' : 'Adjustment rejected');
+      info(language === 'AR' ? t.pendingApproval.reject : 'Adjustment rejected');
     } catch (err) {
       console.error('Reject failed', err);
-      alertError(language === 'AR' ? 'فشل في رفض التعديل' : 'Failed to reject adjustment');
+      alertError(language === 'AR' ? t.common?.error || 'فشل في العملية' : 'Failed to reject adjustment');
       playError();
     }
   };
@@ -316,7 +319,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           // Check uniqueness? Or just pile them up?
           // Better to check if already in list? For now just add.
 
+          const adjustmentId = batch ? `${drug.id}-${batch.id}` : drug.id;
+
           newAdjustments.push({
+            id: adjustmentId,
             drugId: drug.id,
             drugName: getFullDisplayName(drug, textTransform),
             currentStock: currentStock,
@@ -324,6 +330,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
             difference: qty > 0 ? qty - currentStock : 1,
             reason: 'inventory_count',
             notes: 'Imported via CSV',
+            costPrice: batch ? (batch.costPrice || drug.costPrice) : drug.costPrice,
             batchId: batch?.id,
             expiryDate: expiry,
           });
@@ -415,7 +422,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
     const currentStock = batch ? batch.quantity : drug.stock;
     const expiry = batch ? batch.expiryDate : drug.expiryDate;
 
+    const adjustmentId = batch ? `${drug.id}-${batch.id}` : drug.id;
+
     const newItem: AdjustmentItem = {
+      id: adjustmentId,
       drugId: drug.id,
       drugName: getFullDisplayName(drug, textTransform),
       currentStock: currentStock,
@@ -423,6 +433,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       difference: 0,
       reason: 'inventory_count',
       notes: '',
+      costPrice: batch ? (batch.costPrice || drug.costPrice) : drug.costPrice,
       batchId: batch?.id,
       expiryDate: expiry,
     };
@@ -551,9 +562,9 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       setLastTransaction(newTransactionMovements);
 
       if (isManager) {
-        success(language === 'AR' ? 'تم تحديث المخزون بنجاح' : 'Inventory updated successfully');
+        success(language === 'AR' ? t.stockAdjustment.success : 'Inventory updated successfully');
       } else {
-        success(language === 'AR' ? 'تم إرسال التعديلات للموافقة' : 'Adjustments submitted for approval');
+        success(language === 'AR' ? t.stockAdjustment.success : 'Adjustments submitted for approval');
       }
       playSuccess();
 
@@ -674,6 +685,22 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           );
         },
         meta: { align: 'center', width: 80 },
+      },
+      {
+        id: 'valueImpact',
+        header: t.stockAdjustment.table.valueImpact,
+        cell: (info) => {
+          const item = info.row.original;
+          const impact = money.multiply(item.costPrice, item.difference, 0);
+          if (impact === 0) return <span className="text-gray-300">-</span>;
+          return (
+            <div className={`text-xs font-bold tabular-nums ${impact > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+              {impact > 0 ? '+' : ''}
+              <PriceDisplay value={impact} />
+            </div>
+          );
+        },
+        meta: { align: 'center', width: 100 },
       },
       {
         accessorKey: 'reason',

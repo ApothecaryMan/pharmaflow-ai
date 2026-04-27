@@ -11,6 +11,7 @@ import { inventoryService } from '../inventory/inventoryService';
 import { batchService } from '../inventory/batchService';
 import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
 import * as stockOps from '../../utils/stockOperations';
+import { money } from '../../utils/money';
 import { supabase } from '../../lib/supabase';
 import type { PurchaseFilters, PurchaseService, PurchaseStats } from './types';
 
@@ -303,7 +304,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     return {
       totalOrders: all.length,
       pendingOrders: all.filter((p) => p.status === 'pending').length,
-      totalValue: all.reduce((sum, p) => sum + (p.totalCost || 0), 0),
+      totalValue: all.reduce((sum, p) => money.add(sum, p.totalCost || 0), 0),
     };
   }
 

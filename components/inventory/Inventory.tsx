@@ -11,7 +11,7 @@ import {
   isMedicineCategory,
 } from '../../data/productCategories';
 import type { Drug } from '../../types';
-import { formatCurrency, formatCurrencyParts, formatCompactCurrency } from '../../utils/currency';
+import { formatCurrency, formatCurrencyParts, formatCompactCurrency, money } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatStock, formatStockParts, validateStock } from '../../utils/inventory';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
@@ -362,8 +362,17 @@ export const Inventory: React.FC<InventoryProps> = ({
     return groupedInventory.reduce(
       (acc, drug) => {
         acc.totalItems += 1;
-        acc.totalCost += (drug.costPrice || 0) * stockOps.convertToPacks(drug.stock || 0, drug.unitsPerPack || 1);
-        acc.totalSaleValue += (drug.price || 0) * stockOps.convertToPacks(drug.stock || 0, drug.unitsPerPack || 1);
+        const packs = stockOps.convertToPacks(drug.stock || 0, drug.unitsPerPack || 1);
+        
+        acc.totalCost = money.add(
+          acc.totalCost,
+          money.multiply(drug.costPrice || 0, packs, 0)
+        );
+        
+        acc.totalSaleValue = money.add(
+          acc.totalSaleValue,
+          money.multiply(drug.price || 0, packs, 0)
+        );
 
         const status = (drug as any).status || 'active';
         if (status === 'active') {

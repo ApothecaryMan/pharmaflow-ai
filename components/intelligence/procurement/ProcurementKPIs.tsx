@@ -1,6 +1,6 @@
 import type React from 'react';
 import type { ProcurementSummary } from '../../../types/intelligence';
-import { formatCurrency, getCurrencySymbol } from '../../../utils/currency';
+import { formatCurrency } from '../../../utils/currency';
 import { SmallCard } from '../../common/SmallCard';
 
 interface ProcurementKPIsProps {
@@ -34,7 +34,6 @@ export const ProcurementKPIs: React.FC<ProcurementKPIsProps> = ({ summary, t, is
         title={t?.intelligence?.procurement?.kpis?.lostSales || 'Lost Sales'}
         value={summary?.estimated_lost_sales || 0}
         type='currency'
-        currencyLabel={getCurrencySymbol()}
         icon='money_off'
         iconColor='amber'
         isLoading={isLoading}

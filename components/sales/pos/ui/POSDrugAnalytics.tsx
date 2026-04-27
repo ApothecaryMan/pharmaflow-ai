@@ -3,6 +3,7 @@ import { salesService } from '../../../../services/sales/salesService';
 import { useSettings } from '../../../../context';
 import type { Drug } from '../../../../types';
 import { PriceDisplay } from '../../../common/TanStackTable';
+import { money } from '../../../../utils/currency';
 
 interface POSDrugAnalyticsProps {
   viewingDrug: Drug;
@@ -42,7 +43,7 @@ export const POSDrugAnalytics: React.FC<POSDrugAnalyticsProps> = ({ viewingDrug,
           const item = sale.items.find(i => i.id === viewingDrug.id || i.barcode === viewingDrug.barcode);
           if (item) {
             calculatedStats.totalQtySold += item.quantity;
-            calculatedStats.totalRevenue += item.quantity * item.price;
+            calculatedStats.totalRevenue = money.add(calculatedStats.totalRevenue, money.multiply(item.price, item.quantity, 0));
             
             if (!calculatedStats.lastSaleDate || new Date(sale.date) > new Date(calculatedStats.lastSaleDate)) {
               calculatedStats.lastSaleDate = sale.date;

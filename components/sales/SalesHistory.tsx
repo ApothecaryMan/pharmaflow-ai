@@ -23,6 +23,7 @@ import {
 } from './InvoiceTemplate';
 import { SaleDetailModal } from './SaleDetailModal';
 import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
+import { money } from '../../utils/money';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -79,7 +80,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         const isSameEmployee = r.processedBy === currentEmployeeId;
         return isToday && isSameEmployee;
       })
-      .reduce((sum, r) => sum + r.totalRefund, 0);
+      .reduce((sum, r) => money.add(sum, r.totalRefund), 0);
   }, [returns, currentEmployeeId]);
   
   // Handle Navigation Params (Deep Linking)
@@ -241,7 +242,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
                             (sale.itemReturnedQuantities && Object.keys(sale.itemReturnedQuantities).length > 0);
 
           if (isReturned) {
-            const totalReturned = sale.netTotal !== undefined ? sale.total - sale.netTotal : 0;
+            const totalReturned = sale.netTotal !== undefined ? money.subtract(sale.total, sale.netTotal) : 0;
             const isFullReturn = sale.netTotal === 0;
             const returnParts = formatCurrencyParts(totalReturned);
             
@@ -389,7 +390,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     });
   }, [sales, startDate, endDate, currentEmployeeId]);
 
-  const totalRevenue = filteredSales.reduce((sum, sale) => sum + sale.total, 0);
+  const totalRevenue = filteredSales.reduce((sum, sale) => money.add(sum, sale.total), 0);
 
   const exportToCSV = () => {
     if (filteredSales.length === 0) return;

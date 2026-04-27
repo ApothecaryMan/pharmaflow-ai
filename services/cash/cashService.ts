@@ -5,6 +5,7 @@
 
 import { type CashTransaction, type Shift, CashTransactionType } from '../../types';
 import { supabase } from '../../lib/supabase';
+import { money } from '../../utils/money';
 import { BaseDomainService } from '../core/BaseDomainService';
 import { settingsService } from '../settings/settingsService';
 
@@ -160,7 +161,9 @@ export const cashService: CashServiceInterface = {
     const shift = await shiftsInternal.getById(shiftId);
     if (!shift) throw new Error('Shift not found');
     
-    const expectedBalance = shift.openingBalance + shift.cashIn + shift.cashSales - shift.cashOut - shift.returns;
+    const totalIn = money.add(shift.openingBalance, money.add(shift.cashIn, shift.cashSales));
+    const totalOut = money.add(shift.cashOut, shift.returns);
+    const expectedBalance = money.subtract(totalIn, totalOut);
     
     return shiftsInternal.update(shiftId, {
       status: 'closed',

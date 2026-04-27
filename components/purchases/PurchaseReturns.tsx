@@ -1,4 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
+import { money } from '../../utils/money';
 import React, { useMemo, useState } from 'react';
 import { permissionsService } from '../../services/auth/permissions';
 import type { Drug, Purchase, PurchaseReturn, PurchaseReturnItem } from '../../types';
@@ -198,7 +199,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
             return {
               ...item,
               quantityReturned: newQuantity,
-              refundAmount: newQuantity * item.costPrice,
+              refundAmount: money.multiply(newQuantity, item.costPrice, 2),
             };
           }
           return item;
@@ -206,7 +207,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
       );
     } else {
       // Add new item (different reason/condition = separate entry)
-      const refundAmount = quantity * purchaseItem.costPrice;
+      const refundAmount = money.multiply(quantity, purchaseItem.costPrice, 2);
 
       const newItem: PurchaseReturnItem = {
         id: idGenerator.generateSync('returnItem', activeBranchId),
@@ -240,7 +241,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
       return;
     }
 
-    const totalRefund = returnItems.reduce((sum, item) => sum + item.refundAmount, 0);
+    const totalRefund = returnItems.reduce((sum, item) => money.add(sum, item.refundAmount), 0);
     const nextId = idGenerator.generateSync('returns', activeBranchId);
 
     const newReturn: PurchaseReturn = {
@@ -296,7 +297,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
           name: item.name,
           quantityReturned: availableQty,
           costPrice: item.costPrice,
-          refundAmount: availableQty * item.costPrice,
+          refundAmount: money.multiply(availableQty, item.costPrice, 2),
           dosageForm: item.dosageForm,
           reason: 'other' as const,
           condition: 'other' as const,
@@ -527,7 +528,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                       {t.purchaseReturns?.totalRefund || 'Total Refund'}
                     </span>
                     <span className='text-xl font-black text-red-600'>
-                      ${returnItems.reduce((sum, item) => sum + item.refundAmount, 0).toFixed(2)}
+                      ${returnItems.reduce((sum, item) => money.add(sum, item.refundAmount), 0).toFixed(2)}
                     </span>
                   </div>
                 </div>

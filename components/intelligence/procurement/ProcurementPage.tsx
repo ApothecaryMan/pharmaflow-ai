@@ -89,7 +89,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
         meta: { align: 'center' },
         cell: (info) => (
           <span className='text-gray-600 dark:text-gray-300'>
-            {info.getValue().toFixed(1)}{' '}
+            {info.getValue().toLocaleString(undefined, { maximumFractionDigits: 1 })}{' '}
             {t?.intelligence?.procurement?.grid?.columns?.perDay || '/day'}
           </span>
         ),

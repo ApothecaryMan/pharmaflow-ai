@@ -272,7 +272,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
     selectedItems.forEach((quantity, lineKey) => {
       const item = availableItems.find((i) => i.lineKey === lineKey);
       if (item) {
-        const itemPrice = item.isUnit && item.unitsPerPack ? item.price / item.unitsPerPack : item.price;
+        const itemPrice = item.isUnit && item.unitsPerPack ? money.divide(item.price, item.unitsPerPack) : item.price;
         const withItemDiscount = pricing.afterDiscount(itemPrice, item.discount || 0);
 
         // Apply pro-rata global discount if exists
@@ -280,7 +280,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           ? money.subtract(withItemDiscount, money.multiply(withItemDiscount, sale.globalDiscount, 2))
           : withItemDiscount;
 
-        const refundAmount = money.multiply(effectivePrice, quantity, 0);
+        const refundAmount = money.multiply(effectivePrice, quantity, 2);
 
         returnItems.push({
           drugId: (item as any).drugId || item.id,
@@ -473,10 +473,11 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                         <div className='flex items-center gap-4 shrink-0'>
                           <div className='flex flex-col items-end leading-tight'>
                             <p className='font-bold text-gray-900 dark:text-gray-100 text-base'>
-                              {formatCurrency((item.isUnit && item.unitsPerPack
-                                ? item.price / item.unitsPerPack
-                                : item.price
-                              ) * (1 - (item.discount || 0) / 100))}
+                              {(() => {
+                                const basePrice = item.isUnit && item.unitsPerPack ? item.price / item.unitsPerPack : item.price;
+                                const discounted = money.multiply(basePrice, (1 - (item.discount || 0) / 100), 2);
+                                return formatCurrency(discounted);
+                              })()}
                             </p>
                             {item.discount > 0 && (
                               <p className='text-[10px] text-gray-400 line-through opacity-60'>
@@ -702,10 +703,11 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                         <div className='flex items-center gap-6 shrink-0'>
                           <div className='flex flex-col items-end leading-tight'>
                             <p className='font-bold text-gray-900 dark:text-gray-100 text-base'>
-                              {formatCurrency((item.isUnit && item.unitsPerPack
-                                ? item.price / item.unitsPerPack
-                                : item.price
-                              ) * (1 - (item.discount || 0) / 100))}
+                              {(() => {
+                                const basePrice = item.isUnit && item.unitsPerPack ? item.price / item.unitsPerPack : item.price;
+                                const discounted = money.multiply(basePrice, (1 - (item.discount || 0) / 100), 2);
+                                return formatCurrency(discounted);
+                              })()}
                             </p>
                             {item.discount > 0 && (
                               <p className='text-[10px] text-gray-400 line-through opacity-60'>

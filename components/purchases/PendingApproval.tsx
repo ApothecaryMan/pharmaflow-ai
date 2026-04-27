@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { money, pricing } from '../../utils/money';
 import { permissionsService } from '../../services/auth/permissions';
 import { useSettings } from '../../context';
 import { PENDING_APPROVAL_HELP } from '../../i18n/helpInstructions';
@@ -391,7 +392,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                           <td className='p-2 text-right'><CurrencyDisplay amount={item.costPrice} /></td>
                           <td className='p-2 text-center text-gray-500'>{item.discount || 0}%</td>
                           <td className='p-2 text-right text-primary-600 font-medium'><CurrencyDisplay amount={item.salePrice || 0} /></td>
-                          <td className='p-2 text-right font-bold'><CurrencyDisplay amount={item.quantity * item.costPrice * (1 - (item.discount || 0) / 100)} /></td>
+                          <td className='p-2 text-right font-bold'><CurrencyDisplay amount={money.multiply(item.costPrice, item.quantity, 2)} /></td>
                         </tr>
                       ))}
                     </tbody>

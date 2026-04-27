@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { Sale, Return, Shift } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatCurrency } from '../../utils/currency';
+import { money } from '../../utils/money';
 import { permissionsService } from '../../services/auth/permissions';
 import { Modal } from '../common/Modal';
 import { MaterialTabs } from '../common/MaterialTabs';
@@ -251,8 +252,13 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                         if (isUnit) g.unitQty += item.quantity; else g.packQty += item.quantity;
                         const realQty = item.quantity - ret;
                         const price = isUnit ? item.price / (item.unitsPerPack || 1) : item.price;
-                        g.totalPrice += realQty * price * (1 - (item.discount || 0) / 100);
-                        g.originalPrice += realQty * price;
+                        
+                        const lineTotal = money.multiply(realQty, price, 2);
+                        const discountFactor = 1 - (item.discount || 0) / 100;
+                        const discountedTotal = money.multiply(lineTotal, discountFactor, 2);
+                        
+                        g.totalPrice = money.add(g.totalPrice, discountedTotal);
+                        g.originalPrice = money.add(g.originalPrice, lineTotal);
                         g.returnedQty += ret;
 
                         // Add expiry date from batch allocations or item fallback
@@ -327,7 +333,8 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                   )}
                   {(() => {
                     const hasDel = Number(sale.deliveryFee) > 0;
-                    const sav = (sale.subtotal || 0) + (sale.deliveryFee || 0) - sale.total;
+                    const subAndDel = money.add(sale.subtotal || 0, sale.deliveryFee || 0);
+                    const sav = money.subtract(subAndDel, sale.total);
                     const hasSav = sav > 0.01;
                     if (!hasDel && !hasSav) return null;
                     return (

@@ -1,6 +1,5 @@
 import type React from 'react';
 import type { FinancialKPIs } from '../../../types/intelligence';
-import { getCurrencySymbol } from '../../../utils/currency';
 import { SmallCard } from '../../common/SmallCard';
 
 interface FinancialsKPIsProps {
@@ -16,7 +15,6 @@ export const FinancialsKPIs: React.FC<FinancialsKPIsProps> = ({ kpis, t, isLoadi
         title={t?.intelligence?.financials?.kpis?.revenue}
         value={kpis?.revenue?.value || 0}
         type='currency'
-        currencyLabel={getCurrencySymbol()}
         icon='payments'
         iconColor='emerald'
         trend={kpis?.revenue?.change_direction}
@@ -28,7 +26,6 @@ export const FinancialsKPIs: React.FC<FinancialsKPIsProps> = ({ kpis, t, isLoadi
         title={t?.intelligence?.financials?.kpis?.grossProfit}
         value={kpis?.gross_profit?.value || 0}
         type='currency'
-        currencyLabel={getCurrencySymbol()}
         icon='account_balance_wallet'
         iconColor='gray'
         trend={kpis?.gross_profit?.change_direction}

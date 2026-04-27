@@ -3,6 +3,7 @@ import type React from 'react';
 import { useMemo, useState } from 'react';
 import { TanStackTable } from '../../../components/common/TanStackTable';
 import type { AuditTransaction } from '../../../types/intelligence';
+import { formatCurrency } from '../../../utils/currency';
 import { TransactionDetailModal } from './TransactionDetailModal';
 import { useSettings } from '../../../context';
 import { getDisplayName } from '../../../utils/drugDisplayName';
@@ -94,7 +95,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({
         meta: { align: 'end' },
         cell: (info) => (
           <span className='font-mono font-bold text-gray-900 dark:text-white'>
-            {info.getValue().toFixed(2)}
+            {formatCurrency(info.getValue())}
           </span>
         ),
       }),

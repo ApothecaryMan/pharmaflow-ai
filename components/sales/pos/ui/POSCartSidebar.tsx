@@ -11,6 +11,7 @@ import { Tooltip } from '../../../common/Tooltip';
 import { SortableCartItem } from '../SortableCartItem';
 import { resolvePrice } from '../../../../utils/stockOperations';
 import { useNetworkStatus } from '../../../../hooks/useNetworkStatus';
+import { money } from '../../../../utils/currency';
 
 
 const cartScrollStyles = `
@@ -140,9 +141,9 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
     
     const cost = cart.reduce((acc, item) => {
       const unitCost = resolvePrice(item.costPrice || 0, !!item.isUnit, item.unitsPerPack);
-      return acc + unitCost * item.quantity;
+      return money.add(acc, money.multiply(unitCost, item.quantity, 0));
     }, 0);
-    return cartTotal - cost;
+    return money.subtract(cartTotal, cost);
   }, [cart, cartTotal]);
 
   return (
@@ -534,7 +535,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                         ? `text-primary-600 dark:text-primary-400`
                         : 'text-gray-400'
                     }`}>
-                    <PriceDisplay value={Math.max(0, (parseFloat(amountPaid) || 0) - cartTotal)} />
+                    <PriceDisplay value={Math.max(0, money.subtract(parseFloat(amountPaid) || 0, cartTotal))} />
                   </span>
                 </div>
 
