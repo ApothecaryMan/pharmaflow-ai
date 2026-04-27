@@ -267,37 +267,12 @@ const getStoredSettings = (tableId: string) => {
   return storage.get(`table-settings-${tableId}`, null);
 };
 
-// Heuristic for smart alignment
-// Heuristic for smart alignment
-const getSmartAlignment = (columnId: string): 'start' | 'end' | 'center' => {
+const getSmartAlignment = (columnId: string, meta?: any): 'start' | 'end' | 'center' => {
+  if (meta?.align) return meta.align === 'left' ? 'start' : meta.align === 'right' ? 'end' : meta.align;
+  
   const id = columnId.toLowerCase();
-
-  // Numeric / Financial fields -> End
-  if (
-    [
-      'price',
-      'cost',
-      'revenue',
-      'profit',
-      'margin',
-      'qty',
-      'quantity',
-      'count',
-      'amount',
-      'total',
-      'balance',
-      'distribution',
-    ].some((key) => id.includes(key))
-  ) {
-    return 'end';
-  }
-
-  // Status / Actions / Selection -> Center
-  if (['status', 'active', 'is_', 'has_', 'action', 'check', 'customer', 'total', 'driver', 'man'].some((key) => id.includes(key))) {
-    return 'center';
-  }
-
-  // Default -> Start
+  if (['price', 'cost', 'revenue', 'profit', 'qty', 'quantity', 'amount', 'total', 'balance'].some(key => id.includes(key))) return 'end';
+  if (['status', 'active', 'is_', 'action', 'driver', 'man'].some(key => id.includes(key))) return 'center';
   return 'start';
 };
 
@@ -368,21 +343,11 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   // Build default visibility from defaultHiddenColumns
   const defaultVisibility = React.useMemo(() => {
     const visibility: VisibilityState = {};
-
-    // 1. Start with defaultHiddenColumns prop
-    defaultHiddenColumns.forEach((colId) => {
-      visibility[colId] = false;
+    defaultHiddenColumns.forEach(id => { visibility[id] = false; });
+    columns.forEach(col => {
+      const id = (col as any).id || (col as any).accessorKey;
+      if (id && (col as any).meta?.hideFromSettings) visibility[id] = false;
     });
-
-    // 2. Add columns marked with hideFromSettings meta
-    columns.forEach((col) => {
-      const colAny = col as any;
-      const id = colAny.id || colAny.accessorKey;
-      if (id && colAny.meta?.hideFromSettings) {
-        visibility[id] = false;
-      }
-    });
-
     return visibility;
   }, [defaultHiddenColumns, columns]);
 
@@ -434,32 +399,15 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   const memoizedInitialAlignment = React.useMemo(() => {
     const alignment: Record<string, 'start' | 'center' | 'end'> = { ...defaultColumnAlignment };
 
-    // Add defaults from column metadata
     columns.forEach((col) => {
-      const colAny = col as any;
-      const id = colAny.id || colAny.accessorKey;
+      const id = (col as any).id || (col as any).accessorKey;
       if (id) {
-        let align = colAny.meta?.align;
-
-        // Custom default rules
-        if (!align && id.toLowerCase().includes('code')) {
-          align = 'start';
-        }
-
-        if (align) {
-          // Map legacy physical alignments to logical ones
-          if (align === 'left') align = 'start';
-          if (align === 'right') align = 'end';
-          alignment[id] = align;
-        } else if (lite && !alignment[id]) {
-          alignment[id] = getSmartAlignment(id);
-        }
+        alignment[id] = alignment[id] || getSmartAlignment(id, (col as any).meta);
       }
     });
 
-    // Merge with stored overrides
     return { ...alignment, ...(storedSettings?.columnAlignment || {}) };
-  }, [columns, defaultColumnAlignment, lite, storedSettings]);
+  }, [columns, defaultColumnAlignment, storedSettings]);
 
   const [columnAlignment, setColumnAlignment] =
     useState<Record<string, 'start' | 'center' | 'end'>>(memoizedInitialAlignment);
@@ -859,40 +807,35 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     return { todayTs: today.getTime(), yesterdayTs: yesterday.getTime() };
   }, []);
 
-  // --- Fix 3: Pre-compute Column Metadata ---
+  // --- Unified Column Metadata ---
   const columnMetaMap = React.useMemo(() => {
     const map = new Map<string, any>();
-    table.getVisibleLeafColumns().forEach((col) => {
+    table.getAllLeafColumns().forEach((col) => {
       const colId = col.id.toLowerCase();
-      const align =
-        (col.columnDef.meta?.disableAlignment ? null : columnAlignment[col.id]) ||
-        col.columnDef.meta?.align ||
-        (lite ? getSmartAlignment(col.id) : null) ||
-        'start';
-      const isNameColumn = colId.includes('name');
-      const isIdColumn = col.columnDef.meta?.isId ?? (colId.includes('id') || colId.includes('code'));
-      const isActionColumn = colId.includes('action');
-      const isDateColumn = (['date', 'time', 'timestamp', 'visit'].some((key) => colId.includes(key)) ||
-            (colId.includes('at') && !colId.includes('csat') && !colId.includes('cat'))) && !colId.includes('expiry');
-      const isFlex = col.columnDef.meta?.flex ?? isNameColumn;
-
+      const meta = col.columnDef.meta as any;
+      
+      const align = (meta?.disableAlignment ? null : columnAlignment[col.id]) || getSmartAlignment(col.id, meta);
+      
+      const isId = meta?.isId ?? (colId.includes('id') || colId.includes('code'));
+      const isDate = (['date', 'time', 'timestamp', 'visit'].some(k => colId.includes(k)) || 
+                     (colId.includes('at') && !colId.includes('csat'))) && !colId.includes('expiry');
+      
       map.set(col.id, {
-        isIdColumn,
-        isNameColumn,
-        isActionColumn,
-        isDateColumn,
-        isFlex,
         align,
-        justifyClass: `${getHeaderJustifyClass(align)} ${getTextAlignClass(align)}`,
+        isId,
+        isDate,
+        isAction: colId.includes('action'),
+        isFlex: meta?.flex ?? colId.includes('name'),
+        justifyClass: getHeaderJustifyClass(align),
+        textAlignClass: getTextAlignClass(align),
         itemsAlignClass: getItemsAlignClass(align),
-        width: col.columnDef.meta?.width || col.getSize(),
-        minWidth: col.columnDef.meta?.minWidth,
-        cellDirMeta: col.columnDef.meta?.dir,
-        smartDateVisible: col.columnDef.meta?.smartDate !== false,
+        width: meta?.width || col.getSize(),
+        minWidth: meta?.minWidth,
+        smartDate: meta?.smartDate !== false,
       });
     });
     return map;
-  }, [table, columnAlignment, lite]);
+  }, [table, columnAlignment]);
 
   // Virtualizer Setup
   const rowVirtualizer = useVirtualizer({
@@ -978,15 +921,9 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
-                      // ... inside TanStackTable ...
-
-                      const align =
-                        header.column.columnDef.meta?.headerAlign ||
-                        (header.column.columnDef.meta?.disableAlignment ? null : columnAlignment[header.column.id]) ||
-                        header.column.columnDef.meta?.align ||
-                        (lite ? getSmartAlignment(header.column.id) : null) ||
-                        'start';
-
+                      const meta = columnMetaMap.get(header.column.id);
+                      const headerAlign = header.column.columnDef.meta?.headerAlign;
+                      const align = headerAlign || meta?.align || 'start';
                       const justifyClass = getHeaderJustifyClass(align);
                       const textAlignClass = getTextAlignClass(align);
 
@@ -1125,62 +1062,39 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                       }`}
                     >
                       {row.getVisibleCells().map((cell: any) => {
-                        const meta = columnMetaMap.get(cell.column.id) || {
-                          isIdColumn: false, isNameColumn: false, isActionColumn: false, isDateColumn: false,
-                          isFlex: false, align: 'start', justifyClass: 'justify-start text-start', itemsAlignClass: 'items-start',
-                          smartDateVisible: true, width: undefined, minWidth: undefined, cellDirMeta: undefined
-                        };
+                        const meta = columnMetaMap.get(cell.column.id);
+                        if (!meta) return null;
 
                         const cellValue = cell.getValue();
-                        let cellDir = meta.cellDirMeta;
-                        if (cellDir === 'auto' || (!cellDir && meta.isNameColumn && typeof cellValue === 'string')) {
-                          cellDir = getSmartDirection(String(cellValue || ''));
-                        }
+                        const cellDir = (cell.column.columnDef.meta as any)?.dir === 'auto' || (! (cell.column.columnDef.meta as any)?.dir && meta.isFlex && typeof cellValue === 'string')
+                          ? getSmartDirection(String(cellValue || ''))
+                          : (cell.column.columnDef.meta as any)?.dir;
 
-                        // --- Fix 4: Inline renderCellContent ---
+                        // --- Smart Date Formatting ---
                         let content = null;
-                        if (
-                          meta.smartDateVisible &&
-                          meta.isDateColumn &&
-                          cellValue &&
-                          (typeof cellValue === 'string' || typeof cellValue === 'number' || cellValue instanceof Date)
-                        ) {
+                        if (meta.smartDate && meta.isDate && cellValue) {
                           const date = new Date(cellValue);
                           if (!isNaN(date.getTime())) {
                             const targetTs = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+                            const isToday = targetTs === todayTs;
+                            const isYesterday = targetTs === yesterdayTs;
                             
-                            let dateLabel = date.toLocaleDateString();
-                            let isToday = false;
-                            if (targetTs === todayTs) {
-                              dateLabel = isRtl ? 'اليوم' : 'Today';
-                              isToday = true;
-                            } else if (targetTs === yesterdayTs) {
-                              dateLabel = isRtl ? 'أمس' : 'Yesterday';
-                            }
-
+                            const dateLabel = isToday ? (isRtl ? 'اليوم' : 'Today') : isYesterday ? (isRtl ? 'أمس' : 'Yesterday') : date.toLocaleDateString();
                             const timeLabel = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                             const formattedTime = isRtl ? timeLabel.replace('AM', 'ص').replace('PM', 'م') : timeLabel;
 
-                            if (isToday) {
-                              content = (
-                                <div className={`flex flex-col ${meta.itemsAlignClass}`}>
-                                  <span className='font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight'>
-                                    {formattedTime}
-                                  </span>
-                                </div>
-                              );
-                            } else {
-                              content = (
-                                <div className={`flex flex-col ${meta.itemsAlignClass}`}>
-                                  <span className='font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight'>
-                                    {dateLabel}
-                                  </span>
+                            content = (
+                              <div className={`flex flex-col ${meta.itemsAlignClass}`}>
+                                <span className='font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight'>
+                                  {isToday ? formattedTime : dateLabel}
+                                </span>
+                                {!isToday && (
                                   <span className='text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap -mt-0.5 tracking-tight'>
                                     {formattedTime}
                                   </span>
-                                </div>
-                              );
-                            }
+                                )}
+                              </div>
+                            );
                           }
                         }
                         
@@ -1214,22 +1128,20 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                           <td
                             key={cell.id}
                             className={`${dense ? 'py-1 text-xs' : 'py-3 text-sm'} px-4 font-medium text-(--text-primary) align-middle border-b border-(--border-divider) group-last/row:border-b-0
-                            ${meta.isFlex ? '' : 'whitespace-nowrap'} ${meta.isActionColumn ? 'action-col' : ''}`}
+                            ${meta.isFlex ? '' : 'whitespace-nowrap'} ${meta.isAction ? 'action-col' : ''}`}
                             style={{
                               width: meta.isFlex ? 'auto' : (cell.column.columnDef.meta?.width || cell.column.getSize()),
-                              minWidth: cell.column.columnDef.meta?.minWidth,
+                              minWidth: meta.minWidth,
                             }}
                             dir={cellDir}
                           >
-                            <div
-                              className={`flex items-center gap-1.5 w-full ${meta.justifyClass} ${meta.isIdColumn && meta.align === 'start' ? '-ms-3' : ''} ${meta.isIdColumn && meta.align === 'end' ? '-me-3' : ''}`}
-                            >
-                              {meta.isIdColumn && (
+                            <div className={`flex items-center gap-1.5 w-full ${meta.justifyClass} ${meta.isId && meta.align === 'start' ? '-ms-3' : ''} ${meta.isId && meta.align === 'end' ? '-me-3' : ''}`}>
+                              {meta.isId && (
                                 <span className='material-symbols-rounded text-gray-400 shrink-0' style={{ fontSize: 'var(--icon-md)' }}>
                                   tag
                                 </span>
                               )}
-                              <span dir={meta.isIdColumn ? 'ltr' : undefined}>
+                              <span dir={meta.isId ? 'ltr' : undefined}>
                                 {content}
                               </span>
                             </div>
@@ -1280,42 +1192,25 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
               <div className='flex items-center gap-1 px-2.5 h-full text-[11px] uppercase font-bold tracking-wide text-(--text-secondary) tabular-nums'>
                 {isShowAll ? (
                   <span className='whitespace-nowrap font-bold'>{t.global?.table?.showingAll || 'Showing All Items'}</span>
-                ) : language === 'AR' ? (
-                  <>
-                    <span className='text-(--text-primary) inline-block min-w-[24px] text-center text-[12px]'>
-                      {table.getFilteredRowModel().rows.length}
-                    </span>
-                    <span className='shrink-0 px-1'>{t.global?.table?.of || 'of'}</span>
-                    <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
-                      {Math.min(
-                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                        table.getFilteredRowModel().rows.length
-                      )}
-                    </span>
-                    <span className='opacity-50 px-0.5'>-</span>
-                    <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
-                      {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
-                    </span>
-                    <span className='shrink-0'>{t.global?.table?.showing || 'Showing'}</span>
-                  </>
                 ) : (
-                  <>
+                  <div className='flex items-center gap-1'>
                     <span className='shrink-0'>{t.global?.table?.showing || 'Showing'}</span>
                     <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
-                      {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
+                      {language === 'AR' 
+                        ? Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)
+                        : table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
                     </span>
                     <span className='opacity-50 px-0.5'>-</span>
                     <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
-                      {Math.min(
-                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                        table.getFilteredRowModel().rows.length
-                      )}
+                      {language === 'AR'
+                        ? table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1
+                        : Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)}
                     </span>
                     <span className='shrink-0 px-1'>{t.global?.table?.of || 'of'}</span>
                     <span className='text-(--text-primary) inline-block min-w-[24px] text-center text-[12px]'>
                       {table.getFilteredRowModel().rows.length}
                     </span>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
