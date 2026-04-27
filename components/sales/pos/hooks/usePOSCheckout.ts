@@ -57,6 +57,7 @@ export const usePOSCheckout = ({
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
   const [isDeliveryMode, setIsDeliveryMode] = useState(false);
   const [amountPaid, setAmountPaid] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const isValidOrder =
     cart.length > 0 &&
@@ -64,11 +65,15 @@ export const usePOSCheckout = ({
 
   const handleCheckout = useCallback(
     async (saleType: 'walk-in' | 'delivery' = 'walk-in', isPending: boolean = false) => {
+      if (isProcessing) return;
       if (!permissionsService.can('sale.create')) {
         showToastError('Permission Denied: Cannot perform checkout');
         return;
       }
       if (!isValidOrder) return;
+
+      setIsProcessing(true);
+      try {
 
       const isDelivery = saleType === 'delivery';
       let deliveryFee = 0;
@@ -116,6 +121,9 @@ export const usePOSCheckout = ({
         return;
       }
 
+      setIsCheckoutMode(false);
+      setIsDeliveryMode(false);
+      setAmountPaid('');
       playSuccess();
 
       addNotification({
@@ -123,6 +131,9 @@ export const usePOSCheckout = ({
         messageParams: { total: (cartTotal + deliveryFee).toFixed(2) },
         type: 'success',
       });
+
+      // Immediate UI transition: remove tab as soon as sale is recorded
+      removeTab(activeTabId);
 
       try {
         const opts = getActiveReceiptSettings();
@@ -159,7 +170,9 @@ export const usePOSCheckout = ({
         console.error('Auto-print failed:', e);
       }
 
-      removeTab(activeTabId);
+      } finally {
+        setIsProcessing(false);
+      }
     },
     [
       showToastError,
@@ -182,6 +195,7 @@ export const usePOSCheckout = ({
       removeTab,
       activeTabId,
       playSuccess,
+      isProcessing,
     ]
   );
 
@@ -213,5 +227,6 @@ export const usePOSCheckout = ({
     setAmountPaid,
     handleCheckout,
     isValidOrder,
+    isProcessing,
   };
 };

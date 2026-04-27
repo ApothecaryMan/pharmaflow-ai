@@ -67,6 +67,7 @@ export interface POSCartSidebarProps {
   isRTL: boolean;
   paymentMethod: 'cash' | 'visa';
   isMobile?: boolean; // New prop for UI separation
+  isProcessing?: boolean;
 }
 
 export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
@@ -116,6 +117,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
   isRTL,
   paymentMethod,
   isMobile = false,
+  isProcessing = false,
 }) => {
   const { isOnline } = useNetworkStatus();
 
@@ -447,10 +449,10 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                     setAmountPaid('');
                   }}
                   disabled={
-                    !isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout')
+                    !isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout') || isProcessing
                   }
                   className={`flex-1 py-2.5 rounded-xl ${
-                    !isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout')
+                    !isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout') || isProcessing
                       ? BUTTON_INACTIVE
                       : paymentMethod === 'visa' 
                         ? 'bg-primary-600 hover:bg-blue-700 text-white cursor-pointer' 
@@ -470,10 +472,10 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                       setIsCheckoutMode(false);
                     }}
                     disabled={
-                      !isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout')
+                      !isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout') || isProcessing
                     }
                     className={`w-12 py-2.5 rounded-xl ${
-                      !isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout')
+                      !isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout') || isProcessing
                         ? BUTTON_INACTIVE
                         : 'bg-emerald-100 dark:bg-[#3c3c3c] border border-(--border-divider) text-emerald-700 dark:text-gray-300 cursor-pointer'
                     } transition-colors flex justify-center items-center shrink-0`}
@@ -505,9 +507,8 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                     className='flex-1 min-w-0 bg-transparent border-none focus:outline-hidden focus:ring-0 font-bold text-base text-gray-900 dark:text-white p-0 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
+                        if (isProcessing) return;
                         handleCheckout('walk-in');
-                        setIsCheckoutMode(false);
-                        setAmountPaid('');
                       }
                       if (e.key === 'Escape') {
                         setIsCheckoutMode(false);
@@ -538,15 +539,19 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                 </div>
 
                 {/* Confirm Button */}
-                <button
-                  onClick={() => {
-                    handleCheckout('walk-in');
-                    setIsCheckoutMode(false);
-                    setAmountPaid('');
-                  }}
-                  className={`w-11 rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors shrink-0`}>
-                  <span className='material-symbols-rounded'>check</span>
-                </button>
+                  <button
+                    onClick={() => {
+                      if (isProcessing) return;
+                      handleCheckout('walk-in');
+                    }}
+                    disabled={isProcessing}
+                    className={`w-11 rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors shrink-0 ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    {isProcessing ? (
+                      <span className='material-symbols-rounded animate-spin text-sm'>sync</span>
+                    ) : (
+                      <span className='material-symbols-rounded'>check</span>
+                    )}
+                  </button>
 
                 {/* Cancel Button */}
                 <button
@@ -591,14 +596,19 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                 </div>
 
                 {/* Confirm Button */}
-                <button
-                  onClick={() => {
-                    handleCheckout('delivery', true);
-                    setIsDeliveryMode(false);
-                  }}
-                  className={`w-11 rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors shrink-0`}>
-                  <span className='material-symbols-rounded'>check</span>
-                </button>
+                  <button
+                    onClick={() => {
+                      if (isProcessing) return;
+                      handleCheckout('delivery', true);
+                    }}
+                    disabled={isProcessing}
+                    className={`w-11 rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors shrink-0 ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    {isProcessing ? (
+                      <span className='material-symbols-rounded animate-spin text-sm'>sync</span>
+                    ) : (
+                      <span className='material-symbols-rounded'>check</span>
+                    )}
+                  </button>
 
                 {/* Cancel Button */}
                 <button

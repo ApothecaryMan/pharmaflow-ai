@@ -197,7 +197,7 @@ export const POS: React.FC<POSProps> = ({
   const {
     paymentMethod, setPaymentMethod, deliveryEmployeeId, setDeliveryEmployeeId,
     showDeliveryModal, setShowDeliveryModal, isCheckoutMode, setIsCheckoutMode,
-    isDeliveryMode, setIsDeliveryMode, amountPaid, setAmountPaid, handleCheckout, isValidOrder,
+    isDeliveryMode, setIsDeliveryMode, amountPaid, setAmountPaid, handleCheckout, isValidOrder, isProcessing,
   } = usePOSCheckout({
     cart, mergedCartItems, showToastError, addNotification, getVerifiedDate,
     activeTab, activeTabId, removeTab, onCompleteSale, customerName, customerCode,
@@ -988,6 +988,7 @@ export const POS: React.FC<POSProps> = ({
           employees={employees}
           isRTL={isRTL}
           paymentMethod={paymentMethod}
+          isProcessing={isProcessing}
         />
 
         {/* Product Details Modal */}

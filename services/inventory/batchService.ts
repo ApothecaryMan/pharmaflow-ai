@@ -43,11 +43,12 @@ const mapDbToBatch = (db: any): StockBatch => ({
 });
 
 export const batchService = {
-  async fetchBatchesFromSupabase(branchId?: string, drugId?: string): Promise<StockBatch[]> {
+  async fetchBatchesFromSupabase(branchId?: string, drugId?: string, drugIds?: string[]): Promise<StockBatch[]> {
     try {
       let query = supabase.from('stock_batches').select('*');
       if (branchId) query = query.eq('branch_id', branchId);
       if (drugId) query = query.eq('drug_id', drugId);
+      if (drugIds && drugIds.length > 0) query = query.in('drug_id', drugIds);
       
       const { data, error } = await query.order('expiry_date', { ascending: true });
       if (error) throw error;
@@ -58,8 +59,8 @@ export const batchService = {
     }
   },
 
-  async getAllBatches(branchId?: string, drugId?: string): Promise<StockBatch[]> {
-    return this.fetchBatchesFromSupabase(branchId, drugId);
+  async getAllBatches(branchId?: string, drugId?: string, drugIds?: string[]): Promise<StockBatch[]> {
+    return this.fetchBatchesFromSupabase(branchId, drugId, drugIds);
   },
 
   async getBatchById(batchId: string): Promise<StockBatch | null> {
@@ -167,14 +168,25 @@ export const batchService = {
     requests: { drugId: string; quantity: number; name?: string; preferredBatchId?: string }[],
     branchId: string
   ): Promise<{ drugId: string; allocations: BatchAllocation[] }[]> {
-    const result: { drugId: string; allocations: BatchAllocation[] }[] = [];
-    for (const req of requests) {
-      if (req.quantity <= 0) continue;
-      const allocs = await this.allocateStock(req.drugId, req.quantity, branchId, true, req.preferredBatchId);
+    const validRequests = requests.filter(req => req.quantity > 0);
+    const drugIds = [...new Set(validRequests.map(r => r.drugId))];
+
+    // --- Optimization: Fetch all batches for all requested drugs in ONE query ---
+    const allBatches = await this.getAllBatches(branchId, undefined, drugIds);
+    const batchesByDrug = drugIds.reduce((acc, id) => {
+      acc[id] = allBatches.filter(b => b.drugId === id);
+      return acc;
+    }, {} as Record<string, StockBatch[]>);
+    
+    // Process all allocation requests in parallel for maximum speed
+    const results = await Promise.all(validRequests.map(async (req) => {
+      const drugBatches = batchesByDrug[req.drugId] || [];
+      const allocs = await this.allocateStock(req.drugId, req.quantity, branchId, true, req.preferredBatchId, drugBatches);
       if (!allocs) throw new Error(`Insufficient stock for: ${req.name || req.drugId}`);
-      result.push({ drugId: req.drugId, allocations: allocs });
-    }
-    return result;
+      return { drugId: req.drugId, allocations: allocs };
+    }));
+    
+    return results;
   },
 
   async allocateStock(
@@ -182,11 +194,12 @@ export const batchService = {
     quantityNeeded: number,
     branchId: string,
     commitChanges: boolean = true,
-    preferredBatchId?: string
+    preferredBatchId?: string,
+    preFetchedBatches?: StockBatch[]
   ): Promise<BatchAllocation[] | null> {
     if (quantityNeeded <= 0) return null;
 
-    const batches = await this.getAllBatches(branchId, drugId);
+    const batches = preFetchedBatches || await this.getAllBatches(branchId, drugId);
     
     let validBatches = [...batches]
       .filter((b) => {
@@ -224,9 +237,10 @@ export const batchService = {
     }
 
     if (commitChanges && allocations.length > 0) {
-      for (const alloc of allocations) {
-        await this.updateBatchQuantity(alloc.batchId, -alloc.quantity);
-      }
+      // Parallelize batch updates within a single drug allocation
+      await Promise.all(allocations.map(alloc => 
+        this.updateBatchQuantity(alloc.batchId, -alloc.quantity, true)
+      ));
     }
     return allocations;
   },
