@@ -75,6 +75,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     developerMode,
   } = useSettings();
 
+  const currentEmployee = employees.find(e => e.id === currentEmployeeId);
+
   const { activeBranchId, switchBranch, activeOrgId, switchOrg, branches, isLoading: isDataLoading } = useData();
   
   const [userOrgs, setUserOrgs] = useState<Organization[]>([]);
@@ -483,7 +485,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
             <div className='hidden md:flex flex-col items-start'>
                 <span className='text-xs font-bold text-gray-700 dark:text-gray-200 leading-none mb-0.5'>
                   {currentEmployeeId 
-                    ? (authService.getCurrentUserSync()?.username || (language === 'AR' ? 'Zinc' : 'Zinc'))
+                    ? (currentEmployee?.name || authService.getCurrentUserSync()?.username || (language === 'AR' ? 'Zinc' : 'Zinc'))
                     : (language === 'AR' ? 'تسجيل دخول الموظف' : 'Employee Login')
                   }
                 </span>
@@ -550,7 +552,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   <div>
                     <h3 className='font-bold text-gray-900 dark:text-white'>
                       {currentEmployeeId 
-                        ? (authService.getCurrentUserSync()?.username || (language === 'AR' ? 'Zinc' : 'Zinc'))
+                        ? (currentEmployee?.name || authService.getCurrentUserSync()?.username || (language === 'AR' ? 'Zinc' : 'Zinc'))
                         : (language === 'AR' ? 'تسجيل دخول الموظف' : 'Employee Login')
                       }
                     </h3>

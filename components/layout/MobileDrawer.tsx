@@ -8,6 +8,8 @@ import type { MenuItem } from '../../config/menuData';
 import { useSettings } from '../../context';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { SidebarContent } from './SidebarContent';
+import { authService } from '../../services/auth/authService';
+import type { Employee, ViewState } from '../../types';
 
 // ============================================================================
 // CONSTANTS
@@ -35,12 +37,14 @@ interface MobileDrawerProps {
   filteredMenuItems: MenuItem[];
   activeModule: string;
   handleModuleChange: (id: string) => void;
-  view: string;
+  view: ViewState;
   dashboardSubView: string;
-  handleNavigate: (path: string) => void;
-  handleViewChange: (view: string) => void;
+  handleNavigate: (path: ViewState) => void;
+  handleViewChange: (view: ViewState) => void;
   t: Translations;
   profileImage: string | null;
+  currentEmployeeId?: string | null;
+  employees?: Employee[];
 }
 
 // ============================================================================
@@ -80,8 +84,11 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
   handleViewChange,
   t,
   profileImage,
+  currentEmployeeId,
+  employees = [],
 }) => {
   const { theme, language, hideInactiveModules, darkMode } = useSettings();
+  const currentEmployee = employees.find(e => e.id === currentEmployeeId);
   const drawerRef = useRef<HTMLDivElement>(null);
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -173,7 +180,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
   // ============================================================================
 
   const handleNavigateAndClose = useCallback(
-    (v: string) => {
+    (v: ViewState) => {
       handleNavigate(v);
       onClose();
     },
@@ -181,7 +188,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
   );
 
   const handleViewChangeAndClose = useCallback(
-    (v: string) => {
+    (v: ViewState) => {
       handleViewChange(v);
       onClose();
     },
@@ -256,10 +263,13 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
             </div>
             <div className='flex flex-col'>
               <span className='text-sm font-black text-gray-900 dark:text-gray-100 leading-tight'>
-                Zinc AI
+                {currentEmployeeId 
+                  ? (currentEmployee?.name || authService.getCurrentUserSync()?.username || 'Zinc AI')
+                  : 'Zinc AI'
+                }
               </span>
               <span className='text-[11px] font-medium text-gray-500 dark:text-gray-400'>
-                {t.profile.role}
+                {currentEmployeeId ? t.profile.role : 'System'}
               </span>
             </div>
           </div>

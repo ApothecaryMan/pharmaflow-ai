@@ -596,6 +596,8 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
         handleViewChange={handleViewChange}
         t={t}
         profileImage={profileImage}
+        currentEmployeeId={currentEmployeeId}
+        employees={employees}
       />
 
       {/* Mobile Liquid Glass Navigation Bar */}
