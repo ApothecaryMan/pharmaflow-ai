@@ -203,7 +203,7 @@ export const returnStock = async (
     }
     
     if (returnsToMake.length > 0) {
-      await batchService.returnStock(returnsToMake, drug.id, ctx.branchId);
+      await batchService.returnStock(returnsToMake, unitsToRestore, drug.id, ctx.branchId);
     }
   }
 

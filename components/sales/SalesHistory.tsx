@@ -192,14 +192,21 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         header: t.headers.total,
         cell: ({ row }) => {
           const sale = row.original;
-          const totalParts = formatCurrencyParts(sale.total);
+          const displayTotal = sale.netTotal !== undefined ? sale.netTotal : sale.total;
+          const totalParts = formatCurrencyParts(displayTotal);
+          const isReturned = sale.netTotal !== undefined && sale.netTotal < sale.total;
           
           return (
             <div className='font-bold text-gray-900 dark:text-gray-100 tabular-nums text-sm flex flex-col items-end'>
               <div className='flex items-baseline gap-1'>
-                <span>{totalParts.amount}</span>
+                <span className={isReturned ? 'text-orange-600 dark:text-orange-400' : ''}>{totalParts.amount}</span>
                 <span className='text-[10px] text-gray-400 font-medium'>{totalParts.symbol}</span>
               </div>
+              {isReturned && (
+                <div className='text-[8px] text-gray-400 font-normal line-through opacity-50'>
+                  {formatCurrency(sale.total)}
+                </div>
+              )}
               {!!sale.deliveryFee && sale.deliveryFee > 0 && (
                 <div className='text-[10px] text-gray-400 font-normal tabular-nums flex items-baseline gap-0.5 mt-0.5'>
                   <span>{formatCurrencyParts(sale.deliveryFee).amount}</span>
@@ -209,13 +216,15 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
               )}
             </div>
           );
-        },
+       },
       },
       {
         id: 'status',
         accessorFn: (sale) => {
           if (sale.status === 'cancelled') return 'cancelled';
-          if (sale.hasReturns) return 'returned';
+          const isReturned = (sale.netTotal !== undefined && sale.netTotal < sale.total) || 
+                            (sale.itemReturnedQuantities && Object.keys(sale.itemReturnedQuantities).length > 0);
+          if (isReturned) return 'returned';
           // If it's delivery and not completed, return its specific status
           if (sale.saleType === 'delivery' && sale.status !== 'completed') {
             return sale.status;
@@ -226,9 +235,10 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         meta: { align: 'end' },
         cell: ({ row }) => {
           const sale = row.original;
-          const totalReturned = sale.netTotal !== undefined ? sale.total - sale.netTotal : 0;
+          const isReturned = (sale.netTotal !== undefined && sale.netTotal < sale.total) || 
+                            (sale.itemReturnedQuantities && Object.keys(sale.itemReturnedQuantities).length > 0);
 
-          if (sale.hasReturns) {
+          if (isReturned) {
             const totalReturned = sale.netTotal !== undefined ? sale.total - sale.netTotal : 0;
             const isFullReturn = sale.netTotal === 0;
             const returnParts = formatCurrencyParts(totalReturned);

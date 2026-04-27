@@ -44,6 +44,8 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
       modificationHistory: db.modification_history || [],
       version: db.version,
       netTotal: db.net_total,
+      itemReturnedQuantities: db.item_returned_quantities || {},
+      dailyOrderNumber: db.daily_order_number,
     };
   }
 
@@ -77,6 +79,9 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
     if (s.shiftTransactionRecorded !== undefined) db.shift_transaction_recorded = s.shiftTransactionRecorded;
     if (s.modificationHistory !== undefined) db.modification_history = s.modificationHistory;
     if (s.version !== undefined) db.version = s.version;
+    if (s.netTotal !== undefined) db.net_total = s.netTotal;
+    if (s.itemReturnedQuantities !== undefined) db.item_returned_quantities = s.itemReturnedQuantities;
+    if (s.dailyOrderNumber !== undefined) db.daily_order_number = s.dailyOrderNumber;
     return db;
   }
 
@@ -170,6 +175,7 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
       branchId: effectiveBranchId,
       orgId: (sale as any).orgId || settings.orgId,
       date: sale.date || new Date().toISOString(),
+      netTotal: sale.netTotal ?? sale.total,
     } as Sale;
 
     const dbSale = this.mapDomainToDb(newSale);

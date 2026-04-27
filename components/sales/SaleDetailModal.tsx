@@ -244,12 +244,13 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                           expiries: new Set<string>()
                         };
                         
-                        const isUnit = item.isUnit;
-                        const price = isUnit ? item.price / (item.unitsPerPack || 1) : item.price;
-                        const ret = sale.itemReturnedQuantities?.[`${item.id}_${idx}`] || sale.itemReturnedQuantities?.[item.id] || 0;
+                        const isUnit = !!item.isUnit;
+                        const lineKey = `${item.id}_${isUnit ? 'unit' : 'pack'}`;
+                        const ret = sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
                         
                         if (isUnit) g.unitQty += item.quantity; else g.packQty += item.quantity;
                         const realQty = item.quantity - ret;
+                        const price = isUnit ? item.price / (item.unitsPerPack || 1) : item.price;
                         g.totalPrice += realQty * price * (1 - (item.discount || 0) / 100);
                         g.originalPrice += realQty * price;
                         g.returnedQty += ret;
@@ -337,8 +338,8 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                     );
                   })()}
                   <div className={`flex justify-between items-center py-4 px-4 bg-gray-100/50 dark:bg-white/[0.03] rounded-2xl border ${bdr}`}>
-                    <span className='font-bold text-[15px]'>{language === 'AR' ? 'الإجمالي النهائي' : t.modal.total}</span>
-                    <span className='text-2xl font-black tabular-nums tracking-tight'>{formatCurrency(sale.total)}</span>
+                    <span className='font-bold text-[15px]'>{language === 'AR' ? 'الإجمالي الصافي' : t.modal.total}</span>
+                    <span className='text-2xl font-black tabular-nums tracking-tight'>{formatCurrency(sale.netTotal !== undefined ? sale.netTotal : sale.total)}</span>
                   </div>
                 </div>
               </>
@@ -369,12 +370,16 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
 
         <div className={`pt-4 border-t ${bdr} flex gap-3 mt-0`}>
           {(() => {
-            const hasRet = sale.items.some((it, i) => (sale.itemReturnedQuantities?.[`${it.id}_${i}`] || sale.itemReturnedQuantities?.[it.id] || 0) < it.quantity);
+            const hasRemaining = sale.items.some((it) => {
+              const lineKey = `${it.id}_${it.isUnit ? 'unit' : 'pack'}`;
+              const returned = sale.itemReturnedQuantities?.[lineKey] || 0;
+              return returned < it.quantity;
+            });
             const inShift = !!currentShift && new Date(sale.date) >= new Date(currentShift.openTime);
             const canRef = onProcessReturn && permissionsService.can('sale.refund') && !(sale.saleType === 'delivery' && sale.status !== 'completed') && (permissionsService.getEffectiveRole() !== 'cashier' || inShift);
             return (
               <>
-                {hasRet && canRef && (
+                {hasRemaining && canRef && (
                   <button onClick={() => setReturnModalOpen(true)} className='flex-1 py-3 rounded-full font-bold text-white bg-orange-600 hover:opacity-90 cursor-pointer transition-opacity flex items-center justify-center gap-2'>
                     <span className='material-symbols-rounded text-base'>assignment_return</span>{t.returns?.processReturn || 'Return'}
                   </button>
@@ -391,7 +396,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
       {returnModalOpen && onProcessReturn && (
         <ReturnModal
           isOpen={returnModalOpen} sale={sale} onClose={() => setReturnModalOpen(false)}
-          onConfirm={(d) => { onProcessReturn(d); setReturnModalOpen(false); onClose(); }}
+          onConfirm={async (d) => { await onProcessReturn(d); setReturnModalOpen(false); onClose(); }}
           color={color} t={t} language={language} currentDailyRefunds={currentDailyRefunds} currentShift={currentShift} currentEmployeeId={currentEmployeeId}
         />
       )}

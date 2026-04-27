@@ -15,7 +15,8 @@ import { money } from '../../utils/currency';
 import { returnService } from '../returns/returnService';
 import { settingsService } from '../settings/settingsService';
 import * as stockOps from '../../utils/stockOperations';
-import type { Sale, CartItem, Drug, StockMovement, ActionContext, Purchase, PurchaseReturn } from '../../types';
+import { supabase } from '../../lib/supabase';
+import type { Sale, CartItem, Drug, StockMovement, ActionContext, Purchase, PurchaseReturn, Return } from '../../types';
 
 export interface TransactionResult<T = any> {
   success: boolean;
@@ -92,7 +93,8 @@ export const transactionService = {
       // Register Rollback for Batches
       undoManager.push(async () => {
         for (const alloc of bulkAllocations) {
-          await batchService.returnStock(alloc.allocations, alloc.drugId, activeBranchId);
+          const totalToRestore = alloc.allocations.reduce((sum, a) => sum + a.quantity, 0);
+          await batchService.returnStock(alloc.allocations, totalToRestore, alloc.drugId, activeBranchId);
         }
       });
 
@@ -132,14 +134,19 @@ export const transactionService = {
         };
       });
 
-      // 3. Generate IDs — run both sequence calls in parallel
+      // 3. Generate IDs
       const internalId = idGenerator.uuid();
-      const [serialId, dailyOrderNumberStr] = await Promise.all([
-        idGenerator.generate('sales', activeBranchId, branchCode),
-        idGenerator.generateSync('generic', activeBranchId),
-      ]);
-      const dailyOrderNumber = parseInt(dailyOrderNumberStr.split('-')[1], 10);
-
+      
+      // Calculate Daily Order Number atomically in DB to prevent race conditions
+      const { data: dailyOrderNumber, error: dailyNumError } = await supabase.rpc('get_next_daily_order_number', {
+        p_branch_id: activeBranchId
+      });
+      
+      if (dailyNumError) {
+        console.warn('[TransactionService] Failed to get atomic daily number, falling back to 1', dailyNumError);
+      }
+      // Generate the Global Serial ID (e.g. PF-0042)
+      const serialId = await idGenerator.generate('sales', activeBranchId, branchCode);
       movementEntries.forEach(m => m.referenceId = internalId);
 
       const newSale: Sale = {
@@ -204,13 +211,7 @@ export const transactionService = {
   },
 
   async processReturn(
-    returnData: {
-      id: string;
-      saleId: string;
-      items: { drugId: string; quantityReturned: number; isUnit?: boolean; refundAmount?: number }[];
-      totalRefund: number;
-      date: string;
-    },
+    returnData: Return,
     inventory: Drug[],
     sale: Sale,
     context: ActionContext
@@ -219,12 +220,14 @@ export const transactionService = {
     const undoManager = new UndoManager();
     const stockMutations: { id: string; quantity: number }[] = [];
     const movementEntries: any[] = [];
-    const batchReturnOps: { allocations: any[]; drugId: string }[] = [];
+    const batchReturnOps: { allocations: any[]; quantityToReturn: number; drugId: string }[] = [];
     
     try {
       // Validation using high-precision money engine
-      const previouslyRefunded = sale.netTotal !== undefined ? money.subtract(sale.total, sale.netTotal) : 0;
-      const remainingBalance = money.subtract(sale.total, previouslyRefunded);
+      // BUG-012: Handle null netTotal from database (defaults to total if null)
+      const currentNetTotal = (sale.netTotal !== undefined && sale.netTotal !== null) ? sale.netTotal : sale.total;
+      const previouslyRefunded = money.subtract(sale.total, currentNetTotal);
+      const remainingBalance = currentNetTotal; // Simplified: remaining is what's left after previous refunds
       
       if (!money.isGte(remainingBalance, returnData.totalRefund)) {
         return {
@@ -233,12 +236,20 @@ export const transactionService = {
         };
       }
 
+      const updatedReturnedQuantities = { ...(sale.itemReturnedQuantities || {}) };
+
       for (const returnedItem of returnData.items) {
-        const drug = inventory.find((d) => d.id === returnedItem.drugId);
-        const saleItem = sale.items.find((i) => i.id === returnedItem.drugId);
+        const drug = inventory.find(d => d.id === returnedItem.drugId);
+        // Find the specific sale item using saleItemId
+        const saleItem = sale.items.find((i) => i.id === returnedItem.saleItemId);
 
         if (!saleItem) continue;
         
+        // Update the tracked returned quantities for this specific line item
+        const lineKey = returnedItem.isUnit ? `${saleItem.id}_unit` : `${saleItem.id}_pack`;
+        const currentReturned = updatedReturnedQuantities[lineKey] || 0;
+        updatedReturnedQuantities[lineKey] = currentReturned + returnedItem.quantityReturned;
+
         const unitsToRestore = stockOps.resolveUnits(returnedItem.quantityReturned, !!returnedItem.isUnit, drug?.unitsPerPack);
         stockMutations.push({ id: returnedItem.drugId, quantity: unitsToRestore });
 
@@ -260,18 +271,58 @@ export const transactionService = {
         });
 
         if (saleItem?.batchAllocations) {
-          batchReturnOps.push({ allocations: saleItem.batchAllocations, drugId: returnedItem.drugId });
+          batchReturnOps.push({ 
+            allocations: saleItem.batchAllocations, 
+            quantityToReturn: unitsToRestore, // Fix: Pass actual units returned, not full allocation
+            drugId: returnedItem.drugId 
+          });
         }
       }
 
       // Execution
       for (const op of batchReturnOps) {
-        await batchService.returnStock(op.allocations, op.drugId, activeBranchId);
+        await batchService.returnStock(op.allocations, op.quantityToReturn, op.drugId, activeBranchId);
       }
 
       await inventoryService.updateStockBulk(stockMutations, true);
       await stockMovementService.logMovementsBulk(movementEntries);
 
+      // 3. Persist Return Record
+      const { error: returnError } = await (supabase as any).from('returns').insert({
+        id: returnData.id,
+        serial_id: returnData.serialId,
+        branch_id: activeBranchId,
+        org_id: orgId,
+        sale_id: returnData.saleId,
+        date: returnData.date,
+        return_type: returnData.returnType,
+        total_refund: returnData.totalRefund,
+        reason: returnData.reason,
+        notes: returnData.notes,
+        processed_by: currentEmployeeId,
+      });
+
+      if (returnError) throw returnError;
+
+      // 4. Persist Return Items
+      const dbReturnItems = returnData.items.map(item => ({
+        branch_id: activeBranchId,
+        return_id: returnData.id,
+        drug_id: item.drugId,
+        name: item.name,
+        quantity_returned: item.quantityReturned,
+        is_unit: item.isUnit,
+        original_price: item.originalPrice,
+        refund_amount: item.refundAmount,
+        reason: item.reason || returnData.reason,
+        condition: item.condition,
+        dosage_form: item.dosageForm,
+      }));
+
+      const { error: itemsError } = await (supabase as any).from('return_items').insert(dbReturnItems);
+      if (itemsError) throw itemsError;
+
+      // 5. Update Cash Transaction (Only if refund > 0)
       if (shiftId && returnData.totalRefund > 0) {
         await cashService.addTransaction(shiftId, {
           branchId: activeBranchId,
@@ -285,6 +336,13 @@ export const transactionService = {
           relatedSaleId: sale.id,
         });
       }
+
+      // 6. Update Sale Net Total and Return Tracking (Last step to ensure consistency)
+      const newNetTotal = money.subtract(currentNetTotal, returnData.totalRefund);
+      await salesService.update(sale.id, { 
+        netTotal: newNetTotal,
+        itemReturnedQuantities: updatedReturnedQuantities 
+      });
 
       auditService.log('sale.return', {
         userId: currentEmployeeId,

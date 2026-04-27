@@ -6,7 +6,7 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
 import { pricingService } from '../../services/sales/pricingService';
-import { money } from '../../utils/currency';
+import { money, pricing } from '../../utils/currency';
 import { useSmartDirection } from '../common/SmartInputs';
 import { idGenerator } from '../../utils/idGenerator';
 import { useData } from '../../services/DataContext';
@@ -49,6 +49,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   const { activeBranchId } = useData();
 
   const [step, setStep] = useState(1);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Map<string, number>>(new Map());
   const [returnReason, setReturnReason] = useState<ReturnReason>('customer_request');
   const [returnNotes, setReturnNotes] = useState('');
@@ -165,12 +166,17 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   }, [selectedItems, availableItems, sale.globalDiscount]);
 
   const handleConfirm = async () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+    setValidationError(null);
+
     // VALIDATION: Check shift status and balance
     try {
       if (!currentShift) {
         setValidationError(
           t.returns.validation?.noOpenShift || 'Cannot process return - no open shift'
         );
+        setIsProcessing(false);
         return;
       }
 
@@ -185,6 +191,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
               ? `خطأ: لا يمكن استرجاع مبلغ أكبر من ${PHARMACIST_REFUND_LIMIT_PER_INVOICE} جنيه في العملية الواحدة للصيدلي. يرجى طلب موافقة المدير.`
               : `Error: Pharmacists cannot refund more than ${PHARMACIST_REFUND_LIMIT_PER_INVOICE} EGP per invoice. Please request manager approval.`;
           setValidationError(errorMsg);
+          setIsProcessing(false);
           return;
         }
 
@@ -196,6 +203,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
               ? `خطأ: تم تجاوز الحد اليومي للمرتجعات (${PHARMACIST_DAILY_REFUND_LIMIT} جنيه). الإجمالي الحالي: ${currentDailyRefunds?.toFixed(2)}, المبلغ المطلوب: ${calculateRefund.toFixed(2)}. يرجى طلب موافقة المدير.`
               : `Error: Daily refund limit exceeded (${PHARMACIST_DAILY_REFUND_LIMIT} EGP). Current: ${currentDailyRefunds?.toFixed(2)}, Requested: ${calculateRefund.toFixed(2)}. Please request manager approval.`;
           setValidationError(errorMsg);
+          setIsProcessing(false);
           return;
         }
       }
@@ -211,6 +219,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
               ? 'خطأ: يمكن للكاشير استرجاع الفواتير التي تمت في نفس الوردية فقط.'
               : 'Error: Cashiers can only refund invoices processed during the current shift.';
           setValidationError(errorMsg);
+          setIsProcessing(false);
           return;
         }
 
@@ -221,6 +230,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
               ? `خطأ: لا يمكن للكاشير استرجاع مبلغ أكبر من ${CASHIER_REFUND_LIMIT_PER_INVOICE} جنيه في العملية الواحدة.`
               : `Error: Cashiers cannot refund more than ${CASHIER_REFUND_LIMIT_PER_INVOICE} EGP per invoice.`;
           setValidationError(errorMsg);
+          setIsProcessing(false);
           return;
         }
       }
@@ -237,6 +247,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
             t.returns.validation?.insufficientBalance ||
               'Cash refund amount exceeds available cash balance in the current shift'
           );
+          setIsProcessing(false);
           return;
         }
       } else {
@@ -249,6 +260,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
             t.returns.validation?.insufficientBalance ||
               'Return amount exceeds available sales balance'
           );
+          setIsProcessing(false);
           return;
         }
       }
@@ -257,21 +269,22 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
     }
 
     const returnItems: ReturnItem[] = [];
-
     selectedItems.forEach((quantity, lineKey) => {
       const item = availableItems.find((i) => i.lineKey === lineKey);
       if (item) {
-        const effectivePrice =
-          item.isUnit && item.unitsPerPack ? item.price / item.unitsPerPack : item.price;
-        const itemTotal = effectivePrice * quantity;
-        const withItemDiscount = itemTotal * (1 - (item.discount || 0) / 100);
-        // BUG-005: Apply global discount per-item so sum matches calculateRefund
-        const refundAmount = sale.globalDiscount && sale.globalDiscount > 0
-          ? withItemDiscount * (1 - sale.globalDiscount / 100)
+        const itemPrice = item.isUnit && item.unitsPerPack ? item.price / item.unitsPerPack : item.price;
+        const withItemDiscount = pricing.afterDiscount(itemPrice, item.discount || 0);
+
+        // Apply pro-rata global discount if exists
+        const effectivePrice = sale.globalDiscount && sale.globalDiscount > 0
+          ? money.subtract(withItemDiscount, money.multiply(withItemDiscount, sale.globalDiscount, 2))
           : withItemDiscount;
 
+        const refundAmount = money.multiply(effectivePrice, quantity, 0);
+
         returnItems.push({
-          drugId: item.id, // Use actual drugId for lookup
+          drugId: (item as any).drugId || item.id,
+          saleItemId: (item as any).saleItemId || item.id,
           name: item.name,
           quantityReturned: quantity,
           isUnit: item.isUnit || false,
@@ -283,24 +296,32 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         });
       }
     });
+    try {
+      const serialId = await idGenerator.generate('returns', activeBranchId);
+      const returnId = idGenerator.uuid();
 
-    const returnId = await idGenerator.generate('returns', activeBranchId);
+      const returnData: Return = {
+        id: returnId,
+        serialId: serialId,
+        branchId: activeBranchId,
+        saleId: sale.id,
+        date: getVerifiedDate().toISOString(),
+        returnType: isAllSelected ? 'full' : 'partial',
+        items: returnItems,
+        totalRefund: calculateRefund,
+        reason: returnReason,
+        notes: returnNotes,
+        processedBy: currentEmployeeId,
+      };
 
-    const returnData: Return = {
-      id: returnId,
-      branchId: activeBranchId,
-      saleId: sale.id,
-      date: getVerifiedDate().toISOString(),
-      returnType: isAllSelected ? 'full' : 'partial',
-      items: returnItems,
-      totalRefund: calculateRefund,
-      reason: returnReason,
-      notes: returnNotes,
-      processedBy: currentEmployeeId,
-    };
-
-    onConfirm(returnData);
-    handleClose();
+      await onConfirm(returnData);
+      handleClose();
+    } catch (err) {
+      console.error('Return processing error:', err);
+      setValidationError(t.errors?.unexpected || 'An unexpected error occurred. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const stepIcons = ['checklist', 'description', 'verified'];
@@ -758,10 +779,17 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         ) : (
           <button
             onClick={handleConfirm}
-            className={`px-8 py-2.5 rounded-xl font-bold text-white bg-primary-600 hover:bg-primary-700 transition-all flex items-center gap-2 shadow-lg shadow-primary-200 dark:shadow-none`}
+            disabled={isProcessing}
+            className={`px-8 py-2.5 rounded-xl font-bold text-white bg-primary-600 enabled:hover:bg-primary-700 disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-lg shadow-primary-200 dark:shadow-none`}
           >
-            <span className='material-symbols-rounded text-[20px]'>check_circle</span>
-            {t.returns.confirmReturn}
+            {isProcessing ? (
+              <span className='material-symbols-rounded text-[20px] animate-spin'>
+                sync
+              </span>
+            ) : (
+              <span className='material-symbols-rounded text-[20px]'>check_circle</span>
+            )}
+            {isProcessing ? t.common?.processing || 'Processing...' : t.returns.confirmReturn}
           </button>
         )}
       </div>

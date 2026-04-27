@@ -74,7 +74,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
   const columns = useMemo<ColumnDef<Return>[]>(
     () => [
       {
-        accessorKey: 'id',
+        accessorKey: 'serialId',
         header: t.headers.returnId,
         meta: { align: 'start' },
       },
@@ -258,7 +258,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
               <div className='space-y-0.5'>
                 <p className='text-gray-500 text-xs'>{t.headers?.returnId || 'Return ID'}</p>
                 <p className='font-medium text-gray-900 dark:text-gray-100'>
-                  {selectedReturn.id || '001'}
+                  {selectedReturn.serialId || selectedReturn.id || '001'}
                 </p>
               </div>
               <div className='space-y-0.5 text-end'>

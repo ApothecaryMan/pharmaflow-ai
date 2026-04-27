@@ -619,6 +619,8 @@ export type ItemCondition = 'sellable' | 'damaged' | 'expired' | 'other';
 export interface ReturnItem {
   /** Drug ID being returned */
   drugId: string;
+  /** The specific sale item ID (line item) this return refers to */
+  saleItemId: string;
   /** Drug name for display */
   name: string;
   /** Quantity being returned (packs or units) */
@@ -649,6 +651,8 @@ export interface ReturnItem {
 export interface Return {
   /** Unique return ID */
   id: string;
+  /** Human-readable ID (e.g., RET-0001) */
+  serialId?: string;
   /** Branch where return was processed — required for RLS isolation */
   branchId: string;
   /** Organization this return belongs to */

@@ -12,6 +12,7 @@ import { batchService } from '../inventory/batchService';
 import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
 import { supabase } from '../../lib/supabase';
 import { authService } from '../auth/authService';
+import { resolveUnits } from '../../utils/stockOperations';
 import type { ReturnService } from './types';
 
 // Sales Returns Internal Service
@@ -21,6 +22,7 @@ class SalesReturnServiceImpl extends BaseDomainService<Return> {
   protected mapDbToDomain(db: any): Return {
     return {
       id: db.id,
+      serialId: db.serial_id,
       orgId: db.org_id,
       branchId: db.branch_id,
       date: db.date,
@@ -37,6 +39,7 @@ class SalesReturnServiceImpl extends BaseDomainService<Return> {
   protected mapDomainToDb(r: Partial<Return>): any {
     const db: any = {};
     if (r.id !== undefined) db.id = r.id;
+    if (r.serialId !== undefined) db.serial_id = r.serialId;
     if (r.orgId !== undefined) db.org_id = r.orgId;
     if (r.branchId !== undefined) db.branch_id = r.branchId;
     if (r.date !== undefined) db.date = r.date;
@@ -133,7 +136,9 @@ export const returnService: ReturnService = {
       
       // If we have specific batch allocations, restore them precisely
       if (item.batchAllocations && item.batchAllocations.length > 0) {
-        await batchService.returnStock(item.batchAllocations, drugId, effectiveBranchId);
+        // Resolve quantity to units for stock restoration
+        const unitsToRestore = resolveUnits(item.quantityReturned, item.isUnit || false, 1); // unitsPerPack fallback to 1 if unknown here
+        await batchService.returnStock(item.batchAllocations, unitsToRestore, drugId, effectiveBranchId);
         
         // Log movement for each restored batch
         for (const alloc of item.batchAllocations) {

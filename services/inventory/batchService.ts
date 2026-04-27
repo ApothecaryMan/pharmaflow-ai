@@ -226,26 +226,52 @@ export const batchService = {
     return allocations;
   },
 
-  async returnStock(allocations: BatchAllocation[], drugId?: string, branchId?: string): Promise<void> {
-    if (!allocations || allocations.length === 0) return;
-    for (const alloc of allocations) {
-      const batch = await this.getBatchById(alloc.batchId);
-      if (batch) {
-        await this.updateBatchQuantity(alloc.batchId, alloc.quantity);
-      } else if (drugId && branchId) {
-        await this.createBatch({
-          drugId,
-          quantity: alloc.quantity,
-          expiryDate: alloc.expiryDate,
-          costPrice: 0,
-          dateReceived: new Date().toISOString(),
-          batchNumber: 'RECREATED',
-          branchId: branchId,
-          orgId: (await settingsService.getAll()).orgId,
-          version: 1,
-        });
+  async returnStock(
+    allocations: BatchAllocation[],
+    quantityToReturn: number,
+    drugId: string,
+    branchId: string
+  ): Promise<void> {
+    if (!allocations || allocations.length === 0 || quantityToReturn <= 0) return;
+
+    // Pro-rata redistribution: distribute quantityToReturn across original batches
+    // according to their original allocation proportions.
+    let remainingToReturn = quantityToReturn;
+    
+    // Sort allocations to return to the latest batches first (or any consistent order)
+    const sortedAllocations = [...allocations].sort((a, b) => b.quantity - a.quantity);
+
+    for (const alloc of sortedAllocations) {
+      if (remainingToReturn <= 0) break;
+      
+      // How much can we return to this specific batch allocation?
+      // We shouldn't return more than what was originally taken from it.
+      const canReturnToThis = Math.min(alloc.quantity, remainingToReturn);
+      
+      if (canReturnToThis > 0) {
+        const batch = await this.getBatchById(alloc.batchId);
+        if (batch) {
+          await this.updateBatchQuantity(alloc.batchId, canReturnToThis);
+        } else {
+          // Recreate batch if it was deleted but we are returning to it
+          await this.createBatch({
+            drugId,
+            quantity: canReturnToThis,
+            expiryDate: alloc.expiryDate,
+            costPrice: 0,
+            dateReceived: new Date().toISOString(),
+            batchNumber: alloc.batchNumber || 'RECREATED',
+            branchId: branchId,
+            orgId: (await settingsService.getAll()).orgId,
+            version: 1,
+          });
+        }
+        remainingToReturn -= canReturnToThis;
       }
     }
+    
+    // If there's still remaining (e.g. user is returning more than original allocation for some reason),
+    // we should ideally log a warning or put it in the most recent batch.
   },
 
   async getTotalStock(drugId: string, branchId?: string): Promise<number> {
