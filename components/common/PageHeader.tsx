@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 /**
  * PageHeader Component
@@ -40,6 +41,10 @@ interface PageHeaderProps {
   dir?: 'rtl' | 'ltr';
   /** Margin bottom */
   mb?: string;
+  /** Content for the bottom section (expandable) */
+  bottomContent?: ReactNode;
+  /** Whether to show the bottom section */
+  showBottom?: boolean;
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({
@@ -53,8 +58,10 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   className = '',
   dir,
   mb = 'mb-6',
+  bottomContent,
+  showBottom = false,
 }) => {
-  const baseClasses = `flex items-center justify-between shrink-0 px-page py-3.5 transition-all duration-300 ${mb}`;
+  const baseClasses = `flex flex-col shrink-0 transition-all duration-300 ${mb}`;
   const stickyClasses = sticky ? 'sticky top-0 z-40' : '';
   const borderClasses = border ? 'border-b border-zinc-200/50 dark:border-zinc-800/50' : '';
 
@@ -63,32 +70,54 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       className={`${baseClasses} ${stickyClasses} ${borderClasses} ${className}`}
       dir={dir}
     >
-      {/* Left Section: Actions / Title */}
-      <div className="flex-1 flex justify-start items-center min-w-0 gap-3">
-        {leftContent}
-        {title && (
-          <div className="flex flex-col min-w-0">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate tracking-tight page-title">
-              {title}
-            </h1>
-            {subtitle && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate font-medium page-subtitle">
-                {subtitle}
-              </p>
-            )}
-          </div>
-        )}
+      {/* Top Row: Left, Center, Right slots */}
+      <div className="flex items-center justify-between w-full px-page py-3.5">
+        {/* Left Section: Actions / Title */}
+        <div className="flex-1 flex justify-start items-center min-w-0 gap-3">
+          {leftContent}
+          {title && (
+            <div className="flex flex-col min-w-0">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate tracking-tight page-title">
+                {title}
+              </h1>
+              {subtitle && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate font-medium page-subtitle">
+                  {subtitle}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Center Section: Tabs / Switchers */}
+        <div className="flex-none mx-4 empty:hidden">
+          {centerContent}
+        </div>
+
+        {/* Right Section: Filters / Search / Actions */}
+        <div className="flex-1 flex justify-end items-center min-w-0 gap-3">
+          {rightContent}
+        </div>
       </div>
 
-      {/* Center Section: Tabs / Switchers */}
-      <div className="flex-none mx-4 empty:hidden">
-        {centerContent}
-      </div>
-
-      {/* Right Section: Filters / Search / Actions */}
-      <div className="flex-1 flex justify-end items-center min-w-0 gap-3">
-        {rightContent}
-      </div>
+      {/* Expandable Bottom Section */}
+      {bottomContent && (
+        <AnimatePresence initial={false}>
+          {showBottom && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              className="overflow-hidden"
+            >
+              <div className="px-page pb-4 pt-2 border-t border-zinc-100 dark:border-zinc-800/50">
+                {bottomContent}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
     </header>
   );
 };

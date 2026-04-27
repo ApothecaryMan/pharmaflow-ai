@@ -21,8 +21,11 @@ import { authService } from '../../services/auth/authService';
 import { Switch } from '../common/Switch';
 import { useSettings } from '../../context';
 import { branchService } from '../../services/branchService';
+import { Tooltip } from '../common/Tooltip';
 import { PageHeader } from '../common/PageHeader';
 import { SearchInput } from '../common/SearchInput';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 
 interface CustomerManagementProps {
   customers: Customer[];
@@ -87,6 +90,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null);
   const [copyFeedback, setCopyFeedback] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'additional'>('basic');
+  const [showStats, setShowStats] = useState(() => storage.get<boolean>(StorageKeys.HEADER_STATS_VISIBLE, false));
+
+  useEffect(() => {
+    storage.set(StorageKeys.HEADER_STATS_VISIBLE, showStats);
+  }, [showStats]);
 
   const MODAL_TABS = [
     { label: t.modal.basicInfo, value: 'basic', icon: 'person' },
@@ -772,14 +780,14 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
               {permissionsService.can('customer.add') && (
                 <button
                   onClick={handleOpenKiosk}
-                  className='flex items-center gap-2 px-4 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 rounded-full transition-all text-xs font-bold'
+                  className='flex items-center gap-2 px-4 py-2 bg-transparent border border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-700 dark:text-zinc-300 transition-all rounded-full text-xs font-bold'
                   title='Open Patient Self-Entry Mode'
                 >
                   <span className='material-symbols-rounded text-[18px]'>monitor_heart</span>
                   <span className='hidden md:inline'>{t.modal.kioskMode}</span>
                 </button>
               )}
-                <label className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors'>
+                <label className='flex items-center gap-2 px-3 py-2 rounded-full bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors'>
                   <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none'>
                     {t.globalView}
                   </span>
@@ -788,15 +796,25 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     onChange={setShowAllBranches}
                   />
                 </label>
+
+                {/* Stats Toggle Arrow */}
+                <Tooltip content={showStats ? t.hideSummary : t.showSummary}>
+                  <button
+                    onClick={() => setShowStats(!showStats)}
+                    className="flex items-center justify-center w-8 h-8 rounded-full transition-all bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                  >
+                    <span className={`material-symbols-rounded transition-transform duration-300 ${showStats ? 'rotate-180' : ''}`}>
+                      expand_more
+                    </span>
+                  </button>
+                </Tooltip>
             </div>
           ) : null
         }
-      />
-
-      <div className="flex-1 min-h-0 flex flex-col space-y-6 animate-fade-in">
-          {/* Summary Stats Row */}
-          {mode === 'list' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        showBottom={showStats && mode === 'list'}
+        bottomContent={
+          mode === 'list' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
               <InteractiveCard
                 isLoading={isLoading}
                 className={`flex flex-col px-5 py-3.5 rounded-3xl ${language === 'AR' ? 'items-end' : 'items-start'}`}
@@ -916,7 +934,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 ]}
               />
             </div>
-          )}
+          ) : null
+        }
+      />
+
+      <div className="flex-1 min-h-0 flex flex-col space-y-6 animate-fade-in">
 
       {/* Success Message */}
       {showSuccess && mode === 'add' && (

@@ -62,6 +62,7 @@ export const StorageKeys = {
   LAST_SYNC: 'pharmaflow_last_sync',
   LAST_TRANSACTION: 'pharmaflow_last_transaction',
   NOTIFICATIONS: 'pharmaflow_notifications',
+  HEADER_STATS_VISIBLE: 'pharma_header_stats_visible',
 } as const;
 
 export type StorageKeys = (typeof StorageKeys)[keyof typeof StorageKeys];

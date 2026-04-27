@@ -12,7 +12,8 @@ const GLOBAL_KEYS = [
   'pharma_theme',
   'pharmaflow_time_offset',
   'pharmaflow_last_sync',
-  'pharma_navStyle'
+  'pharma_navStyle',
+  'pharma_header_stats_visible'
 ];
 
 export const storage = {

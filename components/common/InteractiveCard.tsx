@@ -93,7 +93,7 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
       onWheel={!isLoading ? onWheel : undefined}
       role="region"
       aria-roledescription="pages"
-      className={`relative group overflow-hidden transition-colors duration-700 ${CARD_BASE} ${current.theme || ''} ${className} ${isLoading ? 'animate-pulse' : ''}`}
+      className={`relative group overflow-hidden ${CARD_BASE} ${current.theme || ''} ${className} ${isLoading ? 'animate-pulse' : ''}`}
       style={{ touchAction: 'none' }}
     >
       <div className="grid grid-cols-1 grid-rows-1 w-full h-full">

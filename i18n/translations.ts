@@ -1494,6 +1494,8 @@ export const TRANSLATIONS = {
       title: 'Customer Management',
       subtitle: 'Manage your customer database, loyalty points, and history',
       globalView: 'Global Directory',
+      showSummary: 'Show Statistics',
+      hideSummary: 'Hide Statistics',
       summary: {
         total: 'Total Customers',
         newThisMonth: 'New This Month',
@@ -3642,6 +3644,8 @@ export const TRANSLATIONS = {
       addCustomerSubtitle: 'تسجيل عميل جديد',
       basicInfo: 'المعلومات الأساسية',
       globalView: 'العرض العام',
+      showSummary: 'عرض الإحصائيات',
+      hideSummary: 'إخفاء الإحصائيات',
       status: {
         active: 'نشط',
         inactive: 'غير نشط',
