@@ -135,13 +135,18 @@ export const batchService = {
     return newBatch;
   },
 
-  async updateBatchQuantity(batchId: string, delta: number): Promise<StockBatch | null> {
+  async updateBatchQuantity(batchId: string, delta: number, skipFetch: boolean = false): Promise<StockBatch | null> {
     // Atomic: SET quantity = quantity + delta, version = version + 1
     const { data, error } = await supabase.rpc('atomic_increment_batch', {
       p_batch_id: batchId,
       p_delta: delta,
     });
     if (error) throw error;
+    
+    if (skipFetch) {
+      return null;
+    }
+
     if (!data || data.length === 0) return null;
 
     const batch = await this.getBatchById(batchId);
@@ -241,34 +246,37 @@ export const batchService = {
     // Sort allocations to return to the latest batches first (or any consistent order)
     const sortedAllocations = [...allocations].sort((a, b) => b.quantity - a.quantity);
 
-    for (const alloc of sortedAllocations) {
-      if (remainingToReturn <= 0) break;
+    // Parallelize batch updates for better performance
+    await Promise.all(sortedAllocations.map(async (alloc) => {
+      if (remainingToReturn <= 0) return;
       
-      // How much can we return to this specific batch allocation?
-      // We shouldn't return more than what was originally taken from it.
       const canReturnToThis = Math.min(alloc.quantity, remainingToReturn);
-      
-      if (canReturnToThis > 0) {
-        const batch = await this.getBatchById(alloc.batchId);
-        if (batch) {
-          await this.updateBatchQuantity(alloc.batchId, canReturnToThis);
-        } else {
-          // Recreate batch if it was deleted but we are returning to it
-          await this.createBatch({
-            drugId,
-            quantity: canReturnToThis,
-            expiryDate: alloc.expiryDate,
-            costPrice: 0,
-            dateReceived: new Date().toISOString(),
-            batchNumber: alloc.batchNumber || 'RECREATED',
-            branchId: branchId,
-            orgId: (await settingsService.getAll()).orgId,
-            version: 1,
-          });
-        }
-        remainingToReturn -= canReturnToThis;
+      if (canReturnToThis <= 0) return;
+
+      // Atomic update - we use rpc directly or via optimized updateBatchQuantity
+      // Try to update directly; if it doesn't exist, we'll handle it (though usually it should exist)
+      const { data, error } = await supabase.rpc('atomic_increment_batch', {
+        p_batch_id: alloc.batchId,
+        p_delta: canReturnToThis,
+      });
+
+      if (error || !data || data.length === 0) {
+        // Recreate batch if it was deleted but we are returning to it
+        await this.createBatch({
+          drugId,
+          quantity: canReturnToThis,
+          expiryDate: alloc.expiryDate,
+          costPrice: 0,
+          dateReceived: new Date().toISOString(),
+          batchNumber: alloc.batchNumber || 'RECREATED',
+          branchId: branchId,
+          orgId: (await settingsService.getAll()).orgId,
+          version: 1,
+        });
       }
-    }
+      
+      remainingToReturn -= canReturnToThis;
+    }));
     
     // If there's still remaining (e.g. user is returning more than original allocation for some reason),
     // we should ideally log a warning or put it in the most recent batch.

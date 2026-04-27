@@ -280,51 +280,54 @@ export const transactionService = {
       }
 
       // Execution
-      for (const op of batchReturnOps) {
-        await batchService.returnStock(op.allocations, op.quantityToReturn, op.drugId, activeBranchId);
-      }
+      // Phase 1: Parallel Batch & Movement Prep
+      // BUG-FIX: Parallelize returnStock calls and movement logging
+      await Promise.all(batchReturnOps.map(op => 
+        batchService.returnStock(op.allocations, op.quantityToReturn, op.drugId, activeBranchId)
+      ));
 
-      await inventoryService.updateStockBulk(stockMutations, true);
-      await stockMovementService.logMovementsBulk(movementEntries);
+      // Phase 2: Parallel Independent Writes (Movements, Return Record, Items, Cash, Sale Update)
+      // Note: We remove inventoryService.updateStockBulk because the trg_sync_stock DB trigger 
+      // automatically updates drug stock when movements are logged.
+      const persistOps = [
+        stockMovementService.logMovementsBulk(movementEntries),
+        (supabase as any).from('returns').insert({
+          id: returnData.id,
+          serial_id: returnData.serialId,
+          branch_id: activeBranchId,
+          org_id: orgId,
+          sale_id: returnData.saleId,
+          date: returnData.date,
+          return_type: returnData.returnType,
+          total_refund: returnData.totalRefund,
+          reason: returnData.reason,
+          notes: returnData.notes,
+          processed_by: currentEmployeeId,
+        }),
+        (supabase as any).from('return_items').insert(
+          returnData.items.map(item => ({
+            branch_id: activeBranchId,
+            return_id: returnData.id,
+            drug_id: item.drugId,
+            name: item.name,
+            quantity_returned: item.quantityReturned,
+            is_unit: item.isUnit,
+            original_price: item.originalPrice,
+            refund_amount: item.refundAmount,
+            reason: item.reason || returnData.reason,
+            condition: item.condition,
+            dosage_form: item.dosageForm,
+          }))
+        ),
+        salesService.update(sale.id, { 
+          netTotal: money.subtract(currentNetTotal, returnData.totalRefund),
+          itemReturnedQuantities: updatedReturnedQuantities 
+        }, true) // true = skipFetch for speed
+      ];
 
-      // 3. Persist Return Record
-      const { error: returnError } = await (supabase as any).from('returns').insert({
-        id: returnData.id,
-        serial_id: returnData.serialId,
-        branch_id: activeBranchId,
-        org_id: orgId,
-        sale_id: returnData.saleId,
-        date: returnData.date,
-        return_type: returnData.returnType,
-        total_refund: returnData.totalRefund,
-        reason: returnData.reason,
-        notes: returnData.notes,
-        processed_by: currentEmployeeId,
-      });
-
-      if (returnError) throw returnError;
-
-      // 4. Persist Return Items
-      const dbReturnItems = returnData.items.map(item => ({
-        branch_id: activeBranchId,
-        return_id: returnData.id,
-        drug_id: item.drugId,
-        name: item.name,
-        quantity_returned: item.quantityReturned,
-        is_unit: item.isUnit,
-        original_price: item.originalPrice,
-        refund_amount: item.refundAmount,
-        reason: item.reason || returnData.reason,
-        condition: item.condition,
-        dosage_form: item.dosageForm,
-      }));
-
-      const { error: itemsError } = await (supabase as any).from('return_items').insert(dbReturnItems);
-      if (itemsError) throw itemsError;
-
-      // 5. Update Cash Transaction (Only if refund > 0)
+      // Add cash transaction if needed
       if (shiftId && returnData.totalRefund > 0) {
-        await cashService.addTransaction(shiftId, {
+        persistOps.push(cashService.addTransaction(shiftId, {
           branchId: activeBranchId,
           orgId: orgId,
           shiftId: shiftId,
@@ -334,15 +337,16 @@ export const transactionService = {
           reason: `Return for Sale #${sale.serialId}`,
           userId: context.performerId || 'System',
           relatedSaleId: sale.id,
-        });
+        }));
       }
 
-      // 6. Update Sale Net Total and Return Tracking (Last step to ensure consistency)
-      const newNetTotal = money.subtract(currentNetTotal, returnData.totalRefund);
-      await salesService.update(sale.id, { 
-        netTotal: newNetTotal,
-        itemReturnedQuantities: updatedReturnedQuantities 
-      });
+      const results = await Promise.all(persistOps);
+      
+      // Check for errors in Supabase inserts
+      const errors = results.filter((r: any) => r?.error).map((r: any) => r.error);
+      if (errors.length > 0) {
+        throw errors[0];
+      }
 
       auditService.log('sale.return', {
         userId: currentEmployeeId,

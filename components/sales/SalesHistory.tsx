@@ -63,6 +63,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   const [showHelp, setShowHelp] = useState(false);
   const [selectedCust, setSelectedCust] = useState<Customer | null>(null);
   const [isHistOpen, setIsHistOpen] = useState(false);
+  const [pendingIds, setPendingIds] = useState<Set<string | number>>(new Set());
   const { textTransform } = useSettings();
 
   // Calculate daily refunds for the current employee (used for pharmacist limits)
@@ -443,6 +444,25 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     printInvoice(sale, options);
   };
 
+  // Wrap onProcessReturn to track pending state for the "real" duration
+  const handleProcessReturn = async (returnData: Return) => {
+    if (!returnData.saleId) return;
+    
+    setPendingIds(prev => new Set(prev).add(returnData.saleId));
+    try {
+      await onProcessReturn(returnData);
+    } finally {
+      // Small delay to let the "success" pulse take over naturally after data refresh
+      setTimeout(() => {
+        setPendingIds(prev => {
+          const next = new Set(prev);
+          next.delete(returnData.saleId);
+          return next;
+        });
+      }, 300);
+    }
+  };
+
   return (
     <div className='h-full flex flex-col space-y-4 animate-fade-in'>
       {/* Header */}
@@ -492,6 +512,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           enableVirtualization={false}
           pageSize='auto'
           enableShowAll={true}
+          pendingRowIds={pendingIds}
           rightCustomControls={
             <>
               <DateRangePicker
@@ -528,7 +549,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         currentShift={currentShift}
         currentEmployeeId={currentEmployeeId}
         currentDailyRefunds={currentDailyRefunds}
-        onProcessReturn={onProcessReturn}
+        onProcessReturn={handleProcessReturn}
       />
 
       {/* Help */}

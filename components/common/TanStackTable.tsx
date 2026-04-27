@@ -259,6 +259,7 @@ export interface TanStackTableProps<TData extends { id: string | number }, TValu
   rightCustomControls?: React.ReactNode;
   enableTopToolbar?: boolean;
   enableShowAll?: boolean;
+  pendingRowIds?: Set<string | number>;
 }
 
 // Helper to get stored settings
@@ -334,6 +335,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   enableGlobalSearchFocus = true,
   leftCustomControls,
   rightCustomControls,
+  pendingRowIds = new Set(),
 }: TanStackTableProps<TData, TValue>) {
   // Detect RTL direction
   const isRtl = typeof document !== 'undefined' && document.dir === 'rtl';
@@ -591,7 +593,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       data.forEach((newRow) => {
         const oldRow = oldDataMap.get(newRow.id);
         if (oldRow && JSON.stringify(oldRow) !== JSON.stringify(newRow)) {
-          changedIds.add(newRow.id);
+          // SURGICAL: Only highlight if it was pending
+          if (pendingRowIds.has(newRow.id)) {
+            changedIds.add(newRow.id);
+          }
         }
       });
 
@@ -1110,11 +1115,13 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                         }
                       }}
                       className={`transition-colors overflow-visible group/row ${onRowClick ? 'cursor-pointer' : ''} ${
-                        updatedRowIds.has(row.original.id)
-                          ? 'bg-blue-50/50 dark:bg-blue-900/20 animate-pulse'
-                          : activeIndex !== undefined && rowIndex === activeIndex
-                            ? `bg-primary-50 dark:bg-primary-900/20`
-                            : 'hover:bg-(--bg-hover)'
+                        pendingRowIds.has(row.original.id)
+                          ? 'bg-orange-50/50 dark:bg-orange-900/20 animate-pulse'
+                          : updatedRowIds.has(row.original.id)
+                            ? 'bg-emerald-50/50 dark:bg-emerald-900/20 animate-pulse'
+                            : activeIndex !== undefined && rowIndex === activeIndex
+                              ? `bg-primary-50 dark:bg-primary-900/20`
+                              : 'hover:bg-(--bg-hover)'
                       }`}
                     >
                       {row.getVisibleCells().map((cell: any) => {
@@ -1183,7 +1190,9 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                         }
 
                         // TIER 3: Inline loading skeleton for existing data (background refresh)
-                        if ((isLoading || localLoading) && rows.length > 0) {
+                        // SURGICAL: Only show skeletons for rows explicitly pending to avoid "coloring" the whole table
+                        const isRowPending = pendingRowIds.has(row.original.id);
+                        if ((isRowPending || localLoading) && rows.length > 0) {
                           const isActionColumn = cell.column.id === 'actions' || cell.column.id === 'status' || cell.column.id.includes('select');
                           if (!isActionColumn) {
                             content = (

@@ -171,7 +171,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
     return newDrug;
   }
 
-  async updateStock(id: string, quantity: number, skipBatch: boolean = false, batchId?: string): Promise<Drug> {
+  async updateStock(id: string, quantity: number, skipBatch: boolean = false, batchId?: string, skipFetch: boolean = false): Promise<Drug> {
     if (skipBatch) {
       // Fast path: atomic increment, no read needed — safe for concurrent access
       const { data, error } = await supabase.rpc('atomic_increment_stock', {
@@ -179,6 +179,11 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
         p_delta: quantity,
       });
       if (error) throw error;
+      
+      if (skipFetch) {
+        return { id, stock: 0 } as any; // Minimal object
+      }
+
       // Return a minimal Drug object — caller usually discards it
       return { id, stock: data } as any;
     }
@@ -244,13 +249,13 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
     if (error) throw error;
   }
 
-  async updateStockBulk(mutations: { id: string; quantity: number; batchId?: string }[], skipBatch: boolean = false): Promise<void> {
+  async updateStockBulk(mutations: { id: string; quantity: number; batchId?: string }[], skipBatch: boolean = false, skipFetch: boolean = true): Promise<void> {
     if (skipBatch) {
       // When skipping batch ops, all updates are independent — run in parallel
-      await Promise.all(mutations.map(m => this.updateStock(m.id, m.quantity, true)));
+      await Promise.all(mutations.map(m => this.updateStock(m.id, m.quantity, true, undefined, skipFetch)));
     } else {
       for (const m of mutations) {
-        await this.updateStock(m.id, m.quantity, skipBatch, m.batchId);
+        await this.updateStock(m.id, m.quantity, skipBatch, m.batchId, skipFetch);
       }
     }
   }
