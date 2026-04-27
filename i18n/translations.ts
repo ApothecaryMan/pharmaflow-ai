@@ -157,6 +157,8 @@ export const TRANSLATIONS = {
         import: 'Import',
         print: 'Print',
         openInWindow: 'Open in Window',
+        showStats: 'Show Statistics',
+        hideStats: 'Hide Statistics',
       },
       datePicker: {
         cancel: 'Cancel',
@@ -1988,6 +1990,7 @@ export const TRANSLATIONS = {
           period: 'Period',
           select: 'Select',
           export: 'Export Report',
+          searchPlaceholder: 'Search products or categories...',
           periods: {
             this_month: 'This Month',
             last_month: 'Last Month',
@@ -2004,8 +2007,8 @@ export const TRANSLATIONS = {
           points: 'points',
         },
         sections: {
-          productProfitability: 'Product Profitability Details',
-          categoryBreakdown: 'Profitability by Category',
+          productProfitability: 'Profit Details',
+          categoryBreakdown: 'Profit Analysis',
           noData: 'No sales data for this period',
         },
         productGrid: {
@@ -2067,9 +2070,6 @@ export const TRANSLATIONS = {
         },
       },
       risk: {
-        sections: {
-          expiryAnalysis: 'Stagnant & Expiring Stock Analysis',
-        },
         kpis: {
           valueAtRisk: 'Value at Risk',
           batchesAtRisk: 'Batches at Risk',
@@ -2332,6 +2332,7 @@ export const TRANSLATIONS = {
           period: 'الفترة',
           select: 'اختر',
           export: 'تصدير تقرير',
+          searchPlaceholder: 'بحث في المنتجات أو التصنيفات...',
           periods: {
             this_month: 'هذا الشهر',
             last_month: 'الشهر الماضي',
@@ -2348,8 +2349,8 @@ export const TRANSLATIONS = {
           points: 'نقاط',
         },
         sections: {
-          productProfitability: 'تفاصيل ربحية المنتجات',
-          categoryBreakdown: 'تحليل الربحية حسب التصنيف',
+          productProfitability: 'تفاصيل الربح',
+          categoryBreakdown: 'تحليل الربح',
           noData: 'لا توجد بيانات مبيعات لهذه الفترة',
         },
         productGrid: {
@@ -2411,9 +2412,6 @@ export const TRANSLATIONS = {
         },
       },
       risk: {
-        sections: {
-          expiryAnalysis: 'تحليل المخزون الراكد والمنتهي الصلاحية',
-        },
         kpis: {
           valueAtRisk: 'قيمة معرضة للخطر',
           batchesAtRisk: 'باتشات تنتهي قريباً',
@@ -2605,6 +2603,8 @@ export const TRANSLATIONS = {
         import: 'استيراد',
         print: 'طباعة',
         openInWindow: 'فتح في نافذة',
+        showStats: 'عرض الإحصائيات',
+        hideStats: 'إخفاء الإحصائيات',
       },
       datePicker: {
         cancel: 'إلغاء',

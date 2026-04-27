@@ -146,7 +146,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
       {/* Trigger Container */}
       <div
         ref={triggerRef}
-        className={`cursor-help flex items-center min-w-0 max-w-full ${triggerClassName}`}
+        className={`flex items-center min-w-0 max-w-full ${triggerClassName}`}
       >
         {children}
       </div>

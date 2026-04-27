@@ -57,6 +57,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   navigationParams,
 }) => {
   const { getVerifiedDate } = useStatusBar();
+  const canViewStats = permissionsService.can('reports.view_intelligence');
   
   useEffect(() => {
     if (navigationParams?.mode === 'add') {
@@ -796,24 +797,15 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     onChange={setShowAllBranches}
                   />
                 </label>
-
-                {/* Stats Toggle Arrow */}
-                <Tooltip content={showStats ? t.hideSummary : t.showSummary}>
-                  <button
-                    onClick={() => setShowStats(!showStats)}
-                    className="flex items-center justify-center w-8 h-8 rounded-full transition-all bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-                  >
-                    <span className={`material-symbols-rounded transition-transform duration-300 ${showStats ? 'rotate-180' : ''}`}>
-                      expand_more
-                    </span>
-                  </button>
-                </Tooltip>
             </div>
           ) : null
         }
-        showBottom={showStats && mode === 'list'}
+        showBottom={canViewStats && showStats && mode === 'list'}
+        showStatsToggle={canViewStats && mode === 'list'}
+        onToggleBottom={() => setShowStats(!showStats)}
+        toggleTooltip={showStats ? t.hideSummary : t.showSummary}
         bottomContent={
-          mode === 'list' ? (
+          canViewStats && mode === 'list' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
               <InteractiveCard
                 isLoading={isLoading}

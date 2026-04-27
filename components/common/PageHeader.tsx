@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Tooltip } from './Tooltip';
 
 /**
  * PageHeader Component
@@ -18,6 +19,11 @@ import { motion, AnimatePresence } from 'framer-motion';
  * 3. VISUAL HIERARCHY:
  *    - title/subtitle should only be used if leftContent is empty, or as a secondary identity.
  *    - sticky=true is the default to maintain context during scroll.
+ * 
+ * 4. EXPANDABLE BOTTOM SECTION:
+ *    - bottomContent: Reserved for secondary metadata or SUMMARY STATS (InteractiveCard grid).
+ *    - showBottom: Controlled by a toggle button (typically a material-symbols-rounded "expand_more" arrow).
+ *    - The toggle button should be placed in the rightContent slot for consistency.
  */
 
 interface PageHeaderProps {
@@ -45,6 +51,12 @@ interface PageHeaderProps {
   bottomContent?: ReactNode;
   /** Whether to show the bottom section */
   showBottom?: boolean;
+  /** Whether to show a built-in toggle button for the bottom section */
+  showStatsToggle?: boolean;
+  /** Callback when the toggle button is clicked */
+  onToggleBottom?: () => void;
+  /** Tooltip text for the toggle button */
+  toggleTooltip?: string;
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({
@@ -60,6 +72,9 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   mb = 'mb-6',
   bottomContent,
   showBottom = false,
+  showStatsToggle = false,
+  onToggleBottom,
+  toggleTooltip,
 }) => {
   const baseClasses = `flex flex-col shrink-0 transition-all duration-300 ${mb}`;
   const stickyClasses = sticky ? 'sticky top-0 z-40' : '';
@@ -97,6 +112,22 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         {/* Right Section: Filters / Search / Actions */}
         <div className="flex-1 flex justify-end items-center min-w-0 gap-3">
           {rightContent}
+          {showStatsToggle && (
+            <Tooltip content={toggleTooltip || (showBottom ? 'Hide Summary' : 'Show Summary')}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleBottom?.();
+                }}
+                className='flex items-center justify-center w-8 h-8 rounded-full bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer'
+                aria-label={showBottom ? 'Hide Summary' : 'Show Summary'}
+              >
+                <span className={`material-symbols-rounded transition-transform duration-300 ${showBottom ? 'rotate-180' : ''}`}>
+                  expand_more
+                </span>
+              </button>
+            </Tooltip>
+          )}
         </div>
       </div>
 

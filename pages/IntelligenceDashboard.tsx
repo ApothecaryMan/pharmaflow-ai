@@ -15,7 +15,12 @@ import { useProcurement } from '../hooks/useProcurement';
 import { useFinancials } from '../hooks/useFinancials';
 import { useRisk } from '../hooks/useRisk';
 import { useAudit } from '../hooks/useAudit';
-import type { FinancialPeriod } from '../services/intelligence/intelligenceService';
+import { type FinancialPeriod } from '../services/intelligence/intelligenceService';
+import { ProcurementKPIs } from '../components/intelligence/procurement/ProcurementKPIs';
+import { RiskKPIs } from '../components/intelligence/risk/RiskKPIs';
+import { FinancialsKPIs } from '../components/intelligence/financials/FinancialsKPIs';
+import type { FilterConfig } from '../components/common/FilterPill';
+import { permissionsService } from '../services/auth/permissions';
 
 interface IntelligenceDashboardProps {
   t: any;
@@ -31,6 +36,12 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
     storage.set(StorageKeys.INTELLIGENCE_ACTIVE_TAB, activeTab);
   }, [activeTab]);
 
+  const [showBottom, setShowBottom] = useState(() => storage.get<boolean>(StorageKeys.HEADER_STATS_VISIBLE, false));
+
+  useEffect(() => {
+    storage.set(StorageKeys.HEADER_STATS_VISIBLE, showBottom);
+  }, [showBottom]);
+
   // --- Procurement State & Hook ---
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSupplier, setSelectedSupplier] = useState<string>('all');
@@ -40,11 +51,11 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
   });
 
   // --- Financials State & Hook ---
-  const [selectedPeriod, setSelectedPeriod] = useState<FinancialPeriod>('this_month');
+  const [selectedPeriod, setSelectedPeriod] = useState<FinancialPeriod | null>(null);
   const [financialsSubTab, setFinancialsSubTab] = useState<'products' | 'categories'>(
     storage.get(StorageKeys.INTELLIGENCE_FINANCIALS_SUBTAB, 'products')
   );
-  const financials = useFinancials(selectedPeriod);
+  const financials = useFinancials(selectedPeriod || 'this_month');
 
   useEffect(() => {
     storage.set(StorageKeys.INTELLIGENCE_FINANCIALS_SUBTAB, financialsSubTab);
@@ -54,8 +65,11 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
   const risk = useRisk();
 
   // --- Audit State & Hook ---
+  const [financialsSearch, setFinancialsSearch] = useState('');
+  const [abcFilter, setAbcFilter] = useState<string[]>([]);
   const [auditSearch, setAuditSearch] = useState('');
   const audit = useAudit();
+  const canViewStats = permissionsService.can('reports.view_intelligence');
 
   // --- Header Helpers ---
   const renderLeftActions = () => {
@@ -91,26 +105,50 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
           </div>
         );
       case 'financials':
+        const periodFilterConfig: FilterConfig = {
+          id: 'period',
+          label: t.intelligence.financials.filters.period,
+          icon: 'calendar_today',
+          mode: 'single',
+          options: [
+            { label: t.intelligence.financials.filters.periods.this_month, value: 'this_month' },
+            { label: t.intelligence.financials.filters.periods.last_month, value: 'last_month' },
+            { label: t.intelligence.financials.filters.periods.last_3_months, value: 'last_3_months' },
+            { label: t.intelligence.financials.filters.periods.this_year, value: 'this_year' },
+          ]
+        };
+
+        const abcFilterConfig: FilterConfig = {
+          id: 'abc_class',
+          label: 'ABC Class',
+          icon: 'category',
+          mode: 'multiple',
+          options: [
+            { label: 'Class A', value: 'A' },
+            { label: 'Class B', value: 'B' },
+            { label: 'Class C', value: 'C' },
+          ]
+        };
+
         return (
-          <SegmentedControl
-            value={financialsSubTab}
-            onChange={(val) => setFinancialsSubTab(val as 'products' | 'categories')}
-            options={[
-              {
-                label: t.intelligence.financials.sections.productProfitability,
-                value: 'products',
-              },
-              {
-                label: t.intelligence.financials.sections.categoryBreakdown,
-                value: 'categories',
-              },
-            ]}
-            size='sm'
-            color='primary'
-            fullWidth={false}
-            variant='onPage'
-            shape='pill'
-          />
+          <div className='w-full max-w-md'>
+            <SearchInput
+              value={financialsSearch}
+              onSearchChange={setFinancialsSearch}
+              placeholder={t.intelligence.financials.filters.searchPlaceholder}
+              className='w-full'
+              rounded='xl'
+              filterConfigs={[periodFilterConfig, abcFilterConfig]}
+              activeFilters={{ 
+                period: selectedPeriod ? [selectedPeriod] : [], 
+                abc_class: abcFilter 
+              }}
+              onUpdateFilter={(id, vals) => {
+                if (id === 'period') setSelectedPeriod(vals.length > 0 ? vals[0] as FinancialPeriod : null);
+                if (id === 'abc_class') setAbcFilter(vals as string[]);
+              }}
+            />
+          </div>
         );
       case 'audit':
         return (
@@ -129,7 +167,21 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
     }
   };
 
+  const renderBottomContent = () => {
+    switch (activeTab) {
+      case 'procurement':
+        return <ProcurementKPIs summary={procurement.summary} t={t} isLoading={procurement.loading && !procurement.summary} />;
+      case 'risk':
+        return <RiskKPIs summary={risk.summary} t={t} isLoading={risk.loading && !risk.summary} />;
+      case 'financials':
+        return <FinancialsKPIs kpis={financials.kpis} t={t} isLoading={financials.loading && !financials.kpis} />;
+      default:
+        return null;
+    }
+  };
+
   const renderRightFilters = () => {
+    let filters: React.ReactNode = null;
     switch (activeTab) {
       case 'procurement':
         const supplierOptions = [
@@ -140,7 +192,7 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
           { label: t.intelligence.procurement.filters.all, value: 'all' },
           ...procurement.categories.map((c) => ({ label: c.name, value: c.id })),
         ];
-        return (
+        filters = (
           <div className='flex gap-2 items-center'>
             <FilterDropdown
               items={supplierOptions}
@@ -196,40 +248,28 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
             />
           </div>
         );
+        break;
       case 'financials':
-        const periodOptions = [
-          { label: t.intelligence.financials.filters.periods.this_month, value: 'this_month' as FinancialPeriod },
-          { label: t.intelligence.financials.filters.periods.last_month, value: 'last_month' as FinancialPeriod },
-          { label: t.intelligence.financials.filters.periods.last_3_months, value: 'last_3_months' as FinancialPeriod },
-          { label: t.intelligence.financials.filters.periods.this_year, value: 'this_year' as FinancialPeriod },
-        ];
-        return (
-          <div className='flex gap-2'>
-            <FilterDropdown
-              items={periodOptions}
-              selectedItem={periodOptions.find((p) => p.value === selectedPeriod)}
-              onSelect={(item) => setSelectedPeriod(item.value)}
-              keyExtractor={(item) => item.value}
-              renderItem={(item, isSelected) => (
-                <span
-                  className={`${isSelected ? 'font-bold text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}
-                >
-                  {item.label}
-                </span>
-              )}
-              renderSelected={(item) => (
-                <div className='flex items-center gap-2'>
-                  <span className='material-symbols-rounded text-gray-400' style={{ fontSize: 'var(--icon-base)' }}>
-                    calendar_today
-                  </span>
-                  <span className='font-medium text-gray-700 dark:text-gray-300 text-xs'>
-                    {item?.label}
-                  </span>
-                </div>
-              )}
-              variant='input'
-              floating
-              minHeight={36}
+        filters = (
+          <div className='flex gap-2 items-center'>
+            <SegmentedControl
+              value={financialsSubTab}
+              onChange={(val) => setFinancialsSubTab(val as 'products' | 'categories')}
+              options={[
+                {
+                  label: t.intelligence.financials.sections.productProfitability,
+                  value: 'products',
+                },
+                {
+                  label: t.intelligence.financials.sections.categoryBreakdown,
+                  value: 'categories',
+                },
+              ]}
+              size='sm'
+              color='primary'
+              fullWidth={false}
+              variant='onPage'
+              shape='pill'
             />
             <button
               className='w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 transition-all active:scale-95'
@@ -238,17 +278,23 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
             </button>
           </div>
         );
+        break;
       case 'audit':
-        return (
+        filters = (
           <button
             className='w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 transition-all active:scale-95'
           >
             <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>file_download</span>
           </button>
         );
-      default:
-        return null;
+        break;
     }
+
+    return (
+      <div className='flex items-center gap-2'>
+        {filters}
+      </div>
+    );
   };
 
   return (
@@ -294,7 +340,13 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
           />
         }
         rightContent={renderRightFilters()}
+        bottomContent={canViewStats ? renderBottomContent() : null}
+        showBottom={canViewStats && showBottom && activeTab !== 'audit'}
+        showStatsToggle={canViewStats && activeTab !== 'audit'}
+        onToggleBottom={() => setShowBottom(!showBottom)}
+        toggleTooltip={showBottom ? t.global.actions.hideStats : t.global.actions.showStats}
         dir={language === 'AR' ? 'rtl' : 'ltr'}
+        mb='mb-4'
       />
 
       {/* Tab Content */}
@@ -313,6 +365,8 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
             {...financials}
             activeTab={financialsSubTab}
             setActiveTab={setFinancialsSubTab}
+            globalFilter={financialsSearch}
+            columnFilters={abcFilter.length > 0 ? { abc_class: abcFilter } : {}}
           />
         )}
         {activeTab === 'risk' && (

@@ -13,6 +13,7 @@
 // ============================================================================
 
 export interface ProcurementItem {
+  id: string; // Map from product_id
   product_id: string;
   product_name: string;
   sku: string;
@@ -73,6 +74,7 @@ export interface ProcurementSummary {
 // ============================================================================
 
 export interface ExpiryRiskItem {
+  id: string; // Map from batch_id
   batch_id: string;
   product_id: string;
   product_name: string;
@@ -127,6 +129,7 @@ export interface RiskSummary {
 // ============================================================================
 
 export interface ProductFinancialItem {
+  id: string; // Map from product_id
   product_id: string;
   product_name: string;
   abc_class: 'A' | 'B' | 'C';
@@ -139,6 +142,7 @@ export interface ProductFinancialItem {
 }
 
 export interface CategoryFinancialItem {
+  id: string; // Map from category_id
   category_id: string;
   category_name: string;
   products_count: number;

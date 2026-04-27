@@ -301,6 +301,7 @@ export const intelligenceService = {
         hasRecentSales && hasConsistentSales ? 85 : hasConsistentSales ? 70 : 50;
 
       return {
+        id: drug.id,
         product_id: drug.id,
         product_name: getDisplayName({ name: drug.name, dosageForm: drug.dosageForm }),
         sku: drug.barcode || drug.internalCode || drug.id.slice(-8),
@@ -471,6 +472,7 @@ export const intelligenceService = {
         : money.multiply(valueAtRisk, 80, 2); // 80% recovery if no specific discount
 
       return {
+        id: batch.id,
         batch_id: batch.id,
         product_id: batch.drugId,
         product_name: drug
@@ -621,6 +623,7 @@ export const intelligenceService = {
 
     // Use Pareto Classification
     const rawResults = Array.from(productAgg.values()).map(p => ({
+      id: p.product_id,
       product_id: p.product_id,
       product_name: p.product_name,
       quantity_sold: p.quantity_sold,
@@ -653,6 +656,7 @@ export const intelligenceService = {
       const catName = 'عام';
       
       const existing = categoryAgg.get(catId) || {
+        id: catId,
         category_id: catId,
         category_name: catName,
         products_count: 0,

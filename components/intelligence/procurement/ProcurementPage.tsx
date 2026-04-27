@@ -7,7 +7,6 @@ import { ConfidenceIndicator } from '../common/ConfidenceIndicator';
 import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
 import { StatusBadge } from '../common/StatusBadge';
 import { GeneratePOModal } from './GeneratePOModal';
-import { ProcurementKPIs } from './ProcurementKPIs';
 import { useSettings } from '../../../context';
 import { getDisplayName } from '../../../utils/drugDisplayName';
 
@@ -151,10 +150,6 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
         selectedProductIds={selectedForPO}
       />
 
-      {/* KPIs */}
-      <div className='shrink-0'>
-        <ProcurementKPIs summary={summary} t={t} isLoading={loading && !summary} />
-      </div>
 
       {/* Main Grid Container - Simplified since TanStackTable will provide card styling */}
       <div className='flex-1 min-h-0'>

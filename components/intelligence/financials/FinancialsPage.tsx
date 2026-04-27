@@ -3,7 +3,6 @@ import type React from 'react';
 import { useMemo, useState } from 'react';
 import type { ProductFinancialItem, FinancialKPIs, CategoryFinancialItem } from '../../../types/intelligence';
 import { formatCurrency } from '../../../utils/currency';
-import { SmallCard } from '../../common/SmallCard';
 import { TanStackTable } from '../../common/TanStackTable';
 
 
@@ -12,7 +11,6 @@ const productColumnHelper = createColumnHelper<ProductFinancialItem>();
 
 import { useFinancials } from '../../../hooks/useFinancials';
 import type { FinancialPeriod } from '../../../services/intelligence/intelligenceService';
-import { getCurrencySymbol } from '../../../utils/currency';
 import { SegmentedControl } from '../../common/SegmentedControl';
 import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
 import { useSettings } from '../../../context';
@@ -27,6 +25,8 @@ interface FinancialsPageProps {
   loading: boolean;
   activeTab: 'products' | 'categories';
   setActiveTab: (tab: 'products' | 'categories') => void;
+  globalFilter?: string;
+  columnFilters?: Record<string, any[]>;
 }
 
 export const FinancialsPage: React.FC<FinancialsPageProps> = ({
@@ -36,6 +36,8 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
   categories,
   loading,
   activeTab,
+  globalFilter,
+  columnFilters = {},
 }) => {
   const { textTransform } = useSettings();
 
@@ -110,6 +112,10 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
 
   const productColumns = useMemo<ColumnDef<ProductFinancialItem, any>[]>(
     () => [
+      productColumnHelper.accessor('abc_class', {
+        header: 'ABC',
+        meta: { hideFromSettings: true },
+      }),
       productColumnHelper.accessor('product_name', {
         header: t?.intelligence?.financials?.productGrid?.columns?.product || 'Product',
         cell: (info) => (
@@ -186,54 +192,6 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
 
   return (
     <div className='h-full flex flex-col space-y-4 overflow-hidden'>
-      {/* KPIs Row */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0'>
-        <SmallCard
-          title={t.intelligence.financials.kpis.revenue}
-          value={kpis?.revenue?.value || 0}
-          type='currency'
-          currencyLabel={getCurrencySymbol()}
-          icon='payments'
-          iconColor='emerald'
-          trend={kpis?.revenue?.change_direction}
-          trendValue={kpis?.revenue ? `${kpis.revenue.change_percent}%` : ''}
-          trendLabel={t.intelligence.financials.kpis.compare}
-          isLoading={loading && !kpis}
-        />
-        <SmallCard
-          title={t.intelligence.financials.kpis.grossProfit}
-          value={kpis?.gross_profit?.value || 0}
-          type='currency'
-          currencyLabel={getCurrencySymbol()}
-          icon='account_balance_wallet'
-          iconColor='gray'
-          trend={kpis?.gross_profit?.change_direction}
-          trendValue={kpis?.gross_profit ? `${kpis.gross_profit.change_percent}%` : ''}
-          trendLabel={t.intelligence.financials.kpis.compare}
-          isLoading={loading && !kpis}
-        />
-        <SmallCard
-          title={t.intelligence.financials.kpis.margin}
-          value={kpis?.margin_percent?.value || 0}
-          valueSuffix='%'
-          fractionDigits={1}
-          icon='percent'
-          iconColor='amber'
-          trend={kpis?.margin_percent?.change_direction}
-          trendValue={kpis?.margin_percent ? `${Math.abs(kpis.margin_percent.change_points)} ${t.intelligence.financials.kpis.points}` : ''}
-          trendLabel={t.intelligence.financials.kpis.compare}
-          isLoading={loading && !kpis}
-        />
-        <SmallCard
-          title={t.intelligence.financials.kpis.unitsSold}
-          value={kpis?.units_sold?.value || 0}
-          icon='shopping_cart'
-          iconColor='purple'
-          trend={kpis?.units_sold?.change_direction}
-          trendValue={kpis?.units_sold ? `${kpis.units_sold.change_percent}%` : ''}
-          trendLabel={t.intelligence.financials.kpis.compare}
-        />
-      </div>
 
       {/* Tables Section - Simplified since TanStackTable will provide card styling */}
       <div className='flex-1 min-h-0'>
@@ -250,6 +208,10 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
                 enableVirtualization={false}
                 pageSize='auto'
                 enableShowAll={true}
+                globalFilter={globalFilter}
+                enableSearch={false}
+                initialFilters={columnFilters}
+                defaultHiddenColumns={['abc_class']}
               />
             ) : (
               <div className='bg-(--bg-card) rounded-xl border-2 border-(--border-primary) dark:border-(--border-divider) p-12 text-center h-full flex flex-col items-center justify-center text-gray-500 text-sm'>
@@ -272,6 +234,8 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
               enableVirtualization={false}
               pageSize='auto'
               enableShowAll={true}
+              globalFilter={globalFilter}
+              enableSearch={false}
             />
           </div>
         )}
