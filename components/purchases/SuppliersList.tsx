@@ -315,17 +315,19 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
     <div className='h-full flex flex-col space-y-4 animate-fade-in overflow-hidden'>
       <PageHeader
         leftContent={
-          <div className="w-full max-w-md">
-            <SearchInput
-              value={search}
-              onSearchChange={setSearch}
-              placeholder={t.searchPlaceholder || 'Search supplier name, contact...'}
-              color={color}
-              filterConfigs={[governorateFilterConfig]}
-              activeFilters={activeFilters}
-              onUpdateFilter={(id, vals) => setActiveFilters(prev => ({ ...prev, [id]: vals }))}
-            />
-          </div>
+          mode === 'list' ? (
+            <div className="w-full max-w-md">
+              <SearchInput
+                value={search}
+                onSearchChange={setSearch}
+                placeholder={t.searchPlaceholder || 'Search supplier name, contact...'}
+                color={color}
+                filterConfigs={[governorateFilterConfig]}
+                activeFilters={activeFilters}
+                onUpdateFilter={(id, vals) => setActiveFilters(prev => ({ ...prev, [id]: vals }))}
+              />
+            </div>
+          ) : null
         }
         centerContent={
           <SegmentedControl
