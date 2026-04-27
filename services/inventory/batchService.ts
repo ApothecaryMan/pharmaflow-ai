@@ -168,7 +168,8 @@ export const batchService = {
 
   async allocateStockBulk(
     requests: { drugId: string; quantity: number; name?: string; preferredBatchId?: string }[],
-    branchId: string
+    branchId: string,
+    referenceDate: Date = new Date()
   ): Promise<{ drugId: string; allocations: BatchAllocation[] }[]> {
     const validRequests = requests.filter(req => req.quantity > 0);
     const drugIds = [...new Set(validRequests.map(r => r.drugId))];
@@ -183,7 +184,7 @@ export const batchService = {
     // Process all allocation requests in parallel for maximum speed
     const results = await Promise.all(validRequests.map(async (req) => {
       const drugBatches = batchesByDrug[req.drugId] || [];
-      const allocs = await this.allocateStock(req.drugId, req.quantity, branchId, true, req.preferredBatchId, drugBatches);
+      const allocs = await this.allocateStock(req.drugId, req.quantity, branchId, true, req.preferredBatchId, drugBatches, referenceDate);
       if (!allocs) throw new Error(`Insufficient stock for: ${req.name || req.drugId}`);
       return { drugId: req.drugId, allocations: allocs };
     }));
@@ -197,7 +198,8 @@ export const batchService = {
     branchId: string,
     commitChanges: boolean = true,
     preferredBatchId?: string,
-    preFetchedBatches?: StockBatch[]
+    preFetchedBatches?: StockBatch[],
+    referenceDate: Date = new Date()
   ): Promise<BatchAllocation[] | null> {
     if (quantityNeeded <= 0) return null;
 
@@ -206,7 +208,7 @@ export const batchService = {
     let validBatches = [...batches]
       .filter((b) => {
         const exp = parseExpiryEndOfMonth(b.expiryDate);
-        return !isNaN(exp.getTime()) && exp > new Date();
+        return !isNaN(exp.getTime()) && exp > referenceDate;
       });
       
     // Sort logic: if preferredBatchId matches, it comes first. Otherwise sort by expiry.
@@ -260,7 +262,8 @@ export const batchService = {
     allocations: BatchAllocation[],
     quantityToReturn: number,
     drugId: string,
-    branchId: string
+    branchId: string,
+    referenceDate: Date = new Date()
   ): Promise<void> {
     if (!allocations || allocations.length === 0 || quantityToReturn <= 0) return;
 
@@ -291,7 +294,7 @@ export const batchService = {
           quantity: canReturnToThis,
           expiryDate: alloc.expiryDate,
           costPrice: 0,
-          dateReceived: new Date().toISOString(),
+          dateReceived: referenceDate.toISOString(),
           batchNumber: alloc.batchNumber || 'RECREATED',
           branchId: branchId,
           orgId: (await settingsService.getAll()).orgId,

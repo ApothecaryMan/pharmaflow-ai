@@ -88,7 +88,7 @@ export const transactionService = {
         };
       });
 
-      const bulkAllocations = await batchService.allocateStockBulk(allocationRequests, activeBranchId);
+      const bulkAllocations = await batchService.allocateStockBulk(allocationRequests, activeBranchId, verifiedDate);
 
       // Register Rollback for Batches
       undoManager.push(async () => {
@@ -282,8 +282,9 @@ export const transactionService = {
       // Execution
       // Phase 1: Parallel Batch & Movement Prep
       // BUG-FIX: Parallelize returnStock calls and movement logging
+      const verifiedReturnDate = new Date(timestamp);
       await Promise.all(batchReturnOps.map(op => 
-        batchService.returnStock(op.allocations, op.quantityToReturn, op.drugId, activeBranchId)
+        batchService.returnStock(op.allocations, op.quantityToReturn, op.drugId, activeBranchId, verifiedReturnDate)
       ));
 
       // Phase 2: Parallel Independent Writes (Movements, Return Record, Items, Cash, Sale Update)

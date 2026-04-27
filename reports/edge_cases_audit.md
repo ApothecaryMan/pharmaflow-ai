@@ -69,16 +69,9 @@ Verification:
 allocation path.
 
 ### EC-04: Time Travel (Clock Tampering)
-
-Scenario: Local system time is changed to bypass expiry checks or backdate sales.
-
-Result: Verified. `timeService.getVerifiedDate()` applies a verified offset, and
-`validateTransactionTime` in `StatusBarContext.tsx` blocks invalid transaction
-ordering.
-
-Residual note: `batchService.allocateStock` still uses `new Date()` for expiry
-filtering. For stricter consistency, that path should eventually accept verified
-server time.
+**Scenario**: Local system time is changed to bypass expiry checks or backdate sales.
+**Status**: 🟢 Fully Hardened & Verified.
+**Result**: `timeService.getVerifiedDate()` applies a verified offset. Both `transactionService` and `batchService.allocateStock` now use this verified date for expiry filtering and transaction ordering, neutralizing local clock manipulation.
 
 ### EC-05: Mid-Checkout Switch
 
