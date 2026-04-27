@@ -116,80 +116,29 @@ const getCachedSearchRegex = (term: string) => {
   return _cachedRegex;
 };
 
-// Define a unified filter function
-const unifiedFilterFn: FilterFn<any> = (row, columnId, filterValue, addMeta) => {
-  // filterValue is expected to be { term: string, filters: Record<string, any[]> }
-  // OR just a string if legacy usage
+// Define a unified filter function that handles both strings (search) and arrays (pills)
+const unifiedFilterFn: FilterFn<any> = (row, columnId, filterValue) => {
+  if (filterValue === undefined || filterValue === null || filterValue === '') return true;
 
-  if (!filterValue) return true;
+  const value = row.getValue(columnId);
 
-  let term = '';
-  let activeFilters: Record<string, any[]> = {};
-
-  if (typeof filterValue === 'string') {
-    term = filterValue;
-  } else if (typeof filterValue === 'object') {
-    term = filterValue.term || '';
-    activeFilters = filterValue.filters || {};
+  // Handle Array-based filters (Pills)
+  if (Array.isArray(filterValue)) {
+    if (filterValue.length === 0 || filterValue.includes('all')) return true;
+    
+    // Cell value might be an array or a scalar
+    if (Array.isArray(value)) {
+      return value.some(v => filterValue.includes(v));
+    }
+    return filterValue.includes(value);
   }
 
-  // 1. Check Active Filters (Structured)
-  // Logic: ALL groups must match (AND). Within a group, ANY value must match (OR).
-  // This requires the filterConfig to map IDs to columns, or we check against specific columns if configured?
-  // Current design: Filter IDs should match Column IDs or we need a proper accessor.
-  // Assumption: FilterConfig.id === ColumnId (accessorKey)
+  // Handle String-based filters (Search)
+  const search = String(filterValue).toLowerCase().trim();
+  if (!search) return true;
 
-  for (const [filterId, selectedValues] of Object.entries(activeFilters)) {
-    if (!selectedValues || selectedValues.length === 0) continue;
-
-    // Skip filtering if 'all' is selected
-    if (selectedValues.includes('all')) continue;
-
-    const cellValue = row.getValue(filterId);
-    // If cell value is array? (e.g. tags) -> check intersection
-    // If scalar -> check inclusion
-
-    // Complex value handling
-    // If selectedValues contains "All", we skip? (Handled at UI/State level usually, but safeguard here)
-    // Assuming UI sends only specific values.
-
-    // Type coercion for loose matching
-    const match = selectedValues.some((val) => {
-      if (cellValue === val) return true;
-      return String(cellValue) === String(val);
-    });
-
-    if (!match) return false;
-  }
-
-  // 2. Check Text Search (Fuzzy)
-  if (!term) return true;
-
-  // Standard Fuzzy Search on the specific column passed by react-table (usually all columns if global)
-  // But wait, globalFilterFn is called against *each column*? No, only once per row if we implement it correctly?
-  // Actually react-table calls globalFilterFn for the row. columnId might be undefined or specific?
-  // The signature is (row, columnId, value).
-
-  // Re-use existing fuzzy logic for the text part
-  // We need to check if ANY visible column matches the term.
-  // Actually, TanStack table handles the column iteration for global filtering if we use standard setup?
-  // If we provide a custom globalFilter function, we typically iterate columns ourselves or rely on the default behavior?
-  // The default `globalFilterFn` in useReactTable iterates columns.
-  // BUT we are replacing the filter function on the table instance.
-
-  // Wait! If we pass this as `globalFilterFn` to useReactTable, `columnId` is NOT passed?
-  // Custom global filter function signature: (row, columnId, value, addMeta)
-  // Usually it checks the specific columnId? No, global filters check the whole row.
-  // Let's use the provided standard approach: check all columns for the term.
-
-  // We will prioritize the Structured Filters (AND logic). If failed above, we returned false.
-  // Now we return result of Fuzzy Search.
-
-  const itemValue = row.getValue(columnId);
-  if (itemValue == null) return false;
-
-  const regex = getCachedSearchRegex(term);
-  return regex.test(String(itemValue));
+  const strValue = String(value || '').toLowerCase();
+  return strValue.includes(search);
 };
 
 // We need a wrapper because TanStack calls this PER COLUMN for global filtering?
@@ -354,20 +303,19 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [internalGlobalFilter, setInternalGlobalFilter] = useState('');
   // We manage "Active Pills" as Column Filters
-  const [columnFilters, setColumnFilters] = useState<{ id: string; value: any }[]>([]);
+  const [columnFilters, setColumnFilters] = useState<{ id: string; value: any }[]>(() =>
+    Object.entries(initialFilters).map(([id, value]) => ({ id, value }))
+  );
 
-  // Sync initialFilters to columnFilters whenever they change
+  // Sync internal filters with props only when props actually change
   React.useEffect(() => {
-    const newFilters = Object.entries(initialFilters).map(([id, values]) => ({
-      id,
-      value: values,
-    }));
+    const propFilters = Object.entries(initialFilters).map(([id, value]) => ({ id, value }));
+    const currentStr = JSON.stringify(columnFilters);
+    const propStr = JSON.stringify(propFilters);
     
-    // Only update if actually different to avoid cycles
-    setColumnFilters(prev => {
-      const isSame = JSON.stringify(prev) === JSON.stringify(newFilters);
-      return isSame ? prev : newFilters;
-    });
+    if (propStr !== currentStr) {
+      setColumnFilters(propFilters);
+    }
   }, [initialFilters]);
 
   const [isShowAll, setIsShowAll] = useState(false);
@@ -538,13 +486,12 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       // Use a Map for O(1) lookup performance
       const oldDataMap = new Map(prevDataRef.current.map(r => [r.id, r]));
       
-      data.forEach((newRow) => {
-        const oldRow = oldDataMap.get(newRow.id);
-        if (oldRow && JSON.stringify(oldRow) !== JSON.stringify(newRow)) {
-          // SURGICAL: Only highlight if it was pending
-          if (pendingRowIds.has(newRow.id)) {
-            changedIds.add(newRow.id);
-          }
+      // SURGICAL & OPTIMIZED: Only check rows that were explicitly pending
+      pendingRowIds.forEach((id) => {
+        const newRow = data.find(r => r.id === id);
+        const oldRow = oldDataMap.get(id);
+        if (newRow && oldRow && JSON.stringify(oldRow) !== JSON.stringify(newRow)) {
+          changedIds.add(id);
         }
       });
 
@@ -578,27 +525,19 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: enablePagination ? getPaginationRowModel() : undefined,
-    globalFilterFn: unifiedFilterFn,
+    // Use default global filter to avoid overhead of unifiedFilterFn if it's just a string
+    globalFilterFn: 'auto', 
     enableSorting: true,
     manualFiltering,
     filterFns: {
-      // Custom filter function for our Arrays (Multi-Select)
-      // This function will be utilized if we set the column definition filterFn to 'arrIncludesSome' or custom
-      arrIncludesSome: (row, columnId, value: any[]) => {
-        if (!value || value.length === 0) return true;
-        const cellValue = row.getValue(columnId);
-        return value.includes(cellValue); // Simple check: Row Value exists in Selected Filter Values
-      },
+      arrIncludesSome: (row, columnId, value) => unifiedFilterFn(row, columnId, value, null as any),
+    },
+    // DEFAULT FILTER FN: Use arrIncludesSome for all columns by default 
+    // This allows our Pill filters (which send arrays) to work seamlessly
+    defaultColumn: {
+      filterFn: 'arrIncludesSome',
     },
   });
-
-  // Helper to update our unifying "SearchInput" state
-  const handleFilterUpdate = React.useCallback((groupId: string, newValues: any[]) => {
-    setColumnFilters((prev) => {
-      const other = prev.filter((f) => f.id !== groupId);
-      return newValues.length === 0 ? other : [...other, { id: groupId, value: newValues }];
-    });
-  }, []);
 
   // Convert columnFilters array back to Record for SearchInput prop
   const activeFiltersRecord = React.useMemo(() => {
@@ -609,12 +548,26 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     return rec;
   }, [columnFilters]);
 
-  // Notify parent of filter changes in a stable way
-  React.useEffect(() => {
+  // Helper to update our unifying "SearchInput" state
+  const handleFilterUpdate = React.useCallback((groupId: string, newValues: any[]) => {
+    // Notify parent immediately if controlled
     if (onFilterChange) {
-      onFilterChange(activeFiltersRecord);
+      const nextFilters = { ...activeFiltersRecord };
+      if (newValues.length === 0) {
+        delete nextFilters[groupId];
+      } else {
+        nextFilters[groupId] = newValues;
+      }
+      onFilterChange(nextFilters);
     }
+
+    // Always update internal state to keep useReactTable sync
+    setColumnFilters((prev) => {
+      const other = prev.filter((f) => f.id !== groupId);
+      return newValues.length === 0 ? other : [...other, { id: groupId, value: newValues }];
+    });
   }, [activeFiltersRecord, onFilterChange]);
+
 
   /* State specific for Context Menu tracking to enable live updates */
   const menuPosRef = React.useRef<{ x: number; y: number; columnId?: string } | null>(null);
@@ -810,17 +763,34 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   // --- Unified Column Metadata ---
   const columnMetaMap = React.useMemo(() => {
     const map = new Map<string, any>();
-    table.getAllLeafColumns().forEach((col) => {
-      const colId = col.id.toLowerCase();
-      const meta = col.columnDef.meta as any;
+    
+    // Flatten columns to get leaf columns without depending on the table instance
+    const getLeafColumns = (cols: ColumnDef<any, any>[]): any[] => {
+      let leaf: any[] = [];
+      cols.forEach(c => {
+        if ((c as any).columns) {
+          leaf = [...leaf, ...getLeafColumns((c as any).columns)];
+        } else {
+          leaf.push(c);
+        }
+      });
+      return leaf;
+    };
+
+    const leafColumns = getLeafColumns(columns);
+
+    leafColumns.forEach((col) => {
+      const colId = (col.id || col.accessorKey || '').toString().toLowerCase();
+      const meta = col.meta as any;
+      const id = (col.id || col.accessorKey || '').toString();
       
-      const align = (meta?.disableAlignment ? null : columnAlignment[col.id]) || getSmartAlignment(col.id, meta);
+      const align = (meta?.disableAlignment ? null : columnAlignment[id]) || getSmartAlignment(id, meta);
       
       const isId = meta?.isId ?? (colId.includes('id') || colId.includes('code'));
       const isDate = (['date', 'time', 'timestamp', 'visit'].some(k => colId.includes(k)) || 
                      (colId.includes('at') && !colId.includes('csat'))) && !colId.includes('expiry');
       
-      map.set(col.id, {
+      map.set(id, {
         align,
         isId,
         isDate,
@@ -829,13 +799,13 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
         justifyClass: getHeaderJustifyClass(align),
         textAlignClass: getTextAlignClass(align),
         itemsAlignClass: getItemsAlignClass(align),
-        width: meta?.width || col.getSize(),
+        width: meta?.width,
         minWidth: meta?.minWidth,
         smartDate: meta?.smartDate !== false,
       });
     });
     return map;
-  }, [table, columnAlignment]);
+  }, [columns, columnAlignment]);
 
   // Virtualizer Setup
   const rowVirtualizer = useVirtualizer({

@@ -37,6 +37,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
   navigationParams,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   
   // Handle Navigation Params (Deep Linking)
   React.useEffect(() => {
@@ -219,6 +220,8 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
           globalFilter={searchTerm}
           onSearchChange={setSearchTerm}
           filterableColumns={filterableColumns}
+          initialFilters={activeFilters}
+          onFilterChange={setActiveFilters}
           enableTopToolbar={true}
           enableSearch={true}
           searchPlaceholder={t.searchPlaceholder}

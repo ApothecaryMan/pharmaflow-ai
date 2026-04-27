@@ -64,6 +64,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   const [selectedCust, setSelectedCust] = useState<Customer | null>(null);
   const [isHistOpen, setIsHistOpen] = useState(false);
   const [pendingIds, setPendingIds] = useState<Set<string | number>>(new Set());
+  const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const { textTransform } = useSettings();
 
   // Calculate daily refunds for the current employee (used for pharmacist limits)
@@ -503,6 +504,8 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           globalFilter={searchTerm}
           onSearchChange={setSearchTerm}
           filterableColumns={filterableColumns}
+          initialFilters={activeFilters}
+          onFilterChange={setActiveFilters}
           onRowClick={(sale) => setSelectedSale(sale)}
           emptyMessage={t.noResults}
           lite={false}
