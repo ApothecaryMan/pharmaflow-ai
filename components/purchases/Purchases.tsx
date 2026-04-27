@@ -788,9 +788,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
         centerContent={
           <SegmentedControl
             options={[
-              { value: 'create', label: t.newPurchase || 'Purchase', icon: 'shopping_cart' },
-              { value: 'approve', label: t.pendingApproval?.title || 'Approve', icon: 'assignment_turned_in' },
-              { value: 'history', label: t.viewHistory || 'History', icon: 'history' },
+              { value: 'create', label: t.newPurchase || 'Purchase', icon: 'shopping_cart', permission: 'purchase.create' },
+              { value: 'approve', label: t.pendingApproval?.title || 'Approve', icon: 'assignment_turned_in', permission: 'purchase.approve' },
+              { value: 'history', label: t.viewHistory || 'History', icon: 'history', permission: 'purchase.view' },
             ]}
             value='create'
             onChange={(val) => {

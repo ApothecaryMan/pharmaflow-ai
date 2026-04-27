@@ -1005,7 +1005,10 @@ export const POS: React.FC<POSProps> = ({
           const detailTabs = [
             { label: currentLang === 'ar' ? 'نظرة عامة' : 'Overview', value: 'overview', icon: 'dashboard' },
             { label: currentLang === 'ar' ? 'الفروع' : 'Branches', value: 'branches', icon: 'location_on' },
-            { label: currentLang === 'ar' ? 'تحليلات' : 'Analytics', value: 'analytics', icon: 'analytics' },
+            ...(permissionsService.can('reports.view_financial') 
+              ? [{ label: currentLang === 'ar' ? 'تحليلات' : 'Analytics', value: 'analytics', icon: 'analytics' }] 
+              : []
+            ),
           ];
 
           return (

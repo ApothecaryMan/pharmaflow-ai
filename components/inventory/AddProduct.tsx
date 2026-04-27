@@ -18,6 +18,8 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { idGenerator } from '../../utils/idGenerator';
 import { validationService } from '../../services/validation/validationService';
 
+import { permissionsService } from '../../services/auth/permissions';
+
 interface AddProductProps {
   inventory: Drug[];
   onAddDrug: (drug: Omit<Drug, 'id' | 'branchId' | 'createdAt' | 'updatedAt'>) => void;
@@ -693,30 +695,32 @@ export const AddProduct: React.FC<AddProductProps> = ({
             </div>
 
             {/* Center: Live Financial Info */}
-            <div className="hidden lg:flex items-center gap-6 px-6 py-1 border-x border-gray-200 dark:border-gray-800">
-              <div className="flex flex-col items-center min-w-[100px]">
-                <span className="text-[10px] uppercase font-black text-gray-400 tracking-wider leading-none mb-1">{t.fields?.liveProfit}</span>
-                <div className="flex items-baseline gap-1">
-                  <span className={`text-lg font-black leading-none ${((formData.price || 0) - (formData.costPrice || 0)) > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400'}`}>
-                    {((formData.price || 0) - (formData.costPrice || 0)).toFixed(2)}
-                  </span>
-                  <span className="text-[10px] font-bold text-gray-400">{t.fields?.currency}</span>
+            {permissionsService.can('reports.view_financial') && (
+              <div className="hidden lg:flex items-center gap-6 px-6 py-1 border-x border-gray-200 dark:border-gray-800">
+                <div className="flex flex-col items-center min-w-[100px]">
+                  <span className="text-[10px] uppercase font-black text-gray-400 tracking-wider leading-none mb-1">{t.fields?.liveProfit}</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className={`text-lg font-black leading-none ${((formData.price || 0) - (formData.costPrice || 0)) > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400'}`}>
+                      {((formData.price || 0) - (formData.costPrice || 0)).toFixed(2)}
+                    </span>
+                    <span className="text-[10px] font-bold text-gray-400">{t.fields?.currency}</span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex flex-col items-center">
-                <span className="text-[10px] uppercase font-black text-gray-400 tracking-wider leading-none mb-1.5">{t.fields?.margin}</span>
-                <div className={`px-4 py-1 rounded-full font-black text-[11px] transition-all duration-500 border ${
-                  margin > 25 
-                    ? 'bg-green-500/10 dark:bg-green-500/20 text-green-700 dark:text-green-400 border-green-200/50 dark:border-green-500/30' 
-                    : margin > 10 
-                      ? 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200/50 dark:border-amber-500/30' 
-                      : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-500/30 opacity-60'
-                }`}>
-                  {margin.toFixed(1)}%
+                <div className="flex flex-col items-center">
+                  <span className="text-[10px] uppercase font-black text-gray-400 tracking-wider leading-none mb-1.5">{t.fields?.margin}</span>
+                  <div className={`px-4 py-1 rounded-full font-black text-[11px] transition-all duration-500 border ${
+                    margin > 25 
+                      ? 'bg-green-500/10 dark:bg-green-500/20 text-green-700 dark:text-green-400 border-green-200/50 dark:border-green-500/30' 
+                      : margin > 10 
+                        ? 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200/50 dark:border-amber-500/30' 
+                        : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-500/30 opacity-60'
+                  }`}>
+                    {margin.toFixed(1)}%
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
             
             {/* Right side: Primary actions */}
             <div className="flex-1 flex items-center justify-end gap-3">

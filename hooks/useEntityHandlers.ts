@@ -996,6 +996,17 @@ export function useEntityHandlers({
         return;
       }
 
+      // Extra Hardening: Prevent self-elevation or salary tampering even if it's "Self"
+      if (isSelf && !permissionsService.can('users.manage')) {
+        const sensitiveFields: (keyof Employee)[] = ['role', 'salary', 'employeeCode', 'status', 'department'];
+        const hasSensitiveUpdates = sensitiveFields.some(field => field in updates);
+        
+        if (hasSensitiveUpdates) {
+          error('Permission denied: You cannot update your own role, salary, or status. Contact an administrator.');
+          return;
+        }
+      }
+
       // Persist to Supabase
       await employeeService.update(id, updates);
       setEmployees((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));

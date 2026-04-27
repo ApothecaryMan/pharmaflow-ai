@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { intelligenceService } from '../services/intelligence/intelligenceService';
 import { useData } from '../services/DataContext';
+import { permissionsService } from '../services/auth/permissions';
 import type { AuditTransaction } from '../types/intelligence';
 
 interface UseAuditResult {
@@ -38,7 +39,12 @@ export function useAudit(limit: number = 100): UseAuditResult {
   }, [limit, activeBranchId]);
 
   useEffect(() => {
-    fetchData();
+    const canView = permissionsService.can('reports.view_intelligence') || permissionsService.can('reports.view_financial');
+    if (canView) {
+      fetchData();
+    } else {
+      setLoading(false);
+    }
   }, [fetchData]);
 
   return {

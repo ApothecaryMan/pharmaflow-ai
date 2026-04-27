@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { Drug, StockBatch } from '../types';
+import { permissionsService } from '../services/auth/permissions';
 
 /**
  * Hook to derive computed inventory properties (stock, expiry) from batches.
@@ -40,29 +41,40 @@ export const useComputedInventory = (
       }
     });
 
+    const canViewFinancials = permissionsService.can('reports.view_financial');
+
     // 2. Map inventory items with computed values
     return filteredInventory.map((drug) => {
       const computed = batchSums.get(drug.id);
       
-      // If we have batches, use them. If not (e.g. new product with no batches yet), 
-      // we might keep the raw stock or default to 0. 
-      // Rule: Batches are the source of truth for existing stock.
+      let processedDrug: Drug;
+
+      // If we have batches, use them.
       if (computed) {
-        return {
+        processedDrug = {
           ...drug,
           stock: computed.total,
           expiryDate: computed.earliestExpiry,
         };
+      } else {
+        // Products with no batches should have 0 stock
+        processedDrug = {
+          ...drug,
+          stock: 0,
+          expiryDate: drug.expiryDate,
+        };
       }
 
-      // Products with no batches should have 0 stock in a strict system.
-      // However, during migration or initial setup, there might be raw stock.
-      // We'll trust the batches if any exist, otherwise return 0 to enforce integrity.
-      return {
-        ...drug,
-        stock: 0,
-        expiryDate: drug.expiryDate, // Keep original if no batches
-      };
+      // Security Strip: Remove cost information if not authorized
+      if (!canViewFinancials) {
+        return {
+          ...processedDrug,
+          costPrice: 0,
+          unitCostPrice: 0,
+        };
+      }
+
+      return processedDrug;
     });
   }, [rawInventory, batches, activeBranchId]);
 };

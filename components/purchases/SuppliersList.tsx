@@ -343,8 +343,8 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
             iconSize="--icon-lg"
             useGraphicFont={true}
             options={[
-              { label: t.allSuppliers || 'All Suppliers', value: 'list', icon: 'group' },
-              ...(permissionsService.can('supplier.add') ? [{ label: t.addNewSupplier || 'Add New Supplier', value: 'add', icon: 'person_add' }] : []),
+              { label: t.allSuppliers || 'All Suppliers', value: 'list', icon: 'group', permission: 'supplier.view' },
+              { label: t.addNewSupplier || 'Add New Supplier', value: 'add', icon: 'person_add', permission: 'supplier.add' },
             ]}
             className="w-full sm:w-[480px]"
           />

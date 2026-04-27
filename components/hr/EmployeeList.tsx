@@ -931,26 +931,28 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                     />
                   </div>
 
-                  {/* Row 4: Salary (4) + Notes (8) */}
-                  <div className='col-span-4 space-y-1.5'>
-                    <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
-                      {t.employeeList.salary}
-                    </label>
-                    <div className='relative'>
-                      <SmartInput
-                        value={formData.salary || ''}
-                        onChange={(e) =>
-                          setFormData({ ...formData, salary: Number(e.target.value) })
-                        }
-                        placeholder='0.00'
-                        type='number'
-                        className={`${INPUT_BASE} uppercase font-bold tracking-widest pl-9`}
-                      />
-                      <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium'>
-                        $
-                      </span>
+                  {/* Row 4: Salary (4) gated + Notes (8) */}
+                  {(permissionsService.can('reports.view_financial') || permissionsService.can('users.manage')) && (
+                    <div className='col-span-4 space-y-1.5'>
+                      <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
+                        {t.employeeList.salary}
+                      </label>
+                      <div className='relative'>
+                        <SmartInput
+                          value={formData.salary || ''}
+                          onChange={(e) =>
+                            setFormData({ ...formData, salary: Number(e.target.value) })
+                          }
+                          placeholder='0.00'
+                          type='number'
+                          className={`${INPUT_BASE} uppercase font-bold tracking-widest pl-9`}
+                        />
+                        <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium'>
+                          $
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <div className='col-span-8 space-y-1.5'>
                     <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
                       {t.employeeList.notes}
@@ -1866,14 +1868,16 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         {viewingEmployee.email || '-'}
                       </div>
                     </div>
-                    <div className='space-y-1.5'>
-                      <div className='text-xs font-semibold text-gray-500 uppercase px-1'>
-                        {t.employeeList.salary}
+                    {(permissionsService.can('reports.view_financial') || permissionsService.can('users.manage')) && (
+                      <div className='space-y-1.5'>
+                        <div className='text-xs font-semibold text-gray-500 uppercase px-1'>
+                          {t.employeeList.salary}
+                        </div>
+                        <div className='text-sm font-medium text-gray-900 dark:text-white bg-white dark:bg-(--bg-card) px-3 py-2.5 rounded-lg border border-(--border-divider) shadow-xs min-h-[42px] flex items-center'>
+                          {viewingEmployee.salary ? viewingEmployee.salary.toLocaleString() : '-'}
+                        </div>
                       </div>
-                      <div className='text-sm font-medium text-gray-900 dark:text-white bg-white dark:bg-(--bg-card) px-3 py-2.5 rounded-lg border border-(--border-divider) shadow-xs min-h-[42px] flex items-center'>
-                        {viewingEmployee.salary ? viewingEmployee.salary.toLocaleString() : '-'}
-                      </div>
-                    </div>
+                    )}
                     <div className='col-span-2 space-y-1.5'>
                       <div className='text-xs font-semibold text-gray-500 uppercase px-1'>
                         {t.employeeList.notes}

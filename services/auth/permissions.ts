@@ -5,6 +5,8 @@ import {
   UserRole, 
   canPerformAction as canPerformBaseAction 
 } from '../../config/permissions';
+
+export { type PermissionAction };
 import { OrgRole } from '../../types';
 
 /**

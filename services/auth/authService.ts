@@ -15,35 +15,97 @@ import { orgService } from '../org/orgService';
 const SESSION_KEY = 'branch_pilot_session';
 const AUDIT_KEY = 'pharmaflow_login_audit';
 
+// In-memory cache to prevent redundant DB hits during a single session
+let cachedSession: UserSession | null = null;
+
 export const authService = {
   /**
    * Get the current user session
    */
-  async getCurrentUser(): Promise<UserSession | null> {
+  async getCurrentUser(forceRefresh = false): Promise<UserSession | null> {
     if (!isSupabaseConfigured) return this.getCurrentUserSync();
 
+    // Return cache if available and not forcing refresh
+    if (!forceRefresh && cachedSession) {
+      return cachedSession;
+    }
+
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
+      const { data: { user: sbUser }, error } = await supabase.auth.getUser();
       
-      if (error || !session) {
+      if (error || !sbUser) {
         localStorage.removeItem(SESSION_KEY);
+        cachedSession = null;
         return null;
       }
+
+      // Sync with database to get the latest role/branch info
+      return await this.syncSessionWithDatabase(sbUser.id);
     } catch (err) {
       console.warn('Failed to verify Supabase session', err);
+      return this.getCurrentUserSync();
     }
-    
-    return this.getCurrentUserSync();
+  },
+
+  /**
+   * Sync session data with the database truth
+   */
+  async syncSessionWithDatabase(userId: string): Promise<UserSession | null> {
+    try {
+      const [employeeResponse, memberResponse] = await Promise.all([
+        supabase.from('employees').select('*').eq('auth_user_id', userId).maybeSingle(),
+        supabase.from('org_members').select('role, org_id').eq('user_id', userId).maybeSingle()
+      ]);
+
+      const employeeData = employeeResponse.data;
+      const memberData = memberResponse.data;
+      const orgRole = memberData?.role || 'member';
+      const orgId = memberData?.org_id;
+
+      let session: UserSession;
+
+      if (employeeData) {
+        session = {
+          userId: userId,
+          username: employeeData.username || employeeData.name,
+          employeeId: employeeData.id,
+          branchId: employeeData.branch_id || '',
+          orgId: orgId || employeeData.org_id,
+          role: employeeData.role,
+          orgRole: orgRole as any,
+          department: employeeData.department,
+        };
+      } else {
+        // Fallback for users without employee record
+        const current = this.getCurrentUserSync();
+        if (!current) return null;
+        session = {
+          ...current,
+          userId: userId,
+          orgRole: orgRole as any,
+        };
+      }
+
+      // Update local storage with the truth from DB
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      cachedSession = session;
+      return session;
+    } catch (err) {
+      console.error('Failed to sync session with database', err);
+      return this.getCurrentUserSync();
+    }
   },
 
   /**
    * Synchronous current user retrieval
    */
   getCurrentUserSync(): UserSession | null {
+    if (cachedSession) return cachedSession;
     try {
       const stored = localStorage.getItem(SESSION_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        cachedSession = JSON.parse(stored);
+        return cachedSession;
       }
       return null;
     } catch {
@@ -59,6 +121,7 @@ export const authService = {
     if (current) {
       const updated = { ...current, ...updates };
       localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
+      cachedSession = updated;
       return updated;
     }
     return null;

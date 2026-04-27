@@ -39,6 +39,7 @@ import { settingsService } from './settings/settingsService';
 import { supplierService } from './suppliers';
 import { useComputedInventory } from '../hooks/useComputedInventory';
 import { transactionService } from './transactions/transactionService';
+import { permissionsService } from './auth/permissions';
 
 export interface DataState {
   inventory: Drug[];
@@ -329,6 +330,11 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
   }, [activeBranchId]);
 
   const updateProduct = useCallback(async (id: string, updates: any) => {
+    // Security: Prevent unauthorized users from overwriting cost prices
+    if (!permissionsService.can('reports.view_financial')) {
+      delete updates.costPrice;
+      delete updates.unitCostPrice;
+    }
     const updated = await inventoryService.update(id, updates);
     setRawInventory((prev) => prev.map((p) => (p.id === id ? updated : p)));
     return updated;

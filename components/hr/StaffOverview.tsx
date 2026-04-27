@@ -71,9 +71,9 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
         centerContent={
           <SegmentedControl
             options={[
-              { value: 'staff-overview', label: language === 'AR' ? 'نظرة عامة' : 'Overview', icon: 'supervisor_account' },
-              { value: 'employee-list', label: language === 'AR' ? 'قائمة الموظفين' : 'Employees', icon: 'badge' },
-              { value: 'employee-profile', label: language === 'AR' ? 'ملف الموظف' : 'Profile', icon: 'person' }
+              { value: 'staff-overview', label: language === 'AR' ? 'نظرة عامة' : 'Overview', icon: 'supervisor_account', permission: 'reports.view_intelligence' },
+              { value: 'employee-list', label: language === 'AR' ? 'قائمة الموظفين' : 'Employees', icon: 'badge', permission: 'users.view' },
+              { value: 'employee-profile', label: language === 'AR' ? 'ملف الموظف' : 'Profile', icon: 'person', permission: 'users.view' }
             ]}
             value="staff-overview"
             onChange={(val) => onViewChange?.(val as any)}

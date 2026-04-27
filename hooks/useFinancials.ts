@@ -10,6 +10,7 @@ import {
   intelligenceService,
 } from '../services/intelligence/intelligenceService';
 import { useData } from '../services/DataContext';
+import { permissionsService } from '../services/auth/permissions';
 import type { FinancialKPIs, ProductFinancialItem, CategoryFinancialItem } from '../types/intelligence';
 
 interface UseFinancialsResult {
@@ -52,7 +53,12 @@ export function useFinancials(period: FinancialPeriod = 'this_month'): UseFinanc
   }, [period, activeBranchId]);
 
   useEffect(() => {
-    fetchData();
+    const canView = permissionsService.can('reports.view_intelligence') || permissionsService.can('reports.view_financial');
+    if (canView) {
+      fetchData();
+    } else {
+      setLoading(false);
+    }
   }, [fetchData]);
 
   return {

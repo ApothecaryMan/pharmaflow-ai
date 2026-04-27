@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useData } from '../services';
+import { permissionsService } from '../services/auth/permissions';
 
 export interface TickerData {
   todaySales: number;
@@ -87,14 +88,16 @@ export const useDynamicTickerData = (): TickerData => {
         }
       : null;
 
+    const canViewFinancials = permissionsService.can('reports.view_financial') || permissionsService.can('reports.view_intelligence');
+
     return {
-      todaySales: todaySalesTotal,
-      completedInvoices,
+      todaySales: canViewFinancials ? todaySalesTotal : 0,
+      completedInvoices: canViewFinancials ? completedInvoices : 0,
       pendingInvoices,
       lowStockCount,
       shortagesCount,
       newCustomersToday,
-      topSeller: topSellerStats,
+      topSeller: canViewFinancials ? topSellerStats : null,
     };
   }, [sales, inventory, customers, employees]);
 

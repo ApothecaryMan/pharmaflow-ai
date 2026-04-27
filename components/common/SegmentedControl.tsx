@@ -10,7 +10,7 @@
  *   onChange={setSelectedValue}
  *   options={[
  *     { label: 'Option 1', value: 'opt1' },
- *     { label: 'Option 2', value: 'opt2', activeColor: 'blue' }
+ *     { label: 'Option 2', value: 'opt2', permission: 'reports.view_financial' }
  *   ]}
  *   size="md"
  *   color="emerald"
@@ -32,7 +32,8 @@
  */
 
 import type React from 'react';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { permissionsService, type PermissionAction } from '../../services/auth/permissions';
 
 export interface SegmentedControlOption<T> {
   label: string;
@@ -43,6 +44,7 @@ export interface SegmentedControlOption<T> {
   count?: number | string;
   fontFamily?: string;
   disabled?: boolean;
+  permission?: PermissionAction;
 }
 
 type SegmentedControlSize = 'xs' | 'sm' | 'md' | 'lg';
@@ -110,13 +112,22 @@ export function SegmentedControl<T extends string | number | boolean>({
   const buttonRound = isPill ? 'rounded-full' : 'rounded-lg';
   const indicatorRound = isPill ? 'rounded-full' : 'rounded-lg';
   const darkBg = variant === 'onPage' ? 'dark:bg-gray-800' : 'dark:bg-gray-900';
+
+  // Filter options based on permissions
+  const filteredOptions = useMemo(() => {
+    return options.filter(option => {
+      if (!option.permission) return true;
+      return permissionsService.can(option.permission);
+    });
+  }, [options]);
+
   const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
   const prevDir = useRef<string | null>(null);
   const [isRtlChange, setIsRtlChange] = useState(false);
 
-  const activeOption = options.find((o) => o.value === value);
+  const activeOption = filteredOptions.find((o) => o.value === value);
   const activeColor = activeOption?.activeColor || color;
   const sizeClasses = SIZE_CLASSES[size];
 
@@ -174,7 +185,7 @@ export function SegmentedControl<T extends string | number | boolean>({
       window.removeEventListener('resize', updateIndicator);
       cancelAnimationFrame(rafId);
     };
-  }, [value, options]);
+  }, [value, filteredOptions]);
 
   return (
     <div
@@ -197,7 +208,7 @@ export function SegmentedControl<T extends string | number | boolean>({
         />
       )}
 
-      {options.map((option) => {
+      {filteredOptions.map((option) => {
         const isActive = value === option.value;
         const optionColor = option.activeColor || color;
         const hasIcon = !!option.icon;

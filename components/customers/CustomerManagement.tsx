@@ -752,9 +752,9 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         centerContent={
           <SegmentedControl
             options={[
-              { value: 'customers', label: t.allCustomers || 'List', icon: 'group' },
-              { value: 'add-customer', label: t.addCustomer || 'Add', icon: 'person_add' },
-              { value: 'customer-history', label: t.customerHistory?.title || 'History', icon: 'history' },
+              { value: 'customers', label: t.allCustomers || 'List', icon: 'group', permission: 'customer.view' },
+              { value: 'add-customer', label: t.addCustomer || 'Add', icon: 'person_add', permission: 'customer.add' },
+              { value: 'customer-history', label: t.customerHistory?.title || 'History', icon: 'history', permission: 'customer.view' },
             ]}
             value={mode === 'add' ? 'add-customer' : 'customers'}
             onChange={(val) => {

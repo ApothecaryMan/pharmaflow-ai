@@ -16,6 +16,7 @@ import { useSettings } from '../../context';
 import { useData } from '../../services/DataContext';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { useContextMenu } from '../common/ContextMenu';
+import { permissionsService } from '../../services/auth/permissions';
 
 interface PurchaseHistoryProps {
   purchases: Purchase[];
@@ -231,17 +232,20 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
         accessorKey: 'totalCost',
         meta: { align: 'end' },
         cell: (info: any) => {
+          if (!permissionsService.can('reports.view_financial')) {
+            return <span className="text-gray-400 opacity-20 select-none">••••••</span>;
+          }
           const p = info.row.original;
           const returns = getPurchaseReturns(p.id);
           const totalReturned = returns.reduce((sum, r) => sum + r.totalRefund, 0);
           return (
             <div className='flex flex-col items-end'>
-              <span className='text-sm font-bold text-gray-900 dark:text-white'>
-                ${info.getValue().toFixed(2)}
-              </span>
+              <div className='text-sm font-bold text-gray-900 dark:text-white'>
+                <PriceDisplay value={info.getValue()} />
+              </div>
               {totalReturned > 0 && (
                 <span className='text-[10px] text-orange-600 dark:text-orange-400 font-medium'>
-                  -${totalReturned.toFixed(2)} {t.detailsModal?.returnedLabel || 'returned'}
+                  -<PriceDisplay value={totalReturned} /> {t.detailsModal?.returnedLabel || 'returned'}
                 </span>
               )}
             </div>

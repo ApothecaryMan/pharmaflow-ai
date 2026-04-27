@@ -1,7 +1,7 @@
 import { closestCenter, DndContext, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { type UserRole } from '../../../../config/permissions';
 import { permissionsService } from '../../../../services/auth/permissions';
 import type { CartItem, Drug, Employee, Language } from '../../../../types';
@@ -133,11 +133,15 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
 
   // Calculate total profit margin (Accounts for item-level and global discounts)
   // Formula: Net Sale Total - Total Cost of Goods Sold
-  const totalCost = cart.reduce((acc, item) => {
-    const unitCost = resolvePrice(item.costPrice || 0, !!item.isUnit, item.unitsPerPack);
-    return acc + unitCost * item.quantity;
-  }, 0);
-  const totalProfit = cartTotal - totalCost;
+  const totalProfit = useMemo(() => {
+    if (!permissionsService.can('reports.view_financial')) return 0;
+    
+    const cost = cart.reduce((acc, item) => {
+      const unitCost = resolvePrice(item.costPrice || 0, !!item.isUnit, item.unitsPerPack);
+      return acc + unitCost * item.quantity;
+    }, 0);
+    return cartTotal - cost;
+  }, [cart, cartTotal]);
 
   return (
     <>
@@ -239,7 +243,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                   </Tooltip>
 
                   {/* Estimated Profit Display (Managers Only) */}
-                  {permissionsService.can('reports.view_financial') && cart.length > 0 && (
+                  {permissionsService.can('reports.view_financial') && cart.length > 0 && totalProfit !== 0 && (
                     <>
                       <svg className="size-1 shrink-0 mx-0.5" viewBox="0 0 6 6" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="3" cy="3" r="2" className="fill-gray-300 dark:fill-gray-600" />

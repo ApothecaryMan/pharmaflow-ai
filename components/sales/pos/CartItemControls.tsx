@@ -112,7 +112,9 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
 
   return (
     <div
-      title={`Max Discount: ${effectiveMax}%\nProfit Margin: ${margin.toFixed(1)}%`}
+      title={permissionsService.can('reports.view_financial') 
+        ? `Max Discount: ${effectiveMax}%\nProfit Margin: ${margin.toFixed(1)}%`
+        : `Max Discount: ${effectiveMax}%`}
       className={`flex items-center rounded-lg h-6 overflow-hidden transition-all w-14 shrink-0 border
         ${hasDiscount 
           ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' 

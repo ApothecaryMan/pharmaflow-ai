@@ -93,14 +93,14 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
       icon: 'domain',
       permission: PAGE_REGISTRY['branch-management']?.permission
     }
-  ].filter(tab => !tab.permission || permissionsService.can(tab.permission));
+  ];
 
 
 
   return (
     <div className="h-full flex flex-col overflow-hidden animate-fade-in">
       <PageHeader
-        centerContent={availableTabs.length > 1 ? (
+        centerContent={
           <SegmentedControl
             options={availableTabs}
             value="org-management"
@@ -113,7 +113,7 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
             className="w-full sm:w-[480px]"
             useGraphicFont={true}
           />
-        ) : null}
+        }
         rightContent={
           <button 
             onClick={() => setShowHelp(true)}

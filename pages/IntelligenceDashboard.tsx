@@ -71,6 +71,23 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
   const audit = useAudit();
   const canViewStats = permissionsService.can('reports.view_intelligence');
 
+  // --- Tab Configuration ---
+  const tabOptions = useMemo(() => [
+    { label: t.intelligence.dashboard.tabs.procurement, value: 'procurement' as const, icon: 'shopping_cart', permission: 'reports.view_intelligence' as const },
+    { label: t.intelligence.dashboard.tabs.financials, value: 'financials' as const, icon: 'payments', permission: 'reports.view_financial' as const },
+    { label: t.intelligence.dashboard.tabs.risk, value: 'risk' as const, icon: 'warning', count: risk.summary?.total_batches_at_risk || undefined, permission: 'reports.view_intelligence' as const },
+    { label: t.intelligence.dashboard.tabs.audit, value: 'audit' as const, icon: 'verified', permission: 'reports.view_intelligence' as const },
+  ], [t, risk.summary]);
+
+  // Auto-redirect if current tab is forbidden
+  useEffect(() => {
+    const isForbidden = !permissionsService.can(tabOptions.find(t => t.value === activeTab)?.permission || 'reports.view_intelligence');
+    if (isForbidden) {
+      const fallback = tabOptions.find(opt => permissionsService.can(opt.permission))?.value;
+      if (fallback) setActiveTab(fallback);
+    }
+  }, [activeTab, tabOptions]);
+
   // --- Header Helpers ---
   const renderLeftActions = () => {
     switch (activeTab) {
@@ -297,6 +314,24 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
     );
   };
 
+  if (!canViewStats) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
+        <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-3xl flex items-center justify-center mb-6 border border-red-100 dark:border-red-900/30">
+          <span className="material-symbols-rounded text-4xl text-red-500">lock</span>
+        </div>
+        <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">
+          {language === 'AR' ? 'غير مصرح بالدخول' : 'Access Denied'}
+        </h2>
+        <p className="text-gray-500 dark:text-gray-400 max-w-sm leading-relaxed">
+          {language === 'AR' 
+            ? 'ليست لديك الصلاحيات الكافية لعرض لوحة تقارير الذكاء الاصطناعي والتحليلات المالية.' 
+            : 'You do not have sufficient permissions to view the AI Intelligence and Financial Analytics dashboard.'}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div
       className='h-full flex flex-col overflow-hidden'
@@ -314,29 +349,7 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
             shape='pill'
             useGraphicFont={true}
             className="w-full sm:w-[540px]"
-            options={[
-              {
-                label: t.intelligence.dashboard.tabs.procurement,
-                value: 'procurement' as const,
-                icon: 'shopping_cart',
-              },
-              {
-                label: t.intelligence.dashboard.tabs.financials,
-                value: 'financials' as const,
-                icon: 'payments',
-              },
-              {
-                label: t.intelligence.dashboard.tabs.risk,
-                value: 'risk' as const,
-                icon: 'warning',
-                count: risk.summary?.total_batches_at_risk || undefined,
-              },
-              {
-                label: t.intelligence.dashboard.tabs.audit,
-                value: 'audit' as const,
-                icon: 'verified',
-              },
-            ]}
+            options={tabOptions}
           />
         }
         rightContent={renderRightFilters()}

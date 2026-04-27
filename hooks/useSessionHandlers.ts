@@ -38,7 +38,7 @@ export const useSessionHandlers = ({
   // --- Employee Selection Wrapper (Audit Logging) ---
   const handleSelectEmployee = useCallback(
     async (id: string | null) => {
-      const session = await authService.getCurrentUser();
+      const session = authService.getCurrentUserSync();
 
       if (session) {
         if (!id) {
@@ -159,7 +159,7 @@ export const useSessionHandlers = ({
   // --- Optimized Logout Handler ---
   const onLogoutClick = useCallback(async () => {
     const startTime = Date.now();
-    const MIN_DISPLAY_TIME = 1500;
+    const MIN_DISPLAY_TIME = 800;
 
     setIsLoggingOut(true);
 

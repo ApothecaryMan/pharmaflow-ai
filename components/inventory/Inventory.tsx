@@ -442,8 +442,11 @@ export const Inventory: React.FC<InventoryProps> = ({
       return actions;
     };
 
+  const canViewFinancials = permissionsService.can('reports.view_financial');
+
   const tableColumns = useMemo<ColumnDef<Drug>[]>(
-    () => [
+    () => {
+      const cols: ColumnDef<Drug>[] = [
       {
         id: 'code',
         header: t.headers.codes,
@@ -560,25 +563,32 @@ export const Inventory: React.FC<InventoryProps> = ({
           );
         },
       },
-      {
-        accessorKey: 'costPrice',
-        header: t.headers.cost,
-        cell: ({ row }) => {
-          const groupData = row.original as any;
-          const selectedId = selectedBatches[groupData.groupId] || groupData.id;
-          const drug = groupData.group.find((d: any) => d.id === selectedId) || groupData;
+      ];
 
-          if (!drug.costPrice) return <span className='text-gray-500 text-xs'>-</span>;
-          const parts = formatCurrencyParts(drug.costPrice);
-          return (
-            <span className='text-gray-900 dark:text-gray-100 text-xs font-medium'>
-              {parts.amount}{' '}
-              <span className='text-[10px] text-gray-400 font-normal'>{parts.symbol}</span>
-            </span>
-          );
-        },
-      },
-      {
+      // Insert cost column only if authorized
+      if (canViewFinancials) {
+        cols.push({
+          accessorKey: 'costPrice',
+          header: t.headers.cost,
+          cell: ({ row }) => {
+            const groupData = row.original as any;
+            const selectedId = selectedBatches[groupData.groupId] || groupData.id;
+            const drug = groupData.group.find((d: any) => d.id === selectedId) || groupData;
+
+            if (!drug.costPrice) return <span className='text-gray-500 text-xs'>-</span>;
+            const parts = formatCurrencyParts(drug.costPrice);
+            return (
+              <span className='text-gray-900 dark:text-gray-100 text-xs font-medium'>
+                {parts.amount}{' '}
+                <span className='text-[10px] text-gray-400 font-normal'>{parts.symbol}</span>
+              </span>
+            );
+          },
+        });
+      }
+
+      // Add Expiry column
+      cols.push({
         accessorKey: 'expiryDate',
         header: t.headers.expiry,
         cell: ({ row }) => {
@@ -658,8 +668,10 @@ export const Inventory: React.FC<InventoryProps> = ({
           return <div className='flex justify-center'>{renderDateWrapper(drug.expiryDate)}</div>;
         },
         meta: { align: 'center', smartDate: false },
-      },
-    ],
+      });
+
+      return cols;
+    },
     [color, currentLang, t, selectedBatches, openBatchDropdown, textTransform]
   );
 
@@ -782,37 +794,39 @@ export const Inventory: React.FC<InventoryProps> = ({
                   }
                 ]}
               />
-              <InteractiveCard
-                className={`flex flex-col min-w-[180px] px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
-                pages={[
-                  {
-                    theme: 'bg-green-50 dark:bg-green-900/20',
-                    content: (
-                      <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                        <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400">
-                          {t.summary?.totalCost || 'Inventory Cost'}
-                        </span>
-                        <span className="text-xl font-bold text-green-900 dark:text-primary-100 tabular-nums">
-                          <PriceDisplay value={summaryStats.totalCost} compact={summaryStats.totalCost >= 1000} />
-                        </span>
-                      </div>
-                    ),
-                  },
-                  {
-                    theme: 'bg-cyan-50 dark:bg-cyan-900/20',
-                    content: (
-                      <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                        <span className="text-[10px] font-bold uppercase text-cyan-600 dark:text-cyan-400">
-                          {t.summary?.saleValue || 'Sale Value'}
-                        </span>
-                        <span className="text-xl font-bold text-cyan-900 dark:text-primary-100 tabular-nums">
-                          <PriceDisplay value={summaryStats.totalSaleValue} compact={summaryStats.totalSaleValue >= 1000} />
-                        </span>
-                      </div>
-                    ),
-                  }
-                ]}
-              />
+              {canViewFinancials && (
+                <InteractiveCard
+                  className={`flex flex-col min-w-[180px] px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
+                  pages={[
+                    {
+                      theme: 'bg-green-50 dark:bg-green-900/20',
+                      content: (
+                        <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
+                          <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400">
+                            {t.summary?.totalCost || 'Inventory Cost'}
+                          </span>
+                          <span className="text-xl font-bold text-green-900 dark:text-primary-100 tabular-nums">
+                            <PriceDisplay value={summaryStats.totalCost} compact={summaryStats.totalCost >= 1000} />
+                          </span>
+                        </div>
+                      ),
+                    },
+                    {
+                      theme: 'bg-indigo-50 dark:bg-indigo-900/20',
+                      content: (
+                        <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
+                          <span className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">
+                            {t.summary?.totalSaleValue || 'Sale Value'}
+                          </span>
+                          <span className="text-xl font-bold text-indigo-900 dark:text-primary-100 tabular-nums">
+                            <PriceDisplay value={summaryStats.totalSaleValue} compact={summaryStats.totalSaleValue >= 1000} />
+                          </span>
+                        </div>
+                      ),
+                    }
+                  ]}
+                />
+              )}
               <InteractiveCard
                 className={`flex flex-col min-w-[160px] px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
                 pages={[

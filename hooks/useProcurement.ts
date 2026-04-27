@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { intelligenceService } from '../services/intelligence/intelligenceService';
 import { useData } from '../services/DataContext';
+import { permissionsService } from '../services/auth/permissions';
 import type { ProcurementItem, ProcurementSummary } from '../types/intelligence';
 
 interface UseProcurementFilters {
@@ -55,7 +56,12 @@ export function useProcurement(filters: UseProcurementFilters = {}): UseProcurem
   }, [activeBranchId]);
 
   useEffect(() => {
-    fetchData();
+    const canView = permissionsService.can('reports.view_intelligence');
+    if (canView) {
+      fetchData();
+    } else {
+      setLoading(false);
+    }
   }, [fetchData]);
 
   // Extract unique suppliers and categories

@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { intelligenceService } from '../services/intelligence/intelligenceService';
 import { useData } from '../services/DataContext';
+import { permissionsService } from '../services/auth/permissions';
 import type { ExpiryRiskItem, RiskSummary } from '../types/intelligence';
 
 interface UseRiskResult {
@@ -45,7 +46,12 @@ export function useRisk(): UseRiskResult {
   }, [activeBranchId]);
 
   useEffect(() => {
-    fetchData();
+    const canView = permissionsService.can('reports.view_intelligence') || permissionsService.can('reports.view_inventory');
+    if (canView) {
+      fetchData();
+    } else {
+      setLoading(false);
+    }
   }, [fetchData]);
 
   return {
