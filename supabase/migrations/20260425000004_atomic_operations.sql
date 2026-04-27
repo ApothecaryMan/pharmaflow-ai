@@ -13,12 +13,17 @@ DECLARE
   result_stock INTEGER;
 BEGIN
   UPDATE drugs 
-  SET stock = GREATEST(0, COALESCE(stock, 0) + p_delta)
+  SET stock = COALESCE(stock, 0) + p_delta
   WHERE id = p_drug_id
+    AND (p_delta >= 0 OR COALESCE(stock, 0) + p_delta >= 0)
   RETURNING stock INTO result_stock;
   
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Drug not found: %', p_drug_id;
+    IF EXISTS (SELECT 1 FROM drugs WHERE id = p_drug_id) THEN
+      RAISE EXCEPTION 'Insufficient stock for drug: %', p_drug_id;
+    ELSE
+      RAISE EXCEPTION 'Drug not found: %', p_drug_id;
+    END IF;
   END IF;
   
   RETURN result_stock;
@@ -32,9 +37,10 @@ RETURNS TABLE(new_qty INTEGER, new_ver INTEGER) AS $$
 BEGIN
   RETURN QUERY
   UPDATE stock_batches 
-  SET quantity = GREATEST(0, quantity + p_delta),
+  SET quantity = quantity + p_delta,
       version = COALESCE(version, 0) + 1
   WHERE id = p_batch_id
+    AND (p_delta >= 0 OR quantity + p_delta >= 0)
   RETURNING quantity::INTEGER, version::INTEGER;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

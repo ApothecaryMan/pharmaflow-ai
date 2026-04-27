@@ -1,60 +1,165 @@
-# 🛡️ PharmaFlow AI: Edge Cases & Logic Audit Log
+# PharmaFlow AI: Edge Cases & Logic Audit Log
 
-This document tracks deep architectural edge cases, security vulnerabilities, and logic pitfalls. Each case is researched against real-world pharmacy software failures and verified within our codebase.
+Last updated: 2026-04-27
 
-## 📋 Audit Status Overview
+This audit verifies the listed pharmacy edge cases against the current codebase and
+records fixes, tests, and remaining gaps.
 
-| ID | Case Name | Complexity | Status | Verification Method |
-|----|-----------|------------|--------|---------------------|
-| EC-01 | **The Double-Sell (Race Condition)** | 🔴 High | 🟡 Verifying | Atomic RPC Check |
-| EC-02 | **Multi-Batch Split (FEFO)** | 🟠 Med | 🟢 Verified | Transaction Log Review |
-| EC-03 | **Partial Fractional Return** | 🔴 High | ⚪ Pending | Math Engine Unit Test |
-| EC-04 | **Time Travel (Clock Tampering)** | 🟠 Med | 🟢 Verified | TimeService Offset |
-| EC-05 | **Mid-Checkout Switch** | 🟡 Med | ⚪ Pending | Hook Guard Check |
-| EC-06 | **Floating Point Drift** | 🔴 High | ⚪ Pending | Precision Math Stress Test |
-| EC-07 | **Return to Purged Batch** | 🟡 Med | ⚪ Pending | DB Schema Integrity |
-| EC-08 | **Credit Limit Overrun** | 🟠 Med | ⚪ Pending | Logic Constraint Check |
-| EC-09 | **Mid-Session Price Change** | 🟡 Med | ⚪ Pending | Snapshot Logic Check |
-| EC-10 | **Rollback Network Failure** | 🔴 High | ⚪ Pending | UndoManager Resilience |
+## Audit Status Overview
 
----
+| ID | Case Name | Risk | Status | Verification Method |
+|----|-----------|------|--------|---------------------|
+| EC-01 | The Double-Sell (Race Condition) | High | Fixed + Verified | Atomic RPC hardening + unit test |
+| EC-02 | Multi-Batch Split (FEFO) | Medium | Verified | FEFO allocation test |
+| EC-03 | Partial Fractional Return | High | Fixed + Verified | Partial return unit test |
+| EC-04 | Time Travel (Clock Tampering) | Medium | Verified | TimeService and StatusBar review |
+| EC-05 | Mid-Checkout Switch | Medium | Verified | Hook guard and branch context review |
+| EC-06 | Floating Point Drift | High | Verified | Money engine stress tests |
+| EC-07 | Return to Purged Batch | Medium | Verified | Recreate-on-missing-batch review |
+| EC-08 | Credit Limit Overrun | Medium | Not Applicable / Gap | POS does not expose credit sales |
+| EC-09 | Mid-Session Price Change | Medium | Verified | Sale item price snapshot review |
+| EC-10 | Rollback Network Failure | High | Improved + Verified | Allocation rollback unit test |
 
-## 🔍 Deep Dive & Verification Progress
+## Deep Dive Results
 
-### [EC-01] The Double-Sell (Race Condition)
-**Description**: Two cashiers sell the same "last box" of a drug simultaneously.
-**Risk**: Inventory drift (Physical stock = 0, System stock = -1 or still 1).
-**Verification**:
-- [x] Check `batchService.updateBatchQuantity` for atomic updates.
-- [x] Verify Supabase RPC `atomic_increment_batch` is used.
-- [ ] Script a concurrency test (Python/Node) to fire 10 simultaneous requests.
+### EC-01: The Double-Sell (Race Condition)
 
-> [!NOTE]
-> Current status: The system uses `UPDATE ... SET quantity = quantity + p_delta`, which is natively atomic in PostgreSQL. This prevents the "read-modify-write" race condition.
+Scenario: Two cashiers sell the same last unit at the same time.
 
----
+Finding: The previous RPC used `GREATEST(0, quantity + p_delta)`. That prevented
+negative quantities but still allowed both checkouts to succeed, silently clamping
+the second decrement to zero.
 
-### [EC-04] Time Travel (Clock Tampering)
-**Description**: User changes system clock to bypass expiry checks or backdate sales.
-**Verification**:
-- [x] Verify `TimeService` uses external NTP/Server sync.
-- [x] Check `validateTransactionTime` in `StatusBarContext.tsx`.
+Fix:
+- Updated `supabase/migrations/20260425000004_atomic_operations.sql`.
+- `atomic_increment_batch` now updates only when the decrement can be satisfied.
+- `atomic_increment_stock` now rejects insufficient stock instead of clamping.
+- `batchService.updateBatchQuantity` throws when an atomic decrement affects no rows.
 
-> [!TIP]
-> The implementation in `timeService.ts` correctly calculates an `offset` from a server source and applies it to `Date.now()`. Local clock changes do not affect `getVerifiedDate()`.
+Verification:
+- `services/inventory/batchService.test.ts` covers failed atomic decrement.
 
----
+### EC-02: Multi-Batch Split (FEFO)
 
-### [EC-02] Multi-Batch Split (FEFO)
-**Description**: A single large sale (e.g., 100 units) must be fulfilled by multiple batches with different expiry dates.
-**Verification**:
-- [x] Review `batchService.allocateStock` logic.
-- [x] Check if `transactionService` logs multiple movements for a single item.
+Scenario: A sale requires more units than the earliest batch contains.
 
-> [!IMPORTANT]
-> The `allocateStock` function correctly loops through sorted batches and creates multiple `BatchAllocation` entries. The `transactionService` then creates a movement for each allocation.
+Result: Verified. `batchService.allocateStock` filters expired batches, sorts by
+expiry date, and splits allocation across valid batches.
 
----
+Verification:
+- Test confirms a 60-unit sale pulls 50 units from the earlier valid batch and
+10 from the later valid batch.
 
-## 🛠️ Tools & Scripts
-*(This section will be updated with Python scripts for stress testing)*
+### EC-03: Partial Fractional Return
+
+Scenario: A customer returns only part of a sale that originally consumed multiple
+batches.
+
+Finding: `batchService.returnStock` was using parallel writes while mutating a
+shared `remainingToReturn` variable. That made partial returns vulnerable to
+over-restore or inconsistent distribution.
+
+Fix:
+- `batchService.returnStock` now processes return allocations sequentially.
+- `utils/stockOperations.ts` now passes only the quantity covered by the selected
+return allocations back into batch restoration.
+
+Verification:
+- Test confirms a 12-unit partial return restores only 12 units to the original
+allocation path.
+
+### EC-04: Time Travel (Clock Tampering)
+
+Scenario: Local system time is changed to bypass expiry checks or backdate sales.
+
+Result: Verified. `timeService.getVerifiedDate()` applies a verified offset, and
+`validateTransactionTime` in `StatusBarContext.tsx` blocks invalid transaction
+ordering.
+
+Residual note: `batchService.allocateStock` still uses `new Date()` for expiry
+filtering. For stricter consistency, that path should eventually accept verified
+server time.
+
+### EC-05: Mid-Checkout Switch
+
+Scenario: User switches branch/session while checkout is in progress.
+
+Result: Verified for the active POS path. `usePOSCheckout` uses `isProcessing`
+to prevent duplicate checkout submission, preserves the cart on checkout failure,
+and the transaction context captures `activeBranchId` at checkout time.
+
+### EC-06: Floating Point Drift
+
+Scenario: Currency math such as `0.1 + 0.2`, discounts, and uneven splits creates
+financial drift.
+
+Result: Verified. `utils/money.ts` converts to integer smallest units for add,
+subtract, multiply, divide, and allocation.
+
+Verification:
+- `utils/money.test.ts` covers common drift, percentage discounts, and uneven
+cent allocation.
+
+### EC-07: Return to Purged Batch
+
+Scenario: A return references a batch that was deleted after the original sale.
+
+Result: Verified. `batchService.returnStock` attempts an atomic restore and
+recreates the batch when the RPC returns no affected rows or an error.
+
+### EC-08: Credit Limit Overrun
+
+Scenario: Customer credit sale exceeds allowed credit balance.
+
+Result: Not applicable to the current POS checkout flow. Although `Sale` allows
+`paymentMethod: 'credit'`, the POS and transaction service checkout types only
+accept `cash` and `visa`. No active credit-limit feature was found.
+
+Recommendation: If credit sales are re-enabled, add customer credit fields,
+server-side credit checks, and a failing test for over-limit checkout.
+
+### EC-09: Mid-Session Price Change
+
+Scenario: Product price changes while the item is already in a cart.
+
+Result: Verified. Cart items carry price snapshots, and `buildSalePayload`
+persists the cart item prices into the sale payload. Later inventory price changes
+do not rewrite existing cart item prices.
+
+### EC-10: Rollback Network Failure
+
+Scenario: A multi-batch allocation succeeds for one batch and fails for a later
+batch.
+
+Finding: `allocateStock` previously committed batch updates in parallel. If one
+write failed after another succeeded, the service did not locally compensate.
+
+Fix:
+- `allocateStock` now commits batch decrements sequentially.
+- If a later decrement fails, earlier committed decrements are restored in reverse
+order before the error is rethrown.
+
+Verification:
+- `services/inventory/batchService.test.ts` covers rollback after a second-batch
+failure.
+
+## Verification Commands
+
+Passed:
+
+```bash
+npm.cmd test -- services/inventory/batchService.test.ts utils/money.test.ts --run
+```
+
+Result: 2 test files passed, 6 tests passed.
+
+Attempted:
+
+```bash
+npm.cmd run type-check
+```
+
+Result: failed on existing unrelated TypeScript errors across the project
+(`Login.tsx`, `ErrorBoundary.tsx`, `sample-inventory.ts`, legacy tests, and
+other files). No new type-check errors were identified in the focused edge-case
+files during the passing Vitest run.

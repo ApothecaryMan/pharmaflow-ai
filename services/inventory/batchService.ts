@@ -143,12 +143,14 @@ export const batchService = {
       p_delta: delta,
     });
     if (error) throw error;
+
+    if (!data || data.length === 0) {
+      throw new Error(`Insufficient batch stock or missing batch: ${batchId}`);
+    }
     
     if (skipFetch) {
       return null;
     }
-
-    if (!data || data.length === 0) return null;
 
     const batch = await this.getBatchById(batchId);
     return batch;
@@ -237,10 +239,19 @@ export const batchService = {
     }
 
     if (commitChanges && allocations.length > 0) {
-      // Parallelize batch updates within a single drug allocation
-      await Promise.all(allocations.map(alloc => 
-        this.updateBatchQuantity(alloc.batchId, -alloc.quantity, true)
-      ));
+      const committedAllocations: BatchAllocation[] = [];
+      try {
+        for (const alloc of allocations) {
+          await this.updateBatchQuantity(alloc.batchId, -alloc.quantity, true);
+          committedAllocations.push(alloc);
+        }
+      } catch (err) {
+        for (let i = committedAllocations.length - 1; i >= 0; i--) {
+          const alloc = committedAllocations[i];
+          await this.updateBatchQuantity(alloc.batchId, alloc.quantity, true);
+        }
+        throw err;
+      }
     }
     return allocations;
   },
@@ -260,12 +271,11 @@ export const batchService = {
     // Sort allocations to return to the latest batches first (or any consistent order)
     const sortedAllocations = [...allocations].sort((a, b) => b.quantity - a.quantity);
 
-    // Parallelize batch updates for better performance
-    await Promise.all(sortedAllocations.map(async (alloc) => {
-      if (remainingToReturn <= 0) return;
+    for (const alloc of sortedAllocations) {
+      if (remainingToReturn <= 0) break;
       
       const canReturnToThis = Math.min(alloc.quantity, remainingToReturn);
-      if (canReturnToThis <= 0) return;
+      if (canReturnToThis <= 0) continue;
 
       // Atomic update - we use rpc directly or via optimized updateBatchQuantity
       // Try to update directly; if it doesn't exist, we'll handle it (though usually it should exist)
@@ -290,7 +300,7 @@ export const batchService = {
       }
       
       remainingToReturn -= canReturnToThis;
-    }));
+    }
     
     // If there's still remaining (e.g. user is returning more than original allocation for some reason),
     // we should ideally log a warning or put it in the most recent batch.
