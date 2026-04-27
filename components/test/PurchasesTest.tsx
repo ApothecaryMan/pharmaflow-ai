@@ -519,9 +519,9 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
       case 'payment':
         return (
           <span
-            className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide text-white shadow-xs ${p.paymentType === 'cash' ? 'bg-green-600' : 'bg-primary-600'}`}
+            className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide text-white shadow-xs ${p.paymentMethod === 'cash' ? 'bg-green-600' : 'bg-primary-600'}`}
           >
-            {p.paymentType === 'cash' ? t.cash || 'Cash' : t.credit || 'Credit'}
+            {p.paymentMethod === 'cash' ? t.cash || 'Cash' : t.credit || 'Credit'}
           </span>
         );
       case 'items':
@@ -935,7 +935,8 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
       status: 'completed',
       invoiceId: uniqueOrderId,
       externalInvoiceId,
-      paymentType: paymentMethod,
+      paymentMethod: paymentMethod,
+      branchId: 'B1', // Dummy ID for test environment
     };
 
     onPurchaseComplete(purchase);
@@ -1003,7 +1004,8 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
       status: 'pending',
       invoiceId: uniqueOrderId,
       externalInvoiceId,
-      paymentType: paymentMethod,
+      paymentMethod: paymentMethod,
+      branchId: 'B1',
     };
 
     onPurchaseComplete(purchase);
@@ -2088,9 +2090,9 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                 {t.detailsModal?.payment || 'Payment'}
               </p>
               <span
-                className={`inline-block px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase text-white ${selectedPurchase.paymentType === 'cash' ? 'bg-green-600' : 'bg-primary-600'}`}
+                className={`inline-block px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase text-white ${selectedPurchase.paymentMethod === 'cash' ? 'bg-green-600' : 'bg-primary-600'}`}
               >
-                {selectedPurchase.paymentType === 'cash' ? t.cash || 'Cash' : t.credit || 'Credit'}
+                {selectedPurchase.paymentMethod === 'cash' ? t.cash || 'Cash' : t.credit || 'Credit'}
               </span>
             </div>
             <div>

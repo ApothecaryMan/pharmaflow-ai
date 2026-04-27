@@ -15,7 +15,7 @@ This document provides a low-level, technical breakdown of the architectural ove
   1. Initialize `UndoManager`.
   2. Call `purchaseService.approve` (updates status + inventory).
   3. Register rollback for inventory if finance fails.
-  4. IF `purchase.paymentType === 'cash'`:
+  4. IF `purchase.paymentMethod === 'cash'`:
      - Check `context.shiftId`. Throw if missing.
      - Call `financeService.addTransaction`.
   5. Call `auditService.log` using `context`.

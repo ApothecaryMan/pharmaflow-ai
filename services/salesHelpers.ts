@@ -11,27 +11,24 @@ import { validateStock } from '../utils/inventory';
 import * as stockOps from '../utils/stockOperations';
 
 // --- Cancellation Logic ---
-export const restoreStockForCancelledSale = (sale: Sale, inventory: Drug[]): Drug[] => {
-  // Logic: The stock movement logging and batch restoration are now handled 
-  // by the caller (hook) using stockOps.returnStock.
-  // This helper remains for the bulk state update of the drug inventory array.
-
-  // Return updated inventory array
-  return inventory.map((drug) => {
-    const matchingItems = sale.items.filter((i) => i.id === drug.id);
-    if (matchingItems.length > 0) {
-      const totalUnitsToRestore = matchingItems.reduce((sum, item) => {
-        const units = stockOps.resolveUnits(item.quantity, !!item.isUnit, drug.unitsPerPack);
-        return sum + units;
-      }, 0);
-      return {
-        ...drug,
-        stock: validateStock(drug.stock + totalUnitsToRestore),
-        expiryDate: batchService.getEarliestExpiry(drug.id, drug.branchId) || drug.expiryDate,
-      };
-    }
-    return drug;
-  });
+export const restoreStockForCancelledSale = async (
+  inventory: Drug[],
+  saleItems: CartItem[]
+): Promise<Drug[]> => {
+  return Promise.all(
+    inventory.map(async (drug) => {
+      const saleItem = saleItems.find((item) => item.id === drug.id);
+      if (saleItem) {
+        const totalUnitsToRestore = saleItem.quantity * (saleItem.isUnit ? 1 : drug.unitsPerPack || 1);
+        return {
+          ...drug,
+          stock: validateStock(drug.stock + totalUnitsToRestore),
+          expiryDate: (await batchService.getEarliestExpiry(drug.id, drug.branchId)) || drug.expiryDate,
+        };
+      }
+      return drug;
+    })
+  );
 };
 
 // --- Modification Logic (Simple Diff) ---

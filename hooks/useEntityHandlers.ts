@@ -1223,7 +1223,7 @@ export function useEntityHandlers({
         }
         
         // Update inventory state
-        const updatedInventory = restoreStockForCancelledSale(sale, inventory);
+        const updatedInventory = await restoreStockForCancelledSale(inventory, sale.items);
         setInventory(updatedInventory);
         const updatedBatches = await batchService.getAllBatches(activeBranchId); setBatches(updatedBatches);
 

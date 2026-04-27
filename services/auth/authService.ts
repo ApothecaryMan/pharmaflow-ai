@@ -434,4 +434,23 @@ export const authService = {
       return { success: false, message: err.message || 'Failed to update password' };
     }
   },
+
+  /**
+   * Resend confirmation email
+   */
+  async resendConfirmation(email: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+        options: {
+          emailRedirectTo: window.location.origin,
+        },
+      });
+      if (error) throw error;
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Failed to resend confirmation' };
+    }
+  },
 };

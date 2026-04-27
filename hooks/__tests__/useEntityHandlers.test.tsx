@@ -123,12 +123,20 @@ describe('useEntityHandlers: handleCompleteSale', () => {
     currentEmployeeId: 'emp1',
     employees: mockEmployees,
     isLoading: false,
+    activeBranchId: 'B1',
+    activeOrgId: 'O1',
+    purchaseReturns: [],
+    setPurchaseReturns: vi.fn(),
     getVerifiedDate: mockGetVerifiedDate,
     validateTransactionTime: mockValidateTransactionTime,
     updateLastTransactionTime: mockUpdateLastTransactionTime,
     setEmployees: vi.fn(),
     batches: [],
     setBatches: vi.fn(),
+    completeSale: vi.fn(),
+    processSalesReturn: vi.fn(),
+    createPurchaseReturn: vi.fn(),
+    markAsReceived: vi.fn(),
   };
 
   it('should complete sale successfully and allocate stock', async () => {
@@ -255,6 +263,10 @@ describe('useEntityHandlers: Drug Management', () => {
     setCustomers: vi.fn(),
     currentEmployeeId: 'emp1',
     isLoading: false,
+    activeBranchId: 'B1',
+    activeOrgId: 'O1',
+    purchaseReturns: [],
+    setPurchaseReturns: vi.fn(),
     getVerifiedDate: vi.fn(),
     validateTransactionTime: vi.fn(),
     updateLastTransactionTime: vi.fn(),
@@ -262,6 +274,10 @@ describe('useEntityHandlers: Drug Management', () => {
     employees: [{ id: 'emp1', role: 'admin' }] as any[],
     batches: [],
     setBatches: vi.fn(),
+    completeSale: vi.fn(),
+    processSalesReturn: vi.fn(),
+    createPurchaseReturn: vi.fn(),
+    markAsReceived: vi.fn(),
   };
 
   it('should validate drug data before adding', async () => {
@@ -328,11 +344,19 @@ describe('useEntityHandlers: RBAC & Security', () => {
     customers: [],
     setCustomers: vi.fn(),
     isLoading: false,
+    activeBranchId: 'B1',
+    activeOrgId: 'O1',
+    purchaseReturns: [],
+    setPurchaseReturns: vi.fn(),
     getVerifiedDate: vi.fn(),
     validateTransactionTime: vi.fn(),
     updateLastTransactionTime: vi.fn(),
     batches: [],
     setBatches: vi.fn(),
+    completeSale: vi.fn(),
+    processSalesReturn: vi.fn(),
+    createPurchaseReturn: vi.fn(),
+    markAsReceived: vi.fn(),
   };
 
   it('should prevent Cashier from deleting drugs', async () => {
@@ -425,6 +449,10 @@ describe('useEntityHandlers: Edge Cases', () => {
     customers: [],
     setCustomers: vi.fn(),
     isLoading: false,
+    activeBranchId: 'B1',
+    activeOrgId: 'O1',
+    purchaseReturns: [],
+    setPurchaseReturns: vi.fn(),
     getVerifiedDate: vi.fn().mockReturnValue(new Date()),
     validateTransactionTime: vi.fn().mockReturnValue({ valid: true }),
     updateLastTransactionTime: vi.fn(),
@@ -432,6 +460,10 @@ describe('useEntityHandlers: Edge Cases', () => {
     employees: [{ id: 'emp1', role: 'admin' }] as any[],
     batches: [],
     setBatches: vi.fn(),
+    completeSale: vi.fn(),
+    processSalesReturn: vi.fn(),
+    createPurchaseReturn: vi.fn(),
+    markAsReceived: vi.fn(),
   };
 
   it('should handle concurrent sales of last item correctly', async () => {
@@ -533,11 +565,19 @@ describe('useEntityHandlers: Customer Management (enrichedCustomers)', () => {
     setCustomers: vi.fn(),
     currentEmployeeId: 'emp1',
     isLoading: false,
+    activeBranchId: 'B1',
+    activeOrgId: 'O1',
+    purchaseReturns: [],
+    setPurchaseReturns: vi.fn(),
     getVerifiedDate: vi.fn(),
     validateTransactionTime: vi.fn(),
     updateLastTransactionTime: vi.fn(),
     batches: [],
     setBatches: vi.fn(),
+    completeSale: vi.fn(),
+    processSalesReturn: vi.fn(),
+    createPurchaseReturn: vi.fn(),
+    markAsReceived: vi.fn(),
   };
 
    it('should correctly calculate total purchases from sales', () => {

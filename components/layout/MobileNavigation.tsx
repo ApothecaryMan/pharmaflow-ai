@@ -68,7 +68,7 @@ interface MobileNavigationProps {
   filteredMenuItems: MenuItem[];
   activeModule: string;
   handleModuleChange: (id: string) => void;
-  view: ViewState | string;
+  view: ViewState;
   dashboardSubView: string;
   handleNavigate: (path: ViewState) => void;
   handleViewChange: (view: ViewState) => void;

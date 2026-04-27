@@ -188,7 +188,11 @@ export interface Drug {
   /** Secondary barcodes for the same product */
   additionalBarcodes?: string[];
   /** Item classification/rank for prioritization */
-  itemRank?: 'normal' | 'fast' | 'slow' | 'essential';
+  itemRank?: string;
+  /** Legacy database ID from CSV/migration */
+  dbId?: string;
+  /** Product class/grouping */
+  class?: string;
   /** Minimum allowed selling price */
   /** ISO date of creation */
   createdAt?: string;
@@ -824,6 +828,7 @@ export type ViewState =
   | 'customers'
   | 'customer-overview'
   | 'customer-history'
+  | 'medicine-search'
   | 'loyalty-overview'
   | 'loyalty-lookup'
   | 'real-time-sales'

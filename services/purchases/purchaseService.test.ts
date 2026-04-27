@@ -28,6 +28,7 @@ describe('PurchaseService', () => {
       supplierName: 'Test Supplier 1',
       status: 'pending',
       totalCost: 1000,
+      paymentMethod: 'cash',
       branchId: 'MAIN'
     },
     {
@@ -38,6 +39,7 @@ describe('PurchaseService', () => {
       supplierName: 'Test Supplier 1',
       status: 'completed',
       totalCost: 500,
+      paymentMethod: 'cash',
       branchId: 'MAIN'
     }
   ];
