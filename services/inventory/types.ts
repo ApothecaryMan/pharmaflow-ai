@@ -38,4 +38,8 @@ export interface InventoryService {
   getLowStock(threshold?: number): Promise<Drug[]>;
   getExpiringSoon(days?: number): Promise<Drug[]>;
   save(inventory: Drug[], branchId?: string): Promise<void>;
+
+  // Mappers
+  mapFromDb(db: any): Drug;
+  mapToDb(d: Partial<Drug>): any;
 }

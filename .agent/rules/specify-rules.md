@@ -1,6 +1,6 @@
 # pharmaflow-ai Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-25
+Auto-generated from all feature plans. Last updated: 2026-04-28
 
 ## Active Technologies
 - TypeScript (ES2022 target) + React 19+, Vite, Supabase, TanStack Table (013-oop-service-refactor-p2)

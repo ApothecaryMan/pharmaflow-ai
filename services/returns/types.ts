@@ -20,4 +20,10 @@ export interface ReturnService {
   // Save
   saveSalesReturns(returns: Return[], branchId?: string): Promise<void>;
   savePurchaseReturns(returns: PurchaseReturn[], branchId?: string): Promise<void>;
+
+  // Mappers
+  mapFromDb(db: any): Return;
+  mapToDb(r: Partial<Return>): any;
+  mapPurchaseReturnFromDb(db: any): PurchaseReturn;
+  mapPurchaseReturnToDb(r: Partial<PurchaseReturn>): any;
 }

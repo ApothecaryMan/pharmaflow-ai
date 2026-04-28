@@ -4,7 +4,7 @@
  */
 
 import { BaseDomainService } from '../core/BaseDomainService';
-import { money } from '../../utils/currency';
+import { money } from '../../utils/money';
 import type { Sale } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { settingsService } from '../settings/settingsService';
@@ -14,7 +14,7 @@ import type { SalesFilters, SalesService, SalesStats } from './types';
 class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
   protected tableName = 'sales';
 
-  protected mapDbToDomain(db: any): Sale {
+  public mapFromDb(db: any): Sale {
     return {
       id: db.id,
       serialId: db.serial_id,
@@ -50,7 +50,7 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
     };
   }
 
-  protected mapDomainToDb(s: Partial<Sale>): any {
+  public mapToDb(s: Partial<Sale>): any {
     const db: any = {};
     if (s.id !== undefined) db.id = s.id;
     if (s.serialId !== undefined) db.serial_id = s.serialId;
@@ -101,7 +101,7 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
       }
       const { data, error } = await query.order('date', { ascending: false });
       if (error) throw error;
-      return (data || []).map(item => this.mapDbToDomain(item));
+      return (data || []).map(item => this.mapFromDb(item));
     } catch (err) {
       console.error('[SalesService] getAll failed:', err);
       return [];
@@ -127,7 +127,7 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
       
       const { data, error } = await query.order('date', { ascending: false });
       if (error) throw error;
-      return (data || []).map(item => this.mapDbToDomain(item));
+      return (data || []).map(item => this.mapFromDb(item));
     } catch (err) {
       console.error('[SalesService] getByCustomer failed:', err);
       return [];
@@ -154,7 +154,7 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
       
       const { data, error } = await query.order('date', { ascending: false });
       if (error) throw error;
-      return (data || []).map(item => this.mapDbToDomain(item));
+      return (data || []).map(item => this.mapFromDb(item));
     } catch (err) {
       console.error('[SalesService] getByDateRange failed:', err);
       return [];
@@ -179,7 +179,7 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
       netTotal: sale.netTotal ?? sale.total,
     } as Sale;
 
-    const dbSale = this.mapDomainToDb(newSale);
+    const dbSale = this.mapToDb(newSale);
     const { error } = await supabase.from(this.tableName).insert(dbSale);
     if (error) throw error;
 
@@ -228,7 +228,7 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
       
       const { data, error } = await query.order('date', { ascending: false });
       if (error) throw error;
-      return (data || []).map(item => this.mapDbToDomain(item));
+      return (data || []).map(item => this.mapFromDb(item));
     } catch (err) {
       console.error('[SalesService] filter failed:', err);
       return [];
@@ -239,7 +239,7 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     
-    const dbSales = sales.map(s => this.mapDomainToDb({
+    const dbSales = sales.map(s => this.mapToDb({
       ...s,
       branchId: s.branchId || effectiveBranchId,
       orgId: s.orgId || settings.orgId

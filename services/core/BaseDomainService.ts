@@ -8,12 +8,12 @@ export abstract class BaseDomainService<T extends { id: string; branchId?: strin
   /**
    * Maps a database record to the domain object.
    */
-  protected abstract mapDbToDomain(db: any): T;
+  public abstract mapFromDb(db: any): T;
 
   /**
    * Maps a domain object to a database record.
    */
-  protected abstract mapDomainToDb(domain: Partial<T>): any;
+  public abstract mapToDb(domain: Partial<T>): any;
 
   /**
    * Fetches all records for a specific branch.
@@ -36,7 +36,7 @@ export abstract class BaseDomainService<T extends { id: string; branchId?: strin
       const { data, error } = await query;
       if (error) throw error;
       
-      return (data || []).map(item => this.mapDbToDomain(item));
+      return (data || []).map(item => this.mapFromDb(item));
     } catch (err) {
       console.error(`[BaseDomainService] getAll failed for ${this.tableName}:`, err);
       return [];
@@ -55,7 +55,7 @@ export abstract class BaseDomainService<T extends { id: string; branchId?: strin
         .single();
         
       if (error) throw error;
-      return data ? this.mapDbToDomain(data) : null;
+      return data ? this.mapFromDb(data) : null;
     } catch (err) {
       console.error(`[BaseDomainService] getById failed for ${this.tableName}:`, err);
       return null;
@@ -76,7 +76,7 @@ export abstract class BaseDomainService<T extends { id: string; branchId?: strin
       orgId: (data as any).orgId || settings.orgId,
     } as T;
 
-    const dbData = this.mapDomainToDb(newEntity);
+    const dbData = this.mapToDb(newEntity);
     const { error } = await (supabase as any).from(this.tableName).insert(dbData);
     if (error) throw error;
 
@@ -87,7 +87,7 @@ export abstract class BaseDomainService<T extends { id: string; branchId?: strin
    * Updates an existing record.
    */
   async update(id: string, updates: Partial<T>, skipFetch: boolean = false): Promise<T> {
-    const dbUpdates = this.mapDomainToDb(updates);
+    const dbUpdates = this.mapToDb(updates);
     const { error } = await (supabase as any)
       .from(this.tableName)
       .update(dbUpdates)

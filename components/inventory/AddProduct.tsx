@@ -14,7 +14,7 @@ import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs
 import { Tooltip } from '../common/Tooltip';
 import { CARD_LG, INPUT_BASE } from '../../utils/themeStyles';
 import * as stockOps from '../../utils/stockOperations';
-import { pricing } from '../../utils/currency';
+import { pricing } from '../../utils/money';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { idGenerator } from '../../utils/idGenerator';
 import { validationService } from '../../services/validation/validationService';

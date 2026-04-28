@@ -13,7 +13,7 @@ import { orgService } from '../org/orgService';
 class EmployeeServiceImpl extends BaseDomainService<Employee> {
   protected tableName = 'employees';
 
-  protected mapDbToDomain(db: any): Employee {
+  public mapFromDb(db: any): Employee {
     return {
       id: db.id,
       orgId: db.org_id,
@@ -43,7 +43,7 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
     };
   }
 
-  protected mapDomainToDb(e: Partial<Employee>): any {
+  public mapToDb(e: Partial<Employee>): any {
     const db: any = {};
     if (e.id !== undefined) db.id = e.id;
     if (e.orgId !== undefined) db.org_id = e.orgId;
@@ -98,7 +98,7 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
       
       const { data, error } = await query.order('name', { ascending: true });
       if (error) throw error;
-      return (data || []).map(item => this.mapDbToDomain(item));
+      return (data || []).map(item => this.mapFromDb(item));
     } catch (err) {
       console.error('[EmployeeService] getAll failed:', err);
       return [];
@@ -127,7 +127,7 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
       newEmployee.employeeCode = `EMP-${String(maxSerial + 1).padStart(3, '0')}`;
     }
 
-    const dbEmployee = this.mapDomainToDb(newEmployee);
+    const dbEmployee = this.mapToDb(newEmployee);
     
     // Safety check for multi-tenant isolation
     if (!dbEmployee.org_id) {
@@ -147,7 +147,7 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     
-    const dbEmployees = employees.map(e => this.mapDomainToDb({
+    const dbEmployees = employees.map(e => this.mapToDb({
       ...e,
       branchId: e.branchId || effectiveBranchId,
       orgId: e.orgId || settings.orgId

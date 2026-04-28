@@ -34,4 +34,8 @@ export interface CustomerService {
   getStats(branchId?: string): Promise<CustomerStats>;
   getVip(branchId?: string): Promise<Customer[]>;
   save(customers: Customer[], branchId?: string): Promise<void>;
+
+  // Mappers
+  mapFromDb(db: any): Customer;
+  mapToDb(c: Partial<Customer>): any;
 }

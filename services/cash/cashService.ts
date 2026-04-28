@@ -13,7 +13,7 @@ import { settingsService } from '../settings/settingsService';
 class ShiftsServiceImpl extends BaseDomainService<Shift> {
   protected tableName = 'shifts';
 
-  protected mapDbToDomain(db: any): Shift {
+  public mapFromDb(db: any): Shift {
     return {
       id: db.id,
       branchId: db.branch_id,
@@ -37,7 +37,7 @@ class ShiftsServiceImpl extends BaseDomainService<Shift> {
     };
   }
 
-  protected mapDomainToDb(s: Partial<Shift>): any {
+  public mapToDb(s: Partial<Shift>): any {
     const db: any = {};
     if (s.id !== undefined) db.id = s.id;
     if (s.branchId !== undefined) db.branch_id = s.branchId;
@@ -65,7 +65,7 @@ class ShiftsServiceImpl extends BaseDomainService<Shift> {
 class CashTransactionsServiceImpl extends BaseDomainService<CashTransaction> {
   protected tableName = 'cash_transactions';
 
-  protected mapDbToDomain(db: any): CashTransaction {
+  public mapFromDb(db: any): CashTransaction {
     return {
       id: db.id,
       branchId: db.branch_id,
@@ -80,7 +80,7 @@ class CashTransactionsServiceImpl extends BaseDomainService<CashTransaction> {
     };
   }
 
-  protected mapDomainToDb(t: Partial<CashTransaction>): any {
+  public mapToDb(t: Partial<CashTransaction>): any {
     const db: any = {};
     if (t.id !== undefined) db.id = t.id;
     if (t.branchId !== undefined) db.branch_id = t.branchId;
@@ -109,6 +109,8 @@ export interface CashServiceInterface {
   closeShift(shiftId: string, closingBalance: number, closedBy: string, notes?: string): Promise<Shift>;
   addTransaction(shiftId: string, transaction: Omit<CashTransaction, 'id'>): Promise<CashTransaction>;
   getTransactions(shiftId?: string): Promise<CashTransaction[]>;
+  mapFromDb(db: any): Shift;
+  mapFromDbTransaction(db: any): CashTransaction;
 }
 
 export const cashService: CashServiceInterface = {
@@ -128,7 +130,7 @@ export const cashService: CashServiceInterface = {
       return null;
     }
     
-    return data ? (shiftsInternal as any).mapDbToDomain(data) : null;
+    return data ? shiftsInternal.mapFromDb(data) : null;
   },
 
   getAllShifts: async (branchId?: string): Promise<Shift[]> => {
@@ -205,8 +207,11 @@ export const cashService: CashServiceInterface = {
         .select('*')
         .eq('shift_id', shiftId);
       if (error) throw error;
-      return (data || []).map(item => (transactionsInternal as any).mapDbToDomain(item));
+      return (data || []).map(item => transactionsInternal.mapFromDb(item));
     }
     return transactionsInternal.getAll();
-  }
+  },
+  
+  mapFromDb: (db: any) => shiftsInternal.mapFromDb(db),
+  mapFromDbTransaction: (db: any) => transactionsInternal.mapFromDb(db),
 };

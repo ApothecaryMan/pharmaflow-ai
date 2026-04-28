@@ -281,12 +281,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
         },
         (payload: any) => {
           console.log('Real-time Sale Event:', payload);
-          if (payload.eventType === 'INSERT') {
-            setSalesState((prev) => [payload.new as Sale, ...prev]);
-          } else if (payload.eventType === 'UPDATE') {
-            setSalesState((prev) =>
-              prev.map((s) => (s.id === payload.new.id ? (payload.new as Sale) : s))
-            );
+          
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const newSale = salesService.mapFromDb(payload.new);
+            setSalesState(prev => [newSale, ...prev.filter(s => s.id !== newSale.id)]);
           } else if (payload.eventType === 'DELETE') {
             setSalesState((prev) => prev.filter((s) => s.id !== payload.old.id));
           }
@@ -309,12 +307,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
         },
         (payload: any) => {
           console.log('Real-time Return Event:', payload);
-          if (payload.eventType === 'INSERT') {
-            setReturnsState((prev) => [payload.new as Return, ...prev]);
-          } else if (payload.eventType === 'UPDATE') {
-            setReturnsState((prev) =>
-              prev.map((r) => (r.id === payload.new.id ? (payload.new as Return) : r))
-            );
+          
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const newReturn = returnService.mapFromDb(payload.new);
+            setReturnsState(prev => [newReturn, ...prev.filter(r => r.id !== newReturn.id)]);
           } else if (payload.eventType === 'DELETE') {
             setReturnsState((prev) => prev.filter((r) => r.id !== payload.old.id));
           }
@@ -336,12 +332,11 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
           filter: `branch_id=eq.${activeBranchId}`,
         },
         (payload: any) => {
-          if (payload.eventType === 'INSERT') {
-            setRawInventory((prev) => [...prev, payload.new as Drug]);
-          } else if (payload.eventType === 'UPDATE') {
-            setRawInventory((prev) =>
-              prev.map((d) => (d.id === payload.new.id ? (payload.new as Drug) : d))
-            );
+          console.log('Real-time Drug Event:', payload);
+          
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const newDrug = inventoryService.mapFromDb(payload.new);
+            setRawInventory(prev => [newDrug, ...prev.filter(d => d.id !== newDrug.id)]);
           } else if (payload.eventType === 'DELETE') {
             setRawInventory((prev) => prev.filter((d) => d.id !== payload.old.id));
           }
@@ -449,9 +444,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
   const completeSale = useCallback(async (saleData: any, context: ActionContext) => {
     const result = await transactionService.processCheckout(saleData, rawInventory, context);
     if (!result.success || !result.sale) throw new Error(result.error);
-    await refreshAll();
     return result.sale;
-  }, [activeBranchId, rawInventory, refreshAll]);
+  }, [rawInventory]);
 
   const addSupplier = useCallback(async (supplier: any) => {
     const newSupplier = await supplierService.create(supplier, activeBranchId);
@@ -481,13 +475,11 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
   const approvePurchase = useCallback(async (id: string, context: ActionContext) => {
     const result = await transactionService.processPurchaseTransaction(id, context);
     if (!result.success) throw new Error(result.error);
-    await refreshAll();
-  }, [refreshAll]);
+  }, []);
 
   const markAsReceived = useCallback(async (id: string, receiverName: string) => {
     await purchaseService.markAsReceived(id, receiverName);
-    await refreshAll();
-  }, [refreshAll]);
+  }, []);
 
   const rejectPurchase = useCallback(async (id: string) => {
     await purchaseService.reject(id, '');
@@ -497,15 +489,13 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
   const processSalesReturn = useCallback(async (returnData: any, sale: Sale, context: ActionContext) => {
     const result = await transactionService.processReturn(returnData, rawInventory, sale, context);
     if (!result.success) throw new Error(result.error);
-    await refreshAll();
-  }, [rawInventory, refreshAll]);
+  }, [rawInventory]);
 
   const createPurchaseReturn = useCallback(async (ret: any, context: ActionContext) => {
     const result = await transactionService.processPurchaseReturnTransaction(ret, context);
     if (!result.success || !result.data) throw new Error(result.error);
-    await refreshAll();
     return result.data;
-  }, [refreshAll]);
+  }, []);
 
   const addReturn = useCallback(async (ret: any) => {
     const newReturn = await returnService.createSalesReturn(ret, activeBranchId);

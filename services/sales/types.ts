@@ -35,4 +35,8 @@ export interface SalesService {
   getStats(branchId?: string): Promise<SalesStats>;
   filter(filters: SalesFilters, branchId?: string): Promise<Sale[]>;
   save(sales: Sale[], branchId?: string): Promise<void>;
+
+  // Mappers
+  mapFromDb(db: any): Sale;
+  mapToDb(s: Partial<Sale>): any;
 }

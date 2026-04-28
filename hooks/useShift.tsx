@@ -70,30 +70,79 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, [activeBranchId]);
 
   useEffect(() => {
+    if (!activeBranchId) return;
+
     refreshShifts();
 
     // Listen for realtime updates from Supabase
-    const channel = supabase.channel('shifts-realtime')
+    const channel = supabase.channel(`shifts-realtime-${activeBranchId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'shifts' },
-        () => {
-          refreshShifts();
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'shifts',
+          filter: `branch_id=eq.${activeBranchId}` 
+        },
+        (payload: any) => {
+          console.log('[Shift Realtime] Shift Event:', payload);
+          
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const newShift = cashService.mapFromDb(payload.new);
+            setShifts(prev => {
+              const existing = prev.find(s => s.id === newShift.id);
+              // Preserve transactions if they exist in the current state
+              if (existing) {
+                newShift.transactions = existing.transactions || [];
+              }
+              return [newShift, ...prev.filter(s => s.id !== newShift.id)];
+            });
+          } else if (payload.eventType === 'DELETE') {
+            setShifts(prev => prev.filter(s => s.id !== payload.old.id));
+          }
         }
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'cash_transactions' },
-        () => {
-          refreshShifts();
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'cash_transactions',
+          filter: `branch_id=eq.${activeBranchId}`
+        },
+        (payload: any) => {
+          console.log('[Shift Realtime] Transaction Event:', payload);
+          
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const newTx = cashService.mapFromDbTransaction(payload.new);
+            
+            // Update the shifts list to include this transaction
+            setShifts(prev => prev.map(s => {
+              if (s.id === newTx.shiftId) {
+                const existingTxs = s.transactions || [];
+                // Replace or add the transaction
+                const filtered = existingTxs.filter(t => t.id !== newTx.id);
+                return { ...s, transactions: [newTx, ...filtered] };
+              }
+              return s;
+            }));
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = payload.old.id;
+            setShifts(prev => prev.map(s => ({
+              ...s,
+              transactions: (s.transactions || []).filter(t => t.id !== deletedId)
+            })));
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`[Shift Realtime] Subscription Status (${activeBranchId}):`, status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refreshShifts]);
+  }, [activeBranchId, refreshShifts]);
 
   // --- Actions ---
 

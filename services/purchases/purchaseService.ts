@@ -18,7 +18,7 @@ import type { PurchaseFilters, PurchaseService, PurchaseStats } from './types';
 class PurchaseServiceImpl extends BaseDomainService<Purchase> implements PurchaseService {
   protected tableName = 'purchases';
 
-  protected mapDbToDomain(db: any): Purchase {
+  public mapFromDb(db: any): Purchase {
     return {
       id: db.id,
       orgId: db.org_id,
@@ -43,7 +43,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     };
   }
 
-  protected mapDomainToDb(p: Partial<Purchase>): any {
+  public mapToDb(p: Partial<Purchase>): any {
     const db: any = {};
     if (p.id !== undefined) db.id = p.id;
     if (p.orgId !== undefined) db.org_id = p.orgId;
@@ -83,7 +83,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
       }
       const { data, error } = await query.order('date', { ascending: false });
       if (error) throw error;
-      return (data || []).map(item => this.mapDbToDomain(item));
+      return (data || []).map(item => this.mapFromDb(item));
     } catch (err) {
       console.error('[PurchaseService] getAll failed:', err);
       return [];
@@ -109,7 +109,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
       
       const { data, error } = await query.order('date', { ascending: false });
       if (error) throw error;
-      return (data || []).map(item => this.mapDbToDomain(item));
+      return (data || []).map(item => this.mapFromDb(item));
     } catch (err) {
       console.error('[PurchaseService] getBySupplier failed:', err);
       return [];
@@ -135,7 +135,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
       
       const { data, error } = await query.order('date', { ascending: false });
       if (error) throw error;
-      return (data || []).map(item => this.mapDbToDomain(item));
+      return (data || []).map(item => this.mapFromDb(item));
     } catch (err) {
       console.error('[PurchaseService] getByStatus failed:', err);
       return [];
@@ -168,7 +168,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
       
       const { data, error } = await query.order('date', { ascending: false });
       if (error) throw error;
-      return (data || []).map(item => this.mapDbToDomain(item));
+      return (data || []).map(item => this.mapFromDb(item));
     } catch (err) {
       console.error('[PurchaseService] filter failed:', err);
       return [];
@@ -188,7 +188,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
       date: purchase.date || new Date().toISOString(),
     } as Purchase;
 
-    const dbPurchase = this.mapDomainToDb(newPurchase);
+    const dbPurchase = this.mapToDb(newPurchase);
     const { error } = await supabase.from(this.tableName).insert(dbPurchase);
     if (error) throw error;
 
@@ -312,7 +312,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     
-    const dbPurchases = purchases.map(p => this.mapDomainToDb({
+    const dbPurchases = purchases.map(p => this.mapToDb({
       ...p,
       branchId: p.branchId || effectiveBranchId,
       orgId: p.orgId || settings.orgId

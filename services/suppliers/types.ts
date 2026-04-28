@@ -19,4 +19,8 @@ export interface SupplierService {
   update(id: string, updates: Partial<Supplier>): Promise<Supplier>;
   delete(id: string): Promise<boolean>;
   save(suppliers: Supplier[], branchId?: string): Promise<void>;
+
+  // Mappers
+  mapFromDb(db: any): Supplier;
+  mapToDb(s: Partial<Supplier>): any;
 }

@@ -167,9 +167,9 @@ export class DashboardService {
    * Calculates Efficiency metrics.
    */
   static calculateEfficiency(cogs: number, valuation: number): DashboardEfficiency {
-    const turnoverRatio = valuation > 0 ? (cogs / valuation) : 0;
-    const dailyCogs = cogs / 30 || 1;
-    const daysOfInventory = valuation / dailyCogs;
+    const turnoverRatio = valuation > 0 ? money.divide(cogs, valuation) : 0;
+    const dailyCogs = money.divide(cogs, 30) || 0.01; // Avoid 0 division
+    const daysOfInventory = money.divide(valuation, dailyCogs);
 
     return {
       turnoverRatio,
@@ -242,10 +242,10 @@ export class DashboardService {
   static calculateAverages(sales: Sale[]): { avgOrderValue: number; returnRate: number } {
     const { totalRevenue, totalReturns } = this.calculateRevenueAndReturns(sales);
     
-    const avgOrderValue = sales.length > 0 ? totalRevenue / sales.length : 0;
+    const avgOrderValue = sales.length > 0 ? money.divide(totalRevenue, sales.length) : 0;
     
     const grossRevenue = money.add(totalRevenue, totalReturns);
-    const returnRate = grossRevenue > 0 ? (totalReturns / grossRevenue) * 100 : 0;
+    const returnRate = grossRevenue > 0 ? money.multiply(money.divide(totalReturns, grossRevenue), 100, 0) : 0;
 
     return { avgOrderValue, returnRate };
   }

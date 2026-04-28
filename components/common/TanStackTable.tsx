@@ -209,6 +209,7 @@ export interface TanStackTableProps<TData extends { id: string | number }, TValu
   enableTopToolbar?: boolean;
   enableShowAll?: boolean;
   pendingRowIds?: Set<string | number>;
+  enableNewRowAnimation?: boolean;
 }
 
 // Helper to get stored settings
@@ -260,6 +261,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   leftCustomControls,
   rightCustomControls,
   pendingRowIds = new Set(),
+  enableNewRowAnimation = true,
 }: TanStackTableProps<TData, TValue>) {
   // Detect RTL direction
   const isRtl = typeof document !== 'undefined' && document.dir === 'rtl';
@@ -470,7 +472,9 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
   const [localLoading, setLocalLoading] = React.useState(data.length > 0);
   const [updatedRowIds, setUpdatedRowIds] = React.useState<Set<string | number>>(new Set());
+  const [newRowIds, setNewRowIds] = React.useState<Set<string | number>>(new Set());
   const prevDataRef = React.useRef<any[]>(data);
+  const isFirstRun = React.useRef(true);
   
   React.useEffect(() => {
     // Smooth transition: Show skeleton for at least 100ms on mount
@@ -480,31 +484,46 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
   // Row-level Change Detection (Live Sync Feel)
   React.useEffect(() => {
-    if (prevDataRef.current !== data && data.length > 0 && prevDataRef.current.length > 0) {
+    if (prevDataRef.current !== data && data.length > 0) {
+      // Baseline Capture: Don't animate initial load
+      if (isFirstRun.current) {
+        isFirstRun.current = false;
+        prevDataRef.current = data;
+        return;
+      }
+
+      const addedIds = new Set<string | number>();
       const changedIds = new Set<string | number>();
       
-      // Use a Map for O(1) lookup performance
       const oldDataMap = new Map(prevDataRef.current.map(r => [r.id, r]));
       
-      // SURGICAL & OPTIMIZED: Only check rows that were explicitly pending
-      pendingRowIds.forEach((id) => {
-        const newRow = data.find(r => r.id === id);
-        const oldRow = oldDataMap.get(id);
-        if (newRow && oldRow && JSON.stringify(oldRow) !== JSON.stringify(newRow)) {
-          changedIds.add(id);
+      for (const row of data) {
+        const oldRow = oldDataMap.get(row.id);
+        if (!oldRow) {
+          if (enableNewRowAnimation) addedIds.add(row.id);
+        } else if (pendingRowIds.has(row.id) && JSON.stringify(oldRow) !== JSON.stringify(row)) {
+          changedIds.add(row.id);
         }
-      });
+      }
+
+      if (addedIds.size > 0) {
+        setNewRowIds(prev => new Set([...prev, ...addedIds]));
+        setTimeout(() => {
+          setNewRowIds(prev => {
+            const next = new Set(prev);
+            addedIds.forEach(id => next.delete(id));
+            return next;
+          });
+        }, 1500); // Shorter duration for snappier feel
+      }
 
       if (changedIds.size > 0) {
         setUpdatedRowIds(changedIds);
-        const timer = setTimeout(() => {
-          setUpdatedRowIds(new Set());
-        }, 2000); // Pulse for 2 seconds
-        return () => clearTimeout(timer);
+        setTimeout(() => setUpdatedRowIds(new Set()), 2000);
       }
     }
     prevDataRef.current = data;
-  }, [data]);
+  }, [data, enableNewRowAnimation, pendingRowIds]);
 
   const table = useReactTable({
     data,
@@ -1021,14 +1040,16 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                           onRowContextMenu(e, row.original);
                         }
                       }}
-                      className={`transition-colors overflow-visible group/row ${onRowClick ? 'cursor-pointer' : ''} ${
-                        pendingRowIds.has(row.original.id)
-                          ? 'bg-orange-50/50 dark:bg-orange-900/20 animate-pulse'
-                          : updatedRowIds.has(row.original.id)
-                            ? 'bg-emerald-50/50 dark:bg-emerald-900/20 animate-pulse'
-                            : activeIndex !== undefined && rowIndex === activeIndex
-                              ? `bg-primary-50 dark:bg-primary-900/20`
-                              : 'hover:bg-(--bg-hover)'
+                          className={`transition-all duration-300 overflow-visible group/row ${onRowClick ? 'cursor-pointer' : ''} ${
+                        newRowIds.has(row.original.id)
+                          ? 'new-transaction'
+                          : pendingRowIds.has(row.original.id)
+                            ? 'bg-orange-50/50 dark:bg-orange-900/20 animate-pulse'
+                            : updatedRowIds.has(row.original.id)
+                              ? 'bg-emerald-50/50 dark:bg-emerald-900/20 animate-pulse'
+                              : activeIndex !== undefined && rowIndex === activeIndex
+                                ? `bg-primary-50 dark:bg-primary-900/20`
+                                : 'hover:bg-(--bg-hover)'
                       }`}
                     >
                       {row.getVisibleCells().map((cell: any) => {

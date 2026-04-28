@@ -19,7 +19,7 @@ import type { ReturnService } from './types';
 class SalesReturnServiceImpl extends BaseDomainService<Return> {
   protected tableName = 'returns';
 
-  protected mapDbToDomain(db: any): Return {
+  public mapFromDb(db: any): Return {
     return {
       id: db.id,
       serialId: db.serial_id,
@@ -36,7 +36,7 @@ class SalesReturnServiceImpl extends BaseDomainService<Return> {
     };
   }
 
-  protected mapDomainToDb(r: Partial<Return>): any {
+  public mapToDb(r: Partial<Return>): any {
     const db: any = {};
     if (r.id !== undefined) db.id = r.id;
     if (r.serialId !== undefined) db.serial_id = r.serialId;
@@ -58,7 +58,7 @@ class SalesReturnServiceImpl extends BaseDomainService<Return> {
 class PurchaseReturnServiceImpl extends BaseDomainService<PurchaseReturn> {
   protected tableName = 'purchase_returns';
 
-  protected mapDbToDomain(db: any): PurchaseReturn {
+  public mapFromDb(db: any): PurchaseReturn {
     return {
       id: db.id,
       orgId: db.org_id,
@@ -74,7 +74,7 @@ class PurchaseReturnServiceImpl extends BaseDomainService<PurchaseReturn> {
     };
   }
 
-  protected mapDomainToDb(r: Partial<PurchaseReturn>): any {
+  public mapToDb(r: Partial<PurchaseReturn>): any {
     const db: any = {};
     if (r.id !== undefined) db.id = r.id;
     if (r.branchId !== undefined) db.branch_id = r.branchId;
@@ -106,7 +106,7 @@ export const returnService: ReturnService = {
       }
       const { data, error } = await query.order('date', { ascending: false });
       if (error) throw error;
-      return (data || []).map(item => (salesReturnInternal as any).mapDbToDomain(item));
+      return (data || []).map(item => salesReturnInternal.mapFromDb(item));
     } catch (err) {
       console.error('[ReturnService] getAllSalesReturns failed:', err);
       return [];
@@ -179,7 +179,7 @@ export const returnService: ReturnService = {
     }
 
     // 2. Save Return Record
-    const dbReturn = (salesReturnInternal as any).mapDomainToDb({
+    const dbReturn = salesReturnInternal.mapToDb({
       ...newReturn,
       processedBy: newReturn.processedBy || authService.getCurrentUserSync()?.employeeId
     });
@@ -201,7 +201,7 @@ export const returnService: ReturnService = {
       }
       const { data, error } = await query.order('date', { ascending: false });
       if (error) throw error;
-      return (data || []).map(item => (purchaseReturnInternal as any).mapDbToDomain(item));
+      return (data || []).map(item => purchaseReturnInternal.mapFromDb(item));
     } catch (err) {
       console.error('[ReturnService] getAllPurchaseReturns failed:', err);
       return [];
@@ -255,7 +255,7 @@ export const returnService: ReturnService = {
     }
 
     // 2. Save Return Record
-    const dbReturn = (purchaseReturnInternal as any).mapDomainToDb(newReturn);
+    const dbReturn = purchaseReturnInternal.mapToDb(newReturn);
     const { error } = await supabase.from('purchase_returns').insert(dbReturn);
     if (error) throw error;
 
@@ -267,7 +267,7 @@ export const returnService: ReturnService = {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     
-    const dbReturns = returns.map(r => (salesReturnInternal as any).mapDomainToDb({
+    const dbReturns = returns.map(r => salesReturnInternal.mapToDb({
       ...r,
       branchId: r.branchId || effectiveBranchId,
       orgId: r.orgId || settings.orgId
@@ -283,7 +283,7 @@ export const returnService: ReturnService = {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     
-    const dbReturns = returns.map(r => (purchaseReturnInternal as any).mapDomainToDb({
+    const dbReturns = returns.map(r => purchaseReturnInternal.mapToDb({
       ...r,
       branchId: r.branchId || effectiveBranchId,
       orgId: r.orgId || settings.orgId
@@ -294,4 +294,10 @@ export const returnService: ReturnService = {
       if (error) throw error;
     }
   },
+
+  // Mappers
+  mapFromDb: (db: any) => salesReturnInternal.mapFromDb(db),
+  mapToDb: (r: Partial<Return>) => salesReturnInternal.mapToDb(r),
+  mapPurchaseReturnFromDb: (db: any) => purchaseReturnInternal.mapFromDb(db),
+  mapPurchaseReturnToDb: (r: Partial<PurchaseReturn>) => purchaseReturnInternal.mapToDb(r),
 };

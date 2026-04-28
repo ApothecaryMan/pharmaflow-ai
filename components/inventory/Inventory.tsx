@@ -11,7 +11,8 @@ import {
   isMedicineCategory,
 } from '../../data/productCategories';
 import type { Drug } from '../../types';
-import { formatCurrency, formatCurrencyParts, formatCompactCurrency, money } from '../../utils/currency';
+import { formatCurrency, formatCurrencyParts, formatCompactCurrency } from '../../utils/currency';
+import { money } from '../../utils/money';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatStock, formatStockParts, validateStock } from '../../utils/inventory';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';

@@ -10,7 +10,7 @@ import { supabase } from '../../lib/supabase';
 class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryService {
   protected tableName = 'drugs';
 
-  protected mapDbToDomain(db: any): Drug {
+  public mapFromDb(db: any): Drug {
     return {
       id: db.id,
       orgId: db.org_id,
@@ -43,7 +43,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
     };
   }
 
-  protected mapDomainToDb(d: Partial<Drug>): any {
+  public mapToDb(d: Partial<Drug>): any {
     const db: any = {};
     if (d.id !== undefined) db.id = d.id;
     if (d.orgId !== undefined) db.org_id = d.orgId;
@@ -88,7 +88,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
       if (branchId) query = query.eq('branch_id', branchId);
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []).map(item => this.mapDbToDomain(item));
+      return (data || []).map(item => this.mapFromDb(item));
     } catch (err) {
       console.error('[InventoryService] getAllBranches failed:', err);
       return [];
@@ -101,7 +101,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
         .select('*')
         .eq('barcode', barcode)
         .maybeSingle();
-      if (!error && data) return this.mapDbToDomain(data);
+      if (!error && data) return this.mapFromDb(data);
     } catch {}
 
     const all = await this.getAll(branchId);
@@ -152,7 +152,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
       status: drug.status || 'active',
     } as Drug;
     
-    const dbDrug = this.mapDomainToDb(newDrug);
+    const dbDrug = this.mapToDb(newDrug);
     const { error } = await supabase.from(this.tableName).insert(dbDrug);
     if (error) throw error;
 
@@ -297,7 +297,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
       orgId: settings.orgId
     }));
 
-    const dbDrugs = processedInventory.map(d => this.mapDomainToDb(d));
+    const dbDrugs = processedInventory.map(d => this.mapToDb(d));
     if (dbDrugs.length > 0) {
       await supabase.from(this.tableName).upsert(dbDrugs, { onConflict: 'id' });
     }

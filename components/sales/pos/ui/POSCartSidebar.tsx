@@ -11,7 +11,7 @@ import { Tooltip } from '../../../common/Tooltip';
 import { SortableCartItem } from '../SortableCartItem';
 import { resolvePrice } from '../../../../utils/stockOperations';
 import { useNetworkStatus } from '../../../../hooks/useNetworkStatus';
-import { money } from '../../../../utils/currency';
+import { money } from '../../../../utils/money';
 
 
 const cartScrollStyles = `
@@ -69,6 +69,7 @@ export interface POSCartSidebarProps {
   paymentMethod: 'cash' | 'visa';
   isMobile?: boolean; // New prop for UI separation
   isProcessing?: boolean;
+  taxAmount?: number;
 }
 
 export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
@@ -387,18 +388,18 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
               </div>
             )}
 
-            {/* Discount Row */}
-            {orderDiscountPercent > 0 && (
-              <div className="flex items-center justify-between text-[11px] text-secondary-600 dark:text-secondary-400 font-bold uppercase tracking-wider">
-                <span>{t.orderDiscount}</span>
-                <span className="tabular-nums font-black text-xs">
-                  {orderDiscountPercent.toFixed(1)}%
+            {/* Tax Row */}
+            {taxAmount !== undefined && taxAmount > 0 && (
+              <div className="flex items-center justify-between text-[11px] text-gray-500 font-bold uppercase tracking-wider">
+                <span className="opacity-70">{t.tax || 'Tax'}</span>
+                <span className="tabular-nums font-black text-xs text-gray-700 dark:text-gray-300">
+                  <PriceDisplay value={taxAmount} />
                 </span>
               </div>
             )}
 
-            {/* Subtle Divider (only if subtotal or discount exists) */}
-            {(grossSubtotal !== cartTotal || orderDiscountPercent > 0) && (
+            {/* Subtle Divider (only if subtotal, discount, or tax exists) */}
+            {(grossSubtotal !== cartTotal || orderDiscountPercent > 0 || (taxAmount || 0) > 0) && (
               <div className="h-px bg-gray-200/50 dark:bg-gray-700/50 -mx-1" />
             )}
 

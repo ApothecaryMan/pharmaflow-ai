@@ -19,7 +19,7 @@ import { formatStock } from '../../../utils/inventory';
 import { resolvePrice } from '../../../utils/stockOperations';
 import { parseSearchTerm } from '../../../utils/searchUtils';
 import { formatExpiryDate, parseExpiryEndOfMonth } from '../../../utils/expiryUtils';
-import { money, formatCurrency } from '../../../utils/currency';
+import { money, formatCurrency } from '../../../utils/money';
 
 import { useContextMenu } from '../../common/ContextMenu';
 import { FilterDropdown } from '../../common/FilterDropdown';
@@ -186,12 +186,13 @@ export const POS: React.FC<POSProps> = ({
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [setSearch]);
 
-  const { grossSubtotal, cartTotal, subtotal } = useMemo(() => {
+  const { grossSubtotal, cartTotal, subtotal, taxAmount } = useMemo(() => {
     const totals = pricingService.calculateOrderTotals(cart, globalDiscount || 0);
     return { 
       grossSubtotal: totals.grossSubtotal, 
       cartTotal: totals.finalTotal, 
-      subtotal: totals.grossSubtotal 
+      subtotal: totals.grossSubtotal,
+      taxAmount: totals.taxAmount
     };
   }, [cart, globalDiscount]);
 
@@ -997,6 +998,7 @@ export const POS: React.FC<POSProps> = ({
           isRTL={isRTL}
           paymentMethod={paymentMethod}
           isProcessing={isProcessing}
+          taxAmount={taxAmount}
         />
 
         {/* Product Details Modal */}

@@ -14,7 +14,7 @@ class SupplierServiceImpl extends BaseEntityService<Supplier> implements Supplie
   protected tableName = 'suppliers';
   protected searchColumns = ['name', 'contact_person', 'phone', 'email'];
 
-  protected mapDbToDomain(db: any): Supplier {
+  public mapFromDb(db: any): Supplier {
     return {
       id: db.id,
       orgId: db.org_id,
@@ -30,7 +30,7 @@ class SupplierServiceImpl extends BaseEntityService<Supplier> implements Supplie
     };
   }
 
-  protected mapDomainToDb(s: Partial<Supplier>): any {
+  public mapToDb(s: Partial<Supplier>): any {
     const db: any = {};
     if (s.id !== undefined) db.id = s.id;
     if (s.orgId !== undefined) db.org_id = s.orgId;
@@ -55,7 +55,7 @@ class SupplierServiceImpl extends BaseEntityService<Supplier> implements Supplie
       orgId: settings.orgId,
     } as Supplier;
 
-    const dbSupplier = this.mapDomainToDb(newSupplier);
+    const dbSupplier = this.mapToDb(newSupplier);
     const { error } = await supabase.from(this.tableName).insert(dbSupplier);
     if (error) throw error;
 
@@ -66,7 +66,7 @@ class SupplierServiceImpl extends BaseEntityService<Supplier> implements Supplie
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     
-    const dbSuppliers = suppliers.map(s => this.mapDomainToDb({
+    const dbSuppliers = suppliers.map(s => this.mapToDb({
       ...s,
       branchId: s.branchId || effectiveBranchId,
       orgId: s.orgId || settings.orgId

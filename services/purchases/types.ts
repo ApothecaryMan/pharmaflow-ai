@@ -34,4 +34,8 @@ export interface PurchaseService {
   delete(id: string): Promise<boolean>;
   getStats(branchId?: string): Promise<PurchaseStats>;
   save(purchases: Purchase[], branchId?: string): Promise<void>;
+
+  // Mappers
+  mapFromDb(db: any): Purchase;
+  mapToDb(p: Partial<Purchase>): any;
 }

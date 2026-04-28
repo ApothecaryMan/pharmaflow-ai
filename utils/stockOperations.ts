@@ -2,7 +2,7 @@ import { batchService } from '../services/inventory/batchService';
 import { stockMovementService } from '../services/inventory/stockMovement/stockMovementService';
 import type { Drug, StockBatch, BatchAllocation, StockMovementType, CartItem } from '../types';
 import { validateStock, assertStockSufficient } from './inventory';
-import { money } from './currency';
+import { money } from './money';
 
 /**
  * Context for stock operations to ensure accurate movement logging.

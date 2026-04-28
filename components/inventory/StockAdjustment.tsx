@@ -25,7 +25,7 @@ import { SmartInput, useSmartDirection } from '../common/SmartInputs';
 // UI Redesign Imports
 import { TanStackTable, PriceDisplay } from '../common/TanStackTable';
 import { StockAdjustmentPrint } from './StockAdjustmentPrint';
-import { money } from '../../utils/currency';
+import { money } from '../../utils/money';
 
 interface StockAdjustmentProps {
   onUpdateInventory: (drugs: Drug[]) => void;

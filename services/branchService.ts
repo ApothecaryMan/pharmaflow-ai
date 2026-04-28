@@ -16,7 +16,7 @@ const ACTIVE_BRANCH_KEY = 'pharma_active_branch_id';
 class BranchServiceImpl extends BaseDomainService<Branch> {
   protected tableName = 'branches';
 
-  protected mapDbToDomain(db: any): Branch {
+  public mapFromDb(db: any): Branch {
     return {
       id: db.id,
       orgId: db.org_id,
@@ -33,7 +33,7 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
     };
   }
 
-  protected mapDomainToDb(b: Partial<Branch>): any {
+  public mapToDb(b: Partial<Branch>): any {
     const db: any = {};
     if (b.id !== undefined) db.id = b.id;
     if (b.orgId !== undefined) db.org_id = b.orgId;
@@ -60,7 +60,7 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
       
       const { data, error } = await query.order('name', { ascending: true });
       if (error) throw error;
-      return (data || []).map(item => this.mapDbToDomain(item));
+      return (data || []).map(item => this.mapFromDb(item));
     } catch (err) {
       console.error('[BranchService] getAll failed:', err);
       return [];
@@ -113,7 +113,7 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
       updatedAt: new Date().toISOString(),
     } as Branch;
 
-    const dbBranch = this.mapDomainToDb(newBranch);
+    const dbBranch = this.mapToDb(newBranch);
     const { error } = await supabase.from(this.tableName).insert(dbBranch);
     if (error) throw error;
 

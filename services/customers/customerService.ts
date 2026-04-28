@@ -14,7 +14,7 @@ class CustomerServiceImpl extends BaseEntityService<Customer> implements Custome
   protected tableName = 'customers';
   protected searchColumns = ['name', 'phone', 'code', 'email'];
 
-  protected mapDbToDomain(db: any): Customer {
+  public mapFromDb(db: any): Customer {
     return {
       id: db.id,
       orgId: db.org_id,
@@ -44,7 +44,7 @@ class CustomerServiceImpl extends BaseEntityService<Customer> implements Custome
     };
   }
 
-  protected mapDomainToDb(c: Partial<Customer>): any {
+  public mapToDb(c: Partial<Customer>): any {
     const db: any = {};
     if (c.id !== undefined) db.id = c.id;
     if (c.orgId !== undefined) db.org_id = c.orgId;
@@ -90,7 +90,7 @@ class CustomerServiceImpl extends BaseEntityService<Customer> implements Custome
       
       const { data, error } = await query.maybeSingle();
       if (error) throw error;
-      return data ? this.mapDbToDomain(data) : null;
+      return data ? this.mapFromDb(data) : null;
     } catch (err) {
       console.error('[CustomerService] getByPhone failed:', err);
       return null;
@@ -126,7 +126,7 @@ class CustomerServiceImpl extends BaseEntityService<Customer> implements Custome
       
       const { data, error } = await query.order('name', { ascending: true });
       if (error) throw error;
-      return (data || []).map(item => this.mapDbToDomain(item));
+      return (data || []).map(item => this.mapFromDb(item));
     } catch (err) {
       console.error('[CustomerService] filter failed:', err);
       return [];
@@ -149,7 +149,7 @@ class CustomerServiceImpl extends BaseEntityService<Customer> implements Custome
       orgId: settings.orgId,
     } as Customer;
 
-    const dbCustomer = this.mapDomainToDb(newCustomer);
+    const dbCustomer = this.mapToDb(newCustomer);
     const { error } = await supabase.from(this.tableName).insert(dbCustomer);
     if (error) throw error;
 
@@ -193,7 +193,7 @@ class CustomerServiceImpl extends BaseEntityService<Customer> implements Custome
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     
-    const dbCustomers = customers.map(c => this.mapDomainToDb({
+    const dbCustomers = customers.map(c => this.mapToDb({
       ...c,
       branchId: c.branchId || effectiveBranchId,
       orgId: c.orgId || settings.orgId

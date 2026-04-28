@@ -364,21 +364,15 @@ layer(base);
 @keyframes slideIn {
   0% {
     opacity: 0;
-    transform: perspective(1000px) rotateX(-10deg) translateY(-20px) scale(0.95);
-    background-color: rgba(16, 185, 129, 0.4);
-    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
-  }
-  60% {
-    transform: perspective(1000px) rotateX(2deg) translateY(4px) scale(1.01);
-  }
-  80% {
-    transform: perspective(1000px) rotateX(0deg) translateY(-1px) scale(0.99);
+    transform: translateY(-12px);
+    filter: blur(4px);
+    background-color: color-mix(in srgb, var(--color-primary-500) 15%, transparent);
   }
   100% {
     opacity: 1;
-    transform: perspective(1000px) rotateX(0) translateY(0) scale(1);
+    transform: translateY(0);
+    filter: blur(0);
     background-color: transparent;
-    box-shadow: none;
   }
 }
 

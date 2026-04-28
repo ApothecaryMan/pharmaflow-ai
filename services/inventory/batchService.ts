@@ -8,7 +8,7 @@ import { idGenerator } from '../../utils/idGenerator';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { supabase } from '../../lib/supabase';
 import { settingsService } from '../settings/settingsService';
-import { money } from '../../utils/currency';
+import { money } from '../../utils/money';
 
 const mapBatchToDb = (b: Partial<StockBatch>): any => {
   const db: any = {};

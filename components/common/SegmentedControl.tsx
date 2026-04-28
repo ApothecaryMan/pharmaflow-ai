@@ -12,7 +12,6 @@ interface SegmentedControlProps<T> {
   className?: string; size?: 'xs' | 'sm' | 'md' | 'lg'; fullWidth?: boolean;
   shape?: 'rounded-sm' | 'pill'; iconSize?: string; disableAnimation?: boolean;
   useGraphicFont?: boolean; dir?: 'ltr' | 'rtl';
-  onBackground?: boolean;
 }
 
 const SIZES = {
@@ -25,7 +24,6 @@ const SIZES = {
 export function SegmentedControl<T extends string | number | boolean>({
   options, value, onChange, className = '', size = 'sm', fullWidth = true,
   shape = 'rounded-sm', iconSize, disableAnimation = false, useGraphicFont = false, dir,
-  onBackground = false,
 }: SegmentedControlProps<T>) {
   const ref = useRef<HTMLDivElement>(null), isFirst = useRef(true), prevDir = useRef<string | null>(null);
   const filtered = useMemo(() => options.filter(o => !o.permission || permissionsService.can(o.permission)), [options]);
@@ -52,12 +50,10 @@ export function SegmentedControl<T extends string | number | boolean>({
   }, [value, filtered.length]);
 
   const pill = shape === 'pill', sz = SIZES[size];
-  const bgColor = onBackground ? 'var(--bg-secondary)' : 'bg-gray-200/50 dark:bg-black/20';
 
   return (
     <div ref={ref} dir={dir} data-settled="false" data-dir-change="false"
-      className={`relative flex p-1 gap-1 ${pill ? 'rounded-full' : 'rounded-xl'} shadow-inner isolate ${className} [--itn:none] data-[settled=true]:data-[dir-change=false]:[--itn:inset-inline-start_0.2s_ease-out,width_0.2s_ease-out,height_0.2s_ease-out,top_0.2s_ease-out]`}
-      style={{ backgroundColor: onBackground ? 'var(--bg-secondary)' : undefined }}
+      className={`relative flex p-1 gap-1 bg-gray-200/50 dark:bg-black/20 ${pill ? 'rounded-full' : 'rounded-xl'} shadow-inner isolate ${className} [--itn:none] data-[settled=true]:data-[dir-change=false]:[--itn:inset-inline-start_0.2s_ease-out,width_0.2s_ease-out,height_0.2s_ease-out,top_0.2s_ease-out]`}
     >
       <div className={`absolute bg-white dark:bg-(--bg-card) border border-transparent dark:border-(--border-divider) ${pill ? 'rounded-full' : 'rounded-lg'} z-0 shadow-sm ${disableAnimation ? '' : 'transition-[var(--itn)]'}`}
         style={{ width: 'var(--iw)', height: 'var(--ih)', top: 'var(--it)', insetInlineStart: 'var(--ix)' }} />

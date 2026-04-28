@@ -8,6 +8,7 @@ interface RealTimeSalesAnalyticsProps {
   sales: Sale[];
   customers: Customer[];
   products: Drug[];
+  shifts: any[];
   language?: string;
 }
 
@@ -25,6 +26,7 @@ export const useRealTimeSalesAnalytics = ({
   sales,
   customers,
   products,
+  shifts,
   language,
 }: RealTimeSalesAnalyticsProps) => {
   // Filter to today's sales
@@ -98,8 +100,8 @@ export const useRealTimeSalesAnalytics = ({
 
     const hoursOpen = Math.max(0.5, nowHour + nowMinutes / 60 - openingHour);
 
-    const hourlySalesRate = hoursOpen > 0 ? coreMetrics.revenue / hoursOpen : 0;
-    const hourlyInvoiceRate = hoursOpen > 0 ? coreMetrics.transactions / hoursOpen : 0;
+    const hourlySalesRate = hoursOpen > 0 ? money.divide(coreMetrics.revenue, hoursOpen) : 0;
+    const hourlyInvoiceRate = hoursOpen > 0 ? money.divide(coreMetrics.transactions, hoursOpen) : 0;
 
     const peakHour = dynamics.hourly.peakHour ?? nowHour;
     const period = peakHour >= 12 ? (language === 'AR' ? 'م' : 'PM') : language === 'AR' ? 'ص' : 'AM';
@@ -126,7 +128,7 @@ export const useRealTimeSalesAnalytics = ({
       hourlyNewCustomerRate: dynamics.customers.newCustomersToday / hoursOpen,
       peakHourLabel,
       peakRevenue: dynamics.hourly.peakRevenue,
-      projectedRevenue: hourlySalesRate * 12,
+      projectedRevenue: money.multiply(hourlySalesRate, 12, 0),
       hourlyData: hourlyData.slice(0, nowHour + 1),
     };
   }, [todaysSales, coreMetrics, dynamics.hourly, dynamics.customers, language]);
@@ -177,7 +179,7 @@ export const useRealTimeSalesAnalytics = ({
     const topCategory = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
 
     return {
-      itemsPerTransaction,
+      itemsPerTransaction: coreMetrics.transactions > 0 ? money.divide(coreMetrics.itemsSold, coreMetrics.transactions) : 0,
       topCategory,
       topCategoryCount: categoryCounts[topCategory] || 0,
       returnRate: averages.returnRate,
@@ -271,7 +273,14 @@ export const useRealTimeSalesAnalytics = ({
     ],
   }), [coreMetrics.itemsSold, itemsAnalysis, language]);
 
-  const activeCountersStats = useMemo(() => ({ activeCounters: 3, totalCounters: 5, onHoldCount: 2 }), []);
+  const activeCountersStats = useMemo(() => {
+    const openShifts = (shifts || []).filter(s => s.status === 'open');
+    return { 
+      activeCounters: openShifts.length, 
+      totalCounters: 5, // Capacity can be a setting later
+      onHoldCount: sales.filter(s => s.status === 'pending').length 
+    };
+  }, [shifts, sales]);
 
   const activeCountersTooltip = useMemo(() => {
     const { activeCounters, totalCounters, onHoldCount } = activeCountersStats;
@@ -313,6 +322,7 @@ export const useRealTimeSalesAnalytics = ({
     highValueAnalysis,
     itemsAnalysis,
     orderTypeAnalysis,
+    returnedValue: coreMetrics.returns,
     topProducts,
     activeCountersStats,
     revenueTooltip,

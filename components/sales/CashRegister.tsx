@@ -1,6 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { CASH_REGISTER_HELP } from '../../i18n/helpInstructions';
 import type { CashTransaction, CashTransactionType, Employee, Language } from '../../types';
 import { formatCurrencyParts } from '../../utils/currency';
@@ -10,6 +10,7 @@ import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useSmartDirection } from '../common/SmartInputs';
 import { PageHeader } from '../common/PageHeader';
+import { AnimatedCounter } from '../common/AnimatedCounter';
 import { TanStackTable } from '../common/TanStackTable';
 import { useCashRegister } from './useCashRegister';
 
@@ -61,6 +62,16 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
     employees,
     currentEmployeeId,
   });
+
+  const amountInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (modalMode) {
+      setTimeout(() => {
+        amountInputRef.current?.focus();
+      }, 50);
+    }
+  }, [modalMode]);
 
   const columns = useMemo<ColumnDef<CashTransaction>[]>(
     () => [
@@ -255,7 +266,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
               permissions.canOpenShift && (
                 <button
                   onClick={() => setModalMode('open')}
-                  className={`px-6 py-2.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border border-zinc-800 dark:border-zinc-200 hover:bg-black dark:hover:bg-zinc-100 font-bold transition-all flex items-center gap-2`}
+                  className={`px-6 py-2.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border border-zinc-800 dark:border-zinc-200 hover:bg-zinc-950 dark:hover:bg-zinc-100 font-bold transition-all flex items-center gap-2`}
                 >
                   <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>lock_open</span>
                   {t.cashRegister.actions.openShift}
@@ -388,22 +399,14 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                        {t.cashRegister.summary.expectedBalance}
                      </p>
                    </div>
-                   <p
-                     className={`text-3xl font-bold text-gray-900 dark:text-gray-100 tabular-nums relative z-10 ${isLoading ? 'h-10 w-32 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
-                   >
-                     {!isLoading && (() => {
-                       const { amount, symbol } = formatCurrencyParts(
-                         currentBalance,
-                         'EGP',
-                         language === 'AR' ? 'ar-EG' : 'en-US'
-                       );
-                       return (
-                         <>
-                           {amount} <span className='text-base font-normal opacity-40 ml-1'>{symbol}</span>
-                         </>
-                       );
-                     })()}
-                   </p>
+                    <div className={`text-3xl font-bold text-gray-900 dark:text-gray-100 tabular-nums relative z-10 flex items-baseline gap-2 ${isLoading ? "h-10 w-32 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse" : ""}`}>
+                      {!isLoading && (
+                        <>
+                          <AnimatedCounter value={currentBalance} />
+                          <span className="text-base font-normal opacity-40">{language === "AR" ? "ج.م" : "EGP"}</span>
+                        </>
+                      )}
+                    </div>
                  </div>
                )}
 
@@ -412,204 +415,112 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.openingBalance}
                   </p>
-                  <p className={`text-base font-bold text-gray-700 dark:text-gray-300 ${isLoading ? 'h-6 w-16 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
-                    {!isLoading && (() => {
-                      const { amount, symbol } = formatCurrencyParts(
-                        currentShift?.openingBalance || 0,
-                        'EGP',
-                        language === 'AR' ? 'ar-EG' : 'en-US',
-                        0
-                      );
-                      return (
-                        <>
-                          {amount}{' '}
-                          <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
-                        </>
-                      );
-                    })()}
-                  </p>
+                  <div className={`text-base font-bold text-gray-700 dark:text-gray-300 flex items-baseline gap-1 ${isLoading ? 'h-6 w-16 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                    {!isLoading && (
+                      <>
+                        <AnimatedCounter value={currentShift?.openingBalance || 0} fractionDigits={0} />
+                        <span className='text-[10px] opacity-60 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cashSales}
                   </p>
-                  <p className={`text-base font-bold text-emerald-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                  <div className={`text-base font-bold text-emerald-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
                     {!isLoading && (
                       <>
                         <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
-                        {(() => {
-                          const { amount, symbol } = formatCurrencyParts(
-                            currentShift?.cashSales || 0,
-                            'EGP',
-                            language === 'AR' ? 'ar-EG' : 'en-US',
-                            0
-                          );
-                          return (
-                            <>
-                              {amount}{' '}
-                              <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
-                            </>
-                          );
-                        })()}
+                        <AnimatedCounter value={currentShift?.cashSales || 0} fractionDigits={0} />
+                        <span className='text-[10px] opacity-60 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
                       </>
                     )}
-                  </p>
+                  </div>
                 </div>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cardSales}
                   </p>
-                  <p className={`text-base font-bold text-violet-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                  <div className={`text-base font-bold text-violet-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
                     {!isLoading && (
                       <>
                         <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
-                        {(() => {
-                          const { amount, symbol } = formatCurrencyParts(
-                            currentShift?.cardSales || 0,
-                            'EGP',
-                            language === 'AR' ? 'ar-EG' : 'en-US',
-                            0
-                          );
-                          return (
-                            <>
-                              {amount}{' '}
-                              <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
-                            </>
-                          );
-                        })()}
+                        <AnimatedCounter value={currentShift?.cardSales || 0} fractionDigits={0} />
+                        <span className='text-[10px] opacity-60 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
                       </>
                     )}
-                  </p>
+                  </div>
                 </div>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cashIn}
                   </p>
-                  <p className={`text-base font-bold text-orange-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                  <div className={`text-base font-bold text-orange-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
                     {!isLoading && (
                       <>
                         <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
-                        {(() => {
-                          const { amount, symbol } = formatCurrencyParts(
-                            currentShift?.cashIn || 0,
-                            'EGP',
-                            language === 'AR' ? 'ar-EG' : 'en-US',
-                            0
-                          );
-                          return (
-                            <>
-                              {amount}{' '}
-                              <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
-                            </>
-                          );
-                        })()}
+                        <AnimatedCounter value={currentShift?.cashIn || 0} fractionDigits={0} />
+                        <span className='text-[10px] opacity-60 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
                       </>
                     )}
-                  </p>
+                  </div>
                 </div>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cashOut}
                   </p>
-                  <p className={`text-base font-bold text-red-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                  <div className={`text-base font-bold text-red-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
                     {!isLoading && (
                       <>
                         <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>remove</span>
-                        {(() => {
-                          const { amount, symbol } = formatCurrencyParts(
-                            currentShift?.cashOut || 0,
-                            'EGP',
-                            language === 'AR' ? 'ar-EG' : 'en-US',
-                            0
-                          );
-                          return (
-                            <>
-                              {amount}{' '}
-                              <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
-                            </>
-                          );
-                        })()}
+                        <AnimatedCounter value={currentShift?.cashOut || 0} fractionDigits={0} />
+                        <span className='text-[10px] opacity-60 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
                       </>
                     )}
-                  </p>
+                  </div>
                 </div>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cashPurchases || 'Cash Purchases'}
                   </p>
-                  <p className={`text-base font-bold text-red-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                  <div className={`text-base font-bold text-red-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
                     {!isLoading && (
                       <>
                         <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>remove</span>
-                        {(() => {
-                          const { amount, symbol } = formatCurrencyParts(
-                            currentShift?.cashPurchases || 0,
-                            'EGP',
-                            language === 'AR' ? 'ar-EG' : 'en-US',
-                            0
-                          );
-                          return (
-                            <>
-                              {amount}{' '}
-                              <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
-                            </>
-                          );
-                        })()}
+                        <AnimatedCounter value={currentShift?.cashPurchases || 0} fractionDigits={0} />
+                        <span className='text-[10px] opacity-60 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
                       </>
                     )}
-                  </p>
+                  </div>
                 </div>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cashPurchaseReturns || 'Cash Purch. Returns'}
                   </p>
-                  <p className={`text-base font-bold text-primary-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                  <div className={`text-base font-bold text-primary-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
                     {!isLoading && (
                       <>
                         <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
-                        {(() => {
-                          const { amount, symbol } = formatCurrencyParts(
-                            currentShift?.cashPurchaseReturns || 0,
-                            'EGP',
-                            language === 'AR' ? 'ar-EG' : 'en-US',
-                            0
-                          );
-                          return (
-                            <>
-                              {amount}{' '}
-                              <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
-                            </>
-                          );
-                        })()}
+                        <AnimatedCounter value={currentShift?.cashPurchaseReturns || 0} fractionDigits={0} />
+                        <span className='text-[10px] opacity-60 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
                       </>
                     )}
-                  </p>
+                  </div>
                 </div>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.returns || 'Returns'}
                   </p>
-                  <p className={`text-base font-bold text-orange-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                  <div className={`text-base font-bold text-orange-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
                     {!isLoading && (
                       <>
                         <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>remove</span>
-                        {(() => {
-                          const { amount, symbol } = formatCurrencyParts(
-                            currentShift?.returns || 0,
-                            'EGP',
-                            language === 'AR' ? 'ar-EG' : 'en-US',
-                            0
-                          );
-                          return (
-                            <>
-                              {amount}{' '}
-                              <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
-                            </>
-                          );
-                        })()}
+                        <AnimatedCounter value={currentShift?.returns || 0} fractionDigits={0} />
+                        <span className='text-[10px] opacity-60 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
                       </>
                     )}
-                  </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -716,7 +627,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 </span>
                 <input
                   type='number'
-                  autoFocus
+                  ref={amountInputRef}
                   className={`${INPUT_BASE} pl-7 text-lg font-bold`}
                   placeholder='0.00'
                   value={amountInput}

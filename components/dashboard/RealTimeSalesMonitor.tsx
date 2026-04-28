@@ -20,7 +20,9 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { useRealTimeSalesAnalytics } from './useRealTimeSalesAnalytics';
 import { useSettings } from '../../context';
 import { useData } from '../../services/DataContext';
+import { useShift } from '../../hooks/useShift';
 import { formatCurrency, formatCurrencyParts, getCurrencySymbol } from '../../utils/currency';
+import { money } from '../../utils/money';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { CARD_BASE } from '../../utils/themeStyles';
 
@@ -102,6 +104,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   const [showHelp, setShowHelp] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'VIP' | 'HIGH_VALUE'>('ALL');
   const { isLoading, branches, activeBranchId } = useData();
+  const { shifts } = useShift();
   const [branchFilter, setBranchFilter] = useState<string>(activeBranchId || 'all');
 
   // Sync with activeBranchId on initial load once it's available
@@ -124,10 +127,17 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
 
   const {
     revenue, transactions, itemsSold, todaysSales, revenueChange,
+    returnedValue,
     hourlyAnalysis, customerAnalysis, paymentAnalysis, highValueAnalysis, itemsAnalysis,
     orderTypeAnalysis, topProducts, activeCountersStats,
     revenueTooltip: revT, transactionsTooltip: transT, itemsSoldTooltip: itemsT, activeCountersTooltip: countersT
-  } = useRealTimeSalesAnalytics({ sales: filteredByBranchSales, customers, products, language });
+  } = useRealTimeSalesAnalytics({ 
+    sales: filteredByBranchSales, 
+    customers, 
+    products, 
+    shifts,
+    language 
+  });
 
 
   const tooltips = useMemo(() => ({
@@ -304,10 +314,11 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       sale.items.forEach(item => {
         const product = products.find(p => p.id === item.id);
         const cat = (product?.category || item.category || 'General').toLowerCase();
-        const total = item.price * item.quantity;
-        if (cat.match(/tablet|capsule|syrup|injection|medicine|drug/)) groups.medicine += total;
-        else if (cat.match(/cream|lotion|skin|hair|cosmetic|beauty|shampoo/)) groups.cosmetic += total;
-        else groups.general += total;
+        const itemTotal = money.multiply(item.price || 0, item.quantity || 0, 0);
+        
+        if (cat.match(/tablet|capsule|syrup|injection|medicine|drug/)) groups.medicine = money.add(groups.medicine, itemTotal);
+        else if (cat.match(/cream|lotion|skin|hair|cosmetic|beauty|shampoo/)) groups.cosmetic = money.add(groups.cosmetic, itemTotal);
+        else groups.general = money.add(groups.general, itemTotal);
       });
     });
     return [
@@ -379,7 +390,6 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                   onChange={(val: any) => setActiveFilter(val)}
                   size='xs'
                   fullWidth={false}
-                  onBackground={true}
                   className='w-auto hidden sm:flex'
                   options={[
                     { label: t.realTimeSales?.filterAll || 'All', value: 'ALL' },
@@ -404,7 +414,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 <tbody>
                   {isLoading ? (
                     Array.from({ length: 8 }).map((_, i) => (
-                      <tr key={i} className='border-b border-gray-50 dark:border-gray-800/50 animate-pulse'>
+                      <tr key={i} className='border-b border-[var(--border-divider)] animate-pulse'>
                         <td className='py-4 px-2'><div className='h-3 w-16 bg-gray-100 dark:bg-gray-800 rounded' /></td>
                         <td className='py-4 px-2'><div className='h-3 w-12 bg-gray-100 dark:bg-gray-800 rounded' /></td>
                         <td className='py-4 px-2'><div className='h-3 w-8 bg-gray-100 dark:bg-gray-800 rounded' /></td>
@@ -621,7 +631,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
               <p className='text-sm text-gray-500'>Returns Processed</p>
             </div>
             <div className='w-full pt-4 border-t border-gray-100 grid grid-cols-2 gap-4'>
-              <div><p className='text-xs text-gray-400'>Value</p><div className='text-lg font-bold text-rose-600'><AnimatedCounter value={todaysSales.reduce((sum, s) => sum + (s.hasReturns ? s.total * 0.1 : 0), 0)} /></div></div>
+              <div><p className='text-xs text-gray-400'>Value</p><div className='text-lg font-bold text-rose-600'><AnimatedCounter value={returnedValue} /></div></div>
               <div><p className='text-xs text-gray-400'>Rate</p><div className='text-lg font-bold flex items-baseline gap-0.5'><AnimatedCounter value={(todaysSales.filter(s => s.hasReturns).length / (transactions || 1)) * 100} fractionDigits={1} /><span className="text-sm font-normal opacity-50">%</span></div></div>
             </div>
           </div>

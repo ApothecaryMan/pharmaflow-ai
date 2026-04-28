@@ -44,7 +44,7 @@ export abstract class BaseEntityService<T extends { id: string; branchId?: strin
       const { data, error } = await supabaseQuery;
       if (error) throw error;
 
-      return (data || []).map(item => this.mapDbToDomain(item));
+      return (data || []).map(item => this.mapFromDb(item));
     } catch (err) {
       console.error(`[BaseEntityService] search failed for ${this.tableName}:`, err);
       return [];
@@ -71,7 +71,7 @@ export abstract class BaseEntityService<T extends { id: string; branchId?: strin
       const { data, error } = await query;
       if (error) throw error;
 
-      return (data || []).map(item => this.mapDbToDomain(item));
+      return (data || []).map(item => this.mapFromDb(item));
     } catch (err) {
       console.error(`[BaseEntityService] filterByStatus failed for ${this.tableName}:`, err);
       return [];
