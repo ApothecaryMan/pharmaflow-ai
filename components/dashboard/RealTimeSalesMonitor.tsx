@@ -16,6 +16,7 @@ import { InsightTooltip } from '../common/InsightTooltip';
 import { FlexDataCard } from '../common/ProgressCard';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
+import { FilterDropdown } from '../common/FilterDropdown';
 import { useRealTimeSalesAnalytics } from './useRealTimeSalesAnalytics';
 import { useSettings } from '../../context';
 import { useData } from '../../services/DataContext';
@@ -100,18 +101,34 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   const [expandedView, setExpandedView] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'VIP' | 'HIGH_VALUE'>('ALL');
-  const { isLoading } = useData();
+  const { isLoading, branches, activeBranchId } = useData();
+  const [branchFilter, setBranchFilter] = useState<string>(activeBranchId || 'all');
+
+  // Sync with activeBranchId on initial load once it's available
+  useEffect(() => {
+    if (activeBranchId && branchFilter === 'all') {
+      setBranchFilter(activeBranchId);
+    }
+  }, [activeBranchId]);
+
   const processedSalesRef = useRef<Set<string>>(new Set());
   const isFirstRun = useRef(true);
   const [displayedSales, setDisplayedSales] = useState<(Sale & { isNew?: boolean })[]>([]);
 
   // === ANALYTICS & HOOKS ===
+  // --- Branch Filtering Logic ---
+  const filteredByBranchSales = useMemo(() => {
+    if (branchFilter === 'all') return sales;
+    return sales.filter(s => s.branchId === branchFilter);
+  }, [sales, branchFilter]);
+
   const {
     revenue, transactions, itemsSold, todaysSales, revenueChange,
     hourlyAnalysis, customerAnalysis, paymentAnalysis, highValueAnalysis, itemsAnalysis,
     orderTypeAnalysis, topProducts, activeCountersStats,
     revenueTooltip: revT, transactionsTooltip: transT, itemsSoldTooltip: itemsT, activeCountersTooltip: countersT
-  } = useRealTimeSalesAnalytics({ sales, customers, products, language });
+  } = useRealTimeSalesAnalytics({ sales: filteredByBranchSales, customers, products, language });
+
 
   const tooltips = useMemo(() => ({
     revenue: <InsightTooltip {...revT} language={language} />,
@@ -128,6 +145,13 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
     return (cust?.totalPurchases || 0) >= 1000;
   }, [customers]);
 
+  // Reset animation baseline when filters change to prevent mass animations
+  useEffect(() => {
+    processedSalesRef.current = new Set();
+    isFirstRun.current = true;
+    setDisplayedSales([]);
+  }, [branchFilter, activeFilter]);
+
   const getPaymentLabel = useCallback((method?: string) => {
     if (!method || method === 'cash') return t.realTimeSales?.cash || t.cash || 'Cash';
     return t.realTimeSales?.visa || t.visa || 'Card';
@@ -135,24 +159,36 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
 
   // --- Animation & Filter Logic ---
   useEffect(() => {
+    // Only proceed if we have sales data or we're sure it's empty after loading
+    if (isLoading && todaysSales.length === 0) return;
+
     if (activeFilter === 'ALL') {
       if (isFirstRun.current) {
+        // Capture initial baseline without animations
         todaysSales.forEach(s => processedSalesRef.current.add(s.id));
-        setDisplayedSales(todaysSales.slice().reverse().slice(0, 20).map(s => ({ ...s, isNew: false })));
-        isFirstRun.current = false;
+        setDisplayedSales(todaysSales.slice(0, 20).map(s => ({ ...s, isNew: false })));
+        
+        // Only mark first run as complete if we actually got the data or loading finished
+        if (!isLoading) {
+          isFirstRun.current = false;
+        }
         return;
       }
+
       const newSales = todaysSales.filter(s => !processedSalesRef.current.has(s.id));
       if (newSales.length > 0) {
         if (newSales.some(s => highValueAnalysis.highValueIds.has(s.id) || isVIP(s))) playHighValue();
         newSales.forEach(s => processedSalesRef.current.add(s.id));
-        setDisplayedSales(prev => [...newSales.slice().reverse().map(s => ({ ...s, isNew: true })), ...prev].slice(0, 20));
+        
+        // For new sales arriving after initial load, mark them as NEW to trigger animation
+        setDisplayedSales(prev => [...newSales.map(s => ({ ...s, isNew: true })), ...prev].slice(0, 20));
       }
     } else {
+      // For filtered views, we don't show "new" animations to avoid visual clutter
       const filtered = todaysSales.filter(s => activeFilter === 'VIP' ? isVIP(s) : highValueAnalysis.highValueIds.has(s.id));
-      setDisplayedSales(filtered.slice().reverse().map(s => ({ ...s, isNew: false })));
+      setDisplayedSales(filtered.slice(0, 20).map(s => ({ ...s, isNew: false })));
     }
-  }, [todaysSales, activeFilter, isVIP, highValueAnalysis.highValueIds, playHighValue]);
+  }, [todaysSales, activeFilter, isVIP, highValueAnalysis.highValueIds, playHighValue, isLoading]);
 
   // --- Smart Registry for Expanded Views ---
   const monitorViews = useMemo(() => {
@@ -202,7 +238,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
               <tbody>
                 {todaysSales.map(s => (
                   <tr key={s.id} className='border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50'>
-                    <td className='p-4 font-bold text-sm'>#{s.id}</td>
+                    <td className='p-4 font-bold text-sm'>#{s.serialId || s.id.substring(0, 8)}</td>
                     <td className='p-4 text-sm text-gray-500'>{new Date(s.date).toLocaleTimeString()}</td>
                     <td className='p-4 text-sm'>{s.items.length}</td>
                     <td className='p-4 text-sm'>{s.customerName || '-'}</td>
@@ -283,14 +319,41 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
 
   return (
     <div className='h-full overflow-y-auto pe-2 space-y-4 animate-fade-in pb-10' dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className='flex items-center justify-between mb-2'>
+      <div className='flex items-center justify-between mb-4'>
         <h1 className='text-2xl font-bold tracking-tight page-title'>{t.realTimeSales?.title || 'Real-time Sales Monitor'}</h1>
-        <div className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'>
-          <span className='relative flex h-3 w-3'>
-            <span className='animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75'></span>
-            <span className='relative inline-flex rounded-full h-3 w-3 bg-emerald-500'></span>
-          </span>
-          <span className='text-xs font-bold text-gray-700 dark:text-gray-300 tracking-wider'>{t.realTimeSales?.live || 'LIVE'}</span>
+        <div className='flex items-center gap-3'>
+          <FilterDropdown
+            items={[{ id: 'all', name: language === 'AR' ? 'جميع الفروع' : 'All Branches' }, ...branches]}
+            selectedItem={branchFilter === 'all' ? { id: 'all', name: language === 'AR' ? 'جميع الفروع' : 'All Branches' } : branches.find(b => b.id === branchFilter)}
+            onSelect={(b) => setBranchFilter(b.id)}
+            renderSelected={(b) => (
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-rounded text-lg opacity-60">store</span>
+                <span className="truncate max-w-[100px]">{b?.name}</span>
+              </div>
+            )}
+            renderItem={(b) => (
+              <div className="flex items-center gap-2 py-1">
+                <span className="material-symbols-rounded text-lg opacity-40">store</span>
+                <span>{b.name}</span>
+              </div>
+            )}
+            keyExtractor={(b) => b.id}
+            variant="input"
+            dense
+            onBackground
+            floating={true}
+            minHeight={34}
+            zIndexHigh="z-50"
+            className="min-w-[140px]"
+          />
+          <div className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'>
+            <span className='relative flex h-3 w-3'>
+              <span className='animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75'></span>
+              <span className='relative inline-flex rounded-full h-3 w-3 bg-emerald-500'></span>
+            </span>
+            <span className='text-xs font-bold text-gray-700 dark:text-gray-300 tracking-wider'>{t.realTimeSales?.live || 'LIVE'}</span>
+          </div>
         </div>
       </div>
 
@@ -304,24 +367,40 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       <div className='grid grid-cols-1 lg:grid-cols-5 gap-4'>
         <div className='lg:col-span-3 flex flex-col gap-4'>
           <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col h-[437px] overflow-hidden`}>
-            <div className='flex items-center justify-between mb-4'>
-              <h3 className='text-lg font-bold flex items-center gap-2'><span className='material-symbols-rounded text-gray-400'>history</span>{t.realTimeSales?.recentTransactions}</h3>
-              <SegmentedControl
-                value={activeFilter}
-                onChange={(val) => setActiveFilter(val as any)}
-                size='xs'
-                fullWidth={false}
-                className='w-auto'
-                options={[
-                  { label: t.realTimeSales?.filterAll, value: 'ALL' },
-                  { label: t.realTimeSales?.filterVip, value: 'VIP' },
-                  { label: t.realTimeSales?.filterHighValue, value: 'HIGH_VALUE' }
-                ]}
-              />
+            <div className='flex items-center justify-between mb-4 gap-4'>
+              <h3 className='text-lg font-bold flex items-center gap-2 shrink-0'>
+                <span className='material-symbols-rounded text-gray-400'>history</span>
+                {t.realTimeSales?.recentTransactions}
+              </h3>
+              
+              <div className='flex items-center gap-2'>
+                <SegmentedControl
+                  value={activeFilter}
+                  onChange={(val: any) => setActiveFilter(val)}
+                  size='xs'
+                  fullWidth={false}
+                  onBackground={true}
+                  className='w-auto hidden sm:flex'
+                  options={[
+                    { label: t.realTimeSales?.filterAll || 'All', value: 'ALL' },
+                    { label: 'VIP', value: 'VIP' },
+                    { label: t.realTimeSales?.filterHighValue || 'High Value', value: 'HIGH_VALUE' }
+                  ]}
+                />
+              </div>
             </div>
             <div className='flex-1 overflow-y-auto custom-scrollbar'>
               <table className='w-full text-left rtl:text-right border-collapse'>
-                <thead className='sticky top-0 bg-(--bg-card) z-10'><tr className='border-b border-gray-100 dark:border-gray-800 text-xs font-bold text-gray-500 uppercase'><th className='pb-3 px-2'>Time</th><th className='pb-3 px-2'>ID</th><th className='pb-3 px-2'>Items</th><th className='pb-3 px-2'>Total</th><th className='pb-3 px-2'>Method</th><th className='pb-3 px-2'>Status</th></tr></thead>
+                <thead className='sticky top-0 bg-(--bg-card) z-10'>
+                  <tr className='border-b border-[var(--border-divider)] text-xs font-bold text-gray-500 uppercase'>
+                    <th className='pb-3 px-2'>{t.realTimeSales?.tableTime || 'Time'}</th>
+                    <th className='pb-3 px-2'>{t.realTimeSales?.tableId || 'ID'}</th>
+                    <th className='pb-3 px-2'>{t.realTimeSales?.tableItems || 'Items'}</th>
+                    <th className='pb-3 px-2'>{t.realTimeSales?.tableTotal || 'Total'}</th>
+                    <th className='pb-3 px-2'>{t.realTimeSales?.tableMethod || 'Method'}</th>
+                    <th className='pb-3 px-2'>{t.realTimeSales?.tableStatus || 'Status'}</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {isLoading ? (
                     Array.from({ length: 8 }).map((_, i) => (
@@ -337,14 +416,44 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                   ) : displayedSales.map(sale => {
                     const vip = isVIP(sale);
                     const high = highValueAnalysis.highValueIds.has(sale.id);
+                    const isSpecial = vip || high;
+                    
                     return (
-                      <tr key={sale.id} className={`border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${sale.isNew ? 'new-transaction' : ''} ${vip || high ? 'bg-amber-50/30 dark:bg-amber-900/10' : ''}`}>
-                        <td className='py-3 px-2 text-sm text-gray-500'>{new Date(sale.date).toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}</td>
-                        <td className='py-3 px-2 text-sm font-medium'>#{sale.id}</td>
-                        <td className='py-3 px-2 text-sm'>{sale.items.length}</td>
-                        <td className='py-3 px-2 text-sm font-bold'>{formatCurrency(sale.total)}</td>
-                        <td className='py-3 px-2'><span className={`flex items-center gap-1 text-xs font-bold ${sale.paymentMethod === 'visa' ? 'text-primary-600' : 'text-green-600'}`}><span className='material-symbols-rounded text-[16px]'>{sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}</span>{getPaymentLabel(sale.paymentMethod)}</span></td>
-                        <td className='py-3 px-2'><div className='flex gap-1'>{vip && <div className='p-1 rounded-lg bg-amber-100 text-amber-600' title='VIP'><span className='material-symbols-rounded text-[16px] block'>verified</span></div>}{high && <div className='p-1 rounded-lg bg-amber-100 text-amber-600' title='High Value'><span className='material-symbols-rounded text-[16px] block'>stars</span></div>}{!vip && !high && <span className='h-2 w-2 rounded-full bg-emerald-500'></span>}</div></td>
+                      <tr 
+                        key={sale.id} 
+                        className={`
+                          group transition-all duration-300
+                          ${sale.isNew ? 'new-transaction' : ''} 
+                          relative
+                        `}
+                      >
+                        <td className={`py-3 px-2 text-sm text-gray-500 transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10 rounded-s-xl' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50 group-hover:rounded-s-xl'}`}>
+                          {new Date(sale.date).toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td className={`py-3 px-2 text-sm font-medium transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50'}`}>#{sale.serialId || sale.id.substring(0, 8)}</td>
+                        <td className={`py-3 px-2 text-sm transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50'}`}>{sale.items.length}</td>
+                        <td className={`py-3 px-2 text-sm font-bold transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50'}`}>{formatCurrency(sale.total)}</td>
+                        <td className={`py-3 px-2 transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50'}`}>
+                          <span className='flex items-center gap-1 text-xs font-bold text-gray-600 dark:text-gray-400'>
+                            <span className='material-symbols-rounded text-[16px] opacity-70'>{sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}</span>
+                            {getPaymentLabel(sale.paymentMethod)}
+                          </span>
+                        </td>
+                        <td className={`py-3 px-2 transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10 rounded-e-xl' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50 group-hover:rounded-e-xl'}`}>
+                          <div className='flex gap-1.5'>
+                            {vip && (
+                              <div className='p-1 rounded-lg bg-amber-200/80 dark:bg-amber-500/30 text-amber-700 dark:text-amber-400 border border-amber-300/50 dark:border-amber-500/30 shadow-xs' title='VIP'>
+                                <span className='material-symbols-rounded text-[18px] block'>verified</span>
+                              </div>
+                            )}
+                            {high && (
+                              <div className='p-1 rounded-lg bg-amber-200/80 dark:bg-amber-500/30 text-amber-700 dark:text-amber-400 border border-amber-300/50 dark:border-amber-500/30 shadow-xs' title='High Value'>
+                                <span className='material-symbols-rounded text-[18px] block'>stars</span>
+                              </div>
+                            )}
+                            {!vip && !high && null}
+                          </div>
+                        </td>
                       </tr>
                     );
                   })}
@@ -513,7 +622,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             </div>
             <div className='w-full pt-4 border-t border-gray-100 grid grid-cols-2 gap-4'>
               <div><p className='text-xs text-gray-400'>Value</p><div className='text-lg font-bold text-rose-600'><AnimatedCounter value={todaysSales.reduce((sum, s) => sum + (s.hasReturns ? s.total * 0.1 : 0), 0)} /></div></div>
-              <div><p className='text-xs text-gray-400'>Rate</p><div className='text-lg font-bold'><AnimatedCounter value={(todaysSales.filter(s => s.hasReturns).length / (transactions || 1)) * 100} suffix='%' fractionDigits={1} /></div></div>
+              <div><p className='text-xs text-gray-400'>Rate</p><div className='text-lg font-bold flex items-baseline gap-0.5'><AnimatedCounter value={(todaysSales.filter(s => s.hasReturns).length / (transactions || 1)) * 100} fractionDigits={1} /><span className="text-sm font-normal opacity-50">%</span></div></div>
             </div>
           </div>
         </div>
