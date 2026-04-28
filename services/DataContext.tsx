@@ -40,6 +40,7 @@ import { supplierService } from './suppliers';
 import { useComputedInventory } from '../hooks/useComputedInventory';
 import { transactionService } from './transactions/transactionService';
 import { permissionsService } from './auth/permissions';
+import { supabase } from '../lib/supabase';
 
 export interface DataState {
   inventory: Drug[];
@@ -260,6 +261,100 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
     };
     initData();
   }, []); // Only once on mount to avoid double-initialization loop with refreshAll
+
+  // ═══════════════════════════════════════════
+  // Real-Time Subscriptions
+  // ═══════════════════════════════════════════
+  useEffect(() => {
+    if (!activeBranchId) return;
+
+    // Subscribe to Sales
+    const salesChannel = supabase
+      .channel(`sales-realtime-${activeBranchId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sales',
+          filter: `branch_id=eq.${activeBranchId}`,
+        },
+        (payload: any) => {
+          console.log('Real-time Sale Event:', payload);
+          if (payload.eventType === 'INSERT') {
+            setSalesState((prev) => [payload.new as Sale, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setSalesState((prev) =>
+              prev.map((s) => (s.id === payload.new.id ? (payload.new as Sale) : s))
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setSalesState((prev) => prev.filter((s) => s.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log(`Sales Subscription Status (${activeBranchId}):`, status);
+      });
+
+    // Subscribe to Returns
+    const returnsChannel = supabase
+      .channel(`returns-realtime-${activeBranchId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'returns',
+          filter: `branch_id=eq.${activeBranchId}`,
+        },
+        (payload: any) => {
+          console.log('Real-time Return Event:', payload);
+          if (payload.eventType === 'INSERT') {
+            setReturnsState((prev) => [payload.new as Return, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setReturnsState((prev) =>
+              prev.map((r) => (r.id === payload.new.id ? (payload.new as Return) : r))
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setReturnsState((prev) => prev.filter((r) => r.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log(`Returns Subscription Status (${activeBranchId}):`, status);
+      });
+
+    // Subscribe to Inventory (Drugs)
+    const drugsChannel = supabase
+      .channel(`drugs-realtime-${activeBranchId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'drugs',
+          filter: `branch_id=eq.${activeBranchId}`,
+        },
+        (payload: any) => {
+          if (payload.eventType === 'INSERT') {
+            setRawInventory((prev) => [...prev, payload.new as Drug]);
+          } else if (payload.eventType === 'UPDATE') {
+            setRawInventory((prev) =>
+              prev.map((d) => (d.id === payload.new.id ? (payload.new as Drug) : d))
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setRawInventory((prev) => prev.filter((d) => d.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(salesChannel);
+      supabase.removeChannel(returnsChannel);
+      supabase.removeChannel(drugsChannel);
+    };
+  }, [activeBranchId]);
 
   const switchBranch = useCallback(async (branchId: string, skipClearEmployee: boolean = false) => {
     setIsLoading(true);
