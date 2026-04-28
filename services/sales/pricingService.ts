@@ -1,6 +1,5 @@
 import { CartItem } from '../../types';
-import { money } from '../../utils/currency';
-import * as stockOps from '../../utils/stockOperations';
+import { money, tax } from '../../utils/money';
 
 /**
  * Pricing Service - Centralized logic for all financial calculations in POS and Sales.
@@ -11,7 +10,7 @@ export const pricingService = {
    * Calculates the total for a single cart item, including precision-safe discounts.
    */
   calculateItemTotal: (item: CartItem): number => {
-    // 1. Get base price (already resolved in cart, but safe to resolve again if needed)
+    // 1. Get base price
     const basePrice = item.price;
     const qty = item.quantity;
     
@@ -49,13 +48,9 @@ export const pricingService = {
       finalTotal = money.subtract(netSubtotal, globalDiscountAmount);
     }
 
-    // 4. Extract VAT if needed (Assuming prices are tax-inclusive)
-    const taxRate = 14; // Default VAT in Egypt, should ideally come from settings
-    const factor = 1 + taxRate / 100;
-    const subtotalExclTax = money.fromSmallestUnit(
-      Math.round(money.toSmallestUnit(finalTotal) / factor)
-    );
-    const taxAmount = money.subtract(finalTotal, subtotalExclTax);
+    // 4. Extract VAT using the tax engine (Inclusive)
+    const taxRate = 14; // Default VAT in Egypt
+    const { base: subtotalExclTax, taxAmount } = tax.invoiceTax(finalTotal, 0, taxRate, 'inclusive');
 
     return {
       grossSubtotal,
