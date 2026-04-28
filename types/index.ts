@@ -521,7 +521,7 @@ export interface PurchaseItem {
   /** Updated selling price (if price changes) */
   salePrice: number;
   /** Manual unit selling price */
-  unitSalePrice?: number;
+  unitPrice?: number;
   /** Manual unit cost price */
   unitCostPrice?: number;
   /** Tax amount for this item */
