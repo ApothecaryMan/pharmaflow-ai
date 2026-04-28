@@ -505,7 +505,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                     inputMode='tel'
                     value={amountPaid}
                     onChange={(e) => setAmountPaid(e.target.value)}
-                    placeholder={cartTotal.toString()}
+                    placeholder={money.divide(cartTotal, 100).toString()}
                     className='flex-1 min-w-0 bg-transparent border-none focus:outline-hidden focus:ring-0 font-bold text-base text-gray-900 dark:text-white p-0 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
@@ -536,7 +536,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                         ? `text-primary-600 dark:text-primary-400`
                         : 'text-gray-400'
                     }`}>
-                    <PriceDisplay value={Math.max(0, money.subtract(parseFloat(amountPaid) || 0, cartTotal))} />
+                    <PriceDisplay value={Math.max(0, money.subtract(money.multiply(parseFloat(amountPaid) || 0, 100, 0), cartTotal))} />
                   </span>
                 </div>
 
