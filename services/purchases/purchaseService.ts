@@ -265,7 +265,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
         status: 'approved',
         orgId: purchase.orgId || settings.orgId,
         price: item.salePrice,
-        unitPrice: item.unitSalePrice,
+        unitPrice: item.unitPrice,
         costPrice: item.costPrice,
         unitCostPrice: item.unitCostPrice,
       });
@@ -283,7 +283,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     for (const item of purchase.items) {
       await inventoryService.update(item.drugId, {
         price: item.salePrice,
-        unitPrice: item.unitSalePrice,
+        unitPrice: item.unitPrice,
         costPrice: item.costPrice,
         unitCostPrice: item.unitCostPrice,
         expiryDate: item.expiryDate,

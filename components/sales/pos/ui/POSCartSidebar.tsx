@@ -120,6 +120,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
   paymentMethod,
   isMobile = false,
   isProcessing = false,
+  taxAmount = 0,
 }) => {
   const { isOnline } = useNetworkStatus();
 
@@ -505,7 +506,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                     inputMode='tel'
                     value={amountPaid}
                     onChange={(e) => setAmountPaid(e.target.value)}
-                    placeholder={money.divide(cartTotal, 100).toString()}
+                    placeholder={cartTotal.toString()}
                     className='flex-1 min-w-0 bg-transparent border-none focus:outline-hidden focus:ring-0 font-bold text-base text-gray-900 dark:text-white p-0 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
@@ -523,7 +524,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                 {/* Change Display */}
                 <div
                   className={`flex flex-col justify-center px-2 rounded-xl border min-w-[70px] transition-colors overflow-hidden whitespace-nowrap ${
-                    (parseFloat(amountPaid) || 0) >= cartTotal
+                    money.toSmallestUnit(parseFloat(amountPaid) || 0) >= cartTotal
                       ? `bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700`
                       : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                   }`}>
@@ -532,11 +533,11 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                   </span>
                   <span
                     className={`text-sm font-bold text-center tabular-nums ${
-                      (parseFloat(amountPaid) || 0) >= cartTotal
+                      money.isGte(parseFloat(amountPaid) || 0, cartTotal)
                         ? `text-primary-600 dark:text-primary-400`
                         : 'text-gray-400'
                     }`}>
-                    <PriceDisplay value={Math.max(0, money.subtract(money.multiply(parseFloat(amountPaid) || 0, 100, 0), cartTotal))} />
+                    <PriceDisplay value={Math.max(0, money.subtract(parseFloat(amountPaid) || 0, cartTotal))} />
                   </span>
                 </div>
 

@@ -2,6 +2,7 @@ import type React from 'react';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { type Notification, useStatusBar } from '../StatusBarContext';
 import { StatusBarItem } from '../StatusBarItem';
+import { formatCurrency } from '../../../../utils/currency';
 
 interface NotificationBellProps {
   language?: 'EN' | 'AR';
@@ -45,7 +46,14 @@ const getNotificationMessage = (notification: Notification, messages?: Notificat
       let result = template;
       if (notification.messageParams) {
         Object.entries(notification.messageParams).forEach(([key, value]) => {
-          result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value || '');
+          let displayValue = value || '';
+          
+          // Smart formatting for monetary values
+          if ((key === 'total' || key === 'amount' || key === 'refund' || key === 'price') && !isNaN(Number(value))) {
+            displayValue = formatCurrency(Number(value));
+          }
+          
+          result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), displayValue);
         });
       }
       return result.trim();
@@ -100,7 +108,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
     dismiss: 'Dismiss',
     messages: {
       outOfStock: 'Out of Stock: {{name}} {{form}}',
-      saleComplete: 'Sale completed: {{total}} L.E',
+      saleComplete: language === 'AR' ? 'تمت عملية البيع: {{total}}' : 'Sale completed: {{total}}',
     },
   },
 }) => {

@@ -40,9 +40,10 @@ import { storage } from '../utils/storage';
 import { getShardKey } from '../utils/sharding';
 import { validateDrug, validateSaleData, validateStockAvailability } from '../utils/validation';
 import { useShift } from './useShift';
+import { formatCurrency } from '../utils/currency';
 
 // --- Constants ---
-const SENIOR_CASHIER_CANCEL_LIMIT = 500;
+const SENIOR_CASHIER_CANCEL_LIMIT = 500; // 500.00 EGP
 
 // Helper to get current branchCode synchronously from storage (DEPRECATED: Use activeBranchId from props)
 // Removed getBranchCode as everything now uses activeBranchId
@@ -1187,7 +1188,7 @@ export function useEntityHandlers({
         // Limit for senior_cashier
         if (employee?.role === 'senior_cashier' && sale.total > SENIOR_CASHIER_CANCEL_LIMIT) {
           error(
-            `Permission denied: Senior Cashiers cannot cancel sales exceeding ${SENIOR_CASHIER_CANCEL_LIMIT} EGP (Sale Total: ${sale.total.toFixed(2)}). Manager approval required.`
+            `Permission denied: Senior Cashiers cannot cancel sales exceeding ${formatCurrency(SENIOR_CASHIER_CANCEL_LIMIT)} (Sale Total: ${formatCurrency(sale.total)}). Manager approval required.`
           );
           return;
         }
@@ -1582,12 +1583,12 @@ export function useEntityHandlers({
         }
 
         const userRole = permissionsService.getEffectiveRole();
-        if (userRole === 'pharmacist' && returnData.totalRefund > 1000) {
-           error('Permission denied: Pharmacists cannot refund more than 1000 EGP per transaction. Please request manager approval.');
+        if (userRole === 'pharmacist' && returnData.totalRefund > 100000) {
+           error('Permission denied: Pharmacists cannot refund more than 1000.00 EGP per transaction. Please request manager approval.');
            return false;
         }
-        if (userRole === 'cashier' && returnData.totalRefund > 500) {
-           error('Permission denied: Cashiers cannot refund more than 500 EGP per transaction.');
+        if (userRole === 'cashier' && returnData.totalRefund > 50000) {
+           error('Permission denied: Cashiers cannot refund more than 500.00 EGP per transaction.');
            return false;
         }
 
@@ -1631,7 +1632,7 @@ export function useEntityHandlers({
         await processSalesReturn(returnData, sale, context);
 
         updateLastTransactionTime(returnDate.getTime());
-        success(`Return processed successfully. Refund: ${returnData.totalRefund.toFixed(2)} L.E`);
+        success(`Return processed successfully. Refund: ${formatCurrency(returnData.totalRefund)}`);
         return true;
 
       } catch (err: any) {

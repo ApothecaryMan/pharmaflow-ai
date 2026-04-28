@@ -1,3 +1,5 @@
+import { money } from './money';
+
 // Performance: Cache formatters to avoid costly re-allocation 
 const formatterCache = new Map<string, Intl.NumberFormat>();
 
@@ -24,7 +26,7 @@ export const formatCurrency = (
   const isArabic = getIsArabic(locale);
   const targetLocale = locale || (isArabic ? 'ar-EG' : 'en-US');
 
-  // 2. Handle EGP specific formatting (L.E vs ج.م)
+  // 2. Handle EGP specific formatting (EGP vs ج.م)
 
   if (currency === 'EGP') {
     const formatter = getFormatter({
@@ -33,14 +35,12 @@ export const formatCurrency = (
       maximumFractionDigits: decimals,
     }, 'en-US');
 
+    // Ensure amount is rounded to desired precision
     const formattedAmount = formatter.format(amount);
     
-    // Use Unicode BiDi controls to ensure correct visual order [Number] [Space] [Symbol]
-    // \u200E is LRM (Left-to-Right Mark) to isolate the number and space
-    // \u00A0 is NBSP (Non-breaking space)
     return isArabic 
       ? `\u200E${formattedAmount}\u00A0ج.م\u200E` 
-      : `\u200E${formattedAmount}\u00A0L.E\u200E`;
+      : `\u200E${formattedAmount}\u00A0EGP\u200E`;
   }
 
   const formatter = getFormatter({
@@ -63,7 +63,7 @@ export const formatCurrencyParts = (
   const isArabic = getIsArabic(locale);
   const targetLocale = locale || (isArabic ? 'ar-EG' : 'en-US');
 
-  // 2. Handle EGP specific formatting (L.E vs ج.م)
+  // 2. Handle EGP specific formatting (EGP vs ج.م)
   if (currency === 'EGP') {
     const formatter = getFormatter({
       style: 'decimal',
@@ -73,7 +73,7 @@ export const formatCurrencyParts = (
 
     return {
       amount: formatter.format(amount),
-      symbol: isArabic ? 'ج.م' : 'L.E',
+      symbol: isArabic ? 'ج.م' : 'EGP',
     };
   }
 
@@ -102,7 +102,7 @@ export const getCurrencySymbol = (currency: string = 'EGP', locale?: string): st
   const isArabic = getIsArabic(locale);
 
   if (currency === 'EGP') {
-    return isArabic ? 'ج.م' : 'L.E';
+    return isArabic ? 'ج.م' : 'EGP';
   }
 
   const formatter = getFormatter({
@@ -133,7 +133,7 @@ export const formatCompactCurrency = (
     const formattedAmount = formatter.format(amount);
     return isArabic 
       ? `\u200E${formattedAmount}\u00A0ج.م\u200E` 
-      : `\u200E${formattedAmount}\u00A0L.E\u200E`;
+      : `\u200E${formattedAmount}\u00A0EGP\u200E`;
   }
 
   const currencyFormatter = getFormatter({
@@ -163,7 +163,7 @@ export const formatCompactCurrencyParts = (
   if (currency === 'EGP') {
     return {
       amount: formatter.format(amount),
-      symbol: isArabic ? 'ج.م' : 'L.E',
+      symbol: isArabic ? 'ج.م' : 'EGP',
     };
   }
 

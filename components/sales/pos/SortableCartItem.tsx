@@ -9,6 +9,7 @@ import type { CartItem, Drug } from '../../../types';
 import { getDisplayName } from '../../../utils/drugDisplayName';
 import { useSettings } from '../../../context';
 import { pricingService } from '../../../services/sales/pricingService';
+import { formatCurrency } from '../../../utils/currency';
 
 import {
   CartItemExpiryBadge,
@@ -317,13 +318,11 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
             currentLang={currentLang}
           />
 
-            {/* Total Price (Sum of both) */}
-            <div className='text-xs font-bold text-gray-900 dark:text-white w-12 shrink-0 text-end tabular-nums'>
-              $
-              {(
+            <div className='text-xs font-bold text-gray-900 dark:text-white shrink-0 text-end tabular-nums'>
+              {formatCurrency(
                 (packItem ? pricingService.calculateItemTotal(packItem) : 0) +
                 (unitItem ? pricingService.calculateItemTotal(unitItem) : 0)
-              ).toFixed(2)}
+              )}
             </div>
 
             {/* Quick Remove button */}

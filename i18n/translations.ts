@@ -256,7 +256,7 @@ export const TRANSLATIONS = {
       },
       messages: {
         outOfStock: 'Out of Stock: {{name}} {{form}}',
-        saleComplete: 'Sale completed: {{total}} L.E',
+        saleComplete: 'Sale completed: {{total}}',
       },
       ticker: {
         todaySales: 'Today',
@@ -768,7 +768,7 @@ export const TRANSLATIONS = {
         tax: 'Tax',
       },
       historyTitle: 'Purchase History',
-      viewHistory: 'View History',
+      viewHistory: 'History',
       newPurchase: 'New Purchase',
       actions: {
         viewDetails: 'View Drug Details',
@@ -2702,7 +2702,7 @@ export const TRANSLATIONS = {
       },
       messages: {
         outOfStock: 'نفذت الكمية: {{name}} {{form}}',
-        saleComplete: 'تمت عملية بيع: {{total}} ج.م',
+        saleComplete: 'تمت عملية بيع: {{total}}',
       },
       ticker: {
         todaySales: 'اليوم',

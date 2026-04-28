@@ -23,6 +23,7 @@ import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 import { money, pricing, tax } from '../../utils/money';
+import { formatCurrency } from '../../utils/currency';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { FilterDropdown } from '../common/FilterDropdown';
@@ -803,9 +804,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
               if (val === 'approve') onViewChange?.('pending-approval');
               else if (val === 'history') onViewChange?.('purchase-history');
             }}
-            variant="onPage"
             shape="pill"
-            color={color}
             size="md"
             iconSize="--icon-lg"
             useGraphicFont={true}
@@ -986,9 +985,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   <SegmentedControl
                     value={paymentMethod}
                     onChange={(val) => setPaymentMethod(val as 'cash' | 'credit')}
-                    color={color}
                     size='xs'
-                    variant='onPage'
                     options={[
                       { label: t.cash || 'Cash', value: 'cash', activeColor: 'green' },
                       { label: t.credit || 'Credit', value: 'credit', activeColor: 'blue' },
@@ -1298,13 +1295,13 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       <div className='w-14'>
                         <FloatingInput
                           inputRef={(el) => {
-                            inputRefs.current[`${index}-unitSalePrice`] = el;
+                            inputRefs.current[`${index}-unitPrice`] = el;
                           }}
-                          onKeyDown={(e) => handleInputKeyDown(e, index, 'unitSalePrice')}
+                          onKeyDown={(e) => handleInputKeyDown(e, index, 'unitPrice')}
                           label={language === 'AR' ? 'س. شريط' : 'U. Sale'}
                           isLoading={isLoading}
                           type='number'
-                          value={item.unitSalePrice || 0}
+                          value={item.unitPrice || 0}
                           placeholder={item.salePrice && item.unitsPerPack ? money.divide(item.salePrice, item.unitsPerPack).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
                           labelBgClassName={
                             selectedCartIndex === index
@@ -1316,7 +1313,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                             e.target.select();
                           }}
                           onChange={(e) =>
-                            updateItem(item.id, 'unitSalePrice', parseFloat(e.target.value) || 0)
+                            updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)
                           }
                         />
                       </div>
@@ -1419,7 +1416,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                         <span
                           className={`font-medium ${totalDiscount > 0 ? 'text-green-600' : 'text-gray-600'}`}
                         >
-                          ${totalDiscount.toFixed(2)}{' '}
+                          {formatCurrency(totalDiscount)}{' '}
                           <span className='text-xs opacity-75'>
                             ({discountPercent.toFixed(1)}%)
                           </span>
@@ -1438,7 +1435,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       <div className='flex items-center gap-2'>
                         <span className='text-gray-400 font-medium'>{t.summary.tax || 'Tax'}</span>
                         <span className='font-medium text-orange-600'>
-                          ${totalTaxAmount.toFixed(2)}
+                          {formatCurrency(totalTaxAmount)}
                         </span>
                       </div>
                     );
@@ -1462,7 +1459,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                         <div
                           className={`text-2xl font-black ${paymentMethod === 'cash' ? 'text-green-600' : 'text-primary-600'}`}
                         >
-                          ${money.add(subtotal, totalTax).toFixed(2)}
+                          {formatCurrency(money.add(subtotal, totalTax))}
                         </div>
                       );
                     })()}

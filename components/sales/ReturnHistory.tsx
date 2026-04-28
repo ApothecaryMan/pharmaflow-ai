@@ -15,6 +15,7 @@ import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
 import { TanStackTable } from '../common/TanStackTable';
 import { SaleDetailModal } from './SaleDetailModal';
+import { formatCurrency } from '../../utils/currency';
 
 interface ReturnHistoryProps {
   returns: Return[];
@@ -122,7 +123,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
         header: t.headers.refundAmount,
         cell: (info) => (
           <span className='font-bold text-red-600 dark:text-red-400'>
-            -${(info.getValue() as number).toFixed(2)}
+            -{formatCurrency(info.getValue() as number)}
           </span>
         ),
       },
@@ -316,7 +317,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
               <div className='space-y-0.5 text-end'>
                 <p className='text-gray-500 text-xs'>{t.headers?.totalRefund || 'Total Refund'}</p>
                 <p className='font-bold text-red-500 text-base'>
-                  ${selectedReturn.totalRefund.toFixed(2)}
+                  {formatCurrency(selectedReturn.totalRefund)}
                 </p>
               </div>
             </div>
@@ -348,7 +349,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
                         </div>
                       </div>
                       <div className='font-bold text-red-600 dark:text-red-400 text-right'>
-                        <span className='tabular-nums'>${item.refundAmount.toFixed(2)}</span>
+                        <span className='tabular-nums'>{formatCurrency(item.refundAmount)}</span>
                       </div>
                     </div>
                   </MaterialTabs>

@@ -151,8 +151,6 @@ export class DashboardService {
     let marginPercent = 0;
     if (revenue > 0) {
       // (Profit / Revenue) * 100
-      const revenueCents = money.toSmallestUnit(revenue);
-      const profitCents = money.toSmallestUnit(grossProfit);
       marginPercent = money.multiply(money.divide(grossProfit, revenue), 100, 0);
     }
 

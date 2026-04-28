@@ -27,9 +27,9 @@ interface ReturnModalProps {
 }
 
 // --- Constants ---
-const PHARMACIST_REFUND_LIMIT_PER_INVOICE = 100000; // 1000.00 EGP in Piastres
-const PHARMACIST_DAILY_REFUND_LIMIT = 200000; // 2000.00 EGP in Piastres
-const CASHIER_REFUND_LIMIT_PER_INVOICE = 50000; // 500.00 EGP in Piastres
+const PHARMACIST_REFUND_LIMIT_PER_INVOICE = 1000; // 1000.00 EGP
+const PHARMACIST_DAILY_REFUND_LIMIT = 2000; // 2000.00 EGP
+const CASHIER_REFUND_LIMIT_PER_INVOICE = 500; // 500.00 EGP
 
 export const ReturnModal: React.FC<ReturnModalProps> = ({
   isOpen,
@@ -165,11 +165,11 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
       // --- Pharmacist Threshold Validation ---
       if (userRole === 'pharmacist') {
         // Limit 1: Per Invoice
-        if (calculateRefund > PHARMACIST_REFUND_LIMIT_PER_INVOICE) {
+        if (money.isGt(calculateRefund, PHARMACIST_REFUND_LIMIT_PER_INVOICE)) {
           const errorMsg =
             language === 'AR'
-              ? `خطأ: لا يمكن استرجاع مبلغ أكبر من ${PHARMACIST_REFUND_LIMIT_PER_INVOICE} جنيه في العملية الواحدة للصيدلي. يرجى طلب موافقة المدير.`
-              : `Error: Pharmacists cannot refund more than ${PHARMACIST_REFUND_LIMIT_PER_INVOICE} EGP per invoice. Please request manager approval.`;
+              ? `خطأ: لا يمكن استرجاع مبلغ أكبر من ${formatCurrency(PHARMACIST_REFUND_LIMIT_PER_INVOICE)} في العملية الواحدة للصيدلي. يرجى طلب موافقة المدير.`
+              : `Error: Pharmacists cannot refund more than ${formatCurrency(PHARMACIST_REFUND_LIMIT_PER_INVOICE)} per invoice. Please request manager approval.`;
           setValidationError(errorMsg);
           setIsProcessing(false);
           return;
@@ -177,7 +177,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
 
         // Limit 2: Daily Total
         const projectedDailyTotal = (currentDailyRefunds || 0) + calculateRefund;
-        if (projectedDailyTotal > PHARMACIST_DAILY_REFUND_LIMIT) {
+        if (money.isGt(projectedDailyTotal, PHARMACIST_DAILY_REFUND_LIMIT)) {
           const errorMsg =
             language === 'AR'
               ? `خطأ: تم تجاوز الحد اليومي للمرتجعات (${formatCurrency(PHARMACIST_DAILY_REFUND_LIMIT)}). الإجمالي الحالي: ${formatCurrency(currentDailyRefunds)}, المبلغ المطلوب: ${formatCurrency(calculateRefund)}. يرجى طلب موافقة المدير.`
@@ -204,11 +204,11 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         }
 
         // Limit 2: Per Invoice
-        if (calculateRefund > CASHIER_REFUND_LIMIT_PER_INVOICE) {
+        if (money.isGt(calculateRefund, CASHIER_REFUND_LIMIT_PER_INVOICE)) {
           const errorMsg =
             language === 'AR'
-              ? `خطأ: لا يمكن للكاشير استرجاع مبلغ أكبر من ${CASHIER_REFUND_LIMIT_PER_INVOICE} جنيه في العملية الواحدة.`
-              : `Error: Cashiers cannot refund more than ${CASHIER_REFUND_LIMIT_PER_INVOICE} EGP per invoice.`;
+              ? `خطأ: لا يمكن للكاشير استرجاع مبلغ أكبر من ${formatCurrency(CASHIER_REFUND_LIMIT_PER_INVOICE)} في العملية الواحدة.`
+              : `Error: Cashiers cannot refund more than ${formatCurrency(CASHIER_REFUND_LIMIT_PER_INVOICE)} per invoice.`;
           setValidationError(errorMsg);
           setIsProcessing(false);
           return;
@@ -222,7 +222,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           money.add(openShift.cashSales || 0, openShift.cashIn || 0),
           openShift.returns || 0
         );
-        if (money.toSmallestUnit(calculateRefund) > money.toSmallestUnit(cashBalance)) {
+        if (money.isGt(calculateRefund, cashBalance)) {
           setValidationError(
             t.returns.validation?.insufficientBalance ||
               'Cash refund amount exceeds available cash balance in the current shift'
@@ -235,7 +235,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           money.add(money.add(openShift.cashSales || 0, openShift.cardSales || 0), openShift.cashIn || 0),
           openShift.returns || 0
         );
-        if (money.toSmallestUnit(calculateRefund) > money.toSmallestUnit(totalBalance)) {
+        if (money.isGt(calculateRefund, totalBalance)) {
           setValidationError(
             t.returns.validation?.insufficientBalance ||
               'Return amount exceeds available sales balance'
