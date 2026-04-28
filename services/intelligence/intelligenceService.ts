@@ -199,7 +199,7 @@ export const intelligenceService = {
       avg_confidence_score: Math.round(avgConfidence),
       pending_po_count: 0, // Would need PO tracking
       pending_po_value: 0,
-      estimated_lost_sales: outOfStock.reduce((sum, i) => sum + i.avg_daily_sales * 7 * 50, 0), // Rough estimate
+      estimated_lost_sales: outOfStock.reduce((sum, i) => money.add(sum, money.multiply(i.avg_daily_sales, 7 * 5000, 0)), 0), // Use 50.00 EGP (5000 Piastres) as avg price
     };
   },
 
@@ -501,7 +501,7 @@ export const intelligenceService = {
         },
         recommended_action: recommendedAction,
         recommended_discount_percent: recommendedDiscount,
-        expected_recovery_value: Math.round(expectedRecovery),
+        expected_recovery_value: expectedRecovery,
       };
     });
 
@@ -548,7 +548,7 @@ export const intelligenceService = {
     const revenueChange = calculateChange(currentMetrics.revenue, prevMetrics.revenue);
     const profitChange = calculateChange(currentMetrics.grossProfit, prevMetrics.grossProfit);
     const unitsChange = calculateChange(currentMetrics.unitsSold, prevMetrics.unitsSold);
-    const marginDiff = Math.round((currentMargin - prevMargin) * 10) / 10;
+    const marginDiff = money.subtract(currentMargin, prevMargin);
 
     return {
       revenue: {
@@ -562,7 +562,7 @@ export const intelligenceService = {
         change_direction: profitChange.direction,
       },
       margin_percent: {
-        value: Math.round(currentMargin * 10) / 10,
+        value: currentMargin,
         change_points: marginDiff,
         change_direction: marginDiff > 0 ? 'up' : marginDiff < 0 ? 'down' : 'unchanged',
       },
@@ -630,7 +630,7 @@ export const intelligenceService = {
       revenue: p.revenue,
       cogs: p.cogs,
       gross_profit: money.subtract(p.revenue, p.cogs),
-      margin_percent: p.revenue > 0 ? Math.round(((p.revenue - p.cogs) / p.revenue) * 100 * 10) / 10 : 0,
+      margin_percent: p.revenue > 0 ? money.multiply(money.divide(money.subtract(p.revenue, p.cogs), p.revenue), 100, 0) : 0,
     }));
 
     const resultsWithABC = calculateParetoABC(rawResults);
@@ -681,7 +681,7 @@ export const intelligenceService = {
     
     return Array.from(categoryAgg.values()).map(cat => ({
       ...cat,
-      margin_percent: cat.revenue > 0 ? Math.round((cat.gross_profit / cat.revenue) * 100 * 10) / 10 : 0
+      margin_percent: cat.revenue > 0 ? money.multiply(money.divide(cat.gross_profit, cat.revenue), 100, 0) : 0
     }));
   },
 
