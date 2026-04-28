@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { money } from '../utils/money';
 
 /**
  * Gemini Service - Hybrid Client
@@ -41,8 +42,8 @@ const callAI = async (action: string, data: any, language: 'AR' | 'EN' = 'EN'): 
 البيانات المالية:
 - الموظف: ${perfData.employeeName}
 - الفترة: ${perfData.period}
-- إجمالي المبيعات: ${perfData.totalSales} جنيه
-- صافي الربح: ${perfData.netProfit} جنيه
+- إجمالي المبيعات: ${money.divide(perfData.totalSales, 100)} جنيه
+- صافي الربح: ${money.divide(perfData.netProfit, 100)} جنيه
 - هامش الربح: ${perfData.profitMargin}%
 - عدد الفواتير: ${perfData.transactionCount}
 - القطع المباعة: ${perfData.itemsSold}
@@ -60,8 +61,8 @@ const callAI = async (action: string, data: any, language: 'AR' | 'EN' = 'EN'): 
 Financial Data:
 - Employee: ${perfData.employeeName}
 - Period: ${perfData.period}
-- Total Sales: ${perfData.totalSales} EGP
-- Net Profit: ${perfData.netProfit} EGP
+- Total Sales: ${money.divide(perfData.totalSales, 100)} EGP
+- Net Profit: ${money.divide(perfData.netProfit, 100)} EGP
 - Profit Margin: ${perfData.profitMargin}%
 - Transaction Count: ${perfData.transactionCount}
 - Items Sold: ${perfData.itemsSold}
@@ -82,18 +83,18 @@ Format: Plain text, no emojis, no asterisks, professional direct language. Do no
 البيانات المالية الخام:
 الموظف: ${perfData.employeeName}
 الفترة: ${perfData.period}
-إجمالي المبيعات: ${perfData.totalSales} جنيه
-صافي الربح: ${perfData.netProfit} جنيه
+إجمالي المبيعات: ${money.divide(perfData.totalSales, 100)} جنيه
+صافي الربح: ${money.divide(perfData.netProfit, 100)} جنيه
 هامش الربح الصافي: ${perfData.profitMargin}%
 عدد الفواتير: ${perfData.transactionCount}
 إجمالي القطع المباعة: ${perfData.itemsSold}
 المنتج الأعلى مبيعاً: ${perfData.topProduct || 'غير محدد'}
 
 مؤشرات الأداء المحسوبة (KPIs):
-• متوسط قيمة الفاتورة (Avg Basket): ${(perfData.totalSales / perfData.transactionCount).toFixed(2)} جنيه
-• متوسط القطع لكل فاتورة (UPT): ${(perfData.itemsSold / perfData.transactionCount).toFixed(2)} قطعة
-• متوسط سعر القطعة (ASP): ${(perfData.totalSales / perfData.itemsSold).toFixed(2)} جنيه
-• معدل الربح لكل فاتورة: ${(perfData.netProfit / perfData.transactionCount).toFixed(2)} جنيه
+• متوسط قيمة الفاتورة (Avg Basket): ${money.divide(money.divide(perfData.totalSales, perfData.transactionCount), 100)} جنيه
+• متوسط القطع لكل فاتورة (UPT): ${perfData.transactionCount > 0 ? (perfData.itemsSold / perfData.transactionCount).toFixed(2) : 0} قطعة
+• متوسط سعر القطعة (ASP): ${money.divide(money.divide(perfData.totalSales, perfData.itemsSold), 100)} جنيه
+• معدل الربح لكل فاتورة: ${money.divide(money.divide(perfData.netProfit, perfData.transactionCount), 100)} جنيه
 
 التحليل المطلوب (بالترتيب):
 
@@ -115,18 +116,18 @@ Format: Plain text, no emojis, no asterisks, professional direct language. Do no
 Raw Financial Data:
 Employee: ${perfData.employeeName}
 Period: ${perfData.period}
-Total Sales: ${perfData.totalSales} EGP
-Net Profit: ${perfData.netProfit} EGP
+Total Sales: ${money.divide(perfData.totalSales, 100)} EGP
+Net Profit: ${money.divide(perfData.netProfit, 100)} EGP
 Net Profit Margin: ${perfData.profitMargin}%
 Transaction Count: ${perfData.transactionCount}
 Total Items Sold: ${perfData.itemsSold}
 Top Selling Product: ${perfData.topProduct || 'N/A'}
 
 Calculated KPIs:
-• Average Basket Value: ${(perfData.totalSales / perfData.transactionCount).toFixed(2)} EGP
-• Units Per Transaction (UPT): ${(perfData.itemsSold / perfData.transactionCount).toFixed(2)} items
-• Average Selling Price (ASP): ${(perfData.totalSales / perfData.itemsSold).toFixed(2)} EGP
-• Profit Per Transaction: ${(perfData.netProfit / perfData.transactionCount).toFixed(2)} EGP
+• Average Basket Value: ${money.divide(money.divide(perfData.totalSales, perfData.transactionCount), 100)} EGP
+• Units Per Transaction (UPT): ${perfData.transactionCount > 0 ? (perfData.itemsSold / perfData.transactionCount).toFixed(2) : 0} items
+• Average Selling Price (ASP): ${money.divide(money.divide(perfData.totalSales, perfData.itemsSold), 100)} EGP
+• Profit Per Transaction: ${money.divide(money.divide(perfData.netProfit, perfData.transactionCount), 100)} EGP
 
 Required Analysis (In Order):
 
