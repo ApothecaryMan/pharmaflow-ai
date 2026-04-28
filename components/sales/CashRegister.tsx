@@ -9,6 +9,7 @@ import { HelpButton, HelpModal } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useSmartDirection } from '../common/SmartInputs';
+import { PageHeader } from '../common/PageHeader';
 import { TanStackTable } from '../common/TanStackTable';
 import { useCashRegister } from './useCashRegister';
 
@@ -18,6 +19,7 @@ interface CashRegisterProps {
   language?: Language;
   employees?: Employee[];
   currentEmployeeId?: string;
+  onViewChange?: (view: string) => void;
 }
 
 export const CashRegister: React.FC<CashRegisterProps> = ({
@@ -26,6 +28,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
   language = 'EN',
   employees,
   currentEmployeeId,
+  onViewChange,
 }) => {
   const helpContent = CASH_REGISTER_HELP[language];
 
@@ -186,58 +189,82 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
       className={`h-full flex flex-col gap-6 animate-fade-in pb-10 ${language === 'AR' ? 'text-right' : 'text-left'}`}
     >
       {/* Header */}
-      <div className='flex justify-between items-center'>
-        <div>
-          <h1 className='text-2xl font-bold tracking-tight page-title'>
-            {t.cashRegister.title}
-          </h1>
-          <p className='text-gray-500 text-sm mt-1'>{t.cashRegister.subtitle}</p>
-        </div>
-
-        <div className='flex gap-3'>
-          {currentShift ? (
-            <>
-              {permissions.canAddCash && (
+      <PageHeader
+        centerContent={
+          <SegmentedControl
+            size="md"
+            shape="pill"
+            iconSize="--icon-lg"
+            useGraphicFont={true}
+            options={[
+              { label: t.cashRegister?.title || 'Register', value: 'cash-register', icon: 'point_of_sale' },
+              { label: t.shiftHistory?.title || 'Shifts', value: 'shift-history', icon: 'history' },
+            ]}
+            value="cash-register"
+            onChange={(val) => onViewChange?.(val as string)}
+          />
+        }
+        rightContent={
+          <div className='flex gap-3'>
+            {isLoading ? (
+              <>
+                <div className="px-4 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-700 animate-pulse flex items-center gap-2">
+                  <div className="w-5 h-5 bg-zinc-300 dark:bg-zinc-600 rounded-full" />
+                  <div className="w-16 h-4 bg-zinc-300 dark:bg-zinc-600 rounded" />
+                </div>
+                <div className="px-4 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-700 animate-pulse hidden md:flex items-center gap-2">
+                  <div className="w-5 h-5 bg-zinc-300 dark:bg-zinc-600 rounded-full" />
+                  <div className="w-16 h-4 bg-zinc-300 dark:bg-zinc-600 rounded" />
+                </div>
+                <div className="px-4 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-700 animate-pulse hidden lg:flex items-center gap-2">
+                  <div className="w-5 h-5 bg-zinc-300 dark:bg-zinc-600 rounded-full" />
+                  <div className="w-16 h-4 bg-zinc-300 dark:bg-zinc-600 rounded" />
+                </div>
+              </>
+            ) : currentShift ? (
+              <>
+                {permissions.canAddCash && (
+                  <button
+                    onClick={() => setModalMode('in')}
+                    className={`px-4 py-2 rounded-xl bg-emerald-100 text-emerald-700 hover:bg-emerald-200 font-bold transition-colors flex items-center gap-2`}
+                  >
+                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>add</span>
+                    {t.cashRegister.actions.addCash}
+                  </button>
+                )}
+                {permissions.canRemoveCash && (
+                  <button
+                    onClick={() => setModalMode('out')}
+                    className={`px-4 py-2 rounded-xl bg-orange-100 text-orange-700 hover:bg-orange-200 font-bold transition-colors flex items-center gap-2`}
+                  >
+                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>remove</span>
+                    {t.cashRegister.actions.removeCash}
+                  </button>
+                )}
+                {permissions.canCloseShift && (
+                  <button
+                    onClick={() => setModalMode('close')}
+                    className={`px-4 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-bold transition-colors flex items-center gap-2`}
+                  >
+                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>lock</span>
+                    {t.cashRegister.actions.closeShift}
+                  </button>
+                )}
+              </>
+            ) : (
+              permissions.canOpenShift && (
                 <button
-                  onClick={() => setModalMode('in')}
-                  className={`px-4 py-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold transition-colors flex items-center gap-2`}
+                  onClick={() => setModalMode('open')}
+                  className={`px-6 py-2.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border border-zinc-800 dark:border-zinc-200 hover:bg-black dark:hover:bg-zinc-100 font-bold transition-all flex items-center gap-2`}
                 >
-                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>add</span>
-                  {t.cashRegister.actions.addCash}
+                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>lock_open</span>
+                  {t.cashRegister.actions.openShift}
                 </button>
-              )}
-              {permissions.canRemoveCash && (
-                <button
-                  onClick={() => setModalMode('out')}
-                  className={`px-4 py-2 rounded-xl bg-orange-100 text-orange-700 hover:bg-orange-200 font-bold transition-colors flex items-center gap-2`}
-                >
-                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>remove</span>
-                  {t.cashRegister.actions.removeCash}
-                </button>
-              )}
-              {permissions.canCloseShift && (
-                <button
-                  onClick={() => setModalMode('close')}
-                  className={`px-4 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-bold transition-colors flex items-center gap-2`}
-                >
-                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>lock</span>
-                  {t.cashRegister.actions.closeShift}
-                </button>
-              )}
-            </>
-          ) : (
-            permissions.canOpenShift && (
-              <button
-                onClick={() => setModalMode('open')}
-                className={`px-6 py-2.5 rounded-xl bg-gray-900 dark:bg-zinc-800 text-white hover:bg-black dark:hover:bg-zinc-700 font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2`}
-              >
-                <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>lock_open</span>
-                {t.cashRegister.actions.openShift}
-              </button>
-            )
-          )}
-        </div>
-      </div>
+              )
+            )}
+          </div>
+        }
+      />
 
       {/* Main Content */}
       <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
@@ -245,9 +272,9 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         <div className='md:col-span-1 space-y-4'>
           {/* Status Card */}
           <div className={`p-6 rounded-3xl ${CARD_BASE} relative overflow-hidden group`}>
-            <div className='absolute -bottom-6 ltr:-right-6 rtl:-left-6 opacity-10 group-hover:scale-110 transition-transform duration-500 pointer-events-none select-none'>
+            <div className='absolute -bottom-6 ltr:-right-6 rtl:-left-6 opacity-10 pointer-events-none select-none'>
               <span
-                className={`material-symbols-rounded ${currentShift ? `text-primary-500` : 'text-gray-500'} -rotate-12`}
+                className={`material-symbols-rounded ${currentShift ? `text-emerald-500` : 'text-zinc-400'}`}
                 style={{ fontSize: '180px' }}
               >
                 {currentShift ? 'lock_open' : 'lock'}
@@ -259,52 +286,58 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
             </p>
             <div className='flex items-center gap-3 mb-4'>
               <div
-                className={`w-3 h-3 rounded-full ${currentShift ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}
+                className={`w-3 h-3 rounded-full ${isLoading ? 'bg-zinc-200 dark:bg-zinc-700 animate-pulse' : currentShift ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}
               ></div>
-              <h3 className='text-2xl font-bold'>
-                {currentShift ? t.cashRegister.status.open : t.cashRegister.status.closed}
+              <h3 className={`text-2xl font-bold ${isLoading ? 'h-8 w-24 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                {!isLoading && (currentShift ? t.cashRegister.status.open : t.cashRegister.status.closed)}
               </h3>
             </div>
-            {currentShift && (
+            {(currentShift || isLoading) && (
               <div className='space-y-2'>
                 {/* Time Badge */}
                 <div className='flex items-center gap-2'>
                   <span className='text-sm text-gray-600 dark:text-gray-400'>
                     {t.cashRegister.messages.started}:
                   </span>
-                  <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-gray-700 dark:text-gray-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>schedule</span>
-                    {(() => {
-                      const timeStr = new Date(currentShift.openTime).toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true,
-                      });
+                  {isLoading ? (
+                    <div className='h-5 w-24 bg-zinc-200 dark:bg-zinc-700 rounded-lg animate-pulse' />
+                  ) : (
+                    <>
+                      <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-gray-700 dark:text-gray-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>schedule</span>
+                        {(() => {
+                          const timeStr = new Date(currentShift!.openTime).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true,
+                          });
 
-                      const parts = timeStr.split(' ');
-                      const timeValue = parts[0];
-                      const amPm = parts[1];
+                          const parts = timeStr.split(' ');
+                          const timeValue = parts[0];
+                          const amPm = parts[1];
 
-                      if (language === 'AR') {
-                        const arabicMarker = amPm === 'AM' ? 'ص' : 'م';
-                        return (
-                          <span className='flex items-center gap-1'>
-                            <span className='font-sans'>{timeValue}</span>
-                            <span className='text-[10px] font-bold opacity-80 mt-1'>
-                              {arabicMarker}
-                            </span>
-                          </span>
-                        );
-                      }
-                      return timeStr;
-                    })()}
-                  </span>
-                  <span className='text-xs text-gray-400'>
-                    {new Date(currentShift.openTime).toLocaleDateString(
-                      language === 'AR' ? 'ar-EG-u-nu-latn' : 'en-GB',
-                      { day: 'numeric', month: 'short' }
-                    )}
-                  </span>
+                          if (language === 'AR') {
+                            const arabicMarker = amPm === 'AM' ? 'ص' : 'م';
+                            return (
+                              <span className='flex items-center gap-1'>
+                                <span className='font-sans'>{timeValue}</span>
+                                <span className='text-[10px] font-bold opacity-80 mt-1'>
+                                  {arabicMarker}
+                                </span>
+                              </span>
+                            );
+                          }
+                          return timeStr;
+                        })()}
+                      </span>
+                      <span className='text-xs text-gray-400'>
+                        {new Date(currentShift!.openTime).toLocaleDateString(
+                          language === 'AR' ? 'ar-EG-u-nu-latn' : 'en-GB',
+                          { day: 'numeric', month: 'short' }
+                        )}
+                      </span>
+                    </>
+                  )}
                 </div>
 
                 {/* User Badge */}
@@ -312,10 +345,14 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <span className='text-sm text-gray-600 dark:text-gray-400'>
                     {t.cashRegister.messages.by}:
                   </span>
-                  <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-purple-700 dark:text-purple-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>person</span>
-                    {employees?.find((e) => e.id === currentShift.openedBy)?.name || currentShift.openedBy}
-                  </span>
+                  {isLoading ? (
+                    <div className='h-5 w-32 bg-zinc-200 dark:bg-zinc-700 rounded-lg animate-pulse' />
+                  ) : (
+                    <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-purple-700 dark:text-purple-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+                      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>person</span>
+                      {employees?.find((e) => e.id === currentShift!.openedBy)?.name || currentShift!.openedBy}
+                    </span>
+                  )}
                 </div>
 
                 {/* Shift ID */}
@@ -323,58 +360,62 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <span className='text-sm text-gray-600 dark:text-gray-400'>
                     {t.cashRegister.messages.id}:
                   </span>
-                  <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-gray-700 dark:text-gray-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>tag</span>
-                    {currentShift.id.slice(-6)}
-                  </span>
+                  {isLoading ? (
+                    <div className='h-5 w-16 bg-zinc-200 dark:bg-zinc-700 rounded-lg animate-pulse' />
+                  ) : (
+                    <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-gray-700 dark:text-gray-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+                      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>tag</span>
+                      {currentShift!.id.slice(-6)}
+                    </span>
+                  )}
                 </div>
               </div>
             )}
           </div>
 
-          {/* Balance Cards (Only if Open) */}
-          {currentShift ? (
+          {/* Balance Cards (Only if Open or Loading) */}
+          {(currentShift || isLoading) ? (
             <div className='space-y-3'>
-              {permissions.canViewExpectedBalance && (
-                <div
-                  className={`p-5 rounded-3xl ${CARD_BASE} border-2 !border-gray-200 dark:!border-gray-800 relative overflow-hidden group transition-all hover:shadow-md`}
-                >
-                  <div className='flex items-center gap-2 mb-1.5 relative z-10'>
-                    <span className='material-symbols-rounded text-primary-600 dark:text-primary-400' style={{ fontSize: 'var(--icon-md)' }}>
-                      account_balance_wallet
-                    </span>
-                    <p className={`text-xs font-bold uppercase text-primary-800 dark:text-primary-300`}>
-                      {t.cashRegister.summary.expectedBalance}
-                    </p>
-                  </div>
-                  <p
-                    className={`text-3xl font-bold text-gray-900 dark:text-gray-100 tabular-nums relative z-10`}
-                  >
-                    {(() => {
-                      const { amount, symbol } = formatCurrencyParts(
-                        currentBalance,
-                        'EGP',
-                        language === 'AR' ? 'ar-EG' : 'en-US'
-                      );
-                      return (
-                        <>
-                          {amount} <span className='text-base font-normal opacity-40 ml-1'>{symbol}</span>
-                        </>
-                      );
-                    })()}
-                  </p>
-                </div>
-              )}
+               {(isLoading || (currentShift && permissions.canViewExpectedBalance)) && (
+                 <div
+                   className={`p-5 rounded-3xl ${CARD_BASE} border-2 !border-gray-200 dark:!border-gray-800 relative overflow-hidden group transition-all hover:shadow-md`}
+                 >
+                   <div className='flex items-center gap-2 mb-1.5 relative z-10'>
+                     <span className='material-symbols-rounded text-primary-600 dark:text-primary-400' style={{ fontSize: 'var(--icon-md)' }}>
+                       account_balance_wallet
+                     </span>
+                     <p className={`text-xs font-bold uppercase text-primary-800 dark:text-primary-300`}>
+                       {t.cashRegister.summary.expectedBalance}
+                     </p>
+                   </div>
+                   <p
+                     className={`text-3xl font-bold text-gray-900 dark:text-gray-100 tabular-nums relative z-10 ${isLoading ? 'h-10 w-32 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                   >
+                     {!isLoading && (() => {
+                       const { amount, symbol } = formatCurrencyParts(
+                         currentBalance,
+                         'EGP',
+                         language === 'AR' ? 'ar-EG' : 'en-US'
+                       );
+                       return (
+                         <>
+                           {amount} <span className='text-base font-normal opacity-40 ml-1'>{symbol}</span>
+                         </>
+                       );
+                     })()}
+                   </p>
+                 </div>
+               )}
 
               <div className='grid grid-cols-2 gap-3'>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.openingBalance}
                   </p>
-                  <p className='text-base font-bold text-gray-700 dark:text-gray-300'>
-                    {(() => {
+                  <p className={`text-base font-bold text-gray-700 dark:text-gray-300 ${isLoading ? 'h-6 w-16 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                    {!isLoading && (() => {
                       const { amount, symbol } = formatCurrencyParts(
-                        currentShift.openingBalance,
+                        currentShift?.openingBalance || 0,
                         'EGP',
                         language === 'AR' ? 'ar-EG' : 'en-US',
                         0
@@ -392,154 +433,182 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cashSales}
                   </p>
-                  <p className='text-base font-bold text-emerald-600 flex items-center gap-1.5'>
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
-                    {(() => {
-                      const { amount, symbol } = formatCurrencyParts(
-                        currentShift.cashSales,
-                        'EGP',
-                        language === 'AR' ? 'ar-EG' : 'en-US',
-                        0
-                      );
-                      return (
-                        <>
-                          {amount}{' '}
-                          <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
-                        </>
-                      );
-                    })()}
+                  <p className={`text-base font-bold text-emerald-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                    {!isLoading && (
+                      <>
+                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
+                        {(() => {
+                          const { amount, symbol } = formatCurrencyParts(
+                            currentShift?.cashSales || 0,
+                            'EGP',
+                            language === 'AR' ? 'ar-EG' : 'en-US',
+                            0
+                          );
+                          return (
+                            <>
+                              {amount}{' '}
+                              <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
+                            </>
+                          );
+                        })()}
+                      </>
+                    )}
                   </p>
                 </div>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cardSales}
                   </p>
-                  <p className='text-base font-bold text-violet-600 flex items-center gap-1.5'>
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
-                    {(() => {
-                      const { amount, symbol } = formatCurrencyParts(
-                        currentShift.cardSales || 0,
-                        'EGP',
-                        language === 'AR' ? 'ar-EG' : 'en-US',
-                        0
-                      );
-                      return (
-                        <>
-                          {amount}{' '}
-                          <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
-                        </>
-                      );
-                    })()}
+                  <p className={`text-base font-bold text-violet-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                    {!isLoading && (
+                      <>
+                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
+                        {(() => {
+                          const { amount, symbol } = formatCurrencyParts(
+                            currentShift?.cardSales || 0,
+                            'EGP',
+                            language === 'AR' ? 'ar-EG' : 'en-US',
+                            0
+                          );
+                          return (
+                            <>
+                              {amount}{' '}
+                              <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
+                            </>
+                          );
+                        })()}
+                      </>
+                    )}
                   </p>
                 </div>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cashIn}
                   </p>
-                  <p className='text-base font-bold text-orange-600 flex items-center gap-1.5'>
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
-                    {(() => {
-                      const { amount, symbol } = formatCurrencyParts(
-                        currentShift.cashIn,
-                        'EGP',
-                        language === 'AR' ? 'ar-EG' : 'en-US',
-                        0
-                      );
-                      return (
-                        <>
-                          {amount}{' '}
-                          <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
-                        </>
-                      );
-                    })()}
+                  <p className={`text-base font-bold text-orange-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                    {!isLoading && (
+                      <>
+                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
+                        {(() => {
+                          const { amount, symbol } = formatCurrencyParts(
+                            currentShift?.cashIn || 0,
+                            'EGP',
+                            language === 'AR' ? 'ar-EG' : 'en-US',
+                            0
+                          );
+                          return (
+                            <>
+                              {amount}{' '}
+                              <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
+                            </>
+                          );
+                        })()}
+                      </>
+                    )}
                   </p>
                 </div>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cashOut}
                   </p>
-                  <p className='text-base font-bold text-red-600 flex items-center gap-1.5'>
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>remove</span>
-                    {(() => {
-                      const { amount, symbol } = formatCurrencyParts(
-                        currentShift.cashOut,
-                        'EGP',
-                        language === 'AR' ? 'ar-EG' : 'en-US',
-                        0
-                      );
-                      return (
-                        <>
-                          {amount}{' '}
-                          <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
-                        </>
-                      );
-                    })()}
+                  <p className={`text-base font-bold text-red-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                    {!isLoading && (
+                      <>
+                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>remove</span>
+                        {(() => {
+                          const { amount, symbol } = formatCurrencyParts(
+                            currentShift?.cashOut || 0,
+                            'EGP',
+                            language === 'AR' ? 'ar-EG' : 'en-US',
+                            0
+                          );
+                          return (
+                            <>
+                              {amount}{' '}
+                              <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
+                            </>
+                          );
+                        })()}
+                      </>
+                    )}
                   </p>
                 </div>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cashPurchases || 'Cash Purchases'}
                   </p>
-                  <p className='text-base font-bold text-red-600 flex items-center gap-1.5'>
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>remove</span>
-                    {(() => {
-                      const { amount, symbol } = formatCurrencyParts(
-                        currentShift.cashPurchases || 0,
-                        'EGP',
-                        language === 'AR' ? 'ar-EG' : 'en-US',
-                        0
-                      );
-                      return (
-                        <>
-                          {amount}{' '}
-                          <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
-                        </>
-                      );
-                    })()}
+                  <p className={`text-base font-bold text-red-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                    {!isLoading && (
+                      <>
+                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>remove</span>
+                        {(() => {
+                          const { amount, symbol } = formatCurrencyParts(
+                            currentShift?.cashPurchases || 0,
+                            'EGP',
+                            language === 'AR' ? 'ar-EG' : 'en-US',
+                            0
+                          );
+                          return (
+                            <>
+                              {amount}{' '}
+                              <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
+                            </>
+                          );
+                        })()}
+                      </>
+                    )}
                   </p>
                 </div>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cashPurchaseReturns || 'Cash Purch. Returns'}
                   </p>
-                  <p className='text-base font-bold text-primary-600 flex items-center gap-1.5'>
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
-                    {(() => {
-                      const { amount, symbol } = formatCurrencyParts(
-                        currentShift.cashPurchaseReturns || 0,
-                        'EGP',
-                        language === 'AR' ? 'ar-EG' : 'en-US',
-                        0
-                      );
-                      return (
-                        <>
-                          {amount}{' '}
-                          <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
-                        </>
-                      );
-                    })()}
+                  <p className={`text-base font-bold text-primary-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                    {!isLoading && (
+                      <>
+                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
+                        {(() => {
+                          const { amount, symbol } = formatCurrencyParts(
+                            currentShift?.cashPurchaseReturns || 0,
+                            'EGP',
+                            language === 'AR' ? 'ar-EG' : 'en-US',
+                            0
+                          );
+                          return (
+                            <>
+                              {amount}{' '}
+                              <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
+                            </>
+                          );
+                        })()}
+                      </>
+                    )}
                   </p>
                 </div>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.returns || 'Returns'}
                   </p>
-                  <p className='text-base font-bold text-orange-600 flex items-center gap-1.5'>
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>remove</span>
-                    {(() => {
-                      const { amount, symbol } = formatCurrencyParts(
-                        currentShift.returns || 0,
-                        'EGP',
-                        language === 'AR' ? 'ar-EG' : 'en-US',
-                        0
-                      );
-                      return (
-                        <>
-                          {amount}{' '}
-                          <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
-                        </>
-                      );
-                    })()}
+                  <p className={`text-base font-bold text-orange-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                    {!isLoading && (
+                      <>
+                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>remove</span>
+                        {(() => {
+                          const { amount, symbol } = formatCurrencyParts(
+                            currentShift?.returns || 0,
+                            'EGP',
+                            language === 'AR' ? 'ar-EG' : 'en-US',
+                            0
+                          );
+                          return (
+                            <>
+                              {amount}{' '}
+                              <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
+                            </>
+                          );
+                        })()}
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
@@ -562,7 +631,6 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
             <div className='p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0'>
               <h3 className='font-bold text-lg'>{t.cashRegister.transactions.title}</h3>
               <SegmentedControl
-                variant='onPage'
                 size='xs'
                 fullWidth={false}
                 value={filterType}
@@ -603,6 +671,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 columns={columns}
                 dense
                 lite
+                isLoading={isLoading}
                 tableId='cash-register-table'
                 searchPlaceholder={t.global?.actions?.search || 'Search...'}
                 emptyMessage={t.cashRegister.messages.noTransactions}

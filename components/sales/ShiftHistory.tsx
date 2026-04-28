@@ -10,6 +10,8 @@ import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
 import { InteractiveCard } from '../common/InteractiveCard';
+import { PageHeader } from '../common/PageHeader';
+import { SegmentedControl } from '../common/SegmentedControl';
 import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
 import { getPrinterSettings, printReceiptSilently } from '../../utils/qzPrinter';
 import { auditService } from '../../services/auditService';
@@ -20,6 +22,7 @@ interface ShiftHistoryProps {
   language: string;
   datePickerTranslations: any;
   employees?: Employee[];
+  onViewChange?: (view: string) => void;
 }
 
 export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
@@ -28,12 +31,14 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   language,
   datePickerTranslations,
   employees,
+  onViewChange,
 }) => {
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
+  const [showSummary, setShowSummary] = useState(false);
 
   // Load shifts from useShift hook (sharded storage)
   const { shifts: allShiftsFromHook, isLoading, endShift } = useShift();
@@ -313,81 +318,34 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
 
   return (
     <div className='h-full flex flex-col space-y-4 animate-fade-in'>
-      {isLoading && (
-        <div className='absolute inset-0 z-50 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-xs rounded-2xl'>
-          <div className='flex flex-col items-center gap-3'>
-            <div
-              className={`w-10 h-10 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin`}
-            />
-            <p className='text-sm font-medium text-gray-500'>
-              {language === 'AR' ? 'جاري تحميل المناوبات...' : 'Loading shifts...'}
-            </p>
-          </div>
-        </div>
-      )}
 
-      {/* Header */}
-      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
-        <div>
-          <h1 className='text-2xl font-bold tracking-tight page-title'>
-            {t.shiftHistory?.title || 'Shift History'}
-          </h1>
-          <p className='text-sm text-gray-500 dark:text-gray-400'>
-            {t.shiftHistory?.subtitle || 'View past cash register shifts'}
-          </p>
-        </div>
-
-        {/* Summary Cards */}
-        <div className='flex items-center'>
-          <InteractiveCard
-            className="flex flex-col items-end min-w-[160px] px-6 py-3 rounded-2xl"
-            pages={[
-              {
-                theme: 'bg-primary-50 dark:bg-primary-900/20',
-                content: (
-                  <div className="flex flex-col items-end w-full">
-                    <span className="text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400">
-                      {t.shiftHistory?.summary?.totalShifts || 'Total Shifts'}
-                    </span>
-                    <span className="text-2xl font-bold text-primary-900 dark:text-primary-100">
-                      {filteredShifts.length}
-                    </span>
-                  </div>
-                ),
-              },
-              {
-                theme: 'bg-green-50 dark:bg-green-900/20',
-                content: (
-                  <div className="flex flex-col items-end w-full">
-                    <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400">
-                      {t.shiftHistory?.summary?.totalRevenue || 'Total Revenue'}
-                    </span>
-                    <span className="text-2xl font-bold text-green-900 dark:text-green-100">
-                      <PriceDisplay value={totalRevenue} compact={totalRevenue >= 1000} />
-                    </span>
-                  </div>
-                ),
-              }
+      {/* Page Header */}
+      <PageHeader
+        centerContent={
+          <SegmentedControl
+            size="md"
+            shape="pill"
+            iconSize="--icon-lg"
+            useGraphicFont={true}
+            options={[
+              { label: t.cashRegister?.title || 'Register', value: 'cash-register', icon: 'point_of_sale' },
+              { label: t.shiftHistory?.title || 'Shifts', value: 'shift-history', icon: 'history' },
             ]}
+            value="shift-history"
+            onChange={(val) => onViewChange?.(val as string)}
           />
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div
-        className={`flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center ${CARD_BASE} p-4 rounded-2xl`}
-      >
-        <div className='flex flex-wrap items-center gap-3 w-full sm:flex-1'>
-          <div className='relative group flex-1'>
-            <SearchInput
-              value={searchTerm}
-              onSearchChange={setSearchTerm}
-              placeholder={t.shiftHistory?.searchPlaceholder || 'Search by shift ID or user...'}
-              color={color}
-              wrapperClassName='w-full'
-            />
-          </div>
-
+        }
+        leftContent={
+          <SearchInput
+            value={searchTerm}
+            onSearchChange={setSearchTerm}
+            placeholder={t.shiftHistory?.searchPlaceholder || 'Search...'}
+            color={color}
+            width="320px"
+          />
+        }
+        rightContent={
+          <div className="flex items-center gap-3">
             <DateRangePicker
               startDate={startDate}
               endDate={endDate}
@@ -396,17 +354,56 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
               color={color}
               locale={locale}
             />
-        </div>
-
-        <button
-          onClick={exportToCSV}
-          disabled={filteredShifts.length === 0}
-          className={`px-4 py-2.5 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50 text-gray-700 dark:text-gray-200`}
-        >
-          <span className='material-symbols-rounded text-lg'>download</span>
-          <span className='hidden md:inline'>{t.shiftHistory?.exportCSV || 'Export CSV'}</span>
-        </button>
-      </div>
+            <button
+              onClick={exportToCSV}
+              disabled={filteredShifts.length === 0}
+              className={`px-4 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50 text-gray-700 dark:text-gray-200 shadow-sm`}
+            >
+              <span className='material-symbols-rounded text-lg'>download</span>
+              <span className='hidden md:inline'>{t.shiftHistory?.exportCSV || 'Export CSV'}</span>
+            </button>
+          </div>
+        }
+        showStatsToggle={true}
+        showBottom={showSummary}
+        onToggleBottom={() => setShowSummary(!showSummary)}
+        bottomContent={
+          <div className='flex items-center justify-end'>
+            <InteractiveCard
+              isLoading={isLoading}
+              className="flex flex-col items-end min-w-[200px] px-6 py-3 rounded-2xl"
+              pages={[
+                {
+                  theme: 'bg-primary-50 dark:bg-primary-900/20',
+                  content: (
+                    <div className="flex flex-col items-end w-full">
+                      <span className="text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400">
+                        {t.shiftHistory?.summary?.totalShifts || 'Total Shifts'}
+                      </span>
+                      <span className="text-2xl font-bold text-primary-900 dark:text-primary-100">
+                        {filteredShifts.length}
+                      </span>
+                    </div>
+                  ),
+                },
+                {
+                  theme: 'bg-green-50 dark:bg-green-900/20',
+                  content: (
+                    <div className="flex flex-col items-end w-full">
+                      <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400">
+                        {t.shiftHistory?.summary?.totalRevenue || 'Total Revenue'}
+                      </span>
+                      <span className="text-2xl font-bold text-green-900 dark:text-green-100">
+                        <PriceDisplay value={totalRevenue} compact={totalRevenue >= 1000} />
+                      </span>
+                    </div>
+                  ),
+                }
+              ]}
+            />
+          </div>
+        }
+      />
 
       {/* Table Card */}
       <div className={`flex-1 ${CARD_BASE} rounded-xl overflow-hidden flex flex-col`}>
@@ -414,6 +411,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
           data={filteredShifts}
           columns={columns}
           color={color}
+          isLoading={isLoading}
           tableId='shift_history_table'
           onRowClick={(shift) => setSelectedShift(shift)}
           manualFiltering={true}

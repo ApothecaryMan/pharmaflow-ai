@@ -173,6 +173,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'navigationParams',
       'customers',
       'employees',
+      'onViewChange',
     ],
     permission: 'sale.view_history',
   },
@@ -414,7 +415,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'سجل النقدية',
     icon: 'point_of_sale',
     category: 'sales',
-    requiredProps: ['color', 't', 'language', 'employees', 'currentEmployeeId'],
+    requiredProps: ['color', 't', 'language', 'employees', 'currentEmployeeId', 'onViewChange'],
     permission: 'shift.open',
   },
   'shift-history': {
@@ -424,7 +425,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'سجل الورديات',
     icon: 'history',
     category: 'sales',
-    requiredProps: ['color', 't', 'language', 'employees'],
+    requiredProps: ['color', 't', 'language', 'employees', 'onViewChange'],
     permission: 'shift.reports',
   },
   'stock-adjustment': {
