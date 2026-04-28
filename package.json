@@ -43,6 +43,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@fontsource-variable/geist": "^5.2.8",
     "@google/genai": "^1.30.0",
+    "@mynaui/icons-react": "^0.4.2",
     "@simplewebauthn/browser": "^13.2.2",
     "@supabase/supabase-js": "^2.99.3",
     "@tanstack/react-table": "^8.21.3",

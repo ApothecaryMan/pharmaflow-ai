@@ -21,6 +21,7 @@ import type { Organization } from '../../types';
 import { PrinterSettings } from '../settings/PrinterSettings';
 import { SidebarDropdown } from './SidebarDropdown';
 import { SettingsMenu } from './StatusBar/items/SettingsMenu';
+import { Icons, getIconByName } from '../common/Icons';
 
 interface NavbarProps {
   menuItems: MenuItem[];
@@ -364,28 +365,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   <span
                     className={`flex items-center justify-center ${(isActive || isDropdownOpen) && (hasPage || hasImplementedSubItems) ? 'icon-filled' : ''}`}
                   >
-                    {module.id === 'sales' ? (
-                      <svg
-                        style={{ width: 'var(--icon-navbar-main)', height: 'var(--icon-navbar-main)' }}
-                        viewBox='0 0 24 24'
-                        fill='none'
-                        stroke='currentColor'
-                        strokeWidth='2'
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                      >
-                        <path d='M4 4h3l1 10h10l1-10H7' />
-                        <circle cx='9' cy='19' r='1.5' />
-                        <circle cx='17' cy='19' r='1.5' />
-                      </svg>
-                    ) : (
-                      <span
-                        className={`material-symbols-rounded`}
-                        style={{ fontSize: 'var(--icon-navbar-main)' }}
-                      >
-                        {module.icon}
-                      </span>
-                    )}
+                    {(() => {
+                      const IconComponent = getIconByName(module.icon || module.id, isActive || isDropdownOpen);
+                      return <IconComponent size="var(--icon-navbar-main)" />;
+                    })()}
                   </span>
 
                   <span className='text-sm font-medium'>
@@ -448,7 +431,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
             onClick={onMobileMenuToggle}
             className='flex items-center justify-center w-10 h-10 text-gray-600 dark:text-gray-300'
           >
-            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-navbar-mobile)' }}>menu</span>
+            <Icons.Menu size="var(--icon-navbar-mobile)" />
           </button>
         </div>
       )}
@@ -479,7 +462,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   height: '32px',
                 }}
               >
-                <span className='material-symbols-rounded text-white' style={{ fontSize: 'var(--icon-md)' }}>store</span>
+                <Icons.Store size="var(--icon-md)" stroke={2.5} color="white" />
               </div>
             )}
             <div className='hidden md:flex flex-col items-start'>
@@ -499,9 +482,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   </span>
                 )}
             </div>
-            <span className='hidden md:block material-symbols-rounded text-gray-400' style={{ fontSize: 'var(--icon-base)' }}>
-              expand_more
-            </span>
+            <Icons.ExpandMore size="var(--icon-base)" className="hidden md:block text-gray-400" />
           </button>
 
           {/* Profile Dropdown */}
@@ -526,9 +507,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                           height: '48px',
                         }}
                       >
-                        <span className='material-symbols-rounded text-white' style={{ fontSize: 'var(--icon-lg)' }}>
-                          store
-                        </span>
+                        <Icons.Store size="var(--icon-lg)" stroke={2} color="white" />
                       </div>
                     )}
                     {currentEmployeeId && (
@@ -545,7 +524,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         className='absolute bottom-0 right-0 w-5 h-5 bg-black/30 backdrop-blur-xs text-white rounded-full flex items-center justify-center hover:bg-black/50 shadow-xs'
                         title='Change Photo'
                       >
-                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-xs)' }}>edit</span>
+                        <Icons.Edit size="var(--icon-xs)" />
                       </button>
                     )}
                   </div>
@@ -602,7 +581,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 <div className='p-2 border-t border-(--border-divider)'>
                   <div className='flex items-center justify-between px-2 mb-2'>
                     <div className='flex items-center gap-1.5'>
-                      <span className='material-symbols-rounded text-gray-400' style={{ fontSize: '16px' }}>location_on</span>
+                      <Icons.Branch size={16} className="text-gray-400" />
                       <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
                         {language === 'AR' ? 'فروع الصيدلية' : 'Pharmacy Branches'}
                       </p>
@@ -615,7 +594,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         }}
                         className='text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-(--bg-menu-hover) flex items-center gap-1 py-1 px-3 rounded-full border border-primary-100 dark:border-primary-900/50 hover:shadow-sm active:scale-95'
                       >
-                        <span className='material-symbols-rounded' style={{ fontSize: '13px' }}>settings</span>
+                        <Icons.Settings size={13} />
                         {language === 'AR' ? 'الإدارة' : 'Manage'}
                       </button>
                     )}
@@ -640,9 +619,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                           `}
                         >
                           <div className='flex items-center gap-2'>
-                            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
-                              {activeBranchId === branch.id ? 'radio_button_checked' : 'radio_button_unchecked'}
-                            </span>
+                            {activeBranchId === branch.id ? <Icons.Success size="var(--icon-md)" /> : <Icons.Circle size="var(--icon-md)" />}
                             {branch.name}
                           </div>
                           {branch.code && <span className='text-[10px] opacity-60'>{branch.code}</span>}
@@ -651,7 +628,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     </div>
                   ) : (
                     <div className='px-2.5 py-2 mt-1 mx-1 text-xs text-gray-500 dark:text-gray-400 bg-(--bg-page-surface) rounded-lg border border-(--border-divider) flex items-center gap-2'>
-                      <span className='material-symbols-rounded text-[16px] text-gray-400'>info</span>
+                      <Icons.Info size={16} className="text-gray-400" />
                       {language === 'AR' ? 'فرع واحد متاح.' : 'One branch available.'}
                     </div>
                   )}
@@ -669,7 +646,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                       }}
                       className='flex items-center justify-center gap-2 p-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) w-full'
                     >
-                      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>corporate_fare</span>
+                      <Icons.Organization size="var(--icon-md)" />
                       {language === 'AR' ? 'إدارة المنظمة' : 'Manage Organization'}
                     </button>
                   )}
@@ -681,7 +658,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                       }}
                       className='flex items-center justify-center gap-2 p-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) w-full'
                     >
-                      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>settings_applications</span>
+                      <Icons.Settings size="var(--icon-md)" />
                       {language === 'AR' ? 'إعدادات الفرع' : 'Branch Settings'}
                     </button>
                   )}
@@ -700,7 +677,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     }}
                     className={`w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg flex items-center justify-center gap-2`}
                   >
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>print</span>
+                    <Icons.Print size="var(--icon-md)" />
                     {(t as any).printerSettings?.title || 'Printer Settings'}
                   </button>
                 </div>
@@ -713,7 +690,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     onClick={() => backupService.exportBackup()}
                     className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg transition-colors flex items-center justify-center gap-2'
                   >
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>download</span>
+                    <Icons.Download size="var(--icon-md)" />
                     {t.settings.exportBackup}
                   </button>
                   <button
@@ -724,7 +701,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     }}
                     className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg flex items-center justify-center gap-2'
                   >
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>upload</span>
+                    <Icons.Upload size="var(--icon-md)" />
                     {t.settings.importBackup}
                   </button>
                   <input 
@@ -772,14 +749,12 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 >
                   {isLoggingOut ? (
                     <>
-                      <span className='material-symbols-rounded animate-spin' style={{ fontSize: 'var(--icon-md)' }}>
-                        progress_activity
-                      </span>
+                      <Icons.Loading size="var(--icon-md)" className="animate-spin" />
                       {t.profile.signOut}...
                     </>
                   ) : (
                     <>
-                      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>logout</span>
+                      <Icons.Logout size="var(--icon-md)" />
                       {t.profile.signOut}
                     </>
                   )}
