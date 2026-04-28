@@ -245,137 +245,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
     inventoryTooltip: inventoryTooltipData,
     profitTooltip: profitTooltipData,
     lowStockTooltip: lowStockTooltipData,
+    topSelling: topSellingFull,
+    expiringItems,
+    salesTrends: salesData,
   } = useDashboardAnalytics({ sales, inventory, batches, totalExpenses, language, branchId: activeBranchId });
 
   const lowStockItems = useMemo(() => {
-    return inventory.filter((d) => {
-      const drugBatches = batches.filter(b => b.drugId === d.id && b.branchId === activeBranchId);
-      const totalStock = drugBatches.reduce((sum, b) => sum + b.quantity, 0);
-      return totalStock <= 10;
-    });
-  }, [inventory, batches, activeBranchId]);
+    return [...movingItemsAnalysis.critical, ...movingItemsAnalysis.lowStock];
+  }, [movingItemsAnalysis.critical, movingItemsAnalysis.lowStock]);
 
   const revenueTooltip = useMemo(() => <InsightTooltip {...revenueTooltipData} language={language} />, [revenueTooltipData, language]);
   const expensesTooltip = useMemo(() => <InsightTooltip {...inventoryTooltipData} language={language} />, [inventoryTooltipData, language]);
   const profitTooltip = useMemo(() => <InsightTooltip {...profitTooltipData} language={language} />, [profitTooltipData, language]);
   const lowStockTooltip = useMemo(() => <InsightTooltip {...lowStockTooltipData} language={language} />, [lowStockTooltipData, language]);
 
-  // --- CHART DATA (Sales by Date) ---
-  const salesData = useMemo(() => {
-    return sales
-      .reduce((acc: any[], sale) => {
-        const date = new Date(sale.date).toLocaleDateString('en-US', { weekday: 'short' });
-        const existing = acc.find((a) => a.name === date);
-        if (existing) {
-          existing.sales += sale.total;
-        } else {
-          acc.push({ name: date, sales: sale.total });
-        }
-        return acc;
-      }, [])
-      .slice(-7);
-  }, [sales]);
-
-  // --- TOP SELLING PRODUCTS (accounting for returns) ---
-  const topSelling = useMemo(() => {
-    // Store full item details keyed by ID to preserve dosageForm
-    const productSales: Record<string, { name: string; dosageForm?: string; qty: number }> = {};
-
-    sales.forEach((sale) => {
-      sale.items.forEach((item, idx) => {
-        // Subtract returned quantities
-        const lineKey = `${item.id}_${idx}`;
-        const returnedQty =
-          sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
-        const actualQty = item.quantity - returnedQty;
-
-        if (actualQty > 0) {
-          if (!productSales[item.id]) {
-            productSales[item.id] = {
-              name: item.name,
-              dosageForm: item.dosageForm,
-              qty: 0,
-            };
-          }
-          productSales[item.id].qty += actualQty;
-        }
-      });
-    });
-
-    return Object.values(productSales)
-      .sort((a, b) => b.qty - a.qty)
-      .slice(0, 5);
-  }, [sales]);
-
-  const topSelling20 = useMemo(() => {
-    const productSales: Record<
-      string,
-      { name: string; dosageForm?: string; qty: number; revenue: number }
-    > = {};
-
-    sales.forEach((sale) => {
-      sale.items.forEach((item, idx) => {
-        // Subtract returned quantities
-        const lineKey = `${item.id}_${idx}`;
-        const returnedQty =
-          sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
-        const actualQty = item.quantity - returnedQty;
-
-        if (actualQty > 0) {
-          if (!productSales[item.id]) {
-            productSales[item.id] = {
-              name: item.name,
-              dosageForm: item.dosageForm,
-              qty: 0,
-              revenue: 0,
-            };
-          }
-          const entry = productSales[item.id];
-          entry.qty += actualQty;
-
-          // Calculate effective price for units
-          let effectivePrice = item.price;
-          if (item.isUnit && item.unitsPerPack) {
-            effectivePrice = item.price / item.unitsPerPack;
-          }
-          entry.revenue += effectivePrice * actualQty;
-        }
-      });
-    });
-
-    return Object.values(productSales)
-      .sort((a, b) => b.qty - a.qty)
-      .slice(0, 20);
-  }, [sales]);
-
-  // --- EXPIRING SOON ITEMS (Next 3 months - based on real batches) ---
-  const expiringItems = useMemo(() => {
-    const today = new Date();
-    const threeMonthsFromNow = new Date();
-    threeMonthsFromNow.setMonth(today.getMonth() + 3);
-
-    // Use batches from context
-    const branchBatches = batches.filter(b => b.branchId === activeBranchId && b.quantity > 0);
-    
-    return inventory
-      .filter((d) => {
-        const drugBatches = branchBatches.filter(b => b.drugId === d.id);
-        return drugBatches.some(b => {
-          const expDate = parseExpiryEndOfMonth(b.expiryDate);
-          return expDate >= today && expDate <= threeMonthsFromNow;
-        });
-      })
-      .map(d => {
-         const drugBatches = branchBatches.filter(b => b.drugId === d.id);
-         return {
-           ...d,
-           expiryDate: drugBatches.length > 0 ? drugBatches.sort((a, b) => 
-             parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime()
-           )[0].expiryDate : d.expiryDate
-         };
-      })
-      .sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime());
-  }, [inventory, batches, activeBranchId]);
+  const topSelling = useMemo(() => topSellingFull.slice(0, 5), [topSellingFull]);
+  const topSelling20 = topSellingFull;
 
   // --- RECENT TRANSACTIONS (exclude fully returned orders) ---
   const recentSales = useMemo(() => {

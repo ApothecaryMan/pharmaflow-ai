@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import type { Drug, Sale, StockBatch } from '../../types';
 import { CalculationBlock, CurrencyValue, DetailMetric } from '../common/InsightTooltip';
+import { DashboardService } from '../../services/dashboard/DashboardService';
 
 interface AnalyticsProps {
   sales: Sale[];
@@ -88,66 +89,33 @@ export const useDashboardAnalytics = ({
   };
 
   // 1. Core Revenue Calculation
-  const { totalRevenue, totalReturns } = useMemo(() => {
-    let rev = 0;
-    let ret = 0;
-    sales.forEach((sale) => {
-      rev += sale.netTotal ?? sale.total;
-      if (sale.hasReturns && sale.netTotal !== undefined) {
-        ret += sale.total - sale.netTotal;
-      }
-    });
-    return { totalRevenue: rev, totalReturns: ret };
-  }, [sales]);
+  const { totalRevenue, totalReturns } = useMemo(
+    () => DashboardService.calculateRevenueAndReturns(sales),
+    [sales]
+  );
 
   // 2. COGS & Inventory Valuation
-  const { totalCogs, inventoryValuation } = useMemo(() => {
-    let cogs = 0;
+  const totalCogs = useMemo(
+    () => DashboardService.calculateCogs(sales, inventory),
+    [sales, inventory]
+  );
 
-    sales.forEach((sale) => {
-      sale.items.forEach((item, idx) => {
-        const drug = inventory.find((d) => d.id === item.id);
-        const costPrice = drug?.costPrice || 0;
-
-        const lineKey = `${item.id}_${idx}`;
-        const returnedQty =
-          sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
-        const actualSoldQty = item.quantity - returnedQty;
-
-        if (actualSoldQty > 0) {
-          let effectiveCost = costPrice;
-          if (item.isUnit && item.unitsPerPack) {
-            effectiveCost = costPrice / item.unitsPerPack;
-          }
-          cogs += actualSoldQty * effectiveCost;
-        }
-      });
-    });
-
-    // IMPROVED Inventory Valuation: Sum of all batch values for this branch
-    const branchBatches = branchId ? batches.filter(b => b.branchId === branchId) : batches;
-    const valuation = branchBatches.reduce((sum, b) => sum + (b.quantity || 0) * (b.costPrice || 0), 0);
-
-    return { totalCogs: cogs, inventoryValuation: valuation };
-  }, [sales, inventory, batches, branchId]);
+  const inventoryValuation = useMemo(
+    () => DashboardService.calculateInventoryValuation(batches, branchId),
+    [batches, branchId]
+  );
 
   // 3. Efficiency Metrics
-  const { inventoryTurnoverRatio, daysOfInventory } = useMemo(() => {
-    const turnover = inventoryValuation > 0 ? totalCogs / inventoryValuation : 0;
-    const dailyCogs = totalCogs / 30 || 1;
-    const days = inventoryValuation / dailyCogs;
-
-    return { inventoryTurnoverRatio: turnover, daysOfInventory: days };
-  }, [totalCogs, inventoryValuation]);
+  const { turnoverRatio: inventoryTurnoverRatio, daysOfInventory } = useMemo(
+    () => DashboardService.calculateEfficiency(totalCogs, inventoryValuation),
+    [totalCogs, inventoryValuation]
+  );
 
   // 4. Profitability Metrics
-  const grossProfit = totalRevenue - totalCogs;
-  const netProfit = grossProfit - totalExpenses;
-
-  const profitMarginPercent = useMemo(() => {
-    if (totalRevenue === 0) return 0;
-    return (grossProfit / totalRevenue) * 100;
-  }, [grossProfit, totalRevenue]);
+  const { grossProfit, netProfit, marginPercent: profitMarginPercent } = useMemo(
+    () => DashboardService.calculateProfitability(totalRevenue, totalCogs, totalExpenses),
+    [totalRevenue, totalCogs, totalExpenses]
+  );
 
   // 5. Customer Behavior
   const averageOrderValue = useMemo(() => {
@@ -162,38 +130,10 @@ export const useDashboardAnalytics = ({
   }, [totalReturns, totalRevenue]);
 
   // 6. Movement & Impact Analysis
-  const movingItemsAnalysis = useMemo(() => {
-    const salesByDrug: Record<string, number> = {};
-    let totalPotentialLoss = 0;
-
-    sales.forEach((sale) => {
-      sale.items.forEach((item) => {
-        salesByDrug[item.id] = (salesByDrug[item.id] || 0) + item.quantity;
-      });
-    });
-
-    // Helper to get stock precisely from batches array
-    const getStock = (drugId: string) => {
-      const drugBatches = branchId ? batches.filter(b => b.drugId === drugId && b.branchId === branchId) : batches.filter(b => b.drugId === drugId);
-      return drugBatches.reduce((sum, b) => sum + (b.quantity || 0), 0);
-    };
-
-    const critical = inventory.filter((d) => getStock(d.id) <= 3);
-
-    // Revenue at Risk Forecast (1-week approximation)
-    critical.forEach((d) => {
-      totalPotentialLoss += (d.price || 0) * 5;
-    });
-
-    return {
-      critical,
-      fastMoving: inventory.filter((d) => (salesByDrug[d.id] || 0) >= 10),
-      slowMoving: inventory.filter(
-        (d) => (salesByDrug[d.id] || 0) < 3 && (salesByDrug[d.id] || 0) > 0
-      ),
-      revenueAtRisk: totalPotentialLoss,
-    };
-  }, [sales, inventory, batches, branchId]);
+  const movingItemsAnalysis = useMemo(
+    () => DashboardService.analyzeMovement(sales, inventory, batches, branchId),
+    [sales, inventory, batches, branchId]
+  );
 
   // 7. Health Grades
   const profitGrade = useMemo(() => {
@@ -201,6 +141,16 @@ export const useDashboardAnalytics = ({
     if (profitMarginPercent > 20) return { label: t('healthy'), color: 'primary' as const };
     return { label: t('lowMargin'), color: 'amber' as const };
   }, [profitMarginPercent, language]);
+
+  // 8. Advanced Lists (for UI components)
+  const topSelling = useMemo(() => DashboardService.getTopSelling(sales, 20), [sales]);
+
+  const expiringItems = useMemo(
+    () => DashboardService.getExpiringSoon(inventory, batches, branchId || 'all'),
+    [inventory, batches, branchId]
+  );
+
+  const salesTrends = useMemo(() => DashboardService.getSalesTrends(sales, 7), [sales]);
 
   // --- TOOLTIP CONFIGURATIONS ---
 
@@ -369,10 +319,7 @@ export const useDashboardAnalytics = ({
         {
           icon: 'trending_down',
           label: t('totalLowStock'),
-          value: inventory.filter((d) => {
-            const drugBatches = branchId ? batches.filter(b => b.drugId === d.id && b.branchId === branchId) : batches.filter(b => b.drugId === d.id);
-            return drugBatches.reduce((sum, b) => sum + (b.quantity || 0), 0) <= 10;
-          }).length,
+          value: movingItemsAnalysis.lowStockCount,
           isCurrency: false,
         },
       ],
@@ -398,5 +345,8 @@ export const useDashboardAnalytics = ({
     inventoryTooltip,
     profitTooltip,
     lowStockTooltip,
+    topSelling,
+    expiringItems,
+    salesTrends,
   };
 };

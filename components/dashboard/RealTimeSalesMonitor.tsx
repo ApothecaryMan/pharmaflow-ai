@@ -306,7 +306,18 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col h-[437px] overflow-hidden`}>
             <div className='flex items-center justify-between mb-4'>
               <h3 className='text-lg font-bold flex items-center gap-2'><span className='material-symbols-rounded text-gray-400'>history</span>{t.realTimeSales?.recentTransactions}</h3>
-              <SegmentedControl value={activeFilter} onChange={(val) => setActiveFilter(val as any)} color='emerald' size='xs' fullWidth={false} variant='onPage' className='w-auto' options={[{ label: t.realTimeSales?.filterAll, value: 'ALL' }, { label: t.realTimeSales?.filterVip, value: 'VIP' }, { label: t.realTimeSales?.filterHighValue, value: 'HIGH_VALUE' }]} />
+              <SegmentedControl
+                value={activeFilter}
+                onChange={(val) => setActiveFilter(val as any)}
+                size='xs'
+                fullWidth={false}
+                className='w-auto'
+                options={[
+                  { label: t.realTimeSales?.filterAll, value: 'ALL' },
+                  { label: t.realTimeSales?.filterVip, value: 'VIP' },
+                  { label: t.realTimeSales?.filterHighValue, value: 'HIGH_VALUE' }
+                ]}
+              />
             </div>
             <div className='flex-1 overflow-y-auto custom-scrollbar'>
               <table className='w-full text-left rtl:text-right border-collapse'>
