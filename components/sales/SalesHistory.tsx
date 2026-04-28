@@ -416,9 +416,9 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
       sale.customerCode || '-',
       sale.paymentMethod === 'visa' ? 'Visa' : 'Cash',
       sale.items.length,
-      (sale.subtotal || 0).toFixed(2),
+      money.divide(sale.subtotal || 0, 1).toFixed(2),
       sale.globalDiscount || 0,
-      sale.total.toFixed(2),
+      money.divide(sale.total, 1).toFixed(2),
     ]);
 
     const csvContent = [
@@ -485,7 +485,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
               {t.totalRevenue}
             </span>
             <span className={`text-xl font-bold text-primary-900 dark:text-primary-100`}>
-              ${totalRevenue.toFixed(2)}
+              {formatCurrency(totalRevenue)}
             </span>
           </div>
         )}

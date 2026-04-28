@@ -27,9 +27,9 @@ interface ReturnModalProps {
 }
 
 // --- Constants ---
-const PHARMACIST_REFUND_LIMIT_PER_INVOICE = 1000;
-const PHARMACIST_DAILY_REFUND_LIMIT = 2000;
-const CASHIER_REFUND_LIMIT_PER_INVOICE = 500;
+const PHARMACIST_REFUND_LIMIT_PER_INVOICE = 100000; // 1000.00 EGP in Piastres
+const PHARMACIST_DAILY_REFUND_LIMIT = 200000; // 2000.00 EGP in Piastres
+const CASHIER_REFUND_LIMIT_PER_INVOICE = 50000; // 500.00 EGP in Piastres
 
 export const ReturnModal: React.FC<ReturnModalProps> = ({
   isOpen,
@@ -180,8 +180,8 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         if (projectedDailyTotal > PHARMACIST_DAILY_REFUND_LIMIT) {
           const errorMsg =
             language === 'AR'
-              ? `خطأ: تم تجاوز الحد اليومي للمرتجعات (${PHARMACIST_DAILY_REFUND_LIMIT} جنيه). الإجمالي الحالي: ${currentDailyRefunds?.toFixed(2)}, المبلغ المطلوب: ${calculateRefund.toFixed(2)}. يرجى طلب موافقة المدير.`
-              : `Error: Daily refund limit exceeded (${PHARMACIST_DAILY_REFUND_LIMIT} EGP). Current: ${currentDailyRefunds?.toFixed(2)}, Requested: ${calculateRefund.toFixed(2)}. Please request manager approval.`;
+              ? `خطأ: تم تجاوز الحد اليومي للمرتجعات (${formatCurrency(PHARMACIST_DAILY_REFUND_LIMIT)}). الإجمالي الحالي: ${formatCurrency(currentDailyRefunds)}, المبلغ المطلوب: ${formatCurrency(calculateRefund)}. يرجى طلب موافقة المدير.`
+              : `Error: Daily refund limit exceeded (${formatCurrency(PHARMACIST_DAILY_REFUND_LIMIT)}). Current: ${formatCurrency(currentDailyRefunds)}, Requested: ${formatCurrency(calculateRefund)}. Please request manager approval.`;
           setValidationError(errorMsg);
           setIsProcessing(false);
           return;
@@ -631,7 +631,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                 <div className='flex justify-between items-center p-3 rounded-xl bg-white dark:bg-gray-900 shadow-xs border border-gray-100 dark:border-gray-800 mt-2'>
                   <span className={`text-gray-500 font-medium`}>{t.returns.refundAmount}:</span>
                   <span className={`text-xl font-black text-primary-600`}>
-                    ${calculateRefund.toFixed(2)}
+                    {formatCurrency(calculateRefund)}
                   </span>
                 </div>
               </div>
