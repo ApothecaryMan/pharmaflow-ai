@@ -43,21 +43,37 @@ export const pricingService = {
 
     // 3. Apply global discount to the net subtotal
     let finalTotal = netSubtotal;
+    let globalDiscountAmount = 0;
     if (globalDiscountPercent > 0) {
-      const globalDiscountAmount = money.multiply(netSubtotal, globalDiscountPercent, 2);
+      globalDiscountAmount = money.multiply(netSubtotal, globalDiscountPercent, 2);
       finalTotal = money.subtract(netSubtotal, globalDiscountAmount);
     }
 
-    // 4. Extract VAT using the tax engine (Inclusive)
-    const taxRate = 14; // Default VAT in Egypt
-    const { base: subtotalExclTax, taxAmount } = tax.invoiceTax(finalTotal, 0, taxRate, 'inclusive');
+    // 4. Calculate Tax per item and sum it up
+    // Since we apply global discount to the total, we need to proportionally 
+    // distribute the global discount across items to get the effective item price for tax.
+    
+    let totalTaxAmount = 0;
+    const itemWeights = items.map(item => money.toSmallestUnit(pricingService.calculateItemTotal(item)));
+    const allocatedFinalTotals = money.allocate(finalTotal, itemWeights);
+
+    items.forEach((item, idx) => {
+      const itemFinalTotal = allocatedFinalTotals[idx];
+      const itemTaxRate = item.tax ?? 0; // Use item-specific tax rate or 0
+      
+      if (itemTaxRate > 0) {
+        // Extract tax from the allocated final total of this item
+        const itemTax = tax.inclusiveAmount(itemFinalTotal, itemTaxRate);
+        totalTaxAmount = money.add(totalTaxAmount, itemTax);
+      }
+    });
 
     return {
       grossSubtotal,
       netSubtotal,
       finalTotal,
-      taxAmount,
-      subtotalExclTax,
+      taxAmount: totalTaxAmount,
+      subtotalExclTax: money.subtract(finalTotal, totalTaxAmount),
       totalDiscountAmount: money.subtract(grossSubtotal, finalTotal),
     };
   },
