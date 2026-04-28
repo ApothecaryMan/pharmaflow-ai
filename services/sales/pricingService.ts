@@ -60,5 +60,39 @@ export const pricingService = {
       subtotalExclTax,
       totalDiscountAmount: money.subtract(grossSubtotal, finalTotal),
     };
+  },
+
+  /**
+   * Calculates the precise refund amount for selected items using the allocate algorithm.
+   * This ensures that partial returns always sum up to the original net total.
+   */
+  calculateRefundAmount: (sale: any, selectedItems: Map<string, number>): number => {
+    if (selectedItems.size === 0) return 0;
+
+    // 1. Calculate the weights for all items in the original sale
+    const itemWeights = sale.items.map((item: any) => {
+      const itemTotal = money.multiply(item.price, item.quantity, 0);
+      return money.toSmallestUnit(itemTotal);
+    });
+
+    // 2. Allocate the original netTotal across all items based on their weights
+    const allocatedAmounts = money.allocate(sale.netTotal, itemWeights);
+
+    // 3. Sum up the allocated shares for the selected items and their quantities
+    let totalRefund = 0;
+    sale.items.forEach((item: any, index: number) => {
+      const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
+      if (selectedItems.has(lineKey)) {
+        const returnedQty = selectedItems.get(lineKey) || 0;
+        // Share per single unit/pack in this line
+        const sharePerFullQty = allocatedAmounts[index];
+        const sharePerIndividualItem = money.divide(sharePerFullQty, item.quantity);
+        
+        const itemRefund = money.multiply(sharePerIndividualItem, returnedQty, 0);
+        totalRefund = money.add(totalRefund, itemRefund);
+      }
+    });
+
+    return totalRefund;
   }
 };

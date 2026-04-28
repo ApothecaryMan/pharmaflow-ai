@@ -6,7 +6,7 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
 import { pricingService } from '../../services/sales/pricingService';
-import { money, pricing } from '../../utils/currency';
+import { money, tax } from '../../utils/money';
 import { useSmartDirection } from '../common/SmartInputs';
 import { idGenerator } from '../../utils/idGenerator';
 import { useData } from '../../services/DataContext';
@@ -142,28 +142,8 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
     availableItems.length > 0 && availableItems.every((item) => selectedItems.has(item.lineKey));
 
   const calculateRefund = useMemo(() => {
-    let total = 0;
-    selectedItems.forEach((quantity, lineKey) => {
-      const item = availableItems.find((i) => i.lineKey === lineKey);
-      if (item) {
-        // Use pricingService for consistent per-item net price
-        const itemTotal = pricingService.calculateItemTotal({
-          ...item,
-          quantity: quantity
-        } as any);
-
-        // Apply global discount per-item (pro-rata)
-        let lineRefund = itemTotal;
-        if (sale.globalDiscount && sale.globalDiscount > 0) {
-          const globalDiscountAmount = money.multiply(itemTotal, sale.globalDiscount, 2);
-          lineRefund = money.subtract(itemTotal, globalDiscountAmount);
-        }
-
-        total = money.add(total, lineRefund);
-      }
-    });
-    return total;
-  }, [selectedItems, availableItems, sale.globalDiscount]);
+    return pricingService.calculateRefundAmount(sale, selectedItems);
+  }, [selectedItems, sale]);
 
   const handleConfirm = async () => {
     if (isProcessing) return;
@@ -268,19 +248,17 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
       console.error('Failed to validate shift:', e);
     }
 
+    const itemWeights = sale.items.map((item: any) => money.toSmallestUnit(money.multiply(item.price, item.quantity, 0)));
+    const allocatedAmounts = money.allocate(sale.netTotal, itemWeights);
+
     const returnItems: ReturnItem[] = [];
-    selectedItems.forEach((quantity, lineKey) => {
-      const item = availableItems.find((i) => i.lineKey === lineKey);
-      if (item) {
-        const itemPrice = item.isUnit && item.unitsPerPack ? money.divide(item.price, item.unitsPerPack) : item.price;
-        const withItemDiscount = pricing.afterDiscount(itemPrice, item.discount || 0);
-
-        // Apply pro-rata global discount if exists
-        const effectivePrice = sale.globalDiscount && sale.globalDiscount > 0
-          ? money.subtract(withItemDiscount, money.multiply(withItemDiscount, sale.globalDiscount, 2))
-          : withItemDiscount;
-
-        const refundAmount = money.multiply(effectivePrice, quantity, 2);
+    sale.items.forEach((item, index) => {
+      const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
+      if (selectedItems.has(lineKey)) {
+        const quantity = selectedItems.get(lineKey) || 0;
+        const totalLineAllocation = allocatedAmounts[index];
+        const sharePerIndividualItem = money.divide(totalLineAllocation, item.quantity);
+        const refundAmount = money.multiply(sharePerIndividualItem, quantity, 0);
 
         returnItems.push({
           drugId: (item as any).drugId || item.id,
@@ -288,7 +266,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           name: item.name,
           quantityReturned: quantity,
           isUnit: item.isUnit || false,
-          originalPrice: effectivePrice,
+          originalPrice: sharePerIndividualItem,
           refundAmount: refundAmount,
           reason: returnReason,
           condition: 'sellable',
