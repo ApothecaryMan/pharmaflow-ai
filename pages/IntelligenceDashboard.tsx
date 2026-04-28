@@ -283,9 +283,7 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
                 },
               ]}
               size='sm'
-              color='primary'
               fullWidth={false}
-              variant='onPage'
               shape='pill'
             />
             <button
@@ -345,7 +343,6 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
             onChange={(val) => setActiveTab(val)}
             size='md'
             iconSize='--icon-lg'
-            variant='onPage'
             shape='pill'
             useGraphicFont={true}
             className="w-full sm:w-[540px]"

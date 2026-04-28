@@ -1,627 +1,94 @@
-import React, { type InputHTMLAttributes, useEffect, useMemo, useRef, useState } from 'react';
+import React, { type InputHTMLAttributes, useMemo, useRef, useState, useEffect } from 'react';
 import { INPUT_BASE } from '../../utils/themeStyles';
 
 /**
  * @module SmartInputs
- * @description
- * This module provides a centralized collection of "Smart" input components and utilities
- * designed effectively primarily to handle:
- * 1. Automatic LTR/RTL text direction switching (Critical for Arabic support).
- * 2. Standardized validation and input masking for Phones and Emails.
- * 3. Consistent styling and behavior across the application.
- * 4. Smart autocomplete with ghost text suggestions.
- *
- * @guidelines
- * - **ALWAYS** use `SmartInput` for generic text fields (Name, Address, Notes).
- * - **ALWAYS** use `SmartPhoneInput` for telephone numbers.
- * - **ALWAYS** use `SmartEmailInput` for email addresses.
- * - **ALWAYS** use `SmartAutocomplete` for search fields with suggestions.
- * - **ALWAYS** use helper functions (`isValidEmail`, `cleanPhone`) instead of writing custom Regex.
- * - **NEVER** use standard HTML `<input>` directly for form fields unless absolutely necessary.
+ * Centralized "Smart" inputs with auto RTL/LTR detection, validation, and ghost autocomplete.
  */
 
-// --- Hooks ---
-
-/**
- * A utility function that automatically detects the text direction ('ltr' or 'rtl') based on the content.
- *
- * @param text - The primary text to analyze (usually the input value).
- * @param placeholder - Fallback text to analyze if the primary text is empty.
- * @returns 'rtl' if Arabic characters are detected, otherwise 'ltr'.
- */
-export const getSmartDirection = (
-  text: string | undefined | null,
-  placeholder?: string | undefined | null
-): 'rtl' | 'ltr' => {
-  if (text) return /[\u0600-\u06FF]/.test(text) ? 'rtl' : 'ltr';
-  if (placeholder) return /[\u0600-\u06FF]/.test(placeholder) ? 'rtl' : 'ltr';
-  return 'ltr';
+export const getSmartDirection = (v?: string | null, p?: string | null): 'rtl' | 'ltr' => {
+  const t = v || p || '';
+  return /[\u0600-\u06FF]/.test(t) ? 'rtl' : 'ltr';
 };
 
-/**
- * A hook that automatically detects the text direction ('ltr' or 'rtl') based on the content.
- *
- * @usage
- * Use this hook when building custom components that need to adapt to user input language.
- *
- * @example
- * ```tsx
- * const dir = useSmartDirection(value, placeholder);
- * <input dir={dir} ... />
- * ```
- *
- * @param text - The primary text to analyze (usually the input value).
- * @param placeholder - Fallback text to analyze if the primary text is empty.
- * @returns 'rtl' if Arabic characters are detected, otherwise 'ltr'.
- */
-export const useSmartDirection = (
-  text: string | undefined | null,
-  placeholder?: string | undefined | null
-): 'rtl' | 'ltr' => {
-  return useMemo(() => getSmartDirection(text, placeholder), [text, placeholder]);
+export const useSmartDirection = (v?: string | null, p?: string | null) => useMemo(() => getSmartDirection(v, p), [v, p]);
+
+export const isValidEmail = (e: string) => /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(e);
+export const isValidPhone = (p: string) => /^[\d\s+\-()]{5,20}$/.test(p);
+export const cleanPhone = (p: string) => p.replace(/[^\d+]/g, '');
+
+export const SmartInput: React.FC<InputHTMLAttributes<HTMLInputElement>> = ({ value, className, placeholder, ...p }) => (
+  <input {...p} value={value} placeholder={placeholder} dir={useSmartDirection(String(value || ''), placeholder)} className={`${INPUT_BASE} ${className || ''}`} />
+);
+
+export const SmartTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = ({ value, className, placeholder, ...p }) => (
+  <textarea {...p} value={value} placeholder={placeholder} dir={useSmartDirection(String(value || ''), placeholder)} className={`${INPUT_BASE} ${className || ''}`} />
+);
+
+export const SmartDateInput: React.FC<{ value: string; onChange: (v: string) => void; className?: string; required?: boolean; placeholder?: string }> = ({ value, onChange, className, required, placeholder }) => {
+  const [foc, setFoc] = useState(false), [disp, setDisp] = useState('');
+  const fmt = (s: string, edit: boolean) => {
+    if (!s) return '';
+    try { const [y, m] = s.split('-'); return edit ? `${m}${y.slice(2)}` : `${m}/${y.slice(2)}`; } catch(e) { return s; }
+  };
+  useEffect(() => setDisp(fmt(value, foc)), [value, foc]);
+  return (
+    <input type="text" inputMode="numeric" className={className || INPUT_BASE} required={required} placeholder={foc ? 'MMYY' : placeholder || 'MM/YY'} value={disp} maxLength={4}
+      onChange={e => setDisp(e.target.value.replace(/\D/g, '').slice(0, 4))} onFocus={() => setFoc(true)}
+      onBlur={() => {
+        setFoc(false); const v = disp.replace(/\D/g, '');
+        if (v.length === 4) { const m = v.slice(0, 2), y = 2000 + parseInt(v.slice(2)); if (parseInt(m) >= 1 && parseInt(m) <= 12) return onChange(`${y}-${m}`); }
+        v ? setDisp(fmt(value, false)) : onChange('');
+      }}
+    />
+  );
 };
 
-// --- Utils ---
+const SpecialtyInput = (type: string, regex: RegExp) => ({ value, onChange, className, ...p }: any) => (
+  <input {...p} type={type} dir="ltr" value={value} className={`${INPUT_BASE} ${className || ''}`} onChange={e => onChange(e.target.value.replace(regex, ''))} />
+);
+export const SmartPhoneInput = SpecialtyInput('tel', /[^0-9\s+\-()]/g);
+export const SmartEmailInput = SpecialtyInput('email', /[^a-zA-Z0-9@._\-+]/g);
+export const SmartPasswordInput = SpecialtyInput('password', /[^a-zA-Z0-9@]/g);
 
-/**
- * Validates an email address against the RFC 5322 official standard.
- *
- * @usage Use this for all email validation logic in the app.
- * @param email - The email string to validate.
- * @returns `true` if valid, `false` otherwise.
- */
-export const isValidEmail = (email: string): boolean => {
-  // RFC 5322 official standard regex for email validation
-  // Allows alphanumeric, dots, underscores, hyphens, and standard domains
-  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-  return emailRegex.test(email);
-};
-
-/**
- * Validates a phone number format.
- * Allows digits, spaces, and the characters: +, -, (, ).
- * Enforces a length between 5 and 20 characters.
- *
- * @usage Use this for all phone number validation logic.
- * @param phone - The phone string to validate.
- * @returns `true` if valid, `false` otherwise.
- */
-export const isValidPhone = (phone: string): boolean => {
-  // Allows numbers, spaces, +, -, (, )
-  // Must contain at least 5 digits
-  const phoneRegex = /^[\d\s+\-()]{5,20}$/;
-  return phoneRegex.test(phone);
-};
-
-/**
- * Strips all non-numeric characters from a phone string, preserving only the leading '+'.
- *
- * @usage Use this before sending phone numbers to the API.
- * @param phone - The raw phone input string.
- * @returns A clean string containing only digits and optional leading '+'.
- */
-export const cleanPhone = (phone: string): string => {
-  // Removes all non-digit characters except +
-  return phone.replace(/[^\d+]/g, '');
-};
-
-// --- Components ---
-
-interface SmartInputProps extends InputHTMLAttributes<HTMLInputElement> {
-  value?: string | number | readonly string[] | undefined;
+export interface SmartAutocompleteProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+  value: string; onChange: (v: string) => void; suggestions: string[]; caseSensitive?: boolean;
+  onSuggestionAccept?: (s: string) => void; inputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
-/**
- * **SmartInput Component**
- *
- * A wrapper around the native input element that automatically sets the `dir` attribute (LTR/RTL)
- * based on the input value.
- *
- * @usage
- * Use this component for **ALL** generic free-text fields where the user might type in English or Arabic.
- * Examples: Customer Name, Address, Product Description, Notes, Comments.
- *
- * @example
- * <SmartInput
- *   value={name}
- *   onChange={(e) => setName(e.target.value)}
- *   placeholder={t.enterName}
- * />
- *
- * @restricted
- * Do NOT use this for:
- * - Emails (Use `SmartEmailInput`)
- * - Phone Numbers (Use `SmartPhoneInput`)
- * - Numeric Codes/Barcodes (Use standard `<input dir="ltr" />`)
- * - Search with autocomplete (Use `SmartAutocomplete`)
- */
-export const SmartInput: React.FC<SmartInputProps> = ({
-  value,
-  className,
-  placeholder,
-  ...props
-}) => {
-  // We cast value to string to keep useSmartDirection happy,
-  // though it handles non-string types gracefully if they are falsy.
-  // If value is undefined, it defaults to LTR.
-  // Now also passes placeholder so empty inputs with Arabic placeholders show RTL
-  const dir = useSmartDirection(
-    typeof value === 'string' ? value : String(value || ''),
-    placeholder
-  );
-
-  return (
-    <input
-      {...props}
-      value={value}
-      placeholder={placeholder}
-      dir={dir} // Calculated direction takes precedence, but props.dir would be overridden here.
-      className={`${INPUT_BASE} ${className || ''}`}
-    />
-  );
-};
-
-interface SmartTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  value?: string | number | readonly string[] | undefined;
-}
-
-/**
- * **SmartTextarea Component**
- * 
- * A wrapper around the native textarea element that automatically sets the `dir` attribute (LTR/RTL)
- * based on the input value or placeholder.
- * 
- * @usage
- * Use this component for **ALL** multi-line text fields.
- */
-export const SmartTextarea: React.FC<SmartTextareaProps> = ({
-  value,
-  className,
-  placeholder,
-  ...props
-}) => {
-  const dir = useSmartDirection(
-    typeof value === 'string' ? value : String(value || ''),
-    placeholder
-  );
-
-  return (
-    <textarea
-      {...props}
-      value={value}
-      placeholder={placeholder}
-      dir={dir}
-      className={`${INPUT_BASE} ${className || ''}`}
-    />
-  );
-};
-
-interface SmartDateInputProps {
-  value: string; // YYYY-MM-DD
-  onChange: (value: string) => void;
-  className?: string;
-  required?: boolean;
-  placeholder?: string;
-  style?: React.CSSProperties;
-}
-
-/**
- * **SmartDateInput Component**
- *
- * A masked input component for handling dates in `MM/YY` format, which converts to `YYYY-MM-DD`.
- * Ideal for Expiry Dates (Credit Cards, Drug Expiration) where day is assumed to be end-of-month.
- *
- * @usage
- * Use for credit card expiry or simple month/year inputs.
- *
- * @param value - ISO Date String (YYYY-MM-DD)
- * @param onChange - Returns the full ISO Date String (YYYY-MM-DD)
- */
-export const SmartDateInput: React.FC<SmartDateInputProps> = ({
-  value,
-  onChange,
-  className,
-  required,
-  placeholder,
-  style,
-}) => {
-  const [isFocused, setIsFocused] = useState(false);
-  const [displayValue, setDisplayValue] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // Helper to format YYYY-MM-DD to MM/YY
-  const formatToDisplay = (dateStr: string): string => {
-    if (!dateStr) return '';
-    try {
-      const [year, month] = dateStr.split('-');
-      if (!year || !month) return '';
-      return `${month}/${year.slice(2)}`;
-    } catch (e) {
-      return dateStr;
-    }
-  };
-
-  // Helper to format YYYY-MM-DD to MMYY (for editing)
-  const formatToEdit = (dateStr: string): string => {
-    if (!dateStr) return '';
-    try {
-      const [year, month] = dateStr.split('-');
-      if (!year || !month) return '';
-      return `${month}${year.slice(2)}`;
-    } catch (e) {
-      return dateStr;
-    }
-  };
-
-  // Initialize display value based on current prop value
-  useEffect(() => {
-    if (isFocused) {
-      setDisplayValue(formatToEdit(value));
-    } else {
-      setDisplayValue(formatToDisplay(value));
-    }
-  }, [value, isFocused]);
-
-  const handleFocus = () => {
-    setIsFocused(true);
-    setDisplayValue(formatToEdit(value));
-  };
-
-  const handleBlur = () => {
-    setIsFocused(false);
-
-    // Parse the input value (MMYY)
-    const cleanValue = displayValue.replace(/\D/g, ''); // Remove non-digits
-
-    if (cleanValue.length === 4) {
-      const monthStr = cleanValue.slice(0, 2);
-      const yearStr = cleanValue.slice(2);
-
-      const month = parseInt(monthStr, 10);
-      const year = 2000 + parseInt(yearStr, 10); // Assume 20xx
-
-      if (month >= 1 && month <= 12) {
-        // Return YYYY-MM format only
-        const formattedDate = `${year}-${monthStr.padStart(2, '0')}`;
-        onChange(formattedDate);
-        setDisplayValue(formatToDisplay(formattedDate));
-        return;
-      }
-    }
-
-    // If invalid or empty, revert/clear
-    if (!cleanValue) {
-      onChange('');
-    } else {
-      // If invalid format but not empty, maybe keep it or reset?
-      // For now, let's reset to previous valid value if parsing fails
-      setDisplayValue(formatToDisplay(value));
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Allow only numbers and limit to 4 chars
-    const val = e.target.value.replace(/\D/g, '').slice(0, 4);
-    setDisplayValue(val);
-  };
-
-  return (
-    <input
-      ref={inputRef}
-      type='text'
-      inputMode='numeric'
-      className={className || INPUT_BASE}
-      style={style}
-      required={required}
-      placeholder={isFocused ? 'MMYY' : placeholder || 'MM/YY'}
-      value={displayValue}
-      onChange={handleChange}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
-      maxLength={4}
-    />
-  );
-};
-
-interface SmartSpecializedInputProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
-  value: string;
-  onChange: (value: string) => void;
-}
-
-/**
- * **SmartPhoneInput Component**
- *
- * An input designed specifically for phone numbers.
- * - Enforces **LTR** direction always.
- * - Automatically finds invalid characters and strips them out.
- * - Allows only: digits, spaces, `+`, `-`, `(`, `)`.
- *
- * @usage
- * **ALWAYS** use this component for phone number fields.
- */
-export const SmartPhoneInput: React.FC<SmartSpecializedInputProps> = ({
-  value,
-  onChange,
-  className,
-  ...props
-}) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    // Regex: Optional + at start, then digits, spaces, or dashes, parens
-    // This regex checks the *entire* string logic we want to ALLOW during typing.
-    // However, for strict input masking, it's better to replace invalid chars.
-
-    // Strategy: Remove any character that is NOT in the allowed set.
-    // Allowed: 0-9, space, +, -, (, )
-    const validVal = val.replace(/[^0-9\s+\-()]/g, '');
-
-    // Call parent with cleansed value
-    onChange(validVal);
-  };
-
-  return (
-    <input
-      {...props}
-      type='tel' // optimized mobile keyboard
-      dir='ltr'
-      value={value}
-      onChange={handleChange}
-      className={`${INPUT_BASE} ${className || ''}`}
-    />
-  );
-};
-
-/**
- * **SmartEmailInput Component**
- *
- * An input designed specifically for email addresses.
- * - Enforces **LTR** direction always.
- * - Automatically finds invalid characters and strips them out.
- * - Allows only: English letters, numbers, `@`, `.`, `_`, `-`, `+`.
- *
- * @usage
- * **ALWAYS** use this component for email fields.
- */
-export const SmartEmailInput: React.FC<SmartSpecializedInputProps> = ({
-  value,
-  onChange,
-  className,
-  ...props
-}) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-
-    // Strategy: Remove any character that is NOT in the allowed set.
-    // Allowed: a-z, A-Z, 0-9, @, ., _, -, +
-    const validVal = val.replace(/[^a-zA-Z0-9@._\-+]/g, '');
-
-    onChange(validVal);
-  };
-
-  return (
-    <input
-      {...props}
-      type='email'
-      dir='ltr'
-      value={value}
-      onChange={handleChange}
-      className={`${INPUT_BASE} ${className || ''}`}
-    />
-  );
-};
-
-/**
- * **SmartPasswordInput Component**
- *
- * An input designed specifically for passwords with restricted characters.
- * - Enforces **LTR** direction always.
- * - Automatically finds invalid characters and strips them out.
- * - Allows only: digits, English letters, and the `@` symbol.
- *
- * @usage
- * Use this when you want to enforce strict password character sets.
- */
-export const SmartPasswordInput: React.FC<SmartSpecializedInputProps> = ({
-  value,
-  onChange,
-  className,
-  type = 'password',
-  ...props
-}) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    // Allow: a-z, A-Z, 0-9, @
-    const validVal = val.replace(/[^a-zA-Z0-9@]/g, '');
-    onChange(validVal);
-  };
-
-  return (
-    <input
-      {...props}
-      type={type}
-      dir='ltr'
-      value={value}
-      onChange={handleChange}
-      className={`${INPUT_BASE} ${className || ''}`}
-    />
-  );
-};
-
-// --- Smart Autocomplete ---
-
-export interface SmartAutocompleteProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
-  value: string;
-  onChange: (value: string) => void;
-  suggestions: string[];
-  placeholder?: string;
-  disabled?: boolean;
-  className?: string;
-  ghostTextClassName?: string;
-  debounceMs?: number;
-  caseSensitive?: boolean;
-  onSuggestionAccept?: (suggestion: string) => void;
-  inputRef?: React.RefObject<HTMLInputElement>;
-  color?: string; // Theme color (default: 'blue')
-}
-
-/**
- * **SmartAutocomplete Component**
- *
- * An intelligent autocomplete input with ghost text suggestions.
- * - Shows inline suggestion as semi-transparent text overlay
- * - Automatically detects RTL/LTR direction
- * - Keyboard shortcuts: Tab/→ to accept, Escape to reject
- * - Debounced suggestion calculation
- *
- * @usage
- * Use for search fields where you want to provide inline suggestions.
- *
- * @example
- * <SmartAutocomplete
- *   value={search}
- *   onChange={setSearch}
- *   suggestions={drugNames}
- *   placeholder="Search..."
- * />
- */
 export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
-  value,
-  onChange,
-  suggestions,
-  placeholder = '',
-  disabled = false,
-  className = '',
-  ghostTextClassName = '',
-  debounceMs = 100,
-  caseSensitive = false,
-  onSuggestionAccept,
-  inputRef: externalRef,
-  color = 'primary',
-  ...restProps
+  value, onChange, suggestions, placeholder, disabled, className, caseSensitive = false, onSuggestionAccept, inputRef: extRef, ...p
 }) => {
-  const [currentSuggestion, setCurrentSuggestion] = useState<string>('');
-  const internalRef = useRef<HTMLInputElement>(null);
-  const inputRef = externalRef || internalRef;
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isCapsLock, setIsCapsLock] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
-
-  // Auto-detect text direction
+  const [caps, setCaps] = useState(false), intRef = useRef<HTMLInputElement>(null), ref = extRef || intRef;
   const dir = useSmartDirection(value, placeholder);
-
-
-  // Calculate matching suggestion
-  const suggestion = useMemo(() => {
+  
+  const match = useMemo(() => {
     if (!value || disabled) return '';
+    const sv = caseSensitive ? value : value.toLowerCase();
+    return suggestions.find(s => (caseSensitive ? s : s.toLowerCase()).startsWith(sv) && s.length > value.length) || '';
+  }, [value, suggestions, disabled, caseSensitive]);
 
-    const searchValue = caseSensitive ? value : value.toLowerCase();
-
-    const match = suggestions.find((s) => {
-      const suggestionValue = caseSensitive ? s : s.toLowerCase();
-      return suggestionValue.startsWith(searchValue) && suggestionValue !== searchValue;
-    });
-
-    return match || '';
-  }, [value, suggestions, caseSensitive, disabled]);
-
-  // Update current suggestion
-  useEffect(() => {
-    setCurrentSuggestion(suggestion);
-  }, [suggestion]);
-
-  // Handle keyboard shortcuts
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Track Caps Lock
-    setIsCapsLock(e.getModifierState('CapsLock'));
-
-    if (currentSuggestion) {
-      // Accept suggestion with Tab or Right Arrow
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        onChange(currentSuggestion);
-        setCurrentSuggestion('');
-        onSuggestionAccept?.(currentSuggestion);
-      }
-      // Reject suggestion with Escape
-      else if (e.key === 'Escape') {
-        e.preventDefault();
-        setCurrentSuggestion('');
-      }
-    }
-
-    // Call original onKeyDown if provided
-    restProps.onKeyDown?.(e);
-  };
-
-  // Calculate ghost text (the remaining part of the suggestion)
-  const ghostText = useMemo(() => {
-    if (!currentSuggestion || !value) return '';
-
-    const valueToCompare = caseSensitive ? value : value.toLowerCase();
-    const suggestionToCompare = caseSensitive ? currentSuggestion : currentSuggestion.toLowerCase();
-
-    if (suggestionToCompare.startsWith(valueToCompare)) {
-      // Normalize to lowercase so it can follow dynamic casing logic
-      return currentSuggestion.slice(value.length).toLowerCase();
-    }
-
-    return '';
-  }, [currentSuggestion, value, caseSensitive]);
+  const ghost = useMemo(() => {
+    if (!match || !value) return '';
+    return match.slice(value.length).toLowerCase();
+  }, [match, value]);
 
   return (
-    <div ref={containerRef} className='relative inline-block w-full'>
-      {/* Actual Input with Smart Direction */}
-      <input
-        {...restProps}
-        ref={inputRef}
-        type='text'
-        autoComplete='off'
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onKeyUp={(e) => setIsCapsLock(e.getModifierState('CapsLock'))}
-        placeholder={placeholder}
-        disabled={disabled}
-        dir={dir}
-        spellCheck='false'
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        className={`
-          ${INPUT_BASE}
-          shadow-xs
-          ${className}
-        `}
+    <div className="relative inline-block w-full">
+      <input {...p} ref={ref} type="text" autoComplete="off" value={value} dir={dir} disabled={disabled} placeholder={placeholder} className={`${INPUT_BASE} shadow-xs ${className || ''}`}
+        onChange={e => onChange(e.target.value)} onKeyUp={e => setCaps(e.getModifierState('CapsLock'))}
+        onKeyDown={e => {
+          setCaps(e.getModifierState('CapsLock'));
+          if (match && (e.key === 'ArrowRight' || e.key === 'Tab')) { e.preventDefault(); onChange(match); onSuggestionAccept?.(match); }
+          else if (match && e.key === 'Escape') { e.preventDefault(); }
+          p.onKeyDown?.(e);
+        }}
       />
-
-      {/* Ghost Text Overlay - Badge Style */}
-      {ghostText && (
-        <div
-          className={`absolute inset-0 pointer-events-none flex items-center ${ghostTextClassName}`}
-          style={{
-            paddingLeft: inputRef.current?.style.paddingLeft || '0.75rem',
-            paddingRight: inputRef.current?.style.paddingRight || '0.75rem',
-            direction: dir, // Match input direction
-          }}
-        >
-          {/* Invisible spacer matching the actual input value */}
-          <span className='invisible whitespace-pre'>{value}</span>
-
-          {/* Visible ghost text as a Badge */}
-          <span
-            className={`
-            inline-flex items-center px-1.5 py-1 ms-1
-            rounded-[8px]
-            bg-gray-100 dark:bg-(--bg-surface-neutral)
-            text-[12px] font-black tracking-tight
-            text-gray-600 dark:text-gray-400 
-            shadow-sm border border-transparent dark:border-(--border-divider)
-            transition-all animate-in fade-in duration-200
-            ${isCapsLock ? 'uppercase' : ''}
-          `}
-          >
-            {isCapsLock ? ghostText.toUpperCase() : ghostText}
+      {ghost && (
+        <div className="absolute inset-0 pointer-events-none flex items-center" style={{ paddingInlineStart: ref.current?.style.paddingInlineStart || '0.75rem', direction: dir }}>
+          <span className="invisible whitespace-pre">{value}</span>
+          <span className={`inline-flex items-center px-1.5 py-1 ms-1 rounded-lg bg-gray-100 dark:bg-zinc-800 text-[11px] font-black text-gray-500 dark:text-gray-400 shadow-sm border border-transparent dark:border-zinc-700 animate-in fade-in duration-200 ${caps ? 'uppercase' : ''}`}>
+            {caps ? ghost.toUpperCase() : ghost}
             <span className="material-symbols-rounded text-[14px] ms-1 opacity-70">keyboard_tab</span>
           </span>
         </div>
@@ -630,48 +97,6 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
   );
 };
 
-// --- Drug Search Input ---
-
-export interface DrugSearchInputProps extends Omit<SmartAutocompleteProps, 'onKeyDown'> {
-  onEnter?: () => void;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-}
-
-/**
- * **DrugSearchInput Component**
- *
- * A specialized search input for drug/product searches.
- * - Wraps SmartAutocomplete with Enter-to-add callback
- * - Autocomplete suggestions (optional)
- * - RTL/LTR auto-detection
- *
- * @usage
- * Use for all drug search fields in POS and Purchases.
- *
- * @example
- * <DrugSearchInput
- *   value={search}
- *   onChange={setSearch}
- *   suggestions={drugNames}
- *   onEnter={() => addFirstItem()}
- *   placeholder="Search..."
- * />
- */
-export const DrugSearchInput: React.FC<DrugSearchInputProps> = ({
-  onEnter,
-  onKeyDown,
-  ...props
-}) => {
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Call custom handler first
-    onKeyDown?.(e);
-
-    // Then handle Enter
-    if (e.key === 'Enter' && onEnter) {
-      e.preventDefault();
-      onEnter();
-    }
-  };
-
-  return <SmartAutocomplete {...props} onKeyDown={handleKeyDown} />;
-};
+export const DrugSearchInput: React.FC<any> = ({ onEnter, ...p }) => (
+  <SmartAutocomplete {...p} onKeyDown={e => { p.onKeyDown?.(e); if (e.key === 'Enter' && onEnter) { e.preventDefault(); onEnter(); } }} />
+);

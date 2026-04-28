@@ -183,16 +183,16 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     <SegmentedControl
                       value={currentTheme.name}
                       onChange={(val) => setTheme(availableThemes.find(th => th.name === val)!)}
-                      color={currentTheme.name.toLowerCase()} size="xs" fullWidth shape="pill"
+                       size="xs" fullWidth shape="pill"
                       options={availableThemes.map(th => ({ label: '', value: th.name, dotColor: th.hex }))}
                     />
                   </div>
                   <SettingsRow icon="brightness_6" label={t.darkMode}>
-                    <SegmentedControl value={darkMode} onChange={v => setDarkMode(v as boolean)} color={currentTheme.name.toLowerCase()} size="xs" iconSize="--icon-lg" shape="pill" options={[{ label: '', value: false, icon: 'light_mode' }, { label: '', value: true, icon: 'dark_mode' }]} />
+                    <SegmentedControl value={darkMode} onChange={v => setDarkMode(v as boolean)}  size="xs"  shape="pill" options={[{ label: '', value: false, icon: 'light_mode' }, { label: '', value: true, icon: 'dark_mode' }]} />
                   </SettingsRow>
                   {developerMode && (
                     <SettingsRow icon="rounded_corner" label={t.borderRadius}>
-                      <SegmentedControl value={borderRadius || 'default'} onChange={v => setBorderRadius?.(v as any)} color={currentTheme.name.toLowerCase()} size="xs" shape="pill" options={[{ label: t.radiusSharp, value: 'sharp' }, { label: t.radiusFull, value: 'full' }, { label: t.radiusDefault, value: 'default' }]} />
+                      <SegmentedControl value={borderRadius || 'default'} onChange={v => setBorderRadius?.(v as any)}  size="xs" shape="pill" options={[{ label: t.radiusSharp, value: 'sharp' }, { label: t.radiusFull, value: 'full' }, { label: t.radiusDefault, value: 'default' }]} />
                     </SettingsRow>
                   )}
                   {!darkMode && developerMode && (
@@ -201,7 +201,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         <SegmentedControl
                           value={cardBorderLight || 'default'}
                           onChange={v => setCardBorderLight?.(v as any)}
-                          color={currentTheme.name.toLowerCase()} size="xs" shape="pill"
+                           size="xs" shape="pill"
                           options={[
                             { label: isAR ? 'سميك' : 'Thick', value: 'default' },
                             { label: isAR ? 'نحيف' : 'Thin', value: 'thin' },
@@ -254,14 +254,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               {/* --- Navigation & Language --- */}
               {navStyle === 1 && (
                 <SettingsRow icon="view_sidebar" label={t.sidebarStyle}>
-                  <SegmentedControl value={sidebarStyle} onChange={v => setSidebarStyle(v as any)} color={currentTheme.name.toLowerCase()} size="xs" iconSize="--icon-md" shape="pill" options={[{ label: '', value: 1, icon: 'view_sidebar' }, { label: '', value: 2, icon: 'dock_to_left' }, { label: '', value: 3, icon: 'mouse' }]} />
+                  <SegmentedControl value={sidebarStyle} onChange={v => setSidebarStyle(v as any)}  size="xs"  shape="pill" options={[{ label: '', value: 1, icon: 'view_sidebar' }, { label: '', value: 2, icon: 'dock_to_left' }, { label: '', value: 3, icon: 'mouse' }]} />
                 </SettingsRow>
               )}
               <SettingsRow icon="dashboard_customize" label={t.designStyle}>
-                <SegmentedControl value={navStyle || 1} onChange={v => setNavStyle(v as any)} color={currentTheme.name.toLowerCase()} size="xs" iconSize="--icon-lg" shape="pill" options={[{ label: '', value: 1, icon: 'view_sidebar' }, { label: '', value: 2, icon: 'web_asset' }]} />
+                <SegmentedControl value={navStyle || 1} onChange={v => setNavStyle(v as any)}  size="xs"  shape="pill" options={[{ label: '', value: 1, icon: 'view_sidebar' }, { label: '', value: 2, icon: 'web_asset' }]} />
               </SettingsRow>
               <SettingsRow icon="translate" label={t.language}>
-                <SegmentedControl value={language} onChange={v => settings.setLanguage(v as any)} color={currentTheme.name.toLowerCase()} size="xs" shape="pill" options={[{ label: 'EN', value: 'EN' }, { label: 'AR', value: 'AR' }]} />
+                <SegmentedControl value={language} onChange={v => settings.setLanguage(v as any)}  size="xs" shape="pill" options={[{ label: 'EN', value: 'EN' }, { label: 'AR', value: 'AR' }]} />
               </SettingsRow>
               <SettingsRow icon="text_fields" label={t.textTransform}>
                 <Switch
@@ -312,7 +312,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                             setGraphicFontVariant(val as 'serif' | 'sans');
                           }
                         }}
-                        color={currentTheme.name.toLowerCase()} size="xs" fullWidth shape="pill"
+                         size="xs" fullWidth shape="pill"
                         options={[
                           { label: 'إيقاف', value: 'off' },
                           { label: 'جرافيكي', value: 'serif', fontFamily: '"HeadingFont"' },

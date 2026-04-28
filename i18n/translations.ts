@@ -4211,7 +4211,7 @@ export const TRANSLATIONS = {
       help: '@@import(./cashRegisterHelp.json)',
     },
     shiftHistory: {
-      title: 'سجل الوردـــــات',
+      title: 'سجل الورديـــــات',
       subtitle: 'عرض ورديات سجل النقدية السابقة',
       searchPlaceholder: 'بحث برقم الوردية أو المستخدم...',
       dateFrom: 'من',

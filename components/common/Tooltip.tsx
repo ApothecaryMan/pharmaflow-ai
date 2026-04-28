@@ -1,203 +1,60 @@
 import type React from 'react';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSettings } from '../../context';
 
-/**
- * A highly reusable, Smart Tooltip component.
- * Uses React Portal to render outside parent stacking contexts.
- * Automatically adjusts position to stay within viewport.
- */
-
 interface TooltipProps {
-  children: ReactNode;
-  content: string | ReactNode;
-  position?: 'top' | 'bottom';
-  className?: string;
-  tooltipClassName?: string;
-  triggerClassName?: string;
-  delay?: number;
+  children: ReactNode; content: string | ReactNode; position?: 'top' | 'bottom';
+  className?: string; tooltipClassName?: string; triggerClassName?: string; delay?: number;
 }
 
 export const Tooltip: React.FC<TooltipProps> = ({
-  children,
-  content,
-  position = 'top',
-  className = '',
-  tooltipClassName = '',
-  triggerClassName = '',
-  delay = 300,
+  children, content, position = 'top', className = '', tooltipClassName = '', triggerClassName = '', delay = 300,
 }) => {
-  const { tooltipBlur } = useSettings();
-  const [isVisible, setIsVisible] = useState(false);
-  const [coords, setCoords] = useState({ top: 0, left: 0, arrowLeft: 0 });
-  const [placement, setPlacement] = useState<'top' | 'bottom'>(position);
+  const { tooltipBlur } = useSettings(), [show, setShow] = useState(false), timeout = useRef<any>(null);
+  const trigRef = useRef<HTMLDivElement>(null), toolRef = useRef<HTMLDivElement>(null);
 
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const tooltipRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const handleMouseEnter = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      setIsVisible(true);
-    }, delay);
-  };
-
-  const handleMouseLeave = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIsVisible(false);
-  };
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+  useLayoutEffect(() => {
+    if (!show || !trigRef.current || !toolRef.current) return;
+    const upd = () => {
+      const tr = trigRef.current!.getBoundingClientRect(), tl = toolRef.current!, gap = 8;
+      const tw = tl.offsetWidth, th = tl.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
+      let side = position, y = side === 'top' ? tr.top - th - gap : tr.bottom + gap;
+      if (side === 'top' && tr.top < th + gap && vh - tr.bottom > th + gap) side = 'bottom';
+      else if (side === 'bottom' && vh - tr.bottom < th + gap && tr.top > th + gap) side = 'top';
+      y = side === 'top' ? tr.top - th - gap : tr.bottom + gap;
+      let x = Math.max(10, Math.min(tr.left + tr.width/2 - tw/2, vw - tw - 10));
+      tl.style.setProperty('--tx', `${x}px`); tl.style.setProperty('--ty', `${y}px`);
+      tl.style.setProperty('--ax', `${Math.max(6, Math.min(tr.left + tr.width/2 - x, tw - 6))}px`);
+      tl.dataset.side = side; tl.dataset.settled = 'true';
     };
-  }, []);
+    const obs = new ResizeObserver(upd); obs.observe(trigRef.current); obs.observe(document.body);
+    upd(); window.addEventListener('scroll', upd, true);
+    return () => { obs.disconnect(); window.removeEventListener('scroll', upd, true); };
+  }, [show, content]);
 
-  const updatePosition = () => {
-    if (!triggerRef.current || !isVisible) return;
-
-    // ... existing logic ...
-    const triggerRect = triggerRef.current.getBoundingClientRect();
-    const tooltipRect = tooltipRef.current?.getBoundingClientRect() || { width: 0, height: 0 };
-
-    // Gap between trigger and tooltip
-    const gap = 8;
-
-    // Preferred calculation
-    let top = 0;
-    let left = triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2; // Center horizontally
-
-    // Vertical Logic (Flip if no space)
-    const spaceAbove = triggerRect.top;
-    const spaceBelow = window.innerHeight - triggerRect.bottom;
-    const requiredHeight = tooltipRect.height + gap;
-
-    let finalPlacement = position;
-
-    // If preferred is top but not enough space, and there is space below -> flip to bottom
-    if (position === 'top' && spaceAbove < requiredHeight && spaceBelow > requiredHeight) {
-      finalPlacement = 'bottom';
-    }
-    // If preferred is bottom but not enough space, and there is space above -> flip to top
-    else if (position === 'bottom' && spaceBelow < requiredHeight && spaceAbove > requiredHeight) {
-      finalPlacement = 'top';
-    }
-
-    if (finalPlacement === 'top') {
-      top = triggerRect.top - tooltipRect.height - gap;
-    } else {
-      top = triggerRect.bottom + gap;
-    }
-
-    // Horizontal Logic (Viewport Constrained)
-    const viewportWidth = window.innerWidth;
-    // Prevent left overflow
-    if (left < 10) left = 10;
-    // Prevent right overflow
-    if (left + tooltipRect.width > viewportWidth - 10) {
-      left = viewportWidth - tooltipRect.width - 10;
-    }
-
-    // Arrow Logic: Arrow should point to center of trigger
-    // Arrow Left relative to Tooltip = (Trigger Center X) - (Tooltip Left X)
-    const triggerCenter = triggerRect.left + triggerRect.width / 2;
-    let arrowL = triggerCenter - left;
-
-    // Clamp arrow to be within tooltip (minus border radius/padding)
-    // Tooltip width approx known from rect
-    if (arrowL < 6) arrowL = 6;
-    if (arrowL > tooltipRect.width - 6) arrowL = tooltipRect.width - 6;
-
-    setCoords({ top, left, arrowLeft: arrowL });
-    setPlacement(finalPlacement);
-  };
-
-  // Recalculate when showing or content changes
-  useEffect(() => {
-    if (isVisible) {
-      updatePosition();
-      // Also update on scroll/resize
-      window.addEventListener('scroll', updatePosition, true);
-      window.addEventListener('resize', updatePosition);
-    }
-    return () => {
-      window.removeEventListener('scroll', updatePosition, true);
-      window.removeEventListener('resize', updatePosition);
-    };
-  }, [isVisible, content]);
-
-  // Initial layout measurement
-  useEffect(() => {
-    if (isVisible && tooltipRef.current) {
-      updatePosition();
-    }
-  }, [isVisible]);
+  const enter = () => { if (timeout.current) clearTimeout(timeout.current); timeout.current = setTimeout(() => setShow(true), delay); };
+  const leave = () => { if (timeout.current) clearTimeout(timeout.current); setShow(false); };
 
   return (
-    // Wrapper must not affect layout too much, but preserves className prop
-    <div
-      className={`relative w-fit ${className}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      {/* Trigger Container */}
-      <div
-        ref={triggerRef}
-        className={`flex items-center min-w-0 max-w-full ${triggerClassName}`}
-      >
-        {children}
-      </div>
-
-      {/* Portal Tooltip Content */}
-      {isVisible &&
-        createPortal(
-          <div
-            ref={tooltipRef}
-            className={`
-                fixed px-2 py-1 
-                ${
-                  tooltipBlur
-                    ? 'backdrop-blur-2xl bg-(--bg-menu)/30 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]'
-                    : 'bg-(--bg-menu) border-(--border-divider) shadow-2xl'
-                }
-                text-gray-900 dark:text-white text-[10px] 
-                rounded-lg z-9999 border
-                pointer-events-none whitespace-nowrap
-                transition-opacity duration-200
-                ${tooltipClassName}
-            `}
-            style={{
-              top: coords.top,
-              left: coords.left,
-              opacity: coords.top === 0 ? 0 : 1, // Hide until positioned
-            }}
-          >
-            {content}
-
-            {/* Arrow - Hidden when blur is active for a cleaner look */}
-            {!tooltipBlur && (
-              <div
-                className={`
-                    absolute w-2 h-2 
-                    bg-(--bg-menu)
-                    ${
-                      placement === 'top'
-                        ? 'top-full -mt-1 border-b border-r'
-                        : 'bottom-full -mb-1 border-t border-l'
-                    }
-                  `}
-                style={{
-                  left: coords.arrowLeft,
-                  transform: 'translateX(-50%) rotate(45deg)', // Center and rotate for diamond shape
-                }}
-              />
-            )}
-          </div>,
-          document.body
-        )}
+    <div className={`relative w-fit ${className}`} onMouseEnter={enter} onMouseLeave={leave}>
+      <div ref={trigRef} className={`flex items-center min-w-0 max-w-full ${triggerClassName}`}>{children}</div>
+      {show && createPortal(
+        <div ref={toolRef} data-settled="false" data-side={position}
+          className={`group fixed px-2 py-1 z-9999 rounded-lg border pointer-events-none whitespace-nowrap shadow-2xl transition-opacity duration-150 opacity-0 data-[settled=true]:opacity-100 ${tooltipBlur ? 'backdrop-blur-xl bg-(--bg-menu)/80 saturate-150 border-(--border-divider)' : 'bg-(--bg-menu) border-(--border-divider)'} text-gray-900 dark:text-white text-[10px] ${tooltipClassName}`}
+          style={{ top: 'var(--ty)', left: 'var(--tx)' }}
+        >
+          <div className="relative z-10">{content}</div>
+          {!tooltipBlur && (
+            <div className="absolute w-2.5 h-2.5 bg-(--bg-menu) border-(--border-divider)
+              group-data-[side=top]:top-full group-data-[side=top]:-mt-[5px] group-data-[side=top]:border-r group-data-[side=top]:border-b
+              group-data-[side=bottom]:bottom-full group-data-[side=bottom]:-mb-[5px] group-data-[side=bottom]:border-t group-data-[side=bottom]:border-l"
+              style={{ left: 'var(--ax)', transform: 'translateX(-50%) rotate(45deg)' }}
+            />
+          )}
+        </div>,
+        document.body
+      )}
     </div>
   );
 };
