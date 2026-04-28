@@ -2,6 +2,7 @@ import type React from 'react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BUTTON_BASE } from '../../utils/themeStyles';
+import { useSettings } from '../../context';
 
 // --- Unified Translations ---
 
@@ -139,7 +140,6 @@ const WheelPicker: React.FC<WheelPickerProps> = ({
           <span
             className='text-sm whitespace-nowrap px-2'
             style={{
-              fontFamily: '"Google Sans Flex", sans-serif',
               fontOpticalSizing: 'auto',
               fontVariationSettings: isLens
                 ? '"slnt" 0, "wdth" 151, "wght" 1000, "GRAD" 144'
@@ -232,7 +232,18 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   rounded = 'full',
   variant = 'default',
 }) => {
-  const translations = customTranslations || DATE_PICKER_TRANSLATIONS[locale] || DATE_PICKER_TRANSLATIONS['en-US'];
+  const { language, numeralSystem } = useSettings();
+  const isAR = language === 'AR';
+  
+  // Use settings-based locale if none provided, or override based on numeralSystem
+  const activeLocale = isAR 
+    ? (numeralSystem === 'AR' ? 'ar-EG' : 'en-US') 
+    : (locale || 'en-US');
+
+  // New: Specific locale for text/words (Months, Days of week) based ONLY on language
+  const languageLocale = isAR ? 'ar-EG' : 'en-US';
+
+  const translations = customTranslations || DATE_PICKER_TRANSLATIONS[activeLocale] || DATE_PICKER_TRANSLATIONS[isAR ? 'ar-EG' : 'en-US'];
   // --- State ---
   const [isOpen, setIsOpen] = useState(false);
   const [alignMode, setAlignMode] = useState<'left' | 'center' | 'right'>('center');
@@ -358,12 +369,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       const d = new Date(base);
       d.setDate(base.getDate() + i);
 
-      // Format: "Mon 19 Feb"
-      const label = d.toLocaleDateString(locale, {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short',
-      });
+      // Labels for date wheel (e.g., "Mon 19 Feb")
+      const weekday = d.toLocaleDateString(languageLocale, { weekday: 'short' });
+      const month = d.toLocaleDateString(languageLocale, { month: 'short' });
+      const day = d.getDate().toLocaleString(activeLocale, { useGrouping: false });
+      
+      const label = isAR ? `${weekday} ${day} ${month}` : `${weekday} ${day} ${month}`;
 
       // Value: ISO string date part for uniqueness? Or just timestamp?
       // We use full date string YYYY-MM-DD
@@ -383,41 +394,44 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   const dayItems = useMemo(() => {
     const daysInMonth = new Date(currentYearForDays, currentMonthForDays + 1, 0).getDate();
     return Array.from({ length: daysInMonth }, (_, i) => ({
-      label: (i + 1).toString().padStart(2, '0'),
+      label: (i + 1).toLocaleString(activeLocale, { minimumIntegerDigits: 2, useGrouping: false }),
       value: i + 1,
     }));
-  }, [currentYearForDays, currentMonthForDays]);
+  }, [currentYearForDays, currentMonthForDays, activeLocale]);
 
   const monthItems = useMemo(() => {
     const items = [];
     for (let i = 0; i < 12; i++) {
       const d = new Date(2024, i, 1);
       items.push({
-        label: d.toLocaleDateString(locale, { month: 'short' }),
+        label: d.toLocaleDateString(languageLocale, { month: 'short' }),
         value: i,
       });
     }
     return items;
-  }, [locale]);
+  }, [languageLocale]);
 
   const yearItems = useMemo(() => {
     const currentYear = new Date().getFullYear();
     const items = [];
     for (let i = currentYear - 10; i <= currentYear + 20; i++) {
-      items.push({ label: i.toString(), value: i });
+      items.push({ 
+        label: i.toLocaleString(activeLocale, { useGrouping: false }), 
+        value: i 
+      });
     }
     return items;
-  }, []);
+  }, [activeLocale]);
 
-  const hourItems = Array.from({ length: 12 }, (_, i) => ({
-    label: (i + 1).toString().padStart(2, '0'),
+  const hourItems = useMemo(() => Array.from({ length: 12 }, (_, i) => ({
+    label: (i + 1).toLocaleString(activeLocale, { minimumIntegerDigits: 2, useGrouping: false }),
     value: i + 1,
-  }));
+  })), [activeLocale]);
 
-  const minuteItems = Array.from({ length: 60 }, (_, i) => ({
-    label: i.toString().padStart(2, '0'),
+  const minuteItems = useMemo(() => Array.from({ length: 60 }, (_, i) => ({
+    label: i.toLocaleString(activeLocale, { minimumIntegerDigits: 2, useGrouping: false }),
     value: i,
-  }));
+  })), [activeLocale]);
 
   const amPmItems = [
     { label: translations.am || 'AM', value: 'AM' },
@@ -574,12 +588,18 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         )}
         <span className='text-sm font-medium whitespace-nowrap'>
           {value
-            ? new Date(value).toLocaleString(locale, {
-                month: 'short',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit',
-              })
+            ? (() => {
+                const d = new Date(value);
+                const month = d.toLocaleDateString(languageLocale, { month: 'short' });
+                const day = d.getDate().toLocaleString(activeLocale, { useGrouping: false });
+                const hour = ((d.getHours() % 12) || 12).toLocaleString(activeLocale, { useGrouping: false });
+                const minute = d.getMinutes().toLocaleString(activeLocale, { minimumIntegerDigits: 2, useGrouping: false });
+                const ampm = d.getHours() >= 12 ? (translations.pm || 'PM') : (translations.am || 'AM');
+                
+                return isAR 
+                  ? `${day} ${month}، ${hour}:${minute} ${ampm}`
+                  : `${month} ${day}, ${hour}:${minute} ${ampm}`;
+              })()
             : placeholder || label}
         </span>
         {iconPosition === 'end' && (
@@ -606,7 +626,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             left: position.left,
             transformOrigin: alignMode === 'right' ? 'top right' : alignMode === 'left' ? 'top left' : 'top center',
           }}
-          dir={locale === 'ar-EG' || locale.startsWith('ar') ? 'rtl' : 'ltr'}
+            dir={activeLocale === 'ar-EG' || activeLocale.startsWith('ar') ? 'rtl' : 'ltr'}
         >
             <div
               className={`bg-white dark:bg-(--bg-card) ${styles.dropdownRounded[rounded]} shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-gray-200 dark:border-(--border-divider) p-5 w-[380px] select-none`}

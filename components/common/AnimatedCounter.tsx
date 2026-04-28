@@ -1,62 +1,101 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useSettings } from '../../context';
 
 interface AnimatedCounterProps {
   value: number;
   fractionDigits?: number;
   className?: string;
+  duration?: number;
+  notation?: 'standard' | 'compact';
 }
 
 /**
- * A simplified, highly stable animated counter for financial data.
- * Optimized for grid layouts and RTL/LTR compatibility.
+ * AnimatedCounter - High-performance counting animation.
+ * Uses direct DOM manipulation for 60fps smoothness and tabular-nums to prevent jitter.
  */
 export const AnimatedCounter = ({
   value,
   fractionDigits = 0,
   className = '',
+  duration = 1200,
+  notation = 'standard',
 }: AnimatedCounterProps) => {
-  const formatted = value.toLocaleString('en-US', {
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits,
-  });
+  const spanRef = useRef<HTMLSpanElement>(null);
+  const prevValueRef = useRef(value);
+  const isFirstMountRef = useRef(true);
+  const { language, numeralSystem, fontFamilyAR, fontFamilyEN } = useSettings();
+  const isAR = language === 'AR';
+  
+  // Logic: Use numeralSystem setting if in AR mode, otherwise always EN
+  const locale = isAR 
+    ? (numeralSystem === 'AR' ? 'ar-EG' : 'ar-u-nu-latn') 
+    : 'en-US';
 
-  const characters = formatted.split('');
+  useEffect(() => {
+    const el = spanRef.current;
+    if (!el) return;
+
+    const from = prevValueRef.current;
+    const to = value;
+
+    // Skip animation on first mount
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      prevValueRef.current = to;
+      return;
+    }
+
+    // Skip if value hasn't changed
+    if (from === to) return;
+
+    const start = performance.now();
+
+    // Cubic ease-out function for smooth deceleration
+    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+
+    let frameId: number;
+
+    const tick = (now: number) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Calculate current value based on progress and easing
+      const current = from + (to - from) * easeOut(progress);
+
+      // Format with specified decimals, locale, and notation
+      el.textContent = current.toLocaleString(locale, {
+        notation,
+        minimumFractionDigits: notation === 'compact' ? (current >= 1000 ? 1 : 0) : fractionDigits,
+        maximumFractionDigits: notation === 'compact' ? (current >= 1000 ? 1 : 0) : fractionDigits,
+      });
+
+      if (progress < 1) {
+        frameId = requestAnimationFrame(tick);
+      } else {
+        prevValueRef.current = to;
+      }
+    };
+
+    frameId = requestAnimationFrame(tick);
+
+    return () => cancelAnimationFrame(frameId);
+  }, [value, duration, fractionDigits]);
 
   return (
-    <div 
-      className={`flex items-baseline overflow-hidden tabular-nums ${className}`} 
-      dir="ltr"
-      style={{ fontFeatureSettings: '"tnum"' }}
+    <span
+      ref={spanRef}
+      className={`tabular-nums inline-block transition-colors ${className}`}
+      style={{ 
+        fontVariantNumeric: 'tabular-nums',
+        fontFeatureSettings: '"tnum"',
+        whiteSpace: 'nowrap'
+      }}
     >
-      {characters.map((char, index) => {
-        if (!/[0-9]/.test(char)) {
-          return (
-            <span key={index} className="opacity-50 px-[0.05em]">
-              {char}
-            </span>
-          );
-        }
-
-        const digit = parseInt(char, 10);
-        return (
-          <div
-            key={index}
-            className="relative h-[1.1em] w-[0.65em] overflow-hidden inline-block"
-            style={{ verticalAlign: 'text-bottom' }}
-          >
-            <div
-              className="absolute top-0 left-0 flex flex-col transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
-              style={{ transform: `translateY(-${digit * 10}%)` }}
-            >
-              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                <span key={num} className="h-full flex items-center justify-center">
-                  {num}
-                </span>
-              ))}
-            </div>
-          </div>
-        );
+      {value.toLocaleString(locale, {
+        notation,
+        minimumFractionDigits: notation === 'compact' ? (value >= 1000 ? 1 : 0) : fractionDigits,
+        maximumFractionDigits: notation === 'compact' ? (value >= 1000 ? 1 : 0) : fractionDigits,
       })}
-    </div>
+    </span>
   );
 };

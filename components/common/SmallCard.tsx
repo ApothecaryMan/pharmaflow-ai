@@ -57,9 +57,11 @@ export const SmallCard = ({
   iconTooltip,
   isLoading,
 }: SmallCardProps) => {
-  const { language } = useSettings();
+  const { language, numeralSystem } = useSettings();
   const isAR = language === 'AR';
-  const locale = isAR ? 'ar-EG' : 'en-US';
+  const activeLocale = isAR 
+    ? (numeralSystem === 'AR' ? 'ar-EG' : 'ar-u-nu-latn') 
+    : 'en-US';
 
   // Render value logic
   const { displayValue, displaySymbol } = useMemo(() => {
@@ -67,17 +69,17 @@ export const SmallCard = ({
 
     if (type === 'currency') {
       const parts = value > 10000 
-        ? formatCompactCurrencyParts(value, 'EGP', locale) 
-        : formatCurrencyParts(value, 'EGP', locale);
+        ? formatCompactCurrencyParts(value, 'EGP', activeLocale) 
+        : formatCurrencyParts(value, 'EGP', activeLocale);
       return { displayValue: parts.amount, displaySymbol: currencyLabel || parts.symbol };
     }
-
+    
     if (value > 10000) {
-      return { displayValue: formatCompactNumber(value, locale), displaySymbol: '' };
+      return { displayValue: formatCompactNumber(value, activeLocale), displaySymbol: '' };
     }
 
     return { displayValue: value, displaySymbol: '' };
-  }, [value, type, locale, currencyLabel]);
+  }, [value, type, activeLocale, currencyLabel]);
 
   const iconContent = (
     <div className={`shrink-0 ${isLoading ? 'bg-zinc-100 dark:bg-zinc-800' : `text-${iconColor}-600 dark:text-${iconColor}-400`} relative flex items-center justify-center w-12 h-12 rounded-xl ${isLoading ? 'animate-pulse' : ''}`}>
@@ -113,8 +115,12 @@ export const SmallCard = ({
             <div className='h-8 w-20 bg-zinc-100 dark:bg-zinc-800 rounded-lg animate-pulse mt-1' />
           ) : (
             <h4 className='text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-baseline leading-none'>
-              {typeof value === 'number' && type !== 'currency' && value <= 10000 ? (
-                <AnimatedCounter value={value} fractionDigits={fractionDigits ?? 0} />
+              {typeof value === 'number' ? (
+                <AnimatedCounter 
+                  value={value} 
+                  fractionDigits={fractionDigits ?? (type === 'currency' ? 2 : 0)} 
+                  notation={value > 10000 ? 'compact' : 'standard'}
+                />
               ) : (
                 displayValue
               )}

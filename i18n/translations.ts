@@ -97,6 +97,9 @@ export const TRANSLATIONS = {
       sidebarMini: 'Mini',
       borderStyle: 'Border Style',
       customCss: 'Custom CSS',
+      numeralSystem: 'Numeral System',
+      numeralArabic: 'Arabic (١٢٣)',
+      numeralLatin: 'Latin (123)',
     },
     orgManagement: {
       title: 'Organization Management',
@@ -2532,6 +2535,9 @@ export const TRANSLATIONS = {
       sidebarMini: 'منكمش',
       borderStyle: 'شكل البطاقة',
       customCss: 'كود CSS للبطاقات',
+      numeralSystem: 'نظام الأرقام',
+      numeralArabic: 'عربي (١٢٣)',
+      numeralLatin: 'إنجليزي (123)',
     },
     orgManagement: {
       title: 'إدارة المنظمة',
@@ -3193,8 +3199,8 @@ export const TRANSLATIONS = {
       fromDate: 'من',
       toDate: 'إلى',
       time: {
-        am: 'صباحاً',
-        pm: 'مساءً',
+        am: 'ص',
+        pm: 'م',
       },
       headers: {
         item: 'الصنف',

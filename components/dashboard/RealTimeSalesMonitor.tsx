@@ -28,7 +28,7 @@ import { CARD_BASE } from '../../utils/themeStyles';
 
 // --- Local Mini-Components for Clean Code ---
 
-const StatCard = ({ title, value, icon, iconColor, subValue, trend, trendValue, tooltip, onClick, suffix, overlay, isLoading }: any) => (
+const StatCard = ({ title, value, icon, iconColor, subValue, trend, trendValue, tooltip, onClick, suffix, overlay, isLoading, type }: any) => (
   <div onClick={onClick} className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'>
     <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
       open_in_full
@@ -45,6 +45,7 @@ const StatCard = ({ title, value, icon, iconColor, subValue, trend, trendValue, 
       valueSuffix={suffix}
       iconOverlay={overlay}
       isLoading={isLoading}
+      type={type}
     />
   </div>
 );
@@ -369,7 +370,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3'>
-        <StatCard title={t.realTimeSales?.todayRevenue} value={revenue} icon='payments' iconColor='primary' trend={revenueChange > 0 ? 'up' : 'neutral'} trendValue={`${revenueChange > 0 ? '+' : ''}${revenueChange.toFixed(1)}%`} tooltip={tooltips.revenue} onClick={() => setExpandedView('revenue')} isLoading={isLoading} />
+        <StatCard title={t.realTimeSales?.todayRevenue} value={revenue} icon='payments' iconColor='primary' trend={revenueChange > 0 ? 'up' : 'neutral'} trendValue={`${revenueChange > 0 ? '+' : ''}${revenueChange.toFixed(1)}%`} tooltip={tooltips.revenue} onClick={() => setExpandedView('revenue')} isLoading={isLoading} type='currency' />
         <StatCard title={t.realTimeSales?.totalTransactions} value={transactions} icon='receipt_long' iconColor='blue' subValue={`${formatCurrency(highValueAnalysis.avgTransactionValue)} ${t.realTimeSales?.avg || 'avg'}`} tooltip={tooltips.transactions} onClick={() => setExpandedView('transactions')} isLoading={isLoading} />
         <StatCard title={t.realTimeSales?.itemsSold} value={itemsSold} icon='inventory_2' iconColor='purple' subValue={itemsAnalysis.topCategory} tooltip={tooltips.items} onClick={() => setExpandedView('items')} isLoading={isLoading} />
         <StatCard title={t.realTimeSales?.activeCounters} value={activeCountersStats.activeCounters} icon='point_of_sale' iconColor='amber' suffix={`/${activeCountersStats.totalCounters}`} subValue={`${activeCountersStats.onHoldCount} on hold`} tooltip={tooltips.counters} onClick={() => setExpandedView('counters')} isLoading={isLoading} overlay={<span className='absolute -top-1 -right-1 flex h-3 w-3'><span className='animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75'></span><span className='relative rounded-full h-3 w-3 bg-green-500'></span></span>} />

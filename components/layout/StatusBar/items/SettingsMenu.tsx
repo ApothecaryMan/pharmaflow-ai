@@ -89,7 +89,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     menuBlur, setMenuBlur, tooltipBlur, setTooltipBlur,
     graphicStyle, setGraphicStyle, graphicFontVariant, setGraphicFontVariant,
     cardBorderLight, setCardBorderLight, enableCustomCardCss, setEnableCustomCardCss,
-    customCardCss, setCustomCardCss
+    customCardCss, setCustomCardCss, numeralSystem, setNumeralSystem
   } = settings;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -300,6 +300,20 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       ))}
                     </div>
                   </div>
+                  {isAR && (
+                    <SettingsRow icon="123" label={t.numeralSystem}>
+                      <SegmentedControl
+                        value={numeralSystem}
+                        onChange={v => setNumeralSystem(v as any)}
+                        size="xs"
+                        shape="pill"
+                        options={[
+                          { label: t.numeralArabic, value: 'AR' },
+                          { label: t.numeralLatin, value: 'EN' }
+                        ]}
+                      />
+                    </SettingsRow>
+                  )}
                   {isAR && (
                     <SettingsRow icon="style" label={t.graphicStyle}>
                       <SegmentedControl

@@ -56,6 +56,7 @@ export interface SettingsState {
   fontFamilyEN: string;
   fontFamilyAR: string;
   textTransform: 'normal' | 'uppercase';
+  numeralSystem: 'AR' | 'EN';
   // UI Preferences
   navStyle: 1 | 2 | 3;
   dropdownBlur: boolean;
@@ -94,6 +95,7 @@ export interface SettingsContextType extends SettingsState {
   setFontFamilyEN: (font: string) => void;
   setFontFamilyAR: (font: string) => void;
   setTextTransform: (transform: 'normal' | 'uppercase') => void;
+  setNumeralSystem: (system: 'AR' | 'EN') => void;
   // UI Actions
   setNavStyle: (style: 1 | 2 | 3) => void;
   setDropdownBlur: (blur: boolean) => void;
@@ -131,6 +133,7 @@ const defaultSettings: SettingsState = {
   fontFamilyEN: 'En-Firewall',
   fontFamilyAR: 'Ar-Firewall',
   textTransform: 'uppercase',
+  numeralSystem: 'AR',
   navStyle: 2,
   dropdownBlur: false,
   sidebarBlur: false,
@@ -218,6 +221,7 @@ const loadSettings = (): SettingsState => {
       graphicFontVariant: storage.get('pharma_graphicFontVariant', defaultSettings.graphicFontVariant) as 'serif' | 'sans',
       activeBranchId: storage.get('pharma_activeBranchId', defaultSettings.activeBranchId),
       branchCode: storage.get('pharma_branchCode', defaultSettings.branchCode),
+      numeralSystem: storage.get('pharma_numeralSystem', defaultSettings.numeralSystem) as 'AR' | 'EN',
     };
   } catch (e) {
     console.warn('Failed to migrate old settings:', e);
@@ -398,6 +402,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, textTransform }));
   }, []);
 
+  const setNumeralSystem = useCallback((numeralSystem: 'AR' | 'EN') => {
+    setSettings((prev) => ({ ...prev, numeralSystem }));
+  }, []);
+
   const setNavStyle = useCallback((navStyle: 1 | 2 | 3) => {
     setSettings((prev) => ({ ...prev, navStyle }));
   }, []);
@@ -519,6 +527,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setBorderRadius,
       setFontFamilyEN,
       setFontFamilyAR,
+      setNumeralSystem,
       availableThemes: THEMES,
       availableLanguages: LANGUAGES,
     }),
@@ -547,6 +556,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setBorderRadius,
       setFontFamilyEN,
       setFontFamilyAR,
+      setNumeralSystem,
     ]
   );
 
