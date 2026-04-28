@@ -153,7 +153,7 @@ export class DashboardService {
       // (Profit / Revenue) * 100
       const revenueCents = money.toSmallestUnit(revenue);
       const profitCents = money.toSmallestUnit(grossProfit);
-      marginPercent = money.fromSmallestUnit(Math.round((profitCents / revenueCents) * 10000));
+      marginPercent = money.multiply(money.divide(grossProfit, revenue), 100, 0);
     }
 
     return {
