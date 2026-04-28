@@ -11,7 +11,7 @@ import { inventoryService } from '../inventory/inventoryService';
 import { salesService } from '../sales/salesService';
 import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
 import { auditService } from '../auditService';
-import { money } from '../../utils/currency';
+import { money } from '../../utils/money';
 import { returnService } from '../returns/returnService';
 import { settingsService } from '../settings/settingsService';
 import * as stockOps from '../../utils/stockOperations';
