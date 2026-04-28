@@ -29,7 +29,7 @@ interface UsePOSCheckoutProps {
   activeBranchId: string;
 }
 
-const DELIVERY_FEE = 5;
+const DELIVERY_FEE = 500; // 5.00 EGP in Piastres
 
 export const usePOSCheckout = ({
   cart,
