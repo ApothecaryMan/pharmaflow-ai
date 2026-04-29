@@ -178,7 +178,11 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
   const [branches, setBranches] = useState<any[]>([]);
 
   const lastLoadedBranchId = useRef<string>('');
-  const inventory = useComputedInventory(rawInventory, batches, activeBranchId);
+  // Proper fix for the "Disappearing Data" race condition:
+  // In DEV mode, we bypass the branch filter while loading so the sample data stays visible.
+  // In Production, rawInventory starts empty anyway, so this has no impact on data leakage.
+  const effectiveFilterBranchId = (isLoading && import.meta.env.DEV) ? '' : activeBranchId;
+  const inventory = useComputedInventory(rawInventory, batches, effectiveFilterBranchId);
 
   const refreshAll = useCallback(async (targetBranchId?: string, targetOrgId?: string) => {
     const branchId = targetBranchId || activeBranchId;

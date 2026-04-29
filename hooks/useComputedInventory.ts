@@ -14,12 +14,12 @@ export const useComputedInventory = (
 ): Drug[] => {
   return useMemo(() => {
     // 0. Filter batches by branchId if provided (Double Guard)
-    const filteredBatches = activeBranchId 
+    const filteredBatches = (activeBranchId && activeBranchId !== 'all')
       ? batches.filter(b => b.branchId === activeBranchId)
       : batches;
 
     // 0b. Double Guard: Filter rawInventory to only show this branch's products
-    const filteredInventory = activeBranchId
+    const filteredInventory = (activeBranchId && activeBranchId !== 'all')
       ? rawInventory.filter(d => d.branchId === activeBranchId)
       : rawInventory;
 
