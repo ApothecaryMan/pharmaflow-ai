@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ROUTES } from '../config/routes';
 import { StorageKeys } from '../config/storageKeys';
+import { authService } from '../services/auth/authService';
 import type { ViewState } from '../types';
 import { usePersistedState } from './usePersistedState';
 
@@ -46,12 +47,12 @@ export function useAppState(): AppState {
   
   const [view, setView] = usePersistedState<ViewState>(
     StorageKeys.VIEW, 
-    urlView || ROUTES.DASHBOARD, 
+    urlView || (authService.hasSession() ? ROUTES.DASHBOARD : ROUTES.LOGIN), 
     false
   );
   const [activeModule, setActiveModule] = usePersistedState<string>(
     StorageKeys.ACTIVE_MODULE,
-    urlView || ROUTES.DASHBOARD,
+    urlView || (authService.hasSession() ? ROUTES.DASHBOARD : ROUTES.LOGIN),
     false
   );
   const [dashboardSubView, setDashboardSubView] = useState<string>('dashboard');

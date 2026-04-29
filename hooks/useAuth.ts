@@ -134,14 +134,10 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
     const correctView = resolveView(view);
     if (correctView !== view) {
       // Small safety: If we think we should redirect to LOGIN, check hasSession one last time
-      // to prevent "flash of login" during state transitions
       if (correctView === ROUTES.LOGIN && authService.hasSession()) {
         return;
       }
 
-      if (import.meta.env.DEV) {
-        console.warn(`[Auth] Redirecting from ${view} to ${correctView}`);
-      }
       if (import.meta.env.PROD && TEST_ROUTES.includes(view)) {
         error('Access Denied: Developer routes are disabled.');
       }
