@@ -19,13 +19,13 @@ import { formatStock } from '../../../utils/inventory';
 import { resolvePrice } from '../../../utils/stockOperations';
 import { parseSearchTerm } from '../../../utils/searchUtils';
 import { formatExpiryDate, parseExpiryEndOfMonth } from '../../../utils/expiryUtils';
-import { money, formatCurrency } from '../../../utils/money';
+import { money } from '../../../utils/money';
 
 import { useContextMenu } from '../../common/ContextMenu';
 import { FilterDropdown } from '../../common/FilterDropdown';
 import { type FilterConfig } from '../../common/FilterPill';
 import { Modal } from '../../common/Modal';
-import { SearchInput } from '../../common/SearchInput';
+import { SearchEngineInput } from '../../common/SearchEngineInput';
 import { SegmentedControl } from '../../common/SegmentedControl';
 import { SmartAutocomplete } from '../../common/SmartInputs';
 import { PriceDisplay, TanStackTable } from '../../common/TanStackTable';
@@ -760,31 +760,22 @@ export const POS: React.FC<POSProps> = ({
           <div className='w-full flex flex-col sm:flex-row gap-1 shrink-0'>
             {/* search length */}
             <div className='relative flex-6'>
-              <SearchInput
+              <SearchEngineInput
                 ref={searchInputRef}
                 value={search}
                 onSearchChange={(val) => {
                   setSearch(val);
                 }}
                 onClear={() => setSearch('')}
-                enableAutocomplete={true}
                 suggestions={searchSuggestions}
+                resultsCount={filteredDrugs.length}
                 placeholder={t.searchPlaceholder}
                 color={color}
-                className=''
+                className=""
                 // Filter Integration
                 filterConfigs={posFilterConfigs}
                 activeFilters={posActiveFilters}
                 onUpdateFilter={handlePosFilterUpdate}
-                badge={
-                  search.trim().length >= 2 ? (
-                    <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-(--bg-surface-neutral) text-gray-500 dark:text-gray-400 text-[11px] font-black uppercase tracking-wider`}
-                    >
-                      {filteredDrugs.length} {t.resultsLabel}
-                    </span>
-                  ) : undefined
-                }
                     
                     onKeyDown={(e) => {
                       const term = search.trim();

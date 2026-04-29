@@ -469,8 +469,6 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
   const [cart, setCart] = React.useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = React.useState(false);
 
-  // --- RENDERING ---
-  if (isStandalone) return null;
 
   // --- CART LOGIC ---
   const addToCart = React.useCallback((drug: any, isUnit: boolean = false, quantity: number = 1) => {
@@ -565,6 +563,9 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
     return acc + linePrice - discountAmount;
   }, 0), [cart]);
   const cartTotalItems = React.useMemo(() => cart.length, [cart]);
+
+  // --- RENDERING ---
+  if (isStandalone) return null;
 
   return (
     <>
