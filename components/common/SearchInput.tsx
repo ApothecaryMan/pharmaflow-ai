@@ -27,6 +27,10 @@ interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   filterConfigs?: FilterConfig[];
   activeFilters?: Record<string, any[]>; // groupID -> values[]
   onUpdateFilter?: (groupId: string, newValues: any[]) => void;
+
+  // Internal Badge Logic Props
+  resultsCount?: number;
+  isLoading?: boolean;
 }
 
 export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
@@ -50,6 +54,9 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
       enableAutocomplete = false,
       suggestions = [],
       onSuggestionAccept,
+
+      resultsCount = 0,
+      isLoading = false,
       ...props
     },
     ref
@@ -182,7 +189,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             bg-(--bg-input)
             border-2 dark:border border-(--border-search)
             ${isFocused ? 'border-gray-400 dark:border-gray-500 shadow-sm' : ''}
-            ${rounded === 'full' ? 'rounded-full ps-4 pe-2' : 'rounded-3xl ps-4 pe-2'} 
+            ${rounded === 'full' ? 'rounded-full ps-4 pe-1.5' : 'rounded-3xl ps-4 pe-1.5'} 
             h-11
             ${wrapperClassName}
          `}
@@ -260,7 +267,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         </div>
 
         {hasActiveFilters && (
-          <div className="flex items-center gap-1.5 h-full">
+          <div className="flex items-center gap-1.5 h-full ms-auto">
             {activeGroups.map((groupId) => {
               const config = filterConfigs.find((c) => c.id === groupId);
               const values = activeFilters[groupId];
@@ -283,18 +290,6 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         )}
 
         <div className='flex items-center gap-1.5 ms-auto h-full'>
-          {showClear && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onClear();
-              }}
-              className='material-symbols-rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 outline-hidden p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700'
-              style={{ fontSize: '20px' }}
-            >
-              close
-            </button>
-          )}
 
           {filterConfigs.length > 0 && (
             <div className={`
@@ -338,7 +333,35 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             </div>
           )}
 
-          {badge && <div className='pointer-events-none flex items-center px-1'>{badge}</div>}
+          {(badge || isLoading || value.trim().length >= 2) && (
+            <div className='pointer-events-none flex items-center ps-1 pe-0.5'>
+              {badge || (
+                <div className="flex items-center gap-2">
+                  {isLoading && (
+                    <span className="w-3 h-3 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                  )}
+                  {value.trim().length >= 2 && !isLoading && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-(--bg-surface-neutral) text-gray-500 dark:text-gray-400 text-[11px] font-black uppercase tracking-wider animate-in zoom-in duration-200">
+                      {resultsCount} {t.pos.resultsLabel}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {showClear && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onClear();
+              }}
+              className='material-symbols-rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 outline-hidden p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 ms-1'
+              style={{ fontSize: '20px' }}
+            >
+              close
+            </button>
+          )}
         </div>
       </div>
     );
