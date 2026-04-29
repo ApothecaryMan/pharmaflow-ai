@@ -83,8 +83,8 @@ export const InventoryManagement: React.FC<InventoryManagementProps> = ({
         },
       },
       {
-        accessorKey: 'price',
-        header: t.price || 'Price',
+        accessorKey: 'publicPrice',
+        header: t.publicPrice || 'Price',
         meta: { width: 100, align: 'end' },
         cell: (info) => `${(info.getValue() as number).toFixed(2)}`,
       },

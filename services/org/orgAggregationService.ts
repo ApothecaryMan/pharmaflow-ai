@@ -127,7 +127,7 @@ const computeMetrics = (
     todayRevenue += branchTodaySales.reduce((sum, sale) => sum + (sale.total || 0), 0);
 
     const branchInventory = inventoryByBranch[branch.id] || [];
-    totalInventoryValue += branchInventory.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || item.stock || 0)), 0);
+    totalInventoryValue += branchInventory.reduce((sum, item) => sum + ((item.publicPrice || 0) * (item.quantity || item.stock || 0)), 0);
   }
 
   const activeStaffCount = allEmployees.filter(e => e.branchId && branchIds.has(e.branchId)).length;

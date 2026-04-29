@@ -285,7 +285,7 @@ describe('useEntityHandlers: Drug Management', () => {
 
     await act(() => {
       // Invalid name
-      result.current.handleAddDrug({ name: '', price: 10, stock: 5 } as Drug);
+      result.current.handleAddDrug({ name: '', publicPrice: 10, stock: 5 } as Drug);
     });
 
     expect(mockSetInventory).not.toHaveBeenCalled();
@@ -299,7 +299,7 @@ describe('useEntityHandlers: Drug Management', () => {
     }));
 
     await act(() => {
-      result.current.handleUpdateDrug({ id: '1', name: 'Drug', price: 10 } as Drug);
+      result.current.handleUpdateDrug({ id: '1', name: 'Drug', publicPrice: 10 } as Drug);
     });
 
     expect(mockSetInventory).not.toHaveBeenCalled();
@@ -310,7 +310,7 @@ describe('useEntityHandlers: Drug Management', () => {
     const { result } = renderHook(() => useEntityHandlers(defaultProps));
 
     await act(() => {
-       result.current.handleAddDrug({ id: '1', name: 'Valid Drug', price: 10, stock: 5 } as Drug);
+       result.current.handleAddDrug({ id: '1', name: 'Valid Drug', publicPrice: 10, stock: 5 } as Drug);
     });
 
     expect(mockSetInventory).toHaveBeenCalled();

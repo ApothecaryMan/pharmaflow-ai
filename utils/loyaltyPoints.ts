@@ -56,7 +56,7 @@ export function calculateLoyaltyPoints(total: number, items: CartItem[]): number
   let itemPoints = 0;
   items.forEach((item) => {
     // Normalize price for unit items
-    const price = stockOps.resolvePrice(item.price, !!item.isUnit, item.unitsPerPack);
+    const price = stockOps.resolvePrice(item.publicPrice, !!item.isUnit, item.unitsPerPack);
 
     const itemRate = getRateForValue(price, ITEM_RATE_TIERS);
     if (itemRate > 0) {

@@ -76,7 +76,7 @@ export const validateDrug = (drug: Partial<Drug>): ValidationResult => {
   if (!drug.name || drug.name.trim().length < 2) {
     return { success: false, message: 'Drug name is required (min 2 chars)' };
   }
-  if (!drug.price || drug.price < 0) {
+  if (!drug.publicPrice || drug.publicPrice < 0) {
     return { success: false, message: 'Invalid price' };
   }
   if (drug.stock !== undefined && drug.stock < 0) {

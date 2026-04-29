@@ -40,7 +40,7 @@ class StockMovementServiceImpl
       reviewedBy: db.reviewed_by || undefined,
       reviewedAt: db.reviewed_at || undefined,
       expiryDate: db.expiry_date || undefined,
-      price: db.price_snapshot,
+      publicPrice: db.public_price_snapshot,
       unitPrice: db.unit_price_snapshot,
       costPrice: db.cost_price_snapshot,
       unitCostPrice: db.unit_cost_price_snapshot,
@@ -69,7 +69,7 @@ class StockMovementServiceImpl
     if (m.reviewedBy) db.reviewed_by = m.reviewedBy;
     if (m.reviewedAt) db.reviewed_at = m.reviewedAt;
     if (m.expiryDate) db.expiry_date = m.expiryDate;
-    if (m.price !== undefined) db.price_snapshot = m.price;
+    if (m.publicPrice !== undefined) db.public_price_snapshot = m.publicPrice;
     if (m.unitPrice !== undefined) db.unit_price_snapshot = m.unitPrice;
     if (m.costPrice !== undefined) db.cost_price_snapshot = m.costPrice;
     if (m.unitCostPrice !== undefined) db.unit_cost_price_snapshot = m.unitCostPrice;
@@ -253,7 +253,7 @@ class StockMovementServiceImpl
     if (!drug) return 0;
     const qty = Math.abs(movement.quantity);
     if (['sale', 'return_customer'].includes(movement.type)) {
-      return qty * (drug.price || 0);
+      return qty * (drug.publicPrice || 0);
     }
     return qty * (drug.costPrice || 0);
   }

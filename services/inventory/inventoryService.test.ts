@@ -30,7 +30,7 @@ describe('InventoryService', () => {
         expiryDate: '2030-01-01', // Future
         category: 'Painkillers',
         branchId: 'B1', 
-        price: 10
+        publicPrice: 10
       } as Drug,
       { 
         id: 'D2', 
@@ -39,7 +39,7 @@ describe('InventoryService', () => {
         expiryDate: '2020-01-01', // Expired
         category: 'Painkillers',
         branchId: 'B1',
-        price: 5
+        publicPrice: 5
       } as Drug
     ];
     

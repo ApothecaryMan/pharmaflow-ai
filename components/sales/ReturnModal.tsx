@@ -248,7 +248,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
       console.error('Failed to validate shift:', e);
     }
 
-    const itemWeights = sale.items.map((item: any) => money.toSmallestUnit(money.multiply(item.price, item.quantity, 0)));
+    const itemWeights = sale.items.map((item: any) => money.toSmallestUnit(money.multiply(item.publicPrice, item.quantity, 0)));
     const allocatedAmounts = money.allocate(sale.netTotal, itemWeights);
 
     const returnItems: ReturnItem[] = [];
@@ -266,7 +266,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           name: item.name,
           quantityReturned: quantity,
           isUnit: item.isUnit || false,
-          originalPrice: sharePerIndividualItem,
+          publicPrice: sharePerIndividualItem,
           refundAmount: refundAmount,
           reason: returnReason,
           condition: 'sellable',
@@ -452,7 +452,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                           <div className='flex flex-col items-end leading-tight'>
                             <p className='font-bold text-gray-900 dark:text-gray-100 text-base'>
                               {(() => {
-                                const basePrice = item.isUnit && item.unitsPerPack ? item.price / item.unitsPerPack : item.price;
+                                const basePrice = item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
                                 const discounted = money.multiply(basePrice, (1 - (item.discount || 0) / 100), 2);
                                 return formatCurrency(discounted);
                               })()}
@@ -460,8 +460,8 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                             {item.discount > 0 && (
                               <p className='text-[10px] text-gray-400 line-through opacity-60'>
                                 {formatCurrency(item.isUnit && item.unitsPerPack
-                                  ? item.price / item.unitsPerPack
-                                  : item.price)}
+                                  ? item.publicPrice / item.unitsPerPack
+                                  : item.publicPrice)}
                               </p>
                             )}
                           </div>
@@ -682,7 +682,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                           <div className='flex flex-col items-end leading-tight'>
                             <p className='font-bold text-gray-900 dark:text-gray-100 text-base'>
                               {(() => {
-                                const basePrice = item.isUnit && item.unitsPerPack ? item.price / item.unitsPerPack : item.price;
+                                const basePrice = item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
                                 const discounted = money.multiply(basePrice, (1 - (item.discount || 0) / 100), 2);
                                 return formatCurrency(discounted);
                               })()}
@@ -690,8 +690,8 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                             {item.discount > 0 && (
                               <p className='text-[10px] text-gray-400 line-through opacity-60'>
                                 {formatCurrency(item.isUnit && item.unitsPerPack
-                                  ? item.price / item.unitsPerPack
-                                  : item.price)}
+                                  ? item.publicPrice / item.unitsPerPack
+                                  : item.publicPrice)}
                               </p>
                             )}
                           </div>

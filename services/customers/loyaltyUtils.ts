@@ -22,9 +22,9 @@ export const calculateSalePoints = (sale: Sale) => {
   let itemPoints = 0;
   sale.items.forEach((item) => {
     let itemRate = 0;
-    let price = item.price;
+    let price = item.publicPrice;
     if (item.isUnit && item.unitsPerPack) {
-      price = item.price / item.unitsPerPack;
+      price = item.publicPrice / item.unitsPerPack;
     }
 
     if (price > 20000) itemRate = 0.15;

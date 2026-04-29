@@ -56,7 +56,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
   const [printConfig, setPrintConfig] = useState({
     store: true,
     name: true,
-    price: true,
+    publicPrice: true,
     expiry: true,
     barcode: true,
     hotline: false,
@@ -323,8 +323,10 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
       // Apply dynamic visibility overrides from printConfig state
       if (printConfig) {
         design.elements.forEach((el: LabelElement) => {
-          if (printConfig[el.id as keyof typeof printConfig] !== undefined) {
-            el.isVisible = printConfig[el.id as keyof typeof printConfig];
+          // Special case: map 'price' element ID to 'publicPrice' config key
+          const configKey = el.id === 'price' ? 'publicPrice' : el.id;
+          if (printConfig[configKey as keyof typeof printConfig] !== undefined) {
+            el.isVisible = printConfig[configKey as keyof typeof printConfig] as boolean;
           }
         });
       }
@@ -696,7 +698,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
               {[
                 { key: 'store', label: t.barcodePrinter?.settings?.store || 'Pharmacy Name', icon: 'storefront' },
                 { key: 'name', label: t.barcodePrinter?.settings?.name || 'Drug Name', icon: 'label' },
-                { key: 'price', label: t.barcodePrinter?.settings?.price || 'Price', icon: 'payments' },
+                { key: 'publicPrice', label: t.barcodePrinter?.settings?.publicPrice || 'Price', icon: 'payments' },
                 { key: 'expiry', label: t.barcodePrinter?.settings?.expiry || 'Expiry Date', icon: 'event' },
                 { key: 'barcode', label: t.barcodePrinter?.settings?.barcode || 'Barcode', icon: 'barcode' },
                 { key: 'hotline', label: t.barcodePrinter?.settings?.hotline || 'Hotline', icon: 'phone' },

@@ -170,9 +170,9 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                     )
                   },
                   { 
-                    header: t.inventory.headers.price, 
+                    header: t.inventory.headers.publicPrice, 
                     width: 'w-28 shrink-0',
-                    render: (d: Drug) => <span className="font-medium text-gray-700 dark:text-gray-300">{formatCurrency(d.price)}</span> 
+                    render: (d: Drug) => <span className="font-medium text-gray-700 dark:text-gray-300">{formatCurrency(d.publicPrice)}</span> 
                   }
                 ]}
               />

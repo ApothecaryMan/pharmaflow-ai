@@ -764,7 +764,7 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
                           <p className='text-xs text-gray-500 dark:text-gray-400'>
                             Price:{' '}
                             <span className='font-bold text-gray-800 dark:text-gray-200'>
-                              ${payload[0].payload.price}
+                              ${payload[0].payload.publicPrice}
                             </span>
                           </p>
                           <p className='text-xs text-gray-500 dark:text-gray-400'>

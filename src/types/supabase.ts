@@ -145,7 +145,7 @@ export interface Database {
           name_arabic: string | null
           generic_name: string[] | null
           category: string
-          price: number
+          public_price: number
           cost_price: number
           stock: number
           damaged_stock: number | null
@@ -268,7 +268,7 @@ export interface Database {
           sale_id: string
           drug_id: string
           quantity: number
-          price: number
+          public_price: number
           cost_price: number | null
           discount: number | null
           is_unit: boolean | null
@@ -328,7 +328,7 @@ export interface Database {
           expiry_date: string | null
           dosage_form: string | null
           discount: number | null
-          sale_price: number | null
+          public_price: number | null
           tax: number | null
           is_unit: boolean | null
           units_per_pack: number | null
@@ -366,7 +366,7 @@ export interface Database {
           name: string
           quantity_returned: number
           is_unit: boolean | null
-          original_price: number
+          public_price: number
           refund_amount: number
           reason: string | null
           condition: string

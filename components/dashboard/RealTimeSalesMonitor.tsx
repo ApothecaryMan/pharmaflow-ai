@@ -315,7 +315,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       sale.items.forEach(item => {
         const product = products.find(p => p.id === item.id);
         const cat = (product?.category || item.category || 'General').toLowerCase();
-        const itemTotal = money.multiply(item.price || 0, item.quantity || 0, 0);
+        const itemTotal = money.multiply(item.publicPrice || 0, item.quantity || 0, 0);
         
         if (cat.match(/tablet|capsule|syrup|injection|medicine|drug/)) groups.medicine = money.add(groups.medicine, itemTotal);
         else if (cat.match(/cream|lotion|skin|hair|cosmetic|beauty|shampoo/)) groups.cosmetic = money.add(groups.cosmetic, itemTotal);

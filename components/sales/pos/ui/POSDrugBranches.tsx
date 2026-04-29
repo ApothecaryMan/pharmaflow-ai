@@ -137,7 +137,7 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
                   </td>
                   <td className="px-6 py-4 text-right">
                     <span className="text-xs font-black text-primary-500">
-                      <PriceDisplay value={item.price} />
+                      <PriceDisplay value={item.publicPrice} />
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -199,7 +199,7 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
                 <div className="flex flex-col items-end">
                   <span className="text-[9px] font-bold text-gray-400 uppercase">{currentLang === 'ar' ? 'السعر' : 'Unit Price'}</span>
                   <span className="text-xs font-black text-primary-500 tracking-tight">
-                    <PriceDisplay value={item.price} />
+                    <PriceDisplay value={item.publicPrice} />
                   </span>
                 </div>
               </div>

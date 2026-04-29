@@ -169,9 +169,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                 if (val === 'history') onViewChange?.('purchase-history');
                 else onViewChange?.('purchases', { mode: val });
               }}
-              variant="onPage"
               shape="pill"
-              color={color}
               size="md"
               iconSize="--icon-lg"
               useGraphicFont={true}
@@ -380,7 +378,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                         <th className='p-2 font-bold text-center'>{t.tableHeaders?.qty || 'Qty'}</th>
                         <th className='p-2 font-bold text-right'>{t.tableHeaders?.cost || 'Cost'}</th>
                         <th className='p-2 font-bold text-center'>{t.tableHeaders?.discount || 'Disc%'}</th>
-                        <th className='p-2 font-bold text-right'>{t.tableHeaders?.salePrice || 'Sale'}</th>
+                        <th className='p-2 font-bold text-right'>{t.tableHeaders?.publicPrice || 'Sale'}</th>
                         <th className='p-2 font-bold text-right'>{t.tableHeaders?.total || 'Total'}</th>
                       </tr>
                     </thead>
@@ -391,7 +389,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                           <td className='p-2 text-center font-bold'>{item.quantity}</td>
                           <td className='p-2 text-right'><CurrencyDisplay amount={item.costPrice} /></td>
                           <td className='p-2 text-center text-gray-500'>{item.discount || 0}%</td>
-                          <td className='p-2 text-right text-primary-600 font-medium'><CurrencyDisplay amount={item.salePrice || 0} /></td>
+                          <td className='p-2 text-right text-primary-600 font-medium'><CurrencyDisplay amount={item.publicPrice || 0} /></td>
                           <td className='p-2 text-right font-bold'><CurrencyDisplay amount={money.multiply(item.costPrice, item.quantity, 2)} /></td>
                         </tr>
                       ))}

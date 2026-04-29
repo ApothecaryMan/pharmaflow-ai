@@ -500,8 +500,8 @@ export const POS: React.FC<POSProps> = ({
           <span className='text-xs text-gray-600 dark:text-gray-400'>{info.getValue()}</span>
         ),
       }),
-      columnHelper.accessor('price', {
-        header: t.price,
+      columnHelper.accessor('publicPrice', {
+        header: t.publicPrice,
         size: 100,
         cell: (info) => (
           <span className='font-bold text-sm text-gray-700 dark:text-gray-300 tabular-nums'>
@@ -929,7 +929,7 @@ export const POS: React.FC<POSProps> = ({
                 barcode: 'start',
                 name: 'start',
                 category: 'center',
-                price: 'center',
+                publicPrice: 'center',
                 stock: 'center',
                 unit: 'center',
                 batches: 'center',

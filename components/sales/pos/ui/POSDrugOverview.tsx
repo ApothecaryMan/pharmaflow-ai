@@ -50,9 +50,9 @@ export const POSDrugOverview: React.FC<POSDrugOverviewProps> = ({
             <span className="text-xl font-black text-emerald-700 dark:text-emerald-300 tabular-nums">{totalStock}</span>
           </div>
           <div className="px-4 py-2 rounded-2xl bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800/50 text-center">
-            <span className="block text-[10px] font-black uppercase text-primary-600 dark:text-primary-400 mb-0.5">{t.price || 'Price'}</span>
+            <span className="block text-[10px] font-black uppercase text-primary-600 dark:text-primary-400 mb-0.5">{t.publicPrice || 'Price'}</span>
             <span className="text-xl font-black text-primary-700 dark:text-primary-300 tabular-nums">
-              <PriceDisplay value={viewingDrug.price} />
+              <PriceDisplay value={viewingDrug.publicPrice} />
             </span>
           </div>
           {drugBatches[0] && (
@@ -255,7 +255,7 @@ export const POSDrugOverview: React.FC<POSDrugOverviewProps> = ({
                 {sub.name}
               </div>
               <div className="text-[10px] font-black text-primary-500">
-                <PriceDisplay value={sub.price} />
+                <PriceDisplay value={sub.publicPrice} />
               </div>
             </div>
           )) : (

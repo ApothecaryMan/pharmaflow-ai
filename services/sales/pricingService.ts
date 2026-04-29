@@ -11,7 +11,7 @@ export const pricingService = {
    */
   calculateItemTotal: (item: CartItem): number => {
     // 1. Get base price
-    const basePrice = item.price;
+    const basePrice = item.publicPrice;
     const qty = item.quantity;
     
     // 2. Subtotal = Price * Quantity
@@ -33,7 +33,7 @@ export const pricingService = {
   calculateOrderTotals: (items: CartItem[], globalDiscountPercent: number = 0) => {
     // 1. Sum up all individual item totals (Gross Subtotal)
     const grossSubtotal = items.reduce((sum, item) => {
-      return money.add(sum, money.multiply(item.price, item.quantity, 0));
+      return money.add(sum, money.multiply(item.publicPrice, item.quantity, 0));
     }, 0);
 
     // 2. Sum up all individual item net totals (after item-level discounts)
@@ -87,7 +87,7 @@ export const pricingService = {
 
     // 1. Calculate the weights for all items in the original sale
     const itemWeights = sale.items.map((item: any) => {
-      const itemTotal = money.multiply(item.price, item.quantity, 0);
+      const itemTotal = money.multiply(item.publicPrice, item.quantity, 0);
       return money.toSmallestUnit(itemTotal);
     });
 

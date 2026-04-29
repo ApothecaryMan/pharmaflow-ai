@@ -255,7 +255,7 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
           ${sale.items
             .map((item) => {
               const effectivePrice =
-                item.isUnit && item.unitsPerPack ? item.price / item.unitsPerPack : item.price;
+                item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
               const lineTotal = effectivePrice * item.quantity * (1 - (item.discount || 0) / 100);
 
               return `
@@ -337,8 +337,8 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
                     if (!item) return '';
                     const effectivePrice =
                       item.isUnit && item.unitsPerPack
-                        ? item.price / item.unitsPerPack
-                        : item.price;
+                        ? item.publicPrice / item.unitsPerPack
+                        : item.publicPrice;
                     const returnedAmount = effectivePrice * qty * (1 - (item.discount || 0) / 100);
                     return `
           <div style="display: flex; justify-content: space-between; font-size: 11px; color: #000; margin: 2px 0;">

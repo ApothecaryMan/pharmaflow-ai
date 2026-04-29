@@ -94,7 +94,7 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
   setGlobalDiscount,
 }) => {
   const cost = item.costPrice || 0;
-  const price = item.price || 0;
+  const price = item.publicPrice || 0;
   const margin = pricing.actualMargin(cost, price);
 
   let calculatedMax = 10;

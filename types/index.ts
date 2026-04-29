@@ -166,8 +166,8 @@ export interface Drug {
   genericName: string[];
   /** Category classification */
   category: string;
-  /** Selling price per pack */
-  price: number;
+  /** Selling price per pack (Public Price / سعر الجمهور) */
+  publicPrice: number;
   /** Selling price per unit (strip/tablet) - Manual entry to avoid division errors */
   unitPrice?: number;
   /** Purchase/cost price per pack */
@@ -361,8 +361,8 @@ export interface StockMovement {
   previousStock: number;
   newStock: number;
 
-  /** Snapshot of pack selling price at movement time */
-  price?: number;
+  /** Snapshot of pack selling price at movement time (Public Price) */
+  publicPrice?: number;
   /** Snapshot of unit selling price at movement time */
   unitPrice?: number;
   /** Snapshot of pack cost price at movement time */
@@ -459,10 +459,8 @@ export interface SaleItem {
   drugNameSnapshot: string;
   /** Quantity sold */
   quantity: number;
-  /** Selling price at time of sale */
-  price: number;
-  /** Cost price at time of sale */
-  costPrice?: number;
+  /** Selling price at time of sale (Public Price) */
+  publicPrice: number;
   /** Item-level discount percentage */
   discount?: number;
   /** Whether quantity is in units */
@@ -537,8 +535,8 @@ export interface PurchaseItem {
   dosageForm?: string;
   /** Supplier discount percentage */
   discount?: number;
-  /** Updated selling price (if price changes) */
-  salePrice: number;
+  /** Updated selling price (Public Price / سعر الجمهور) */
+  publicPrice: number;
   /** Manual unit selling price */
   unitPrice?: number;
   /** Manual unit cost price */
@@ -593,7 +591,7 @@ export interface Sale {
   deliveryFee?: number;
   /**
    * @computed Total discount calculated as sum of all item discounts.
-   * Formula: sum(item.price * item.quantity * (item.discount/100)) for all items
+   * Formula: sum(item.publicPrice * item.quantity * (item.discount/100)) for all items
    */
   globalDiscount?: number;
   /** Optional notes */
@@ -650,9 +648,9 @@ export interface ReturnItem {
   quantityReturned: number;
   /** Whether quantity is in units */
   isUnit: boolean;
-  /** Original selling price */
-  originalPrice: number;
-  /** Calculated refund amount */
+  /** Public price at time of original sale */
+  publicPrice: number;
+  /** Actual refund amount per item */
   refundAmount: number;
   /** Reason for this item's return */
   reason?: ReturnReason;

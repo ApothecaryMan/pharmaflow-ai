@@ -264,7 +264,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
         performedBy: performedBy,
         status: 'approved',
         orgId: purchase.orgId || settings.orgId,
-        price: item.salePrice,
+        publicPrice: item.publicPrice,
         unitPrice: item.unitPrice,
         costPrice: item.costPrice,
         unitCostPrice: item.unitCostPrice,
@@ -282,7 +282,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     // Update Drug pricing info from latest purchase
     for (const item of purchase.items) {
       await inventoryService.update(item.drugId, {
-        price: item.salePrice,
+        publicPrice: item.publicPrice,
         unitPrice: item.unitPrice,
         costPrice: item.costPrice,
         unitCostPrice: item.unitCostPrice,

@@ -313,7 +313,7 @@ export const transactionService = {
             name: item.name,
             quantity_returned: item.quantityReturned,
             is_unit: item.isUnit,
-            original_price: item.originalPrice,
+            public_price: item.publicPrice,
             refund_amount: item.refundAmount,
             reason: item.reason || returnData.reason,
             condition: item.condition,

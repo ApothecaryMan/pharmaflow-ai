@@ -47,7 +47,6 @@ Found issues in 30 categories.
 - `components\sales\ReturnModal.tsx`
 - `components\settings\PrinterSettings.tsx`
 - `components\test\POSTest.tsx`
-- `components\test\PurchasesTest.tsx`
 
 </details>
 
@@ -94,7 +93,6 @@ Found issues in 30 categories.
 - `components\sales\ReturnModal.tsx`
 - `components\sales\SortableCartItem.tsx`
 - `components\test\POSTest.tsx`
-- `components\test\PurchasesTest.tsx`
 
 </details>
 
@@ -186,7 +184,6 @@ Found issues in 30 categories.
 - `components\settings\PrinterSettings.tsx`
 - `components\test\ModalTests.tsx`
 - `components\test\POSTest.tsx`
-- `components\test\PurchasesTest.tsx`
 
 </details>
 
@@ -225,7 +222,6 @@ Found issues in 30 categories.
 - `components\sales\ReturnModal.tsx`
 - `components\sales\SortableCartItem.tsx`
 - `components\test\POSTest.tsx`
-- `components\test\PurchasesTest.tsx`
 
 </details>
 
@@ -271,7 +267,6 @@ Found issues in 30 categories.
 - `components\purchases\SuppliersList.tsx`
 - `components\sales\POS.tsx`
 - `components\test\POSTest.tsx`
-- `components\test\PurchasesTest.tsx`
 - `context\SettingsContext.tsx`
 - `utils\drugDisplayName.ts`
 - `utils\qzPrinter.ts`
@@ -339,7 +334,6 @@ Found issues in 30 categories.
 - `components\sales\SortableCartItem.tsx`
 - `components\test\ModalTests.tsx`
 - `components\test\POSTest.tsx`
-- `components\test\PurchasesTest.tsx`
 - `hooks\useEntityHandlers.ts`
 - `hooks\useNavigation.ts`
 - `netlify\functions\time.ts`
@@ -407,7 +401,6 @@ Found issues in 30 categories.
 - `components\skeletons\POSSkeleton.tsx`
 - `components\skeletons\PageSkeletonRegistry.tsx`
 - `components\test\POSTest.tsx`
-- `components\test\PurchasesTest.tsx`
 - `context\SettingsContext.tsx`
 - `hooks\useAppState.ts`
 - `hooks\useEntityHandlers.ts`
@@ -471,7 +464,6 @@ Found issues in 30 categories.
 - `components\sales\SortableCartItem.tsx`
 - `components\settings\PrinterSettings.tsx`
 - `components\test\POSTest.tsx`
-- `components\test\PurchasesTest.tsx`
 - `data\areas.ts`
 - `hooks\useAuth.ts`
 - `hooks\useEntityHandlers.ts`
@@ -526,7 +518,6 @@ Found issues in 30 categories.
 - `components\sales\ShiftHistory.tsx`
 - `components\settings\PrinterSettings.tsx`
 - `components\test\POSTest.tsx`
-- `components\test\PurchasesTest.tsx`
 - `context\SettingsContext.tsx`
 - `hooks\useAuth.ts`
 - `hooks\useEntityHandlers.ts`
@@ -590,7 +581,6 @@ Found issues in 30 categories.
 - `components\sales\ReceiptDesigner.tsx`
 - `components\sales\SalesHistory.tsx`
 - `components\test\POSTest.tsx`
-- `components\test\PurchasesTest.tsx`
 - `i18n\menuTranslations.ts`
 - `netlify\functions\ai.ts`
 - `services\sales\salesService.ts`
@@ -627,7 +617,6 @@ Found issues in 30 categories.
 - `components\sales\DeliveryOrdersModal.tsx`
 - `components\sales\ReturnHistory.tsx`
 - `components\sales\SalesHistory.tsx`
-- `components\test\PurchasesTest.tsx`
 
 </details>
 
@@ -716,7 +705,6 @@ Found issues in 30 categories.
 - `components\sales\SortableCartItem.tsx`
 - `components\settings\PrinterSettings.tsx`
 - `components\test\POSTest.tsx`
-- `components\test\PurchasesTest.tsx`
 - `config\pageRegistry.ts`
 - `hooks\useAppState.ts`
 - `hooks\useAuthenticatedData.ts`
@@ -772,7 +760,6 @@ Found issues in 30 categories.
 - `components\purchases\Purchases.tsx`
 - `components\sales\POS.tsx`
 - `components\test\POSTest.tsx`
-- `components\test\PurchasesTest.tsx`
 - `hooks\useFilterDropdown.ts`
 - `scripts\check-translations.ts`
 - `services\auth\hashUtils.ts`

@@ -99,7 +99,7 @@ const escapeHtml = (text: string): string => {
  * @returns True if valid, false otherwise
  */
 const validateDrug = (drug: Drug): boolean => {
-  return !!(drug && (drug.id || drug.internalCode) && drug.name && typeof drug.price === 'number');
+  return !!(drug && (drug.id || drug.internalCode) && drug.name && typeof drug.publicPrice === 'number');
 };
 
 /**
@@ -129,8 +129,8 @@ export const getLabelElementContent = (
       return receiptSettings.hotline || '19099';
     case 'name':
       return getDisplayName(drug);
-    case 'price':
-      return `${Number(drug.price).toFixed(2)} ${currency === 'L.E' ? 'L.E' : '$'}`;
+    case 'publicPrice':
+      return `${Number(drug.publicPrice).toFixed(2)} ${currency === 'L.E' ? 'L.E' : '$'}`;
     case 'barcode':
       return barcodeSource === 'internal' ? drug.internalCode || drug.id : drug.barcode || drug.id;
     case 'type':
@@ -460,7 +460,7 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
       fontWeight: 'bold',
       align: 'left',
       isVisible: true,
-      field: 'price',
+      field: 'publicPrice',
       hitboxOffsetX: 0.1,
       hitboxOffsetY: -1.3,
       hitboxWidth: 8,

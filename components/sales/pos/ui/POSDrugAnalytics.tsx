@@ -43,7 +43,7 @@ export const POSDrugAnalytics: React.FC<POSDrugAnalyticsProps> = ({ viewingDrug,
           const item = sale.items.find(i => i.id === viewingDrug.id || i.barcode === viewingDrug.barcode);
           if (item) {
             calculatedStats.totalQtySold += item.quantity;
-            calculatedStats.totalRevenue = money.add(calculatedStats.totalRevenue, money.multiply(item.price, item.quantity, 0));
+            calculatedStats.totalRevenue = money.add(calculatedStats.totalRevenue, money.multiply(item.publicPrice, item.quantity, 0));
             
             if (!calculatedStats.lastSaleDate || new Date(sale.date) > new Date(calculatedStats.lastSaleDate)) {
               calculatedStats.lastSaleDate = sale.date;

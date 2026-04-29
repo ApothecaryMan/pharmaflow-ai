@@ -98,7 +98,7 @@ export const Inventory: React.FC<InventoryProps> = ({
     nameArabic: '',
     genericName: [], // Changed to array
     category: 'General',
-    price: 0,
+    publicPrice: 0,
     unitPrice: 0,
     costPrice: 0,
     unitCostPrice: 0,
@@ -372,7 +372,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         
         acc.totalSaleValue = money.add(
           acc.totalSaleValue,
-          money.multiply(drug.price || 0, packs, 0)
+          money.multiply(drug.publicPrice || 0, packs, 0)
         );
 
         const status = (drug as any).status || 'active';
@@ -561,10 +561,10 @@ export const Inventory: React.FC<InventoryProps> = ({
         },
       },
       {
-        accessorKey: 'price',
-        header: t.headers.price,
+        accessorKey: 'publicPrice',
+        header: t.headers.publicPrice,
         cell: ({ row }) => {
-          const parts = formatCurrencyParts(row.original.price);
+          const parts = formatCurrencyParts(row.original.publicPrice);
           return (
             <span className='text-gray-700 dark:text-gray-300 text-xs font-bold'>
               {parts.amount}{' '}
@@ -898,7 +898,6 @@ export const Inventory: React.FC<InventoryProps> = ({
             ]}
             shape='pill'
             size='sm'
-            color={color}
             fullWidth={false}
           />
         </div>
@@ -1035,7 +1034,7 @@ export const Inventory: React.FC<InventoryProps> = ({
               <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
                 <span className='text-sm text-gray-500'>{t.details?.sellingPrice}</span>
                 <span className='text-sm font-bold text-gray-900 dark:text-gray-100'>
-                  {formatCurrency(viewingDrug.price)}
+                  {formatCurrency(viewingDrug.publicPrice)}
                 </span>
               </div>
               <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
@@ -1380,16 +1379,16 @@ export const Inventory: React.FC<InventoryProps> = ({
                   <div className='space-y-4'>
                     <div>
                       <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        {t.modal.price}
+                        {t.modal.publicPrice}
                       </label>
                       <input
                         type='number'
                         step='0.01'
                         required
                         className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm font-bold text-green-600'
-                        value={formData.price}
+                        value={formData.publicPrice}
                         onChange={(e) =>
-                          setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })
+                          setFormData({ ...formData, publicPrice: parseFloat(e.target.value) || 0 })
                         }
                       />
                     </div>
@@ -1419,7 +1418,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                         step='0.01'
                         className='w-full px-3 py-2 rounded-xl border border-amber-200 dark:border-amber-900/30 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-amber-500 outline-hidden transition-all text-sm font-bold text-amber-600'
                         value={formData.unitPrice || 0}
-                        placeholder={formData.price && formData.unitsPerPack ? (formData.price / formData.unitsPerPack).toFixed(2) : ''}
+                        placeholder={formData.publicPrice && formData.unitsPerPack ? (formData.publicPrice / formData.unitsPerPack).toFixed(2) : ''}
                         onChange={(e) =>
                           setFormData({ ...formData, unitPrice: parseFloat(e.target.value) || 0 })
                         }

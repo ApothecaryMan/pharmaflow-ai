@@ -15,7 +15,8 @@ import { usePosSounds } from '../common/hooks/usePosSounds';
 import { useContextMenu } from '../common/ContextMenu';
 import { useSmartDirection } from '../common/SmartInputs';
 import { formatCurrencyParts } from '../../utils/currency';
-import type { Employee, CartItem, ViewState } from '../../types';
+import * as stockOps from '../../utils/stockOperations';
+import type { Employee, CartItem, Drug, ViewState } from '../../types';
 
 // ============================================================================
 // CONSTANTS
@@ -471,7 +472,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
 
   // --- CART LOGIC ---
-  const addToCart = React.useCallback((drug: any, isUnit: boolean = false, quantity: number = 1) => {
+  const addToCart = React.useCallback((drug: Drug, isUnit: boolean = false, quantity: number = 1) => {
     setCart(prev => {
       const existing = prev.find(item => item.id === drug.id && item.isUnit === isUnit);
       if (existing) {
@@ -481,7 +482,16 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
             : item
         );
       }
-      return [...prev, { ...drug, quantity, isUnit }];
+      
+      return [
+        ...prev, 
+        { 
+          ...drug, 
+          quantity, 
+          isUnit,
+          publicPrice: stockOps.resolvePrice(drug.publicPrice, isUnit, drug.unitsPerPack, drug.unitPrice)
+        }
+      ];
     });
     if (window.navigator.vibrate) window.navigator.vibrate(10);
     playSuccess();
@@ -556,9 +566,9 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
     return map;
   }, [inventory]);
 
-  const grossSubtotal = React.useMemo(() => cart.reduce((acc, item) => acc + (item.price * item.quantity), 0), [cart]);
+  const grossSubtotal = React.useMemo(() => cart.reduce((acc, item) => acc + (item.publicPrice * item.quantity), 0), [cart]);
   const cartTotal = React.useMemo(() => cart.reduce((acc, item) => {
-    const linePrice = item.price * item.quantity;
+    const linePrice = item.publicPrice * item.quantity;
     const discountAmount = ((item.discount || 0) / 100) * linePrice;
     return acc + linePrice - discountAmount;
   }, 0), [cart]);

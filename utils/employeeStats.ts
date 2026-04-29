@@ -37,7 +37,7 @@ export interface EmployeeSalesStats {
   highestPricedItemSold?: {
     id: string;
     name: string;
-    price: number;
+    publicPrice: number;
   };
 }
 
@@ -110,10 +110,10 @@ export function getEmployeeSalesStats(
         totalItemsSold += soldQty;
 
         // Calculate profit for this item
-        // Profit = (Sale Price - Cost Price) * Quantity
-        const salePrice = item.price;
+        // Profit = (Public Price - Cost Price) * Quantity
+        const publicPrice = item.publicPrice;
         const costPrice = item.costPrice || 0;
-        const itemProfit = money.multiply(money.subtract(salePrice, costPrice), soldQty, 0);
+        const itemProfit = money.multiply(money.subtract(publicPrice, costPrice), soldQty, 0);
         totalProfit = money.add(totalProfit, itemProfit);
 
         // Track quantities per product for "most sold"
@@ -158,12 +158,12 @@ export function getEmployeeSalesStats(
 
   employeeSales.forEach((sale) => {
     sale.items.forEach((item) => {
-      if (item.price > maxItemPrice) {
-        maxItemPrice = item.price;
+      if (item.publicPrice > maxItemPrice) {
+        maxItemPrice = item.publicPrice;
         highestPricedItemSold = {
           id: item.id,
           name: item.name,
-          price: item.price,
+          publicPrice: item.publicPrice,
         };
       }
     });

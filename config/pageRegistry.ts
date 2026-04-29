@@ -39,7 +39,6 @@ import { SalesHistory } from '../components/sales/SalesHistory';
 import { ShiftHistory } from '../components/sales/ShiftHistory';
 import { POSSkeleton } from '../components/skeletons/POSSkeleton';
 import { ModalTests } from '../components/test/ModalTests';
-import { PurchasesTest } from '../components/test/PurchasesTest';
 import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
 import type { PermissionAction } from './permissions';
 
@@ -456,25 +455,6 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'science',
     category: 'test',
     requiredProps: ['color', 't', 'language'],
-    permission: 'system.debug',
-  },
-  'purchases-test': {
-    id: 'purchases-test',
-    component: PurchasesTest,
-    menuLabel: 'Create PO (Test)',
-    menuLabelAr: 'انشاء امر شراء (تيست)',
-    icon: 'shopping_cart',
-    category: 'test',
-    requiredProps: [
-      'inventory',
-      'suppliers',
-      'purchases',
-      'purchaseReturns',
-      'onCompletePurchase',
-      'color',
-      't',
-      'language',
-    ],
     permission: 'system.debug',
   },
   'advanced-sm-card': {

@@ -389,7 +389,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     playBeep();
     setCart((prev) => {
       const cost = drug.costPrice || 0;
-      const sale = drug.price || 0;
+      const sale = drug.publicPrice || 0;
       let initialDiscount = 0;
 
       // Auto-calculate discount if Sale > Cost
@@ -410,8 +410,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
           costPrice: cost,
           unitCostPrice: drug.unitCostPrice || 0,
           dosageForm: drug.dosageForm,
-          salePrice: sale,
-          unitSalePrice: drug.unitPrice || 0,
+          publicPrice: sale,
+          unitPrice: drug.unitPrice || 0,
           discount: parseFloat(initialDiscount.toFixed(2)),
           expiryDate: '',
           tax: initialTaxPercent, // Tax as percentage
@@ -446,15 +446,15 @@ export const Purchases: React.FC<PurchasesProps> = ({
         // Interdependent Calculation Logic
         if (field === 'discount') {
           const disc = typeof value === 'number' ? value : 0;
-          updatedItem.costPrice = pricing.afterDiscount(i.salePrice, disc);
+          updatedItem.costPrice = pricing.afterDiscount(i.publicPrice, disc);
           // Tax percentage stays the same, just the calculated amount changes
         } else if (field === 'costPrice') {
           const cost = typeof value === 'number' ? value : 0;
-          if (i.salePrice > 0) {
-            updatedItem.discount = pricing.actualMargin(cost, i.salePrice);
+          if (i.publicPrice > 0) {
+            updatedItem.discount = pricing.actualMargin(cost, i.publicPrice);
           }
           // Tax percentage stays the same
-        } else if (field === 'salePrice') {
+        } else if (field === 'publicPrice') {
           const sale = typeof value === 'number' ? value : 0;
           if (sale > 0 && i.costPrice >= 0) {
             updatedItem.discount = pricing.actualMargin(i.costPrice, sale);
@@ -525,7 +525,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
         alert(`Please enter a valid Cost Price for ${item.name}`);
         return;
       }
-      if (!item.salePrice || item.salePrice <= 0) {
+      if (!item.publicPrice || item.publicPrice <= 0) {
         alert(`Please enter a valid Sale Price for ${item.name}`);
         return;
       }
@@ -597,7 +597,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
         alert(`Please enter a valid Cost Price for ${item.name}`);
         return;
       }
-      if (!item.salePrice || item.salePrice <= 0) {
+      if (!item.publicPrice || item.publicPrice <= 0) {
         alert(`Please enter a valid Sale Price for ${item.name}`);
         return;
       }
@@ -878,7 +878,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
                   const profit =
                     invItem.costPrice > 0
-                      ? ((invItem.price - invItem.costPrice) / invItem.costPrice) * 100
+                      ? ((invItem.publicPrice - invItem.costPrice) / invItem.costPrice) * 100
                       : 0;
 
                   return (
@@ -1269,13 +1269,13 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       <div className='w-14'>
                         <FloatingInput
                           inputRef={(el) => {
-                            inputRefs.current[`${index}-salePrice`] = el;
+                            inputRefs.current[`${index}-publicPrice`] = el;
                           }}
-                          onKeyDown={(e) => handleInputKeyDown(e, index, 'salePrice')}
+                          onKeyDown={(e) => handleInputKeyDown(e, index, 'publicPrice')}
                           label={t.cartFields?.sale || 'Sale'}
                           isLoading={isLoading}
                           type='number'
-                          value={item.salePrice || 0}
+                          value={item.publicPrice || 0}
                           labelBgClassName={
                             selectedCartIndex === index
                               ? `bg-primary-50 dark:bg-(--bg-navbar)`
@@ -1286,7 +1286,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                             e.target.select();
                           }}
                           onChange={(e) =>
-                            updateItem(item.id, 'salePrice', parseFloat(e.target.value) || 0)
+                            updateItem(item.id, 'publicPrice', parseFloat(e.target.value) || 0)
                           }
                         />
                       </div>
@@ -1302,7 +1302,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           isLoading={isLoading}
                           type='number'
                           value={item.unitPrice || 0}
-                          placeholder={item.salePrice && item.unitsPerPack ? money.divide(item.salePrice, item.unitsPerPack).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
+                          placeholder={item.publicPrice && item.unitsPerPack ? money.divide(item.publicPrice, item.unitsPerPack).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
                           labelBgClassName={
                             selectedCartIndex === index
                               ? `bg-primary-50 dark:bg-(--bg-navbar)`
@@ -1404,7 +1404,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   {/* Discount */}
                   {(() => {
                     const totalCost = cart.reduce((sum, i) => money.add(sum, pricing.lineTotal(i.costPrice, i.quantity, i.discount)), 0);
-                    const totalSale = cart.reduce((sum, i) => money.add(sum, money.multiply(i.salePrice, i.quantity, 2)), 0);
+                    const totalSale = cart.reduce((sum, i) => money.add(sum, money.multiply(i.publicPrice, i.quantity, 2)), 0);
                     const totalDiscount = money.subtract(totalSale, totalCost);
                     const discountPercent = pricing.actualMargin(totalCost, totalSale);
 

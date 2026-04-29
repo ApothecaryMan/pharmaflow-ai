@@ -146,11 +146,11 @@ export const usePOSCart = ({
         ...prev,
         {
           ...drug,
-          price: stockOps.resolvePrice(drug.price, isUnitMode, drug.unitsPerPack, drug.unitPrice),
+          publicPrice: stockOps.resolvePrice(drug.publicPrice, isUnitMode, drug.unitsPerPack, drug.unitPrice),
           quantity: initialQuantity,
           discount: prev.find((i) => i.id === drug.id && !!i.isUnit !== isUnitMode)?.discount || 0,
           isUnit: isUnitMode,
-          basePackPrice: drug.price, // Preserve base price for future toggles
+          basePackPrice: drug.publicPrice, // Preserve base price for future toggles
           preferredBatchId: drug.id,
         },
       ];
@@ -235,7 +235,7 @@ export const usePOSCart = ({
               quantity: packsTake,
               discount: currentItem.discount || 0,
               isUnit: false,
-              price: stockOps.resolvePrice(batch.price, false, unitsPerPack, batch.unitPrice),
+              publicPrice: stockOps.resolvePrice(batch.publicPrice, false, unitsPerPack, batch.unitPrice),
               preferredBatchId: batch.id,
             });
             remainingPacks -= packsTake;
@@ -255,7 +255,7 @@ export const usePOSCart = ({
               quantity: unitsTake,
               discount: currentItem.discount || 0,
               isUnit: true,
-              price: stockOps.resolvePrice(batch.price, true, unitsPerPack, batch.unitPrice),
+              publicPrice: stockOps.resolvePrice(batch.publicPrice, true, unitsPerPack, batch.unitPrice),
               preferredBatchId: batch.id,
             });
             remainingUnits -= unitsTake;
@@ -334,8 +334,8 @@ export const usePOSCart = ({
                 ...i, 
                 isUnit: newIsUnit, 
                 quantity: convertedQty,
-                price: stockOps.resolvePrice(
-                  i.basePackPrice || drug?.price || i.price,
+                publicPrice: stockOps.resolvePrice(
+                  i.basePackPrice || drug?.publicPrice || i.publicPrice,
                   newIsUnit,
                   unitsPerPack,
                   drug?.unitPrice

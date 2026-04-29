@@ -256,7 +256,7 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                                     x{item.quantity}
                                   </span>
                                   <span className='font-black text-zinc-900 dark:text-zinc-100 min-w-[70px] text-right tabular-nums'>
-                                    {formatCurrency(pricing.lineTotal(item.price, item.quantity, item.discount))}
+                                    {formatCurrency(pricing.lineTotal(item.publicPrice, item.quantity, item.discount))}
                                   </span>
                                 </div>
                               </div>

@@ -52,7 +52,7 @@ export class DashboardService {
           sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
         
         const actualSoldQty = item.quantity - returnedQty;
-        const itemPrice = item.price || 0;
+        const itemPrice = item.publicPrice || 0;
         const itemDiscountPct = item.discount || 0; // Item-level discount %
 
         // 1. Calculate effective price after item discount
@@ -219,7 +219,7 @@ export class DashboardService {
     let revenueAtRisk = 0;
     critical.forEach((d) => {
       // Risk = price * 5 (expected weekly demand placeholder)
-      revenueAtRisk = money.add(revenueAtRisk, money.multiply(d.price || 0, 5, 0));
+      revenueAtRisk = money.add(revenueAtRisk, money.multiply(d.publicPrice || 0, 5, 0));
     });
 
     return {
@@ -349,7 +349,7 @@ export class DashboardService {
         const actualQty = item.quantity - returnedQty;
 
         if (actualQty > 0) {
-          const itemPrice = item.price || 0;
+          const itemPrice = item.publicPrice || 0;
           const itemDiscountPct = item.discount || 0;
           
           // Effective revenue after item discount

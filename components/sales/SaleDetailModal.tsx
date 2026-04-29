@@ -238,10 +238,10 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                           packQty: 0, 
                           unitQty: 0, 
                           totalPrice: 0, 
-                          originalPrice: 0, 
+                          preDiscountTotal: 0, 
                           returnedQty: 0, 
                           unitsPerPack: item.unitsPerPack || 1, 
-                          itemBasePrice: item.price,
+                          itemBasePrice: item.publicPrice,
                           expiries: new Set<string>()
                         };
                         
@@ -251,14 +251,14 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                         
                         if (isUnit) g.unitQty += item.quantity; else g.packQty += item.quantity;
                         const realQty = item.quantity - ret;
-                        const price = isUnit ? item.price / (item.unitsPerPack || 1) : item.price;
+                        const price = isUnit ? item.publicPrice / (item.unitsPerPack || 1) : item.publicPrice;
                         
                         const lineTotal = money.multiply(realQty, price, 2);
                         const discountFactor = 1 - (item.discount || 0) / 100;
                         const discountedTotal = money.multiply(lineTotal, discountFactor, 2);
                         
                         g.totalPrice = money.add(g.totalPrice, discountedTotal);
-                        g.originalPrice = money.add(g.originalPrice, lineTotal);
+                        g.preDiscountTotal = money.add(g.preDiscountTotal, lineTotal);
                         g.returnedQty += ret;
 
                         // Add expiry date from batch allocations or item fallback
@@ -275,8 +275,8 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                       return groupList.map((g: any, i) => {
                         const hasRet = g.returnedQty > 0;
                         const isFullRet = g.returnedQty >= (g.packQty + g.unitQty);
-                        const hasDisc = g.originalPrice > g.totalPrice + 0.01;
-                        const disc = hasDisc ? Math.round(((g.originalPrice - g.totalPrice) / g.originalPrice) * 100) : 0;
+                        const hasDisc = g.preDiscountTotal > g.totalPrice + 0.01;
+                        const disc = hasDisc ? Math.round(((g.preDiscountTotal - g.totalPrice) / g.preDiscountTotal) * 100) : 0;
                         const expiryList = Array.from(g.expiries as Set<string>);
 
                         return (
@@ -312,7 +312,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                                 {!isFullRet && (
                                   <div className='flex flex-col items-end leading-tight'>
                                     <span className='font-bold'>{formatCurrency(g.totalPrice)}</span>
-                                    {hasDisc && <span className='text-[9px] text-gray-400 line-through opacity-60'>{formatCurrency(g.originalPrice)}</span>}
+                                    {hasDisc && <span className='text-[9px] text-gray-400 line-through opacity-60'>{formatCurrency(g.preDiscountTotal)}</span>}
                                   </div>
                                 )}
                               </div>

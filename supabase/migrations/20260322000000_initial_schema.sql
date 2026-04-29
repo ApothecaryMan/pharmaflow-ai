@@ -86,7 +86,7 @@ CREATE TABLE drugs (
   name_arabic     TEXT,
   generic_name    TEXT[] DEFAULT '{}',
   category        TEXT NOT NULL,
-  price           NUMERIC(10,2) NOT NULL,
+  public_price    NUMERIC(10,2) NOT NULL,
   cost_price      NUMERIC(10,2) NOT NULL,
   stock           INTEGER NOT NULL DEFAULT 0,
   damaged_stock   INTEGER DEFAULT 0,
@@ -141,7 +141,7 @@ CREATE TABLE purchase_items (
   expiry_date   DATE,
   dosage_form   TEXT,
   discount      NUMERIC(5,2) DEFAULT 0,
-  sale_price    NUMERIC(10,2),
+  public_price  NUMERIC(10,2),
   tax           NUMERIC(10,2) DEFAULT 0,
   is_unit       BOOLEAN DEFAULT false,
   units_per_pack INTEGER
@@ -198,7 +198,7 @@ CREATE TABLE sale_items (
   sale_id           UUID NOT NULL REFERENCES sales(id) ON DELETE CASCADE,
   drug_id           UUID NOT NULL REFERENCES drugs(id),
   quantity          INTEGER NOT NULL,
-  price             NUMERIC(10,2) NOT NULL,
+  unit_price        NUMERIC(10,2) NOT NULL,
   cost_price        NUMERIC(10,2),
   discount          NUMERIC(5,2) DEFAULT 0,
   is_unit           BOOLEAN DEFAULT false
@@ -267,7 +267,7 @@ CREATE TABLE return_items (
   name                TEXT NOT NULL,  -- snapshot
   quantity_returned   INTEGER NOT NULL,
   is_unit             BOOLEAN DEFAULT false,
-  original_price      NUMERIC(10,2) NOT NULL,
+  public_price        NUMERIC(10,2) NOT NULL,
   refund_amount       NUMERIC(10,2) NOT NULL,
   reason              return_reason,
   condition           item_condition NOT NULL DEFAULT 'sellable',

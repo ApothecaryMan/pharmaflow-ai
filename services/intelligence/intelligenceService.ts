@@ -120,7 +120,9 @@ function calculateMetrics(sales: Sale[], drugMap: Map<string, Drug>): PeriodMetr
       // Normalize quantity to units for "unitsSold" metric
       const normalizedQuantity = item.isUnit ? item.quantity : item.quantity * unitsPerPack;
       
-      const itemRevenue = money.multiply(item.price, item.quantity, 0);
+      // Defensive: support both new publicPrice and legacy price
+      const itemPrice = item.publicPrice || (item as any).price || 0;
+      const itemRevenue = money.multiply(itemPrice, item.quantity, 0);
       const itemCost = money.multiply(item.costPrice || 0, item.quantity, 0);
 
       unitsSold += normalizedQuantity;
@@ -610,7 +612,9 @@ export const intelligenceService = {
           cogs: 0,
         };
 
-        const itemRevenue = money.multiply(item.price, item.quantity, 0);
+        // Defensive: support both new publicPrice and legacy price
+        const itemPrice = item.publicPrice || (item as any).price || 0;
+        const itemRevenue = money.multiply(itemPrice, item.quantity, 0);
         const itemCost = money.multiply(item.costPrice || 0, item.quantity, 0);
 
         existing.quantity_sold += item.quantity;
@@ -726,7 +730,7 @@ export const intelligenceService = {
           cashier_name: cashierName,
           product_name: getDisplayName({ name: item.name, dosageForm: item.dosageForm }),
           quantity: item.quantity,
-          amount: money.multiply(item.price, item.quantity, 0),
+          amount: money.multiply(item.publicPrice || (item as any).price || 0, item.quantity, 0),
           has_anomaly: false,
         });
       }

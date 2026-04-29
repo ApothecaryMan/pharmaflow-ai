@@ -14,7 +14,7 @@
 | 12 | components/common/ExpandedModal.tsx | ExpandedModal | ? SKIP | Pure UI primitive/barrel (parents: components/customers/CustomerOverview.tsx, components/dashboard/Dashboard.tsx, components/dashboard/RealTimeSalesMonitor.tsx) | - |
 | 13 | components/common/FilterDropdown.tsx | FilterDropdown | ? SKIP | Effect orchestration; Derived data/transformation; Validation/permission rules (parents: components/customers/CustomerManagement.tsx, components/common/LocationSelector.tsx, components/hr/EmployeeList.tsx, components/hr/EmployeeProfile.tsx, components/inventory/BarcodeStudio.tsx, ...) | - |
 | 14 | components/common/FilterPill.tsx | FilterPill | ? SKIP | Derived data/transformation (parents: components/common/SearchInput.tsx, components/common/TanStackTable.tsx, components/hr/EmployeeList.tsx, components/inventory/Inventory.tsx, components/purchases/Purchases.tsx, ...) | - |
-| 15 | components/common/FloatingInput.tsx | FloatingInput | ? SKIP | Pure UI primitive/barrel (parents: components/purchases/Purchases.tsx, components/test/PurchasesTest.tsx) | - |
+| 15 | components/common/FloatingInput.tsx | FloatingInput | ? SKIP | Pure UI primitive/barrel (parents: components/purchases/Purchases.tsx) | - |
 | 16 | components/common/HasPermission.tsx | HasPermission | ? SKIP | Validation/permission rules (parents: components/dashboard/Dashboard.tsx) | - |
 | 17 | components/common/HelpModal.tsx | HelpModal | ? SKIP | Derived data/transformation (parents: components/dashboard/Dashboard.tsx, components/dashboard/RealTimeSalesMonitor.tsx, components/purchases/PendingApproval.tsx, components/sales/CashRegister.tsx, components/sales/ReturnHistory.tsx, ...) | - |
 | 18 | components/common/InsightTooltip.tsx | CurrencyValue | ? SKIP | Pure UI primitive/barrel (parents: components/dashboard/Dashboard.tsx, components/dashboard/useDashboardAnalytics.ts, components/dashboard/RealTimeSalesMonitor.tsx, components/dashboard/useRealTimeSalesAnalytics.ts, components/hr/StaffSpotlightTicker.tsx, ...) | - |
@@ -152,7 +152,6 @@
 | 150 | components/skeletons/POSSkeleton.tsx | POSSkeleton | ? SKIP | Derived data/transformation | - |
 | 151 | components/skeletons/PageSkeletonRegistry.tsx | PageSkeletonRegistry | ? SKIP | Pure UI primitive/barrel (parents: components/layout/PageRouter.tsx, App.tsx) | - |
 | 152 | components/test/ModalTests.tsx | ModalTests | ?? MEDIUM | Mostly clean | useModalTests.ts |
-| 153 | components/test/PurchasesTest.tsx | PurchasesTest | ?? HIGH | Direct Supabase/query logic; Storage side effects; Complex local state; Effect orchestration | domain.service.ts / usePurchasesTest.ts |
 | 154 | pages/IntelligenceDashboard.tsx | IntelligenceDashboard | ?? MEDIUM | Complex local state; Effect orchestration; Derived data/transformation; Entangled enough to consider rewrite | useIntelligenceDashboard.ts |
 | 155 | components/inventory/StockMovementReport.tsx | StockMovementReport | ✅ DONE | UI/logic split complete: complex state, search, and CSV export moved to useStockMovementReport.ts; monetary calculations moved to stockMovementService.ts. | components/inventory/useStockMovementReport.ts / services/inventory/stockMovement/stockMovementService.ts |
 
@@ -207,7 +206,6 @@
 48. ?? HIGH components/sales/pos/POS.tsx ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
 49. ?? HIGH components/sales/pos/hooks/usePOSCart.ts ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
 50. ?? HIGH components/settings/BranchSettings.tsx ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
-51. ?? HIGH components/test/PurchasesTest.tsx ? Direct Supabase/query logic; Storage side effects; Complex local state; Effect orchestration.
 52. ?? MEDIUM components/layout/PageRouter.tsx ? Validation/permission rules.
 53. ?? MEDIUM components/auth/AuthPage.tsx ? Validation/permission rules.
 54. ?? MEDIUM components/common/LocationSelector.tsx ? Effect orchestration; Derived data/transformation.

@@ -1276,7 +1276,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                         {stats.highestPricedItemSold.name}
                       </p>
                       <p className='text-xs text-gray-500 dark:text-gray-400'>
-                        {Math.round(stats.highestPricedItemSold.price).toLocaleString()}{' '}
+                        {Math.round(stats.highestPricedItemSold.publicPrice).toLocaleString()}{' '}
                         {t.global?.currency || (language === 'AR' ? 'ج.م' : 'L.E')}
                       </p>
                     </>

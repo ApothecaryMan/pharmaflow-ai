@@ -53,7 +53,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
     genericName: [],
     category: 'General',
     dosageForm: '',
-    price: 0,
+    publicPrice: 0,
     unitPrice: 0,
     costPrice: 0,
     unitCostPrice: 0,
@@ -146,8 +146,8 @@ export const AddProduct: React.FC<AddProductProps> = ({
   };
 
   const margin = useMemo(() => {
-    return pricing.actualMargin(formData.costPrice || 0, formData.price || 0);
-  }, [formData.price, formData.costPrice]);
+    return pricing.actualMargin(formData.costPrice || 0, formData.publicPrice || 0);
+  }, [formData.publicPrice, formData.costPrice]);
 
   const handleSubmit = async (e: React.FormEvent, addAnother: boolean = false) => {
     e.preventDefault();
@@ -179,7 +179,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
       nameArabic: formData.nameArabic,
       genericName: formData.genericName,
       category: formData.category || 'General',
-      price: formData.price || 0,
+      publicPrice: formData.publicPrice || 0,
       unitPrice: formData.unitPrice || 0,
       costPrice: formData.costPrice || 0,
       unitCostPrice: formData.unitCostPrice || 0,
@@ -225,7 +225,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
       genericName: [],
       category: 'General',
       dosageForm: '',
-      price: 0,
+      publicPrice: 0,
       unitPrice: 0,
       costPrice: 0,
       unitCostPrice: 0,
@@ -477,7 +477,6 @@ export const AddProduct: React.FC<AddProductProps> = ({
                       { label: t.fields?.originImported, value: 'imported' },
                     ]}
                     size="sm"
-                    color="blue"
                   />
                 </div>
 
@@ -494,7 +493,6 @@ export const AddProduct: React.FC<AddProductProps> = ({
                       { label: t.discontinued || 'Discontinued', value: 'discontinued', activeColor: 'red' },
                     ]}
                     size="sm"
-                    color="blue"
                   />
                 </div>
               </div>
@@ -594,15 +592,15 @@ export const AddProduct: React.FC<AddProductProps> = ({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1 flex justify-between">
-                    <span>{t.fields?.price} *</span>
+                    <span>{t.fields?.publicPrice} *</span>
                   </label>
                   <input
                     type="number"
                     required
                     step="0.01"
                     className={INPUT_BASE}
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                    value={formData.publicPrice}
+                    onChange={(e) => setFormData({ ...formData, publicPrice: parseFloat(e.target.value) || 0 })}
                   />
                 </div>
 
@@ -631,7 +629,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                     step="0.01"
                     className={`${INPUT_BASE} border-amber-200 dark:border-amber-900/30 focus:border-amber-500`}
                     value={formData.unitPrice}
-                    placeholder={formData.price && formData.unitsPerPack ? (formData.price / formData.unitsPerPack).toFixed(2) : ''}
+                    placeholder={formData.publicPrice && formData.unitsPerPack ? (formData.publicPrice / formData.unitsPerPack).toFixed(2) : ''}
                     onChange={(e) => setFormData({ ...formData, unitPrice: parseFloat(e.target.value) || 0 })}
                   />
                 </div>
@@ -698,8 +696,8 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 <div className="flex flex-col items-center min-w-[100px]">
                   <span className="text-[10px] uppercase font-black text-gray-400 tracking-wider leading-none mb-1">{t.fields?.liveProfit}</span>
                   <div className="flex items-baseline gap-1">
-                    <span className={`text-lg font-black leading-none ${((formData.price || 0) - (formData.costPrice || 0)) > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400'}`}>
-                      {((formData.price || 0) - (formData.costPrice || 0)).toFixed(2)}
+                    <span className={`text-lg font-black leading-none ${((formData.publicPrice || 0) - (formData.costPrice || 0)) > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400'}`}>
+                      {((formData.publicPrice || 0) - (formData.costPrice || 0)).toFixed(2)}
                     </span>
                     <span className="text-[10px] font-bold text-gray-400">{t.fields?.currency}</span>
                   </div>

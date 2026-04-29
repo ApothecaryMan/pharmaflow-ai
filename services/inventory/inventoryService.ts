@@ -19,7 +19,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
       nameArabic: db.name_arabic || undefined,
       genericName: db.generic_name || [],
       category: db.category,
-      price: db.price,
+      publicPrice: db.public_price,
       unitPrice: db.unit_price,
       costPrice: db.cost_price,
       unitCostPrice: db.unit_cost_price,
@@ -52,7 +52,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
     if (d.nameArabic !== undefined) db.name_arabic = d.nameArabic;
     if (d.genericName !== undefined) db.generic_name = d.genericName;
     if (d.category !== undefined) db.category = d.category;
-    if (d.price !== undefined) db.price = d.price;
+    if (d.publicPrice !== undefined) db.public_price = d.publicPrice;
     if (d.unitPrice !== undefined) db.unit_price = d.unitPrice;
     if (d.costPrice !== undefined) db.cost_price = d.costPrice;
     if (d.unitCostPrice !== undefined) db.unit_cost_price = d.unitCostPrice;
@@ -267,7 +267,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
 
     return {
       totalProducts: all.length,
-      totalValue: all.reduce((sum, d) => sum + (d.price || 0) * (d.stock || 0), 0),
+      totalValue: all.reduce((sum, d) => sum + (d.publicPrice || 0) * (d.stock || 0), 0),
       lowStockCount: all.filter((d) => (d.stock || 0) < (d.minStock || 10) && (d.stock || 0) > 0).length,
       expiringSoonCount: all.filter((d) => parseExpiryEndOfMonth(d.expiryDate) <= thirtyDays).length,
       outOfStockCount: all.filter((d) => (d.stock || 0) <= 0).length,

@@ -100,7 +100,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
     if (priceRange && !priceRange.searchTerm && priceRange.minPrice >= 0) {
       // Price range only, no text filter — show all in range
       return inventory
-        .filter((drug) => drug.price >= priceRange.minPrice && drug.price <= priceRange.maxPrice)
+        .filter((drug) => drug.publicPrice >= priceRange.minPrice && drug.publicPrice <= priceRange.maxPrice)
         .slice(0, 100);
     }
 
@@ -116,7 +116,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
 
     return inventory.filter((drug) => {
       // Price range gate: reject immediately if outside range
-      if (priceRange && (drug.price < priceRange.minPrice || drug.price > priceRange.maxPrice)) {
+      if (priceRange && (drug.publicPrice < priceRange.minPrice || drug.publicPrice > priceRange.maxPrice)) {
         return false;
       }
 
@@ -373,7 +373,7 @@ const DrugActionPill: React.FC<{
     .reduce((sum, c) => sum + (c.isUnit ? stockOps.convertToPacks(c.quantity, drug.unitsPerPack) : c.quantity), 0);
   const isOutOfStock = currentQtyInCart >= drug.stock;
   
-  const parts = formatCurrencyParts(drug.price);
+  const parts = formatCurrencyParts(drug.publicPrice);
   const isArabic = language === 'AR';
 
   return (

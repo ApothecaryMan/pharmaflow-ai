@@ -1245,8 +1245,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
                       // Display Price Calculation
                       const unitsPerPack = common.unitsPerPack || 1;
-                      const packPrice = common.price;
-                      const unitPrice = common.price / unitsPerPack;
+                      const packPrice = common.publicPrice;
+                      const unitPrice = common.publicPrice / unitsPerPack;
                       const totalPrice = money.add(
                         money.multiply(packPrice, packQty, 0),
                         money.multiply(unitPrice, unitQty, 0)
@@ -1354,7 +1354,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                 (() => {
                                   const drug = inventory.find((d) => d.id === common.id);
                                   const cost = drug?.costPrice || 0;
-                                  const price = common.price || 0;
+                                  const price = common.publicPrice || 0;
                                   const margin = pricing.actualMargin(cost, price);
                                   let calculatedMax = 10;
                                   if (margin < 20) calculatedMax = Math.floor(margin / 2);
@@ -1415,7 +1415,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                               {/* Price Display */}
                               <div className='flex flex-col items-end min-w-[70px]'>
                                 <span className='text-xs text-gray-400 uppercase tracking-wider text-[10px]'>
-                                  {t.price || 'Price'}
+                                  {t.publicPrice || 'Price'}
                                 </span>
                                 <span className='font-bold text-gray-900 dark:text-gray-100 text-sm'>
                                   {formatCurrency(
