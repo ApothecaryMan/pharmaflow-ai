@@ -3137,7 +3137,7 @@ export const TRANSLATIONS = {
       placeholders: {
         searchHistory: 'بحث برقم، مورد...',
         searchSupplier: 'بحث واختيار المورد...',
-        enterId: 'أدخـــــل الرقم',
+        enterId: 'أدخـل الرقم',
         searchDrug: 'بحث عن دواء...',
       },
       pack: 'علبة',
