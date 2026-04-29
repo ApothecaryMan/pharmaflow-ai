@@ -128,10 +128,17 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
 
   // Watch for view changes and redirect if needed
   useEffect(() => {
+    // CRITICAL: Don't redirect while checking auth or if we just found a session
     if (isAuthChecking) return;
 
     const correctView = resolveView(view);
     if (correctView !== view) {
+      // Small safety: If we think we should redirect to LOGIN, check hasSession one last time
+      // to prevent "flash of login" during state transitions
+      if (correctView === ROUTES.LOGIN && authService.hasSession()) {
+        return;
+      }
+
       if (import.meta.env.DEV) {
         console.warn(`[Auth] Redirecting from ${view} to ${correctView}`);
       }
@@ -140,7 +147,7 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
       }
       setView(correctView);
     }
-  }, [view, isAuthChecking, resolveView, setView, error]);
+  }, [view, isAuthChecking, resolveView, setView, error, isAuthenticated]);
 
   return {
     isAuthenticated,

@@ -27,7 +27,11 @@ export const LandingPage: React.FC<{ language: 'EN' | 'AR'; darkMode: boolean }>
 
       <div className="inline-flex items-center gap-3 px-7 py-3 rounded-2xl bg-zinc-100/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-zinc-800/50 text-zinc-500">
         <span className="material-symbols-rounded text-xl animate-bounce">arrow_downward</span>
-        <span className="text-[11px] font-bold uppercase tracking-wider">{language === 'AR' ? 'اختر ملف الموظف بالأسفل' : 'Select Profile Below'}</span>
+        <span className="text-[11px] font-bold uppercase tracking-wider">
+          {language === 'AR' 
+            ? (window.innerWidth < 768 ? 'سجل دخول الموظف من الأسفل' : 'اختر ملف الموظف بالأسفل') 
+            : (window.innerWidth < 768 ? 'LOGIN AS EMPLOYEE BELOW' : 'Select Profile Below')}
+        </span>
       </div>
     </div>
   </div>
