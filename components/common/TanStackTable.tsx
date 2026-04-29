@@ -56,6 +56,7 @@ import { useSettings } from '../../context/SettingsContext';
 import { useLongPress } from '../../hooks/useLongPress';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { formatCurrencyParts, formatCompactCurrencyParts } from '../../utils/currency';
+import { normalizeDigits } from '../../utils/localization';
 import { getSmartDirection } from './SmartInputs';
 import {
   ContextMenuCheckboxItem,
@@ -79,20 +80,9 @@ export const PriceDisplay: React.FC<{
   size?: 'sm' | 'base' | 'lg' | 'xl' | '2xl';
   compact?: boolean;
 }> = ({ value, size = 'base', compact = false }) => {
-  const { language, numeralSystem } = useSettings();
-  const isAR = language === 'AR';
-  
-  // Use a locale that forces the desired numeral system but keeps currency formatting consistent
-  // If we want Arabic currency symbol (ج.م.) but English digits, we need to be careful.
-  // formatCurrencyParts usually takes a single locale.
-  
-  const activeLocale = isAR 
-    ? (numeralSystem === 'AR' ? 'ar-EG' : 'ar-u-nu-latn') 
-    : 'en-US';
-
   const { amount, symbol } = compact
-    ? formatCompactCurrencyParts(value, 'EGP', activeLocale, 2)
-    : formatCurrencyParts(value, 'EGP', activeLocale);
+    ? formatCompactCurrencyParts(value, 'EGP', undefined, 2)
+    : formatCurrencyParts(value, 'EGP');
 
   // Scale symbol based on text size approximately
   const SYMBOL_SCALES = {
@@ -142,10 +132,10 @@ const unifiedFilterFn: FilterFn<any> = (row, columnId, filterValue) => {
   }
 
   // Handle String-based filters (Search)
-  const search = String(filterValue).toLowerCase().trim();
+  const search = normalizeDigits(String(filterValue).toLowerCase().trim());
   if (!search) return true;
 
-  const strValue = String(value || '').toLowerCase();
+  const strValue = normalizeDigits(String(value || '').toLowerCase());
   return strValue.includes(search);
 };
 
@@ -293,12 +283,9 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   const headerRef = useRef<HTMLTableSectionElement>(null);
   const firstRowRef = useRef<HTMLTableRowElement>(null);
 
-  const { language, numeralSystem } = useSettings();
+  const { language, numeralLocale, textLocale } = useSettings();
   const isAR = language === 'AR';
-  const activeLocale = isAR 
-    ? (numeralSystem === 'AR' ? 'ar-EG' : 'en-US') 
-    : 'en-US';
-  const languageLocale = isAR ? 'ar-EG' : 'en-US';
+  const languageLocale = textLocale;
   const t = TRANSLATIONS[language];
 
   // Load initial state from localStorage
@@ -1082,13 +1069,13 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                             const targetTs = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
                             const isToday = targetTs === todayTs;
                             const isYesterday = targetTs === yesterdayTs;
-                            const dateLabel = isToday ? (isRtl ? 'اليوم' : 'Today') : isYesterday ? (isRtl ? 'أمس' : 'Yesterday') : date.toLocaleDateString(activeLocale);
+                            const dateLabel = isToday ? (isRtl ? 'اليوم' : 'Today') : isYesterday ? (isRtl ? 'أمس' : 'Yesterday') : date.toLocaleDateString();
                             
                             // Manual AM/PM to ensure "ص" and "م"
                             const hourRaw = date.getHours();
-                            const ampm = hourRaw >= 12 ? (isAR ? 'م' : 'PM') : (isAR ? 'ص' : 'AM');
-                            const displayHour = (hourRaw % 12 || 12).toLocaleString(activeLocale, { useGrouping: false });
-                            const displayMinute = date.getMinutes().toLocaleString(activeLocale, { minimumIntegerDigits: 2, useGrouping: false });
+                            const ampm = isRtl ? (hourRaw >= 12 ? 'م' : 'ص') : (hourRaw >= 12 ? 'PM' : 'AM');
+                            const displayHour = (hourRaw % 12 || 12).toLocaleString(undefined, { useGrouping: false });
+                            const displayMinute = date.getMinutes().toLocaleString(undefined, { minimumIntegerDigits: 2, useGrouping: false });
                             const formattedTime = isAR ? `${displayHour}:${displayMinute} ${ampm}` : `${displayHour}:${displayMinute} ${ampm}`;
 
                             content = (
@@ -1132,9 +1119,27 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                           }
                         }
 
+                        const columnId = cell.column.id.toLowerCase();
+                        const header = String(cell.column.columnDef.header || '').toLowerCase();
+                        const isTechnical = 
+                          columnId.includes('id') || columnId.includes('sku') || columnId.includes('barcode') || 
+                          columnId.includes('batch') || columnId.includes('serial') || 
+                          columnId.includes('email') || columnId.includes('address') ||
+                          columnId.includes('phone') || columnId.includes('mobile') ||
+                          columnId.includes('invoice') || columnId.includes('receipt') ||
+                          columnId.includes('code') ||
+                          header.includes('id') || header.includes('sku') || header.includes('barcode') || 
+                          header.includes('batch') || header.includes('serial') ||
+                          header.includes('email') || header.includes('address') ||
+                          header.includes('phone') || header.includes('mobile') ||
+                          header.includes('invoice') || header.includes('receipt') ||
+                          header.includes('code') ||
+                          meta.isId || meta.noConvert;
+
                         return (
                           <td
                             key={cell.id}
+                            data-no-convert={isTechnical ? 'true' : undefined}
                             className={`${dense ? 'py-1 text-xs' : 'py-3 text-sm'} px-4 font-medium text-(--text-primary) align-middle border-b border-(--border-divider) group-last/row:border-b-0
                             ${meta.isFlex ? '' : 'whitespace-nowrap'} ${meta.isAction ? 'action-col' : ''}`}
                             style={{
@@ -1207,18 +1212,18 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                       {(isAR 
                         ? Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)
                         : table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1
-                      ).toLocaleString(activeLocale)}
+                      ).toLocaleString()}
                     </span>
                     <span className='opacity-50 px-0.5'>-</span>
                     <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
                       {(isAR
                         ? table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1
                         : Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)
-                      ).toLocaleString(activeLocale)}
+                      ).toLocaleString()}
                     </span>
                     <span className='shrink-0 px-1'>{t.global?.table?.of || 'of'}</span>
                     <span className='text-(--text-primary) inline-block min-w-[24px] text-center text-[12px]'>
-                      {table.getFilteredRowModel().rows.length.toLocaleString(activeLocale)}
+                      {table.getFilteredRowModel().rows.length.toLocaleString()}
                     </span>
                   </div>
                 )}
@@ -1293,17 +1298,17 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                         />
                         <span className='opacity-50 mx-0.5'>/</span>
                         <span className='opacity-70 inline-block min-w-[24px] text-center'>
-                          {table.getPageCount().toLocaleString(activeLocale)}
+                          {table.getPageCount().toLocaleString()}
                         </span>
                       </div>
                     ) : (
                       <>
                         <span className='group-hover:text-(--text-primary) inline-block min-w-[24px] text-center'>
-                          {(table.getState().pagination.pageIndex + 1).toLocaleString(activeLocale)}
+                          {(table.getState().pagination.pageIndex + 1).toLocaleString()}
                         </span>
                         <span className='opacity-50 mx-1'>/</span>
                         <span className='opacity-70 inline-block min-w-[24px] text-center'>
-                          {table.getPageCount().toLocaleString(activeLocale)}
+                          {table.getPageCount().toLocaleString()}
                         </span>
                       </>
                     )}

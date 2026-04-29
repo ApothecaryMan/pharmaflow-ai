@@ -23,13 +23,8 @@ export const AnimatedCounter = ({
   const spanRef = useRef<HTMLSpanElement>(null);
   const prevValueRef = useRef(value);
   const isFirstMountRef = useRef(true);
-  const { language, numeralSystem, fontFamilyAR, fontFamilyEN } = useSettings();
-  const isAR = language === 'AR';
-  
-  // Logic: Use numeralSystem setting if in AR mode, otherwise always EN
-  const locale = isAR 
-    ? (numeralSystem === 'AR' ? 'ar-EG' : 'ar-u-nu-latn') 
-    : 'en-US';
+  const { numeralLocale } = useSettings(); // Keeping for re-render trigger if needed, or remove if not needed.
+  // Actually, toLocaleString() will now use the global state.
 
   useEffect(() => {
     const el = spanRef.current;
@@ -63,7 +58,7 @@ export const AnimatedCounter = ({
       const current = from + (to - from) * easeOut(progress);
 
       // Format with specified decimals, locale, and notation
-      el.textContent = current.toLocaleString(locale, {
+      el.textContent = current.toLocaleString(undefined, {
         notation,
         minimumFractionDigits: notation === 'compact' ? (current >= 1000 ? 1 : 0) : fractionDigits,
         maximumFractionDigits: notation === 'compact' ? (current >= 1000 ? 1 : 0) : fractionDigits,
@@ -91,7 +86,7 @@ export const AnimatedCounter = ({
         whiteSpace: 'nowrap'
       }}
     >
-      {value.toLocaleString(locale, {
+      {value.toLocaleString(undefined, {
         notation,
         minimumFractionDigits: notation === 'compact' ? (value >= 1000 ? 1 : 0) : fractionDigits,
         maximumFractionDigits: notation === 'compact' ? (value >= 1000 ? 1 : 0) : fractionDigits,

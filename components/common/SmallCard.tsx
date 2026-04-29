@@ -57,11 +57,8 @@ export const SmallCard = ({
   iconTooltip,
   isLoading,
 }: SmallCardProps) => {
-  const { language, numeralSystem } = useSettings();
+  const { language } = useSettings();
   const isAR = language === 'AR';
-  const activeLocale = isAR 
-    ? (numeralSystem === 'AR' ? 'ar-EG' : 'ar-u-nu-latn') 
-    : 'en-US';
 
   // Render value logic
   const { displayValue, displaySymbol } = useMemo(() => {
@@ -69,17 +66,17 @@ export const SmallCard = ({
 
     if (type === 'currency') {
       const parts = value > 10000 
-        ? formatCompactCurrencyParts(value, 'EGP', activeLocale) 
-        : formatCurrencyParts(value, 'EGP', activeLocale);
+        ? formatCompactCurrencyParts(value, 'EGP') 
+        : formatCurrencyParts(value, 'EGP');
       return { displayValue: parts.amount, displaySymbol: currencyLabel || parts.symbol };
     }
     
     if (value > 10000) {
-      return { displayValue: formatCompactNumber(value, activeLocale), displaySymbol: '' };
+      return { displayValue: formatCompactNumber(value), displaySymbol: '' };
     }
 
     return { displayValue: value, displaySymbol: '' };
-  }, [value, type, activeLocale, currencyLabel]);
+  }, [value, type, currencyLabel]);
 
   const iconContent = (
     <div className={`shrink-0 ${isLoading ? 'bg-zinc-100 dark:bg-zinc-800' : `text-${iconColor}-600 dark:text-${iconColor}-400`} relative flex items-center justify-center w-12 h-12 rounded-xl ${isLoading ? 'animate-pulse' : ''}`}>

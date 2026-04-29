@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useSettings } from '../../../../context/SettingsContext';
 import { useStatusBar } from '../StatusBarContext';
 import { StatusBarItem } from '../StatusBarItem';
 
@@ -14,9 +15,11 @@ export const DateTime: React.FC<DateTimeProps> = ({
   format = 'datetime',
   showSeconds = false,
   use24Hour = false,
-  locale = 'en-US',
+  locale: manualLocale,
   hideIcon = false,
 }) => {
+  const { textLocale } = useSettings();
+  const locale = manualLocale || textLocale;
   const { getVerifiedDate, state } = useStatusBar();
   const [now, setNow] = useState(getVerifiedDate());
 

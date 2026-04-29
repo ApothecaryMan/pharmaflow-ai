@@ -38,7 +38,7 @@ const variantColors: Record<string, string> = {
   default: 'text-(--text-secondary)',
 };
 
-const formatVal = (v: any) => typeof v === 'number' ? v.toLocaleString('en-US') : v;
+const formatVal = (v: any) => typeof v === 'number' ? v.toLocaleString() : v;
 
 // --- Sub-components ---
 

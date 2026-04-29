@@ -123,6 +123,16 @@ export interface SettingsContextType extends SettingsState {
   // Helpers
   availableThemes: ThemeColor[];
   availableLanguages: { code: Language; label: string }[];
+  /** 
+   * The locale to use for numbers/digits. 
+   * Respects numeralSystem setting (e.g., 'ar-u-nu-latn' for English digits in Arabic). 
+   */
+  numeralLocale: string;
+  /** 
+   * The locale to use for text/names (e.g., Months, Days). 
+   * Based strictly on the application language. 
+   */
+  textLocale: string;
 }
 
 // Default Settings
@@ -497,6 +507,32 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, graphicFontVariant }));
   }, []);
 
+  // --- Centralized Locale Resolution ---
+  const numeralLocale = useMemo(() => {
+    const isAR = settings.language === 'AR';
+    if (isAR) {
+      return settings.numeralSystem === 'AR' ? 'ar-EG' : 'ar-u-nu-latn';
+    }
+    return 'en-US';
+  }, [settings.language, settings.numeralSystem]);
+
+  const textLocale = useMemo(() => {
+    return settings.language === 'AR' ? 'ar-EG' : 'en-US';
+  }, [settings.language]);
+
+  // Sync with global polyfills
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__NUMERAL_LOCALE__ = numeralLocale;
+      window.__TEXT_LOCALE__ = textLocale;
+      
+      // Trigger global DOM update for raw numbers
+      if ((window as any).__UPDATE_DIGITS__) {
+        (window as any).__UPDATE_DIGITS__();
+      }
+    }
+  }, [numeralLocale, textLocale]);
+
   const value = useMemo<SettingsContextType>(
     () => ({
       ...settings,
@@ -530,6 +566,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setNumeralSystem,
       availableThemes: THEMES,
       availableLanguages: LANGUAGES,
+      numeralLocale,
+      textLocale,
     }),
     [
       settings,
@@ -557,6 +595,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setFontFamilyEN,
       setFontFamilyAR,
       setNumeralSystem,
+      numeralLocale,
+      textLocale,
     ]
   );
 

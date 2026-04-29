@@ -21,9 +21,10 @@ export const formatCurrency = (
   currency: string = 'EGP',
   locale?: string,
   decimals: number = 2
-): string => {
+ ): string => {
   // 1. Detect language from DOM if not provided
   const isArabic = getIsArabic(locale);
+  // Default fallback if no locale provided - strictly for non-component usage
   const targetLocale = locale || (isArabic ? 'ar-EG' : 'en-US');
 
   // 2. Handle EGP specific formatting (EGP vs ج.م)
@@ -33,7 +34,7 @@ export const formatCurrency = (
       style: 'decimal',
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
-    }, 'en-US');
+    }, targetLocale);
 
     // Ensure amount is rounded to desired precision
     const formattedAmount = formatter.format(amount);
@@ -69,7 +70,7 @@ export const formatCurrencyParts = (
       style: 'decimal',
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
-    }, 'en-US');
+    }, targetLocale);
 
     return {
       amount: formatter.format(amount),
@@ -100,6 +101,7 @@ export const formatCurrencyParts = (
 
 export const getCurrencySymbol = (currency: string = 'EGP', locale?: string): string => {
   const isArabic = getIsArabic(locale);
+  const targetLocale = locale || (isArabic ? 'ar-EG' : 'en-US');
 
   if (currency === 'EGP') {
     return isArabic ? 'ج.م' : 'EGP';
@@ -108,13 +110,14 @@ export const getCurrencySymbol = (currency: string = 'EGP', locale?: string): st
   const formatter = getFormatter({
     style: 'currency',
     currency,
-  }, locale || (isArabic ? 'ar-EG' : 'en-US'));
+  }, targetLocale);
 
   return (
     formatter.formatToParts(0)
       .find((p) => p.type === 'currency')?.value || currency
   );
 };
+
 export const formatCompactCurrency = (
   amount: number,
   currency: string = 'EGP',
@@ -122,12 +125,13 @@ export const formatCompactCurrency = (
   decimals: number = 1
 ): string => {
   const isArabic = getIsArabic(locale);
+  const targetLocale = locale || (isArabic ? 'ar-EG' : 'en-US');
 
   const formatter = getFormatter({
     notation: 'compact',
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  }, 'en-US');
+  }, targetLocale);
 
   if (currency === 'EGP') {
     const formattedAmount = formatter.format(amount);
@@ -142,10 +146,11 @@ export const formatCompactCurrency = (
     currency: currency,
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  }, locale || (isArabic ? 'ar-EG' : 'en-US'));
+  }, targetLocale);
 
   return currencyFormatter.format(amount);
 };
+
 export const formatCompactCurrencyParts = (
   amount: number,
   currency: string = 'EGP',
@@ -153,12 +158,13 @@ export const formatCompactCurrencyParts = (
   decimals: number = 1
 ) => {
   const isArabic = getIsArabic(locale);
+  const targetLocale = locale || (isArabic ? 'ar-EG' : 'en-US');
 
   const formatter = getFormatter({
     notation: 'compact',
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  }, 'en-US');
+  }, targetLocale);
 
   if (currency === 'EGP') {
     return {
@@ -172,7 +178,7 @@ export const formatCompactCurrencyParts = (
     style: 'currency',
     currency: currency,
     maximumFractionDigits: decimals,
-  }, locale || (isArabic ? 'ar-EG' : 'en-US'));
+  }, targetLocale);
 
   const parts = currencyFormatter.formatToParts(amount);
 
@@ -189,4 +195,3 @@ export const formatCompactCurrencyParts = (
 };
 
 export { money, pricing, tax } from './money';
-

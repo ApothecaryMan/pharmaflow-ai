@@ -68,7 +68,8 @@ export const getDisplayName = (
 
   const fullName = parts.join(' ');
   const mode = forcedTransform || (shouldCapitalize() ? 'uppercase' : 'normal');
-  return mode === 'uppercase' ? fullName.toUpperCase() : capitalizeWords(fullName);
+  const result = mode === 'uppercase' ? fullName.toUpperCase() : capitalizeWords(fullName);
+  return `\u200B${result}\u200B`;
 };
 
 /**
@@ -96,7 +97,8 @@ export const getFullDisplayName = (
 
   const fullName = parts.join(' ');
   const mode = forcedTransform || (shouldCapitalize() ? 'uppercase' : 'normal');
-  return mode === 'uppercase' ? fullName.toUpperCase() : capitalizeWords(fullName);
+  const result = mode === 'uppercase' ? fullName.toUpperCase() : capitalizeWords(fullName);
+  return `\u200B${result}\u200B`;
 };
 
 export const getArabicDisplayName = (item: DrugDisplayItem): string => {

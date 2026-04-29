@@ -143,22 +143,12 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   const columns = useMemo<ColumnDef<Shift>[]>(
     () => [
       {
-        id: 'shiftNumber',
+        id: 'id',
         accessorFn: (row) => row.handoverReceiptNumber || row.id.slice(-6),
         header: t.shiftHistory?.headers?.shiftNumber || 'Shift #',
         cell: ({ getValue }) => (
           <span className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
             <span className="material-symbols-rounded text-[18px] text-gray-400">tag</span>
-            {getValue() as string}
-          </span>
-        ),
-        meta: { align: 'start' },
-      },
-      {
-        accessorKey: 'id',
-        header: t.shiftHistory?.headers?.systemId || 'System ID',
-        cell: ({ getValue }) => (
-          <span className="text-sm font-mono text-gray-500">
             {getValue() as string}
           </span>
         ),

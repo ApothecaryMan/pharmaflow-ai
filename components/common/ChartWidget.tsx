@@ -320,7 +320,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(value) => value.toLocaleString('en-US')}
+                tickFormatter={(value) => value.toLocaleString()}
                 tick={{
                   fill: 'var(--text-secondary)',
                   fontSize: 12,
