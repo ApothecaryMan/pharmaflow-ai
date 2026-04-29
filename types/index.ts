@@ -129,12 +129,31 @@ export interface Branch {
 }
 
 /**
+ * GlobalDrug - Master catalog entry shared across all branches.
+ * Contains standard data like name, ingredients, and public price.
+ */
+export interface GlobalDrug {
+  id: string;
+  nameEn: string;
+  nameAr?: string;
+  activeSubstance?: string;
+  barcode?: string;
+  category?: string;
+  publicPrice?: number;
+  manufacturer?: string;
+  dosageForm?: string;
+  updatedAt: string;
+}
+
+/**
  * Drug/Medication entity - core inventory item.
  * Represents a sellable medicine with pricing, stock, and metadata.
  */
 export interface Drug {
   /** Unique identifier (UUID) */
   id: string;
+  /** Link to global catalog entry */
+  globalDrugId?: string;
   /** Branch this drug belongs to — required for RLS isolation */
   branchId?: string;
   /** Organization this drug belongs to */
