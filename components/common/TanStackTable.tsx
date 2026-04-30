@@ -104,23 +104,14 @@ export const PriceDisplay: React.FC<{
 
 import { createSearchRegex } from '../../utils/searchUtils';
 
-let _cachedTerm = '';
-let _cachedRegex: RegExp = /.*/;
-const getCachedSearchRegex = (term: string) => {
-  if (term !== _cachedTerm) {
-    _cachedTerm = term;
-    _cachedRegex = createSearchRegex(term);
-  }
-  return _cachedRegex;
-};
-
-// Define a unified filter function that handles both strings (search) and arrays (pills)
-const unifiedFilterFn: FilterFn<any> = (row, columnId, filterValue) => {
+/**
+ * A pure utility to check if a value matches a filter (string search or array pills).
+ * Handles digit normalization and case-insensitivity.
+ */
+const checkValueMatchesFilter = (value: any, filterValue: any): boolean => {
   if (filterValue === undefined || filterValue === null || filterValue === '') return true;
 
-  const value = row.getValue(columnId);
-
-  // Handle Array-based filters (Pills)
+  // 1. Handle Array-based filters (Pills)
   if (Array.isArray(filterValue)) {
     if (filterValue.length === 0 || filterValue.includes('all')) return true;
     
@@ -131,12 +122,19 @@ const unifiedFilterFn: FilterFn<any> = (row, columnId, filterValue) => {
     return filterValue.includes(value);
   }
 
-  // Handle String-based filters (Search)
-  const search = normalizeDigits(String(filterValue).toLowerCase().trim());
-  if (!search) return true;
+  // 2. Handle String-based filters (Search)
+  const searchTerm = normalizeDigits(String(filterValue).toLowerCase().trim());
+  if (!searchTerm) return true;
 
   const strValue = normalizeDigits(String(value || '').toLowerCase());
-  return strValue.includes(search);
+  
+  // Use simple substring match for performance, or regex if advanced search is required
+  return strValue.includes(searchTerm);
+};
+
+// Define a unified filter function compatible with TanStack FilterFn signature
+const unifiedFilterFn: FilterFn<any> = (row, columnId, filterValue) => {
+  return checkValueMatchesFilter(row.getValue(columnId), filterValue);
 };
 
 // We need a wrapper because TanStack calls this PER COLUMN for global filtering?
@@ -712,22 +710,18 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: enablePagination ? getPaginationRowModel() : undefined,
-    // Use default global filter to avoid overhead of unifiedFilterFn if it's just a string
+    // Use the unified logic for global filtering too
     globalFilterFn: (row, columnId, filterValue) => {
-      const value = row.getValue(columnId);
-      if (value == null) return false;
-      const search = String(filterValue).toLowerCase().trim();
-      return String(value).toLowerCase().includes(search);
+      return checkValueMatchesFilter(row.getValue(columnId), filterValue);
     },
     enableSorting: true,
     manualFiltering,
     filterFns: {
-      arrIncludesSome: (row, columnId, value) => unifiedFilterFn(row, columnId, value, null as any),
+      arrIncludesSome: unifiedFilterFn,
     },
-    // DEFAULT FILTER FN: Use arrIncludesSome for all columns by default 
-    // This allows our Pill filters (which send arrays) to work seamlessly
+    // DEFAULT FILTER FN: Use our unified logic for all columns
     defaultColumn: {
-      filterFn: 'arrIncludesSome',
+      filterFn: unifiedFilterFn,
     },
   });
 
