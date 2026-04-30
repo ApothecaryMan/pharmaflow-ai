@@ -163,20 +163,31 @@ export const transactionService = {
         items: processedItems,
       } as Sale;
 
-      // 4. Persistence Phase — run independent writes in parallel
-      // Register stock undo before parallel execution
+      // 4. Persistence Phase — run critical writes sequentially with full undo coverage
+      
+      // A. Update Stock
+      await inventoryService.updateStockBulk(stockMutations, true);
       undoManager.push(async () => {
         await inventoryService.updateStockBulk(
-          stockMutations.map(m => ({ id: m.id, quantity: -m.quantity }))
+          stockMutations.map(m => ({ id: m.id, quantity: -m.quantity })),
+          true
         );
       });
 
-      // A+B+C: Stock update, movement log, and sale creation write to different tables
-      const [, , createdSale] = await Promise.all([
-        inventoryService.updateStockBulk(stockMutations, true),   // A. Update Stock
-        stockMovementService.logMovementsBulk(movementEntries),    // B. Log Movements
-        salesService.create(newSale, activeBranchId),              // C. Create Sale
-      ]);
+      // B. Log Movements
+      const createdMovements = await stockMovementService.logMovementsBulk(movementEntries);
+      undoManager.push(async () => {
+        const movementIds = createdMovements.map(m => m.id);
+        await supabase.from('stock_movements').delete().in('id', movementIds);
+      });
+
+      // C. Create Sale
+      const createdSale = await salesService.create(newSale, activeBranchId);
+      undoManager.push(async () => {
+        await supabase.from('sales').delete().eq('id', createdSale.id);
+        // If there were any other tables linked (like sale_items), we'd delete them here too.
+        // Currently, salesService.create handles everything via the JSONB 'items' column in 'sales'.
+      });
 
       // D. Shift Transaction + Audit — fire-and-forget (non-critical, shouldn't block checkout)
       const isImmediateComplete = !saleData.saleType || saleData.saleType === 'walk-in';
