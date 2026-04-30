@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { MenuItem } from '../../config/menuData';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import type { UserRole } from '../../config/permissions';
 import { useSettings } from '../../context';
 import { getMenuTranslation } from '../../i18n/menuTranslations';

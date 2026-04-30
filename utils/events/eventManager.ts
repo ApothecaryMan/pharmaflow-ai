@@ -2,6 +2,7 @@ import { DYNAMIC_EVENTS, type DynamicEvent } from './dynamicEvents';
 
 export interface EventContext {
   currentPath: string;
+  view?: string;
   userRole?: string;
   employeeId?: string;
   branchId?: string;
@@ -17,14 +18,19 @@ export const EventManager = {
     const now = new Date();
 
     return DYNAMIC_EVENTS.filter((event) => {
+      // 0. Check if explicitly disabled
+      if (event.enabled === false) return false;
+
       // 1. Time Check
       const start = new Date(event.startDate);
       const end = new Date(event.endDate);
       if (now < start || now > end) return false;
 
-      // 2. Page Check
+      // 2. Page Check (Supports both URL path and internal View ID)
       if (event.targetPages !== 'all' && event.targetPages) {
-        if (!event.targetPages.some((p) => ctx.currentPath.includes(p))) return false;
+        const isPathMatch = event.targetPages.some((p) => ctx.currentPath.includes(p));
+        const isViewMatch = ctx.view && event.targetPages.includes(ctx.view);
+        if (!isPathMatch && !isViewMatch) return false;
       }
 
       // 3. Role Check

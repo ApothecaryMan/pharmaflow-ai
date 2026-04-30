@@ -5,7 +5,7 @@ import { SearchInput } from '../common/SearchInput';
 import { useSmartDirection } from '../common/SmartInputs';
 import { useSettings } from '../../context';
 import { Tooltip } from '../common/Tooltip';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface SidebarMenuProps {

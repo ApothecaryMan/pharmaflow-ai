@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { Tooltip } from './Tooltip';
 
 /**

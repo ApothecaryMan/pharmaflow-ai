@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { motion, AnimatePresence, PanInfo } from 'motion/react';
 import { CARD_BASE } from '../../utils/themeStyles';
 
 export interface InteractiveCardPage {

@@ -4,7 +4,7 @@ import { StorageKeys } from './config/storageKeys';
 import { branchService } from './services/branchService';
 import { AuthPage } from './components/auth/AuthPage';
 import { Modal } from './components/common/Modal';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { MainLayout } from './components/layout/MainLayout';
 import { LogoutOverlay } from './components/layout/LogoutOverlay';
 import { PageRouter } from './components/layout/PageRouter';
