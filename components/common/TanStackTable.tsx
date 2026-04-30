@@ -648,6 +648,24 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     return () => clearTimeout(timer);
   }, []);
 
+  /**
+   * Efficient row comparison to avoid JSON.stringify overhead.
+   * Compares IDs and common fields that indicate a content change.
+   */
+  const areRowsEqual = (row1: any, row2: any) => {
+    if (row1 === row2) return true;
+    if (!row1 || !row2) return false;
+    // Check ID first
+    if (row1.id !== row2.id) return false;
+    // Check specific fields that are likely to change in this app
+    return (
+      row1.status === row2.status &&
+      row1.updated_at === row2.updated_at &&
+      row1.quantity === row2.quantity &&
+      row1.price === row2.price
+    );
+  };
+
   // Row-level Change Detection (Live Sync Feel)
   React.useEffect(() => {
     if (prevDataRef.current !== data && data.length > 0) {
@@ -667,7 +685,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
         const oldRow = oldDataMap.get(row.id);
         if (!oldRow) {
           if (enableNewRowAnimation) addedIds.add(row.id);
-        } else if (pendingRowIds.has(row.id) && JSON.stringify(oldRow) !== JSON.stringify(row)) {
+        } else if (pendingRowIds.has(row.id) && !areRowsEqual(oldRow, row)) {
           changedIds.add(row.id);
         }
       }
@@ -758,21 +776,29 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   /* State specific for Context Menu tracking to enable live updates */
   const menuPosRef = React.useRef<{ x: number; y: number; columnId?: string } | null>(null);
 
+  // Keep dynamic dependencies in refs for stable callback
+  const columnAlignmentRef = useRef(columnAlignment);
+  columnAlignmentRef.current = columnAlignment;
+  const columnVisibilityRef = useRef(columnVisibility);
+  columnVisibilityRef.current = columnVisibility;
+  const translationsRef = useRef(t.global.table);
+  translationsRef.current = t.global.table;
+
   const getMenuContent = React.useCallback(
     (columnId?: string, overrideAlign?: Record<string, 'start' | 'center' | 'end'>) => {
       const column = columnId ? table.getColumn(columnId) : null;
 
-      // Use override values if provided, otherwise fall back to state
-      const effectiveAlign = overrideAlign ?? columnAlignment;
-
+      // Use override values if provided, otherwise fall back to latest ref state
+      const effectiveAlign = overrideAlign ?? columnAlignmentRef.current;
       const currentAlign = columnId ? effectiveAlign[columnId] || 'start' : 'start';
+      const currentT = translationsRef.current;
 
       // Handlers (re-create handlers that use the state/props)
       const handleAlign = (align: 'start' | 'center' | 'end') => {
         if (!columnId) return;
-        const newAlign = { ...columnAlignment, [columnId]: align };
+        const newAlign = { ...columnAlignmentRef.current, [columnId]: align };
         setColumnAlignment(newAlign);
-        persistSettings(columnVisibility, newAlign);
+        persistSettings(columnVisibilityRef.current, newAlign);
 
         if (menuPosRef.current) {
           showMenu(menuPosRef.current.x, menuPosRef.current.y, getMenuContent(columnId, newAlign));
@@ -817,7 +843,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
           {/* All Columns Visibility */}
           <div className='space-y-1'>
             <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase py-2 px-3 border-b border-gray-100 dark:border-(--border-divider) mb-1'>
-              {t?.global?.table?.columns || 'Columns'}
+              {currentT?.columns || 'Columns'}
             </div>
             {table
               .getAllLeafColumns()
@@ -861,7 +887,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
               <div className='px-3 py-3'>
                 <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase mb-2.5 flex items-center gap-2'>
                   <span className='material-symbols-rounded opacity-60' style={{ fontSize: 'var(--icon-sm)' }}>format_align_left</span>
-                  {t?.global?.table?.alignment || 'Alignment'}
+                  {currentT?.alignment || 'Alignment'}
                 </div>
                 {/* Unified Alignment */}
                 <div className='bg-gray-50 dark:bg-gray-800/80 p-1.5 rounded-xl border border-gray-100 dark:border-(--border-divider) flex items-center justify-between gap-1'>
@@ -890,7 +916,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
         </div>
       );
     },
-    [table, columnAlignment, showMenu, columnVisibility, persistSettings, t.global.table]
+    [table, showMenu, persistSettings, language]
   );
 
   const onContextMenuOpen = React.useCallback((x: number, y: number, columnId?: string) => {
@@ -912,7 +938,8 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
         // Use a more realistic minimum to avoid 1-row tables on glitchy initial renders
         const calculated = Math.max(10, Math.floor(availableHeight / rowHeight));
         
-        if (calculated !== pagination.pageSize && calculated > 0) {
+        // Remove pagination.pageSize dependency to prevent loops
+        if (calculated > 0) {
           table.setPageSize(calculated);
         }
       };
@@ -927,7 +954,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       observer.observe(tableContainerRef.current);
       return () => observer.disconnect();
     }
-  }, [pageSize, dense, isShowAll, pagination.pageSize, table]);
+  }, [pageSize, dense, isShowAll, table]);
 
   const handleColumnContextMenu = React.useCallback((e: React.MouseEvent, columnId?: string) => {
     e.preventDefault();
@@ -950,25 +977,13 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   const columnMetaMap = React.useMemo(() => {
     const map = new Map<string, any>();
     
-    // Flatten columns to get leaf columns without depending on the table instance
-    const getLeafColumns = (cols: ColumnDef<any, any>[]): any[] => {
-      let leaf: any[] = [];
-      cols.forEach(c => {
-        if ((c as any).columns) {
-          leaf = [...leaf, ...getLeafColumns((c as any).columns)];
-        } else {
-          leaf.push(c);
-        }
-      });
-      return leaf;
-    };
+    // Use the internal table leaf columns for guaranteed sync with state
+    const leafColumns = table.getAllLeafColumns();
 
-    const leafColumns = getLeafColumns(columns);
-
-    leafColumns.forEach((col) => {
-      const colId = (col.id || col.accessorKey || '').toString().toLowerCase();
-      const meta = col.meta as any;
-      const id = (col.id || col.accessorKey || '').toString();
+    leafColumns.forEach((column) => {
+      const colId = (column.id || '').toString().toLowerCase();
+      const meta = column.columnDef.meta as any;
+      const id = column.id;
       
       const align = (meta?.disableAlignment ? null : columnAlignment[id]) || getSmartAlignment(id, meta);
       
@@ -991,7 +1006,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       });
     });
     return map;
-  }, [columns, columnAlignment]);
+  }, [table, columnAlignment]);
 
   // Virtualizer Setup
   const rowVirtualizer = useVirtualizer({
