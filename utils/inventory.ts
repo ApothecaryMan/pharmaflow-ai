@@ -91,6 +91,31 @@ export const formatStock = (
 };
 
 /**
+ * Formats a raw unit count into packs/fractional packs without clamping or "Out of Stock" labels.
+ * Useful for deltas and movement history where negative or zero values are meaningful.
+ * 
+ * @param stock - Total units
+ * @param unitsPerPack - Conversion factor
+ * @param label - Label for packs (e.g. "Packs" or "علبة")
+ */
+export const formatStockAmount = (
+  stock: number,
+  unitsPerPack: number = 1,
+  label: string = 'Packs'
+): string => {
+  // Use absolute value for the core conversion if we want to handle negative signs externally
+  // But usually for deltas we might want to keep the sign.
+  // parseFloat(packs.toFixed(2)) handles rounding and trailing zeros.
+  
+  if (unitsPerPack === 1) return `${stock} ${label}`;
+  
+  const packs = stock / unitsPerPack;
+  const formattedPacks = Number.isInteger(packs) ? packs.toString() : parseFloat(packs.toFixed(2)).toString();
+  
+  return `${formattedPacks} ${label}`;
+};
+
+/**
  * Returns stock value and label separately to allow custom styling (e.g. smaller font for labels).
  */
 export const formatStockParts = (

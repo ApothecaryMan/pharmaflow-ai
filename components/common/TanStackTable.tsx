@@ -247,12 +247,12 @@ const MemoizedCell = React.memo(({ cell, dense, meta, cellDir, content }: any) =
       className={`${dense ? 'py-1 text-xs' : 'py-3 text-sm'} px-4 font-medium text-(--text-primary) align-middle border-b border-(--border-divider) group-last/row:border-b-0
       ${meta.isFlex ? '' : 'whitespace-nowrap'} ${meta.isAction ? 'action-col' : ''}`}
       style={{
-        width: meta.isFlex ? 'auto' : (cell.column.columnDef.meta?.width || cell.column.getSize()),
+        width: cell.column.getSize(),
         minWidth: meta.minWidth,
       }}
       dir={cellDir}
     >
-      <div className={`flex items-center gap-1.5 w-full ${meta.justifyClass} ${meta.isId && meta.align === 'start' ? '-ms-3' : ''} ${meta.isId && meta.align === 'end' ? '-me-3' : ''}`}>
+      <div className={`flex items-center gap-1.5 w-full ${meta.justifyClass}`}>
         {meta.isId && (
           <span className='material-symbols-rounded text-gray-400 shrink-0' style={{ fontSize: 'var(--icon-md)' }}>
             tag
@@ -321,7 +321,12 @@ const MemoizedRow = React.memo(React.forwardRef(({
       {row.getVisibleCells().map((cell: any) => {
         const meta = columnMetaMap.get(cell.column.id);
         const cellValue = cell.getValue();
-        const cellDir = meta.isId ? 'ltr' : (meta.dir === 'auto' ? getSmartDirection(String(cellValue || '')) : (meta.dir || 'auto'));
+        // Exception: IDs and Actions should strictly follow table direction (isRtl)
+        // to ensure 'justify-start' always matches the header alignment.
+        // Others use 'Smart Direction' for natural language flow.
+        const cellDir = (meta.isId || meta.isAction) 
+          ? (isRtl ? 'rtl' : 'ltr') 
+          : (meta.dir === 'auto' ? getSmartDirection(String(cellValue || '')) : (meta.dir || 'auto'));
         
         let content = null;
 
@@ -427,8 +432,11 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   pendingRowIds = new Set(),
   enableNewRowAnimation = true,
 }: TanStackTableProps<TData, TValue>) {
-  // Detect RTL direction
-  const isRtl = typeof document !== 'undefined' && document.dir === 'rtl';
+  const { language, numeralLocale, textLocale } = useSettings();
+  const isAR = language === 'AR';
+  const isRtl = isAR; // Source of truth from state, not DOM, to prevent sync lag
+  const languageLocale = textLocale;
+  const t = TRANSLATIONS[language];
 
   // Long-press support for rows
   const currentTouchRow = useRef<TData | null>(null);
@@ -443,16 +451,11 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       }
     },
   });
-  
+
   const searchInputRef = useRef<HTMLInputElement>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLTableSectionElement>(null);
   const firstRowRef = useRef<HTMLTableRowElement>(null);
-
-  const { language, numeralLocale, textLocale } = useSettings();
-  const isAR = language === 'AR';
-  const languageLocale = textLocale;
-  const t = TRANSLATIONS[language];
 
   // Load initial state from localStorage
   const [storedSettings, setStoredSettings] = useState(() => getStoredSettings(tableId));
@@ -709,6 +712,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     prevDataRef.current = data;
   }, [data, enableNewRowAnimation, pendingRowIds]);
 
+  const [columnSizing, setColumnSizing] = React.useState({});
   const table = useReactTable({
     data,
     columns,
@@ -717,6 +721,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       globalFilter,
       columnFilters,
       columnVisibility,
+      columnSizing,
       pagination: isShowAll ? { pageIndex: 0, pageSize: data.length || 1 } : pagination,
     },
     onSortingChange: setSorting,
@@ -724,6 +729,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: handleColumnVisibilityChange,
     onPaginationChange: handlePaginationChange,
+    onColumnSizingChange: setColumnSizing,
+    enableColumnResizing: true,
+    columnResizeMode: 'onChange',
+    columnResizeDirection: isRtl ? 'rtl' : 'ltr',
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -1110,7 +1119,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                         ${textAlignClass}
                         ${isFlex ? '' : 'w-[1%] whitespace-nowrap'}`}
                           style={{
-                            width: isFlex ? 'auto' : (header.column.columnDef.meta?.width || header.column.getSize()),
+                            width: header.getSize(),
                             minWidth: header.column.columnDef.meta?.minWidth,
                           }}
                         >
@@ -1162,6 +1171,18 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                               </div>
                             )}
                           </ContextMenuTrigger>
+                          {/* Resizer Handle */}
+                          {header.column.getCanResize() && (
+                            <div
+                              {...{
+                                onMouseDown: header.getResizeHandler(),
+                                onTouchStart: header.getResizeHandler(),
+                                className: `resizer absolute top-0 z-20 h-full w-1 cursor-col-resize select-none touch-none hover:bg-primary/30 transition-colors
+                                  ${isRtl ? 'left-0' : 'right-0'} 
+                                  ${header.column.getIsResizing() ? 'bg-primary w-1 opacity-100' : 'opacity-0'}`,
+                              }}
+                            />
+                          )}
                         </th>
                       );
                     })}
@@ -1266,7 +1287,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
             className={`flex items-center justify-between h-10 border-t shrink-0 select-none bg-(--bg-card) border-(--border-divider)`}
           >
             {/* Left Zone: Data Summary (Fixed width to prevent jitter) */}
-            <div className='w-56 flex items-center h-full'>
+            <div dir='auto' className={`w-56 flex items-center h-full ${isRtl ? 'justify-end' : ''}`}>
               <div className='flex items-center gap-1 px-2.5 h-full text-[11px] uppercase font-bold tracking-wide text-(--text-secondary) tabular-nums'>
                 {isShowAll ? (
                   <span className='whitespace-nowrap font-bold'>{t.global?.table?.showingAll || 'Showing All Items'}</span>
@@ -1274,16 +1295,13 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                   <div className='flex items-center gap-1'>
                     <span className='shrink-0'>{t.global?.table?.showing || 'Showing'}</span>
                     <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
-                      {(isAR 
-                        ? Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)
-                        : table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1
-                      ).toLocaleString()}
+                      {(table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1).toLocaleString()}
                     </span>
-                    <span className='opacity-50 px-0.5'>-</span>
+                    <span className='text-(--text-primary) px-0.5'>-</span>
                     <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
-                      {(isAR
-                        ? table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1
-                        : Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)
+                      {Math.min(
+                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                        table.getFilteredRowModel().rows.length
                       ).toLocaleString()}
                     </span>
                     <span className='shrink-0 px-1'>{t.global?.table?.of || 'of'}</span>

@@ -120,7 +120,7 @@ export const ContextMenuItem: React.FC<ContextMenuItemProps> = ({
         }
       }}
       disabled={disabled}
-      className={`w-full text-start px-3 py-2 text-sm flex items-center gap-2 transition-all duration-200 type-interactive rounded-xl
+      className={`w-full text-start px-3 py-1.5 text-sm flex items-center gap-2 transition-all duration-200 type-interactive rounded-xl
                 ${
                   danger
                     ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
@@ -167,7 +167,7 @@ export const ContextMenuCheckboxItem: React.FC<{
         }
       }}
       disabled={disabled}
-      className={`w-full flex items-center justify-between px-3 py-2 cursor-pointer transition-all duration-200 type-interactive rounded-xl
+      className={`w-full flex items-center justify-between px-3 py-1.2 cursor-pointer transition-all duration-200 type-interactive rounded-xl
                 ${
                   disabled
                     ? 'opacity-50 cursor-not-allowed'
@@ -181,7 +181,7 @@ export const ContextMenuCheckboxItem: React.FC<{
         {label}
       </span>
       <span
-        className={`material-symbols-rounded text-[16px] transition-colors ${!checked ? 'text-gray-300 dark:text-gray-600' : 'text-emerald-500'}`}
+        className={`material-symbols-rounded text-[15px] transition-colors ${!checked ? 'text-gray-300 dark:text-gray-600' : 'text-emerald-500'}`}
       >
         {checked ? 'check_circle' : 'circle'}
       </span>
@@ -332,7 +332,7 @@ export const ContextMenuProvider: React.FC<{
           ref={menuRef}
           onMouseEnter={() => setIsMouseOverMenu(true)}
           onMouseLeave={() => setIsMouseOverMenu(false)}
-          className={`fixed z-9999 min-w-[180px] rounded-2xl shadow-xl border border-(--border-divider) py-1 px-1 animate-scale-in origin-top-left overflow-hidden
+          className={`fixed z-9999 min-w-[180px] rounded-2xl shadow-xl border border-(--border-divider) py-0.5 px-0.8 animate-scale-in origin-top-left overflow-hidden
                 ${
                   enableGlassEffect
                     ? 'backdrop-blur-2xl bg-(--bg-menu)/30 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]'

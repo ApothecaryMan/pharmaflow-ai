@@ -2,6 +2,7 @@ import React from 'react';
 import { StockMovementType } from '../../../types';
 import { formatCurrency } from '../../../utils/currency';
 import { formatExpiryDate, checkExpiryStatus, getExpiryStatusConfig } from '../../../utils/expiryUtils';
+import { formatStockAmount } from '../../../utils/inventory';
 
 interface TimelineItemProps {
   type: StockMovementType;
@@ -16,6 +17,7 @@ interface TimelineItemProps {
   batchId?: string;
   expiryDate?: string;
   value?: number;
+  unitsPerPack?: number;
 }
 
 const typeConfig: Record<StockMovementType, { color: string, label: string, arLabel: string }> = {
@@ -43,7 +45,8 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
   reason,
   batchId,
   expiryDate,
-  value
+  value,
+  unitsPerPack = 1
 }) => {
   const config = typeConfig[type] || typeConfig.adjustment;
   const dateObj = new Date(date);
@@ -57,6 +60,13 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
     hour: '2-digit',
     minute: '2-digit',
   });
+
+  const packLabel = isRTL ? 'علبة' : 'PACKS';
+  const qtyFormatted = formatStockAmount(Math.abs(quantity), unitsPerPack, packLabel);
+  const [qtyValue, qtyLabel] = qtyFormatted.split(' ');
+
+  const prevFormatted = formatStockAmount(previousStock, unitsPerPack, '');
+  const newFormatted = formatStockAmount(newStock, unitsPerPack, '');
 
   const getColorClasses = (color: string) => {
     const map: Record<string, string> = {
@@ -118,11 +128,11 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
               <span
                 className={`text-3xl font-black tabular-nums tracking-tighter leading-none ${quantity > 0 ? 'text-emerald-500' : 'text-rose-500'}`}
               >
-                {quantity > 0 ? '+' : ''}
-                {quantity}
+                {quantity > 0 ? '+' : quantity < 0 ? '-' : ''}
+                {qtyValue}
               </span>
               <span className='text-[10px] uppercase font-black text-gray-400 tracking-widest'>
-                {isRTL ? 'وحدة' : 'UNITS'}
+                {qtyLabel}
               </span>
             </div>
 
@@ -149,12 +159,12 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
                 {isRTL ? 'الرصيد' : 'BALANCE'}
               </span>
               <div className='flex items-center gap-2 text-xs font-bold text-(--text-secondary) leading-none'>
-                <span className='tabular-nums opacity-60'>{previousStock}</span>
+                <span className='tabular-nums opacity-60'>{prevFormatted.trim()}</span>
                 <span className='material-symbols-rounded text-(--text-tertiary)' style={{ fontSize: 'var(--icon-sm)' }}>
                   {isRTL ? 'arrow_back' : 'arrow_forward'}
                 </span>
                 <span className='text-(--text-primary) font-black tabular-nums'>
-                  {newStock}
+                  {newFormatted.trim()}
                 </span>
               </div>
             </div>

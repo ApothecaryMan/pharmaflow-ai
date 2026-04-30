@@ -14,6 +14,7 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { SearchInput } from '../common/SearchInput';
 import { type FilterConfig } from '../common/FilterPill';
 import { useStockMovementReport } from './useStockMovementReport';
+import { formatStockAmount } from '../../utils/inventory';
 
 interface StockMovementReportProps {
   onViewChange: (view: string, params?: any) => void;
@@ -207,25 +208,33 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
           <div className="w-full lg:w-72 flex flex-col gap-4 shrink-0 overflow-y-auto max-h-full scrollbar-hide">
             <SmallCard
               title={isRTL ? 'وارد المخزون' : 'Stock In'}
-              value={summary?.totalIn || 0}
+              value={(summary?.totalIn || 0) / (selectedDrug?.unitsPerPack || 1)}
+              fractionDigits={(summary?.totalIn || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
+              valueSuffix={isRTL ? 'علبة' : 'Packs'}
               icon="south_west"
               iconColor="emerald"
             />
             <SmallCard
               title={isRTL ? 'صادر المخزون' : 'Stock Out'}
-              value={summary?.totalOut || 0}
+              value={(summary?.totalOut || 0) / (selectedDrug?.unitsPerPack || 1)}
+              fractionDigits={(summary?.totalOut || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
+              valueSuffix={isRTL ? 'علبة' : 'Packs'}
               icon="north_east"
               iconColor="rose"
             />
             <SmallCard
               title={isRTL ? 'المرتجعات' : 'Returns'}
-              value={summary?.returns || 0}
+              value={(summary?.returns || 0) / (selectedDrug?.unitsPerPack || 1)}
+              fractionDigits={(summary?.returns || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
+              valueSuffix={isRTL ? 'علبة' : 'Packs'}
               icon="rotate_left"
               iconColor="sky"
             />
             <SmallCard
               title={isRTL ? 'المخزون الحالي' : 'Current Stock'}
-              value={summary?.currentStock || 0}
+              value={(summary?.currentStock || 0) / (selectedDrug?.unitsPerPack || 1)}
+              fractionDigits={(summary?.currentStock || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
+              valueSuffix={isRTL ? 'علبة' : 'Packs'}
               icon="package_2"
               iconColor="indigo"
             />
@@ -258,8 +267,6 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                   ]}
                   size="xs"
                   iconSize="var(--icon-md)"
-                  variant="onCard"
-                  color="blue"
                   className="min-w-[240px]"
                 />
               </div>
@@ -312,6 +319,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                         batchId={m.batchId}
                         expiryDate={m.expiryDate}
                         value={stockMovementService.calculateMovementValue(m, selectedDrug)}
+                        unitsPerPack={selectedDrug?.unitsPerPack}
                       />
                     ))}
                   </div>
@@ -364,7 +372,8 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                               </td>
                               <td style={{ width: columns[2].width }} className="py-2">
                                 <span className={`text-sm font-bold tabular-nums ${m.quantity > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                                  {m.quantity > 0 ? '+' : ''}{m.quantity}
+                                  {m.quantity > 0 ? '+' : m.quantity < 0 ? '-' : ''}
+                                  {formatStockAmount(Math.abs(m.quantity), selectedDrug?.unitsPerPack, isRTL ? 'علبة' : 'Packs')}
                                 </span>
                               </td>
                               <td style={{ width: columns[3].width }} className="py-2">
@@ -398,9 +407,9 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                               </td>
                               <td style={{ width: columns[5].width }} className="py-2">
                                 <div className="text-xs text-gray-500 flex items-center gap-1">
-                                  <span className="font-normal text-gray-400">{m.previousStock}</span>
+                                  <span className="font-normal text-gray-400">{formatStockAmount(m.previousStock, selectedDrug?.unitsPerPack, '')}</span>
                                   <span className="material-symbols-rounded text-(--text-tertiary)" style={{ fontSize: 'var(--icon-sm)' }}>{isRTL ? 'arrow_back' : 'arrow_forward'}</span>
-                                  <span className="font-medium text-gray-900 dark:text-gray-100">{m.newStock}</span>
+                                  <span className="font-medium text-gray-900 dark:text-gray-100">{formatStockAmount(m.newStock, selectedDrug?.unitsPerPack, '')}</span>
                                 </div>
                               </td>
                               <td style={{ width: columns[6].width }} className="py-2">
