@@ -315,12 +315,19 @@ const NavbarComponent: React.FC<NavbarProps> = ({
           src={darkMode ? '/logo_icon_white.svg' : '/logo_icon_black.svg'}
           alt={appTitle}
           className='h-8 w-auto'
+          id="navbar-logo-icon"
         />
-        <img
-          src={darkMode ? '/logo_word_white.svg' : '/logo_word_black.svg'}
-          alt='Zinc'
-          className='h-5 w-auto hidden md:block'
-        />
+        <div className='hidden md:flex items-center' id="navbar-app-title" dir="ltr">
+          {"Zinc".split('').map((char, index) => (
+            <span 
+              key={index} 
+              id={`nav-char-${char}-${index}`}
+              className="text-lg font-bold tracking-tight text-gray-900 dark:text-white transition-transform hover:scale-125 hover:text-primary-500 cursor-default"
+            >
+              {char}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Desktop: Horizontal Module Tabs */}
@@ -344,7 +351,12 @@ const NavbarComponent: React.FC<NavbarProps> = ({
               !developerMode && !hasPage && !hasImplementedSubItems;
 
             return (
-              <div key={module.id} className='relative group/item' onMouseLeave={handleMouseLeave}>
+              <div 
+                key={module.id} 
+                id={`navbar-tab-${module.id}`}
+                className='relative group/item' 
+                onMouseLeave={handleMouseLeave}
+              >
                 <button
                   onMouseEnter={(e) => handleMouseEnter(module.id, e)}
                   onClick={(e) => handleModuleClick(module.id, e)}

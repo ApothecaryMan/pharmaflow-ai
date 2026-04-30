@@ -50,5 +50,15 @@ export const DYNAMIC_EVENTS: DynamicEvent[] = [
     targetBranches: ['branch-001'], // Only for this branch
     targetSelector: '.premium-card', // Only when hovering over premium cards
     priority: 20,
+  },
+  {
+    id: 'dragon-on-logo',
+    type: 'ANIMATION',
+    payload: { text: '🐲', size: '48px', offsetY: '-45px' },
+    startDate: '2026-04-30T00:00:00Z',
+    endDate: '2026-05-01T00:00:00Z',
+    targetPages: 'all',
+    targetSelector: '#nav-char-Z-0', // Targets the 'Z' in Zinc
+    priority: 30,
   }
 ];
