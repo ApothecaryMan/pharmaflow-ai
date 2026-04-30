@@ -3,7 +3,7 @@ import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 export interface DrugCatalogItem {
   id: string;
   nameAr?: string;
-  nameEn: string;
+  name: string;
   barcode?: string;
   activeSubstance?: string;
   category?: string;

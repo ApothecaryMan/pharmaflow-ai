@@ -73,18 +73,29 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     // --- Autocomplete Logic ---
     const [currentSuggestion, setCurrentSuggestion] = useState<string>('');
 
-    // Calculate suggestion
-    const ghostText = useMemo(() => {
-        if (!enableAutocomplete || !value || !suggestions.length) return '';
+    // Update currentSuggestion via side-effect to prevent anti-patterns
+    useEffect(() => {
+        if (!enableAutocomplete || !value || !suggestions.length) {
+            setCurrentSuggestion('');
+            return;
+        }
         const match = suggestions.find(s => 
             s.toLowerCase().startsWith(value.toLowerCase()) && 
             s.toLowerCase() !== value.toLowerCase()
         );
-        if (!match) return '';
-        setCurrentSuggestion(match);
-        // Normalize to lowercase so it can follow dynamic casing logic
-        return match.slice(value.length).toLowerCase();
+        setCurrentSuggestion(match || '');
     }, [value, suggestions, enableAutocomplete]);
+
+    // Calculate suggestion ghost text purely
+    const ghostText = useMemo(() => {
+        if (!enableAutocomplete || !value || !currentSuggestion) return '';
+        
+        // Ensure the suggestion still matches the current input
+        if (!currentSuggestion.toLowerCase().startsWith(value.toLowerCase())) return '';
+
+        // Normalize to lowercase so it can follow dynamic casing logic
+        return currentSuggestion.slice(value.length).toLowerCase();
+    }, [value, currentSuggestion, enableAutocomplete]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         setIsCapsLock(e.getModifierState('CapsLock'));

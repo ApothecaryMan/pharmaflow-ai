@@ -1,5 +1,4 @@
 import { Drug } from '../../../../types';
-import { parseSearchTerm } from '../../../../utils/searchUtils';
 
 // Helper to map specific categories to broad groups
 const getBroadCategory = (category: string): string => {
@@ -25,64 +24,78 @@ self.onmessage = (e: MessageEvent) => {
 
   if (type === 'FILTER') {
     const { search, category, stockFilter, activeBranchId } = e.data;
+    const rawSearch = search || '';
+    const trimmedSearch = rawSearch.trim().toLowerCase();
+    const startsWithSpace = rawSearch.startsWith(' ');
 
-    const { mode, regex } = parseSearchTerm(search || '');
-    const trimmedSearch = (search || '').trim();
+    // 1. If search is empty, show nothing (to avoid heavy lists unless needed)
+    if (!trimmedSearch) {
+      self.postMessage({ type: 'FILTER_RESULT', results: [] });
+      return;
+    }
 
-    // Get search term without @ prefix for length check
-    const searchTermForLength =
-      mode === 'generic' ? (search || '').trimStart().substring(1).trim() : trimmedSearch;
+    const words = trimmedSearch.split(/\s+/).filter(w => w.length > 0);
+    const [first, ...rest] = words;
 
     const results = inventory.filter((d) => {
-      // Branch filtering
+      // --- A. Essential Filters (O(1)) ---
       if (activeBranchId && d.branchId !== activeBranchId) return false;
 
+      // --- B. Exact Code Match (Priority) ---
+      if (d.barcode === trimmedSearch || d.internalCode === trimmedSearch) return true;
+
+      // --- C. Category Filter ---
       const drugBroadCat = getBroadCategory(d.category);
-      const matchesCategory = category === 'All' || drugBroadCat === category;
+      if (category !== 'All' && drugBroadCat !== category) return false;
 
-      let matchesSearch = false;
-
-      // If search is empty, show nothing
-      if (!trimmedSearch) {
-        matchesSearch = false;
-      }
-      // Exact code match (barcode or internal code) - no minimum length
-      else if (d.barcode === trimmedSearch || d.internalCode === trimmedSearch) {
-        matchesSearch = true;
-      }
-      // Text search requires minimum 2 characters
-      else if (searchTermForLength.length >= 2) {
-        if (mode === 'generic') {
-          matchesSearch = Array.isArray(d.genericName) 
-            ? d.genericName.some(gn => regex.test(gn))
-            : (d.genericName && regex.test(d.genericName as any));
-        } else {
-          const searchableText = [
-            d.name,
-            d.dosageForm,
-            d.category,
-            d.description,
-            ...(Array.isArray(d.genericName) 
-              ? d.genericName 
-              : d.genericName 
-                ? [d.genericName] 
-                : []),
-          ]
-            .filter(Boolean)
-            .join(' ');
-
-          matchesSearch = regex.test(searchableText);
-        }
-      }
-
+      // --- D. Stock Filter ---
       const matchesStock =
         stockFilter === 'all' ||
         (stockFilter === 'in_stock' && d.stock > 0) ||
         (stockFilter === 'out_of_stock' && d.stock <= 0);
+      if (!matchesStock) return false;
 
-      return matchesCategory && matchesSearch && matchesStock;
+      // --- E. Intelligent Text Search (The Core) ---
+      // Minimum 2 chars for text search
+      if (trimmedSearch.length < 2) return false;
+
+      const nameEn = (d.name || '').toLowerCase();
+      const nameAr = (d.nameAr || '').toLowerCase();
+      const fullName = `${nameEn} ${nameAr}`;
+
+      // 1. First Word Matching
+      if (startsWithSpace) {
+        // "Contains" mode
+        if (!fullName.includes(first)) return false;
+      } else {
+        // "Prefix" mode - check if either language starts with it
+        if (!nameEn.startsWith(first) && !nameAr.startsWith(first)) return false;
+      }
+
+      // 2. Rest of Words (Always Contains)
+      if (rest.length > 0) {
+        return rest.every(w => fullName.includes(w));
+      }
+
+      return true;
     });
 
-    self.postMessage({ type: 'FILTER_RESULT', results });
+    // Sort results to prioritize prefix matches and shorter names
+    const sorted = results.sort((a, b) => {
+      const aName = (a.name || '').toLowerCase();
+      const bName = (b.name || '').toLowerCase();
+      const aAr = (a.nameAr || '').toLowerCase();
+      const bAr = (b.nameAr || '').toLowerCase();
+
+      const aStarts = aName.startsWith(first) || aAr.startsWith(first);
+      const bStarts = bName.startsWith(first) || bAr.startsWith(first);
+
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return 1;
+      
+      return aName.length - bName.length;
+    }).slice(0, 50);
+
+    self.postMessage({ type: 'FILTER_RESULT', results: sorted });
   }
 };

@@ -16,7 +16,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
       orgId: db.org_id,
       branchId: db.branch_id,
       name: db.name,
-      nameArabic: db.name_arabic || undefined,
+      nameAr: db.name_ar || undefined,
       genericName: db.generic_name || [],
       category: db.category,
       publicPrice: db.public_price,
@@ -49,7 +49,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
     if (d.orgId !== undefined) db.org_id = d.orgId;
     if (d.branchId !== undefined) db.branch_id = d.branchId;
     if (d.name !== undefined) db.name = d.name;
-    if (d.nameArabic !== undefined) db.name_arabic = d.nameArabic;
+    if (d.nameAr !== undefined) db.name_ar = d.nameAr;
     if (d.genericName !== undefined) db.generic_name = d.genericName;
     if (d.category !== undefined) db.category = d.category;
     if (d.publicPrice !== undefined) db.public_price = d.publicPrice;

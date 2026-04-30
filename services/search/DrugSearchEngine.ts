@@ -14,10 +14,6 @@ export class DrugSearchEngine {
   // High-speed HashMaps for exact lookups
   private idMap = new Map<string, DrugCatalogItem>();
   private barcodeMap = new Map<string, string>(); // Barcode -> ID
-  
-  // Term Index for prefix/word matching
-  // Maps a word/prefix to a Set of Drug IDs
-  private termIndex = new Map<string, Set<string>>();
 
   constructor(initialData: DrugCatalogItem[] = []) {
     if (initialData.length > 0) {
@@ -33,22 +29,12 @@ export class DrugSearchEngine {
     this.drugs = data;
     this.idMap.clear();
     this.barcodeMap.clear();
-    this.termIndex.clear();
 
     for (const drug of data) {
       this.idMap.set(drug.id, drug);
       
       if (drug.barcode) {
         this.barcodeMap.set(drug.barcode, drug.id);
-      }
-
-      // Index words from EN and AR names for fast searching
-      const words = this.extractTerms(drug);
-      for (const word of words) {
-        if (!this.termIndex.has(word)) {
-          this.termIndex.set(word, new Set());
-        }
-        this.termIndex.get(word)!.add(drug.id);
       }
     }
     console.log(`[SearchEngine] Indexed ${data.length} drugs.`);
@@ -57,7 +43,8 @@ export class DrugSearchEngine {
   /**
    * Main Search Gateway
    */
-  public search(query: string): DrugCatalogItem[] {
+  public search(query: string, filters?: any): DrugCatalogItem[] {
+    const rawTerm = query.toLowerCase();
     const term = query.trim().toLowerCase();
     if (!term) return [];
 
@@ -76,60 +63,59 @@ export class DrugSearchEngine {
 
     // 3. Specialized Shortcut: Price Range (e.g., 10/50/panadol)
     if (term.includes('/')) {
-      return this.searchWithPriceRange(term);
+      return this.searchWithPriceRange(term, filters);
     }
 
-    // 4. Multi-word Name Search (Optimized)
-    return this.searchByName(term);
+    // 4. Multi-word Name Search (Optimized with pre-filtering)
+    return this.searchByName(rawTerm, filters);
   }
 
-  private searchByName(query: string): DrugCatalogItem[] {
-    const words = query.split(/\s+/).filter(w => w.length > 0);
+  private searchByName(query: string, filters?: any): DrugCatalogItem[] {
+    if (!query.trim()) return [];
+
+    const startsWithSpace = query.startsWith(' ');
+    const words = query.trim().toLowerCase().split(/\s+/).filter(w => w.length > 0);
     if (words.length === 0) return [];
 
-    // Intersection Search: 
-    // We take the results for each word and find items that contain ALL words.
-    let resultSet: Set<string> | null = null;
+    const [first, ...rest] = words;
 
-    for (const word of words) {
-      const wordMatches = new Set<string>();
-      
-      // Look for prefix matches in the term index
-      // In a more advanced version, we'd use a Trie for this.
-      for (const [term, ids] of this.termIndex) {
-        if (term.startsWith(word)) {
-          for (const id of ids) wordMatches.add(id);
-        }
-      }
+    // --- Optimization: Pre-filter Pool based on Category ---
+    let pool = this.getFilteredPool(filters);
 
-      if (resultSet === null) {
-        resultSet = wordMatches;
+    // --- Main Filtering ---
+    return pool.filter(drug => {
+      const nameEn = drug.name.toLowerCase();
+      const nameAr = (drug.nameAr || '').toLowerCase();
+      const fullName = `${nameEn} ${nameAr}`;
+
+      // Logic for first word
+      if (startsWithSpace) {
+        // "Contains" mode
+        if (!fullName.includes(first)) return false;
       } else {
-        // Intersect
-        const nextSet = new Set<string>();
-        for (const id of wordMatches) {
-          if (resultSet.has(id)) nextSet.add(id);
-        }
-        resultSet = nextSet;
+        // "Prefix" mode - check if either language starts with it
+        if (!nameEn.startsWith(first) && !nameAr.startsWith(first)) return false;
       }
 
-      if (resultSet.size === 0) break;
-    }
+      // Logic for rest of words (always contains)
+      if (rest.length > 0) {
+        return rest.every(w => fullName.includes(w));
+      }
 
-    if (!resultSet) return [];
-    
-    // Map IDs back to objects and sort by name relevance (prefix priority)
-    return Array.from(resultSet)
-      .map(id => this.idMap.get(id)!)
-      .sort((a, b) => {
-        // Simple priority: does the name start with the first word?
-        const aStarts = a.nameEn.toLowerCase().startsWith(words[0]) || (a.nameAr?.startsWith(words[0]) ?? false);
-        const bStarts = b.nameEn.toLowerCase().startsWith(words[0]) || (b.nameAr?.startsWith(words[0]) ?? false);
-        if (aStarts && !bStarts) return -1;
-        if (!aStarts && bStarts) return 1;
-        return 0;
-      })
-      .slice(0, 50); // Limit to 50 results for UI performance
+      return true;
+    })
+    .sort((a, b) => {
+      // Priority: Does it start with the first word in either language?
+      const aStarts = a.name.toLowerCase().startsWith(first) || (a.nameAr?.toLowerCase().startsWith(first) ?? false);
+      const bStarts = b.name.toLowerCase().startsWith(first) || (b.nameAr?.toLowerCase().startsWith(first) ?? false);
+      
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return 1;
+      
+      // Secondary: Sort by name length (shorter names often more relevant)
+      return a.name.length - b.name.length;
+    })
+    .slice(0, 50);
   }
 
   private searchByIngredient(query: string): DrugCatalogItem[] {
@@ -140,7 +126,7 @@ export class DrugSearchEngine {
     ).slice(0, 50);
   }
 
-  private searchWithPriceRange(query: string): DrugCatalogItem[] {
+  private searchWithPriceRange(query: string, filters?: any): DrugCatalogItem[] {
     const parts = query.split('/');
     // Format: min/max/term OR min/term
     let min = 0;
@@ -156,16 +142,30 @@ export class DrugSearchEngine {
       term = parts[1].trim();
     }
 
-    const matches = term ? this.searchByName(term) : this.drugs;
+    const matches = term ? this.searchByName(term, filters) : this.getFilteredPool(filters);
     
     return matches.filter(d => 
       d.publicPrice >= min && d.publicPrice <= max
     ).slice(0, 50);
   }
 
-  private extractTerms(drug: DrugCatalogItem): string[] {
-    const text = `${drug.nameEn} ${drug.nameAr || ''}`.toLowerCase();
-    return text.split(/[\s,.-]+/).filter(w => w.length >= 2);
+
+  private getFilteredPool(filters?: any): DrugCatalogItem[] {
+    let pool = this.drugs;
+
+    // 1. Category Filter
+    if (filters?.category && filters.category.length > 0) {
+      const targetCat = filters.category[0].toLowerCase();
+      pool = pool.filter(d => d.category?.toLowerCase() === targetCat);
+    }
+
+    // 2. Price Filter (if applicable)
+    if (filters?.priceRange) {
+      const { min, max } = filters.priceRange;
+      pool = pool.filter(d => d.publicPrice >= min && d.publicPrice <= max);
+    }
+
+    return pool;
   }
 
   // Getter for all data (useful for initial lists)

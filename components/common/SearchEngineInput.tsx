@@ -1,8 +1,10 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useMemo, useEffect, useState } from 'react';
 import { SearchInput } from './SearchInput';
 import { useSettings } from '../../context/SettingsContext';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { Tooltip } from './Tooltip';
+import { DrugSearchEngine } from '../../services/search/DrugSearchEngine';
+import type { Drug } from '../../types';
 
 interface SearchEngineInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   value: string;
@@ -12,6 +14,10 @@ interface SearchEngineInputProps extends React.InputHTMLAttributes<HTMLInputElem
   isLoading?: boolean;
   suggestions?: string[];
   onSuggestionAccept?: (suggestion: string) => void;
+  
+  // Data Integration (Optional - if provided, the component handles search internally)
+  inventory?: Drug[];
+  onResultsChange?: (results: any[]) => void;
   
   // Filter Integration
   activeFilters?: any;
@@ -38,10 +44,12 @@ export const SearchEngineInput = forwardRef<HTMLInputElement, SearchEngineInputP
       value,
       onSearchChange,
       onClear,
-      resultsCount = 0,
+      resultsCount: externalResultsCount = 0,
       isLoading = false,
-      suggestions = [],
+      suggestions: externalSuggestions = [],
       onSuggestionAccept,
+      inventory,
+      onResultsChange,
       activeFilters,
       filterConfigs,
       onUpdateFilter,
@@ -57,6 +65,42 @@ export const SearchEngineInput = forwardRef<HTMLInputElement, SearchEngineInputP
   ) => {
     const { language } = useSettings();
     const t = TRANSLATIONS[language];
+
+    // --- Internal Search Engine Logic ---
+    const [internalSuggestions, setInternalSuggestions] = useState<string[]>([]);
+    const [internalResultsCount, setInternalResultsCount] = useState(0);
+
+    // 1. Initialize Engine
+    const engine = useMemo(() => {
+      if (!inventory || inventory.length === 0) return null;
+      const e = new DrugSearchEngine();
+      // Map Drug to DrugCatalogItem expected by engine if necessary, 
+      // but they should be compatible enough for basic search.
+      e.indexData(inventory as any);
+      return e;
+    }, [inventory]);
+
+    // 2. Automated Search Effect
+    useEffect(() => {
+      if (!engine || !inventory) return;
+
+      const results = engine.search(value, activeFilters);
+      
+      // Update Results Count
+      setInternalResultsCount(results.length);
+      onResultsChange?.(results);
+
+      // Update Suggestions
+      const topSuggestions = results
+        .slice(0, 5)
+        .map(d => d.name || '');
+      setInternalSuggestions(topSuggestions);
+
+    }, [value, engine, activeFilters, inventory, onResultsChange]);
+
+    // Determine which data to use (Internal vs External)
+    const suggestions = inventory ? internalSuggestions : externalSuggestions;
+    const resultsCount = inventory ? internalResultsCount : externalResultsCount;
 
     // Shortcuts Content for Tooltip - Theme Aware
     const shortcutsHint = (

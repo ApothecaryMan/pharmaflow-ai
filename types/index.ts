@@ -134,7 +134,7 @@ export interface Branch {
  */
 export interface GlobalDrug {
   id: string;
-  nameEn: string;
+  name: string;
   nameAr?: string;
   activeSubstance?: string;
   barcode?: string;
@@ -161,7 +161,7 @@ export interface Drug {
   /** Product name in English */
   name: string;
   /** Product name in Arabic (الاسم عربي) */
-  nameArabic?: string;
+  nameAr?: string;
   /** Generic/scientific name */
   genericName: string[];
   /** Category classification */
