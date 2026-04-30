@@ -75,6 +75,10 @@ layer(base);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  
+  /* Global Dynamic Cursors */
+  --global-cursor: auto;
+  --global-pointer: pointer;
 }
 
 .graphic-mode[dir='rtl'],
@@ -183,7 +187,14 @@ layer(base);
   }
   body {
     @apply bg-background text-foreground;
+    cursor: var(--global-cursor), auto;
   }
+  
+  /* Apply dynamic cursor to all interactive elements */
+  a, button, [role="button"], .interactive, .type-interactive {
+    cursor: var(--global-pointer), pointer;
+  }
+
   html {
     @apply font-sans;
   }

@@ -11,6 +11,7 @@ import { MobileNavigation } from './MobileNavigation';
 import { Navbar } from './Navbar';
 import { SidebarContent } from './SidebarContent';
 import { StatusBar } from './StatusBar';
+import { DynamicEventLayer } from './DynamicEventLayer';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -138,6 +139,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   return (
     <ContextMenuProvider enableGlassEffect={menuBlur}>
+      <DynamicEventLayer />
       <GlobalContextMenuWrapper
         t={t}
         darkMode={darkMode}
