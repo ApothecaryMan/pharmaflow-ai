@@ -545,7 +545,12 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: enablePagination ? getPaginationRowModel() : undefined,
     // Use default global filter to avoid overhead of unifiedFilterFn if it's just a string
-    globalFilterFn: 'auto', 
+    globalFilterFn: (row, columnId, filterValue) => {
+      const value = row.getValue(columnId);
+      if (value == null) return false;
+      const search = String(filterValue).toLowerCase().trim();
+      return String(value).toLowerCase().includes(search);
+    },
     enableSorting: true,
     manualFiltering,
     filterFns: {
@@ -864,6 +869,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                   onClear={() => setGlobalFilter('')}
                   placeholder={searchPlaceholder}
                   color={color}
+                  resultsCount={table.getFilteredRowModel().rows.length}
                   // New Integrated Props
                   filterConfigs={filterableColumns}
                   activeFilters={activeFiltersRecord}
@@ -987,7 +993,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
               </thead>
               {/* Enforce var(--icon-sm) on all material-symbols-rounded icons inside table cells using arbitrary variants, except action columns */}
               <tbody className='[&_td:not(.action-col):not(.empty-state)_.material-symbols-rounded]:!text-[length:var(--icon-sm)] [&_td:not(.action-col):not(.empty-state)_.material-symbols-rounded]:!text-sm'>
-                {(isLoading || localLoading) && rows.length === 0 ? (
+                {isLoading || (localLoading && rows.length === 0) ? (
                   <>
                     {[...Array(Math.max(5, typeof pageSize === 'number' ? pageSize : 10))].map((_, i) => (
                       <tr key={`skeleton-row-${i}`} className='animate-pulse border-b border-(--border-divider)'>

@@ -344,14 +344,14 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             </div>
           )}
 
-          {(badge || isLoading || value.trim().length >= 2) && (
+          {(badge || isLoading || value.trim().length > 0) && (
             <div className='pointer-events-none flex items-center ps-1 pe-0.5'>
               {badge || (
                 <div className="flex items-center gap-2">
                   {isLoading && (
                     <span className="w-3 h-3 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
                   )}
-                  {value.trim().length >= 2 && !isLoading && (
+                  {!isLoading && (
                     <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-(--bg-surface-neutral) text-gray-500 dark:text-gray-400 text-[11px] font-black uppercase tracking-wider animate-in zoom-in duration-200">
                       {resultsCount} {t.pos.resultsLabel}
                     </span>

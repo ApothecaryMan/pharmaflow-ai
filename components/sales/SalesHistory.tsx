@@ -38,6 +38,7 @@ interface SalesHistoryProps {
   navigationParams?: any;
   customers: Customer[];
   employees: Employee[];
+  isLoading?: boolean;
 }
 
 export const SalesHistory: React.FC<SalesHistoryProps> = ({
@@ -54,6 +55,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   navigationParams,
   customers = [],
   employees = [],
+  isLoading = false,
 }) => {
   // Determine locale based on language
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
@@ -103,11 +105,12 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   const tableColumns = React.useMemo<ColumnDef<Sale>[]>(
     () => [
       {
-        accessorKey: 'serialId',
+        id: 'serialId',
+        accessorFn: (row) => row.serialId || row.id.slice(0, 8),
         header: t.modal.id,
-        cell: ({ row }) => (
+        cell: ({ getValue }) => (
           <span className='font-mono font-bold text-sm text-gray-900 dark:text-gray-100'>
-            {row.original.serialId || row.original.id.slice(0, 8)}
+            {getValue() as string}
           </span>
         ),
         meta: { align: 'start' },
@@ -123,6 +126,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         ),
       },
       {
+        id: 'customerCode',
         accessorKey: 'customerCode',
         header: t.headers.code || 'Code',
         cell: ({ getValue }) => {
@@ -151,16 +155,14 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         },
       },
       {
-        accessorKey: 'customerName',
+        id: 'customerName',
+        accessorFn: (row) => row.customerName || 'Guest',
         header: t.headers.customer,
-        cell: ({ row }) => {
-          const name = row.original.customerName;
-          return (
-            <div className='font-medium text-gray-900 dark:text-gray-100 text-sm'>
-              {name || 'Guest'}
-            </div>
-          );
-        },
+        cell: ({ getValue }) => (
+          <div className='font-medium text-gray-900 dark:text-gray-100 text-sm'>
+            {getValue() as string}
+          </div>
+        ),
       },
       {
         accessorKey: 'paymentMethod',
@@ -465,6 +467,18 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     }
   };
 
+  const [isMounting, setIsMounting] = useState(true);
+
+  React.useEffect(() => {
+    // TIER 1: Instant Skeleton.
+    // Delay mounting the heavy table by 100ms to allow the skeleton to show up 
+    // before the main thread gets busy with virtualization calculations.
+    const timer = setTimeout(() => setIsMounting(false), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const showLoading = isLoading || isMounting;
+
   return (
     <div className='h-full flex flex-col space-y-4 animate-fade-in'>
       {/* Header */}
@@ -493,12 +507,13 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
 
 
       {/* Table Section */}
-      <div className='flex-1 flex flex-col min-h-0'>
+      <div className={`flex-1 flex flex-col min-h-0 transition-opacity${isMounting ? 'opacity-50' : 'opacity-100'}`}>
         <TanStackTable
           data={filteredSales}
           columns={tableColumns}
           tableId='sales_history_table'
           color={color}
+          isLoading={showLoading}
           enableTopToolbar={true}
           enableSearch={true}
           searchPlaceholder={t.searchPlaceholder || 'Search sales…'}
@@ -513,7 +528,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           dense={true}
           initialSorting={[{ id: 'date', desc: true }]}
           enablePagination={true}
-          enableVirtualization={false}
+          enableVirtualization={true}
           pageSize='auto'
           enableShowAll={true}
           pendingRowIds={pendingIds}
