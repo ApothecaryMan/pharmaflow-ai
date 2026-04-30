@@ -224,6 +224,174 @@ const getSmartAlignment = (columnId: string, meta?: any): 'start' | 'end' | 'cen
   return 'start';
 };
 
+// Memoized Cell Component for extreme performance
+const MemoizedCell = React.memo(({ cell, dense, meta, cellDir, content }: any) => {
+  const columnId = cell.column.id.toLowerCase();
+  const header = String(cell.column.columnDef.header || '').toLowerCase();
+  const isTechnical = 
+    columnId.includes('id') || columnId.includes('sku') || columnId.includes('barcode') || 
+    columnId.includes('batch') || columnId.includes('serial') || 
+    columnId.includes('email') || columnId.includes('address') ||
+    columnId.includes('phone') || columnId.includes('mobile') ||
+    columnId.includes('invoice') || columnId.includes('receipt') ||
+    columnId.includes('code') ||
+    header.includes('id') || header.includes('sku') || header.includes('barcode') || 
+    header.includes('batch') || header.includes('serial') ||
+    header.includes('email') || header.includes('address') ||
+    header.includes('phone') || header.includes('mobile') ||
+    header.includes('invoice') || header.includes('receipt') ||
+    header.includes('code') ||
+    meta.isId || meta.noConvert;
+
+  return (
+    <td
+      data-no-convert={isTechnical ? 'true' : undefined}
+      className={`${dense ? 'py-1 text-xs' : 'py-3 text-sm'} px-4 font-medium text-(--text-primary) align-middle border-b border-(--border-divider) group-last/row:border-b-0
+      ${meta.isFlex ? '' : 'whitespace-nowrap'} ${meta.isAction ? 'action-col' : ''}`}
+      style={{
+        width: meta.isFlex ? 'auto' : (cell.column.columnDef.meta?.width || cell.column.getSize()),
+        minWidth: meta.minWidth,
+      }}
+      dir={cellDir}
+    >
+      <div className={`flex items-center gap-1.5 w-full ${meta.justifyClass} ${meta.isId && meta.align === 'start' ? '-ms-3' : ''} ${meta.isId && meta.align === 'end' ? '-me-3' : ''}`}>
+        {meta.isId && (
+          <span className='material-symbols-rounded text-gray-400 shrink-0' style={{ fontSize: 'var(--icon-md)' }}>
+            tag
+          </span>
+        )}
+        <span dir={meta.isId ? 'ltr' : undefined}>
+          {content}
+        </span>
+      </div>
+    </td>
+  );
+});
+
+// Memoized Row Component
+const MemoizedRow = React.memo(React.forwardRef(({ 
+  row, 
+  dense, 
+  onRowClick, 
+  onRowTouchStart, 
+  onRowTouchEnd, 
+  onRowTouchMove, 
+  onRowContextMenu,
+  pendingRowIds,
+  newRowIds,
+  updatedRowIds,
+  localLoading,
+  columnMetaMap,
+  rowsCount,
+  rowIndex,
+  currentTouchRow,
+  // Date-related props for SmartDate
+  todayTs,
+  yesterdayTs,
+  isRtl,
+  isAR
+}: any, ref: any) => {
+  const isPending = pendingRowIds.has(row.original.id);
+  const isNew = newRowIds.has(row.original.id);
+  const isUpdated = updatedRowIds.has(row.original.id);
+
+  return (
+    <tr
+      ref={ref}
+      data-index={rowIndex}
+      id={`drug-row-${rowIndex}`}
+      onClick={() => onRowClick?.(row.original)}
+      onTouchStart={(e) => {
+        if (currentTouchRow) currentTouchRow.current = row.original;
+        onRowTouchStart?.(e);
+      }}
+      onTouchEnd={onRowTouchEnd}
+      onTouchMove={onRowTouchMove}
+      onContextMenu={(e) => {
+        if (onRowContextMenu) {
+          e.preventDefault();
+          onRowContextMenu(e, row.original);
+        }
+      }}
+      className={`group/row transition-all duration-200 outline-none
+        ${onRowClick ? 'cursor-pointer hover:bg-gray-50/80 dark:hover:bg-white/[0.03]' : ''}
+        ${isPending ? 'opacity-60 grayscale-[0.5]' : ''}
+        ${isNew ? 'bg-emerald-50/50 dark:bg-emerald-500/5 animate-in fade-in slide-in-from-left-2 duration-500' : ''}
+        ${isUpdated ? 'bg-amber-50/50 dark:bg-amber-500/5 transition-colors duration-1000' : ''}
+      `}
+    >
+      {row.getVisibleCells().map((cell: any) => {
+        const meta = columnMetaMap.get(cell.column.id);
+        const cellValue = cell.getValue();
+        const cellDir = meta.isId ? 'ltr' : (meta.dir === 'auto' ? getSmartDirection(String(cellValue || '')) : (meta.dir || 'auto'));
+        
+        let content = null;
+
+        // --- Smart Date Formatting ---
+        if (meta.smartDate && meta.isDate && cellValue) {
+          const date = new Date(cellValue);
+          if (!isNaN(date.getTime())) {
+            const targetTs = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+            const isToday = targetTs === todayTs;
+            const isYesterday = targetTs === yesterdayTs;
+            const dateLabel = isToday ? (isRtl ? 'اليوم' : 'Today') : isYesterday ? (isRtl ? 'أمس' : 'Yesterday') : date.toLocaleDateString();
+            
+            const hourRaw = date.getHours();
+            const ampm = isRtl ? (hourRaw >= 12 ? 'م' : 'ص') : (hourRaw >= 12 ? 'PM' : 'AM');
+            const displayHour = (hourRaw % 12 || 12).toLocaleString(undefined, { useGrouping: false });
+            const displayMinute = date.getMinutes().toLocaleString(undefined, { minimumIntegerDigits: 2, useGrouping: false });
+            const formattedTime = `${displayHour}:${displayMinute} ${ampm}`;
+
+            content = (
+              <div className={`flex flex-col ${meta.itemsAlignClass}`}>
+                <span className='font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight'>
+                  {isToday ? formattedTime : dateLabel}
+                </span>
+                {!isToday && (
+                  <span className='text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap -mt-0.5 tracking-tight'>
+                    {formattedTime}
+                  </span>
+                )}
+              </div>
+            );
+          }
+        }
+
+        if (!content) {
+          content = flexRender(cell.column.columnDef.cell, cell.getContext());
+        }
+
+        if ((isPending || localLoading) && rowsCount > 0) {
+          const isActionColumn = cell.column.id === 'actions' || cell.column.id === 'status' || cell.column.id.includes('select');
+          if (!isActionColumn) {
+            content = (
+              <div className="animate-pulse">
+                <div className="h-3 w-3/4 bg-zinc-100 dark:bg-zinc-800/60 rounded" />
+                <div className="h-2 w-1/2 bg-zinc-50 dark:bg-zinc-800/30 rounded mt-1" />
+              </div>
+            );
+          } else {
+            content = (
+              <div className="animate-pulse opacity-50">{content}</div>
+            );
+          }
+        }
+
+        return (
+          <MemoizedCell
+            key={cell.id}
+            cell={cell}
+            dense={dense}
+            meta={meta}
+            cellDir={cellDir}
+            content={content}
+          />
+        );
+      })}
+    </tr>
+  );
+}));
+
 export function TanStackTable<TData extends { id: string | number }, TValue>({
   data,
   columns,
@@ -1021,161 +1189,43 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                     {itemsToRender.map((item, index) => {
                       const isVirtual = enableVirtualization;
                       const row = isVirtual ? rows[(item as any).index] : (item as any);
-                      const virtualRow = isVirtual ? (item as any) : null;
-                      const rowIndex = isVirtual ? virtualRow.index : index;
+                      const rowIndex = isVirtual ? (item as any).index : index;
                       
                       return (
-                        <tr
+                        <MemoizedRow
                           key={row.id}
-                          ref={(el) => {
+                          ref={(el: any) => {
                             if (isVirtual) rowVirtualizer.measureElement(el);
                             if (rowIndex === 0) (firstRowRef.current as any) = el;
                           }}
-                          data-index={rowIndex}
-                          id={`drug-row-${rowIndex}`}
-                          onClick={() => onRowClick && onRowClick(row.original)}
-                      onTouchStart={(e) => {
-                        currentTouchRow.current = row.original;
-                        onRowTouchStart(e);
-                      }}
-                      onTouchEnd={onRowTouchEnd}
-                      onTouchMove={onRowTouchMove}
-                      onContextMenu={(e) => {
-                        if (onRowContextMenu) {
-                          e.preventDefault();
-                          onRowContextMenu(e, row.original);
-                        }
-                      }}
-                          className={`transition-all duration-300 overflow-visible group/row ${onRowClick ? 'cursor-pointer' : ''} ${
-                        newRowIds.has(row.original.id)
-                          ? 'new-transaction'
-                          : pendingRowIds.has(row.original.id)
-                            ? 'bg-orange-50/50 dark:bg-orange-900/20 animate-pulse'
-                            : updatedRowIds.has(row.original.id)
-                              ? 'bg-emerald-50/50 dark:bg-emerald-900/20 animate-pulse'
-                              : activeIndex !== undefined && rowIndex === activeIndex
-                                ? `bg-primary-50 dark:bg-primary-900/20`
-                                : 'hover:bg-(--bg-hover)'
-                      }`}
-                    >
-                      {row.getVisibleCells().map((cell: any) => {
-                        const meta = columnMetaMap.get(cell.column.id);
-                        if (!meta) return null;
-
-                        const cellValue = cell.getValue();
-                        const cellDir = (cell.column.columnDef.meta as any)?.dir === 'auto' || (! (cell.column.columnDef.meta as any)?.dir && meta.isFlex && typeof cellValue === 'string')
-                          ? getSmartDirection(String(cellValue || ''))
-                          : (cell.column.columnDef.meta as any)?.dir;
-
-                        // --- Smart Date Formatting ---
-                        let content = null;
-                        if (meta.smartDate && meta.isDate && cellValue) {
-                          const date = new Date(cellValue);
-                          if (!isNaN(date.getTime())) {
-                            const targetTs = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-                            const isToday = targetTs === todayTs;
-                            const isYesterday = targetTs === yesterdayTs;
-                            const dateLabel = isToday ? (isRtl ? 'اليوم' : 'Today') : isYesterday ? (isRtl ? 'أمس' : 'Yesterday') : date.toLocaleDateString();
-                            
-                            // Manual AM/PM to ensure "ص" and "م"
-                            const hourRaw = date.getHours();
-                            const ampm = isRtl ? (hourRaw >= 12 ? 'م' : 'ص') : (hourRaw >= 12 ? 'PM' : 'AM');
-                            const displayHour = (hourRaw % 12 || 12).toLocaleString(undefined, { useGrouping: false });
-                            const displayMinute = date.getMinutes().toLocaleString(undefined, { minimumIntegerDigits: 2, useGrouping: false });
-                            const formattedTime = isAR ? `${displayHour}:${displayMinute} ${ampm}` : `${displayHour}:${displayMinute} ${ampm}`;
-
-                            content = (
-                              <div className={`flex flex-col ${meta.itemsAlignClass}`}>
-                                <span className='font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight'>
-                                  {isToday ? formattedTime : dateLabel}
-                                </span>
-                                {!isToday && (
-                                  <span className='text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap -mt-0.5 tracking-tight'>
-                                    {formattedTime}
-                                  </span>
-                                )}
-                              </div>
-                            );
-                          }
-                        }
-                        
-                        // Fallback to default render if no format applied
-                        if (!content) {
-                          content = flexRender(cell.column.columnDef.cell, cell.getContext());
-                        }
-
-                        // TIER 3: Inline loading skeleton for existing data (background refresh)
-                        // SURGICAL: Only show skeletons for rows explicitly pending to avoid "coloring" the whole table
-                        const isRowPending = pendingRowIds.has(row.original.id);
-                        if ((isRowPending || localLoading) && rows.length > 0) {
-                          const isActionColumn = cell.column.id === 'actions' || cell.column.id === 'status' || cell.column.id.includes('select');
-                          if (!isActionColumn) {
-                            content = (
-                              <div className="animate-pulse">
-                                <div className="h-3 w-3/4 bg-zinc-100 dark:bg-zinc-800/60 rounded" />
-                                <div className="h-2 w-1/2 bg-zinc-50 dark:bg-zinc-800/30 rounded mt-1" />
-                              </div>
-                            );
-                          } else {
-                            content = (
-                              <div className="animate-pulse opacity-50">
-                                {content}
-                              </div>
-                            );
-                          }
-                        }
-
-                        const columnId = cell.column.id.toLowerCase();
-                        const header = String(cell.column.columnDef.header || '').toLowerCase();
-                        const isTechnical = 
-                          columnId.includes('id') || columnId.includes('sku') || columnId.includes('barcode') || 
-                          columnId.includes('batch') || columnId.includes('serial') || 
-                          columnId.includes('email') || columnId.includes('address') ||
-                          columnId.includes('phone') || columnId.includes('mobile') ||
-                          columnId.includes('invoice') || columnId.includes('receipt') ||
-                          columnId.includes('code') ||
-                          header.includes('id') || header.includes('sku') || header.includes('barcode') || 
-                          header.includes('batch') || header.includes('serial') ||
-                          header.includes('email') || header.includes('address') ||
-                          header.includes('phone') || header.includes('mobile') ||
-                          header.includes('invoice') || header.includes('receipt') ||
-                          header.includes('code') ||
-                          meta.isId || meta.noConvert;
-
-                        return (
-                          <td
-                            key={cell.id}
-                            data-no-convert={isTechnical ? 'true' : undefined}
-                            className={`${dense ? 'py-1 text-xs' : 'py-3 text-sm'} px-4 font-medium text-(--text-primary) align-middle border-b border-(--border-divider) group-last/row:border-b-0
-                            ${meta.isFlex ? '' : 'whitespace-nowrap'} ${meta.isAction ? 'action-col' : ''}`}
-                            style={{
-                              width: meta.isFlex ? 'auto' : (cell.column.columnDef.meta?.width || cell.column.getSize()),
-                              minWidth: meta.minWidth,
-                            }}
-                            dir={cellDir}
-                          >
-                            <div className={`flex items-center gap-1.5 w-full ${meta.justifyClass} ${meta.isId && meta.align === 'start' ? '-ms-3' : ''} ${meta.isId && meta.align === 'end' ? '-me-3' : ''}`}>
-                              {meta.isId && (
-                                <span className='material-symbols-rounded text-gray-400 shrink-0' style={{ fontSize: 'var(--icon-md)' }}>
-                                  tag
-                                </span>
-                              )}
-                              <span dir={meta.isId ? 'ltr' : undefined}>
-                                {content}
-                              </span>
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })}
-                {enableVirtualization && paddingBottom > 0 && (
-                  <tr className="padding-row">
-                    <td style={{ height: paddingBottom }} colSpan={columns.length} />
-                  </tr>
-                )}
-              </>
+                          row={row}
+                          dense={dense}
+                          onRowClick={onRowClick}
+                          onRowTouchStart={onRowTouchStart}
+                          onRowTouchEnd={onRowTouchEnd}
+                          onRowTouchMove={onRowTouchMove}
+                          onRowContextMenu={onRowContextMenu}
+                          pendingRowIds={pendingRowIds}
+                          newRowIds={newRowIds}
+                          updatedRowIds={updatedRowIds}
+                          localLoading={localLoading}
+                          columnMetaMap={columnMetaMap}
+                          rowsCount={rows.length}
+                          rowIndex={rowIndex}
+                          currentTouchRow={currentTouchRow}
+                          todayTs={todayTs}
+                          yesterdayTs={yesterdayTs}
+                          isRtl={isRtl}
+                          isAR={isAR}
+                        />
+                      );
+                    })}
+                    {enableVirtualization && paddingBottom > 0 && (
+                      <tr className="padding-row">
+                        <td style={{ height: paddingBottom }} colSpan={columns.length} />
+                      </tr>
+                    )}
+                  </>
                 ) : (
                   <tr>
                     <td
