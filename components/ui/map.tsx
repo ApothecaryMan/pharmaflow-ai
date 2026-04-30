@@ -18,7 +18,7 @@ import {
   type Key,
 } from "react";
 import { createPortal } from "react-dom";
-import { X, Minus, Plus, Locate, Maximize, Loader2 } from "lucide-react";
+import Icons from '@/components/common/Icons';
 
 import { cn } from "@/lib/utils";
 

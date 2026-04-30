@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import maplibregl from "maplibre-gl";
-import { Maximize2, Users, Activity } from "lucide-react";
+import Icons from '@/components/common/Icons';
 import {
   Map,
   MapControls,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getContentContainerClasses, LAYOUT_CONFIG } from '../../config/layoutConfig';
 import { type UserRole } from '../../config/permissions';
 import { ROUTES } from '../../config/routes';

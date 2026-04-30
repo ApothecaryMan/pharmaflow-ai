@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { MenuItem } from '../../config/menuData';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import type { UserRole } from '../../config/permissions';
 import { useSettings } from '../../context';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
@@ -298,6 +298,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     }
   };
 
+ 
   return (
     <nav
       className='h-12 flex items-center justify-between w-full px-4 sticky top-0 z-50'
@@ -375,11 +376,18 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   title={!hasPage && !hasImplementedSubItems && navStyle !== 2 ? t.settings.comingSoon : ''}
                 >
                   <span
-                    className={`flex items-center justify-center ${(isActive || isDropdownOpen) && (hasPage || hasImplementedSubItems) ? 'icon-filled' : ''}`}
+                    className={`flex items-center justify-center`}
                   >
                     {(() => {
-                      const IconComponent = getIconByName(module.icon || module.id, isActive || isDropdownOpen);
-                      return <IconComponent size="var(--icon-navbar-main)" />;
+                      const iconName = module.icon || module.id;
+                      const IconComponent = getIconByName(iconName);
+                      return (
+                        <IconComponent 
+                          size={22} 
+                          active={isActive || isDropdownOpen}
+                          className="transition-all duration-200" 
+                        />
+                      );
                     })()}
                   </span>
 

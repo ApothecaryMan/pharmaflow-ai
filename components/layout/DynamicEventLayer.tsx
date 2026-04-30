@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { EventManager, type EventContext } from '../../utils/events/eventManager';
 import { useSettings } from '../../context';
-import { motion, AnimatePresence, useMotionValue } from 'motion/react';
+import { motion, AnimatePresence, useMotionValue } from 'framer-motion';
 import { getIconByName } from '../common/Icons';
 
 /**
@@ -267,7 +267,7 @@ export const DynamicEventLayer: React.FC<{ view?: string }> = ({ view }) => {
                  )}
 
                  {payload.icon && (() => {
-                    const IconComp = getIconByName(payload.icon, true);
+                     const IconComp = getIconByName(payload.icon);
                     return (
                       <div 
                         className="absolute" 
