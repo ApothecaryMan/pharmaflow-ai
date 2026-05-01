@@ -258,16 +258,15 @@ export const Inventory: React.FC<InventoryProps> = ({
   // --- Search Engine Integration ---
   const localEngine = useMemo(() => new DrugSearchEngine(inventory as any), [inventory]);
 
-  const filteredInventory = useMemo(() => {
-    // 1. Apply Search Engine (Handles prefix matching, scientific names @, and price ranges)
-    let result = searchTerm 
-      ? localEngine.search(searchTerm) as Drug[]
-      : [...inventory];
+  // 1. Base filtering (Pills/Status only - No Search)
+  const baseFilteredInventory = useMemo(() => {
+    let result = [...inventory];
 
-    // 2. Apply Stock Status Filter (Defaults to 'in_stock' if no filter is active or if cleared)
+    // Apply Stock Status Filter
     const stockVals = (activeFilters['stock_status'] && activeFilters['stock_status'].length > 0) 
       ? activeFilters['stock_status'] 
       : ['in_stock'];
+    
     if (!stockVals.includes('all')) {
       result = result.filter((d) => {
         if (stockVals.includes('in_stock') && stockVals.includes('out_of_stock')) return true;
@@ -277,7 +276,7 @@ export const Inventory: React.FC<InventoryProps> = ({
       });
     }
 
-    // 3. Apply other Active Filters (Pills)
+    // Apply other Active Filters (Pills)
     Object.entries(activeFilters).forEach(([groupId, values]) => {
       const vals = values as any[];
       if (!vals || vals.length === 0 || groupId === 'stock_status') return;
@@ -286,31 +285,37 @@ export const Inventory: React.FC<InventoryProps> = ({
         const now = getVerifiedDate();
         const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         const nearExpiredLimit = new Date(currentMonthStart);
-        nearExpiredLimit.setMonth(currentMonthStart.getMonth() + 6);
+        nearExpiredLimit.setMonth(nearExpiredLimit.getMonth() + 3);
 
         result = result.filter((d) => {
-          if (!d.expiryDate) return vals.includes('all');
           const expiry = parseExpiryEndOfMonth(d.expiryDate);
-
-          if (vals.includes('expired')) {
-            return expiry < currentMonthStart;
-          }
-          if (vals.includes('near_expired')) {
-            return expiry >= currentMonthStart && expiry < nearExpiredLimit;
-          }
-          return true; // 'all' or other values
+          if (vals.includes('expired')) return expiry < currentMonthStart;
+          if (vals.includes('near_expiry')) return expiry >= currentMonthStart && expiry <= nearExpiredLimit;
+          if (vals.includes('valid')) return expiry > nearExpiredLimit;
+          return true;
         });
-      } else {
-        // Generic filter for other columns if added later
-        result = result.filter((d) => {
-          const val = (d as any)[groupId];
-          return vals.includes(val);
-        });
+      } else if (groupId === 'category') {
+        result = result.filter((d) => vals.includes(d.category));
+      } else if (groupId === 'item_rank') {
+        result = result.filter((d) => vals.includes(d.itemRank));
+      } else if (groupId === 'product_status_filter') {
+        if (!vals.includes('all')) {
+          result = result.filter((d) => vals.includes(d.status || 'active'));
+        }
       }
     });
 
     return result;
-  }, [inventory, searchTerm, activeFilters, t, localEngine]);
+  }, [inventory, activeFilters, t]);
+
+  // 2. Final filtering (Apply Search on top of Base)
+  const filteredInventory = useMemo(() => {
+    if (searchTerm) {
+      const searchEngine = new DrugSearchEngine(baseFilteredInventory as any);
+      return searchEngine.search(searchTerm) as Drug[];
+    }
+    return baseFilteredInventory;
+  }, [baseFilteredInventory, searchTerm]);
 
 
   const groupedInventory = useMemo(() => {
@@ -913,7 +918,7 @@ export const Inventory: React.FC<InventoryProps> = ({
               onClear={() => setSearchTerm('')}
               placeholder={t.searchPlaceholder}
               color={color}
-              inventory={inventory}
+              inventory={baseFilteredInventory}
               wrapperClassName='max-w-xl' // Apply width constraint to the wrapper div
             />
           </div>

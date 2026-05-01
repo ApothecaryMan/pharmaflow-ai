@@ -41,23 +41,35 @@ self.onmessage = (e: MessageEvent) => {
       // --- A. Essential Filters (O(1)) ---
       if (activeBranchId && d.branchId !== activeBranchId) return false;
 
-      // --- B. Exact Code Match (Priority) ---
-      if (d.barcode === trimmedSearch || d.internalCode === trimmedSearch) return true;
-
-      // --- C. Category Filter ---
+      // --- B. Category Filter ---
       const drugBroadCat = getBroadCategory(d.category);
       if (category !== 'All' && drugBroadCat !== category) return false;
 
-      // --- D. Stock Filter ---
+      // --- C. Stock Filter ---
       const matchesStock =
         stockFilter === 'all' ||
         (stockFilter === 'in_stock' && d.stock > 0) ||
         (stockFilter === 'out_of_stock' && d.stock <= 0);
       if (!matchesStock) return false;
 
+      // --- D. Exact Code Match (Priority - ignores 2 char limit) ---
+      if (d.barcode === trimmedSearch || d.internalCode === trimmedSearch) return true;
+
       // --- E. Intelligent Text Search (The Core) ---
       // Minimum 2 chars for text search
       if (trimmedSearch.length < 2) return false;
+
+      const isScientific = trimmedSearch.startsWith('@');
+      const searchTerm = isScientific ? trimmedSearch.slice(1).trim() : trimmedSearch;
+
+      if (isScientific) {
+        // Generic Name Search
+        const generics = Array.isArray(d.genericName) 
+          ? d.genericName 
+          : d.genericName ? [d.genericName] : [];
+        
+        return generics.some(gn => gn.toLowerCase().includes(searchTerm));
+      }
 
       const nameEn = (d.name || '').toLowerCase();
       const nameAr = (d.nameAr || '').toLowerCase();
@@ -73,8 +85,9 @@ self.onmessage = (e: MessageEvent) => {
       }
 
       // 2. Rest of Words (Always Contains)
-      if (rest.length > 0) {
-        return rest.every(w => fullName.includes(w));
+      if (rest.length > 1 || (rest.length > 0 && !isScientific)) {
+        const remainingWords = isScientific ? words : rest;
+        return remainingWords.every(w => fullName.includes(w));
       }
 
       return true;

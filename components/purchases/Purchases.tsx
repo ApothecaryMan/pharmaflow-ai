@@ -19,7 +19,7 @@ import {
   sanitizeExpiryInput,
 } from '../../utils/expiryUtils';
 import { formatStock } from '../../utils/inventory';
-import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
+import { DrugSearchEngine } from '../../services/search/DrugSearchEngine';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
@@ -1243,34 +1243,25 @@ export const Purchases: React.FC<PurchasesProps> = ({
     }
   };
 
-  const { mode: searchMode, regex } = parseSearchTerm(search);
+  const filteredDrugs = useMemo(() => {
+    let result = [...(inventory || [])];
 
-  const filteredDrugs = (inventory || [])
-    .filter((d) => {
-      // 1. Stock Filter
-      const stockFilter = activeFilters['stockStatus']?.[0];
-      if (stockFilter === 'in-stock' && d.stock <= 0) return false;
-      if (stockFilter === 'out-stock' && d.stock > 0) return false;
+    // 1. Apply active filters first
+    const stockFilter = activeFilters['stockStatus']?.[0];
+    if (stockFilter === 'in-stock') {
+      result = result.filter(d => d.stock > 0);
+    } else if (stockFilter === 'out-stock') {
+      result = result.filter(d => d.stock <= 0);
+    }
 
-      // 2. Search Filter
-      if (searchMode === 'ingredient' || searchMode === 'generic') {
-        return Array.isArray(d.genericName) 
-          ? d.genericName.some((gn) => regex.test(gn))
-          : (d.genericName as any) && regex.test(d.genericName as any);
-      }
+    // 2. Search within filtered results
+    if (search.trim()) {
+      const engine = new DrugSearchEngine(result as any);
+      return (engine.search(search) as Drug[]).slice(0, 30);
+    }
 
-      const searchableText = [
-        d.name,
-        d.dosageForm,
-        d.internalCode,
-        d.barcode,
-        ...(Array.isArray(d.genericName) ? d.genericName : [d.genericName]),
-      ]
-        .filter(Boolean)
-        .join(' ');
-      return regex.test(searchableText);
-    })
-    .slice(0, 30); // Limit to 30 results for performance
+    return result.slice(0, 30);
+  }, [inventory, search, activeFilters]);
 
   // Filter suppliers by search
   const filteredSuppliers = useMemo(() => {
