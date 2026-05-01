@@ -52,6 +52,9 @@ export const authService = {
    */
   async syncSessionWithDatabase(userId: string): Promise<UserSession | null> {
     try {
+      const stored = localStorage.getItem(SESSION_KEY);
+      const existingSession: UserSession | null = stored ? JSON.parse(stored) : null;
+
       const [employeeResponse, memberResponse] = await Promise.all([
         supabase.from('employees').select('*').eq('auth_user_id', userId).maybeSingle(),
         supabase.from('org_members').select('role, org_id').eq('user_id', userId).maybeSingle()
@@ -64,7 +67,20 @@ export const authService = {
 
       let session: UserSession;
 
-      if (employeeData) {
+      // Logic: If we already have an active employeeId in the local session, 
+      // and it belongs to the same org, we should keep it instead of defaulting 
+      // to the one linked to auth_user_id (which is usually the owner's primary profile).
+      const hasActiveManualEmployee = existingSession?.employeeId && 
+                                    existingSession.userId === userId && 
+                                    existingSession.orgId === orgId;
+
+      if (hasActiveManualEmployee) {
+        session = {
+          ...existingSession!,
+          orgRole: orgRole as any, // Sync role/permissions just in case
+          orgId: orgId || existingSession!.orgId,
+        };
+      } else if (employeeData) {
         session = {
           userId: userId,
           username: employeeData.username || employeeData.name,
@@ -77,16 +93,17 @@ export const authService = {
         };
       } else {
         // Fallback for users without employee record
-        const current = this.getCurrentUserSync();
+        const current = existingSession || this.getCurrentUserSync();
         if (!current) return null;
         session = {
           ...current,
           userId: userId,
           orgRole: orgRole as any,
+          orgId: orgId || current.orgId,
         };
       }
 
-      // Update local storage with the truth from DB
+      // Update local storage with the truth from DB + local state preservation
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
       cachedSession = session;
       return session;

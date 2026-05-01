@@ -380,11 +380,21 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
     };
   }, [activeBranchId]);
 
-  const switchBranch = useCallback(async (branchId: string, skipClearEmployee: boolean = false) => {
+  const switchBranch = useCallback(async (branchId: string, skipClearEmployee?: boolean) => {
     setIsLoading(true);
     try {
-      // Clear employee session on branch switch to prevent leakage (unless skipped)
-      if (!skipClearEmployee) {
+      // Determine if we should clear the employee session
+      // Default: Clear it. 
+      // Exceptions: 
+      // 1. Explicitly requested to skip (e.g. from handleSelectEmployee redirect)
+      // 2. Current employee is a manager/admin (global access)
+      // 3. Current employee is already assigned to this branch
+      const isManagerOrAdmin = permissionsService.isManager() || permissionsService.isOrgAdmin();
+      const belongsToBranch = currentEmployee?.branchId === branchId;
+      
+      const shouldSkipClear = skipClearEmployee === true || isManagerOrAdmin || belongsToBranch;
+
+      if (!shouldSkipClear) {
         setCurrentEmployee(null);
         authService.clearEmployeeSession();
       } else if (currentEmployee?.id) {
