@@ -25,6 +25,7 @@ import type { TRANSLATIONS } from '../../i18n/translations';
 import type { SaleTab } from '../../types';
 import { useContextMenu } from '../common/ContextMenu';
 import { useSettings } from '../../context';
+import { getDisplayName } from '../../utils/drugDisplayName';
 
 interface TabBarProps {
   tabs: SaleTab[];
@@ -298,7 +299,9 @@ const SortableTab = ({
           <ul className="flex flex-col gap-1.5 no-scrollbar">
             {tab.cart.map(item => (
               <li key={item.id} className="text-[11px] flex items-center justify-between gap-3 font-semibold">
-                <span className="truncate flex-1" dir="auto" style={{ color: 'var(--text-primary)' }}>{item.name} {item.dosageForm}</span>
+                <span className="truncate flex-1" dir="auto" style={{ color: 'var(--text-primary)' }}>
+                  {getDisplayName(item)}
+                </span>
                 <span className="tabular-nums text-primary-600 dark:text-primary-400 font-black">
                   {item.quantity}{item.isUnit ? ' U' : ''}
                 </span>

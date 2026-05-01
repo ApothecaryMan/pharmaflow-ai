@@ -62,7 +62,8 @@ export const getDisplayName = (
 
   const parts: string[] = [item.name];
 
-  if (item.dosageForm) {
+  // Only append dosage form if it's not already in the name
+  if (item.dosageForm && !item.name.toLowerCase().includes(item.dosageForm.toLowerCase())) {
     parts.push(item.dosageForm);
   }
 
@@ -91,7 +92,8 @@ export const getFullDisplayName = (
     parts.push(item.strength);
   }
 
-  if (item.dosageForm) {
+  // Only append dosage form if it's not already in the name
+  if (item.dosageForm && !item.name.toLowerCase().includes(item.dosageForm.toLowerCase())) {
     parts.push(item.dosageForm);
   }
 

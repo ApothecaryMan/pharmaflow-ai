@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { Sale, Return, Shift } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatCurrency } from '../../utils/currency';
-import { money } from '../../utils/money';
+import { money, pricing } from '../../utils/money';
 import { permissionsService } from '../../services/auth/permissions';
 import { Modal } from '../common/Modal';
 import { MaterialTabs } from '../common/MaterialTabs';
@@ -251,11 +251,10 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                         
                         if (isUnit) g.unitQty += item.quantity; else g.packQty += item.quantity;
                         const realQty = item.quantity - ret;
-                        const price = isUnit ? item.publicPrice / (item.unitsPerPack || 1) : item.publicPrice;
+                        const price = isUnit ? money.divide(item.publicPrice, item.unitsPerPack || 1) : item.publicPrice;
                         
-                        const lineTotal = money.multiply(realQty, price, 2);
-                        const discountFactor = 1 - (item.discount || 0) / 100;
-                        const discountedTotal = money.multiply(lineTotal, discountFactor, 2);
+                        const lineTotal = money.multiply(price, realQty, 0);
+                        const discountedTotal = pricing.afterDiscount(lineTotal, item.discount || 0);
                         
                         g.totalPrice = money.add(g.totalPrice, discountedTotal);
                         g.preDiscountTotal = money.add(g.preDiscountTotal, lineTotal);
