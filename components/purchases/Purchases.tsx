@@ -87,7 +87,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     activeTab,
     activeTabId,
     addTab,
-    removeTab,
+    removeTab: _removeTab,
     switchTab,
     updateTab,
     renameTab,
@@ -95,6 +95,17 @@ export const Purchases: React.FC<PurchasesProps> = ({
     reorderTabs,
     maxTabs,
   } = usePurchaseTabs(activeBranchId);
+
+  const handleRemoveTab = (tabId: string) => {
+    const tabToClose = tabs.find((t) => t.id === tabId);
+    if (tabToClose && tabToClose.cart.length > 0) {
+      const confirmMsg =
+        t.alerts?.confirmCloseTab ||
+        'This tab contains items. Are you sure you want to close it and move it to history?';
+      if (!window.confirm(confirmMsg)) return;
+    }
+    _removeTab(tabId);
+  };
 
   const [search, setSearch] = useState('');
   const [supplierSearch, setSupplierSearch] = useState('');
@@ -615,8 +626,13 @@ export const Purchases: React.FC<PurchasesProps> = ({
     };
 
     onPurchaseComplete(purchase);
-    setCart([]);
-    setSelectedSupplierId('');
+
+    updateTab(activeTabId, {
+      cart: [],
+      supplierId: '',
+      externalInvoiceId: '',
+      name: `Purchase ${tabs.findIndex((t) => t.id === activeTabId) + 1}`,
+    });
 
     // Generate Next ID
     const nextNum = parseInt(uniqueOrderId.replace('INV-', ''), 10) + 1;
@@ -943,7 +959,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
             tabs={tabs as any} // Cast to any to bypass strict SaleTab typing if needed, though they share the same structure
             activeTabId={activeTabId}
             onTabClick={switchTab}
-            onTabClose={removeTab}
+            onTabClose={handleRemoveTab}
             onTabAdd={handleAddTab}
             onTabRename={renameTab}
             onTogglePin={togglePin}
