@@ -432,9 +432,14 @@ export const transactionService = {
       }, context.branchId);
 
       undoManager.push(async () => {
-        // Delete stock batches created by this purchase to prevent FK conflicts
+        // [ROLLBACK] 1. Delete associated stock movements first (loose reference)
+        await supabase.from('stock_movements').delete().eq('reference_id', newPurchase.id);
+        
+        // [ROLLBACK] 2. Delete stock batches created by this purchase to prevent FK conflicts
+        // These have a hard foreign key reference to the purchase record
         await supabase.from('stock_batches').delete().eq('purchase_id', newPurchase.id);
-        // Then delete the purchase itself
+        
+        // [ROLLBACK] 3. Finally delete the purchase itself
         await supabase.from('purchases').delete().eq('id', newPurchase.id);
       });
 
