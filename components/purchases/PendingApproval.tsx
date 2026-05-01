@@ -237,93 +237,90 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
           </div>
         </div>
       ) : (
-        <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 flex-1 overflow-y-auto p-1'>
+        <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 flex-1 overflow-y-auto p-2 items-start content-start'>
           {filteredPendingPurchases.map((purchase) => (
             <div
               key={purchase.id}
-              className={`bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-100 dark:border-gray-800 shadow-xs flex flex-col relative overflow-hidden group cursor-pointer hover:border-gray-200 dark:hover:border-blue-800 transition-colors ${
+              className={`bg-white dark:bg-(--bg-card) rounded-3xl p-5 border border-gray-100 dark:border-(--border-divider) shadow-sm flex flex-col relative overflow-hidden group cursor-pointer hover:border-gray-200 dark:hover:border-primary-500/50 transition-colors ${
                 isLoading ? 'animate-pulse pointer-events-none opacity-80' : ''
               }`}
               onClick={() => setSelectedPurchase(purchase)}
             >
-              <div className='absolute top-4 right-4 px-3 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5'>
-                <span className='w-2 h-2 rounded-full bg-orange-500 animate-pulse'></span>
-                {t.pendingReview || 'Pending Review'}
-              </div>
-
-              <div className='mb-6'>
-                <p className='text-xs font-bold text-gray-400 uppercase tracking-wider mb-1'>
-                  {t.supplier || 'Supplier'}
-                </p>
-                <h3 className='text-xl font-bold text-gray-800 dark:text-gray-100 mb-1'>
-                  {purchase.supplierName}
-                </h3>
-                <p className='text-xs text-gray-500 font-mono'>
-                  {t.invCode || 'INV'}: {purchase.externalInvoiceId || purchase.invoiceId}
-                </p>
-              </div>
-
-              <div className='grid grid-cols-2 gap-4 mb-6 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl'>
-                <div>
-                  <p className='text-[10px] uppercase font-bold text-gray-400 mb-1'>
-                    {t.date || 'Date'}
+              {/* Header */}
+              <div className='flex justify-between items-start mb-5'>
+                <div className='space-y-1 min-w-0 flex-1'>
+                  <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate'>
+                    {t.supplier || 'Supplier'}
                   </p>
-                  <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    {new Date(purchase.date).toLocaleDateString()}
-                  </p>
-                  <p className='text-[10px] text-gray-400'>{formatTime(new Date(purchase.date))}</p>
+                  <h3 className='text-base font-bold text-gray-800 dark:text-gray-100 truncate' title={purchase.supplierName}>
+                    {purchase.supplierName}
+                  </h3>
                 </div>
-                <div>
-                  <p className='text-[10px] uppercase font-bold text-gray-400 mb-1'>
-                    {t.totalCost || 'Total Cost'}
+                <div className='flex flex-col items-end shrink-0 ml-3 space-y-1.5'>
+                  <div className='px-2.5 py-0.5 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 text-[9px] font-bold uppercase flex items-center gap-1.5 border border-orange-100 dark:border-orange-900/50'>
+                    <span className='w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse'></span>
+                    {t.pendingReview || 'Pending'}
+                  </div>
+                  <p className='text-[10px] text-gray-400 font-mono'>
+                    {t.invCode || 'INV'}: {purchase.externalInvoiceId || purchase.invoiceId.slice(0, 8)}
                   </p>
-                  <p className={`text-lg font-bold text-primary-600 dark:text-primary-400`}>
+                </div>
+              </div>
+
+              {/* Data Rows */}
+              <div className='space-y-3 mb-5'>
+                <div className='flex justify-between items-center'>
+                  <span className='text-gray-500 dark:text-gray-400 text-xs font-medium'>{t.totalCost || 'Total Cost'}</span>
+                  <span className='font-bold text-primary-600 dark:text-primary-400 text-sm'>
                     <CurrencyDisplay amount={purchase.totalCost} />
-                  </p>
+                  </span>
                 </div>
-                <div className='col-span-2 flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700'>
-                  <div className='flex items-center gap-2'>
-                    <span className='material-symbols-rounded text-gray-400 text-sm'>
-                      shopping_basket
+                <div className='flex justify-between items-center'>
+                  <span className='text-gray-500 dark:text-gray-400 text-xs font-medium'>{t.date || 'Date'}</span>
+                  <span className='font-medium text-gray-700 dark:text-gray-300 text-xs flex items-center gap-1'>
+                    {new Date(purchase.date).toLocaleDateString()} 
+                    <span className='text-[10px] opacity-50 font-mono'>({formatTime(new Date(purchase.date))})</span>
+                  </span>
+                </div>
+                <div className='flex justify-between items-center'>
+                  <span className='text-gray-500 dark:text-gray-400 text-xs font-medium'>{t.items || 'Items'}</span>
+                  <span className='font-medium text-gray-700 dark:text-gray-300 text-xs flex items-center gap-2'>
+                    <span>{purchase.items.reduce((acc, item) => acc + item.quantity, 0)} {t.items || 'Items'}</span>
+                    <span className='opacity-30'>•</span>
+                    <span className='flex items-center gap-1 bg-gray-50 dark:bg-white/5 px-1.5 py-0.5 rounded-md'>
+                      <span className='material-symbols-rounded text-[12px] opacity-60'>person</span>
+                      <span className='text-[10px]'>{purchase.createdByName || t.unknown || 'Unknown'}</span>
                     </span>
-                    <span className='text-sm text-gray-600 dark:text-gray-400 font-medium'>
-                      {purchase.items.reduce((acc, item) => acc + item.quantity, 0)}{' '}
-                      {t.items || 'Items'}
-                    </span>
-                  </div>
-                  <div className='flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-[10px] font-bold text-gray-500'>
-                    <span className='material-symbols-rounded text-xs'>person</span>
-                    {purchase.createdByName || t.unknown || 'Unknown'}
-                  </div>
+                  </span>
                 </div>
               </div>
 
-              <div className='mt-auto grid grid-cols-2 gap-3' onClick={(e) => e.stopPropagation()}>
-                {permissionsService.can('purchase.reject') && (
+              {/* Actions */}
+              <div className='mt-auto pt-3 border-t border-gray-100 dark:border-(--border-divider) grid grid-cols-2 gap-3' onClick={(e) => e.stopPropagation()}>
+                {permissionsService.can('purchase.approve') && (
                   <button
-                    onClick={(e) => handleOpenReject(purchase.id, e)}
-                    className='py-2.5 rounded-2xl bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 font-bold text-sm transition-colors flex items-center justify-center gap-2'
+                    onClick={(e) => handleOpenApprove(purchase.id, e)}
+                    className='py-2 rounded-xl bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400 font-bold text-xs transition-colors flex items-center justify-center gap-1.5'
                   >
-                    <span className='material-symbols-rounded text-lg'>close</span>
-                    {t.reject || 'Reject'}
+                    <span className='material-symbols-rounded text-[18px]'>check_circle</span>
+                    {t.approve || 'Approve'}
                   </button>
                 )}
+
                 {purchase.paymentMethod === 'cash' && !currentShift ? (
-                  <div className='py-2.5 px-2 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 flex items-center justify-center gap-1.5 text-red-600 dark:text-red-400'>
-                    <span className='material-symbols-rounded text-base'>warning</span>
-                    <span className='text-[10px] font-bold leading-tight uppercase'>{t.noOpenShift || 'Open Shift First'}</span>
+                  <div className='py-2 px-1 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 flex items-center justify-center gap-1 text-red-600 dark:text-red-400'>
+                    <span className='material-symbols-rounded text-[14px]'>warning</span>
+                    <span className='text-[9px] font-bold uppercase truncate'>{t.noOpenShift || 'Open Shift First'}</span>
                   </div>
-                ) : (
-                  permissionsService.can('purchase.approve') && (
-                    <button
-                      onClick={(e) => handleOpenApprove(purchase.id, e)}
-                      className='py-2.5 rounded-2xl bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400 font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-xs'
-                    >
-                      <span className='material-symbols-rounded text-lg'>check</span>
-                      {t.approve || 'Approve'}
-                    </button>
-                  )
-                )}
+                ) : permissionsService.can('purchase.reject') ? (
+                  <button
+                    onClick={(e) => handleOpenReject(purchase.id, e)}
+                    className='py-2 rounded-xl bg-gray-50 hover:bg-red-50 dark:bg-white/5 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 font-bold text-xs transition-colors flex items-center justify-center gap-1.5 border border-transparent hover:border-red-100 dark:hover:border-red-900/50'
+                  >
+                    <span className='material-symbols-rounded text-[18px]'>cancel</span>
+                    {t.reject || 'Reject'}
+                  </button>
+                ) : <div />}
               </div>
             </div>
           ))}
