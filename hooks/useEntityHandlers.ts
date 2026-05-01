@@ -12,6 +12,8 @@ import { migrationService } from '../services/migration';
 import { restoreStockForCancelledSale } from '../services/salesHelpers';
 import { salesService } from '../services/sales/salesService';
 import { purchaseService } from '../services/purchases/purchaseService';
+import { customerService } from '../services/customers/customerService';
+import { supplierService } from '../services/suppliers/supplierService';
 import { returnService } from '../services/returns/returnService';
 import * as stockOps from '../utils/stockOperations';
 import type { AppSettings } from '../services/settings/types';
@@ -435,7 +437,7 @@ export function useEntityHandlers({
 
   // --- Supplier Management ---
   const handleAddSupplier = useCallback(
-    (supplier: Supplier) => {
+    async (supplier: Supplier) => {
       if (!currentEmployeeId) {
         error('Authentication required: Please log in to add suppliers');
         return;
@@ -444,21 +446,26 @@ export function useEntityHandlers({
         error('Permission denied: Cannot add suppliers');
         return;
       }
-      const newId = supplier.id || idGenerator.generateSync('suppliers', activeBranchId);
-      setSuppliers((prev) => [...prev, { ...supplier, id: newId, branchId: activeBranchId, status: 'active' }]);
-      success('Supplier added successfully');
-      auditService.log('supplier.add', {
-        userId: currentEmployeeId,
-        details: `Added supplier: ${supplier.name}`,
-        entityId: newId,
-        branchId: activeBranchId,
-      });
+
+      try {
+        const result = await supplierService.create(supplier, activeBranchId);
+        setSuppliers((prev) => [...prev, result]);
+        success('Supplier added successfully');
+        auditService.log('supplier.add', {
+          userId: currentEmployeeId,
+          details: `Added supplier: ${result.name}`,
+          entityId: result.id,
+          branchId: activeBranchId,
+        });
+      } catch (err) {
+        error(`Failed to add supplier: ${err instanceof Error ? err.message : String(err)}`);
+      }
     },
-    [setSuppliers, currentEmployeeId, employees, error]
+    [setSuppliers, currentEmployeeId, employees, activeBranchId, error, success]
   );
 
   const handleUpdateSupplier = useCallback(
-    (supplier: Supplier) => {
+    async (supplier: Supplier) => {
       if (!currentEmployeeId) {
         error('Authentication required: Please log in to update suppliers');
         return;
@@ -467,20 +474,26 @@ export function useEntityHandlers({
         error('Permission denied: Cannot update suppliers');
         return;
       }
-      setSuppliers((prev) => prev.map((s) => (s.id === supplier.id ? supplier : s)));
-      success('Supplier updated successfully');
-      auditService.log('supplier.update', {
-        userId: currentEmployeeId,
-        details: `Updated supplier: ${supplier.name}`,
-        entityId: supplier.id,
-        branchId: activeBranchId,
-      });
+
+      try {
+        const result = await supplierService.update(supplier.id, supplier);
+        setSuppliers((prev) => prev.map((s) => (s.id === supplier.id ? result : s)));
+        success('Supplier updated successfully');
+        auditService.log('supplier.update', {
+          userId: currentEmployeeId,
+          details: `Updated supplier: ${supplier.name}`,
+          entityId: supplier.id,
+          branchId: activeBranchId,
+        });
+      } catch (err) {
+        error(`Failed to update supplier: ${err instanceof Error ? err.message : String(err)}`);
+      }
     },
-    [setSuppliers, currentEmployeeId, employees, error]
+    [setSuppliers, currentEmployeeId, employees, activeBranchId, error, success]
   );
 
   const handleDeleteSupplier = useCallback(
-    (id: string) => {
+    async (id: string) => {
       if (!currentEmployeeId) {
         error('Authentication required: Please log in to delete suppliers');
         return;
@@ -497,21 +510,26 @@ export function useEntityHandlers({
         return;
       }
 
-      setSuppliers((prev) => prev.filter((s) => s.id !== id));
-      success('Supplier deleted successfully');
-      auditService.log('supplier.delete', {
-        userId: currentEmployeeId || 'System',
-        details: `Deleted supplier ID: ${id}`,
-        entityId: id,
-        branchId: activeBranchId,
-      });
+      try {
+        await supplierService.delete(id);
+        setSuppliers((prev) => prev.filter((s) => s.id !== id));
+        success('Supplier deleted successfully');
+        auditService.log('supplier.delete', {
+          userId: currentEmployeeId || 'System',
+          details: `Deleted supplier ID: ${id}`,
+          entityId: id,
+          branchId: activeBranchId,
+        });
+      } catch (err) {
+        error(`Failed to delete supplier: ${err instanceof Error ? err.message : String(err)}`);
+      }
     },
     [setSuppliers, purchases, success, currentEmployeeId, employees, error, activeBranchId]
   );
 
   // --- Customer Management ---
   const handleAddCustomer = useCallback(
-    (customer: Customer) => {
+    async (customer: Customer) => {
       if (!currentEmployeeId) {
         error('Authentication required: Please log in to add customers');
         return;
@@ -521,29 +539,31 @@ export function useEntityHandlers({
         return;
       }
 
-      // Ensure critical tracking fields are present
-      const enhancedCustomer: Customer = {
-        ...customer,
-        id: customer.id || idGenerator.generateSync('customers', activeBranchId),
-        branchId: activeBranchId,
-        createdAt: customer.createdAt || getVerifiedDate().toISOString(),
-        registeredByEmployeeId: customer.registeredByEmployeeId || currentEmployeeId || undefined,
-      };
+      try {
+        // Persist to database via customerService
+        const result = await customerService.create({
+          ...customer,
+          createdAt: customer.createdAt || getVerifiedDate().toISOString(),
+          registeredByEmployeeId: customer.registeredByEmployeeId || currentEmployeeId || undefined,
+        }, activeBranchId);
 
-      setCustomers((prev) => [...prev, enhancedCustomer]);
-      success('Customer added successfully');
-      auditService.log('customer.add', {
-        userId: currentEmployeeId || 'System',
-        details: `Added customer: ${customer.name}`,
-        entityId: customer.id,
-        branchId: activeBranchId,
-      });
+        setCustomers((prev) => [...prev, result]);
+        success('Customer added successfully');
+        auditService.log('customer.add', {
+          userId: currentEmployeeId || 'System',
+          details: `Added customer: ${result.name}`,
+          entityId: result.id,
+          branchId: activeBranchId,
+        });
+      } catch (err) {
+        error(`Failed to add customer: ${err instanceof Error ? err.message : String(err)}`);
+      }
     },
-    [setCustomers, success, currentEmployeeId, employees, error, getVerifiedDate]
+    [setCustomers, success, currentEmployeeId, employees, error, getVerifiedDate, activeBranchId]
   );
 
   const handleUpdateCustomer = useCallback(
-    (customer: Customer) => {
+    async (customer: Customer) => {
       if (!currentEmployeeId) {
         error('Authentication required: Please log in to update customers');
         return;
@@ -552,20 +572,26 @@ export function useEntityHandlers({
         error('Permission denied: Cannot update customers');
         return;
       }
-      setCustomers((prev) => prev.map((c) => (c.id === customer.id ? customer : c)));
-      success('Customer updated successfully');
-      auditService.log('customer.update', {
-        userId: currentEmployeeId,
-        details: `Updated customer: ${customer.name}`,
-        entityId: customer.id,
-        branchId: activeBranchId,
-      });
+
+      try {
+        const result = await customerService.update(customer.id, customer);
+        setCustomers((prev) => prev.map((c) => (c.id === customer.id ? result : c)));
+        success('Customer updated successfully');
+        auditService.log('customer.update', {
+          userId: currentEmployeeId,
+          details: `Updated customer: ${customer.name}`,
+          entityId: customer.id,
+          branchId: activeBranchId,
+        });
+      } catch (err) {
+        error(`Failed to update customer: ${err instanceof Error ? err.message : String(err)}`);
+      }
     },
-    [setCustomers, success, currentEmployeeId, employees, error]
+    [setCustomers, success, currentEmployeeId, employees, error, activeBranchId]
   );
 
   const handleDeleteCustomer = useCallback(
-    (id: string) => {
+    async (id: string) => {
       if (!currentEmployeeId) {
         error('Authentication required: Please log in to delete customers');
         return;
@@ -582,16 +608,21 @@ export function useEntityHandlers({
         return;
       }
 
-      setCustomers((prev) => prev.filter((c) => c.id !== id));
-      success('Customer removed successfully');
-      auditService.log('customer.delete', {
-        userId: currentEmployeeId || 'System',
-        details: `Deleted customer ID: ${id}`,
-        entityId: id,
-        branchId: activeBranchId,
-      });
+      try {
+        await customerService.delete(id);
+        setCustomers((prev) => prev.filter((c) => c.id !== id));
+        success('Customer removed successfully');
+        auditService.log('customer.delete', {
+          userId: currentEmployeeId || 'System',
+          details: `Deleted customer ID: ${id}`,
+          entityId: id,
+          branchId: activeBranchId,
+        });
+      } catch (err) {
+        error(`Failed to delete customer: ${err instanceof Error ? err.message : String(err)}`);
+      }
     },
-    [setCustomers, sales, success, currentEmployeeId, employees, error]
+    [setCustomers, sales, success, currentEmployeeId, employees, error, activeBranchId]
   );
 
   // --- Purchase Management ---

@@ -3002,7 +3002,7 @@ export const TRANSLATIONS = {
       noSuppliersFound: 'لا يوجد موردين مطابقين للبحث',
       noSuppliersAvailable: 'لا يوجد موردين',
       headers: {
-        id: 'الرقم',
+        id: 'ID',
         name: 'الاسم',
         contactPerson: 'الشخص المسؤول',
         phone: 'الهاتف',
@@ -3017,7 +3017,7 @@ export const TRANSLATIONS = {
       form: {
         companyInfo: 'معلومات الشركة',
         contactInfo: 'معلومات الاتصال',
-        id: 'الرقم',
+        id: 'ID',
         companyName: 'اسم الشركة',
         enterCompanyName: 'أدخل اسم الشركة',
         address: 'العنوان',
@@ -3137,7 +3137,7 @@ export const TRANSLATIONS = {
       placeholders: {
         searchHistory: 'بحث برقم، مورد...',
         searchSupplier: 'بحث واختيار المورد...',
-        enterId: 'أدخـل الرقم',
+        enterId: 'أدخـل الـ ID',
         searchDrug: 'بحث عن دواء...',
       },
       pack: 'علبة',

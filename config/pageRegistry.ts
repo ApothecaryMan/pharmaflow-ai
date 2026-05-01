@@ -193,7 +193,16 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'قائمة الموردين',
     icon: 'local_shipping',
     category: 'purchase',
-    requiredProps: ['suppliers', 'setSuppliers', 'color', 't', 'language'],
+    requiredProps: [
+      'suppliers',
+      'setSuppliers',
+      'onAddSupplier',
+      'onUpdateSupplier',
+      'onDeleteSupplier',
+      'color',
+      't',
+      'language',
+    ],
     permission: 'supplier.view',
   },
   purchases: {
