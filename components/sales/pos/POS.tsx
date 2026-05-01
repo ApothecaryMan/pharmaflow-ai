@@ -256,13 +256,54 @@ export const POS: React.FC<POSProps> = ({
     prevCartLengthRef.current = cart.length;
   }, [cart.length, mergedCartItems.length]);
 
-  const { filteredDrugs } = usePOSSearchWorker({
+  const { filteredDrugs, totalResults } = usePOSSearchWorker({
     inventory,
     search,
     selectedCategory,
     stockFilter,
     activeBranchId,
   });
+
+  // --- Search Highlighting Logic ---
+  const highlightRegex = useMemo(() => {
+    if (!search.trim()) return null;
+    const rawTerm = search.trimStart().replace(/^[@#]/, '').trim();
+    if (!rawTerm) return null;
+    const escaped = rawTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const words = escaped.split(/\s+/).filter(Boolean);
+    if (words.length === 0) return null;
+    return new RegExp(words.map(w => `\\b${w}`).join('|'), 'gi');
+  }, [search]);
+
+  const highlightMatch = useCallback((text: string, forceHighlight: boolean = true) => {
+    // Only enable highlighting for scientific search (starting with @)
+    if (!search.trimStart().startsWith('@')) return text;
+    
+    if (!highlightRegex || !text) return text;
+
+    try {
+      const regex = new RegExp(highlightRegex.source, highlightRegex.flags);
+      const segments: React.ReactNode[] = [];
+      let lastIndex = 0;
+      let match: RegExpExecArray | null;
+
+      while ((match = regex.exec(text)) !== null) {
+        if (match.index > lastIndex) segments.push(text.slice(lastIndex, match.index));
+        segments.push(
+          <span key={match.index} className="text-primary-600 dark:text-primary-400 bg-primary-500/10 rounded-sm px-0.5">
+            {match[0]}
+          </span>
+        );
+        lastIndex = regex.lastIndex;
+        if (match[0].length === 0) break;
+      }
+
+      if (lastIndex < text.length) segments.push(text.slice(lastIndex));
+      return segments.length === 0 ? text : <>{segments}</>;
+    } catch (e) {
+      return text;
+    }
+  }, [highlightRegex, search]);
 
   // Dynamic suggestions: generic names when @ prefix, else drug names (requires 2+ chars)
   const searchSuggestions = useMemo(() => {
@@ -480,18 +521,26 @@ export const POS: React.FC<POSProps> = ({
           headerAlign: language === 'AR' ? 'end' : 'start',
           disableAlignment: true,
         },
-        cell: (info) => (
-          <div className="flex flex-col w-full min-w-0 items-start text-start">
-            <span className='font-bold text-sm text-gray-900 dark:text-gray-100 drug-name truncate'>
-              {getDisplayName(info.row.original, textTransform)}
-            </span>
-            <span className='text-xs text-gray-500 whitespace-normal wrap-break-word w-full text-start' dir='auto'>
-              {Array.isArray(info.row.original.genericName)
-                ? info.row.original.genericName.join(' + ')
-                : (info.row.original.genericName as any)}
-            </span>
-          </div>
-        ),
+        cell: (info) => {
+          const drug = info.row.original;
+          const displayName = getDisplayName(drug, textTransform);
+          const genericNameStr = Array.isArray(drug.genericName)
+            ? drug.genericName.join(' + ')
+            : String(drug.genericName || '');
+          
+          const isScientificSearch = search.trimStart().startsWith('@');
+          
+          return (
+            <div className="flex flex-col w-full min-w-0 items-start text-start">
+              <span className='font-bold text-sm text-gray-900 dark:text-gray-100 drug-name truncate'>
+                {displayName}
+              </span>
+              <span className='text-xs text-gray-500 whitespace-normal wrap-break-word w-full text-start' dir='auto'>
+                {highlightMatch(genericNameStr)}
+              </span>
+            </div>
+          );
+        },
       }),
       columnHelper.accessor('category', {
         header: t.category,
@@ -706,7 +755,7 @@ export const POS: React.FC<POSProps> = ({
         },
       }),
     ],
-    [color, t, language, selectedUnits, openUnitDropdown, selectedBatches, openBatchDropdown, textTransform]
+    [color, t, language, selectedUnits, openUnitDropdown, selectedBatches, openBatchDropdown, textTransform, highlightMatch, search]
   );
 
   return (
@@ -768,7 +817,7 @@ export const POS: React.FC<POSProps> = ({
                 }}
                 onClear={() => setSearch('')}
                 suggestions={searchSuggestions}
-                resultsCount={filteredDrugs.length}
+                resultsCount={totalResults}
                 placeholder={t.searchPlaceholder}
                 color={color}
                 className=""
