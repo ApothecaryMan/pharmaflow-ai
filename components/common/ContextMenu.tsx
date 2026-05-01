@@ -155,7 +155,8 @@ export const ContextMenuCheckboxItem: React.FC<{
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   disabled?: boolean;
-}> = ({ label, checked, onCheckedChange, disabled }) => {
+  className?: string; // Restore className support
+}> = ({ label, checked, onCheckedChange, disabled, className = '' }) => {
   const { isGlass } = useContextMenu();
 
   return (
@@ -167,12 +168,13 @@ export const ContextMenuCheckboxItem: React.FC<{
         }
       }}
       disabled={disabled}
-      className={`w-full flex items-center justify-between px-3 py-1.2 cursor-pointer transition-all duration-200 type-interactive rounded-xl
+      className={`w-full flex items-center justify-between px-1 py-0.5 cursor-pointer transition-all duration-200 type-interactive rounded-xl
                 ${
                   disabled
                     ? 'opacity-50 cursor-not-allowed'
                     : 'hover:bg-(--bg-menu-hover) hover:ps-4'
                 }
+                ${className}
             `}
     >
       <span
@@ -181,7 +183,7 @@ export const ContextMenuCheckboxItem: React.FC<{
         {label}
       </span>
       <span
-        className={`material-symbols-rounded text-[15px] transition-colors ${!checked ? 'text-gray-300 dark:text-gray-600' : 'text-emerald-500'}`}
+        className={`material-symbols-rounded text-[16px] transition-colors ${!checked ? 'text-gray-300 dark:text-gray-600' : 'text-emerald-500'}`}
       >
         {checked ? 'check_circle' : 'circle'}
       </span>
@@ -332,7 +334,7 @@ export const ContextMenuProvider: React.FC<{
           ref={menuRef}
           onMouseEnter={() => setIsMouseOverMenu(true)}
           onMouseLeave={() => setIsMouseOverMenu(false)}
-          className={`fixed z-9999 min-w-[180px] rounded-2xl shadow-xl border border-(--border-divider) py-0.5 px-0.8 animate-scale-in origin-top-left overflow-hidden
+          className={`fixed z-9999 min-w-[180px] rounded-2xl shadow-xl border border-(--border-divider) py-1 px-1 animate-scale-in origin-top-left overflow-hidden
                 ${
                   enableGlassEffect
                     ? 'backdrop-blur-2xl bg-(--bg-menu)/30 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]'
