@@ -15,6 +15,20 @@ const isPlaceholder = !supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('
 // Export configuration status for other services
 export const isSupabaseConfigured = !isPlaceholder;
 
+// Dynamically inject preconnect hints at runtime (avoids hardcoding URL in index.html)
+if (isSupabaseConfigured && typeof document !== 'undefined') {
+  const preconnect = document.createElement('link');
+  preconnect.rel = 'preconnect';
+  preconnect.href = supabaseUrl;
+  preconnect.crossOrigin = '';
+  document.head.appendChild(preconnect);
+
+  const dnsPrefetch = document.createElement('link');
+  dnsPrefetch.rel = 'dns-prefetch';
+  dnsPrefetch.href = supabaseUrl;
+  document.head.appendChild(dnsPrefetch);
+}
+
 // Diagnostic logging for production debugging
 if (import.meta.env.PROD) {
   console.log('Supabase Configuration Status:', {
