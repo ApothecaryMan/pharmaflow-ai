@@ -60,7 +60,7 @@ export const SmallCard = ({
   const { language } = useSettings();
   const isAR = language === 'AR';
 
-  // Render value logic
+  // 1. Data Formatting Logic
   const { displayValue, displaySymbol } = useMemo(() => {
     if (typeof value !== 'number') return { displayValue: value, displaySymbol: '' };
 
@@ -78,97 +78,130 @@ export const SmallCard = ({
     return { displayValue: value, displaySymbol: '' };
   }, [value, type, currencyLabel]);
 
-  const iconContent = (
-    <div className={`shrink-0 ${isLoading ? 'bg-zinc-100 dark:bg-zinc-800' : `text-${iconColor}-600 dark:text-${iconColor}-400`} relative flex items-center justify-center w-12 h-12 rounded-xl ${isLoading ? 'animate-pulse' : ''}`}>
-      {!isLoading && (
-        <>
-          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-2xl)', lineHeight: 1 }}>{icon}</span>
+  // 2. Rich Tooltip Memoization
+  const richTooltipContent = useMemo(() => {
+    if (!trend && !subValue) return null;
+    
+    return (
+      <div className="p-2 min-w-[150px] space-y-3" dir={isAR ? 'rtl' : 'ltr'}>
+        <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-(--text-tertiary) border-b border-(--border-divider) pb-1.5 mb-1">
+          {isAR ? 'تحليل المؤشر' : 'Metric Insights'}
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-xl ${
+            trend === 'up' ? 'bg-emerald-500/10 text-emerald-500' : 
+            trend === 'down' ? 'bg-rose-500/10 text-rose-500' : 
+            'bg-zinc-500/10 text-zinc-400'
+          }`}>
+            <span className="material-symbols-rounded block" style={{ fontSize: '22px' }}>
+              {trend === 'up' ? 'trending_up' : trend === 'down' ? 'trending_down' : 'trending_flat'}
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <span className={`text-base font-bold leading-tight ${
+              trend === 'up' ? 'text-emerald-500' : 
+              trend === 'down' ? 'text-rose-500' : 
+              'text-zinc-400'
+            }`}>
+              {trendValue || (isAR ? 'مستقر' : 'Stable')}
+            </span>
+            <span className="text-[10px] text-(--text-tertiary) font-medium">
+              {trend ? (isAR ? 'التغير النسبي' : 'Relative Change') : (isAR ? 'لا توجد بيانات' : 'No Trend Data')}
+            </span>
+          </div>
+        </div>
+
+        <div className="space-y-1.5 pt-1">
+          {trendLabel && (
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-[10px] text-(--text-tertiary)">{isAR ? 'الفترة:' : 'Period:'}</span>
+              <span className="text-[10px] text-(--text-secondary) font-semibold">{trendLabel}</span>
+            </div>
+          )}
+          {subValue && (
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-[10px] text-(--text-tertiary)">{isAR ? 'السياق:' : 'Context:'}</span>
+              <span className="text-[10px] text-(--text-secondary) font-semibold truncate max-w-[80px]">{subValue}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }, [trend, trendValue, trendLabel, subValue, isAR]);
+
+  // 3. Icon Sub-component
+  const iconSection = (
+    <div className="relative shrink-0 w-14 h-16 flex items-center justify-center ms-2">
+      <div className="absolute inset-0 bg-zinc-200/60 dark:bg-zinc-800/40 rounded-lg rotate-[-3deg] translate-x-1 translate-y-1" />
+      <div 
+        className="absolute inset-0 bg-zinc-100 dark:bg-zinc-800/60 border border-(--border-divider) rounded-lg shadow-[4px_6px_12px_rgba(0,0,0,0.06)] rotate-[2deg] ltr:-translate-x-3 rtl:translate-x-3 -translate-y-0.5 flex items-center justify-center z-10"
+      >
+        {!isLoading && (
+          <span 
+            className="material-symbols-rounded text-zinc-600 dark:text-zinc-400 select-none" 
+            style={{ fontSize: '36px', lineHeight: 1 }}
+          >
+            {icon}
+          </span>
+        )}
+      </div>
+      {!isLoading && iconOverlay && (
+        <div className="absolute -top-2 ltr:-left-4 rtl:-right-4 z-20 scale-90 drop-shadow-sm">
           {iconOverlay}
-        </>
+        </div>
       )}
     </div>
   );
 
   return (
-    // Compact design: h-[84px], p-3
-    <div className={`p-3 rounded-2xl ${CARD_BASE} ${CARD_HOVER} h-[84px] flex items-center gap-3`}>
-      {/* Icon - Left Side */}
+    <div className={`p-3 rounded-2xl ${CARD_BASE} ${CARD_HOVER} h-[84px] flex items-center gap-3 overflow-visible`}>
       {iconTooltip ? (
-        <Tooltip content={iconTooltip} position='top' triggerClassName='shrink-0'>
-          {iconContent}
+        <Tooltip content={iconTooltip} position="top" triggerClassName="shrink-0">
+          {iconSection}
         </Tooltip>
-      ) : (
-        iconContent
-      )}
+      ) : iconSection}
 
-      {/* Content - Right Side */}
-      <div className='flex-1 min-w-0'>
-        <p className='text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-0.5'>
+      <div className="flex-1 min-w-0 flex flex-col justify-center h-full py-0.5">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-(--text-tertiary) mb-1 opacity-80">
           {title}
         </p>
 
-        <div className='flex items-center gap-2'>
+        <div className="flex flex-col">
           {isLoading ? (
-            <div className='h-8 w-20 bg-zinc-100 dark:bg-zinc-800 rounded-lg animate-pulse mt-1' />
+            <div className="h-8 w-20 bg-(--bg-input) rounded-lg animate-pulse" />
           ) : (
-            <h4 className='text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-baseline leading-none'>
-              {typeof value === 'number' ? (
-                <AnimatedCounter 
-                  value={value} 
-                  fractionDigits={fractionDigits ?? (type === 'currency' ? 2 : 0)} 
-                  notation={value > 10000 ? 'compact' : 'standard'}
-                />
-              ) : (
-                displayValue
-              )}
-              {displaySymbol && (
-                <span className='text-sm font-medium text-gray-500 dark:text-gray-400 ms-1'>
-                  {displaySymbol}
-                </span>
-              )}
-              {valueSuffix && (
-                <span className='text-sm font-medium text-gray-500 dark:text-gray-400 ms-1'>
-                  {valueSuffix}
-                </span>
-              )}
-            </h4>
-          )}
-
-          {/* Badge Next to Number (Includes Trend Value + Label/SubValue) */}
-          {(trend || subValue) && (
-            <Tooltip
-              content={subValue || trendLabel}
-              className='min-w-0 shrink max-w-full'
-              tooltipClassName='font-bold uppercase tracking-wider'
-            >
-              <span
-                className={`flex items-center gap-1.5 px-1.5 rounded-lg border border-current bg-transparent text-[10px] font-bold uppercase tracking-wider leading-none h-[22px] min-w-0 max-w-full ${
-                  trend === 'up'
-                    ? 'text-emerald-700 dark:text-emerald-400'
-                    : trend === 'down'
-                      ? 'text-rose-700 dark:text-rose-400'
-                      : 'text-gray-400 dark:text-gray-500' // Neutral/SubValue
-                }`}
-              >
-                {trend && trend !== 'unchanged' && (
-                  <div className='flex items-center gap-1 shrink-0'>
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>
-                      {trend === 'up' ? 'trending_up' : 'trending_down'}
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2 group/val">
+                <h4 className="text-2xl font-bold text-(--text-primary) flex items-baseline leading-none">
+                  {typeof value === 'number' ? (
+                    <AnimatedCounter 
+                      value={value} 
+                      fractionDigits={fractionDigits ?? (type === 'currency' ? 2 : 0)} 
+                      notation={value > 10000 ? 'compact' : 'standard'}
+                    />
+                  ) : displayValue}
+                  {displaySymbol && (
+                    <span className="text-xs font-semibold text-(--text-tertiary) ms-1">
+                      {displaySymbol}
                     </span>
-                    <span>{trendValue}</span>
-                  </div>
-                )}
+                  )}
+                </h4>
+              </div>
 
-                {/* Small Text Inside Badge */}
-                {(trendLabel || subValue) && (
-                  <span
-                    className={`truncate min-w-0 ${trend && trend !== 'unchanged' ? 'opacity-80 ltr:border-l rtl:border-r border-current ltr:pl-1.5 rtl:pr-1.5' : ''}`}
-                  >
-                    {subValue || trendLabel}
-                  </span>
-                )}
-              </span>
-            </Tooltip>
+              {!isLoading && (subValue || trendLabel) && (
+                <Tooltip content={richTooltipContent} position="top" triggerClassName="w-fit">
+                  <div className="flex items-center gap-1.5 mt-1 group/footer cursor-help">
+                    <p className="text-[10px] text-(--text-tertiary) truncate max-w-[140px] font-medium transition-colors group-hover:text-(--text-secondary)">
+                      {subValue || trendLabel}
+                    </p>
+                    <span className="material-symbols-rounded text-zinc-400 select-none" style={{ fontSize: '14px' }}>
+                      help
+                    </span>
+                  </div>
+                </Tooltip>
+              )}
+            </div>
           )}
         </div>
       </div>
