@@ -759,117 +759,116 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
       )}
 
       {/* Details View Modal */}
-      {viewingSupplier && (
-        <Modal
-          isOpen={true}
-          onClose={() => setViewingSupplier(null)}
-          size='lg'
-          title={t.modal?.details || 'Supplier Details'}
-          icon='visibility'
-          tabs={[
-            { label: t.form?.companyInfo || 'Information', value: 'info', icon: 'business' },
-            { label: t.form?.contactInfo || 'Contact', value: 'contact', icon: 'person' },
-          ]}
-          activeTab={detailsTab}
-          onTabChange={setDetailsTab}
-          footer={
-            <div className='flex gap-3 w-full'>
-              <button
-                onClick={() => setViewingSupplier(null)}
-                className='flex-1 py-3 rounded-full font-bold bg-transparent text-gray-500 dark:text-gray-400 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-all flex items-center justify-center gap-2 outline-hidden'
-              >
-                <span className='material-symbols-rounded text-base'>close</span>
-                {t.suppliers?.modal?.close || t.global?.actions?.close || (language === 'AR' ? 'إغلاق' : 'Close')}
-              </button>
-              <button
-                onClick={() => {
-                  const s = viewingSupplier;
-                  setViewingSupplier(null);
-                  handleEdit(s);
-                }}
-                className='flex-1 py-3 rounded-full font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90 transition-opacity flex items-center justify-center gap-2 outline-hidden'
-              >
-                <span className='material-symbols-rounded text-base'>edit</span>
-                {t.suppliers?.modal?.edit?.split(' ')[0] || t.global?.actions?.edit || (language === 'AR' ? 'تعديل' : 'Edit')}
-              </button>
-            </div>
-          }
-        >
-          <div className='animate-fade-in'>
-            {detailsTab === 'info' ? (
-              <div className='space-y-6'>
-                {/* Main Info Section */}
-                <div>
-                  <p className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2 px-1 tracking-widest'>{t.form?.companyInfo || 'Company Information'}</p>
-                  <ListWrapper>
-                    {[
-                      { label: t.form?.id || 'ID', icon: 'tag', value: <span className='font-mono'>{viewingSupplier.supplierCode || viewingSupplier.id}</span> },
-                      { label: t.form?.companyName || 'Company Name', icon: 'business', value: <span className='font-bold'>{viewingSupplier.name}</span> },
-                      { label: t.headers?.governorate || 'Governorate', icon: 'map', value: (() => {
-                          const gov = GOVERNORATES.find(g => g.id === viewingSupplier.governorate);
-                          return gov ? (language === 'AR' ? gov.name_ar : gov.name_en) : (viewingSupplier.governorate || '-');
-                        })()
-                      },
-                      { label: t.headers?.city || 'City', icon: 'location_city', value: (() => {
-                          const city = CITIES.find(c => c.id === viewingSupplier.city);
-                          return city ? (language === 'AR' ? city.name_ar : city.name_en) : (viewingSupplier.city || '-');
-                        })()
-                      },
-                      { label: t.headers?.area || 'Area', icon: 'near_me', value: (() => {
-                          const area = AREAS.find(a => a.id === viewingSupplier.area);
-                          return area ? (language === 'AR' ? area.name_ar : area.name_en) : (viewingSupplier.area || '-');
-                        })()
-                      }
-                    ].map((item, i, arr) => (
-                      <ListItem key={i} index={i} total={arr.length}>
-                        <div className='flex items-center gap-2 shrink-0'>
-                          <span className='material-symbols-rounded text-base opacity-40'>{item.icon}</span>
-                          <span className='text-[9px] font-bold uppercase tracking-wider opacity-50'>{item.label}</span>
-                        </div>
-                        <div className='text-[12px] font-bold text-right pl-2'>{item.value}</div>
-                      </ListItem>
-                    ))}
-                  </ListWrapper>
-                </div>
+      {(() => {
+        if (!viewingSupplier) return null;
 
-                {/* Address Details */}
-                {viewingSupplier.address && (
-                  <div>
-                    <p className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2 px-1 tracking-widest'>{t.form?.address || 'Detailed Address'}</p>
-                    <div className='p-4 bg-gray-50/50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 rounded-2xl'>
-                      <p className='text-sm text-gray-700 dark:text-gray-200 leading-relaxed'>
-                        {viewingSupplier.address}
-                      </p>
-                    </div>
-                  </div>
-                )}
+        // Rule 2: Smart Memoization - Pre-calculate display values outside JSX
+        const locationNames = {
+          governorate: (() => {
+            const gov = GOVERNORATES.find(g => g.id === viewingSupplier.governorate);
+            return gov ? (language === 'AR' ? gov.name_ar : gov.name_en) : (viewingSupplier.governorate || '-');
+          })(),
+          city: (() => {
+            const city = CITIES.find(c => c.id === viewingSupplier.city);
+            return city ? (language === 'AR' ? city.name_ar : city.name_en) : (viewingSupplier.city || '-');
+          })(),
+          area: (() => {
+            const area = AREAS.find(a => a.id === viewingSupplier.area);
+            return area ? (language === 'AR' ? area.name_ar : area.name_en) : (viewingSupplier.area || '-');
+          })()
+        };
+
+        // Rule 7: Config-Driven UI - Define data structures as configs
+        const infoItems = [
+          { label: t.form?.id || 'ID', icon: 'tag', value: <span className='font-mono'>{viewingSupplier.supplierCode || viewingSupplier.id}</span> },
+          { label: t.form?.companyName || 'Company Name', icon: 'business', value: <span className='font-bold'>{viewingSupplier.name}</span> },
+          { label: t.headers?.governorate || 'Governorate', icon: 'map', value: locationNames.governorate },
+          { label: t.headers?.city || 'City', icon: 'location_city', value: locationNames.city },
+          { label: t.headers?.area || 'Area', icon: 'near_me', value: locationNames.area }
+        ];
+
+        const contactItems = [
+          { label: t.form?.contactPerson || 'Contact Person', icon: 'person', value: viewingSupplier.contactPerson },
+          { label: t.form?.phone || 'Phone', icon: 'call', value: <span dir='ltr' className='font-mono'>{viewingSupplier.phone}</span> },
+          { label: t.form?.email || 'Email', icon: 'mail', value: viewingSupplier.email }
+        ];
+
+        const activeItems = detailsTab === 'info' ? infoItems : contactItems;
+
+        return (
+          <Modal
+            isOpen={true}
+            onClose={() => setViewingSupplier(null)}
+            size='lg'
+            title={t.modal?.details || 'Supplier Details'}
+            icon='visibility'
+            tabs={[
+              { label: t.form?.companyInfo || 'Information', value: 'info', icon: 'business' },
+              { label: t.form?.contactInfo || 'Contact', value: 'contact', icon: 'person' },
+            ]}
+            activeTab={detailsTab}
+            onTabChange={setDetailsTab}
+            footer={
+              <div className='flex gap-3 w-full'>
+                <button
+                  onClick={() => setViewingSupplier(null)}
+                  className='flex-1 py-3 rounded-full font-bold bg-transparent text-gray-500 dark:text-gray-400 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-all flex items-center justify-center gap-2 outline-hidden'
+                >
+                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-base)' }}>close</span>
+                  {t.suppliers?.modal?.close || t.global?.actions?.close || (language === 'AR' ? 'إغلاق' : 'Close')}
+                </button>
+                <button
+                  onClick={() => {
+                    const s = viewingSupplier;
+                    setViewingSupplier(null);
+                    handleEdit(s);
+                  }}
+                  className='flex-1 py-3 rounded-full font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90 transition-opacity flex items-center justify-center gap-2 outline-hidden'
+                >
+                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-base)' }}>edit</span>
+                  {t.suppliers?.modal?.edit?.split(' ')[0] || t.global?.actions?.edit || (language === 'AR' ? 'تعديل' : 'Edit')}
+                </button>
               </div>
-            ) : (
-              <div className='space-y-6'>
-                {/* Contact Info Section */}
+            }
+          >
+            <div className='animate-fade-in space-y-6'>
+              <div>
+                <p className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2 px-1 tracking-widest'>
+                  {detailsTab === 'info' ? (t.form?.companyInfo || 'Company Information') : (t.form?.contactInfo || 'Contact Information')}
+                </p>
+                <ListWrapper>
+                  {activeItems.map((item, i, arr) => (
+                    <ListItem key={i} index={i} total={arr.length}>
+                      <div className='flex items-center gap-2 shrink-0'>
+                        {/* Rule 9: Precise Icon Styling */}
+                        <span 
+                          className='material-symbols-rounded opacity-40'
+                          style={{ fontSize: 'var(--icon-base)', lineHeight: 1 }}
+                        >
+                          {item.icon}
+                        </span>
+                        <span className='text-[9px] font-bold uppercase tracking-wider opacity-50'>{item.label}</span>
+                      </div>
+                      <div className='text-[12px] font-bold text-right pl-2'>{item.value}</div>
+                    </ListItem>
+                  ))}
+                </ListWrapper>
+              </div>
+
+              {detailsTab === 'info' && viewingSupplier.address && (
                 <div>
-                  <p className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2 px-1 tracking-widest'>{t.form?.contactInfo || 'Contact Information'}</p>
-                  <ListWrapper>
-                    {[
-                      { label: t.form?.contactPerson || 'Contact Person', icon: 'person', value: viewingSupplier.contactPerson },
-                      { label: t.form?.phone || 'Phone', icon: 'call', value: <span dir='ltr' className='font-mono'>{viewingSupplier.phone}</span> },
-                      { label: t.form?.email || 'Email', icon: 'mail', value: viewingSupplier.email }
-                    ].map((item, i, arr) => (
-                      <ListItem key={i} index={i} total={arr.length}>
-                        <div className='flex items-center gap-2 shrink-0'>
-                          <span className='material-symbols-rounded text-base opacity-40'>{item.icon}</span>
-                          <span className='text-[9px] font-bold uppercase tracking-wider opacity-50'>{item.label}</span>
-                        </div>
-                        <div className='text-[12px] font-bold text-right pl-2'>{item.value}</div>
-                      </ListItem>
-                    ))}
-                  </ListWrapper>
+                  <p className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2 px-1 tracking-widest'>{t.form?.address || 'Detailed Address'}</p>
+                  <div className='p-4 bg-gray-50/50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 rounded-2xl'>
+                    <p className='text-sm text-gray-700 dark:text-gray-200 leading-relaxed'>
+                      {viewingSupplier.address}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </Modal>
-      )}
+              )}
+            </div>
+          </Modal>
+        );
+      })()}
     </div>
   );
 };
