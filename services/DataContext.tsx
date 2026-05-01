@@ -348,10 +348,35 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
       )
       .subscribe();
 
+    // Subscribe to Purchases
+    const purchasesChannel = supabase
+      .channel(`purchases-realtime-${activeBranchId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'purchases',
+          filter: `branch_id=eq.${activeBranchId}`,
+        },
+        (payload: any) => {
+          console.log('Real-time Purchase Event:', payload);
+          
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const newPurchase = purchaseService.mapFromDb(payload.new);
+            setPurchasesState(prev => [newPurchase, ...prev.filter(p => p.id !== newPurchase.id)]);
+          } else if (payload.eventType === 'DELETE') {
+            setPurchasesState((prev) => prev.filter((p) => p.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(salesChannel);
       supabase.removeChannel(returnsChannel);
       supabase.removeChannel(drugsChannel);
+      supabase.removeChannel(purchasesChannel);
     };
   }, [activeBranchId]);
 

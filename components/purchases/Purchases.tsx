@@ -315,6 +315,26 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
     return `INV-${String(maxId + 1).padStart(6, '0')}`;
   });
+
+  // Live Sync: Update next ID when new purchases arrive via Realtime
+  useEffect(() => {
+    if (!purchases || purchases.length === 0) return;
+
+    const maxId = purchases.reduce((max, p) => {
+      const match = p.invoiceId?.match(/INV-(\d+)/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        return num > max ? num : max;
+      }
+      return max;
+    }, 0);
+
+    const nextId = `INV-${String(maxId + 1).padStart(6, '0')}`;
+    if (nextId !== invoiceId) {
+      setInvoiceId(nextId);
+    }
+  }, [purchases, invoiceId]);
+
   const externalInvoiceIdDir = useSmartDirection(
     externalInvoiceId,
     t.placeholders?.enterId || 'Enter ID'
