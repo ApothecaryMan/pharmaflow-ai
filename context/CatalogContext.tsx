@@ -7,7 +7,7 @@ import {
   getLastSyncTime,
   type DrugCatalogItem 
 } from '../services/search/catalogCache';
-import { CSV_INVENTORY } from '../data/sample-inventory';
+import { supabase } from '../lib/supabase';
 
 interface CatalogContextType {
   engine: DrugSearchEngine | null;
@@ -41,25 +41,12 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
           setTotalItems(cachedDrugs.length);
           setLastSync(syncTime);
           console.log(`[CatalogContext] Loaded ${cachedDrugs.length} items from IndexedDB.`);
-        } else {
-          // 2. Fallback to Sample Data if Cache is empty
-          console.log('[CatalogContext] Cache empty. Loading from sample data...');
-          const sampleData: DrugCatalogItem[] = CSV_INVENTORY.map(item => ({
-            id: item.id,
-            name: item.name,
-            nameAr: (item as any).nameArabic || item.nameAr,
-            barcode: item.barcode,
-            publicPrice: item.publicPrice,
-            category: item.category,
-            activeSubstance: item.genericName?.join(', '),
-            genericName: item.genericName,
-            updatedAt: new Date().toISOString()
-          }));
           
-          await saveCatalogToDB(db, sampleData);
-          engine.indexData(sampleData);
-          setTotalItems(sampleData.length);
-          setLastSync(new Date().toISOString());
+          // Background sync if it's been a while (optional)
+          syncWithSource();
+        } else {
+          // 2. First-time sync from Supabase
+          await syncWithSource();
         }
       } catch (error) {
         console.error('[CatalogContext] Initialization failed:', error);
@@ -72,27 +59,58 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [engine]);
 
   const syncWithSource = async () => {
-    // This will eventually call Supabase
-    // For now, it just re-syncs with Sample Data to show the pattern
-    setIsLoading(true);
     try {
       const db = await openCatalogDB();
-      const sampleData: DrugCatalogItem[] = CSV_INVENTORY.map(item => ({
-        id: item.id,
-        name: item.name,
-        nameAr: item.nameAr,
-        barcode: item.barcode,
-        publicPrice: item.publicPrice,
-        category: item.category,
-        activeSubstance: item.genericName?.join(', '),
-        genericName: item.genericName,
-        updatedAt: new Date().toISOString()
-      }));
+      const lastTime = await getLastSyncTime(db);
       
-      await saveCatalogToDB(db, sampleData);
-      engine.indexData(sampleData);
-      setTotalItems(sampleData.length);
-      setLastSync(new Date().toISOString());
+      console.log(`[CatalogContext] Syncing with Supabase (last sync: ${lastTime || 'never'})...`);
+      
+      let query = supabase.from('global_drugs').select('*');
+      
+      // Delta Sync Logic
+      if (lastTime) {
+        query = query.gt('updated_at', lastTime);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('[CatalogContext] Sync failed:', error.message);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const mappedData: DrugCatalogItem[] = data.map(item => ({
+          id: item.id,
+          name: item.name_en,
+          nameAr: item.name_ar || '',
+          barcode: item.barcode || '',
+          publicPrice: Number(item.public_price),
+          category: item.category || '',
+          activeSubstance: item.active_substance || '',
+          genericName: item.active_substance ? item.active_substance.split(',').map(s => s.trim()) : [],
+          updatedAt: item.updated_at
+        }));
+
+        await saveCatalogToDB(db, mappedData);
+        
+        // Reload EVERYTHING from local DB to ensure engine has the full set
+        const allItems = await loadCatalogFromDB(db);
+        engine.indexData(allItems);
+        setTotalItems(allItems.length);
+        
+        setLastSync(new Date().toISOString());
+        console.log(`[CatalogContext] Sync complete. ${data.length} new items added. Total: ${allItems.length}`);
+      } else {
+        console.log('[CatalogContext] Catalog is already up to date.');
+        const allItems = await loadCatalogFromDB(db);
+        if (totalItems !== allItems.length) {
+          engine.indexData(allItems);
+          setTotalItems(allItems.length);
+        }
+      }
+    } catch (err) {
+      console.error('[CatalogContext] Sync error:', err);
     } finally {
       setIsLoading(false);
     }

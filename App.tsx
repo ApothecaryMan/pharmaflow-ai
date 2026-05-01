@@ -17,7 +17,6 @@ import { UserRole } from './config/permissions';
 import { SecureGate } from './components/common/SecureGate';
 import { ROUTES } from './config/routes';
 import { LANGUAGES, THEMES, useSettings } from './context';
-import { CSV_INVENTORY } from './data/sample-inventory';
 // App State Hooks
 import { type AppState, useAppState } from './hooks/useAppState';
 import { type AuthState, useAuth } from './hooks/useAuth';
@@ -544,7 +543,6 @@ const App: React.FC = () => {
   // 10. Authenticated & Setup Done -> Show Secure Content wrapped in Providers
   return (
     <DataProvider 
-      initialInventory={import.meta.env.DEV ? CSV_INVENTORY : []} 
       initialSuppliers={import.meta.env.DEV ? INITIAL_SUPPLIERS : []}
     >
       <ShiftProvider>
