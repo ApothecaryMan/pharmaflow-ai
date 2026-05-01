@@ -677,6 +677,15 @@ export const TRANSLATIONS = {
       selectSupplier: 'Select Supplier',
       searchDrug: 'Search drug to buy...',
       emptyCart: 'No items in order',
+      tabs: {
+        newTab: 'New Purchase',
+        closeTab: 'Close Tab',
+        closeOthers: 'Close Others',
+        duplicateTab: 'Duplicate Tab',
+        pin: 'Pin Tab',
+        unpin: 'Unpin Tab',
+        rename: 'Rename Tab',
+      },
       // Stock filter options
       filters: {
         all: 'All',
@@ -743,6 +752,7 @@ export const TRANSLATIONS = {
         enterExpiry: 'Please enter an Expiry Date for',
         incompleteExpiry: 'Please enter a complete expiry date (4 digits: MMYY)',
         promptQuantity: 'Enter quantity:',
+        confirmCloseTab: 'This tab contains items. Are you sure you want to close it and move it to history?',
       },
       // Other labels
       unknown: 'Unknown',
@@ -3141,6 +3151,15 @@ export const TRANSLATIONS = {
       selectSupplier: 'اختر المورد',
       searchDrug: 'بحث عن دواء للشراء...',
       emptyCart: 'لا توجد عناصر',
+      tabs: {
+        newTab: 'شراء جديد',
+        closeTab: 'إغلاق التبويب',
+        closeOthers: 'إغلاق الآخرين',
+        duplicateTab: 'تكرار التبويب',
+        pin: 'تثبيت التبويب',
+        unpin: 'إلغاء التثبيت',
+        rename: 'إعادة التسمية',
+      },
       // Stock filter options
       filters: {
         all: 'الكل',
@@ -3210,6 +3229,7 @@ export const TRANSLATIONS = {
         enterExpiry: 'الرجاء إدخال تاريخ صلاحية لـ',
         incompleteExpiry: 'الرجاء إدخال تاريخ صلاحية كامل (4 أرقام: شهر سنة)',
         promptQuantity: 'أدخل الكمية:',
+        confirmCloseTab: 'هذا التبويب يحتوي على أصناف. هل أنت متأكد من رغبتك في إغلاقه ونقله إلى السجل؟',
       },
       // Other labels
       unknown: 'غير معروف',

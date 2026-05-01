@@ -8,7 +8,7 @@ const MAX_TABS = 10;
 
 const createNewTab = (index: number): PurchaseTab => ({
   id: idGenerator.generateSync('tabs'),
-  name: `Inv ${index}`,
+  name: `Purchase ${index}`,
   cart: [],
   supplierId: '',
   externalInvoiceId: '',
