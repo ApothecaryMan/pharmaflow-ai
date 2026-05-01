@@ -10,17 +10,19 @@ if (!rootElement) {
 }
 
 import { StatusBarProvider } from './components/layout/StatusBar';
-import { AlertProvider, SettingsProvider } from './context';
+import { AlertProvider, SettingsProvider, CatalogProvider } from './context';
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <SettingsProvider>
-      <StatusBarProvider>
-        <AlertProvider>
-          <App />
-        </AlertProvider>
-      </StatusBarProvider>
+      <CatalogProvider>
+        <StatusBarProvider>
+          <AlertProvider>
+            <App />
+          </AlertProvider>
+        </StatusBarProvider>
+      </CatalogProvider>
     </SettingsProvider>
   </React.StrictMode>
 );

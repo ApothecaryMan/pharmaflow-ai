@@ -1,10 +1,11 @@
-import React, { forwardRef, useMemo, useEffect, useState } from 'react';
+import React, { forwardRef, useEffect, useState } from 'react';
 import { SearchInput } from './SearchInput';
 import { useSettings } from '../../context/SettingsContext';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { Tooltip } from './Tooltip';
 import { DrugSearchEngine } from '../../services/search/DrugSearchEngine';
 import type { Drug } from '../../types';
+import { useCatalog } from '../../context/CatalogContext';
 
 interface SearchEngineInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   value: string;
@@ -45,7 +46,7 @@ export const SearchEngineInput = forwardRef<HTMLInputElement, SearchEngineInputP
       onSearchChange,
       onClear,
       resultsCount: externalResultsCount = 0,
-      isLoading = false,
+      isLoading: externalIsLoading = false,
       suggestions: externalSuggestions = [],
       onSuggestionAccept,
       inventory,
@@ -65,42 +66,44 @@ export const SearchEngineInput = forwardRef<HTMLInputElement, SearchEngineInputP
   ) => {
     const { language } = useSettings();
     const t = TRANSLATIONS[language];
+    const { engine, isLoading: catalogLoading } = useCatalog();
 
     // --- Internal Search Engine Logic ---
     const [internalSuggestions, setInternalSuggestions] = useState<string[]>([]);
     const [internalResultsCount, setInternalResultsCount] = useState(0);
 
-    // 1. Initialize Engine
-    const engine = useMemo(() => {
-      if (!inventory || inventory.length === 0) return null;
-      const e = new DrugSearchEngine();
-      // Map Drug to DrugCatalogItem expected by engine if necessary, 
-      // but they should be compatible enough for basic search.
-      e.indexData(inventory as any);
-      return e;
-    }, [inventory]);
-
-    // 2. Automated Search Effect
+    // Automated Search Effect
     useEffect(() => {
-      if (!engine || !inventory) return;
-
-      const results = engine.search(value, activeFilters);
+      // If we are using the internal global engine
+      if (engine && !inventory) {
+        const results = engine.search(value, activeFilters);
+        setInternalResultsCount(results.length);
+        onResultsChange?.(results);
+        
+        const topSuggestions = results
+          .slice(0, 5)
+          .map(d => d.name || '');
+        setInternalSuggestions(topSuggestions);
+      }
       
-      // Update Results Count
-      setInternalResultsCount(results.length);
-      onResultsChange?.(results);
-
-      // Update Suggestions
-      const topSuggestions = results
-        .slice(0, 5)
-        .map(d => d.name || '');
-      setInternalSuggestions(topSuggestions);
-
+      // If we are using a passed-in local inventory (backward compatibility)
+      if (inventory && inventory.length > 0) {
+        const localEngine = new DrugSearchEngine(inventory as any);
+        const results = localEngine.search(value, activeFilters);
+        setInternalResultsCount(results.length);
+        onResultsChange?.(results);
+        
+        const topSuggestions = results
+          .slice(0, 5)
+          .map(d => d.name || '');
+        setInternalSuggestions(topSuggestions);
+      }
     }, [value, engine, activeFilters, inventory, onResultsChange]);
 
     // Determine which data to use (Internal vs External)
-    const suggestions = inventory ? internalSuggestions : externalSuggestions;
-    const resultsCount = inventory ? internalResultsCount : externalResultsCount;
+    const suggestions = (inventory || engine) ? internalSuggestions : externalSuggestions;
+    const resultsCount = (inventory || engine) ? internalResultsCount : externalResultsCount;
+    const isLoading = externalIsLoading || catalogLoading;
 
     // Shortcuts Content for Tooltip - Theme Aware
     const shortcutsHint = (
