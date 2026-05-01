@@ -247,6 +247,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
       }
     }
   };
+  const [taxMode, setTaxMode] = useState<'exclusive' | 'inclusive'>('exclusive');
 
   // Smart direction for inputs
   const supplierSearchDir = useSmartDirection(
@@ -429,7 +430,11 @@ export const Purchases: React.FC<PurchasesProps> = ({
       prev.map((i) => {
         if (i.id !== itemId) return i;
 
+        // T3: Allow empty string to pass through for better typing UX
         const updatedItem = { ...i, [field]: value };
+        
+        // Convert to number for calculations, but keep string for display if empty
+        const numValue = value === '' ? 0 : (typeof value === 'number' ? value : parseFloat(value as string) || 0);
 
         // Auto-format expiry date: 1125 -> 2025-11-01 (ISO format)
         if (
@@ -443,29 +448,44 @@ export const Purchases: React.FC<PurchasesProps> = ({
           updatedItem.expiryDate = `20${year}-${month}`;
         }
 
-        // Interdependent Calculation Logic
+        // Interdependent Calculation Logic (Smart Sync Chain)
         if (field === 'discount') {
-          const disc = typeof value === 'number' ? value : 0;
-          updatedItem.costPrice = pricing.afterDiscount(i.publicPrice, disc);
-          // Tax percentage stays the same, just the calculated amount changes
-        } else if (field === 'costPrice') {
-          const cost = typeof value === 'number' ? value : 0;
+          updatedItem.costPrice = pricing.afterDiscount(i.publicPrice, numValue);
+          updatedItem.unitCostPrice = money.divide(updatedItem.costPrice, i.unitsPerPack || 1);
+        } 
+        else if (field === 'costPrice') {
           if (i.publicPrice > 0) {
-            updatedItem.discount = pricing.actualMargin(cost, i.publicPrice);
+            updatedItem.discount = pricing.actualMargin(numValue, i.publicPrice);
           }
-          // Tax percentage stays the same
-        } else if (field === 'publicPrice') {
-          const sale = typeof value === 'number' ? value : 0;
-          if (sale > 0 && i.costPrice >= 0) {
-            updatedItem.discount = pricing.actualMargin(i.costPrice, sale);
-          } else {
-            updatedItem.discount = 0;
+          updatedItem.unitCostPrice = money.divide(numValue, i.unitsPerPack || 1);
+        } 
+        else if (field === 'unitCostPrice') {
+          const newCost = money.multiply(numValue, i.unitsPerPack || 1, 0);
+          const currentCostFromThisUnit = money.divide(i.costPrice, i.unitsPerPack || 1);
+          if (!money.isEqual(currentCostFromThisUnit, numValue)) {
+            updatedItem.costPrice = newCost;
+            if (i.publicPrice > 0) {
+              updatedItem.discount = pricing.actualMargin(updatedItem.costPrice, i.publicPrice);
+            }
           }
-        } else if (field === 'quantity') {
-          // Tax percentage stays the same, calculated amount updates automatically
-        } else if (field === 'tax') {
-          // Manual tax percentage edit
-          updatedItem.tax = typeof value === 'number' ? value : 0;
+        }
+        else if (field === 'publicPrice') {
+          updatedItem.costPrice = pricing.afterDiscount(numValue, i.discount || 0);
+          updatedItem.unitPrice = money.divide(numValue, i.unitsPerPack || 1);
+          updatedItem.unitCostPrice = money.divide(updatedItem.costPrice, i.unitsPerPack || 1);
+        } 
+        else if (field === 'unitPrice') {
+          const newSale = money.multiply(numValue, i.unitsPerPack || 1, 0);
+          const currentSaleFromThisUnit = money.divide(i.publicPrice, i.unitsPerPack || 1);
+          if (!money.isEqual(currentSaleFromThisUnit, numValue)) {
+            updatedItem.publicPrice = newSale;
+            if (updatedItem.publicPrice > 0) {
+              updatedItem.discount = pricing.actualMargin(i.costPrice, updatedItem.publicPrice);
+            }
+          }
+        }
+        else if (field === 'tax') {
+          updatedItem.tax = numValue;
         }
 
         return updatedItem;
@@ -540,6 +560,14 @@ export const Purchases: React.FC<PurchasesProps> = ({
     // Get unique order ID (auto-increment if duplicate)
     const uniqueOrderId = getUniqueOrderId();
 
+    const taxResults = tax.multiRate(
+      cart.map((item) => ({
+        amount: money.multiply(item.costPrice, item.quantity, 0),
+        taxPct: item.tax || 0,
+      })),
+      taxMode
+    );
+
     const purchase: Purchase = {
       id: idGenerator.uuid(),
       branchId: activeBranchId,
@@ -547,11 +575,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
       supplierId: selectedSupplierId,
       supplierName: supplier?.name || 'Unknown',
       items: cart,
-      totalCost: cart.reduce((sum, i) => money.add(sum, money.multiply(i.costPrice, i.quantity, 0)), 0),
-      totalTax: cart.reduce((sum, i) => {
-        const lineTotal = money.multiply(i.costPrice, i.quantity, 0);
-        return money.add(sum, tax.exclusiveAmount(lineTotal, i.tax || 0));
-      }, 0),
+      totalCost: taxResults.total,
+      totalTax: taxResults.taxAmount,
       status: 'completed',
       invoiceId: uniqueOrderId,
       externalInvoiceId,
@@ -777,11 +802,16 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     header: t.headers?.stock || 'Stock',
                     width: 'w-[60px] shrink-0',
                     className: 'justify-center text-center text-gray-900 dark:text-gray-400',
-                    render: (drug: Drug) => (
-                      <div className='tabular-nums border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-0.5 rounded-lg shrink-0 min-w-[36px] text-center'>
-                        {drug.stock}
-                      </div>
-                    ),
+                    render: (drug: Drug) => {
+                      const packs = Math.floor(drug.stock / (drug.unitsPerPack || 1));
+                      const units = drug.stock % (drug.unitsPerPack || 1);
+                      return (
+                        <div className='tabular-nums border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-0.5 rounded-lg shrink-0 min-w-[36px] text-center font-bold'>
+                          {packs}
+                          {units > 0 && <span className='text-[8px] opacity-50 ml-0.5 text-blue-500'>{units}u</span>}
+                        </div>
+                      );
+                    },
                   },
                 ]}
                 isVisible={showSuggestions && !!search.trim()}
@@ -993,6 +1023,23 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     className='w-fit'
                   />
                 </div>
+
+                {/* Tax Mode Toggle */}
+                <div className='group relative'>
+                  <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
+                    {language === 'AR' ? 'نظام الضريبة' : 'Tax Mode'}
+                  </label>
+                  <SegmentedControl
+                    value={taxMode}
+                    onChange={(val) => setTaxMode(val as 'exclusive' | 'inclusive')}
+                    size='xs'
+                    options={[
+                      { label: language === 'AR' ? 'غير شامل' : 'Excl.', value: 'exclusive', activeColor: 'blue' },
+                      { label: language === 'AR' ? 'شامل' : 'Incl.', value: 'inclusive', activeColor: 'green' },
+                    ]}
+                    className='w-fit'
+                  />
+                </div>
               </div>
             </div>
 
@@ -1099,7 +1146,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       </div>
 
                       {/* 1. Qty */}
-                      <div className='w-12'>
+                      <div className='w-12 relative group/qty'>
                         <FloatingInput
                           inputRef={(el) => {
                             inputRefs.current[`${index}-quantity`] = el;
@@ -1124,6 +1171,11 @@ export const Purchases: React.FC<PurchasesProps> = ({
                             updateItem(item.id, 'quantity', parseFloat(val) || 0);
                           }}
                         />
+                        {item.unitsPerPack > 1 && (
+                          <div className='absolute -bottom-3 left-1/2 -translate-x-1/2 text-[8px] font-bold text-blue-500 whitespace-nowrap opacity-0 group-hover/qty:opacity-100 transition-opacity pointer-events-none'>
+                            x{item.unitsPerPack} u
+                          </div>
+                        )}
                       </div>
 
                       {/* 2. Expiry */}
@@ -1217,7 +1269,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                             inputRefs.current[`${index}-unitCostPrice`] = el;
                           }}
                           onKeyDown={(e) => handleInputKeyDown(e, index, 'unitCostPrice')}
-                          label={language === 'AR' ? 'ت. شريط' : 'U. Cost'}
+                          label={language === 'AR' ? 'ت. وحدة' : 'U. Cost'}
                           isLoading={isLoading}
                           type='number'
                           value={item.unitCostPrice || 0}
@@ -1298,7 +1350,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                             inputRefs.current[`${index}-unitPrice`] = el;
                           }}
                           onKeyDown={(e) => handleInputKeyDown(e, index, 'unitPrice')}
-                          label={language === 'AR' ? 'س. شريط' : 'U. Sale'}
+                          label={language === 'AR' ? 'س. وحدة' : 'U. Sale'}
                           isLoading={isLoading}
                           type='number'
                           value={item.unitPrice || 0}
@@ -1346,30 +1398,37 @@ export const Purchases: React.FC<PurchasesProps> = ({
                         />
                       </div>
 
-                      {/* 7. Subtotal (Cost × Qty) - Read Only */}
+                      {/* 7. Subtotal (Net Amount) - Read Only */}
                       <div className='w-16'>
                         <FloatingInput
                           label={t.cartFields?.subtotal || 'Subtotal'}
                           isLoading={isLoading}
                           type='number'
-                          value={money.multiply(item.costPrice, item.quantity, 2)}
+                          value={(() => {
+                            const lineTotal = money.multiply(item.costPrice, item.quantity, 0);
+                            if (taxMode === 'exclusive') return lineTotal;
+                            // Inclusive: Extract base from total
+                            return tax.inclusiveBase(lineTotal, item.tax || 0);
+                          })()}
                           onChange={() => {}} // Read only
                           labelBgClassName={
                             selectedCartIndex === index
                               ? `bg-primary-50 dark:bg-(--bg-navbar)`
                               : 'bg-gray-50 dark:bg-(--bg-navbar)'
                           }
-                          className='opacity-75 pointer-events-none' // Visual cue
+                          className='opacity-75 pointer-events-none cursor-default' // Visual cue
                         />
                       </div>
 
-                      {/* 8. Grand Total (Subtotal + Tax) - Read Only */}
+                      {/* 8. Grand Total (Gross Amount) - Read Only */}
                       <div className='w-[70px]'>
                         <FloatingInput
                           label={t.cartFields?.totalWithTax || 'Total+Tax'}
                           type='number'
                           value={(() => {
-                            const lineTotal = money.multiply(item.costPrice, item.quantity, 2);
+                            const lineTotal = money.multiply(item.costPrice, item.quantity, 0);
+                            if (taxMode === 'inclusive') return lineTotal;
+                            // Exclusive: Add tax to base
                             const taxAmount = tax.exclusiveAmount(lineTotal, item.tax || 0);
                             return money.add(lineTotal, taxAmount);
                           })()}
@@ -1380,7 +1439,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                               : 'bg-gray-50 dark:bg-(--bg-navbar)'
                           }
                           isLoading={isLoading}
-                          className='opacity-75 pointer-events-none' // Visual cue
+                          className='opacity-75 pointer-events-none cursor-default' // Visual cue
                         />
                       </div>
                     </div>
@@ -1403,10 +1462,10 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
                   {/* Discount */}
                   {(() => {
-                    const totalCost = cart.reduce((sum, i) => money.add(sum, pricing.lineTotal(i.costPrice, i.quantity, i.discount)), 0);
-                    const totalSale = cart.reduce((sum, i) => money.add(sum, money.multiply(i.publicPrice, i.quantity, 2)), 0);
+                    const totalCost = cart.reduce((sum, i) => money.add(sum, money.multiply(i.costPrice, i.quantity, 0)), 0);
+                    const totalSale = cart.reduce((sum, i) => money.add(sum, money.multiply(i.publicPrice, i.quantity, 0)), 0);
                     const totalDiscount = money.subtract(totalSale, totalCost);
-                    const discountPercent = pricing.actualMargin(totalCost, totalSale);
+                    const discountPercent = pricing.actualMarkup(totalCost, totalSale);
 
                     return (
                       <div className='flex items-center gap-2'>
@@ -1427,15 +1486,18 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
                   {/* Tax */}
                   {(() => {
-                    const totalTaxAmount = cart.reduce((sum, i) => {
-                      const lineTotal = pricing.lineTotal(i.costPrice, i.quantity, i.discount);
-                      return money.add(sum, money.multiply(lineTotal, i.tax || 0, 2));
-                    }, 0);
+                    const taxResults = tax.multiRate(
+                      cart.map((item) => ({
+                        amount: money.multiply(item.costPrice, item.quantity, 0),
+                        taxPct: item.tax || 0,
+                      })),
+                      taxMode
+                    );
                     return (
                       <div className='flex items-center gap-2'>
                         <span className='text-gray-400 font-medium'>{t.summary.tax || 'Tax'}</span>
                         <span className='font-medium text-orange-600'>
-                          {formatCurrency(totalTaxAmount)}
+                          {formatCurrency(taxResults.taxAmount)}
                         </span>
                       </div>
                     );
@@ -1450,16 +1512,18 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       {t.summary.totalCost}
                     </div>
                     {(() => {
-                      const subtotal = cart.reduce((sum, i) => money.add(sum, pricing.lineTotal(i.costPrice, i.quantity, i.discount)), 0);
-                      const totalTax = cart.reduce((sum, i) => {
-                        const lineTotal = pricing.lineTotal(i.costPrice, i.quantity, i.discount);
-                        return money.add(sum, money.multiply(lineTotal, i.tax || 0, 2));
-                      }, 0);
+                      const taxResults = tax.multiRate(
+                        cart.map((item) => ({
+                          amount: money.multiply(item.costPrice, item.quantity, 0),
+                          taxPct: item.tax || 0,
+                        })),
+                        taxMode
+                      );
                       return (
                         <div
                           className={`text-2xl font-black ${paymentMethod === 'cash' ? 'text-green-600' : 'text-primary-600'}`}
                         >
-                          {formatCurrency(money.add(subtotal, totalTax))}
+                          {formatCurrency(taxResults.total)}
                         </div>
                       );
                     })()}
