@@ -22,22 +22,16 @@ export const usePurchaseTabs = (activeBranchId: string) => {
   const activeTabKey = `${StorageKeys.PURCHASE_ACTIVE_TAB_ID}_${activeBranchId}`;
   const closedTabsKey = `${StorageKeys.PURCHASE_CLOSED_TABS}_${activeBranchId}`;
 
-  const [tabs, setTabs] = useState<PurchaseTab[]>(() => {
-    const saved = storage.get<PurchaseTab[]>(tabsKey, []);
-    return saved.length > 0 ? saved : [createNewTab(1)];
-  });
-
-  const [activeTabId, setActiveTabId] = useState<string>(() => {
-    const savedId = storage.get<string>(activeTabKey, '');
-    if (savedId && tabs.some((t) => t.id === savedId)) return savedId;
-    return tabs[0]?.id || '';
-  });
+  const [tabs, setTabs] = useState<PurchaseTab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string>('');
 
   const [closedTabs, setClosedTabs] = useState<PurchaseTab[]>(() => {
     return storage.get<PurchaseTab[]>(closedTabsKey, []);
   });
 
   useEffect(() => {
+    if (!activeBranchId) return;
+
     // 1. Check for legacy data (Migration)
     const legacyItemsKey = `purchases_cart_${activeBranchId}_items`;
     const legacySupplierKey = `purchases_cart_${activeBranchId}_supplier`;
@@ -46,7 +40,7 @@ export const usePurchaseTabs = (activeBranchId: string) => {
     let currentTabs = storage.get<PurchaseTab[]>(tabsKey, []);
 
     // 2. If legacy data exists and we don't have real tabs yet
-    if (legacyItems.length > 0 && currentTabs.length <= 1 && (currentTabs[0]?.cart.length === 0)) {
+    if (legacyItems.length > 0 && currentTabs.length === 0) {
       const legacySupplier = storage.get<string>(legacySupplierKey, '');
       
       const migratedTab: PurchaseTab = {
@@ -64,7 +58,6 @@ export const usePurchaseTabs = (activeBranchId: string) => {
       storage.remove(legacyItemsKey);
       storage.remove(legacySupplierKey);
       localStorage.removeItem(`purchases_cart_${activeBranchId}_selected`);
-      console.log('Successfully migrated legacy purchase data to new Tab system');
     } else {
       const savedTabs = storage.get<PurchaseTab[]>(tabsKey, []);
       const newTabs = savedTabs.length > 0 ? savedTabs : [createNewTab(1)];
@@ -102,16 +95,19 @@ export const usePurchaseTabs = (activeBranchId: string) => {
   }, [tabsKey, activeTabKey, closedTabsKey]);
 
   useEffect(() => {
+    if (!activeBranchId || tabs.length === 0) return;
     storage.set(tabsKey, tabs);
-  }, [tabs, tabsKey]);
+  }, [tabs, tabsKey, activeBranchId]);
 
   useEffect(() => {
+    if (!activeBranchId || !activeTabId) return;
     storage.set(activeTabKey, activeTabId);
-  }, [activeTabId, activeTabKey]);
+  }, [activeTabId, activeTabKey, activeBranchId]);
 
   useEffect(() => {
+    if (!activeBranchId) return;
     storage.set(closedTabsKey, closedTabs);
-  }, [closedTabs, closedTabsKey]);
+  }, [closedTabs, closedTabsKey, activeBranchId]);
 
   const addTab = useCallback(() => {
     if (tabs.length >= MAX_TABS) return;

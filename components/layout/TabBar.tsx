@@ -39,6 +39,7 @@ interface TabBarProps {
   maxTabs: number;
   color?: string;
   t: typeof TRANSLATIONS.EN.pos; // Strict translation prop
+  isLoading?: boolean;
 }
 
 interface SortableTabProps {
@@ -60,6 +61,7 @@ interface SortableTabProps {
   showMenu: (x: number, y: number, items: any[]) => void;
   onCloseOthers: (id: string) => void;
   t: typeof TRANSLATIONS.EN.pos;
+  isLoading?: boolean;
 }
 
 const SortableTab = ({
@@ -80,6 +82,7 @@ const SortableTab = ({
   showMenu,
   onCloseOthers,
   t,
+  isLoading,
 }: SortableTabProps) => {
   const { tooltipBlur } = useSettings();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -191,15 +194,17 @@ const SortableTab = ({
         onTabClick(tab.id);
       }}
     >
-      {/* Pin Indicator */}
-      {isPinned && (
+      {/* Pin or Loading Indicator */}
+      {isActive && isLoading ? (
+        <span className='w-4 h-4 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin shrink-0' />
+      ) : isPinned ? (
         <span
           className={`material-symbols-rounded ${isActive ? `text-primary-500` : 'text-gray-400'}`}
           style={{ fontSize: 'var(--icon-sm)' }}
         >
           push_pin
         </span>
-      )}
+      ) : null}
 
       {/* Tab Name or Input */}
       {editingTabId === tab.id ? (
@@ -320,6 +325,7 @@ export const TabBar: React.FC<TabBarProps> = ({
   maxTabs,
   color = 'blue',
   t,
+  isLoading,
 }) => {
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -399,6 +405,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                 showMenu={showMenu}
                 onCloseOthers={handleCloseOthers}
                 t={t}
+                isLoading={isLoading}
               />
             ))}
           </SortableContext>

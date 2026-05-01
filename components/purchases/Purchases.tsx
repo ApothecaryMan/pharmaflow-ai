@@ -111,11 +111,12 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const [supplierSearch, setSupplierSearch] = useState('');
 
   // Derived from active tab
-  const cart = activeTab.cart;
-  const selectedSupplierId = activeTab.supplierId;
-  const taxMode = activeTab.taxMode;
-  const paymentMethod = activeTab.paymentMethod;
-  const externalInvoiceId = activeTab.externalInvoiceId;
+  const cart = activeTab?.cart || [];
+  const selectedSupplierId = activeTab?.supplierId || '';
+  const taxMode = activeTab?.taxMode || 'exclusive';
+  const paymentMethod = activeTab?.paymentMethod || 'cash';
+  const externalInvoiceId = activeTab?.externalInvoiceId || '';
+
 
   const [selectedCartIndex, setSelectedCartIndex] = useState(-1);
   const [isSupplierOpen, setIsSupplierOpen] = useState(false);
@@ -123,19 +124,25 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [taxRate, setTaxRate] = useState(14); // Default 14%, loaded from settings
-  const [showPurchaseTabs, setShowPurchaseTabs] = useState(() => {
-    if (typeof window !== 'undefined' && activeBranchId) {
-      const saved = localStorage.getItem(`purchases_show_tabs_${activeBranchId}`);
-      return saved ? saved === 'true' : true;
+  const [showPurchaseTabs, setShowPurchaseTabs] = useState(false);
+
+  // Load initial preference and animate
+  useEffect(() => {
+    if (activeBranchId) {
+      const saved = storage.get<boolean>(`purchases_show_tabs_${activeBranchId}`, true);
+      if (saved) {
+        // Small delay to ensure layout is ready for animation
+        setTimeout(() => setShowPurchaseTabs(true), 100);
+      }
     }
-    return true;
-  });
+  }, [activeBranchId]);
 
   useEffect(() => {
     if (activeBranchId) {
-      localStorage.setItem(`purchases_show_tabs_${activeBranchId}`, showPurchaseTabs.toString());
+      storage.set(`purchases_show_tabs_${activeBranchId}`, showPurchaseTabs);
     }
   }, [showPurchaseTabs, activeBranchId]);
+
 
   // Sync helpers
   const setCart = (newCart: PurchaseItem[] | ((prev: PurchaseItem[]) => PurchaseItem[])) => {
@@ -1010,20 +1017,23 @@ export const Purchases: React.FC<PurchasesProps> = ({
         onToggleBottom={() => setShowPurchaseTabs(!showPurchaseTabs)}
         toggleTooltip={showPurchaseTabs ? 'Hide Tabs' : 'Show Tabs'}
         bottomContent={
-          <TabBar
-            tabs={tabs as any} // Cast to any to bypass strict SaleTab typing if needed, though they share the same structure
-            activeTabId={activeTabId}
-            onTabClick={switchTab}
-            onTabClose={handleRemoveTab}
-            onTabAdd={handleAddTab}
-            onTabRename={renameTab}
-            onTogglePin={togglePin}
-            onTabReorder={(newOrder) => reorderTabs(newOrder as any)}
-            onOpenClosedHistory={() => {}} // Can be implemented later if needed for purchases
-            maxTabs={maxTabs}
-            color={color}
-            t={t}
-          />
+          tabs.length > 0 && (
+            <TabBar
+              tabs={tabs as any}
+              activeTabId={activeTabId}
+              onTabClick={switchTab}
+              onTabClose={handleRemoveTab}
+              onTabAdd={handleAddTab}
+              onTabRename={renameTab}
+              onTogglePin={togglePin}
+              onTabReorder={(newOrder) => reorderTabs(newOrder as any)}
+              onOpenClosedHistory={() => {}}
+              maxTabs={maxTabs}
+              color={color}
+              t={t}
+              isLoading={isConfirming}
+            />
+          )
         }
       />
       
