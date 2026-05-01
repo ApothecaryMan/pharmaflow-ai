@@ -284,7 +284,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
           filter: `branch_id=eq.${activeBranchId}`,
         },
         (payload: any) => {
-          console.log('Real-time Sale Event:', payload);
+          if (import.meta.env.DEV) console.log('Real-time Sale Event:', payload);
           
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newSale = salesService.mapFromDb(payload.new);
@@ -295,7 +295,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
         }
       )
       .subscribe((status) => {
-        console.log(`Sales Subscription Status (${activeBranchId}):`, status);
+        if (import.meta.env.DEV) console.log(`Sales Subscription Status (${activeBranchId}):`, status);
       });
 
     // Subscribe to Returns
@@ -310,7 +310,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
           filter: `branch_id=eq.${activeBranchId}`,
         },
         (payload: any) => {
-          console.log('Real-time Return Event:', payload);
+          if (import.meta.env.DEV) console.log('Real-time Return Event:', payload);
           
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newReturn = returnService.mapFromDb(payload.new);
@@ -321,7 +321,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
         }
       )
       .subscribe((status) => {
-        console.log(`Returns Subscription Status (${activeBranchId}):`, status);
+        if (import.meta.env.DEV) console.log(`Returns Subscription Status (${activeBranchId}):`, status);
       });
 
     // Subscribe to Inventory (Drugs)
@@ -336,7 +336,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
           filter: `branch_id=eq.${activeBranchId}`,
         },
         (payload: any) => {
-          console.log('Real-time Drug Event:', payload);
+          if (import.meta.env.DEV) console.log('Real-time Drug Event:', payload);
           
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newDrug = inventoryService.mapFromDb(payload.new);
@@ -360,7 +360,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
           filter: `branch_id=eq.${activeBranchId}`,
         },
         (payload: any) => {
-          console.log('Real-time Purchase Event:', payload);
+          if (import.meta.env.DEV) console.log('Real-time Purchase Event:', payload);
           
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newPurchase = purchaseService.mapFromDb(payload.new);

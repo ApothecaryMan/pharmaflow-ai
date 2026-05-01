@@ -85,7 +85,7 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           filter: `branch_id=eq.${activeBranchId}` 
         },
         (payload: any) => {
-          console.log('[Shift Realtime] Shift Event:', payload);
+          if (import.meta.env.DEV) console.log('[Shift Realtime] Shift Event:', payload);
           
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newShift = cashService.mapFromDb(payload.new);
@@ -111,7 +111,7 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           filter: `branch_id=eq.${activeBranchId}`
         },
         (payload: any) => {
-          console.log('[Shift Realtime] Transaction Event:', payload);
+          if (import.meta.env.DEV) console.log('[Shift Realtime] Transaction Event:', payload);
           
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newTx = cashService.mapFromDbTransaction(payload.new);
@@ -136,7 +136,7 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
       )
       .subscribe((status) => {
-        console.log(`[Shift Realtime] Subscription Status (${activeBranchId}):`, status);
+        if (import.meta.env.DEV) console.log(`[Shift Realtime] Subscription Status (${activeBranchId}):`, status);
       });
 
     return () => {
