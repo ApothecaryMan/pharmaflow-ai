@@ -629,10 +629,9 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabel: 'Services & Pricing',
     menuLabelAr: 'الخدمات والأسعار',
     icon: 'sell',
-    category: 'settings',
-    requiredProps: ['color', 't', 'language'],
+    requiredProps: ['color', 't', 'language', 'onViewChange'],
     permission: 'settings.view',
-    layout: 'full-bleed',
+    layout: 'full-screen',
   },
 };
 

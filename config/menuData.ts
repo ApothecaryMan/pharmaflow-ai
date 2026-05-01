@@ -1076,7 +1076,6 @@ export const PHARMACY_MENU: MenuItem[] = [
         items: [
           { label: 'Organization Management', view: 'org-management', icon: 'corporate_fare' },
           { label: 'Branch Management', view: 'branch-management', icon: 'store' },
-          { label: 'Services & Pricing', view: 'services', icon: 'sell' },
           { label: 'Business Hours', icon: 'schedule' },
           { label: 'Currency Settings', icon: 'attach_money' },
           { label: 'Date/Time Format', icon: 'calendar_today' },

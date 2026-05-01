@@ -39,7 +39,7 @@ interface MainLayoutProps {
   isRecoveringPassword?: boolean;
 }
 
-const STANDALONE_VIEWS = [ROUTES.LOGIN];
+const STANDALONE_VIEWS = [ROUTES.LOGIN, 'services'];
 
 import { useContextMenu } from '../common/ContextMenu';
 

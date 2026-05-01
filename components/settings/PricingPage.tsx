@@ -187,9 +187,10 @@ interface PricingPageProps {
   color?: string;
   t?: any;
   language?: string;
+  onViewChange?: (view: string) => void;
 }
 
-export const PricingPage: React.FC<PricingPageProps> = () => {
+export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange }) => {
   const [isAnnual, setIsAnnual] = useState(false);
 
   const getPrice = (monthly: number) => {
@@ -234,6 +235,16 @@ export const PricingPage: React.FC<PricingPageProps> = () => {
       <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;500;700;800&display=swap" rel="stylesheet" />
       <style>{styles}</style>
       <div className='zn-root' dir="ltr">
+        {/* Simple Back Arrow */}
+        <button 
+          onClick={() => onViewChange?.('org-management')}
+          className="fixed top-10 left-10 z-50 flex items-center justify-center transition-opacity hover:opacity-60"
+        >
+          <span className="material-symbols-rounded text-[var(--zn-text)]" style={{ fontSize: '36px' }}>
+            arrow_back
+          </span>
+        </button>
+
         {/* Header */}
         <div className='zn-header'>
           <p className='zn-brand'>Zinc Pharmacy OS — Pricing</p>

@@ -1,6 +1,8 @@
 import React from 'react';
 import type { Branch } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { formatDistanceToNow } from 'date-fns';
+import { arEG, enUS } from 'date-fns/locale';
 
 interface BranchMasterMonitorProps {
   branches: Branch[];
@@ -17,16 +19,47 @@ const BranchRow: React.FC<{
   isLoading?: boolean;
 }> = ({ branch, language, color, isLoading }) => {
   const isActive = branch?.status === 'active';
+  const [copied, setCopied] = React.useState(false);
+
+  const handleCopy = (text?: string) => {
+    if (!text) return;
+    
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    } else {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      textArea.style.top = "0";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }
+      } catch (err) {
+        console.error('Fallback: Oops, unable to copy', err);
+      }
+      document.body.removeChild(textArea);
+    }
+  };
   
   return (
-    <div className={`flex items-center justify-between p-4 border-b border-zinc-100 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors ${isLoading ? 'animate-pulse' : ''}`}>
+    <div className={`flex items-center justify-between py-2.5 px-4 border-b border-border last:border-0 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20 transition-colors ${isLoading ? 'animate-pulse' : ''}`}>
       <div className="flex items-center gap-4">
         <div 
-          className="w-10 h-10 rounded-xl flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+          className="w-10 h-10 rounded-xl flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 shrink-0"
         >
           {isLoading ? null : <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-lg)' }}>store</span>}
         </div>
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {isLoading ? (
             <>
               <div className="h-4 w-24 bg-zinc-100 dark:bg-zinc-800 rounded" />
@@ -34,10 +67,24 @@ const BranchRow: React.FC<{
             </>
           ) : (
             <>
-              <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm">{branch?.name}</h4>
-              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
-                {branch?.code}
-              </span>
+              <div className="flex items-center gap-2">
+                <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm">{branch?.name}</h4>
+                <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
+                  {branch?.code}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 text-zinc-400">
+                <span className="text-[10px] font-mono opacity-80">{branch?.id}</span>
+                <button 
+                  onClick={() => handleCopy(branch?.id)}
+                  className="w-6 h-6 flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors group shrink-0"
+                  title={language === 'ar' ? 'نسخ المعرف' : 'Copy ID'}
+                >
+                  <span className="material-symbols-rounded opacity-50 group-hover:opacity-100" style={{ fontSize: '16px' }}>
+                    {copied ? 'check' : 'content_copy'}
+                  </span>
+                </button>
+              </div>
             </>
           )}
         </div>
@@ -59,11 +106,14 @@ const BranchRow: React.FC<{
               </span>
             </div>
             
-            {/* Last Sync */}
+            {/* Creation Time */}
             <div className="flex items-center gap-2 text-zinc-400">
-              <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-base)' }}>schedule</span>
+              <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-base)' }}>calendar_today</span>
               <span className="text-xs font-medium whitespace-nowrap">
-                {language === 'ar' ? 'منذ 5 د' : '5m ago'}
+                {branch?.createdAt ? formatDistanceToNow(new Date(branch.createdAt), { 
+                  addSuffix: true, 
+                  locale: language === 'ar' ? arEG : enUS 
+                }) : (language === 'ar' ? 'غير متوفر' : 'N/A')}
               </span>
             </div>
           </>

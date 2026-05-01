@@ -11,9 +11,11 @@ import { useData } from '../../services/DataContext';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { HelpButton, HelpModal } from '../common/HelpModal';
 import { ORG_MANAGEMENT_HELP } from '../../i18n/helpInstructions';
+import { useSettings } from '../../context';
 import { PageHeader } from '../common/PageHeader';
 import { permissionsService } from '../../services/auth/permissions';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
+import { UpgradeTunnelTransition } from './UpgradeTunnelTransition';
 
 interface OrganizationManagementPageProps {
   activeOrgId: string;
@@ -28,12 +30,17 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
   color = 'primary',
   onViewChange
 }) => {
+  const { darkMode } = useSettings();
   const [data, setData] = useState<OrgData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { currentEmployee } = useData();
   const [showHelp, setShowHelp] = useState(false);
   const [activeMatrixTab, setActiveMatrixTab] = useState<'managers' | 'staff'>('managers');
+  
+  // Upgrade Transition State
+  const [showUpgradeTransition, setShowUpgradeTransition] = useState(false);
+  const [upgradeTriggerRect, setUpgradeTriggerRect] = useState<DOMRect | null>(null);
 
   const t = TRANSLATIONS[language].orgManagement;
   const normalizedLang = language.toLowerCase() as 'en' | 'ar';
@@ -105,10 +112,8 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
             options={availableTabs}
             value="org-management"
             onChange={(val) => onViewChange?.(val as any)}
-            color={color}
             size="md"
             iconSize="--icon-lg"
-            variant="onPage"
             shape="pill"
             className="w-full sm:w-[480px]"
             useGraphicFont={true}
@@ -154,6 +159,10 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
             language={normalizedLang} 
             color={color}
             isLoading={isLoading}
+            onUpgrade={(rect) => {
+              setUpgradeTriggerRect(rect);
+              setShowUpgradeTransition(true);
+            }}
           />
         </div>
 
@@ -184,7 +193,6 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
                 ]}
                 value={activeMatrixTab}
                 onChange={(val) => setActiveMatrixTab(val as any)}
-                color={color}
                 iconSize="--icon-sm"
               />
             </div>
@@ -215,6 +223,20 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
           helpContent={ORG_MANAGEMENT_HELP[language] as any}
           color={color}
           language={language}
+        />
+
+        <UpgradeTunnelTransition 
+          isOpen={showUpgradeTransition}
+          triggerRect={upgradeTriggerRect}
+          language={normalizedLang}
+          darkMode={darkMode}
+          onComplete={() => {
+            // Give it a bit more time to show the tunnel before actually switching
+            setTimeout(() => {
+              onViewChange?.('services');
+              setShowUpgradeTransition(false);
+            }, 3000);
+          }}
         />
       </div>
     </div>
