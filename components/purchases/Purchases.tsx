@@ -777,7 +777,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     <div className='h-full flex flex-col gap-2 animate-fade-in overflow-hidden'>
       {/* Header with toggle */}
       <PageHeader
-        mb="mb-3"
+        mb="mb-0"
         leftContent={
           <div className='relative w-48 xl:w-120' ref={searchRef}>
             <SearchInput
@@ -1003,7 +1003,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
         }
       />
       
-      <div className='flex flex-col gap-3 h-full overflow-hidden'>
+      <div className='flex flex-col gap-1.5 h-full overflow-hidden'>
           {/* BOTTOM: Order Cart */}
           <div className={`flex-1 ${CARD_BASE} p-5 pb-0 rounded-3xl flex flex-col overflow-hidden`}>
             <div className='flex justify-between items-center mb-4 gap-4'>
