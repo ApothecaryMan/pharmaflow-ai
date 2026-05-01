@@ -200,41 +200,87 @@ layer(base);
   }
 }
 
-@utility custom-scrollbar {
-  scrollbar-width: auto;
-  scrollbar-color: var(--color-gray-400) transparent;
-  .dark & {
-    scrollbar-color: var(--color-gray-600) transparent;
+@layer base {
+  /* --- Global Scrollbar System --- */
+  * {
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--color-gray-300) transparent !important;
   }
 
-  &::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+  .dark * {
+    scrollbar-color: var(--color-gray-600) transparent !important;
   }
 
-  &::-webkit-scrollbar-track {
-    background: transparent;
+  /* Global Webkit Scrollbars (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 8px !important;
+    height: 8px !important;
+    display: block !important;
   }
 
-  &::-webkit-scrollbar-thumb {
-    @apply bg-gray-400 dark:bg-gray-600;
-    border-radius: 20px;
-    border: 2px solid transparent;
-    background-clip: content-box;
+  ::-webkit-scrollbar-track {
+    background: transparent !important;
   }
 
-  &::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-500 dark:bg-gray-500;
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-gray-300) !important;
+    border-radius: 20px !important;
+    border: 2px solid transparent !important;
+    background-clip: content-box !important;
   }
 
-  &::-webkit-scrollbar-button {
-    display: none;
+  .dark ::-webkit-scrollbar-thumb {
+    background-color: var(--color-gray-600) !important;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-gray-400) !important;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-gray-500) !important;
+  }
+
+  /* Force stable gutters on internal scrollable containers only (exclude main window) */
+  :not(html):not(body).overflow-y-auto,
+  :not(html):not(body).overflow-y-scroll,
+  :not(html):not(body).overflow-auto,
+  :not(html):not(body)[class*="overflow-y-auto"],
+  :not(html):not(body)[class*="overflow-y-scroll"] {
+    scrollbar-gutter: stable !important;
   }
 }
 
-@utility dark {
-  & .custom-scrollbar {
-    scrollbar-color: var(--color-gray-700) transparent;
+@utility custom-scrollbar {
+  scrollbar-width: thin !important;
+  scrollbar-color: var(--color-gray-400) transparent !important;
+  scrollbar-gutter: stable !important;
+
+  &::-webkit-scrollbar {
+    width: 8px !important;
+    height: 8px !important;
+    display: block !important;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-gray-400) !important;
+    border-radius: 20px !important;
+  }
+}
+
+@utility scrollbar-hide {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  &::-webkit-scrollbar {
+    display: none !important;
+  }
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  &::-webkit-scrollbar {
+    display: none !important;
   }
 }
 
@@ -321,7 +367,7 @@ layer(base);
   body {
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
-    scrollbar-gutter: stable;
+    scrollbar-gutter: auto; /* Return to default for the main window */
   }
 
   /* Scroll Lock for Mobile Drawer/Modals */
