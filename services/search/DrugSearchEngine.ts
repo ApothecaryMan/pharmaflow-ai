@@ -48,17 +48,20 @@ export class DrugSearchEngine {
     const term = query.trim().toLowerCase();
     if (!term) return [];
 
-    // 1. O(1) Barcode Lookup (Priority 1)
+    // --- Filtered Pool (Base for all search modes) ---
+    const pool = this.getFilteredPool(filters);
+
+    // 1. O(1) Barcode Lookup (Priority 1) - Must exist in filtered pool
     const idByBarcode = this.barcodeMap.get(term);
     if (idByBarcode) {
-      const match = this.idMap.get(idByBarcode);
-      return match ? [match] : [];
+      const match = pool.find(d => d.id === idByBarcode);
+      if (match) return [match];
     }
 
     // 2. Specialized Shortcut: @ (Scientific/Ingredient Search)
     if (term.startsWith('@')) {
       const ingredientQuery = term.slice(1).trim();
-      return this.searchByIngredient(ingredientQuery);
+      return this.searchByIngredient(ingredientQuery, filters);
     }
 
     // 3. Specialized Shortcut: Price Range (e.g., 10/50/panadol)
@@ -79,7 +82,7 @@ export class DrugSearchEngine {
 
     const [first, ...rest] = words;
 
-    // --- Optimization: Pre-filter Pool based on Category ---
+    // --- Optimization: Pre-filter Pool based on Category/Stock ---
     let pool = this.getFilteredPool(filters);
 
     // --- Main Filtering ---
@@ -122,10 +125,12 @@ export class DrugSearchEngine {
     .slice(0, 50);
   }
 
-  private searchByIngredient(query: string): DrugCatalogItem[] {
+  private searchByIngredient(query: string, filters?: any): DrugCatalogItem[] {
     if (!query) return [];
     const q = query.toLowerCase();
-    return this.drugs.filter(d => {
+    const pool = this.getFilteredPool(filters);
+
+    return pool.filter(d => {
       const substance = (d as any).activeSubstance?.toLowerCase() || '';
       const generic = Array.isArray((d as any).genericName) 
         ? (d as any).genericName.join(' ').toLowerCase() 
@@ -162,13 +167,34 @@ export class DrugSearchEngine {
   private getFilteredPool(filters?: any): DrugCatalogItem[] {
     let pool = this.drugs;
 
-    // 1. Category Filter
-    if (filters?.category && filters.category.length > 0) {
-      const targetCat = filters.category[0].toLowerCase();
-      pool = pool.filter(d => d.category?.toLowerCase() === targetCat);
+    // 1. Branch Filter
+    if (filters?.branchId) {
+      pool = pool.filter(d => (d as any).branchId === filters.branchId);
     }
 
-    // 2. Price Filter (if applicable)
+    // 2. Category Filter
+    if (filters?.category && filters.category.length > 0) {
+      const targetCats = filters.category.map((c: string) => c.toLowerCase());
+      if (!targetCats.includes('all')) {
+        pool = pool.filter(d => d.category && targetCats.includes(d.category.toLowerCase()));
+      }
+    }
+
+    // 3. Stock Status Filter
+    if (filters?.stock_status && filters.stock_status.length > 0) {
+      const status = filters.stock_status;
+      if (!status.includes('all')) {
+        pool = pool.filter(d => {
+          const s = (d as any).stock || 0;
+          if (status.includes('in_stock') && status.includes('out_of_stock')) return true;
+          if (status.includes('in_stock')) return s > 0;
+          if (status.includes('out_of_stock')) return s <= 0;
+          return true;
+        });
+      }
+    }
+
+    // 4. Price Filter (if applicable)
     if (filters?.priceRange) {
       const { min, max } = filters.priceRange;
       pool = pool.filter(d => d.publicPrice >= min && d.publicPrice <= max);

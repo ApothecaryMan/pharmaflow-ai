@@ -68,7 +68,10 @@ class StockMovementServiceImpl
     if (m.status) db.status = m.status;
     if (m.reviewedBy) db.reviewed_by = m.reviewedBy;
     if (m.reviewedAt) db.reviewed_at = m.reviewedAt;
-    if (m.expiryDate) db.expiry_date = m.expiryDate;
+    if (m.expiryDate) {
+      if (m.expiryDate.length === 7 && /^\d{4}-\d{2}$/.test(m.expiryDate)) db.expiry_date = `${m.expiryDate}-01`;
+      else db.expiry_date = m.expiryDate;
+    }
     if (m.publicPrice !== undefined) db.public_price_snapshot = m.publicPrice;
     if (m.unitPrice !== undefined) db.unit_price_snapshot = m.unitPrice;
     if (m.costPrice !== undefined) db.cost_price_snapshot = m.costPrice;

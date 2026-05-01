@@ -242,10 +242,17 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
       const currentStock = await batchService.getTotalStock(item.drugId);
       const unitsToAdd = stockOps.resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack);
 
+      let expiryDate = item.expiryDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+      
+      // Normalize partial dates (YYYY-MM) to full dates (YYYY-MM-DD) for Postgres
+      if (expiryDate && expiryDate.length === 7 && expiryDate.includes('-')) {
+        expiryDate = `${expiryDate}-01`;
+      }
+
       const batch = await batchService.createBatch({
         drugId: item.drugId,
         quantity: unitsToAdd,
-        expiryDate: item.expiryDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        expiryDate: expiryDate,
         costPrice: item.costPrice,
         purchaseId: purchase.id,
         dateReceived: new Date().toISOString(),
@@ -289,12 +296,17 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
       const earliestExpiry = await batchService.getEarliestExpiry(item.drugId, branchId);
       const globalWAC = await batchService.calculateGlobalWAC(item.drugId, branchId);
       
+      // Normalize for second loop
+      const normalizedExpiry = item.expiryDate && item.expiryDate.length === 7 && item.expiryDate.includes('-') 
+        ? `${item.expiryDate}-01` 
+        : item.expiryDate;
+
       await inventoryService.update(item.drugId, {
         publicPrice: item.publicPrice,
         unitPrice: item.unitPrice,
         costPrice: globalWAC || item.costPrice,
         unitCostPrice: globalWAC ? money.divide(globalWAC, item.unitsPerPack || 1) : item.unitCostPrice,
-        expiryDate: earliestExpiry || item.expiryDate,
+        expiryDate: earliestExpiry || normalizedExpiry,
       });
     }
   }

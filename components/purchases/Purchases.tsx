@@ -1748,7 +1748,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     const totalCost = cart.reduce((sum, i) => money.add(sum, money.multiply(i.costPrice, i.quantity, 0)), 0);
                     const totalSale = cart.reduce((sum, i) => money.add(sum, money.multiply(i.publicPrice, i.quantity, 0)), 0);
                     const totalDiscount = money.subtract(totalSale, totalCost);
-                    const discountPercent = pricing.actualMarkup(totalCost, totalSale);
+                    const discountPercent = pricing.actualMargin(totalCost, totalSale);
 
                     return (
                       <div className='flex items-center gap-2'>

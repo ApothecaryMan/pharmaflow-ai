@@ -93,6 +93,14 @@ self.onmessage = (e: MessageEvent) => {
       return true;
     });
 
+    // Calculate total count based on unique groups (Name + Dosage Form)
+    // matching how POS.tsx groups results for the table.
+    const uniqueGroups = new Set();
+    for (const d of results) {
+      uniqueGroups.add(`${d.name}|${d.dosageForm || ''}`);
+    }
+    const totalCount = uniqueGroups.size;
+    
     // Sort results to prioritize prefix matches and shorter names
     const sorted = results.sort((a, b) => {
       const aName = (a.name || '').toLowerCase();
@@ -109,6 +117,6 @@ self.onmessage = (e: MessageEvent) => {
       return aName.length - bName.length;
     }).slice(0, 50);
 
-    self.postMessage({ type: 'FILTER_RESULT', results: sorted });
+    self.postMessage({ type: 'FILTER_RESULT', results: sorted, totalCount });
   }
 };

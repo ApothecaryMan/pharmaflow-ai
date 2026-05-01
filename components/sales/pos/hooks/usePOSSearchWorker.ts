@@ -19,6 +19,7 @@ export const usePOSSearchWorker = ({
 }: UsePOSSearchWorkerProps) => {
   const workerRef = useRef<Worker | null>(null);
   const [filteredDrugs, setFilteredDrugs] = useState<Drug[]>([]);
+  const [totalResults, setTotalResults] = useState(0);
 
   // Initialize worker once
   useEffect(() => {
@@ -26,6 +27,7 @@ export const usePOSSearchWorker = ({
     workerRef.current.onmessage = (e: MessageEvent) => {
       if (e.data.type === 'FILTER_RESULT') {
         setFilteredDrugs(e.data.results);
+        setTotalResults(e.data.totalCount || 0);
       }
     };
 
@@ -71,5 +73,5 @@ export const usePOSSearchWorker = ({
     return () => clearTimeout(timer);
   }, [search, selectedCategory, stockFilter, activeBranchId]);
 
-  return { filteredDrugs };
+  return { filteredDrugs, totalResults };
 };

@@ -312,10 +312,10 @@ export const Inventory: React.FC<InventoryProps> = ({
   const filteredInventory = useMemo(() => {
     if (searchTerm) {
       const searchEngine = new DrugSearchEngine(baseFilteredInventory as any);
-      return searchEngine.search(searchTerm) as Drug[];
+      return searchEngine.search(searchTerm, activeFilters) as Drug[];
     }
     return baseFilteredInventory;
-  }, [baseFilteredInventory, searchTerm]);
+  }, [baseFilteredInventory, searchTerm, activeFilters]);
 
 
   const groupedInventory = useMemo(() => {

@@ -45,7 +45,7 @@ export const SearchEngineInput = forwardRef<HTMLInputElement, SearchEngineInputP
       value,
       onSearchChange,
       onClear,
-      resultsCount: externalResultsCount = 0,
+      resultsCount: externalResultsCount,
       isLoading: externalIsLoading = false,
       suggestions: externalSuggestions = [],
       onSuggestionAccept,
@@ -102,7 +102,13 @@ export const SearchEngineInput = forwardRef<HTMLInputElement, SearchEngineInputP
 
     // Determine which data to use (Internal vs External)
     const suggestions = (inventory || engine) ? internalSuggestions : externalSuggestions;
-    const resultsCount = (inventory || engine) ? internalResultsCount : externalResultsCount;
+    
+    // PRIORITY: If an explicit resultsCount is passed via props (externalResultsCount), use it.
+    // Otherwise, fallback to internal engine count if available.
+    const resultsCount = (externalResultsCount !== undefined) 
+      ? externalResultsCount 
+      : ((inventory || engine) ? internalResultsCount : externalResultsCount);
+    
     const isLoading = externalIsLoading || catalogLoading;
 
     // Shortcuts Content for Tooltip - Theme Aware
