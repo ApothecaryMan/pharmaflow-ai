@@ -825,6 +825,7 @@ export const MENU_TRANSLATIONS = {
 
     // Settings
     'Company Profile': 'ملف الشركة',
+    'Organization Management': 'إدارة الشركة',
     'Branch Management': 'إدارة الفروع',
     'Services & Pricing': 'الخدمات والأسعار',
     'Business Hours': 'ساعات العمل',

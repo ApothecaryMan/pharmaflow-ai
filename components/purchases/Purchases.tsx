@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import type React from 'react';
+import React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStatusBar } from '../../components/layout/StatusBar';
@@ -40,6 +40,24 @@ import { TanStackTable } from '../common/TanStackTable';
 import { PageHeader } from '../common/PageHeader';
 import { TabBar } from '../../components/layout/TabBar';
 import { usePurchaseTabs } from '../../hooks/usePurchaseTabs';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
 
 interface PurchasesProps {
   inventory: Drug[];
@@ -58,6 +76,410 @@ interface PurchasesProps {
   currentShift: Shift | null;
   isLoading?: boolean;
 }
+
+interface SortableCartItemProps {
+  item: PurchaseItem;
+  index: number;
+  selectedCartIndex: number;
+  setSelectedCartIndex: (index: number) => void;
+  removeItem: (id: string) => void;
+  updateItem: (id: string, field: keyof PurchaseItem, value: any) => void;
+  showMenu: any;
+  t: any;
+  isLoading: boolean;
+  textTransform: 'uppercase' | 'normal';
+  language: string;
+  focusedInput: { id: string; field: string } | null;
+  setFocusedInput: (val: { id: string; field: string } | null) => void;
+  inputRefs: any;
+  handleInputKeyDown: any;
+  money: any;
+  tax: any;
+  taxMode: 'exclusive' | 'inclusive';
+}
+
+const SortableCartItem = React.memo(({
+  item,
+  index,
+  selectedCartIndex,
+  setSelectedCartIndex,
+  removeItem,
+  updateItem,
+  showMenu,
+  t,
+  isLoading,
+  textTransform,
+  language,
+  focusedInput,
+  setFocusedInput,
+  inputRefs,
+  handleInputKeyDown,
+  money,
+  tax,
+  taxMode,
+}: SortableCartItemProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  const lineTotal = money.multiply(item.costPrice, item.quantity, 0);
+  const calculatedSubtotal = taxMode === 'exclusive' 
+    ? lineTotal 
+    : tax.inclusiveBase(lineTotal, item.tax ?? 14);
+  const calculatedTotal = taxMode === 'inclusive' 
+    ? lineTotal 
+    : money.add(lineTotal, tax.exclusiveAmount(lineTotal, item.tax ?? 14));
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      dir='ltr'
+      onClick={() => setSelectedCartIndex(index)}
+      className={`p-3 rounded-2xl relative group pr-2 type-functional cursor-pointer border border-transparent ${
+        selectedCartIndex === index
+          ? `bg-primary-50 dark:bg-(--bg-navbar) border-primary-100 dark:border-primary-900/30`
+          : 'bg-gray-50 dark:bg-(--bg-navbar) hover:bg-gray-100 dark:hover:bg-(--bg-surface-neutral)'
+      } ${isDragging ? 'z-50 bg-white dark:bg-gray-800 border-primary-500/50' : ''}`}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        showMenu(e.clientX, e.clientY, [
+          {
+            label: t.actions.viewDetails,
+            icon: 'visibility',
+            action: () =>
+              alert(
+                `Details for ${item.name}\nQuantity: ${item.quantity}\nCost Price: ${item.costPrice}`
+              ),
+          },
+          {
+            label: t.actions.editQty,
+            icon: 'edit',
+            action: () => {
+              const qty = prompt('Enter quantity:', item.quantity.toString());
+              if (qty) updateItem(item.id, 'quantity', parseFloat(qty) || 1);
+            },
+          },
+          { separator: true },
+          {
+            label: t.contextMenu?.removeItem || 'Remove Item',
+            icon: 'delete',
+            action: () => removeItem(item.id),
+            danger: true,
+          },
+        ]);
+      }}
+    >
+      {/* Drag Handle */}
+      <div 
+        {...attributes} 
+        {...listeners}
+        className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-40 hover:!opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-1 z-20"
+      >
+        <span className="material-symbols-rounded text-lg">drag_indicator</span>
+      </div>
+
+      <button
+        onClick={() => removeItem(item.id)}
+        className='absolute top-1/2 -translate-y-1/2 right-0 w-6 h-full flex items-center justify-center text-gray-400 hover:text-red-500 z-10 opacity-0 group-hover:opacity-100 transition-opacity rounded-r-2xl'
+      >
+        <span className='material-symbols-rounded text-lg'>close</span>
+      </button>
+
+      {/* Single Row: Name + All Inputs */}
+      <div className='flex gap-1.5 items-center pe-4 ps-5'>
+        {/* Product Name */}
+        <div className='flex-1 min-w-0'>
+          <p className='font-bold text-md drug-name truncate mb-1' title={item.name}>
+            {getDisplayName(item, textTransform)}
+          </p>
+        </div>
+
+        {/* 1. Qty */}
+        <div className='w-12 relative group/qty'>
+          <FloatingInput
+            inputRef={(el) => {
+              inputRefs.current[`${index}-quantity`] = el;
+            }}
+            onKeyDown={(e) => handleInputKeyDown(e, index, 'quantity')}
+            label={t.cartFields?.qty || 'Qty'}
+            isLoading={isLoading}
+            type='number'
+            maxLength={4}
+            value={item.quantity}
+            labelBgClassName={
+              selectedCartIndex === index
+                ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                : 'bg-gray-50 dark:bg-(--bg-navbar)'
+            }
+            onFocus={(e) => {
+              setSelectedCartIndex(index);
+              e.target.select();
+            }}
+            onChange={(e) => {
+              const val = e.target.value.slice(0, 4);
+              updateItem(item.id, 'quantity', parseFloat(val) || 0);
+            }}
+          />
+          {item.unitsPerPack > 1 && (
+            <div className='absolute -bottom-3 left-1/2 -translate-x-1/2 text-[8px] font-bold text-blue-500 whitespace-nowrap opacity-0 group-hover/qty:opacity-100 transition-opacity pointer-events-none'>
+              x{item.unitsPerPack} u
+            </div>
+          )}
+        </div>
+
+        {/* 2. Expiry */}
+        <div className='w-[74px]'>
+          <FloatingInput
+            inputRef={(el) => {
+              inputRefs.current[`${index}-expiryDate`] = el;
+            }}
+            onKeyDown={(e) => handleInputKeyDown(e, index, 'expiryDate')}
+            label={t.cartFields?.expiry || 'Expiry'}
+            isLoading={isLoading}
+            type='text'
+            maxLength={4}
+            inputClassName={(() => {
+              const isFocused =
+                focusedInput?.id === item.id &&
+                focusedInput?.field === 'expiryDate';
+              const status = checkExpiryStatus(item.expiryDate || '', {
+                checkIncomplete: !isFocused,
+              });
+              return getExpiryStatusStyle(status, 'input');
+            })()}
+            labelBgClassName={
+              selectedCartIndex === index
+                ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                : 'bg-gray-50 dark:bg-(--bg-navbar)'
+            }
+            value={
+              focusedInput?.id === item.id && focusedInput?.field === 'expiryDate'
+                ? (item.expiryDate?.includes('-') ? item.expiryDate.split('-')[1] + item.expiryDate.split('-')[0].slice(2) : item.expiryDate)
+                : formatExpiryDate(item.expiryDate || '')
+            }
+            onFocus={(e) => {
+              setSelectedCartIndex(index);
+              setFocusedInput({ id: item.id, field: 'expiryDate' });
+              setTimeout(() => e.target.select(), 10);
+            }}
+            onBlur={() => {
+              setFocusedInput(null);
+              // Alert if expiry date is incomplete (1-3 digits)
+              const status = checkExpiryStatus(item.expiryDate || '');
+              if (status === 'incomplete') {
+                alert(
+                  t.alerts?.incompleteExpiry ||
+                    'Please enter a complete expiry date (4 digits: MMYY)'
+                );
+              }
+            }}
+            onChange={(e) => {
+              const sanitized = sanitizeExpiryInput(
+                e.target.value,
+                item.expiryDate || ''
+              );
+              if (sanitized !== null) {
+                updateItem(item.id, 'expiryDate', sanitized);
+              }
+            }}
+          />
+        </div>
+
+        {/* 3. Cost */}
+        <div className='w-14'>
+          <FloatingInput
+            inputRef={(el) => {
+              inputRefs.current[`${index}-costPrice`] = el;
+            }}
+            onKeyDown={(e) => handleInputKeyDown(e, index, 'costPrice')}
+            label={t.cartFields?.cost || 'Cost'}
+            isLoading={isLoading}
+            type='number'
+            value={item.costPrice}
+            labelBgClassName={
+              selectedCartIndex === index
+                ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                : 'bg-gray-50 dark:bg-(--bg-navbar)'
+            }
+            onFocus={(e) => {
+              setSelectedCartIndex(index);
+              e.target.select();
+            }}
+            onChange={(e) =>
+              updateItem(item.id, 'costPrice', parseFloat(e.target.value) || 0)
+            }
+          />
+        </div>
+
+        {/* 3b. Unit Cost */}
+        <div className='w-14'>
+          <FloatingInput
+            inputRef={(el) => {
+              inputRefs.current[`${index}-unitCostPrice`] = el;
+            }}
+            onKeyDown={(e) => handleInputKeyDown(e, index, 'unitCostPrice')}
+            label={language === 'AR' ? 'ت. وحدة' : 'U. Cost'}
+            isLoading={isLoading}
+            type='number'
+            value={item.unitCostPrice || 0}
+            placeholder={item.costPrice && item.unitsPerPack ? money.divide(item.costPrice, item.unitsPerPack).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
+            labelBgClassName={
+              selectedCartIndex === index
+                ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                : 'bg-gray-50 dark:bg-(--bg-navbar)'
+            }
+            onFocus={(e) => {
+              setSelectedCartIndex(index);
+              e.target.select();
+            }}
+            onChange={(e) =>
+              updateItem(item.id, 'unitCostPrice', parseFloat(e.target.value) || 0)
+            }
+          />
+        </div>
+
+        {/* 4. Discount */}
+        <div className='w-14'>
+          <FloatingInput
+            inputRef={(el) => {
+              inputRefs.current[`${index}-discount`] = el;
+            }}
+            onKeyDown={(e) => handleInputKeyDown(e, index, 'discount')}
+            label={t.cartFields?.discount || 'Disc %'}
+            isLoading={isLoading}
+            type='number'
+            min={0}
+            max={100}
+            value={item.discount || 0}
+            labelBgClassName={
+              selectedCartIndex === index
+                ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                : 'bg-gray-50 dark:bg-(--bg-navbar)'
+            }
+            onFocus={(e) => {
+              setSelectedCartIndex(index);
+              e.target.select();
+            }}
+            onChange={(e) =>
+              updateItem(item.id, 'discount', parseFloat(e.target.value) || 0)
+            }
+          />
+        </div>
+
+        {/* 5. Sale Price */}
+        <div className='w-14'>
+          <FloatingInput
+            inputRef={(el) => {
+              inputRefs.current[`${index}-publicPrice`] = el;
+            }}
+            onKeyDown={(e) => handleInputKeyDown(e, index, 'publicPrice')}
+            label={t.cartFields?.sale || 'Sale'}
+            isLoading={isLoading}
+            type='number'
+            value={item.publicPrice || 0}
+            labelBgClassName={
+              selectedCartIndex === index
+                ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                : 'bg-gray-50 dark:bg-(--bg-navbar)'
+            }
+            onFocus={(e) => {
+              setSelectedCartIndex(index);
+              e.target.select();
+            }}
+            onChange={(e) =>
+              updateItem(item.id, 'publicPrice', parseFloat(e.target.value) || 0)
+            }
+          />
+        </div>
+
+        {/* 5b. Unit Sale */}
+        <div className='w-14'>
+          <FloatingInput
+            inputRef={(el) => {
+              inputRefs.current[`${index}-unitPrice`] = el;
+            }}
+            onKeyDown={(e) => handleInputKeyDown(e, index, 'unitPrice')}
+            label={language === 'AR' ? 'س. وحدة' : 'U. Sale'}
+            isLoading={isLoading}
+            type='number'
+            value={item.unitPrice || 0}
+            placeholder={item.publicPrice && item.unitsPerPack ? money.divide(item.publicPrice, item.unitsPerPack).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
+            labelBgClassName={
+              selectedCartIndex === index
+                ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                : 'bg-gray-50 dark:bg-(--bg-navbar)'
+            }
+            onFocus={(e) => {
+              setSelectedCartIndex(index);
+              e.target.select();
+            }}
+            onChange={(e) =>
+              updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)
+            }
+          />
+        </div>
+
+        {/* 6. Tax % */}
+        <div className='w-12'>
+          <FloatingInput
+            inputRef={(el) => {
+              inputRefs.current[`${index}-tax`] = el;
+            }}
+            onKeyDown={(e) => handleInputKeyDown(e, index, 'tax')}
+            label={t.cartFields?.tax || 'Tax %'}
+            isLoading={isLoading}
+            type='number'
+            value={item.tax ?? 14}
+            labelBgClassName={
+              selectedCartIndex === index
+                ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                : 'bg-gray-50 dark:bg-(--bg-navbar)'
+            }
+            onFocus={(e) => {
+              setSelectedCartIndex(index);
+              e.target.select();
+            }}
+            onChange={(e) =>
+              updateItem(item.id, 'tax', parseFloat(e.target.value) || 0)
+            }
+          />
+        </div>
+
+        {/* 7. Subtotal */}
+        <div className='w-16 flex flex-col items-center gap-0.5'>
+          <span className='text-[8px] text-gray-400 uppercase font-bold leading-none'>
+            {t.headers?.subtotal || 'Subtotal'}
+          </span>
+          <div className='tabular-nums text-[13px] font-black text-(--text-primary)'>
+            {calculatedSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+        </div>
+
+        {/* 8. Total */}
+        <div className='w-16 flex flex-col items-center gap-0.5'>
+          <span className='text-[8px] text-primary-500 uppercase font-bold leading-none'>
+            {t.headers?.totalPlusTax || 'Total+Tax'}
+          </span>
+          <div className='tabular-nums text-[13px] font-black text-primary-600 dark:text-primary-400'>
+            {calculatedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 export const Purchases: React.FC<PurchasesProps> = ({
   inventory,
@@ -272,6 +694,34 @@ export const Purchases: React.FC<PurchasesProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, // Reduced distance for better responsiveness
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    // Get fresh cart from activeTab directly to ensure we have current state
+    const currentActiveTab = tabs.find(t => t.id === activeTabId);
+    const currentCart = currentActiveTab?.cart || [];
+
+    const oldIndex = currentCart.findIndex((item) => item.id === active.id);
+    const newIndex = currentCart.findIndex((item) => item.id === over.id);
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const newCart = arrayMove(currentCart, oldIndex, newIndex);
+      updateTab(activeTabId, { cart: newCart });
+    }
+  };
 
   const handleInputKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
@@ -1190,30 +1640,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
             </div>
 
             <div
-              className={`flex-1 space-y-1.5 mb-4 cart-scroll pe-3 ${cart.length > 0 ? 'overflow-y-auto' : 'overflow-hidden'}`}
-              style={{
-                scrollbarWidth: 'thin',
-                scrollbarColor: 'rgba(156, 163, 175, 0.6) transparent',
-              }}
+              className={`flex-1 space-y-1.5 mb-4 custom-scrollbar pe-3 ${cart.length > 0 ? 'overflow-y-auto' : 'overflow-hidden'}`}
             >
-              <style>{`
-                         .cart-scroll::-webkit-scrollbar {
-                             width: 2px;
-                             background: transparent;
-                         }
-                         .cart-scroll::-webkit-scrollbar-track {
-                             background: transparent;
-                             border: none;
-                             box-shadow: none;
-                         }
-                         .cart-scroll::-webkit-scrollbar-thumb {
-                             background: rgba(156, 163, 175, 0.6);
-                             border-radius: 9999px;
-                         }
-                         .cart-scroll::-webkit-scrollbar-corner {
-                             background: transparent;
-                         }
-                     `}</style>
+
               {isLoading && cart.length === 0 ? (
                 <div className="space-y-2">
                   {[1, 2, 3, 4].map((i) => (
@@ -1235,362 +1664,40 @@ export const Purchases: React.FC<PurchasesProps> = ({
               ) : cart.length === 0 ? (
                 <div className='text-center text-gray-400 py-10'>{t.emptyCart}</div>
               ) : (
-                cart.map((item, index) => (
-                  <div
-                    key={item.id}
-                    dir='ltr'
-                    onClick={() => setSelectedCartIndex(index)}
-                    className={`p-3 rounded-2xl relative group pr-2 type-functional cursor-pointer transition-all ${
-                      selectedCartIndex === index
-                        ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                        : 'bg-gray-50 dark:bg-(--bg-navbar) hover:bg-gray-100 dark:hover:bg-(--bg-surface-neutral)'
-                    }`}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      showMenu(e.clientX, e.clientY, [
-                        {
-                          label: t.actions.viewDetails,
-                          icon: 'visibility',
-                          action: () =>
-                            alert(
-                              `Details for ${item.name}\nQuantity: ${item.quantity}\nCost Price: ${item.costPrice}`
-                            ),
-                        },
-                        {
-                          label: t.actions.editQty,
-                          icon: 'edit',
-                          action: () => {
-                            const qty = prompt('Enter quantity:', item.quantity.toString());
-                            if (qty) updateItem(item.id, 'quantity', parseFloat(qty) || 1);
-                          },
-                        },
-                        { separator: true },
-                        {
-                          label: t.contextMenu?.removeItem || 'Remove Item',
-                          icon: 'delete',
-                          action: () => removeItem(item.id),
-                          danger: true,
-                        },
-                      ]);
-                    }}
-                  >
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className='absolute top-1/2 -translate-y-1/2 right-0 w-6 h-full flex items-center justify-center text-gray-400 hover:text-red-500 z-10 opacity-0 group-hover:opacity-100 transition-opacity rounded-r-2xl'
-                    >
-                      <span className='material-symbols-rounded text-lg'>close</span>
-                    </button>
-
-                    {/* Single Row: Name + All Inputs */}
-                    <div className='flex gap-1.5 items-center pe-4'>
-                      {/* Product Name */}
-                      <div className='flex-1 min-w-0'>
-                        <p className='font-bold text-md drug-name truncate mb-1' title={item.name}>
-                          {getDisplayName(item, textTransform)}
-                        </p>
-                      </div>
-
-                      {/* 1. Qty */}
-                      <div className='w-12 relative group/qty'>
-                        <FloatingInput
-                          inputRef={(el) => {
-                            inputRefs.current[`${index}-quantity`] = el;
-                          }}
-                          onKeyDown={(e) => handleInputKeyDown(e, index, 'quantity')}
-                          label={t.cartFields?.qty || 'Qty'}
-                          isLoading={isLoading}
-                          type='number'
-                          maxLength={4}
-                          value={item.quantity}
-                          labelBgClassName={
-                            selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
-                          }
-                          onFocus={(e) => {
-                            setSelectedCartIndex(index);
-                            e.target.select();
-                          }}
-                          onChange={(e) => {
-                            const val = e.target.value.slice(0, 4);
-                            updateItem(item.id, 'quantity', parseFloat(val) || 0);
-                          }}
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                  modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
+                >
+                  <SortableContext items={cart.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-1.5">
+                      {cart.map((item, index) => (
+                        <SortableCartItem
+                          key={item.id}
+                          item={item}
+                          index={index}
+                          selectedCartIndex={selectedCartIndex}
+                          setSelectedCartIndex={setSelectedCartIndex}
+                          removeItem={removeItem}
+                          updateItem={updateItem}
+                          showMenu={showMenu}
+                          t={t}
+                          isLoading={!!isLoading}
+                          textTransform={textTransform}
+                          language={language}
+                          focusedInput={focusedInput}
+                          setFocusedInput={setFocusedInput}
+                          inputRefs={inputRefs}
+                          handleInputKeyDown={handleInputKeyDown}
+                          money={money}
+                          tax={tax}
+                          taxMode={taxMode}
                         />
-                        {item.unitsPerPack > 1 && (
-                          <div className='absolute -bottom-3 left-1/2 -translate-x-1/2 text-[8px] font-bold text-blue-500 whitespace-nowrap opacity-0 group-hover/qty:opacity-100 transition-opacity pointer-events-none'>
-                            x{item.unitsPerPack} u
-                          </div>
-                        )}
-                      </div>
-
-                      {/* 2. Expiry */}
-                      <div className='w-[74px]'>
-                        <FloatingInput
-                          inputRef={(el) => {
-                            inputRefs.current[`${index}-expiryDate`] = el;
-                          }}
-                          onKeyDown={(e) => handleInputKeyDown(e, index, 'expiryDate')}
-                          label={t.cartFields?.expiry || 'Expiry'}
-                          isLoading={isLoading}
-                          type='text'
-                          maxLength={4}
-                          inputClassName={(() => {
-                            const isFocused =
-                              focusedInput?.id === item.id &&
-                              focusedInput?.field === 'expiryDate';
-                            const status = checkExpiryStatus(item.expiryDate || '', {
-                              checkIncomplete: !isFocused,
-                            });
-                            return getExpiryStatusStyle(status, 'input');
-                          })()}
-                          labelBgClassName={
-                            selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
-                          }
-                          value={
-                            focusedInput?.id === item.id && focusedInput?.field === 'expiryDate'
-                              ? (item.expiryDate?.includes('-') ? item.expiryDate.split('-')[1] + item.expiryDate.split('-')[0].slice(2) : item.expiryDate)
-                              : formatExpiryDate(item.expiryDate || '')
-                          }
-                          onFocus={(e) => {
-                            setSelectedCartIndex(index);
-                            setFocusedInput({ id: item.id, field: 'expiryDate' });
-                            setTimeout(() => e.target.select(), 10);
-                          }}
-                          onBlur={() => {
-                            setFocusedInput(null);
-                            // Alert if expiry date is incomplete (1-3 digits)
-                            const status = checkExpiryStatus(item.expiryDate || '');
-                            if (status === 'incomplete') {
-                              alert(
-                                t.alerts?.incompleteExpiry ||
-                                  'Please enter a complete expiry date (4 digits: MMYY)'
-                              );
-                            }
-                          }}
-                          onChange={(e) => {
-                            const sanitized = sanitizeExpiryInput(
-                              e.target.value,
-                              item.expiryDate || ''
-                            );
-                            if (sanitized !== null) {
-                              updateItem(item.id, 'expiryDate', sanitized);
-                            }
-                          }}
-                        />
-                      </div>
-
-                      {/* 3. Cost */}
-                      <div className='w-14'>
-                        <FloatingInput
-                          inputRef={(el) => {
-                            inputRefs.current[`${index}-costPrice`] = el;
-                          }}
-                          onKeyDown={(e) => handleInputKeyDown(e, index, 'costPrice')}
-                          label={t.cartFields?.cost || 'Cost'}
-                          isLoading={isLoading}
-                          type='number'
-                          value={item.costPrice}
-                          labelBgClassName={
-                            selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
-                          }
-                          onFocus={(e) => {
-                            setSelectedCartIndex(index);
-                            e.target.select();
-                          }}
-                          onChange={(e) =>
-                            updateItem(item.id, 'costPrice', parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </div>
-
-                      {/* 3b. Unit Cost */}
-                      <div className='w-14'>
-                        <FloatingInput
-                          inputRef={(el) => {
-                            inputRefs.current[`${index}-unitCostPrice`] = el;
-                          }}
-                          onKeyDown={(e) => handleInputKeyDown(e, index, 'unitCostPrice')}
-                          label={language === 'AR' ? 'ت. وحدة' : 'U. Cost'}
-                          isLoading={isLoading}
-                          type='number'
-                          value={item.unitCostPrice || 0}
-                          placeholder={item.costPrice && item.unitsPerPack ? money.divide(item.costPrice, item.unitsPerPack).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
-                          labelBgClassName={
-                            selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
-                          }
-                          onFocus={(e) => {
-                            setSelectedCartIndex(index);
-                            e.target.select();
-                          }}
-                          onChange={(e) =>
-                            updateItem(item.id, 'unitCostPrice', parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </div>
-
-                      {/* 4. Discount */}
-                      <div className='w-14'>
-                        <FloatingInput
-                          inputRef={(el) => {
-                            inputRefs.current[`${index}-discount`] = el;
-                          }}
-                          onKeyDown={(e) => handleInputKeyDown(e, index, 'discount')}
-                          label={t.cartFields?.discount || 'Disc %'}
-                          isLoading={isLoading}
-                          type='number'
-                          min={0}
-                          max={100}
-                          value={item.discount || 0}
-                          labelBgClassName={
-                            selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
-                          }
-                          onFocus={(e) => {
-                            setSelectedCartIndex(index);
-                            e.target.select();
-                          }}
-                          onChange={(e) =>
-                            updateItem(item.id, 'discount', parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </div>
-
-                      {/* 5. Sale Price */}
-                      <div className='w-14'>
-                        <FloatingInput
-                          inputRef={(el) => {
-                            inputRefs.current[`${index}-publicPrice`] = el;
-                          }}
-                          onKeyDown={(e) => handleInputKeyDown(e, index, 'publicPrice')}
-                          label={t.cartFields?.sale || 'Sale'}
-                          isLoading={isLoading}
-                          type='number'
-                          value={item.publicPrice || 0}
-                          labelBgClassName={
-                            selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
-                          }
-                          onFocus={(e) => {
-                            setSelectedCartIndex(index);
-                            e.target.select();
-                          }}
-                          onChange={(e) =>
-                            updateItem(item.id, 'publicPrice', parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </div>
-
-                      {/* 5b. Unit Sale Price */}
-                      <div className='w-14'>
-                        <FloatingInput
-                          inputRef={(el) => {
-                            inputRefs.current[`${index}-unitPrice`] = el;
-                          }}
-                          onKeyDown={(e) => handleInputKeyDown(e, index, 'unitPrice')}
-                          label={language === 'AR' ? 'س. وحدة' : 'U. Sale'}
-                          isLoading={isLoading}
-                          type='number'
-                          value={item.unitPrice || 0}
-                          placeholder={item.publicPrice && item.unitsPerPack ? money.divide(item.publicPrice, item.unitsPerPack).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
-                          labelBgClassName={
-                            selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
-                          }
-                          onFocus={(e) => {
-                            setSelectedCartIndex(index);
-                            e.target.select();
-                          }}
-                          onChange={(e) =>
-                            updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </div>
-
-                      {/* 6. Tax % */}
-                      <div className='w-14'>
-                        <FloatingInput
-                          inputRef={(el) => {
-                            inputRefs.current[`${index}-tax`] = el;
-                          }}
-                          onKeyDown={(e) => handleInputKeyDown(e, index, 'tax')}
-                          label={t.cartFields?.tax || 'Tax %'}
-                          isLoading={isLoading}
-                          type='number'
-                          min={0}
-                          max={100}
-                          value={item.tax || 0}
-                          labelBgClassName={
-                            selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
-                          }
-                          onFocus={(e) => {
-                            setSelectedCartIndex(index);
-                            e.target.select();
-                          }}
-                          onChange={(e) =>
-                            updateItem(item.id, 'tax', parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </div>
-
-                      {/* 7. Subtotal (Net Amount) - Read Only */}
-                      <div className='w-16'>
-                        <FloatingInput
-                          label={t.cartFields?.subtotal || 'Subtotal'}
-                          isLoading={isLoading}
-                          type='number'
-                          value={(() => {
-                            const lineTotal = money.multiply(item.costPrice, item.quantity, 0);
-                            if (taxMode === 'exclusive') return lineTotal;
-                            // Inclusive: Extract base from total
-                            return tax.inclusiveBase(lineTotal, item.tax || 0);
-                          })()}
-                          onChange={() => {}} // Read only
-                          labelBgClassName={
-                            selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
-                          }
-                          className='opacity-75 pointer-events-none cursor-default' // Visual cue
-                        />
-                      </div>
-
-                      {/* 8. Grand Total (Gross Amount) - Read Only */}
-                      <div className='w-[70px]'>
-                        <FloatingInput
-                          label={t.cartFields?.totalWithTax || 'Total+Tax'}
-                          type='number'
-                          value={(() => {
-                            const lineTotal = money.multiply(item.costPrice, item.quantity, 0);
-                            if (taxMode === 'inclusive') return lineTotal;
-                            // Exclusive: Add tax to base
-                            const taxAmount = tax.exclusiveAmount(lineTotal, item.tax || 0);
-                            return money.add(lineTotal, taxAmount);
-                          })()}
-                          onChange={() => {}} // Read only
-                          labelBgClassName={
-                            selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
-                          }
-                          isLoading={isLoading}
-                          className='opacity-75 pointer-events-none cursor-default' // Visual cue
-                        />
-                      </div>
+                      ))}
                     </div>
-                  </div>
-                ))
+                  </SortableContext>
+                </DndContext>
               )}
             </div>
 
