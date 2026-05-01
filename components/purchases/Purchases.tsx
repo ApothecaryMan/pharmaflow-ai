@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import { permissionsService } from '../../services/auth/permissions';
 import { useAlert, useSettings } from '../../context';
@@ -37,6 +38,7 @@ import { useSmartDirection } from '../common/SmartInputs';
 import { FilterPill, type FilterConfig } from '../common/FilterPill';
 import { TanStackTable } from '../common/TanStackTable';
 import { PageHeader } from '../common/PageHeader';
+import { TabBar } from '../../components/layout/TabBar';
 import { usePurchaseTabs } from '../../hooks/usePurchaseTabs';
 
 interface PurchasesProps {
@@ -90,6 +92,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
     updateTab,
     renameTab,
     togglePin,
+    reorderTabs,
+    maxTabs,
   } = usePurchaseTabs(activeBranchId);
 
   const [search, setSearch] = useState('');
@@ -924,82 +928,20 @@ export const Purchases: React.FC<PurchasesProps> = ({
         onToggleBottom={() => setShowPurchaseTabs(!showPurchaseTabs)}
         toggleTooltip={showPurchaseTabs ? 'Hide Tabs' : 'Show Tabs'}
         bottomContent={
-          <div className='flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5'>
-            {tabs.map((tab) => (
-              <div
-                key={tab.id}
-                onClick={() => switchTab(tab.id)}
-                className={`group relative flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all cursor-pointer whitespace-nowrap ${
-                  activeTabId === tab.id
-                    ? 'bg-primary-50 dark:bg-primary-950/20 border-primary-200/50 dark:border-primary-800/50 text-primary-700 dark:text-primary-400 shadow-sm'
-                    : 'bg-zinc-50 dark:bg-zinc-800/50 border-transparent text-gray-500 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                }`}
-              >
-                {/* Pin Indicator */}
-                {tab.isPinned && (
-                  <span className='material-symbols-rounded text-[14px] text-orange-500'>push_pin</span>
-                )}
-
-                {/* Tab Name (Editable) */}
-                <input
-                  value={tab.name}
-                  onChange={(e) => renameTab(tab.id, e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                  className={`bg-transparent border-none outline-hidden text-[11px] font-bold w-14 focus:w-20 transition-all ${
-                    activeTabId === tab.id ? 'text-primary-700 dark:text-primary-400' : 'text-gray-500'
-                  }`}
-                />
-
-                {/* Cart Count Badge */}
-                {tab.cart.length > 0 && (
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${
-                    activeTabId === tab.id 
-                      ? 'bg-primary-200 dark:bg-primary-800 text-primary-700 dark:text-primary-300' 
-                      : 'bg-gray-200 dark:bg-gray-800 text-gray-500'
-                  }`}>
-                    {tab.cart.length}
-                  </span>
-                )}
-
-                {/* Actions: Pin & Close */}
-                <div className='flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ms-1'>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      togglePin(tab.id);
-                    }}
-                    className='p-0.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-gray-400 hover:text-orange-500 transition-colors'
-                  >
-                    <span className='material-symbols-rounded text-[14px]'>
-                      {tab.isPinned ? 'push_pin' : 'push_pin'}
-                    </span>
-                  </button>
-                  {tabs.length > 1 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeTab(tab.id);
-                      }}
-                      className='p-0.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-gray-400 hover:text-red-500 transition-colors'
-                    >
-                      <span className='material-symbols-rounded text-[14px]'>close</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-
-            {/* Add New Tab Button */}
-            {tabs.length < 10 && (
-              <button
-                onClick={handleAddTab}
-                className='flex items-center justify-center p-1.5 rounded-xl bg-gray-500/5 border border-dashed border-gray-300 dark:border-gray-700 text-gray-400 hover:text-primary-600 hover:border-primary-200 transition-all'
-                title={t.newPurchase || 'New Purchase'}
-              >
-                <span className='material-symbols-rounded text-lg'>add</span>
-              </button>
-            )}
-          </div>
+          <TabBar
+            tabs={tabs as any} // Cast to any to bypass strict SaleTab typing if needed, though they share the same structure
+            activeTabId={activeTabId}
+            onTabClick={switchTab}
+            onTabClose={removeTab}
+            onTabAdd={handleAddTab}
+            onTabRename={renameTab}
+            onTogglePin={togglePin}
+            onTabReorder={(newOrder) => reorderTabs(newOrder as any)}
+            onOpenClosedHistory={() => {}} // Can be implemented later if needed for purchases
+            maxTabs={maxTabs}
+            color={color}
+            t={t}
+          />
         }
       />
       

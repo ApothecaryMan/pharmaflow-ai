@@ -208,6 +208,7 @@ export const usePurchaseTabs = (activeBranchId: string) => {
     renameTab,
     togglePin,
     restoreTab,
+    reorderTabs: (newOrder: PurchaseTab[]) => setTabs(newOrder),
     closedTabs,
     maxTabs: MAX_TABS,
   };
