@@ -459,6 +459,7 @@ export function useEntityHandlers({
         });
       } catch (err) {
         error(`Failed to add supplier: ${err instanceof Error ? err.message : String(err)}`);
+        throw err;
       }
     },
     [setSuppliers, currentEmployeeId, employees, activeBranchId, error, success]
@@ -487,6 +488,7 @@ export function useEntityHandlers({
         });
       } catch (err) {
         error(`Failed to update supplier: ${err instanceof Error ? err.message : String(err)}`);
+        throw err;
       }
     },
     [setSuppliers, currentEmployeeId, employees, activeBranchId, error, success]
@@ -557,6 +559,7 @@ export function useEntityHandlers({
         });
       } catch (err) {
         error(`Failed to add customer: ${err instanceof Error ? err.message : String(err)}`);
+        throw err;
       }
     },
     [setCustomers, success, currentEmployeeId, employees, error, getVerifiedDate, activeBranchId]
@@ -585,6 +588,7 @@ export function useEntityHandlers({
         });
       } catch (err) {
         error(`Failed to update customer: ${err instanceof Error ? err.message : String(err)}`);
+        throw err;
       }
     },
     [setCustomers, success, currentEmployeeId, employees, error, activeBranchId]

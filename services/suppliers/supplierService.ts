@@ -24,6 +24,10 @@ class SupplierServiceImpl extends BaseEntityService<Supplier> implements Supplie
       phone: db.phone || '',
       email: db.email || '',
       address: db.address || '',
+      governorate: db.governorate || '',
+      city: db.city || '',
+      area: db.area || '',
+      supplierCode: db.supplier_code || '',
       status: db.status || 'active',
       createdAt: db.created_at || new Date().toISOString(),
       updatedAt: db.updated_at || new Date().toISOString(),
@@ -40,26 +44,40 @@ class SupplierServiceImpl extends BaseEntityService<Supplier> implements Supplie
     if (s.phone !== undefined) db.phone = s.phone;
     if (s.email !== undefined) db.email = s.email;
     if (s.address !== undefined) db.address = s.address;
+    if (s.governorate !== undefined) db.governorate = s.governorate;
+    if (s.city !== undefined) db.city = s.city;
+    if (s.area !== undefined) db.area = s.area;
+    if (s.supplierCode !== undefined) db.supplier_code = s.supplierCode;
     if (s.status !== undefined) db.status = s.status;
     return db;
   }
 
   async create(supplier: Omit<Supplier, 'id'>, branchId?: string): Promise<Supplier> {
     const settings = await settingsService.getAll();
-    const effectiveBranchId = branchId || (supplier as any).branchId || settings.activeBranchId || settings.branchCode;
     
-    const newSupplier: Supplier = {
-      ...supplier,
-      id: idGenerator.uuid(),
-      branchId: effectiveBranchId,
-      orgId: settings.orgId,
-    } as Supplier;
+    // Validate branchId is a valid UUID, otherwise fallback to settings
+    const isUuid = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const effectiveBranchId = (branchId && isUuid(branchId)) 
+      ? branchId 
+      : (settings.activeBranchId || (supplier as any).branchId);
+    
+    if (!effectiveBranchId || !isUuid(effectiveBranchId)) {
+      throw new Error('Valid Branch ID is required for supplier creation');
+    }
 
-    const dbSupplier = this.mapToDb(newSupplier);
-    const { error } = await supabase.from(this.tableName).insert(dbSupplier);
-    if (error) throw error;
+    // Call the ATOMIC RPC
+    const { data, error } = await supabase.rpc('create_supplier', {
+      p_supplier: supplier,
+      p_branch_id: effectiveBranchId,
+      p_org_id: settings.orgId
+    });
 
-    return newSupplier;
+    if (error) {
+      console.error('RPC Error:', error);
+      throw error;
+    }
+
+    return this.mapFromDb(data);
   }
 
   async save(suppliers: Supplier[], branchId?: string): Promise<void> {

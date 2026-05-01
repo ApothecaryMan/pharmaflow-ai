@@ -19,21 +19,49 @@ import {
 } from '../common/SmartInputs';
 import { LocationSelector } from '../common/LocationSelector';
 import { TanStackTable } from '../common/TanStackTable';
-import { GOVERNORATES } from '../../data/locations';
+import { GOVERNORATES, CITIES, AREAS } from '../../data/locations';
 import { PageHeader } from '../common/PageHeader';
 import { type FilterConfig } from '../common/FilterPill';
 
 interface SuppliersListProps {
   suppliers: Supplier[];
   setSuppliers: (suppliers: Supplier[]) => void;
+  onAddSupplier: (supplier: Supplier) => Promise<void>;
+  onUpdateSupplier: (supplier: Supplier) => Promise<void>;
+  onDeleteSupplier: (id: string) => Promise<void>;
   color: string;
   t: any;
   language: 'EN' | 'AR';
 }
 
+const ListWrapper: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
+  <div className={`flex flex-col gap-0.5 ${className}`}>{children}</div>
+);
+
+const ListItem: React.FC<{
+  index: number;
+  total: number;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ index, total, children, className = '' }) => {
+  const isFirst = index === 0;
+  const isLast = index === total - 1;
+  const rounding = isFirst && isLast ? 'rounded-2xl' : isFirst ? 'rounded-t-2xl rounded-b-md' : isLast ? 'rounded-b-2xl rounded-t-md' : 'rounded-md';
+  return (
+    <div
+      className={`flex items-center justify-between py-2 px-4 bg-gray-50/50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 transition-all ${rounding} ${className}`}
+    >
+      {children}
+    </div>
+  );
+};
+
 export const SuppliersList: React.FC<SuppliersListProps> = ({
   suppliers,
   setSuppliers,
+  onAddSupplier,
+  onUpdateSupplier,
+  onDeleteSupplier,
   color,
   t,
   language,
@@ -41,12 +69,14 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
   const { showMenu } = useContextMenu();
   const { activeBranchId } = useData();
   const [search, setSearch] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
 
   // Mode and state
   const [mode, setMode] = useState<'list' | 'add'>('list');
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [viewingSupplier, setViewingSupplier] = useState<Supplier | null>(null);
+  const [detailsTab, setDetailsTab] = useState<'info' | 'contact'>('info');
   const [deleteConfirm, setDeleteConfirm] = useState<Supplier | null>(null);
   const [editForm, setEditForm] = useState<Supplier>({
     id: '',
@@ -119,23 +149,22 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
     setViewingSupplier(supplier);
   };
 
-  const handleSaveEdit = () => {
-    if (!editForm.name || !editForm.contactPerson || !editForm.phone || !editForm.email) {
-      alert(t.fillRequired || 'Please fill in all required fields');
+  const handleSaveEdit = async () => {
+    if (!editForm.name) {
+      alert(t.errors?.nameRequired || 'Name is required');
       return;
     }
-
-    if (!isValidPhone(editForm.phone)) {
-      alert(t.errors?.invalidPhone || 'Invalid phone number');
-      return;
+    
+    setIsSaving(true);
+    try {
+      await onUpdateSupplier(editForm);
+      setEditingSupplier(null);
+    } catch (error) {
+      console.error('Error updating supplier:', error);
+      alert(language === 'AR' ? 'حدث خطأ أثناء تحديث المورد' : 'Error updating supplier');
+    } finally {
+      setIsSaving(false);
     }
-
-    if (!isValidEmail(editForm.email)) {
-      alert(t.errors?.invalidEmail || 'Invalid email address');
-      return;
-    }
-    setSuppliers(suppliers.map((s) => (s.id === editForm.id ? editForm : s)));
-    setEditingSupplier(null);
   };
 
   const handleDelete = (supplier: Supplier) => {
@@ -144,20 +173,17 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
 
   const confirmDelete = () => {
     if (deleteConfirm) {
-      setSuppliers(suppliers.filter((s) => s.id !== deleteConfirm.id));
+      onDeleteSupplier(deleteConfirm.id);
       setDeleteConfirm(null);
     }
   };
 
-  const handleAddNew = async () => {
+  const handleAddNew = () => {
     if (!permissionsService.can('supplier.add')) return;
-    
-    // Generate unique ID - branchId is required for DB sequence
-    const nextId = await idGenerator.generate('suppliers', activeBranchId || 'PF');
     
     setMode('add');
     setEditForm({
-      id: nextId,
+      id: '', // Service will handle ID generation
       name: '',
       contactPerson: '',
       phone: '',
@@ -168,24 +194,28 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
     });
   };
 
-  const handleSaveNew = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editForm.name || !editForm.contactPerson || !editForm.phone || !editForm.email) {
-      alert(t.fillRequired || 'Please fill in all required fields');
+  const handleSaveNew = async () => {
+    if (!editForm.name) {
+      alert(t.errors?.nameRequired || 'Name is required');
       return;
     }
-
-    if (!isValidPhone(editForm.phone)) {
-      alert(t.errors?.invalidPhone || 'Invalid phone number');
-      return;
-    }
-
-    if (!isValidEmail(editForm.email)) {
+    if (editForm.email && !editForm.email.includes('@')) {
       alert(t.errors?.invalidEmail || 'Invalid email address');
       return;
     }
-    setSuppliers([...suppliers, editForm]);
-    setMode('list');
+    
+    setIsSaving(true);
+    try {
+      // Remove empty ID so service can generate a real one
+      const { id, ...supplierData } = editForm;
+      await onAddSupplier(supplierData as any);
+      setMode('list');
+    } catch (error) {
+      console.error('Error saving supplier:', error);
+      alert(language === 'AR' ? 'حدث خطأ أثناء حفظ المورد' : 'Error saving supplier');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Helper: Get row context menu actions
@@ -223,10 +253,15 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
   const columns = useMemo<ColumnDef<Supplier>[]>(
     () => [
       {
-        accessorKey: 'id',
+        accessorKey: 'supplierCode',
         header: t.headers?.id || 'ID',
         size: 100,
         meta: { align: 'start' },
+        cell: ({ row }) => (
+          <span className='text-xs font-mono text-gray-500 dark:text-gray-400'>
+            {row.original.supplierCode || row.original.id.slice(0, 8)}
+          </span>
+        ),
       },
       {
         accessorKey: 'name',
@@ -273,39 +308,50 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
         ),
       },
       {
+        id: 'governorate_display',
+        accessorKey: 'governorate',
+        header: t.headers?.governorate || 'Governorate',
+        size: 150,
+        meta: { align: 'start', smartDate: false },
+        cell: ({ row }) => {
+          const id = row.original.governorate;
+          const gov = GOVERNORATES.find(g => g.id === id);
+          return (
+            <span className='text-sm text-gray-600 dark:text-gray-400'>
+              {gov ? (language === 'AR' ? gov.name_ar : gov.name_en) : (id || '-')}
+            </span>
+          );
+        },
+      },
+      {
         accessorKey: 'address',
         header: t.headers?.address || 'Address',
         size: 250,
         meta: { align: 'start' },
-        cell: ({ getValue }) => (
-          <span className='text-sm text-gray-600 dark:text-gray-400 truncate'>
-            {getValue() as string}
-          </span>
-        ),
-      },
-      {
-        id: 'governorate',
-        accessorKey: 'governorate',
-        header: 'Governorate',
-        meta: { hideFromSettings: true },
-      },
-      {
-        id: 'actions',
-        header: t.headers?.action || 'Action',
-        size: 80,
-        meta: { align: 'center' },
-        cell: ({ row }) => (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              showMenu(e.clientX, e.clientY, getRowActions(row.original));
-            }}
-            className='p-1.5 text-gray-400 hover:text-primary-600 transition-colors outline-hidden'
-            title={t.headers?.actions || 'Actions'}
-          >
-            <span className='material-symbols-rounded text-[20px]'>more_vert</span>
-          </button>
-        ),
+        cell: ({ row, column }) => {
+          const s = row.original;
+          const city = CITIES.find(c => c.id === s.city);
+          const area = AREAS.find(a => a.id === s.area);
+          
+          const cityName = city ? (language === 'AR' ? city.name_ar : city.name_en) : '';
+          const areaName = area ? (language === 'AR' ? area.name_ar : area.name_en) : '';
+
+          const locationLine = [cityName, areaName].filter(Boolean).join(', ');
+          const align = column.columnDef.meta?.align || 'start';
+          
+          return (
+            <div className={`flex flex-col py-1 overflow-hidden items-${align}`}>
+              <span className='text-sm font-medium text-gray-700 dark:text-gray-200 truncate'>
+                {locationLine || '-'}
+              </span>
+              {s.address && (
+                <span className='text-xs text-gray-500 dark:text-gray-400 truncate opacity-80' title={s.address}>
+                  {s.address}
+                </span>
+              )}
+            </div>
+          );
+        },
       },
     ],
     [t, getRowActions]
@@ -336,9 +382,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
               if (val === 'list') setMode('list');
               else if (val === 'add') handleAddNew();
             }}
-            color={color}
             shape='pill'
-            variant="onPage"
             size='md'
             iconSize="--icon-lg"
             useGraphicFont={true}
@@ -378,7 +422,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
       ) : (
         /* ADD SUPPLIER FORM VIEW - INLINE */
         <div className='flex-1 overflow-y-auto'>
-          <form onSubmit={handleSaveNew} className='max-w-full mx-auto pb-20 space-y-6'>
+          <div className='max-w-full mx-auto pb-20 space-y-6'>
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 items-start'>
               {/* Company Information Card */}
               <div className={`${CARD_BASE} rounded-xl p-6`}>
@@ -392,7 +436,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                       {t.form?.id || 'ID'}
                     </label>
                     <div className='w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 font-mono text-sm'>
-                      {editForm.id}
+                      {editForm.supplierCode || (language === 'AR' ? 'توليد تلقائي...' : 'Auto-generated...')}
                     </div>
                   </div>
                   <div>
@@ -508,13 +552,21 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                 {t.modal?.cancel || 'Cancel'}
               </button>
               <button
-                type='submit'
-                className={`px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl shadow-lg transition-all font-bold`}
+                onClick={handleSaveNew}
+                disabled={isSaving}
+                className='py-3 px-6 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-all shadow-lg shadow-primary-600/20 flex items-center justify-center space-x-2 rtl:space-x-reverse'
               >
-                {t.modal?.addSupplier || 'Add Supplier'}
+                {isSaving ? (
+                  <>
+                    <span className='w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin' />
+                    <span>{language === 'AR' ? 'جاري الحفظ...' : 'Saving...'}</span>
+                  </>
+                ) : (
+                  <span>{t.modal?.addSupplier || 'Add Supplier'}</span>
+                )}
               </button>
             </div>
-          </form>
+          </div>
         </div>
       )}
 
@@ -537,7 +589,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                 {t.form?.id || 'ID'}
               </label>
               <div className='w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 font-mono text-sm'>
-                {editForm.id}
+                {editForm.supplierCode || editForm.id}
               </div>
             </div>
 
@@ -656,9 +708,17 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
             </button>
             <button
               onClick={handleSaveEdit}
-              className={`px-4 py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-colors`}
+              disabled={isSaving}
+              className={`px-4 py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-colors flex items-center justify-center gap-2 min-w-[120px] disabled:opacity-50`}
             >
-              {t.modal?.saveChanges || 'Save Changes'}
+              {isSaving ? (
+                <>
+                  <span className='w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin' />
+                  <span>{language === 'AR' ? 'جاري الحفظ...' : 'Saving...'}</span>
+                </>
+              ) : (
+                <span>{t.modal?.saveChanges || 'Save Changes'}</span>
+              )}
             </button>
           </div>
         </Modal>
@@ -703,97 +763,110 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
         <Modal
           isOpen={true}
           onClose={() => setViewingSupplier(null)}
-          size='2xl'
-          zIndex={50}
+          size='lg'
           title={t.modal?.details || 'Supplier Details'}
           icon='visibility'
+          tabs={[
+            { label: t.form?.companyInfo || 'Information', value: 'info', icon: 'business' },
+            { label: t.form?.contactInfo || 'Contact', value: 'contact', icon: 'person' },
+          ]}
+          activeTab={detailsTab}
+          onTabChange={setDetailsTab}
+          footer={
+            <div className='flex gap-3 w-full'>
+              <button
+                onClick={() => setViewingSupplier(null)}
+                className='flex-1 py-3 rounded-full font-bold bg-transparent text-gray-500 dark:text-gray-400 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-all flex items-center justify-center gap-2 outline-hidden'
+              >
+                <span className='material-symbols-rounded text-base'>close</span>
+                {t.suppliers?.modal?.close || t.global?.actions?.close || (language === 'AR' ? 'إغلاق' : 'Close')}
+              </button>
+              <button
+                onClick={() => {
+                  const s = viewingSupplier;
+                  setViewingSupplier(null);
+                  handleEdit(s);
+                }}
+                className='flex-1 py-3 rounded-full font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90 transition-opacity flex items-center justify-center gap-2 outline-hidden'
+              >
+                <span className='material-symbols-rounded text-base'>edit</span>
+                {t.suppliers?.modal?.edit?.split(' ')[0] || t.global?.actions?.edit || (language === 'AR' ? 'تعديل' : 'Edit')}
+              </button>
+            </div>
+          }
         >
-          {/* Content */}
-          <div className='space-y-6'>
-            {/* Company Information */}
-            <div>
-              <h4 className='text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2'>
-                <span className='material-symbols-rounded text-[18px]'>business</span>
-                {t.form?.companyInfo || 'Company Information'}
-              </h4>
-              <div className='grid grid-cols-2 gap-4'>
+          <div className='animate-fade-in'>
+            {detailsTab === 'info' ? (
+              <div className='space-y-6'>
+                {/* Main Info Section */}
                 <div>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
-                    {t.form?.id || 'ID'}
-                  </label>
-                  <p className='text-sm text-gray-900 dark:text-white font-mono'>
-                    {viewingSupplier.id}
-                  </p>
+                  <p className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2 px-1 tracking-widest'>{t.form?.companyInfo || 'Company Information'}</p>
+                  <ListWrapper>
+                    {[
+                      { label: t.form?.id || 'ID', icon: 'tag', value: <span className='font-mono'>{viewingSupplier.supplierCode || viewingSupplier.id}</span> },
+                      { label: t.form?.companyName || 'Company Name', icon: 'business', value: <span className='font-bold'>{viewingSupplier.name}</span> },
+                      { label: t.headers?.governorate || 'Governorate', icon: 'map', value: (() => {
+                          const gov = GOVERNORATES.find(g => g.id === viewingSupplier.governorate);
+                          return gov ? (language === 'AR' ? gov.name_ar : gov.name_en) : (viewingSupplier.governorate || '-');
+                        })()
+                      },
+                      { label: t.headers?.city || 'City', icon: 'location_city', value: (() => {
+                          const city = CITIES.find(c => c.id === viewingSupplier.city);
+                          return city ? (language === 'AR' ? city.name_ar : city.name_en) : (viewingSupplier.city || '-');
+                        })()
+                      },
+                      { label: t.headers?.area || 'Area', icon: 'near_me', value: (() => {
+                          const area = AREAS.find(a => a.id === viewingSupplier.area);
+                          return area ? (language === 'AR' ? area.name_ar : area.name_en) : (viewingSupplier.area || '-');
+                        })()
+                      }
+                    ].map((item, i, arr) => (
+                      <ListItem key={i} index={i} total={arr.length}>
+                        <div className='flex items-center gap-2 shrink-0'>
+                          <span className='material-symbols-rounded text-base opacity-40'>{item.icon}</span>
+                          <span className='text-[9px] font-bold uppercase tracking-wider opacity-50'>{item.label}</span>
+                        </div>
+                        <div className='text-[12px] font-bold text-right pl-2'>{item.value}</div>
+                      </ListItem>
+                    ))}
+                  </ListWrapper>
                 </div>
+
+                {/* Address Details */}
+                {viewingSupplier.address && (
+                  <div>
+                    <p className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2 px-1 tracking-widest'>{t.form?.address || 'Detailed Address'}</p>
+                    <div className='p-4 bg-gray-50/50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 rounded-2xl'>
+                      <p className='text-sm text-gray-700 dark:text-gray-200 leading-relaxed'>
+                        {viewingSupplier.address}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className='space-y-6'>
+                {/* Contact Info Section */}
                 <div>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
-                    {t.form?.companyName || 'Company Name'}
-                  </label>
-                  <p className='text-sm text-gray-900 dark:text-white font-bold'>
-                    {viewingSupplier.name}
-                  </p>
-                </div>
-                <div className='col-span-2'>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
-                    {t.form?.address || 'Address'}
-                  </label>
-                  <p className='text-sm text-gray-900 dark:text-white'>
-                    {viewingSupplier.address || 'N/A'}
-                  </p>
+                  <p className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2 px-1 tracking-widest'>{t.form?.contactInfo || 'Contact Information'}</p>
+                  <ListWrapper>
+                    {[
+                      { label: t.form?.contactPerson || 'Contact Person', icon: 'person', value: viewingSupplier.contactPerson },
+                      { label: t.form?.phone || 'Phone', icon: 'call', value: <span dir='ltr' className='font-mono'>{viewingSupplier.phone}</span> },
+                      { label: t.form?.email || 'Email', icon: 'mail', value: viewingSupplier.email }
+                    ].map((item, i, arr) => (
+                      <ListItem key={i} index={i} total={arr.length}>
+                        <div className='flex items-center gap-2 shrink-0'>
+                          <span className='material-symbols-rounded text-base opacity-40'>{item.icon}</span>
+                          <span className='text-[9px] font-bold uppercase tracking-wider opacity-50'>{item.label}</span>
+                        </div>
+                        <div className='text-[12px] font-bold text-right pl-2'>{item.value}</div>
+                      </ListItem>
+                    ))}
+                  </ListWrapper>
                 </div>
               </div>
-            </div>
-
-            {/* Contact Information */}
-            <div>
-              <h4 className='text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2'>
-                <span className='material-symbols-rounded text-[18px]'>person</span>
-                {t.form?.contactInfo || 'Contact Information'}
-              </h4>
-              <div className='grid grid-cols-2 gap-4'>
-                <div>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
-                    {t.form?.contactPerson || 'Contact Person'}
-                  </label>
-                  <p className='text-sm text-gray-900 dark:text-white'>
-                    {viewingSupplier.contactPerson}
-                  </p>
-                </div>
-                <div>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
-                    {t.form?.phone || 'Phone'}
-                  </label>
-                  <p className='text-sm text-gray-900 dark:text-white font-mono' dir='ltr'>
-                    {viewingSupplier.phone}
-                  </p>
-                </div>
-                <div className='col-span-2'>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
-                    {t.form?.email || 'Email'}
-                  </label>
-                  <p className='text-sm text-gray-900 dark:text-white'>{viewingSupplier.email}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className='p-4 border-t border-gray-100 dark:border-gray-800 flex gap-3 justify-end'>
-            <button
-              onClick={() => setViewingSupplier(null)}
-              className='px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
-            >
-              {t.modal?.close || 'Close'}
-            </button>
-            <button
-              onClick={() => {
-                setViewingSupplier(null);
-                handleEdit(viewingSupplier);
-              }}
-              className={`px-4 py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-colors`}
-            >
-              {t.modal?.edit || 'Edit Supplier'}
-            </button>
+            )}
           </div>
         </Modal>
       )}

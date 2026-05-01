@@ -147,6 +147,15 @@ export const TRANSLATIONS = {
       avatar: 'Profile Avatar',
       contactInfo: 'Contact Information',
     },
+    common: {
+      close: 'Close',
+      edit: 'Edit',
+      save: 'Save',
+      cancel: 'Cancel',
+      delete: 'Delete',
+      actions: 'Actions',
+      loading: 'Loading...',
+    },
     global: {
       actions: {
         theme: 'Switch Theme',
@@ -560,6 +569,9 @@ export const TRANSLATIONS = {
         contact: 'Contact Person',
         details: 'Contact Details',
         actions: 'Actions',
+        governorate: 'Governorate',
+        city: 'City',
+        area: 'Area',
       },
       form: {
         companyInfo: 'Company Information',
@@ -2585,6 +2597,15 @@ export const TRANSLATIONS = {
       avatar: 'الصورة الشخصية',
       contactInfo: 'معلومات الاتصال',
     },
+    common: {
+      close: 'إغلاق',
+      edit: 'تعديل',
+      save: 'حفظ',
+      cancel: 'إلغاء',
+      delete: 'حذف',
+      actions: 'إجراءات',
+      loading: 'جاري التحميل...',
+    },
     global: {
       actions: {
         theme: 'تغيير السمة',
@@ -3013,6 +3034,9 @@ export const TRANSLATIONS = {
         contact: 'الشخص المسؤول',
         details: 'بيانات الاتصال',
         actions: 'إجراءات',
+        governorate: 'المحافظة',
+        city: 'المدينة',
+        area: 'المنطقة',
       },
       form: {
         companyInfo: 'معلومات الشركة',

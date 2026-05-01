@@ -230,6 +230,8 @@ export interface Supplier {
   branchId: string;
   /** Organization this supplier belongs to */
   orgId?: string;
+  /** Human-readable unique code (e.g., 'SUP-0001') */
+  supplierCode?: string;
   /** Company/supplier name */
   name: string;
   /** Primary contact person name */
