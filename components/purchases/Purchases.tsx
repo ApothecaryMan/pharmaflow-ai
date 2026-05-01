@@ -8,7 +8,7 @@ import { useAlert, useSettings } from '../../context';
 import { useLongPress } from '../../hooks/useLongPress';
 import { settingsService } from '../../services';
 import { useData } from '../../services/DataContext';
-import type { Drug, Purchase, PurchaseItem, PurchaseReturn, Shift, Supplier } from '../../types';
+import type { Drug, Purchase, PurchaseItem, PurchaseReturn, PurchaseTab, Shift, Supplier } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import {
   checkExpiryStatus,
@@ -546,16 +546,16 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [taxRate, setTaxRate] = useState(14); // Default 14%, loaded from settings
-  const [showPurchaseTabs, setShowPurchaseTabs] = useState(false);
+  const [showPurchaseTabs, setShowPurchaseTabs] = useState(() => {
+    if (!activeBranchId) return true;
+    return storage.get<boolean>(`purchases_show_tabs_${activeBranchId}`, true);
+  });
 
-  // Load initial preference and animate
+  // Keep state in sync if branch changes (without animation delay)
   useEffect(() => {
     if (activeBranchId) {
       const saved = storage.get<boolean>(`purchases_show_tabs_${activeBranchId}`, true);
-      if (saved) {
-        // Small delay to ensure layout is ready for animation
-        setTimeout(() => setShowPurchaseTabs(true), 100);
-      }
+      setShowPurchaseTabs(saved);
     }
   }, [activeBranchId]);
 
@@ -568,9 +568,17 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
   // Sync helpers
   const setCart = (newCart: PurchaseItem[] | ((prev: PurchaseItem[]) => PurchaseItem[])) => {
-    updateTab(activeTabId, (prev) => ({
-      cart: typeof newCart === 'function' ? (newCart as any)(prev.cart) : newCart,
-    }));
+    updateTab(activeTabId, (prev) => {
+      const updatedCart = typeof newCart === 'function' ? (newCart as any)(prev.cart) : newCart;
+      const updates: Partial<PurchaseTab> = { cart: updatedCart };
+      
+      // Set createdAt only when first item is added
+      if ((!prev.createdAt || prev.createdAt === 0) && updatedCart.length > 0) {
+        updates.createdAt = Date.now();
+      }
+      
+      return updates;
+    });
   };
 
   const setSelectedSupplierId = (id: string) => {
@@ -1562,6 +1570,25 @@ export const Purchases: React.FC<PurchasesProps> = ({
               </div>
 
               <div className='flex items-center gap-4'>
+                {/* Session Timestamp */}
+                {activeTab?.createdAt > 0 && (
+                  <div className='group relative'>
+                    <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 whitespace-nowrap'>
+                      {language === 'AR' ? 'وقت البدء' : 'Started at'}
+                    </label>
+                    <div className='flex items-center h-8 gap-1.5 text-xs font-mono font-bold text-gray-500 dark:text-gray-400 bg-gray-50/50 dark:bg-white/5 px-2.5 rounded-lg border border-gray-100/50 dark:border-white/5 transition-all duration-300 group-hover:bg-gray-100 dark:group-hover:bg-white/10'>
+                      <span className='material-symbols-rounded text-sm opacity-60'>schedule</span>
+                      {new Intl.DateTimeFormat(language === 'AR' ? 'ar-EG' : 'en-US', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true,
+                      }).format(activeTab.createdAt)}
+                    </div>
+                  </div>
+                )}
+
                 {/* System Order ID (Read Only) */}
                 <div className='group relative'>
                   <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
@@ -1604,38 +1631,44 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 </div>
 
                 {/* Payment Method Toggle */}
-                <div className='group relative'>
-                  <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
-                    {t.paymentMethod || 'Payment Method'}
-                  </label>
-                  <SegmentedControl
-                    value={paymentMethod}
-                    onChange={(val) => setPaymentMethod(val as 'cash' | 'credit')}
-                    size='xs'
-                    options={[
-                      { label: t.cash || 'Cash', value: 'cash', activeColor: 'green' },
-                      { label: t.credit || 'Credit', value: 'credit', activeColor: 'blue' },
-                    ]}
-                    className='w-fit'
-                  />
-                </div>
+                {activeTab && (
+                  <div className='group relative'>
+                    <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
+                      {t.paymentMethod || 'Payment Method'}
+                    </label>
+                    <SegmentedControl
+                      value={paymentMethod}
+                      onChange={(val) => setPaymentMethod(val as 'cash' | 'credit')}
+                      size='xs'
+                      options={[
+                        { label: t.cash || 'Cash', value: 'cash', activeColor: 'green' },
+                        { label: t.credit || 'Credit', value: 'credit', activeColor: 'blue' },
+                      ]}
+                      className='w-fit'
+                      disableAnimation={!activeTab}
+                    />
+                  </div>
+                )}
 
                 {/* Tax Mode Toggle */}
-                <div className='group relative'>
-                  <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
-                    {language === 'AR' ? 'نظام الضريبة' : 'Tax Mode'}
-                  </label>
-                  <SegmentedControl
-                    value={taxMode}
-                    onChange={(val) => setTaxMode(val as 'exclusive' | 'inclusive')}
-                    size='xs'
-                    options={[
-                      { label: language === 'AR' ? 'غير شامل' : 'Excl.', value: 'exclusive', activeColor: 'blue' },
-                      { label: language === 'AR' ? 'شامل' : 'Incl.', value: 'inclusive', activeColor: 'green' },
-                    ]}
-                    className='w-fit'
-                  />
-                </div>
+                {activeTab && (
+                  <div className='group relative'>
+                    <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
+                      {language === 'AR' ? 'نظام الضريبة' : 'Tax Mode'}
+                    </label>
+                    <SegmentedControl
+                      value={taxMode}
+                      onChange={(val) => setTaxMode(val as 'exclusive' | 'inclusive')}
+                      size='xs'
+                      options={[
+                        { label: language === 'AR' ? 'غير شامل' : 'Excl.', value: 'exclusive', activeColor: 'blue' },
+                        { label: language === 'AR' ? 'شامل' : 'Incl.', value: 'inclusive', activeColor: 'green' },
+                      ]}
+                      className='w-fit'
+                      disableAnimation={!activeTab}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

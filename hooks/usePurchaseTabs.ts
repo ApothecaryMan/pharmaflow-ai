@@ -14,7 +14,7 @@ const createNewTab = (index: number): PurchaseTab => ({
   externalInvoiceId: '',
   taxMode: 'exclusive',
   paymentMethod: 'cash',
-  createdAt: Date.now(),
+  createdAt: 0,
 });
 
 export const usePurchaseTabs = (activeBranchId: string) => {
