@@ -896,7 +896,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
       
         <div className='flex flex-col gap-4 h-full overflow-hidden'>
           {/* BOTTOM: Order Cart */}
-          <div className={`flex-1 ${CARD_BASE} p-5 rounded-3xl flex flex-col overflow-hidden`}>
+          <div className={`flex-1 ${CARD_BASE} p-5 pb-0 rounded-3xl flex flex-col overflow-hidden`}>
             <div className='flex justify-between items-center mb-4 gap-4'>
               {/* Left: Selected Item Details (Existing Inventory) */}
               <div className='flex-1 min-w-0'>
@@ -1448,10 +1448,10 @@ export const Purchases: React.FC<PurchasesProps> = ({
               )}
             </div>
 
-            <div className='pt-4 border-t border-gray-100 dark:border-gray-800'>
-              <div className='flex flex-wrap items-center justify-between gap-4'>
+            <div className='border-t border-gray-100 dark:border-(--border-divider) mt-auto px-1 py-4'>
+              <div className='flex items-center justify-between gap-3'>
                 {/* Left: Metrics Group */}
-                <div className='flex items-center gap-6 text-sm'>
+                <div className='flex items-center gap-6 text-sm py-1'>
                   {/* Items Count */}
                   <div className='flex items-center gap-2'>
                     <span className='text-gray-400 font-medium'>{t.summary.totalItems}</span>
@@ -1469,16 +1469,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
                     return (
                       <div className='flex items-center gap-2'>
-                        <span className='text-gray-400 font-medium'>
-                          {t.summary.discount || 'Disc'}
-                        </span>
-                        <span
-                          className={`font-medium ${totalDiscount > 0 ? 'text-green-600' : 'text-gray-600'}`}
-                        >
-                          {formatCurrency(totalDiscount)}{' '}
-                          <span className='text-xs opacity-75'>
-                            ({discountPercent.toFixed(1)}%)
-                          </span>
+                        <span className='text-gray-400 font-medium'>{t.summary.discount || 'Disc'}</span>
+                        <span className={`font-bold ${totalDiscount > 0 ? 'text-green-600' : 'text-gray-600'}`}>
+                          {formatCurrency(totalDiscount)} <span className='text-xs opacity-75 font-mono'>({discountPercent.toFixed(1)}%)</span>
                         </span>
                       </div>
                     );
@@ -1487,44 +1480,34 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   {/* Tax */}
                   {(() => {
                     const taxResults = tax.multiRate(
-                      cart.map((item) => ({
-                        amount: money.multiply(item.costPrice, item.quantity, 0),
-                        taxPct: item.tax || 0,
-                      })),
+                      cart.map((item) => ({ amount: money.multiply(item.costPrice, item.quantity, 0), taxPct: item.tax || 0 })),
                       taxMode
                     );
                     return (
                       <div className='flex items-center gap-2'>
                         <span className='text-gray-400 font-medium'>{t.summary.tax || 'Tax'}</span>
-                        <span className='font-medium text-orange-600'>
-                          {formatCurrency(taxResults.taxAmount)}
-                        </span>
+                        <span className='font-bold text-orange-600'>{formatCurrency(taxResults.taxAmount)}</span>
                       </div>
                     );
                   })()}
                 </div>
 
                 {/* Right: Total & Actions */}
-                <div className='flex items-center gap-4 flex-1 justify-end'>
-                  {/* Total Display */}
-                  <div className='text-right me-2'>
-                    <div className='text-[10px] uppercase text-gray-500 font-bold tracking-wider'>
+                <div className='flex items-center gap-3'>
+                  {/* Total Display - Fixed Height for alignment */}
+                  <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
+                    <span className='text-[10px] uppercase text-gray-400 font-bold tracking-wider'>
                       {t.summary.totalCost}
-                    </div>
+                    </span>
                     {(() => {
                       const taxResults = tax.multiRate(
-                        cart.map((item) => ({
-                          amount: money.multiply(item.costPrice, item.quantity, 0),
-                          taxPct: item.tax || 0,
-                        })),
+                        cart.map((item) => ({ amount: money.multiply(item.costPrice, item.quantity, 0), taxPct: item.tax || 0 })),
                         taxMode
                       );
                       return (
-                        <div
-                          className={`text-2xl font-black ${paymentMethod === 'cash' ? 'text-green-600' : 'text-primary-600'}`}
-                        >
+                        <span className={`text-lg font-black leading-none ${paymentMethod === 'cash' ? 'text-green-600' : 'text-primary-600'}`}>
                           {formatCurrency(taxResults.total)}
-                        </div>
+                        </span>
                       );
                     })()}
                   </div>
@@ -1533,24 +1516,24 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   <div className='flex items-center gap-2'>
                     <button
                       onClick={handlePendingPO}
-                      disabled={cart.length === 0 || !selectedSupplierId || !permissionsService.can('purchase.create')}
-                      title={t.pending || 'Save as Pending'}
-                      className='h-12 w-12 flex items-center justify-center rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-600 disabled:bg-gray-100 disabled:text-gray-400 dark:bg-orange-900/20 dark:hover:bg-orange-900/30 dark:disabled:bg-gray-800 transition-all active:scale-95'
+                      disabled={cart.length === 0 || !selectedSupplierId}
+                      className='h-10 w-10 flex items-center justify-center rounded-xl bg-orange-500 hover:bg-orange-600 text-white disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-gray-800 transition-all active:scale-95 shadow-sm shadow-orange-200 dark:shadow-none'
                     >
-                      <span className='material-symbols-rounded'>pending_actions</span>
+                      <span className='material-symbols-rounded text-xl'>pending_actions</span>
                     </button>
 
                     {paymentMethod === 'cash' && !currentShift ? (
-                      <div className='h-12 w-80 flex items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-bold border border-amber-200 dark:border-amber-900/50 gap-2'>
-                        <span className='material-symbols-rounded text-xl'>lock</span>
+                      <div className='h-10 px-4 flex items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-bold border border-amber-200 dark:border-amber-900/50 gap-2 text-xs'>
+                        <span className='material-symbols-rounded text-base'>lock</span>
                         {t.summary?.openShiftFirst || 'Open Shift First'}
                       </div>
                     ) : (
                       <button
                         onClick={handleConfirm}
-                        disabled={cart.length === 0 || !selectedSupplierId || !permissionsService.can('purchase.create')}
-                        className={`h-12 w-80 justify-center rounded-xl flex items-center gap-2 shadow-lg shadow-gray-200 dark:shadow-none ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700 shadow-green-200' : 'bg-primary-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:shadow-none text-white font-bold transition-all active:scale-95`}
+                        disabled={cart.length === 0 || !selectedSupplierId}
+                        className={`h-10 px-10 justify-center rounded-xl flex items-center gap-2 shadow-sm ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700' : 'bg-primary-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 text-white font-bold transition-all active:scale-95 text-sm`}
                       >
+                        <span className='material-symbols-rounded text-lg'>check_circle</span>
                         <span>{t.summary.confirm}</span>
                       </button>
                     )}
