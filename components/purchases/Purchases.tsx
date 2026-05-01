@@ -890,6 +890,11 @@ export const Purchases: React.FC<PurchasesProps> = ({
               onClear={() => {
                 setSupplierSearch('');
                 setSelectedSupplierId('');
+                
+                // --- Optional: Reset Tab Name if cart is empty ---
+                if (cart.length === 0) {
+                  renameTab(activeTabId, `Purchase ${tabs.findIndex(t => t.id === activeTabId) + 1}`);
+                }
               }}
               placeholder={t.placeholders?.searchSupplier || 'Search and select supplier...'}
               rounded='full'
@@ -902,6 +907,12 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 setSelectedSupplierId(supplier.id);
                 setSupplierSearch('');
                 setIsSupplierOpen(false);
+                
+                // --- Auto Rename Tab ---
+                const activeTab = tabs.find(t => t.id === activeTabId);
+                if (activeTab && (activeTab.name.startsWith('Purchase ') || activeTab.name === 'New Purchase')) {
+                  renameTab(activeTabId, supplier.name);
+                }
               }}
               columns={[
                 {
