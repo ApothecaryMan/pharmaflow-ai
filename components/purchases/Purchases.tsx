@@ -1332,6 +1332,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 setSearch(val);
                 setShowSuggestions(true);
               }}
+              resultsCount={filteredDrugs.length}
               onKeyDown={onDrugSearchKeyDown}
               placeholder={t.placeholders?.searchDrug || 'Search products...'}
               color={color}

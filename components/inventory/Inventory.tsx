@@ -15,7 +15,6 @@ import { formatCurrency, formatCurrencyParts, formatCompactCurrency } from '../.
 import { money } from '../../utils/money';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatStock, formatStockParts, validateStock } from '../../utils/inventory';
-import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { formatExpiryDate, parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { FilterDropdown, SegmentedControl } from '../common';
@@ -28,6 +27,8 @@ import { InteractiveCard } from '../common/InteractiveCard';
 import { AddProduct } from './AddProduct';
 import { useStatusBar } from '../layout/StatusBar';
 import { useSettings } from '../../context';
+import { SearchEngineInput } from '../common/SearchEngineInput';
+import { DrugSearchEngine } from '../../services/search/DrugSearchEngine';
 
 import * as stockOps from '../../utils/stockOperations';
 
@@ -254,31 +255,19 @@ export const Inventory: React.FC<InventoryProps> = ({
   // Categories are now determined dynamically using helper
   const allCategories = getCategories(currentLang);
 
+  // --- Search Engine Integration ---
+  const localEngine = useMemo(() => new DrugSearchEngine(inventory as any), [inventory]);
+
   const filteredInventory = useMemo(() => {
-    // 1. First apply Search Text
-    const { mode: searchMode, regex } = parseSearchTerm(searchTerm);
+    // 1. Apply Search Engine (Handles prefix matching, scientific names @, and price ranges)
+    let result = searchTerm 
+      ? localEngine.search(searchTerm) as Drug[]
+      : [...inventory];
 
-    let result = inventory.filter((d) => {
-      if (searchMode === 'ingredient' || searchMode === 'generic') {
-        return Array.isArray(d.genericName) 
-          ? d.genericName.some((gn) => regex.test(gn))
-          : (d.genericName as any) && regex.test(d.genericName as any);
-      }
-
-      // Normal search: Check composite string for cross-field matches (e.g. "Pana Tablet")
-      const searchableText = getDisplayName(d) + ' ' + d.category;
-
-      return (
-        regex.test(searchableText) ||
-        (d.barcode && regex.test(d.barcode)) ||
-        (d.internalCode && regex.test(d.internalCode)) ||
-        (Array.isArray(d.genericName) && d.genericName.some((gn) => regex.test(gn))) || // Search genericName array
-        (!Array.isArray(d.genericName) && d.genericName && regex.test(d.genericName)) // Fallback for old string genericName
-      );
-    });
-
-    // 2. Apply Stock Status Filter (Defaults to 'in_stock' if no filter is active)
-    const stockVals = activeFilters['stock_status'] || ['in_stock'];
+    // 2. Apply Stock Status Filter (Defaults to 'in_stock' if no filter is active or if cleared)
+    const stockVals = (activeFilters['stock_status'] && activeFilters['stock_status'].length > 0) 
+      ? activeFilters['stock_status'] 
+      : ['in_stock'];
     if (!stockVals.includes('all')) {
       result = result.filter((d) => {
         if (stockVals.includes('in_stock') && stockVals.includes('out_of_stock')) return true;
@@ -321,7 +310,8 @@ export const Inventory: React.FC<InventoryProps> = ({
     });
 
     return result;
-  }, [inventory, searchTerm, activeFilters, t]);
+  }, [inventory, searchTerm, activeFilters, t, localEngine]);
+
 
   const groupedInventory = useMemo(() => {
     const groups: Record<string, Drug[]> = {};
@@ -911,7 +901,23 @@ export const Inventory: React.FC<InventoryProps> = ({
       </div>
 
       {mode === 'list' ? (
-        <>
+        <div className='flex flex-col flex-1 min-h-0'>
+          {/* Search & Filter Hub - Floating outside the table for full width control */}
+          <div className='mb-4 px-1'>
+            <SearchEngineInput
+              value={searchTerm}
+              onSearchChange={setSearchTerm}
+              activeFilters={activeFilters}
+              filterConfigs={filterConfigs}
+              onUpdateFilter={(id, vals) => setActiveFilters(prev => ({ ...prev, [id]: vals }))}
+              onClear={() => setSearchTerm('')}
+              placeholder={t.searchPlaceholder}
+              color={color}
+              inventory={inventory}
+              wrapperClassName='max-w-xl' // Apply width constraint to the wrapper div
+            />
+          </div>
+
           {/* Table Card - Default Design */}
           <div className='flex-1 overflow-hidden'>
             <TanStackTable
@@ -919,29 +925,22 @@ export const Inventory: React.FC<InventoryProps> = ({
               columns={enhancedColumns}
               tableId='inventory_table'
               color={color}
-              enableTopToolbar={true}
-              enableSearch={true}
-              searchPlaceholder={t.searchPlaceholder}
-              globalFilter={searchTerm} // Sync state
-              onSearchChange={setSearchTerm} // Update state
-              manualFiltering={true} // Prevent double filtering
+              enableTopToolbar={false} // Disabled since we have our custom hub above
+              manualFiltering={true}
               onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row))}
               emptyMessage={t.noResults}
-              lite={false} // Use standard card design
-              dense={true} // Enable compact mode
+              lite={false}
+              dense={true}
               enablePagination={true}
               enableVirtualization={false}
               pageSize='auto'
               enableShowAll={true}
-              // New Filter Props
-              filterableColumns={filterConfigs}
               initialFilters={activeFilters}
               onFilterChange={setActiveFilters}
-              defaultHiddenColumns={[]} // Helpers are now hidden via metadata
               isLoading={!isDataSettled}
             />
           </div>
-        </>
+        </div>
       ) : (
         /* ADD PRODUCT FORM VIEW - COMPACT LAYOUT */
         <div className='flex-1 overflow-y-auto'>

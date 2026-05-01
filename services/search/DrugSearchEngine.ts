@@ -86,7 +86,11 @@ export class DrugSearchEngine {
     return pool.filter(drug => {
       const nameEn = drug.name.toLowerCase();
       const nameAr = (drug.nameAr || '').toLowerCase();
-      const fullName = `${nameEn} ${nameAr}`;
+      const generic = Array.isArray((drug as any).genericName) 
+        ? (drug as any).genericName.join(' ').toLowerCase() 
+        : String((drug as any).genericName || (drug as any).activeSubstance || '').toLowerCase();
+      
+      const fullName = `${nameEn} ${nameAr} ${generic}`;
 
       // Logic for first word
       if (startsWithSpace) {
@@ -121,9 +125,14 @@ export class DrugSearchEngine {
   private searchByIngredient(query: string): DrugCatalogItem[] {
     if (!query) return [];
     const q = query.toLowerCase();
-    return this.drugs.filter(d => 
-      d.activeSubstance?.toLowerCase().includes(q)
-    ).slice(0, 50);
+    return this.drugs.filter(d => {
+      const substance = (d as any).activeSubstance?.toLowerCase() || '';
+      const generic = Array.isArray((d as any).genericName) 
+        ? (d as any).genericName.join(' ').toLowerCase() 
+        : String((d as any).genericName || '').toLowerCase();
+        
+      return substance.includes(q) || generic.includes(q);
+    }).slice(0, 50);
   }
 
   private searchWithPriceRange(query: string, filters?: any): DrugCatalogItem[] {
