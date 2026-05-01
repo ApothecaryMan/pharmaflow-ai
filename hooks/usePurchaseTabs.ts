@@ -81,6 +81,26 @@ export const usePurchaseTabs = (activeBranchId: string) => {
     setClosedTabs(storage.get<PurchaseTab[]>(closedTabsKey, []));
   }, [tabsKey, activeTabKey, closedTabsKey, activeBranchId]);
 
+  // --- Cross-Tab Synchronization ---
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === tabsKey && e.newValue) {
+        setTabs(JSON.parse(e.newValue));
+      }
+      if (e.key === activeTabKey && e.newValue) {
+        // Only update if it's a valid ID (not empty string from a remove operation)
+        const newId = JSON.parse(e.newValue);
+        if (newId) setActiveTabId(newId);
+      }
+      if (e.key === closedTabsKey && e.newValue) {
+        setClosedTabs(JSON.parse(e.newValue));
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [tabsKey, activeTabKey, closedTabsKey]);
+
   useEffect(() => {
     storage.set(tabsKey, tabs);
   }, [tabs, tabsKey]);
