@@ -38,19 +38,48 @@ export const usePurchaseTabs = (activeBranchId: string) => {
   });
 
   useEffect(() => {
-    const savedTabs = storage.get<PurchaseTab[]>(tabsKey, []);
-    const newTabs = savedTabs.length > 0 ? savedTabs : [createNewTab(1)];
-    setTabs(newTabs);
+    // 1. Check for legacy data (Migration)
+    const legacyItemsKey = `purchases_cart_${activeBranchId}_items`;
+    const legacySupplierKey = `purchases_cart_${activeBranchId}_supplier`;
+    const legacyItems = storage.get<PurchaseItem[]>(legacyItemsKey, []);
+    
+    let currentTabs = storage.get<PurchaseTab[]>(tabsKey, []);
 
-    const savedId = storage.get<string>(activeTabKey, '');
-    if (savedId && newTabs.some((t) => t.id === savedId)) {
-      setActiveTabId(savedId);
+    // 2. If legacy data exists and we don't have real tabs yet
+    if (legacyItems.length > 0 && currentTabs.length <= 1 && (currentTabs[0]?.cart.length === 0)) {
+      const legacySupplier = storage.get<string>(legacySupplierKey, '');
+      
+      const migratedTab: PurchaseTab = {
+        ...createNewTab(1),
+        cart: legacyItems,
+        supplierId: legacySupplier,
+        name: 'Migrated Inv',
+      };
+
+      currentTabs = [migratedTab];
+      setTabs(currentTabs);
+      setActiveTabId(migratedTab.id);
+
+      // 3. Clean up legacy keys
+      storage.remove(legacyItemsKey);
+      storage.remove(legacySupplierKey);
+      localStorage.removeItem(`purchases_cart_${activeBranchId}_selected`);
+      console.log('Successfully migrated legacy purchase data to new Tab system');
     } else {
-      setActiveTabId(newTabs[0]?.id || '');
+      const savedTabs = storage.get<PurchaseTab[]>(tabsKey, []);
+      const newTabs = savedTabs.length > 0 ? savedTabs : [createNewTab(1)];
+      setTabs(newTabs);
+
+      const savedId = storage.get<string>(activeTabKey, '');
+      if (savedId && newTabs.some((t) => t.id === savedId)) {
+        setActiveTabId(savedId);
+      } else {
+        setActiveTabId(newTabs[0]?.id || '');
+      }
     }
 
     setClosedTabs(storage.get<PurchaseTab[]>(closedTabsKey, []));
-  }, [tabsKey, activeTabKey, closedTabsKey]);
+  }, [tabsKey, activeTabKey, closedTabsKey, activeBranchId]);
 
   useEffect(() => {
     storage.set(tabsKey, tabs);
