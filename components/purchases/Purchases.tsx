@@ -153,6 +153,24 @@ export const Purchases: React.FC<PurchasesProps> = ({
   // Sound effects
   const { playBeep } = usePosSounds();
 
+  // --- Tab Switch Safety ---
+  useEffect(() => {
+    // Reset local selection and searches when switching tabs
+    setSelectedCartIndex(-1);
+    setSearch('');
+    setSupplierSearch('');
+    setIsSupplierOpen(false);
+  }, [activeTabId]);
+
+  // Handle add tab with alert
+  const handleAddTab = () => {
+    if (tabs.length >= 10) {
+      showToastError(t.maxTabsReached || 'Maximum 10 tabs allowed');
+      return;
+    }
+    addTab();
+  };
+
   // Refs for keyboard navigation
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
@@ -1106,14 +1124,15 @@ export const Purchases: React.FC<PurchasesProps> = ({
               ))}
 
               {/* Add New Tab Button */}
-              <button
-                onClick={addTab}
-                disabled={tabs.length >= 10}
-                className='flex items-center justify-center p-2 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-dashed border-gray-200 dark:border-gray-800 text-gray-400 hover:text-primary-600 hover:border-primary-200 transition-all disabled:opacity-50'
-                title={t.newPurchase || 'New Purchase'}
-              >
-                <span className='material-symbols-rounded text-xl'>add</span>
-              </button>
+              {tabs.length < 10 && (
+                <button
+                  onClick={handleAddTab}
+                  className='flex items-center justify-center p-2 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-dashed border-gray-200 dark:border-gray-800 text-gray-400 hover:text-primary-600 hover:border-primary-200 transition-all'
+                  title={t.newPurchase || 'New Purchase'}
+                >
+                  <span className='material-symbols-rounded text-xl'>add</span>
+                </button>
+              )}
             </div>
 
             <div
