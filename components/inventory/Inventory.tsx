@@ -95,7 +95,7 @@ export const Inventory: React.FC<InventoryProps> = ({
   // Form State for Add Product
   const [formData, setFormData] = useState<Partial<Drug>>({
     name: '',
-    nameArabic: '',
+    nameAr: '',
     genericName: [], // Changed to array
     category: 'General',
     publicPrice: 0,
@@ -277,19 +277,23 @@ export const Inventory: React.FC<InventoryProps> = ({
       );
     });
 
-    // 2. Then apply Active Filters (Pills)
+    // 2. Apply Stock Status Filter (Defaults to 'in_stock' if no filter is active)
+    const stockVals = activeFilters['stock_status'] || ['in_stock'];
+    if (!stockVals.includes('all')) {
+      result = result.filter((d) => {
+        if (stockVals.includes('in_stock') && stockVals.includes('out_of_stock')) return true;
+        if (stockVals.includes('in_stock')) return d.stock > 0;
+        if (stockVals.includes('out_of_stock')) return d.stock <= 0;
+        return true;
+      });
+    }
+
+    // 3. Apply other Active Filters (Pills)
     Object.entries(activeFilters).forEach(([groupId, values]) => {
       const vals = values as any[];
-      if (!vals || vals.length === 0) return;
+      if (!vals || vals.length === 0 || groupId === 'stock_status') return;
 
-      if (groupId === 'stock_status') {
-        result = result.filter((d) => {
-          if (vals.includes('in_stock') && vals.includes('out_of_stock')) return true;
-          if (vals.includes('in_stock')) return d.stock > 0;
-          if (vals.includes('out_of_stock')) return d.stock <= 0;
-          return true;
-        });
-      } else if (groupId === 'expiry_status') {
+      if (groupId === 'expiry_status') {
         const now = getVerifiedDate();
         const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         const nearExpiredLimit = new Date(currentMonthStart);
@@ -698,7 +702,7 @@ export const Inventory: React.FC<InventoryProps> = ({
           { label: t.available || 'Available', value: 'in_stock' },
           { label: t.outOfStock || 'Out of Stock', value: 'out_of_stock' },
         ],
-        defaultValue: 'all',
+        defaultValue: 'in_stock',
       },
       {
         id: 'expiry_status',
@@ -785,6 +789,7 @@ export const Inventory: React.FC<InventoryProps> = ({
           {mode === 'list' && (
             <>
               <InteractiveCard
+                isLoading={isLoading || !isDataSettled}
                 className={`flex flex-col min-w-[140px] px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
                 pages={[
                   {
@@ -806,6 +811,7 @@ export const Inventory: React.FC<InventoryProps> = ({
               />
               {canViewFinancials && (
                 <InteractiveCard
+                  isLoading={isLoading || !isDataSettled}
                   className={`flex flex-col min-w-[180px] px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
                   pages={[
                     {
@@ -837,7 +843,8 @@ export const Inventory: React.FC<InventoryProps> = ({
                   ]}
                 />
               )}
-              <InteractiveCard
+               <InteractiveCard
+                isLoading={isLoading || !isDataSettled}
                 className={`flex flex-col min-w-[160px] px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
                 pages={[
                   {
@@ -931,7 +938,7 @@ export const Inventory: React.FC<InventoryProps> = ({
               initialFilters={activeFilters}
               onFilterChange={setActiveFilters}
               defaultHiddenColumns={[]} // Helpers are now hidden via metadata
-              isLoading={!isDataSettled && groupedInventory.length === 0}
+              isLoading={!isDataSettled}
             />
           </div>
         </>
@@ -1128,8 +1135,8 @@ export const Inventory: React.FC<InventoryProps> = ({
                     </label>
                     <input
                       className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                      value={formData.nameArabic || ''}
-                      onChange={(e) => setFormData({ ...formData, nameArabic: e.target.value })}
+                      value={formData.nameAr || ''}
+                      onChange={(e) => setFormData({ ...formData, nameAr: e.target.value })}
                       dir="rtl"
                     />
                   </div>

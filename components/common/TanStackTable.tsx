@@ -1198,10 +1198,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                         {table.getVisibleLeafColumns().map((col) => (
                           <td key={`skeleton-cell-${col.id}-${i}`} className={`${dense ? 'py-2' : 'py-4'} px-4`}>
                             <div className="flex flex-col gap-2 [direction:ltr] items-start">
-                              <div className='h-3 bg-gray-100 dark:bg-neutral-800/60 rounded-md w-24' />
+                              <div className='h-3 bg-zinc-100 dark:bg-zinc-800/60 rounded-md w-24' />
                               {/* Sub-line for some columns to look more natural */}
                               {col.id.toLowerCase().includes('name') && (
-                                <div className='h-2 bg-gray-50 dark:bg-neutral-800/30 rounded-md w-16' />
+                                <div className='h-2 bg-zinc-50 dark:bg-zinc-800/30 rounded-md w-16' />
                               )}
                             </div>
                           </td>
