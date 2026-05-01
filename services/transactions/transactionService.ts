@@ -394,9 +394,8 @@ export const transactionService = {
           orgId: context.orgId,
           shiftId: context.shiftId,
           time: context.timestamp,
-          type: 'purchase',
+          type: 'out',
           amount: purchase.totalCost,
-          relatedSaleId: purchase.id,
           reason: `PO #${purchase.invoiceId || purchase.id} from ${purchase.supplierName}`,
           userId: context.performerId,
         });
@@ -420,6 +419,7 @@ export const transactionService = {
     purchase: Omit<Purchase, 'id'>,
     context: ActionContext
   ): Promise<TransactionResult<Purchase>> {
+    const undoManager = new UndoManager();
     try {
       // 1. Create the purchase record with "Purchaser" info
       const newPurchase = await purchaseService.create({ 
@@ -431,6 +431,13 @@ export const transactionService = {
         createdByName: context.performerName
       }, context.branchId);
 
+      undoManager.push(async () => {
+        // Delete stock batches created by this purchase to prevent FK conflicts
+        await supabase.from('stock_batches').delete().eq('purchase_id', newPurchase.id);
+        // Then delete the purchase itself
+        await supabase.from('purchases').delete().eq('id', newPurchase.id);
+      });
+
       // 2. For direct purchases, we handle cash/audit directly without "Manager Approval" label
       if (purchase.paymentMethod === 'cash' && context.shiftId) {
         await cashService.addTransaction(context.shiftId, {
@@ -438,9 +445,8 @@ export const transactionService = {
           orgId: context.orgId,
           shiftId: context.shiftId,
           time: context.timestamp,
-          type: 'purchase',
+          type: 'out',
           amount: purchase.totalCost,
-          relatedSaleId: newPurchase.id,
           reason: `Direct PO #${newPurchase.invoiceId || newPurchase.id} from ${purchase.supplierName}`,
           userId: context.performerId,
         });
@@ -459,6 +465,7 @@ export const transactionService = {
       return { success: true, data: receivedPurchase };
     } catch (err: any) {
       console.error('[TransactionService] Direct purchase failed:', err);
+      await undoManager.undoAll();
       return { success: false, error: err.message || 'Direct purchase failed' };
     }
   },
@@ -479,11 +486,10 @@ export const transactionService = {
           orgId: context.orgId,
           shiftId: context.shiftId,
           time: context.timestamp,
-          type: 'purchase_return',
+          type: 'in',
           amount: savedReturn.totalRefund,
           reason: `Purchase Return #${savedReturn.id} for PO #${originalPurchase.invoiceId || originalPurchase.id}`,
           userId: context.performerId || 'System',
-          relatedSaleId: originalPurchase.id,
         });
       }
 

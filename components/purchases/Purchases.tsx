@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import { permissionsService } from '../../services/auth/permissions';
+import { authService } from '../../services/auth/authService';
 import { useAlert, useSettings } from '../../context';
 import { useLongPress } from '../../hooks/useLongPress';
 import { settingsService } from '../../services';
@@ -1119,6 +1120,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
       invoiceId: uniqueOrderId,
       externalInvoiceId,
       paymentMethod: paymentMethod,
+      createdBy: authService.getCurrentUserSync()?.employeeId,
+      createdByName: authService.getCurrentUserSync()?.username,
     };
 
     setIsConfirming(true);
@@ -1214,6 +1217,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
       externalInvoiceId,
       paymentMethod: paymentMethod,
       orgId: activeOrgId,
+      createdBy: authService.getCurrentUserSync()?.employeeId,
+      createdByName: authService.getCurrentUserSync()?.username,
     };
 
     if (!permissionsService.can('purchase.create')) {

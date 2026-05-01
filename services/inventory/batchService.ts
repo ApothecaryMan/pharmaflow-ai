@@ -326,6 +326,23 @@ export const batchService = {
     return valid.length > 0 ? valid[0].expiryDate : null;
   },
 
+  async calculateGlobalWAC(drugId: string, branchId?: string): Promise<number> {
+    const batches = await this.getAllBatches(branchId, drugId);
+    const activeBatches = batches.filter((b) => b.quantity > 0);
+    if (activeBatches.length === 0) return 0;
+
+    let totalValue = 0;
+    let totalQuantity = 0;
+
+    for (const b of activeBatches) {
+      // Calculate total value of each batch and sum them up
+      totalValue = money.add(totalValue, money.multiply(b.costPrice, b.quantity, 0));
+      totalQuantity += b.quantity;
+    }
+
+    return totalQuantity > 0 ? money.divide(totalValue, totalQuantity) : 0;
+  },
+
   async hasStock(drugId: string, quantityNeeded: number, branchId: string): Promise<boolean> {
     const total = await this.getTotalStock(drugId, branchId);
     return total >= quantityNeeded;

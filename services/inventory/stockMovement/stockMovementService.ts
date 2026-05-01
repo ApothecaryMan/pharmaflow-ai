@@ -250,12 +250,13 @@ class StockMovementServiceImpl
   }
 
   calculateMovementValue(movement: StockMovement, drug: any): number {
-    if (!drug) return 0;
     const qty = Math.abs(movement.quantity);
     if (['sale', 'return_customer'].includes(movement.type)) {
-      return qty * (drug.publicPrice || 0);
+      const price = movement.publicPrice !== undefined ? movement.publicPrice : (drug?.publicPrice || 0);
+      return qty * price;
     }
-    return qty * (drug.costPrice || 0);
+    const cost = movement.costPrice !== undefined ? movement.costPrice : (drug?.costPrice || 0);
+    return qty * cost;
   }
 }
 
