@@ -15,6 +15,9 @@ export const StorageKeys = {
   POS_BRANCHES_VIEW_MODE: 'pharma_pos_branches_view_mode',
   PRINTER_SETTINGS: 'pharma_printer_config',
   BRANCHES: 'pharma_branches',
+  PURCHASE_TABS: 'pharma_purchase_tabs',
+  PURCHASE_ACTIVE_TAB_ID: 'pharma_purchase_active_tab_id',
+  PURCHASE_CLOSED_TABS: 'pharma_purchase_closed_tabs',
 
   // Label Printer & Barcode Studio
   RECEIPT_TEMPLATES: 'receipt_templates',

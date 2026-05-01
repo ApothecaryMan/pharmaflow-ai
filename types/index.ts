@@ -517,6 +517,37 @@ export interface SaleTab {
 }
 
 /**
+ * PurchaseTab - represents an open Purchase invoice draft.
+ * Allows multiple concurrent purchase invoices to be managed.
+ */
+export interface PurchaseTab {
+  /** Unique tab identifier */
+  id: string;
+  /** Branch this tab belongs to */
+  branchId?: string;
+  /** Display name for the tab (e.g., "Inv 1") */
+  name: string;
+  /** Items currently in the cart */
+  cart: PurchaseItem[];
+  /** Associated supplier ID */
+  supplierId: string;
+  /** Supplier's external invoice number */
+  externalInvoiceId: string;
+  /** Tax calculation mode */
+  taxMode: 'exclusive' | 'inclusive';
+  /** Payment method for this purchase */
+  paymentMethod: 'cash' | 'credit';
+  /** Timestamp when tab was created */
+  createdAt: number;
+  /** Whether this tab is pinned */
+  isPinned?: boolean;
+  /** Last search query used in this tab */
+  searchQuery?: string;
+  /** Timestamp when tab was closed (for history) */
+  closedAt?: number;
+}
+
+/**
  * PurchaseItem - item in a purchase order from supplier.
  * Represents drugs being received into inventory.
  */

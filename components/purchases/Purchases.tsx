@@ -37,6 +37,7 @@ import { useSmartDirection } from '../common/SmartInputs';
 import { FilterPill, type FilterConfig } from '../common/FilterPill';
 import { TanStackTable } from '../common/TanStackTable';
 import { PageHeader } from '../common/PageHeader';
+import { usePurchaseTabs } from '../../hooks/usePurchaseTabs';
 
 interface PurchasesProps {
   inventory: Drug[];
@@ -79,52 +80,57 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const { showMenu } = useContextMenu();
   const { textTransform } = useSettings();
   const { activeBranchId, activeOrgId } = useData();
+  const {
+    tabs,
+    activeTab,
+    activeTabId,
+    addTab,
+    removeTab,
+    switchTab,
+    updateTab,
+    renameTab,
+    togglePin,
+  } = usePurchaseTabs(activeBranchId);
+
   const [search, setSearch] = useState('');
   const [supplierSearch, setSupplierSearch] = useState('');
 
-  // Handle Navigation Params (Deep Linking Redirect)
-  useEffect(() => {
-    if (navigationParams?.id) {
-      onViewChange?.('purchase-history', { id: navigationParams.id });
-    }
-  }, [navigationParams]);
+  // Derived from active tab
+  const cart = activeTab.cart;
+  const selectedSupplierId = activeTab.supplierId;
+  const taxMode = activeTab.taxMode;
+  const paymentMethod = activeTab.paymentMethod;
+  const externalInvoiceId = activeTab.externalInvoiceId;
 
-  // Helper: Format time with Arabic AM/PM
-  const formatTime = (date: Date): string => {
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    const hour12 = hours % 12 || 12;
-    const minuteStr = minutes.toString().padStart(2, '0');
-    const period = hours >= 12 ? t.time?.pm || 'PM' : t.time?.am || 'AM';
-    return `${hour12}:${minuteStr} ${period}`;
-  };
-
-  // --- Dynamic Storage Keys ---
-  const getCartKey = (key: string) => `purchases_cart_${activeBranchId}_${key}`;
-
-  // Initialize from branch-scoped localStorage
-  const [cart, setCart] = useState<PurchaseItem[]>([]);
-  const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [selectedCartIndex, setSelectedCartIndex] = useState(-1);
-
-  // Sync state when branch changes
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const savedCart = localStorage.getItem(getCartKey('items'));
-    const savedSupplier = localStorage.getItem(getCartKey('supplier'));
-    const savedSelected = localStorage.getItem(getCartKey('selected'));
-
-    setCart(savedCart ? JSON.parse(savedCart) : []);
-    setSelectedSupplierId(savedSupplier || '');
-    setSelectedCartIndex(savedSelected ? parseInt(savedSelected, 10) : -1);
-  }, [activeBranchId]);
-
   const [isSupplierOpen, setIsSupplierOpen] = useState(false);
   const [focusedInput, setFocusedInput] = useState<{ id: string; field: string } | null>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [taxRate, setTaxRate] = useState(14); // Default 14%, loaded from settings
+
+  // Sync helpers
+  const setCart = (newCart: PurchaseItem[] | ((prev: PurchaseItem[]) => PurchaseItem[])) => {
+    updateTab(activeTabId, (prev) => ({
+      cart: typeof newCart === 'function' ? (newCart as any)(prev.cart) : newCart,
+    }));
+  };
+
+  const setSelectedSupplierId = (id: string) => {
+    updateTab(activeTabId, { supplierId: id });
+  };
+
+  const setTaxMode = (mode: 'exclusive' | 'inclusive') => {
+    updateTab(activeTabId, { taxMode: mode });
+  };
+
+  const setPaymentMethod = (method: 'cash' | 'credit') => {
+    updateTab(activeTabId, { paymentMethod: method });
+  };
+
+  const setExternalInvoiceId = (id: string) => {
+    updateTab(activeTabId, { externalInvoiceId: id });
+  };
 
   const purchaseFilterConfigs: FilterConfig[] = useMemo(() => [
     {
@@ -146,14 +152,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
   // Sound effects
   const { playBeep } = usePosSounds();
-
-  // Save to branch-scoped localStorage when cart changes
-  useEffect(() => {
-    if (typeof window === 'undefined' || !activeBranchId) return;
-    localStorage.setItem(getCartKey('items'), JSON.stringify(cart));
-    localStorage.setItem(getCartKey('supplier'), selectedSupplierId);
-    localStorage.setItem(getCartKey('selected'), selectedCartIndex.toString());
-  }, [cart, selectedSupplierId, selectedCartIndex, activeBranchId]);
 
   // Refs for keyboard navigation
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
@@ -247,7 +245,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
       }
     }
   };
-  const [taxMode, setTaxMode] = useState<'exclusive' | 'inclusive'>('exclusive');
 
   // Smart direction for inputs
   const supplierSearchDir = useSmartDirection(
@@ -272,12 +269,10 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
     return `INV-${String(maxId + 1).padStart(6, '0')}`;
   });
-  const [externalInvoiceId, setExternalInvoiceId] = useState('');
   const externalInvoiceIdDir = useSmartDirection(
     externalInvoiceId,
     t.placeholders?.enterId || 'Enter ID'
   );
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit'>('credit');
 
   // Animation state for order ID (YouTube-style)
   const [isOrderIdAnimating, setIsOrderIdAnimating] = useState(false);
@@ -559,6 +554,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
     // Get unique order ID (auto-increment if duplicate)
     const uniqueOrderId = getUniqueOrderId();
+
 
     const taxResults = tax.multiRate(
       cart.map((item) => ({
@@ -1041,6 +1037,83 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   />
                 </div>
               </div>
+            </div>
+
+            {/* --- Purchase Tabs --- */}
+            <div className='flex items-center gap-1.5 px-1 mb-3 overflow-x-auto no-scrollbar'>
+              {tabs.map((tab) => (
+                <div
+                  key={tab.id}
+                  onClick={() => switchTab(tab.id)}
+                  className={`group relative flex items-center gap-2 px-4 py-2 rounded-xl border transition-all cursor-pointer whitespace-nowrap ${
+                    activeTabId === tab.id
+                      ? 'bg-primary-50 dark:bg-primary-950/30 border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-400 shadow-sm'
+                      : 'bg-white dark:bg-(--bg-internal-card) border-gray-100 dark:border-(--border-divider) text-gray-500 hover:border-gray-200 dark:hover:border-gray-700'
+                  }`}
+                >
+                  {/* Pin Indicator */}
+                  {tab.isPinned && (
+                    <span className='material-symbols-rounded text-[14px] text-orange-500'>push_pin</span>
+                  )}
+
+                  {/* Tab Name (Editable) */}
+                  <input
+                    value={tab.name}
+                    onChange={(e) => renameTab(tab.id, e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    className={`bg-transparent border-none outline-hidden text-xs font-bold w-16 focus:w-24 transition-all ${
+                      activeTabId === tab.id ? 'text-primary-700 dark:text-primary-400' : 'text-gray-500'
+                    }`}
+                  />
+
+                  {/* Cart Count Badge */}
+                  {tab.cart.length > 0 && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
+                      activeTabId === tab.id 
+                        ? 'bg-primary-200 dark:bg-primary-800 text-primary-700 dark:text-primary-300' 
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                    }`}>
+                      {tab.cart.length}
+                    </span>
+                  )}
+
+                  {/* Actions: Pin & Close */}
+                  <div className='flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ms-1'>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        togglePin(tab.id);
+                      }}
+                      className='p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-gray-400 hover:text-orange-500 transition-colors'
+                    >
+                      <span className='material-symbols-rounded text-[16px]'>
+                        {tab.isPinned ? 'push_pin' : 'push_pin'}
+                      </span>
+                    </button>
+                    {tabs.length > 1 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeTab(tab.id);
+                        }}
+                        className='p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-gray-400 hover:text-red-500 transition-colors'
+                      >
+                        <span className='material-symbols-rounded text-[16px]'>close</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {/* Add New Tab Button */}
+              <button
+                onClick={addTab}
+                disabled={tabs.length >= 10}
+                className='flex items-center justify-center p-2 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-dashed border-gray-200 dark:border-gray-800 text-gray-400 hover:text-primary-600 hover:border-primary-200 transition-all disabled:opacity-50'
+                title={t.newPurchase || 'New Purchase'}
+              >
+                <span className='material-symbols-rounded text-xl'>add</span>
+              </button>
             </div>
 
             <div
