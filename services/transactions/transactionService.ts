@@ -385,7 +385,7 @@ export const transactionService = {
       if (purchase.status === 'completed') return { success: true, data: purchase };
 
       // Approve Purchase
-      const completedPurchase = await purchaseService.approve(purchaseId, context.performerName);
+      const completedPurchase = await purchaseService.approve(purchaseId, context.performerId, context.performerName);
       
       // Record Shift Transaction if Cash
       if (purchase.paymentMethod === 'cash' && context.shiftId) {
@@ -421,18 +421,40 @@ export const transactionService = {
     context: ActionContext
   ): Promise<TransactionResult<Purchase>> {
     try {
+      // 1. Create the purchase record with "Purchaser" info
       const newPurchase = await purchaseService.create({ 
         ...purchase, 
         branchId: context.branchId,
         orgId: context.orgId,
-        status: 'pending'
+        status: 'pending',
+        createdBy: context.performerId,
+        createdByName: context.performerName
       }, context.branchId);
 
-      const result = await transactionService.processPurchaseTransaction(newPurchase.id, context);
-      if (!result.success) throw new Error(result.error);
+      // 2. For direct purchases, we handle cash/audit directly without "Manager Approval" label
+      if (purchase.paymentMethod === 'cash' && context.shiftId) {
+        await cashService.addTransaction(context.shiftId, {
+          branchId: context.branchId,
+          orgId: context.orgId,
+          shiftId: context.shiftId,
+          time: context.timestamp,
+          type: 'purchase',
+          amount: purchase.totalCost,
+          relatedSaleId: newPurchase.id,
+          reason: `Direct PO #${newPurchase.invoiceId || newPurchase.id} from ${purchase.supplierName}`,
+          userId: context.performerId,
+        });
+      }
 
-      // For direct purchases, we immediately mark as received to update inventory
-      const receivedPurchase = await purchaseService.markAsReceived(newPurchase.id, context.performerName);
+      auditService.log('purchase.direct_create', {
+        userId: context.performerId,
+        details: `Direct Purchase PO #${newPurchase.invoiceId || newPurchase.id} (${context.performerName})`,
+        entityId: newPurchase.id,
+        branchId: context.branchId,
+      });
+
+      // 3. Immediately mark as received to update inventory
+      const receivedPurchase = await purchaseService.markAsReceived(newPurchase.id, context.performerId, context.performerName);
       
       return { success: true, data: receivedPurchase };
     } catch (err: any) {

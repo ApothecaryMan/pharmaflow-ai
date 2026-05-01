@@ -90,7 +90,7 @@ export interface DataActions {
   setPurchases: (purchases: Purchase[] | ((prev: Purchase[]) => Purchase[])) => void;
   addPurchase: (purchase: Omit<Purchase, 'id'>, context?: ActionContext) => Promise<Purchase>;
   approvePurchase: (id: string, context: ActionContext) => Promise<void>;
-  markAsReceived: (id: string, receiverName: string) => Promise<void>;
+  markAsReceived: (id: string, receiverId: string, receiverName: string) => Promise<void>;
   rejectPurchase: (id: string) => Promise<void>;
 
   // Returns
@@ -506,8 +506,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
     if (!result.success) throw new Error(result.error);
   }, []);
 
-  const markAsReceived = useCallback(async (id: string, receiverName: string) => {
-    await purchaseService.markAsReceived(id, receiverName);
+  const markAsReceived = useCallback(async (id: string, receiverId: string, receiverName: string) => {
+    await purchaseService.markAsReceived(id, receiverId, receiverName);
   }, []);
 
   const rejectPurchase = useCallback(async (id: string) => {

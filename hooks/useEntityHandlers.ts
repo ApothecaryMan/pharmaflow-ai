@@ -68,7 +68,7 @@ export interface EntityHandlers {
   handleDeleteCustomer: (id: string) => void;
 
   // Purchase handlers
-  handlePurchaseComplete: (purchase: Purchase) => void;
+  handlePurchaseComplete: (purchase: Purchase) => Promise<boolean>;
   handleApprovePurchase: (purchaseId: string) => Promise<void>;
   handleMarkAsReceived: (purchaseId: string) => Promise<void>;
   handleRejectPurchase: (purchaseId: string, reason?: string) => void;
@@ -140,7 +140,7 @@ interface UseEntityHandlersParams {
   // Actions
   addPurchase?: (purchase: Omit<Purchase, 'id'>, context?: ActionContext) => Promise<Purchase>;
   approvePurchase?: (id: string, context: ActionContext) => Promise<void>;
-  markAsReceived?: (id: string, receiverName: string) => Promise<void>;
+  markAsReceived?: (id: string, receiverId: string, receiverName: string) => Promise<void>;
 
   completeSale: (saleData: any, context: ActionContext) => Promise<Sale>;
   processSalesReturn: (returnData: any, sale: Sale, context: ActionContext) => Promise<void>;
@@ -716,16 +716,16 @@ export function useEntityHandlers({
   );
 
   const handlePurchaseComplete = useCallback(
-    async (purchase: Purchase) => {
+    async (purchase: Purchase): Promise<boolean> => {
       const currentUser = employees?.find((e) => e.id === currentEmployeeId);
       if (!currentUser) {
         error('Authentication required: Please log in to complete purchases');
-        return;
+        return false;
       }
 
       if (!permissionsService.can('purchase.create')) {
         error('Permission denied: Cannot create purchase orders');
-        return;
+        return false;
       }
 
       try {
@@ -743,16 +743,18 @@ export function useEntityHandlers({
         if (addPurchase) {
           const result = await addPurchase(purchase, context);
           
-          if (result.status === 'completed') {
+          if (result.status === 'completed' || result.status === 'received') {
             success(`Direct Purchase PO #${result.invoiceId} completed and inventory updated`);
           } else {
             info(`Purchase Order PO #${result.invoiceId} saved as pending`);
           }
+          return true;
         } else {
           throw new Error('Add purchase action not initialized');
         }
       } catch (err) {
         error(`Failed to process purchase: ${err instanceof Error ? err.message : String(err)}`);
+        return false;
       }
     },
     [
@@ -854,7 +856,7 @@ export function useEntityHandlers({
 
       try {
         if (markAsReceived) {
-          await markAsReceived(purchaseId, currentUser.name);
+          await markAsReceived(purchaseId, currentEmployeeId!, currentUser.name);
           success(`PO #${purchase.invoiceId} marked as received. Batches created.`);
           auditService.log('purchase.receive', {
             userId: currentEmployeeId,

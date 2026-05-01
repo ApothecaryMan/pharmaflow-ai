@@ -38,6 +38,8 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
       receivedBy: db.received_by,
       receivedAt: db.received_at,
       externalInvoiceId: db.external_invoice_id,
+      createdBy: db.created_by,
+      createdByName: db.created_by_name,
       invoiceId: db.invoice_id,
       version: db.version,
     };
@@ -65,6 +67,8 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     if (p.externalInvoiceId !== undefined) db.external_invoice_id = p.externalInvoiceId;
     if (p.invoiceId !== undefined) db.invoice_id = p.invoiceId;
     if (p.version !== undefined) db.version = p.version;
+    if (p.createdBy !== undefined) db.created_by = p.createdBy;
+    if (p.createdByName !== undefined) db.created_by_name = p.createdByName;
     return db;
   }
 
@@ -179,44 +183,44 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || (purchase as any).branchId || settings.activeBranchId || settings.branchCode;
     
-    const newPurchase: Purchase = {
+    const dbPurchase = this.mapToDb({
       ...purchase,
       id: idGenerator.uuid(),
       status: (purchase as any).status || 'pending',
       branchId: effectiveBranchId,
       orgId: settings.orgId,
       date: purchase.date || new Date().toISOString(),
-    } as Purchase;
-
-    const dbPurchase = this.mapToDb(newPurchase);
-    const { error } = await supabase.from(this.tableName).insert(dbPurchase);
+    });
+    
+    const { data, error } = await supabase.from(this.tableName).insert(dbPurchase).select().single();
     if (error) throw error;
-
-    return newPurchase;
+    
+    return this.mapFromDb(data);
   }
 
-  async approve(id: string, approverName: string): Promise<Purchase> {
+  async approve(id: string, approverId: string, approverName: string): Promise<Purchase> {
     const purchase = await this.getById(id);
     if (!purchase) throw new Error('Purchase not found');
     
-    // Approval simply validates the order and moves it forward
-    // In the decoupled workflow, batch creation is deferred until 'received' status
+    // Approval validates the order and moves it forward
     const updates = {
       status: 'approved' as PurchaseStatus,
-      approvedBy: approverName,
+      approvedBy: approverName, // Store name in the TEXT column for display/snapshot
       approvalDate: new Date().toISOString(),
+      // If we want to store the ID as well, we'd need an approved_by_id column.
+      // For now, we follow the TEXT pattern for approvedBy as requested/implemented.
     };
     
     return this.update(id, updates);
   }
 
-  async markAsReceived(id: string, receiverName: string): Promise<Purchase> {
+  async markAsReceived(id: string, receiverId: string, receiverName: string): Promise<Purchase> {
     const purchase = await this.getById(id);
     if (!purchase) throw new Error('Purchase not found');
     if (purchase.status === 'received' || purchase.status === 'completed') return purchase;
 
-    // Trigger automated batch creation
-    await this.processInventoryReceipt(purchase, receiverName);
+    // Trigger automated batch creation with full performer info
+    await this.processInventoryReceipt(purchase, receiverId, receiverName);
 
     const updates = {
       status: 'received' as PurchaseStatus,
@@ -230,7 +234,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
   /**
    * Internal helper to handle the automated batch creation and stock updates
    */
-  private async processInventoryReceipt(purchase: Purchase, performedBy: string): Promise<void> {
+  private async processInventoryReceipt(purchase: Purchase, performerId: string, performerName: string): Promise<void> {
     const settings = await settingsService.getAll();
     const branchId = purchase.branchId;
 
@@ -261,7 +265,8 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
         referenceId: purchase.id,
         batchId: batch.id,
         expiryDate: batch.expiryDate,
-        performedBy: performedBy,
+        performedBy: performerId, // Pass the UUID here!
+        performedByName: performerName, // Pass the Name snapshot here!
         status: 'approved',
         orgId: purchase.orgId || settings.orgId,
         publicPrice: item.publicPrice,

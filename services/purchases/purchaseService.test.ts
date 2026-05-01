@@ -71,9 +71,9 @@ describe('PurchaseService', () => {
   });
 
   it('should approve purchase', async () => {
-    const approved = await purchaseService.approve('P1', 'Admin');
+    const approved = await purchaseService.approve('P1', 'EMP1', 'Admin');
     
-    expect(approved.status).toBe('completed');
+    expect(approved.status).toBe('approved');
     expect(approved.approvedBy).toBe('Admin');
     expect(storage.set).toHaveBeenCalled();
   });

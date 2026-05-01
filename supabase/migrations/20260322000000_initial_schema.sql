@@ -124,8 +124,10 @@ CREATE TABLE purchases (
   payment_type        purchase_pay_type DEFAULT 'cash',
   invoice_id          TEXT,
   external_invoice_id TEXT,
-  approved_by         UUID REFERENCES employees(id),
+  approved_by         TEXT,
   approval_date       TIMESTAMPTZ,
+  created_by          UUID REFERENCES employees(id),
+  created_by_name     TEXT,
   created_at          TIMESTAMPTZ DEFAULT now(),
   updated_at          TIMESTAMPTZ DEFAULT now()
 );

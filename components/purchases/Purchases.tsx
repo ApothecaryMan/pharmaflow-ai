@@ -46,7 +46,7 @@ interface PurchasesProps {
   suppliers: Supplier[];
   purchases: Purchase[];
   purchaseReturns: PurchaseReturn[];
-  onPurchaseComplete: (purchase: Purchase) => void;
+  onPurchaseComplete: (purchase: Purchase) => Promise<boolean>;
   color: string;
   t: any;
   onApprovePurchase?: (id: string) => Promise<void>;
@@ -342,6 +342,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
   // Animation state for order ID (YouTube-style)
   const [isOrderIdAnimating, setIsOrderIdAnimating] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
   const prevInvoiceId = useRef(invoiceId);
 
   useEffect(() => {
@@ -581,8 +582,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
     if (!selectedSupplierId || cart.length === 0) return;
 
     // 1. Validate Invoice ID
-    if (!externalInvoiceId || externalInvoiceId.trim() === '') {
-      alert(t.alerts?.enterInvoice || 'Please enter the Invoice Number (Inv #) from the supplier.');
+    if (!externalInvoiceId || externalInvoiceId.trim() === "") {
+      alert(t.alerts?.enterInvoice || "Please enter the Invoice Number (Inv #) from the supplier.");
+      inputRefs.current["externalInvoiceId"]?.focus();
       return;
     }
 
@@ -591,27 +593,36 @@ export const Purchases: React.FC<PurchasesProps> = ({
     if (isDuplicate) {
       alert(
         t.alerts?.duplicateInvoice ||
-          'This Invoice ID already exists. Please enter a unique Invoice ID.'
+          "This Invoice ID already exists. Please enter a unique Invoice ID."
       );
+      inputRefs.current["externalInvoiceId"]?.focus();
       return;
     }
-
     // 2. Validate Cart Items
-    for (const item of cart) {
+    for (let i = 0; i < cart.length; i++) {
+      const item = cart[i];
       if (!item.quantity || item.quantity <= 0) {
         alert(`Please enter a valid quantity for ${item.name}`);
+        inputRefs.current[`${i}-quantity`]?.focus();
+        inputRefs.current[`${i}-quantity`]?.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
       if (!item.costPrice || item.costPrice <= 0) {
         alert(`Please enter a valid Cost Price for ${item.name}`);
+        inputRefs.current[`${i}-costPrice`]?.focus();
+        inputRefs.current[`${i}-costPrice`]?.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
       if (!item.publicPrice || item.publicPrice <= 0) {
         alert(`Please enter a valid Sale Price for ${item.name}`);
+        inputRefs.current[`${i}-publicPrice`]?.focus();
+        inputRefs.current[`${i}-publicPrice`]?.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
       if (!item.expiryDate) {
         alert(`Please enter an Expiry Date for ${item.name}`);
+        inputRefs.current[`${i}-expiryDate`]?.focus();
+        inputRefs.current[`${i}-expiryDate`]?.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
     }
@@ -645,27 +656,35 @@ export const Purchases: React.FC<PurchasesProps> = ({
       paymentMethod: paymentMethod,
     };
 
-    onPurchaseComplete(purchase);
+    setIsConfirming(true);
+    try {
+      const success = await onPurchaseComplete(purchase);
 
-    updateTab(activeTabId, {
-      cart: [],
-      supplierId: '',
-      externalInvoiceId: '',
-      name: `Purchase ${tabs.findIndex((t) => t.id === activeTabId) + 1}`,
-    });
+      if (success) {
+        updateTab(activeTabId, {
+          cart: [],
+          supplierId: '',
+          externalInvoiceId: '',
+          name: `Purchase ${tabs.findIndex((t) => t.id === activeTabId) + 1}`,
+        });
 
-    // Generate Next ID
-    const nextNum = parseInt(uniqueOrderId.replace('INV-', ''), 10) + 1;
-    setInvoiceId(`INV-${String(nextNum).padStart(6, '0')}`);
-    setExternalInvoiceId('');
+        // Generate Next ID
+        const nextNum = parseInt(uniqueOrderId.replace('INV-', ''), 10) + 1;
+        setInvoiceId(`INV-${String(nextNum).padStart(6, '0')}`);
+        setExternalInvoiceId('');
+      }
+    } finally {
+      setIsConfirming(false);
+    }
   };
 
-  const handlePendingPO = () => {
+  const handlePendingPO = async () => {
     if (!selectedSupplierId || cart.length === 0) return;
 
     // 1. Validate Invoice ID
-    if (!externalInvoiceId || externalInvoiceId.trim() === '') {
-      alert(t.alerts?.enterInvoice || 'Please enter the Invoice Number (Inv #) from the supplier.');
+    if (!externalInvoiceId || externalInvoiceId.trim() === "") {
+      alert(t.alerts?.enterInvoice || "Please enter the Invoice Number (Inv #) from the supplier.");
+      inputRefs.current["externalInvoiceId"]?.focus();
       return;
     }
 
@@ -674,27 +693,36 @@ export const Purchases: React.FC<PurchasesProps> = ({
     if (isDuplicate) {
       alert(
         t.alerts?.duplicateInvoice ||
-          'This Invoice ID already exists. Please enter a unique Invoice ID.'
+          "This Invoice ID already exists. Please enter a unique Invoice ID."
       );
+      inputRefs.current["externalInvoiceId"]?.focus();
       return;
     }
-
     // 2. Validate Cart Items
-    for (const item of cart) {
+    for (let i = 0; i < cart.length; i++) {
+      const item = cart[i];
       if (!item.quantity || item.quantity <= 0) {
         alert(`Please enter a valid quantity for ${item.name}`);
+        inputRefs.current[`${i}-quantity`]?.focus();
+        inputRefs.current[`${i}-quantity`]?.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
       if (!item.costPrice || item.costPrice <= 0) {
         alert(`Please enter a valid Cost Price for ${item.name}`);
+        inputRefs.current[`${i}-costPrice`]?.focus();
+        inputRefs.current[`${i}-costPrice`]?.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
       if (!item.publicPrice || item.publicPrice <= 0) {
         alert(`Please enter a valid Sale Price for ${item.name}`);
+        inputRefs.current[`${i}-publicPrice`]?.focus();
+        inputRefs.current[`${i}-publicPrice`]?.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
       if (!item.expiryDate) {
         alert(`Please enter an Expiry Date for ${item.name}`);
+        inputRefs.current[`${i}-expiryDate`]?.focus();
+        inputRefs.current[`${i}-expiryDate`]?.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
     }
@@ -728,14 +756,21 @@ export const Purchases: React.FC<PurchasesProps> = ({
       return;
     }
 
-    onPurchaseComplete(purchase);
-    setCart([]);
-    setSelectedSupplierId('');
-
-    // Generate Next ID
-    const nextNum = parseInt(uniqueOrderId.replace('INV-', ''), 10) + 1;
-    setInvoiceId(`INV-${String(nextNum).padStart(6, '0')}`);
-    setExternalInvoiceId('');
+    setIsConfirming(true);
+    try {
+      const success = await onPurchaseComplete(purchase);
+      if (success) {
+        setCart([]);
+        setSelectedSupplierId('');
+        
+        // Generate Next ID
+        const nextNum = parseInt(uniqueOrderId.replace('INV-', ''), 10) + 1;
+        setInvoiceId(`INV-${String(nextNum).padStart(6, '0')}`);
+        setExternalInvoiceId('');
+      }
+    } finally {
+      setIsConfirming(false);
+    }
   };
 
   const { mode: searchMode, regex } = parseSearchTerm(search);
@@ -915,7 +950,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
               value={
                 supplierSearch ||
                 (selectedSupplierId
-                  ? suppliers.find((s) => s.id === selectedSupplierId)?.name
+                  ? suppliers.find((s) => s.id === selectedSupplierId)?.name || ''
                   : '')
               }
               onSearchChange={(val) => {
@@ -1096,6 +1131,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     {t.tableHeaders?.invId || 'Invoice #'}
                   </label>
                   <input
+                    ref={(el) => {
+                      inputRefs.current['externalInvoiceId'] = el;
+                    }}
                     type='text'
                     placeholder={t.placeholders?.enterId || 'Enter ID'}
                     value={externalInvoiceId}
@@ -1628,11 +1666,20 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     ) : (
                       <button
                         onClick={handleConfirm}
-                        disabled={cart.length === 0 || !selectedSupplierId}
-                        className={`h-10 px-10 justify-center rounded-xl flex items-center gap-2 shadow-sm ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700' : 'bg-primary-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 text-white font-bold transition-all active:scale-95 text-sm`}
+                        disabled={cart.length === 0 || !selectedSupplierId || isConfirming}
+                        className={`h-10 px-10 justify-center rounded-xl flex items-center gap-2 shadow-sm ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700' : 'bg-primary-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 text-white font-bold transition-all active:scale-95 text-sm relative overflow-hidden`}
                       >
-                        <span className='material-symbols-rounded text-lg'>check_circle</span>
-                        <span>{t.summary.confirm}</span>
+                        {isConfirming ? (
+                          <div className='flex items-center gap-2'>
+                            <span className='w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin'></span>
+                            <span>{language === 'AR' ? 'جاري التأكيد...' : 'Confirming...'}</span>
+                          </div>
+                        ) : (
+                          <>
+                            <span className='material-symbols-rounded text-lg'>check_circle</span>
+                            <span>{t.summary.confirm}</span>
+                          </>
+                        )}
                       </button>
                     )}
                   </div>

@@ -780,7 +780,9 @@ export interface Purchase {
   /** ISO date of last update */
   updatedAt?: string;
   /** Employee ID who created the record */
-  employeeId?: string;
+  createdBy?: string;
+  /** Employee name who created the record */
+  createdByName?: string;
   /** Optimistic lock version */
   version?: number;
 }

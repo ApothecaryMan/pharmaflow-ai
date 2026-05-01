@@ -281,14 +281,20 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                     <CurrencyDisplay amount={purchase.totalCost} />
                   </p>
                 </div>
-                <div className='col-span-2 flex items-center gap-2 pt-2 border-t border-gray-200 dark:border-gray-700'>
-                  <span className='material-symbols-rounded text-gray-400 text-sm'>
-                    shopping_basket
-                  </span>
-                  <span className='text-sm text-gray-600 dark:text-gray-400 font-medium'>
-                    {purchase.items.reduce((acc, item) => acc + item.quantity, 0)}{' '}
-                    {t.items || 'Items'}
-                  </span>
+                <div className='col-span-2 flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700'>
+                  <div className='flex items-center gap-2'>
+                    <span className='material-symbols-rounded text-gray-400 text-sm'>
+                      shopping_basket
+                    </span>
+                    <span className='text-sm text-gray-600 dark:text-gray-400 font-medium'>
+                      {purchase.items.reduce((acc, item) => acc + item.quantity, 0)}{' '}
+                      {t.items || 'Items'}
+                    </span>
+                  </div>
+                  <div className='flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-[10px] font-bold text-gray-500'>
+                    <span className='material-symbols-rounded text-xs'>person</span>
+                    {purchase.createdByName || t.unknown || 'Unknown'}
+                  </div>
                 </div>
               </div>
 
@@ -345,18 +351,20 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                       </span>
                     )
                   },
-                  { label: t.modal?.id || 'ID', icon: 'tag', value: selectedPurchase.id.slice(0, 8) },
+                  { label: t.modal?.id || 'ID', icon: 'tag', value: selectedPurchase.invoiceId || selectedPurchase.id.slice(0, 8) },
                   { label: t.supplier || 'Supplier', icon: 'store', value: selectedPurchase.supplierName },
-                  { label: t.approvedBy || 'Approved By:', icon: 'person', value: (
-                      <div className='flex items-center gap-2.5'>
-                        <span className='font-bold text-gray-800 dark:text-white'>
-                          {employees?.find(e => e.id === currentEmployeeId)?.name || t.unknown || 'Unknown'}
-                        </span>
-                      </div>
-                    )
+                  { 
+                    label: language === 'AR' ? 'بواسطة:' : 'Created By:', 
+                    icon: 'person_add', 
+                    value: selectedPurchase.createdByName || t.unknown || 'Unknown' 
+                  },
+                  selectedPurchase.approvedBy && { 
+                    label: t.approvedBy || 'Approved By:', 
+                    icon: 'verified_user', 
+                    value: selectedPurchase.approvedBy 
                   }
-                ].map((item, i) => (
-                  <div key={i} className={`flex items-center justify-between py-2 px-4 bg-transparent transition-all border-b sm:border-b last:border-b-0 sm:[&:nth-child(3)]:border-b-0 sm:[&:nth-child(4)]:border-b-0 sm:border-gray-100/30 dark:sm:border-white/5 border-gray-100 dark:border-white/10`}>
+                ].filter(Boolean).map((item: any, i) => (
+                  <div key={i} className={`flex items-center justify-between py-2 px-4 bg-transparent transition-all border-b sm:border-b last:border-b-0 border-gray-100 dark:border-white/10`}>
                     <div className='flex items-center gap-2 shrink-0'>
                       <span className='material-symbols-rounded text-base opacity-40'>{item.icon}</span>
                       <span className='text-[9px] font-bold uppercase tracking-wider opacity-50'>{item.label}</span>

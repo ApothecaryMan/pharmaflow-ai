@@ -36,7 +36,7 @@ interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
   (
     {
-      value,
+      value = '',
       onSearchChange,
       onClear,
       placeholder,
@@ -344,7 +344,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             </div>
           )}
 
-          {(badge || isLoading || value.trim().length > 0) && (
+          {(badge || isLoading || (value?.trim().length ?? 0) > 0) && (
             <div className='pointer-events-none flex items-center ps-1 pe-0.5'>
               {badge || (
                 <div className="flex items-center gap-2">

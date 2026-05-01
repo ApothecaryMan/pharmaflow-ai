@@ -347,9 +347,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
               if (val === 'approve') onViewChange?.('pending-approval');
               else onViewChange?.('purchases', { mode: 'create' });
             }}
-            variant="onPage"
             shape="pill"
-            color={color}
             size="md"
             iconSize="--icon-lg"
             useGraphicFont={true}
@@ -411,7 +409,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
           subtitle={`${selectedPurchase.invoiceId} • ${new Date(selectedPurchase.date).toLocaleDateString()} ${formatTime(new Date(selectedPurchase.date))}`}
         >
           <div className='p-6 space-y-6'>
-            <div className='grid grid-cols-2 sm:grid-cols-4 gap-6 p-1'>
+            <div className='grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-6 p-1'>
               <div className='group relative'>
                 <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>{t.tableHeaders?.supplier || 'Supplier'}</p>
                 <div className='flex items-center gap-2'>
@@ -459,6 +457,24 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
                   <p className='font-bold text-gray-900 dark:text-white text-sm'>{new Date(selectedPurchase.date).toLocaleDateString()}</p>
                 </div>
               </div>
+
+              <div>
+                <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>{language === 'AR' ? 'بواسطة' : 'By'}</p>
+                <div className='flex items-center gap-2'>
+                  <span className='material-symbols-rounded text-sm text-zinc-400'>person</span>
+                  <p className='font-bold text-gray-900 dark:text-white text-sm truncate'>{selectedPurchase.createdByName || t.unknown || 'Unknown'}</p>
+                </div>
+              </div>
+
+              {selectedPurchase.approvedBy && (
+                <div>
+                  <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>{t.status?.approved || 'Approved'}</p>
+                  <div className='flex items-center gap-2 text-blue-600 dark:text-blue-400'>
+                    <span className='material-symbols-rounded text-sm'>verified_user</span>
+                    <p className='font-bold text-sm truncate'>{selectedPurchase.approvedBy}</p>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className='rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden'>
