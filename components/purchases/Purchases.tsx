@@ -108,6 +108,19 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [taxRate, setTaxRate] = useState(14); // Default 14%, loaded from settings
+  const [showPurchaseTabs, setShowPurchaseTabs] = useState(() => {
+    if (typeof window !== 'undefined' && activeBranchId) {
+      const saved = localStorage.getItem(`purchases_show_tabs_${activeBranchId}`);
+      return saved ? saved === 'true' : true;
+    }
+    return true;
+  });
+
+  useEffect(() => {
+    if (activeBranchId) {
+      localStorage.setItem(`purchases_show_tabs_${activeBranchId}`, showPurchaseTabs.toString());
+    }
+  }, [showPurchaseTabs, activeBranchId]);
 
   // Sync helpers
   const setCart = (newCart: PurchaseItem[] | ((prev: PurchaseItem[]) => PurchaseItem[])) => {
@@ -764,6 +777,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     <div className='h-full flex flex-col gap-2 animate-fade-in overflow-hidden'>
       {/* Header with toggle */}
       <PageHeader
+        mb="mb-3"
         leftContent={
           <div className='relative w-48 xl:w-120' ref={searchRef}>
             <SearchInput
@@ -905,10 +919,91 @@ export const Purchases: React.FC<PurchasesProps> = ({
             />
           </div>
         }
-      />
+        showStatsToggle={true}
+        showBottom={showPurchaseTabs}
+        onToggleBottom={() => setShowPurchaseTabs(!showPurchaseTabs)}
+        toggleTooltip={showPurchaseTabs ? 'Hide Tabs' : 'Show Tabs'}
+        bottomContent={
+          <div className='flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5'>
+            {tabs.map((tab) => (
+              <div
+                key={tab.id}
+                onClick={() => switchTab(tab.id)}
+                className={`group relative flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all cursor-pointer whitespace-nowrap ${
+                  activeTabId === tab.id
+                    ? 'bg-primary-50 dark:bg-primary-950/20 border-primary-200/50 dark:border-primary-800/50 text-primary-700 dark:text-primary-400 shadow-sm'
+                    : 'bg-zinc-50 dark:bg-zinc-800/50 border-transparent text-gray-500 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                }`}
+              >
+                {/* Pin Indicator */}
+                {tab.isPinned && (
+                  <span className='material-symbols-rounded text-[14px] text-orange-500'>push_pin</span>
+                )}
 
+                {/* Tab Name (Editable) */}
+                <input
+                  value={tab.name}
+                  onChange={(e) => renameTab(tab.id, e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  className={`bg-transparent border-none outline-hidden text-[11px] font-bold w-14 focus:w-20 transition-all ${
+                    activeTabId === tab.id ? 'text-primary-700 dark:text-primary-400' : 'text-gray-500'
+                  }`}
+                />
+
+                {/* Cart Count Badge */}
+                {tab.cart.length > 0 && (
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${
+                    activeTabId === tab.id 
+                      ? 'bg-primary-200 dark:bg-primary-800 text-primary-700 dark:text-primary-300' 
+                      : 'bg-gray-200 dark:bg-gray-800 text-gray-500'
+                  }`}>
+                    {tab.cart.length}
+                  </span>
+                )}
+
+                {/* Actions: Pin & Close */}
+                <div className='flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ms-1'>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      togglePin(tab.id);
+                    }}
+                    className='p-0.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-gray-400 hover:text-orange-500 transition-colors'
+                  >
+                    <span className='material-symbols-rounded text-[14px]'>
+                      {tab.isPinned ? 'push_pin' : 'push_pin'}
+                    </span>
+                  </button>
+                  {tabs.length > 1 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeTab(tab.id);
+                      }}
+                      className='p-0.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-gray-400 hover:text-red-500 transition-colors'
+                    >
+                      <span className='material-symbols-rounded text-[14px]'>close</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {/* Add New Tab Button */}
+            {tabs.length < 10 && (
+              <button
+                onClick={handleAddTab}
+                className='flex items-center justify-center p-1.5 rounded-xl bg-gray-500/5 border border-dashed border-gray-300 dark:border-gray-700 text-gray-400 hover:text-primary-600 hover:border-primary-200 transition-all'
+                title={t.newPurchase || 'New Purchase'}
+              >
+                <span className='material-symbols-rounded text-lg'>add</span>
+              </button>
+            )}
+          </div>
+        }
+      />
       
-        <div className='flex flex-col gap-4 h-full overflow-hidden'>
+      <div className='flex flex-col gap-3 h-full overflow-hidden'>
           {/* BOTTOM: Order Cart */}
           <div className={`flex-1 ${CARD_BASE} p-5 pb-0 rounded-3xl flex flex-col overflow-hidden`}>
             <div className='flex justify-between items-center mb-4 gap-4'>
@@ -1055,84 +1150,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   />
                 </div>
               </div>
-            </div>
-
-            {/* --- Purchase Tabs --- */}
-            <div className='flex items-center gap-1.5 px-1 mb-3 overflow-x-auto no-scrollbar'>
-              {tabs.map((tab) => (
-                <div
-                  key={tab.id}
-                  onClick={() => switchTab(tab.id)}
-                  className={`group relative flex items-center gap-2 px-4 py-2 rounded-xl border transition-all cursor-pointer whitespace-nowrap ${
-                    activeTabId === tab.id
-                      ? 'bg-primary-50 dark:bg-primary-950/30 border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-400 shadow-sm'
-                      : 'bg-white dark:bg-(--bg-internal-card) border-gray-100 dark:border-(--border-divider) text-gray-500 hover:border-gray-200 dark:hover:border-gray-700'
-                  }`}
-                >
-                  {/* Pin Indicator */}
-                  {tab.isPinned && (
-                    <span className='material-symbols-rounded text-[14px] text-orange-500'>push_pin</span>
-                  )}
-
-                  {/* Tab Name (Editable) */}
-                  <input
-                    value={tab.name}
-                    onChange={(e) => renameTab(tab.id, e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                    className={`bg-transparent border-none outline-hidden text-xs font-bold w-16 focus:w-24 transition-all ${
-                      activeTabId === tab.id ? 'text-primary-700 dark:text-primary-400' : 'text-gray-500'
-                    }`}
-                  />
-
-                  {/* Cart Count Badge */}
-                  {tab.cart.length > 0 && (
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
-                      activeTabId === tab.id 
-                        ? 'bg-primary-200 dark:bg-primary-800 text-primary-700 dark:text-primary-300' 
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
-                    }`}>
-                      {tab.cart.length}
-                    </span>
-                  )}
-
-                  {/* Actions: Pin & Close */}
-                  <div className='flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ms-1'>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        togglePin(tab.id);
-                      }}
-                      className='p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-gray-400 hover:text-orange-500 transition-colors'
-                    >
-                      <span className='material-symbols-rounded text-[16px]'>
-                        {tab.isPinned ? 'push_pin' : 'push_pin'}
-                      </span>
-                    </button>
-                    {tabs.length > 1 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeTab(tab.id);
-                        }}
-                        className='p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-gray-400 hover:text-red-500 transition-colors'
-                      >
-                        <span className='material-symbols-rounded text-[16px]'>close</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {/* Add New Tab Button */}
-              {tabs.length < 10 && (
-                <button
-                  onClick={handleAddTab}
-                  className='flex items-center justify-center p-2 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-dashed border-gray-200 dark:border-gray-800 text-gray-400 hover:text-primary-600 hover:border-primary-200 transition-all'
-                  title={t.newPurchase || 'New Purchase'}
-                >
-                  <span className='material-symbols-rounded text-xl'>add</span>
-                </button>
-              )}
             </div>
 
             <div
