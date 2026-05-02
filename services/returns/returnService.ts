@@ -154,7 +154,6 @@ export const returnService: ReturnService = {
             referenceId: newReturn.id,
             batchId: alloc.batchId,
             expiryDate: alloc.expiryDate,
-            performedBy: authService.getCurrentUserSync()?.employeeId || 'System',
             status: 'approved'
           });
         }
@@ -170,7 +169,6 @@ export const returnService: ReturnService = {
           previousStock: currentStock,
           newStock: currentStock + item.quantityReturned,
           referenceId: newReturn.id,
-          performedBy: authService.getCurrentUserSync()?.employeeId || 'System',
           status: 'approved'
         });
       }
@@ -244,7 +242,6 @@ export const returnService: ReturnService = {
             referenceId: newReturn.id,
             batchId: allocation.batchId,
             expiryDate: allocation.expiryDate,
-            performedBy: authService.getCurrentUserSync()?.employeeId || 'System',
             status: 'approved',
             orgId: settings.orgId,
           });

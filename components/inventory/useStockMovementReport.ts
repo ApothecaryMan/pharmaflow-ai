@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useData } from '../../services';
 import { useSettings } from '../../context';
 import { stockMovementService } from '../../services/inventory/stockMovement/stockMovementService';
+import { DrugSearchEngine } from '../../services/search/DrugSearchEngine';
 import { StockMovement, StockMovementSummary, Drug } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { useSearchKeyboardNavigation } from '../common/SearchDropdown';
@@ -65,17 +66,9 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
   // --- Search Logic ---
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
-    return inventory.filter(d => {
-      if (!d) return false;
-      const query = searchQuery.toLowerCase();
-      const displayName = getDisplayName(d, textTransform).toLowerCase();
-      const nameMatch = d.name?.toLowerCase().includes(query) || displayName.includes(query);
-      const arabicMatch = d.nameArabic?.includes(searchQuery);
-      const idMatch = d.id?.toLowerCase().includes(query);
-      const barcodeMatch = d.barcode?.includes(searchQuery);
-      return nameMatch || arabicMatch || idMatch || barcodeMatch;
-    }).slice(0, 8);
-  }, [searchQuery, inventory, textTransform]);
+    const engine = new DrugSearchEngine(inventory);
+    return engine.search(searchQuery).slice(0, 8);
+  }, [searchQuery, inventory]);
 
   const suggestions = useMemo(() => {
     return inventory.map(d => getDisplayName(d, textTransform));

@@ -77,10 +77,12 @@ export const transactionService = {
 
       // 1. Allocate Batches
       const allocationRequests = saleData.items.map((item) => {
-        const drug = inventory.find((d) => d.id === item.id);
+        const drug = inventory.find((d) => d.id === item.id || d.batches?.some(b => b.id === item.id));
+        const actualDrugId = (item as any).dbId || drug?.id || item.id;
         const quantityToDeduct = stockOps.resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack || drug?.unitsPerPack);
+        
         return {
-          drugId: item.id,
+          drugId: actualDrugId,
           quantity: quantityToDeduct,
           name: item.name,
           // Support explicit batch selection if available, else default to the item id (which may be the batch itself in the current UI)
@@ -100,17 +102,25 @@ export const transactionService = {
 
       // 2. Prepare Inventory Mutations & Movement Logs
       const processedItems: CartItem[] = saleData.items.map((item) => {
-        const drug = inventory.find((d) => d.id === item.id);
-        const alloc = bulkAllocations.find((a) => a.drugId === item.id);
-        const unitsToDeduct = stockOps.resolveUnits(item.quantity, !!item.isUnit, drug?.unitsPerPack);
+        // Resolve the true actualDrugId to match with global inventory (templates)
+        const itemAsDb = (item as any).dbId;
+        const actualDrugId = itemAsDb || item.id;
+        
+        // Find the parent group drug reliably
+        const drug = inventory.find((d) => d.id === actualDrugId || d.batches?.some(b => b.id === actualDrugId || b.id === item.id));
+        
+        const alloc = bulkAllocations.find((a) => a.drugId === actualDrugId);
+        const unitsToDeduct = stockOps.resolveUnits(item.quantity, !!item.isUnit, drug?.unitsPerPack || item.unitsPerPack);
 
-        stockMutations.push({ id: item.id, quantity: -unitsToDeduct });
+        stockMutations.push({ id: actualDrugId, quantity: -unitsToDeduct });
         
         if (alloc?.allocations && alloc.allocations.length > 0) {
-          let runningStock = drug?.stock || 0;
+          // Reliable running stock calculation
+          let runningStock = drug?.stock !== undefined ? drug.stock : (item.stock || 0);
+          
           alloc.allocations.forEach(a => {
             movementEntries.push({
-              drugId: item.id,
+              drugId: actualDrugId,
               drugName: item.name,
               branchId: activeBranchId,
               type: 'sale',

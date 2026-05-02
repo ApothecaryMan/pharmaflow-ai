@@ -115,9 +115,9 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
               {isRTL ? config.arLabel : config.label}
             </span>
             <span className='text-gray-300 dark:text-gray-700 text-[10px]'>•</span>
-            <span className='text-[11px] text-(--text-secondary) font-bold flex items-center gap-1 uppercase tracking-wider'>
-              <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>person</span>
-              {performedBy}
+            <span className='text-[11px] text-(--text-secondary) font-bold flex items-center gap-1 uppercase tracking-wider max-w-[150px]'>
+              <span className='material-symbols-rounded shrink-0' style={{ fontSize: 'var(--icon-sm)' }}>person</span>
+              <span className='truncate'>{performedBy}</span>
             </span>
           </div>
 

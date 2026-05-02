@@ -12,30 +12,30 @@ export const validateStockAvailability = (
   inventory: Drug[]
 ): ValidationResult => {
   for (const item of items) {
-    const drug = inventory.find((d) => d.id === item.id);
+    // Inventory contains grouped items (where id = template.id), but cart items might have id = batch.id
+    const drug = inventory.find(
+      (d) => d.id === item.id || d.batches?.some((b) => b.id === item.id)
+    );
 
     if (!drug) {
-      return { success: false, message: `Item not found in inventory: ${item.name}` };
+      // Fallback display name for better error clarity
+      const displayName = item.name || item.internalCode || item.id;
+      return { success: false, message: `Item not found in inventory: ${displayName}` };
     }
 
-    const requestedQty = stockOps.resolveUnits(item.quantity, !!item.isUnit, drug.unitsPerPack);
+    // Determine the actual batch inside the group if the cart item was a batch
+    const targetBatch = drug.id === item.id ? drug : drug.batches?.find(b => b.id === item.id) || drug;
 
-    // 1. Check total stock
-    if (drug.stock < requestedQty) {
+    const requestedQty = stockOps.resolveUnits(item.quantity, !!item.isUnit, targetBatch.unitsPerPack);
+
+    // 1. Check total stock against the specific batch or group
+    // We check against targetBatch.stock so it validates the exact batch added
+    if ((targetBatch.stock || 0) < requestedQty) {
       return {
         success: false,
-        message: `Insufficient stock for ${drug.name}. Requested: ${requestedQty} units, Available: ${drug.stock} units`,
+        message: `Insufficient stock for ${targetBatch.name || drug.name}. Requested: ${requestedQty} units, Available: ${targetBatch.stock} units`,
       };
     }
-
-    // 2. dry-run batch allocation to ensure we have valid batches
-    // We pass 'false' to commit parameter if the service supports it, or we rely on the fact
-    // that we are just checking math here.
-    // Ideally batchService should have a 'checkAvailability' method.
-    // Assuming allocateStock returns null on failure without side-effects if strict checking is on.
-    // However, looking at usage, batchService.allocateStock MIGHT have side effects or just return allocations.
-    // We will assume simpler Total Stock validation is the first line of defense,
-    // and specific batch validation happens during the granular allocation step.
   }
 
   return { success: true };

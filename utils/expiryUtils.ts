@@ -148,11 +148,22 @@ export const checkExpiryStatus = (
     // MM/YYYY format
     month = parseInt(date.split('/')[0]);
     year = parseInt(date.split('/')[1]) % 100;
+  } else if (/^\d{4}-\d{2}$/.test(date)) {
+    // YYYY-MM format
+    const parts = date.split('-');
+    year = parseInt(parts[0].slice(-2));
+    month = parseInt(parts[1]);
+  } else if (/^\d{4}-\d{2}-\d{2}(T.*)?$/.test(date)) {
+    // YYYY-MM-DD or full ISO string
+    const parts = date.split('T')[0].split('-');
+    year = parseInt(parts[0].slice(-2));
+    month = parseInt(parts[1]);
   } else if (date.length > 4 && !date.includes('/')) {
     return 'invalid';
   } else {
     return 'valid';
   }
+
 
   // Invalid month
   if (isNaN(month) || isNaN(year) || month < 1 || month > 12) return 'invalid';

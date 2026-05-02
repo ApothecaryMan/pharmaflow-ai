@@ -2,6 +2,7 @@ import { BaseReportService, BaseReportFilters } from '../../core/BaseReportServi
 import { idGenerator } from '../../../utils/idGenerator';
 import { settingsService } from '../../settings/settingsService';
 import { supabase } from '../../../lib/supabase';
+import { authService } from '../../auth/authService';
 import type { 
   StockMovement, 
   StockMovementFilters, 
@@ -95,10 +96,22 @@ class StockMovementServiceImpl
   }
 
   async logMovement(
-    movement: Omit<StockMovement, 'id' | 'timestamp'>
+    movement: Omit<StockMovement, 'id' | 'timestamp' | 'performedBy'> & { performedBy?: string }
   ): Promise<StockMovement> {
     const settings = await settingsService.getAll();
     const activeBranchId = settings.activeBranchId || settings.branchCode;
+
+    // Automatically populate creator info if missing
+    let finalPerformedBy = movement.performedBy;
+    let finalPerformedByName = movement.performedByName;
+
+    if (!finalPerformedBy || !finalPerformedByName) {
+      const session = authService.getCurrentUserSync();
+      if (session) {
+        finalPerformedBy = finalPerformedBy || session.employeeId || session.userId;
+        finalPerformedByName = finalPerformedByName || session.username;
+      }
+    }
 
     const newMovement: StockMovement = {
       ...movement,
@@ -106,6 +119,8 @@ class StockMovementServiceImpl
       branchId: movement.branchId || activeBranchId,
       orgId: movement.orgId || settings.orgId,
       timestamp: new Date().toISOString(),
+      performedBy: finalPerformedBy,
+      performedByName: finalPerformedByName,
     };
 
     const dbMovement = this.mapDomainToDb(newMovement);
@@ -232,7 +247,7 @@ class StockMovementServiceImpl
     if (error) throw error;
   }
 
-  async logMovementsBulk(movements: Omit<StockMovement, 'id' | 'timestamp'>[]): Promise<StockMovement[]> {
+  async logMovementsBulk(movements: (Omit<StockMovement, 'id' | 'timestamp' | 'performedBy'> & { performedBy?: string })[]): Promise<StockMovement[]> {
     const settings = await settingsService.getAll();
     const timestamp = new Date().toISOString();
     const activeBranchId = settings.activeBranchId || settings.branchCode;

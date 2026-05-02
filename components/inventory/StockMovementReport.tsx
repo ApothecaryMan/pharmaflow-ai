@@ -318,7 +318,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                         previousStock={m.previousStock}
                         newStock={m.newStock}
                         reason={m.reason}
-                        performedBy={m.performedByName || m.performedBy}
+                        performedBy={m.performedByName || m.performedBy || (isRTL ? 'النظام' : 'System')}
                         isRTL={isRTL}
                         status={m.status}
                         batchId={m.batchId}
@@ -420,7 +420,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                               <td style={{ width: columns[6].width }} className="py-2">
                                 <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-xl border border-gray-100 dark:border-(--border-divider) text-[10px] font-bold uppercase tracking-widest text-(--text-secondary) bg-transparent">
                                   <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-sm)' }}>person</span>
-                                  <span className="truncate max-w-[80px]">{m.performedByName || m.performedBy}</span>
+                                  <span className="truncate">{m.performedByName || m.performedBy || (isRTL ? 'النظام' : 'System')}</span>
                                 </span>
                               </td>
                               <td style={{ width: columns[7].width }} className="py-2 pr-4 rtl:pr-0 rtl:pl-4 rounded-r-2xl rtl:rounded-r-none rtl:rounded-l-2xl text-right rtl:text-left">
