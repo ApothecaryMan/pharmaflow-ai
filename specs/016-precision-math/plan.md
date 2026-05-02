@@ -1,75 +1,104 @@
-# Implementation Plan: Precision Financial Math
+# Implementation Plan: [FEATURE]
 
-**Branch**: `016-precision-math` | **Date**: 2026-04-28 | **Spec**: [spec.md](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/specs/016-precision-math/spec.md)
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+
+**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
-Migrate the entire financial calculation engine from floating-point arithmetic to a precise integer-based (Piastres) system. This involves adopting a "Bottom-Up" data model where unit prices are stored directly, and a centralized `money` utility handles all arithmetic, rounding (Round Half Up), and allocation.
+
+[Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
-- **Language/Version**: TypeScript ES2022
-- **Primary Dependencies**: React 19, Vite, Tailwind CSS
-- **Storage**: Supabase (PostgreSQL) - integer columns for currency.
-- **Testing**: scratch/test-precision-final.ts (10,000 transaction simulation)
-- **Target Platform**: Web (Chrome/Safari)
-- **Project Type**: Web Application (PharmaFlow AI)
-- **Constraints**: 0% rounding discrepancy across multi-item returns.
+
+<!--
+  ACTION REQUIRED: Replace the content in this section with the technical details
+  for the project. The structure here is presented in advisory capacity to guide
+  the iteration process.
+-->
+
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
+**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: [single/web/mobile - determines source structure]  
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
+**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 
-| Principle | Status | Note |
-|-----------|--------|------|
-| I. Strict Type Safety | PASS | All price fields use `number` (mapped to integer). No `any`. |
-| II. Localization First | PASS | `money.format()` integrates with current i18n system. |
-| III. Standard Components | PASS | Updating forms to use `SmartInput` for manual overrides. |
-| IV. Service Architecture | PASS | Moving pricing logic to `pricingService.ts` and `salesService.ts`. |
-| V. Secure Data Handling | PASS | Using `StorageService` and sequential IDs as mandated. |
+*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+
+[Gates determined based on constitution file]
 
 ## Project Structure
 
-```text
-specs/016-precision-math/
-├── plan.md              # This file
-├── research.md          # Rounding and allocation decisions
-├── data-model.md        # Updated Drug entity schema
-├── quickstart.md        # How to run precision simulations
-└── tasks.md             # Implementation tasks
+### Documentation (this feature)
 
-src/
-├── components/
-│   ├── pos/             # POS cart and checkout logic
-│   └── inventory/       # Manual unit price entry modals
-├── services/
-│   ├── sales/           # Return and total validations
-│   ├── purchases/       # Cost calculations
-│   └── pricingService.ts # NEW: Centralized pricing engine
-└── utils/
-    └── money.ts         # CORE: Integer-based math engine
+```text
+specs/[###-feature]/
+├── plan.md              # This file (/speckit.plan command output)
+├── research.md          # Phase 0 output (/speckit.plan command)
+├── data-model.md        # Phase 1 output (/speckit.plan command)
+├── quickstart.md        # Phase 1 output (/speckit.plan command)
+├── contracts/           # Phase 1 output (/speckit.plan command)
+└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
 ```
 
-## Proposed Changes
+### Source Code (repository root)
+<!--
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
+  for this feature. Delete unused options and expand the chosen structure with
+  real paths (e.g., apps/admin, packages/something). The delivered plan must
+  not include Option labels.
+-->
 
-### [Component] Utilities & Engine
-#### [MODIFY] [money.ts](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/utils/money.ts)
-- Implement `allocate(total, ratios)` for fair distribution.
-- Implement `scaledMultiply(amount, factor)` with Round Half Up.
+```text
+# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
+src/
+├── models/
+├── services/
+├── cli/
+└── lib/
 
-### [Component] Service Layer
-#### [NEW] [pricingService.ts](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/services/pricingService.ts)
-- Centralize all tax, discount, and unit-price resolution logic.
-#### [MODIFY] [salesService.ts](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/services/sales/salesService.ts)
-- Update return logic to use `money.allocate` for partial returns.
+tests/
+├── contract/
+├── integration/
+└── unit/
 
-### [Component] Data Layer
-#### [MODIFY] [types/index.ts](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/types/index.ts)
-- Add `unitPrice` and `unitCostPrice` to `Drug` interface.
-#### [NEW] [migration.sql](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/supabase/migrations/20260425000006_add_unit_pricing.sql)
-- DB migration for integer pricing columns.
+# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
+backend/
+├── src/
+│   ├── models/
+│   ├── services/
+│   └── api/
+└── tests/
+
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
+
+# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
+
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
+```
+
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
 
 ## Complexity Tracking
-*No constitution violations identified.*
 
-## Verification Plan
-### Automated Tests
-- `npm run test:precision` (via scratch script) to simulate 10,000 transactions.
-### Manual Verification
-- Verify a 100.00 EGP total split across 3 items shows 33.34, 33.33, 33.33.
+> **Fill ONLY if Constitution Check has violations that must be justified**
+
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|-----------|------------|-------------------------------------|
+| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
