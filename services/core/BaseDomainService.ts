@@ -2,6 +2,12 @@ import { supabase } from '../../lib/supabase';
 import { settingsService } from '../settings/settingsService';
 import { idGenerator } from '../../utils/idGenerator';
 
+/**
+ * BaseDomainService
+ * 
+ * Provides standard CRUD (Create, Read, Update, Delete) operations for domain entities.
+ * Used for manageable business objects that require persistence and frequent modification.
+ */
 export abstract class BaseDomainService<T extends { id: string; branchId?: string; orgId?: string }> {
   protected abstract tableName: string;
 

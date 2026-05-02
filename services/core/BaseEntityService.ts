@@ -3,8 +3,11 @@ import { settingsService } from '../settings/settingsService';
 import { BaseDomainService } from './BaseDomainService';
 
 /**
- * BaseEntityService extends BaseDomainService to provide standardized
- * search and status-based filtering for business entities like Customers and Suppliers.
+ * BaseEntityService
+ * 
+ * Extends BaseDomainService to provide standardized search and status-based filtering.
+ * Ideal for business entities like Customers, Suppliers, or Employees that need 
+ * text-search capabilities and status management (active/inactive).
  */
 export abstract class BaseEntityService<T extends { id: string; branchId?: string; orgId?: string; status?: string }> extends BaseDomainService<T> {
   /**

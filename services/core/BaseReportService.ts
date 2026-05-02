@@ -14,6 +14,17 @@ export interface PaginatedResult<T> {
   hasMore: boolean;
 }
 
+/**
+ * BaseReportService
+ * 
+ * A specialized service for read-heavy, append-only, or historical data.
+ * Unlike BaseDomainService, this focuses on history fetching, pagination, and 
+ * data aggregation (sums, counts).
+ * 
+ * Architecture Note: This is kept separate from BaseDomainService because 
+ * reporting data (like Stock Movements) should generally not be modified or 
+ * deleted via standard CRUD methods, maintaining data integrity.
+ */
 export abstract class BaseReportService<T, TFilters extends BaseReportFilters> {
   protected abstract tableName: string;
   protected dateColumn: string = 'timestamp';
