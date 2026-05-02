@@ -13,7 +13,7 @@ import { HelpButton, HelpModal } from '../common/HelpModal';
 import { ORG_MANAGEMENT_HELP } from '../../i18n/helpInstructions';
 import { useSettings } from '../../context';
 import { PageHeader } from '../common/PageHeader';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
 import { UpgradeTunnelTransition } from './UpgradeTunnelTransition';
 

@@ -10,7 +10,7 @@ import { money, tax } from '../../utils/money';
 import { useSmartDirection } from '../common/SmartInputs';
 import { idGenerator } from '../../utils/idGenerator';
 import { useData } from '../../services/DataContext';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { formatCurrency } from '../../utils/currency';
 
 interface ReturnModalProps {

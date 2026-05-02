@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { permissionsService } from '../services/auth/permissions';
+import { permissionsService } from '../services/auth/permissionsService';
 import { StorageKeys } from '../config/storageKeys';
 import { useAlert } from '../context';
 import { auditService } from '../services/auditService';

@@ -20,7 +20,7 @@ import { ProcurementKPIs } from '../components/intelligence/procurement/Procurem
 import { RiskKPIs } from '../components/intelligence/risk/RiskKPIs';
 import { FinancialsKPIs } from '../components/intelligence/financials/FinancialsKPIs';
 import type { FilterConfig } from '../components/common/FilterPill';
-import { permissionsService } from '../services/auth/permissions';
+import { permissionsService } from '../services/auth/permissionsService';
 
 interface IntelligenceDashboardProps {
   t: any;

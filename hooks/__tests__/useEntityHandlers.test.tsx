@@ -10,7 +10,7 @@ import { useEntityHandlers, SaleData } from '../useEntityHandlers';
 import { batchService } from '../../services/inventory/batchService';
 import { useAlert } from '../../context';
 import { Drug } from '../../types';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 
 // Mock Dependencies
 vi.mock('../../context', () => ({
@@ -88,7 +88,7 @@ vi.mock('../../services/auditService', () => ({
   },
 }));
 
-vi.mock('../../services/auth/permissions', () => ({
+vi.mock('../../services/auth/permissionsService', () => ({
   permissionsService: {
     can: vi.fn().mockReturnValue(true),
     isManager: vi.fn().mockReturnValue(false),

@@ -9,7 +9,7 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { type UserRole } from '../../../../config/permissions';
-import { permissionsService } from '../../../../services/auth/permissions';
+import { permissionsService } from '../../../../services/auth/permissionsService';
 import type { CartItem, Drug } from '../../../../types';
 import * as stockOps from '../../../../utils/stockOperations';
 import { isStockConstraintMet } from '../../../../utils/stockOperations';

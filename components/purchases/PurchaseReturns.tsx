@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { money } from '../../utils/money';
 import React, { useMemo, useState } from 'react';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import type { Drug, Purchase, PurchaseReturn, PurchaseReturnItem } from '../../types';
 import { useSettings } from '../../context';
 import { getDisplayName } from '../../utils/drugDisplayName';

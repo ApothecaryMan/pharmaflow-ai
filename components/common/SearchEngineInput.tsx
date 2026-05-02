@@ -3,7 +3,7 @@ import { SearchInput } from './SearchInput';
 import { useSettings } from '../../context/SettingsContext';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { Tooltip } from './Tooltip';
-import { DrugSearchEngine } from '../../services/search/drugSearchEngine';
+import { DrugSearchEngine } from '../../services/search/drugSearchService';
 import type { Drug } from '../../types';
 import { useCatalog } from '../../context/CatalogContext';
 

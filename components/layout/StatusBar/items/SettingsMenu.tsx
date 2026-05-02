@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { AVAILABLE_FONTS_AR, AVAILABLE_FONTS_EN } from '../../../../config/fonts';
-import { permissionsService } from '../../../../services/auth/permissions';
+import { permissionsService } from '../../../../services/auth/permissionsService';
 import { useSettings } from '../../../../context';
 import { useSmartPosition } from '../../../../hooks/useSmartPosition';
 import { TRANSLATIONS } from '../../../../i18n/translations';

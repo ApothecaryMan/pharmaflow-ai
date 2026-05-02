@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { type MenuItem, PHARMACY_MENU, MODULE_VIEW_MAPPING } from '../config/menuData';
 import { PAGE_REGISTRY } from '../config/pageRegistry';
 import { type UserRole } from '../config/permissions';
-import { permissionsService } from '../services/auth/permissions';
+import { permissionsService } from '../services/auth/permissionsService';
 import { useAlert } from '../context';
 import type { ViewState } from '../types';
 

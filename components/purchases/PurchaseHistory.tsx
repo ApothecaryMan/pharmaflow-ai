@@ -17,7 +17,7 @@ import { useSettings } from '../../context';
 import { useData } from '../../services/DataContext';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { useContextMenu } from '../common/ContextMenu';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 
 interface PurchaseHistoryProps {
   purchases: Purchase[];

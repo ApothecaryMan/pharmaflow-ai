@@ -1,6 +1,6 @@
 import React from 'react';
 import { PermissionAction } from '../../config/permissions';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { OrgRole } from '../../types';
 
 interface HasPermissionProps {

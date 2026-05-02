@@ -5,7 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { usePosShortcuts } from '../../common/hooks/usePosShortcuts';
 import { usePosSounds } from '../../common/hooks/usePosSounds';
 import { type UserRole } from '../../../config/permissions';
-import { permissionsService } from '../../../services/auth/permissions';
+import { permissionsService } from '../../../services/auth/permissionsService';
 import { useAlert, useSettings } from '../../../context';
 import { getLocationName } from '../../../data/locations';
 import { useFilterDropdown } from '../../../hooks/useFilterDropdown';

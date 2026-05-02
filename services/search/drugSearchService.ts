@@ -1,4 +1,4 @@
-import { type DrugCatalogItem } from './catalogCache';
+import { type DrugCatalogItem } from './catalogCacheService';
 
 /**
  * DrugSearchEngine - High Performance In-Memory Search Engine.

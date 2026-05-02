@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Drug, StockBatch } from '../types';
-import { permissionsService } from '../services/auth/permissions';
+import { permissionsService } from '../services/auth/permissionsService';
 import { getGroupingKey } from '../services/inventory/batchService';
 import { parseExpiryEndOfMonth } from '../utils/expiryUtils';
 

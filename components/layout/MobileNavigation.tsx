@@ -5,7 +5,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { type MenuItem, PHARMACY_MENU } from '../../config/menuData';
 import { type UserRole } from '../../config/permissions';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { MobileDrawer } from './MobileDrawer';
 import { MobileMedicineSearch } from '../mobile/MobileMedicineSearch';

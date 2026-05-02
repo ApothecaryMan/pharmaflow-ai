@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { COUNTRY_CODES } from '../../data/countryCodes';
 import { AREAS, CITIES, GOVERNORATES, getLocationName } from '../../data/locations';
 import type { Customer } from '../../types';

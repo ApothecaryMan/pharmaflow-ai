@@ -1,7 +1,7 @@
 import React from 'react';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
 import { ROUTES } from '../../config/routes';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { useSettings } from '../../context';
 import { LandingPage } from '../layout/LandingPage';
 import { type ViewState } from '../../types';

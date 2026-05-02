@@ -3,7 +3,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import React, { useCallback, useMemo } from 'react';
 import { type UserRole } from '../../../../config/permissions';
-import { permissionsService } from '../../../../services/auth/permissions';
+import { permissionsService } from '../../../../services/auth/permissionsService';
 import type { CartItem, Drug, Employee, Language } from '../../../../types';
 import { BUTTON_INACTIVE, CARD_MD } from '../../../../utils/themeStyles';
 import { PriceDisplay } from '../../../common/TanStackTable';

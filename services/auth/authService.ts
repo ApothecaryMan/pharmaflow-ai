@@ -77,7 +77,7 @@ export const authService = {
       if (hasActiveManualEmployee) {
         session = {
           ...existingSession!,
-          orgRole: orgRole as any, // Sync role/permissions just in case
+          orgRole: orgRole as any, // Sync role/permissionsService just in case
           orgId: orgId || existingSession!.orgId,
         };
       } else if (employeeData) {

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Drug } from '../types';
-import { DrugSearchEngine } from '../services/search/drugSearchEngine';
+import { DrugSearchEngine } from '../services/search/drugSearchService';
 
 interface UseInventorySearchProps {
   inventory: Drug[];

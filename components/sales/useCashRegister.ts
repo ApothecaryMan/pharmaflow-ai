@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { useShift } from '../../hooks/useShift';
 import type { CashTransaction, CashTransactionType, Employee, Language, Shift } from '../../types';
 import { useData } from '../../services';

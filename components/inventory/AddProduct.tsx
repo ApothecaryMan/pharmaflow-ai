@@ -19,7 +19,7 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { idGenerator } from '../../utils/idGenerator';
 import { validationService } from '../../services/validation/validationService';
 
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 
 interface AddProductProps {
   inventory: Drug[];

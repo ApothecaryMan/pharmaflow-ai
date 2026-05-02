@@ -39,7 +39,7 @@ import { settingsService } from './settings/settingsService';
 import { supplierService } from './suppliers';
 import { useComputedInventory } from '../hooks/useComputedInventory';
 import { transactionService } from './transactions/transactionService';
-import { permissionsService } from './auth/permissions';
+import { permissionsService } from './auth/permissionsService';
 import { supabase } from '../lib/supabase';
 
 export interface DataState {

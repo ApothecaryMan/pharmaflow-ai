@@ -5,7 +5,7 @@ import type { Supplier } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { idGenerator } from '../../utils/idGenerator';
 import { useData } from '../../services/DataContext';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { useContextMenu } from '../common/ContextMenu';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';

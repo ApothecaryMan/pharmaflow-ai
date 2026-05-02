@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSettings } from '../../../../context';
-import { permissionsService } from '../../../../services/auth/permissions';
+import { permissionsService } from '../../../../services/auth/permissionsService';
 import type { Drug } from '../../../../types';
 import { getArabicDisplayName, getDisplayName } from '../../../../utils/drugDisplayName';
 import { PriceDisplay } from '../../../common/TanStackTable';

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { money, pricing } from '../../utils/money';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { useSettings } from '../../context';
 import { PENDING_APPROVAL_HELP } from '../../i18n/helpInstructions';
 import { type Purchase, type Employee, type Shift } from '../../types';

@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { type UserRole } from '../../config/permissions';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import {
   getCategories,
   getLocalizedCategory,
@@ -28,7 +28,7 @@ import { AddProduct } from './AddProduct';
 import { useStatusBar } from '../layout/StatusBar';
 import { useSettings } from '../../context';
 import { SearchEngineInput } from '../common/SearchEngineInput';
-import { DrugSearchEngine } from '../../services/search/drugSearchEngine';
+import { DrugSearchEngine } from '../../services/search/drugSearchService';
 
 import * as stockOps from '../../utils/stockOperations';
 import { batchService } from '../../services/inventory/batchService';

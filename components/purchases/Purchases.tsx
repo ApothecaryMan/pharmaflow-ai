@@ -3,7 +3,7 @@ import React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStatusBar } from '../../components/layout/StatusBar';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { authService } from '../../services/auth/authService';
 import { useAlert, useSettings } from '../../context';
 import { useLongPress } from '../../hooks/useLongPress';
@@ -19,7 +19,7 @@ import {
   sanitizeExpiryInput,
 } from '../../utils/expiryUtils';
 import { formatStock } from '../../utils/inventory';
-import { DrugSearchEngine } from '../../services/search/drugSearchEngine';
+import { DrugSearchEngine } from '../../services/search/drugSearchService';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';

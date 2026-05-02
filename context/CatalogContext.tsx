@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
-import { DrugSearchEngine } from '../services/search/drugSearchEngine';
+import { DrugSearchEngine } from '../services/search/drugSearchService';
 import { 
   openCatalogDB, 
   loadCatalogFromDB, 
   saveCatalogToDB, 
   getLastSyncTime,
   type DrugCatalogItem 
-} from '../services/search/catalogCache';
+} from '../services/search/catalogCacheService';
 import { supabase } from '../lib/supabase';
 
 interface CatalogContextType {

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { type UserRole } from '../../../../config/permissions';
-import { permissionsService } from '../../../../services/auth/permissions';
+import { permissionsService } from '../../../../services/auth/permissionsService';
 import type { CartItem, Customer, Sale } from '../../../../types';
 import { generateInvoiceHTML, getActiveReceiptSettings } from '../../InvoiceTemplate';
 import { getPrinterSettings, printReceiptSilently } from '../../../../utils/qzPrinter';

@@ -16,7 +16,7 @@ import { Tooltip } from '../common/Tooltip';
 import { useAlert } from '../../context';
 import { getLocationName } from '../../data/locations';
 import { PageHeader } from '../common/PageHeader';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
 
 interface BranchSettingsProps {

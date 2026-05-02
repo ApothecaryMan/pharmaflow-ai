@@ -3,7 +3,7 @@ import type { Sale, Return, Shift } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatCurrency } from '../../utils/currency';
 import { money, pricing } from '../../utils/money';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { Modal } from '../common/Modal';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { ReturnModal } from './ReturnModal';

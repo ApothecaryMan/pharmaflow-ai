@@ -15,7 +15,7 @@ import { Switch } from '../common/Switch';
 import { useData } from '../../services/DataContext';
 import { branchService } from '../../services/branchService';
 import { orgService } from '../../services/org/orgService';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import type { Organization } from '../../types';
 
 import { PrinterSettings } from '../settings/PrinterSettings';

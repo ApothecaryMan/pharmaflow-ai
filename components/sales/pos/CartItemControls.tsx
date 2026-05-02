@@ -1,6 +1,6 @@
 import React from 'react';
 import { type UserRole } from '../../../config/permissions';
-import { permissionsService } from '../../../services/auth/permissions';
+import { permissionsService } from '../../../services/auth/permissionsService';
 import type { CartItem, Drug } from '../../../types';
 import { formatExpiryDate, parseExpiryEndOfMonth, getExpiryColorClass } from '../../../utils/expiryUtils';
 import { money, pricing } from '../../../utils/currency';

@@ -4,7 +4,7 @@ import {
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { type UserRole } from '../../config/permissions';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { useData } from '../../services';
 import { authService } from '../../services/auth/authService';
 import { branchService } from '../../services/branchService';

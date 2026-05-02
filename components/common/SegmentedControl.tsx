@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useLayoutEffect, useMemo, useRef } from 'react';
-import { permissionsService, type PermissionAction } from '../../services/auth/permissions';
+import { permissionsService, type PermissionAction } from '../../services/auth/permissionsService';
 
 export interface SegmentedControlOption<T> {
   label: string; value: T; icon?: string; dotColor?: string; activeColor?: string;

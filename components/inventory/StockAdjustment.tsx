@@ -4,7 +4,7 @@ import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
 import { type StockMovement, stockMovementService } from '../../services/inventory';
 import { batchService } from '../../services/inventory/batchService';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import type { Drug, StockBatch } from '../../types';
 import { getDisplayName, getFullDisplayName } from '../../utils/drugDisplayName';
 import * as stockOps from '../../utils/stockOperations';

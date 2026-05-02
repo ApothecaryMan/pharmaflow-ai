@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { permissionsService } from '../../../../services/auth/permissions';
+import { permissionsService } from '../../../../services/auth/permissionsService';
 import { Tooltip } from '../../../common/Tooltip';
 import { StatusBarItem } from '../StatusBarItem';
 

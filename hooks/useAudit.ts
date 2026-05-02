@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { intelligenceService } from '../services/intelligence/intelligenceService';
 import { useData } from '../services/DataContext';
-import { permissionsService } from '../services/auth/permissions';
+import { permissionsService } from '../services/auth/permissionsService';
 import type { AuditTransaction } from '../types/intelligence';
 
 interface UseAuditResult {

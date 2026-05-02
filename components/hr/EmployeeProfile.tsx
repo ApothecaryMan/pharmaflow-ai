@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { COLOR_HEX_MAP } from '../../config/themeColors';
 import { useShift } from '../../hooks/useShift';
 import { analyzeEmployeePerformance } from '../../services/geminiService';

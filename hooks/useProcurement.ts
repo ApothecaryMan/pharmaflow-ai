@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { intelligenceService } from '../services/intelligence/intelligenceService';
 import { useData } from '../services/DataContext';
-import { permissionsService } from '../services/auth/permissions';
+import { permissionsService } from '../services/auth/permissionsService';
 import type { ProcurementItem, ProcurementSummary } from '../types/intelligence';
 
 interface UseProcurementFilters {

@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import React, { useRef, useState } from 'react';
 import { useSettings } from '../../context';
 import { type UserRole } from '../../config/permissions';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
 import type { Customer, Employee, Return, Sale, Shift } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';

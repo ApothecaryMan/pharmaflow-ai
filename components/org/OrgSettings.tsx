@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { orgService } from '../../services/org/orgService';
-import { permissionsService } from '../../services/auth/permissions';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { branchService } from '../../services/branchService';
 import { employeeService } from '../../services/hr/employeeService';
 import { auditService, type AuditEntry } from '../../services/auditService';

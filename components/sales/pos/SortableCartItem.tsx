@@ -2,7 +2,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import React from 'react';
 import { type UserRole } from '../../../config/permissions';
-import { permissionsService } from '../../../services/auth/permissions';
+import { permissionsService } from '../../../services/auth/permissionsService';
 import { useLongPress } from '../../../hooks/useLongPress';
 import type { TRANSLATIONS } from '../../../i18n/translations';
 import type { CartItem, Drug } from '../../../types';

@@ -1,4 +1,4 @@
-import type { PermissionAction } from './permissions';
+import type { PermissionAction } from './permissionsService';
 import { type ViewState } from '../types';
 
 export interface MenuItem {

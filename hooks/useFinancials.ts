@@ -10,7 +10,7 @@ import {
   intelligenceService,
 } from '../services/intelligence/intelligenceService';
 import { useData } from '../services/DataContext';
-import { permissionsService } from '../services/auth/permissions';
+import { permissionsService } from '../services/auth/permissionsService';
 import type { FinancialKPIs, ProductFinancialItem, CategoryFinancialItem } from '../types/intelligence';
 
 interface UseFinancialsResult {
