@@ -47,7 +47,7 @@ import { ClosedTabsHistoryModal } from './ui/ClosedTabsHistoryModal';
 import { usePOSSidebarResizer } from './hooks/usePOSSidebarResizer';
 import { usePOSSearchAndFilters } from './hooks/usePOSSearchAndFilters';
 import { usePOSCustomer } from './hooks/usePOSCustomer';
-import { usePOSSearchWorker } from './hooks/usePOSSearchWorker';
+import { useInventorySearch } from '../../../hooks/useInventorySearch';
 import { usePOSCart } from './hooks/usePOSCart';
 import { usePOSCheckout } from './hooks/usePOSCheckout';
 import { useBarcodeScanner } from './hooks/useBarcodeScanner';
@@ -257,10 +257,10 @@ export const POS: React.FC<POSProps> = ({
     prevCartLengthRef.current = cart.length;
   }, [cart.length, mergedCartItems.length]);
 
-  const { filteredDrugs, totalResults } = usePOSSearchWorker({
+  const { filteredDrugs, totalResults } = useInventorySearch({
     inventory,
     search,
-    selectedCategory,
+    category: selectedCategory,
     stockFilter,
     activeBranchId,
   });
@@ -614,17 +614,28 @@ export const POS: React.FC<POSProps> = ({
 
           const selectedBatchId = selectedBatches[row.id];
           
-          // Auto-fallback: Prefer the selected batch IF IT HAS STOCK, otherwise pick the earliest batch with stock
+          const availableBatches = (row.batches || []).filter((d: Drug) => d.stock > 0);
+          
+          // Auto-fallback: Prefer the selected batch IF IT HAS STOCK, otherwise pick the earliest available batch
           const selectedBatchWithInventory = selectedBatchId 
-            ? row.batches.find((d: Drug) => d.id === selectedBatchId && d.stock > 0)
+            ? availableBatches.find((d: Drug) => d.id === selectedBatchId)
             : null;
             
-          const defaultBatch = row.batches.find((d: Drug) => d.stock > 0) || row.batches[0];
-          
+          const defaultBatch = availableBatches[0];
           const displayBatch = selectedBatchWithInventory || defaultBatch;
 
-          if (row.batches.length === 1) {
-            const i = displayBatch;
+          if (availableBatches.length === 0) {
+            return (
+              <div className='w-full h-full flex items-center justify-center'>
+                <span className='inline-flex items-center px-2 py-0.5 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-900/20 rounded-sm border border-red-100 dark:border-red-800/50'>
+                  {t.noStock || 'Out of Stock'}
+                </span>
+              </div>
+            );
+          }
+
+          if (availableBatches.length === 1) {
+            const i = availableBatches[0];
             return (
               <div className='w-full h-full flex items-center justify-center'>
                 <div className={`text-sm font-bold tabular-nums ${i ? getExpiryColorClass(i.expiryDate) : 'text-gray-700 dark:text-gray-300'}`}>
@@ -643,7 +654,7 @@ export const POS: React.FC<POSProps> = ({
           return (
             <div className='w-full h-full flex items-center justify-center overflow-visible'>
               <FilterDropdown
-                items={row.batches}
+                items={availableBatches}
                 selectedItem={displayBatch}
                 isOpen={openBatchDropdown === row.id}
                 onToggle={() => {
@@ -1008,7 +1019,7 @@ export const POS: React.FC<POSProps> = ({
         {/* Product Details Modal */}
         {viewingDrug && (() => {
           const drugBatches = inventory.filter(d => 
-            d.name === viewingDrug.name && d.dosageForm === viewingDrug.dosageForm
+            d.name === viewingDrug.name && d.dosageForm === viewingDrug.dosageForm && d.stock > 0
           ).sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
 
           const substitutes = inventory.filter(d => 

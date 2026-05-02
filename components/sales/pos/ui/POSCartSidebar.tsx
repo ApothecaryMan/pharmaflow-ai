@@ -356,7 +356,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                           addToCart={addToCart}
                           removeDrugFromCart={removeDrugFromCart}
                           allBatches={
-                            batchesMap.get(getGroupingKey(group.common)) || []
+                            (batchesMap.get(getGroupingKey(group.common)) || []).filter(b => (b.stock || 0) > 0)
                           }
                           onSelectBatch={switchBatchWithAutoSplit}
                           isHighlighted={index === highlightedIndex}

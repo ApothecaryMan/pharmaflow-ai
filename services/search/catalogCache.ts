@@ -10,7 +10,9 @@ export interface DrugCatalogItem {
   publicPrice: number;
   manufacturer?: string;
   genericName?: string[];
-  updatedAt: string;
+  updatedAt?: string;
+  stock?: number; // Added to support local inventory enrichment
+  batches?: any[]; // Added to support batch grouping enrichment
 }
 
 interface CatalogDB extends DBSchema {

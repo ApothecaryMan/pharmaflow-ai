@@ -184,12 +184,32 @@ export class DrugSearchEngine {
     if (filters?.stock_status && filters.stock_status.length > 0) {
       const status = filters.stock_status;
       if (!status.includes('all')) {
+        const showInStock = status.includes('in_stock');
+        const showOut = status.includes('out_of_stock');
+
+        // First filter the drugs themselves
         pool = pool.filter(d => {
-          const s = (d as any).stock || 0;
-          if (status.includes('in_stock') && status.includes('out_of_stock')) return true;
-          if (status.includes('in_stock')) return s > 0;
-          if (status.includes('out_of_stock')) return s <= 0;
+          const s = d.stock || 0;
+          if (showInStock && showOut) return true;
+          if (showInStock) return s > 0;
+          if (showOut) return s <= 0;
           return true;
+        });
+
+        // NEW: Also filter the batches INSIDE each drug to match the status
+        pool = pool.map(d => {
+          if (!d.batches || d.batches.length === 0) return d;
+          
+          const filteredBatches = d.batches.filter(b => {
+            const qty = (b as any).stock || 0;
+            if (showInStock && showOut) return true;
+            if (showInStock) return qty > 0;
+            if (showOut) return qty <= 0;
+            return true;
+          });
+
+          // Return a shallow copy with filtered batches to avoid mutating the index
+          return { ...d, batches: filteredBatches };
         });
       }
     }
