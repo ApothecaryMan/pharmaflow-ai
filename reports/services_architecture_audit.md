@@ -176,7 +176,12 @@ BaseReportService (146 lines — standalone)
 - **بيعرّف `STORES` لـ IndexedDB**: `inventory`, `sales`, `sync_queue`, etc.
 - **المفروض يكون deprecated** — لكنه لسه imported في `backupService`.
 
-**التوصية:** أرشفة الـ 3 files دول في folder `_legacy/` أو حذفهم بالكامل. هم مش بيتنفذوا في الـ normal flow.
+**التوصية:** حذف الملفات تماماً لتنظيف الـ codebase.
+
+> [!TIP]
+> **✅ [FIXED] 2026-05-02:**
+> تم حذف ملفات `migrationService.ts` و `backupService.ts` و `db.ts` نهائياً. كما تم تنظيف `useEntityHandlers.ts` من أي استدعاءات للـ migration التي كانت تستهلك موارد عند كل تشغيل.
+
 
 ---
 

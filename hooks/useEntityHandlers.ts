@@ -8,7 +8,7 @@ import { inventoryService } from '../services/inventory/inventoryService';
 import { employeeService } from '../services/hr/employeeService';
 import { stockMovementService } from '../services/inventory/stockMovement/stockMovementService';
 import { transactionService } from '../services/transactions/transactionService';
-import { migrationService } from '../services/migration';
+
 import { restoreStockForCancelledSale } from '../services/salesHelpers';
 import { salesService } from '../services/sales/salesService';
 import { purchaseService } from '../services/purchases/purchaseService';
@@ -193,30 +193,7 @@ export function useEntityHandlers({
 
   const migrationAttempted = useRef(false);
 
-  // Run migrations on mount
-  // Run migrations on mount
-  useEffect(() => {
-    let cancelled = false;
 
-    if (isLoading || migrationAttempted.current) return;
-    if (!inventory || inventory.length === 0) return;
-
-    const runMigrations = async () => {
-      migrationAttempted.current = true;
-      // Simulate async if needed, or structured like this for future async support
-      const { hasUpdates, migratedInventory } = migrationService.runMigrations(inventory);
-
-      if (!cancelled && hasUpdates) {
-        setInventory(migratedInventory);
-      }
-    };
-
-    runMigrations();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isLoading, inventory, setInventory]);
 
   // --- Drug Management ---
   const handleAddDrug = useCallback(
