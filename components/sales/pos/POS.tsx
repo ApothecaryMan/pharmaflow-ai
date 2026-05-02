@@ -15,10 +15,11 @@ import { useData } from '../../../services/DataContext';
 import type { TRANSLATIONS } from '../../../i18n/translations';
 import type { CartItem, Customer, Drug, Employee, Language, Sale, Shift } from '../../../types';
 import { getArabicDisplayName, getDisplayName } from '../../../utils/drugDisplayName';
+import { batchService } from '../../../services/inventory/batchService';
 import { formatStock } from '../../../utils/inventory';
-import { resolvePrice } from '../../../utils/stockOperations';
+import * as stockOps from '../../../utils/stockOperations';
 import { parseSearchTerm } from '../../../utils/searchUtils';
-import { formatExpiryDate, parseExpiryEndOfMonth } from '../../../utils/expiryUtils';
+import { formatExpiryDate, getExpiryColorClass, parseExpiryEndOfMonth } from '../../../utils/expiryUtils';
 import { money } from '../../../utils/money';
 
 import { useContextMenu } from '../../common/ContextMenu';
@@ -342,26 +343,6 @@ export const POS: React.FC<POSProps> = ({
     return isUppercase ? suggestions.map((s) => s.toUpperCase()) : suggestions;
   }, [search, filteredDrugs, textTransform]);
 
-  // Group drugs by name and sort batches by expiry
-  const groupedDrugs = useMemo(() => {
-    const groups: Record<string, Drug[]> = {};
-    filteredDrugs.forEach((d) => {
-      // Group by Name AND DosageForm to separate different forms
-      const key = `${d.name}|${d.dosageForm || ''}`;
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(d);
-    });
-
-    // Sort batches by expiry date (asc)
-    Object.values(groups).forEach((group) => {
-      group.sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime());
-    });
-
-    return Object.values(groups);
-  }, [filteredDrugs]);
-
-  // Long Press Logic for Touch Devices
-
   // --- Cart Quantity Map (lightweight, updates on cart change) ---
   const cartQtyMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -377,34 +358,19 @@ export const POS: React.FC<POSProps> = ({
   // PERF: tableData no longer depends on `cart`. This prevents rebuilding
   // thousands of row objects on every cart add/remove/quantity change.
   const tableData = useMemo(() => {
-    return groupedDrugs.map((group) => {
-      const first = group[0];
-      const drugKey = `${first.name}|${first.dosageForm || ''}`;
-      return {
-        id: drugKey, // Use stable drug key as row ID
-        ...first,
-        group: group,
-        totalStock: group.reduce((sum, d) => sum + d.stock, 0),
-      };
-    });
-  }, [groupedDrugs]);
+    return batchService.groupInventory(filteredDrugs).map(g => ({
+      ...g,
+      id: g.groupId // Use stable drug key as row ID for selection/shortcuts
+    }));
+  }, [filteredDrugs]);
 
   // --- Precomputed Batches Map for Cart Items (Fix A) ---
   // PREVENTS O(N) inventory scans per SortableCartItem on every sidebar render
   const batchesMap = useMemo(() => {
+    const grouped = batchService.groupInventory(inventory);
     const map = new Map<string, Drug[]>();
-    inventory.forEach((drug) => {
-      const key = `${drug.name}|${drug.dosageForm}`;
-      const existing = map.get(key);
-      if (existing) {
-        existing.push(drug);
-      } else {
-        map.set(key, [drug]);
-      }
-    });
-    // Sort all arrays in the map once
-    map.forEach((batches) => {
-      batches.sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime());
+    grouped.forEach((g) => {
+      map.set(g.groupId, g.batches);
     });
     return map;
   }, [inventory]);
@@ -438,7 +404,7 @@ export const POS: React.FC<POSProps> = ({
     },
     onAddFromTable: () => {
       if (tableData[activeIndex]) {
-        addGroupToCart(tableData[activeIndex].group);
+        addGroupToCart(tableData[activeIndex].batches);
         // Replicate existing behavior on selection: clear search and reset focus
         setSearch('');
         setActiveIndex(0);
@@ -575,14 +541,11 @@ export const POS: React.FC<POSProps> = ({
             );
           }
 
-          let displayValue;
-          if (mode === 'unit') {
-            displayValue = info.getValue(); // Show total units
-          } else {
-            // Show fractional packs
-            const packs = info.getValue() / unitsPerPack;
-            displayValue = parseFloat(packs.toFixed(2));
-          }
+          const displayValue = stockOps.resolveDisplayStock(
+            info.getValue(), 
+            unitsPerPack, 
+            mode as 'pack' | 'unit'
+          );
 
           return (
             <span className='text-sm font-bold text-gray-700 dark:text-gray-300 tabular-nums'>
@@ -646,25 +609,25 @@ export const POS: React.FC<POSProps> = ({
         size: 150,
         cell: (info) => {
           const row = info.row.original;
-          if (!row.group || row.group.length === 0)
+          if (!row.batches || row.batches.length === 0)
             return <span className='text-xs text-gray-400'>-</span>;
 
           const selectedBatchId = selectedBatches[row.id];
           
           // Auto-fallback: Prefer the selected batch IF IT HAS STOCK, otherwise pick the earliest batch with stock
           const selectedBatchWithInventory = selectedBatchId 
-            ? row.group.find((d: Drug) => d.id === selectedBatchId && d.stock > 0)
+            ? row.batches.find((d: Drug) => d.id === selectedBatchId && d.stock > 0)
             : null;
             
-          const defaultBatch = row.group.find((d: Drug) => d.stock > 0) || row.group[0];
+          const defaultBatch = row.batches.find((d: Drug) => d.stock > 0) || row.batches[0];
           
           const displayBatch = selectedBatchWithInventory || defaultBatch;
 
-          if (row.group.length === 1) {
+          if (row.batches.length === 1) {
             const i = displayBatch;
             return (
               <div className='w-full h-full flex items-center justify-center'>
-                <div className='text-sm font-bold text-gray-700 dark:text-gray-300'>
+                <div className={`text-sm font-bold tabular-nums ${i ? getExpiryColorClass(i.expiryDate) : 'text-gray-700 dark:text-gray-300'}`}>
                   {i ? (
                     formatExpiryDate(i.expiryDate) + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                   ) : (
@@ -680,7 +643,7 @@ export const POS: React.FC<POSProps> = ({
           return (
             <div className='w-full h-full flex items-center justify-center overflow-visible'>
               <FilterDropdown
-                items={row.group}
+                items={row.batches}
                 selectedItem={displayBatch}
                 isOpen={openBatchDropdown === row.id}
                 onToggle={() => {
@@ -696,13 +659,14 @@ export const POS: React.FC<POSProps> = ({
                 keyExtractor={(item) => (item as Drug).id}
                 renderSelected={(item) => {
                   const i = item as Drug | undefined;
+                  const colorClass = i ? getExpiryColorClass(i.expiryDate) : 'text-red-500';
                   return (
-                    <div className='w-full px-2 text-sm font-bold text-center truncate transition-colors'>
+                    <div className={`w-full px-2 text-sm font-bold text-center truncate transition-colors ${colorClass}`}>
                       {i ? (
                         formatExpiryDate(i.expiryDate) +
                         ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                       ) : (
-                        <span className='text-red-500'>{t.noStock}</span>
+                        <span>{t.noStock}</span>
                       )}
                     </div>
                   );
@@ -710,14 +674,14 @@ export const POS: React.FC<POSProps> = ({
                 renderItem={(item) => {
                   const i = item as Drug;
                   return (
-                    <div className='w-full px-2 text-sm font-bold text-center text-gray-700 dark:text-gray-300'>
+                    <div className={`w-full px-2 text-sm font-bold text-center ${getExpiryColorClass(i.expiryDate)}`}>
                       {formatExpiryDate(i.expiryDate) +
                         ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`}
                     </div>
                   );
                 }}
                 onEnter={() => {
-                  addGroupToCart(row.group);
+                  addGroupToCart(row.batches);
                   setSearch('');
                   setActiveIndex(0);
                   searchInputRef.current?.focus();
@@ -741,7 +705,7 @@ export const POS: React.FC<POSProps> = ({
         meta: { align: 'center' },
         cell: (info) => {
           // Computed lazily from ref — doesn't force table re-render on cart change
-          const count = info.row.original.group.reduce(
+          const count = info.row.original.batches.reduce(
             (sum: number, d: any) => sum + (cartQtyMapRef.current.get(d.id) || 0), 0
           );
           if (count <= 0) return null;
@@ -832,16 +796,16 @@ export const POS: React.FC<POSProps> = ({
                       // --- Grid Navigation ---
                       if (e.key === 'ArrowDown') {
                         e.preventDefault();
-                        if (groupedDrugs.length > 0) {
-                          setActiveIndex((prev) => (prev + 1) % groupedDrugs.length);
+                        if (tableData.length > 0) {
+                          setActiveIndex((prev) => (prev + 1) % tableData.length);
                         }
                         return;
                       }
                       if (e.key === 'ArrowUp') {
                         e.preventDefault();
-                        if (groupedDrugs.length > 0) {
+                        if (tableData.length > 0) {
                           setActiveIndex(
-                            (prev) => (prev - 1 + groupedDrugs.length) % groupedDrugs.length
+                            (prev) => (prev - 1 + tableData.length) % tableData.length
                           );
                         }
                         return;
@@ -867,9 +831,9 @@ export const POS: React.FC<POSProps> = ({
                         }
     
                         // 2. Add Active Item
-                        if (groupedDrugs.length > 0) {
-                          const activeGroup = groupedDrugs[activeIndex];
-                          addGroupToCart(activeGroup);
+                        if (tableData.length > 0) {
+                          const activeGroup = tableData[activeIndex];
+                          addGroupToCart(activeGroup.batches);
                           setSearch('');
                           setActiveIndex(0);
                           // Ensure focus remains/returns to search (though it's already there)
@@ -927,19 +891,19 @@ export const POS: React.FC<POSProps> = ({
               enableVirtualization={true}
               dense={true}
               enablePagination={false}
-              onRowClick={(item) => addGroupToCart(item.group)}
+              onRowClick={(item) => addGroupToCart(item.batches)}
               onRowLongPress={(e, item) => {
                 showMenu(e.touches[0].clientX, e.touches[0].clientY, [
                   {
                     label: t.addToCart,
                     icon: 'add_shopping_cart',
-                    action: () => addGroupToCart(item.group),
+                    action: () => addGroupToCart(item.batches),
                     danger: false,
                   },
                   {
                     label: t.viewDetails,
                     icon: 'info',
-                    action: () => setViewingDrug(item.group[0]),
+                    action: () => setViewingDrug(item.batches[0]),
                   },
                 ]);
               }}
@@ -948,13 +912,13 @@ export const POS: React.FC<POSProps> = ({
                   {
                     label: t.addToCart,
                     icon: 'add_shopping_cart',
-                    action: () => addGroupToCart(item.group),
+                    action: () => addGroupToCart(item.batches),
                     danger: false,
                   },
                   {
                     label: t.viewDetails,
                     icon: 'info',
-                    action: () => setViewingDrug(item.group[0]),
+                    action: () => setViewingDrug(item.batches[0]),
                   },
                 ]);
               }}

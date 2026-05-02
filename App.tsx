@@ -542,13 +542,7 @@ const App: React.FC = () => {
 
   // 10. Authenticated & Setup Done -> Show Secure Content wrapped in Providers
   return (
-    <DataProvider 
-      initialSuppliers={import.meta.env.DEV ? INITIAL_SUPPLIERS : []}
-    >
-      <ShiftProvider>
-        <AuthenticatedContent {...appState} {...authState} />
-      </ShiftProvider>
-    </DataProvider>
+    <AuthenticatedContent {...appState} {...authState} />
   );
 };
 

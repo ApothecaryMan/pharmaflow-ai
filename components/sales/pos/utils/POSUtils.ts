@@ -99,29 +99,3 @@ export const buildSalePayload = (params: SalePayloadParams): Sale => {
   } as Sale;
 };
 
-import * as stockOps from '../../../../utils/stockOperations';
-
-/**
- * Validates if adding a specific quantity of a drug (in packs or units) 
- * would exceed the current total stock.
- */
-export const isStockConstraintMet = (
-  drugId: string,
-  stock: number,
-  unitsPerPack: number | undefined,
-  currentCart: CartItem[],
-  delta: number,
-  isUnit: boolean
-): boolean => {
-  // Calculate existing units in cart for this drug
-  const existingUnits = currentCart
-    .filter((item) => item.id === drugId)
-    .reduce((sum, item) => {
-      return sum + stockOps.resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack || unitsPerPack);
-    }, 0);
-
-  // Calculate new units to be added
-  const newUnits = stockOps.resolveUnits(delta, isUnit, unitsPerPack);
-
-  return existingUnits + newUnits <= stock;
-};

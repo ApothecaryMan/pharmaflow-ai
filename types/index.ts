@@ -146,6 +146,25 @@ export interface GlobalDrug {
 }
 
 /**
+ * GroupingKey - Canonical identity key for a product group.
+ * Format: `barcode || (name|dosageForm|manufacturer)`
+ */
+export type GroupingKey = string;
+
+/**
+ * GroupedDrug - Represents a virtual collection of batches for the same drug.
+ * Used in Inventory and POS to display a single row for multiple batches.
+ */
+export interface GroupedDrug extends Drug {
+  /** Canonical grouping key for this product */
+  groupId: GroupingKey;
+  /** Total aggregate stock across all batches in the group (in units) */
+  totalStock: number;
+  /** All batches belonging to this group, sorted by FEFO (earliest expiry first) */
+  batches: Drug[];
+}
+
+/**
  * Drug/Medication entity - core inventory item.
  * Represents a sellable medicine with pricing, stock, and metadata.
  */
@@ -210,6 +229,7 @@ export interface Drug {
   itemRank?: string;
   /** Legacy database ID from CSV/migration */
   dbId?: string;
+  batches?: Drug[];
   /** Product class/grouping */
   class?: string;
   /** Minimum allowed selling price */

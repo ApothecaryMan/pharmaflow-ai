@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import type { Drug, StockBatch } from '../types';
 import { permissionsService } from '../services/auth/permissions';
+import { getGroupingKey } from '../services/inventory/batchService';
+import { parseExpiryEndOfMonth } from '../utils/expiryUtils';
 
 /**
  * Hook to derive computed inventory properties (stock, expiry) from batches.
@@ -23,58 +25,96 @@ export const useComputedInventory = (
       ? rawInventory.filter(d => d.branchId === activeBranchId)
       : rawInventory;
 
-    // 1. Group batches by Drug ID for efficient lookup
-    const batchSums = new Map<string, { total: number; earliestExpiry: string }>();
-
+    // 1. Group batches by Unified Grouping Key for efficient lookup
+    const drugDataMap = new Map<string, { 
+      total: number; 
+      earliestExpiry: string;
+      batches: Drug[];
+      template: Drug;
+    }>();
+ 
     filteredBatches.forEach((batch) => {
-      const existing = batchSums.get(batch.drugId);
+      // Find the template drug for this batch to inherit properties (name, price, etc)
+      const drugTemplate = filteredInventory.find(d => d.id === batch.drugId);
+      if (!drugTemplate) return;
+
+      const groupKey = getGroupingKey(drugTemplate);
+      const existing = drugDataMap.get(groupKey);
+      
+      // Create a virtual drug object for this specific batch
+      const batchAsDrug: Drug = {
+        ...drugTemplate,
+        id: batch.id, // Use batch ID as the unique ID for this instance
+        stock: batch.quantity,
+        expiryDate: batch.expiryDate,
+        costPrice: batch.costPrice,
+        // Preserve original ID for reference if needed
+        dbId: batch.drugId 
+      };
+
       if (existing) {
-        batchSums.set(batch.drugId, {
+        drugDataMap.set(groupKey, {
+          ...existing,
           total: existing.total + batch.quantity,
           earliestExpiry: batch.expiryDate < existing.earliestExpiry ? batch.expiryDate : existing.earliestExpiry,
+          batches: [...existing.batches, batchAsDrug]
         });
       } else {
-        batchSums.set(batch.drugId, {
+        drugDataMap.set(groupKey, {
           total: batch.quantity,
           earliestExpiry: batch.expiryDate,
+          batches: [batchAsDrug],
+          template: drugTemplate
         });
       }
     });
-
+ 
     const canViewFinancials = permissionsService.can('reports.view_financial');
+ 
+    // 2. Map the groups to a final array of Drugs
+    const results: Drug[] = Array.from(drugDataMap.values()).map(({ total, earliestExpiry, batches, template }) => {
+      let processedDrug: Drug = {
+        ...template,
+        stock: total,
+        expiryDate: earliestExpiry,
+        batches: batches.sort((a, b) => 
+          parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime()
+        )
+      };
 
-    // 2. Map inventory items with computed values
-    return filteredInventory.map((drug) => {
-      const computed = batchSums.get(drug.id);
-      
-      let processedDrug: Drug;
-
-      // If we have batches, use them.
-      if (computed) {
-        processedDrug = {
-          ...drug,
-          stock: computed.total,
-          expiryDate: computed.earliestExpiry,
-        };
-      } else {
-        // Products with no batches should have 0 stock
-        processedDrug = {
-          ...drug,
-          stock: 0,
-          expiryDate: drug.expiryDate,
-        };
-      }
-
-      // Security Strip: Remove cost information if not authorized
       if (!canViewFinancials) {
-        return {
+        processedDrug = {
           ...processedDrug,
           costPrice: 0,
           unitCostPrice: 0,
+          batches: processedDrug.batches?.map(b => ({
+            ...b,
+            costPrice: 0,
+            unitCostPrice: 0
+          }))
         };
       }
-
       return processedDrug;
     });
+
+    // 3. Add zero-stock drugs that weren't in any batch group
+    const processedKeys = new Set(Array.from(drugDataMap.keys()));
+    filteredInventory.forEach(drug => {
+      const key = getGroupingKey(drug);
+      if (!processedKeys.has(key)) {
+        let emptyDrug: Drug = {
+          ...drug,
+          stock: 0,
+          batches: []
+        };
+        if (!canViewFinancials) {
+          emptyDrug = { ...emptyDrug, costPrice: 0, unitCostPrice: 0 };
+        }
+        results.push(emptyDrug);
+        processedKeys.add(key);
+      }
+    });
+
+    return results;
   }, [rawInventory, batches, activeBranchId]);
 };

@@ -12,6 +12,7 @@ import { SortableCartItem } from '../SortableCartItem';
 import { resolvePrice } from '../../../../utils/stockOperations';
 import { useNetworkStatus } from '../../../../hooks/useNetworkStatus';
 import { money } from '../../../../utils/money';
+import { getGroupingKey } from '../../../../services/inventory/batchService';
 
 
 const cartScrollStyles = `
@@ -355,7 +356,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                           addToCart={addToCart}
                           removeDrugFromCart={removeDrugFromCart}
                           allBatches={
-                            batchesMap.get(`${group.common.name}|${group.common.dosageForm}`) || []
+                            batchesMap.get(getGroupingKey(group.common)) || []
                           }
                           onSelectBatch={switchBatchWithAutoSplit}
                           isHighlighted={index === highlightedIndex}

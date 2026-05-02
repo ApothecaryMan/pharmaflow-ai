@@ -1,5 +1,5 @@
 import { CartItem } from '../../types';
-import { money, tax } from '../../utils/money';
+import { money, tax, pricing } from '../../utils/money';
 
 /**
  * Pricing Service - Centralized logic for all financial calculations in POS and Sales.
@@ -110,5 +110,21 @@ export const pricingService = {
     });
 
     return totalRefund;
-  }
+  },
+
+  /**
+   * Calculates the maximum allowed discount for an item based on its profit margin.
+   * Ensures the discount doesn't wipe out the margin completely.
+   */
+  calculateMaxDiscount: (costPrice: number, publicPrice: number, manualMaxDiscount?: number): number => {
+    const margin = pricing.actualMargin(costPrice || 0, publicPrice || 0);
+
+    let calculatedMax = 10;
+    if (margin < 20) {
+      calculatedMax = Math.floor(margin / 2);
+    }
+
+    const effectiveMax = manualMaxDiscount && manualMaxDiscount > 0 ? manualMaxDiscount : calculatedMax;
+    return Math.max(0, effectiveMax);
+  },
 };

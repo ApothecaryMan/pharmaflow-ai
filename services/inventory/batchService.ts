@@ -3,12 +3,13 @@
  * Online-Only implementation using Supabase.
  */
 
-import type { BatchAllocation, StockBatch } from '../../types';
+import { money } from '../../utils/money';
+import * as stockOps from '../../utils/stockOperations';
+import type { BatchAllocation, StockBatch, Drug, GroupedDrug, GroupingKey, CartItem } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { supabase } from '../../lib/supabase';
 import { settingsService } from '../settings/settingsService';
-import { money } from '../../utils/money';
 
 const mapBatchToDb = (b: Partial<StockBatch>): any => {
   const db: any = {};
@@ -42,6 +43,18 @@ const mapDbToBatch = (db: any): StockBatch => ({
   batchNumber: db.batch_number || undefined,
   version: db.version || 1,
 });
+
+/**
+ * Canonical grouping key strategy: barcode || (name|dosageForm|manufacturer)
+ * This is the SINGLE source of truth for drug identity across the system.
+ */
+export const getGroupingKey = (drug: Drug | Partial<Drug>): GroupingKey => {
+  if (drug.barcode) return `BARCODE|${drug.barcode}`;
+  const name = drug.name || '';
+  const form = drug.dosageForm || '';
+  const mfr = drug.manufacturer || '';
+  return `NAME|${name}|${form}|${mfr}`;
+};
 
 export const batchService = {
   async fetchBatchesFromSupabase(branchId?: string, drugId?: string, drugIds?: string[]): Promise<StockBatch[]> {
@@ -361,6 +374,120 @@ export const batchService = {
     };
   },
 
+  groupInventory(drugs: Drug[]): GroupedDrug[] {
+    const groups: Record<GroupingKey, (Drug & { batches?: Drug[] })[]> = {};
+
+    drugs.forEach((drug) => {
+      const key = getGroupingKey(drug);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(drug);
+    });
+
+    return Object.entries(groups).map(([key, items]) => {
+      // 1. Extract ALL batches from all drugs in this group
+      const allBatchesInGroup: Drug[] = [];
+      items.forEach(d => {
+        if (d.batches && d.batches.length > 0) {
+          allBatchesInGroup.push(...d.batches);
+        } else {
+          // If a drug has no batches attached (e.g. legacy or 0 stock), 
+          // add the drug itself as a single batch for display
+          allBatchesInGroup.push(d);
+        }
+      });
+
+      // 2. Sort batches by expiry date (FEFO)
+      const sortedBatches = [...allBatchesInGroup].sort((a, b) => {
+        if (!a.expiryDate) return 1;
+        if (!b.expiryDate) return -1;
+        const dateA = parseExpiryEndOfMonth(a.expiryDate).getTime();
+        const dateB = parseExpiryEndOfMonth(b.expiryDate).getTime();
+        return isNaN(dateA) ? 1 : isNaN(dateB) ? -1 : dateA - dateB;
+      });
+
+      // 3. The representative drug (earliest batch)
+      const earliest = sortedBatches[0];
+      
+      // 4. Sum up stock correctly
+      // We should use the stock from the drugs themselves if they were already computed
+      // OR sum up the sortedBatches.
+      const totalStock = sortedBatches.reduce((sum, b) => sum + (b.stock || 0), 0);
+
+      return {
+        ...earliest,
+        groupId: key,
+        totalStock,
+        batches: sortedBatches,
+        id: earliest.id,
+        stock: totalStock, // Compatibility
+      } as GroupedDrug;
+    });
+  },
+
+  autoDistributeQuantities(
+    totalPacks: number,
+    totalUnits: number,
+    batches: Drug[],
+    preferredBatchId?: string
+  ): { batchId: string; packQty: number; unitQty: number }[] {
+    const unitsPerPack = batches[0]?.unitsPerPack || 1;
+    const totalRequestedUnits = totalPacks * unitsPerPack + totalUnits;
+    let remainingUnits = totalRequestedUnits;
+
+    const sortedBatches = [...batches].sort((a, b) => {
+      if (preferredBatchId) {
+        if (a.id === preferredBatchId) return -1;
+        if (b.id === preferredBatchId) return 1;
+      }
+      if (!a.expiryDate) return 1;
+      if (!b.expiryDate) return -1;
+      return parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime();
+    });
+
+    const results: { batchId: string; packQty: number; unitQty: number }[] = [];
+
+    for (const batch of sortedBatches) {
+      if (remainingUnits <= 0) break;
+      const batchMaxUnits = (batch.stock || 0); // stock is already in units in the DB/Drug type
+      const takeUnits = Math.min(batchMaxUnits, remainingUnits);
+
+      if (takeUnits > 0) {
+        const pQty = Math.floor(takeUnits / unitsPerPack);
+        const uQty = takeUnits % unitsPerPack;
+        results.push({ batchId: batch.id, packQty: pQty, unitQty: uQty });
+        remainingUnits -= takeUnits;
+      }
+    }
+
+    return results;
+  },
+
+  findTargetBatch(
+    group: GroupedDrug,
+    currentCart: CartItem[],
+    selectedBatchId?: string
+  ): Drug | null {
+    if (selectedBatchId) {
+      const selected = group.batches.find((b) => b.id === selectedBatchId);
+      if (selected) return selected;
+    }
+
+    for (const batch of group.batches) {
+      const inCartUnits = currentCart
+        .filter((item) => item.id === batch.id)
+        .reduce((sum, item) => {
+          const units = item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1);
+          return sum + units;
+        }, 0);
+
+      if ((batch.stock || 0) > inCartUnits) {
+        return batch;
+      }
+    }
+
+    return group.batches[0] || null;
+  },
+
   async deleteBatchById(batchId: string): Promise<boolean> {
     const { error } = await supabase.from('stock_batches').delete().eq('id', batchId);
     return !error;
@@ -370,4 +497,39 @@ export const batchService = {
     const { error } = await supabase.from('stock_batches').delete().eq('drug_id', drugId);
     return !error;
   },
+
+  /**
+   * Validates if the current cart's requirements are still met by the actual inventory.
+   * Prevents double-deduction and race conditions.
+   * Returns a list of drugs that are now out of stock or insufficient.
+   */
+  validateCartStock: async (cart: CartItem[], branchId: string): Promise<{ drugId: string, name: string, available: number, required: number }[]> => {
+    const groupedRequirements = new Map<string, number>();
+    
+    // 1. Sum up all requirements per drug ID
+    cart.forEach(item => {
+      const units = stockOps.resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack);
+      groupedRequirements.set(item.id, (groupedRequirements.get(item.id) || 0) + units);
+    });
+
+    const issues: { drugId: string, name: string, available: number, required: number }[] = [];
+
+    // 2. Cross-reference with actual batch levels
+    for (const [drugId, required] of groupedRequirements.entries()) {
+      const drugBatches = await batchService.getAllBatches(branchId, drugId);
+      const totalAvailable = drugBatches.reduce((sum, b) => sum + b.quantity, 0);
+      
+      if (totalAvailable < required) {
+        const first = cart.find(i => i.id === drugId);
+        issues.push({
+          drugId,
+          name: first?.name || 'Unknown',
+          available: totalAvailable,
+          required
+        });
+      }
+    }
+
+    return issues;
+  }
 };

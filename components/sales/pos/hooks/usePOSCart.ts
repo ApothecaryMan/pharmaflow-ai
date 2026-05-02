@@ -11,8 +11,10 @@ import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { type UserRole } from '../../../../config/permissions';
 import { permissionsService } from '../../../../services/auth/permissions';
 import type { CartItem, Drug } from '../../../../types';
-import { isStockConstraintMet } from '../utils/POSUtils';
 import * as stockOps from '../../../../utils/stockOperations';
+import { isStockConstraintMet } from '../../../../utils/stockOperations';
+import { batchService } from '../../../../services/inventory/batchService';
+import type { GroupedDrug } from '../../../../types';
 
 interface UsePOSCartProps {
   activeTab: any;
@@ -158,32 +160,16 @@ export const usePOSCart = ({
   }, [activeTab?.firstItemAt, activeTabId, updateTab, setCart]);
 
   const addGroupToCart = useCallback((group: Drug[]) => {
-    const firstDrug = group[0];
-    const drugKey = `${firstDrug.name}|${firstDrug.dosageForm || ''}`;
+    // Treat the array as a potential group
+    const grouped = batchService.groupInventory(group)[0];
+    if (!grouped) return;
+
+    const drugKey = grouped.groupId;
     const selectedBatchId = selectedBatches[drugKey];
 
-    let targetBatch: Drug | undefined;
-
-    if (selectedBatchId) {
-      targetBatch = group.find((d) => d.id === selectedBatchId);
-    }
-
-    if (!targetBatch || targetBatch.stock <= 0) {
-      const currentCart = cartRef.current;
-      targetBatch = group.find((d) => {
-        const inCart = currentCart
-          .filter((c) => c.id === d.id)
-          .reduce(
-            (sum, c) =>
-              sum + (c.isUnit && c.unitsPerPack ? c.quantity / c.unitsPerPack : c.quantity),
-            0
-          );
-        return d.stock - inCart > 0;
-      });
-    }
+    const targetBatch = batchService.findTargetBatch(grouped, cartRef.current, selectedBatchId);
 
     if (targetBatch) {
-      const drugKey = `${firstDrug.name}|${firstDrug.dosageForm || ''}`;
       const unitMode = selectedUnits[drugKey] === 'unit';
       addToCart(targetBatch, unitMode);
     }
@@ -274,30 +260,63 @@ export const usePOSCart = ({
 
   const updateQuantity = useCallback((id: string, isUnit: boolean, delta: number) => {
     setCart((prev: CartItem[]) => {
-      const drug = inventory.find((d) => d.id === id);
-      if (!drug) return prev;
+      // 1. Find the parent drug definition to get ALL its batches
+      const drugDefinition = inventory.find((d) => d.id === id || (d as any).dbId === id);
+      if (!drugDefinition) return prev;
 
-      const targetItem = prev.find((i) => i.id === id && !!i.isUnit === isUnit);
+      const targetItem = prev.find((i) => (i.id === id || (i as any).dbId === id) && !!i.isUnit === isUnit);
       if (!targetItem) return prev;
 
-      const newQty = targetItem.quantity + delta;
+      // 2. Calculate new total requested quantity for this drug-type pair in cart
+      // We sum up all items of same drug definition and same unit mode
+      const sameTypeItems = prev.filter(i => (i.id === id || (i as any).dbId === id) && !!i.isUnit === isUnit);
+      const currentTotalQty = sameTypeItems.reduce((sum, i) => sum + i.quantity, 0);
+      const newTotalQty = currentTotalQty + delta;
+
+      if (newTotalQty < 0) return prev;
+      if (newTotalQty === 0) {
+        return prev.filter(i => !((i.id === id || (i as any).dbId === id) && !!i.isUnit === isUnit));
+      }
+
+      // 3. Get all available batches sorted by expiry (FEFO)
+      const availableBatches = (drugDefinition as any).batches || [drugDefinition];
       
-      // Basic validation: Cannot go below 1 pack, but units can hit 0 (if there are packs)
-      const unitsPerPack = drug.unitsPerPack || 1;
-      const hasDualMode = unitsPerPack > 1;
-      const minQtyValid = hasDualMode ? newQty >= 0 : isUnit ? newQty >= 0 : newQty >= 1;
+      // 4. Redistribute the new total quantity across batches
+      const newItems: CartItem[] = [];
+      let remainingToDistribute = newTotalQty;
 
-      if (!minQtyValid) return prev;
+      for (const batch of availableBatches) {
+        if (remainingToDistribute <= 0) break;
 
-      if (!isStockConstraintMet(id, drug.stock, drug.unitsPerPack, prev, delta, isUnit)) {
+        const unitsPerPack = drugDefinition.unitsPerPack || 1;
+        const batchStock = isUnit ? batch.stock : Math.floor(batch.stock / unitsPerPack);
+        
+        if (batchStock <= 0) continue;
+
+        const take = Math.min(remainingToDistribute, batchStock);
+        if (take > 0) {
+          newItems.push({
+            ...batch,
+            quantity: take,
+            isUnit,
+            discount: targetItem.discount,
+            publicPrice: stockOps.resolvePrice(batch.publicPrice, isUnit, unitsPerPack, batch.unitPrice),
+            preferredBatchId: batch.id
+          });
+          remainingToDistribute -= take;
+        }
+      }
+
+      // If we couldn't fulfill the whole quantity, stay with previous state (Stock constraint)
+      if (remainingToDistribute > 0 && delta > 0) {
         return prev;
       }
 
+      // 5. Replace old items with new distributed items
+      const otherItems = prev.filter(i => !((i.id === id || (i as any).dbId === id) && !!i.isUnit === isUnit));
+      
       playBeep();
-      const updated = prev.map((item) =>
-        item.id === id && !!item.isUnit === isUnit ? { ...item, quantity: newQty } : item
-      );
-      return updated.filter((item) => item.quantity > 0);
+      return [...otherItems, ...newItems];
     });
   }, [inventory, setCart, playBeep]);
 

@@ -428,3 +428,39 @@ export const logInitialStock = (
     status: 'approved',
   });
 };
+
+/**
+ * Validates if adding a specific quantity of a drug (in packs or units) 
+ * would exceed the current total stock.
+ * Used in POS to prevent adding more than available.
+ */
+export const isStockConstraintMet = (
+  drugId: string,
+  stock: number,
+  unitsPerPack: number | undefined,
+  currentCart: CartItem[],
+  delta: number,
+  isUnit: boolean
+): boolean => {
+  // Calculate existing units in cart for this drug
+  const existingUnits = currentCart
+    .filter((item) => item.id === drugId)
+    .reduce((sum, item) => {
+      return sum + resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack || unitsPerPack);
+    }, 0);
+
+  // Calculate new units to be added
+  const newUnits = resolveUnits(delta, isUnit, unitsPerPack);
+
+  return existingUnits + newUnits <= stock;
+};
+
+/**
+ * Resolves stock value for display based on mode (pack vs unit).
+ * Packs are shown as fractional values (e.g. 1.5 packs).
+ */
+export const resolveDisplayStock = (stock: number, unitsPerPack: number = 1, mode: 'pack' | 'unit'): number => {
+  if (mode === 'unit') return stock;
+  const packs = stock / (unitsPerPack || 1);
+  return parseFloat(packs.toFixed(2));
+};

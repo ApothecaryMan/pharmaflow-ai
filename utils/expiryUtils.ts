@@ -250,3 +250,27 @@ export const getExpiryStatusConfig = (status: ExpiryStatus): { color: string; ic
       return { color: 'red', icon: 'error' };
   }
 };
+
+/**
+ * Get the CSS color class based on an expiry date string.
+ * @param expiryDate - Date string (YYYY-MM or YYYY-MM-DD)
+ * @returns Tailwind CSS classes
+ */
+export const getExpiryColorClass = (expiryDate: string): string => {
+  if (!expiryDate) return 'text-gray-400';
+  const date = parseExpiryEndOfMonth(expiryDate);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  // Set threshold to 6 months
+  const threshold = new Date(today);
+  threshold.setMonth(today.getMonth() + 6);
+
+  if (date <= today) {
+    return 'text-red-500 font-bold';
+  } else if (date <= threshold) {
+    return 'text-amber-500 font-bold';
+  }
+  
+  return 'text-gray-700 dark:text-gray-300';
+};

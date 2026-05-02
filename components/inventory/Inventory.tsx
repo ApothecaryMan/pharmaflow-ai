@@ -10,12 +10,12 @@ import {
   getProductTypes,
   isMedicineCategory,
 } from '../../data/productCategories';
-import type { Drug } from '../../types';
+import type { Drug, GroupedDrug, GroupingKey } from '../../types';
 import { formatCurrency, formatCurrencyParts, formatCompactCurrency } from '../../utils/currency';
 import { money } from '../../utils/money';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatStock, formatStockParts, validateStock } from '../../utils/inventory';
-import { formatExpiryDate, parseExpiryEndOfMonth } from '../../utils/expiryUtils';
+import { formatExpiryDate, getExpiryColorClass, parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { FilterDropdown, SegmentedControl } from '../common';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
@@ -31,6 +31,7 @@ import { SearchEngineInput } from '../common/SearchEngineInput';
 import { DrugSearchEngine } from '../../services/search/DrugSearchEngine';
 
 import * as stockOps from '../../utils/stockOperations';
+import { batchService } from '../../services/inventory/batchService';
 
 interface InventoryProps {
   inventory: Drug[];
@@ -319,42 +320,7 @@ export const Inventory: React.FC<InventoryProps> = ({
 
 
   const groupedInventory = useMemo(() => {
-    const groups: Record<string, Drug[]> = {};
-
-    filteredInventory.forEach((d) => {
-      // Group by barcode if available, otherwise by name + dosage form
-      const key = d.barcode ? `BARCODE|${d.barcode}` : `NAME|${d.name}|${d.dosageForm || ''}`;
-
-      if (!groups[key]) {
-        groups[key] = [];
-      }
-      groups[key].push(d);
-    });
-
-    return Object.values(groups).map((group) => {
-      // Sort batches by expiry date (FEFO)
-      const sortedGroup = [...group].sort((a, b) => {
-        if (!a.expiryDate) return 1;
-        if (!b.expiryDate) return -1;
-        const dateA = parseExpiryEndOfMonth(a.expiryDate).getTime();
-        const dateB = parseExpiryEndOfMonth(b.expiryDate).getTime();
-        return isNaN(dateA) ? 1 : isNaN(dateB) ? -1 : dateA - dateB;
-      });
-
-      // The representative drug for the row's display metadata
-      const first = sortedGroup[0];
-
-      // Calculate total stock for all batches in the group
-      const totalStock = sortedGroup.reduce((sum, d) => sum + d.stock, 0);
-
-      return {
-        ...first,
-        id: first.id, // Group row ID (uses first batch's ID as representative)
-        stock: totalStock, // Summed stock
-        group: sortedGroup, // All batches in this group
-        groupId: first.barcode ? `B-${first.barcode}` : `N-${first.name}-${first.dosageForm || ''}`,
-      };
-    });
+    return batchService.groupInventory(filteredInventory);
   }, [filteredInventory]);
 
   // Calculate summary stats
@@ -362,7 +328,7 @@ export const Inventory: React.FC<InventoryProps> = ({
     return groupedInventory.reduce(
       (acc, drug) => {
         acc.totalItems += 1;
-        const packs = stockOps.convertToPacks(drug.stock || 0, drug.unitsPerPack || 1);
+        const packs = stockOps.convertToPacks(drug.totalStock || 0, drug.unitsPerPack || 1);
         
         acc.totalCost = money.add(
           acc.totalCost,
@@ -376,8 +342,8 @@ export const Inventory: React.FC<InventoryProps> = ({
 
         const status = (drug as any).status || 'active';
         if (status === 'active') {
-          if (drug.stock === 0) acc.criticalRestock += 1;
-          else if (drug.stock <= (drug.minStock || 5)) acc.nearReorder += 1;
+          if (drug.totalStock === 0) acc.criticalRestock += 1;
+          else if (drug.totalStock <= (drug.minStock || 5)) acc.nearReorder += 1;
         } else if (status === 'discontinued') {
           acc.discontinuedCount += 1;
         }
@@ -396,9 +362,9 @@ export const Inventory: React.FC<InventoryProps> = ({
   }, [groupedInventory]);
 
     const getRowActions = (drugRow: any) => {
-      const groupData = drugRow as Drug & { group: Drug[]; groupId: string };
+      const groupData = drugRow as GroupedDrug;
       const selectedId = selectedBatches[groupData.groupId] || groupData.id;
-      const drug = groupData.group.find((d) => d.id === selectedId) || groupData;
+      const drug = groupData.batches.find((d) => d.id === selectedId) || groupData;
 
       const actions = [];
   
@@ -580,9 +546,9 @@ export const Inventory: React.FC<InventoryProps> = ({
           accessorKey: 'costPrice',
           header: t.headers.cost,
           cell: ({ row }) => {
-            const groupData = row.original as any;
+            const groupData = row.original as GroupedDrug;
             const selectedId = selectedBatches[groupData.groupId] || groupData.id;
-            const drug = groupData.group.find((d: any) => d.id === selectedId) || groupData;
+            const drug = groupData.batches.find((d: any) => d.id === selectedId) || groupData;
 
             if (!drug.costPrice) return <span className='text-gray-500 text-xs'>-</span>;
             const parts = formatCurrencyParts(drug.costPrice);
@@ -601,26 +567,14 @@ export const Inventory: React.FC<InventoryProps> = ({
         accessorKey: 'expiryDate',
         header: t.headers.expiry,
         cell: ({ row }) => {
-          const groupData = row.original as any;
-          const batches = groupData.group || [groupData];
+          const groupData = row.original as GroupedDrug;
+          const batches = groupData.batches || [groupData];
           const selectedId = selectedBatches[groupData.groupId] || groupData.id;
           const drug = batches.find((d: any) => d.id === selectedId) || groupData;
 
           const renderDateWrapper = (val: string, isDropdownTrigger = false) => {
             if (!val) return <span className='text-gray-400'>-</span>;
-            const date = new Date(val);
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const sixMonthsFromNow = new Date(today);
-            sixMonthsFromNow.setMonth(today.getMonth() + 6);
-            const expiry = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-            let colorClass = 'text-current';
-            if (expiry <= today) {
-              colorClass = 'text-red-500 font-bold';
-            } else if (expiry <= sixMonthsFromNow) {
-              colorClass = 'text-amber-500 font-bold';
-            }
+            const colorClass = getExpiryColorClass(val);
 
             return (
               <div

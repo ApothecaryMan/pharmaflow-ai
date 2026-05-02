@@ -1164,7 +1164,7 @@ export function useEntityHandlers({
 
       } catch (err: any) {
         console.error('[handleCompleteSale] Fatal error:', err);
-        error('An unexpected error occurred during checkout.');
+        error(err?.message || 'An unexpected error occurred during checkout.');
         return false;
       }
     },

@@ -2,8 +2,9 @@ import React from 'react';
 import { type UserRole } from '../../../config/permissions';
 import { permissionsService } from '../../../services/auth/permissions';
 import type { CartItem, Drug } from '../../../types';
-import { formatExpiryDate, parseExpiryEndOfMonth } from '../../../utils/expiryUtils';
+import { formatExpiryDate, parseExpiryEndOfMonth, getExpiryColorClass } from '../../../utils/expiryUtils';
 import { money, pricing } from '../../../utils/currency';
+import { pricingService } from '../../../services/sales/pricingService';
 
 export interface CartItemExpiryBadgeProps {
   item: CartItem;
@@ -27,12 +28,7 @@ export const CartItemExpiryBadge: React.FC<CartItemExpiryBadgeProps> = ({
   onSelectBatch,
 }) => {
   const getUrgencyColor = () => {
-    const today = new Date();
-    const expiry = parseExpiryEndOfMonth(item.expiryDate);
-    const monthDiff = (expiry.getFullYear() - today.getFullYear()) * 12 + (expiry.getMonth() - today.getMonth());
-    if (monthDiff <= 0) return 'text-red-500';
-    if (monthDiff <= 3) return 'text-orange-500';
-    return 'text-gray-400 dark:text-gray-500';
+    return getExpiryColorClass(item.expiryDate);
   };
 
   const currentExpiry = formatExpiryDate(item.expiryDate);
@@ -66,7 +62,7 @@ export const CartItemExpiryBadge: React.FC<CartItemExpiryBadgeProps> = ({
         </span>
       </button>
       <div className="flex-1 min-w-0 h-full flex items-center justify-center pr-1">
-        <span className="text-[10px] font-bold text-gray-900 dark:text-gray-100 tabular-nums leading-none">
+        <span className={`text-[10px] font-bold tabular-nums leading-none ${getUrgencyColor()}`}>
           {currentExpiry}
         </span>
       </div>
@@ -93,16 +89,13 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
   updateItemDiscount,
   setGlobalDiscount,
 }) => {
-  const cost = item.costPrice || 0;
-  const price = item.publicPrice || 0;
-  const margin = pricing.actualMargin(cost, price);
+  const effectiveMax = pricingService.calculateMaxDiscount(
+    item.costPrice || 0,
+    item.publicPrice || 0,
+    item.maxDiscount
+  );
 
-  let calculatedMax = 10;
-  if (margin < 20) {
-    calculatedMax = Math.floor(margin / 2);
-  }
-
-  const effectiveMax = item.maxDiscount && item.maxDiscount > 0 ? item.maxDiscount : calculatedMax;
+  const margin = pricing.actualMargin(item.costPrice || 0, item.publicPrice || 0);
 
   if ((globalDiscount && globalDiscount > 0) || !permissionsService.can('sale.discount')) {
     return null;
