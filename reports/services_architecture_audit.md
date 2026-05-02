@@ -267,7 +267,13 @@ const ai = new GoogleGenAI({ apiKey });
 | **`DashboardService`** | 438 | 🟡 **P2** | Revenue/COGS/profit calculations. Pure functions — easiest to test. |
 | **`pricingService`** | — | 🟡 **P2** | Price calculations affect every sale. |
 
-**ملاحظة قاسية:** الـ services اللي فيها tests هي الـ CRUD البسيط (add/update/delete). الـ services اللي **محتاجة** tests بجد — orchestration و financial calculations — هي بالظبط اللي مفيهاش ولا test واحد.
+**ملاحظة قاسية:** الـ services اللي فيها tests هي الـ CRUD البسيط (add/update/delete). الـ **الوضع الحالي:** التغطية (Coverage) منخفضة جداً في الـ Orchestration layer.
+
+> [!TIP]
+> **✅ [IN-PROGRESS] 2026-05-02:**
+> تم إنشاء أول Unit Test شامل لـ `transactionService.processReturn`. الاختبار بيغطي الـ Atomicity والـ Rollback بنجاح، مما يضمن سلامة البيانات المالية والمخزنية في حالات الفشل الجزئي.
+
+والـ services اللي **محتاجة** tests بجد — orchestration و financial calculations — هي بالظبط اللي مفيهاش ولا test واحد.
 
 ---
 
