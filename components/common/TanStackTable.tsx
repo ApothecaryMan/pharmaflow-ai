@@ -123,13 +123,11 @@ const checkValueMatchesFilter = (value: any, filterValue: any): boolean => {
   }
 
   // 2. Handle String-based filters (Search)
-  const searchTerm = normalizeDigits(String(filterValue).toLowerCase().trim());
-  if (!searchTerm) return true;
-
-  const strValue = normalizeDigits(String(value || '').toLowerCase());
+  const normalizedSearch = normalizeDigits(String(filterValue || ''));
+  const regex = createSearchRegex(normalizedSearch);
+  const strValue = normalizeDigits(String(value || ''));
   
-  // Use simple substring match for performance, or regex if advanced search is required
-  return strValue.includes(searchTerm);
+  return regex.test(strValue);
 };
 
 // Define a unified filter function compatible with TanStack FilterFn signature
