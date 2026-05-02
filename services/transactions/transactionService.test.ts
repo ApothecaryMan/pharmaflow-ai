@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { transactionService } from './transactionService';
 import { supabase } from '../../lib/supabase';
 import { batchService } from '../inventory/batchService';
+import { inventoryService } from '../inventory/inventoryService';
 import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
 import { salesService } from '../sales/salesService';
 import { cashService } from '../cash/cashService';
@@ -16,6 +17,7 @@ vi.mock('../../lib/supabase', () => ({
         in: vi.fn().mockResolvedValue({ error: null }),
       })),
     })),
+    rpc: vi.fn(),
   },
 }));
 
@@ -24,6 +26,12 @@ vi.mock('../inventory/batchService', () => ({
   batchService: {
     returnStock: vi.fn().mockResolvedValue(null),
     allocateStockBulk: vi.fn().mockResolvedValue(null),
+  },
+}));
+
+vi.mock('../inventory/inventoryService', () => ({
+  inventoryService: {
+    updateStockBulk: vi.fn().mockResolvedValue(null),
   },
 }));
 
@@ -36,6 +44,13 @@ vi.mock('../inventory/stockMovement/stockMovementService', () => ({
 vi.mock('../sales/salesService', () => ({
   salesService: {
     update: vi.fn().mockResolvedValue(null),
+    create: vi.fn().mockResolvedValue({ id: 'NEW_SALE', serialId: 'PF-001' }),
+  },
+}));
+
+vi.mock('../settings/settingsService', () => ({
+  settingsService: {
+    getAll: vi.fn().mockResolvedValue({ branchCode: 'PF' }),
   },
 }));
 
@@ -147,6 +162,7 @@ describe('transactionService - processReturn Atomicity', () => {
     expect(cashService.addTransaction).not.toHaveBeenCalled();
   });
 
+
   it('completes successfully when all steps succeed', async () => {
     const result = await transactionService.processReturn(
       mockReturnData,
@@ -161,3 +177,104 @@ describe('transactionService - processReturn Atomicity', () => {
     expect(cashService.addTransaction).toHaveBeenCalled();
   });
 });
+
+describe('transactionService - processCheckout Atomicity', () => {
+  const mockContext: any = {
+    branchId: 'BR1',
+    performerId: 'EMP1',
+    performerName: 'Test Employee',
+    timestamp: '2026-05-02T12:00:00Z',
+    orgId: 'ORG1',
+    shiftId: 'SHIFT1',
+  };
+
+  const mockCartItems: any[] = [
+    {
+      id: 'D1',
+      name: 'Drug 1',
+      quantity: 1,
+      isUnit: false,
+      price: 100,
+      unitsPerPack: 1,
+    }
+  ];
+
+  const mockInventory: any[] = [
+    { id: 'D1', name: 'Drug 1', stock: 10, unitsPerPack: 1, batches: [{ id: 'B1', quantity: 10 }] }
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Mock RPC for daily number
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: 42, error: null });
+  });
+
+  it('rolls back inventory and movements if salesService fails', async () => {
+    // 1. Setup failure at step 4C (salesService.create)
+    vi.mocked(salesService.create).mockRejectedValueOnce(new Error('SALES_DB_ERROR'));
+    
+    // Mock bulk allocation success
+    vi.mocked(batchService.allocateStockBulk).mockResolvedValueOnce([
+      { drugId: 'D1', allocations: [{ batchId: 'B1', quantity: 1, expiryDate: '2030-01-01' }] }
+    ]);
+
+    // 2. Execute
+    const result = await transactionService.processCheckout(
+      {
+        items: mockCartItems,
+        customerName: 'Guest',
+        paymentMethod: 'cash',
+        total: 100,
+        subtotal: 100,
+        globalDiscount: 0
+      },
+      mockInventory,
+      mockContext
+    );
+
+    // 3. Verify
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('SALES_DB_ERROR');
+
+    // Verify Rollbacks
+    // Rollback A: Inventory update reversed (quantity becomes positive 1)
+    expect(inventoryService.updateStockBulk).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ quantity: 1 })]),
+      true
+    );
+
+    // Rollback B: Batch return
+    expect(batchService.returnStock).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ batchId: 'B1' })]),
+      1,
+      'D1',
+      'BR1'
+    );
+  });
+
+  it('successfully completes a walk-in cash sale', async () => {
+    vi.mocked(batchService.allocateStockBulk).mockResolvedValueOnce([
+      { drugId: 'D1', allocations: [{ batchId: 'B1', quantity: 1, expiryDate: '2030-01-01' }] }
+    ]);
+    
+    vi.mocked(salesService.create).mockResolvedValueOnce({ id: 'NEW_SALE', serialId: 'PF-001' } as any);
+
+    const result = await transactionService.processCheckout(
+      {
+        items: mockCartItems,
+        customerName: 'Guest',
+        paymentMethod: 'cash',
+        total: 100,
+        subtotal: 100,
+        globalDiscount: 0
+      },
+      mockInventory,
+      mockContext
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.sale?.id).toBe('NEW_SALE');
+    expect(cashService.addTransaction).toHaveBeenCalled();
+  });
+});
+

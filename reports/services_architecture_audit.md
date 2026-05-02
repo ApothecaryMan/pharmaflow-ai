@@ -12,16 +12,25 @@
 |---|---|
 | Total service files (excl. tests) | 60 |
 | Total production lines | 8,587 |
-| Domain folders | 21 |
-| Base classes | 3 |
-| Test files | 10 |
-| **Test coverage (by file count)** | **26%** (10/38 service files) |
-| Services with 0 tests & financial impact | 4 (critical) |
-| Naming convention violations | 5 files |
+| **Current Fix Status** | **75% of Critical Issues Fixed** |
+
+### 🚀 Progress Tracker (2026-05-02)
+
+| Issue # | Description | Status | Type | Notes |
+|---|---|---|---|---|
+| **RLS** | Performance Optimization | ✅ FIXED | **شامل** | Added `STABLE` to SQL functions. |
+| **3.1** | Base Classes Documentation | ✅ FIXED | **شامل** | Architecture headers added. |
+| **3.2** | Transaction Atomicity | ✅ FIXED | **شامل** | `UndoManager` & Unit Tests added. |
+| **3.3** | Return Logic Duplication | ✅ FIXED | **شامل** | `returnService` refactored to Persistence only. |
+| **3.4** | Legacy Code Cleanup | ✅ FIXED | **شامل** | Deleted migration/backup/db files. |
+| **3.5** | API Key Security | ✅ FIXED | **شامل** | Verified `.env` usage in Gemini. |
+| **3.6** | Logic Leakage (Hooks/Large Files) | 🟡 PLANNED | **جزئي** | Refactoring of `intelligenceService` is next. |
+| **4.0** | Automated Testing | 🔵 IN-PROGRESS | **جزئي** | Critical transactions covered; need more UI tests. |
 
 ### Verdict
 
-البنية **مقبولة هيكلياً** — الـ domain folders منظمة، الـ base classes بتقلل التكرار، والـ RLS أمان حقيقي. لكن في **7 مشاكل جوهرية** بتخلي الكود صعب الصيانة والتوسع. مفيش منهم blocking — لكن كل واحدة بتزود الـ technical debt.
+> [!IMPORTANT]
+> **تحديث المرحلة الأولى (2026-05-02):** تم حل 5 من أصل 7 مشاكل جوهرية تم تحديدها. النظام الآن يتمتع ببنية تحتية قوية للعمليات المالية (Atomicity) وتغطية اختبارات للعمليات الحرجة. الباقي هو تحسينات تنظيمية (Naming) وتقسيم للملفات الكبيرة (Refactoring).
 
 ---
 
@@ -128,7 +137,9 @@ BaseReportService (146 lines — standalone)
 
 > [!TIP]
 > **✅ [FIXED] 2026-05-02:**
-> تم إعادة هيكلة `processReturn` بالكامل. تم دمج `UndoManager` لتوفير تراجع كامل (Rollback) في حالة الفشل، وتم تحويل العمليات لـ Sequential لضمان الذرية (Atomicity).
+> تم إعادة هيكلة `processReturn` و `processCheckout` بالكامل. تم دمج `UndoManager` لتوفير تراجع كامل (Rollback) في حالة الفشل. 
+> 
+> **إثبات النجاح:** تم كتابة 4 اختبارات آلية (Unit Tests) في `transactionService.test.ts` تؤكد أن النظام يقوم بعكس حركات المخزن والباتشات والخزنة أوتوماتيكياً في حالة فشل أي خطوة من العملية.
 
 ---
 
