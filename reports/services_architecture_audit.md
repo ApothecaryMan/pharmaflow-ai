@@ -64,6 +64,10 @@ $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 
 بدون `STABLE`، PostgreSQL بيستدعي الـ function مرة لكل row بدل مرة واحدة للـ query. ده بيأثر على **الأداء** مش الأمان.
 
+> [!TIP]
+> **✅ [FIXED] 2026-05-02:**
+> تم إنشاء Migration رقم `20260502000000` يضيف الـ `STABLE` marker للـ functions دي.
+
 ---
 
 ## 3. Structural Issues
@@ -94,6 +98,10 @@ BaseReportService (146 lines — standalone)
 **المشكلة:** `BaseReportService` معندهاش inheritance relationship مع `BaseDomainService` رغم إن الاتنين بيعملوا نفس الـ pattern (table name, map from/to DB). ده بيعني إن `stockMovementService` مش ممكن يستخدم `create()` من `BaseDomainService`.
 
 **التوصية:** إما merge `BaseReportService` into `BaseDomainService` كـ mixin/optional methods، أو document بوضوح ليه هم separate.
+
+> [!TIP]
+> **✅ [RESOLVED via Documentation] 2026-05-02:**
+> تم إضافة توثيق معماري (Header Comments) في الـ 3 كلاسات يوضح سبب الفصل: الـ Reports هي `Append-only` ولا يجب أن ترث عمليات الحذف أو التعديل من الـ `BaseDomainService` للحفاظ على نزاهة البيانات. تم إبقاء الفصل "مقصوداً" مع توضيحه برمجياً.
 
 ---
 
