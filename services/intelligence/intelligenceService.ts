@@ -179,6 +179,23 @@ function calculateParetoABC<T extends { revenue: number }>(items: T[]): (T & { a
   });
 }
 
+// === Internal Data Loaders ===
+
+async function _loadCoreData(branchId?: string) {
+  const [drugs, allBatches] = await Promise.all([
+    inventoryService.getAll(branchId),
+    batchService.getAllBatches(branchId),
+  ]);
+
+  const drugMap = new Map(drugs.map((d) => [d.id, d]));
+  const stockMap = new Map<string, number>();
+  for (const b of allBatches) {
+    stockMap.set(b.drugId, (stockMap.get(b.drugId) || 0) + b.quantity);
+  }
+
+  return { drugs, drugMap, allBatches, stockMap };
+}
+
 // === Service Export ===
 
 export const intelligenceService = {
@@ -209,26 +226,15 @@ export const intelligenceService = {
    * Get Procurement Items from real inventory and sales data
    */
   getProcurementItems: async (branchId?: string): Promise<ProcurementItem[]> => {
-    const drugs = await inventoryService.getAll(branchId);
+    const { drugs, drugMap, allBatches, stockMap } = await _loadCoreData(branchId);
+    
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    // FETCH ONLY LAST 30 DAYS OF SALES (Significant performance gain)
     const recentSales = await salesService.getByDateRange(thirtyDaysAgo.toISOString(), now.toISOString(), branchId);
-    
-    // Filter completed sales (if not already filtered by service)
     const completedSales = recentSales.filter((s) => s.status === 'completed');
-
-    const drugMap = new Map(drugs.map((d) => [d.id, d]));
-    const allBatches = await batchService.getAllBatches(branchId);
-    
-    // Build stock map for fast lookup (Efficiency: O(N) instead of O(N^2) DB calls)
-    const stockMap = new Map<string, number>();
-    for (const b of allBatches) {
-      stockMap.set(b.drugId, (stockMap.get(b.drugId) || 0) + b.quantity);
-    }
 
     // Build velocity map per drug (normalized to units)
     const velocityMap = new Map<string, { last7: number; last14: number; last30: number }>();
@@ -408,9 +414,7 @@ export const intelligenceService = {
    * Get Expiry Risk Items computed from real batch data
    */
   getExpiryRiskItems: async (branchId?: string): Promise<ExpiryRiskItem[]> => {
-    const allBatches = await batchService.getAllBatches(branchId);
-    const drugs = await inventoryService.getAll(branchId);
-    const drugMap = new Map(drugs.map((d) => [d.id, d]));
+    const { drugs, drugMap, allBatches } = await _loadCoreData(branchId);
 
     const now = new Date();
     const ninetyDaysFromNow = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
@@ -520,8 +524,7 @@ export const intelligenceService = {
     period: FinancialPeriod = 'this_month',
     branchId?: string
   ): Promise<FinancialKPIs> => {
-    const drugs = await inventoryService.getAll(branchId);
-    const drugMap = new Map(drugs.map((d) => [d.id, d]));
+    const { drugs, drugMap } = await _loadCoreData(branchId);
 
     // Optimized Fetching: Only fetch for the periods we need
     const currentRange = getDateRangeForPeriod(period);
@@ -583,8 +586,7 @@ export const intelligenceService = {
     period: FinancialPeriod = 'this_month',
     branchId?: string
   ): Promise<ProductFinancialItem[]> => {
-    const drugs = await inventoryService.getAll(branchId);
-    const drugMap = new Map(drugs.map((d) => [d.id, d]));
+    const { drugs, drugMap } = await _loadCoreData(branchId);
 
     const range = getDateRangeForPeriod(period);
     const periodSales = await salesService.getByDateRange(range.start.toISOString(), range.end.toISOString(), branchId);
@@ -602,7 +604,7 @@ export const intelligenceService = {
       }
     >();
 
-    for (const sale of periodSales) {
+    for (const sale of completedSales) {
       for (const item of sale.items) {
         const existing = productAgg.get(item.id) || {
           product_id: item.id,

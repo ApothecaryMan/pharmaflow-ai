@@ -231,6 +231,320 @@ export const transactionService = {
     }
   },
 
+  /**
+   * Orchestrates the cancellation of a sale, ensuring stock is returned
+   * and shift balance is corrected atomically.
+   */
+  async processCancellation(
+    sale: Sale,
+    inventory: Drug[],
+    context: ActionContext
+  ): Promise<{ success: boolean; error?: string }> {
+    const { branchId: activeBranchId, performerId: currentEmployeeId, performerName, shiftId } = context;
+    const undoManager = new UndoManager();
+
+    try {
+      // 1. Validations
+      if (sale.status === 'cancelled') {
+        throw new Error('Sale is already cancelled.');
+      }
+
+      if (sale.status === 'completed' && sale.saleType === 'delivery') {
+        throw new Error('Cannot cancel a completed delivery order. Please use the Return flow instead.');
+      }
+
+      if (sale.saleType === 'walk-in' || sale.status === 'completed') {
+        if (!shiftId) {
+          throw new Error('An active shift must be open to cancel a completed sale and issue a refund.');
+        }
+      }
+
+      // 2. Return stock for each item
+      const stockUpdates: { id: string; quantity: number }[] = [];
+
+      for (const item of sale.items) {
+        const drug = inventory.find((d) => d.id === item.id);
+        if (!drug) continue;
+
+        const allocations = item.batchAllocations || [];
+        
+        // Return stock to batches
+        await stockOps.returnStock(
+          drug,
+          item.quantity,
+          !!item.isUnit,
+          allocations,
+          'correction',
+          `Cancellation of Sale #${sale.serialId || sale.id}`,
+          {
+            branchId: activeBranchId,
+            performedBy: currentEmployeeId,
+            performedByName: performerName,
+          },
+          sale.id
+        );
+
+        // Track for bulk inventory update and undo
+        const unitsToRestore = stockOps.resolveUnits(item.quantity, !!item.isUnit, drug.unitsPerPack);
+        stockUpdates.push({ id: item.id, quantity: unitsToRestore });
+
+        // Undo for batch return (re-allocate)
+        undoManager.push(async () => {
+          // Note: re-allocating specifically to the same batches if possible
+          // This is a complex undo, but for cancellation, it's mostly about reversing the numbers.
+          await inventoryService.updateStock(item.id, -unitsToRestore);
+          if (allocations.length > 0) {
+            await batchService.allocateStockBulk([{
+              drugId: item.id,
+              quantity: unitsToRestore,
+              preferredBatchId: allocations[0]?.batchId
+            }], activeBranchId);
+          }
+        });
+      }
+
+      // 3. Bulk update inventory quantities
+      if (stockUpdates.length > 0) {
+        await inventoryService.updateStockBulk(stockUpdates, true); // true = increment
+      }
+
+      // 4. Shift Balancing
+      if (shiftId && (sale.saleType === 'walk-in' || sale.status === 'completed')) {
+        const type = sale.paymentMethod === 'visa' ? 'card_return' : 'return';
+        const txId = idGenerator.generateSync('transactions', activeBranchId);
+        
+        await cashService.addTransaction(shiftId, {
+          branchId: activeBranchId,
+          shiftId: shiftId,
+          time: new Date().toISOString(),
+          type: type,
+          amount: sale.total,
+          reason: `Cancellation of Sale #${sale.serialId || sale.id}`,
+          userId: performerName || 'System',
+          relatedSaleId: sale.id
+        });
+
+        undoManager.push(async () => {
+          // We don't have a direct 'delete transaction' but we could add a reversal
+          // For now, most shift transactions are additive. 
+          // In a real rollback, we'd want to remove the tx record if possible.
+          await supabase.from('shift_transactions').delete().eq('id', txId);
+        });
+      }
+
+      // 5. Update Sale Status
+      await salesService.update(sale.id, { 
+        status: 'cancelled',
+        updatedAt: new Date().toISOString()
+      });
+
+      // 6. Log Audit
+      auditService.log('sale.cancel', {
+        userId: currentEmployeeId,
+        details: `Cancelled Sale #${sale.serialId || sale.id}`,
+        entityId: sale.id,
+        branchId: activeBranchId,
+      });
+
+      return { success: true };
+
+    } catch (err: any) {
+      console.error('[TransactionService] Cancellation failed:', err);
+      await undoManager.undoAll();
+      return { success: false, error: err.message || 'Cancellation failed' };
+    }
+  },
+
+  /**
+   * Orchestrates the modification of a delivery order.
+   * Handles stock deduction/return based on changes and records history.
+   */
+  async processOrderModification(
+    sale: Sale,
+    updates: Partial<Sale>,
+    inventory: Drug[],
+    context: ActionContext
+  ): Promise<{ success: boolean; error?: string; modificationHistory?: any[] }> {
+    const { branchId: activeBranchId, performerId: currentEmployeeId, performerName, timestamp } = context;
+    const undoManager = new UndoManager();
+    const modifications: any[] = [];
+    
+    if (!updates.items) return { success: true };
+
+    try {
+      // Logic from useEntityHandlers adapted for TransactionService
+      for (const oldItem of sale.items) {
+        const newItem = updates.items.find(
+          (i) => i.id === oldItem.id && i.isUnit === oldItem.isUnit
+        );
+
+        const drug = inventory.find(d => d.id === oldItem.id);
+        if (!drug) continue;
+
+        if (!newItem) {
+          // 1. Item was deleted - return all stock
+          await stockOps.returnStock(
+            drug,
+            oldItem.quantity,
+            !!oldItem.isUnit,
+            oldItem.batchAllocations,
+            'correction',
+            `Item Removed from Delivery #${sale.id}`,
+            { branchId: activeBranchId, performedBy: currentEmployeeId, performedByName: performerName },
+            sale.id
+          );
+
+          const unitsToRestore = stockOps.resolveUnits(oldItem.quantity, !!oldItem.isUnit, drug.unitsPerPack);
+          await inventoryService.updateStock(oldItem.id, unitsToRestore);
+
+          undoManager.push(async () => {
+            await inventoryService.updateStock(oldItem.id, -unitsToRestore);
+            if (oldItem.batchAllocations) {
+              await batchService.allocateStockBulk([{
+                drugId: oldItem.id,
+                quantity: unitsToRestore,
+                preferredBatchId: oldItem.batchAllocations[0]?.batchId
+              }], activeBranchId);
+            }
+          });
+
+          modifications.push({
+            type: 'item_removed',
+            itemId: oldItem.id,
+            itemName: oldItem.name,
+            dosageForm: oldItem.dosageForm,
+            previousQuantity: oldItem.quantity,
+            newQuantity: 0,
+            stockReturned: unitsToRestore,
+          });
+        } else {
+          // 2. Check for quantity changes
+          if (newItem.quantity !== oldItem.quantity) {
+            const oldUnits = oldItem.isUnit ? oldItem.quantity : oldItem.quantity * (drug.unitsPerPack || 1);
+            const newUnits = newItem.isUnit ? newItem.quantity : newItem.quantity * (drug.unitsPerPack || 1);
+            const diff = oldUnits - newUnits;
+
+            if (diff > 0) {
+              // Quantity reduced - return partial stock
+              await stockOps.returnStock(
+                drug, diff, true, oldItem.batchAllocations, 'correction',
+                `Quantity Reduced in Delivery #${sale.id}`,
+                { branchId: activeBranchId, performedBy: currentEmployeeId, performedByName: performerName },
+                sale.id
+              );
+              await inventoryService.updateStock(oldItem.id, diff);
+              undoManager.push(async () => {
+                await inventoryService.updateStock(oldItem.id, -diff);
+                // Partial re-allocation is complex, but batchService handles it
+                await batchService.allocateStockBulk([{
+                  drugId: oldItem.id,
+                  quantity: diff,
+                  preferredBatchId: oldItem.batchAllocations![0].batchId
+                }], activeBranchId);
+              });
+
+              modifications.push({
+                type: 'quantity_update',
+                itemId: oldItem.id,
+                itemName: oldItem.name,
+                dosageForm: oldItem.dosageForm,
+                previousQuantity: oldItem.quantity,
+                newQuantity: newItem.quantity,
+                stockReturned: diff,
+              });
+            } else if (diff < 0) {
+              // Quantity increased - allocate more
+              const unitsToAdd = Math.abs(diff);
+              const mutation = await stockOps.deductStock(
+                drug, unitsToAdd, true, 'sale',
+                `Quantity Increased in Delivery #${sale.id}`,
+                { branchId: activeBranchId, performedBy: currentEmployeeId, performedByName: performerName },
+                sale.id
+              );
+
+              if (mutation) {
+                newItem.batchAllocations = [...(oldItem.batchAllocations || []), ...(mutation.allocations || [])];
+                await inventoryService.updateStock(oldItem.id, -unitsToAdd);
+                undoManager.push(async () => {
+                   await inventoryService.updateStock(oldItem.id, unitsToAdd);
+                   for (const alloc of mutation.allocations) {
+                     await batchService.returnStock([alloc], alloc.quantity, oldItem.id, activeBranchId);
+                   }
+                });
+
+                modifications.push({
+                  type: 'quantity_update',
+                  itemId: oldItem.id,
+                  itemName: oldItem.name,
+                  dosageForm: oldItem.dosageForm,
+                  previousQuantity: oldItem.quantity,
+                  newQuantity: newItem.quantity,
+                  stockDeducted: unitsToAdd,
+                });
+              }
+            }
+          }
+        }
+      }
+
+      // 3. Handle NEW items
+      for (const newItem of updates.items) {
+        const isNew = !sale.items.some(old => old.id === newItem.id && old.isUnit === newItem.isUnit);
+        if (isNew) {
+          const drug = inventory.find(d => d.id === newItem.id);
+          if (drug) {
+            const mutation = await stockOps.deductStock(
+              drug, newItem.quantity, !!newItem.isUnit, 'sale',
+              `Item Added to Delivery #${sale.id}`,
+              { branchId: activeBranchId, performedBy: currentEmployeeId, performedByName: performerName },
+              sale.id
+            );
+
+            if (mutation) {
+              newItem.batchAllocations = mutation.allocations;
+              await inventoryService.updateStock(newItem.id, -mutation.unitsChanged);
+              undoManager.push(async () => {
+                 await inventoryService.updateStock(newItem.id, mutation.unitsChanged);
+                 for (const alloc of mutation.allocations) {
+                   await batchService.returnStock([alloc], alloc.quantity, newItem.id, activeBranchId);
+                 }
+              });
+
+              modifications.push({
+                type: 'item_added',
+                itemId: newItem.id,
+                itemName: newItem.name,
+                dosageForm: newItem.dosageForm,
+                previousQuantity: 0,
+                newQuantity: newItem.quantity,
+                stockDeducted: mutation.unitsChanged,
+              });
+            }
+          }
+        }
+      }
+
+      // 4. Build history
+      let modificationHistory = sale.modificationHistory || [];
+      if (modifications.length > 0) {
+        const historyRecord = {
+          id: idGenerator.generateSync('generic', activeBranchId),
+          timestamp: timestamp || new Date().toISOString(),
+          modifiedBy: performerName || 'System',
+          modifications,
+        };
+        modificationHistory = [...modificationHistory, historyRecord];
+      }
+
+      return { success: true, modificationHistory };
+
+    } catch (err: any) {
+      console.error('[TransactionService] Modification failed:', err);
+      await undoManager.undoAll();
+      return { success: false, error: err.message || 'Modification failed' };
+    }
+  },
+
   async processReturn(
     returnData: Return,
     inventory: Drug[],
@@ -542,5 +856,8 @@ export const transactionService = {
       console.error('[TransactionService] Purchase return failed:', err);
       return { success: false, error: err.message || 'Purchase return failed' };
     }
+  },
+  async addTransaction(shiftId: string, tx: any): Promise<any> {
+    return cashService.addTransaction(shiftId, tx);
   }
 };

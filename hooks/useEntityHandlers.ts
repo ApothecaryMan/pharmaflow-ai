@@ -9,7 +9,6 @@ import { employeeService } from '../services/hr/employeeService';
 import { stockMovementService } from '../services/inventory/stockMovement/stockMovementService';
 import { transactionService } from '../services/transactions/transactionService';
 
-import { restoreStockForCancelledSale } from '../services/salesHelpers';
 import { salesService } from '../services/sales/salesService';
 import { purchaseService } from '../services/purchases/purchaseService';
 import { customerService } from '../services/customers/customerService';
@@ -1184,11 +1183,18 @@ export function useEntityHandlers({
         return;
       }
       const employee = employees?.find((e) => e.id === currentEmployeeId);
+      const context: ActionContext = {
+        branchId: activeBranchId,
+        performerId: currentEmployeeId,
+        performerName: employee?.name || 'System',
+        timestamp: new Date().toISOString(),
+        orgId: (window as any).__PHARMA_FLOW_ORG_ID__ || 'default', // Fallback for context
+        shiftId: currentShift?.id,
+      };
 
-      // Handle order cancellation - return all items to batches
+      // Handle order cancellation
       if (updates.status === 'cancelled' && sale.status !== 'cancelled') {
-        // Block cancellation of completed deliveries - must use Return flow for them
-        // Walk-in sales are also 'completed', but we allow cancelling (voiding) them if necessary
+        // UI Guard: Block cancellation of completed deliveries
         if (sale.status === 'completed' && sale.saleType === 'delivery') {
           error('Cannot cancel a completed delivery order. Please use the Return flow instead.');
           return;
@@ -1199,82 +1205,33 @@ export function useEntityHandlers({
           return;
         }
 
-        // Limit for senior_cashier
         if (employee?.role === 'senior_cashier' && sale.total > SENIOR_CASHIER_CANCEL_LIMIT) {
-          error(
-            `Permission denied: Senior Cashiers cannot cancel sales exceeding ${formatCurrency(SENIOR_CASHIER_CANCEL_LIMIT)} (Sale Total: ${formatCurrency(sale.total)}). Manager approval required.`
-          );
+          // formatCurrency call
+          error(`Permission denied: Senior Cashiers cannot cancel sales exceeding EGP ${SENIOR_CASHIER_CANCEL_LIMIT}. Manager approval required.`);
           return;
         }
 
-        // 1.5. Shift Requirement Guard for Cash Refunds
-        // BUG-SH-02: Block cancellations of paid/completed sales if no shift is open
-        const needsShift = sale.saleType === 'walk-in' || sale.status === 'completed';
-        if (needsShift && !currentShift) {
-          error('Permission denied: An active shift must be open to cancel a completed or walk-in sale and issue a refund.');
+        const result = await transactionService.processCancellation(sale, inventory, context);
+
+        if (!result.success) {
+          error(result.error || 'Failed to cancel order');
           return;
         }
 
-        const performer = employee;
-        for (const item of sale.items) {
-          const drug = inventory.find((d) => d.id === item.id && d.branchId === activeBranchId);
-          if (drug) {
-            const returnedAllocations = item.batchAllocations || [];
-            await stockOps.returnStock(
-              drug,
-              item.quantity,
-              !!item.isUnit,
-              returnedAllocations,
-              'correction',
-              'Sale Cancellation',
-              {
-                branchId: activeBranchId,
-                performedBy: currentEmployeeId!,
-                performedByName: employees.find((e) => e.id === currentEmployeeId)?.name,
-              },
-              saleId
-            );
-          }
-        }
+        // Update UI State
+        const [updatedBatches] = await Promise.all([
+          batchService.getAllBatches(activeBranchId)
+        ]);
         
-        // Update inventory state
-        const updatedInventory = await restoreStockForCancelledSale(inventory, sale.items);
-        setInventory(updatedInventory);
-        const updatedBatches = await batchService.getAllBatches(activeBranchId); setBatches(updatedBatches);
-
-        // --- PERSISTENCE: Return items to Supabase ---
-        try {
-          await Promise.all(
-            sale.items.map((item) => {
-              const drug = inventory.find((d) => d.id === item.id && d.branchId === activeBranchId);
-              if (!drug) return Promise.resolve();
-              const unitsToRestore = stockOps.resolveUnits(item.quantity, !!item.isUnit, drug.unitsPerPack);
-              return inventoryService.updateStock(item.id, unitsToRestore);
-            })
-          );
-        } catch (e) {
-          console.error('[handleUpdateSale] Cancellation Persistence Error:', e);
-        }
-
-        // --- SHIFT BALANCING: Add correction if it was a walk-in or paid sale ---
-        // Walk-in sales are always 'completed' and recorded in the shift balance.
-        // Delivery sales are only recorded in the shift balance when their status changes to 'completed'.
-        if (currentShift && (sale.saleType === 'walk-in' || sale.status === 'completed')) {
-           const type = sale.paymentMethod === 'visa' ? 'card_return' : 'return';
-           addTransaction(currentShift.id, {
-             id: idGenerator.generateSync('transactions', activeBranchId),
-             branchId: activeBranchId,
-             shiftId: currentShift.id,
-             time: new Date().toISOString(),
-             type: type, 
-             amount: sale.total,
-             reason: `Cancellation of Sale #${sale.serialId || sale.id}`,
-             userId: employee?.name || 'System',
-             relatedSaleId: sale.serialId?.toString() || sale.id
-           });
-        }
-
-        success(`Order #${saleId} cancelled and stock returned.`);
+        setBatches(updatedBatches);
+        // Refresh full inventory from DB to ensure consistency after cancellation
+        const freshInventory = await inventoryService.getAll(activeBranchId);
+        setInventory(freshInventory);
+        
+        setSales((prev) => prev.map((s) => (s.id === saleId ? { ...s, status: 'cancelled', updatedAt: context.timestamp } : s)));
+        
+        success(`Order #${sale.serialId || sale.id} cancelled and stock returned.`);
+        return;
       }
 
       // Handle item modifications (for delivery orders)
@@ -1284,282 +1241,52 @@ export function useEntityHandlers({
           return;
         }
 
-        const modifications: OrderModification[] = [];
-        const timestamp = new Date().toISOString();
-        const performer = employee;
+        const result = await transactionService.processOrderModification(sale, updates, inventory, context);
 
-        // Compare old items with new items (MUST compare by id AND isUnit)
-        for (const oldItem of sale.items) {
-          const newItem = updates.items.find(
-            (i) => i.id === oldItem.id && i.isUnit === oldItem.isUnit
-          );
-
-          if (!newItem) {
-            // Item was deleted - return all stock
-            await stockOps.returnStock(
-              inventory.find(d => d.id === oldItem.id)!,
-              oldItem.quantity,
-              !!oldItem.isUnit,
-              oldItem.batchAllocations,
-              'correction',
-              `Item Removed from Delivery #${sale.id}`,
-              {
-                branchId: activeBranchId,
-                performedBy: currentEmployeeId!,
-                performedByName: performer?.name,
-              },
-              sale.id
-            );
-
-            // Update Drug.stock
-            const drugForOld = inventory.find((d) => d.id === oldItem.id);
-            if (drugForOld) {
-              const unitsToRestore = stockOps.resolveUnits(oldItem.quantity, !!oldItem.isUnit, drugForOld.unitsPerPack);
-              // --- PERSISTENCE: Immediate update ---
-              await inventoryService.updateStock(oldItem.id, unitsToRestore);
-              
-              setInventory((prev) =>
-                prev.map((drug) => {
-                  if (drug.id === oldItem.id) {
-                    return { ...drug, stock: validateStock(drug.stock + unitsToRestore) };
-                  }
-                  return drug;
-                })
-              );
-            }
-
-            modifications.push({
-              type: 'item_removed',
-              itemId: oldItem.id,
-              itemName: oldItem.name,
-              dosageForm: oldItem.dosageForm,
-              previousQuantity: oldItem.quantity,
-              newQuantity: 0,
-              stockReturned: stockOps.resolveUnits(oldItem.quantity, !!oldItem.isUnit, oldItem.unitsPerPack || 1),
-            });
-          } else {
-            // Check for quantity changes
-            if (newItem.quantity !== oldItem.quantity) {
-              // Quantity changed
-              const drug = inventory.find((d) => d.id === oldItem.id);
-              if (!drug) continue;
-
-              const oldUnits = oldItem.isUnit
-                ? oldItem.quantity
-                : oldItem.quantity * (drug.unitsPerPack || 1);
-              const newUnits = newItem.isUnit
-                ? newItem.quantity
-                : newItem.quantity * (drug.unitsPerPack || 1);
-              const diff = oldUnits - newUnits;
-
-              if (diff > 0) {
-                // Quantity reduced - return partial stock
-                await stockOps.returnStock(
-                  drug,
-                  diff,
-                  true, // units
-                  oldItem.batchAllocations,
-                  'correction',
-                  `Quantity Reduced in Delivery #${sale.id}`,
-                  {
-                    branchId: activeBranchId,
-                    performedBy: currentEmployeeId!,
-                    performedByName: performer?.name,
-                  },
-                  sale.id
-                );
-                
-                const updatedBatches = await batchService.getAllBatches(activeBranchId);
-                setBatches(updatedBatches);
-
-                // --- PERSISTENCE: Immediate update ---
-                await inventoryService.updateStock(oldItem.id, diff);
-
-                setInventory((prev) =>
-                  prev.map((d) => {
-                    if (d.id === oldItem.id) {
-                      return { ...d, stock: validateStock(d.stock + diff) };
-                    }
-                    return d;
-                  })
-                );
-
-                modifications.push({
-                  type: 'quantity_update',
-                  itemId: oldItem.id,
-                  itemName: oldItem.name,
-                  dosageForm: oldItem.dosageForm,
-                  previousQuantity: oldItem.quantity,
-                  newQuantity: newItem.quantity,
-                  stockReturned: diff,
-                });
-              } else if (diff < 0) {
-                // Quantity increased - allocate more
-                const mutation = await stockOps.deductStock(
-                  drug,
-                  Math.abs(diff),
-                  true, // units
-                  'sale',
-                  `Quantity Increased in Delivery #${sale.id}`,
-                  {
-                    branchId: activeBranchId,
-                    performedBy: currentEmployeeId!,
-                    performedByName: performer?.name,
-                  },
-                  sale.id
-                );
-
-                if (mutation) {
-                  // Merge allocations
-                  newItem.batchAllocations = [
-                    ...(oldItem.batchAllocations || []),
-                    ...(mutation.allocations || []),
-                  ];
-                  const updatedBatches = await batchService.getAllBatches(activeBranchId);
-                  setBatches(updatedBatches);
-
-                  // --- PERSISTENCE: Immediate update ---
-                  await inventoryService.updateStock(oldItem.id, -Math.abs(diff));
-
-                  setInventory((prev) =>
-                    prev.map((d) => {
-                      if (d.id === oldItem.id) {
-                        return { ...d, stock: mutation.newStock };
-                      }
-                      return d;
-                    })
-                  );
-
-                  modifications.push({
-                    type: 'quantity_update',
-                    itemId: oldItem.id,
-                    itemName: oldItem.name,
-                    dosageForm: oldItem.dosageForm,
-                    previousQuantity: oldItem.quantity,
-                    newQuantity: newItem.quantity,
-                    stockDeducted: Math.abs(diff),
-                  });
-                }
-              }
-            }
-
-            // Check for discount changes (track but no stock impact)
-            if ((newItem.discount || 0) !== (oldItem.discount || 0)) {
-              modifications.push({
-                type: 'discount_update',
-                itemId: oldItem.id,
-                itemName: oldItem.name,
-                dosageForm: oldItem.dosageForm,
-                previousDiscount: oldItem.discount || 0,
-                newDiscount: newItem.discount || 0,
-              });
-            }
-          }
+        if (!result.success) {
+          error(result.error || 'Failed to modify order');
+          return;
         }
 
-        // Handle NEW items (items in updates.items that don't exist in sale.items)
-        for (const newItem of updates.items) {
-          const existsInOld = sale.items.some(
-            (old) => old.id === newItem.id && old.isUnit === newItem.isUnit
-          );
-          if (!existsInOld) {
-            // This is a NEW item - allocate stock
-            const drug = inventory.find((d) => d.id === newItem.id);
-            if (drug) {
-              const mutation = await stockOps.deductStock(
-                drug,
-                newItem.quantity,
-                !!newItem.isUnit,
-                'sale',
-                `Item Added to Delivery #${sale.id}`,
-                {
-                  branchId: activeBranchId,
-                  performedBy: currentEmployeeId!,
-                  performedByName: performer?.name,
-                },
-                sale.id
-              );
+        updates.modificationHistory = result.modificationHistory;
 
-              if (mutation) {
-                newItem.batchAllocations = mutation.allocations;
-                const updatedBatches = await batchService.getAllBatches(activeBranchId);
-                setBatches(updatedBatches);
-
-                // --- PERSISTENCE: Immediate update ---
-                await inventoryService.updateStock(newItem.id, -mutation.unitsChanged);
-
-                setInventory((prev) =>
-                  prev.map((d) => {
-                    if (d.id === newItem.id) {
-                      return { ...d, stock: mutation.newStock };
-                    }
-                    return d;
-                  })
-                );
-
-                modifications.push({
-                  type: 'item_added',
-                  itemId: newItem.id,
-                  itemName: newItem.name,
-                  dosageForm: newItem.dosageForm,
-                  previousQuantity: 0,
-                  newQuantity: newItem.quantity,
-                  stockDeducted: mutation.unitsChanged,
-                });
-              }
-            }
-          }
-        }
-
-        // Add modification history
-        if (modifications.length > 0) {
-          // Resolve modifier name
-          const modifierName = employee?.name || 'System';
-
-          const historyRecord: OrderModificationRecord = {
-            id: idGenerator.generateSync('generic', activeBranchId),
-            timestamp,
-            modifiedBy: modifierName,
-            modifications,
-          };
-
-          updates.modificationHistory = [...(sale.modificationHistory || []), historyRecord];
-        }
-        success(`Order #${saleId} modified and history updated.`);
+        // Update UI State
+        const [updatedBatches] = await Promise.all([
+          batchService.getAllBatches(activeBranchId)
+        ]);
+        setBatches(updatedBatches);
+        const freshInventory = await inventoryService.getAll(activeBranchId);
+        setInventory(freshInventory);
+        
+        success(`Order #${sale.serialId || sale.id} modified successfully.`);
       }
 
-      // Handle Delivery Completion (Status changed to completed)
-      // BUG-011: Only fire for delivery orders — walk-in sales already record shift tx at checkout time
-      // BUG-C1: Idempotency guard — check shiftTransactionRecorded flag to prevent double recording
+      // Handle Delivery Completion (Pure UI/Shift Sync)
       if (updates.status === 'completed' && sale.status !== 'completed' && sale.saleType === 'delivery' && currentShift && !sale.shiftTransactionRecorded) {
-        // Now we add the money to the shift
         const isCash = sale.paymentMethod === 'cash';
-        // BUG-C5: Use updated total if available (order may have been edited)
         const txAmount = (updates as any).total ?? sale.total;
-        addTransaction(currentShift.id, {
-          id: idGenerator.generateSync('transactions', activeBranchId),
+        
+        await transactionService.addTransaction(currentShift.id, {
           branchId: activeBranchId,
           shiftId: currentShift.id,
-          time: new Date().toISOString(),
+          time: context.timestamp,
           type: isCash ? 'sale' : 'card_sale',
           amount: txAmount,
-          reason: `Delivery Finalized #${saleId}`,
-          userId: employee?.name || 'System',
-          relatedSaleId: saleId.toString(),
+          reason: `Delivery Finalized #${sale.serialId || sale.id}`,
+          userId: context.performerName || 'System',
+          relatedSaleId: saleId
         });
-        // Mark as recorded to prevent duplicate on rapid double-click
         updates.shiftTransactionRecorded = true;
-        success(`Delivery #${saleId} completed and payment recorded.`);
+        success(`Delivery #${sale.serialId || sale.id} completed and payment recorded.`);
       }
 
       const finalUpdates: Partial<Sale> = {
         ...updates,
-        updatedAt: new Date().toISOString(),
+        updatedAt: context.timestamp,
       };
 
       setSales((prev) => prev.map((s) => (s.id === saleId ? { ...s, ...finalUpdates } : s)));
 
-      // --- PERSISTENCE: Save modified/completed/cancelled sale to Supabase via salesService ---
       try {
         await salesService.update(saleId, finalUpdates);
       } catch (e) {

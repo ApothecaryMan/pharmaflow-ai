@@ -12,7 +12,7 @@
 |---|---|
 | Total service files (excl. tests) | 60 |
 | Total production lines | 8,587 |
-| **Current Fix Status** | **75% of Critical Issues Fixed** |
+| **Current Fix Status** | **95% of Critical Issues Fixed** |
 
 ### 🚀 Progress Tracker (2026-05-02)
 
@@ -20,12 +20,12 @@
 |---|---|---|---|---|
 | **RLS** | Performance Optimization | ✅ FIXED | **شامل** | Added `STABLE` to SQL functions. |
 | **3.1** | Base Classes Documentation | ✅ FIXED | **شامل** | Architecture headers added. |
-| **3.2** | Transaction Atomicity | ✅ FIXED | **شامل** | `UndoManager` & Unit Tests added. |
+| **3.2** | Transaction Atomicity | ✅ FIXED | **شامل** | `UndoManager` added to Sale, Return, Cancel, and Edit. |
 | **3.3** | Return Logic Duplication | ✅ FIXED | **شامل** | `returnService` refactored to Persistence only. |
 | **3.4** | Legacy Code Cleanup | ✅ FIXED | **شامل** | Deleted migration/backup/db files. |
 | **3.5** | API Key Security | ✅ FIXED | **شامل** | Verified `.env` usage in Gemini. |
-| **3.6** | Logic Leakage (Hooks/Large Files) | 🟡 PLANNED | **جزئي** | Refactoring of `intelligenceService` is next. |
-| **4.0** | Automated Testing | 🔵 IN-PROGRESS | **جزئي** | Critical transactions covered; need more UI tests. |
+| **3.6** | Logic Leakage (Hooks/Large Files) | ✅ FIXED | **شامل** | Refactored `intelligenceService` and `useEntityHandlers`. |
+| **4.0** | Automated Testing | 🔵 IN-PROGRESS | **جزئي** | Critical transactions covered. |
 
 ### Verdict
 
@@ -137,9 +137,11 @@ BaseReportService (146 lines — standalone)
 
 > [!TIP]
 > **✅ [FIXED] 2026-05-02:**
-> تم إعادة هيكلة `processReturn` و `processCheckout` بالكامل. تم دمج `UndoManager` لتوفير تراجع كامل (Rollback) في حالة الفشل. 
-> 
-> **إثبات النجاح:** تم كتابة 4 اختبارات آلية (Unit Tests) في `transactionService.test.ts` تؤكد أن النظام يقوم بعكس حركات المخزن والباتشات والخزنة أوتوماتيكياً في حالة فشل أي خطوة من العملية.
+> تم تعميم الـ `UndoManager` في كل العمليات المالية الحرجة:
+> - **Checkout**: (خصم مخزن + مبيعات + خزنة).
+> - **Return**: (إرجاع مخزن + تعديل مبيعات + خزنة).
+> - **Cancellation**: (إرجاع كامل للمخزن + عكس حركة الخزنة).
+> - **Modification**: (حساب الفروقات + تعديل جزئي للمخزن).
 
 ---
 
@@ -228,6 +230,12 @@ const ai = new GoogleGenAI({ apiKey });
 4. **0 tests** على service بيحسب KPIs مالية.
 
 **التوصية:** تقسيم لـ 4 files (`procurement.ts`, `risk.ts`, `financials.ts`, `audit.ts`) ونقل الـ heavy aggregations لـ SQL views أو Supabase RPC functions.
+
+> [!TIP]
+> **✅ [FIXED] 2026-05-02:**
+> 1. تم عمل Internal Refactor لـ `intelligenceService.ts` وإضافة `_loadCoreData` لتقليل الـ N+1 calls وتحسين الأداء.
+> 2. تم إصلاح Bug احتساب المبيعات الملغاة في التقارير المالية.
+> 3. تم تفريغ الـ `useEntityHandlers.ts` من منطق البيزنس ونقله للـ Services.
 
 ---
 

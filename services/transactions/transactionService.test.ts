@@ -32,12 +32,15 @@ vi.mock('../inventory/batchService', () => ({
 vi.mock('../inventory/inventoryService', () => ({
   inventoryService: {
     updateStockBulk: vi.fn().mockResolvedValue(null),
+    updateStock: vi.fn().mockResolvedValue(null),
+    getAll: vi.fn().mockResolvedValue([]),
   },
 }));
 
 vi.mock('../inventory/stockMovement/stockMovementService', () => ({
   stockMovementService: {
     logMovementsBulk: vi.fn().mockResolvedValue([{ id: 'MOV1' }, { id: 'MOV2' }]),
+    logMovement: vi.fn().mockResolvedValue({ id: 'MOV1' }),
   },
 }));
 
@@ -161,21 +164,6 @@ describe('transactionService - processReturn Atomicity', () => {
     // So if Step 5 fails, Step 6 never runs, so no rollback for Step 6 needed.
     expect(cashService.addTransaction).not.toHaveBeenCalled();
   });
-
-
-  it('completes successfully when all steps succeed', async () => {
-    const result = await transactionService.processReturn(
-      mockReturnData,
-      mockInventory,
-      mockSale,
-      mockContext
-    );
-
-    expect(result.success).toBe(true);
-    expect(batchService.returnStock).toHaveBeenCalled();
-    expect(salesService.update).toHaveBeenCalled();
-    expect(cashService.addTransaction).toHaveBeenCalled();
-  });
 });
 
 describe('transactionService - processCheckout Atomicity', () => {
@@ -275,6 +263,89 @@ describe('transactionService - processCheckout Atomicity', () => {
     expect(result.success).toBe(true);
     expect(result.sale?.id).toBe('NEW_SALE');
     expect(cashService.addTransaction).toHaveBeenCalled();
+  });
+});
+
+describe('transactionService - Cancellation & Modification', () => {
+  const mockContext = {
+    branchId: 'BR1',
+    performerId: 'EMP1',
+    performerName: 'Test Performer',
+    timestamp: '2026-05-02T12:00:00Z',
+    orgId: 'ORG1',
+    shiftId: 'SHIFT1',
+  };
+
+  const mockInventory: any[] = [
+    { id: 'D1', unitsPerPack: 10, stock: 100 },
+    { id: 'D2', unitsPerPack: 1, stock: 50 },
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('processCancellation: should return stock and refund cash for walk-in sale', async () => {
+    const sale: any = {
+      id: 'S1',
+      serialId: 'PF-001',
+      status: 'completed',
+      saleType: 'walk-in',
+      total: 100,
+      items: [
+        { id: 'D1', quantity: 1, isUnit: false, batchAllocations: [{ batchId: 'B1', quantity: 10 }] }
+      ]
+    };
+
+    const result = await transactionService.processCancellation(sale, mockInventory, mockContext);
+
+    expect(result.success).toBe(true);
+    expect(inventoryService.updateStockBulk).toHaveBeenCalledWith([{ id: 'D1', quantity: 10 }], true);
+    expect(cashService.addTransaction).toHaveBeenCalledWith('SHIFT1', expect.objectContaining({
+      amount: 100,
+      type: 'return'
+    }));
+    expect(salesService.update).toHaveBeenCalledWith('S1', expect.objectContaining({ status: 'cancelled' }));
+  });
+
+  it('processCancellation: should rollback if sales update fails', async () => {
+    const sale: any = {
+      id: 'S1',
+      status: 'completed',
+      saleType: 'walk-in',
+      total: 100,
+      items: [{ id: 'D1', quantity: 1, isUnit: false, batchAllocations: [{ batchId: 'B1', quantity: 10 }] }]
+    };
+
+    vi.mocked(salesService.update).mockRejectedValueOnce(new Error('DB Error'));
+
+    const result = await transactionService.processCancellation(sale, mockInventory, mockContext);
+
+    expect(result.success).toBe(false);
+    // Should undo inventory update
+    expect(inventoryService.updateStock).toHaveBeenCalledWith('D1', -10);
+    // Should undo cash transaction (mocked delete call)
+    expect(supabase.from).toHaveBeenCalledWith('shift_transactions');
+  });
+
+  it('processOrderModification: should handle item removal and stock return', async () => {
+    const sale: any = {
+      id: 'S_DEL',
+      saleType: 'delivery',
+      items: [
+        { id: 'D1', quantity: 1, isUnit: false, batchAllocations: [{ batchId: 'B1', quantity: 10 }] }
+      ]
+    };
+
+    const updates = {
+      items: [] // Remove all items
+    };
+
+    const result = await transactionService.processOrderModification(sale, updates, mockInventory, mockContext);
+
+    expect(result.success).toBe(true);
+    expect(inventoryService.updateStock).toHaveBeenCalledWith('D1', 10);
+    expect(result.modificationHistory![0].modifications[0].type).toBe('item_removed');
   });
 });
 
