@@ -11,7 +11,7 @@ import { ContextMenuTrigger } from '../common/ContextMenu';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { Switch } from '../common/Switch';
-import { backupService } from '../../services/backup/backupService';
+
 import { useData } from '../../services/DataContext';
 import { branchService } from '../../services/branchService';
 import { orgService } from '../../services/org/orgService';
@@ -703,41 +703,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 </div>
               )}
 
-              {/* Backup & Data Management (Only for employee session) */}
-              {currentEmployeeId && (
-                <div className='p-2 border-t border-(--border-divider) space-y-1'>
-                  <button
-                    onClick={() => backupService.exportBackup()}
-                    className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg transition-colors flex items-center justify-center gap-2'
-                  >
-                    <Icons.Download size="var(--icon-md)" />
-                    {t.settings.exportBackup}
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (window.confirm(t.settings.importWarning)) {
-                        importRef.current?.click();
-                      }
-                    }}
-                    className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg flex items-center justify-center gap-2'
-                  >
-                    <Icons.Upload size="var(--icon-md)" />
-                    {t.settings.importBackup}
-                  </button>
-                  <input 
-                    type="file" 
-                    ref={importRef} 
-                    className="hidden" 
-                    accept=".json"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        backupService.importBackup(file).catch(err => alert('Error: ' + err.message));
-                      }
-                    }}
-                  />
-                </div>
-              )}
+
 
               {/* Sign Out */}
               <div className='p-2 border-t border-(--border-divider) bg-(--bg-page-surface)'>

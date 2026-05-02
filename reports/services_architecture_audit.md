@@ -187,8 +187,13 @@ BaseReportService (146 lines — standalone)
 
 ### 3.5 — `geminiService.ts` — API Key Exposure Risk
 
+**التوصية:** نقل الـ API Key لملف `.env` واستدعاؤه عبر `import.meta.env`.
+
+> [!TIP]
+> **✅ [RESOLVED]:**
+> الكود الحالي في `geminiService.ts` يستخدم بالفعل `import.meta.env.VITE_GEMINI_API_KEY` ويقوم بالتحقق من وجوده، مما يمنع تسريب المفتاح في الكود المصدري.
+
 ```typescript
-// DEV mode: Uses direct API key from .env
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 const ai = new GoogleGenAI({ apiKey });
 ```
