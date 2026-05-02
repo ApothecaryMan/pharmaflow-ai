@@ -127,60 +127,11 @@ export const returnService: ReturnService = {
       branchId: effectiveBranchId,
       orgId: settings.orgId,
       date: ret.date || new Date().toISOString(),
+      processedBy: ret.processedBy || authService.getCurrentUserSync()?.employeeId
     } as Return;
 
-    // 1. Update Inventory and log movements
-    for (const item of newReturn.items) {
-      const drugId = item.drugId;
-      const currentStock = await batchService.getTotalStock(drugId, effectiveBranchId);
-      
-      // If we have specific batch allocations, restore them precisely
-      if (item.batchAllocations && item.batchAllocations.length > 0) {
-        // Resolve quantity to units for stock restoration
-        const unitsToRestore = resolveUnits(item.quantityReturned, item.isUnit || false, 1); // unitsPerPack fallback to 1 if unknown here
-        await batchService.returnStock(item.batchAllocations, unitsToRestore, drugId, effectiveBranchId);
-        
-        // Log movement for each restored batch
-        for (const alloc of item.batchAllocations) {
-          await stockMovementService.logMovement({
-            drugId,
-            drugName: item.name,
-            branchId: effectiveBranchId,
-            orgId: settings.orgId,
-            type: 'return_customer',
-            quantity: alloc.quantity,
-            previousStock: currentStock, // Simplified, but okay for logging
-            newStock: currentStock + alloc.quantity,
-            referenceId: newReturn.id,
-            batchId: alloc.batchId,
-            expiryDate: alloc.expiryDate,
-            status: 'approved'
-          });
-        }
-      } else {
-        // Fallback: Just update total stock and log a general movement
-        await stockMovementService.logMovement({
-          drugId,
-          drugName: item.name,
-          branchId: effectiveBranchId,
-          orgId: settings.orgId,
-          type: 'return_customer',
-          quantity: item.quantityReturned,
-          previousStock: currentStock,
-          newStock: currentStock + item.quantityReturned,
-          referenceId: newReturn.id,
-          status: 'approved'
-        });
-      }
-
-      await inventoryService.updateStock(drugId, item.quantityReturned, true);
-    }
-
-    // 2. Save Return Record
-    const dbReturn = salesReturnInternal.mapToDb({
-      ...newReturn,
-      processedBy: newReturn.processedBy || authService.getCurrentUserSync()?.employeeId
-    });
+    // Save Return Record (Persistence only)
+    const dbReturn = salesReturnInternal.mapToDb(newReturn);
     const { error } = await supabase.from('returns').insert(dbReturn);
     if (error) throw error;
 

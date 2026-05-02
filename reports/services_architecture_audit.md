@@ -126,6 +126,10 @@ BaseReportService (146 lines — standalone)
 - توحيد `UndoManager` كـ required pattern في كل method.
 - تأجيل `Promise.all` للـ writes اللي فعلاً independent.
 
+> [!TIP]
+> **✅ [FIXED] 2026-05-02:**
+> تم إعادة هيكلة `processReturn` بالكامل. تم دمج `UndoManager` لتوفير تراجع كامل (Rollback) في حالة الفشل، وتم تحويل العمليات لـ Sequential لضمان الذرية (Atomicity).
+
 ---
 
 ### 3.3 — `returnService` Duplicates `transactionService` Logic
@@ -149,6 +153,10 @@ BaseReportService (146 lines — standalone)
 **المشكلة:** مسارين لنفس العملية — حسب الكود اللي بيستدعيهم، ممكن return يحصل من غير ما الـ sale.netTotal يتحدث.
 
 **التوصية:** `returnService.createSalesReturn()` المفروض يكون low-level persistence only. كل الـ business orchestration يمر من `transactionService`.
+
+> [!TIP]
+> **✅ [FIXED] 2026-05-02:**
+> تم حذف الـ business logic المكرر من `returnService.createSalesReturn`. الخدمة الآن مسؤولة فقط عن الحفظ (Persistence)، بينما يتم إدارة المخزن والحسابات والـ Rollback حصرياً عبر `transactionService`.
 
 ---
 

@@ -245,10 +245,8 @@ export const transactionService = {
     
     try {
       // Validation using high-precision money engine
-      // BUG-012: Handle null netTotal from database (defaults to total if null)
       const currentNetTotal = (sale.netTotal !== undefined && sale.netTotal !== null) ? sale.netTotal : sale.total;
-      const previouslyRefunded = money.subtract(sale.total, currentNetTotal);
-      const remainingBalance = currentNetTotal; // Simplified: remaining is what's left after previous refunds
+      const remainingBalance = currentNetTotal; 
       
       if (!money.isGte(remainingBalance, returnData.totalRefund)) {
         return {
@@ -261,12 +259,10 @@ export const transactionService = {
 
       for (const returnedItem of returnData.items) {
         const drug = inventory.find(d => d.id === returnedItem.drugId);
-        // Find the specific sale item using saleItemId
         const saleItem = sale.items.find((i) => i.id === returnedItem.saleItemId);
 
         if (!saleItem) continue;
         
-        // Update the tracked returned quantities for this specific line item
         const lineKey = returnedItem.isUnit ? `${saleItem.id}_unit` : `${saleItem.id}_pack`;
         const currentReturned = updatedReturnedQuantities[lineKey] || 0;
         updatedReturnedQuantities[lineKey] = currentReturned + returnedItem.quantityReturned;
@@ -294,62 +290,92 @@ export const transactionService = {
         if (saleItem?.batchAllocations) {
           batchReturnOps.push({ 
             allocations: saleItem.batchAllocations, 
-            quantityToReturn: unitsToRestore, // Fix: Pass actual units returned, not full allocation
+            quantityToReturn: unitsToRestore,
             drugId: returnedItem.drugId 
           });
         }
       }
 
-      // Execution
-      // Phase 1: Parallel Batch & Movement Prep
-      // BUG-FIX: Parallelize returnStock calls and movement logging
+      // Execution Phase with Undo Support
       const verifiedReturnDate = new Date(timestamp);
-      await Promise.all(batchReturnOps.map(op => 
-        batchService.returnStock(op.allocations, op.quantityToReturn, op.drugId, activeBranchId, verifiedReturnDate)
-      ));
 
-      // Phase 2: Parallel Independent Writes (Movements, Return Record, Items, Cash, Sale Update)
-      // Note: We remove inventoryService.updateStockBulk because the trg_sync_stock DB trigger 
-      // automatically updates drug stock when movements are logged.
-      const persistOps = [
-        stockMovementService.logMovementsBulk(movementEntries),
-        (supabase as any).from('returns').insert({
-          id: returnData.id,
-          serial_id: returnData.serialId,
+      // 1. Restore Batches (Sequential or with individual rollback)
+      for (const op of batchReturnOps) {
+        await batchService.returnStock(op.allocations, op.quantityToReturn, op.drugId, activeBranchId, verifiedReturnDate);
+        undoManager.push(async () => {
+          // Rollback: Re-deduct from these specific batches
+          // This is a simplified rollback but better than nothing
+          await batchService.allocateStockBulk([{
+            drugId: op.drugId,
+            quantity: op.quantityToReturn,
+            name: 'Return Rollback',
+            preferredBatchId: op.allocations[0]?.batchId
+          }], activeBranchId, verifiedReturnDate);
+        });
+      }
+
+      // 2. Log Movements
+      const createdMovements = await stockMovementService.logMovementsBulk(movementEntries);
+      undoManager.push(async () => {
+        const movementIds = createdMovements.map(m => m.id);
+        await supabase.from('stock_movements').delete().in('id', movementIds);
+      });
+
+      // 3. Create Return Record
+      const { error: returnError } = await (supabase as any).from('returns').insert({
+        id: returnData.id,
+        serial_id: returnData.serialId,
+        branch_id: activeBranchId,
+        org_id: orgId,
+        sale_id: returnData.saleId,
+        date: returnData.date,
+        return_type: returnData.returnType,
+        total_refund: returnData.totalRefund,
+        reason: returnData.reason,
+        notes: returnData.notes,
+        processed_by: currentEmployeeId,
+      });
+      if (returnError) throw returnError;
+      undoManager.push(async () => {
+        await supabase.from('returns').delete().eq('id', returnData.id);
+      });
+
+      // 4. Create Return Items
+      const { error: itemsError } = await (supabase as any).from('return_items').insert(
+        returnData.items.map(item => ({
           branch_id: activeBranchId,
-          org_id: orgId,
-          sale_id: returnData.saleId,
-          date: returnData.date,
-          return_type: returnData.returnType,
-          total_refund: returnData.totalRefund,
-          reason: returnData.reason,
-          notes: returnData.notes,
-          processed_by: currentEmployeeId,
-        }),
-        (supabase as any).from('return_items').insert(
-          returnData.items.map(item => ({
-            branch_id: activeBranchId,
-            return_id: returnData.id,
-            drug_id: item.drugId,
-            name: item.name,
-            quantity_returned: item.quantityReturned,
-            is_unit: item.isUnit,
-            public_price: item.publicPrice,
-            refund_amount: item.refundAmount,
-            reason: item.reason || returnData.reason,
-            condition: item.condition,
-            dosage_form: item.dosageForm,
-          }))
-        ),
-        salesService.update(sale.id, { 
-          netTotal: money.subtract(currentNetTotal, returnData.totalRefund),
-          itemReturnedQuantities: updatedReturnedQuantities 
-        }, true) // true = skipFetch for speed
-      ];
+          return_id: returnData.id,
+          drug_id: item.drugId,
+          name: item.name,
+          quantity_returned: item.quantityReturned,
+          is_unit: item.isUnit,
+          public_price: item.publicPrice,
+          refund_amount: item.refundAmount,
+          reason: item.reason || returnData.reason,
+          condition: item.condition,
+          dosage_form: item.dosageForm,
+        }))
+      );
+      if (itemsError) throw itemsError;
+      undoManager.push(async () => {
+        await supabase.from('return_items').delete().eq('return_id', returnData.id);
+      });
 
-      // Add cash transaction if needed
+      // 5. Update Original Sale
+      await salesService.update(sale.id, { 
+        netTotal: money.subtract(currentNetTotal, returnData.totalRefund),
+        itemReturnedQuantities: updatedReturnedQuantities 
+      }, true);
+      undoManager.push(async () => {
+        await salesService.update(sale.id, { 
+          netTotal: currentNetTotal,
+          itemReturnedQuantities: sale.itemReturnedQuantities 
+        }, true);
+      });
+
+      // 6. Cash Transaction (Financial impact)
       if (shiftId && returnData.totalRefund > 0) {
-        persistOps.push(cashService.addTransaction(shiftId, {
+        const cashTx = await cashService.addTransaction(shiftId, {
           branchId: activeBranchId,
           orgId: orgId,
           shiftId: shiftId,
@@ -359,15 +385,10 @@ export const transactionService = {
           reason: `Return for Sale #${sale.serialId}`,
           userId: context.performerId || 'System',
           relatedSaleId: sale.id,
-        }));
-      }
-
-      const results = await Promise.all(persistOps);
-      
-      // Check for errors in Supabase inserts
-      const errors = results.filter((r: any) => r?.error).map((r: any) => r.error);
-      if (errors.length > 0) {
-        throw errors[0];
+        });
+        undoManager.push(async () => {
+          await supabase.from('cash_transactions').delete().eq('id', cashTx.id);
+        });
       }
 
       auditService.log('sale.return', {
@@ -381,6 +402,7 @@ export const transactionService = {
 
     } catch (err: any) {
       console.error('[TransactionService] Return processing failed:', err);
+      await undoManager.undoAll();
       return { success: false, error: err.message || 'Return failed' };
     }
   },
