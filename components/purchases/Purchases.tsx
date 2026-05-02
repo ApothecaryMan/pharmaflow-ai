@@ -19,7 +19,7 @@ import {
   sanitizeExpiryInput,
 } from '../../utils/expiryUtils';
 import { formatStock } from '../../utils/inventory';
-import { DrugSearchEngine } from '../../services/search/DrugSearchEngine';
+import { DrugSearchEngine } from '../../services/search/drugSearchEngine';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';

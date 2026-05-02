@@ -6,7 +6,7 @@
 import { type CashTransaction, type Shift, CashTransactionType } from '../../types';
 import { supabase } from '../../lib/supabase';
 import { money } from '../../utils/money';
-import { BaseDomainService } from '../core/BaseDomainService';
+import { BaseDomainService } from '../core/baseDomainService';
 import { settingsService } from '../settings/settingsService';
 
 // --- Internal Shifts Service ---

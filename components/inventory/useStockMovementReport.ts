@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useData } from '../../services';
 import { useSettings } from '../../context';
 import { stockMovementService } from '../../services/inventory/stockMovement/stockMovementService';
-import { DrugSearchEngine } from '../../services/search/DrugSearchEngine';
+import { DrugSearchEngine } from '../../services/search/drugSearchEngine';
 import { StockMovement, StockMovementSummary, Drug } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { useSearchKeyboardNavigation } from '../common/SearchDropdown';

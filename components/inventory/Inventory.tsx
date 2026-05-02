@@ -28,7 +28,7 @@ import { AddProduct } from './AddProduct';
 import { useStatusBar } from '../layout/StatusBar';
 import { useSettings } from '../../context';
 import { SearchEngineInput } from '../common/SearchEngineInput';
-import { DrugSearchEngine } from '../../services/search/DrugSearchEngine';
+import { DrugSearchEngine } from '../../services/search/drugSearchEngine';
 
 import * as stockOps from '../../utils/stockOperations';
 import { batchService } from '../../services/inventory/batchService';

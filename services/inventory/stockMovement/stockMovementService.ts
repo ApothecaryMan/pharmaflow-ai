@@ -1,4 +1,4 @@
-import { BaseReportService, BaseReportFilters } from '../../core/BaseReportService';
+import { BaseReportService, BaseReportFilters } from '../../core/baseReportService';
 import { idGenerator } from '../../../utils/idGenerator';
 import { settingsService } from '../../settings/settingsService';
 import { supabase } from '../../../lib/supabase';

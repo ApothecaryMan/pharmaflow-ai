@@ -3,7 +3,7 @@
  * Online-Only implementation using Supabase.
  */
 
-import { BaseDomainService } from './core/BaseDomainService';
+import { BaseDomainService } from './core/baseDomainService';
 import type { Branch } from '../types';
 import { idGenerator } from '../utils/idGenerator';
 import { supabase } from '../lib/supabase';

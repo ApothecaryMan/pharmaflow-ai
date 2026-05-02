@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import type { Drug, Sale, StockBatch } from '../../types';
 import { CalculationBlock, CurrencyValue, DetailMetric } from '../common/InsightTooltip';
-import { DashboardService } from '../../services/dashboard/DashboardService';
+import { DashboardService } from '../../services/dashboard/dashboardService';
 
 interface AnalyticsProps {
   sales: Sale[];

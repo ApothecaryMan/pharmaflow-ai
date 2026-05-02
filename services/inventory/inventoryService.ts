@@ -1,4 +1,4 @@
-import { BaseDomainService } from '../core/BaseDomainService';
+import { BaseDomainService } from '../core/baseDomainService';
 import type { Drug } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { batchService } from './batchService';

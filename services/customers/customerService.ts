@@ -3,7 +3,7 @@
  * Online-Only implementation using Supabase
  */
 
-import { BaseEntityService } from '../core/BaseEntityService';
+import { BaseEntityService } from '../core/baseEntityService';
 import type { Customer } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { settingsService } from '../settings/settingsService';

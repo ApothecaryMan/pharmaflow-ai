@@ -1,6 +1,6 @@
 import { supabase } from '../../lib/supabase';
 import { settingsService } from '../settings/settingsService';
-import { BaseDomainService } from './BaseDomainService';
+import { BaseDomainService } from './baseDomainService';
 
 /**
  * BaseEntityService

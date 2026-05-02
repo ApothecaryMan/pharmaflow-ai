@@ -3,7 +3,7 @@ import { useState } from 'react';
 import {
   requestPasswordReset,
   validateResetPasswordEmail,
-} from '../../services/auth/forgotPassword.service';
+} from '../../services/auth/forgotPasswordService';
 
 export interface ForgotPasswordMessages {
   invalidEmail: string;

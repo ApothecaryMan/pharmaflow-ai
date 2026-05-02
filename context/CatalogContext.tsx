@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
-import { DrugSearchEngine } from '../services/search/DrugSearchEngine';
+import { DrugSearchEngine } from '../services/search/drugSearchEngine';
 import { 
   openCatalogDB, 
   loadCatalogFromDB, 

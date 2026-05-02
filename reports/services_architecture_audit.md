@@ -25,6 +25,7 @@
 | **3.4** | Legacy Code Cleanup | ✅ FIXED | **شامل** | Deleted migration/backup/db files. |
 | **3.5** | API Key Security | ✅ FIXED | **شامل** | Verified `.env` usage in Gemini. |
 | **3.6** | Logic Leakage (Hooks/Large Files) | ✅ FIXED | **شامل** | Refactored `intelligenceService` and `useEntityHandlers`. |
+| **5.0** | Naming Convention Standardization | ✅ FIXED | **شامل** | All services unified to camelCase. |
 | **4.0** | Automated Testing | 🔵 IN-PROGRESS | **جزئي** | Critical transactions covered. |
 
 ### Verdict
@@ -254,7 +255,9 @@ const ai = new GoogleGenAI({ apiKey });
 
 **ملاحظة:** `DashboardService.ts` هو الوحيد اللي بيعمل export لـ **class** مش object/singleton — ده بيفسر الـ PascalCase. بس الـ base classes كمان classes ومع ذلك بعضهم PascalCase. الـ convention مش consistent.
 
-**التوصية:** توحيد على `camelCase` لكل الـ service files. الـ class name جوا الملف يفضل PascalCase.
+> [!TIP]
+> **✅ [FIXED] 2026-05-02:**
+> تم توحيد تسمية جميع ملفات الخدمات (Services) لتتبع نمط الـ `camelCase` (مثلاً: `baseDomainService.ts`). تم تحديث جميع الـ Imports في المشروع لضمان استقرار الـ Build.
 
 ---
 
