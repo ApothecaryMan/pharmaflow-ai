@@ -1,4 +1,4 @@
-import { auditService } from '../services/auditService';
+import { auditService } from '../services/audit/auditService';
 
 export const measurePerformance = async <T>(
   name: string,

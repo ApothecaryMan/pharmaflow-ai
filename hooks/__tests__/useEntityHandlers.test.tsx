@@ -82,7 +82,7 @@ vi.mock('../../utils/shiftHelpers', () => ({
   addTransactionToOpenShift: vi.fn(),
 }));
 
-vi.mock('../../services/auditService', () => ({
+vi.mock('../../services/audit/auditService', () => ({
   auditService: {
     log: vi.fn(),
   },

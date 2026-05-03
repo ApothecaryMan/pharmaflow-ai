@@ -4,7 +4,7 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { useSettings } from '../../context';
 import { employeeService } from '../../services/hr/employeeService';
 import { authService } from '../../services/auth/authService';
-import { branchService } from '../../services/branchService';
+import { branchService } from '../../services/org/branchService';
 import { RoleIcon } from '../hr/RoleIcon';
 import { OnboardingStepper } from './OnboardingStepper';
 

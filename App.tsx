@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { storage } from './utils/storage';
 import { StorageKeys } from './config/storageKeys';
-import { branchService } from './services/branchService';
+import { branchService } from './services/org/branchService';
 import { AuthPage } from './components/auth/AuthPage';
 import { Modal } from './components/common/Modal';
 import { motion, AnimatePresence } from 'framer-motion';

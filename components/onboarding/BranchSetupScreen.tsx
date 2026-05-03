@@ -8,7 +8,7 @@ import { StorageKeys } from '../../config/storageKeys';
 import type { AppSettings } from '../../services/settings/types';
 
 import { OnboardingStepper } from './OnboardingStepper';
-import { branchService } from '../../services/branchService';
+import { branchService } from '../../services/org/branchService';
 import { orgService } from '../../services/org/orgService';
 import { settingsService } from '../../services/settings/settingsService';
 

@@ -93,9 +93,32 @@ export const returnsRepository = {
     return data ? this.mapSalesFromDb(data) : null;
   },
 
-  async insertSalesReturn(ret: Return): Promise<void> {
-    const { error } = await supabase.from(this.salesTableName).insert(this.mapSalesToDb(ret));
+  async insertReturn(ret: Return, processedBy?: string): Promise<void> {
+    const dbData = this.mapSalesToDb(ret);
+    if (processedBy) dbData.processed_by = processedBy;
+    const { error } = await supabase.from(this.salesTableName).insert(dbData);
     if (error) throw error;
+  },
+
+  async insertSalesReturn(ret: Return): Promise<void> {
+    return this.insertReturn(ret);
+  },
+
+  async deleteReturn(id: string): Promise<boolean> {
+    const { error } = await supabase.from(this.salesTableName).delete().eq('id', id);
+    if (error) throw error;
+    return true;
+  },
+
+  async insertReturnItems(items: any[]): Promise<void> {
+    const { error } = await supabase.from('return_items').insert(items);
+    if (error) throw error;
+  },
+
+  async deleteReturnItems(returnId: string): Promise<boolean> {
+    const { error } = await supabase.from('return_items').delete().eq('return_id', returnId);
+    if (error) throw error;
+    return true;
   },
 
   async upsertSalesReturns(returns: Return[]): Promise<void> {

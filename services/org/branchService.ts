@@ -1,15 +1,15 @@
 /**
  * Branch Service - Handles CRUD operations for pharmacy branches.
- * Online-Only implementation using Supabase.
+ * Business logic layer that orchestrates data access via BranchRepository.
  */
 
-import { BaseDomainService } from './core/baseDomainService';
-import type { Branch } from '../types';
-import { idGenerator } from '../utils/idGenerator';
-import { supabase } from '../lib/supabase';
-import { storage } from '../utils/storage';
-import { employeeService } from './hr/employeeService';
-import { orgService } from './org/orgService';
+import { BaseDomainService } from '../core/baseDomainService';
+import type { Branch } from '../../types';
+import { idGenerator } from '../../utils/idGenerator';
+import { storage } from '../../utils/storage';
+import { employeeService } from '../hr/employeeService';
+import { orgService } from './orgService';
+import { branchRepository } from './repositories/branchRepository';
 
 const ACTIVE_BRANCH_KEY = 'pharma_active_branch_id';
 
@@ -17,50 +17,19 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
   protected tableName = 'branches';
 
   public mapFromDb(db: any): Branch {
-    return {
-      id: db.id,
-      orgId: db.org_id,
-      code: db.code,
-      name: db.name,
-      phone: db.phone || undefined,
-      address: db.address || undefined,
-      governorate: db.governorate || undefined,
-      city: db.city || undefined,
-      area: db.area || undefined,
-      status: db.status || 'active',
-      createdAt: db.created_at || new Date().toISOString(),
-      updatedAt: db.updated_at || new Date().toISOString(),
-    };
+    return branchRepository.mapFromDb(db);
   }
 
   public mapToDb(b: Partial<Branch>): any {
-    const db: any = {};
-    if (b.id !== undefined) db.id = b.id;
-    if (b.orgId !== undefined) db.org_id = b.orgId;
-    if (b.code !== undefined) db.code = b.code;
-    if (b.name !== undefined) db.name = b.name;
-    if (b.phone !== undefined) db.phone = b.phone;
-    if (b.address !== undefined) db.address = b.address;
-    if (b.governorate !== undefined) db.governorate = b.governorate;
-    if (b.city !== undefined) db.city = b.city;
-    if (b.area !== undefined) db.area = b.area;
-    if (b.status !== undefined) db.status = b.status;
-    return db;
+    return branchRepository.mapToDb(b);
   }
 
   async getAll(orgId?: string): Promise<Branch[]> {
     try {
-      // If orgId is provided as an empty string, return empty immediately.
-      // This prevents fetching ALL branches from the database if the caller passes an empty ID.
       const effectiveOrgId = orgId !== undefined ? orgId : orgService.getActiveOrgId();
       if (!effectiveOrgId) return [];
 
-      let query = supabase.from(this.tableName).select('*');
-      query = query.eq('org_id', effectiveOrgId);
-      
-      const { data, error } = await query.order('name', { ascending: true });
-      if (error) throw error;
-      return (data || []).map(item => this.mapFromDb(item));
+      return branchRepository.getAll(effectiveOrgId);
     } catch (err) {
       console.error('[BranchService] getAll failed:', err);
       return [];
@@ -113,19 +82,14 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
       updatedAt: new Date().toISOString(),
     } as Branch;
 
-    const dbBranch = this.mapToDb(newBranch);
-    const { error } = await supabase.from(this.tableName).insert(dbBranch);
-    if (error) throw error;
-
+    await branchRepository.insert(newBranch);
     return newBranch;
   }
 
   async delete(id: string): Promise<boolean> {
-    const { error } = await supabase.from(this.tableName).delete().eq('id', id);
-    if (error) throw error;
+    await branchRepository.delete(id);
 
     const activeId = storage.get(ACTIVE_BRANCH_KEY, '');
-    
     if (activeId === id) {
       storage.remove(ACTIVE_BRANCH_KEY);
     }
@@ -161,7 +125,6 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
     }
 
     const activeId = storage.get(ACTIVE_BRANCH_KEY, '');
-    
     const activeExists = activeId && branches.some(b => b.id === activeId);
     
     if (!activeExists) {

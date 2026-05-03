@@ -1,4 +1,4 @@
-import { branchService } from '../branchService';
+import { branchService } from './branchService';
 import { salesService } from '../sales/salesService';
 import { inventoryService } from '../inventory/inventoryService';
 import { employeeService } from '../hr/employeeService';

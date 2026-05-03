@@ -20,7 +20,7 @@ import { type FilterConfig } from '../common/FilterPill';
 import { authService } from '../../services/auth/authService';
 import { Switch } from '../common/Switch';
 import { useSettings } from '../../context';
-import { branchService } from '../../services/branchService';
+import { branchService } from '../../services/org/branchService';
 import { Tooltip } from '../common/Tooltip';
 import { PageHeader } from '../common/PageHeader';
 import { SearchInput } from '../common/SearchInput';

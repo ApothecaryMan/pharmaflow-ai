@@ -3,7 +3,7 @@ import type { Drug, Supplier, DataContextType } from './types';
 import { useDataState } from './useDataState';
 import { useDataActions } from './useDataActions';
 import { useRealtimeSync } from './useRealtimeSync';
-import { branchService } from '../../services/branchService';
+import { branchService } from '../../services/org/branchService';
 import { authService } from '../../services/auth/authService';
 import { settingsService } from '../../services/settings/settingsService';
 

@@ -63,7 +63,7 @@ vi.mock('../cash/cashService', () => ({
   },
 }));
 
-vi.mock('../auditService', () => ({
+vi.mock('../audit/auditService', () => ({
   auditService: {
     log: vi.fn(),
   },

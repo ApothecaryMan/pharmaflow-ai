@@ -14,7 +14,7 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { Switch } from '../common/Switch';
 
 import { useData } from '../../context/DataContext';
-import { branchService } from '../../services/branchService';
+import { branchService } from '../../services/org/branchService';
 import { orgService } from '../../services/org/orgService';
 import { permissionsService } from '../../services/auth/permissionsService';
 import type { Organization } from '../../types';

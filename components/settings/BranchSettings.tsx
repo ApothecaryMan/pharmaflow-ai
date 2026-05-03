@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { branchService } from '../../services/branchService';
+import { branchService } from '../../services/org/branchService';
 import { orgService } from '../../services/org/orgService';
 import { employeeService } from '../../services/hr/employeeService';
 import type { Branch, Employee } from '../../types';

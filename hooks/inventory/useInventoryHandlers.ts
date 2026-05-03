@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useAlert } from '../../context';
 import { permissionsService } from '../../services/auth/permissionsService';
-import { auditService } from '../../services/auditService';
+import { auditService } from '../../services/audit/auditService';
 import { batchService } from '../../services/inventory/batchService';
 import { inventoryService } from '../../services/inventory/inventoryService';
 import { stockMovementService } from '../../services/inventory/stockMovement/stockMovementService';

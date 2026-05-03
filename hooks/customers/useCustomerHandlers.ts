@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useAlert } from '../../context';
 import { permissionsService } from '../../services/auth/permissionsService';
-import { auditService } from '../../services/auditService';
+import { auditService } from '../../services/audit/auditService';
 import { customerService } from '../../services/customers/customerService';
 import type { Customer, Employee, Sale } from '../../types';
 

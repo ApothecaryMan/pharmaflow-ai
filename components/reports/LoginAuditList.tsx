@@ -5,7 +5,7 @@ import { useData } from '../../services';
 import { useSettings } from '../../context';
 import { authService } from '../../services/auth/authService';
 import type { LoginAuditEntry } from '../../types';
-import { branchService } from '../../services/branchService';
+import { branchService } from '../../services/org/branchService';
 import { TanStackTable } from '../common/TanStackTable';
 import { Switch } from '../common/Switch';
 import { permissionsService } from '../../services/auth/permissionsService';

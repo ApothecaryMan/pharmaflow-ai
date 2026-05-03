@@ -1,12 +1,11 @@
 /**
  * Organization Service — Manages multi-tenant organizations.
- * Online-Only implementation using Supabase.
+ * Business logic layer that orchestrates data access via OrgRepository.
  */
 
 import type { Organization, OrgMember, OrgRole, Subscription } from '../../types';
-import { idGenerator } from '../../utils/idGenerator';
-import { supabase } from '../../lib/supabase';
 import { storage } from '../../utils/storage';
+import { orgRepository } from './repositories/orgRepository';
 
 const ACTIVE_ORG_KEY = 'pharma_active_org_id';
 
@@ -19,46 +18,6 @@ const generateSlug = (name: string): string => {
     .trim();
 };
 
-function mapOrg(row: any): Organization {
-  return {
-    id: row.id,
-    name: row.name,
-    slug: row.slug,
-    ownerId: row.owner_id,
-    logoUrl: row.logo_url,
-    status: row.status,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
-
-function mapMember(row: any): OrgMember {
-  return {
-    id: row.id,
-    orgId: row.org_id,
-    userId: row.user_id,
-    role: row.role,
-    joinedAt: row.joined_at,
-  };
-}
-
-function mapSubscription(row: any): Subscription {
-  return {
-    id: row.id,
-    orgId: row.org_id,
-    plan: row.plan,
-    status: row.status,
-    maxBranches: row.max_branches,
-    maxEmployees: row.max_employees,
-    maxDrugs: row.max_drugs,
-    trialEndsAt: row.trial_ends_at,
-    currentPeriodStart: row.current_period_start,
-    currentPeriodEnd: row.current_period_end,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
-
 export const orgService = {
   async create(
     name: string,
@@ -67,118 +26,58 @@ export const orgService = {
   ): Promise<{ org: Organization; membership: OrgMember; subscription: Subscription }> {
     const slug = generateSlug(name) + '-' + Date.now().toString(36);
 
-    const { data, error } = await supabase.rpc('setup_initial_organization', {
-      p_name: name,
-      p_slug: slug,
-      p_owner_id: ownerId,
-      p_plan: plan
-    });
-
-    if (error) {
+    try {
+      const data = await orgRepository.setupInitialOrg(name, slug, ownerId, plan);
+      return {
+        org: orgRepository.mapOrg(data.org),
+        membership: orgRepository.mapMember(data.membership),
+        subscription: orgRepository.mapSubscription(data.subscription),
+      };
+    } catch (error: any) {
       console.error('Failed to setup organization via RPC:', error);
       throw new Error(error.message);
     }
-
-    return {
-      org: mapOrg(data.org),
-      membership: mapMember(data.membership),
-      subscription: mapSubscription(data.subscription),
-    };
   },
 
   async getUserOrgs(userId: string): Promise<Organization[]> {
     if (!userId || !userId.includes('-')) return [];
-
-    const { data: memberships, error: memError } = await supabase
-      .from('org_members')
-      .select('org_id')
-      .eq('user_id', userId);
-
-    if (memError || !memberships || memberships.length === 0) return [];
-
-    const orgIds = memberships.map((m: any) => m.org_id);
-    const { data: orgs, error: orgError } = await supabase
-      .from('organizations')
-      .select('*')
-      .in('id', orgIds)
-      .eq('status', 'active');
-
-    if (orgError) return [];
-    return (orgs || []).map(mapOrg);
+    return orgRepository.getUserOrgs(userId);
   },
 
   async getById(orgId: string): Promise<Organization | null> {
-    const { data, error } = await supabase.from('organizations').select('*').eq('id', orgId).maybeSingle();
-    if (error || !data) return null;
-    return mapOrg(data);
+    return orgRepository.getById(orgId);
   },
 
   async update(orgId: string, updates: Partial<Pick<Organization, 'name' | 'logoUrl'>>): Promise<Organization> {
-    const { data, error } = await supabase
-      .from('organizations')
-      .update({
-        ...(updates.name && { name: updates.name }),
-        ...(updates.logoUrl !== undefined && { logo_url: updates.logoUrl }),
-      })
-      .eq('id', orgId)
-      .select()
-      .single();
+    const dbUpdates: any = {};
+    if (updates.name) dbUpdates.name = updates.name;
+    if (updates.logoUrl !== undefined) dbUpdates.logo_url = updates.logoUrl;
 
-    if (error || !data) throw new Error(error?.message || 'Failed to update organization');
-    return mapOrg(data);
+    return orgRepository.update(orgId, dbUpdates);
   },
 
   async getMembers(orgId: string): Promise<OrgMember[]> {
-    const { data, error } = await supabase.from('org_members').select('*').eq('org_id', orgId);
-    if (error) return [];
-    return (data || []).map(mapMember);
+    return orgRepository.getMembers(orgId);
   },
 
   async getUserRole(orgId: string, userId: string): Promise<OrgRole | null> {
-    const { data, error } = await supabase
-      .from('org_members')
-      .select('role')
-      .eq('org_id', orgId)
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (error) return null;
-    return data?.role || null;
+    return orgRepository.getMemberRole(orgId, userId);
   },
 
   async addMember(orgId: string, userId: string, role: OrgRole = 'member'): Promise<OrgMember> {
-    const { data, error } = await supabase
-      .from('org_members')
-      .insert({ org_id: orgId, user_id: userId, role })
-      .select()
-      .single();
-
-    if (error || !data) throw new Error(error?.message || 'Failed to add member');
-    return mapMember(data);
+    return orgRepository.insertMember(orgId, userId, role);
   },
 
   async updateMemberRole(orgId: string, userId: string, role: OrgRole): Promise<void> {
-    const { error } = await supabase
-      .from('org_members')
-      .update({ role })
-      .eq('org_id', orgId)
-      .eq('user_id', userId);
-
-    if (error) throw new Error(error.message);
+    return orgRepository.updateMemberRole(orgId, userId, role);
   },
 
   async removeMember(orgId: string, userId: string): Promise<void> {
-    await supabase.from('org_members').delete().eq('org_id', orgId).eq('user_id', userId);
+    await orgRepository.deleteMember(orgId, userId);
   },
 
   async getSubscription(orgId: string): Promise<Subscription | null> {
-    const { data, error } = await supabase
-      .from('subscriptions')
-      .select('*')
-      .eq('org_id', orgId)
-      .maybeSingle();
-    if (error || !data) return null;
-    return mapSubscription(data);
+    return orgRepository.getSubscription(orgId);
   },
 
   getActiveOrgId(): string | null {
@@ -194,6 +93,8 @@ export const orgService = {
   },
 
   async claimOrganization(orgId: string, userId: string): Promise<void> {
+    // Note: Manual repository calls here or specialized repo methods
+    const { supabase } = await import('../../lib/supabase');
     // Update Org owner
     await supabase.from('organizations').update({ owner_id: userId }).eq('id', orgId);
     

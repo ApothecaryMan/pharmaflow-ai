@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { orgService } from '../../services/org/orgService';
 import { permissionsService } from '../../services/auth/permissionsService';
-import { branchService } from '../../services/branchService';
+import { branchService } from '../../services/org/branchService';
 import { employeeService } from '../../services/hr/employeeService';
-import { auditService, type AuditEntry } from '../../services/auditService';
+import { auditService, type AuditEntry } from '../../services/audit/auditService';
 import type { Organization, OrgMember, Subscription, Employee, Branch } from '../../types';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { SmartInput } from '../common/SmartInputs';

@@ -8,6 +8,8 @@
 export * from './api';
 // Re-export service instances for convenience
 export { apiClient } from './api/client';
+export { auditService } from './audit/auditService';
+export { branchService } from './org/branchService';
 export * from './cash';
 export { cashService } from './cash/cashService';
 export * from './customers';

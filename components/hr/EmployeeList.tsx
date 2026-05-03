@@ -7,7 +7,7 @@ import { type UserRole } from '../../config/permissions';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { useData } from '../../services';
 import { authService } from '../../services/auth/authService';
-import { branchService } from '../../services/branchService';
+import { branchService } from '../../services/org/branchService';
 import type { Branch, Employee, UserSession } from '../../types';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';

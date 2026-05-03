@@ -7,7 +7,7 @@ import { returnService } from '../../services/returns';
 import { customerService } from '../../services/customers';
 import { employeeService } from '../../services/hr';
 import { batchService } from '../../services/inventory';
-import { branchService } from '../../services/branchService';
+import { branchService } from '../../services/org/branchService';
 import { authService } from '../../services/auth/authService';
 import { settingsService } from '../../services/settings/settingsService';
 import { transactionService } from '../../services/transactions/transactionService';

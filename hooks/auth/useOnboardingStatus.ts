@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { orgService } from '../../services/org/orgService';
-import { branchService } from '../../services/branchService';
+import { branchService } from '../../services/org/branchService';
 import { authService } from '../../services/auth/authService';
 
 export type OnboardingStep = 1 | 2 | 3 | 0;

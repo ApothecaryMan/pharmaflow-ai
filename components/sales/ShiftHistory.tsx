@@ -14,7 +14,7 @@ import { PageHeader } from '../common/PageHeader';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
 import { getPrinterSettings, printReceiptSilently } from '../../utils/qzPrinter';
-import { auditService } from '../../services/auditService';
+import { auditService } from '../../services/audit/auditService';
 
 interface ShiftHistoryProps {
   color: string;

@@ -51,7 +51,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   private logError = async (error: Error, errorInfo: React.ErrorInfo) => {
     try {
-      const { auditService } = await import('../../services/auditService');
+      const { auditService } = await import('../../services/audit/auditService');
       auditService.log('UI_CRASH', {
         details: {
           message: error.message,
