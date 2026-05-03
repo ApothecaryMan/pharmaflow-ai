@@ -20,7 +20,7 @@ import { restrictToHorizontalAxis } from '@dnd-kit/modifiers';
 import type React from 'react';
 import { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useLongPress } from '../../hooks/useLongPress';
+import { useLongPress } from '../../hooks/common/useLongPress';
 import type { TRANSLATIONS } from '../../i18n/translations';
 import type { SaleTab } from '../../types';
 import { useContextMenu } from '../common/ContextMenu';

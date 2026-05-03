@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 import type { CashTransaction, Shift } from '../types';
-import { useData } from '../services/DataContext';
+import { useData } from '../context/DataContext';
 import { cashService } from '../services/cash/cashService';
 import { supabase } from '../lib/supabase';
 

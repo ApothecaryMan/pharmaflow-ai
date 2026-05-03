@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
-import { ROUTES } from '../config/routes';
-import { authService } from '../services/auth/authService';
-import { PHARMACY_MENU, MODULE_VIEW_MAPPING } from '../config/menuData';
-import { permissionsService } from '../services/auth/permissionsService';
-import type { ViewState } from '../types';
+import { ROUTES } from '../../config/routes';
+import { authService } from '../../services/auth/authService';
+import { PHARMACY_MENU, MODULE_VIEW_MAPPING } from '../../config/menuData';
+import { permissionsService } from '../../services/auth/permissionsService';
+import type { ViewState } from '../../types';
 
 interface SessionHandlersProps {
   employees: any[];

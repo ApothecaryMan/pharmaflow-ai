@@ -4,7 +4,7 @@ import { COLOR_HEX_MAP } from '../../config/themeColors';
 import { useShift } from '../../hooks/useShift';
 import { analyzeEmployeePerformance } from '../../services/geminiService';
 import type { Employee, Sale, Shift, ThemeColor } from '../../types';
-import { useData } from '../../services/DataContext';
+import { useData } from '../../context/DataContext';
 import {
   type DateRangeFilter,
   type EmployeeSalesStats,
@@ -872,10 +872,8 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
             ]}
             value="employee-profile"
             onChange={(val) => onViewChange?.(val as any)}
-            color={color.name}
             size="md"
             iconSize="--icon-lg"
-            variant="onPage"
             shape="pill"
             className="w-full sm:w-[480px]"
             useGraphicFont={true}

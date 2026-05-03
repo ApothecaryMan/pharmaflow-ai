@@ -7,7 +7,7 @@ import { BranchMasterMonitor } from './BranchMasterMonitor';
 import { QuotaMonitor } from './QuotaMonitor';
 import { MemberPermissionMatrix } from './MemberPermissionMatrix';
 import { employeeService } from '../../services/hr/employeeService';
-import { useData } from '../../services/DataContext';
+import { useData } from '../../context/DataContext';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { HelpButton, HelpModal } from '../common/HelpModal';
 import { ORG_MANAGEMENT_HELP } from '../../i18n/helpInstructions';

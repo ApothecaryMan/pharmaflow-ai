@@ -13,7 +13,7 @@ import { SmartInput } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
 import { type FilterConfig } from '../common/FilterPill';
 import { useStatusBar } from '../layout/StatusBar';
-import { useData } from '../../services/DataContext';
+import { useData } from '../../context/DataContext';
 import { useAlert, useSettings } from '../../context';
 import * as stockOps from '../../utils/stockOperations';
 import { idGenerator } from '../../utils/idGenerator';
@@ -404,7 +404,6 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
             ]}
             value={activeFilters['expiryDate']?.[0] || 'all'}
             onChange={(val) => setActiveFilters(prev => ({ ...prev, expiryDate: val === 'all' ? [] : [val] }))}
-            color={color}
           />
         </div>
 

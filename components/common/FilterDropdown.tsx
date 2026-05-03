@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 // FilterDropdown Component
-import { useFilterDropdown } from '../../hooks/useFilterDropdown';
+import { useFilterDropdown } from '../../hooks/layout/useFilterDropdown';
 
 export interface FilterDropdownProps<T> {
   items: T[];

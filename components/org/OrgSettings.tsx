@@ -7,7 +7,7 @@ import { auditService, type AuditEntry } from '../../services/auditService';
 import type { Organization, OrgMember, Subscription, Employee, Branch } from '../../types';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { SmartInput } from '../common/SmartInputs';
-import { useData } from '../../services/DataContext';
+import { useData } from '../../context/DataContext';
 import { InviteModal } from './InviteModal';
 
 interface OrgSettingsProps {

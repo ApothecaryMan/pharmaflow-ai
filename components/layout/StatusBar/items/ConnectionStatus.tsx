@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useNetworkStatus } from '@/hooks/useNetworkStatus.tsx';
+import { useNetworkStatus } from '@/hooks/common/useNetworkStatus';
 import { StatusBarItem } from '../StatusBarItem';
 
 interface ConnectionStatusProps {

@@ -12,9 +12,9 @@ export * from './cash';
 export { cashService } from './cash/cashService';
 export * from './customers';
 export { customerService } from './customers/customerService';
-export type { DataActions, DataContextType, DataState } from './DataContext';
+export type { DataActions, DataContextType, DataState } from '../context/DataContext';
 // Data Context (Unified State Management)
-export { DataProvider, useData } from './DataContext';
+export { DataProvider, useData } from '../context/DataContext';
 export * from './hr';
 export { employeeService } from './hr/employeeService';
 export * from './inventory';

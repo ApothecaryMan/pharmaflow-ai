@@ -7,7 +7,7 @@ import { COUNTRY_CODES } from '../../data/countryCodes';
 import { AREAS, CITIES, GOVERNORATES, getLocationName } from '../../data/locations';
 import type { Customer } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
-import { useData } from '../../services/DataContext';
+import { useData } from '../../context/DataContext';
 import { useContextMenu } from '../common/ContextMenu';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { LocationSelector } from '../common/LocationSelector';
@@ -766,9 +766,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 onViewChange?.(val);
               }
             }}
-            variant="onPage"
             shape="pill"
-            color={color}
             size="md"
             iconSize="--icon-lg"
             useGraphicFont={true}

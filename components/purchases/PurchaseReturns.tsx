@@ -7,7 +7,7 @@ import { useSettings } from '../../context';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { idGenerator } from '../../utils/idGenerator';
-import { useData } from '../../services/DataContext';
+import { useData } from '../../context/DataContext';
 import { useContextMenu } from '../common/ContextMenu';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';

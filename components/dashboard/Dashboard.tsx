@@ -29,7 +29,7 @@ import { useDashboardAnalytics } from './useDashboardAnalytics';
 import { useSettings } from '../../context';
 import { formatExpiryDate, parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { batchService } from '../../services/inventory/batchService';
-import { useData } from '../../services/DataContext';
+import { useData } from '../../context/DataContext';
 import { SegmentedControl } from '../common/SegmentedControl';
 
 interface DashboardProps {

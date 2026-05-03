@@ -9,7 +9,7 @@ import { TanStackTable } from '../../common/TanStackTable';
 const categoryColumnHelper = createColumnHelper<CategoryFinancialItem>();
 const productColumnHelper = createColumnHelper<ProductFinancialItem>();
 
-import { useFinancials } from '../../../hooks/useFinancials';
+import { useFinancials } from '../../../hooks/sales/useFinancials';
 import type { FinancialPeriod } from '../../../services/intelligence/intelligenceService';
 import { SegmentedControl } from '../../common/SegmentedControl';
 import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';

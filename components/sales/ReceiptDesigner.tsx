@@ -11,7 +11,7 @@ import { generateInvoiceHTML, type InvoiceTemplateOptions } from '../sales/Invoi
 import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
 import { useShift } from '../../hooks/useShift';
 import { idGenerator } from '../../utils/idGenerator';
-import { useData } from '../../services/DataContext';
+import { useData } from '../../context/DataContext';
 
 interface ReceiptDesignerProps {
   color: string;
@@ -239,7 +239,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
         name: 'Panadol Extra 500mg',
         genericName: ['Paracetamol'],
         quantity: 2,
-        price: 15.5,
+        publicPrice: 15.5,
         costPrice: 10,
         category: 'Medicine',
         isUnit: false,
@@ -254,7 +254,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
         name: 'Vitamin C 1000mg',
         genericName: ['Ascorbic Acid'],
         quantity: 3,
-        price: 45.0,
+        publicPrice: 45.0,
         costPrice: 30,
         category: 'Vitamins',
         isUnit: true,
@@ -269,7 +269,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
         name: 'Face Mask (Premium)',
         genericName: ['Mask'],
         quantity: 5,
-        price: 5.0,
+        publicPrice: 5.0,
         costPrice: 2,
         category: 'Supplies',
         isUnit: false,
@@ -734,7 +734,6 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               <SegmentedControl
                 value={options.receiptFont || 'courier'}
                 onChange={(val) => setOptions({ ...options, receiptFont: val })}
-                color={color}
                 size='sm'
                 options={[
                   { label: 'Fake Receipt', value: 'courier' },
@@ -847,7 +846,6 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                     autoPrintOnDelivery: val === 'delivery',
                   });
                 }}
-                color={color}
                 size='sm'
                 options={[
                   {

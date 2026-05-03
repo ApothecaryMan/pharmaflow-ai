@@ -12,7 +12,7 @@ import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { Switch } from '../common/Switch';
 
-import { useData } from '../../services/DataContext';
+import { useData } from '../../context/DataContext';
 import { branchService } from '../../services/branchService';
 import { orgService } from '../../services/org/orgService';
 import { permissionsService } from '../../services/auth/permissionsService';

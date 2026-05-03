@@ -19,7 +19,7 @@ import { SmallCard } from '../common/SmallCard';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { useRealTimeSalesAnalytics } from './useRealTimeSalesAnalytics';
 import { useSettings } from '../../context';
-import { useData } from '../../services/DataContext';
+import { useData } from '../../context/DataContext';
 import { useShift } from '../../hooks/useShift';
 import { formatCurrency, formatCurrencyParts, getCurrencySymbol } from '../../utils/currency';
 import { money } from '../../utils/money';

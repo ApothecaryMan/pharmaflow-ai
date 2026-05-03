@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useFilterDropdown } from '../../../../hooks/useFilterDropdown';
+import { useFilterDropdown } from '../../../../hooks/layout/useFilterDropdown';
 import type { Customer } from '../../../../types';
 
 interface UsePOSCustomerProps {

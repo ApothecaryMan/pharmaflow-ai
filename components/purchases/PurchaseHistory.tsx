@@ -14,7 +14,7 @@ import { Modal } from '../common/Modal';
 import { useSmartDirection } from '../common/SmartInputs';
 import { Switch } from '../common/Switch';
 import { useSettings } from '../../context';
-import { useData } from '../../services/DataContext';
+import { useData } from '../../context/DataContext';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { useContextMenu } from '../common/ContextMenu';
 import { permissionsService } from '../../services/auth/permissionsService';

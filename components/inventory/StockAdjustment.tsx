@@ -16,7 +16,7 @@ import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { formatExpiryDate } from '../../utils/expiryUtils';
 import { usePosSounds } from '../common/hooks/usePosSounds';
-import { useData } from '../../services/DataContext';
+import { useData } from '../../context/DataContext';
 import { Modal } from '../common/Modal';
 import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
@@ -983,9 +983,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
               ]}
               value={activeView}
               onChange={(val) => setActiveView(val as 'adjust' | 'history')}
-              variant='onPage'
               shape='pill'
-              color='blue'
               size='sm'
             />
           </div>
@@ -1176,7 +1174,6 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                   ]}
                   size='xs'
                   iconSize='--icon-md'
-                  color={color}
                   fullWidth={false}
                 />
               </div>

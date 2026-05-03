@@ -10,7 +10,7 @@ import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { MobileDrawer } from './MobileDrawer';
 import { MobileMedicineSearch } from '../mobile/MobileMedicineSearch';
 import { MobileSearchCartDrawer } from '../mobile/MobileSearchCartDrawer';
-import { useData } from '../../services/DataContext';
+import { useData } from '../../context/DataContext';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { useContextMenu } from '../common/ContextMenu';
 import { useSmartDirection } from '../common/SmartInputs';

@@ -3,7 +3,7 @@ import { CSS } from '@dnd-kit/utilities';
 import React from 'react';
 import { type UserRole } from '../../../config/permissions';
 import { permissionsService } from '../../../services/auth/permissionsService';
-import { useLongPress } from '../../../hooks/useLongPress';
+import { useLongPress } from '../../../hooks/common/useLongPress';
 import type { TRANSLATIONS } from '../../../i18n/translations';
 import type { CartItem, Drug } from '../../../types';
 import { getDisplayName } from '../../../utils/drugDisplayName';

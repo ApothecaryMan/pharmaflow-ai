@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { AVAILABLE_FONTS_AR, AVAILABLE_FONTS_EN } from '../../../../config/fonts';
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import { useSettings } from '../../../../context';
-import { useSmartPosition } from '../../../../hooks/useSmartPosition';
+import { useSmartPosition } from '../../../../hooks/common/useSmartPosition';
 import { TRANSLATIONS } from '../../../../i18n/translations';
 import { type Language } from '../../../../types';
 import { SegmentedControl } from '../../../common/SegmentedControl';

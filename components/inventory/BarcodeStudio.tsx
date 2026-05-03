@@ -2,7 +2,7 @@ import * as QRCode from 'qrcode';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
-import { useDebounce } from '../../hooks/useDebounce';
+import { useDebounce } from '../../hooks/common/useDebounce';
 import type { TRANSLATIONS } from '../../i18n/translations';
 import type { Drug } from '../../types';
 import { encodeCode128 } from '../../utils/barcodeEncoders';

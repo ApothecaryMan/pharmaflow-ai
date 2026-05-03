@@ -6,9 +6,9 @@ import { useStatusBar } from '../../components/layout/StatusBar';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { authService } from '../../services/auth/authService';
 import { useAlert, useSettings } from '../../context';
-import { useLongPress } from '../../hooks/useLongPress';
+import { useLongPress } from '../../hooks/common/useLongPress';
 import { settingsService } from '../../services';
-import { useData } from '../../services/DataContext';
+import { useData } from '../../context/DataContext';
 import type { Drug, Purchase, PurchaseItem, PurchaseReturn, PurchaseTab, Shift, Supplier } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import {
@@ -40,7 +40,7 @@ import { FilterPill, type FilterConfig } from '../common/FilterPill';
 import { TanStackTable } from '../common/TanStackTable';
 import { PageHeader } from '../common/PageHeader';
 import { TabBar } from '../../components/layout/TabBar';
-import { usePurchaseTabs } from '../../hooks/usePurchaseTabs';
+import { usePurchaseTabs } from '../../hooks/purchases/usePurchaseTabs';
 import {
   DndContext,
   closestCenter,

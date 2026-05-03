@@ -10,7 +10,7 @@ import { PriceDisplay } from '../../../common/TanStackTable';
 import { Tooltip } from '../../../common/Tooltip';
 import { SortableCartItem } from '../SortableCartItem';
 import { resolvePrice } from '../../../../utils/stockOperations';
-import { useNetworkStatus } from '../../../../hooks/useNetworkStatus';
+import { useNetworkStatus } from '../../../../hooks/common/useNetworkStatus';
 import { money } from '../../../../utils/money';
 import { getGroupingKey } from '../../../../services/inventory/batchService';
 

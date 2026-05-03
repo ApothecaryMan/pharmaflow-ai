@@ -5,7 +5,7 @@ import { employeeService } from '../../services/hr/employeeService';
 import type { Branch, Employee } from '../../types';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { Modal } from '../common/Modal';
-import { useData } from '../../services/DataContext';
+import { useData } from '../../context/DataContext';
 import { useSettings } from '../../context';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { MaterialTabs } from '../common/MaterialTabs';
@@ -452,7 +452,6 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
           </label>
           <SegmentedControl
             size="xs"
-            variant="onPage"
             value={employeeView}
             onChange={(val) => setEmployeeView(val as 'all' | 'selected')}
             options={[
@@ -550,10 +549,8 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
             options={availableTabs}
             value="branch-management"
             onChange={(val) => onViewChange?.(val as any)}
-            color={color}
             size="md"
             iconSize="--icon-lg"
-            variant="onPage"
             shape="pill"
             className="w-full sm:w-[480px]"
             useGraphicFont={true}

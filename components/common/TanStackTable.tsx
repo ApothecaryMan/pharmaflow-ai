@@ -53,7 +53,7 @@ declare module '@tanstack/react-table' {
 }
 
 import { useSettings } from '../../context/SettingsContext';
-import { useLongPress } from '../../hooks/useLongPress';
+import { useLongPress } from '../../hooks/common/useLongPress';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { formatCurrencyParts, formatCompactCurrencyParts } from '../../utils/currency';
 import { normalizeDigits } from '../../utils/localization';

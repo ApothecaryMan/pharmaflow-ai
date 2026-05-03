@@ -17,7 +17,7 @@
  * 2. Use `useContextMenu()` or `<ContextMenuTrigger>` to invoke the menu.
  */
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { useLongPress } from '../../hooks/useLongPress';
+import { useLongPress } from '../../hooks/common/useLongPress';
 
 // --- Types ---
 /**

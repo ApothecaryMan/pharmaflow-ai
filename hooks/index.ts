@@ -17,8 +17,11 @@ export { useLongPress } from './common/useLongPress';
 export { useFinancials } from './sales/useFinancials';
 export { usePOSTabs } from './sales/usePOSTabs';
 export { useProcurement } from './purchases/useProcurement';
+export { useInventorySearch } from './inventory/useInventorySearch';
 
 // Root Hooks
 export { useAudit } from './useAudit';
 export { type EntityHandlers, type SaleData, useEntityHandlers } from './useEntityHandlers';
 export { useRisk } from './useRisk';
+export { useShift } from './useShift';
+export { useDynamicTickerData } from './useDynamicTickerData';

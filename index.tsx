@@ -12,7 +12,7 @@ if (!rootElement) {
 import { StatusBarProvider } from './components/layout/StatusBar';
 import { AlertProvider, SettingsProvider, CatalogProvider } from './context';
 import { ShiftProvider } from './hooks/useShift';
-import { DataProvider } from './services/DataContext';
+import { DataProvider } from './context/DataContext';
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(

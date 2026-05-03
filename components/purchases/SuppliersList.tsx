@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import type { Supplier } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { idGenerator } from '../../utils/idGenerator';
-import { useData } from '../../services/DataContext';
+import { useData } from '../../context/DataContext';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { useContextMenu } from '../common/ContextMenu';
 import { Modal } from '../common/Modal';

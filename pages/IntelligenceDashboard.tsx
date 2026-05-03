@@ -11,8 +11,8 @@ import { ProcurementPage } from '../components/intelligence/procurement/Procurem
 import { RiskPage } from '../components/intelligence/risk/RiskPage';
 
 // Import hooks
-import { useProcurement } from '../hooks/useProcurement';
-import { useFinancials } from '../hooks/useFinancials';
+import { useProcurement } from "../hooks/purchases/useProcurement";
+import { useFinancials } from "../hooks/sales/useFinancials";
 import { useRisk } from '../hooks/useRisk';
 import { useAudit } from '../hooks/useAudit';
 import { type FinancialPeriod } from '../services/intelligence/intelligenceService';

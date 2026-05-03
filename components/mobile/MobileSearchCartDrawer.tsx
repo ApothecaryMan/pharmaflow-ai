@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { POSCartSidebar, type POSCartSidebarProps } from '../sales/pos/ui/POSCartSidebar';
-import { useData } from '../../services/DataContext';
+import { useData } from '../../context/DataContext';
 import { useSettings } from '../../context/SettingsContext';
 import { pricingService } from '../../services/sales/pricingService';
 

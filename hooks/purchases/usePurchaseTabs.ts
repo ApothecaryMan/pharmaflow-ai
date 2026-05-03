@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { StorageKeys } from '../config/storageKeys';
-import { PurchaseItem, PurchaseTab } from '../types';
-import { storage } from '../utils/storage';
-import { idGenerator } from '../utils/idGenerator';
+import { StorageKeys } from '../../config/storageKeys';
+import { PurchaseItem, PurchaseTab } from '../../types';
+import { storage } from '../../utils/storage';
+import { idGenerator } from '../../utils/idGenerator';
 
 const MAX_TABS = 10;
 
