@@ -21,8 +21,12 @@ export { usePOSTabs } from './sales/usePOSTabs';
 export { useProcurement } from './purchases/useProcurement';
 export { useInventorySearch } from './inventory/useInventorySearch';
 
+// Infrastructure Hooks
+export { useAudit } from './infrastructure/useAudit';
+export { useGlobalEventHandlers } from './infrastructure/useGlobalEventHandlers';
+export { usePrinter } from './infrastructure/usePrinter';
+
 // Root Hooks
-export { useAudit } from './useAudit';
 export { type EntityHandlers, type SaleData, useEntityHandlers } from './useEntityHandlers';
 export { useRisk } from './useRisk';
 export { useShift } from './useShift';

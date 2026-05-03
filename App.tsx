@@ -23,7 +23,7 @@ import { type AuthState, useAuth } from './hooks/auth/useAuth';
 import { useAuthenticatedData } from './hooks/auth/useAuthenticatedData';
 import { useOnboardingStatus } from './hooks/auth/useOnboardingStatus';
 import { useEntityHandlers } from './hooks/useEntityHandlers';
-import { useGlobalEventHandlers } from './hooks/useGlobalEventHandlers';
+import { useGlobalEventHandlers } from './hooks/infrastructure/useGlobalEventHandlers';
 import { useNavigation } from './hooks/layout/useNavigation';
 import { useSessionHandlers } from './hooks/auth/useSessionHandlers';
 import { ShiftProvider, useShift } from './hooks/useShift';

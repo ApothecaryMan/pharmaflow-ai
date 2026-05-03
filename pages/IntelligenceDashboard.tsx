@@ -14,7 +14,7 @@ import { RiskPage } from '../components/intelligence/risk/RiskPage';
 import { useProcurement } from "../hooks/purchases/useProcurement";
 import { useFinancials } from "../hooks/sales/useFinancials";
 import { useRisk } from '../hooks/useRisk';
-import { useAudit } from '../hooks/useAudit';
+import { useAudit } from '../hooks/infrastructure/useAudit';
 import { type FinancialPeriod } from '../services/intelligence/intelligenceService';
 import { ProcurementKPIs } from '../components/intelligence/procurement/ProcurementKPIs';
 import { RiskKPIs } from '../components/intelligence/risk/RiskKPIs';

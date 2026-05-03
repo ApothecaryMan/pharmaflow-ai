@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { batchService } from '../services/inventory/batchService';
-import type { Language } from '../types';
+import { batchService } from '../../services/inventory/batchService';
+import type { Language } from '../../types';
 
 interface GlobalEventHandlersProps {
   language: Language;

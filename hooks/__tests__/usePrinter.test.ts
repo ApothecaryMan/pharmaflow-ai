@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { usePrinter } from '../usePrinter';
+import { usePrinter } from '../infrastructure/usePrinter';
 import * as qzPrinterUtils from '../../utils/qzPrinter';
 
 // Clean mock setup using vi.mock with factory that returns spies

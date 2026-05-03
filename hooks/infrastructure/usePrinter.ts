@@ -21,7 +21,7 @@ import {
   printReceiptSilently,
   type SilentMode,
   savePrinterSettings,
-} from '../utils/qzPrinter';
+} from '../../utils/qzPrinter';
 
 export interface UsePrinterResult {
   // Connection status

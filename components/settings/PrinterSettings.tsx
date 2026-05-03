@@ -8,7 +8,7 @@
 
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { usePrinter } from '../../hooks/usePrinter';
+import { usePrinter } from '../../hooks/infrastructure/usePrinter';
 import type { SilentMode } from '../../utils/qzPrinter';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { Modal } from '../common/Modal';
@@ -316,7 +316,6 @@ export const PrinterSettings: React.FC<PrinterSettingsProps> = ({
             <SegmentedControl<SilentMode>
               value={settings.silentMode}
               onChange={(mode) => updateSettings({ silentMode: mode })}
-              color={color}
               size='sm'
               options={[
                 { label: pt.silentModes?.on || 'ON', value: 'on' },
