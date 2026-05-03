@@ -1,6 +1,6 @@
 /**
  * Auth Service - Authentication and session management
- * Online-Only implementation using Supabase
+ * Refactored to use Repositories for data access.
  */
 
 import { 
@@ -9,13 +9,13 @@ import {
 } from '../../types';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { storage } from '../../utils/storage';
-import { employeeService } from '../hr/employeeService';
+import { employeeRepository } from '../hr/repositories/employeeRepository';
+import { orgRepository } from '../org/repositories/orgRepository';
 import { orgService } from '../org/orgService';
 
 const SESSION_KEY = 'branch_pilot_session';
 const AUDIT_KEY = 'pharmaflow_login_audit';
 
-// In-memory cache to prevent redundant DB hits during a single session
 let cachedSession: UserSession | null = null;
 
 export const authService = {
@@ -25,7 +25,6 @@ export const authService = {
   async getCurrentUser(forceRefresh = false): Promise<UserSession | null> {
     if (!isSupabaseConfigured) return this.getCurrentUserSync();
 
-    // Return cache if available and not forcing refresh
     if (!forceRefresh && cachedSession) {
       return cachedSession;
     }
@@ -39,7 +38,6 @@ export const authService = {
         return null;
       }
 
-      // Sync with database to get the latest role/branch info
       return await this.syncSessionWithDatabase(sbUser.id);
     } catch (err) {
       console.warn('Failed to verify Supabase session', err);
@@ -55,21 +53,16 @@ export const authService = {
       const stored = localStorage.getItem(SESSION_KEY);
       const existingSession: UserSession | null = stored ? JSON.parse(stored) : null;
 
-      const [employeeResponse, memberResponse] = await Promise.all([
-        supabase.from('employees').select('*').eq('auth_user_id', userId).maybeSingle(),
-        supabase.from('org_members').select('role, org_id').eq('user_id', userId).maybeSingle()
+      const [employeeData, memberData] = await Promise.all([
+        employeeRepository.getByAuthUserId(userId),
+        orgRepository.getMemberByUserId(userId)
       ]);
 
-      const employeeData = employeeResponse.data;
-      const memberData = memberResponse.data;
       const orgRole = memberData?.role || 'member';
-      const orgId = memberData?.org_id;
+      const orgId = memberData?.orgId;
 
       let session: UserSession;
 
-      // Logic: If we already have an active employeeId in the local session, 
-      // and it belongs to the same org, we should keep it instead of defaulting 
-      // to the one linked to auth_user_id (which is usually the owner's primary profile).
       const hasActiveManualEmployee = existingSession?.employeeId && 
                                     existingSession.userId === userId && 
                                     existingSession.orgId === orgId;
@@ -77,7 +70,7 @@ export const authService = {
       if (hasActiveManualEmployee) {
         session = {
           ...existingSession!,
-          orgRole: orgRole as any, // Sync role/permissionsService just in case
+          orgRole: orgRole as any,
           orgId: orgId || existingSession!.orgId,
         };
       } else if (employeeData) {
@@ -85,14 +78,13 @@ export const authService = {
           userId: userId,
           username: employeeData.username || employeeData.name,
           employeeId: employeeData.id,
-          branchId: employeeData.branch_id || '',
-          orgId: orgId || employeeData.org_id,
+          branchId: employeeData.branchId || '',
+          orgId: orgId || employeeData.orgId,
           role: employeeData.role,
           orgRole: orgRole as any,
           department: employeeData.department,
         };
       } else {
-        // Fallback for users without employee record
         const current = existingSession || this.getCurrentUserSync();
         if (!current) return null;
         session = {
@@ -103,7 +95,6 @@ export const authService = {
         };
       }
 
-      // Update local storage with the truth from DB + local state preservation
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
       cachedSession = session;
       return session;
@@ -113,9 +104,6 @@ export const authService = {
     }
   },
 
-  /**
-   * Synchronous current user retrieval
-   */
   getCurrentUserSync(): UserSession | null {
     if (cachedSession) return cachedSession;
     try {
@@ -130,9 +118,6 @@ export const authService = {
     }
   },
 
-  /**
-   * Update current session
-   */
   updateSession(updates: Partial<UserSession>): UserSession | null {
     const current = this.getCurrentUserSync();
     if (current) {
@@ -144,12 +129,9 @@ export const authService = {
     return null;
   },
 
-  /**
-   * Sign up a new user
-   */
   async signUp(name: string, username: string, email: string, password: string): Promise<{ success: boolean; message?: string }> {
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -163,9 +145,6 @@ export const authService = {
     }
   },
 
-  /**
-   * Request password reset
-   */
   async resetPassword(email: string): Promise<{ success: boolean; message?: string }> {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -179,18 +158,16 @@ export const authService = {
   },
 
   async login(username: string, password: string): Promise<UserSession | null> {
-    // 1. Resolve email if username provided
     let loginEmail = username;
     if (!username.includes('@')) {
       try {
-        const { data: resolvedEmail } = await supabase.rpc('get_email_by_username', { p_username: username });
+        const resolvedEmail = await employeeRepository.getEmailByUsername(username);
         loginEmail = resolvedEmail || `${username}@zinc.co`;
       } catch (err) {
         loginEmail = `${username}@zinc.co`;
       }
     }
 
-    // 2. Sign in with Supabase
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ 
       email: loginEmail, 
       password 
@@ -199,29 +176,18 @@ export const authService = {
     if (authError) throw authError;
     if (!authData.user) throw new Error('No user data returned');
 
-    // 3. Fetch Metadata
-    const [employeeResponse, memberResponse] = await Promise.all([
-      supabase.from('employees').select('*').eq('auth_user_id', authData.user.id).maybeSingle(),
-      supabase.from('org_members').select('role, org_id').eq('user_id', authData.user.id).maybeSingle()
-    ]);
-
-    let employeeData = employeeResponse.data;
-    const memberData = memberResponse.data;
+    let employeeData = await employeeRepository.getByAuthUserId(authData.user.id);
+    const memberData = await orgRepository.getMemberByUserId(authData.user.id);
+    
     const orgRole = memberData?.role || 'member';
-    const orgId = memberData?.org_id;
+    const orgId = memberData?.orgId;
 
-    // Link employee if missing auth_user_id but matching username
     if (!employeeData) {
-      const { data: fallbackData } = await supabase
-        .from('employees')
-        .select('*')
-        .eq('username', username)
-        .maybeSingle();
-        
+      const fallbackData = await employeeRepository.getByUsername(username);
       if (fallbackData) {
         employeeData = fallbackData;
-        if (!employeeData.auth_user_id) {
-          await supabase.from('employees').update({ auth_user_id: authData.user.id }).eq('id', employeeData.id);
+        if (!employeeData.userId) {
+          await employeeRepository.update(employeeData.id, { userId: authData.user.id });
         }
       }
     }
@@ -233,14 +199,13 @@ export const authService = {
         userId: authData.user.id,
         username: employeeData.username || employeeData.name,
         employeeId: employeeData.id,
-        branchId: employeeData.branch_id || '',
-        orgId: orgId || employeeData.org_id,
+        branchId: employeeData.branchId || '',
+        orgId: orgId || employeeData.orgId,
         role: employeeData.role,
         orgRole: orgRole as any,
         department: employeeData.department,
       };
     } else {
-      // Partial session for onboarding
       session = {
         userId: authData.user.id,
         username: authData.user.email?.split('@')[0] || username,
@@ -263,7 +228,6 @@ export const authService = {
       await supabase.auth.signOut();
       this.clearEmployeeSession();
       
-      // Clear all session and context keys using the smart storage utility
       const userId = storage.getUserId();
       
       storage.remove(SESSION_KEY);
@@ -271,7 +235,6 @@ export const authService = {
       storage.remove('pharma_active_branch_id');
       storage.remove('area_unlocked');
       
-      // Clear any other potentially leaked settings for this user
       if (userId) {
         const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
@@ -290,7 +253,6 @@ export const authService = {
 
   clearEmployeeSession(): void {
     storage.remove('pharma_currentEmployeeId');
-    // Also restore the original session if needed
     const stored = localStorage.getItem(SESSION_KEY);
     if (stored) {
       try {
@@ -311,7 +273,6 @@ export const authService = {
         console.error('Failed to restore session:', e);
       }
     }
-    // Dispatch storage event manually for same-tab updates if needed
     window.dispatchEvent(new StorageEvent('storage', {
       key: 'pharma_currentEmployeeId',
       newValue: null
@@ -343,7 +304,7 @@ export const authService = {
 
   async registerBiometric(employeeId: string, credentialId: string, publicKey: string): Promise<boolean> {
     try {
-      await employeeService.update(employeeId, {
+      await employeeRepository.update(employeeId, {
         biometricCredentialId: credentialId,
         biometricPublicKey: publicKey
       });
@@ -373,9 +334,6 @@ export const authService = {
     return { session, id: employee.id };
   },
   
-  /**
-   * Generate a random temporary password
-   */
   generateTempPassword(length: number = 8): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
     let password = '';
@@ -385,64 +343,39 @@ export const authService = {
     return password;
   },
 
-  /**
-   * Handle forgot password request
-   */
   async handleForgotPassword(email: string): Promise<{ success: boolean; message?: string }> {
     try {
-      // 1. Trigger Supabase standard reset link
       const result = await this.resetPassword(email);
       if (!result.success) throw new Error(result.message);
-      
-      // 2. Log or handle custom "Temporary Password" if needed
-      // Note: Real email sending with a specific temp password would require an Edge Function
-      
       return { success: true };
     } catch (err: any) {
       return { success: false, message: err.message || 'Failed to handle request' };
     }
   },
 
-  /**
-   * Update Employee Password (via Supabase Auth)
-   */
   async updatePassword(newPassword: string): Promise<{ success: boolean; message?: string }> {
     try {
-      // 1. Update Supabase Auth Record
       const { data, error } = await supabase.auth.updateUser({
         password: newPassword
       });
       if (error) throw error;
 
-      // 2. Sync hashed password to employee table
       if (data.user) {
         const userId = data.user.id;
         const email = data.user.email;
         
-        // Query the database directly instead of fetching all employees
-        let { data: empData, error: empError } = await supabase
-          .from('employees')
-          .select('id, username')
-          .eq('auth_user_id', userId)
-          .maybeSingle();
+        let empData = await employeeRepository.getByAuthUserId(userId);
 
-        // Fallback to email if not found by userId
         if (!empData && email) {
-          const { data: fallbackData } = await supabase
-            .from('employees')
-            .select('id, username')
-            .eq('email', email)
-            .maybeSingle();
-          empData = fallbackData;
+          // Add a temporary method to employeeRepository if needed, or just use existing
+          const all = await employeeRepository.getAll(''); // Empty branch to get all
+          empData = all.find(e => e.email === email) || null;
         }
         
         if (empData) {
           const { hashPassword } = await import('./hashUtils');
           const hashed = await hashPassword(newPassword);
-          await employeeService.update(empData.id, { password: hashed });
-          console.log(`[AuthService] Synced new password hash for employee ${empData.username}`);
-        } else {
-          console.warn(`[AuthService] Could not find employee record for userId ${userId} or email ${email} to sync password.`);
+          await employeeRepository.update(empData.id, { password: hashed });
         }
       }
 
@@ -452,9 +385,6 @@ export const authService = {
     }
   },
 
-  /**
-   * Resend confirmation email
-   */
   async resendConfirmation(email: string): Promise<{ success: boolean; message?: string }> {
     try {
       const { error } = await supabase.auth.resend({

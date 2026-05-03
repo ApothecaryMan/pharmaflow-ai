@@ -1,13 +1,12 @@
 /**
  * Supplier Service - Supplier CRUD operations
- * Online-Only implementation using Supabase
+ * Business logic layer that orchestrates data access via SupplierRepository.
  */
 
 import { BaseEntityService } from '../core/baseEntityService';
 import type { Supplier } from '../../types';
-import { idGenerator } from '../../utils/idGenerator';
 import { settingsService } from '../settings/settingsService';
-import { supabase } from '../../lib/supabase';
+import { supplierRepository } from './repositories/supplierRepository';
 import type { SupplierService } from './types';
 
 class SupplierServiceImpl extends BaseEntityService<Supplier> implements SupplierService {
@@ -15,47 +14,26 @@ class SupplierServiceImpl extends BaseEntityService<Supplier> implements Supplie
   protected searchColumns = ['name', 'contact_person', 'phone', 'email'];
 
   public mapFromDb(db: any): Supplier {
-    return {
-      id: db.id,
-      orgId: db.org_id,
-      branchId: db.branch_id,
-      name: db.name,
-      contactPerson: db.contact_person || '',
-      phone: db.phone || '',
-      email: db.email || '',
-      address: db.address || '',
-      governorate: db.governorate || '',
-      city: db.city || '',
-      area: db.area || '',
-      supplierCode: db.supplier_code || '',
-      status: db.status || 'active',
-      createdAt: db.created_at || new Date().toISOString(),
-      updatedAt: db.updated_at || new Date().toISOString(),
-    };
+    return supplierRepository.mapFromDb(db);
   }
 
   public mapToDb(s: Partial<Supplier>): any {
-    const db: any = {};
-    if (s.id !== undefined) db.id = s.id;
-    if (s.orgId !== undefined) db.org_id = s.orgId;
-    if (s.branchId !== undefined) db.branch_id = s.branchId;
-    if (s.name !== undefined) db.name = s.name;
-    if (s.contactPerson !== undefined) db.contact_person = s.contactPerson;
-    if (s.phone !== undefined) db.phone = s.phone;
-    if (s.email !== undefined) db.email = s.email;
-    if (s.address !== undefined) db.address = s.address;
-    if (s.governorate !== undefined) db.governorate = s.governorate;
-    if (s.city !== undefined) db.city = s.city;
-    if (s.area !== undefined) db.area = s.area;
-    if (s.supplierCode !== undefined) db.supplier_code = s.supplierCode;
-    if (s.status !== undefined) db.status = s.status;
-    return db;
+    return supplierRepository.mapToDb(s);
+  }
+
+  async getAll(branchId?: string): Promise<Supplier[]> {
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    return supplierRepository.getAll(effectiveBranchId, settings.orgId);
+  }
+
+  async getById(id: string): Promise<Supplier | null> {
+    return supplierRepository.getById(id);
   }
 
   async create(supplier: Omit<Supplier, 'id'>, branchId?: string): Promise<Supplier> {
     const settings = await settingsService.getAll();
     
-    // Validate branchId is a valid UUID, otherwise fallback to settings
     const isUuid = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
     const effectiveBranchId = (branchId && isUuid(branchId)) 
       ? branchId 
@@ -65,35 +43,28 @@ class SupplierServiceImpl extends BaseEntityService<Supplier> implements Supplie
       throw new Error('Valid Branch ID is required for supplier creation');
     }
 
-    // Call the ATOMIC RPC
-    const { data, error } = await supabase.rpc('create_supplier', {
-      p_supplier: supplier,
-      p_branch_id: effectiveBranchId,
-      p_org_id: settings.orgId
-    });
+    return supplierRepository.createWithRpc(supplier, effectiveBranchId, settings.orgId);
+  }
 
-    if (error) {
-      console.error('RPC Error:', error);
-      throw error;
-    }
+  async update(id: string, updates: Partial<Supplier>): Promise<Supplier> {
+    return supplierRepository.update(id, updates);
+  }
 
-    return this.mapFromDb(data);
+  async delete(id: string): Promise<boolean> {
+    return supplierRepository.delete(id);
   }
 
   async save(suppliers: Supplier[], branchId?: string): Promise<void> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     
-    const dbSuppliers = suppliers.map(s => this.mapToDb({
+    const processedSuppliers = suppliers.map(s => ({
       ...s,
       branchId: s.branchId || effectiveBranchId,
       orgId: s.orgId || settings.orgId
     }));
 
-    if (dbSuppliers.length > 0) {
-      const { error } = await supabase.from(this.tableName).upsert(dbSuppliers);
-      if (error) throw error;
-    }
+    await supplierRepository.upsert(processedSuppliers);
   }
 }
 

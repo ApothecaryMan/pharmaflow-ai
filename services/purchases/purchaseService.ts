@@ -1,6 +1,6 @@
 /**
  * Purchase Service - Purchase order operations
- * Online-Only implementation using Supabase
+ * Business logic layer that orchestrates data access via PurchaseRepository.
  */
 
 import { BaseDomainService } from '../core/baseDomainService';
@@ -12,138 +12,36 @@ import { batchService } from '../inventory/batchService';
 import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
 import * as stockOps from '../../utils/stockOperations';
 import { money } from '../../utils/money';
-import { supabase } from '../../lib/supabase';
+import { purchaseRepository } from './repositories/purchaseRepository';
 import type { PurchaseFilters, PurchaseService, PurchaseStats } from './types';
 
 class PurchaseServiceImpl extends BaseDomainService<Purchase> implements PurchaseService {
   protected tableName = 'purchases';
 
   public mapFromDb(db: any): Purchase {
-    return {
-      id: db.id,
-      orgId: db.org_id,
-      branchId: db.branch_id,
-      date: db.date,
-      supplierId: db.supplier_id,
-      supplierName: db.supplier_name_snapshot,
-      items: db.items || [],
-      subtotal: db.subtotal,
-      discount: db.discount,
-      totalTax: db.total_tax,
-      totalCost: db.total_cost,
-      paymentMethod: db.payment_type || 'cash',
-      status: db.status,
-      approvedBy: db.approved_by,
-      approvalDate: db.approval_date,
-      receivedBy: db.received_by,
-      receivedAt: db.received_at,
-      externalInvoiceId: db.external_invoice_id,
-      createdBy: db.created_by,
-      createdByName: db.created_by_name,
-      invoiceId: db.invoice_id,
-      version: db.version,
-    };
+    return purchaseRepository.mapFromDb(db);
   }
 
   public mapToDb(p: Partial<Purchase>): any {
-    const db: any = {};
-    if (p.id !== undefined) db.id = p.id;
-    if (p.orgId !== undefined) db.org_id = p.orgId;
-    if (p.branchId !== undefined) db.branch_id = p.branchId;
-    if (p.date !== undefined) db.date = p.date;
-    if (p.supplierId !== undefined) db.supplier_id = p.supplierId;
-    if (p.supplierName !== undefined) db.supplier_name_snapshot = p.supplierName;
-    if (p.items !== undefined) db.items = p.items;
-    if (p.subtotal !== undefined) db.subtotal = p.subtotal;
-    if (p.discount !== undefined) db.discount = p.discount;
-    if (p.totalTax !== undefined) db.total_tax = p.totalTax;
-    if (p.totalCost !== undefined) db.total_cost = p.totalCost;
-    if (p.paymentMethod !== undefined) db.payment_type = p.paymentMethod;
-    if (p.status !== undefined) db.status = p.status;
-    if (p.approvedBy !== undefined) db.approved_by = p.approvedBy;
-    if (p.approvalDate !== undefined) db.approval_date = p.approvalDate;
-    if (p.receivedBy !== undefined) db.received_by = p.receivedBy;
-    if (p.receivedAt !== undefined) db.received_at = p.receivedAt;
-    if (p.externalInvoiceId !== undefined) db.external_invoice_id = p.externalInvoiceId;
-    if (p.invoiceId !== undefined) db.invoice_id = p.invoiceId;
-    if (p.version !== undefined) db.version = p.version;
-    if (p.createdBy !== undefined) db.created_by = p.createdBy;
-    if (p.createdByName !== undefined) db.created_by_name = p.createdByName;
-    return db;
+    return purchaseRepository.mapToDb(p);
   }
 
   async getAll(branchId?: string): Promise<Purchase[]> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    
-    try {
-      let query = supabase.from(this.tableName).select('*');
-      const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
-      
-      if (effectiveBranchId && !isAll) {
-        query = query.eq('branch_id', effectiveBranchId);
-      } else if (isAll && settings.orgId) {
-        query = query.eq('org_id', settings.orgId);
-      }
-      const { data, error } = await query.order('date', { ascending: false });
-      if (error) throw error;
-      return (data || []).map(item => this.mapFromDb(item));
-    } catch (err) {
-      console.error('[PurchaseService] getAll failed:', err);
-      return [];
-    }
+    return purchaseRepository.getAll(effectiveBranchId, settings.orgId);
+  }
+
+  async getById(id: string): Promise<Purchase | null> {
+    return purchaseRepository.getById(id);
   }
 
   async getBySupplier(supplierId: string, branchId?: string): Promise<Purchase[]> {
-    const settings = await settingsService.getAll();
-    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    
-    try {
-      let query = supabase.from(this.tableName)
-        .select('*')
-        .eq('supplier_id', supplierId);
-      
-      const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
-      
-      if (effectiveBranchId && !isAll) {
-        query = query.eq('branch_id', effectiveBranchId);
-      } else if (isAll && settings.orgId) {
-        query = query.eq('org_id', settings.orgId);
-      }
-      
-      const { data, error } = await query.order('date', { ascending: false });
-      if (error) throw error;
-      return (data || []).map(item => this.mapFromDb(item));
-    } catch (err) {
-      console.error('[PurchaseService] getBySupplier failed:', err);
-      return [];
-    }
+    return this.filter({ supplierId }, branchId);
   }
 
   async getByStatus(status: PurchaseStatus, branchId?: string): Promise<Purchase[]> {
-    const settings = await settingsService.getAll();
-    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    
-    try {
-      let query = supabase.from(this.tableName)
-        .select('*')
-        .eq('status', status);
-      
-      const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
-      
-      if (effectiveBranchId && !isAll) {
-        query = query.eq('branch_id', effectiveBranchId);
-      } else if (isAll && settings.orgId) {
-        query = query.eq('org_id', settings.orgId);
-      }
-      
-      const { data, error } = await query.order('date', { ascending: false });
-      if (error) throw error;
-      return (data || []).map(item => this.mapFromDb(item));
-    } catch (err) {
-      console.error('[PurchaseService] getByStatus failed:', err);
-      return [];
-    }
+    return this.filter({ status }, branchId);
   }
 
   async getPending(branchId?: string): Promise<Purchase[]> {
@@ -153,62 +51,37 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
   async filter(filters: PurchaseFilters, branchId?: string): Promise<Purchase[]> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    
-    try {
-      let query = supabase.from(this.tableName).select('*');
-      
-      const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
-      
-      if (effectiveBranchId && !isAll) {
-        query = query.eq('branch_id', effectiveBranchId);
-      } else if (isAll && settings.orgId) {
-        query = query.eq('org_id', settings.orgId);
-      }
-      
-      if (filters.status) query = query.eq('status', filters.status);
-      if (filters.supplierId) query = query.eq('supplier_id', filters.supplierId);
-      if (filters.dateFrom) query = query.gte('date', filters.dateFrom);
-      if (filters.dateTo) query = query.lte('date', filters.dateTo);
-      
-      const { data, error } = await query.order('date', { ascending: false });
-      if (error) throw error;
-      return (data || []).map(item => this.mapFromDb(item));
-    } catch (err) {
-      console.error('[PurchaseService] filter failed:', err);
-      return [];
-    }
+    return purchaseRepository.findByFilters(filters, effectiveBranchId, settings.orgId);
   }
 
   async create(purchase: Omit<Purchase, 'id'>, branchId?: string): Promise<Purchase> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || (purchase as any).branchId || settings.activeBranchId || settings.branchCode;
     
-    const dbPurchase = this.mapToDb({
+    const newPurchase: Purchase = {
       ...purchase,
       id: idGenerator.uuid(),
       status: (purchase as any).status || 'pending',
       branchId: effectiveBranchId,
       orgId: settings.orgId,
       date: purchase.date || new Date().toISOString(),
-    });
+    } as Purchase;
     
-    const { data, error } = await supabase.from(this.tableName).insert(dbPurchase).select().single();
-    if (error) throw error;
-    
-    return this.mapFromDb(data);
+    return purchaseRepository.insert(newPurchase);
+  }
+
+  async update(id: string, updates: Partial<Purchase>): Promise<Purchase> {
+    return purchaseRepository.update(id, updates);
   }
 
   async approve(id: string, approverId: string, approverName: string): Promise<Purchase> {
     const purchase = await this.getById(id);
     if (!purchase) throw new Error('Purchase not found');
     
-    // Approval validates the order and moves it forward
     const updates = {
       status: 'approved' as PurchaseStatus,
-      approvedBy: approverName, // Store name in the TEXT column for display/snapshot
+      approvedBy: approverName,
       approvalDate: new Date().toISOString(),
-      // If we want to store the ID as well, we'd need an approved_by_id column.
-      // For now, we follow the TEXT pattern for approvedBy as requested/implemented.
     };
     
     return this.update(id, updates);
@@ -219,7 +92,6 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     if (!purchase) throw new Error('Purchase not found');
     if (purchase.status === 'received' || purchase.status === 'completed') return purchase;
 
-    // Trigger automated batch creation with full performer info
     await this.processInventoryReceipt(purchase, receiverId, receiverName);
 
     const updates = {
@@ -231,9 +103,6 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     return this.update(id, updates);
   }
 
-  /**
-   * Internal helper to handle the automated batch creation and stock updates
-   */
   private async processInventoryReceipt(purchase: Purchase, performerId: string, performerName: string): Promise<void> {
     const settings = await settingsService.getAll();
     const branchId = purchase.branchId;
@@ -244,7 +113,6 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
 
       let expiryDate = item.expiryDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
       
-      // Normalize partial dates (YYYY-MM) to full dates (YYYY-MM-DD) for Postgres
       if (expiryDate && expiryDate.length === 7 && expiryDate.includes('-')) {
         expiryDate = `${expiryDate}-01`;
       }
@@ -272,8 +140,8 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
         referenceId: purchase.id,
         batchId: batch.id,
         expiryDate: batch.expiryDate,
-        performedBy: performerId, // Pass the UUID here!
-        performedByName: performerName, // Pass the Name snapshot here!
+        performedBy: performerId,
+        performedByName: performerName,
         status: 'approved',
         orgId: purchase.orgId || settings.orgId,
         publicPrice: item.publicPrice,
@@ -288,15 +156,13 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
         id: i.drugId, 
         quantity: stockOps.resolveUnits(i.quantity, !!i.isUnit, i.unitsPerPack) 
       })),
-      true // skipBatch: we already created batches above
+      true
     );
 
-    // Update Drug pricing info from latest purchase
     for (const item of purchase.items) {
       const earliestExpiry = await batchService.getEarliestExpiry(item.drugId, branchId);
       const globalWAC = await batchService.calculateGlobalWAC(item.drugId, branchId);
       
-      // Normalize for second loop
       const normalizedExpiry = item.expiryDate && item.expiryDate.length === 7 && item.expiryDate.includes('-') 
         ? `${item.expiryDate}-01` 
         : item.expiryDate;
@@ -314,7 +180,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
   async reject(id: string, reason: string): Promise<Purchase> {
     const updates = {
       status: 'rejected' as PurchaseStatus,
-      notes: reason, // Reusing notes for rejection reason
+      notes: reason,
     };
     return this.update(id, updates);
   }
@@ -332,16 +198,13 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     
-    const dbPurchases = purchases.map(p => this.mapToDb({
+    const processedPurchases = purchases.map(p => ({
       ...p,
       branchId: p.branchId || effectiveBranchId,
       orgId: p.orgId || settings.orgId
     }));
 
-    if (dbPurchases.length > 0) {
-      const { error } = await supabase.from(this.tableName).upsert(dbPurchases);
-      if (error) throw error;
-    }
+    await purchaseRepository.upsert(processedPurchases);
   }
 }
 

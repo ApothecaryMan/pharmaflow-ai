@@ -5,103 +5,38 @@ import { batchService } from './batchService';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { settingsService } from '../settings/settingsService';
 import type { InventoryFilters, InventoryService, InventoryStats } from './types';
-import { supabase } from '../../lib/supabase';
+import { inventoryRepository } from './repositories/inventoryRepository';
+import { permissionsService } from '../auth/permissionsService';
 
 class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryService {
   protected tableName = 'drugs';
 
   public mapFromDb(db: any): Drug {
-    return {
-      id: db.id,
-      orgId: db.org_id,
-      branchId: db.branch_id,
-      name: db.name,
-      nameAr: db.name_ar || undefined,
-      genericName: db.generic_name || [],
-      category: db.category,
-      publicPrice: db.public_price,
-      unitPrice: db.unit_price,
-      costPrice: db.cost_price,
-      unitCostPrice: db.unit_cost_price,
-      stock: db.stock,
-      damagedStock: db.damaged_stock || 0,
-      expiryDate: db.expiry_date || '',
-      barcode: db.barcode || undefined,
-      internalCode: db.internal_code || undefined,
-      unitsPerPack: db.units_per_pack || 1,
-      supplierId: db.supplier_id || undefined,
-      maxDiscount: db.max_discount || undefined,
-      dosageForm: db.dosage_form || undefined,
-      minStock: db.min_stock || 0,
-      origin: db.origin || undefined,
-      manufacturer: db.manufacturer || undefined,
-      tax: db.tax || 0,
-      status: db.status || 'active',
-      description: db.description || undefined,
-      additionalBarcodes: db.additional_barcodes || [],
-      itemRank: db.item_rank || 'normal',
-    };
+    return inventoryRepository.mapFromDb(db);
   }
 
   public mapToDb(d: Partial<Drug>): any {
-    const db: any = {};
-    if (d.id !== undefined) db.id = d.id;
-    if (d.orgId !== undefined) db.org_id = d.orgId;
-    if (d.branchId !== undefined) db.branch_id = d.branchId;
-    if (d.name !== undefined) db.name = d.name;
-    if (d.nameAr !== undefined) db.name_ar = d.nameAr;
-    if (d.genericName !== undefined) db.generic_name = d.genericName;
-    if (d.category !== undefined) db.category = d.category;
-    if (d.publicPrice !== undefined) db.public_price = d.publicPrice;
-    if (d.unitPrice !== undefined) db.unit_price = d.unitPrice;
-    if (d.costPrice !== undefined) db.cost_price = d.costPrice;
-    if (d.unitCostPrice !== undefined) db.unit_cost_price = d.unitCostPrice;
-    if (d.stock !== undefined) db.stock = d.stock;
-    if (d.damagedStock !== undefined) db.damaged_stock = d.damagedStock;
-    if (d.expiryDate !== undefined) {
-      if (d.expiryDate === '') db.expiry_date = null;
-      else if (d.expiryDate.length === 7 && /^\d{4}-\d{2}$/.test(d.expiryDate)) db.expiry_date = `${d.expiryDate}-01`;
-      else db.expiry_date = d.expiryDate;
-    }
-    if (d.description !== undefined) db.description = d.description;
-    if (d.additionalBarcodes !== undefined) db.additional_barcodes = d.additionalBarcodes;
-    if (d.itemRank !== undefined) db.item_rank = d.itemRank;
-    if (d.barcode !== undefined) db.barcode = d.barcode;
-    if (d.internalCode !== undefined) db.internal_code = d.internalCode;
-    if (d.unitsPerPack !== undefined) db.units_per_pack = d.unitsPerPack;
-    if (d.supplierId !== undefined) db.supplier_id = d.supplierId;
-    if (d.maxDiscount !== undefined) db.max_discount = d.maxDiscount;
-    if (d.dosageForm !== undefined) db.dosage_form = d.dosageForm;
-    if (d.minStock !== undefined) db.min_stock = d.minStock;
-    if (d.origin !== undefined) db.origin = d.origin;
-    if (d.manufacturer !== undefined) db.manufacturer = d.manufacturer;
-    if (d.tax !== undefined) db.tax = d.tax;
-    if (d.status !== undefined) db.status = d.status;
-    return db;
+    return inventoryRepository.mapToDb(d);
   }
 
   // --- Specialized Methods ---
 
+  async getAll(branchId?: string): Promise<Drug[]> {
+    return inventoryRepository.getAll(branchId);
+  }
+
+  async getById(id: string): Promise<Drug | null> {
+    return inventoryRepository.getById(id);
+  }
+
   async getAllBranches(branchId?: string): Promise<Drug[]> {
-    try {
-      let query = supabase.from(this.tableName).select('*');
-      if (branchId) query = query.eq('branch_id', branchId);
-      const { data, error } = await query;
-      if (error) throw error;
-      return (data || []).map(item => this.mapFromDb(item));
-    } catch (err) {
-      console.error('[InventoryService] getAllBranches failed:', err);
-      return [];
-    }
+    return inventoryRepository.getAll(branchId);
   }
 
   async getByBarcode(barcode: string, branchId?: string): Promise<Drug | null> {
     try {
-      const { data, error } = await supabase.from(this.tableName)
-        .select('*')
-        .eq('barcode', barcode)
-        .maybeSingle();
-      if (!error && data) return this.mapFromDb(data);
+      const drug = await inventoryRepository.getByBarcode(barcode);
+      if (drug) return drug;
     } catch {}
 
     const all = await this.getAll(branchId);
@@ -152,9 +87,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
       status: drug.status || 'active',
     } as Drug;
     
-    const dbDrug = this.mapToDb(newDrug);
-    const { error } = await supabase.from(this.tableName).insert(dbDrug);
-    if (error) throw error;
+    await inventoryRepository.insert(newDrug);
 
     await batchService.createBatch({
       drugId: newDrug.id,
@@ -171,24 +104,20 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
     return newDrug;
   }
 
+  async update(id: string, updates: Partial<Drug>): Promise<Drug> {
+    return inventoryRepository.update(id, updates);
+  }
+
   async updateStock(id: string, quantity: number, skipBatch: boolean = false, batchId?: string, skipFetch: boolean = false): Promise<Drug> {
     if (skipBatch) {
-      // Fast path: atomic increment, no read needed — safe for concurrent access
-      const { data, error } = await supabase.rpc('atomic_increment_stock', {
-        p_drug_id: id,
-        p_delta: quantity,
-      });
-      if (error) throw error;
-      
+      const newStock = await inventoryRepository.atomicIncrement(id, quantity);
       if (skipFetch) {
-        return { id, stock: 0 } as any; // Minimal object
+        return { id, stock: newStock } as any; 
       }
-
-      // Return a minimal Drug object — caller usually discards it
-      return { id, stock: data } as any;
+      const drug = await this.getById(id);
+      return drug || ({ id, stock: newStock } as any);
     }
 
-    // Slow path: needs drug data for batch operations
     const drug = await this.getById(id);
     if (!drug) throw new Error('Drug not found');
     
@@ -197,10 +126,8 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
     
     if (quantity > 0) {
       if (batchId) {
-        // Specific batch update
         await batchService.updateBatchQuantity(batchId, quantity);
       } else {
-        // Generic increase: Merge into existing or create new
         await batchService.createBatch({
           drugId: id,
           quantity: quantity,
@@ -214,13 +141,12 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
         }, branchId);
       }
     } else if (quantity < 0) {
-      // Decrease: use specific batch if provided, else FEFO
       const allocResult = await batchService.allocateStock(
         id, 
         Math.abs(quantity), 
         branchId, 
         true, 
-        batchId // Pass preferredBatchId
+        batchId 
       );
       
       if (!allocResult) {
@@ -228,13 +154,8 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
       }
     }
 
-    const { data, error } = await supabase.rpc('atomic_increment_stock', {
-      p_drug_id: id,
-      p_delta: quantity,
-    });
-    if (error) throw error;
-
-    return { ...drug, stock: data };
+    const newStock = await inventoryRepository.atomicIncrement(id, quantity);
+    return { ...drug, stock: newStock };
   }
 
   async updateStockCount(id: string, quantity: number): Promise<void> {
@@ -242,16 +163,11 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
     if (!drug) throw new Error('Drug not found');
     
     const updatedStock = Math.max(0, (drug.stock || 0) + quantity);
-    const { error } = await supabase.from(this.tableName)
-      .update({ stock: updatedStock })
-      .eq('id', id);
-      
-    if (error) throw error;
+    await inventoryRepository.update(id, { stock: updatedStock });
   }
 
   async updateStockBulk(mutations: { id: string; quantity: number; batchId?: string }[], skipBatch: boolean = false, skipFetch: boolean = true): Promise<void> {
     if (skipBatch) {
-      // When skipping batch ops, all updates are independent — run in parallel
       await Promise.all(mutations.map(m => this.updateStock(m.id, m.quantity, true, undefined, skipFetch)));
     } else {
       for (const m of mutations) {
@@ -297,10 +213,7 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
       orgId: settings.orgId
     }));
 
-    const dbDrugs = processedInventory.map(d => this.mapToDb(d));
-    if (dbDrugs.length > 0) {
-      await supabase.from(this.tableName).upsert(dbDrugs, { onConflict: 'id' });
-    }
+    await inventoryRepository.upsert(processedInventory);
   }
 }
 
