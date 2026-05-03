@@ -71,20 +71,39 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
           : "Organization ID not found. Please restart the first step.");
       }
 
-      const newBranch = await branchService.create({ 
-        name: branchName.trim(), 
-        code: branchCode.trim().toUpperCase(), 
-        status: 'active',
-        orgId: activeOrgId,
-        governorate,
-        city,
-        area,
-        address: streetAddress.trim()
-      });
-      await branchService.setActive(newBranch.id);
+      // Check if a default branch already exists (created by RPC setup_initial_organization)
+      const existingBranches = await branchService.getAll(activeOrgId);
+      let targetBranch;
+
+      if (existingBranches.length > 0) {
+        // Update the existing branch (likely "MAIN-01")
+        targetBranch = await branchService.update(existingBranches[0].id, {
+          name: branchName.trim(),
+          code: branchCode.trim().toUpperCase(),
+          status: 'active',
+          governorate,
+          city,
+          area,
+          address: streetAddress.trim()
+        } as any);
+      } else {
+        // Create new branch if none exists (fallback)
+        targetBranch = await branchService.create({ 
+          name: branchName.trim(), 
+          code: branchCode.trim().toUpperCase(), 
+          status: 'active',
+          orgId: activeOrgId,
+          governorate,
+          city,
+          area,
+          address: streetAddress.trim()
+        });
+      }
+
+      await branchService.setActive(targetBranch.id);
       await settingsService.setMultiple({ 
-        activeBranchId: newBranch.id, 
-        branchCode: newBranch.code
+        activeBranchId: targetBranch.id, 
+        branchCode: targetBranch.code
       });
       
       onComplete();
