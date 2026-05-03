@@ -7,6 +7,7 @@ import { type CashTransaction, type Shift } from '../../types';
 import { money } from '../../utils/money';
 import { settingsService } from '../settings/settingsService';
 import { cashRepository } from './repositories/cashRepository';
+import { idGenerator } from '../../utils/idGenerator';
 
 /**
  * Cash Service Interface
@@ -91,7 +92,7 @@ export const cashService: CashServiceInterface = {
   addTransaction: async (shiftId: string, transaction: Omit<CashTransaction, 'id'>): Promise<CashTransaction> => {
     const newTx: CashTransaction = {
       ...transaction,
-      id: crypto.randomUUID(), // Or use idGenerator.uuid()
+      id: idGenerator.uuid(),
       shiftId,
     } as CashTransaction;
 

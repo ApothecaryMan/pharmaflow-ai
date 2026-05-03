@@ -22,6 +22,7 @@ import { employeeService } from '../../services/hr/employeeService';
 import { orgService } from '../../services/org/orgService';
 import { INPUT_BASE } from '../../utils/themeStyles';
 import { SearchInput } from '../common/SearchInput';
+import { idGenerator } from '../../utils/idGenerator';
 
 import { 
   DEPARTMENT_ROLES, 
@@ -543,10 +544,8 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
             ]}
             value="employee-list"
             onChange={(val) => onViewChange?.(val as any)}
-            color={color}
             size="md"
             iconSize="--icon-lg"
-            variant="onPage"
             shape="pill"
             className="w-full sm:w-[480px]"
             useGraphicFont={true}
@@ -1027,7 +1026,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                             // 1. Get Challenge from "Backend" (Mocked)
                             const challengeBuffer = generateChallenge();
                             const challengeBase64 = bufferToBase64(challengeBuffer);
-                            const employeeId = formData.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2));
+                            const employeeId = formData.id || idGenerator.uuid();
 
                             // 2. Options for Creation (Usually comes from backend)
                             const publicKeyCredentialCreationOptions = {
@@ -1760,7 +1759,6 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
             )}
             value={activeViewTab}
             onChange={(value) => setActiveViewTab(value as 'general' | 'credentials' | 'documents')}
-            color={color}
             iconSize='--icon-lg'
           />
         }
