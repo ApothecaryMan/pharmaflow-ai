@@ -22,6 +22,12 @@ export { useShift } from './sales/useShift';
 export { useProcurement } from './purchases/useProcurement';
 export { useInventorySearch } from './inventory/useInventorySearch';
 export { useRisk } from './inventory/useRisk';
+export { useInventoryHandlers } from './inventory/useInventoryHandlers';
+export { useCustomerHandlers } from './customers/useCustomerHandlers';
+export { useSupplierHandlers } from './suppliers/useSupplierHandlers';
+export { useEmployeeHandlers } from './hr/useEmployeeHandlers';
+export { usePurchaseHandlers } from './purchases/usePurchaseHandlers';
+export { useSalesHandlers } from './sales/useSalesHandlers';
 
 // Infrastructure Hooks
 export { useAudit } from './infrastructure/useAudit';
