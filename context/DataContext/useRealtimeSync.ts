@@ -96,7 +96,7 @@ export const useRealtimeSync = ({
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newDrug = inventoryService.mapFromDb(payload.new);
             setInventory(prev => [newDrug, ...prev.filter(d => d.id !== newDrug.id)]);
-            inventorySearchEngine.updateItem(newDrug as any);
+            inventorySearchEngine.queueUpdate(newDrug as any);
           } else if (payload.eventType === 'DELETE') {
             setInventory((prev) => prev.filter((d) => d.id !== payload.old.id));
             inventorySearchEngine.removeItem(payload.old.id);

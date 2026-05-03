@@ -1,5 +1,6 @@
 import { type DrugCatalogItem } from './catalogCacheService';
 import type { Drug } from '../../types';
+import { getLocalizedProductType } from '../../data/productCategories';
 
 type SearchableDrug = DrugCatalogItem | Drug;
 
@@ -16,9 +17,13 @@ export class DrugSearchEngine {
   private idMap = new Map<string, SearchableDrug>();
   private barcodeMap = new Map<string, string>(); // Barcode -> ID
   
-  // Performance Optimization: Cache the array version of the Map
-  // to avoid calling Array.from() on every keystroke.
   private cachedArray: SearchableDrug[] = [];
+  private nameSearchKeys = new Map<string, string>(); // ID -> name-only search string
+  private ingredientSearchKeys = new Map<string, string>(); // ID -> generic-only search string
+  
+  // Batching / Throttling system
+  private pendingUpdates = new Map<string, SearchableDrug>();
+  private batchTimeout: NodeJS.Timeout | null = null;
 
   constructor(initialData: SearchableDrug[] = []) {
     if (initialData.length > 0) {
@@ -43,8 +48,39 @@ export class DrugSearchEngine {
   }
 
   /**
-   * O(1) Incremental Update.
-   * Efficiently updates a single item without re-indexing everything.
+   * Queues an update to be applied in the next batch.
+   * This prevents UI flickering and CPU spikes during high-volume events.
+   */
+  public queueUpdate(item: SearchableDrug) {
+    this.pendingUpdates.set(item.id, item);
+    
+    if (!this.batchTimeout) {
+      this.batchTimeout = setTimeout(() => this.flushPending(), 300);
+    }
+  }
+
+  /**
+   * Immediately applies all pending updates.
+   * Called automatically by search() to ensure data integrity.
+   */
+  public flushPending() {
+    if (this.batchTimeout) {
+      clearTimeout(this.batchTimeout);
+      this.batchTimeout = null;
+    }
+
+    if (this.pendingUpdates.size === 0) return;
+
+    for (const item of this.pendingUpdates.values()) {
+      this.addOrUpdateToMap(item);
+    }
+    
+    this.pendingUpdates.clear();
+    this.refreshCache();
+  }
+
+  /**
+   * O(1) Incremental Update (Direct).
    */
   public updateItem(item: SearchableDrug) {
     this.addOrUpdateToMap(item);
@@ -56,15 +92,32 @@ export class DrugSearchEngine {
    */
   public removeItem(id: string) {
     const item = this.idMap.get(id);
-    if (item?.barcode) {
-      this.barcodeMap.delete(item.barcode);
-    }
     this.idMap.delete(id);
+    this.nameSearchKeys.delete(id);
+    this.ingredientSearchKeys.delete(id);
     this.refreshCache();
   }
 
   private refreshCache() {
     this.cachedArray = Array.from(this.idMap.values());
+    
+    // Pre-compute search keys separately for Trade Name and Ingredients
+    for (const drug of this.cachedArray) {
+      const nameEn = (drug.name || '').toLowerCase();
+      const nameAr = ((drug as any).nameArabic || drug.nameAr || '').toLowerCase();
+      const dosageEn = (drug as any).dosageForm || '';
+      const dosageAr = getLocalizedProductType(dosageEn, 'ar');
+      
+      const substance = (drug as DrugCatalogItem).activeSubstance || '';
+      const generic = Array.isArray((drug as Drug).genericName) 
+        ? (drug as Drug).genericName.join(' ').toLowerCase() 
+        : String(substance).toLowerCase();
+        
+      // Trade Name Key: includes Name (with strength) + Dosage (EN/AR) + Arabic Name
+      const searchKey = `${nameEn} ${dosageEn.toLowerCase()} ${nameAr} ${dosageAr}`;
+      this.nameSearchKeys.set(drug.id, searchKey);
+      this.ingredientSearchKeys.set(drug.id, generic);
+    }
   }
 
   private addOrUpdateToMap(drug: SearchableDrug) {
@@ -85,6 +138,7 @@ export class DrugSearchEngine {
    * Main Search Gateway
    */
   public search(query: string, filters?: any): SearchableDrug[] {
+    this.flushPending();
     const rawTerm = query.toLowerCase();
     const term = query.trim().toLowerCase();
     if (!term) return [];
@@ -125,12 +179,8 @@ export class DrugSearchEngine {
 
     return this.cachedArray
       .filter(d => {
-        const substance = (d as DrugCatalogItem).activeSubstance?.toLowerCase() || '';
-        const generic = Array.isArray((d as Drug).genericName) 
-          ? (d as Drug).genericName.join(' ').toLowerCase() 
-          : String(substance).toLowerCase();
-          
-        return (substance.includes(q) || generic.includes(q)) && this.matchesFilters(d, filters);
+        const key = this.ingredientSearchKeys.get(d.id) || '';
+        return key.includes(q) && this.matchesFilters(d, filters);
       })
       .slice(0, 50)
       .map(d => this.transformResult(d, filters));
@@ -172,6 +222,7 @@ export class DrugSearchEngine {
     const [first, ...rest] = words;
 
     let matches = this.cachedArray.filter(drug => {
+      const searchKey = this.nameSearchKeys.get(drug.id) || '';
       const nameEn = (drug.name || '').toLowerCase();
       const nameAr = ((drug as any).nameArabic || drug.nameAr || '').toLowerCase();
       
@@ -179,22 +230,21 @@ export class DrugSearchEngine {
         ? (nameEn.includes(first) || nameAr.includes(first))
         : (nameEn.startsWith(first) || nameAr.startsWith(first));
 
-      if (!matchesFirst) {
-        const substance = (drug as DrugCatalogItem).activeSubstance || '';
-        const generic = Array.isArray((drug as Drug).genericName) 
-          ? (drug as Drug).genericName.join(' ').toLowerCase() 
-          : String(substance).toLowerCase();
-        if (!generic.includes(first)) return false;
-      }
+      if (!matchesFirst) return false;
 
-      if (rest.length > 0) {
-        const substance = (drug as DrugCatalogItem).activeSubstance || '';
-        const generic = Array.isArray((drug as Drug).genericName) 
-          ? (drug as Drug).genericName.join(' ').toLowerCase() 
-          : String(substance).toLowerCase();
-        const fullName = `${nameEn} ${nameAr} ${generic}`;
-        return rest.every(w => fullName.includes(w));
+      // Sequential Match Logic:
+      // We start looking for the rest of the words AFTER the first word's position
+      let firstWordIndex = nameEn.startsWith(first) ? 0 : searchKey.indexOf(first);
+      if (firstWordIndex === -1) return false;
+
+      let lastIndex = firstWordIndex + first.length;
+      
+      for (const word of rest) {
+        const index = searchKey.indexOf(word, lastIndex);
+        if (index === -1) return false;
+        lastIndex = index + word.length;
       }
+      
       return true;
     });
 
