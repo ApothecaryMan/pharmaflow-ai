@@ -144,7 +144,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
                 {isRTL ? 'إعداد الفرع' : 'Branch Setup'}
               </h1>
             </div>
-            <div className={`scale-90 ${isRTL ? 'origin-left' : 'origin-right'}`}>
+            <div className="scale-90 origin-inline-end">
               <OnboardingStepper currentStep={2} language={language} />
             </div>
           </div>
@@ -161,7 +161,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
           <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
               {isRTL ? 'اسم الصيدلية / الفرع' : 'Pharmacy / Branch Name'}
-              <span className="text-red-500 ml-1">*</span>
+              <span className="text-red-500 ms-1">*</span>
             </label>
             <SmartInput
               required
@@ -175,7 +175,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
           <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
               {isRTL ? 'كود الفرع' : 'Branch Code'}
-              <span className="text-red-500 ml-1">*</span>
+              <span className="text-red-500 ms-1">*</span>
             </label>
             <SmartInput
               required
@@ -199,7 +199,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
           <div className="space-y-4">
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               {isRTL ? 'موقع الفرع' : 'Branch Location'}
-              <span className="text-red-500 ml-1">*</span>
+              <span className="text-red-500 ms-1">*</span>
             </label>
             <LocationSelector
               language={language as 'EN' | 'AR'}
@@ -215,7 +215,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
           <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
               {isRTL ? 'العنوان بالتفصيل' : 'Street Address'}
-              <span className="text-red-500 ml-1">*</span>
+              <span className="text-red-500 ms-1">*</span>
             </label>
             <SmartInput
               required
@@ -249,7 +249,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
               </svg>
             ) : (
               <>
-                <span className="ml-2 mr-2">{isRTL ? 'التالي' : 'Next'}</span>
+                <span className="mx-2">{isRTL ? 'التالي' : 'Next'}</span>
                 <span className={`material-symbols-rounded text-lg ${isRTL ? 'rotate-180' : ''}`}>
                   arrow_forward
                 </span>

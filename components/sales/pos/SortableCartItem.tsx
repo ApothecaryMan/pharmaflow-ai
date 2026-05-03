@@ -252,7 +252,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
         ${isDragging ? `z-50 opacity-100 bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-sm shadow-2xl scale-[1.02] rounded-xl` : 'rounded-lg'}
         ${
           isHighlighted
-            ? `bg-primary-500/[0.04] dark:bg-primary-500/[0.08]`
+            ? `bg-primary-100 dark:bg-primary-900`
             : 'bg-transparent hover:bg-black/[0.02] dark:hover:bg-white/[0.04]'
         }`}
       onContextMenu={(e) => {

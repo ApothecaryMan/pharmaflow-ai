@@ -162,7 +162,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
   const labelText = 'text-[9px] font-bold uppercase tracking-wider opacity-50';
 
   const handlePrint = () => {
-    printInvoice(sale, { ...getActiveReceiptSettings(), language: language as 'EN' | 'AR' });
+    printInvoice(sale, { ...getActiveReceiptSettings(sale.branchId), language: language as 'EN' | 'AR' });
   };
 
   return (

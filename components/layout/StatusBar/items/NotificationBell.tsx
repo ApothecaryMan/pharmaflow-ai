@@ -69,7 +69,7 @@ const NotificationItem: React.FC<{
   onRemove: (id: string) => void;
   dismissText: string;
 }> = ({ notification, messages, onRemove, dismissText }) => (
-  <div className="px-3 py-2 transition-colors flex items-start gap-2 hover:bg-black/5 dark:hover:bg-white/5">
+  <div className="px-3 py-2 transition-colors flex items-start gap-2 hover:bg-black/5 dark:hover:bg-white/5" role="listitem">
     <span
       className={`material-symbols-rounded mt-0.5 ${getVariantColor(notification.type)}`}
       style={{ fontSize: 'var(--status-icon-size, 16px)' }}
@@ -155,11 +155,13 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
       {/* Dropdown Container */}
       {isOpen && (
         <div
-          className="absolute bottom-full right-0 mb-1 w-72 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-50 animate-scale-in origin-bottom-right"
+          className="absolute bottom-full end-0 mb-1 w-72 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-50 animate-scale-in origin-bottom-end"
           dir={isRTL ? 'rtl' : 'ltr'}
+          role="log"
+          aria-live="polite"
         >
           {/* Arrow Indicator */}
-          <div className="absolute bottom-[-5px] right-3 w-2.5 h-2.5 rotate-45 border-b border-r border-(--border-divider) bg-(--bg-menu) z-50" />
+          <div className="absolute bottom-[-5px] end-3 w-2.5 h-2.5 rotate-45 border-b border-r border-(--border-divider) bg-(--bg-menu) z-50" />
 
           {/* Dropdown Header */}
           <div className="flex items-center justify-between px-3 py-2 border-b border-(--border-divider)">
@@ -177,7 +179,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
           </div>
 
           {/* Notifications Scroll Area */}
-          <div className="divide-y divide-(--border-divider) max-h-80 overflow-y-auto rounded-b-lg custom-scrollbar">
+          <div className="divide-y divide-(--border-divider) max-h-80 overflow-y-auto rounded-b-lg custom-scrollbar" role="list">
             {displayedNotifications.length === 0 ? (
               <div className="px-3 py-4 text-center text-sm text-(--text-tertiary)">
                 {t.noNotifications}

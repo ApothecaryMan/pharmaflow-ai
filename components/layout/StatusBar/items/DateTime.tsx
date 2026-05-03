@@ -2,6 +2,12 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useSettings } from '../../../../context/SettingsContext';
 import { useStatusBar } from '../StatusBarContext';
 import { StatusBarItem } from '../StatusBarItem';
+import { 
+  formatLocalizedDateTime, 
+  DATE_OPTS_SHORT, 
+  getTimeOpts, 
+  getCombinedDateTimeOpts 
+} from '../../../../utils/dateFormatter';
 
 interface DateTimeProps {
   format?: 'date' | 'time' | 'datetime';
@@ -18,8 +24,8 @@ export const DateTime: React.FC<DateTimeProps> = ({
   locale: manualLocale,
   hideIcon = false,
 }) => {
-  const { textLocale } = useSettings();
-  const locale = manualLocale || textLocale;
+  const { numeralLocale } = useSettings();
+  const locale = manualLocale || numeralLocale;
   const { getVerifiedDate, state } = useStatusBar();
   const [now, setNow] = useState(getVerifiedDate());
 
@@ -28,18 +34,17 @@ export const DateTime: React.FC<DateTimeProps> = ({
     return () => clearInterval(timer);
   }, [showSeconds, getVerifiedDate]);
 
-  const displayLabel = useMemo(() => {
-    const dateOpts: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
-    const timeOpts: Intl.DateTimeFormatOptions = {
-      hour: '2-digit', minute: '2-digit',
-      ...(showSeconds && { second: '2-digit' }),
-      hour12: !use24Hour,
-    };
+  const timeOpts = useMemo(() => getTimeOpts(showSeconds, use24Hour), [showSeconds, use24Hour]);
+  const combinedOpts = useMemo(() => getCombinedDateTimeOpts(showSeconds, use24Hour), [showSeconds, use24Hour]);
 
-    if (format === 'date') return now.toLocaleDateString(locale, dateOpts);
-    if (format === 'time') return now.toLocaleTimeString(locale, timeOpts);
-    return `${now.toLocaleDateString(locale, dateOpts)} ${now.toLocaleTimeString(locale, timeOpts)}`;
-  }, [now, locale, format, showSeconds, use24Hour]);
+  const displayLabel = useMemo(() => {
+    return formatLocalizedDateTime(
+      now, 
+      locale, 
+      format === 'date' ? DATE_OPTS_SHORT : format === 'time' ? timeOpts : combinedOpts,
+      format
+    );
+  }, [now, locale, format, timeOpts, combinedOpts]);
 
   const status = useMemo(() => {
     const isVerified = state.isOnline && state.timeSynced;
@@ -51,10 +56,10 @@ export const DateTime: React.FC<DateTimeProps> = ({
       tooltip: isVerified 
         ? 'Exact time from server' 
         : isTrusted 
-          ? `Offline Mode (Time Verified) • Last synced: ${state.lastSyncTime ? new Date(state.lastSyncTime).toLocaleTimeString() : 'Unknown'}`
+          ? `Offline Mode (Time Verified) • Last synced: ${state.lastSyncTime ? formatLocalizedDateTime(state.lastSyncTime, locale, timeOpts, 'time') : 'Unknown'}`
           : 'Unverified Device Time'
     };
-  }, [state.isOnline, state.timeSynced, state.lastSyncTime]);
+  }, [state.isOnline, state.timeSynced, state.lastSyncTime, locale, timeOpts]);
 
   return (
     <StatusBarItem

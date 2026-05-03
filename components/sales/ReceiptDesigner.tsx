@@ -68,6 +68,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
 
   // Initial load and sync when branch changes
   useEffect(() => {
+    // Only proceed if activeBranch is loaded (to get correct defaults if needed)
+    if (!activeBranchId || !branches || branches.length === 0) return;
+
     try {
       const savedTemplates = storage.get<SavedTemplate[]>(getTemplateKey(StorageKeys.RECEIPT_TEMPLATES), []);
       let activeId = '';
@@ -106,7 +109,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
     } catch (e) {
       console.error('Failed to load templates', e);
     }
-  }, [activeBranchId]);
+  }, [activeBranchId, branches]); // Added branches as dependency
 
   const [options, setOptions] = useState<InvoiceTemplateOptions>(() => {
     const active = templates.find((t) => t.id === activeTemplateId) || templates[0];
@@ -577,6 +580,19 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                     <span className='material-symbols-rounded'>save</span>
                   </button>
                 )}
+                {hasChanges && (
+                  <button
+                    onClick={() => {
+                      if (confirm(t.common?.confirmReset || 'Reset all settings to defaults?')) {
+                        setOptions(defaultOptions);
+                      }
+                    }}
+                    className='w-10 h-10 flex items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 hover:bg-orange-500 hover:text-white transition-all border border-orange-200 dark:border-orange-800/50'
+                    title={t.common?.reset || 'Reset to Defaults'}
+                  >
+                    <span className='material-symbols-rounded'>restart_alt</span>
+                  </button>
+                )}
                 <button
                   onClick={() => setIsAddingTemplate(true)}
                   className='w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-primary-500 hover:text-white transition-all border border-gray-200 dark:border-gray-700'
@@ -804,8 +820,16 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
 
             <div className='col-span-2 grid grid-cols-2 gap-3'>
               <div className='space-y-1'>
-                <label className='text-xs font-medium text-gray-500 dark:text-gray-400'>
-                  {t.receiptDesigner.options.address}
+                <label className='text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between'>
+                  <span>{t.receiptDesigner.options.address}</span>
+                  {activeBranch?.address && options.headerAddress !== activeBranch.address && (
+                    <button 
+                      onClick={() => setOptions({ ...options, headerAddress: activeBranch.address })}
+                      className="text-[10px] text-primary-500 hover:underline"
+                    >
+                      {language === 'AR' ? 'استخدام بيانات الفرع' : 'Use Branch Info'}
+                    </button>
+                  )}
                 </label>
                 <SmartInput
                   value={options.headerAddress}
@@ -815,8 +839,16 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 />
               </div>
               <div className='space-y-1'>
-                <label className='text-xs font-medium text-gray-500 dark:text-gray-400'>
-                  {t.receiptDesigner.options.area}
+                <label className='text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between'>
+                  <span>{t.receiptDesigner.options.area}</span>
+                  {activeBranch?.area && options.headerArea !== activeBranch.area && (
+                    <button 
+                      onClick={() => setOptions({ ...options, headerArea: activeBranch.area })}
+                      className="text-[10px] text-primary-500 hover:underline"
+                    >
+                      {language === 'AR' ? 'استخدام بيانات الفرع' : 'Use Branch Info'}
+                    </button>
+                  )}
                 </label>
                 <SmartInput
                   value={options.headerArea}

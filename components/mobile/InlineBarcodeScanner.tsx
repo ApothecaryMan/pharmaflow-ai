@@ -193,7 +193,7 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
         >
           {/* Scanning line animation */}
           <div 
-            className="absolute left-0 w-full h-[3px] shadow-[0_0_20px_rgba(var(--primary-rgb),0.8)] animate-[scan_2.5s_ease-in-out_infinite]"
+            className="absolute start-0 w-full h-[3px] shadow-[0_0_20px_rgba(var(--primary-rgb),0.8)] animate-[scan_2.5s_ease-in-out_infinite]"
             style={{ 
               backgroundColor: color || 'var(--primary-color)',
               boxShadow: `0 0 15px ${color || 'var(--primary-color)'}`
@@ -235,7 +235,7 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
       )}
 
       {/* Floating Controls Overlay */}
-      <div className="absolute top-2 right-2 flex flex-col gap-2 z-10 transition-opacity duration-300 opacity-80 hover:opacity-100">
+      <div className="absolute top-2 end-2 flex flex-col gap-2 z-10 transition-opacity duration-300 opacity-80 hover:opacity-100">
         <button
           onClick={onClose}
           className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-white hover:text-black transition-colors flex items-center justify-center shadow-lg border border-white/10"

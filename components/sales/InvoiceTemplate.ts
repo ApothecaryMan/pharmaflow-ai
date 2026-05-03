@@ -55,10 +55,13 @@ export const defaultOptions: InvoiceTemplateOptions = {
  * Helper to fetch the active receipt template and its options from storage.
  * Synchronized with ReceiptDesigner's saving logic.
  */
-export function getActiveReceiptSettings(): InvoiceTemplateOptions {
+export function getActiveReceiptSettings(branchId?: string): InvoiceTemplateOptions {
   try {
-    const templates = storage.get<any[]>(StorageKeys.RECEIPT_TEMPLATES, []);
-    const activeId = storage.get<string | null>(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID, null);
+    const templatesKey = branchId ? `receipt_designer_${branchId}_${StorageKeys.RECEIPT_TEMPLATES}` : StorageKeys.RECEIPT_TEMPLATES;
+    const activeIdKey = branchId ? `receipt_designer_${branchId}_${StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID}` : StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID;
+
+    const templates = storage.get<any[]>(templatesKey, []);
+    const activeId = storage.get<string | null>(activeIdKey, null);
 
     const activeTemplate =
       templates.find((t: any) => t.id === activeId) ||

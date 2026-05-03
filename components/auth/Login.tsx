@@ -243,7 +243,7 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                         setState(prev => ({ ...prev, error: res.message || 'Error' }));
                       }
                     }}
-                    className="ml-auto text-xs underline hover:text-white"
+                    className="ms-auto text-xs underline hover:text-white"
                   >
                     {language === 'AR' ? 'إعادة إرسال الرابط' : 'Resend Link'}
                   </button>
@@ -262,7 +262,7 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                     id='username'
                     type='text'
                     placeholder={t.usernamePlaceholder}
-                    autoComplete='username'
+                    autoComplete='off'
                     value={state.username}
                     onChange={(e) => {
                       setState((prev) => ({
@@ -271,7 +271,7 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                         validationErrors: { ...prev.validationErrors, username: undefined },
                       }));
                     }}
-                    className={`w-full bg-zinc-900 border ${state.validationErrors.username ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 placeholder:text-left cursor-text focus:bg-zinc-800/50 ${!state.username.includes('@') && state.username ? 'pr-20' : ''}`}
+                    className={`w-full bg-zinc-900 border ${state.validationErrors.username ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 placeholder:text-start cursor-text focus:bg-zinc-800/50 ${!state.username.includes('@') && state.username ? 'pr-20' : ''}`}
                     dir='ltr'
                   />
                   {!state.username.includes('@') && state.username && (
@@ -284,7 +284,7 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                   )}
                 </div>
                 {state.validationErrors.username && (
-                  <p className='text-xs text-red-500 mt-1 pl-1'>
+                  <p className='text-xs text-red-500 mt-1 ps-1'>
                     {state.validationErrors.username}
                   </p>
                 )}
@@ -303,7 +303,7 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                     id='password'
                     type={state.showPassword ? 'text' : 'password'}
                     placeholder={t.passwordPlaceholder}
-                    autoComplete='current-password'
+                    autoComplete='off'
                     value={state.password}
                     onChange={(e) => {
                       setState((prev) => ({
@@ -312,7 +312,7 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                         validationErrors: { ...prev.validationErrors, password: undefined },
                       }));
                     }}
-                    className={`w-full bg-zinc-900 border ${state.validationErrors.password ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 pr-10 placeholder:text-left cursor-text focus:bg-zinc-800/50`}
+                    className={`w-full bg-zinc-900 border ${state.validationErrors.password ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 pr-10 placeholder:text-start cursor-text focus:bg-zinc-800/50`}
                     dir='ltr'
                   />
                   <button
@@ -357,7 +357,7 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                   </button>
                 </div>
                 {state.validationErrors.password && (
-                  <p className='text-xs text-red-500 mt-1 pl-1'>
+                  <p className='text-xs text-red-500 mt-1 ps-1'>
                     {state.validationErrors.password}
                   </p>
                 )}

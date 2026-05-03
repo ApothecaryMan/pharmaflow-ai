@@ -44,7 +44,6 @@ export class DrugSearchEngine {
     }
     
     this.refreshCache();
-    console.log(`[SearchEngine] Indexed ${data.length} drugs.`);
   }
 
   /**

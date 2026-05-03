@@ -900,3 +900,40 @@ html:not(.dark).none-border-mode .card-shadow {
   pointer-events: none;
   user-select: none;
 }
+
+/* Logical Transform Origin Utilities */
+.origin-inline-start {
+  transform-origin: left;
+}
+[dir='rtl'] .origin-inline-start {
+  transform-origin: right;
+}
+
+.origin-inline-end {
+  transform-origin: right;
+}
+[dir='rtl'] .origin-inline-end {
+  transform-origin: left;
+}
+
+.origin-bottom-end {
+  transform-origin: bottom right;
+}
+[dir='rtl'] .origin-bottom-end {
+  transform-origin: bottom left;
+}
+
+/* Logical Slide-in Utilities */
+.slide-in-from-inline-start-1 {
+  --tw-enter-translate-x: -0.25rem;
+}
+[dir='rtl'] .slide-in-from-inline-start-1 {
+  --tw-enter-translate-x: 0.25rem;
+}
+
+.slide-in-from-inline-end-1 {
+  --tw-enter-translate-x: 0.25rem;
+}
+[dir='rtl'] .slide-in-from-inline-end-1 {
+  --tw-enter-translate-x: -0.25rem;
+}

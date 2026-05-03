@@ -35,8 +35,8 @@ export interface POSCartSidebarProps {
   cartSensors: any;
   handleCartDragEnd: (e: DragEndEvent) => void;
   mergedCartItems: any[];
-  highlightedIndex: number;
-  setHighlightedIndex: (idx: number) => void;
+  highlightedItemId: string | null;
+  setHighlightedItemId: (id: string | null) => void;
   color: string;
   showMenu: any;
   removeFromCart: any;
@@ -86,8 +86,8 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
   cartSensors,
   handleCartDragEnd,
   mergedCartItems,
-  highlightedIndex,
-  setHighlightedIndex,
+  highlightedItemId,
+  setHighlightedItemId,
   color,
   showMenu,
   removeFromCart,
@@ -335,10 +335,10 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                   return (
                     <React.Fragment key={itemId}>
                       <div
-                        id={`cart-item-${index}`}
+                        id={`cart-item-${itemId}`}
                         className='w-full'
-                        onClick={() => setHighlightedIndex(index)}
-                        onMouseDown={() => setHighlightedIndex(index)}
+                        onClick={() => setHighlightedItemId(itemId)}
+                        onMouseDown={() => setHighlightedItemId(itemId)}
                       >
                         <SortableCartItem
                           packItem={group.pack}
@@ -359,7 +359,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                             (batchesMap.get(getGroupingKey(group.common)) || []).filter(b => (b.stock || 0) > 0)
                           }
                           onSelectBatch={switchBatchWithAutoSplit}
-                          isHighlighted={index === highlightedIndex}
+                          isHighlighted={itemId === highlightedItemId}
                           currentLang={currentLang as 'en' | 'ar'}
                           globalDiscount={globalDiscount}
                           onSearchInTable={handleSearchInTable}

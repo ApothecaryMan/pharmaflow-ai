@@ -31,11 +31,12 @@ interface FormFieldProps {
   label: string;
   children: React.ReactNode;
   className?: string;
+  id?: string;
 }
 
-const FormField: React.FC<FormFieldProps> = ({ label, children, className = '' }) => (
+const FormField: React.FC<FormFieldProps> = ({ label, children, className = '', id }) => (
   <div className={className}>
-    <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">{label}</label>
+    <label htmlFor={id} className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">{label}</label>
     {children}
   </div>
 );
@@ -355,8 +356,9 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
 
   const renderGeneralView = () => (
     <div className="grid grid-cols-2 gap-5">
-      <FormField label={t.settings.branchName} className="col-span-2">
+      <FormField label={t.settings.branchName} className="col-span-2" id="branch-name">
         <SmartInput
+          id="branch-name"
           type="text"
           value={editingBranch?.name || ''}
           onChange={(e) => setEditingBranch(prev => ({ ...prev!, name: e.target.value }))}
@@ -364,8 +366,9 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
         />
       </FormField>
       
-      <FormField label={t.settings.branchCode}>
+      <FormField label={t.settings.branchCode} id="branch-code">
         <SmartInput
+          id="branch-code"
           type="text"
           dir="ltr"
           readOnly={!!editingBranch?.id}
@@ -415,8 +418,9 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
         />
       </FormField>
 
-      <FormField label={language === 'AR' ? 'العنوان بالتفصيل' : 'Street Address'} className="col-span-2">
+      <FormField label={language === 'AR' ? 'العنوان بالتفصيل' : 'Street Address'} className="col-span-2" id="branch-address">
         <SmartInput
+          id="branch-address"
           type="text"
           placeholder={language === 'AR' ? 'رقم المبنى، اسم الشارع...' : 'Building no, street name...'}
           value={editingBranch?.address || ''}
@@ -424,8 +428,9 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
         />
       </FormField>
       
-      <FormField label={t.settings?.branchPhone || 'Phone Number'} className="col-span-2">
+      <FormField label={t.settings?.branchPhone || 'Phone Number'} className="col-span-2" id="branch-phone">
         <SmartPhoneInput
+          id="branch-phone"
           placeholder="+20..."
           value={editingBranch?.phone || ''}
           onChange={(val) => setEditingBranch(prev => ({ ...prev!, phone: val }))}
@@ -469,11 +474,11 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
             value={employeeSearchTerm}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmployeeSearchTerm(e.target.value)}
             placeholder={language === 'AR' ? 'ابحث عن موظف...' : 'Search employee...'}
-            className="pl-10"
+            className="ps-10"
           />
         </div>
 
-        <div className="max-h-[350px] overflow-y-auto pr-1 custom-scrollbar grid grid-cols-1 gap-1">
+        <div className="max-h-[350px] overflow-y-auto pe-1 custom-scrollbar grid grid-cols-1 gap-1">
           {filteredList.length === 0 ? (
             <div className="py-12 flex flex-col items-center justify-center text-center opacity-40">
               <span className="material-symbols-rounded text-zinc-400" style={{ fontSize: '40px' }}>

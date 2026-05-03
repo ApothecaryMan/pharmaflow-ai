@@ -440,7 +440,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   };
 
   const handlePrint = (sale: Sale) => {
-    const activeSettings = getActiveReceiptSettings();
+    const activeSettings = getActiveReceiptSettings(sale.branchId);
     const options: InvoiceTemplateOptions = {
       ...activeSettings,
       language: language as 'EN' | 'AR',

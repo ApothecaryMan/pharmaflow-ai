@@ -133,10 +133,11 @@ export const SignUp: React.FC<SignUpProps> = ({ onViewChange, onLoginSuccess, la
                 <input
                   id='name'
                   type='text'
+                  autoComplete='off'
                   placeholder={language === 'AR' ? 'أحمد محمود' : 'John Doe'}
                   value={state.name}
                   onChange={(e) => setState((prev) => ({ ...prev, name: e.target.value, validationErrors: { ...prev.validationErrors, name: '' } }))}
-                  className={`w-full bg-zinc-900 border ${state.validationErrors.name ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 placeholder:text-zinc-600 cursor-text focus:bg-zinc-800/50`}
+                  className={`w-full bg-zinc-900 border ${state.validationErrors.name ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 placeholder:text-start cursor-text focus:bg-zinc-800/50`}
                 />
                 {state.validationErrors.name && <p className='text-xs text-red-500 mt-1 pl-1'>{state.validationErrors.name}</p>}
               </div>
@@ -150,10 +151,11 @@ export const SignUp: React.FC<SignUpProps> = ({ onViewChange, onLoginSuccess, la
                   <input
                     id='username'
                     type='text'
+                    autoComplete='off'
                     placeholder={language === 'AR' ? 'mohamed_99' : 'john_doe'}
                     value={state.username}
                     onChange={(e) => setState((prev) => ({ ...prev, username: e.target.value.toLowerCase(), validationErrors: { ...prev.validationErrors, username: '' } }))}
-                    className={`w-full bg-zinc-900 border ${state.validationErrors.username ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 pr-20 text-left placeholder:text-left cursor-text focus:bg-zinc-800/50`}
+                    className={`w-full bg-zinc-900 border ${state.validationErrors.username ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 pr-20 text-start placeholder:text-start cursor-text focus:bg-zinc-800/50`}
                     dir='ltr'
                   />
                   <span dir="ltr" className='absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm pointer-events-none font-medium'>
@@ -170,10 +172,11 @@ export const SignUp: React.FC<SignUpProps> = ({ onViewChange, onLoginSuccess, la
                 <input
                   id='email'
                   type='email'
+                  autoComplete='off'
                   placeholder={t.emailPlaceholder || 'you@example.com'}
                   value={state.email}
                   onChange={(e) => setState((prev) => ({ ...prev, email: e.target.value, validationErrors: { ...prev.validationErrors, email: '' } }))}
-                  className={`w-full bg-zinc-900 border ${state.validationErrors.email ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 text-left placeholder:text-left cursor-text focus:bg-zinc-800/50`}
+                  className={`w-full bg-zinc-900 border ${state.validationErrors.email ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 text-start placeholder:text-start cursor-text focus:bg-zinc-800/50`}
                   dir='ltr'
                 />
                 {state.validationErrors.email && <p className='text-xs text-red-500 mt-1 pl-1'>{state.validationErrors.email}</p>}
@@ -187,10 +190,11 @@ export const SignUp: React.FC<SignUpProps> = ({ onViewChange, onLoginSuccess, la
                   <input
                     id='password'
                     type={state.showPassword ? 'text' : 'password'}
+                    autoComplete='off'
                     placeholder={t.passwordPlaceholder}
                     value={state.password}
                     onChange={(e) => setState((prev) => ({ ...prev, password: e.target.value, validationErrors: { ...prev.validationErrors, password: '' } }))}
-                    className={`w-full bg-zinc-900 border ${state.validationErrors.password ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 pr-10 text-left placeholder:text-left cursor-text focus:bg-zinc-800/50`}
+                    className={`w-full bg-zinc-900 border ${state.validationErrors.password ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 pr-10 text-start placeholder:text-start cursor-text focus:bg-zinc-800/50`}
                     dir='ltr'
                   />
                   <button type='button' onClick={toggleShowPassword} className='absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 focus:text-green-500 cursor-pointer'>
@@ -220,10 +224,11 @@ export const SignUp: React.FC<SignUpProps> = ({ onViewChange, onLoginSuccess, la
                   <input
                     id='confirmPassword'
                     type={state.showPassword ? 'text' : 'password'}
+                    autoComplete='off'
                     placeholder={t.passwordPlaceholder}
                     value={state.confirmPassword}
                     onChange={(e) => setState((prev) => ({ ...prev, confirmPassword: e.target.value, validationErrors: { ...prev.validationErrors, confirmPassword: '' } }))}
-                    className={`w-full bg-zinc-900 border ${state.validationErrors.confirmPassword ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 pr-10 text-left placeholder:text-left cursor-text focus:bg-zinc-800/50`}
+                    className={`w-full bg-zinc-900 border ${state.validationErrors.confirmPassword ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 pr-10 text-start placeholder:text-start cursor-text focus:bg-zinc-800/50`}
                     dir='ltr'
                   />
                 </div>

@@ -294,7 +294,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         label: t.printReceipt || 'Print Receipt',
         icon: 'print',
         action: () => {
-          const opts = getActiveReceiptSettings();
+          const opts = getActiveReceiptSettings(activeBranchId);
           printInvoice(sale, opts);
         },
       },

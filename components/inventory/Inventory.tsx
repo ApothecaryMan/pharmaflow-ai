@@ -891,7 +891,7 @@ export const Inventory: React.FC<InventoryProps> = ({
               lite={false}
               dense={true}
               enablePagination={true}
-              enableVirtualization={false}
+              enableVirtualization={true}
               pageSize='auto'
               enableShowAll={true}
               initialFilters={activeFilters}
@@ -1077,10 +1077,11 @@ export const Inventory: React.FC<InventoryProps> = ({
               <div className='md:col-span-2 space-y-4 flex flex-col'>
                 <div className='grid grid-cols-2 gap-4'>
                   <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    <label htmlFor="brand-name" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                       {t.modal.brand} *
                     </label>
                     <input
+                      id="brand-name"
                       required
                       className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       value={formData.name}
@@ -1088,10 +1089,11 @@ export const Inventory: React.FC<InventoryProps> = ({
                     />
                   </div>
                   <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    <label htmlFor="name-arabic" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                       {t.modal.nameArabic || 'Arabic Name'}
                     </label>
                     <input
+                      id="name-arabic"
                       className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       value={formData.nameAr || ''}
                       onChange={(e) => setFormData({ ...formData, nameAr: e.target.value })}
@@ -1099,10 +1101,11 @@ export const Inventory: React.FC<InventoryProps> = ({
                     />
                   </div>
                   <div className='md:col-span-2 space-y-1'>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300'>
+                    <label htmlFor="generic-name" className='block text-xs font-medium text-gray-700 dark:text-gray-300'>
                       Generic Name
                     </label>
                     <input
+                      id="generic-name"
                       className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       value={Array.isArray(formData.genericName) ? formData.genericName.join(', ') : formData.genericName || ''}
                       onChange={(e) =>
@@ -1195,7 +1198,7 @@ export const Inventory: React.FC<InventoryProps> = ({
 
                 {/* Multi-Barcode Input */}
                 <div>
-                  <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label htmlFor="barcode-input" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     {t.modal.barcode}
                   </label>
                   <div className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus-within:ring-2 focus-within:ring-blue-500 transition-all flex flex-wrap gap-2 items-center min-h-[42px]'>
@@ -1254,11 +1257,12 @@ export const Inventory: React.FC<InventoryProps> = ({
                 </div>
 
                 <div>
-                  <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label htmlFor="internal-code" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     {t.modal.internalCode}
                   </label>
                   <div className='relative'>
                     <input
+                      id="internal-code"
                       className='w-full pl-3 pr-10 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm font-mono'
                       placeholder='Auto-generated'
                       value={formData.internalCode || ''}
@@ -1276,10 +1280,11 @@ export const Inventory: React.FC<InventoryProps> = ({
                 </div>
 
                 <div className='flex-1 flex flex-col'>
-                  <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label htmlFor="description-input" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     {t.modal.desc}
                   </label>
                   <SmartTextarea
+                    id="description-input"
                     className='w-full flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm resize-none'
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -1295,10 +1300,11 @@ export const Inventory: React.FC<InventoryProps> = ({
                   </h4>
                   <div className='grid grid-cols-2 gap-3'>
                     <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      <label htmlFor="stock-input" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                         {t.modal.stock}
                       </label>
                       <input
+                        id="stock-input"
                         type='number'
                         step='0.01'
                         required
@@ -1310,10 +1316,11 @@ export const Inventory: React.FC<InventoryProps> = ({
                       />
                     </div>
                     <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      <label htmlFor="units-pack" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                         {t.modal.unitsPerPack}
                       </label>
                       <input
+                        id="units-pack"
                         type='number'
                         min='1'
                         className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
@@ -1343,10 +1350,11 @@ export const Inventory: React.FC<InventoryProps> = ({
                   </h4>
                   <div className='space-y-4'>
                     <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      <label htmlFor="public-price" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                         {t.modal.publicPrice}
                       </label>
                       <input
+                        id="public-price"
                         type='number'
                         step='0.01'
                         required
@@ -1358,10 +1366,11 @@ export const Inventory: React.FC<InventoryProps> = ({
                       />
                     </div>
                     <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      <label htmlFor="cost-price" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                         {t.modal.cost}
                       </label>
                       <input
+                        id="cost-price"
                         type='number'
                         step='0.01'
                         className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
@@ -1375,10 +1384,11 @@ export const Inventory: React.FC<InventoryProps> = ({
 
                   <div className='grid grid-cols-2 gap-3'>
                     <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      <label htmlFor="unit-price" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                         {currentLang === 'ar' ? 'سعر الشريط' : 'Unit Price'}
                       </label>
                       <input
+                        id="unit-price"
                         type='number'
                         step='0.01'
                         className='w-full px-3 py-2 rounded-xl border border-amber-200 dark:border-amber-900/30 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-amber-500 outline-hidden transition-all text-sm font-bold text-amber-600'
@@ -1390,10 +1400,11 @@ export const Inventory: React.FC<InventoryProps> = ({
                       />
                     </div>
                     <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      <label htmlFor="unit-cost" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                         {currentLang === 'ar' ? 'تكلفة الشريط' : 'Unit Cost'}
                       </label>
                       <input
+                        id="unit-cost"
                         type='number'
                         step='0.01'
                         className='w-full px-3 py-2 rounded-xl border border-amber-200 dark:border-amber-900/30 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-amber-500 outline-hidden transition-all text-sm text-amber-700'
@@ -1406,10 +1417,11 @@ export const Inventory: React.FC<InventoryProps> = ({
                     </div>
                   </div>
                   <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    <label htmlFor="max-discount" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                       Max Discount (%)
                     </label>
                     <input
+                      id="max-discount"
                       type='number'
                       min='0'
                       max='100'

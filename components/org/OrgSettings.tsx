@@ -126,11 +126,12 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
             
             <div className="p-6 space-y-6">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider" htmlFor="org-name">
                   {language === 'AR' ? 'اسم المنظمة' : 'Organization Name'}
                 </label>
                 <div className="flex gap-3">
                   <SmartInput
+                    id="org-name"
                     value={editingName}
                     onChange={(e) => setEditingName(e.target.value)}
                     placeholder={language === 'AR' ? 'ادخل اسم المنظمة' : 'Enter organization name'}
@@ -153,10 +154,10 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider" htmlFor="org-id">
                     {language === 'AR' ? 'معرف المنظمة' : 'Organization ID'}
                   </label>
-                  <p className="text-sm font-mono text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 p-2 rounded-lg border border-zinc-100 dark:border-zinc-800 select-all">
+                  <p id="org-id" className="text-sm font-mono text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 p-2 rounded-lg border border-zinc-100 dark:border-zinc-800 select-all">
                     {org.id}
                   </p>
                 </div>

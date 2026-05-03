@@ -101,10 +101,11 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
                 <input
                   id='email'
                   type='email'
+                  autoComplete='off'
                   placeholder={t.emailPlaceholder || 'you@example.com'}
                   value={email}
                   onChange={(e) => handleEmailChange(e.target.value)}
-                  className={`w-full bg-zinc-900 border ${validationError ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 ${language === 'AR' ? 'text-right placeholder:text-right' : 'text-left placeholder:text-left'} cursor-text focus:bg-zinc-800/50`}
+                  className={`w-full bg-zinc-900 border ${validationError ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 text-start placeholder:text-start cursor-text focus:bg-zinc-800/50`}
                   dir='ltr'
                 />
                 {validationError && (

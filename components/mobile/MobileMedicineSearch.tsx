@@ -378,7 +378,7 @@ const DrugActionPill: React.FC<{
 
   return (
     <div className="shrink-0 relative">
-      <div className={`absolute -top-2.5 right-1 z-20 px-1.5 py-0.5 rounded-full text-[9px] font-black shadow-lg border-2 border-white dark:border-(--bg-secondary) animate-in zoom-in duration-300 ${
+      <div className={`absolute -top-2.5 end-1 z-20 px-1.5 py-0.5 rounded-full text-[9px] font-black shadow-lg border-2 border-white dark:border-(--bg-secondary) animate-in zoom-in duration-300 ${
         currentQtyInCart > 0 
           ? 'bg-amber-500 text-white' 
           : (drug.stock > 0 ? 'bg-green-500 text-white' : 'bg-red-500 text-white')

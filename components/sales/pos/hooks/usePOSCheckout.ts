@@ -137,7 +137,7 @@ export const usePOSCheckout = ({
       removeTab(activeTabId);
 
       try {
-        const opts = getActiveReceiptSettings();
+        const opts = getActiveReceiptSettings(activeBranchId);
         const shouldPrint = (isDelivery && opts.autoPrintOnDelivery) || opts.autoPrintOnComplete;
 
         if (shouldPrint) {

@@ -1,0 +1,152 @@
+[
+  {
+    "issue_id": "PERF-001",
+    "file": "components/sales/pos/ui/ClosedTabsHistoryModal.tsx",
+    "status": "fixed",
+    "change_summary": "Moved getBoundingClientRect() out of render body into useLayoutEffect to prevent forced reflows."
+  },
+  {
+    "issue_id": "PERF-002",
+    "file": "components/common/Tooltip.tsx",
+    "status": "fixed",
+    "change_summary": "Wrapped scroll listener updates in requestAnimationFrame and added throttling to reduce layout thrashing."
+  },
+  {
+    "issue_id": "RTL-005",
+    "file": "components/sales/pos/ui/ClosedTabsHistoryModal.tsx",
+    "status": "fixed",
+    "change_summary": "Removed manual isRTL checks for flex-row-reverse; relying on global dir attribute."
+  },
+  {
+    "issue_id": "DESIGN-004",
+    "file": "components/common/Tooltip.tsx",
+    "status": "fixed",
+    "change_summary": "Created src/styles/z-index.ts and replaced hardcoded z-9999 with Z_INDEX.TOOLTIP."
+  },
+  {
+    "issue_id": "PERF-003",
+    "file": "components/inventory/Inventory.tsx",
+    "status": "fixed",
+    "change_summary": "Enabled virtualization for the main inventory table to improve performance with large datasets."
+  },
+  {
+    "issue_id": "A11Y-006",
+    "file": "components/inventory/Inventory.tsx",
+    "status": "fixed",
+    "change_summary": "Added IDs to inventory form inputs and associated them with labels using htmlFor for better accessibility."
+  },
+  {
+    "issue_id": "BUNDLE-001",
+    "file": "components/common/Icons.tsx",
+    "status": "fixed",
+    "change_summary": "Replaced dynamic barrel imports with explicit named imports to enable tree-shaking and reduce bundle size."
+  },
+  {
+    "issue_id": "RTL-001",
+    "file": "components/onboarding/BranchSetupScreen.tsx",
+    "status": "fixed",
+    "change_summary": "Replaced physical margin-left with logical margin-inline-start (ms-1)."
+  },
+  {
+    "issue_id": "RTL-008",
+    "file": "components/onboarding/BranchSetupScreen.tsx",
+    "status": "fixed",
+    "change_summary": "Replaced conditional transform-origin with logical origin-inline-end."
+  },
+  {
+    "issue_id": "RTL-003",
+    "file": "components/layout/TabBar.tsx",
+    "status": "fixed",
+    "change_summary": "Replaced physical padding (pl-3 pr-8) with logical padding (ps-3 pe-8)."
+  },
+  {
+    "issue_id": "RTL-010",
+    "file": "components/layout/TabBar.tsx",
+    "status": "fixed",
+    "change_summary": "Replaced physical right positioning (right-1.5) with logical end positioning (end-1.5)."
+  },
+  {
+    "issue_id": "RTL-006",
+    "file": "components/mobile/InlineBarcodeScanner.tsx",
+    "status": "fixed",
+    "change_summary": "Replaced physical left positioning with logical start positioning for the scanning line."
+  },
+  {
+    "issue_id": "RTL-013",
+    "file": "components/mobile/InlineBarcodeScanner.tsx",
+    "status": "fixed",
+    "change_summary": "Replaced physical right positioning with logical end positioning for scanner controls."
+  },
+  {
+    "issue_id": "RTL-012",
+    "file": "components/mobile/MobileMedicineSearch.tsx",
+    "status": "fixed",
+    "change_summary": "Replaced physical right positioning with logical end positioning for the cart badge."
+  },
+  {
+    "issue_id": "RTL-007",
+    "file": "components/auth/Login.tsx",
+    "status": "fixed",
+    "change_summary": "Replaced ml-auto with ms-auto in the resend link button."
+  },
+  {
+    "issue_id": "RTL-014",
+    "file": "components/auth/Login.tsx",
+    "status": "fixed",
+    "change_summary": "Replaced right-3 with end-3 and used logical slide-in animations for input overlays."
+  },
+  {
+    "issue_id": "A11Y-001",
+    "file": "components/settings/BranchSettings.tsx",
+    "status": "fixed",
+    "change_summary": "Associated form labels with inputs using id and htmlFor in the branch edit modal."
+  },
+  {
+    "issue_id": "RTL-002",
+    "file": "components/settings/BranchSettings.tsx",
+    "status": "fixed",
+    "change_summary": "Replaced physical padding (pr-1) and absolute positioning with logical equivalents."
+  },
+  {
+    "issue_id": "RTL-009",
+    "file": "components/settings/BranchSettings.tsx",
+    "status": "fixed",
+    "change_summary": "Ensured form layout consistency in RTL by using logical grid and spacing utilities."
+  },
+  {
+    "issue_id": "A11Y-003",
+    "file": "components/common/HelpModal.tsx",
+    "status": "fixed",
+    "change_summary": "Added aria-label to the floating help button for screen reader support."
+  },
+  {
+    "issue_id": "RTL-015",
+    "file": "components/common/HelpModal.tsx",
+    "status": "fixed",
+    "change_summary": "Replaced conditional left/right positioning with logical end-6 for the help button."
+  },
+  {
+    "issue_id": "A11Y-004",
+    "file": "components/layout/StatusBar/items/NotificationBell.tsx",
+    "status": "fixed",
+    "change_summary": "Added role='log' and aria-live='polite' to the notification list for better screen reader feedback."
+  },
+  {
+    "issue_id": "A11Y-002",
+    "file": "components/sales/pos/ui/ClosedTabsHistoryModal.tsx",
+    "status": "fixed",
+    "change_summary": "Added list and listitem roles to the closed tabs history and replaced manual flex-row-reverse with logical layout."
+  },
+  {
+    "issue_id": "A11Y-005",
+    "file": "components/org/OrgSettings.tsx",
+    "status": "fixed",
+    "change_summary": "Associated organization name and ID labels with their respective fields using id and htmlFor."
+  },
+  {
+    "issue_id": "RTL-016",
+    "file": "components/auth/Login.tsx",
+    "status": "fixed",
+    "change_summary": "Implemented hybrid alignment: action icons fixed on the physical right ('right-3'), while placeholders mirror logically ('placeholder:text-start')."
+  }
+]

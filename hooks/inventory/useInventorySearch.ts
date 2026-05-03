@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Drug } from '../../types';
-import { DrugSearchEngine } from '../../services/search/drugSearchService';
+import { DrugSearchEngine, inventorySearchEngine } from '../../services/search/drugSearchService';
 
 interface UseInventorySearchProps {
   inventory: Drug[];
@@ -22,19 +22,24 @@ export const useInventorySearch = ({
   activeBranchId,
 }: UseInventorySearchProps) => {
   
+  // 1. Sync inventory to engine (only when inventory changes)
+  useMemo(() => {
+    inventorySearchEngine.indexData(inventory);
+  }, [inventory]);
+
+  // 2. Perform search
   const { filteredDrugs, totalResults } = useMemo(() => {
     if (!search || search.trim().length === 0) {
       return { filteredDrugs: [], totalResults: 0 };
     }
 
-    const engine = new DrugSearchEngine(inventory);
     const filters = {
       branchId: activeBranchId,
       category: category === 'All' ? ['all'] : [category],
       stock_status: stockFilter === 'all' ? ['all'] : [stockFilter]
     };
 
-    const results = engine.search(search, filters) as Drug[];
+    const results = inventorySearchEngine.search(search, filters) as Drug[];
 
     // Calculate total count based on unique groups (Name + Dosage Form)
     const uniqueGroups = new Set();
@@ -46,7 +51,7 @@ export const useInventorySearch = ({
       filteredDrugs: results, 
       totalResults: uniqueGroups.size 
     };
-  }, [inventory, search, category, stockFilter, activeBranchId]);
+  }, [search, category, stockFilter, activeBranchId]);
 
   return { filteredDrugs, totalResults };
 };

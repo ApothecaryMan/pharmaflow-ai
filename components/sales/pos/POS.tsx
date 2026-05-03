@@ -162,17 +162,18 @@ export const POS: React.FC<POSProps> = ({
   const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
   const [isClosedTabsModalOpen, setIsClosedTabsModalOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
-  const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
+  const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (mergedCartItems.length > 0 && highlightedIndex === -1) {
-      setHighlightedIndex(0);
+    if (mergedCartItems.length > 0 && !highlightedItemId) {
+      setHighlightedItemId(mergedCartItems[0].id);
     } else if (mergedCartItems.length === 0) {
-      setHighlightedIndex(-1);
-    } else if (highlightedIndex >= mergedCartItems.length) {
-      setHighlightedIndex(mergedCartItems.length - 1);
+      setHighlightedItemId(null);
+    } else if (highlightedItemId && !mergedCartItems.find(i => i.id === highlightedItemId)) {
+      // Fallback if item was removed: pick the last one or stay null
+      setHighlightedItemId(mergedCartItems.length > 0 ? mergedCartItems[mergedCartItems.length - 1].id : null);
     }
-  }, [mergedCartItems.length]);
+  }, [mergedCartItems, highlightedItemId]);
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -231,19 +232,19 @@ export const POS: React.FC<POSProps> = ({
 
   // Auto-scroll active CART item into view
   useEffect(() => {
-    if (highlightedIndex !== -1) {
-      const activeCartRow = document.getElementById(`cart-item-${highlightedIndex}`);
+    if (highlightedItemId) {
+      const activeCartRow = document.getElementById(`cart-item-${highlightedItemId}`);
       if (activeCartRow) {
         // Use requestAnimationFrame to ensure the DOM has rendered the new state
         requestAnimationFrame(() => {
           activeCartRow.scrollIntoView({ 
             behavior: 'smooth', 
-            block: highlightedIndex === mergedCartItems.length - 1 ? 'end' : 'nearest' 
+            block: 'nearest' 
           });
         });
       }
     }
-  }, [highlightedIndex, mergedCartItems.length]);
+  }, [highlightedItemId]);
 
   // Auto-highlight last item when added
   const prevCartLengthRef = useRef(cart.length);
@@ -251,7 +252,7 @@ export const POS: React.FC<POSProps> = ({
     if (cart.length > prevCartLengthRef.current) {
       // Item added - highlight the last one instantly before paint
       if (mergedCartItems.length > 0) {
-        setHighlightedIndex(mergedCartItems.length - 1);
+        setHighlightedItemId(mergedCartItems[mergedCartItems.length - 1].id);
       }
     }
     prevCartLengthRef.current = cart.length;
@@ -383,14 +384,14 @@ export const POS: React.FC<POSProps> = ({
   useEffect(() => {
     // Transition: was table focused, now not focused -> move to cart
     if (prevIsTableFocusedRef.current && !isTableFocused && mergedCartItems.length > 0) {
-      setHighlightedIndex(0);
+      setHighlightedItemId(mergedCartItems[0].id);
     }
     // Also handle initial case: table never focused and cart has items
-    if (!isTableFocused && mergedCartItems.length > 0 && highlightedIndex === -1) {
-      setHighlightedIndex(0);
+    if (!isTableFocused && mergedCartItems.length > 0 && !highlightedItemId) {
+      setHighlightedItemId(mergedCartItems[0].id);
     }
     prevIsTableFocusedRef.current = isTableFocused;
-  }, [isTableFocused, mergedCartItems.length, highlightedIndex]);
+  }, [isTableFocused, mergedCartItems, highlightedItemId]);
 
   usePosShortcuts({
     enabled: true,
@@ -413,8 +414,8 @@ export const POS: React.FC<POSProps> = ({
     },
     onTab: () => {
       // Find the active cart item row and focus its first input
-      if (highlightedIndex !== -1) {
-        const row = document.getElementById(`cart-item-${highlightedIndex}`);
+      if (highlightedItemId) {
+        const row = document.getElementById(`cart-item-${highlightedItemId}`);
         if (row) {
           const firstInput = row.querySelector('input, button');
           if (firstInput) {
@@ -425,21 +426,24 @@ export const POS: React.FC<POSProps> = ({
     },
     onNavigate: (direction) => {
       if (mergedCartItems.length === 0) return;
-      setHighlightedIndex((prev) => {
-        const next = direction === 'up' ? prev - 1 : prev + 1;
-        const clamped = Math.max(0, Math.min(next, mergedCartItems.length - 1));
-        if (clamped !== prev) {
+      setHighlightedItemId((prevId) => {
+        const currentIndex = mergedCartItems.findIndex(i => i.id === prevId);
+        const nextIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+        const clamped = Math.max(0, Math.min(nextIndex, mergedCartItems.length - 1));
+        const newItem = mergedCartItems[clamped];
+        if (newItem && newItem.id !== prevId) {
           playClick();
+          return newItem.id;
         }
-        return clamped;
+        return prevId;
       });
     },
     onQuantityChange: (delta) => {
-      if (highlightedIndex === -1 || !mergedCartItems[highlightedIndex]) {
+      const item = mergedCartItems.find(i => i.id === highlightedItemId);
+      if (!highlightedItemId || !item) {
         playError();
         return;
       }
-      const item = mergedCartItems[highlightedIndex];
       const targetId = item.common.id;
       const useUnit = !item.pack;
 
@@ -447,8 +451,8 @@ export const POS: React.FC<POSProps> = ({
       updateQuantity(targetId, useUnit, delta);
     },
     onDelete: () => {
-      if (highlightedIndex === -1 || !mergedCartItems[highlightedIndex]) return;
-      const item = mergedCartItems[highlightedIndex];
+      const item = mergedCartItems.find(i => i.id === highlightedItemId);
+      if (!highlightedItemId || !item) return;
       if (item.pack) removeFromCart(item.pack.id, false);
       if (item.unit) removeFromCart(item.unit.id, true);
       playClick();
@@ -979,8 +983,8 @@ export const POS: React.FC<POSProps> = ({
           cartSensors={cartSensors}
           handleCartDragEnd={handleCartDragEnd}
           mergedCartItems={mergedCartItems}
-          highlightedIndex={highlightedIndex}
-          setHighlightedIndex={setHighlightedIndex}
+          highlightedItemId={highlightedItemId}
+          setHighlightedItemId={setHighlightedItemId}
           color={color}
           showMenu={showMenu}
           removeFromCart={removeFromCart}

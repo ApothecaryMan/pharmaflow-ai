@@ -161,7 +161,7 @@ const SortableTab = ({
       {...attributes}
       {...listeners}
       className={`
-        group relative flex items-center gap-2 pl-3 pr-8 py-2 rounded-xl transition-all duration-200 ease-out cursor-pointer
+        group relative flex items-center gap-2 ps-3 pe-8 py-2 rounded-xl transition-all duration-200 ease-out cursor-pointer
         min-w-[100px] max-w-[180px] touch-manipulation backdrop-blur-md
         ${
           isActive
@@ -266,7 +266,7 @@ const SortableTab = ({
           }}
           onPointerDown={(e) => e.stopPropagation()} // Prevent drag start when clicking close
           className={`
-            absolute right-1.5 top-1/2 -translate-y-1/2
+            absolute end-1.5 top-1/2 -translate-y-1/2
             w-5 h-5 flex items-center justify-center rounded-full transition-colors 
             ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
             text-gray-400 hover:text-gray-700 dark:hover:text-gray-200
