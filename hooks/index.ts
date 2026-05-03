@@ -1,16 +1,24 @@
-// Hooks
+// Hooks Barrel File
 
-// App State Hooks
-export { type AppState, type ToastState, useAppState } from './useAppState';
+// Layout Hooks
+export { type AppState, type ToastState, useAppState } from './layout/useAppState';
+export { useColumnReorder } from './layout/useColumnReorder';
+export { useFilterDropdown } from './layout/useFilterDropdown';
+export { type NavigationHandlers, useNavigation } from './layout/useNavigation';
+export { useTheme } from './layout/useTheme';
+
+// Auth Hooks
+export { type AuthActions, type AuthState, useAuth } from './auth/useAuth';
+
+// Common Hooks
+export { useLongPress } from './common/useLongPress';
+
+// Domain Hooks
+export { useFinancials } from './sales/useFinancials';
+export { usePOSTabs } from './sales/usePOSTabs';
+export { useProcurement } from './purchases/useProcurement';
+
+// Root Hooks
 export { useAudit } from './useAudit';
-export { type AuthActions, type AuthState, useAuth } from './useAuth';
-export { useColumnReorder } from './useColumnReorder';
 export { type EntityHandlers, type SaleData, useEntityHandlers } from './useEntityHandlers';
-export { useFilterDropdown } from './useFilterDropdown';
-export { useFinancials } from './useFinancials';
-export { useLongPress } from './useLongPress';
-export { type NavigationHandlers, useNavigation } from './useNavigation';
-export { usePOSTabs } from './usePOSTabs';
-export { useProcurement } from './useProcurement';
 export { useRisk } from './useRisk';
-export { useTheme } from './useTheme';

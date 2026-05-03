@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { ROUTES } from '../config/routes';
-import { StorageKeys } from '../config/storageKeys';
-import { authService } from '../services/auth/authService';
-import type { ViewState } from '../types';
-import { usePersistedState } from './usePersistedState';
+import { ROUTES } from '../../config/routes';
+import { StorageKeys } from '../../config/storageKeys';
+import { authService } from '../../services/auth/authService';
+import type { ViewState } from '../../types';
+import { usePersistedState } from '../common/usePersistedState';
 
 export interface ToastState {
   message: string;

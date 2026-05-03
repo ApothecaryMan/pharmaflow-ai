@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import type { Drug, StockBatch } from '../types';
-import { permissionsService } from '../services/auth/permissionsService';
-import { getGroupingKey } from '../services/inventory/batchService';
-import { parseExpiryEndOfMonth } from '../utils/expiryUtils';
+import type { Drug, StockBatch } from '../../types';
+import { permissionsService } from '../../services/auth/permissionsService';
+import { getGroupingKey } from '../../services/inventory/batchService';
+import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 
 /**
  * Hook to derive computed inventory properties (stock, expiry) from batches.

@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ROUTES, TEST_ROUTES } from '../config/routes';
-import { useAlert } from '../context';
-import { authService } from '../services/auth/authService';
-import type { ViewState, UserSession } from '../types';
+import { ROUTES, TEST_ROUTES } from '../../config/routes';
+import { useAlert } from '../../context';
+import { authService } from '../../services/auth/authService';
+import type { ViewState, UserSession } from '../../types';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -105,7 +105,7 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
     let authListener: { unsubscribe: () => void } | null = null;
 
     if (isSupabaseConfigured) {
-      import('../lib/supabase').then(({ supabase }) => {
+      import('../../lib/supabase').then(({ supabase }) => {
         const { data } = supabase.auth.onAuthStateChange((event) => {
           if (event === 'PASSWORD_RECOVERY') {
             setIsRecoveringPassword(true);

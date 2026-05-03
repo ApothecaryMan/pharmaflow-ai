@@ -1,6 +1,6 @@
 import { type Dispatch, type SetStateAction, useEffect, useState } from 'react';
-import type { StorageKeys } from '../config/storageKeys';
-import { storage } from '../utils/storage';
+import type { StorageKeys } from '../../config/storageKeys';
+import { storage } from '../../utils/storage';
 
 /**
  * A hook that syncs state with localStorage.

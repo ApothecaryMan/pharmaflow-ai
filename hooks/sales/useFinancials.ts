@@ -8,10 +8,10 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   type FinancialPeriod,
   intelligenceService,
-} from '../services/intelligence/intelligenceService';
-import { useData } from '../services/DataContext';
-import { permissionsService } from '../services/auth/permissionsService';
-import type { FinancialKPIs, ProductFinancialItem, CategoryFinancialItem } from '../types/intelligence';
+} from '../../services/intelligence/intelligenceService';
+import { useData } from '../../services/DataContext';
+import { permissionsService } from '../../services/auth/permissionsService';
+import type { FinancialKPIs, ProductFinancialItem, CategoryFinancialItem } from '../../types/intelligence';
 
 interface UseFinancialsResult {
   kpis: FinancialKPIs | null;

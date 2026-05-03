@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { storage } from '../utils/storage';
+import { storage } from '../../utils/storage';
 
 interface UseColumnReorderProps {
   defaultColumns: string[];

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { StorageKeys } from '../config/storageKeys';
-import { CartItem, type SaleTab } from '../types';
-import { storage } from '../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
+import { CartItem, type SaleTab } from '../../types';
+import { storage } from '../../utils/storage';
 
 const MAX_TABS = 10;
 
-import { idGenerator } from '../utils/idGenerator';
+import { idGenerator } from '../../utils/idGenerator';
 
 // ...
 
