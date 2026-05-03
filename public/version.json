@@ -1,9 +1,9 @@
 {
-  "version": "2.013",
+  "version": "2.014",
   "releaseDate": "2026-05-03",
   "notes": {
-    "AR": "تحسينات في أداء النظام ونظام تحديثات تلقائي جديد.",
-    "EN": "System performance improvements and new automatic update system."
+    "AR": "إضافة مصمم الإيصالات الجديد وتحسينات في دقة طباعة الفواتير.",
+    "EN": "Added new Receipt Designer and improvements in invoice printing accuracy."
   },
   "forceUpdate": false
 }
