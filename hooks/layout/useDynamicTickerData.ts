@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { useData } from '../services';
-import { permissionsService } from '../services/auth/permissionsService';
+import { useData } from '../../services';
+import { permissionsService } from '../../services/auth/permissionsService';
 
 export interface TickerData {
   todaySales: number;

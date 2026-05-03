@@ -13,7 +13,7 @@ import { RiskPage } from '../components/intelligence/risk/RiskPage';
 // Import hooks
 import { useProcurement } from "../hooks/purchases/useProcurement";
 import { useFinancials } from "../hooks/sales/useFinancials";
-import { useRisk } from '../hooks/useRisk';
+import { useRisk } from '../hooks/inventory/useRisk';
 import { useAudit } from '../hooks/infrastructure/useAudit';
 import { type FinancialPeriod } from '../services/intelligence/intelligenceService';
 import { ProcurementKPIs } from '../components/intelligence/procurement/ProcurementKPIs';

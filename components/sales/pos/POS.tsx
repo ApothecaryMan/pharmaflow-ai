@@ -10,7 +10,7 @@ import { useAlert, useSettings } from '../../../context';
 import { getLocationName } from '../../../data/locations';
 import { useFilterDropdown } from '../../../hooks/layout/useFilterDropdown';
 import { usePOSTabs } from '../../../hooks/sales/usePOSTabs';
-import { useShift } from '../../../hooks/useShift'; // Import useShift
+import { useShift } from '../../../hooks/sales/useShift'; // Import useShift
 import { useData } from '../../../context/DataContext';
 import type { TRANSLATIONS } from '../../../i18n/translations';
 import type { CartItem, Customer, Drug, Employee, Language, Sale, Shift } from '../../../types';

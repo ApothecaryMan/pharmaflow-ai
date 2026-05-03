@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { COLOR_HEX_MAP } from '../../config/themeColors';
-import { useShift } from '../../hooks/useShift';
+import { useShift } from '../../hooks/sales/useShift';
 import { analyzeEmployeePerformance } from '../../services/geminiService';
 import type { Employee, Sale, Shift, ThemeColor } from '../../types';
 import { useData } from '../../context/DataContext';

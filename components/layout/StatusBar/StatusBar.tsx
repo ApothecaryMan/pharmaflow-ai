@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useSettings } from '../../../context';
-import { useDynamicTickerData } from '../../../hooks/useDynamicTickerData';
-import { useShift } from '../../../hooks/useShift';
+import { useDynamicTickerData } from '../../../hooks/layout/useDynamicTickerData';
+import { useShift } from '../../../hooks/sales/useShift';
 import packageJson from '../../../package.json';
 import { useData } from '../../../services';
 import { AlertsAndAds } from '../../features/alerts/AlertsAndAds';

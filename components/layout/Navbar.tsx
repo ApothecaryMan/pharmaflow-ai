@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { MenuItem } from '../../config/menuData';
 import { motion } from 'framer-motion';
 import type { UserRole } from '../../config/permissions';
+import { useShift } from '../../hooks/sales/useShift';
 import { useSettings } from '../../context';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { TRANSLATIONS } from '../../i18n/translations';

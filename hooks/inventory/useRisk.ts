@@ -5,10 +5,10 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { intelligenceService } from '../services/intelligence/intelligenceService';
-import { useData } from '../context/DataContext';
-import { permissionsService } from '../services/auth/permissionsService';
-import type { ExpiryRiskItem, RiskSummary } from '../types/intelligence';
+import { intelligenceService } from '../../services/intelligence/intelligenceService';
+import { useData } from '../../context/DataContext';
+import { permissionsService } from '../../services/auth/permissionsService';
+import type { ExpiryRiskItem, RiskSummary } from '../../types/intelligence';
 
 interface UseRiskResult {
   summary: RiskSummary | null;

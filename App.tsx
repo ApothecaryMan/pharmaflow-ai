@@ -26,7 +26,7 @@ import { useEntityHandlers } from './hooks/useEntityHandlers';
 import { useGlobalEventHandlers } from './hooks/infrastructure/useGlobalEventHandlers';
 import { useNavigation } from './hooks/layout/useNavigation';
 import { useSessionHandlers } from './hooks/auth/useSessionHandlers';
-import { ShiftProvider, useShift } from './hooks/useShift';
+import { ShiftProvider, useShift } from './hooks/sales/useShift';
 import { useTheme } from './hooks/layout/useTheme';
 import { TRANSLATIONS } from './i18n/translations';
 import { DataProvider, useData } from './context/DataContext';

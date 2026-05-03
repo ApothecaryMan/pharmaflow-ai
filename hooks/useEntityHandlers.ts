@@ -4,7 +4,7 @@ import { usePurchaseHandlers } from './purchases/usePurchaseHandlers';
 import { useCustomerHandlers } from './customers/useCustomerHandlers';
 import { useSupplierHandlers } from './suppliers/useSupplierHandlers';
 import { useEmployeeHandlers } from './hr/useEmployeeHandlers';
-import { useShift } from './useShift';
+import { useShift } from './sales/useShift';
 import type {
   ActionContext,
   CartItem,

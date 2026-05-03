@@ -20,7 +20,7 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { useRealTimeSalesAnalytics } from './useRealTimeSalesAnalytics';
 import { useSettings } from '../../context';
 import { useData } from '../../context/DataContext';
-import { useShift } from '../../hooks/useShift';
+import { useShift } from '../../hooks/sales/useShift';
 import { formatCurrency, formatCurrencyParts, getCurrencySymbol } from '../../utils/currency';
 import { money } from '../../utils/money';
 import { getDisplayName } from '../../utils/drugDisplayName';

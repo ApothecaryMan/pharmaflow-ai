@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
-import { useShift } from '../../hooks/useShift';
+import { useShift } from '../../hooks/sales/useShift';
 import type { Employee, Shift } from '../../types';
 import { createSearchRegex } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';

@@ -28,7 +28,7 @@ import { isToday, isAfter, subHours, parseISO } from 'date-fns';
 import { pricingService } from '../../../services/sales/pricingService';
 import * as stockOps from '../../../utils/stockOperations';
 import { idGenerator } from '../../../utils/idGenerator';
-import { useShift } from '../../../hooks/useShift';
+import { useShift } from '../../../hooks/sales/useShift';
 import { resolvePrice } from '../../../utils/stockOperations';
 
 const ShiftWarning = ({ t, compact = false }: { t: any; compact?: boolean }) => (
@@ -1155,7 +1155,6 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                         value={activeSubTab}
                         onChange={(val) => setActiveSubTab(val as 'items' | 'history')}
                         size='xs'
-                        variant='onCard'
                         fullWidth={false}
                       />
                     </div>

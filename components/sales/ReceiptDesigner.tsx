@@ -9,7 +9,7 @@ import { SmartInput, useSmartDirection } from '../common/SmartInputs';
 import { useStatusBar } from '../layout/StatusBar';
 import { generateInvoiceHTML, type InvoiceTemplateOptions } from '../sales/InvoiceTemplate';
 import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
-import { useShift } from '../../hooks/useShift';
+import { useShift } from '../../hooks/sales/useShift';
 import { idGenerator } from '../../utils/idGenerator';
 import { useData } from '../../context/DataContext';
 

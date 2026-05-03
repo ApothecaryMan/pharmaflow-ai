@@ -18,8 +18,10 @@ export { useLongPress } from './common/useLongPress';
 // Domain Hooks
 export { useFinancials } from './sales/useFinancials';
 export { usePOSTabs } from './sales/usePOSTabs';
+export { useShift } from './sales/useShift';
 export { useProcurement } from './purchases/useProcurement';
 export { useInventorySearch } from './inventory/useInventorySearch';
+export { useRisk } from './inventory/useRisk';
 
 // Infrastructure Hooks
 export { useAudit } from './infrastructure/useAudit';
@@ -28,6 +30,4 @@ export { usePrinter } from './infrastructure/usePrinter';
 
 // Root Hooks
 export { type EntityHandlers, type SaleData, useEntityHandlers } from './useEntityHandlers';
-export { useRisk } from './useRisk';
-export { useShift } from './useShift';
-export { useDynamicTickerData } from './useDynamicTickerData';
+export { useDynamicTickerData } from './layout/useDynamicTickerData';
