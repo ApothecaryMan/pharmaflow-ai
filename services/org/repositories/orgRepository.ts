@@ -97,6 +97,18 @@ export const orgRepository = {
     return data?.role || null;
   },
 
+  async getMemberByUserId(userId: string): Promise<OrgMember | null> {
+    const { data, error } = await supabase
+      .from('org_members')
+      .select('*')
+      .eq('user_id', userId)
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return this.mapMember(data);
+  },
+
   async insertMember(orgId: string, userId: string, role: string): Promise<OrgMember> {
     const { data, error } = await supabase
       .from('org_members')
