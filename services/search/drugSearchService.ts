@@ -173,7 +173,8 @@ export class DrugSearchEngine {
 
     let matches = this.cachedArray.filter(drug => {
       const nameEn = (drug.name || '').toLowerCase();
-      const nameAr = ((drug as any).nameArabic || (drug as any).nameAr || '').toLowerCase();
+      const nameAr = ((drug as any).nameArabic || drug.nameAr || '').toLowerCase();
+      
       const matchesFirst = startsWithSpace 
         ? (nameEn.includes(first) || nameAr.includes(first))
         : (nameEn.startsWith(first) || nameAr.startsWith(first));
@@ -202,8 +203,12 @@ export class DrugSearchEngine {
     }
 
     return matches.sort((a, b) => {
-      const aStarts = a.name.toLowerCase().startsWith(first) || ((a as any).nameArabic?.toLowerCase().startsWith(first) ?? a.nameAr?.toLowerCase().startsWith(first) ?? false);
-      const bStarts = b.name.toLowerCase().startsWith(first) || ((b as any).nameArabic?.toLowerCase().startsWith(first) ?? b.nameAr?.toLowerCase().startsWith(first) ?? false);
+      const nameArA = ((a as any).nameArabic || a.nameAr || '').toLowerCase();
+      const nameArB = ((b as any).nameArabic || b.nameAr || '').toLowerCase();
+      
+      const aStarts = a.name.toLowerCase().startsWith(first) || nameArA.startsWith(first);
+      const bStarts = b.name.toLowerCase().startsWith(first) || nameArB.startsWith(first);
+      
       if (aStarts && !bStarts) return -1;
       if (!aStarts && bStarts) return 1;
       return a.name.length - b.name.length;
