@@ -1,0 +1,9 @@
+{
+  "version": "2.013",
+  "releaseDate": "2026-05-03",
+  "notes": {
+    "AR": "تحسينات في أداء النظام ونظام تحديثات تلقائي جديد.",
+    "EN": "System performance improvements and new automatic update system."
+  },
+  "forceUpdate": false
+}
