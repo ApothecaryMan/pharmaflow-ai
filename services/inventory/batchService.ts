@@ -1,6 +1,6 @@
 /**
  * Stock Batch Service - FEFO (First Expiry First Out) Inventory Management
- * Online-Only implementation using Supabase.
+ * Business logic layer that orchestrates data access via BatchRepository.
  */
 
 import { money } from '../../utils/money';
@@ -8,41 +8,8 @@ import * as stockOps from '../../utils/stockOperations';
 import type { BatchAllocation, StockBatch, Drug, GroupedDrug, GroupingKey, CartItem } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
-import { supabase } from '../../lib/supabase';
 import { settingsService } from '../settings/settingsService';
-
-const mapBatchToDb = (b: Partial<StockBatch>): any => {
-  const db: any = {};
-  if (b.id !== undefined) db.id = b.id;
-  if (b.branchId !== undefined) db.branch_id = b.branchId;
-  if (b.drugId !== undefined) db.drug_id = b.drugId;
-  if (b.quantity !== undefined) db.quantity = b.quantity;
-  if (b.expiryDate !== undefined) {
-    if (b.expiryDate === '') db.expiry_date = null;
-    else if (b.expiryDate.length === 7 && /^\d{4}-\d{2}$/.test(b.expiryDate)) db.expiry_date = `${b.expiryDate}-01`;
-    else db.expiry_date = b.expiryDate;
-  }
-  if (b.costPrice !== undefined) db.cost_price = b.costPrice;
-  if (b.purchaseId !== undefined) db.purchase_id = b.purchaseId;
-  if (b.dateReceived !== undefined) db.date_received = b.dateReceived;
-  if (b.batchNumber !== undefined) db.batch_number = b.batchNumber;
-  if (b.version !== undefined) db.version = b.version;
-  return db;
-};
-
-const mapDbToBatch = (db: any): StockBatch => ({
-  id: db.id,
-  orgId: db.org_id,
-  branchId: db.branch_id,
-  drugId: db.drug_id,
-  quantity: db.quantity,
-  expiryDate: db.expiry_date,
-  costPrice: db.cost_price,
-  purchaseId: db.purchase_id || undefined,
-  dateReceived: db.date_received,
-  batchNumber: db.batch_number || undefined,
-  version: db.version || 1,
-});
+import { batchRepository } from './repositories/batchRepository';
 
 /**
  * Canonical grouping key strategy: barcode || (name|dosageForm|manufacturer)
@@ -57,30 +24,12 @@ export const getGroupingKey = (drug: Drug | Partial<Drug>): GroupingKey => {
 };
 
 export const batchService = {
-  async fetchBatchesFromSupabase(branchId?: string, drugId?: string, drugIds?: string[]): Promise<StockBatch[]> {
-    try {
-      let query = supabase.from('stock_batches').select('*');
-      if (branchId) query = query.eq('branch_id', branchId);
-      if (drugId) query = query.eq('drug_id', drugId);
-      if (drugIds && drugIds.length > 0) query = query.in('drug_id', drugIds);
-      
-      const { data, error } = await query.order('expiry_date', { ascending: true });
-      if (error) throw error;
-      return (data || []).map(mapDbToBatch);
-    } catch (err) {
-      console.error('[BatchService] fetchBatches failed:', err);
-      return [];
-    }
-  },
-
   async getAllBatches(branchId?: string, drugId?: string, drugIds?: string[]): Promise<StockBatch[]> {
-    return this.fetchBatchesFromSupabase(branchId, drugId, drugIds);
+    return batchRepository.getAll(branchId, drugId, drugIds);
   },
 
   async getBatchById(batchId: string): Promise<StockBatch | null> {
-    const { data, error } = await supabase.from('stock_batches').select('*').eq('id', batchId).maybeSingle();
-    if (error || !data) return null;
-    return mapDbToBatch(data);
+    return batchRepository.getById(batchId);
   },
 
   async createBatch(batch: Omit<StockBatch, 'id'>, branchId?: string): Promise<StockBatch> {
@@ -88,27 +37,12 @@ export const batchService = {
     const effectiveBranchId = branchId || batch.branchId || settings.activeBranchId;
     
     // 1. Check for existing batch with same drug, branch, and expiry
-    let query = supabase.from('stock_batches')
-      .select('*')
-      .eq('drug_id', batch.drugId)
-      .eq('branch_id', effectiveBranchId);
-      
-    if (batch.expiryDate) {
-      let expDate = batch.expiryDate;
-      if (expDate.length === 7 && /^\d{4}-\d{2}$/.test(expDate)) expDate = `${expDate}-01`;
-      query = query.eq('expiry_date', expDate);
-    } else {
-      query = query.is('expiry_date', null);
-    }
+    const existing = await batchRepository.findExistingBatch(batch.drugId, effectiveBranchId, batch.expiryDate || null);
 
-    const { data: existingBatches, error: searchError } = await query;
-    if (searchError) throw searchError;
-
-    if (existingBatches && existingBatches.length > 0) {
-      // Merge into the first matching batch
-      const existing = existingBatches[0];
+    if (existing) {
+      // Merge into the matching batch
       const oldQty = existing.quantity || 0;
-      const oldCost = existing.cost_price || 0;
+      const oldCost = existing.costPrice || 0;
       const addedQty = batch.quantity || 0;
       const addedCost = batch.costPrice || 0;
       
@@ -124,19 +58,16 @@ export const batchService = {
       }
       
       // Use atomic increment for safety during merging
-      const { data, error } = await supabase.rpc('atomic_increment_batch', {
-        p_batch_id: existing.id,
-        p_delta: addedQty,
-      });
-      
-      if (error) throw error;
+      const success = await batchRepository.atomicIncrement(existing.id, addedQty);
+      if (!success) throw new Error(`Failed to merge into batch: ${existing.id}`);
       
       // Update the cost price separately since RPC only updates quantity
-      await supabase.from('stock_batches')
-        .update({ cost_price: newCost, date_received: new Date().toISOString() })
-        .eq('id', existing.id);
+      await batchRepository.update(existing.id, { 
+        costPrice: newCost, 
+        dateReceived: new Date().toISOString() 
+      });
         
-      const updatedBatch = await this.getBatchById(existing.id);
+      const updatedBatch = await batchRepository.getById(existing.id);
       return updatedBatch!;
     }
 
@@ -148,39 +79,23 @@ export const batchService = {
       version: 1, 
     };
 
-    const { error } = await supabase.from('stock_batches').insert(mapBatchToDb(newBatch));
-    if (error) throw error;
+    await batchRepository.insert(newBatch);
     return newBatch;
   },
 
   async updateBatchQuantity(batchId: string, delta: number, skipFetch: boolean = false): Promise<StockBatch | null> {
-    // Atomic: SET quantity = quantity + delta, version = version + 1
-    const { data, error } = await supabase.rpc('atomic_increment_batch', {
-      p_batch_id: batchId,
-      p_delta: delta,
-    });
-    if (error) throw error;
-
-    if (!data || data.length === 0) {
+    const success = await batchRepository.atomicIncrement(batchId, delta);
+    if (!success) {
       throw new Error(`Insufficient batch stock or missing batch: ${batchId}`);
     }
     
-    if (skipFetch) {
-      return null;
-    }
-
-    const batch = await this.getBatchById(batchId);
-    return batch;
+    if (skipFetch) return null;
+    return batchRepository.getById(batchId);
   },
 
   async updateBatch(batchId: string, updates: Partial<StockBatch>): Promise<StockBatch | null> {
-    const { error } = await supabase
-      .from('stock_batches')
-      .update(mapBatchToDb(updates))
-      .eq('id', batchId);
-      
-    if (error) throw error;
-    return this.getBatchById(batchId);
+    await batchRepository.update(batchId, updates);
+    return batchRepository.getById(batchId);
   },
 
   async allocateStockBulk(
@@ -284,27 +199,17 @@ export const batchService = {
   ): Promise<void> {
     if (!allocations || allocations.length === 0 || quantityToReturn <= 0) return;
 
-    // Pro-rata redistribution: distribute quantityToReturn across original batches
-    // according to their original allocation proportions.
     let remainingToReturn = quantityToReturn;
-    
-    // Sort allocations to return to the latest batches first (or any consistent order)
     const sortedAllocations = [...allocations].sort((a, b) => b.quantity - a.quantity);
 
     for (const alloc of sortedAllocations) {
       if (remainingToReturn <= 0) break;
-      
       const canReturnToThis = Math.min(alloc.quantity, remainingToReturn);
       if (canReturnToThis <= 0) continue;
 
-      // Atomic update - we use rpc directly or via optimized updateBatchQuantity
-      // Try to update directly; if it doesn't exist, we'll handle it (though usually it should exist)
-      const { data, error } = await supabase.rpc('atomic_increment_batch', {
-        p_batch_id: alloc.batchId,
-        p_delta: canReturnToThis,
-      });
+      const success = await batchRepository.atomicIncrement(alloc.batchId, canReturnToThis);
 
-      if (error || !data || data.length === 0) {
+      if (!success) {
         // Recreate batch if it was deleted but we are returning to it
         await this.createBatch({
           drugId,
@@ -321,9 +226,6 @@ export const batchService = {
       
       remainingToReturn -= canReturnToThis;
     }
-    
-    // If there's still remaining (e.g. user is returning more than original allocation for some reason),
-    // we should ideally log a warning or put it in the most recent batch.
   },
 
   async getTotalStock(drugId: string, branchId?: string): Promise<number> {
@@ -348,7 +250,6 @@ export const batchService = {
     let totalQuantity = 0;
 
     for (const b of activeBatches) {
-      // Calculate total value of each batch and sum them up
       totalValue = money.add(totalValue, money.multiply(b.costPrice, b.quantity, 0));
       totalQuantity += b.quantity;
     }
@@ -384,19 +285,15 @@ export const batchService = {
     });
 
     return Object.entries(groups).map(([key, items]) => {
-      // 1. Extract ALL batches from all drugs in this group
       const allBatchesInGroup: Drug[] = [];
       items.forEach(d => {
         if (d.batches && d.batches.length > 0) {
           allBatchesInGroup.push(...d.batches);
         } else {
-          // If a drug has no batches attached (e.g. legacy or 0 stock), 
-          // add the drug itself as a single batch for display
           allBatchesInGroup.push(d);
         }
       });
 
-      // 2. Sort batches by expiry date (FEFO)
       const sortedBatches = [...allBatchesInGroup].sort((a, b) => {
         if (!a.expiryDate) return 1;
         if (!b.expiryDate) return -1;
@@ -405,12 +302,7 @@ export const batchService = {
         return isNaN(dateA) ? 1 : isNaN(dateB) ? -1 : dateA - dateB;
       });
 
-      // 3. The representative drug (earliest batch)
       const earliest = sortedBatches[0];
-      
-      // 4. Sum up stock correctly
-      // We should use the stock from the drugs themselves if they were already computed
-      // OR sum up the sortedBatches.
       const totalStock = sortedBatches.reduce((sum, b) => sum + (b.stock || 0), 0);
 
       return {
@@ -448,7 +340,7 @@ export const batchService = {
 
     for (const batch of sortedBatches) {
       if (remainingUnits <= 0) break;
-      const batchMaxUnits = (batch.stock || 0); // stock is already in units in the DB/Drug type
+      const batchMaxUnits = (batch.stock || 0);
       const takeUnits = Math.min(batchMaxUnits, remainingUnits);
 
       if (takeUnits > 0) {
@@ -489,24 +381,16 @@ export const batchService = {
   },
 
   async deleteBatchById(batchId: string): Promise<boolean> {
-    const { error } = await supabase.from('stock_batches').delete().eq('id', batchId);
-    return !error;
+    return batchRepository.delete(batchId);
   },
 
   async deleteBatchesByDrugId(drugId: string): Promise<boolean> {
-    const { error } = await supabase.from('stock_batches').delete().eq('drug_id', drugId);
-    return !error;
+    return batchRepository.deleteByDrugId(drugId);
   },
 
-  /**
-   * Validates if the current cart's requirements are still met by the actual inventory.
-   * Prevents double-deduction and race conditions.
-   * Returns a list of drugs that are now out of stock or insufficient.
-   */
   validateCartStock: async (cart: CartItem[], branchId: string): Promise<{ drugId: string, name: string, available: number, required: number }[]> => {
     const groupedRequirements = new Map<string, number>();
     
-    // 1. Sum up all requirements per drug ID
     cart.forEach(item => {
       const units = stockOps.resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack);
       groupedRequirements.set(item.id, (groupedRequirements.get(item.id) || 0) + units);
@@ -514,7 +398,6 @@ export const batchService = {
 
     const issues: { drugId: string, name: string, available: number, required: number }[] = [];
 
-    // 2. Cross-reference with actual batch levels
     for (const [drugId, required] of groupedRequirements.entries()) {
       const drugBatches = await batchService.getAllBatches(branchId, drugId);
       const totalAvailable = drugBatches.reduce((sum, b) => sum + b.quantity, 0);

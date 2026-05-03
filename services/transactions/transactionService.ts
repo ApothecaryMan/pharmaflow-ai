@@ -16,6 +16,12 @@ import { returnService } from '../returns/returnService';
 import { settingsService } from '../settings/settingsService';
 import * as stockOps from '../../utils/stockOperations';
 import { supabase } from '../../lib/supabase';
+import { salesRepository } from '../sales/repositories/salesRepository';
+import { stockMovementRepository } from '../inventory/repositories/stockMovementRepository';
+import { returnsRepository } from '../returns/repositories/returnsRepository';
+import { cashRepository } from '../cash/repositories/cashRepository';
+import { batchRepository } from '../inventory/repositories/batchRepository';
+
 import type { Sale, CartItem, Drug, StockMovement, ActionContext, Purchase, PurchaseReturn, Return } from '../../types';
 
 export interface TransactionResult<T = any> {
@@ -28,28 +34,7 @@ export interface CheckoutResult extends TransactionResult<Sale> {
   sale?: Sale;
 }
 
-/**
- * UndoManager - Manages a stack of rollback actions for atomic transactions.
- */
-class UndoManager {
-  private actions: (() => Promise<void>)[] = [];
-
-  push(action: () => Promise<void>) {
-    this.actions.push(action);
-  }
-
-  async undoAll() {
-    console.warn('[UndoManager] Executing rollbacks...');
-    for (let i = this.actions.length - 1; i >= 0; i--) {
-      try {
-        await this.actions[i]();
-      } catch (err) {
-        console.error('[UndoManager] Failed to undo action:', err);
-      }
-    }
-    this.actions = [];
-  }
-}
+import { UndoManager } from './undoManager';
 
 export const transactionService = {
   async processCheckout(
@@ -147,14 +132,8 @@ export const transactionService = {
       // 3. Generate IDs
       const internalId = idGenerator.uuid();
       
-      // Calculate Daily Order Number atomically in DB to prevent race conditions
-      const { data: dailyOrderNumber, error: dailyNumError } = await supabase.rpc('get_next_daily_order_number', {
-        p_branch_id: activeBranchId
-      });
-      
-      if (dailyNumError) {
-        console.warn('[TransactionService] Failed to get atomic daily number, falling back to 1', dailyNumError);
-      }
+      const dailyOrderNumber = await salesRepository.getNextDailyOrderNumber(activeBranchId);
+
       // Generate the Global Serial ID (e.g. PF-0042)
       const serialId = await idGenerator.generate('sales', activeBranchId, branchCode);
       movementEntries.forEach(m => m.referenceId = internalId);
@@ -188,13 +167,13 @@ export const transactionService = {
       const createdMovements = await stockMovementService.logMovementsBulk(movementEntries);
       undoManager.push(async () => {
         const movementIds = createdMovements.map(m => m.id);
-        await supabase.from('stock_movements').delete().in('id', movementIds);
+        await stockMovementRepository.deleteByIds(movementIds);
       });
 
       // C. Create Sale
       const createdSale = await salesService.create(newSale, activeBranchId);
       undoManager.push(async () => {
-        await supabase.from('sales').delete().eq('id', createdSale.id);
+        await salesRepository.delete(createdSale.id);
         // If there were any other tables linked (like sale_items), we'd delete them here too.
         // Currently, salesService.create handles everything via the JSONB 'items' column in 'sales'.
       });
@@ -328,7 +307,7 @@ export const transactionService = {
           // We don't have a direct 'delete transaction' but we could add a reversal
           // For now, most shift transactions are additive. 
           // In a real rollback, we'd want to remove the tx record if possible.
-          await supabase.from('shift_transactions').delete().eq('id', txId);
+          await cashRepository.deleteTransaction(txId);
         });
       }
 
@@ -632,30 +611,15 @@ export const transactionService = {
       const createdMovements = await stockMovementService.logMovementsBulk(movementEntries);
       undoManager.push(async () => {
         const movementIds = createdMovements.map(m => m.id);
-        await supabase.from('stock_movements').delete().in('id', movementIds);
+        await stockMovementRepository.deleteByIds(movementIds);
       });
 
-      // 3. Create Return Record
-      const { error: returnError } = await (supabase as any).from('returns').insert({
-        id: returnData.id,
-        serial_id: returnData.serialId,
-        branch_id: activeBranchId,
-        org_id: orgId,
-        sale_id: returnData.saleId,
-        date: returnData.date,
-        return_type: returnData.returnType,
-        total_refund: returnData.totalRefund,
-        reason: returnData.reason,
-        notes: returnData.notes,
-        processed_by: currentEmployeeId,
-      });
-      if (returnError) throw returnError;
+      await returnsRepository.insertReturn(returnData, currentEmployeeId);
       undoManager.push(async () => {
-        await supabase.from('returns').delete().eq('id', returnData.id);
+        await returnsRepository.deleteReturn(returnData.id);
       });
 
-      // 4. Create Return Items
-      const { error: itemsError } = await (supabase as any).from('return_items').insert(
+      await returnsRepository.insertReturnItems(
         returnData.items.map(item => ({
           branch_id: activeBranchId,
           return_id: returnData.id,
@@ -670,9 +634,8 @@ export const transactionService = {
           dosage_form: item.dosageForm,
         }))
       );
-      if (itemsError) throw itemsError;
       undoManager.push(async () => {
-        await supabase.from('return_items').delete().eq('return_id', returnData.id);
+        await returnsRepository.deleteReturnItems(returnData.id);
       });
 
       // 5. Update Original Sale
@@ -701,7 +664,7 @@ export const transactionService = {
           relatedSaleId: sale.id,
         });
         undoManager.push(async () => {
-          await supabase.from('cash_transactions').delete().eq('id', cashTx.id);
+          await cashRepository.deleteTransaction(cashTx.id);
         });
       }
 
@@ -778,16 +741,11 @@ export const transactionService = {
       }, context.branchId);
 
       undoManager.push(async () => {
-        // [ROLLBACK] 1. Delete associated stock movements first (loose reference)
-        await supabase.from('stock_movements').delete().eq('reference_id', newPurchase.id);
-        
-        // [ROLLBACK] 2. Delete stock batches created by this purchase to prevent FK conflicts
-        // These have a hard foreign key reference to the purchase record
-        await supabase.from('stock_batches').delete().eq('purchase_id', newPurchase.id);
-        
-        // [ROLLBACK] 3. Finally delete the purchase itself
+        await stockMovementRepository.deleteByReferenceId(newPurchase.id);
+        await batchRepository.deleteByPurchaseId(newPurchase.id);
         await supabase.from('purchases').delete().eq('id', newPurchase.id);
       });
+
 
       // 2. For direct purchases, we handle cash/audit directly without "Manager Approval" label
       if (purchase.paymentMethod === 'cash' && context.shiftId) {
