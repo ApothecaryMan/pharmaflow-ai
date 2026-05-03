@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useState } from 'react';
+import React, { forwardRef, useEffect, useState, useRef } from 'react';
 import { SearchInput } from './SearchInput';
 import { useSettings } from '../../context/SettingsContext';
 import { TRANSLATIONS } from '../../i18n/translations';
@@ -72,13 +72,18 @@ export const SearchEngineInput = forwardRef<HTMLInputElement, SearchEngineInputP
     const [internalSuggestions, setInternalSuggestions] = useState<string[]>([]);
     const [internalResultsCount, setInternalResultsCount] = useState(0);
 
+    const onResultsChangeRef = useRef(onResultsChange);
+    useEffect(() => {
+      onResultsChangeRef.current = onResultsChange;
+    }, [onResultsChange]);
+
     // Automated Search Effect
     useEffect(() => {
       // If we are using the internal global engine
       if (engine && !inventory) {
         const results = engine.search(value, activeFilters);
         setInternalResultsCount(results.length);
-        onResultsChange?.(results);
+        onResultsChangeRef.current?.(results);
         
         const topSuggestions = results
           .slice(0, 5)
@@ -88,20 +93,16 @@ export const SearchEngineInput = forwardRef<HTMLInputElement, SearchEngineInputP
       
       // If we are using a passed-in local inventory (Optimized to use Singleton)
       if (inventory && inventory.length > 0) {
-        // We use the singleton inventorySearchEngine which is kept in sync by DataContext.
-        // If the inventory prop actually contains DIFFERENT data than the singleton, 
-        // we might still need a local engine, but for 99% of POS/Inventory cases, 
-        // they are the same.
         const results = inventorySearchEngine.search(value, activeFilters);
         setInternalResultsCount(results.length);
-        onResultsChange?.(results);
+        onResultsChangeRef.current?.(results);
         
         const topSuggestions = results
           .slice(0, 5)
           .map(d => d.name || '');
         setInternalSuggestions(topSuggestions);
       }
-    }, [value, engine, activeFilters, inventory, onResultsChange]);
+    }, [value, engine, activeFilters, inventory]);
 
     // Determine which data to use (Internal vs External)
     const suggestions = (inventory || engine) ? internalSuggestions : externalSuggestions;

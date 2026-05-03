@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import { DrugSearchEngine } from '../services/search/drugSearchService';
 import { 
   openCatalogDB, 
@@ -25,47 +25,15 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [totalItems, setTotalItems] = useState(0);
 
-  // Initialize Engine and Load Cache
-  useEffect(() => {
-    const init = async () => {
-      try {
-        setIsLoading(true);
-        const db = await openCatalogDB();
-        
-        // 1. Load from IndexedDB
-        const cachedDrugs = await loadCatalogFromDB(db);
-        const syncTime = await getLastSyncTime(db);
-        
-        if (cachedDrugs.length > 0) {
-          engine.indexData(cachedDrugs);
-          setTotalItems(cachedDrugs.length);
-          setLastSync(syncTime);
-          console.log(`[CatalogContext] Loaded ${cachedDrugs.length} items from IndexedDB.`);
-          
-          // Background sync if it's been a while (optional)
-          syncWithSource();
-        } else {
-          // 2. First-time sync from Supabase
-          await syncWithSource();
-        }
-      } catch (error) {
-        console.error('[CatalogContext] Initialization failed:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    init();
-  }, [engine]);
-
-  const syncWithSource = async () => {
+  const syncWithSource = useCallback(async () => {
     try {
       const db = await openCatalogDB();
       const lastTime = await getLastSyncTime(db);
       
       console.log(`[CatalogContext] Syncing with Supabase (last sync: ${lastTime || 'never'})...`);
       
-      let query = supabase.from('global_drugs').select('*');
+      const columns = 'id, name_en, name_ar, barcode, public_price, category, active_substance, updated_at';
+      let query = supabase.from('global_drugs').select(columns);
       
       // Delta Sync Logic
       if (lastTime) {
@@ -104,17 +72,54 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       } else {
         console.log('[CatalogContext] Catalog is already up to date.');
         const allItems = await loadCatalogFromDB(db);
-        if (totalItems !== allItems.length) {
-          engine.indexData(allItems);
-          setTotalItems(allItems.length);
-        }
+        // We don't use totalItems from state here to avoid stale closures
+        setTotalItems(prev => {
+          if (prev !== allItems.length) {
+            engine.indexData(allItems);
+            return allItems.length;
+          }
+          return prev;
+        });
       }
     } catch (err) {
       console.error('[CatalogContext] Sync error:', err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [engine]);
+
+  // Initialize Engine and Load Cache
+  useEffect(() => {
+    const init = async () => {
+      try {
+        setIsLoading(true);
+        const db = await openCatalogDB();
+        
+        // 1. Load from IndexedDB
+        const cachedDrugs = await loadCatalogFromDB(db);
+        const syncTime = await getLastSyncTime(db);
+        
+        if (cachedDrugs.length > 0) {
+          engine.indexData(cachedDrugs);
+          setTotalItems(cachedDrugs.length);
+          setLastSync(syncTime);
+          console.log(`[CatalogContext] Loaded ${cachedDrugs.length} items from IndexedDB.`);
+          
+          // Background sync if it's been a while (optional)
+          syncWithSource();
+        } else {
+          // 2. First-time sync from Supabase
+          await syncWithSource();
+        }
+      } catch (error) {
+        console.error('[CatalogContext] Initialization failed:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    init();
+  }, [engine, syncWithSource]);
 
   const value = useMemo(() => ({
     engine,

@@ -122,41 +122,34 @@ export class DrugSearchEngine {
 
     const [first, ...rest] = words;
 
-    // --- Optimization Step 1: Filter by Text Match First (Broad Pool) ---
-    // This is much faster than applying complex filters (stock, branch) first.
     let matches = this.cachedArray.filter(drug => {
-      const nameEn = drug.name.toLowerCase();
-      const nameAr = (drug.nameAr || '').toLowerCase();
+      const nameEn = (drug.name || '').toLowerCase();
+      const nameAr = ((drug as any).nameArabic || (drug as any).nameAr || '').toLowerCase();
       
-      // Check if either name contains the first word
-      if (startsWithSpace) {
-        if (!nameEn.includes(first) && !nameAr.includes(first)) return false;
-      } else {
-        if (!nameEn.startsWith(first) && !nameAr.startsWith(first)) return false;
-      }
+      // Check if either name contains/starts with the first word
+      const matchesFirst = startsWithSpace 
+        ? (nameEn.includes(first) || nameAr.includes(first))
+        : (nameEn.startsWith(first) || nameAr.startsWith(first));
 
-      // Check the rest of the words in the full string (including generic)
-      if (rest.length > 0 || (drug as Drug).genericName || (drug as DrugCatalogItem).activeSubstance) {
+      if (!matchesFirst) {
+        // If it didn't match the name, check generic/substance too
         const substance = (drug as DrugCatalogItem).activeSubstance || '';
         const generic = Array.isArray((drug as Drug).genericName) 
           ? (drug as Drug).genericName.join(' ').toLowerCase() 
           : String(substance).toLowerCase();
-        
+          
+        if (!generic.includes(first)) return false;
+      }
+
+      // Check the rest of the words in the full string
+      if (rest.length > 0) {
+        const substance = (drug as DrugCatalogItem).activeSubstance || '';
+        const generic = Array.isArray((drug as Drug).genericName) 
+          ? (drug as Drug).genericName.join(' ').toLowerCase() 
+          : String(substance).toLowerCase();
         const fullName = `${nameEn} ${nameAr} ${generic}`;
         
-        // If we only have one word and it passed the startsWith check, we're good
-        if (rest.length === 0) {
-          // If it didn't start with the first word but we are in "contains" mode (space),
-          // we already checked it above. If we are in prefix mode, it passed.
-          // However, we might want to check the generic name too if it didn't match the names.
-          if (!nameEn.startsWith(first) && !nameAr.startsWith(first)) {
-             if (!fullName.includes(first)) return false;
-          }
-        }
-
-        if (rest.length > 0) {
-          return rest.every(w => fullName.includes(w));
-        }
+        return rest.every(w => fullName.includes(w));
       }
 
       return true;
@@ -215,7 +208,7 @@ export class DrugSearchEngine {
       term = parts[1].trim();
     }
 
-    const initialMatches = term ? this.searchByName(term, filters) : this.cachedArray;
+    const initialMatches = term ? this.internalSearchByName(term, filters) : this.cachedArray;
     
     return initialMatches
       .filter(d => 
@@ -223,6 +216,55 @@ export class DrugSearchEngine {
       )
       .slice(0, 50)
       .map(d => this.transformResult(d, filters));
+  }
+
+  /**
+   * Internal search to avoid double transformation.
+   */
+  private internalSearchByName(query: string, filters?: any): SearchableDrug[] {
+    const rawTerm = query.toLowerCase();
+    const startsWithSpace = rawTerm.startsWith(' ');
+    const words = rawTerm.trim().split(/\s+/).filter(w => w.length > 0);
+    if (words.length === 0) return [];
+    const [first, ...rest] = words;
+
+    let matches = this.cachedArray.filter(drug => {
+      const nameEn = (drug.name || '').toLowerCase();
+      const nameAr = ((drug as any).nameArabic || (drug as any).nameAr || '').toLowerCase();
+      const matchesFirst = startsWithSpace 
+        ? (nameEn.includes(first) || nameAr.includes(first))
+        : (nameEn.startsWith(first) || nameAr.startsWith(first));
+
+      if (!matchesFirst) {
+        const substance = (drug as DrugCatalogItem).activeSubstance || '';
+        const generic = Array.isArray((drug as Drug).genericName) 
+          ? (drug as Drug).genericName.join(' ').toLowerCase() 
+          : String(substance).toLowerCase();
+        if (!generic.includes(first)) return false;
+      }
+
+      if (rest.length > 0) {
+        const substance = (drug as DrugCatalogItem).activeSubstance || '';
+        const generic = Array.isArray((drug as Drug).genericName) 
+          ? (drug as Drug).genericName.join(' ').toLowerCase() 
+          : String(substance).toLowerCase();
+        const fullName = `${nameEn} ${nameAr} ${generic}`;
+        return rest.every(w => fullName.includes(w));
+      }
+      return true;
+    });
+
+    if (filters) {
+      matches = matches.filter(d => this.matchesFilters(d, filters));
+    }
+
+    return matches.sort((a, b) => {
+      const aStarts = a.name.toLowerCase().startsWith(first) || ((a as any).nameArabic?.toLowerCase().startsWith(first) ?? a.nameAr?.toLowerCase().startsWith(first) ?? false);
+      const bStarts = b.name.toLowerCase().startsWith(first) || ((b as any).nameArabic?.toLowerCase().startsWith(first) ?? b.nameAr?.toLowerCase().startsWith(first) ?? false);
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return 1;
+      return a.name.length - b.name.length;
+    });
   }
 
   /**
