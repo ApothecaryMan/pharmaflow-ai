@@ -5,3 +5,4 @@
  */
 
 export * from './cashService';
+export * from './repositories/cashRepository';
