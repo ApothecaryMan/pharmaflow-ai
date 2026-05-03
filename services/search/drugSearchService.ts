@@ -114,65 +114,8 @@ export class DrugSearchEngine {
   }
 
   private searchByName(query: string, filters?: any): SearchableDrug[] {
-    if (!query.trim()) return [];
-
-    const startsWithSpace = query.startsWith(' ');
-    const words = query.trim().toLowerCase().split(/\s+/).filter(w => w.length > 0);
-    if (words.length === 0) return [];
-
-    const [first, ...rest] = words;
-
-    let matches = this.cachedArray.filter(drug => {
-      const nameEn = (drug.name || '').toLowerCase();
-      const nameAr = ((drug as any).nameArabic || (drug as any).nameAr || '').toLowerCase();
-      
-      // Check if either name contains/starts with the first word
-      const matchesFirst = startsWithSpace 
-        ? (nameEn.includes(first) || nameAr.includes(first))
-        : (nameEn.startsWith(first) || nameAr.startsWith(first));
-
-      if (!matchesFirst) {
-        // If it didn't match the name, check generic/substance too
-        const substance = (drug as DrugCatalogItem).activeSubstance || '';
-        const generic = Array.isArray((drug as Drug).genericName) 
-          ? (drug as Drug).genericName.join(' ').toLowerCase() 
-          : String(substance).toLowerCase();
-          
-        if (!generic.includes(first)) return false;
-      }
-
-      // Check the rest of the words in the full string
-      if (rest.length > 0) {
-        const substance = (drug as DrugCatalogItem).activeSubstance || '';
-        const generic = Array.isArray((drug as Drug).genericName) 
-          ? (drug as Drug).genericName.join(' ').toLowerCase() 
-          : String(substance).toLowerCase();
-        const fullName = `${nameEn} ${nameAr} ${generic}`;
-        
-        return rest.every(w => fullName.includes(w));
-      }
-
-      return true;
-    });
-
-    // --- Optimization Step 2: Apply Complex Filters only on the search matches ---
-    if (filters) {
-      matches = matches.filter(d => this.matchesFilters(d, filters));
-    }
-
-    // --- Optimization Step 3: Sort and Slice ---
-    return matches
-      .sort((a, b) => {
-        const aStarts = a.name.toLowerCase().startsWith(first) || (a.nameAr?.toLowerCase().startsWith(first) ?? false);
-        const bStarts = b.name.toLowerCase().startsWith(first) || (b.nameAr?.toLowerCase().startsWith(first) ?? false);
-        
-        if (aStarts && !bStarts) return -1;
-        if (!aStarts && bStarts) return 1;
-        return a.name.length - b.name.length;
-      })
+    return this.internalSearchByName(query, filters)
       .slice(0, 50)
-      // --- Optimization Step 4: Lazy Transform (Final Batch Filtering) ---
-      // We only do the heavy {...d} and batch filtering on the final 50 items.
       .map(d => this.transformResult(d, filters));
   }
 
