@@ -12,6 +12,7 @@ import { authService } from '../../services/auth/authService';
 import { settingsService } from '../../services/settings/settingsService';
 import { transactionService } from '../../services/transactions/transactionService';
 import { permissionsService } from '../../services/auth/permissionsService';
+import { inventorySearchEngine } from '../../services/search/drugSearchService';
 import type { ActionContext, Drug, Sale, Supplier, Purchase, PurchaseReturn, Return, Customer, Employee, StockBatch } from '../../types';
 
 interface DataActionsProps {
@@ -81,6 +82,7 @@ export const useDataActions = ({
       const loggedInEmployee = emp.find(e => e.id === currentSession?.employeeId) || null;
 
       setRawInventory(inv);
+      inventorySearchEngine.indexData(inv as any);
       setSalesState(sal);
       setSuppliersState(sup);
       setPurchasesState(pur);

@@ -1,4 +1,7 @@
 import { type DrugCatalogItem } from './catalogCacheService';
+import type { Drug } from '../../types';
+
+type SearchableDrug = DrugCatalogItem | Drug;
 
 /**
  * DrugSearchEngine - High Performance In-Memory Search Engine.
@@ -9,13 +12,15 @@ import { type DrugCatalogItem } from './catalogCacheService';
  * - Multi-word intersection search.
  */
 export class DrugSearchEngine {
-  private drugs: DrugCatalogItem[] = [];
-  
   // High-speed HashMaps for exact lookups
-  private idMap = new Map<string, DrugCatalogItem>();
+  private idMap = new Map<string, SearchableDrug>();
   private barcodeMap = new Map<string, string>(); // Barcode -> ID
+  
+  // Performance Optimization: Cache the array version of the Map
+  // to avoid calling Array.from() on every keystroke.
+  private cachedArray: SearchableDrug[] = [];
 
-  constructor(initialData: DrugCatalogItem[] = []) {
+  constructor(initialData: SearchableDrug[] = []) {
     if (initialData.length > 0) {
       this.indexData(initialData);
     }
@@ -23,39 +28,74 @@ export class DrugSearchEngine {
 
   /**
    * Builds the memory indexes from raw catalog data.
-   * This should be called once on load or after a sync.
+   * This should be called once on load or after a full sync.
    */
-  public indexData(data: DrugCatalogItem[]) {
-    this.drugs = data;
+  public indexData(data: SearchableDrug[]) {
     this.idMap.clear();
     this.barcodeMap.clear();
 
     for (const drug of data) {
-      this.idMap.set(drug.id, drug);
-      
-      if (drug.barcode) {
-        this.barcodeMap.set(drug.barcode, drug.id);
-      }
+      this.addOrUpdateToMap(drug);
     }
+    
+    this.refreshCache();
     console.log(`[SearchEngine] Indexed ${data.length} drugs.`);
+  }
+
+  /**
+   * O(1) Incremental Update.
+   * Efficiently updates a single item without re-indexing everything.
+   */
+  public updateItem(item: SearchableDrug) {
+    this.addOrUpdateToMap(item);
+    this.refreshCache();
+  }
+
+  /**
+   * O(1) Incremental Removal.
+   */
+  public removeItem(id: string) {
+    const item = this.idMap.get(id);
+    if (item?.barcode) {
+      this.barcodeMap.delete(item.barcode);
+    }
+    this.idMap.delete(id);
+    this.refreshCache();
+  }
+
+  private refreshCache() {
+    this.cachedArray = Array.from(this.idMap.values());
+  }
+
+  private addOrUpdateToMap(drug: SearchableDrug) {
+    // If it had a previous barcode, clean it up
+    const old = this.idMap.get(drug.id);
+    if (old?.barcode && old.barcode !== drug.barcode) {
+      this.barcodeMap.delete(old.barcode);
+    }
+
+    this.idMap.set(drug.id, drug);
+    
+    if (drug.barcode) {
+      this.barcodeMap.set(drug.barcode, drug.id);
+    }
   }
 
   /**
    * Main Search Gateway
    */
-  public search(query: string, filters?: any): DrugCatalogItem[] {
+  public search(query: string, filters?: any): SearchableDrug[] {
     const rawTerm = query.toLowerCase();
     const term = query.trim().toLowerCase();
     if (!term) return [];
 
-    // --- Filtered Pool (Base for all search modes) ---
-    const pool = this.getFilteredPool(filters);
-
-    // 1. O(1) Barcode Lookup (Priority 1) - Must exist in filtered pool
+    // 1. O(1) Barcode Lookup (Priority 1)
     const idByBarcode = this.barcodeMap.get(term);
     if (idByBarcode) {
-      const match = pool.find(d => d.id === idByBarcode);
-      if (match) return [match];
+      const match = this.idMap.get(idByBarcode);
+      if (match && this.matchesFilters(match, filters)) {
+        return [this.transformResult(match, filters)];
+      }
     }
 
     // 2. Specialized Shortcut: @ (Scientific/Ingredient Search)
@@ -69,11 +109,11 @@ export class DrugSearchEngine {
       return this.searchWithPriceRange(term, filters);
     }
 
-    // 4. Multi-word Name Search (Optimized with pre-filtering)
+    // 4. Multi-word Name Search
     return this.searchByName(rawTerm, filters);
   }
 
-  private searchByName(query: string, filters?: any): DrugCatalogItem[] {
+  private searchByName(query: string, filters?: any): SearchableDrug[] {
     if (!query.trim()) return [];
 
     const startsWithSpace = query.startsWith(' ');
@@ -82,67 +122,86 @@ export class DrugSearchEngine {
 
     const [first, ...rest] = words;
 
-    // --- Optimization: Pre-filter Pool based on Category/Stock ---
-    let pool = this.getFilteredPool(filters);
-
-    // --- Main Filtering ---
-    return pool.filter(drug => {
+    // --- Optimization Step 1: Filter by Text Match First (Broad Pool) ---
+    // This is much faster than applying complex filters (stock, branch) first.
+    let matches = this.cachedArray.filter(drug => {
       const nameEn = drug.name.toLowerCase();
       const nameAr = (drug.nameAr || '').toLowerCase();
-      const generic = Array.isArray((drug as any).genericName) 
-        ? (drug as any).genericName.join(' ').toLowerCase() 
-        : String((drug as any).genericName || (drug as any).activeSubstance || '').toLowerCase();
       
-      const fullName = `${nameEn} ${nameAr} ${generic}`;
-
-      // Logic for first word
+      // Check if either name contains the first word
       if (startsWithSpace) {
-        // "Contains" mode
-        if (!fullName.includes(first)) return false;
+        if (!nameEn.includes(first) && !nameAr.includes(first)) return false;
       } else {
-        // "Prefix" mode - check if either language starts with it
         if (!nameEn.startsWith(first) && !nameAr.startsWith(first)) return false;
       }
 
-      // Logic for rest of words (always contains)
-      if (rest.length > 0) {
-        return rest.every(w => fullName.includes(w));
+      // Check the rest of the words in the full string (including generic)
+      if (rest.length > 0 || (drug as Drug).genericName || (drug as DrugCatalogItem).activeSubstance) {
+        const substance = (drug as DrugCatalogItem).activeSubstance || '';
+        const generic = Array.isArray((drug as Drug).genericName) 
+          ? (drug as Drug).genericName.join(' ').toLowerCase() 
+          : String(substance).toLowerCase();
+        
+        const fullName = `${nameEn} ${nameAr} ${generic}`;
+        
+        // If we only have one word and it passed the startsWith check, we're good
+        if (rest.length === 0) {
+          // If it didn't start with the first word but we are in "contains" mode (space),
+          // we already checked it above. If we are in prefix mode, it passed.
+          // However, we might want to check the generic name too if it didn't match the names.
+          if (!nameEn.startsWith(first) && !nameAr.startsWith(first)) {
+             if (!fullName.includes(first)) return false;
+          }
+        }
+
+        if (rest.length > 0) {
+          return rest.every(w => fullName.includes(w));
+        }
       }
 
       return true;
-    })
-    .sort((a, b) => {
-      // Priority: Does it start with the first word in either language?
-      const aStarts = a.name.toLowerCase().startsWith(first) || (a.nameAr?.toLowerCase().startsWith(first) ?? false);
-      const bStarts = b.name.toLowerCase().startsWith(first) || (b.nameAr?.toLowerCase().startsWith(first) ?? false);
-      
-      if (aStarts && !bStarts) return -1;
-      if (!aStarts && bStarts) return 1;
-      
-      // Secondary: Sort by name length (shorter names often more relevant)
-      return a.name.length - b.name.length;
-    })
-    .slice(0, 50);
+    });
+
+    // --- Optimization Step 2: Apply Complex Filters only on the search matches ---
+    if (filters) {
+      matches = matches.filter(d => this.matchesFilters(d, filters));
+    }
+
+    // --- Optimization Step 3: Sort and Slice ---
+    return matches
+      .sort((a, b) => {
+        const aStarts = a.name.toLowerCase().startsWith(first) || (a.nameAr?.toLowerCase().startsWith(first) ?? false);
+        const bStarts = b.name.toLowerCase().startsWith(first) || (b.nameAr?.toLowerCase().startsWith(first) ?? false);
+        
+        if (aStarts && !bStarts) return -1;
+        if (!aStarts && bStarts) return 1;
+        return a.name.length - b.name.length;
+      })
+      .slice(0, 50)
+      // --- Optimization Step 4: Lazy Transform (Final Batch Filtering) ---
+      // We only do the heavy {...d} and batch filtering on the final 50 items.
+      .map(d => this.transformResult(d, filters));
   }
 
-  private searchByIngredient(query: string, filters?: any): DrugCatalogItem[] {
+  private searchByIngredient(query: string, filters?: any): SearchableDrug[] {
     if (!query) return [];
     const q = query.toLowerCase();
-    const pool = this.getFilteredPool(filters);
 
-    return pool.filter(d => {
-      const substance = (d as any).activeSubstance?.toLowerCase() || '';
-      const generic = Array.isArray((d as any).genericName) 
-        ? (d as any).genericName.join(' ').toLowerCase() 
-        : String((d as any).genericName || '').toLowerCase();
-        
-      return substance.includes(q) || generic.includes(q);
-    }).slice(0, 50);
+    return this.cachedArray
+      .filter(d => {
+        const substance = (d as DrugCatalogItem).activeSubstance?.toLowerCase() || '';
+        const generic = Array.isArray((d as Drug).genericName) 
+          ? (d as Drug).genericName.join(' ').toLowerCase() 
+          : String(substance).toLowerCase();
+          
+        return (substance.includes(q) || generic.includes(q)) && this.matchesFilters(d, filters);
+      })
+      .slice(0, 50)
+      .map(d => this.transformResult(d, filters));
   }
 
-  private searchWithPriceRange(query: string, filters?: any): DrugCatalogItem[] {
+  private searchWithPriceRange(query: string, filters?: any): SearchableDrug[] {
     const parts = query.split('/');
-    // Format: min/max/term OR min/term
     let min = 0;
     let max = Infinity;
     let term = '';
@@ -156,75 +215,90 @@ export class DrugSearchEngine {
       term = parts[1].trim();
     }
 
-    const matches = term ? this.searchByName(term, filters) : this.getFilteredPool(filters);
+    const initialMatches = term ? this.searchByName(term, filters) : this.cachedArray;
     
-    return matches.filter(d => 
-      d.publicPrice >= min && d.publicPrice <= max
-    ).slice(0, 50);
+    return initialMatches
+      .filter(d => 
+        d.publicPrice >= min && d.publicPrice <= max && (term ? true : this.matchesFilters(d, filters))
+      )
+      .slice(0, 50)
+      .map(d => this.transformResult(d, filters));
   }
 
-
-  private getFilteredPool(filters?: any): DrugCatalogItem[] {
-    let pool = this.drugs;
+  /**
+   * Fast Boolean Filter check.
+   * No object creation, just logic.
+   */
+  private matchesFilters(d: SearchableDrug, filters: any): boolean {
+    if (!filters) return true;
 
     // 1. Branch Filter
-    if (filters?.branchId) {
-      pool = pool.filter(d => (d as any).branchId === filters.branchId);
-    }
+    if (filters.branchId && (d as Drug).branchId !== filters.branchId) return false;
 
     // 2. Category Filter
-    if (filters?.category && filters.category.length > 0) {
+    if (filters.category && filters.category.length > 0) {
       const targetCats = filters.category.map((c: string) => c.toLowerCase());
       if (!targetCats.includes('all')) {
-        pool = pool.filter(d => d.category && targetCats.includes(d.category.toLowerCase()));
+        if (!d.category || !targetCats.includes(d.category.toLowerCase())) return false;
       }
     }
 
     // 3. Stock Status Filter
-    if (filters?.stock_status && filters.stock_status.length > 0) {
+    if (filters.stock_status && filters.stock_status.length > 0) {
       const status = filters.stock_status;
       if (!status.includes('all')) {
         const showInStock = status.includes('in_stock');
         const showOut = status.includes('out_of_stock');
+        const s = (d as Drug).stock || 0;
 
-        // First filter the drugs themselves
-        pool = pool.filter(d => {
-          const s = d.stock || 0;
-          if (showInStock && showOut) return true;
-          if (showInStock) return s > 0;
-          if (showOut) return s <= 0;
-          return true;
-        });
-
-        // NEW: Also filter the batches INSIDE each drug to match the status
-        pool = pool.map(d => {
-          if (!d.batches || d.batches.length === 0) return d;
-          
-          const filteredBatches = d.batches.filter(b => {
-            const qty = (b as any).stock || 0;
-            if (showInStock && showOut) return true;
-            if (showInStock) return qty > 0;
-            if (showOut) return qty <= 0;
-            return true;
-          });
-
-          // Return a shallow copy with filtered batches to avoid mutating the index
-          return { ...d, batches: filteredBatches };
-        });
+        if (showInStock && !showOut && s <= 0) return false;
+        if (showOut && !showInStock && s > 0) return false;
       }
     }
 
-    // 4. Price Filter (if applicable)
-    if (filters?.priceRange) {
+    // 4. Price Filter
+    if (filters.priceRange) {
       const { min, max } = filters.priceRange;
-      pool = pool.filter(d => d.publicPrice >= min && d.publicPrice <= max);
+      if (d.publicPrice < min || d.publicPrice > max) return false;
     }
 
-    return pool;
+    return true;
+  }
+
+  /**
+   * Final transformation applied only to the visible results.
+   * Handles batch filtering and object creation.
+   */
+  private transformResult(d: SearchableDrug, filters: any): SearchableDrug {
+    const drug = d as Drug;
+    if (!filters?.stock_status || filters.stock_status.includes('all')) return d;
+    if (!drug.batches || drug.batches.length === 0) return d;
+
+    const showInStock = filters.stock_status.includes('in_stock');
+    const showOut = filters.stock_status.includes('out_of_stock');
+
+    const filteredBatches = drug.batches.filter(b => {
+      const qty = (b as Drug).stock ?? (b as any).quantity ?? 0;
+      if (showInStock && showOut) return true;
+      if (showInStock) return qty > 0;
+      if (showOut) return qty <= 0;
+      return true;
+    });
+
+    // We only create a new object if we actually modified the batches
+    if (filteredBatches.length === drug.batches.length) return d;
+
+    return { ...d, batches: filteredBatches };
   }
 
   // Getter for all data (useful for initial lists)
-  public getAll(): DrugCatalogItem[] {
-    return this.drugs;
+  public getAll(): SearchableDrug[] {
+    return this.cachedArray;
   }
 }
+
+/**
+ * Singleton instance for branch-specific inventory search.
+ * This prevents recreating the engine on every render/update.
+ */
+export const inventorySearchEngine = new DrugSearchEngine();

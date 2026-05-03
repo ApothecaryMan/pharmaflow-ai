@@ -4,6 +4,7 @@ import { salesService } from '../../services/sales';
 import { returnService } from '../../services/returns';
 import { inventoryService } from '../../services/inventory';
 import { purchaseService } from '../../services/purchases';
+import { inventorySearchEngine } from '../../services/search/drugSearchService';
 import type { StockBatch } from '../../types';
 
 interface RealtimeSyncProps {
@@ -95,8 +96,10 @@ export const useRealtimeSync = ({
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newDrug = inventoryService.mapFromDb(payload.new);
             setInventory(prev => [newDrug, ...prev.filter(d => d.id !== newDrug.id)]);
+            inventorySearchEngine.updateItem(newDrug as any);
           } else if (payload.eventType === 'DELETE') {
             setInventory((prev) => prev.filter((d) => d.id !== payload.old.id));
+            inventorySearchEngine.removeItem(payload.old.id);
           }
         }
       )

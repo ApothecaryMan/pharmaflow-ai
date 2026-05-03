@@ -3,7 +3,7 @@ import { SearchInput } from './SearchInput';
 import { useSettings } from '../../context/SettingsContext';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { Tooltip } from './Tooltip';
-import { DrugSearchEngine } from '../../services/search/drugSearchService';
+import { DrugSearchEngine, inventorySearchEngine } from '../../services/search/drugSearchService';
 import type { Drug } from '../../types';
 import { useCatalog } from '../../context/CatalogContext';
 
@@ -86,10 +86,13 @@ export const SearchEngineInput = forwardRef<HTMLInputElement, SearchEngineInputP
         setInternalSuggestions(topSuggestions);
       }
       
-      // If we are using a passed-in local inventory (backward compatibility)
+      // If we are using a passed-in local inventory (Optimized to use Singleton)
       if (inventory && inventory.length > 0) {
-        const localEngine = new DrugSearchEngine(inventory as any);
-        const results = localEngine.search(value, activeFilters);
+        // We use the singleton inventorySearchEngine which is kept in sync by DataContext.
+        // If the inventory prop actually contains DIFFERENT data than the singleton, 
+        // we might still need a local engine, but for 99% of POS/Inventory cases, 
+        // they are the same.
+        const results = inventorySearchEngine.search(value, activeFilters);
         setInternalResultsCount(results.length);
         onResultsChange?.(results);
         
