@@ -162,9 +162,9 @@ export const authService = {
     if (!username.includes('@')) {
       try {
         const resolvedEmail = await employeeRepository.getEmailByUsername(username);
-        loginEmail = resolvedEmail || `${username}@zinc.co`;
+        loginEmail = resolvedEmail || username;
       } catch (err) {
-        loginEmail = `${username}@zinc.co`;
+        loginEmail = username;
       }
     }
 

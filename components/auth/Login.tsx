@@ -271,17 +271,10 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                         validationErrors: { ...prev.validationErrors, username: undefined },
                       }));
                     }}
-                    className={`w-full bg-zinc-900 border ${state.validationErrors.username ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 placeholder:text-start cursor-text focus:bg-zinc-800/50 ${!state.username.includes('@') && state.username ? 'pr-20' : ''}`}
+                    className={`w-full bg-zinc-900 border ${state.validationErrors.username ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 placeholder:text-start cursor-text focus:bg-zinc-800/50`}
                     dir='ltr'
                   />
-                  {!state.username.includes('@') && state.username && (
-                    <span 
-                      dir="ltr" 
-                      className='absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm pointer-events-none animate-in fade-in slide-in-from-right-1 duration-200 font-medium'
-                    >
-                      @zinc.co
-                    </span>
-                  )}
+                  {/* No forced suffix to allow external emails */}
                 </div>
                 {state.validationErrors.username && (
                   <p className='text-xs text-red-500 mt-1 ps-1'>

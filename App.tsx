@@ -268,17 +268,25 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 
   // --- URL Synchronization ---
   React.useEffect(() => {
-    if (isAuthenticated && activeOrgId && activeBranchId) {
+    if (!isAuthenticated) return;
+
+    const currentHash = window.location.hash;
+    const isAuthHash = [`#/${ROUTES.LOGIN}`, `#/${ROUTES.SIGNUP}`, `#/${ROUTES.FORGOT_PASSWORD}`].includes(currentHash);
+
+    if (activeOrgId && activeBranchId) {
       const activeBranch = branches.find(b => b.id === activeBranchId);
       if (activeBranch) {
-        const currentHash = window.location.hash;
         const newHash = `#/${activeOrgId}/${activeBranch.code}/${view}`;
         if (currentHash !== newHash) {
           window.history.replaceState(null, '', newHash);
         }
       }
+    } else if (isAuthHash) {
+      // If we are authenticated but still on an auth hash, and data isn't ready yet,
+      // we can at least move away from the login hash to a neutral state or wait.
+      // For now, the block above will handle it as soon as activeOrgId is ready.
     }
-  }, [isAuthenticated, activeOrgId, activeBranchId, view]);
+  }, [isAuthenticated, activeOrgId, activeBranchId, view, branches]);
 
   // --- Memoized Props for PageRouter ---
   const handlers = React.useMemo(
