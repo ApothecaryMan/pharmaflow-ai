@@ -1,17 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useAuth } from './useAuth';
-import { authService } from '../services/auth/authService';
-import { ROUTES } from '../config/routes';
+import { useAuth } from '../auth/useAuth';
+import { authService } from '../../services/auth/authService';
+import { ROUTES } from '../../config/routes';
 
 // Mock authService
-vi.mock('../context', () => ({
+vi.mock('../../context', () => ({
   useAlert: vi.fn().mockReturnValue({
     error: vi.fn(),
   }),
 }));
 
-vi.mock('../services/auth/authService', () => ({
+vi.mock('../../services/auth/authService', () => ({
   authService: {
     hasSession: vi.fn(),
     getCurrentUser: vi.fn(),
@@ -30,7 +30,6 @@ describe('useAuth Hook', () => {
     (authService.getCurrentUser as any).mockResolvedValue({ id: 'u1' });
     
     const setView = vi.fn();
-    const setToast = vi.fn();
     
     const { result } = renderHook(() => useAuth({ 
       view: ROUTES.DASHBOARD, 
@@ -50,7 +49,6 @@ describe('useAuth Hook', () => {
     (authService.getCurrentUser as any).mockResolvedValue({ id: 'u1', name: 'User' }); 
     
     const setView = vi.fn();
-    const setToast = vi.fn();
     
     const { result } = renderHook(() => useAuth({ 
       view: ROUTES.LOGIN, 
@@ -68,7 +66,6 @@ describe('useAuth Hook', () => {
     (authService.getCurrentUser as any).mockResolvedValue({ id: 'u1' });
 
     const setView = vi.fn();
-    const setToast = vi.fn();
     
     const { result } = renderHook(() => useAuth({ 
       view: ROUTES.DASHBOARD, 
@@ -94,7 +91,6 @@ describe('useAuth Hook', () => {
     (authService.getCurrentUser as any).mockResolvedValue(null);
 
     const setView = vi.fn();
-    const setToast = vi.fn();
     
     const { result } = renderHook(() => useAuth({ 
       view: ROUTES.LOGIN, 

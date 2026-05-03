@@ -9,6 +9,8 @@ export { useTheme } from './layout/useTheme';
 
 // Auth Hooks
 export { type AuthActions, type AuthState, useAuth } from './auth/useAuth';
+export { useAuthenticatedData } from './auth/useAuthenticatedData';
+export { useOnboardingStatus } from './auth/useOnboardingStatus';
 
 // Common Hooks
 export { useLongPress } from './common/useLongPress';

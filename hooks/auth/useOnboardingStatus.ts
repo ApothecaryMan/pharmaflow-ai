@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { orgService } from '../services/org/orgService';
-import { branchService } from '../services/branchService';
-import { authService } from '../services/auth/authService';
+import { orgService } from '../../services/org/orgService';
+import { branchService } from '../../services/branchService';
+import { authService } from '../../services/auth/authService';
 
 export type OnboardingStep = 1 | 2 | 3 | 0;
 
@@ -38,7 +38,7 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
       }
 
       // 3. Check Employees
-      const { employeeService } = await import('../services/hr/employeeService');
+      const { employeeService } = await import('../../services/hr/employeeService');
       const all = await employeeService.getAll('ALL', activeOrgId || undefined);
       const hasRealEmployees = !!user?.employeeId || all.some(
         (e) => e.employeeCode !== 'EMP-000'

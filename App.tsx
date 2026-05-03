@@ -20,7 +20,8 @@ import { LANGUAGES, THEMES, useSettings } from './context';
 // App State Hooks
 import { type AppState, useAppState } from './hooks/layout/useAppState';
 import { type AuthState, useAuth } from './hooks/auth/useAuth';
-import { useAuthenticatedData } from './hooks/useAuthenticatedData';
+import { useAuthenticatedData } from './hooks/auth/useAuthenticatedData';
+import { useOnboardingStatus } from './hooks/auth/useOnboardingStatus';
 import { useEntityHandlers } from './hooks/useEntityHandlers';
 import { useGlobalEventHandlers } from './hooks/useGlobalEventHandlers';
 import { useNavigation } from './hooks/layout/useNavigation';
@@ -31,7 +32,6 @@ import { TRANSLATIONS } from './i18n/translations';
 import { DataProvider, useData } from './context/DataContext';
 import { authService } from './services/auth/authService';
 import { type Supplier, ViewState } from './types';
-import { useOnboardingStatus } from './hooks/useOnboardingStatus';
 
 const INITIAL_SUPPLIERS: Supplier[] = [
   { id: '1', orgId: '', branchId: '1', name: 'B2B', contactPerson: 'B2B', phone: '', email: '', address: '', status: 'active' },

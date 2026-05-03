@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import type { UserRole } from '../config/permissions';
-import type { Customer, Employee } from '../types';
+import type { UserRole } from '../../config/permissions';
+import type { Customer, Employee } from '../../types';
 
 interface AuthenticatedDataProps {
   employees: Employee[];

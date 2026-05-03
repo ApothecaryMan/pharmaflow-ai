@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { usePrinter } from './usePrinter';
-import * as qzPrinterUtils from '../utils/qzPrinter';
+import { usePrinter } from '../usePrinter';
+import * as qzPrinterUtils from '../../utils/qzPrinter';
 
 // Clean mock setup using vi.mock with factory that returns spies
-vi.mock('../utils/qzPrinter', () => {
+vi.mock('../../utils/qzPrinter', () => {
   return {
     getStatus: vi.fn(),
     isConnected: vi.fn(),
