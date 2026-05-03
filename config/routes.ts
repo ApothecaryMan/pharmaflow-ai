@@ -3,6 +3,8 @@ import type { ViewState } from '../types';
 export const ROUTES = {
   DASHBOARD: 'dashboard' as ViewState,
   LOGIN: 'login' as ViewState,
+  SIGNUP: 'signup' as ViewState,
+  FORGOT_PASSWORD: 'forgot-password' as ViewState,
   MODAL_TESTS: 'modal-tests' as ViewState,
   TEST_THEME: 'test-theme' as ViewState,
   INVENTORY: 'inventory' as ViewState,

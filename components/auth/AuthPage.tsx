@@ -4,6 +4,7 @@ import { SignUp } from './SignUp';
 import { ForgotPassword } from './ForgotPassword';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useSettings } from '../../context';
+import { ROUTES } from '../../config/routes';
 
 type AuthView = 'login' | 'signup' | 'forgot-password';
 
@@ -14,10 +15,21 @@ interface AuthPageProps {
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
   const { language, setLanguage } = useSettings();
-  const [currentView, setCurrentView] = useState<AuthView>('login');
+  const [currentView, setCurrentView] = useState<AuthView>(() => {
+    const hash = window.location.hash;
+    if (hash === `#/${ROUTES.SIGNUP}`) return 'signup';
+    if (hash === `#/${ROUTES.FORGOT_PASSWORD}`) return 'forgot-password';
+    return 'login';
+  });
 
   const handleViewChange = useCallback((view: AuthView) => {
     setCurrentView(view);
+    const hashMap: Record<AuthView, string> = {
+      login: ROUTES.LOGIN,
+      signup: ROUTES.SIGNUP,
+      'forgot-password': ROUTES.FORGOT_PASSWORD
+    };
+    window.history.replaceState(null, '', `#/${hashMap[view]}`);
   }, []);
 
   const handleLoginSuccessOrDashboard = useCallback((view?: string) => {
@@ -67,7 +79,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
           size='xs'
           fullWidth={false}
           disableAnimation={true}
-          variant='onPage'
           className='min-w-[80px] !bg-white !shadow-none ring-1 ring-white/10 [&>div]:!bg-black [&>div]:!shadow-none [&_button]:!text-black [&_button[data-active=true]]:!text-white [&_button:not([data-active=true])]:!cursor-pointer [&_button[data-active=true]]:!cursor-default'
           dir='ltr'
         />

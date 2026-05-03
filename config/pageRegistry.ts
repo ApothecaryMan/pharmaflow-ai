@@ -40,7 +40,7 @@ import { ShiftHistory } from '../components/sales/ShiftHistory';
 import { POSSkeleton } from '../components/skeletons/POSSkeleton';
 import { ModalTests } from '../components/test/ModalTests';
 import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
-import type { PermissionAction } from './permissionsService';
+import type { PermissionAction } from './permissions';
 
 export interface PageConfig {
   id: string;

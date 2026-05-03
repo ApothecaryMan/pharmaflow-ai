@@ -499,6 +499,19 @@ const App: React.FC = () => {
   }, [setIsAuthenticated, setActiveModule, setView]);
 
 
+  // 7. URL Synchronization for Login
+  React.useEffect(() => {
+    if (!authState.isAuthenticated) {
+      const currentHash = window.location.hash;
+      const allowedAuthHashes = [`#/${ROUTES.LOGIN}`, `#/${ROUTES.SIGNUP}`, `#/${ROUTES.FORGOT_PASSWORD}`];
+      
+      if (!allowedAuthHashes.includes(currentHash)) {
+         // Only set to login if we're not on a valid auth path
+         window.history.replaceState(null, '', `#/${ROUTES.LOGIN}`);
+      }
+    }
+  }, [authState.isAuthenticated]);
+
   // 8. Not Authenticated -> Show Login
   if (!authState.isAuthenticated) {
     return (
