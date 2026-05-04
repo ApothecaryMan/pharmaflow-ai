@@ -4,6 +4,7 @@ import { useContextMenu } from '../../../common/ContextMenu';
 import { usePosSounds } from '../../../common/hooks/usePosSounds';
 import { useSmartDirection } from '../../../common/SmartInputs';
 import { StatusBarItem } from '../StatusBarItem';
+import { useAlert } from '../../../../context';
 
 interface QuickLoginProps {
   userName?: string;
@@ -140,6 +141,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const { playSuccess, playError } = usePosSounds();
   const { showMenu } = useContextMenu();
+  const alert = useAlert();
 
   const isAR = language === 'AR';
   const dir = useSmartDirection(inputVal, t?.password || 'Password...');
@@ -206,12 +208,14 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
       if (res.success) {
         playSuccess();
         setHasRecovered(true);
-        alert(t?.changeSuccess || 'Password updated successfully');
-        window.location.replace(window.location.origin + '/#/');
+        alert.success(t?.changeSuccess || 'Password updated successfully');
+        setTimeout(() => {
+          window.location.replace(window.location.origin + '/#/');
+        }, 1500);
       } else {
         setIsError(true);
         playError();
-        alert(res.message);
+        alert.error(res.message || 'Failed to update password');
       }
     }
   };
@@ -223,7 +227,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
       const { authService } = await import('../../../../services/auth/authService');
 
       if (!(await isWebAuthnSupported())) {
-        alert(t?.biometricUnsupported || 'Browser does not support Passkeys. Ensure you are on HTTPS.');
+        alert.warning(t?.biometricUnsupported || 'Browser does not support Passkeys. Ensure you are on HTTPS.');
         return;
       }
 
@@ -252,7 +256,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
       const { parseWebAuthnError } = await import('../../../../utils/webAuthnUtils');
       setIsError(true);
       playError();
-      alert(parseWebAuthnError(err, language as any));
+      alert.error(parseWebAuthnError(err, language as any));
     }
   };
 
@@ -274,12 +278,12 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
       const { authService } = await import('../../../../services/auth/authService');
       const res = await authService.handleForgotPassword(tempEmployee.email);
       if (res.success) {
-        alert(t?.resetSent || 'Reset link sent to your email');
+        alert.success(t?.resetSent || 'Reset link sent to your email');
       } else {
-        alert(res.message);
+        alert.error(res.message || 'Failed to send reset link');
       }
     } else {
-      alert(t?.contactManager || 'Contact manager to reset password');
+      alert.info(t?.contactManager || 'Contact manager to reset password');
     }
   };
 

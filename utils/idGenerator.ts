@@ -102,9 +102,13 @@ export const idGenerator = {
       const prefix = branchCode || 'PF';
       return `${prefix}-${data.toString().padStart(ID_PADDING, '0')}`;
     } catch (err) {
-      console.warn(`[idGenerator] Online sequence failed for ${type}, falling back to timestamp`, err);
-      // Fallback to timestamp + random if DB is down to prevent UI crash
-      return idGenerator.generateSync(type, branchCode);
+      // Do not fallback to timestamp - throw a clear error to preserve data integrity
+      console.error(`[idGenerator] Sequence generation failed for ${type}:`, err);
+      throw new Error(
+        `Failed to generate ID for ${type}. ` +
+        `This may indicate a database connectivity issue. ` +
+        `Transaction aborted to preserve data integrity.`
+      );
     }
   },
 
