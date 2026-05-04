@@ -83,8 +83,8 @@ export const idGenerator = {
    * @returns Formatted ID string (e.g., "B1-1050")
    */
   generate: async (type: EntityType, branchId: string, branchCode?: string): Promise<string> => {
-    // For non-critical types, redirect to sync generator to save DB roundtrips
-    const nonCriticalTypes: EntityType[] = ['notification', 'generic', 'barcodes', 'receipts', 'tabs', 'movement'];
+    // Only truly transient or UI-only types should be generated synchronously
+    const nonCriticalTypes: EntityType[] = ['notification', 'generic', 'tabs'];
     if (nonCriticalTypes.includes(type)) {
       return idGenerator.generateSync(type, branchCode);
     }
