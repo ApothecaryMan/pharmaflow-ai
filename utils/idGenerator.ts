@@ -126,13 +126,14 @@ export const idGenerator = {
   },
 
   /**
-   * Generates a secondary mnemonic code (e.g., CUST-000042)
+   * Generates a secondary mnemonic code (e.g., B1-000042)
    * Backed by database sequence to ensure absolute uniqueness.
-   * @param prefix The prefix to use (e.g., 'CUST', 'DRUG')
+   * @param prefix The type of code ('CUST' for customers, 'DRUG' for inventory)
    * @param branchId The UUID of the branch
+   * @param branchCode The short code of the branch (e.g., "B1")
    * @returns Formatted code string
    */
-  code: async (prefix: 'CUST' | 'DRUG', branchId: string): Promise<string> => {
+  code: async (prefix: 'CUST' | 'DRUG', branchId: string, branchCode?: string): Promise<string> => {
     const type: EntityType = prefix === 'CUST' ? 'customers-serial' : 'inventory';
     
     try {
@@ -141,12 +142,40 @@ export const idGenerator = {
         p_entity_type: type
       });
       if (error) throw error;
-      return `${prefix}-${data.toString().padStart(6, '0')}`;
+      
+      // Use branchCode for customers (e.g., B1-1), 
+      // but keep 'DRUG' for medications to maintain clear classification.
+      const finalPrefix = (prefix === 'CUST' && branchCode) ? branchCode : prefix;
+      
+      return `${finalPrefix}-${data}`;
     } catch (err) {
       console.error(`[idGenerator] Code generation failed for ${prefix}:`, err);
-      // Fallback to a high-entropy temporary code if DB fails
       const ts = Date.now().toString(36).toUpperCase();
-      return `${prefix}-TEMP-${ts}`;
+      const finalPrefix = (prefix === 'CUST' && branchCode) ? branchCode : prefix;
+      return `${finalPrefix}-TEMP-${ts}`;
+    }
+  },
+
+  /**
+   * Generates a numeric-only barcode for medications (e.g., 1042)
+   * Starts from 1000 to differentiate from manufacturer barcodes.
+   * @param branchId The UUID of the branch
+   * @returns Formatted numeric string
+   */
+  barcode: async (branchId: string): Promise<string> => {
+    try {
+      const { data, error } = await supabase.rpc('increment_sequence', {
+        p_branch_id: branchId,
+        p_entity_type: 'barcodes'
+      });
+      if (error) throw error;
+      
+      // Start from 1000 (DB sequence starts at 1, so we add 999)
+      const finalValue = Number(data) + 999;
+      return finalValue.toString();
+    } catch (err) {
+      console.error(`[idGenerator] Barcode generation failed:`, err);
+      return Date.now().toString().slice(-8); // Fallback
     }
   },
 
