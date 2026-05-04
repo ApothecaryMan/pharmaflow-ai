@@ -99,6 +99,20 @@ export const customerRepository = {
     return data ? this.mapFromDb(data) : null;
   },
 
+  async getByCode(code: string, orgId?: string): Promise<Customer | null> {
+    let query = supabase.from(this.tableName).select('*').eq('code', code);
+    if (orgId) query = query.eq('org_id', orgId);
+    
+    const { data, error } = await query.maybeSingle();
+    if (error) throw error;
+    return data ? this.mapFromDb(data) : null;
+  },
+
+  async isCodeExists(code: string, orgId?: string): Promise<boolean> {
+    const customer = await this.getByCode(code, orgId);
+    return !!customer;
+  },
+
   async findByFilters(filters: CustomerFilters, effectiveBranchId: string, orgId?: string): Promise<Customer[]> {
     let query = supabase.from(this.tableName).select('*');
     const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';

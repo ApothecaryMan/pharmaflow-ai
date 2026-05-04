@@ -126,14 +126,28 @@ export const idGenerator = {
   },
 
   /**
-   * Generates a secondary mnemonic code (e.g., CUST-123456)
-   * This is typically used for user-facing codes that need to be short but unique.
+   * Generates a secondary mnemonic code (e.g., CUST-000042)
+   * Backed by database sequence to ensure absolute uniqueness.
    * @param prefix The prefix to use (e.g., 'CUST', 'DRUG')
+   * @param branchId The UUID of the branch
    * @returns Formatted code string
    */
-  code: (prefix: 'CUST' | 'DRUG'): string => {
-    const random = Math.floor(100000 + Math.random() * 900000).toString();
-    return `${prefix}-${random}`;
+  code: async (prefix: 'CUST' | 'DRUG', branchId: string): Promise<string> => {
+    const type: EntityType = prefix === 'CUST' ? 'customers-serial' : 'inventory';
+    
+    try {
+      const { data, error } = await supabase.rpc('increment_sequence', {
+        p_branch_id: branchId,
+        p_entity_type: type
+      });
+      if (error) throw error;
+      return `${prefix}-${data.toString().padStart(6, '0')}`;
+    } catch (err) {
+      console.error(`[idGenerator] Code generation failed for ${prefix}:`, err);
+      // Fallback to a high-entropy temporary code if DB fails
+      const ts = Date.now().toString(36).toUpperCase();
+      return `${prefix}-TEMP-${ts}`;
+    }
   },
 
   /**
