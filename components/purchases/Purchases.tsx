@@ -25,7 +25,7 @@ import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 import { money, pricing, tax } from '../../utils/money';
-import { formatCurrency } from '../../utils/currency';
+import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { FilterDropdown } from '../common/FilterDropdown';
@@ -463,8 +463,8 @@ const SortableCartItem = React.memo(({
           <span className='text-[8px] text-gray-400 uppercase font-bold leading-none'>
             {t.headers?.subtotal || 'Subtotal'}
           </span>
-          <div className='tabular-nums text-[13px] font-black text-(--text-primary)'>
-            {calculatedSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <div className='tabular-nums text-[15px] font-black text-(--text-primary)'>
+            {calculatedSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className='text-[10px] text-gray-400 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
           </div>
         </div>
 
@@ -473,8 +473,8 @@ const SortableCartItem = React.memo(({
           <span className='text-[8px] text-primary-500 uppercase font-bold leading-none'>
             {t.headers?.totalPlusTax || 'Total+Tax'}
           </span>
-          <div className='tabular-nums text-[13px] font-black text-primary-600 dark:text-primary-400'>
-            {calculatedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <div className='tabular-nums text-[15px] font-black text-primary-600 dark:text-primary-400'>
+            {calculatedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className='text-[10px] text-gray-400 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
           </div>
         </div>
       </div>
@@ -576,6 +576,11 @@ export const Purchases: React.FC<PurchasesProps> = ({
       // Set createdAt only when first item is added
       if ((!prev.createdAt || prev.createdAt === 0) && updatedCart.length > 0) {
         updates.createdAt = Date.now();
+      }
+
+      // Reset createdAt if cart is explicitly cleared
+      if (updatedCart.length === 0) {
+        updates.createdAt = 0;
       }
       
       return updates;
@@ -1134,6 +1139,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
           supplierId: '',
           externalInvoiceId: '',
           name: `Purchase ${tabs.findIndex((t) => t.id === activeTabId) + 1}`,
+          createdAt: 0,
         });
 
         // Generate Next ID
@@ -1570,14 +1576,12 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 {/* Session Timestamp */}
                 {activeTab?.createdAt > 0 && (
                   <div className='group relative'>
-                    <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 whitespace-nowrap'>
+                    <label className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1 whitespace-nowrap'>
                       {language === 'AR' ? 'وقت البدء' : 'Started at'}
                     </label>
-                    <div className='flex items-center h-8 gap-1.5 text-xs font-mono font-bold text-gray-500 dark:text-gray-400 bg-gray-50/50 dark:bg-white/5 px-2.5 rounded-lg border border-gray-100/50 dark:border-white/5 transition-all duration-300 group-hover:bg-gray-100 dark:group-hover:bg-white/10'>
-                      <span className='material-symbols-rounded text-sm opacity-60'>schedule</span>
+                    <div className='flex items-center h-7 gap-1 text-base font-bold text-gray-600 dark:text-gray-300 bg-gray-50/50 dark:bg-white/5 px-2 rounded-lg border border-gray-100/50 dark:border-white/5 transition-all duration-300 group-hover:bg-gray-100 dark:group-hover:bg-white/10'>
+                      <span className='material-symbols-rounded text-lg opacity-60'>schedule</span>
                       {new Intl.DateTimeFormat(language === 'AR' ? 'ar-EG' : 'en-US', {
-                        day: '2-digit',
-                        month: '2-digit',
                         hour: '2-digit',
                         minute: '2-digit',
                         hour12: true,
@@ -1588,43 +1592,46 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
                 {/* System Order ID (Read Only) */}
                 <div className='group relative'>
-                  <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
+                  <label className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
                     {t.tableHeaders?.orderId || 'Order #'}
                   </label>
-                  <div className='relative overflow-hidden h-8 flex items-center'>
-                    <input
-                      type='text'
-                      readOnly
-                      value={invoiceId}
-                      dir='ltr'
-                      className={`text-lg font-mono font-bold bg-transparent border border-transparent rounded-lg px-2 py-0.5 outline-hidden cursor-default w-28 text-left select-all transition-all duration-500 ease-out ${
+                  <div className='relative h-10 flex items-center'>
+                    <div 
+                      className={`text-xl font-mono font-bold px-2 py-0.5 select-none transition-all duration-500 ease-out ${
                         isOrderIdAnimating
-                          ? 'text-green-500 dark:text-green-400 animate-[rollUp_0.5s_ease-out]'
-                          : 'text-gray-500 dark:text-gray-400'
+                          ? 'text-green-500 dark:text-green-400'
+                          : 'text-gray-600 dark:text-gray-300'
                       }`}
                       style={{
                         animation: isOrderIdAnimating ? 'rollUp 0.5s ease-out' : 'none',
                       }}
-                    />
+                    >
+                      {invoiceId}
+                    </div>
                   </div>
                 </div>
 
                 {/* Manual Invoice ID */}
                 <div className='group relative'>
-                  <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
+                  <label className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
                     {t.tableHeaders?.invId || 'Invoice #'}
                   </label>
-                  <input
-                    ref={(el) => {
-                      inputRefs.current['externalInvoiceId'] = el;
-                    }}
-                    type='text'
-                    placeholder={t.placeholders?.enterId || 'Enter ID'}
-                    value={externalInvoiceId}
-                    onChange={(e) => setExternalInvoiceId(e.target.value)}
-                    dir={externalInvoiceIdDir}
-                    className='text-lg font-mono font-bold bg-transparent border border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary-500 rounded-lg px-2 py-0.5 outline-hidden transition-all w-28 text-left text-gray-600 dark:text-gray-400 placeholder-gray-300'
-                  />
+                  <div className="relative inline-grid items-center h-10">
+                    <span className="invisible text-xl font-mono font-bold px-2 py-0.5 whitespace-pre min-w-[6rem]">
+                      {externalInvoiceId || (t.placeholders?.enterId || 'Enter ID')}
+                    </span>
+                    <input
+                      ref={(el) => {
+                        inputRefs.current['externalInvoiceId'] = el;
+                      }}
+                      type='text'
+                      placeholder={t.placeholders?.enterId || 'Enter ID'}
+                      value={externalInvoiceId}
+                      onChange={(e) => setExternalInvoiceId(e.target.value)}
+                      dir={externalInvoiceIdDir}
+                      className='absolute inset-0 text-xl font-mono font-bold bg-transparent border border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary-500 rounded-lg px-2 py-0.5 outline-hidden transition-all text-left text-gray-600 dark:text-gray-300 placeholder-gray-300 w-full h-full'
+                    />
+                  </div>
                 </div>
 
                 {/* Payment Method Toggle */}
@@ -1734,11 +1741,11 @@ export const Purchases: React.FC<PurchasesProps> = ({
             <div className='border-t border-gray-100 dark:border-(--border-divider) mt-auto px-1 py-4'>
               <div className='flex items-center justify-between gap-3'>
                 {/* Left: Metrics Group */}
-                <div className='flex items-center gap-6 text-sm py-1'>
+                <div className='flex items-center gap-2 text-sm py-1'>
                   {/* Items Count */}
-                  <div className='flex items-center gap-2'>
-                    <span className='text-gray-400 font-medium'>{t.summary.totalItems}</span>
-                    <span className='font-bold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-lg'>
+                  <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
+                    <span className='text-[10px] uppercase text-gray-400 font-bold tracking-wider'>{t.summary.totalItems}</span>
+                    <span className='text-lg font-black text-gray-900 dark:text-white leading-none'>
                       {cart.reduce((a, b) => a + (Number(b.quantity) || 0), 0)}
                     </span>
                   </div>
@@ -1750,11 +1757,12 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     const totalDiscount = money.subtract(totalSale, totalCost);
                     const discountPercent = pricing.actualMargin(totalCost, totalSale);
 
+                    const { amount: formattedDiscount, symbol } = formatCurrencyParts(totalDiscount);
                     return (
-                      <div className='flex items-center gap-2'>
-                        <span className='text-gray-400 font-medium'>{t.summary.discount || 'Disc'}</span>
-                        <span className={`font-bold ${totalDiscount > 0 ? 'text-green-600' : 'text-gray-600'}`}>
-                          {formatCurrency(totalDiscount)} <span className='text-xs opacity-75 font-mono'>({discountPercent.toFixed(1)}%)</span>
+                      <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
+                        <span className={`text-[10px] uppercase font-bold tracking-wider ${totalDiscount > 0 ? 'text-green-600' : 'text-gray-400'}`}>{t.summary.discount || 'Disc'}</span>
+                        <span className='text-lg font-black leading-none text-gray-900 dark:text-white'>
+                          {formattedDiscount} <span className='text-[10px] text-gray-400 font-normal'>{symbol}</span> <span className='text-[10px] opacity-75 font-mono text-gray-400'>({discountPercent.toFixed(1)}%)</span>
                         </span>
                       </div>
                     );
@@ -1766,10 +1774,11 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       cart.map((item) => ({ amount: money.multiply(item.costPrice, item.quantity, 0), taxPct: item.tax || 0 })),
                       taxMode
                     );
+                    const { amount: formattedTax, symbol } = formatCurrencyParts(taxResults.taxAmount);
                     return (
-                      <div className='flex items-center gap-2'>
-                        <span className='text-gray-400 font-medium'>{t.summary.tax || 'Tax'}</span>
-                        <span className='font-bold text-orange-600'>{formatCurrency(taxResults.taxAmount)}</span>
+                      <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
+                        <span className='text-[10px] uppercase text-orange-600 font-bold tracking-wider'>{t.summary.tax || 'Tax'}</span>
+                        <span className='text-lg font-black text-gray-900 dark:text-white leading-none'>{formattedTax} <span className='text-[10px] text-gray-400 font-normal'>{symbol}</span></span>
                       </div>
                     );
                   })()}
@@ -1779,7 +1788,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 <div className='flex items-center gap-3'>
                   {/* Total Display - Fixed Height for alignment */}
                   <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
-                    <span className='text-[10px] uppercase text-gray-400 font-bold tracking-wider'>
+                    <span className={`text-[10px] uppercase font-bold tracking-wider ${paymentMethod === 'cash' ? 'text-green-600' : 'text-primary-600'}`}>
                       {t.summary.totalCost}
                     </span>
                     {(() => {
@@ -1787,9 +1796,10 @@ export const Purchases: React.FC<PurchasesProps> = ({
                         cart.map((item) => ({ amount: money.multiply(item.costPrice, item.quantity, 0), taxPct: item.tax || 0 })),
                         taxMode
                       );
+                      const { amount: formattedTotal, symbol } = formatCurrencyParts(taxResults.total);
                       return (
-                        <span className={`text-lg font-black leading-none ${paymentMethod === 'cash' ? 'text-green-600' : 'text-primary-600'}`}>
-                          {formatCurrency(taxResults.total)}
+                        <span className='text-xl font-black leading-none text-gray-900 dark:text-white'>
+                          {formattedTotal} <span className='text-xs text-gray-400 font-normal'>{symbol}</span>
                         </span>
                       );
                     })()}

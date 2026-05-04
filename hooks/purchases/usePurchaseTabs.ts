@@ -12,8 +12,8 @@ const createNewTab = (index: number): PurchaseTab => ({
   cart: [],
   supplierId: '',
   externalInvoiceId: '',
-  taxMode: 'exclusive',
-  paymentMethod: 'cash',
+  taxMode: 'inclusive',
+  paymentMethod: 'credit',
   createdAt: 0,
 });
 

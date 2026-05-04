@@ -288,7 +288,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     <label className="text-xs font-medium flex items-center gap-1.5 text-(--text-primary)"><span className="material-symbols-rounded text-(--icon-xs)">text_fields</span>{t.fontEN}</label>
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                       {AVAILABLE_FONTS_EN.map(f => (
-                        <button key={f.value} onClick={() => setFontFamilyEN(f.value)} className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all ${fontFamilyEN === f.value ? 'bg-black text-white dark:bg-(--accent-primary)' : 'border-(--border-divider) text-(--text-primary)'}`} style={{ fontFamily: f.value }}>{f.label}</button>
+                        <button 
+                          key={f.value} 
+                          onClick={() => setFontFamilyEN(f.value)} 
+                          className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all whitespace-nowrap flex-shrink-0 ${fontFamilyEN === f.value ? 'bg-black text-white dark:bg-white dark:text-black' : 'border-(--border-divider) text-(--text-primary)'}`} 
+                          style={{ fontFamily: f.value }}
+                        >
+                          {f.label}
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -296,7 +303,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     <label className="text-xs font-medium flex items-center gap-1.5 text-(--text-primary)"><span className="material-symbols-rounded text-(--icon-xs)">translate</span>{t.fontAR}</label>
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                       {AVAILABLE_FONTS_AR.map(f => (
-                        <button key={f.value} onClick={() => setFontFamilyAR(f.value)} className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all ${fontFamilyAR === f.value ? 'bg-black text-white dark:bg-(--accent-primary)' : 'border-(--border-divider) text-(--text-primary)'}`} style={{ fontFamily: f.value }}>{f.label}</button>
+                        <button 
+                          key={f.value} 
+                          onClick={() => setFontFamilyAR(f.value)} 
+                          className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all whitespace-nowrap flex-shrink-0 ${fontFamilyAR === f.value ? 'bg-black text-white dark:bg-white dark:text-black' : 'border-(--border-divider) text-(--text-primary)'}`} 
+                          style={{ fontFamily: f.value }}
+                        >
+                          {f.label}
+                        </button>
                       ))}
                     </div>
                   </div>
