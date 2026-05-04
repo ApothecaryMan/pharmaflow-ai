@@ -7,6 +7,7 @@ export interface GlobalDrug {
   name: string;
   nameAr?: string;
   activeSubstance?: string;
+  /** International Barcode (Global) */
   barcode?: string;
   category?: string;
   publicPrice?: number;
@@ -69,9 +70,9 @@ export interface Drug {
   damagedStock?: number;
   /** Earliest expiry date (ISO string) */
   expiryDate: string;
-  /** Primary barcode */
+  /** International Barcode (Primary Global Code) */
   barcode?: string;
-  /** Internal reference code */
+  /** Internal Barcode (System-generated Sequential Code) */
   internalCode?: string;
   /** Number of units per pack (for unit sales) */
   unitsPerPack?: number;
