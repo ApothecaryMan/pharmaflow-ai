@@ -34,14 +34,14 @@ export const formatCurrency = (
       style: 'decimal',
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
-    }, targetLocale);
+    }, 'en-US'); // Force dot separator
 
     // Ensure amount is rounded to desired precision
     const formattedAmount = formatter.format(amount);
     
     return isArabic 
-      ? `\u200E${formattedAmount}\u00A0ج.م\u200E` 
-      : `\u200E${formattedAmount}\u00A0EGP\u200E`;
+      ? `\u2067${formattedAmount}\u00A0ج.م\u2069` 
+      : `\u2066${formattedAmount}\u00A0EGP\u2069`;
   }
 
   const formatter = getFormatter({
@@ -70,7 +70,7 @@ export const formatCurrencyParts = (
       style: 'decimal',
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
-    }, targetLocale);
+    }, 'en-US'); // Force dot separator
 
     return {
       amount: formatter.format(amount),
@@ -134,10 +134,16 @@ export const formatCompactCurrency = (
   }, targetLocale);
 
   if (currency === 'EGP') {
+    const formatter = getFormatter({
+      notation: 'compact',
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }, 'en-US'); // Force dot separator
+
     const formattedAmount = formatter.format(amount);
     return isArabic 
-      ? `\u200E${formattedAmount}\u00A0ج.م\u200E` 
-      : `\u200E${formattedAmount}\u00A0EGP\u200E`;
+      ? `\u2067${formattedAmount}\u00A0ج.م\u2069` 
+      : `\u2066${formattedAmount}\u00A0EGP\u2069`;
   }
 
   const currencyFormatter = getFormatter({
@@ -167,6 +173,12 @@ export const formatCompactCurrencyParts = (
   }, targetLocale);
 
   if (currency === 'EGP') {
+    const formatter = getFormatter({
+      notation: 'compact',
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }, 'en-US'); // Force dot separator
+
     return {
       amount: formatter.format(amount),
       symbol: isArabic ? 'ج.م' : 'EGP',

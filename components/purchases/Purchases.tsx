@@ -464,7 +464,7 @@ const SortableCartItem = React.memo(({
             {t.headers?.subtotal || 'Subtotal'}
           </span>
           <div className='tabular-nums text-[15px] font-black text-(--text-primary)'>
-            {calculatedSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className='text-[10px] text-gray-400 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
+            {calculatedSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
         </div>
 
@@ -474,7 +474,7 @@ const SortableCartItem = React.memo(({
             {t.headers?.totalPlusTax || 'Total+Tax'}
           </span>
           <div className='tabular-nums text-[15px] font-black text-primary-600 dark:text-primary-400'>
-            {calculatedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className='text-[10px] text-gray-400 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
+            {calculatedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
         </div>
       </div>
@@ -1761,8 +1761,10 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     return (
                       <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
                         <span className={`text-[10px] uppercase font-bold tracking-wider ${totalDiscount > 0 ? 'text-green-600' : 'text-gray-400'}`}>{t.summary.discount || 'Disc'}</span>
-                        <span className='text-lg font-black leading-none text-gray-900 dark:text-white'>
-                          {formattedDiscount} <span className='text-[10px] text-gray-400 font-normal'>{symbol}</span> <span className='text-[10px] opacity-75 font-mono text-gray-400'>({discountPercent.toFixed(1)}%)</span>
+                        <span className='text-lg font-black leading-none text-gray-900 dark:text-white flex items-center gap-1.5 h-full'>
+                          <span>{formattedDiscount} <span className='text-[10px] text-gray-400 font-normal'>{symbol}</span></span>
+                          <span className='h-full w-px bg-gray-200 dark:bg-gray-700 mx-0.5' />
+                          <span>({discountPercent.toFixed(1)}%)</span>
                         </span>
                       </div>
                     );
