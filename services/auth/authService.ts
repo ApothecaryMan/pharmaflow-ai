@@ -367,17 +367,15 @@ export const authService = {
         
         let empData = await employeeRepository.getByAuthUserId(userId);
 
-        if (!empData && email) {
-          // Add a temporary method to employeeRepository if needed, or just use existing
-          const all = await employeeRepository.getAll(''); // Empty branch to get all
-          empData = all.find(e => e.email === email) || null;
-        }
-        
-        if (empData) {
-          const { hashPassword } = await import('./hashUtils');
-          const hashed = await hashPassword(newPassword);
-          await employeeRepository.update(empData.id, { password: hashed });
-        }
+      if (!empData && email) {
+        empData = await employeeRepository.getByEmail(email);
+      }
+      
+      if (empData) {
+        const { hashPassword } = await import('./hashUtils');
+        const hashed = await hashPassword(newPassword);
+        await employeeRepository.update(empData.id, { password: hashed });
+      }
       }
 
       return { success: true };

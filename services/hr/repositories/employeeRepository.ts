@@ -131,6 +131,15 @@ export const employeeRepository = {
     return data;
   },
 
+  async getByEmail(email: string): Promise<Employee | null> {
+    const { data, error } = await supabase.from(this.tableName)
+      .select('*')
+      .eq('email', email)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? this.mapFromDb(data) : null;
+  },
+
   async upsert(employees: Employee[]): Promise<void> {
     if (employees.length === 0) return;
     const dbEmployees = employees.map(e => this.mapToDb(e));
