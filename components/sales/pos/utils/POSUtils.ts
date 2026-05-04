@@ -83,7 +83,7 @@ export const buildSalePayload = (params: SalePayloadParams): Sale => {
     items,
     branchId,
     customerName: customerName || customer?.name || 'Guest Customer',
-    customerCode: customerCode || customer?.code,
+    customerCode: (customerCode || customer?.code) || undefined,
     customerPhone: customer?.phone,
     customerAddress: formatFullAddress(customer, language),
     customerStreetAddress: customer?.streetAddress,
@@ -93,7 +93,7 @@ export const buildSalePayload = (params: SalePayloadParams): Sale => {
     globalDiscount,
     subtotal,
     total,
-    deliveryEmployeeId,
+    deliveryEmployeeId: deliveryEmployeeId || undefined,
     status,
     processingTimeMinutes,
   } as Sale;
