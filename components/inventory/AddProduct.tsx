@@ -49,7 +49,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
 
   const [formData, setFormData] = useState<Partial<Drug>>({
     name: '',
-    nameArabic: '',
+    nameAr: '',
     genericName: [],
     category: 'General',
     dosageForm: '',
@@ -176,7 +176,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
 
     const newDrug: Omit<Drug, 'id' | 'branchId' | 'createdAt' | 'updatedAt'> = {
       name: formData.name || '',
-      nameArabic: formData.nameArabic,
+      nameAr: formData.nameAr,
       genericName: formData.genericName,
       category: formData.category || 'General',
       publicPrice: formData.publicPrice || 0,
@@ -221,7 +221,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
     }
     setFormData({
       name: '',
-      nameArabic: '',
+      nameAr: '',
       genericName: [],
       category: 'General',
       dosageForm: '',
@@ -305,8 +305,8 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 </label>
                 <SmartInput
                   placeholder={t.placeholders?.nameArabic}
-                  value={formData.nameArabic}
-                  onChange={(e) => setFormData({ ...formData, nameArabic: e.target.value })}
+                  value={formData.nameAr}
+                  onChange={(e) => setFormData({ ...formData, nameAr: e.target.value })}
                   className={INPUT_BASE}
                   dir="rtl"
                 />

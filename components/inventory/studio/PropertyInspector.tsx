@@ -288,7 +288,6 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                     { label: '0.5mm', value: 0.5 },
                     { label: '1mm', value: 1 },
                   ]}
-                  color={color}
                   size='xs'
                 />
                 <p className='text-[10px] text-gray-500 mt-1.5 px-1'>
@@ -311,7 +310,6 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                     { label: t.printSettings.currencyEGP, value: 'L.E' },
                     { label: t.printSettings.currencyUSD, value: 'USD' },
                   ]}
-                  color={color}
                   size='xs'
                 />
               </div>
@@ -390,7 +388,6 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       { label: 'Normal', value: 'normal' },
                       { label: 'Bold', value: 'bold' },
                     ]}
-                    color={color}
                     size='xs'
                   />
                 </div>
@@ -451,7 +448,6 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       { label: '', value: 'center', icon: 'format_align_center' },
                       { label: '', value: 'right', icon: 'format_align_right' },
                     ]}
-                    color={color}
                     size='xs'
                     fullWidth
                   />
@@ -468,7 +464,6 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       { label: '0°', value: 0 },
                       { label: '90°', value: 90, icon: 'rotate_right' },
                     ]}
-                    color={color}
                     size='xs'
                   />
                 </div>
@@ -484,7 +479,6 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                         { label: 'Global', value: 'global' },
                         { label: 'Internal', value: 'internal' },
                       ]}
-                      color={color}
                       size='xs'
                     />
                   </div>
