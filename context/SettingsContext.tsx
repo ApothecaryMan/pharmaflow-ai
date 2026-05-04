@@ -138,12 +138,12 @@ export interface SettingsContextType extends SettingsState {
 // Default Settings
 const defaultSettings: SettingsState = {
   theme: THEMES[0],
-  darkMode: false,
-  language: 'AR', // Default English
+  darkMode: true,
+  language: 'AR',
   fontFamilyEN: 'En-Firewall',
   fontFamilyAR: 'Ar-Firewall',
   textTransform: 'uppercase',
-  numeralSystem: 'AR',
+  numeralSystem: 'EN',
   navStyle: 2,
   dropdownBlur: false,
   sidebarBlur: false,
@@ -168,6 +168,7 @@ const defaultSettings: SettingsState = {
   activeBranchId: '',
   branchCode: '',
 };
+
 // Load settings from storage
 const loadSettings = (): SettingsState => {
   if (typeof window === 'undefined') return defaultSettings;
