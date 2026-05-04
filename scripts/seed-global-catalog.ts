@@ -58,7 +58,7 @@ async function seed() {
               .from('global_drugs')
               .upsert({
                 name_en: item.name,
-                name_ar: item.nameArabic || item.nameAr,
+                name_ar: item.nameAr || item.nameAr,
                 active_substance: Array.isArray(item.genericName) ? item.genericName.join(', ') : item.genericName,
                 barcode: item.barcode,
                 category: item.category,
@@ -79,7 +79,7 @@ async function seed() {
         const branchDrug: any = {
           branch_id: BRANCH_ID,
           name: item.name,
-          name_arabic: item.nameArabic || item.nameAr,
+          name_arabic: item.nameAr || item.nameAr,
           generic_name: item.genericName,
           category: item.category,
           public_price: item.publicPrice,

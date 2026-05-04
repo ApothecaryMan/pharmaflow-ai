@@ -52,7 +52,7 @@ function generateChunkSql(chunk: any[], chunkIndex: number) {
   sql += `  SELECT org_id INTO v_oid FROM branches WHERE id = v_bid;\n\n`;
 
   for (const item of chunk) {
-    const nameAr = item.nameArabic || item.nameAr;
+    const nameAr = item.nameAr || item.nameAr;
     const activeSub = Array.isArray(item.genericName) ? item.genericName.join(', ') : item.genericName;
     const expiry = item.expiryDate ? (item.expiryDate.length === 7 ? `${item.expiryDate}-01` : item.expiryDate) : null;
     const dosage = item.dosageForm || item.dosage_form;

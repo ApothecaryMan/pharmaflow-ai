@@ -11,7 +11,7 @@ import { getLocalizedProductType } from '../data/productCategories';
 
 export interface DrugDisplayItem {
   name: string;
-  nameArabic?: string;
+  nameAr?: string;
   dosageForm?: string;
   genericName?: string[];
   strength?: string;
@@ -104,9 +104,9 @@ export const getFullDisplayName = (
 };
 
 export const getArabicDisplayName = (item: DrugDisplayItem): string => {
-  if (!item || !item.nameArabic) return '';
+  if (!item || !item.nameAr) return '';
 
-  const parts: string[] = [item.nameArabic];
+  const parts: string[] = [item.nameAr];
 
   if (item.dosageForm) {
     const localizedForm = getLocalizedProductType(item.dosageForm, 'ar');
