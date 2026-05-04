@@ -477,7 +477,13 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 
 
 const App: React.FC = () => {
+  // 0. Storage Version Validation
+  React.useEffect(() => {
+    storage.validateVersion();
+  }, []);
+
   // 1. Initialize App State (View, Toast, etc.)
+
   const appState = useAppState();
 
   // 2. Initialize Auth State

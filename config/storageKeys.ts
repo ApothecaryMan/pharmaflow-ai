@@ -1,5 +1,8 @@
+export const CURRENT_APP_VERSION = '2.014';
+
 export const StorageKeys = {
   // Core config
+  STORAGE_VERSION: 'pharma_storage_version',
   VIEW: 'pharma_view',
   ACTIVE_MODULE: 'pharma_activeModule',
   THEME: 'pharma_theme', // Note: SettingsContext might use different keys, need to check
@@ -69,3 +72,4 @@ export const StorageKeys = {
 } as const;
 
 export type StorageKeys = (typeof StorageKeys)[keyof typeof StorageKeys];
+

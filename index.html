@@ -10,12 +10,38 @@
     <title>ZINC</title>
     <script>
       (function() {
+        var CURRENT_VERSION = '2.014';
+        var VERSION_KEY = 'pharma_storage_version';
+        var SESSION_KEY = 'branch_pilot_session';
+        
         try {
-          var session = JSON.parse(localStorage.getItem('branch_pilot_session'));
+          // 1. Version Check (Pre-flight Reset)
+          var storedVersion = localStorage.getItem(VERSION_KEY);
+          if (storedVersion !== CURRENT_VERSION) {
+            console.warn('New version detected (' + CURRENT_VERSION + '). Clearing stale storage.');
+            localStorage.clear();
+            localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
+            return;
+          }
+
+          // 2. Safe Session Parse
+          var rawSession = localStorage.getItem(SESSION_KEY);
+          var session = null;
+          if (rawSession) {
+            try { session = JSON.parse(rawSession); } catch(e) { console.error('Stale session detected'); }
+          }
+          
           var isAuthenticated = !!(session && (session.userId || session.employeeId));
           var userId = session ? session.userId : null;
           var key = userId ? 'pharma_settings_' + userId : 'pharma_settings';
-          var settings = JSON.parse(localStorage.getItem(key));
+          
+          // 3. Safe Settings Parse
+          var rawSettings = localStorage.getItem(key);
+          var settings = null;
+          if (rawSettings) {
+            try { settings = JSON.parse(rawSettings); } catch(e) { console.error('Malformed settings'); }
+          }
+
           var darkMode = false;
           var language = 'AR';
           if (settings) {
@@ -47,9 +73,12 @@
           }
           document.documentElement.dir = language === 'AR' ? 'rtl' : 'ltr';
           document.documentElement.lang = language.toLowerCase();
-        } catch (e) {}
+        } catch (e) {
+          console.error('Pre-flight check failed:', e);
+        }
       })();
     </script>
+
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
