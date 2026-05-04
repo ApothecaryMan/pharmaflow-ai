@@ -180,6 +180,46 @@ export const idGenerator = {
   },
 
   /**
+   * Generates a short, smart, and deterministic batch barcode.
+   * Format: [DrugID in Base36][Months since 2024 in Base36]
+   * Example: Drug 2166 + Expiry 2027-10 => "1O62D"
+   * @param drugId Numeric ID of the drug
+   * @param expiryDate Expiry date of the batch
+   */
+  generateBatchBarcode: (drugId: number, expiryDate: string | Date): string => {
+    // 1. Encode Drug ID (e.g., 2166 => "1O6")
+    const drugPart = drugId.toString(36).toUpperCase();
+    
+    // 2. Encode Expiry Date as months since 2024-01
+    const date = new Date(expiryDate);
+    const startYear = 2024;
+    const months = (date.getFullYear() - startYear) * 12 + date.getMonth();
+    const datePart = months.toString(36).toUpperCase().padStart(2, '0');
+    
+    return `${drugPart}${datePart}`;
+  },
+
+  /**
+   * Decodes a smart batch barcode back into drugId and approximate expiry date.
+   * Useful for offline interpretation of scanned internal stickers.
+   */
+  decodeBatchBarcode: (barcode: string): { drugId: number; expiryDate: Date } => {
+    const datePart = barcode.slice(-2);
+    const drugPart = barcode.slice(0, -2);
+    
+    const drugId = parseInt(drugPart, 36);
+    const months = parseInt(datePart, 36);
+    
+    const year = Math.floor(months / 12) + 2024;
+    const month = months % 12;
+    
+    return {
+      drugId,
+      expiryDate: new Date(year, month, 1)
+    };
+  },
+
+  /**
    * Validates if a string is a valid UUID
    * @param id The string to check
    */
