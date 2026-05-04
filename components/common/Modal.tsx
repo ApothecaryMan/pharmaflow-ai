@@ -246,7 +246,6 @@ export const Modal: React.FC<ModalProps> = ({
                     value={activeTab}
                     onChange={onTabChange}
                     size='xs'
-                    variant='onCard'
                     fullWidth={false}
                     iconSize='--icon-md'
                   />
@@ -254,15 +253,24 @@ export const Modal: React.FC<ModalProps> = ({
               ) : null}
 
               {/* End Section - Header Actions + Close Button */}
-              <div className='flex items-center absolute end-0 top-0 bottom-0'>
+              <div className='flex items-center absolute end-2 top-0 bottom-0'>
                 {headerActions}
                 {!hideCloseButton ? (
                   <button
                     onClick={onClose}
-                    className='h-full w-12 flex items-center justify-center text-(--text-tertiary) hover:text-white hover:bg-red-500 active:bg-red-600 transition-colors duration-150 group'
+                    className='w-8 h-8 rounded-full grid place-items-center text-(--text-tertiary) hover:text-(--text-primary) hover:bg-zinc-500/10 dark:hover:bg-zinc-400/15 active:scale-95 transition-all duration-200'
                     aria-label="Close modal"
                   >
-                    <span className='material-symbols-rounded block' style={{ fontSize: '18px' }}>close</span>
+                    <span 
+                      className='material-symbols-rounded leading-none' 
+                      style={{ 
+                        fontSize: '22px',
+                        fontVariationSettings: "'wght' 600",
+                        display: 'block'
+                      }}
+                    >
+                      close
+                    </span>
                   </button>
                 ) : null}
               </div>

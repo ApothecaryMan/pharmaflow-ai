@@ -414,5 +414,25 @@ export const batchService = {
     }
 
     return issues;
+  },
+
+  getDrugInventorySummary(drug: Drug, batchesMap: Map<string, Drug[]>) {
+    const groupId = getGroupingKey(drug);
+    const batches = batchesMap.get(groupId) || [];
+    
+    const sortedBatches = [...batches]
+      .filter(b => (b.stock || 0) > 0)
+      .sort((a, b) => 
+        parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime()
+      );
+
+    const totalStock = sortedBatches.reduce((sum, b) => sum + (b.stock || 0), 0);
+    
+    return {
+      batches: sortedBatches,
+      totalStock,
+      hasStock: totalStock > 0,
+      earliestExpiry: sortedBatches[0]?.expiryDate || null
+    };
   }
 };

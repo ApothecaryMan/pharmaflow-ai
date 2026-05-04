@@ -41,7 +41,7 @@ export const COLOR_HEX_MAP: Record<string, string> = {
  * Displayed in the settings menu for user selection
  */
 export const THEMES: ThemeColor[] = [
-  { name: 'Red', primary: 'red', hex: COLOR_HEX_MAP.red },
+  { name: 'Indigo', primary: 'indigo', hex: COLOR_HEX_MAP.indigo },
   { name: 'Green', primary: 'green', hex: COLOR_HEX_MAP.green },
   { name: 'Blue', primary: 'blue', hex: COLOR_HEX_MAP.blue },
   { name: 'Purple', primary: 'purple', hex: COLOR_HEX_MAP.purple },

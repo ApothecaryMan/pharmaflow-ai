@@ -166,6 +166,29 @@ export class DrugSearchEngine {
     return this.searchByName(rawTerm, filters);
   }
 
+  /**
+   * O(1) Barcode/Internal Code Lookup
+   */
+  public searchByBarcode(barcode: string, filters?: any): SearchableDrug | null {
+    const term = barcode.trim().toLowerCase();
+    const id = this.barcodeMap.get(term);
+    if (!id) return null;
+    
+    const match = this.idMap.get(id);
+    if (match && this.matchesFilters(match, filters)) {
+      return this.transformResult(match, filters);
+    }
+    return null;
+  }
+
+  /**
+   * Specialized Scientific/Ingredient Search
+   */
+  public searchByScientificName(genericName: string | string[], filters?: any): SearchableDrug[] {
+    const q = Array.isArray(genericName) ? genericName.join(' ').toLowerCase() : genericName.toLowerCase();
+    return this.searchByIngredient(q, filters);
+  }
+
   private searchByName(query: string, filters?: any): SearchableDrug[] {
     return this.internalSearchByName(query, filters)
       .slice(0, 50)

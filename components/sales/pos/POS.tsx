@@ -15,7 +15,8 @@ import { useData } from '../../../context/DataContext';
 import type { TRANSLATIONS } from '../../../i18n/translations';
 import type { CartItem, Customer, Drug, Employee, Language, Sale, Shift } from '../../../types';
 import { getArabicDisplayName, getDisplayName } from '../../../utils/drugDisplayName';
-import { batchService } from '../../../services/inventory/batchService';
+import { batchService, getGroupingKey } from '../../../services/inventory/batchService';
+import { inventorySearchEngine } from '../../../services/search/drugSearchService';
 import { formatStock } from '../../../utils/inventory';
 import * as stockOps from '../../../utils/stockOperations';
 import { parseSearchTerm } from '../../../utils/searchUtils';
@@ -145,6 +146,12 @@ export const POS: React.FC<POSProps> = ({
     playBeep, playError,
   });
 
+  const [activeIndex, setActiveIndex] = useState(0);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
+  const [viewingDrugTab, setViewingDrugTab] = useState<'overview' | 'branches' | 'analytics'>('overview');
+
+
   // Initialize Smart Barcode Scanner (Background Detection)
   useBarcodeScanner({
     inventory,
@@ -154,10 +161,6 @@ export const POS: React.FC<POSProps> = ({
     enabled: hasOpenShift,
   });
 
-  const [activeIndex, setActiveIndex] = useState(0);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
-  const [viewingDrugTab, setViewingDrugTab] = useState<'overview' | 'branches' | 'analytics'>('overview');
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
   const [isClosedTabsModalOpen, setIsClosedTabsModalOpen] = useState(false);
@@ -375,6 +378,35 @@ export const POS: React.FC<POSProps> = ({
     });
     return map;
   }, [inventory]);
+
+  // --- Product Details Memoized Data (Optimized & Service-Connected) ---
+  const viewingDrugDetails = useMemo(() => {
+    if (!viewingDrug) return null;
+
+    // 1. Get Stock Summary from BatchService
+    const summary = batchService.getDrugInventorySummary(viewingDrug, batchesMap);
+
+    // 2. Get Substitutes from SearchEngine (Scientific Search)
+    const substitutes = (inventorySearchEngine.searchByScientificName(viewingDrug.genericName) as Drug[])
+      .filter(d => d.id !== viewingDrug.id)
+      .slice(0, 5);
+
+    const detailTabs = [
+      { label: currentLang === 'ar' ? 'نظرة عامة' : 'Overview', value: 'overview', icon: 'dashboard' },
+      { label: currentLang === 'ar' ? 'الفروع' : 'Branches', value: 'branches', icon: 'location_on' },
+      ...(permissionsService.can('reports.view_financial') 
+        ? [{ label: currentLang === 'ar' ? 'تحليلات' : 'Analytics', value: 'analytics', icon: 'analytics' }] 
+        : []
+      ),
+    ];
+
+    return { 
+      sortedBatches: summary.batches, 
+      substitutes, 
+      totalStock: summary.totalStock, 
+      detailTabs 
+    };
+  }, [viewingDrug, inventory, batchesMap, currentLang]);
 
   // --- Keyboard Shortcuts & Navigation ---
   const isTableFocused = search.trim().length > 0 && tableData.length > 0;
@@ -835,9 +867,7 @@ export const POS: React.FC<POSProps> = ({
                         const isBarcodeLike = /^\d+$/.test(term) && term.length > 3;
     
                         if (isBarcodeLike) {
-                          const match = inventory.find(
-                            (d) => d.barcode === term || (d.internalCode && d.internalCode === term)
-                          );
+                          const match = inventorySearchEngine.searchByBarcode(term) as Drug;
                           if (match) {
                             addToCart(match);
                             setSearch('');
@@ -1021,63 +1051,42 @@ export const POS: React.FC<POSProps> = ({
         />
 
         {/* Product Details Modal */}
-        {viewingDrug && (() => {
-          const drugBatches = inventory.filter(d => 
-            d.name === viewingDrug.name && d.dosageForm === viewingDrug.dosageForm && d.stock > 0
-          ).sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+        {viewingDrug && viewingDrugDetails && (
+          <Modal
+            isOpen={!!viewingDrug}
+            onClose={() => {
+              setViewingDrug(null);
+              setViewingDrugTab('overview');
+            }}
+            size='6xl'
+            title={t.productDetails}
+            icon='info'
+            tabs={viewingDrugDetails.detailTabs}
+            activeTab={viewingDrugTab}
+            onTabChange={setViewingDrugTab}
+          >
+            <div className='flex flex-col gap-6 p-1' dir="ltr">
+              {viewingDrugTab === 'overview' && (
+                <POSDrugOverview 
+                  viewingDrug={viewingDrug}
+                  drugBatches={viewingDrugDetails.sortedBatches}
+                  substitutes={viewingDrugDetails.substitutes}
+                  totalStock={viewingDrugDetails.totalStock}
+                  t={t}
+                  setViewingDrug={setViewingDrug}
+                />
+              )}
+              
+              {viewingDrugTab === 'branches' && (
+                <POSDrugBranches viewingDrug={viewingDrug} t={t} />
+              )}
 
-          const substitutes = inventory.filter(d => 
-            d.genericName === viewingDrug.genericName && d.id !== viewingDrug.id
-          ).slice(0, 5);
-
-          const totalStock = drugBatches.reduce((sum, d) => sum + d.stock, 0);
-
-          const detailTabs = [
-            { label: currentLang === 'ar' ? 'نظرة عامة' : 'Overview', value: 'overview', icon: 'dashboard' },
-            { label: currentLang === 'ar' ? 'الفروع' : 'Branches', value: 'branches', icon: 'location_on' },
-            ...(permissionsService.can('reports.view_financial') 
-              ? [{ label: currentLang === 'ar' ? 'تحليلات' : 'Analytics', value: 'analytics', icon: 'analytics' }] 
-              : []
-            ),
-          ];
-
-          return (
-            <Modal
-              isOpen={true}
-              onClose={() => {
-                setViewingDrug(null);
-                setViewingDrugTab('overview'); // Reset tab on close
-              }}
-              size='6xl'
-              title={t.productDetails}
-              icon='info'
-              tabs={detailTabs}
-              activeTab={viewingDrugTab}
-              onTabChange={setViewingDrugTab}
-            >
-              <div className='flex flex-col gap-6 p-1' dir="ltr">
-                {viewingDrugTab === 'overview' && (
-                  <POSDrugOverview 
-                    viewingDrug={viewingDrug}
-                    drugBatches={drugBatches}
-                    substitutes={substitutes}
-                    totalStock={totalStock}
-                    t={t}
-                    setViewingDrug={setViewingDrug}
-                  />
-                )}
-                
-                {viewingDrugTab === 'branches' && (
-                  <POSDrugBranches viewingDrug={viewingDrug} t={t} />
-                )}
-
-                {viewingDrugTab === 'analytics' && (
-                  <POSDrugAnalytics viewingDrug={viewingDrug} t={t} />
-                )}
-              </div>
-            </Modal>
-          );
-        })()}
+              {viewingDrugTab === 'analytics' && (
+                <POSDrugAnalytics viewingDrug={viewingDrug} t={t} />
+              )}
+            </div>
+          </Modal>
+        )}
 
         {/* Delivery Orders Modal */}
         <DeliveryOrdersModal

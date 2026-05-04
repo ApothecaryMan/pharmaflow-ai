@@ -223,13 +223,13 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
                 addToCart(item, false, clampedVal);
               }
             }}
-            className={`w-full h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 dark:placeholder-gray-700 text-primary-600 dark:text-primary-400 p-0`}
+            className={`w-full h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-black/20 dark:placeholder-white/20 text-black dark:text-white p-0`}
           />
         </div>
 
         {hasDualMode && (
           <>
-            <div className='w-px h-3 bg-gray-200 dark:bg-gray-700 shrink-0'></div>
+            <div className='w-px h-full bg-gray-100/50 dark:bg-white/5 shrink-0'></div>
             {/* Unit Section */}
             <div className={`flex-1 h-full flex items-center min-w-0`}>
               <input
@@ -251,7 +251,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
                     addToCart(item, true, clampedVal);
                   }
                 }}
-                className={`w-full h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-primary-600 dark:text-primary-400 placeholder-primary-200 dark:placeholder-primary-900/40 p-0`}
+                className={`w-full h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-black dark:text-white placeholder-black/20 dark:placeholder-white/20 p-0`}
               />
             </div>
           </>
@@ -294,7 +294,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
             readOnly // On mobile, maybe only +/- are better or keyboard triggered separately
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
-            className={`w-6 h-full text-[10px] font-black text-center bg-transparent border-none focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 dark:placeholder-gray-700 text-primary-600 dark:text-primary-400`}
+            className={`w-6 h-full text-[10px] font-black text-center bg-transparent border-none focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-black/20 dark:placeholder-white/20 text-black dark:text-white`}
           />
 
           <button
@@ -314,7 +314,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
         {renderMobileStepper(false)}
         {hasDualMode && (
           <>
-            <div className="w-px h-4 bg-gray-200 dark:bg-gray-800 shrink-0" />
+            <div className="w-px h-full bg-gray-100/50 dark:bg-white/5 shrink-0" />
             {renderMobileStepper(true)}
           </>
         )}
