@@ -225,6 +225,7 @@ export const authService = {
 
   async logout(): Promise<void> {
     try {
+      cachedSession = null;
       await supabase.auth.signOut();
       this.clearEmployeeSession();
       
