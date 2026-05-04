@@ -259,13 +259,6 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     onNavigate: (targetView) => handleViewChange(targetView),
   });
 
-  // --- Login Success Handler ---
-  const handleLoginSuccess = useCallback(() => {
-    setIsAuthenticated(true);
-    setActiveModule(ROUTES.DASHBOARD);
-    setView(ROUTES.DASHBOARD);
-  }, [setIsAuthenticated, setActiveModule, setView]);
-
   // --- URL Synchronization ---
   React.useEffect(() => {
     if (!isAuthenticated) return;
@@ -283,10 +276,22 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       }
     } else if (isAuthHash) {
       // If we are authenticated but still on an auth hash, and data isn't ready yet,
-      // we can at least move away from the login hash to a neutral state or wait.
-      // For now, the block above will handle it as soon as activeOrgId is ready.
+      // move away from login hash to prevent routing conflicts.
+      window.history.replaceState(null, '', `#/${view}`);
     }
   }, [isAuthenticated, activeOrgId, activeBranchId, view, branches]);
+
+
+  // --- Login Success Handler ---
+  const handleLoginSuccess = useCallback(() => {
+    setIsAuthenticated(true);
+    setActiveModule(ROUTES.DASHBOARD);
+    setView(ROUTES.DASHBOARD);
+    
+    // Force immediate hash update to prevent "stuck on login" issue
+    window.history.replaceState(null, '', `#/${ROUTES.DASHBOARD}`);
+  }, [setIsAuthenticated, setActiveModule, setView]);
+
 
   // --- Memoized Props for PageRouter ---
   const handlers = React.useMemo(
@@ -510,7 +515,11 @@ const App: React.FC = () => {
     setIsAuthenticated(true);
     setActiveModule(ROUTES.DASHBOARD);
     setView(ROUTES.DASHBOARD);
+
+    // Force immediate hash update to prevent "stuck on login" issue
+    window.history.replaceState(null, '', `#/${ROUTES.DASHBOARD}`);
   }, [setIsAuthenticated, setActiveModule, setView]);
+
 
 
   // 7. URL Synchronization for Login
