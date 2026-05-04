@@ -118,9 +118,11 @@ export const idGenerator = {
    */
   generateSync: (type: EntityType, branchCode?: string): string => {
     const prefix = branchCode || GLOBAL_PREFIX;
-    const ts = Date.now().toString().slice(-6);
-    const rand = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `${prefix}-${ts}${rand}`;
+    // Use full timestamp in Base36 (unlikely to wrap around for centuries)
+    const timePart = Date.now().toString(36).toUpperCase();
+    // Add 4-character alphanumeric entropy for high-frequency calls
+    const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `${prefix}-${timePart}${randomPart}`;
   },
 
   /**
