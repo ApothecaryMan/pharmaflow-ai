@@ -54,10 +54,36 @@ export const useUpdateCheck = () => {
     return () => clearInterval(interval);
   }, [checkForUpdates]);
 
-  const performUpdate = useCallback(() => {
-    // Simple way to force refresh and clear cache
-    window.location.reload();
+  const performUpdate = useCallback(async () => {
+    // 1. Unregister Service Workers to ensure fresh assets
+    if ('serviceWorker' in navigator) {
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+      } catch (e) {
+        console.warn('[Update] Failed to unregister SW:', e);
+      }
+    }
+
+    // 2. Clear Caches if possible
+    if ('caches' in window) {
+      try {
+        const cacheNames = await caches.keys();
+        for (const name of cacheNames) {
+          await caches.delete(name);
+        }
+      } catch (e) {
+        console.warn('[Update] Failed to clear caches:', e);
+      }
+    }
+
+    // 3. Hard reload with cache-busting timestamp
+    const separator = window.location.href.includes('?') ? '&' : '?';
+    window.location.href = window.location.origin + window.location.pathname + separator + 'update=' + Date.now() + window.location.hash;
   }, []);
+
 
   return {
     hasUpdate,

@@ -50,15 +50,17 @@ export const VersionInfo: React.FC<VersionInfoProps> = ({
   );
 
   return (
-    <Tooltip content={updateContent} delay={200} position="top">
+    <Tooltip content={updateContent} delay={200} position="top" className="h-full" triggerClassName="h-full">
+
       <StatusBarItem
-        icon={hasUpdate ? "zap" : "info"}
+        icon={hasUpdate ? "update" : "info"}
         label={version}
         tooltip="" // Handled by Tooltip wrapper
         onClick={onClick}
         variant={hasUpdate ? "success" : "default"}
         className={hasUpdate ? "animate-pulse" : ""}
       />
+
     </Tooltip>
   );
 };
