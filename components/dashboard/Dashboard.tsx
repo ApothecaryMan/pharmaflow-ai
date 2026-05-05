@@ -251,7 +251,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
   } = useDashboardAnalytics({ sales, inventory, batches, totalExpenses, language, branchId: activeBranchId });
 
   const lowStockItems = useMemo(() => {
-    return [...movingItemsAnalysis.critical, ...movingItemsAnalysis.lowStock];
+    const combined = [...movingItemsAnalysis.critical, ...movingItemsAnalysis.lowStock];
+    // Ensure uniqueness by ID
+    return Array.from(new Map(combined.map(item => [item.id, item])).values());
   }, [movingItemsAnalysis.critical, movingItemsAnalysis.lowStock]);
 
   const revenueTooltip = useMemo(() => <InsightTooltip {...revenueTooltipData} language={language} />, [revenueTooltipData, language]);
@@ -288,6 +290,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
         const totalItems = sale.items.reduce((sum, item) => sum + item.quantity, 0);
         return { 
           ...sale, 
+          // Ensure we have a valid key if ID is missing or numeric
+          key: `sale-${sale.id}-${new Date(sale.date).getTime()}`,
           returnStats: { returned: totalReturned, total: totalItems },
           timeAgo: getRelativeTime(new Date(sale.date), t, language)
         };
@@ -322,6 +326,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         const totalItems = sale.items.reduce((sum, item) => sum + item.quantity, 0);
         return { 
           ...sale, 
+          key: `sale-exp-${sale.id}-${new Date(sale.date).getTime()}`,
           returnStats: { returned: totalReturned, total: totalItems },
           timeAgo: getRelativeTime(new Date(sale.date), t, language)
         };
@@ -435,9 +440,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
         actions: exportBtn('low_stock', lowStockItems),
         children: (
           <div className='grid gap-3'>
-            {lowStockItems.map(item => (
+            {lowStockItems.map((item, idx) => (
               <GenericListItem 
-                key={item.id}
+                key={item.id || `low-${idx}`}
                 title={getDisplayName(item, textTransform)}
                 subtitle={item.category || ''}
                 badge={`${item.stock} ${t.expand?.allItems || 'left'}`}
@@ -456,7 +461,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className='space-y-3'>
             {topSelling20.map((item, index) => (
               <GenericListItem 
-                key={item.name}
+                key={`${item.id}-${index}`}
                 icon="hotel_class"
                 title={getDisplayName(item, textTransform)}
                 subtitle={`${item.qty} ${t.sold} • ${formatCurrency(item.revenue)} ${t.revenue}`}
@@ -471,12 +476,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
         actions: exportBtn('expiring_items', expiringItems),
         children: (
           <div className='space-y-3'>
-            {expiringItems.map(item => {
+            {expiringItems.map((item, idx) => {
               const days = getDaysUntilExpiry(item.expiryDate);
               const isExpired = days < 0;
               return (
                 <GenericListItem 
-                  key={item.id}
+                  key={item.id || `exp-${idx}`}
                   icon="event_busy"
                   title={getDisplayName(item, textTransform)}
                   subtitle={`${item.category} • ${item.stock} in stock`}
@@ -496,7 +501,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="relative space-y-4 py-1">
             <div className={`absolute top-4 bottom-4 w-0.5 bg-gray-100 dark:bg-gray-800 z-0 ${language === 'AR' ? 'right-[11px]' : 'left-[11px]'}`} />
             {recentSales20.map((sale, index) => (
-              <div key={sale.id} className="relative z-10">
+              <div key={sale.key || sale.id || `rs20-${index}`} className="relative z-10">
                 <div className={`absolute top-6 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-sm z-10 ${sale.hasReturns ? 'bg-orange-400' : 'bg-primary-500'} ${language === 'AR' ? '-right-[18px]' : '-left-[18px]'}`} />
                 <MaterialTabs index={index} total={recentSales20.length} className='h-auto! py-2 flex-col! items-stretch! gap-1 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors shadow-xs'>
                   <div className='flex items-center justify-between gap-3'>
@@ -582,31 +587,35 @@ export const Dashboard: React.FC<DashboardProps> = ({
           },
         ].map((card) => {
           const cardContent = (
+            <SmallCard
+              title={card.title}
+              value={card.value}
+              icon={card.icon}
+              iconColor={card.iconColor}
+              type={card.type as any}
+              currencyLabel={card.type === 'currency' ? getCurrencySymbol() : undefined}
+              fractionDigits={card.type === 'currency' ? 2 : 0}
+              iconTooltip={card.tooltip}
+              isLoading={isLoading}
+            />
+          );
+
+          const renderCard = (key: string) => (
             <div
-              key={card.id}
+              key={key}
               onClick={() => setExpandedView(card.id as ExpandedView)}
               className='cursor-pointer transition-transform active:scale-95 touch-manipulation'
             >
-              <SmallCard
-                title={card.title}
-                value={card.value}
-                icon={card.icon}
-                iconColor={card.iconColor}
-                type={card.type as any}
-                currencyLabel={card.type === 'currency' ? getCurrencySymbol() : undefined}
-                fractionDigits={card.type === 'currency' ? 2 : 0}
-                iconTooltip={card.tooltip}
-                isLoading={isLoading}
-              />
+              {cardContent}
             </div>
           );
 
           return card.permission ? (
             <HasPermission key={card.id} action={card.permission as any}>
-              {cardContent}
+              {renderCard(`inner-${card.id}`)}
             </HasPermission>
           ) : (
-            cardContent
+            renderCard(card.id)
           );
         })}
       </div>
@@ -655,7 +664,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             ) : (
               topSelling.map((item, index) => (
                 <div
-                  key={item.name}
+                  key={item.id || `ts-${index}`}
                   className='flex items-center justify-between p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
                 >
                   <div className='flex items-center gap-3 overflow-hidden'>
@@ -812,9 +821,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 {t.noResults || 'No transactions yet'}
               </div>
             ) : (
-              recentSales.map((sale) => (
+              recentSales.map((sale, idx) => (
                 <div
-                  key={sale.id}
+                  key={sale.key || sale.id || `rs-${idx}`}
                   className='py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/30 px-2 rounded-lg transition-colors'
                 >
                   <div className='flex items-center gap-3'>

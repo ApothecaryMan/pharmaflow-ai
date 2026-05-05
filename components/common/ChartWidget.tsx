@@ -11,7 +11,7 @@ import {
   YAxis,
 } from 'recharts';
 import { SegmentedControl } from './SegmentedControl'; // Adjust path if needed
-import { formatCurrencyParts } from '../../utils/currency';
+import { formatCurrencyParts, formatCompactCurrencyParts } from '../../utils/currency';
 import { CARD_BASE } from '../../utils/themeStyles';
 
 // --- Custom Tooltip Component ---
@@ -46,7 +46,7 @@ export const CustomTooltipContent = memo(
             <div className='flex flex-col'>
               <div className='flex items-baseline gap-1.5'>
                 {(() => {
-                  const parts = formatCurrencyParts(mainData.value);
+                  const parts = formatCompactCurrencyParts(mainData.value);
                   return (
                     <>
                       <span 
@@ -76,7 +76,7 @@ export const CustomTooltipContent = memo(
                       <span className='text-[11px] font-medium text-gray-600 dark:text-gray-400 truncate max-w-[80px]'>{name}</span>
                     </div>
                     <span className='text-[11px] font-bold text-gray-700 dark:text-gray-200 tabular-nums'>
-                      {formatCurrencyParts(emp.value).amount}
+                      {formatCompactCurrencyParts(emp.value).amount}
                     </span>
                   </div>
                 );
@@ -167,26 +167,21 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
 
   // Delay rendering until container has valid dimensions
   useLayoutEffect(() => {
-    const checkDimensions = () => {
-      if (containerRef.current) {
-        const { width, height } = containerRef.current.getBoundingClientRect();
+    if (!containerRef.current) return;
+
+    const obs = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
         if (width > 0 && height > 0) {
           setIsReady(true);
-          return true;
+        } else {
+          setIsReady(false);
         }
       }
-      return false;
-    };
-
-    // Check immediately
-    if (checkDimensions()) return;
-
-    // If not ready, use requestAnimationFrame to check after layout
-    const rafId = requestAnimationFrame(() => {
-      checkDimensions();
     });
 
-    return () => cancelAnimationFrame(rafId);
+    obs.observe(containerRef.current);
+    return () => obs.disconnect();
   }, []);
 
   // Use external state if provided, otherwise internal
@@ -288,11 +283,11 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
           </div>
         )}
         {isReady && !isLoading && (
-          <ResponsiveContainer width='100%' height='100%' debounce={50}>
+          <ResponsiveContainer width='100%' height='100%' minWidth={0} minHeight={0} debounce={50}>
             <ComposedChart
               data={data}
               margin={
-                chartMargin || { top: 15, right: 0, left: language === 'AR' ? 30 : 0, bottom: 20 }
+                chartMargin || { top: 15, right: 0, left: 0, bottom: 20 }
               }
             >
               <defs>
@@ -312,15 +307,16 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                 dataKey='date'
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
-                interval={xAxisInterval ?? 'equidistantPreserveStart'}
+                tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
+                interval={xAxisInterval ?? 0}
                 padding={{ left: 1, right: 3 }}
                 dy={10}
               />
               <YAxis
+                width={45}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(value) => value.toLocaleString()}
+                tickFormatter={(value) => (value === 0 ? '' : value.toLocaleString('en-US', { notation: 'compact' }))}
                 tick={{
                   fill: 'var(--text-secondary)',
                   fontSize: 12,
@@ -345,7 +341,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
               {/* Comparison Lines - Other Employees (Gray Dashed) - Render FIRST (Background) - Only for Area Chart */}
               {showComparison &&
                 activeChartType === 'area' &&
-                dataKeys.comparison?.map((key) => (
+                dataKeys.comparison?.map((key, idx) => (
                   <Area
                     key={key}
                     type='monotone'
@@ -355,7 +351,9 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                     strokeOpacity={0.5}
                     strokeDasharray='5 5'
                     fill='none'
-                    animationDuration={500}
+                    animationDuration={600}
+                    animationBegin={idx * 150} // Staggered entry
+                    animationEasing="ease-out"
                     activeDot={false}
                   />
                 ))}
@@ -369,14 +367,17 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                   strokeWidth={2}
                   fillOpacity={1}
                   fill={`url(#gradient-${title.replace(/[^a-zA-Z0-9]/g, '-')})`}
-                  animationDuration={500}
+                  animationDuration={1000}
+                  animationBegin={(dataKeys.comparison?.length || 0) * 150 + 100} // Start after comparison lines
+                  animationEasing="ease-out"
                 />
               ) : (
                 <Bar
                   dataKey={dataKeys.primary}
                   fill={color}
                   radius={[20, 20, 20, 20]}
-                  animationDuration={500}
+                  animationDuration={1000}
+                  animationEasing="ease-out"
                 />
               )}
               </ComposedChart>
