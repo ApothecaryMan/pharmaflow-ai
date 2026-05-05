@@ -30,7 +30,9 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const db = await openCatalogDB();
       const lastTime = await getLastSyncTime(db);
       
-      console.log(`[CatalogContext] Syncing with Supabase (last sync: ${lastTime || 'never'})...`);
+      if (import.meta.env.DEV) {
+        console.log(`[CatalogContext] Syncing with Supabase (last sync: ${lastTime || 'never'})...`);
+      }
       
       const columns = 'id, name_en, name_ar, barcode, public_price, category, active_substance, updated_at';
       let query = supabase.from('global_drugs').select(columns);
@@ -43,7 +45,9 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const { data, error } = await query;
 
       if (error) {
-        console.error('[CatalogContext] Sync failed:', error.message);
+        if (import.meta.env.DEV) {
+          console.error('[CatalogContext] Sync failed:', error.message);
+        }
         return;
       }
 
@@ -68,9 +72,13 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setTotalItems(allItems.length);
         
         setLastSync(new Date().toISOString());
-        console.log(`[CatalogContext] Sync complete. ${data.length} new items added. Total: ${allItems.length}`);
+        if (import.meta.env.DEV) {
+          console.log(`[CatalogContext] Sync complete. ${data.length} new items added. Total: ${allItems.length}`);
+        }
       } else {
-        console.log('[CatalogContext] Catalog is already up to date.');
+        if (import.meta.env.DEV) {
+          console.log('[CatalogContext] Catalog is already up to date.');
+        }
         const allItems = await loadCatalogFromDB(db);
         // We don't use totalItems from state here to avoid stale closures
         setTotalItems(prev => {
@@ -82,7 +90,9 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
         });
       }
     } catch (err) {
-      console.error('[CatalogContext] Sync error:', err);
+      if (import.meta.env.DEV) {
+        console.error('[CatalogContext] Sync error:', err);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -103,7 +113,9 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
           engine.indexData(cachedDrugs);
           setTotalItems(cachedDrugs.length);
           setLastSync(syncTime);
-          console.log(`[CatalogContext] Loaded ${cachedDrugs.length} items from IndexedDB.`);
+          if (import.meta.env.DEV) {
+            console.log(`[CatalogContext] Loaded ${cachedDrugs.length} items from IndexedDB.`);
+          }
           
           // Background sync if it's been a while (optional)
           syncWithSource();

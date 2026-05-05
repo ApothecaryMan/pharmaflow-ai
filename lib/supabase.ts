@@ -30,7 +30,7 @@ if (isSupabaseConfigured && typeof document !== 'undefined') {
 }
 
 // Diagnostic logging for production debugging
-if (import.meta.env.PROD) {
+if (import.meta.env.DEV) {
   console.log('Supabase Configuration Status:', {
     configured: isSupabaseConfigured,
     urlSet: !!supabaseUrl,

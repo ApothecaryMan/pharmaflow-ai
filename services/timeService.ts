@@ -213,7 +213,9 @@ export const timeService = new TimeService();
 const attemptSync = async (retries = 3) => {
   // Skip if already synced (e.g., from localStorage cache)
   if (timeService.isSynced()) {
-    console.log('[TimeService] Already synced from cache, skipping network sync.');
+    if (import.meta.env.DEV) {
+      console.log('[TimeService] Already synced from cache, skipping network sync.');
+    }
     return;
   }
 
