@@ -31,6 +31,7 @@ import { formatExpiryDate, parseExpiryEndOfMonth } from '../../utils/expiryUtils
 import { batchService } from '../../services/inventory/batchService';
 import { useData } from '../../context/DataContext';
 import { SegmentedControl } from '../common/SegmentedControl';
+import { DashboardHeader } from './DashboardHeader';
 
 interface DashboardProps {
   inventory: Drug[];
@@ -39,6 +40,7 @@ interface DashboardProps {
   color: string;
   t: any;
   onRestock: (id: string, qty: number, isUnit?: boolean) => void;
+  onViewChange?: (view: string) => void;
   subView?: string;
   language: string;
 }
@@ -169,6 +171,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   color,
   t,
   onRestock,
+  onViewChange,
   subView,
   language,
 }) => {
@@ -180,6 +183,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const { textTransform } = useSettings();
   const { activeBranchId, batches, isLoading } = useData();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [timeRange, setTimeRange] = useState('7');
+
+  const filteredData = useMemo(() => {
+    if (timeRange === 'ALL') return { sales, purchases };
+    const days = parseInt(timeRange);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    cutoff.setHours(0, 0, 0, 0);
+
+    return {
+      sales: sales.filter(s => new Date(s.date) >= cutoff),
+      purchases: purchases.filter(p => new Date(p.date) >= cutoff)
+    };
+  }, [sales, purchases, timeRange]);
 
   const helpContent = DASHBOARD_HELP[language as 'EN' | 'AR'] || DASHBOARD_HELP.EN;
 
@@ -248,7 +265,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
     topSelling: topSellingFull,
     expiringItems,
     salesTrends: salesData,
-  } = useDashboardAnalytics({ sales, inventory, batches, totalExpenses, language, branchId: activeBranchId });
+  } = useDashboardAnalytics({ 
+    sales: filteredData.sales, 
+    inventory, 
+    batches, 
+    totalExpenses: filteredData.purchases.reduce((sum, p) => sum + p.totalCost, 0), 
+    language, 
+    branchId: activeBranchId 
+  });
 
   const lowStockItems = useMemo(() => {
     const combined = [...movingItemsAnalysis.critical, ...movingItemsAnalysis.lowStock];
@@ -266,7 +290,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   // --- RECENT TRANSACTIONS (exclude fully returned orders) ---
   const recentSales = useMemo(() => {
-    return [...sales]
+    return [...filteredData.sales]
       .filter((sale) => {
         if ((sale.netTotal ?? sale.total) === 0) return false;
         if (sale.hasReturns && sale.itemReturnedQuantities) {
@@ -299,7 +323,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   }, [sales, t, language]);
 
   const recentSales20 = useMemo(() => {
-    return [...sales]
+    return [...filteredData.sales]
       .filter((sale) => {
         if ((sale.netTotal ?? sale.total) === 0) return false;
 
@@ -539,9 +563,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div
       ref={scrollContainerRef}
-      className='h-full overflow-y-auto pe-2 space-y-4 animate-fade-in pb-10'
+      className='h-full overflow-y-auto px-page space-y-4 animate-fade-in pb-10'
     >
-      <h1 className='text-2xl font-bold tracking-tight mb-4 page-title'>{t.title}</h1>
+      <DashboardHeader 
+        switcher={{
+          value: 'dashboard',
+          onChange: (val) => onViewChange?.(val),
+          options: [
+            { label: language === 'AR' ? 'نظرة عامة' : 'Overview', value: 'dashboard' },
+            { label: language === 'AR' ? 'المراقبة الفورية' : 'Real-time', value: 'real-time-sales' },
+          ]
+        }}
+        segmented={{
+          value: timeRange,
+          onChange: setTimeRange,
+          options: [
+            { label: language === 'AR' ? '٧ أيام' : '7 Days', value: '7' },
+            { label: language === 'AR' ? '٣٠ يوم' : '30 Days', value: '30' },
+            { label: language === 'AR' ? '٩٠ يوم' : '90 Days', value: '90' },
+            { label: language === 'AR' ? 'الكل' : 'All', value: 'ALL' },
+          ]
+        }}
+      />
 
       {/* Stats Cards Row */}
       <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3'>

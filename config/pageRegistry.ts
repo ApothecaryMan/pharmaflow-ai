@@ -396,7 +396,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'مراقبة المبيعات الفورية',
     icon: 'monitoring',
     category: 'sales-dashboard',
-    requiredProps: ['sales', 'customers', 'products', 'color', 't', 'language'],
+    requiredProps: ['sales', 'customers', 'products', 'color', 't', 'language', 'onViewChange'],
     permission: 'reports.view_financial',
     layout: 'dashboard',
   },
