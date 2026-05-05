@@ -79,9 +79,10 @@ export const useUpdateCheck = () => {
       }
     }
 
-    // 3. Hard reload with cache-busting timestamp
-    const separator = window.location.href.includes('?') ? '&' : '?';
-    window.location.href = window.location.origin + window.location.pathname + separator + 'update=' + Date.now() + window.location.hash;
+    // 3. Hard reload with cache-busting timestamp using robust URL API
+    const url = new URL(window.location.href);
+    url.searchParams.set('update', Date.now().toString());
+    window.location.href = url.toString();
   }, []);
 
 
