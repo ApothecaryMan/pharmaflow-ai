@@ -8,76 +8,7 @@
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
     <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
     <title>ZINC</title>
-    <script>
-      (function() {
-        var CURRENT_VERSION = '__APP_VERSION__';
-        var VERSION_KEY = 'pharma_storage_version';
-        var SESSION_KEY = 'branch_pilot_session';
-        
-        try {
-          // 1. Version Check (Pre-flight Reset)
-          var storedVersion = localStorage.getItem(VERSION_KEY);
-          if (storedVersion !== CURRENT_VERSION) {
-            console.warn('New version detected (' + CURRENT_VERSION + '). Clearing stale storage.');
-            localStorage.clear();
-            localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
-            return;
-          }
-
-          // 2. Safe Session Parse
-          var rawSession = localStorage.getItem(SESSION_KEY);
-          var session = null;
-          if (rawSession) {
-            try { session = JSON.parse(rawSession); } catch(e) { console.error('Stale session detected'); }
-          }
-          
-          var isAuthenticated = !!(session && (session.userId || session.employeeId));
-          var userId = session ? session.userId : null;
-          var key = userId ? 'pharma_settings_' + userId : 'pharma_settings';
-          
-          // 3. Safe Settings Parse
-          var rawSettings = localStorage.getItem(key);
-          var settings = null;
-          if (rawSettings) {
-            try { settings = JSON.parse(rawSettings); } catch(e) { console.error('Malformed settings'); }
-          }
-
-          var darkMode = false;
-          var language = 'AR';
-          if (settings) {
-            darkMode = !!settings.darkMode;
-            language = settings.language || 'AR';
-            if (settings.fontFamilyEN) document.documentElement.style.setProperty('--font-en', settings.fontFamilyEN);
-            if (settings.fontFamilyAR) document.documentElement.style.setProperty('--font-ar', settings.fontFamilyAR);
-            var radius = '0.625rem';
-            if (settings.borderRadius === 'sharp') radius = '0rem';
-            else if (settings.borderRadius === 'full') radius = '0.375rem';
-            document.documentElement.style.setProperty('--radius', radius);
-            if (settings.textTransform) {
-              document.documentElement.style.setProperty('--text-transform', settings.textTransform === 'uppercase' ? 'uppercase' : 'none');
-            }
-          } else {
-            var oldDarkMode = localStorage.getItem('pharma_darkMode');
-            if (oldDarkMode !== null) { try { darkMode = JSON.parse(oldDarkMode); } catch(e) { darkMode = oldDarkMode === 'true'; } }
-            var oldLang = localStorage.getItem('pharma_language');
-            if (oldLang !== null) { try { language = JSON.parse(oldLang); } catch(e) { language = oldLang; } }
-            var oldFontEN = localStorage.getItem('pharma_fontFamilyEN');
-            if (oldFontEN) document.documentElement.style.setProperty('--font-en', oldFontEN);
-            var oldFontAR = localStorage.getItem('pharma_fontFamilyAR');
-            if (oldFontAR) document.documentElement.style.setProperty('--font-ar', oldFontAR);
-          }
-          if (darkMode || !isAuthenticated) {
-            document.documentElement.classList.add('dark');
-            var meta = document.querySelectorAll('meta[name="theme-color"]');
-            for (var i = 0; i < meta.length; i++) meta[i].setAttribute('content', '#1f1f1f');
-          }
-          document.documentElement.dir = language === 'AR' ? 'rtl' : 'ltr';
-          document.documentElement.lang = language.toLowerCase();
-        } catch (e) {
-          console.error('Pre-flight check failed:', e);
-        }
-      })();
-    </script>
+    <script src="/preflight.js"></script>
 
     <meta
       name="viewport"

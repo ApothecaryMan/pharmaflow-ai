@@ -49,19 +49,27 @@ export const storage = {
     if (typeof localStorage === 'undefined') return;
     
     const storedVersion = localStorage.getItem(StorageKeys.STORAGE_VERSION);
-    if (storedVersion !== CURRENT_APP_VERSION) {
-      console.warn(`[Storage] Version mismatch! Current: ${CURRENT_APP_VERSION}, Stored: ${storedVersion}. Clearing storage for stability.`);
+    if (storedVersion && storedVersion !== CURRENT_APP_VERSION) {
+      console.warn(`[Storage] Version transition from ${storedVersion} to ${CURRENT_APP_VERSION}.`);
       
-      // Preserve critical auth session if possible, but for breaking changes, clear all
-      const session = localStorage.getItem(SESSION_KEY);
+      // We only clear known volatile caches. 
+      // Everything else (Session, Tabs, Settings) is preserved.
+      const VOLATILE_PREFIXES = [
+        StorageKeys.INVENTORY,
+        StorageKeys.EMPLOYEES,
+        StorageKeys.LAST_SYNC,
+        'pharma_shifts'
+      ];
       
-      localStorage.clear();
+      const keys = Object.keys(localStorage);
+      keys.forEach(k => {
+        if (VOLATILE_PREFIXES.some(p => k.startsWith(p))) {
+          localStorage.removeItem(k);
+        }
+      });
       
-      // Restore session to prevent logout if it was a minor update, 
-      // but if the user requested "مسح التخزين تلقائياً", we follow.
-      // However, usually we keep session to avoid frustration unless specifically told.
-      // Given the prompt says "مسح التخزين تلقائياً", I will clear ALL.
-      
+      localStorage.setItem(StorageKeys.STORAGE_VERSION, CURRENT_APP_VERSION);
+    } else if (!storedVersion) {
       localStorage.setItem(StorageKeys.STORAGE_VERSION, CURRENT_APP_VERSION);
     }
   },

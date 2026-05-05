@@ -13,11 +13,13 @@ import { StatusBarProvider } from './components/layout/StatusBar';
 import { AlertProvider, SettingsProvider, CatalogProvider } from './context';
 import { ShiftProvider } from './hooks/sales/useShift';
 import { DataProvider } from './context/DataContext';
+import { ErrorBoundary } from './src/components/common/ErrorBoundary';
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <SettingsProvider>
+    <ErrorBoundary>
+      <SettingsProvider>
       <CatalogProvider>
         <StatusBarProvider>
           <AlertProvider>
@@ -29,6 +31,7 @@ root.render(
           </AlertProvider>
         </StatusBarProvider>
       </CatalogProvider>
-    </SettingsProvider>
+      </SettingsProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );

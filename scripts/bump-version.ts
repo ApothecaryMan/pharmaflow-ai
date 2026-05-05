@@ -75,6 +75,19 @@ function bumpVersion() {
       console.log(`✅ Updated public/version.json (Date: ${newReleaseDate})`);
     }
 
+    // 5. Update public/preflight.js (New!)
+    const preflightPath = path.resolve(process.cwd(), 'public/preflight.js');
+    if (fs.existsSync(preflightPath)) {
+      let content = fs.readFileSync(preflightPath, 'utf8');
+      // Look for const CURRENT_VERSION = '...';
+      const versionRegex = /const CURRENT_VERSION = '.*?';/;
+      if (versionRegex.test(content)) {
+        content = content.replace(versionRegex, `const CURRENT_VERSION = '${newVersion}';`);
+        fs.writeFileSync(preflightPath, content);
+        console.log('✅ Updated public/preflight.js');
+      }
+    }
+
     console.log('\n✨ Version bump complete! Everything is in sync.');
   } catch (error) {
     console.error('❌ An unexpected error occurred:', error);

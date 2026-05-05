@@ -4,7 +4,7 @@
   "author": "ZINC Team",
   "license": "UNLICENSED",
   "private": true,
-  "version": "2.017",
+  "version": "2.018",
   "type": "module",
   "keywords": [
     "pharmacy",
@@ -35,6 +35,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
+    "bump": "tsx scripts/bump-version.ts",
     "bump-version": "ts-node scripts/bump-version.ts"
   },
   "dependencies": {
