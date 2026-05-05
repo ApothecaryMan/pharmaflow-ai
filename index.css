@@ -284,6 +284,10 @@ layer(base);
   }
 }
 
+@utility glass-surface {
+  @apply backdrop-blur-2xl bg-(--bg-menu)/80 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)];
+}
+
 @layer utilities {
   /* 
    --- Script Firewall: Unicode Proxy Strategy ---
@@ -341,6 +345,9 @@ layer(base);
     --icon-navbar-main: 22px;
     --icon-navbar-dropdown: 18px;
     --icon-navbar-mobile: 28px;
+
+    /* Settings Menu Specific */
+    --icon-settings: 22px;
   }
 
   .dark {

@@ -335,11 +335,7 @@ export const ContextMenuProvider: React.FC<{
           onMouseEnter={() => setIsMouseOverMenu(true)}
           onMouseLeave={() => setIsMouseOverMenu(false)}
           className={`fixed z-9999 min-w-[180px] rounded-2xl shadow-xl border border-(--border-divider) py-1 px-1 animate-scale-in origin-top-left overflow-hidden
-                ${
-                  enableGlassEffect
-                    ? 'backdrop-blur-2xl bg-(--bg-menu)/30 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]'
-                    : 'bg-(--bg-menu)'
-                }
+                ${enableGlassEffect ? 'glass-surface' : 'bg-(--bg-menu)'}
             `}
           style={{
             top: adjustedPos.top || menu.y,

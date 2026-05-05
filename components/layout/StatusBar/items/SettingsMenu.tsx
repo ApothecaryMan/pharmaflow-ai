@@ -9,7 +9,12 @@ import { SegmentedControl } from '../../../common/SegmentedControl';
 import { Switch } from '../../../common/Switch';
 import { StatusBarItem } from '../StatusBarItem';
 
-// --- Utility Components for Cleaner Maestro ---
+// --- Utility Components & Helpers ---
+
+const getMenuSurfaceClasses = (isBlur: boolean, isMobile: boolean = false) => {
+  if (!isBlur) return isMobile ? 'bg-(--bg-page-surface)' : 'bg-(--bg-menu)';
+  return 'glass-surface';
+};
 
 const SettingsRow: React.FC<{
   icon: string;
@@ -20,8 +25,8 @@ const SettingsRow: React.FC<{
   <div className={`flex items-center justify-between py-1 ${className}`}>
     <div className="flex items-center gap-2">
       <span 
-        className="material-symbols-rounded text-(--text-secondary) text-(--icon-base)"
-        style={{ fontSize: 'var(--status-icon-size, 16px)' }}
+        className="material-symbols-rounded text-(--text-secondary)"
+        style={{ fontSize: 'var(--icon-settings)' }}
       >
         {icon}
       </span>
@@ -41,11 +46,9 @@ const SubmenuWrapper: React.FC<{
 }> = ({ isOpen, isMobile, settingsBlur, pos, children, title }) => {
   if (!isOpen) return null;
 
-  const mobileClasses = `relative w-full mt-2 ${settingsBlur ? 'bg-(--bg-menu)/50 saturate-150 backdrop-blur-xl' : 'bg-(--bg-page-surface)'} border-none shadow-none p-4 space-y-4 rounded-xl`;
+  const mobileClasses = `relative w-full mt-2 p-4 space-y-4 rounded-xl border-none shadow-none ${getMenuSurfaceClasses(settingsBlur, true)}`;
   
-  const desktopClasses = `absolute w-64 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-4 space-y-4 ${pos.align === 'top' ? 'top-0' : 'bottom-0'} ${
-    settingsBlur ? 'backdrop-blur-2xl bg-(--bg-menu)/85 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]' : 'bg-(--bg-menu)'
-  }`;
+  const desktopClasses = `absolute w-64 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-4 space-y-4 ${pos.align === 'top' ? 'top-0' : 'bottom-0'} ${getMenuSurfaceClasses(settingsBlur)}`;
 
   const desktopStyle = {
     [pos.side === 'left' ? 'right' : 'left']: '100%',
@@ -54,7 +57,7 @@ const SubmenuWrapper: React.FC<{
 
   return (
     <div className={isMobile ? mobileClasses : desktopClasses} style={isMobile ? {} : desktopStyle}>
-      {title && <label className="text-[10px] font-bold uppercase mb-1 block text-(--text-tertiary)">{title}</label>}
+      {title && <label className="text-[10px] font-bold uppercase mb-1 block text-(--text-tertiary) border-b border-(--border-divider)/30 pb-1">{title}</label>}
       {children}
     </div>
   );
@@ -123,6 +126,12 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 
   useEffect(() => { if (!isOpen) closeAllSubmenus(); }, [isOpen, closeAllSubmenus]);
 
+  // Auto-close submenus when master switch is turned off
+  useEffect(() => {
+    if (!dropdownBlur && expandedSubmenu === 'blur') setExpandedSubmenu(null);
+    if (!showTicker && expandedSubmenu === 'status') setExpandedSubmenu(null);
+  }, [dropdownBlur, showTicker, expandedSubmenu]);
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setIsOpen(false);
@@ -145,7 +154,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
     ${align === 'start' ? 'inset-s-0 origin-top-start' : 'inset-e-0 origin-top-end'}
     w-64 rounded-xl shadow-2xl border border-(--border-divider) z-110 animate-fade-in
-    ${settingsBlur ? 'backdrop-blur-2xl bg-(--bg-menu)/30 saturate-200' : 'bg-(--bg-menu)'}
+    ${getMenuSurfaceClasses(settingsBlur)}
   `, [dropDirection, align, settingsBlur]);
 
   return (
@@ -155,7 +164,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
           <StatusBarItem icon="settings" tooltip={t.settings} variant={isOpen ? 'info' : 'default'} onClick={() => setIsOpen(!isOpen)} />
         ) : (
           <button onClick={() => setIsOpen(!isOpen)} className={`flex items-center justify-center w-10 h-10 ${isOpen ? 'text-primary-500' : 'text-(--text-secondary)'}`}>
-            <span className="material-symbols-rounded" style={{ fontSize: `${triggerSize}px` }}>settings</span>
+            <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-settings)' }}>settings</span>
           </button>
         )
       )}
@@ -171,7 +180,10 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               <div className="space-y-1 relative" ref={themesPos.ref}>
                 <SettingsRow icon="brightness_6" label={t.themesMenu}>
                   <button type="button" onClick={() => toggleSubmenu('themes', themesPos.checkPosition)}>
-                    <span className={`material-symbols-rounded transition-transform text-(--icon-base) text-(--text-tertiary) ${expandedSubmenu === 'themes' ? 'rotate-180' : ''}`}>
+                    <span 
+                      className={`material-symbols-rounded transition-transform text-(--text-tertiary) ${expandedSubmenu === 'themes' ? 'rotate-180' : ''}`}
+                      style={{ fontSize: 'var(--icon-settings)' }}
+                    >
                       {themesPos.position.side === 'left' ? 'chevron_left' : 'chevron_right'}
                     </span>
                   </button>
@@ -179,7 +191,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 
                 <SubmenuWrapper isOpen={expandedSubmenu === 'themes'} isMobile={isMobile} settingsBlur={settingsBlur} pos={themesPos.position}>
                   <div className="flex items-center gap-1.5">
-                    <span className="material-symbols-rounded text-(--icon-sm) text-(--text-secondary)">palette</span>
+                    <span className="material-symbols-rounded text-(--text-secondary)" style={{ fontSize: 'var(--icon-settings)' }}>palette</span>
                     <SegmentedControl
                       value={currentTheme.name}
                       onChange={(val) => setTheme(availableThemes.find(th => th.name === val)!)}
@@ -188,7 +200,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     />
                   </div>
                   <SettingsRow icon="brightness_6" label={t.darkMode}>
-                    <SegmentedControl value={darkMode} onChange={v => setDarkMode(v as boolean)}  size="xs"  shape="pill" options={[{ label: '', value: false, icon: 'light_mode' }, { label: '', value: true, icon: 'dark_mode' }]} />
+                    <SegmentedControl value={darkMode} onChange={v => setDarkMode(v as boolean)}  size="xs"  shape="pill" iconSize="--icon-settings" options={[{ label: '', value: false, icon: 'light_mode' }, { label: '', value: true, icon: 'dark_mode' }]} />
                   </SettingsRow>
                   {developerMode && (
                     <SettingsRow icon="rounded_corner" label={t.borderRadius}>
@@ -212,7 +224,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       <div className="flex flex-col gap-1.5 py-1">
                         <label className="text-xs font-medium flex items-center justify-between text-(--text-primary)">
                           <div className="flex items-center gap-1.5">
-                            <span className="material-symbols-rounded text-(--icon-sm) text-(--text-secondary)">code</span>
+                            <span className="material-symbols-rounded text-(--text-secondary)" style={{ fontSize: 'var(--icon-settings)' }}>code</span>
                             {t.customCss || (isAR ? 'كود CSS للبطاقات' : 'Custom Card CSS')}
                           </div>
                           <Switch checked={enableCustomCardCss} onChange={setEnableCustomCardCss} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
@@ -236,12 +248,21 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 <SettingsRow icon="blur_on" label={t.dropdownBlur}>
                   <Switch checked={dropdownBlur || false} onChange={setDropdownBlur} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
                   <button type="button" onClick={() => toggleSubmenu('blur', blurPos.checkPosition)}>
-                    <span className={`material-symbols-rounded transition-transform text-(--icon-base) text-(--text-tertiary) ${expandedSubmenu === 'blur' ? 'rotate-180' : ''}`}>
+                    <span 
+                      className={`material-symbols-rounded transition-transform text-(--text-tertiary) ${expandedSubmenu === 'blur' ? 'rotate-180' : ''}`}
+                      style={{ fontSize: 'var(--icon-settings)' }}
+                    >
                       {blurPos.position.side === 'left' ? 'chevron_left' : 'chevron_right'}
                     </span>
                   </button>
                 </SettingsRow>
-                <SubmenuWrapper isOpen={expandedSubmenu === 'blur'} isMobile={isMobile} settingsBlur={settingsBlur} pos={blurPos.position} title={t.dropdownBlur}>
+                <SubmenuWrapper 
+                  isOpen={expandedSubmenu === 'blur' && dropdownBlur} 
+                  isMobile={isMobile} 
+                  settingsBlur={settingsBlur} 
+                  pos={blurPos.position} 
+                  title={t.dropdownBlur}
+                >
                   <SettingsRow icon="view_sidebar" label={t.sidebarBlur}><Switch checked={sidebarBlur || false} onChange={setSidebarBlur} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
                   <SettingsRow icon="menu" label={t.menuBlur}><Switch checked={menuBlur || false} onChange={setMenuBlur} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
                   <SettingsRow icon="chat_bubble" label={t.tooltipBlur}><Switch checked={tooltipBlur || false} onChange={setTooltipBlur} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
@@ -254,11 +275,11 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               {/* --- Navigation & Language --- */}
               {navStyle === 1 && (
                 <SettingsRow icon="view_sidebar" label={t.sidebarStyle}>
-                  <SegmentedControl value={sidebarStyle} onChange={v => setSidebarStyle(v as any)}  size="xs"  shape="pill" options={[{ label: '', value: 1, icon: 'view_sidebar' }, { label: '', value: 2, icon: 'dock_to_left' }, { label: '', value: 3, icon: 'mouse' }]} />
+                  <SegmentedControl value={sidebarStyle} onChange={v => setSidebarStyle(v as any)}  size="xs"  shape="pill" iconSize="--icon-settings" options={[{ label: '', value: 1, icon: 'view_sidebar' }, { label: '', value: 2, icon: 'dock_to_left' }, { label: '', value: 3, icon: 'mouse' }]} />
                 </SettingsRow>
               )}
               <SettingsRow icon="dashboard_customize" label={t.designStyle}>
-                <SegmentedControl value={navStyle || 1} onChange={v => setNavStyle(v as any)}  size="xs"  shape="pill" options={[{ label: '', value: 1, icon: 'view_sidebar' }, { label: '', value: 2, icon: 'web_asset' }]} />
+                <SegmentedControl value={navStyle || 1} onChange={v => setNavStyle(v as any)}  size="xs"  shape="pill" iconSize="--icon-settings" options={[{ label: '', value: 1, icon: 'view_sidebar' }, { label: '', value: 2, icon: 'web_asset' }]} />
               </SettingsRow>
               <SettingsRow icon="translate" label={t.language}>
                 <SegmentedControl value={language} onChange={v => settings.setLanguage(v as any)}  size="xs" shape="pill" options={[{ label: 'EN', value: 'EN' }, { label: 'AR', value: 'AR' }]} />
@@ -278,14 +299,17 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               <div className="space-y-1 relative" ref={typographyPos.ref}>
                 <SettingsRow icon="font_download" label={t.typography}>
                   <button type="button" onClick={() => toggleSubmenu('typography', typographyPos.checkPosition)}>
-                    <span className={`material-symbols-rounded transition-transform text-(--icon-base) text-(--text-tertiary) ${expandedSubmenu === 'typography' ? 'rotate-180' : ''}`}>
+                    <span 
+                      className={`material-symbols-rounded transition-transform text-(--text-tertiary) ${expandedSubmenu === 'typography' ? 'rotate-180' : ''}`}
+                      style={{ fontSize: 'var(--icon-settings)' }}
+                    >
                       {typographyPos.position.side === 'left' ? 'chevron_left' : 'chevron_right'}
                     </span>
                   </button>
                 </SettingsRow>
                 <SubmenuWrapper isOpen={expandedSubmenu === 'typography'} isMobile={isMobile} settingsBlur={settingsBlur} pos={typographyPos.position}>
                   <div className="space-y-2">
-                    <label className="text-xs font-medium flex items-center gap-1.5 text-(--text-primary)"><span className="material-symbols-rounded text-(--icon-xs)">text_fields</span>{t.fontEN}</label>
+                    <label className="text-xs font-medium flex items-center gap-1.5 text-(--text-primary)"><span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-settings)' }}>text_fields</span>{t.fontEN}</label>
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                       {AVAILABLE_FONTS_EN.map(f => (
                         <button 
@@ -300,7 +324,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-medium flex items-center gap-1.5 text-(--text-primary)"><span className="material-symbols-rounded text-(--icon-xs)">translate</span>{t.fontAR}</label>
+                    <label className="text-xs font-medium flex items-center gap-1.5 text-(--text-primary)"><span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-settings)' }}>translate</span>{t.fontAR}</label>
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                       {AVAILABLE_FONTS_AR.map(f => (
                         <button 
@@ -366,7 +390,10 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   <SettingsRow icon="speed" label={t.quickStatuses}>
                     <Switch checked={showTicker || false} onChange={setShowTicker} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
                     <button type="button" onClick={() => toggleSubmenu('status', quickStatusPos.checkPosition)}>
-                      <span className={`material-symbols-rounded transition-transform text-(--icon-base) text-(--text-tertiary) ${expandedSubmenu === 'status' ? 'rotate-180' : ''}`}>
+                      <span 
+                      className={`material-symbols-rounded transition-transform text-(--text-tertiary) ${expandedSubmenu === 'status' ? 'rotate-180' : ''}`}
+                      style={{ fontSize: 'var(--icon-settings)' }}
+                    >
                         {quickStatusPos.position.side === 'left' ? 'chevron_left' : 'chevron_right'}
                       </span>
                     </button>

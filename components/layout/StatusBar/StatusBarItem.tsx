@@ -57,7 +57,7 @@ export const StatusBarItem: React.FC<StatusBarItemProps> = ({
       {icon && (
         <span 
           className="material-symbols-rounded leading-none"
-          style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 2px)' }}
+          style={{ fontSize: 'var(--icon-base)' }}
         >
           {icon}
         </span>
