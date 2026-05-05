@@ -375,7 +375,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'نظرة عامة على الولاء',
     icon: 'stars',
     category: 'customer-dashboard',
-    requiredProps: ['customers', 'sales', 'color', 't', 'language'],
+    requiredProps: ['customers', 'sales', 'color', 't', 'language', 'onViewChange'],
     permission: 'customer.view_loyalty',
     layout: 'dashboard',
   },
@@ -386,7 +386,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'بحث ولاء العملاء',
     icon: 'person_search',
     category: 'customer-dashboard',
-    requiredProps: ['customers', 'sales', 'color', 't', 'language'],
+    requiredProps: ['customers', 'sales', 'color', 't', 'language', 'onViewChange'],
     permission: 'customer.view_loyalty',
   },
   'real-time-sales': {

@@ -7,8 +7,9 @@ import { calculateSalePoints } from '../../services/customers/loyaltyUtils';
 import { SearchDropdown, type SearchDropdownColumn, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
 import { SmallCard } from '../common/SmallCard';
-import { useSmartDirection } from '../common/SmartInputs';
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
+import { PageHeader } from '../common/PageHeader';
+import { SegmentedControl } from '../common/SegmentedControl';
 
 interface CustomerLoyaltyLookupProps {
   customers: Customer[];
@@ -16,6 +17,7 @@ interface CustomerLoyaltyLookupProps {
   color: string;
   t: any;
   language: 'EN' | 'AR';
+  onViewChange?: (view: string) => void;
 }
 
 export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
@@ -24,6 +26,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
   color,
   t,
   language,
+  onViewChange,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -253,55 +256,63 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
   ];
 
   return (
-    <div
-      className='h-full flex flex-col overflow-hidden animate-fade-in'
-      dir={isRTL ? 'rtl' : 'ltr'}
-    >
-      <div className='flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 shrink-0 pe-2'>
-        <h1 className='text-2xl font-bold tracking-tight page-title'>
-          {t.loyalty?.lookup || 'Customer Loyalty Lookup'}
-        </h1>
+    <div className='h-full overflow-y-auto px-page space-y-4 animate-fade-in pb-10' dir={isRTL ? 'rtl' : 'ltr'}>
+      <PageHeader
+        mb="mb-0"
+        centerContent={
+          <SegmentedControl
+            options={[
+              { label: language === 'AR' ? 'نظرة عامة على العملاء' : 'Customer Overview', value: 'customer-overview' },
+              { label: language === 'AR' ? 'نظرة عامة على الولاء' : 'Loyalty Overview', value: 'loyalty-overview' },
+              { label: language === 'AR' ? 'ولاء العملاء' : 'Customer Loyalty', value: 'loyalty-lookup' },
+            ]}
+            value='loyalty-lookup'
+            onChange={(val) => onViewChange?.(String(val))}
+            size="md"
+            shape="pill"
+          />
+        }
+        rightContent={
+          <div className='flex items-center gap-2 flex-1 max-w-xl relative z-30'>
+            <div className='relative flex-1' ref={dropdownRef}>
+              <SearchInput
+                value={searchTerm}
+                onSearchChange={(val) => {
+                  setSearchTerm(val);
+                  setShowDropdown(true);
+                }}
+                onFocus={() => setShowDropdown(true)}
+                onKeyDown={(e) => {
+                  if (!showDropdown || filteredCustomers.length === 0) return;
+                  onKeyDown(e);
+                }}
+                icon='person_search'
+                placeholder={t.loyalty?.searchPlaceholder || 'Search by name, code, or phone...'}
+                className='pe-4'
+                style={{ '--tw-ring-color': 'var(--primary-500)' } as any}
+              />
 
-        {/* Search Section */}
-        <div className='flex items-center gap-2 flex-1 max-w-xl relative z-30'>
-          <div className='relative flex-1' ref={dropdownRef}>
-            <SearchInput
-              value={searchTerm}
-              onSearchChange={(val) => {
-                setSearchTerm(val);
-                setShowDropdown(true);
-              }}
-              onFocus={() => setShowDropdown(true)}
-              onKeyDown={(e) => {
-                if (!showDropdown || filteredCustomers.length === 0) return;
-                onKeyDown(e);
-              }}
-              icon='person_search'
-              placeholder={t.loyalty?.searchPlaceholder || 'Search by name, code, or phone...'}
-              className='pe-4'
-              style={{ '--tw-ring-color': 'var(--primary-500)' } as any}
-            />
+              <SearchDropdown
+                results={filteredCustomers}
+                onSelect={handleCustomerSelect}
+                columns={dropdownColumns}
+                isVisible={showDropdown && !!searchTerm}
+                highlightedIndex={highlightedIndex}
+                emptyMessage={t.loyalty?.noCustomerFound || 'No customer found'}
+              />
+            </div>
 
-            <SearchDropdown
-              results={filteredCustomers}
-              onSelect={handleCustomerSelect}
-              columns={dropdownColumns}
-              isVisible={showDropdown && !!searchTerm}
-              highlightedIndex={highlightedIndex}
-              emptyMessage={t.loyalty?.noCustomerFound || 'No customer found'}
-            />
+            {selectedCustomer && (
+              <button
+                onClick={handleClear}
+                className='px-4 py-2.5 rounded-xl font-medium text-xs text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50 backdrop-blur-xs transition-all whitespace-nowrap'
+              >
+                {t.clear || 'Clear'}
+              </button>
+            )}
           </div>
-
-          {selectedCustomer && (
-            <button
-              onClick={handleClear}
-              className='px-4 py-2.5 rounded-xl font-medium text-xs text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50 backdrop-blur-xs transition-all whitespace-nowrap'
-            >
-              {t.clear || 'Clear'}
-            </button>
-          )}
-        </div>
-      </div>
+        }
+      />
 
       {/* Results */}
       {selectedCustomer === null && searchTerm && !showDropdown && (

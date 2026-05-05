@@ -31,7 +31,7 @@ import { formatExpiryDate, parseExpiryEndOfMonth } from '../../utils/expiryUtils
 import { batchService } from '../../services/inventory/batchService';
 import { useData } from '../../context/DataContext';
 import { SegmentedControl } from '../common/SegmentedControl';
-import { DashboardHeader } from './DashboardHeader';
+import { PageHeader } from '../common/PageHeader';
 
 interface DashboardProps {
   inventory: Drug[];
@@ -565,25 +565,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
       ref={scrollContainerRef}
       className='h-full overflow-y-auto px-page space-y-4 animate-fade-in pb-10'
     >
-      <DashboardHeader 
-        switcher={{
-          value: 'dashboard',
-          onChange: (val) => onViewChange?.(val),
-          options: [
-            { label: language === 'AR' ? 'نظرة عامة' : 'Overview', value: 'dashboard' },
-            { label: language === 'AR' ? 'المراقبة الفورية' : 'Real-time', value: 'real-time-sales' },
-          ]
-        }}
-        segmented={{
-          value: timeRange,
-          onChange: setTimeRange,
-          options: [
-            { label: language === 'AR' ? '٧ أيام' : '7 Days', value: '7' },
-            { label: language === 'AR' ? '٣٠ يوم' : '30 Days', value: '30' },
-            { label: language === 'AR' ? '٩٠ يوم' : '90 Days', value: '90' },
-            { label: language === 'AR' ? 'الكل' : 'All', value: 'ALL' },
-          ]
-        }}
+      <PageHeader
+        mb="mb-0"
+        centerContent={
+          <SegmentedControl
+            options={[
+              { label: language === 'AR' ? 'نظرة عامة' : 'Overview', value: 'dashboard' },
+              { label: language === 'AR' ? 'المراقبة الفورية' : 'Real-time', value: 'real-time-sales' },
+            ]}
+            value='dashboard'
+            onChange={(val) => onViewChange?.(String(val))}
+            size="md"
+            shape="pill"
+          />
+        }
+        rightContent={
+          <SegmentedControl
+            options={[
+              { label: language === 'AR' ? '٧ أيام' : '7 Days', value: '7' },
+              { label: language === 'AR' ? '٣٠ يوم' : '30 Days', value: '30' },
+              { label: language === 'AR' ? '٩٠ يوم' : '90 Days', value: '90' },
+              { label: language === 'AR' ? 'الكل' : 'All', value: 'ALL' },
+            ]}
+            value={timeRange}
+            onChange={(val) => setTimeRange(String(val))}
+            size="sm"
+          />
+        }
       />
 
       {/* Stats Cards Row */}

@@ -15,6 +15,8 @@ import { calculateSalePoints } from '../../services/customers/loyaltyUtils';
 import type { Customer, Sale } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { SmallCard } from '../common/SmallCard';
+import { PageHeader } from '../common/PageHeader';
+import { SegmentedControl } from '../common/SegmentedControl';
 
 interface CustomerLoyaltyOverviewProps {
   customers: Customer[];
@@ -22,6 +24,7 @@ interface CustomerLoyaltyOverviewProps {
   color: string;
   t: any;
   language: 'EN' | 'AR';
+  onViewChange?: (view: string) => void;
 }
 
 export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = ({
@@ -30,6 +33,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
   color,
   t,
   language,
+  onViewChange,
 }) => {
   const isRTL = language === 'AR';
 
@@ -164,13 +168,23 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
   };
 
   return (
-    <div
-      className='h-full overflow-y-auto pe-2 space-y-4 animate-fade-in pb-10'
-      dir={isRTL ? 'rtl' : 'ltr'}
-    >
-      <h1 className='text-2xl font-bold tracking-tight mb-4 page-title'>
-        {t.loyalty?.overview || 'Loyalty Program Overview'}
-      </h1>
+    <div className='h-full overflow-y-auto px-page space-y-4 animate-fade-in pb-10' dir={isRTL ? 'rtl' : 'ltr'}>
+      <PageHeader
+        mb="mb-0"
+        centerContent={
+          <SegmentedControl
+            options={[
+              { label: language === 'AR' ? 'نظرة عامة على العملاء' : 'Customer Overview', value: 'customer-overview' },
+              { label: language === 'AR' ? 'نظرة عامة على الولاء' : 'Loyalty Overview', value: 'loyalty-overview' },
+              { label: language === 'AR' ? 'ولاء العملاء' : 'Customer Loyalty', value: 'loyalty-lookup' },
+            ]}
+            value='loyalty-overview'
+            onChange={(val) => onViewChange?.(String(val))}
+            size="md"
+            shape="pill"
+          />
+        }
+      />
 
       {/* Summary Cards */}
       <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3'>

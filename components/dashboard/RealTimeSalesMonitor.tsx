@@ -18,7 +18,7 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { useRealTimeSalesAnalytics } from './useRealTimeSalesAnalytics';
-import { DashboardHeader } from './DashboardHeader';
+import { PageHeader } from '../common/PageHeader';
 import { useSettings } from '../../context';
 import { useData } from '../../context/DataContext';
 import { useShift } from '../../hooks/sales/useShift';
@@ -334,16 +334,21 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
 
   return (
     <div className='h-full overflow-y-auto px-page space-y-4 animate-fade-in pb-10' dir={isRTL ? 'rtl' : 'ltr'}>
-      <DashboardHeader
-        switcher={{
-          value: 'real-time-sales',
-          onChange: (val) => onViewChange?.(val),
-          options: [
-            { label: language === 'AR' ? 'نظرة عامة' : 'Overview', value: 'dashboard' },
-            { label: language === 'AR' ? 'المراقبة الفورية' : 'Real-time', value: 'real-time-sales' },
-          ]
-        }}
-        extra={
+      <PageHeader
+        mb="mb-0"
+        centerContent={
+          <SegmentedControl
+            options={[
+              { label: language === 'AR' ? 'نظرة عامة' : 'Overview', value: 'dashboard' },
+              { label: language === 'AR' ? 'المراقبة الفورية' : 'Real-time', value: 'real-time-sales' },
+            ]}
+            value='real-time-sales'
+            onChange={(val) => onViewChange?.(String(val))}
+            size="md"
+            shape="pill"
+          />
+        }
+        leftContent={
           <div className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'>
             <span className='relative flex h-3 w-3'>
               <span className='animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75'></span>
@@ -352,33 +357,34 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             <span className='text-xs font-bold text-gray-700 dark:text-gray-300 tracking-wider'>{t.realTimeSales?.live || 'LIVE'}</span>
           </div>
         }
-      >
-        <FilterDropdown
-          items={[{ id: 'all', name: language === 'AR' ? 'جميع الفروع' : 'All Branches' }, ...branches]}
-          selectedItem={branchFilter === 'all' ? { id: 'all', name: language === 'AR' ? 'جميع الفروع' : 'All Branches' } : branches.find(b => b.id === branchFilter)}
-          onSelect={(b) => setBranchFilter(b.id)}
-          renderSelected={(b) => (
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-rounded text-lg opacity-60">store</span>
-              <span className="truncate max-w-[100px]">{b?.name}</span>
-            </div>
-          )}
-          renderItem={(b) => (
-            <div className="flex items-center gap-2 py-1">
-              <span className="material-symbols-rounded text-lg opacity-40">store</span>
-              <span>{b.name}</span>
-            </div>
-          )}
-          keyExtractor={(b) => b.id}
-          variant="input"
-          dense
-          onBackground
-          floating={true}
-          minHeight={34}
-          zIndexHigh="z-50"
-          className="min-w-[140px]"
-        />
-      </DashboardHeader>
+        rightContent={
+          <FilterDropdown
+            items={[{ id: 'all', name: language === 'AR' ? 'جميع الفروع' : 'All Branches' }, ...branches]}
+            selectedItem={branchFilter === 'all' ? { id: 'all', name: language === 'AR' ? 'جميع الفروع' : 'All Branches' } : branches.find(b => b.id === branchFilter)}
+            onSelect={(b) => setBranchFilter(b.id)}
+            renderSelected={(b) => (
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-rounded text-lg opacity-60">store</span>
+                <span className="truncate max-w-[100px]">{b?.name}</span>
+              </div>
+            )}
+            renderItem={(b) => (
+              <div className="flex items-center gap-2 py-1">
+                <span className="material-symbols-rounded text-lg opacity-40">store</span>
+                <span>{b.name}</span>
+              </div>
+            )}
+            keyExtractor={(b) => b.id}
+            variant="input"
+            dense
+            onBackground
+            floating={true}
+            minHeight={34}
+            zIndexHigh="z-50"
+            className="min-w-[140px]"
+          />
+        }
+      />
 
       <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3'>
         <StatCard title={t.realTimeSales?.todayRevenue} value={revenue} icon='payments' iconColor='primary' trend={revenueChange > 0 ? 'up' : 'neutral'} trendValue={`${revenueChange > 0 ? '+' : ''}${revenueChange.toFixed(1)}%`} tooltip={tooltips.revenue} onClick={() => setExpandedView('revenue')} isLoading={isLoading} type='currency' />

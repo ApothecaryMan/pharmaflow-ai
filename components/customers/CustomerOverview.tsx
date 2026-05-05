@@ -277,10 +277,22 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
 
 
   return (
-    <div className='h-full space-y-6 overflow-y-auto pb-10 pe-2'>
+    <div className='h-full overflow-y-auto px-page space-y-4 animate-fade-in pb-10' dir={language === 'AR' ? 'rtl' : 'ltr'}>
       <PageHeader
-        title={t.customerOverview || 'Customer Overview'}
-        subtitle={t.customerOverviewSubtitle || 'Analyze customer behavior and health insights'}
+        mb="mb-0"
+        centerContent={
+          <SegmentedControl
+            options={[
+              { label: language === 'AR' ? 'نظرة عامة على العملاء' : 'Customer Overview', value: 'customer-overview' },
+              { label: language === 'AR' ? 'نظرة عامة على الولاء' : 'Loyalty Overview', value: 'loyalty-overview' },
+              { label: language === 'AR' ? 'ولاء العملاء' : 'Customer Loyalty', value: 'loyalty-lookup' },
+            ]}
+            value='customer-overview'
+            onChange={(val) => onViewChange?.(String(val))}
+            size="md"
+            shape="pill"
+          />
+        }
       />
 
       <div className="space-y-6 animate-fade-in">

@@ -77,7 +77,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   toggleTooltip,
 }) => {
   const baseClasses = `flex flex-col shrink-0 transition-all duration-300 ${mb}`;
-  const stickyClasses = sticky ? 'sticky top-0 z-40' : '';
+  const stickyClasses = sticky ? 'sticky top-0 z-40 bg-(--bg-page-surface)/80 backdrop-blur-md' : '';
   const borderClasses = border ? 'border-b border-zinc-200/50 dark:border-zinc-800/50' : '';
 
   return (
