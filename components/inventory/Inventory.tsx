@@ -24,6 +24,7 @@ import { Modal } from '../common/Modal';
 import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs';
 import { TanStackTable, PriceDisplay } from '../common/TanStackTable';
 import { InteractiveCard } from '../common/InteractiveCard';
+import { PageHeader } from '../common/PageHeader';
 import { AddProduct } from './AddProduct';
 import { useStatusBar } from '../layout/StatusBar';
 import { useSettings } from '../../context';
@@ -41,6 +42,7 @@ interface InventoryProps {
   color: string;
   t: any;
   isLoading?: boolean;
+  onViewChange?: (view: string) => void;
 }
 
 export const Inventory: React.FC<InventoryProps> = ({
@@ -51,6 +53,7 @@ export const Inventory: React.FC<InventoryProps> = ({
   color,
   t,
   isLoading = false,
+  onViewChange,
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
@@ -72,6 +75,7 @@ export const Inventory: React.FC<InventoryProps> = ({
   const [selectedBatches, setSelectedBatches] = useState<Record<string, string>>({}); // groupId -> drugId
   const [openBatchDropdown, setOpenBatchDropdown] = useState<string | null>(null);
   const [isDataSettled, setIsDataSettled] = useState(false);
+  const [showStats, setShowStats] = useState(true);
 
   // Synchronization Buffer: Ensures skeleton stays until data is actually available
   useEffect(() => {
@@ -719,27 +723,49 @@ export const Inventory: React.FC<InventoryProps> = ({
   );
 
   return (
-    <div className='h-full flex flex-col space-y-4 animate-fade-in'>
+    <div className='h-full flex flex-col gap-2 animate-fade-in pb-10 overflow-y-auto'>
       {/* Header with toggle */}
-      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
-        <div>
-          <h1 className='text-2xl font-bold tracking-tight page-title'>
-            {mode === 'list' ? t.title : t.addNewProduct || 'Add New Product'}
-          </h1>
-          <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>
-            {mode === 'list'
-              ? t.subtitle
-              : t.addProductSubtitle || 'Add a new item to your inventory'}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-4 flex-wrap">
-          {/* Summary Cards */}
-          {mode === 'list' && (
-            <>
+      <PageHeader
+        mb="mb-0"
+        leftContent={
+          mode === 'list' && (
+            <div className="relative flex-1 max-w-xl">
+              <SearchEngineInput
+                value={searchTerm}
+                onSearchChange={setSearchTerm}
+                activeFilters={activeFilters}
+                filterConfigs={filterConfigs}
+                onUpdateFilter={(id, vals) => setActiveFilters(prev => ({ ...prev, [id]: vals }))}
+                onClear={() => setSearchTerm('')}
+                placeholder={t.searchPlaceholder}
+                color={color}
+                inventory={baseFilteredInventory}
+              />
+            </div>
+          )
+        }
+        centerContent={
+          <SegmentedControl
+            options={[
+              { label: t.inventory?.titleAr || 'المخزون', value: 'inventory' },
+              { label: t.inventory?.addProductAr || 'إضافة منتج', value: 'add-product' },
+              { label: t.inventory?.stockMovementAr || 'حركة المخزون', value: 'stock-movement' },
+            ]}
+            value='inventory'
+            onChange={(val) => onViewChange?.(String(val))}
+            size="md"
+            shape="pill"
+          />
+        }
+        showStatsToggle={mode === 'list'}
+        showBottom={showStats}
+        onToggleBottom={() => setShowStats(!showStats)}
+        bottomContent={
+          mode === 'list' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">
               <InteractiveCard
                 isLoading={isLoading || !isDataSettled}
-                className={`flex flex-col min-w-[140px] px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
+                className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
                 pages={[
                   {
                     theme: 'bg-primary-50 dark:bg-primary-900/20',
@@ -761,7 +787,7 @@ export const Inventory: React.FC<InventoryProps> = ({
               {canViewFinancials && (
                 <InteractiveCard
                   isLoading={isLoading || !isDataSettled}
-                  className={`flex flex-col min-w-[180px] px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
+                  className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
                   pages={[
                     {
                       theme: 'bg-green-50 dark:bg-green-900/20',
@@ -792,9 +818,9 @@ export const Inventory: React.FC<InventoryProps> = ({
                   ]}
                 />
               )}
-               <InteractiveCard
+              <InteractiveCard
                 isLoading={isLoading || !isDataSettled}
-                className={`flex flex-col min-w-[160px] px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
+                className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
                 pages={[
                   {
                     theme: 'bg-red-50 dark:bg-red-900/20',
@@ -837,46 +863,13 @@ export const Inventory: React.FC<InventoryProps> = ({
                   }
                 ]}
               />
-            </>
-          )}
-
-          <SegmentedControl
-            value={mode}
-            onChange={(val) => {
-              setMode(val);
-              if (val === 'add') handleOpenAdd();
-            }}
-            options={[
-              { label: t.allProducts || 'All Products', value: 'list' as const },
-              ...(permissionsService.can('inventory.add')
-                ? [{ label: t.addNewProduct || 'Add New Product', value: 'add' as const }]
-                : []),
-            ]}
-            shape='pill'
-            size='sm'
-            fullWidth={false}
-          />
-        </div>
-      </div>
+            </div>
+          )
+        }
+      />
 
       {mode === 'list' ? (
         <div className='flex flex-col flex-1 min-h-0'>
-          {/* Search & Filter Hub - Floating outside the table for full width control */}
-          <div className='mb-4 px-1'>
-            <SearchEngineInput
-              value={searchTerm}
-              onSearchChange={setSearchTerm}
-              activeFilters={activeFilters}
-              filterConfigs={filterConfigs}
-              onUpdateFilter={(id, vals) => setActiveFilters(prev => ({ ...prev, [id]: vals }))}
-              onClear={() => setSearchTerm('')}
-              placeholder={t.searchPlaceholder}
-              color={color}
-              inventory={baseFilteredInventory}
-              wrapperClassName='max-w-xl' // Apply width constraint to the wrapper div
-            />
-          </div>
-
           {/* Table Card - Default Design */}
           <div className='flex-1 overflow-hidden'>
             <TanStackTable
@@ -911,7 +904,7 @@ export const Inventory: React.FC<InventoryProps> = ({
             color={color}
             t={t.addProduct || {}}
             language={currentLang.toUpperCase()}
-            hideHeader={true}
+            onViewChange={onViewChange}
             onCancel={() => setMode('list')}
           />
         </div>

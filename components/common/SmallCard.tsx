@@ -24,6 +24,7 @@ export interface SmallCardProps {
   valueSuffix?: React.ReactNode;
   iconTooltip?: React.ReactNode;
   isLoading?: boolean;
+  className?: string;
 }
 
 /**
@@ -56,6 +57,7 @@ export const SmallCard = ({
   valueSuffix,
   iconTooltip,
   isLoading,
+  className = '',
 }: SmallCardProps) => {
   const { language } = useSettings();
   const isAR = language === 'AR';
@@ -155,7 +157,7 @@ export const SmallCard = ({
   );
 
   return (
-    <div className={`p-3 rounded-2xl ${CARD_BASE} ${CARD_HOVER} h-[84px] flex items-center gap-3 overflow-visible`}>
+    <div className={`p-3 rounded-2xl ${CARD_BASE} ${CARD_HOVER} h-[84px] flex items-center gap-3 overflow-visible ${className}`}>
       {iconTooltip ? (
         <Tooltip content={iconTooltip} position="top" triggerClassName="shrink-0">
           {iconSection}

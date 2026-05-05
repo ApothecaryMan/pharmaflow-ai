@@ -15,6 +15,7 @@ import { SearchInput } from '../common/SearchInput';
 import { type FilterConfig } from '../common/FilterPill';
 import { useStockMovementReport } from './useStockMovementReport';
 import { formatStockAmount } from '../../utils/inventory';
+import { PageHeader } from '../common/PageHeader';
 
 interface StockMovementReportProps {
   onViewChange: (view: string, params?: any) => void;
@@ -57,6 +58,8 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
     handleSearchChange,
     handleClearSearch,
   } = useStockMovementReport({ onViewChange });
+
+  const [showStats, setShowStats] = React.useState(true);
 
   // --- Column Configuration ---
   // moved to useStockMovementReport.ts
@@ -118,74 +121,83 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
   );
 
   return (
-    <div className={`p-6 w-full h-full flex flex-col gap-6 overflow-hidden ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Header & Filter Bar - Fixed Height */}
-      <div className={`flex flex-col gap-4 p-4 rounded-3xl shrink-0 ${CARD_LG}`}>
-        {/* Top Row: Search and Actions */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          {/* Search Input */}
-          <div className="flex-1 relative max-w-lg">
-              <SearchInput
-                placeholder={isRTL ? 'البحث عن صنف...' : 'Search for drug...'}
-                value={searchQuery}
-                onSearchChange={handleSearchChange}
-                onFocus={() => setShowSearch(true)}
-                onKeyDown={onKeyDown}
-                onClear={handleClearSearch}
-                enableAutocomplete
-                suggestions={suggestions}
-                filterConfigs={filterConfigs}
-                activeFilters={activeFilters}
-                onUpdateFilter={handleUpdateFilter}
-                className="border-none ring-0 focus:ring-0 shadow-none bg-transparent"
-                wrapperClassName="w-full bg-gray-50 dark:bg-(--bg-input) rounded-2xl border-none ring-1 ring-gray-200 dark:ring-(--border-divider) focus-within:ring-2 focus-within:ring-blue-500 transition-all"
-              />
-              <SearchDropdown
-                isVisible={showSearch && searchResults.length > 0}
-                results={searchResults}
-                highlightedIndex={highlightedIndex}
-                onSelect={handleSelectDrug}
-                columns={[
-                  { 
-                    header: t.inventory.headers.name, 
-                    width: 'flex-4',
-                    render: (d: Drug) => {
-                      const displayName = getDisplayName(d, textTransform);
-                      const itemDir = /[\u0600-\u06FF]/.test(displayName) ? 'rtl' : 'ltr';
-                      return (
-                        <div className="font-bold whitespace-normal" dir={itemDir}>
-                          {displayName}
-                        </div>
-                      );
-                    } 
-                  },
-                  { 
-                    header: t.inventory.headers.stock, 
-                    width: 'w-24 shrink-0',
-                    render: (d: Drug) => {
-                      const packs = Math.floor(d.stock / (d.unitsPerPack || 1));
-                      const units = d.stock % (d.unitsPerPack || 1);
-                      return (
-                        <div className={`tabular-nums border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-0.5 rounded-lg shrink-0 min-w-[36px] text-center font-bold ${
-                          d.stock < (d.minStock || 5) ? 'text-rose-600 dark:text-rose-400' : 'text-gray-700 dark:text-gray-300'
-                        }`}>
-                          {packs}
-                          {units > 0 && <span className='text-[8px] opacity-50 ml-0.5 text-blue-500'>{units}u</span>}
-                        </div>
-                      );
-                    }
-                  },
-                  { 
-                    header: t.inventory.headers.publicPrice, 
-                    width: 'w-28 shrink-0',
-                    render: (d: Drug) => <span className="font-medium text-gray-700 dark:text-gray-300">{formatCurrency(d.publicPrice)}</span> 
+    <div className={`h-full flex flex-col gap-2 animate-fade-in pb-10 overflow-y-auto ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+      <PageHeader
+        mb="mb-0"
+        leftContent={
+          <div className="relative flex-1 max-w-md">
+            <SearchInput
+              placeholder={isRTL ? 'البحث عن صنف...' : 'Search for drug...'}
+              value={searchQuery}
+              onSearchChange={handleSearchChange}
+              onFocus={() => setShowSearch(true)}
+              onKeyDown={onKeyDown}
+              onClear={handleClearSearch}
+              enableAutocomplete
+              suggestions={suggestions}
+              filterConfigs={filterConfigs}
+              activeFilters={activeFilters}
+              onUpdateFilter={handleUpdateFilter}
+            />
+            <SearchDropdown
+              isVisible={showSearch && searchResults.length > 0}
+              results={searchResults}
+              highlightedIndex={highlightedIndex}
+              onSelect={handleSelectDrug}
+              columns={[
+                { 
+                  header: t.inventory.headers.name, 
+                  width: 'flex-4',
+                  render: (d: Drug) => {
+                    const displayName = getDisplayName(d, textTransform);
+                    const itemDir = /[\u0600-\u06FF]/.test(displayName) ? 'rtl' : 'ltr';
+                    return (
+                      <div className="font-bold whitespace-normal" dir={itemDir}>
+                        {displayName}
+                      </div>
+                    );
+                  } 
+                },
+                { 
+                  header: t.inventory.headers.stock, 
+                  width: 'w-24 shrink-0',
+                  render: (d: Drug) => {
+                    const packs = Math.floor(d.stock / (d.unitsPerPack || 1));
+                    const units = d.stock % (d.unitsPerPack || 1);
+                    return (
+                      <div className={`tabular-nums border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-0.5 rounded-lg shrink-0 min-w-[36px] text-center font-bold ${
+                        d.stock < (d.minStock || 5) ? 'text-rose-600 dark:text-rose-400' : 'text-gray-700 dark:text-gray-300'
+                      }`}>
+                        {packs}
+                        {units > 0 && <span className='text-[8px] opacity-50 ml-0.5 text-blue-500'>{units}u</span>}
+                      </div>
+                    );
                   }
-                ]}
-              />
+                },
+                { 
+                  header: t.inventory.headers.publicPrice, 
+                  width: 'w-28 shrink-0',
+                  render: (d: Drug) => <span className="font-medium text-gray-700 dark:text-gray-300">{formatCurrency(d.publicPrice)}</span> 
+                }
+              ]}
+            />
           </div>
-
-          {/* Date Range & Actions */}
-          <div className="flex flex-wrap items-center gap-2">
+        }
+        centerContent={
+          <SegmentedControl
+            options={[
+              { label: language === 'AR' ? 'المخزون' : 'Inventory', value: 'inventory' },
+              { label: language === 'AR' ? 'إضافة منتج' : 'Add Product', value: 'add-product' },
+              { label: language === 'AR' ? 'حركة المخزون' : 'Stock Movement', value: 'stock-movement' },
+            ]}
+            value='stock-movement'
+            onChange={(val) => onViewChange?.(String(val))}
+            size="md"
+            shape="pill"
+          />
+        }
+        rightContent={
+          <div className="flex items-center gap-3">
             <DateRangePicker
               startDate={dateRange.start}
               endDate={dateRange.end}
@@ -204,47 +216,56 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
               <span className="hidden sm:inline font-semibold">{isRTL ? 'تصدير' : 'Export'}</span>
             </button>
           </div>
-        </div>
-      </div>
+        }
+        showStatsToggle={!!selectedDrug}
+        showBottom={showStats}
+        onToggleBottom={() => setShowStats(!showStats)}
+        bottomContent={
+          selectedDrug && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
+              <SmallCard
+                title={isRTL ? 'وارد المخزون' : 'Stock In'}
+                value={(summary?.totalIn || 0) / (selectedDrug?.unitsPerPack || 1)}
+                fractionDigits={(summary?.totalIn || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
+                valueSuffix={isRTL ? 'علبة' : 'Packs'}
+                icon="south_west"
+                iconColor="emerald"
+                className="w-full"
+              />
+              <SmallCard
+                title={isRTL ? 'صادر المخزون' : 'Stock Out'}
+                value={(summary?.totalOut || 0) / (selectedDrug?.unitsPerPack || 1)}
+                fractionDigits={(summary?.totalOut || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
+                valueSuffix={isRTL ? 'علبة' : 'Packs'}
+                icon="north_east"
+                iconColor="rose"
+                className="w-full"
+              />
+              <SmallCard
+                title={isRTL ? 'المرتجعات' : 'Returns'}
+                value={(summary?.returns || 0) / (selectedDrug?.unitsPerPack || 1)}
+                fractionDigits={(summary?.returns || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
+                valueSuffix={isRTL ? 'علبة' : 'Packs'}
+                icon="rotate_left"
+                iconColor="sky"
+                className="w-full"
+              />
+              <SmallCard
+                title={isRTL ? 'المخزون الحالي' : 'Current Stock'}
+                value={(summary?.currentStock || 0) / (selectedDrug?.unitsPerPack || 1)}
+                fractionDigits={(summary?.currentStock || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
+                valueSuffix={isRTL ? 'علبة' : 'Packs'}
+                icon="package_2"
+                iconColor="indigo"
+                className="w-full"
+              />
+            </div>
+          )
+        }
+      />
 
       {!selectedDrug ? renderEmptyState() : (
-        <div className="flex flex-col lg:flex-row gap-6 items-start flex-1 overflow-hidden">
-          {/* Sidebar KPIs - Fixed Height or Scrollable if needed */}
-          <div className="w-full lg:w-72 flex flex-col gap-4 shrink-0 overflow-y-auto max-h-full scrollbar-hide">
-            <SmallCard
-              title={isRTL ? 'وارد المخزون' : 'Stock In'}
-              value={(summary?.totalIn || 0) / (selectedDrug?.unitsPerPack || 1)}
-              fractionDigits={(summary?.totalIn || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
-              valueSuffix={isRTL ? 'علبة' : 'Packs'}
-              icon="south_west"
-              iconColor="emerald"
-            />
-            <SmallCard
-              title={isRTL ? 'صادر المخزون' : 'Stock Out'}
-              value={(summary?.totalOut || 0) / (selectedDrug?.unitsPerPack || 1)}
-              fractionDigits={(summary?.totalOut || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
-              valueSuffix={isRTL ? 'علبة' : 'Packs'}
-              icon="north_east"
-              iconColor="rose"
-            />
-            <SmallCard
-              title={isRTL ? 'المرتجعات' : 'Returns'}
-              value={(summary?.returns || 0) / (selectedDrug?.unitsPerPack || 1)}
-              fractionDigits={(summary?.returns || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
-              valueSuffix={isRTL ? 'علبة' : 'Packs'}
-              icon="rotate_left"
-              iconColor="sky"
-            />
-            <SmallCard
-              title={isRTL ? 'المخزون الحالي' : 'Current Stock'}
-              value={(summary?.currentStock || 0) / (selectedDrug?.unitsPerPack || 1)}
-              fractionDigits={(summary?.currentStock || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
-              valueSuffix={isRTL ? 'علبة' : 'Packs'}
-              icon="package_2"
-              iconColor="indigo"
-            />
-          </div>
-
+        <div className="flex flex-col gap-0 items-start flex-1 overflow-hidden">
           {/* Main Content Area - Scrollable Table */}
           <div className="flex-1 w-full min-w-0 h-full flex flex-col overflow-hidden">
             <div className={`overflow-hidden rounded-3xl ${CARD_LG} flex flex-col h-full`}>

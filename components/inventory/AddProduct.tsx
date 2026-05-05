@@ -16,8 +16,8 @@ import { CARD_LG, INPUT_BASE } from '../../utils/themeStyles';
 import * as stockOps from '../../utils/stockOperations';
 import { pricing } from '../../utils/money';
 import { SegmentedControl } from '../common/SegmentedControl';
-import { idGenerator } from '../../utils/idGenerator';
 import { validationService } from '../../services/validation/validationService';
+import { PageHeader } from '../common/PageHeader';
 
 import { permissionsService } from '../../services/auth/permissionsService';
 
@@ -27,7 +27,7 @@ interface AddProductProps {
   color: string;
   t: any;
   language?: string;
-  hideHeader?: boolean;
+  onViewChange?: (view: string) => void;
   onCancel?: () => void;
 }
 
@@ -38,7 +38,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
   color,
   t,
   language = 'EN',
-  hideHeader = false,
+  onViewChange,
   onCancel,
 }) => {
   const { getVerifiedDate } = useStatusBar();
@@ -247,20 +247,23 @@ export const AddProduct: React.FC<AddProductProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col space-y-6 animate-fade-in p-1">
-      {/* Header */}
-      {!hideHeader && (
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 page-title">
-              {t.title}
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {t.subtitle}
-            </p>
-          </div>
-        </div>
-      )}
+    <div className="h-full flex flex-col gap-6 animate-fade-in pb-10 overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+      <PageHeader
+        mb="mb-0"
+        centerContent={
+          <SegmentedControl
+            options={[
+              { label: language === 'AR' ? 'المخزون' : 'Inventory', value: 'inventory' },
+              { label: language === 'AR' ? 'إضافة منتج' : 'Add Product', value: 'add-product' },
+              { label: language === 'AR' ? 'حركة المخزون' : 'Stock Movement', value: 'stock-movement' },
+            ]}
+            value='add-product'
+            onChange={(val) => onViewChange?.(String(val))}
+            size="md"
+            shape="pill"
+          />
+        }
+      />
 
       {/* Progress Indicator */}
       {false && (
@@ -668,7 +671,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
         </div>
 
         {/* Action Bar: Sticky Bottom */}
-        <div className={`${hideHeader ? 'absolute' : 'fixed'} bottom-0 left-0 right-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-(--border-divider) p-4 z-40 lg:pl-[64px]`}>
+        <div className="fixed bottom-0 md:bottom-6 left-0 right-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-(--border-divider) p-4 z-40 lg:pl-[64px]">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
             {/* Left side: Secondary actions */}
             <div className="flex-1">
