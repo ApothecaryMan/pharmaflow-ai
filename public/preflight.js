@@ -3,7 +3,7 @@
  * Optimized to handle critical boot failures and clear IndexedDB on recovery safely.
  */
 (function() {
-  const CURRENT_VERSION = '2.020'; 
+  const CURRENT_VERSION = '2.021'; 
   const VERSION_KEY = 'pharma_storage_version';
   const SESSION_KEY = 'branch_pilot_session';
   const DB_NAME = 'pharmaflow_catalog';

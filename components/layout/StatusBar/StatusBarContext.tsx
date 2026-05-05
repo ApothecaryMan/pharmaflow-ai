@@ -140,8 +140,17 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, []);
 
   useEffect(() => {
-    if (state.isOnline && !timeService.isSynced()) syncTime();
-  }, [state.isOnline, syncTime]);
+    // If TimeService is already synced but our state says it's not, sync them
+    if (timeService.isSynced() && !state.timeSynced) {
+      dispatch({ 
+        type: 'SET_TIME_SYNC', 
+        synced: true, 
+        lastSync: timeService.getLastSyncTime()?.getTime() || null 
+      });
+    } else if (state.isOnline && !timeService.isSynced()) {
+      syncTime();
+    }
+  }, [state.isOnline, state.timeSynced, syncTime]);
 
   // --- Actions ---
   const actions = useMemo(() => ({
