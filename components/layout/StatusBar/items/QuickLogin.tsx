@@ -339,8 +339,8 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
 
   return (
     <div className="relative flex items-center h-full" ref={containerRef} dir={isAR ? 'rtl' : 'ltr'}>
-      <div onContextMenu={handleContextMenu} className="h-full flex items-center">
-        {step === 'idle' ? (
+      {step === 'idle' ? (
+        <div onContextMenu={handleContextMenu} className="h-full flex items-center">
           <StatusBarItem
             icon="person"
             label={loginLabel}
@@ -355,32 +355,31 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
               </span>
             )}
           </StatusBarItem>
-        ) : (
-          <LoginInputView
-            step={step}
-            inputVal={inputVal}
-            setInputVal={setInputVal}
-            isError={isError}
-            setIsError={setIsError}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') checkAuth();
-              else if (e.key === 'Escape') resetState();
-            }}
-            onForgotPassword={handleForgotPassword}
-            language={language}
-            dir={dir}
-            inputRef={inputRef}
-            t={t}
-          />
-        )}
-        
-        {!currentEmployeeId && (
-          <PasskeyButton 
-            onClick={handlePasskeyLogin} 
-            title={isAR ? 'تسجيل الدخول بمفتاح المرور' : 'Login with Passkey'} 
-          />
-        )}
-      </div>
+          {!currentEmployeeId && (
+            <PasskeyButton 
+              onClick={handlePasskeyLogin} 
+              title={isAR ? 'تسجيل الدخول بمفتاح المرور' : 'Login with Passkey'} 
+            />
+          )}
+        </div>
+      ) : (
+        <LoginInputView
+          step={step}
+          inputVal={inputVal}
+          setInputVal={setInputVal}
+          isError={isError}
+          setIsError={setIsError}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') checkAuth();
+            else if (e.key === 'Escape') resetState();
+          }}
+          onForgotPassword={handleForgotPassword}
+          language={language}
+          dir={dir}
+          inputRef={inputRef}
+          t={t}
+        />
+      )}
     </div>
   );
 };

@@ -1004,7 +1004,71 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         type='button'
                         onClick={async () => {
                           try {
-                            // Dynamic import for SimpleWebAuthn
+                            // SECURITY CHECK: If passkey exists, verify identity first
+                            if (formData.biometricCredentialId) {
+                              let isVerified = false;
+                              
+                              // 1. Try Biometric Verification first (Seamless)
+                              try {
+                                const { startAuthentication } = await import('@simplewebauthn/browser');
+                                const { generateChallenge, bufferToBase64 } = await import('../../utils/webAuthnUtils');
+                                const challengeBase64 = bufferToBase64(generateChallenge());
+                                
+                                const asseResp = await startAuthentication({
+                                  optionsJSON: {
+                                    challenge: challengeBase64,
+                                    rpId: window.location.hostname,
+                                    allowCredentials: [{
+                                      id: formData.biometricCredentialId,
+                                      type: 'public-key',
+                                      transports: ['internal'],
+                                    }],
+                                    userVerification: 'required',
+                                  } as any,
+                                });
+                                if (asseResp) isVerified = true;
+                              } catch (authErr) {
+                                console.log('Biometric verification skipped or failed, falling back to password');
+                              }
+
+                              // 2. Fallback to Password if biometric failed/cancelled
+                              if (!isVerified) {
+                                const pass = prompt(language === 'AR' ? 'يرجى إدخال كلمة المرور للتأكيد:' : 'Please enter password to confirm:');
+                                if (!pass) return;
+
+                                const { verifyPassword } = await import('../../services/auth/hashUtils');
+                                // Verify against the existing employee password (if editing) or the one in formData
+                                const currentHashedPassword = editingEmployee?.password || formData.password;
+                                
+                                if (currentHashedPassword) {
+                                  const isValid = await verifyPassword(pass, currentHashedPassword);
+                                  if (!isValid) {
+                                    playError();
+                                    alert(language === 'AR' ? 'كلمة المرور غير صحيحة' : 'Incorrect password');
+                                    return;
+                                  }
+                                  isVerified = true;
+                                } else {
+                                  // No password set yet, allow management if user is admin
+                                  isVerified = true; 
+                                }
+                              }
+
+                              if (isVerified) {
+                                if (confirm(language === 'AR' ? 'هل تريد حذف مفتاح المرور الحالي لهذا الموظف؟' : 'Delete current passkey for this employee?')) {
+                                  setFormData({ 
+                                    ...formData, 
+                                    biometricCredentialId: undefined, 
+                                    biometricPublicKey: undefined 
+                                  });
+                                  playSuccess();
+                                  return;
+                                }
+                              }
+                              return;
+                            }
+
+                            // Dynamic import for SimpleWebAuthn for NEW registration
                             const { startRegistration } = await import('@simplewebauthn/browser');
                             const {
                               generateChallenge,
