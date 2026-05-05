@@ -18,6 +18,7 @@ interface TimeResponse {
 }
 
 const TIME_PROVIDERS: string[] = [
+  '/api/time',
   'https://worldtimeapi.org/api/timezone/Etc/UTC',
   'https://timeapi.io/api/Time/current/zone?timeZone=UTC',
 ];
