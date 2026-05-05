@@ -231,15 +231,31 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
         return;
       }
 
+      // Smart optimization: If user already typed their username, target their specific passkey
+      // to skip the browser selection list.
+      let allowCredentials = undefined;
+      if (step === 'username' && inputVal.trim()) {
+        const found = employees.find(emp => emp.username === inputVal.trim());
+        if (found?.biometricCredentialId) {
+          allowCredentials = [{
+            id: found.biometricCredentialId,
+            type: 'public-key' as const,
+            transports: ['internal'] as AuthenticatorTransport[],
+          }];
+        }
+      }
+
       const challengeBase64 = bufferToBase64(generateChallenge());
       const asseResp = await startAuthentication({
         optionsJSON: {
           challenge: challengeBase64,
           rpId: window.location.hostname,
+          allowCredentials,
           userVerification: 'required' as UserVerificationRequirement,
           timeout: 60000,
         } as any,
-      });
+        mediation: 'optional', // Supported by browser, bypassing strict library types
+      } as any);
 
       if (asseResp && onSelectEmployee) {
         const result = await authService.loginWithBiometric(asseResp.id, employees);
@@ -252,7 +268,10 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
           playError();
         }
       }
-    } catch (err) {
+    } catch (err: any) {
+      // Ignore AbortError (user cancelled)
+      if (err.name === 'AbortError') return;
+
       const { parseWebAuthnError } = await import('../../../../utils/webAuthnUtils');
       setIsError(true);
       playError();
@@ -320,8 +339,8 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
 
   return (
     <div className="relative flex items-center h-full" ref={containerRef} dir={isAR ? 'rtl' : 'ltr'}>
-      {step === 'idle' ? (
-        <div onContextMenu={handleContextMenu} className="h-full flex items-center">
+      <div onContextMenu={handleContextMenu} className="h-full flex items-center">
+        {step === 'idle' ? (
           <StatusBarItem
             icon="person"
             label={loginLabel}
@@ -336,31 +355,32 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
               </span>
             )}
           </StatusBarItem>
-          {!currentEmployeeId && (
-            <PasskeyButton 
-              onClick={handlePasskeyLogin} 
-              title={isAR ? 'تسجيل الدخول بمفتاح المرور' : 'Login with Passkey'} 
-            />
-          )}
-        </div>
-      ) : (
-        <LoginInputView
-          step={step}
-          inputVal={inputVal}
-          setInputVal={setInputVal}
-          isError={isError}
-          setIsError={setIsError}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') checkAuth();
-            else if (e.key === 'Escape') resetState();
-          }}
-          onForgotPassword={handleForgotPassword}
-          language={language}
-          dir={dir}
-          inputRef={inputRef}
-          t={t}
-        />
-      )}
+        ) : (
+          <LoginInputView
+            step={step}
+            inputVal={inputVal}
+            setInputVal={setInputVal}
+            isError={isError}
+            setIsError={setIsError}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') checkAuth();
+              else if (e.key === 'Escape') resetState();
+            }}
+            onForgotPassword={handleForgotPassword}
+            language={language}
+            dir={dir}
+            inputRef={inputRef}
+            t={t}
+          />
+        )}
+        
+        {!currentEmployeeId && (
+          <PasskeyButton 
+            onClick={handlePasskeyLogin} 
+            title={isAR ? 'تسجيل الدخول بمفتاح المرور' : 'Login with Passkey'} 
+          />
+        )}
+      </div>
     </div>
   );
 };
