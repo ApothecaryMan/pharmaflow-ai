@@ -12,6 +12,7 @@ import { ContextMenuTrigger } from '../common/ContextMenu';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { Switch } from '../common/Switch';
+import { Tooltip } from '../common/Tooltip';
 
 import { useData } from '../../context/DataContext';
 import { branchService } from '../../services/org/branchService';
@@ -320,15 +321,36 @@ const NavbarComponent: React.FC<NavbarProps> = ({
           id="navbar-logo-icon"
         />
         <div className='hidden md:flex items-center' id="navbar-app-title" dir="ltr">
-          {"Zinc".split('').map((char, index) => (
-            <span 
-              key={index} 
-              id={`nav-char-${char}-${index}`}
-              className="text-lg font-bold tracking-tight text-gray-900 dark:text-white transition-transform hover:scale-125 hover:text-primary-500 cursor-default"
-            >
-              {char}
-            </span>
-          ))}
+          {"Zinc".split('').map((char, index) => {
+            const charKey = char.toUpperCase();
+            const acronym = (t as any).zincAcronym?.[charKey];
+            
+            return (
+              <Tooltip 
+                key={index}
+                position="bottom"
+                content={
+                  acronym ? (
+                    <div className={`flex flex-col gap-0.5 p-0.5 min-w-[180px] max-w-[250px] ${language === 'AR' ? 'text-right' : 'text-left'}`}>
+                      <div className="font-bold text-primary-600 dark:text-primary-400 text-[11px]">
+                        {acronym.title}
+                      </div>
+                      <div className="text-[10px] text-gray-600 dark:text-gray-300 leading-relaxed whitespace-normal">
+                        {acronym.desc}
+                      </div>
+                    </div>
+                  ) : char
+                }
+              >
+                <span 
+                  id={`nav-char-${char}-${index}`}
+                  className="text-lg font-bold tracking-tight text-gray-900 dark:text-white transition-transform hover:scale-125 hover:text-primary-500 cursor-default px-0.5"
+                >
+                  {char}
+                </span>
+              </Tooltip>
+            );
+          })}
         </div>
       </div>
 

@@ -6,6 +6,24 @@
 export const TRANSLATIONS = {
   EN: {
     appTitle: 'ZINC',
+    zincAcronym: {
+      Z: {
+        title: 'Zero Errors',
+        desc: 'Ensures maximum precision in dispensing and inventory tracking to guarantee patient safety.'
+      },
+      I: {
+        title: 'Integrated Solutions',
+        desc: 'A seamless ecosystem connecting sales, purchases, and insurance claims in one place.'
+      },
+      N: {
+        title: 'Next-Gen Innovation',
+        desc: 'Empowering pharmacies with AI-driven insights and smart automation for a faster workflow.'
+      },
+      C: {
+        title: 'Comprehensive Control',
+        desc: 'Full authority over your stock, finances, and staff performance with real-time analytics.'
+      }
+    },
     location: {
       governorate: 'Governorate',
       city: 'City',
@@ -2473,6 +2491,24 @@ export const TRANSLATIONS = {
       },
     },
     appTitle: 'Zinc',
+    zincAcronym: {
+      Z: {
+        title: 'Zero Errors (دقة بلا أخطاء)',
+        desc: 'يضمن أعلى معايير الدقة في صرف الوصفات وإدارة المخزون لضمان سلامة المرضى.'
+      },
+      I: {
+        title: 'Integrated Management (إدارة متكاملة)',
+        desc: 'نظام موحد يربط المبيعات والمشتريات وشركات التأمين في منصة تقنية واحدة.'
+      },
+      N: {
+        title: 'Next-Gen Tech (تقنيات الجيل القادم)',
+        desc: 'واجهة ذكية تعتمد على الأتمتة لتقليل الجهد اليدوي وتسريع وتيرة العمل اليومي.'
+      },
+      C: {
+        title: 'Constant Control (رقابة مستمرة)',
+        desc: 'تحكم كامل وشامل في الأرباح، النواقص، وحركة الأصناف من خلال تقارير لحظية دقيقة.'
+      }
+    },
     date: 'التاريخ',
     orderId: 'رقم الطلب',
     orderTotal: 'إجمالي الطلب',
