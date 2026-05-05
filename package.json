@@ -4,7 +4,7 @@
   "author": "ZINC Team",
   "license": "UNLICENSED",
   "private": true,
-  "version": "2.015",
+  "version": "2.017",
   "type": "module",
   "keywords": [
     "pharmacy",
@@ -34,7 +34,8 @@
     "supabase:generate": "supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" > src/types/supabase.ts",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "bump-version": "ts-node scripts/bump-version.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -1,9 +1,9 @@
 {
-  "version": "2.015",
-  "releaseDate": "2026-05-03",
+  "version": "2.017",
+  "releaseDate": "2026-05-05",
   "notes": {
-    "AR": "إضافة مصمم الإيصالات الجديد وتحسينات في دقة طباعة الفواتير.",
-    "EN": "Added new Receipt Designer and improvements in invoice printing accuracy."
+    "AR": "تحسينات عامة وتحديثات في استقرار النظام.",
+    "EN": "General improvements and system stability updates."
   },
   "forceUpdate": false
 }
