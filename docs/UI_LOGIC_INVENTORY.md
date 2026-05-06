@@ -149,7 +149,7 @@
 | 147 | components/settings/PrinterSettings.tsx | PrinterSettings | ?? MEDIUM | Complex local state; Effect orchestration (parents: components/layout/Navbar.tsx) | usePrinterSettings.ts |
 | 148 | components/skeletons/GenericSkeleton.tsx | GenericSkeleton | ? SKIP | Pure UI primitive/barrel (parents: components/skeletons/PageSkeletonRegistry.tsx) | - |
 | 149 | components/skeletons/InventorySkeleton.tsx | InventorySkeleton | ? SKIP | Pure UI primitive/barrel | - |
-| 150 | components/skeletons/POSSkeleton.tsx | POSSkeleton | ? SKIP | Derived data/transformation | - |
+
 | 151 | components/skeletons/PageSkeletonRegistry.tsx | PageSkeletonRegistry | ? SKIP | Pure UI primitive/barrel (parents: components/layout/PageRouter.tsx, App.tsx) | - |
 | 152 | components/test/ModalTests.tsx | ModalTests | ?? MEDIUM | Mostly clean | useModalTests.ts |
 | 154 | pages/IntelligenceDashboard.tsx | IntelligenceDashboard | ?? MEDIUM | Complex local state; Effect orchestration; Derived data/transformation; Entangled enough to consider rewrite | useIntelligenceDashboard.ts |

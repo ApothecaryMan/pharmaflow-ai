@@ -71,6 +71,7 @@ export interface POSCartSidebarProps {
   isMobile?: boolean; // New prop for UI separation
   isProcessing?: boolean;
   taxAmount?: number;
+  isLoading?: boolean;
 }
 
 export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
@@ -122,6 +123,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
   isMobile = false,
   isProcessing = false,
   taxAmount = 0,
+  isLoading = false,
 }) => {
   const { isOnline } = useNetworkStatus();
 
@@ -306,7 +308,32 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
           dir='ltr'
         >
           <style>{cartScrollStyles}</style>
-          {cart.length === 0 ? (
+          {isLoading ? (
+            <div className="flex flex-col space-y-1">
+              {[...Array(4)].map((_, i) => (
+                <SortableCartItem
+                  key={`skeleton-${i}`}
+                  isLoading={true}
+                  itemId={`skeleton-${i}`}
+                  commonItem={{} as any}
+                  color={color}
+                  t={t}
+                  showMenu={() => {}}
+                  removeFromCart={() => {}}
+                  toggleUnitMode={() => {}}
+                  updateItemDiscount={() => {}}
+                  setGlobalDiscount={() => {}}
+                  updateQuantity={() => {}}
+                  addToCart={() => {}}
+                  removeDrugFromCart={() => {}}
+                  allBatches={[]}
+                  onSelectBatch={() => {}}
+                  currentLang={currentLang as any}
+                  onSearchInTable={() => {}}
+                />
+              ))}
+            </div>
+          ) : cart.length === 0 ? (
             <div className='h-full flex flex-col items-center justify-center text-gray-400 space-y-2'>
               <span className='material-symbols-rounded text-4xl opacity-20'>
                 remove_shopping_cart

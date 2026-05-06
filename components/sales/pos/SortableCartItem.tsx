@@ -40,6 +40,7 @@ export interface SortableCartItemProps {
   globalDiscount?: number;
   onSearchInTable: (term: string) => void;
   isMobile?: boolean;
+  isLoading?: boolean;
 }
 
 export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
@@ -64,8 +65,44 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
   globalDiscount,
   onSearchInTable,
   isMobile,
+  isLoading,
 }) => {
   const { textTransform } = useSettings();
+  
+  if (isLoading) {
+    return (
+      <div className="flex flex-col p-1.5 animate-pulse border-b border-gray-100 dark:border-gray-800/50 last:border-0 relative">
+        {/* Subtle Accent Bar placeholder */}
+        <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-gray-100 dark:bg-zinc-800 opacity-50" />
+
+        <div className='flex flex-wrap items-center justify-between gap-x-1 gap-y-1 relative pl-2'>
+          {/* Name Section */}
+          <div className='flex-1 min-w-[120px]'>
+            <div className="h-3 w-32 bg-gray-100 dark:bg-zinc-800 rounded-md" />
+          </div>
+
+          {/* Unified 'Rest' Section */}
+          <div className='flex items-center gap-2 shrink-0 ml-auto'>
+            {/* Expiry Placeholder */}
+            <div className="h-5 w-14 bg-gray-50 dark:bg-zinc-800/50 rounded-full" />
+            
+            {/* Discount Placeholder */}
+            <div className="h-5 w-10 bg-gray-50 dark:bg-zinc-800/50 rounded-full" />
+
+            {/* Qty Control Placeholder */}
+            <div className="h-7 w-20 bg-gray-100 dark:bg-zinc-800 rounded-xl" />
+
+            {/* Price Placeholder */}
+            <div className="h-3 w-14 bg-gray-100 dark:bg-zinc-800 rounded-md" />
+            
+            {/* Delete Placeholder */}
+            <div className="w-7 h-7 bg-gray-50 dark:bg-zinc-800/30 rounded-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: itemId,
   });

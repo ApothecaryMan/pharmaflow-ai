@@ -107,7 +107,7 @@ export const POS: React.FC<POSProps> = ({
   const isRTL = (t as any).direction === 'rtl' || language === 'AR' || (language as any) === 'ar';
   const currentLang = isRTL ? 'ar' : 'en';
 
-  const { activeBranchId } = useData();
+  const { activeBranchId, isLoading } = useData();
 
   const {
     tabs, activeTab, activeTabId, addTab, removeTab,
@@ -995,6 +995,7 @@ export const POS: React.FC<POSProps> = ({
               activeIndex={activeIndex}
               enableTopToolbar={false}
               enableSearch={false}
+              isLoading={isLoading}
               manualFiltering={true}
             />
           </div>
@@ -1046,6 +1047,7 @@ export const POS: React.FC<POSProps> = ({
           employees={employees}
           isRTL={isRTL}
           paymentMethod={paymentMethod}
+          isLoading={isLoading}
           isProcessing={isProcessing}
           taxAmount={taxAmount}
         />

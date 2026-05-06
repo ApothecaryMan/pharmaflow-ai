@@ -37,7 +37,7 @@ import { ReceiptDesigner } from '../components/sales/ReceiptDesigner';
 import { ReturnHistory } from '../components/sales/ReturnHistory';
 import { SalesHistory } from '../components/sales/SalesHistory';
 import { ShiftHistory } from '../components/sales/ShiftHistory';
-import { POSSkeleton } from '../components/skeletons/POSSkeleton';
+
 import { ModalTests } from '../components/test/ModalTests';
 import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
 import type { PermissionAction } from './permissions';
@@ -151,7 +151,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'employees',
       'onUpdateSale',
     ],
-    skeleton: POSSkeleton,
+
     permission: 'sale.create',
     layout: 'full-bleed',
   },
