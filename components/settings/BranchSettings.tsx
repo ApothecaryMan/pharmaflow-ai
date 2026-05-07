@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { branchService } from '../../services/org/branchService';
 import { orgService } from '../../services/org/orgService';
 import { employeeService } from '../../services/hr/employeeService';
+import { attendanceService } from '../../services/hr/attendanceService';
 import type { Branch, Employee } from '../../types';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { Modal } from '../common/Modal';
@@ -237,9 +238,15 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
   const [employeeView, setEmployeeView] = useState<'all' | 'selected'>('all');
-  const [modalView, setModalView] = useState<'general' | 'employees'>('general');
+  const [modalView, setModalView] = useState<'general' | 'employees' | 'attendance'>('general');
   const [error, setError] = useState<string | null>(null);
   const { success, error: showAlertError } = useAlert();
+
+  // ─── Attendance Token State ───
+  const [terminalToken, setTerminalToken] = useState<string | null>(null);
+  const [isTokenRevealed, setIsTokenRevealed] = useState(false);
+  const [isGeneratingToken, setIsGeneratingToken] = useState(false);
+  const canGenerateToken = permissionsService.can('attendance.generate_token');
 
   const loadData = useCallback(async () => {
     try {
@@ -529,6 +536,136 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
     );
   };
 
+  // ─── Attendance Token View ───
+  const renderAttendanceView = () => {
+    if (!editingBranch?.id) {
+      return (
+        <div className="py-12 flex flex-col items-center justify-center text-center opacity-40">
+          <span className="material-symbols-rounded text-zinc-400" style={{ fontSize: '40px' }}>save</span>
+          <p className="text-xs text-zinc-500 mt-2 font-medium">
+            {language === 'AR' ? 'احفظ الفرع أولاً لتتمكن من توليد رمز الحضور' : 'Save the branch first to generate an attendance token'}
+          </p>
+        </div>
+      );
+    }
+
+    const handleGenerate = async () => {
+      setIsGeneratingToken(true);
+      try {
+        const token = await attendanceService.generateTerminalToken(editingBranch.id!);
+        setTerminalToken(token);
+        setIsTokenRevealed(true);
+        success(language === 'AR' ? t.attendance.tokenGenerated : t.attendance.tokenGenerated);
+      } catch (err: any) {
+        showAlertError(err.message || 'Failed to generate token');
+      } finally {
+        setIsGeneratingToken(false);
+      }
+    };
+
+    const handleCopy = async () => {
+      if (!terminalToken) return;
+      try {
+        await navigator.clipboard.writeText(terminalToken);
+        success(language === 'AR' ? t.attendance.tokenCopied : t.attendance.tokenCopied);
+      } catch {
+        // Fallback
+        const textarea = document.createElement('textarea');
+        textarea.value = terminalToken;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        success(language === 'AR' ? t.attendance.tokenCopied : t.attendance.tokenCopied);
+      }
+    };
+
+    return (
+      <div className="flex flex-col gap-5">
+        {/* Title */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+            <span className="material-symbols-rounded text-blue-600 dark:text-blue-400" style={{ fontSize: '22px' }}>fingerprint</span>
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{t.attendance.terminalToken}</h3>
+            <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+              {language === 'AR' ? 'رمز تفعيل جهاز الحضور لهذا الفرع' : 'Terminal activation token for this branch'}
+            </p>
+          </div>
+        </div>
+
+        {/* Token Display */}
+        {terminalToken ? (
+          <div className="space-y-3">
+            {/* Token Value */}
+            <div className="relative">
+              <div className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-mono text-sm text-center tracking-wider select-all" dir="ltr">
+                {isTokenRevealed ? terminalToken : '••••••••-••••-••••-••••-••••••••••••'}
+              </div>
+              {/* Reveal Toggle */}
+              <button
+                onClick={() => setIsTokenRevealed(!isTokenRevealed)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer"
+                title={isTokenRevealed ? 'Hide' : 'Reveal'}
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>
+                  {isTokenRevealed ? 'visibility_off' : 'visibility'}
+                </span>
+              </button>
+            </div>
+
+            {/* Copy + Regenerate Buttons */}
+            <div className="flex gap-2">
+              <button
+                onClick={handleCopy}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold uppercase tracking-wider hover:opacity-90 cursor-pointer transition-none"
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>content_copy</span>
+                {t.attendance.copyToken}
+              </button>
+              <button
+                onClick={handleGenerate}
+                disabled={isGeneratingToken}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer disabled:opacity-50 transition-none"
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>refresh</span>
+                {t.attendance.regenerateToken}
+              </button>
+            </div>
+
+            {/* Warning */}
+            <p className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-lg px-3 py-2">
+              <span className="material-symbols-rounded shrink-0" style={{ fontSize: '14px' }}>warning</span>
+              {t.attendance.tokenWarning}
+            </p>
+          </div>
+        ) : (
+          /* No Token Yet — Generate Button */
+          <div className="flex flex-col items-center py-8">
+            <button
+              onClick={handleGenerate}
+              disabled={isGeneratingToken}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold cursor-pointer disabled:opacity-50 transition-none shadow-sm"
+            >
+              {isGeneratingToken ? (
+                <span className="material-symbols-rounded animate-spin" style={{ fontSize: '18px' }}>progress_activity</span>
+              ) : (
+                <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>vpn_key</span>
+              )}
+              {t.attendance.generateToken}
+            </button>
+            <p className="text-[10px] text-zinc-400 mt-3 text-center max-w-xs">
+              {language === 'AR'
+                ? 'ولّد رمز جديد وانسخه والصقه في جهاز الحضور لتفعيله'
+                : 'Generate a token, copy it, and paste it on the attendance terminal device to activate it'}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Permission-based Tab Configuration
   const availableTabs = [
     { 
@@ -544,6 +681,13 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
       permission: PAGE_REGISTRY['branch-management']?.permission
     }
   ].filter(tab => !tab.permission || permissionsService.can(tab.permission));
+
+  // Modal Tabs — add Attendance tab if user can generate tokens
+  const modalTabs = [
+    { label: language === 'AR' ? 'البيانات' : 'General', value: 'general' },
+    { label: language === 'AR' ? 'الموظفين' : 'Employees', value: 'employees' },
+    ...(canGenerateToken ? [{ label: language === 'AR' ? 'الحضور' : 'Attendance', value: 'attendance' }] : []),
+  ];
 
 
   return (
@@ -606,15 +750,12 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
         isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
         title={editingBranch?.id ? t.settings.branchManagement : t.settings.addBranch}
         className="max-w-xl" hideCloseButton={true}
-        tabs={[
-          { label: language === 'AR' ? 'البيانات' : 'General', value: 'general' },
-          { label: language === 'AR' ? 'الموظفين' : 'Employees', value: 'employees' }
-        ]}
+        tabs={modalTabs}
         activeTab={modalView}
-        onTabChange={(val) => setModalView(val as 'general' | 'employees')}
+        onTabChange={(val) => setModalView(val as 'general' | 'employees' | 'attendance')}
       >
         <div className="space-y-6 min-h-[400px] py-2">
-          {modalView === 'general' ? renderGeneralView() : renderEmployeesView()}
+          {modalView === 'general' ? renderGeneralView() : modalView === 'employees' ? renderEmployeesView() : renderAttendanceView()}
           
           {error && (
             <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-2 mt-4 animate-shake">

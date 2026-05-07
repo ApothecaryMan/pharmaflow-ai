@@ -63,7 +63,8 @@ export type ViewState =
   | 'medicine-search'
   | 'customer-density-map'
   | 'services'
-  | 'org-management';
+  | 'org-management'
+  | 'attendance-terminal';
 
 /** Dashboard widget expand options */
 export type ExpandedView =

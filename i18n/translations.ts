@@ -2264,6 +2264,53 @@ export const TRANSLATIONS = {
         expiryDate: 'Expiry Date',
       }
     },
+    // ═══════════════════════════════════════════
+    // Attendance Module
+    // ═══════════════════════════════════════════
+    attendance: {
+      title: 'Attendance Terminal',
+      subtitle: 'Biometric attendance tracking',
+      // Terminal States
+      terminalLocked: 'Terminal Locked',
+      enterToken: 'Enter Terminal Token',
+      tokenPlaceholder: 'Paste terminal token here...',
+      activateTerminal: 'Activate Terminal',
+      invalidToken: 'Invalid terminal token. Please check with the administrator.',
+      terminalNotActivated: 'Attendance terminal is not activated.',
+      contactAdmin: 'Contact the administrator to activate it.',
+      accessDenied: 'You do not have permission to access the attendance terminal.',
+      // Clock Actions
+      clockIn: 'Clock In',
+      clockOut: 'Clock Out',
+      selectEmployee: 'Select Employee',
+      searchEmployee: 'Search employee...',
+      // Timeline
+      todayTimeline: "Today's Timeline",
+      noEventsToday: 'No attendance events recorded today.',
+      eventIn: 'Clock In',
+      eventOut: 'Clock Out',
+      // Status
+      currentlyIn: 'Currently Clocked In',
+      currentlyOut: 'Currently Clocked Out',
+      notClockedIn: 'Not Clocked In Yet',
+      // Biometric
+      touchSensor: 'Touch the fingerprint sensor',
+      biometricVerified: 'Biometric verified',
+      biometricFailed: 'Biometric verification failed',
+      noBiometric: 'No biometric registered for this employee',
+      // Branch Settings
+      terminalToken: 'Attendance Terminal Token',
+      generateToken: 'Generate New Token',
+      regenerateToken: 'Regenerate Token',
+      tokenGenerated: 'New terminal token generated successfully',
+      tokenWarning: 'Generating a new token will immediately invalidate the previous one.',
+      copyToken: 'Copy Token',
+      tokenCopied: 'Token copied to clipboard',
+      // Success/Error
+      clockInSuccess: 'Clocked in successfully',
+      clockOutSuccess: 'Clocked out successfully',
+      clockError: 'Failed to record attendance',
+    },
   },
   AR: {
     employeeList: {
@@ -4539,6 +4586,53 @@ export const TRANSLATIONS = {
         potentialLoss: 'خسارة محتملة',
         expiryDate: 'تاريخ الانتهاء',
       }
+    },
+    // ═══════════════════════════════════════════
+    // Attendance Module
+    // ═══════════════════════════════════════════
+    attendance: {
+      title: 'لوحة الحضور',
+      subtitle: 'تسجيل الحضور بالبصمة',
+      // Terminal States
+      terminalLocked: 'الجهاز مقفل',
+      enterToken: 'أدخل رمز الجهاز',
+      tokenPlaceholder: 'الصق رمز الجهاز هنا...',
+      activateTerminal: 'تفعيل الجهاز',
+      invalidToken: 'رمز الجهاز غير صحيح. تواصل مع المسؤول.',
+      terminalNotActivated: 'لوحة الحضور غير مفعّلة.',
+      contactAdmin: 'تواصل مع المسؤول لتفعيلها.',
+      accessDenied: 'ليس لديك صلاحية الوصول إلى لوحة الحضور.',
+      // Clock Actions
+      clockIn: 'تسجيل دخول',
+      clockOut: 'تسجيل انصراف',
+      selectEmployee: 'اختر الموظف',
+      searchEmployee: 'بحث عن موظف...',
+      // Timeline
+      todayTimeline: 'سجل اليوم',
+      noEventsToday: 'لا توجد أحداث حضور مسجلة اليوم.',
+      eventIn: 'دخول',
+      eventOut: 'انصراف',
+      // Status
+      currentlyIn: 'حاضر حالياً',
+      currentlyOut: 'منصرف حالياً',
+      notClockedIn: 'لم يسجل حضور بعد',
+      // Biometric
+      touchSensor: 'المس مستشعر البصمة',
+      biometricVerified: 'تم التحقق من البصمة',
+      biometricFailed: 'فشل التحقق من البصمة',
+      noBiometric: 'لا توجد بصمة مسجلة لهذا الموظف',
+      // Branch Settings
+      terminalToken: 'رمز جهاز الحضور',
+      generateToken: 'توليد رمز جديد',
+      regenerateToken: 'إعادة توليد الرمز',
+      tokenGenerated: 'تم توليد رمز جديد بنجاح',
+      tokenWarning: 'توليد رمز جديد سيلغي الرمز السابق فوراً.',
+      copyToken: 'نسخ الرمز',
+      tokenCopied: 'تم نسخ الرمز',
+      // Success/Error
+      clockInSuccess: 'تم تسجيل الدخول بنجاح',
+      clockOutSuccess: 'تم تسجيل الانصراف بنجاح',
+      clockError: 'فشل تسجيل الحضور',
     },
   },
 };

@@ -45,3 +45,27 @@ export interface Employee {
   mainSyndicateCard?: string; // Base64 encoded Main Syndicate Card (كارنيه النقابة الرئيسية)
   subSyndicateCard?: string; // Base64 encoded Sub Syndicate Card (كارنيه النقابة الفرعية)
 }
+
+/**
+ * Attendance Event Types
+ * Event-based log: each clock in/out is a separate row.
+ */
+export type AttendanceEventType = 'IN' | 'OUT';
+
+/**
+ * Attendance Event
+ * Represents a single clock in or clock out event.
+ * Timestamps are ALWAYS server-generated (Supabase now()).
+ */
+export interface AttendanceEvent {
+  id: string;
+  employeeId: string;
+  branchId: string;
+  orgId?: string;
+  eventType: AttendanceEventType;
+  isBiometric: boolean;
+  /** Server-generated timestamp — never set from client */
+  timestamp: string;
+  /** Employee name (joined from employees table, for display) */
+  employeeName?: string;
+}

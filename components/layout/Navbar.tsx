@@ -24,6 +24,7 @@ import { PrinterSettings } from '../settings/PrinterSettings';
 import { SidebarDropdown } from './SidebarDropdown';
 import { SettingsMenu } from './StatusBar/items/SettingsMenu';
 import { Icons, getIconByName } from '../common/Icons';
+import { AttendanceQuickAction } from './AttendanceQuickAction';
 
 interface NavbarProps {
   menuItems: MenuItem[];
@@ -482,7 +483,9 @@ const NavbarComponent: React.FC<NavbarProps> = ({
       {/* Right Side Actions (Desktop) */}
       {authService.getCurrentUserSync() && (
       <div className='hidden md:flex items-center gap-2 ltr:ml-4 rtl:mr-4'>
-
+        
+        {/* Quick Attendance Action */}
+        <AttendanceQuickAction language={language} />
 
         {/* User Profile & Settings */}
         <div className='relative' ref={profileRef}>

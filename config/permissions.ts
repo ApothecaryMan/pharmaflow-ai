@@ -86,7 +86,12 @@ export type PermissionAction =
   | 'users.manage' // Add/Edit/Delete employees
   | 'users.view_it' // View IT department employees
   | 'backup.manage'
-  | 'system.debug';
+  | 'system.debug'
+
+  // Attendance
+  | 'attendance.generate_token' // Generate/regenerate terminal UUID in Branch Settings
+  | 'attendance.activate_terminal' // Enter terminal token to activate attendance screen
+  | 'attendance.clock'; // Clock in/out using biometric
 
 const ALL_PERMISSIONS: PermissionAction[] = [
   'inventory.view',
@@ -141,6 +146,9 @@ const ALL_PERMISSIONS: PermissionAction[] = [
   'backup.manage',
   'system.debug',
   'inventory.restock',
+  'attendance.generate_token',
+  'attendance.activate_terminal',
+  'attendance.clock',
 ];
 
 export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
@@ -197,6 +205,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'users.view',
     'users.manage', // Can manage staff
     'shift.view_expected_balance',
+    'attendance.generate_token',
+    'attendance.activate_terminal',
+    'attendance.clock',
   ],
 
   pharmacist_manager: [
@@ -241,6 +252,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'reports.view_stock_movement',
     'users.view', // Can view staff but not manage accounts directly (unless given 'users.manage' specifically)
     'shift.view_expected_balance',
+    'attendance.clock',
   ],
 
   pharmacist: [
@@ -269,6 +281,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'shift.cash_out', // Can Withdraw/Remove Cash
     // NO CASH IN
     // NO REPORTS
+    'attendance.clock',
   ],
 
   inventory_officer: [
@@ -287,6 +300,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'supplier.update',
     'reports.view_inventory',
     'reports.view_stock_movement',
+    'attendance.clock',
   ],
 
   assistant: [
@@ -296,6 +310,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'sale.create', // Can create cart, maybe needs checkout approval? Giving create for now.
     'customer.view',
     'customer.add',
+    'attendance.clock',
   ],
 
   delivery_pharmacist: [
@@ -307,6 +322,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'customer.view',
     'customer.add',
     'customer.update',
+    'attendance.clock',
   ],
 
   // --- Sales Dept ---
@@ -330,6 +346,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'shift.reports',
     'shift.cash_in',
     'shift.cash_out',
+    'attendance.clock',
   ],
 
   cashier: [
@@ -340,6 +357,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'sale.refund',
     'customer.view',
     'customer.add',
+    'attendance.clock',
   ],
 
   // --- Other ---
@@ -363,18 +381,21 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'reports.export',
     'users.view',
     'shift.view_expected_balance',
+    'attendance.clock',
   ],
 
   hr_manager: [
     'users.view',
     'users.manage',
     'settings.view', // View settings but maybe not change them
+    'attendance.clock',
   ],
 
   delivery: [
     'sale.view_history',
     'sale.view_details',
     'sale.view_assigned_only', // To check delivery orders
+    'attendance.clock',
   ],
 
   officeboy: [],

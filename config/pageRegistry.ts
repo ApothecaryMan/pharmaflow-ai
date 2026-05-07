@@ -635,6 +635,16 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     permission: 'settings.view',
     layout: 'full-screen',
   },
+  'attendance-terminal': {
+    id: 'attendance-terminal',
+    component: React.lazy(() => import('../components/hr/attendance/AttendanceTerminal')),
+    menuLabel: 'Mark Attendance',
+    menuLabelAr: 'تسجيل الحضور',
+    icon: 'touch_app',
+    category: 'hr',
+    requiredProps: ['language'],
+    permission: 'attendance.clock',
+  },
 };
 
 // Helper function to get page config
