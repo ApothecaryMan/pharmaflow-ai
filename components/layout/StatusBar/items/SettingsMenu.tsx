@@ -23,7 +23,7 @@ const SettingsRow: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ icon, label, children, className = '' }) => (
-  <div className={`flex items-center justify-between py-1 ${className}`}>
+  <div className={`flex items-center justify-between py-0.5 ${className}`}>
     <div className="flex items-center gap-2">
       <span 
         className="material-symbols-rounded text-(--text-secondary)"
@@ -47,9 +47,9 @@ const SubmenuWrapper: React.FC<{
 }> = ({ isOpen, isMobile, settingsBlur, pos, children, title }) => {
   if (!isOpen) return null;
 
-  const mobileClasses = `relative w-full mt-2 p-4 space-y-4 rounded-xl border-none shadow-none ${getMenuSurfaceClasses(settingsBlur, true)}`;
+  const mobileClasses = `relative w-full mt-2 p-2.5 space-y-2 rounded-xl border-none shadow-none ${getMenuSurfaceClasses(settingsBlur, true)}`;
   
-  const desktopClasses = `absolute w-64 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-4 space-y-4 ${pos.align === 'top' ? 'top-0' : 'bottom-0'} ${getMenuSurfaceClasses(settingsBlur)}`;
+  const desktopClasses = `absolute w-64 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-2.5 space-y-2 ${pos.align === 'top' ? 'top-0' : 'bottom-0'} ${getMenuSurfaceClasses(settingsBlur)}`;
 
   const desktopStyle = {
     [pos.side === 'left' ? 'right' : 'left']: '100%',
@@ -179,7 +179,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
             <span className="text-xs font-bold text-(--text-primary)">{t.settings}</span>
           </div>
 
-            <div className="p-3 space-y-3" style={{ direction: isAR ? 'rtl' : 'ltr' }}>
+            <div className="p-2 space-y-1.5" style={{ direction: isAR ? 'rtl' : 'ltr' }}>
               {/* --- Appearance Section --- */}
               <div className="space-y-1 relative" ref={themesPos.ref}>
                 <SettingsRow icon="brightness_6" label={t.themesMenu}>
@@ -274,7 +274,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 </SubmenuWrapper>
               </div>
 
-              <div className="border-t border-(--border-divider) my-1 opacity-50" />
+              <div className="border-t border-(--border-divider) my-0.5 opacity-50" />
 
               {/* --- Navigation & Language --- */}
               {navStyle === 1 && (
@@ -297,7 +297,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 />
               </SettingsRow>
 
-              <div className="border-t border-(--border-divider) my-1 opacity-50" />
+              <div className="border-t border-(--border-divider) my-0.5 opacity-50" />
 
               {/* --- Typography Section --- */}
               <div className="space-y-1 relative" ref={typographyPos.ref}>
@@ -312,7 +312,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   </button>
                 </SettingsRow>
                 <SubmenuWrapper isOpen={expandedSubmenu === 'typography'} isMobile={isMobile} settingsBlur={settingsBlur} pos={typographyPos.position}>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <label className="text-xs font-medium flex items-center gap-1.5 text-(--text-primary)"><span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-settings)' }}>text_fields</span>{t.fontEN}</label>
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                       {AVAILABLE_FONTS_EN.map(f => (
@@ -327,7 +327,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       ))}
                     </div>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <label className="text-xs font-medium flex items-center gap-1.5 text-(--text-primary)"><span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-settings)' }}>translate</span>{t.fontAR}</label>
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                       {AVAILABLE_FONTS_AR.map(f => (
@@ -380,7 +380,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 </SubmenuWrapper>
               </div>
 
-              <div className="border-t border-(--border-divider) my-1 opacity-50" />
+              <div className="border-t border-(--border-divider) my-0.5 opacity-50" />
 
               {/* --- Workspace & Status Bar --- */}
               <SettingsRow icon="filter_center_focus" label={t.focusMode}><Switch checked={hideInactiveModules || false} onChange={setHideInactiveModules} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
@@ -389,7 +389,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               )}
 
               {/* --- POS Settings --- */}
-              <div className="border-t border-(--border-divider) my-1 opacity-50" />
+              <div className="border-t border-(--border-divider) my-0.5 opacity-50" />
               <div className="space-y-1">
                 <label className="text-[10px] font-bold uppercase text-(--text-tertiary)">{isAR ? 'إعدادات البيع' : 'POS Settings'}</label>
                 <SettingsRow icon="moped" label={isAR ? 'مصاريف التوصيل الافتراضية' : 'Default Delivery Fee'}>
