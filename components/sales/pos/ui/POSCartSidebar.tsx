@@ -6,12 +6,12 @@ import { type UserRole } from '../../../../config/permissions';
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import type { CartItem, Drug, Employee, Language } from '../../../../types';
 import { BUTTON_INACTIVE, CARD_MD } from '../../../../utils/themeStyles';
-import { PriceDisplay } from '../../../common/TanStackTable';
 import { Tooltip } from '../../../common/Tooltip';
 import { SortableCartItem } from '../SortableCartItem';
 import { resolvePrice } from '../../../../utils/stockOperations';
 import { useNetworkStatus } from '../../../../hooks/common/useNetworkStatus';
 import { money } from '../../../../utils/money';
+import { formatCurrency } from '../../../../utils/currency';
 import { getGroupingKey } from '../../../../services/inventory/batchService';
 import { useData } from '../../../../context/DataContext';
 import { useContextMenu, useContextMenuTrigger } from '../../../common/ContextMenu';
@@ -269,7 +269,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
             <span className='font-medium text-sm'>{t.viewCart}</span>
           </div>
           <span className='font-bold text-base tabular-nums'>
-            <PriceDisplay value={cartTotal} />
+            {formatCurrency(cartTotal, 'EGP', undefined, 2, true)}
           </span>
         </button>
       </div>
@@ -363,7 +363,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                           <div className="flex justify-between gap-4 text-xs">
                             <span className="opacity-70">{currentLang === 'ar' ? 'هامش الربح المتوقع:' : 'Exp. Margin:'}</span>
                             <span className="font-bold tabular-nums text-emerald-400">
-                              {totalProfit >= 0 ? '+' : ''}<PriceDisplay value={totalProfit} />
+                              {totalProfit >= 0 ? '+' : ''}{formatCurrency(totalProfit, 'EGP', undefined, 2, true)}
                             </span>
                           </div>
                           <p className="text-[9px] text-gray-400 font-medium leading-tight mt-1 border-t border-gray-100/10 pt-1">
@@ -374,7 +374,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                         </div>
                       }>
                         <span className="text-emerald-600 dark:text-emerald-400 font-bold tabular-nums bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-800/30 whitespace-nowrap animate-in fade-in zoom-in duration-300 leading-none">
-                          {totalProfit >= 0 ? '+' : ''}<PriceDisplay value={totalProfit} />
+                          {totalProfit >= 0 ? '+' : ''}{formatCurrency(totalProfit, 'EGP', undefined, 2, true)}
                         </span>
                       </Tooltip>
                     </>
@@ -513,7 +513,22 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
               <div className="flex items-center justify-between text-[11px] text-gray-500 font-bold uppercase tracking-wider">
                 <span className="opacity-70">{t.subtotal}</span>
                 <span className="tabular-nums font-black text-xs text-gray-700 dark:text-gray-300">
-                  <PriceDisplay value={grossSubtotal} />
+                  {formatCurrency(grossSubtotal, 'EGP', undefined, 2, true)}
+                </span>
+              </div>
+            )}
+
+            {/* Discount Row */}
+            {(grossSubtotal !== cartTotal || orderDiscountPercent > 0) && (
+              <div className="flex items-center justify-between text-[11px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">
+                <div className="flex items-center gap-1">
+                  <span className="opacity-70">{t.orderDiscount || 'Discount'}</span>
+                  {orderDiscountPercent > 0 && (
+                    <span className="bg-emerald-500/10 px-1 rounded text-[9px]">{orderDiscountPercent}%</span>
+                  )}
+                </div>
+                <span className="tabular-nums font-black text-xs">
+                  - {formatCurrency(money.subtract(grossSubtotal, cartTotal), 'EGP', undefined, 2, true)}
                 </span>
               </div>
             )}
@@ -523,7 +538,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
               <div className="flex items-center justify-between text-[11px] text-gray-500 font-bold uppercase tracking-wider">
                 <span className="opacity-70">{t.tax || 'Tax'}</span>
                 <span className="tabular-nums font-black text-xs text-gray-700 dark:text-gray-300">
-                  <PriceDisplay value={taxAmount} />
+                  {formatCurrency(taxAmount || 0, 'EGP', undefined, 2, true)}
                 </span>
               </div>
             )}
@@ -533,7 +548,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
               <div className="flex items-center justify-between text-[11px] text-primary-600 dark:text-primary-400 font-bold uppercase tracking-wider">
                 <span className="opacity-70">{t.deliveryFee || 'Delivery Fee'}</span>
                 <span className="tabular-nums font-black text-xs">
-                  + <PriceDisplay value={deliveryFee} />
+                  + {formatCurrency(deliveryFee, 'EGP', undefined, 2, true)}
                 </span>
               </div>
             )}
@@ -550,7 +565,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
               </span>
               <div className="flex flex-col items-end">
                 <span className="text-2xl font-black text-primary-600 dark:text-primary-400 tabular-nums tracking-tighter transition-all">
-                  <PriceDisplay value={finalTotal} />
+                  {formatCurrency(finalTotal, 'EGP', undefined, 2, true)}
                 </span>
               </div>
             </div>
@@ -676,7 +691,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                         ? `text-primary-600 dark:text-primary-400`
                         : 'text-gray-400'
                     }`}>
-                    <PriceDisplay value={Math.max(0, money.subtract(parseFloat(amountPaid) || 0, finalTotal))} />
+                    {formatCurrency(Math.max(0, money.subtract(parseFloat(amountPaid) || 0, finalTotal)), 'EGP', undefined, 2, true)}
                   </span>
                 </div>
 

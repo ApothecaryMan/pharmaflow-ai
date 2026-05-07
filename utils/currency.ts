@@ -20,7 +20,8 @@ export const formatCurrency = (
   amount: number,
   currency: string = 'EGP',
   locale?: string,
-  decimals: number = 2
+  decimals: number = 2,
+  hideSymbol: boolean = false
  ): string => {
   // 1. Detect language from DOM if not provided
   const isArabic = getIsArabic(locale);
@@ -39,6 +40,8 @@ export const formatCurrency = (
     // Ensure amount is rounded to desired precision
     const formattedAmount = formatter.format(amount);
     
+    if (hideSymbol) return formattedAmount;
+
     return isArabic 
       ? `\u2067${formattedAmount}\u00A0ج.م\u2069` 
       : `\u2066${formattedAmount}\u00A0EGP\u2069`;
@@ -122,7 +125,8 @@ export const formatCompactCurrency = (
   amount: number,
   currency: string = 'EGP',
   locale?: string,
-  decimals: number = 1
+  decimals: number = 1,
+  hideSymbol: boolean = false
 ): string => {
   const isArabic = getIsArabic(locale);
   const targetLocale = locale || (isArabic ? 'ar-EG' : 'en-US');
@@ -141,6 +145,7 @@ export const formatCompactCurrency = (
     }, 'en-US'); // Force dot separator
 
     const formattedAmount = formatter.format(amount);
+    if (hideSymbol) return formattedAmount;
     return isArabic 
       ? `\u2067${formattedAmount}\u00A0ج.م\u2069` 
       : `\u2066${formattedAmount}\u00A0EGP\u2069`;

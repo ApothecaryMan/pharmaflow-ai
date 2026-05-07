@@ -361,7 +361,11 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
             <div className='text-xs font-bold text-gray-900 dark:text-white shrink-0 text-end tabular-nums' dir='ltr' style={{ unicodeBidi: 'isolate' }}>
               {formatCurrency(
                 (packItem ? pricingService.calculateItemTotal(packItem) : 0) +
-                (unitItem ? pricingService.calculateItemTotal(unitItem) : 0)
+                (unitItem ? pricingService.calculateItemTotal(unitItem) : 0),
+                'EGP',
+                undefined,
+                2,
+                true
               )}
             </div>
 
