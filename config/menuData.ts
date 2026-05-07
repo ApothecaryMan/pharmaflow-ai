@@ -946,6 +946,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         label: 'Attendance & Leave',
         items: [
           { label: 'Mark Attendance', view: 'attendance-terminal', icon: 'touch_app', permission: 'attendance.clock' },
+          { label: 'Attendance Reports', view: 'attendance-reports', icon: 'assessment', permission: 'attendance.view' },
           { label: 'Attendance Register', icon: 'fact_check' },
           { label: 'Biometric Integration', icon: 'fingerprint' },
           { label: 'Leave Application', icon: 'event_note' },

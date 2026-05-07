@@ -1,0 +1,219 @@
+import React from 'react';
+import { useAttendanceReports } from './useAttendanceReports';
+import { PageHeader } from '../../common/PageHeader';
+import { SmallCard } from '../../common/SmallCard';
+import { SearchInput } from '../../common/SearchInput';
+import { DataPortButton } from '../../common/DataPortButton';
+import { CARD_LG } from '../../../utils/themeStyles';
+import { formatDuration } from '../../../utils/attendanceUtils';
+
+interface AttendanceReportsProps {
+  onViewChange?: (view: string, params?: any) => void;
+}
+
+const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) => {
+  const {
+    report,
+    isLoading,
+    targetDate,
+    searchQuery,
+    filteredEmployees,
+    columns,
+    isRTL,
+    t,
+    setSearchQuery,
+    handleDateChange,
+  } = useAttendanceReports({ onViewChange });
+
+  const renderStats = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
+      <SmallCard
+        title={t.attendance.present}
+        value={report?.presentCount || 0}
+        valueSuffix={`/ ${report?.totalEmployees || 0}`}
+        icon="person_check"
+        iconColor="emerald"
+        className="w-full"
+      />
+      <SmallCard
+        title={t.attendance.absent}
+        value={report?.absentCount || 0}
+        icon="person_off"
+        iconColor="rose"
+        className="w-full"
+      />
+      <SmallCard
+        title={t.attendance.late}
+        value={report?.lateCount || 0}
+        icon="schedule"
+        iconColor="amber"
+        className="w-full"
+      />
+      <SmallCard
+        title={t.attendance.avgHours}
+        value={report?.avgMinutes ? Math.floor(report.avgMinutes / 60) : 0}
+        valueSuffix={isRTL ? 'ساعة' : 'hrs'}
+        icon="timer"
+        iconColor="indigo"
+        className="w-full"
+      />
+    </div>
+  );
+
+  return (
+    <div className={`h-full flex flex-col gap-4 animate-fade-in pb-10 overflow-y-auto ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+      <PageHeader
+        title={t.attendance.attendanceReports}
+        mb="mb-0"
+        leftContent={
+          <div className="max-w-md w-full">
+            <SearchInput
+              placeholder={t.attendance.searchEmployee}
+              value={searchQuery}
+              onSearchChange={setSearchQuery}
+              onClear={() => setSearchQuery('')}
+            />
+          </div>
+        }
+        rightContent={
+          <div className="flex items-center gap-3">
+            <input
+              type="date"
+              value={targetDate}
+              onChange={(e) => handleDateChange(e.target.value)}
+              className="px-4 py-2 bg-gray-100 dark:bg-(--bg-surface-neutral) border-none rounded-xl text-gray-700 dark:text-gray-200 font-medium outline-none focus:ring-2 focus:ring-blue-500/20"
+            />
+            <DataPortButton
+              language={isRTL ? 'AR' : 'EN'}
+              data={filteredEmployees}
+              filename={`attendance-report-${targetDate}`}
+              columns={columns.map(c => ({
+                key: c.key as any,
+                header: c.label,
+                format: (val, row) => {
+                  if (c.id === 'duration') return formatDuration(val);
+                  if (c.id === 'status') return val ? t.attendance.lateStatusLate : t.attendance.lateStatusOk;
+                  if (c.id === 'firstIn' || c.id === 'lastOut') {
+                    return val ? new Date(val).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
+                  }
+                  return val;
+                }
+              }))}
+            />
+          </div>
+        }
+        showStatsToggle={true}
+        showBottom={true}
+        bottomContent={renderStats()}
+      />
+
+      <div className="flex-1 min-h-0">
+        <div className={`h-full flex flex-col overflow-hidden rounded-3xl ${CARD_LG}`}>
+          <div className="flex-1 overflow-auto p-6 main-content-scroll">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <div className="w-12 h-12 border-4 border-primary-500/20 border-t-blue-500 rounded-full animate-spin" />
+                <span className="text-gray-500 font-medium">{isRTL ? 'جاري التحميل...' : 'Loading...'}</span>
+              </div>
+            ) : filteredEmployees.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="w-20 h-20 bg-gray-100 dark:bg-(--bg-surface-neutral) rounded-full flex items-center justify-center mb-6">
+                  <span className="material-symbols-rounded text-gray-400" style={{ fontSize: 'var(--icon-2xl)' }}>person_search</span>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                  {isRTL ? 'لا توجد بيانات' : 'No Data Found'}
+                </h3>
+                <p className="text-gray-500 max-w-xs">
+                  {t.attendance.noReportData}
+                </p>
+              </div>
+            ) : (
+              <table className="w-full text-left rtl:text-right border-separate border-spacing-y-2">
+                <thead>
+                  <tr className="text-[11px] font-black tracking-widest text-(--text-tertiary) uppercase">
+                    {columns.map(col => (
+                      <th key={col.id} className="pb-2 px-4" style={{ width: col.width }}>{col.label}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredEmployees.map((emp) => (
+                    <tr key={emp.employeeId} className="bg-gray-50/50 dark:bg-(--bg-surface-neutral) hover:bg-gray-50 dark:hover:bg-(--bg-input) transition-colors group">
+                      <td className="py-3 px-4 rounded-l-2xl rtl:rounded-l-none rtl:rounded-r-2xl">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-gray-900 dark:text-gray-100">{emp.employeeName}</span>
+                          <span className="text-[10px] text-gray-500 font-mono">{emp.employeeCode}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        {emp.firstIn ? (
+                          <div className="flex items-center gap-2">
+                            <span className="material-symbols-rounded text-emerald-500" style={{ fontSize: 'var(--icon-sm)' }}>login</span>
+                            <span className="text-sm font-medium tabular-nums">
+                              {new Date(emp.firstIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        {emp.lastOut ? (
+                          <div className="flex items-center gap-2">
+                            <span className="material-symbols-rounded text-rose-500" style={{ fontSize: 'var(--icon-sm)' }}>logout</span>
+                            <span className="text-sm font-medium tabular-nums">
+                              {new Date(emp.lastOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        ) : emp.isOngoing ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-xs text-emerald-600 font-medium">{t.attendance.ongoing}</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="text-sm font-bold tabular-nums text-gray-700 dark:text-gray-300">
+                          {formatDuration(emp.totalMinutes)}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        {emp.firstIn ? (
+                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${
+                            emp.isLate 
+                              ? 'border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-400' 
+                              : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400'
+                          }`}>
+                            <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-xs)' }}>
+                              {emp.isLate ? 'schedule' : 'check_circle'}
+                            </span>
+                            {emp.isLate ? t.attendance.lateStatusLate : t.attendance.lateStatusOk}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            {t.attendance.absent}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 rounded-r-2xl rtl:rounded-r-none rtl:rounded-l-2xl">
+                        {emp.lateMinutes > 0 && (
+                          <span className="text-xs font-bold text-rose-600 tabular-nums">
+                            +{emp.lateMinutes} {isRTL ? 'د' : 'm'}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AttendanceReports;

@@ -64,7 +64,8 @@ export type ViewState =
   | 'customer-density-map'
   | 'services'
   | 'org-management'
-  | 'attendance-terminal';
+  | 'attendance-terminal'
+  | 'attendance-reports';
 
 /** Dashboard widget expand options */
 export type ExpandedView =

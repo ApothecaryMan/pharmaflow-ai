@@ -645,6 +645,16 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     requiredProps: ['language'],
     permission: 'attendance.clock',
   },
+  'attendance-reports': {
+    id: 'attendance-reports',
+    component: React.lazy(() => import('../components/hr/attendance/AttendanceReports')),
+    menuLabel: 'Attendance Reports',
+    menuLabelAr: 'تقارير الحضور',
+    icon: 'assessment',
+    category: 'hr',
+    requiredProps: ['onViewChange'],
+    permission: 'attendance.view',
+  },
 };
 
 // Helper function to get page config

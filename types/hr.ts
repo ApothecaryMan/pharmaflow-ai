@@ -69,4 +69,6 @@ export interface AttendanceEvent {
   timestamp: string;
   /** Employee name (joined from employees table, for display) */
   employeeName?: string;
+  /** Employee unique code (joined from employees table, for display) */
+  employeeCode?: string;
 }

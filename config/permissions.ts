@@ -91,6 +91,7 @@ export type PermissionAction =
   // Attendance
   | 'attendance.generate_token' // Generate/regenerate terminal UUID in Branch Settings
   | 'attendance.activate_terminal' // Enter terminal token to activate attendance screen
+  | 'attendance.view' // View attendance reports and dashboard
   | 'attendance.clock'; // Clock in/out using biometric
 
 const ALL_PERMISSIONS: PermissionAction[] = [
@@ -148,6 +149,7 @@ const ALL_PERMISSIONS: PermissionAction[] = [
   'inventory.restock',
   'attendance.generate_token',
   'attendance.activate_terminal',
+  'attendance.view',
   'attendance.clock',
 ];
 
@@ -207,6 +209,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'shift.view_expected_balance',
     'attendance.generate_token',
     'attendance.activate_terminal',
+    'attendance.view',
     'attendance.clock',
   ],
 
@@ -252,6 +255,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'reports.view_stock_movement',
     'users.view', // Can view staff but not manage accounts directly (unless given 'users.manage' specifically)
     'shift.view_expected_balance',
+    'attendance.view',
     'attendance.clock',
   ],
 
@@ -381,6 +385,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'reports.export',
     'users.view',
     'shift.view_expected_balance',
+    'attendance.view',
     'attendance.clock',
   ],
 
@@ -388,6 +393,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'users.view',
     'users.manage',
     'settings.view', // View settings but maybe not change them
+    'attendance.view',
     'attendance.clock',
   ],
 

@@ -180,3 +180,37 @@ export function formatDuration(minutes: number): string {
   if (hours === 0) return `${mins}m`;
   return `${hours}h ${mins.toString().padStart(2, '0')}m`;
 }
+
+// ═══════════════════════════════════════════
+// Lateness Detection
+// ═══════════════════════════════════════════
+
+/**
+ * Check if an employee is late based on their first IN event.
+ * @param firstInTimestamp - The employee's first IN event timestamp
+ * @param shiftStartTime - Branch shift start (e.g., "09:00")
+ * @param graceMinutes - Grace period (default: 5 minutes)
+ * @returns { isLate, lateMinutes }
+ */
+export function checkLateness(
+  firstInTimestamp: string,
+  shiftStartTime: string,
+  graceMinutes: number = 5
+): { isLate: boolean; lateMinutes: number } {
+  const firstIn = new Date(firstInTimestamp);
+  
+  // Parse shift time "HH:MM" into same day as firstIn
+  const [hours, minutes] = shiftStartTime.split(':').map(Number);
+  const shiftStart = new Date(firstIn);
+  shiftStart.setHours(hours, minutes, 0, 0);
+  
+  // Add grace period
+  const deadline = new Date(shiftStart.getTime() + graceMinutes * 60000);
+  
+  if (firstIn > deadline) {
+    const lateMs = firstIn.getTime() - shiftStart.getTime();
+    return { isLate: true, lateMinutes: Math.round(lateMs / 60000) };
+  }
+  
+  return { isLate: false, lateMinutes: 0 };
+}

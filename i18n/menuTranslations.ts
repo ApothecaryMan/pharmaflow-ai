@@ -609,6 +609,7 @@ export const MENU_TRANSLATIONS = {
     // Attendance & Leave Items
     'Mark Attendance': 'تسجيل الحضور',
     'Attendance Register': 'سجل الحضور',
+    'Attendance Reports': 'تقارير الحضور',
     'Leave Application': 'طلب إجازة',
     'Leave Approval': 'الموافقة على الإجازة',
     'Leave Balance': 'رصيد الإجازات',
