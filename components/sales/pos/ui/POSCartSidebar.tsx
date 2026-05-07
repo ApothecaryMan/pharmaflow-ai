@@ -13,6 +13,7 @@ import { resolvePrice } from '../../../../utils/stockOperations';
 import { useNetworkStatus } from '../../../../hooks/common/useNetworkStatus';
 import { money } from '../../../../utils/money';
 import { getGroupingKey } from '../../../../services/inventory/batchService';
+import { useData } from '../../../../context/DataContext';
 
 
 const cartScrollStyles = `
@@ -130,6 +131,8 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
   setDeliveryFee,
 }) => {
   const { isOnline } = useNetworkStatus();
+  const { activeBranch } = useData();
+  const globalDeliveryFee = activeBranch?.deliveryFee ?? 5;
 
   const finalTotal = isDeliveryMode ? money.add(cartTotal, deliveryFee) : cartTotal;
 
@@ -648,12 +651,12 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                 <div className='w-16 overflow-hidden relative'>
                   <input
                     type='number'
-                    min='5'
+                    min={globalDeliveryFee}
                     value={deliveryFee}
                     onChange={(e) => {
                       const val = parseFloat(e.target.value);
                       if (!isNaN(val)) {
-                        setDeliveryFee(Math.max(5, val));
+                        setDeliveryFee(Math.max(globalDeliveryFee, val));
                       }
                     }}
                     placeholder='Fee'

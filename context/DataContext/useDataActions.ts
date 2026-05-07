@@ -13,7 +13,7 @@ import { settingsService } from '../../services/settings/settingsService';
 import { transactionService } from '../../services/transactions/transactionService';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { inventorySearchEngine } from '../../services/search/drugSearchService';
-import type { ActionContext, Drug, Sale, Supplier, Purchase, PurchaseReturn, Return, Customer, Employee, StockBatch } from '../../types';
+import type { ActionContext, Drug, Sale, Supplier, Purchase, PurchaseReturn, Return, Customer, Employee, StockBatch, Branch } from '../../types';
 
 interface DataActionsProps {
   activeBranchId: string;
@@ -299,5 +299,9 @@ export const useDataActions = ({
     addEmployee,
     updateEmployee,
     deleteEmployee,
+    updateBranch: async (id: string, updates: any) => {
+      await branchService.update(id, updates);
+      setBranches((prev: any) => prev.map((b: any) => (b.id === id ? { ...b, ...updates } : b)));
+    },
   };
 };

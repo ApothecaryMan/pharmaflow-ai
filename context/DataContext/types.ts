@@ -10,6 +10,7 @@ import type {
   Sale,
   StockBatch,
   Supplier,
+  Branch
 } from '../../types';
 
 export type {
@@ -37,7 +38,8 @@ export interface DataState {
   employees: Employee[];
   currentEmployee: Employee | null;
   batches: StockBatch[];
-  branches: any[];
+  branches: Branch[];
+  activeBranch: Branch | null;
   isLoading: boolean;
 }
 
@@ -123,6 +125,8 @@ export interface DataActions {
 
   // Switch to a different organization
   switchOrg: (orgId: string) => Promise<void>;
+  
+  updateBranch: (id: string, updates: Partial<Branch>) => Promise<void>;
 
   // Get current active branch ID
   activeBranchId: string;

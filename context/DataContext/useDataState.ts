@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import type { Drug, Sale, Supplier, Purchase, PurchaseReturn, Return, Customer, Employee, StockBatch } from '../../types';
+import { useState, useRef, useMemo } from 'react';
+import type { Drug, Sale, Supplier, Purchase, PurchaseReturn, Return, Customer, Employee, StockBatch, Branch } from '../../types';
 import { useComputedInventory } from '../../hooks/inventory/useComputedInventory';
 
 export const useDataState = (initialInventory?: Drug[], initialSuppliers?: Supplier[]) => {
@@ -16,7 +16,7 @@ export const useDataState = (initialInventory?: Drug[], initialSuppliers?: Suppl
   const [employees, setEmployeesState] = useState<Employee[]>([]);
   const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(null);
   const [batches, setBatchesState] = useState<StockBatch[]>([]);
-  const [branches, setBranches] = useState<any[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
 
   const lastLoadedBranchId = useRef<string>('');
   
@@ -26,10 +26,15 @@ export const useDataState = (initialInventory?: Drug[], initialSuppliers?: Suppl
   const effectiveFilterBranchId = (isLoading && import.meta.env.DEV) ? '' : activeBranchId;
   const inventory = useComputedInventory(rawInventory, batches, effectiveFilterBranchId);
 
+  const activeBranch = useMemo(() => {
+    return branches.find(b => b.id === activeBranchId) || null;
+  }, [branches, activeBranchId]);
+
   return {
     isLoading, setIsLoading,
     activeOrgId, setActiveOrgId,
     activeBranchId, setActiveBranchId,
+    activeBranch,
     rawInventory, setRawInventory,
     sales, setSalesState,
     suppliers, setSuppliersState,

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { AVAILABLE_FONTS_AR, AVAILABLE_FONTS_EN } from '../../../../config/fonts';
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import { useSettings } from '../../../../context';
+import { useData } from '../../../../context/DataContext';
 import { useSmartPosition } from '../../../../hooks/common/useSmartPosition';
 import { TRANSLATIONS } from '../../../../i18n/translations';
 import { type Language } from '../../../../types';
@@ -92,8 +93,11 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     menuBlur, setMenuBlur, tooltipBlur, setTooltipBlur,
     graphicStyle, setGraphicStyle, graphicFontVariant, setGraphicFontVariant,
     cardBorderLight, setCardBorderLight, enableCustomCardCss, setEnableCustomCardCss,
-    customCardCss, setCustomCardCss, numeralSystem, setNumeralSystem
+    customCardCss, setCustomCardCss, numeralSystem, setNumeralSystem,
   } = settings;
+
+  const { activeBranchId, updateBranch, activeBranch } = useData();
+  const deliveryFee = activeBranch?.deliveryFee ?? 5;
 
   const [isOpen, setIsOpen] = useState(false);
   const [expandedSubmenu, setExpandedSubmenu] = useState<string | null>(null);
@@ -383,6 +387,24 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               {permissionsService.isOrgAdmin() && (
                 <SettingsRow icon="science" label={t.developerMode}><Switch checked={developerMode || false} onChange={setDeveloperMode} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
               )}
+
+              {/* --- POS Settings --- */}
+              <div className="border-t border-(--border-divider) my-1 opacity-50" />
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-(--text-tertiary)">{isAR ? 'إعدادات البيع' : 'POS Settings'}</label>
+                <SettingsRow icon="moped" label={isAR ? 'مصاريف التوصيل الافتراضية' : 'Default Delivery Fee'}>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      value={deliveryFee}
+                      onChange={(e) => updateBranch(activeBranchId, { deliveryFee: parseFloat(e.target.value) || 0 })}
+                      className="w-16 h-7 text-xs font-bold text-center rounded-lg bg-(--bg-input) border border-(--border-divider) text-(--text-primary) outline-hidden"
+                    />
+                    <span className="text-[10px] font-bold text-(--text-tertiary)">{isAR ? 'ج.م' : 'EGP'}</span>
+                  </div>
+                </SettingsRow>
+              </div>
 
               {showTicker !== undefined && (
                 <div className="space-y-1 relative" ref={quickStatusPos.ref}>

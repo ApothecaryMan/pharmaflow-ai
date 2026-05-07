@@ -92,6 +92,8 @@ export interface Branch {
   area?: string;
   /** Contact phone number */
   phone?: string;
+  /** Default delivery fee for this branch */
+  deliveryFee?: number;
   /** Active status */
   status: 'active' | 'inactive';
   /** ISO date of creation */

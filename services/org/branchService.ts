@@ -78,6 +78,7 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
       ...data,
       id: idGenerator.uuid(),
       code,
+      deliveryFee: data.deliveryFee ?? 5,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     } as Branch;

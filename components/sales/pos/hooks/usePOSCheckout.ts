@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { type UserRole } from '../../../../config/permissions';
 import { permissionsService } from '../../../../services/auth/permissionsService';
+import { useData } from '../../../../context/DataContext';
 import type { CartItem, Customer, Sale } from '../../../../types';
 import { generateInvoiceHTML, getActiveReceiptSettings } from '../../InvoiceTemplate';
 import { getPrinterSettings, printReceiptSilently } from '../../../../utils/qzPrinter';
@@ -52,13 +53,16 @@ export const usePOSCheckout = ({
   activeBranchId,
   sales,
 }: UsePOSCheckoutProps) => {
+  const { activeBranch } = useData();
+  const globalDeliveryFee = activeBranch?.deliveryFee ?? 5;
+
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'visa'>('cash');
   const [deliveryEmployeeId, setDeliveryEmployeeId] = useState<string>('');
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
   const [isDeliveryMode, setIsDeliveryMode] = useState(false);
   const [amountPaid, setAmountPaid] = useState('');
-  const [deliveryFee, setDeliveryFee] = useState<number>(5); // Default 5.00 EGP, now dynamic
+  const [deliveryFee, setDeliveryFee] = useState<number>(globalDeliveryFee); // Initialized from settings
   const [isProcessing, setIsProcessing] = useState(false);
 
   // --- Sticky Delivery Fee Memory ---
@@ -74,14 +78,15 @@ export const usePOSCheckout = ({
         );
       
       if (lastDeliverySale) {
-        setDeliveryFee(Math.max(5, lastDeliverySale.deliveryFee || 5));
+        // Must be at least the global delivery fee
+        setDeliveryFee(Math.max(globalDeliveryFee, lastDeliverySale.deliveryFee || globalDeliveryFee));
       } else {
-        setDeliveryFee(5); // Default for customer with no previous delivery
+        setDeliveryFee(globalDeliveryFee); // Default for customer with no previous delivery
       }
     } else {
-      setDeliveryFee(5); // Reset to global for Guest
+      setDeliveryFee(globalDeliveryFee); // Reset to global for Guest
     }
-  }, [selectedCustomer, sales]);
+  }, [selectedCustomer, sales, globalDeliveryFee]);
 
   const isValidOrder =
     cart.length > 0 &&

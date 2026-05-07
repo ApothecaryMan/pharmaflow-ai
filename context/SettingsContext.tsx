@@ -162,9 +162,9 @@ const defaultSettings: SettingsState = {
   showTickerSales: false,
   showTickerInventory: false,
   showTickerCustomers: false,
-  showTickerTopSeller: false,
+  showTickerTopSeller: true,
   graphicStyle: false,
-  graphicFontVariant: 'serif',
+  graphicFontVariant: 'sans',
   activeBranchId: '',
   branchCode: '',
 };

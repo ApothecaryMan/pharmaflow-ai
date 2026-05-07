@@ -15,6 +15,7 @@ export const branchRepository = {
       governorate: db.governorate || undefined,
       city: db.city || undefined,
       area: db.area || undefined,
+      deliveryFee: db.delivery_fee || 0,
       status: db.status || 'active',
       createdAt: db.created_at || new Date().toISOString(),
       updatedAt: db.updated_at || new Date().toISOString(),
@@ -32,6 +33,7 @@ export const branchRepository = {
     if (b.governorate !== undefined) db.governorate = b.governorate;
     if (b.city !== undefined) db.city = b.city;
     if (b.area !== undefined) db.area = b.area;
+    if (b.deliveryFee !== undefined) db.delivery_fee = b.deliveryFee;
     if (b.status !== undefined) db.status = b.status;
     return db;
   },
