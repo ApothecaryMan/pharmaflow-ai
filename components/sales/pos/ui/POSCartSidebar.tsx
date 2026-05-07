@@ -72,6 +72,8 @@ export interface POSCartSidebarProps {
   isProcessing?: boolean;
   taxAmount?: number;
   isLoading?: boolean;
+  deliveryFee: number;
+  setDeliveryFee: (val: number) => void;
 }
 
 export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
@@ -124,8 +126,12 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
   isProcessing = false,
   taxAmount = 0,
   isLoading = false,
+  deliveryFee,
+  setDeliveryFee,
 }) => {
   const { isOnline } = useNetworkStatus();
+
+  const finalTotal = isDeliveryMode ? money.add(cartTotal, deliveryFee) : cartTotal;
 
   const handleSearchInTable = useCallback(
     (term: string) => {
@@ -429,6 +435,16 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
               </div>
             )}
 
+            {/* Delivery Fee Row */}
+            {isDeliveryMode && (
+              <div className="flex items-center justify-between text-[11px] text-primary-600 dark:text-primary-400 font-bold uppercase tracking-wider">
+                <span className="opacity-70">{t.deliveryFee || 'Delivery Fee'}</span>
+                <span className="tabular-nums font-black text-xs">
+                  + <PriceDisplay value={deliveryFee} />
+                </span>
+              </div>
+            )}
+
             {/* Subtle Divider (only if subtotal, discount, or tax exists) */}
             {(grossSubtotal !== cartTotal || orderDiscountPercent > 0 || (taxAmount || 0) > 0) && (
               <div className="h-px bg-gray-200/50 dark:bg-gray-700/50 -mx-1" />
@@ -441,7 +457,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
               </span>
               <div className="flex flex-col items-end">
                 <span className="text-2xl font-black text-primary-600 dark:text-primary-400 tabular-nums tracking-tighter transition-all">
-                  <PriceDisplay value={cartTotal} />
+                  <PriceDisplay value={finalTotal} />
                 </span>
               </div>
             </div>
@@ -554,7 +570,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                 {/* Change Display */}
                 <div
                   className={`flex flex-col justify-center px-2 rounded-xl border min-w-[70px] transition-colors overflow-hidden whitespace-nowrap ${
-                    money.toSmallestUnit(parseFloat(amountPaid) || 0) >= cartTotal
+                    money.toSmallestUnit(parseFloat(amountPaid) || 0) >= money.toSmallestUnit(finalTotal)
                       ? `bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700`
                       : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                   }`}>
@@ -563,11 +579,11 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                   </span>
                   <span
                     className={`text-sm font-bold text-center tabular-nums ${
-                      money.isGte(parseFloat(amountPaid) || 0, cartTotal)
+                      money.isGte(parseFloat(amountPaid) || 0, finalTotal)
                         ? `text-primary-600 dark:text-primary-400`
                         : 'text-gray-400'
                     }`}>
-                    <PriceDisplay value={Math.max(0, money.subtract(parseFloat(amountPaid) || 0, cartTotal))} />
+                    <PriceDisplay value={Math.max(0, money.subtract(parseFloat(amountPaid) || 0, finalTotal))} />
                   </span>
                 </div>
 
@@ -626,6 +642,17 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                         </option>
                       ))}
                   </select>
+                </div>
+
+                {/* Delivery Fee Input */}
+                <div className='w-16 overflow-hidden relative'>
+                  <input
+                    type='number'
+                    value={deliveryFee}
+                    onChange={(e) => setDeliveryFee(parseFloat(e.target.value) || 0)}
+                    placeholder='Fee'
+                    className='w-full h-full bg-white dark:bg-gray-900 border border-primary-400 dark:border-primary-500/50 rounded-xl text-sm px-2 text-center focus:ring-0 focus:outline-hidden font-bold tabular-nums transition-all'
+                  />
                 </div>
 
                 {/* Confirm Button */}

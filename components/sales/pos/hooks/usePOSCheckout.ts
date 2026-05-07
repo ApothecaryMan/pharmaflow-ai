@@ -29,8 +29,6 @@ interface UsePOSCheckoutProps {
   activeBranchId: string;
 }
 
-const DELIVERY_FEE = 5; // 5.00 EGP
-
 export const usePOSCheckout = ({
   cart,
   mergedCartItems,
@@ -58,6 +56,7 @@ export const usePOSCheckout = ({
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
   const [isDeliveryMode, setIsDeliveryMode] = useState(false);
   const [amountPaid, setAmountPaid] = useState('');
+  const [deliveryFee, setDeliveryFee] = useState<number>(5); // Default 5.00 EGP, now dynamic
   const [isProcessing, setIsProcessing] = useState(false);
 
   const isValidOrder =
@@ -77,9 +76,9 @@ export const usePOSCheckout = ({
       try {
 
       const isDelivery = saleType === 'delivery';
-      let deliveryFee = 0;
+      let currentDeliveryFee = 0;
       if (isDelivery) {
-        deliveryFee = DELIVERY_FEE;
+        currentDeliveryFee = deliveryFee;
       }
 
       if (isDelivery && !deliveryEmployeeId && !isPending) {
@@ -101,10 +100,10 @@ export const usePOSCheckout = ({
         customerCode: customerCode || undefined,
         paymentMethod,
         saleType,
-        deliveryFee,
+        deliveryFee: currentDeliveryFee,
         globalDiscount,
         subtotal,
-        total: money.add(cartTotal, deliveryFee),
+        total: money.add(cartTotal, currentDeliveryFee),
         language: (language as 'EN' | 'AR') || 'EN',
         deliveryEmployeeId: isDelivery ? (deliveryEmployeeId || undefined) : undefined,
         status: (isPending ? 'pending' : isDelivery ? (deliveryEmployeeId ? 'with_delivery' : 'pending') : 'completed') as Sale['status'],
@@ -129,7 +128,7 @@ export const usePOSCheckout = ({
 
       addNotification({
         messageKey: 'saleComplete',
-        messageParams: { total: formatCurrency(money.add(cartTotal, deliveryFee)) },
+        messageParams: { total: formatCurrency(money.add(cartTotal, currentDeliveryFee)) },
         type: 'success',
       });
 
@@ -197,6 +196,7 @@ export const usePOSCheckout = ({
       activeTabId,
       playSuccess,
       isProcessing,
+      deliveryFee,
     ]
   );
 
@@ -226,6 +226,8 @@ export const usePOSCheckout = ({
     setIsDeliveryMode,
     amountPaid,
     setAmountPaid,
+    deliveryFee,
+    setDeliveryFee,
     handleCheckout,
     isValidOrder,
     isProcessing,

@@ -204,7 +204,7 @@ export const POS: React.FC<POSProps> = ({
   const {
     paymentMethod, setPaymentMethod, deliveryEmployeeId, setDeliveryEmployeeId,
     showDeliveryModal, setShowDeliveryModal, isCheckoutMode, setIsCheckoutMode,
-    isDeliveryMode, setIsDeliveryMode, amountPaid, setAmountPaid, handleCheckout, isValidOrder, isProcessing,
+    isDeliveryMode, setIsDeliveryMode, amountPaid, setAmountPaid, deliveryFee, setDeliveryFee, handleCheckout, isValidOrder, isProcessing,
   } = usePOSCheckout({
     cart, mergedCartItems, showToastError, addNotification, getVerifiedDate,
     activeTab, activeTabId, removeTab, onCompleteSale, customerName, customerCode,
@@ -1040,6 +1040,8 @@ export const POS: React.FC<POSProps> = ({
           setIsDeliveryMode={setIsDeliveryMode}
           amountPaid={amountPaid}
           setAmountPaid={setAmountPaid}
+          deliveryFee={deliveryFee}
+          setDeliveryFee={setDeliveryFee}
           isValidOrder={isValidOrder}
           handleCheckout={handleCheckout}
           deliveryEmployeeId={deliveryEmployeeId}
