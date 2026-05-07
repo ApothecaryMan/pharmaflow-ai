@@ -14,7 +14,7 @@ import { useNetworkStatus } from '../../../../hooks/common/useNetworkStatus';
 import { money } from '../../../../utils/money';
 import { getGroupingKey } from '../../../../services/inventory/batchService';
 import { useData } from '../../../../context/DataContext';
-import { useContextMenuTrigger } from '../../../common/ContextMenu';
+import { useContextMenu, useContextMenuTrigger } from '../../../common/ContextMenu';
 
 
 const cartScrollStyles = `
@@ -23,6 +23,83 @@ const cartScrollStyles = `
   .cart-scroll::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.6); border-radius: 9999px; }
   .cart-scroll::-webkit-scrollbar-corner { background: transparent; }
 `;
+
+// --- Isolated Calculator Component to ensure reactivity inside Context Menu ---
+const DeliveryCalculatorContent = ({ globalDeliveryFee, setDeliveryFee, hideMenu, t }: any) => {
+  const [val, setVal] = React.useState('');
+  
+  const handleApply = () => {
+    const dist = parseFloat(val);
+    if (!isNaN(dist)) {
+      setDeliveryFee(dist * globalDeliveryFee);
+      hideMenu();
+    }
+  };
+
+  return (
+    <div className="p-2 min-w-[200px]" onClick={(e) => e.stopPropagation()}>
+      <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1 flex items-center justify-between">
+        <span>{t.deliveryCalculator.title}</span>
+        <span className="text-primary-500">{globalDeliveryFee} {t.deliveryCalculator.perKm}</span>
+      </div>
+      <div className="grid grid-cols-2 gap-1">
+        {[1, 1.5, 2, 2.5, 3, 4, 5, 10].map((dist) => (
+          <button
+            key={dist}
+            onClick={() => {
+              setDeliveryFee(dist * globalDeliveryFee);
+              hideMenu();
+            }}
+            className="flex flex-col items-center justify-center py-1.5 px-1 rounded-lg bg-gray-50 dark:bg-white/5 hover:bg-primary-50 dark:hover:bg-primary-900/20 border border-gray-100 dark:border-white/10 hover:border-primary-200 group"
+          >
+            <span className="text-xs font-black text-gray-900 dark:text-white">{dist} {t.deliveryCalculator.km}</span>
+            <span className="text-[10px] font-bold text-gray-500">
+              {dist * globalDeliveryFee} <span className="text-[8px] opacity-50">{t.deliveryCalculator.egp}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+      <div className="mt-2 pt-2 border-t border-(--border-divider) flex gap-1 items-center">
+        <div className="flex bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-lg overflow-hidden flex-1 h-7">
+          <button
+            onClick={() => {
+              const current = parseFloat(val) || 0;
+              if (current > 0) setVal((current - 0.5).toString());
+            }}
+            className="px-2 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-500 transition-colors"
+          >
+            <span className="material-symbols-rounded text-lg">remove</span>
+          </button>
+          <input
+            type="number"
+            step="0.5"
+            autoFocus
+            value={val}
+            onChange={(e) => setVal(e.target.value)}
+            placeholder={t.deliveryCalculator.customDistance}
+            className="w-full bg-transparent border-none text-center py-0 text-base focus:ring-0 focus:outline-hidden font-black"
+            onKeyDown={(e) => e.key === 'Enter' && handleApply()}
+          />
+          <button
+            onClick={() => {
+              const current = parseFloat(val) || 0;
+              setVal((current + 0.5).toString());
+            }}
+            className="px-2 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-500 transition-colors border-l border-gray-100 dark:border-white/10"
+          >
+            <span className="material-symbols-rounded text-lg">add</span>
+          </button>
+        </div>
+        <button
+          onClick={handleApply}
+          className="w-8 h-7 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center justify-center transition-colors"
+        >
+          <span className="material-symbols-rounded text-sm">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export interface POSCartSidebarProps {
   mobileTab: 'products' | 'cart';
@@ -133,18 +210,18 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
 }) => {
   const { isOnline } = useNetworkStatus();
   const { activeBranch } = useData();
+  const { hideMenu } = useContextMenu();
   const globalDeliveryFee = activeBranch?.deliveryFee ?? 5;
 
   const { triggerProps } = useContextMenuTrigger({
-    actions: [
-      { label: `Default (${globalDeliveryFee})`, icon: 'settings', action: () => setDeliveryFee(globalDeliveryFee) },
-      { separator: true },
-      { label: '10 EGP', icon: 'money', action: () => setDeliveryFee(10) },
-      { label: '15 EGP', icon: 'money', action: () => setDeliveryFee(15) },
-      { label: '20 EGP', icon: 'money', action: () => setDeliveryFee(20) },
-      { label: '30 EGP', icon: 'money', action: () => setDeliveryFee(30) },
-      { label: '50 EGP', icon: 'money', action: () => setDeliveryFee(50) },
-    ]
+    content: (
+      <DeliveryCalculatorContent 
+        globalDeliveryFee={globalDeliveryFee} 
+        setDeliveryFee={setDeliveryFee} 
+        hideMenu={hideMenu}
+        t={t}
+      />
+    )
   });
 
   const finalTotal = isDeliveryMode ? money.add(cartTotal, deliveryFee) : cartTotal;
