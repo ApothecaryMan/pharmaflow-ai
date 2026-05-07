@@ -197,6 +197,16 @@ export const TRANSLATIONS = {
         openInWindow: 'Open in Window',
         showStats: 'Show Statistics',
         hideStats: 'Hide Statistics',
+        // DataPort (Export/Import)
+        exportCSV: 'Export CSV',
+        exportExcel: 'Export Excel',
+        exportPDF: 'Export PDF',
+        importCSV: 'Import CSV/Excel',
+        exportData: 'Export Data',
+        importData: 'Import Data',
+        importSuccess: 'Imported successfully',
+        importError: 'Import failed',
+        rowsImported: 'rows imported',
       },
       datePicker: {
         cancel: 'Cancel',
@@ -2771,6 +2781,16 @@ export const TRANSLATIONS = {
         openInWindow: 'فتح في نافذة',
         showStats: 'عرض الإحصائيات',
         hideStats: 'إخفاء الإحصائيات',
+        // DataPort (Export/Import)
+        exportCSV: 'تصدير CSV',
+        exportExcel: 'تصدير Excel',
+        exportPDF: 'تصدير PDF',
+        importCSV: 'استيراد CSV/Excel',
+        exportData: 'تصدير البيانات',
+        importData: 'استيراد البيانات',
+        importSuccess: 'تم الاستيراد بنجاح',
+        importError: 'فشل الاستيراد',
+        rowsImported: 'صف تم استيراده',
       },
       datePicker: {
         cancel: 'إلغاء',
