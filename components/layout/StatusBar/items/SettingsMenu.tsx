@@ -94,6 +94,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     graphicStyle, setGraphicStyle, graphicFontVariant, setGraphicFontVariant,
     cardBorderLight, setCardBorderLight, enableCustomCardCss, setEnableCustomCardCss,
     customCardCss, setCustomCardCss, numeralSystem, setNumeralSystem,
+    switchVariant, setSwitchVariant,
   } = settings;
 
   const { activeBranchId, updateBranch, activeBranch } = useData();
@@ -207,9 +208,30 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     <SegmentedControl value={darkMode} onChange={v => setDarkMode(v as boolean)}  size="xs"  shape="pill" iconSize="--icon-settings" options={[{ label: '', value: false, icon: 'light_mode' }, { label: '', value: true, icon: 'dark_mode' }]} />
                   </SettingsRow>
                   {developerMode && (
-                    <SettingsRow icon="rounded_corner" label={t.borderRadius}>
-                      <SegmentedControl value={borderRadius || 'default'} onChange={v => setBorderRadius?.(v as any)}  size="xs" shape="pill" options={[{ label: t.radiusSharp, value: 'sharp' }, { label: t.radiusFull, value: 'full' }, { label: t.radiusDefault, value: 'default' }]} />
-                    </SettingsRow>
+                    <>
+                      <SettingsRow icon="rounded_corner" label={t.borderRadius}>
+                        <SegmentedControl value={borderRadius || 'default'} onChange={v => setBorderRadius?.(v as any)}  size="xs" shape="pill" options={[{ label: t.radiusSharp, value: 'sharp' }, { label: t.radiusFull, value: 'full' }, { label: t.radiusDefault, value: 'default' }]} />
+                      </SettingsRow>
+                      
+                      <div className="flex items-center gap-1.5 py-1">
+                        <span className="material-symbols-rounded text-(--text-secondary)" style={{ fontSize: 'var(--icon-settings)' }}>toggle_on</span>
+                        <div className="flex-1 overflow-x-auto scrollbar-none pb-0.5">
+                          <SegmentedControl 
+                            value={switchVariant || 'default'} 
+                            onChange={v => setSwitchVariant?.(v as any)} 
+                            size="xs" 
+                            shape="pill" 
+                            iconSize="--icon-settings"
+                            options={[
+                              { label: '', value: 'default', icon: 'done' },
+                              { label: '', value: 'ios', icon: 'toggle_on' },
+                              { label: '', value: 'minimal', icon: 'check_box_outline_blank' },
+                              { label: '', value: 'slim', icon: 'horizontal_rule' },
+                            ]} 
+                          />
+                        </div>
+                      </div>
+                    </>
                   )}
                   {!darkMode && developerMode && (
                     <>

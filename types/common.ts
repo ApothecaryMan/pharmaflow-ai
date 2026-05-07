@@ -116,3 +116,17 @@ export interface AuditLog {
   /** ISO timestamp */
   timestamp: string;
 }
+
+/** Professional Switch Design Variants */
+export type SwitchVariant = 
+  | 'default' 
+  | 'v1'
+  | 'ios' 
+  | 'minimal' 
+  | 'icon' 
+  | 'vertical' 
+  | 'squircle' 
+  | 'slim' 
+  | 'outline' 
+  | 'segmented' 
+  | 'neon';

@@ -1,19 +1,7 @@
-import type React from 'react';
 import { useLayoutEffect, useRef } from 'react';
 import './Switch.css';
-
-export type SwitchVariant = 
-  | 'default' 
-  | 'v1'
-  | 'ios' 
-  | 'minimal' 
-  | 'icon' 
-  | 'vertical' 
-  | 'squircle' 
-  | 'slim' 
-  | 'outline' 
-  | 'segmented' 
-  | 'neon';
+import { useSettings } from '../../context/SettingsContext';
+import type { SwitchVariant } from '../../types';
 
 interface SwitchProps {
   checked: boolean;
@@ -29,18 +17,21 @@ interface SwitchProps {
 /**
  * Professional Switch Component
  * Supports multiple design variants while preserving core logic and accessibility.
- * Now using V2 design as the default.
+ * Now using global settings for variant selection if not explicitly provided.
  */
 export const Switch: React.FC<SwitchProps> = ({
   checked, 
   onChange, 
   className = '', 
-  variant = 'default',
+  variant: propVariant,
   theme = 'primary', 
   disabled = false, 
   activeColor, 
   animate = true,
 }) => {
+  const { switchVariant: globalVariant, theme: currentTheme } = useSettings();
+  const variant = propVariant || globalVariant || 'default';
+  
   const ref = useRef<any>(null);
   const isFirst = useRef(true);
   const prevDir = useRef<string | null>(null);
@@ -69,8 +60,11 @@ export const Switch: React.FC<SwitchProps> = ({
     if (!disabled) onChange(!checked);
   };
 
+  const dynamicStyle = {
+    '--sw-active-color': activeColor || currentTheme.hex,
+  } as React.CSSProperties;
+
   const commonProps = {
-    ref,
     onClick: handleClick,
     role: "switch",
     "aria-checked": checked,
@@ -91,12 +85,13 @@ export const Switch: React.FC<SwitchProps> = ({
     return (
       <button
         {...commonProps}
+        ref={ref}
         type="button" 
         data-checked={checked} 
         data-settled="false" 
         data-dir-changing="false"
         className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${checked ? bg : 'bg-gray-200 dark:bg-black/30 shadow-inner'} ${className} [--tx:0.25rem] data-[checked=true]:[--tx:1.5rem] [--tt:none] data-[settled=true]:data-[dir-changing=false]:[--tt:inset-inline-start_0.2s_cubic-bezier(0.4,0,0.2,1)]`}
-        style={{ backgroundColor: checked ? activeColor : undefined }}
+        style={{ ...dynamicStyle, backgroundColor: checked ? activeColor : undefined }}
       >
         <span
           className="pointer-events-none absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-[var(--tt)] flex items-center justify-center"
@@ -112,7 +107,7 @@ export const Switch: React.FC<SwitchProps> = ({
 
   if (variant === 'ios') {
     return (
-      <div {...commonProps} className={`s1-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
+      <div {...commonProps} ref={ref} style={dynamicStyle} className={`s1-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
         <div className="s1-thumb"></div>
       </div>
     );
@@ -120,7 +115,7 @@ export const Switch: React.FC<SwitchProps> = ({
 
   if (variant === 'minimal') {
     return (
-      <div {...commonProps} className={`s3-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
+      <div {...commonProps} ref={ref} style={dynamicStyle} className={`s3-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
         <div className="s3-thumb"></div>
       </div>
     );
@@ -128,7 +123,7 @@ export const Switch: React.FC<SwitchProps> = ({
 
   if (variant === 'icon') {
     return (
-      <div {...commonProps} className={`s4-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
+      <div {...commonProps} ref={ref} style={dynamicStyle} className={`s4-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
         <svg className="s4-moon w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
         </svg>
@@ -142,7 +137,7 @@ export const Switch: React.FC<SwitchProps> = ({
 
   if (variant === 'vertical') {
     return (
-      <div {...commonProps} className={`s5-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
+      <div {...commonProps} ref={ref} style={dynamicStyle} className={`s5-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
         <div className="s5-thumb"></div>
       </div>
     );
@@ -150,7 +145,7 @@ export const Switch: React.FC<SwitchProps> = ({
 
   if (variant === 'squircle') {
     return (
-      <div {...commonProps} className={`s6-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
+      <div {...commonProps} ref={ref} style={dynamicStyle} className={`s6-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
         <div className="s6-thumb"></div>
       </div>
     );
@@ -158,7 +153,7 @@ export const Switch: React.FC<SwitchProps> = ({
 
   if (variant === 'slim') {
     return (
-      <div {...commonProps} className={`s7-wrap ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
+      <div {...commonProps} ref={ref} style={dynamicStyle} className={`s7-wrap ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
         <div className="s7-track"></div>
         <div className="s7-thumb"></div>
       </div>
@@ -167,7 +162,7 @@ export const Switch: React.FC<SwitchProps> = ({
 
   if (variant === 'outline') {
     return (
-      <div {...commonProps} className={`s8-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
+      <div {...commonProps} ref={ref} style={dynamicStyle} className={`s8-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
         <div className="s8-thumb"></div>
       </div>
     );
@@ -175,7 +170,7 @@ export const Switch: React.FC<SwitchProps> = ({
 
   if (variant === 'segmented') {
     return (
-      <div {...commonProps} className={`s9-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
+      <div {...commonProps} ref={ref} style={dynamicStyle} className={`s9-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
         <div className="s9-seg">OFF</div>
         <div className="s9-seg">ON</div>
       </div>
@@ -184,7 +179,7 @@ export const Switch: React.FC<SwitchProps> = ({
 
   if (variant === 'neon') {
     return (
-      <div {...commonProps} className={`s10-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
+      <div {...commonProps} ref={ref} style={dynamicStyle} className={`s10-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
         <div className="s10-glow"></div>
         <div className="s10-thumb"></div>
       </div>
@@ -193,7 +188,7 @@ export const Switch: React.FC<SwitchProps> = ({
 
   // Default Variant (New Dark Design - previously default_v2)
   return (
-    <div {...commonProps} className={`s2-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
+    <div {...commonProps} ref={ref} style={dynamicStyle} className={`s2-track ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
       <div className="s2-thumb">
         <svg className="s2-check" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <path d="M2.5 7.5L5.5 10.5L11.5 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>

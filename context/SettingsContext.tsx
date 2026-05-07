@@ -21,7 +21,7 @@ import {
 } from 'react';
 import { AVAILABLE_FONTS_AR, AVAILABLE_FONTS_EN } from '../config/fonts';
 import { COLOR_HEX_MAP, THEMES } from '../config/themeColors';
-import type { Language, ThemeColor } from '../types';
+import type { Language, ThemeColor, SwitchVariant } from '../types';
 import { storage } from '../utils/storage';
 
 // Re-export for convenience
@@ -84,6 +84,7 @@ export interface SettingsState {
   // Metadata
   activeBranchId: string;
   branchCode: string;
+  switchVariant: SwitchVariant;
 }
 // Context Type
 export interface SettingsContextType extends SettingsState {
@@ -120,6 +121,7 @@ export interface SettingsContextType extends SettingsState {
   setShowTickerTopSeller: (show: boolean) => void;
   setGraphicStyle: (graphic: boolean) => void;
   setGraphicFontVariant: (variant: 'serif' | 'sans') => void;
+  setSwitchVariant: (variant: SwitchVariant) => void;
   // Helpers
   availableThemes: ThemeColor[];
   availableLanguages: { code: Language; label: string }[];
@@ -167,6 +169,7 @@ const defaultSettings: SettingsState = {
   graphicFontVariant: 'sans',
   activeBranchId: '',
   branchCode: '',
+  switchVariant: 'default',
 };
 
 // Load settings from storage
@@ -233,6 +236,7 @@ const loadSettings = (): SettingsState => {
       activeBranchId: storage.get('pharma_activeBranchId', defaultSettings.activeBranchId),
       branchCode: storage.get('pharma_branchCode', defaultSettings.branchCode),
       numeralSystem: storage.get('pharma_numeralSystem', defaultSettings.numeralSystem) as 'AR' | 'EN',
+      switchVariant: storage.get('pharma_switchVariant', defaultSettings.switchVariant) as SwitchVariant,
     };
   } catch (e) {
     console.warn('Failed to migrate old settings:', e);
@@ -508,6 +512,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, graphicFontVariant }));
   }, []);
 
+  const setSwitchVariant = useCallback((switchVariant: SwitchVariant) => {
+    setSettings((prev) => ({ ...prev, switchVariant }));
+  }, []);
+
   // --- Centralized Locale Resolution ---
   const numeralLocale = useMemo(() => {
     const isAR = settings.language === 'AR';
@@ -565,6 +573,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setFontFamilyEN,
       setFontFamilyAR,
       setNumeralSystem,
+      setSwitchVariant,
       availableThemes: THEMES,
       availableLanguages: LANGUAGES,
       numeralLocale,
@@ -578,6 +587,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setTextTransform,
       setNavStyle,
       setDropdownBlur,
+      setSidebarBlur,
+      setMenuBlur,
+      setTooltipBlur,
+      setSettingsBlur,
       setSidebarVisible,
       setSidebarStyle,
       setCardBorderLight,
@@ -596,6 +609,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setFontFamilyEN,
       setFontFamilyAR,
       setNumeralSystem,
+      setSwitchVariant,
       numeralLocale,
       textLocale,
     ]
