@@ -346,7 +346,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                       )}
                     </div>
                   }>
-                    <span className="whitespace-nowrap">{totalItems} {t.quantity || 'قطعة'}</span>
+                    <span className="whitespace-nowrap">{totalItems} {t.items}</span>
                   </Tooltip>
 
                   {/* Estimated Profit Display (Managers Only) */}
@@ -358,18 +358,16 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                       <Tooltip content={
                         <div className="flex flex-col gap-1 py-0.5 min-w-[120px]">
                           <span className="font-bold border-b border-emerald-200/20 pb-0.5 mb-0.5 text-emerald-400">
-                            {currentLang === 'ar' ? 'صافي الربح' : 'Net Profit'}
+                            {t.netProfit}
                           </span>
                           <div className="flex justify-between gap-4 text-xs">
-                            <span className="opacity-70">{currentLang === 'ar' ? 'هامش الربح المتوقع:' : 'Exp. Margin:'}</span>
+                            <span className="opacity-70">{t.expMargin}</span>
                             <span className="font-bold tabular-nums text-emerald-400">
-                              {totalProfit >= 0 ? '+' : ''}{formatCurrency(totalProfit, 'EGP', undefined, 2, true)}
+                               {totalProfit >= 0 ? '+' : ''}{formatCurrency(totalProfit, 'EGP', undefined, 2, true)}
                             </span>
                           </div>
                           <p className="text-[9px] text-gray-400 font-medium leading-tight mt-1 border-t border-gray-100/10 pt-1">
-                            {currentLang === 'ar' 
-                              ? 'صافي الربح بعد خصم التكلفة والخصومات.' 
-                              : 'Net gain after cost and discounts.'}
+                            {t.netProfitDesc}
                           </p>
                         </div>
                       }>
@@ -536,7 +534,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
             {/* Tax Row */}
             {taxAmount !== undefined && taxAmount > 0 && (
               <div className="flex items-center justify-between text-[11px] text-gray-500 font-bold uppercase tracking-wider">
-                <span className="opacity-70">{t.tax || 'Tax'}</span>
+                <span className="opacity-70">{t.tax || (currentLang === 'ar' ? 'الضريبة' : 'Tax')}</span>
                 <span className="tabular-nums font-black text-xs text-gray-700 dark:text-gray-300">
                   {formatCurrency(taxAmount || 0, 'EGP', undefined, 2, true)}
                 </span>
@@ -546,7 +544,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
             {/* Delivery Fee Row */}
             {isDeliveryMode && (
               <div className="flex items-center justify-between text-[11px] text-primary-600 dark:text-primary-400 font-bold uppercase tracking-wider">
-                <span className="opacity-70">{t.deliveryFee || 'Delivery Fee'}</span>
+                <span className="opacity-70">{t.deliveryFee}</span>
                 <span className="tabular-nums font-black text-xs">
                   + {formatCurrency(deliveryFee, 'EGP', undefined, 2, true)}
                 </span>
@@ -741,7 +739,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                       backgroundPosition: isRTL ? 'left .7em top 50%' : 'right .7em top 50%',
                       backgroundSize: '.65em auto',
                     }}>
-                    <option value=''>{t.selectDriver || 'Select Driver (Optional)'}</option>
+                    <option value=''>{t.selectDriverPlaceholder}</option>
                     {employees
                       .filter((e) => e.role === 'delivery')
                       .map((e) => (
@@ -756,15 +754,20 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                 <div className='w-16 overflow-hidden relative'>
                   <input
                     type='number'
-                    min={globalDeliveryFee}
-                    value={deliveryFee}
+                    value={deliveryFee || ''}
                     onChange={(e) => {
-                      const val = parseFloat(e.target.value);
+                      const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
                       if (!isNaN(val)) {
-                        setDeliveryFee(Math.max(globalDeliveryFee, val));
+                        setDeliveryFee(val);
                       }
                     }}
-                    placeholder='Fee'
+                    onBlur={() => {
+                      // Enforce minimum only when user finishes typing/leaves the field
+                      if (deliveryFee < globalDeliveryFee) {
+                        setDeliveryFee(globalDeliveryFee);
+                      }
+                    }}
+                    placeholder={t.feePlaceholder}
                     className='w-full h-full bg-white dark:bg-gray-900 border border-primary-400 dark:border-primary-500/50 rounded-xl text-sm px-2 text-center focus:ring-0 focus:outline-hidden font-bold tabular-nums transition-all'
                     {...triggerProps}
                   />
