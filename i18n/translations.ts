@@ -1066,6 +1066,9 @@ export const TRANSLATIONS = {
       modifications: 'Changes',
       customer: 'Customer',
       guestCustomer: 'Guest Customer',
+      stockLimitReached: 'Stock limit reached',
+      units: 'Units',
+      packs: 'Packs',
     },
     cashRegister: {
       title: 'Cash Register',
@@ -3566,6 +3569,9 @@ export const TRANSLATIONS = {
       modifications: 'تعديلات',
       customer: 'العميل',
       guestCustomer: 'عميل غير مسجل',
+      stockLimitReached: 'تم الوصول للحد الأقصى للمخزن',
+      units: 'وحدات',
+      packs: 'علب',
     },
     salesHistory: {
       title: 'سجل المبيعـــــات',

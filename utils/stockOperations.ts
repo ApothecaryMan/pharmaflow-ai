@@ -435,16 +435,17 @@ export const logInitialStock = (
  * Used in POS to prevent adding more than available.
  */
 export const isStockConstraintMet = (
-  drugId: string,
-  stock: number,
+  drugName: string,
+  dosageForm: string,
+  totalStockUnits: number,
   unitsPerPack: number | undefined,
   currentCart: CartItem[],
   delta: number,
   isUnit: boolean
 ): boolean => {
-  // Calculate existing units in cart for this drug
+  // Calculate existing units in cart for this drug (all batches/modes)
   const existingUnits = currentCart
-    .filter((item) => item.id === drugId)
+    .filter((item) => item.name === drugName && (item.dosageForm || '') === (dosageForm || ''))
     .reduce((sum, item) => {
       return sum + resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack || unitsPerPack);
     }, 0);
@@ -452,7 +453,7 @@ export const isStockConstraintMet = (
   // Calculate new units to be added
   const newUnits = resolveUnits(delta, isUnit, unitsPerPack);
 
-  return existingUnits + newUnits <= stock;
+  return existingUnits + newUnits <= totalStockUnits;
 };
 
 /**

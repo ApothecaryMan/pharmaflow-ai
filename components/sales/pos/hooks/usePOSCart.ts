@@ -25,6 +25,7 @@ interface UsePOSCartProps {
   addNotification: (notification: any) => void;
   playBeep: () => void;
   playError: () => void;
+  t: any;
 }
 
 export const usePOSCart = ({
@@ -36,6 +37,7 @@ export const usePOSCart = ({
   addNotification,
   playBeep,
   playError,
+  t,
 }: UsePOSCartProps) => {
   // --- Cart State ---
   const cart: CartItem[] = activeTab?.cart || [];
@@ -123,7 +125,14 @@ export const usePOSCart = ({
     }
 
     setCart((prev: CartItem[]) => {
-      if (!isStockConstraintMet(drug.id, drug.stock, drug.unitsPerPack, prev, initialQuantity, isUnitMode)) {
+      const totalStockUnits = Math.max(
+        drug.stock,
+        inventory
+          .filter((d) => d.name === drug.name && (d.dosageForm || '') === (drug.dosageForm || ''))
+          .reduce((sum, d) => sum + d.stock, 0)
+      );
+
+      if (!isStockConstraintMet(drug.name, drug.dosageForm || '', totalStockUnits, drug.unitsPerPack, prev, initialQuantity, isUnitMode)) {
         return prev;
       }
 
@@ -260,65 +269,51 @@ export const usePOSCart = ({
 
   const updateQuantity = useCallback((id: string, isUnit: boolean, delta: number) => {
     setCart((prev: CartItem[]) => {
-      // 1. Find the parent drug definition to get ALL its batches
-      const drugDefinition = inventory.find((d) => d.id === id || (d as any).dbId === id);
-      if (!drugDefinition) return prev;
-
-      const targetItem = prev.find((i) => (i.id === id || (i as any).dbId === id) && !!i.isUnit === isUnit);
+      const targetItem = prev.find((i) => i.id === id && !!i.isUnit === isUnit);
       if (!targetItem) return prev;
 
-      // 2. Calculate new total requested quantity for this drug-type pair in cart
-      // We sum up all items of same drug definition and same unit mode
-      const sameTypeItems = prev.filter(i => (i.id === id || (i as any).dbId === id) && !!i.isUnit === isUnit);
-      const currentTotalQty = sameTypeItems.reduce((sum, i) => sum + i.quantity, 0);
-      const newTotalQty = currentTotalQty + delta;
+      // 1. Calculate Total Available Stock for this Drug (All Batches)
+      const drugDefinition = inventory.find((d) => 
+        d.id === id || 
+        (d.name === targetItem.name && d.dosageForm === targetItem.dosageForm)
+      );
+      if (!drugDefinition) return prev;
 
-      if (newTotalQty < 0) return prev;
-      if (newTotalQty === 0) {
-        return prev.filter(i => !((i.id === id || (i as any).dbId === id) && !!i.isUnit === isUnit));
-      }
+      const totalStockUnits = Math.max(
+        drugDefinition.stock,
+        inventory
+          .filter((d) => d.name === targetItem.name && (d.dosageForm || '') === (targetItem.dosageForm || ''))
+          .reduce((sum, d) => sum + d.stock, 0)
+      );
 
-      // 3. Get all available batches sorted by expiry (FEFO)
-      const availableBatches = (drugDefinition as any).batches || [drugDefinition];
-      
-      // 4. Redistribute the new total quantity across batches
-      const newItems: CartItem[] = [];
-      let remainingToDistribute = newTotalQty;
-
-      for (const batch of availableBatches) {
-        if (remainingToDistribute <= 0) break;
-
-        const unitsPerPack = drugDefinition.unitsPerPack || 1;
-        const batchStock = isUnit ? batch.stock : Math.floor(batch.stock / unitsPerPack);
-        
-        if (batchStock <= 0) continue;
-
-        const take = Math.min(remainingToDistribute, batchStock);
-        if (take > 0) {
-          newItems.push({
-            ...batch,
-            quantity: take,
-            isUnit,
-            discount: targetItem.discount,
-            publicPrice: stockOps.resolvePrice(batch.publicPrice, isUnit, unitsPerPack, batch.unitPrice),
-            preferredBatchId: batch.id
-          });
-          remainingToDistribute -= take;
-        }
-      }
-
-      // If we couldn't fulfill the whole quantity, stay with previous state (Stock constraint)
-      if (remainingToDistribute > 0 && delta > 0) {
+      // 2. Validate using refined logic (Cross-Mode/Cross-Batch)
+      const unitsPerPack = drugDefinition.unitsPerPack || 1;
+      if (!isStockConstraintMet(
+        targetItem.name, 
+        targetItem.dosageForm || '', 
+        totalStockUnits, 
+        unitsPerPack, 
+        prev, 
+        delta, 
+        isUnit
+      )) {
+        playError();
+        showToastError(t.stockLimitReached);
         return prev;
       }
 
-      // 5. Replace old items with new distributed items
-      const otherItems = prev.filter(i => !((i.id === id || (i as any).dbId === id) && !!i.isUnit === isUnit));
-      
+      const newQty = targetItem.quantity + delta;
+      if (newQty < 0) return prev;
+      if (newQty === 0) {
+        return prev.filter((i) => !(i.id === id && !!i.isUnit === isUnit));
+      }
+
       playBeep();
-      return [...otherItems, ...newItems];
+      return prev.map((item) =>
+        item.id === id && !!item.isUnit === isUnit ? { ...item, quantity: newQty } : item
+      );
     });
-  }, [inventory, setCart, playBeep]);
+  }, [inventory, setCart, playBeep, playError, showToastError, t]);
 
   const toggleUnitMode = useCallback((id: string, currentIsUnit: boolean) => {
     setCart((prev: CartItem[]) => {

@@ -1,30 +1,38 @@
-# Implementation Plan: Batch & Grouping Refactor
+# Implementation Plan: Fix POS Quantity Logic & Stock Linking
 
-**Branch**: `018-batch-grouping-refactor` | **Date**: 2026-05-02 | **Spec**: [spec.md](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/specs/018-batch-grouping-refactor/spec.md)
+**Branch**: `014-fix-pos-quantity-logic` | **Date**: 2026-05-06 | **Spec**: [spec.md](spec.md)
 **Input**: Feature specification from `/specs/018-batch-grouping-refactor/spec.md`
 
 ## Summary
-
-The project aims to centralize the inventory grouping and quantity distribution logic. Currently, this logic is scattered across `Inventory.tsx` and `usePOSCart.ts`. We will introduce a `GroupedDrug` type and move the core logic to `batchService.ts` and `stockOperations.ts`. This ensures that batch allocation (FEFO) and product grouping are consistent across the entire application and easier to maintain.
+Revert the POS quantity update logic from a "Global Redistribution" model (which caused batch-selection loss and calculation errors) to a "Stable Item Update" model. Implement cross-batch stock pool validation to prevent over-selling while maintaining manual batch integrity.
 
 ## Technical Context
 
-**Language/Version**: TypeScript / React 19+ / Vite  
-**Primary Dependencies**: Supabase, TanStack Table v8, Lucide React  
-**Storage**: Supabase (PostgreSQL) - `stock_batches` and `drugs` tables.  
-**Testing**: Vitest / React Testing Library  
-**Target Platform**: Web (Responsive)  
-**Project Type**: Single project (Monolith structure)  
-**Performance Goals**: Instant cart updates (<100ms), fast inventory grouping for 1000+ items.  
-**Constraints**: Must respect branch-level data isolation via `branch_id`.
+**Language/Version**: TypeScript 5+ (ES2022)
+**Primary Dependencies**: React 19, Lucide React, TanStack Table v8
+**Storage**: Supabase (PostgreSQL), StorageService
+**Testing**: Vitest (npm test)
+**Target Platform**: Web (Bilingual EN/AR)
+**Project Type**: Single Project Web App
+**Performance Goals**: Instantaneous input response (no lag during typing)
+**Constraints**: <100ms UI update for cart interactions
+**Scale/Scope**: Handles carts with 50+ items and inventory with 1000+ batches
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+### Principles Compliance
 
-- [x] Standard React/TypeScript patterns used.
-- [x] Uses existing `money` utility for precision math.
-- [x] Follows "Logical CSS Properties" for RTL/LTR stability.
+- **I. Strict Type Safety**: No `any` will be used in the new logic. CartItem and Drug types will be strictly followed.
+- **II. Localization First**: All error messages (e.g., stock limit reached) will use `t` translations.
+- **III. Standard Components**: We will investigate if `SmartInput` can be used without sacrificing performance in the POS cart. If not, a justification for raw `<input>` (with proper RTL logic) will be added to Complexity Tracking.
+- **IV. Service-Based Architecture**: Business logic for stock calculation will remain in `stockOperations.ts` and `usePOSCart.ts` (Service layer).
+- **V. IDs**: Existing `id` and `batchId` patterns will be preserved.
+
+### Gates
+
+- [ ] **Type Check**: Run `npm run type-check` after refactor.
+- [ ] **Test Check**: Ensure `npm test` passes.
+- [ ] **Visual Check**: Verify RTL alignment in Arabic mode.
 
 ## Project Structure
 
@@ -32,38 +40,32 @@ The project aims to centralize the inventory grouping and quantity distribution 
 
 ```text
 specs/018-batch-grouping-refactor/
-├── plan.md              # This file
-├── research.md          # Batch allocation & grouping patterns
-├── data-model.md        # GroupedDrug and BatchAllocation definitions
-├── quickstart.md        # How to use the new grouping services
-├── contracts/           # Service interface definitions
-└── tasks.md             # Implementation tasks
+├── plan.md              # This file (/speckit.plan command output)
+├── research.md          # Phase 0 output (/speckit.plan command)
+├── data-model.md        # Phase 1 output (/speckit.plan command)
+├── quickstart.md        # Phase 1 output (/speckit.plan command)
+├── contracts/           # Phase 1 output (/speckit.plan command)
+└── tasks.md             # Phase 2 output (/speckit.tasks command)
 ```
 
 ### Source Code (repository root)
 
 ```text
 src/
-├── types/
-│   └── index.ts         # New GroupedDrug type
-├── services/
-│   ├── inventory/
-│   │   ├── batchService.ts     # Central grouping & allocation logic
-│   │   └── stockOperations.ts   # Unified stock validation
 ├── components/
-│   ├── inventory/
-│   │   └── Inventory.tsx       # Refactored to use batchService
-│   ├── sales/
-│   │   └── pos/
-│   │       ├── hooks/
-│   │       │   └── usePOSCart.ts  # Refactored to use batchService
-│   │       └── POS.tsx           # UI updates
+│   └── sales/
+│       └── pos/
+│           ├── CartItemControls.tsx  # [MODIFY] UI Logic & Inputs
+│           └── hooks/
+│               └── usePOSCart.ts     # [MODIFY] Core Update Logic
+└── utils/
+    └── stockOperations.ts            # [MODIFY] Global Validation Helper
 ```
 
-**Structure Decision**: Standard repository structure. We are refactoring existing services and components.
+**Structure Decision**: Standard React component and hook structure as established in the project.
 
 ## Complexity Tracking
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| N/A | No violations detected | N/A |
+| Raw `<input>` tags | Custom POS styling and high-performance stepper needs | `SmartInput` might add overhead or default styles that conflict with the compact POS layout |

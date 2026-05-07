@@ -1,85 +1,39 @@
-# Feature Specification: Batch & Grouping Refactor
+# Spec: Fix POS Quantity Logic & Stock Linking
 
-**Feature Branch**: `018-batch-grouping-refactor`  
-**Created**: 2026-05-02  
-**Status**: Draft  
-**Input**: User description: "Refactor batch grouping and quantity distribution logic into batchService.ts and stockOperations.ts to centralize product-level and batch-level stock management. This includes creating a GroupedDrug type, implementing auto-distribution of quantities across batches (FEFO), and refactoring POS and Inventory components to use these centralized utilities while respecting Branch-specific data."
+## Problem Description
+The recent overhaul of the POS cart logic introduced a "Global Redistribution" mechanism for drug quantities. While intended to support automatic FEFO (First Expiry First Out), it created a disconnect between manual batch selection, dual-mode (Pack/Unit) consumption, and maximum stock clamping. Users are experiencing "locked" inputs or incorrect quantity limits when switching between modes or editing specific batches.
 
-## User Scenarios & Testing *(mandatory)*
+## Proposed Changes
 
-### User Story 1 - Unified Inventory View (Priority: P1)
+### 1. Revert to Stable Item Updates
+Instead of redistributing the entire drug quantity across all batches in the cart when a single item's quantity changes, we will return to a stable update model. 
+- `updateQuantity` will update the specific `CartItem` (batch/mode pair) targeted by the user.
+- Automatic batch splitting will still happen during `addToCart`, but once items are in the cart, their batch identity should remain stable unless explicitly changed by the user via the `switchBatch` feature.
 
-Pharmacists can view their inventory grouped by product identity (Name, Dosage Form, Barcode) while still being able to see and select specific batches within that group. This provides a clean overview without losing the ability to track specific stock instances.
+### 2. Unified Stock Pool Validation
+To prevent over-selling across multiple batches or modes, validation must be global for the drug.
+- **Stock Constraint**: The sum of units used by ALL items of the same drug (regardless of batch or mode) must not exceed the total stock available in all batches.
+- **Cross-Mode Logic**: Adding units to Batch A must correctly account for Packs already taken from Batch B.
 
-**Why this priority**: Essential for a clean inventory management experience and accurate stock counting across multiple branches.
+### 3. Logic Refinement in `usePOSCart.ts`
+- Modify `updateQuantity` to:
+    1. Find the target item by ID and mode.
+    2. Calculate the global stock pool for the parent drug.
+    3. Validate the `delta` against the global pool using a refined `isStockConstraintMet` logic.
+    4. Perform a surgical update on the `prev` cart array without wiping out other batches.
 
-**Independent Test**: Can be tested by viewing the Inventory table and verifying that multiple batches of the same drug are consolidated into a single row with an aggregate stock count.
+### 4. UI Alignment in `CartItemControls.tsx`
+- The `max` prop for quantity inputs must be calculated using the global pool.
+- `maxUnits = TotalDrugStock - OtherItemsUnitsInCart`.
+- This ensures the UI "stops" the user exactly at the true physical limit of the pharmacy.
 
-**Acceptance Scenarios**:
+## Success Criteria
+- [ ] Users can clear the quantity input (empty string) without the UI reverting or locking.
+- [ ] Increasing quantity in Unit mode correctly reduces the available quantity in Pack mode for the SAME drug (across all batches).
+- [ ] The "Maximum Limit Reached" toast shows the correct global limit.
+- [ ] Switching batches manually doesn't break the quantity synchronization.
+- [ ] No focus loss during typing.
 
-1. **Given** two batches of "Panadol 500mg" (Exp: 2026-01 and 2026-06), **When** viewing the Inventory list, **Then** only one row for "Panadol 500mg" is visible.
-2. **Given** the grouped row, **When** checking the stock column, **Then** it shows the sum of all batches in that group.
-
----
-
-### User Story 2 - Intelligent Cart Allocation (Priority: P2)
-
-When a pharmacist adds a product to the sales cart, the system automatically allocates the requested quantity from available batches using the FEFO (First Expiry First Out) principle. If one batch is insufficient, the system automatically splits the item across the next available batch.
-
-**Why this priority**: Automates a tedious manual process and ensures the pharmacy always sells older stock first, reducing waste.
-
-**Independent Test**: Can be tested by adding a quantity larger than the first batch's stock to the cart and verifying that two cart items (for different batches) are created automatically.
-
-**Acceptance Scenarios**:
-
-1. **Given** Batch A (10 units) and Batch B (10 units), **When** adding 15 units of the product to the cart, **Then** the cart contains two entries: Batch A (10 units) and Batch B (5 units).
-
----
-
-### User Story 3 - Manual Batch Override (Priority: P2)
-
-While the system defaults to FEFO, pharmacists can manually switch a cart item to a specific batch. If the manually selected batch has insufficient stock for the total requested quantity, the system automatically distributes the remainder to other available batches.
-
-**Why this priority**: Provides flexibility for edge cases (e.g., a customer specifically wants a longer expiry date) while maintaining stock accuracy.
-
-**Independent Test**: Can be tested by choosing a specific batch in the cart dropdown and verifying the quantities are redistributed correctly.
-
-**Acceptance Scenarios**:
-
-1. **Given** a cart item for Batch A, **When** the user selects Batch B from the dropdown, **Then** the cart item is updated to Batch B, and any spillover quantity is moved to Batch A or other batches.
-
----
-
-### Edge Cases
-
-- **Mixed Quantities**: What happens when a user adds 1.5 packs (1 pack + 5 units)? The system must correctly distribute the units across batches even if they cross batch boundaries.
-- **Stock Depletion during Session**: How does the system handle a scenario where a batch's stock is reduced by another terminal while the current user is still editing their cart? The allocation logic must re-validate before final checkout.
-- **Double Deduction**: Two terminals sell the last 5 units simultaneously. Without pre-checkout validation, both succeed and stock goes negative. The system must fail the second transaction gracefully.
-- **Grouping Key Collision**: Two different products from different manufacturers share the same name and dosage form but have different barcodes. The system must NOT merge them into a single group.
-
-## Requirements *(mandatory)*
-
-### Functional Requirements
-
-- **FR-001**: System MUST group inventory items by a canonical product identity key: `barcode || (name + dosageForm + manufacturer)`.
-- **FR-002**: System MUST calculate aggregate stock for grouped products in real-time.
-- **FR-003**: System MUST automatically distribute requested quantities across batches using FEFO logic.
-- **FR-004**: System MUST support manual batch selection in the sales interface.
-- **FR-005**: System MUST isolate grouping and distribution logic from the UI components.
-- **FR-006**: System MUST respect branch-level data isolation (users only see groups/batches for their active branch).
-- **FR-007**: System MUST use one unified grouping key across ALL modules (Inventory, POS, Reports) to prevent identity mismatches.
-- **FR-008**: System MUST re-validate stock availability for all cart items immediately before checkout submission to prevent double-deduction across concurrent terminals.
-- **FR-009**: System MUST NOT contain accounting logic (max discount calculation, profit margin computation, stock clamping) inside UI components — these MUST reside in service or utility layers.
-
-### Key Entities *(include if feature involves data)*
-
-- **GroupedDrug**: A virtual entity representing a collection of `Drug` batches sharing the same identity.
-- **BatchAllocation**: A record of how a requested quantity is distributed across specific `StockBatch` entities.
-
-## Success Criteria *(mandatory)*
-
-### Measurable Outcomes
-
-- **SC-001**: Inventory grouping logic is centralized and reused across at least 3 components (Inventory, POS, Reports).
-- **SC-002**: Automated batch splitting reduces manual cart adjustments by 80% during peak hours.
-- **SC-003**: Cart quantity updates (increment/decrement) correctly maintain FEFO distribution without manual user intervention.
+## Verification Plan
+- **Manual Test**: Add 1 Pack of a drug (10 units per pack). Try to add 1 unit. If total stock is 10, it should fail or clamp.
+- **Edge Case**: Drug with multiple batches. Verify that updating one batch doesn't accidentally "reset" or "merge" other batches in the cart unless intended.

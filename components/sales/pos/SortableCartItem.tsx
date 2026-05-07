@@ -41,6 +41,7 @@ export interface SortableCartItemProps {
   onSearchInTable: (term: string) => void;
   isMobile?: boolean;
   isLoading?: boolean;
+  cart: CartItem[];
 }
 
 export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
@@ -66,6 +67,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
   onSearchInTable,
   isMobile,
   isLoading,
+  cart,
 }) => {
   const { textTransform } = useSettings();
   
@@ -353,6 +355,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
             isMobile={isMobile}
             t={t}
             currentLang={currentLang}
+            cart={cart}
           />
 
             <div className='text-xs font-bold text-gray-900 dark:text-white shrink-0 text-end tabular-nums' dir='ltr' style={{ unicodeBidi: 'isolate' }}>

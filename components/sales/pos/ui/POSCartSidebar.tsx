@@ -330,6 +330,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                   onSelectBatch={() => {}}
                   currentLang={currentLang as any}
                   onSearchInTable={() => {}}
+                  cart={[]}
                 />
               ))}
             </div>
@@ -391,6 +392,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                           globalDiscount={globalDiscount}
                           onSearchInTable={handleSearchInTable}
                           isMobile={isMobile}
+                          cart={cart}
                         />
                       </div>
                       {index < mergedCartItems.length - 1 && (

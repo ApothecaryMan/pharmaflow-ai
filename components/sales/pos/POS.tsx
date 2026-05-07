@@ -143,7 +143,7 @@ export const POS: React.FC<POSProps> = ({
     openBatchDropdown, setOpenBatchDropdown,
   } = usePOSCart({
     activeTab, activeTabId, updateTab, inventory, showToastError, addNotification, 
-    playBeep, playError,
+    playBeep, playError, t,
   });
 
   const [activeIndex, setActiveIndex] = useState(0);
