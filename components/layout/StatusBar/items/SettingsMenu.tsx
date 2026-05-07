@@ -235,35 +235,34 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   )}
                   {!darkMode && developerMode && (
                     <>
-                      <SettingsRow icon="border_style" label={t.borderStyle || (isAR ? 'شكل البطاقة' : 'Card Style')}>
+                      <SettingsRow icon="border_style" label={t.borderStyle || t.cardStyle}>
                         <SegmentedControl
                           value={cardBorderLight || 'default'}
-                          onChange={v => setCardBorderLight?.(v as any)}
-                           size="xs" shape="pill"
+                          onChange={v => setCardBorderLight?.(v as any)} 
+                          size="xs" 
+                          shape="pill" 
                           options={[
-                            { label: isAR ? 'سميك' : 'Thick', value: 'default' },
-                            { label: isAR ? 'نحيف' : 'Thin', value: 'thin' },
-                            { label: isAR ? 'بدون' : 'None', value: 'none' },
-                          ]}
+                            { label: t.cardThick, value: 'default' },
+                            { label: t.cardThin, value: 'thin' },
+                            { label: t.cardNone, value: 'none' },
+                          ]} 
                         />
                       </SettingsRow>
-                      <div className="flex flex-col gap-1.5 py-1">
-                        <label className="text-xs font-medium flex items-center justify-between text-(--text-primary)">
-                          <div className="flex items-center gap-1.5">
-                            <span className="material-symbols-rounded text-(--text-secondary)" style={{ fontSize: 'var(--icon-settings)' }}>code</span>
-                            {t.customCss || (isAR ? 'كود CSS للبطاقات' : 'Custom Card CSS')}
+                      <SettingsRow icon="code" label={t.customCardCss}>
+                        <div className="flex flex-col gap-1.5 py-1 w-full">
+                          <div className="flex items-center justify-end">
+                            <Switch checked={enableCustomCardCss} onChange={setEnableCustomCardCss} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
                           </div>
-                          <Switch checked={enableCustomCardCss} onChange={setEnableCustomCardCss} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
-                        </label>
-                        <textarea
-                          value={customCardCss || ''}
-                          onChange={(e) => setCustomCardCss?.(e.target.value)}
-                          placeholder="box-shadow: 0px 4px 6px rgba(0,0,0,0.1);"
-                          className="w-full text-xs p-2 rounded-lg bg-(--bg-input) border border-(--border-divider) text-(--text-primary) outline-hidden font-mono min-h-[60px] resize-y scrollbar-none"
-                          spellCheck={false}
-                          dir="ltr"
-                        />
-                      </div>
+                          <textarea
+                            value={customCardCss || ''}
+                            onChange={(e) => setCustomCardCss?.(e.target.value)}
+                            placeholder="box-shadow: 0px 4px 6px rgba(0,0,0,0.1);"
+                            className="w-full text-xs p-2 rounded-lg bg-(--bg-input) border border-(--border-divider) text-(--text-primary) outline-hidden font-mono min-h-[60px] resize-y scrollbar-none"
+                            spellCheck={false}
+                            dir="ltr"
+                          />
+                        </div>
+                      </SettingsRow>
                     </>
                   )}
                 </SubmenuWrapper>
@@ -411,19 +410,18 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               )}
 
               {/* --- POS Settings --- */}
-              <div className="border-t border-(--border-divider) my-0.5 opacity-50" />
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase text-(--text-tertiary)">{isAR ? 'إعدادات البيع' : 'POS Settings'}</label>
-                <SettingsRow icon="moped" label={isAR ? 'مصاريف التوصيل الافتراضية' : 'Default Delivery Fee'}>
+              {/* --- POS Settings --- */}
+              <div className="pt-2 mt-2 border-t border-(--border-divider) space-y-1.5">
+                <label className="text-[10px] font-bold uppercase text-(--text-tertiary)">{t.posSettings}</label>
+                <SettingsRow icon="moped" label={t.defaultDeliveryFee}>
                   <div className="flex items-center gap-2">
                     <input
                       type="number"
-                      min="0"
                       value={deliveryFee}
-                      onChange={(e) => updateBranch(activeBranchId, { deliveryFee: parseFloat(e.target.value) || 0 })}
-                      className="w-16 h-7 text-xs font-bold text-center rounded-lg bg-(--bg-input) border border-(--border-divider) text-(--text-primary) outline-hidden"
+                      onChange={(e) => updateBranch?.(activeBranchId, { deliveryFee: Number(e.target.value) })}
+                      className="w-16 h-7 bg-black/5 dark:bg-white/5 border-none rounded-md px-2 text-xs font-bold focus:ring-1 focus:ring-primary-500/50 text-center"
                     />
-                    <span className="text-[10px] font-bold text-(--text-tertiary)">{isAR ? 'ج.م' : 'EGP'}</span>
+                    <span className="text-[10px] font-bold text-(--text-tertiary)">{t.egp}</span>
                   </div>
                 </SettingsRow>
               </div>
