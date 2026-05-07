@@ -199,4 +199,41 @@ export const attendanceService = {
     if (error) throw error;
     return newToken;
   },
+
+  // ═══════════════════════════════════════════
+  // PIN Fallback Methods
+  // ═══════════════════════════════════════════
+
+  /**
+   * Set a 4-digit attendance PIN for an employee.
+   * The PIN is hashed before storage using the same bcrypt utility
+   * used for password hashing throughout the app.
+   *
+   * @param employeeId - The employee to set the PIN for
+   * @param pin - The raw 4-digit PIN
+   */
+  async setEmployeePin(employeeId: string, pin: string): Promise<void> {
+    const { hashPassword } = await import('../auth/hashUtils');
+    const hashed = await hashPassword(pin);
+
+    const { error } = await supabase
+      .from('employees')
+      .update({ attendance_pin: hashed })
+      .eq('id', employeeId);
+
+    if (error) throw error;
+  },
+
+  /**
+   * Verify an employee's 4-digit attendance PIN.
+   *
+   * @param employeeId - The employee to verify
+   * @param pin - The raw 4-digit PIN to check
+   * @param storedHash - The bcrypt hash from the employee record
+   * @returns true if PIN matches
+   */
+  async verifyEmployeePin(pin: string, storedHash: string): Promise<boolean> {
+    const { verifyPassword } = await import('../auth/hashUtils');
+    return verifyPassword(pin, storedHash);
+  },
 };

@@ -2310,6 +2310,18 @@ export const TRANSLATIONS = {
       clockInSuccess: 'Clocked in successfully',
       clockOutSuccess: 'Clocked out successfully',
       clockError: 'Failed to record attendance',
+      // PIN Fallback
+      enterPin: 'Enter PIN',
+      pinPlaceholder: '4-digit PIN',
+      invalidPin: 'Invalid PIN',
+      setPin: 'Set Attendance PIN',
+      unverifiedClock: 'Unverified (no biometric or PIN)',
+      pinOrBiometric: 'Use biometric or enter PIN',
+      noPinNoBiometric: 'No biometric or PIN registered',
+      // Working Hours
+      totalHours: 'Total Hours',
+      ongoing: 'Ongoing',
+      sessionDuration: 'Session Duration',
     },
   },
   AR: {
@@ -4633,6 +4645,18 @@ export const TRANSLATIONS = {
       clockInSuccess: 'تم تسجيل الدخول بنجاح',
       clockOutSuccess: 'تم تسجيل الانصراف بنجاح',
       clockError: 'فشل تسجيل الحضور',
+      // PIN Fallback
+      enterPin: 'أدخل رمز PIN',
+      pinPlaceholder: 'رمز PIN ٤ أرقام',
+      invalidPin: 'رمز PIN غير صحيح',
+      setPin: 'تعيين رمز حضور PIN',
+      unverifiedClock: 'غير موثق (بدون بصمة أو PIN)',
+      pinOrBiometric: 'استخدم البصمة أو أدخل PIN',
+      noPinNoBiometric: 'لا توجد بصمة أو PIN مسجل',
+      // Working Hours
+      totalHours: 'إجمالي الساعات',
+      ongoing: 'جارٍ',
+      sessionDuration: 'مدة الجلسة',
     },
   },
 };

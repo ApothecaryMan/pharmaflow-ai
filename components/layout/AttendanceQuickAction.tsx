@@ -12,7 +12,7 @@ interface AttendanceQuickActionProps {
   language: 'EN' | 'AR';
 }
 
-type Step = 'idle' | 'username' | 'biometric' | 'success' | 'error';
+type Step = 'idle' | 'username' | 'biometric' | 'pin' | 'success' | 'error';
 
 const SESSION_TOKEN_KEY = 'attendance_terminal_token';
 
@@ -20,6 +20,7 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
   const [step, setStep] = useState<Step>('idle');
   const [username, setUsername] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [pin, setPin] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   
@@ -28,9 +29,9 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
   const t = TRANSLATIONS[language];
   const isAR = language === 'AR';
 
-  // Auto-focus input when entering username step
+  // Auto-focus input when entering username or pin step
   useEffect(() => {
-    if (step === 'username' && inputRef.current) {
+    if ((step === 'username' || step === 'pin') && inputRef.current) {
       inputRef.current.focus();
     }
   }, [step]);
@@ -39,6 +40,7 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
     setStep('idle');
     setUsername('');
     setSelectedEmployee(null);
+    setPin('');
     setIsLoading(false);
     setErrorMessage('');
   };
@@ -65,14 +67,16 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
     );
 
     if (found) {
-      if (!found.biometricCredentialId) {
-         setStep('error');
-         setErrorMessage(isAR ? 'لا يوجد بصمة مسجلة' : 'No biometric registered');
-         setTimeout(reset, 3000);
-         return;
-      }
       setSelectedEmployee(found);
-      setStep('biometric');
+      if (found.biometricCredentialId) {
+        setStep('biometric');
+      } else if (found.attendancePin) {
+        setStep('pin');
+      } else {
+        setStep('error');
+        setErrorMessage(isAR ? 'لا توجد بصمة أو كود' : 'No biometric or PIN');
+        setTimeout(reset, 3000);
+      }
     } else {
       setStep('error');
       setErrorMessage(isAR ? 'الموظف غير موجود' : 'Employee not found');
@@ -137,6 +141,45 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
     }
   };
 
+  const handlePinSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (pin.length !== 4 || !selectedEmployee || !activeBranchId) return;
+
+    setIsLoading(true);
+    const token = sessionStorage.getItem(SESSION_TOKEN_KEY);
+
+    try {
+      const isValid = await attendanceService.verifyEmployeePin(pin, selectedEmployee.attendancePin!);
+      if (!isValid) {
+        throw new Error(isAR ? 'الكود غير صحيح' : 'Invalid PIN');
+      }
+
+      const currentStatus = await attendanceService.getEmployeeStatus(selectedEmployee.id, activeBranchId);
+      const nextType = currentStatus === 'IN' ? 'OUT' : 'IN';
+
+      await attendanceService.logEvent(
+        selectedEmployee.id,
+        activeBranchId,
+        activeOrgId || undefined,
+        nextType,
+        token!,
+        false
+      );
+
+      setStep('success');
+      setTimeout(reset, 2000);
+    } catch (err: any) {
+      setStep('error');
+      setErrorMessage(err.message);
+      setTimeout(() => {
+        if (selectedEmployee?.attendancePin) setStep('pin');
+        else reset();
+      }, 2000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex items-center justify-center min-w-[40px] h-9 transition-all duration-300">
       {step === 'idle' && (
@@ -174,6 +217,39 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
             {isLoading ? 'progress_activity' : 'fingerprint'}
           </span>
         </button>
+      )}
+
+      {step === 'pin' && (
+        <form ref={(el) => { if (el) (el as any)._formRef = el; }} onSubmit={handlePinSubmit} className="flex items-center gap-1">
+          <input
+            ref={inputRef}
+            autoFocus
+            type="password"
+            inputMode="numeric"
+            maxLength={4}
+            value={pin}
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+              setPin(val);
+              // Auto-submit when 4th digit is entered
+              if (val.length === 4) {
+                setTimeout(() => handlePinSubmit(), 150);
+              }
+            }}
+            onKeyDown={(e) => e.key === 'Escape' && reset()}
+            placeholder="PIN"
+            className="w-16 h-8 px-2 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-center text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+          />
+          <button 
+            type="submit"
+            disabled={pin.length !== 4 || isLoading}
+            className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary-500 text-white disabled:opacity-50"
+          >
+            <span className="material-symbols-rounded text-sm">
+              {isLoading ? 'progress_activity' : (isAR ? 'arrow_back' : 'arrow_forward')}
+            </span>
+          </button>
+        </form>
       )}
 
       {step === 'success' && (

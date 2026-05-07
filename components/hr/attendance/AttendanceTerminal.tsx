@@ -68,6 +68,11 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
   const [isValidating, setIsValidating] = useState(false);
   const [isRestoring, setIsRestoring] = useState(true); // Loading state for auto-restore
 
+  // ─── PIN Fallback State ───
+  const [showPinInput, setShowPinInput] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState('');
+
   // ─── Attendance Data ───
   const [timeline, setTimeline] = useState<AttendanceEvent[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
@@ -169,8 +174,8 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
     }
   };
 
-  // ─── Clock In/Out Handler ───
-  const handleClock = async () => {
+   // ─── Clock In/Out Handler ───
+  const handleClock = async (pinOverride?: string) => {
     if (!selectedEmployee || !activeBranchId || isClocking) return;
 
     const nextEventType: AttendanceEventType = employeeStatus === 'IN' ? 'OUT' : 'IN';
@@ -178,10 +183,11 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
     setLastAction(null);
 
     try {
-      // Step 1: Biometric verification (if employee has biometric registered)
+      // Step 1: Identity Verification
       let isBiometric = false;
 
       if (selectedEmployee.biometricCredentialId && isWebAuthnSupported()) {
+        // Path A: Biometric available → try WebAuthn
         try {
           const asseResp = await startAuthentication({
             optionsJSON: {
@@ -197,15 +203,41 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
               userVerification: 'required',
             },
           });
-          // If we get here, biometric was successful
           if (asseResp?.id) {
             isBiometric = true;
           }
         } catch (bioErr) {
-          // Biometric failed or cancelled — we still allow clocking
-          // but mark it as non-biometric
+          // Biometric failed or cancelled
+          // If employee has PIN → show PIN input instead
+          if (selectedEmployee.attendancePin && !pinOverride) {
+            setShowPinInput(true);
+            setIsClocking(false);
+            return;
+          }
           console.warn('[AttendanceTerminal] Biometric verification skipped:', bioErr);
         }
+      } else if (selectedEmployee.attendancePin && !pinOverride) {
+        // Path B: No biometric, but has PIN → show PIN input
+        setShowPinInput(true);
+        setIsClocking(false);
+        return;
+      }
+
+      // Step 1b: PIN verification (if coming from PIN input)
+      if (pinOverride && selectedEmployee.attendancePin) {
+        const pinValid = await attendanceService.verifyEmployeePin(
+          pinOverride,
+          selectedEmployee.attendancePin
+        );
+        if (!pinValid) {
+          setPinError(t.attendance.invalidPin);
+          setIsClocking(false);
+          return;
+        }
+        // PIN verified — clear PIN UI
+        setShowPinInput(false);
+        setPinInput('');
+        setPinError('');
       }
 
       // Step 2: Log the event via RPC (server validates token + generates timestamp)
@@ -479,45 +511,107 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
                 : t.attendance.notClockedIn}
             </p>
 
-            {/* Big Fingerprint Button */}
-            <button
-              onClick={handleClock}
-              disabled={isClocking}
-              className={`w-28 h-28 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-95 ${
-                isClocking
-                  ? 'bg-gray-200 dark:bg-gray-700 cursor-wait'
-                  : isClockIn
-                  ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30'
-                  : 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/30'
-              }`}
-            >
-              <span className="material-symbols-rounded text-5xl text-white">
-                {isClocking ? 'progress_activity' : 'fingerprint'}
-              </span>
-            </button>
+            {/* PIN Input (shown when biometric fails/unavailable) */}
+            {showPinInput ? (
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
+                  <span className="material-symbols-rounded text-4xl text-amber-600 dark:text-amber-400">pin</span>
+                </div>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={pinInput}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                    setPinInput(val);
+                    setPinError('');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && pinInput.length === 4) {
+                      handleClock(pinInput);
+                    } else if (e.key === 'Escape') {
+                      setShowPinInput(false);
+                      setPinInput('');
+                      setPinError('');
+                    }
+                  }}
+                  placeholder={t.attendance.pinPlaceholder}
+                  className="w-32 text-center text-2xl font-bold tracking-[0.5em] px-4 py-3 rounded-xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  autoFocus
+                  dir="ltr"
+                />
+                {pinError && (
+                  <p className="text-xs text-rose-500 flex items-center gap-1">
+                    <span className="material-symbols-rounded text-sm">error</span>
+                    {pinError}
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleClock(pinInput)}
+                    disabled={pinInput.length !== 4 || isClocking}
+                    className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white text-sm font-bold transition-colors"
+                  >
+                    {t.attendance.enterPin}
+                  </button>
+                  <button
+                    onClick={() => { setShowPinInput(false); setPinInput(''); setPinError(''); }}
+                    className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 text-sm font-bold transition-colors hover:bg-gray-200 dark:hover:bg-white/15"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Big Fingerprint Button */}
+                <button
+                  onClick={() => handleClock()}
+                  disabled={isClocking}
+                  className={`w-28 h-28 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-95 ${
+                    isClocking
+                      ? 'bg-gray-200 dark:bg-gray-700 cursor-wait'
+                      : isClockIn
+                      ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30'
+                      : 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/30'
+                  }`}
+                >
+                  <span className="material-symbols-rounded text-5xl text-white">
+                    {isClocking ? 'progress_activity' : 'fingerprint'}
+                  </span>
+                </button>
 
-            {/* Button Label */}
-            <p
-              className={`mt-3 text-sm font-bold ${
-                isClockIn
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : 'text-rose-600 dark:text-rose-400'
-              }`}
-            >
-              {buttonLabel}
-            </p>
+                {/* Button Label */}
+                <p
+                  className={`mt-3 text-sm font-bold ${
+                    isClockIn
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-rose-600 dark:text-rose-400'
+                  }`}
+                >
+                  {buttonLabel}
+                </p>
 
-            {/* Biometric Hint */}
-            {selectedEmployee.biometricCredentialId && (
-              <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
-                {t.attendance.touchSensor}
-              </p>
-            )}
-            {!selectedEmployee.biometricCredentialId && (
-              <p className="text-[10px] text-amber-500 dark:text-amber-400 mt-1 flex items-center gap-1">
-                <span className="material-symbols-rounded text-xs">warning</span>
-                {t.attendance.noBiometric}
-              </p>
+                {/* Verification Method Hint */}
+                {selectedEmployee.biometricCredentialId && (
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+                    {t.attendance.touchSensor}
+                  </p>
+                )}
+                {!selectedEmployee.biometricCredentialId && selectedEmployee.attendancePin && (
+                  <p className="text-[10px] text-amber-500 dark:text-amber-400 mt-1 flex items-center gap-1">
+                    <span className="material-symbols-rounded text-xs">pin</span>
+                    {t.attendance.pinOrBiometric}
+                  </p>
+                )}
+                {!selectedEmployee.biometricCredentialId && !selectedEmployee.attendancePin && (
+                  <p className="text-[10px] text-amber-500 dark:text-amber-400 mt-1 flex items-center gap-1">
+                    <span className="material-symbols-rounded text-xs">warning</span>
+                    {t.attendance.noPinNoBiometric}
+                  </p>
+                )}
+              </>
             )}
           </div>
         )}
@@ -532,6 +626,8 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
               noEventsToday: t.attendance.noEventsToday,
               eventIn: t.attendance.eventIn,
               eventOut: t.attendance.eventOut,
+              totalHours: t.attendance.totalHours,
+              ongoing: t.attendance.ongoing,
             }}
           />
         </div>

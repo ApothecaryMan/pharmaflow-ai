@@ -35,6 +35,7 @@ export interface Employee {
   orgRole?: 'owner' | 'admin' | 'member'; // Added for multi-tenant ownership
   biometricCredentialId?: string; // WebAuthn Credential ID
   biometricPublicKey?: string; // WebAuthn Public Key (Base64)
+  attendancePin?: string; // Hashed 4-digit PIN (bcrypt) — fallback for non-biometric devices
 
   // --- Profile ---
   image?: string; // Base64 encoded profile image
