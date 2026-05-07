@@ -36,4 +36,10 @@ React 19 / TypeScript 5: Follow standard conventions
 - 001-org-management: Added React 19 / TypeScript 5 + , TanStack Table v8 (MANDATORY per Constitution), existing services (`employeeService`, `branchService`).
 
 <!-- MANUAL ADDITIONS START -->
+## AI Assistant Golden Rules (STRICT ADHERENCE REQUIRED)
+
+1.  **NO HARDCODED TRANSLATIONS**: Never write raw strings (Arabic or English) in JSX. Always use `i18n/translations.ts` and access via `t.key`.
+2.  **PRESERVE COMMENTS**: Never delete existing comments during code edits. Preserve all logic explanations, documentation, and organizational comments.
+3.  **CLEAN UI/NUMERIC FOCUS**: Prioritize clear, numeric-focused interfaces for POS operations (e.g., hiding currency symbols where requested for a cleaner look).
+4.  **MINIMAL UI LOGIC**: Keep components focused on rendering. Move complex calculations, data transformations, and business logic into hooks (e.g., `usePOSCart`) or dedicated service layers.
 <!-- MANUAL ADDITIONS END -->
