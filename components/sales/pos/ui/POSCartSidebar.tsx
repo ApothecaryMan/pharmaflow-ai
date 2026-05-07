@@ -14,6 +14,7 @@ import { useNetworkStatus } from '../../../../hooks/common/useNetworkStatus';
 import { money } from '../../../../utils/money';
 import { getGroupingKey } from '../../../../services/inventory/batchService';
 import { useData } from '../../../../context/DataContext';
+import { useContextMenuTrigger } from '../../../common/ContextMenu';
 
 
 const cartScrollStyles = `
@@ -133,6 +134,18 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
   const { isOnline } = useNetworkStatus();
   const { activeBranch } = useData();
   const globalDeliveryFee = activeBranch?.deliveryFee ?? 5;
+
+  const { triggerProps } = useContextMenuTrigger({
+    actions: [
+      { label: `Default (${globalDeliveryFee})`, icon: 'settings', action: () => setDeliveryFee(globalDeliveryFee) },
+      { separator: true },
+      { label: '10 EGP', icon: 'money', action: () => setDeliveryFee(10) },
+      { label: '15 EGP', icon: 'money', action: () => setDeliveryFee(15) },
+      { label: '20 EGP', icon: 'money', action: () => setDeliveryFee(20) },
+      { label: '30 EGP', icon: 'money', action: () => setDeliveryFee(30) },
+      { label: '50 EGP', icon: 'money', action: () => setDeliveryFee(50) },
+    ]
+  });
 
   const finalTotal = isDeliveryMode ? money.add(cartTotal, deliveryFee) : cartTotal;
 
@@ -661,6 +674,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                     }}
                     placeholder='Fee'
                     className='w-full h-full bg-white dark:bg-gray-900 border border-primary-400 dark:border-primary-500/50 rounded-xl text-sm px-2 text-center focus:ring-0 focus:outline-hidden font-bold tabular-nums transition-all'
+                    {...triggerProps}
                   />
                 </div>
 
