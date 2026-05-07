@@ -209,7 +209,7 @@ export const POS: React.FC<POSProps> = ({
     cart, mergedCartItems, showToastError, addNotification, getVerifiedDate,
     activeTab, activeTabId, removeTab, onCompleteSale, customerName, customerCode,
     selectedCustomer, language, t, cartTotal, subtotal, globalDiscount, playSuccess,
-    activeBranchId,
+    activeBranchId, sales: sales || [],
   });
 
   const { totalDiscountAmount, orderDiscountPercent, totalItems } = useMemo(() => {

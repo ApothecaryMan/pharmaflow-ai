@@ -27,6 +27,7 @@ interface UsePOSCheckoutProps {
   subtotal: number;
   globalDiscount: number;
   activeBranchId: string;
+  sales: Sale[];
 }
 
 export const usePOSCheckout = ({
@@ -49,6 +50,7 @@ export const usePOSCheckout = ({
   subtotal,
   globalDiscount,
   activeBranchId,
+  sales,
 }: UsePOSCheckoutProps) => {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'visa'>('cash');
   const [deliveryEmployeeId, setDeliveryEmployeeId] = useState<string>('');
@@ -58,6 +60,28 @@ export const usePOSCheckout = ({
   const [amountPaid, setAmountPaid] = useState('');
   const [deliveryFee, setDeliveryFee] = useState<number>(5); // Default 5.00 EGP, now dynamic
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // --- Sticky Delivery Fee Memory ---
+  useEffect(() => {
+    if (selectedCustomer) {
+      // Find the last delivery sale for this specific customer
+      const lastDeliverySale = [...sales]
+        .reverse() // Start from newest
+        .find(s => 
+          s.customerCode === selectedCustomer.code && 
+          s.saleType === 'delivery' && 
+          (s.deliveryFee || 0) > 0
+        );
+      
+      if (lastDeliverySale) {
+        setDeliveryFee(lastDeliverySale.deliveryFee || 5);
+      } else {
+        setDeliveryFee(5); // Default for customer with no previous delivery
+      }
+    } else {
+      setDeliveryFee(5); // Reset to global for Guest
+    }
+  }, [selectedCustomer, sales]);
 
   const isValidOrder =
     cart.length > 0 &&
