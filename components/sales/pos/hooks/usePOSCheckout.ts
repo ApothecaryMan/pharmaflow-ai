@@ -74,7 +74,7 @@ export const usePOSCheckout = ({
         );
       
       if (lastDeliverySale) {
-        setDeliveryFee(lastDeliverySale.deliveryFee || 5);
+        setDeliveryFee(Math.max(5, lastDeliverySale.deliveryFee || 5));
       } else {
         setDeliveryFee(5); // Default for customer with no previous delivery
       }

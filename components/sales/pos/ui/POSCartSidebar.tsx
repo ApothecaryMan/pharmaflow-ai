@@ -648,8 +648,14 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                 <div className='w-16 overflow-hidden relative'>
                   <input
                     type='number'
+                    min='5'
                     value={deliveryFee}
-                    onChange={(e) => setDeliveryFee(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (!isNaN(val)) {
+                        setDeliveryFee(Math.max(5, val));
+                      }
+                    }}
                     placeholder='Fee'
                     className='w-full h-full bg-white dark:bg-gray-900 border border-primary-400 dark:border-primary-500/50 rounded-xl text-sm px-2 text-center focus:ring-0 focus:outline-hidden font-bold tabular-nums transition-all'
                   />
