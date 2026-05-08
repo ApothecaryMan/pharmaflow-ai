@@ -55,8 +55,8 @@ export const useUpdateCheck = () => {
   }, [checkForUpdates]);
 
   const performUpdate = useCallback(async () => {
-    // 1. Unregister Service Workers to ensure fresh assets
-    if ('serviceWorker' in navigator) {
+    // 1. Unregister Service Workers to ensure fresh assets (web only, skip in Tauri)
+    if ('serviceWorker' in navigator && !('__TAURI_INTERNALS__' in window)) {
       try {
         const registrations = await navigator.serviceWorker.getRegistrations();
         for (const registration of registrations) {

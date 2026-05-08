@@ -33,4 +33,8 @@ dist-ssr
 spec-kit/
 .gemini/
 
+# Tauri build artifacts
+src-tauri/target/
+src-tauri/gen/
+
 # *.test.*

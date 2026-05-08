@@ -12,6 +12,7 @@ import { storage } from '../../utils/storage';
 import { employeeRepository } from '../hr/repositories/employeeRepository';
 import { orgRepository } from '../org/repositories/orgRepository';
 import { orgService } from '../org/orgService';
+import { isTauri } from '../../utils/platform';
 
 const SESSION_KEY = 'branch_pilot_session';
 const AUDIT_KEY = 'pharmaflow_login_audit';
@@ -147,8 +148,10 @@ export const authService = {
 
   async resetPassword(email: string): Promise<{ success: boolean; message?: string }> {
     try {
+      // In Tauri desktop mode, redirect to the production web URL
+      const origin = isTauri() ? 'https://pharmaflow-ai.vercel.app' : window.location.origin;
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/reset-password',
+        redirectTo: origin + '/reset-password',
       });
       if (error) throw error;
       return { success: true };
@@ -390,7 +393,8 @@ export const authService = {
         type: 'signup',
         email: email,
         options: {
-          emailRedirectTo: window.location.origin,
+          // In Tauri desktop mode, redirect to the production web URL
+          emailRedirectTo: isTauri() ? 'https://pharmaflow-ai.vercel.app' : window.location.origin,
         },
       });
       if (error) throw error;

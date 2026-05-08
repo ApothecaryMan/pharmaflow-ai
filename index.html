@@ -315,7 +315,7 @@
 
     <!-- Service Worker Registration -->
     <script>
-      if ("serviceWorker" in navigator) {
+      if ("serviceWorker" in navigator && !window.__TAURI_INTERNALS__) {
         window.addEventListener("load", () => {
           navigator.serviceWorker
             .register("/sw.js")
