@@ -307,8 +307,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       .slice(0, 5)
       .map(sale => {
         let totalReturned = 0;
-        sale.items.forEach((item, idx) => {
-          const lineKey = `${item.id}_${idx}`;
+        sale.items.forEach((item) => {
+          const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
           totalReturned += sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
         });
         const totalItems = sale.items.reduce((sum, item) => sum + item.quantity, 0);
@@ -342,8 +342,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       .slice(0, 20)
       .map((sale) => {
         let totalReturned = 0;
-        sale.items.forEach((item, idx) => {
-          const lineKey = `${item.id}_${idx}`;
+        sale.items.forEach((item) => {
+          const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
           totalReturned +=
             sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
         });

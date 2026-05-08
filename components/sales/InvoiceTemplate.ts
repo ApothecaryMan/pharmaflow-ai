@@ -330,13 +330,19 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
               ? Object.entries(sale.itemReturnedQuantities)
                   .filter(([_, qty]) => qty > 0)
                   .map(([lineKey, qty]) => {
-                    // lineKey can be "drugId_index" or just "drugId"
+                    // lineKey can be "drugId_unit" or "drugId_pack" or just "drugId"
                     const parts = lineKey.split('_');
                     const drugId = parts[0];
-                    const index = parts.length > 1 ? parseInt(parts[1]) : 0;
-                    const item = sale.items.find(
-                      (it, idx) => it.id === drugId && (parts.length > 1 ? idx === index : true)
-                    );
+                    const suffix = parts.length > 1 ? parts[1] : null;
+                    
+                    const item = sale.items.find((it) => {
+                      if (it.id !== drugId) return false;
+                      if (!suffix) return true;
+                      if (suffix === 'unit') return !!it.isUnit;
+                      if (suffix === 'pack') return !it.isUnit;
+                      // Fallback for old index-based keys if they exist
+                      return true; 
+                    });
                     if (!item) return '';
                     const effectivePrice =
                       item.isUnit && item.unitsPerPack

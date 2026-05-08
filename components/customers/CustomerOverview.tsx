@@ -19,6 +19,7 @@ import { ExpandedModal } from '../common/ExpandedModal';
 import { SmallCard } from '../common/SmallCard';
 import { PageHeader } from '../common/PageHeader';
 import { SegmentedControl } from '../common/SegmentedControl';
+import { formatCurrency, getCurrencySymbol } from '../../utils/currency';
 
 
 interface CustomerOverviewProps {
@@ -329,7 +330,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
             title={t?.lifetimeValue || 'Avg. Lifetime Value'}
             value={customerLifetimeValue}
             type='currency'
-            currencyLabel='$'
+            currencyLabel={getCurrencySymbol('EGP', language === 'AR' ? 'ar-EG' : 'en-US')}
             subValue={t?.perCustomer || 'Per Customer'}
             iconColor='emerald'
           />
@@ -475,7 +476,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                   </div>
                   <div className='text-end'>
                     <span className='text-sm font-bold text-gray-900 dark:text-gray-100'>
-                      ${customer.totalPurchases.toFixed(2)}
+                      {formatCurrency(customer.totalPurchases, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US')}
                     </span>
                     <span className='text-xs text-gray-400 block'>{customer.points} pts</span>
                   </div>
@@ -600,7 +601,9 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               <p className='text-2xl font-bold text-amber-900 dark:text-amber-100'>
                 {segmentation.vip.length}
               </p>
-              <p className='text-xs text-amber-600 dark:text-amber-400'>$1000+</p>
+              <p className='text-xs text-amber-600 dark:text-amber-400'>
+                {formatCurrency(1000, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0)}+
+              </p>
             </div>
 
             <div className='p-4 rounded-2xl bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-500/10 dark:to-blue-500/5 border border-gray-200 dark:border-primary-500/20'>
@@ -613,7 +616,9 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               <p className='text-2xl font-bold text-blue-900 dark:text-blue-100'>
                 {segmentation.regular.length}
               </p>
-              <p className='text-xs text-primary-600 dark:text-blue-400'>$100-$1000</p>
+              <p className='text-xs text-primary-600 dark:text-blue-400'>
+                {formatCurrency(100, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0)} - {formatCurrency(1000, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0)}
+              </p>
             </div>
 
             <div className='p-4 rounded-2xl bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-800/30 border border-gray-200 dark:border-gray-700/50'>
@@ -626,7 +631,9 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
                 {segmentation.basic.length}
               </p>
-              <p className='text-xs text-gray-500 dark:text-gray-400'>&lt;$100</p>
+              <p className='text-xs text-gray-500 dark:text-gray-400'>
+                &lt;{formatCurrency(100, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0)}
+              </p>
             </div>
 
             <div className='p-4 rounded-2xl bg-linear-to-br from-red-50 to-red-100 dark:from-red-500/10 dark:to-red-500/5 border border-red-200 dark:border-red-500/20'>
@@ -767,7 +774,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                 className={`w-16 h-16 mx-auto rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-2`}
               >
                 <p className='text-lg font-bold text-primary-600 dark:text-blue-400'>
-                  ${satisfactionMetrics.avgOrderValue.toFixed(0)}
+                  {formatCurrency(satisfactionMetrics.avgOrderValue, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0)}
                 </p>
               </div>
               <p className='text-xs text-gray-500 dark:text-gray-400'>
@@ -942,7 +949,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               </div>
               <div className='text-end'>
                 <p className='text-lg font-bold text-gray-900 dark:text-gray-100'>
-                  ${customer.totalPurchases.toFixed(2)}
+                  {formatCurrency(customer.totalPurchases, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US')}
                 </p>
                 <p className='text-xs text-gray-400'>
                   {t?.lastVisit || 'Last'}: {new Date(customer.lastVisit).toLocaleDateString()}
@@ -976,7 +983,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                 >
                   <span className='text-sm text-gray-900 dark:text-gray-100'>{c.name}</span>
                   <span className='text-sm font-bold text-amber-600'>
-                    ${c.totalPurchases.toFixed(2)}
+                    {formatCurrency(c.totalPurchases, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US')}
                   </span>
                 </div>
               ))}
@@ -1002,7 +1009,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                     </p>
                   </div>
                   <span className='text-sm font-medium text-gray-500'>
-                    ${c.totalPurchases.toFixed(2)}
+                    {formatCurrency(c.totalPurchases, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US')}
                   </span>
                 </div>
               ))}

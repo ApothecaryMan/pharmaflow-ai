@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import type { Sale } from '../../../types';
+import { money } from '../../../utils/money';
 import type { SalesFilters } from '../types';
 
 export const salesRepository = {
@@ -19,23 +20,24 @@ export const salesRepository = {
       customerAddress: db.customer_address,
       customerStreetAddress: db.customer_street_address,
       items: db.items || [],
-      subtotal: db.subtotal,
-      globalDiscount: db.global_discount,
-      tax: db.tax,
-      total: db.total,
+      subtotal: money.fromSmallestUnit(money.toSmallestUnit(db.subtotal || 0)),
+      globalDiscount: db.global_discount || 0,
+      tax: money.fromSmallestUnit(money.toSmallestUnit(db.tax || 0)),
+      total: money.fromSmallestUnit(money.toSmallestUnit(db.total || 0)),
       paymentMethod: db.payment_method,
       status: db.status,
       soldByEmployeeId: db.sold_by_employee_id,
       shiftId: db.shift_id,
       notes: db.notes,
       saleType: db.sale_type || 'walk-in',
-      deliveryFee: db.delivery_fee,
+      deliveryFee: money.fromSmallestUnit(money.toSmallestUnit(db.delivery_fee || 0)),
       deliveryEmployeeId: db.delivery_employee_id,
       processingTimeMinutes: db.processing_time_min,
       shiftTransactionRecorded: db.shift_transaction_recorded,
       modificationHistory: db.modification_history || [],
       version: db.version,
-      netTotal: db.net_total,
+      netTotal: money.fromSmallestUnit(money.toSmallestUnit(db.net_total ?? db.total ?? 0)),
+      hasReturns: !!db.item_returned_quantities && Object.keys(db.item_returned_quantities).length > 0,
       itemReturnedQuantities: db.item_returned_quantities || {},
       dailyOrderNumber: db.daily_order_number,
     };
@@ -55,23 +57,23 @@ export const salesRepository = {
     if (s.customerAddress !== undefined) db.customer_address = s.customerAddress;
     if (s.customerStreetAddress !== undefined) db.customer_street_address = s.customerStreetAddress;
     if (s.items !== undefined) db.items = s.items;
-    if (s.subtotal !== undefined) db.subtotal = s.subtotal;
+    if (s.subtotal !== undefined) db.subtotal = money.fromSmallestUnit(money.toSmallestUnit(s.subtotal || 0));
     if (s.globalDiscount !== undefined) db.global_discount = s.globalDiscount;
-    if (s.tax !== undefined) db.tax = s.tax;
-    if (s.total !== undefined) db.total = s.total;
+    if (s.tax !== undefined) db.tax = money.fromSmallestUnit(money.toSmallestUnit(s.tax || 0));
+    if (s.total !== undefined) db.total = money.fromSmallestUnit(money.toSmallestUnit(s.total || 0));
     if (s.paymentMethod !== undefined) db.payment_method = s.paymentMethod;
     if (s.status !== undefined) db.status = s.status;
     if (s.soldByEmployeeId !== undefined) db.sold_by_employee_id = s.soldByEmployeeId;
     if (s.shiftId !== undefined) db.shift_id = s.shiftId;
     if (s.notes !== undefined) db.notes = s.notes;
     if (s.saleType !== undefined) db.sale_type = s.saleType;
-    if (s.deliveryFee !== undefined) db.delivery_fee = s.deliveryFee;
+    if (s.deliveryFee !== undefined) db.delivery_fee = money.fromSmallestUnit(money.toSmallestUnit(s.deliveryFee || 0));
     if (s.deliveryEmployeeId !== undefined) db.delivery_employee_id = s.deliveryEmployeeId;
     if (s.processingTimeMinutes !== undefined) db.processing_time_min = s.processingTimeMinutes;
     if (s.shiftTransactionRecorded !== undefined) db.shift_transaction_recorded = s.shiftTransactionRecorded;
     if (s.modificationHistory !== undefined) db.modification_history = s.modificationHistory;
     if (s.version !== undefined) db.version = s.version;
-    if (s.netTotal !== undefined) db.net_total = s.netTotal;
+    if (s.netTotal !== undefined) db.net_total = money.fromSmallestUnit(money.toSmallestUnit(s.netTotal || 0));
     if (s.itemReturnedQuantities !== undefined) db.item_returned_quantities = s.itemReturnedQuantities;
     if (s.dailyOrderNumber !== undefined) db.daily_order_number = s.dailyOrderNumber;
     return db;

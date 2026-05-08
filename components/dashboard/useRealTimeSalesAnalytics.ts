@@ -48,8 +48,8 @@ export const useRealTimeSalesAnalytics = ({
     // Items sold (net of returns) - Precise aggregation
     let totalItemsNet = 0;
     todaysSales.forEach((s) => {
-      s.items.forEach((item, idx) => {
-        const lineKey = `${item.id}_${idx}`;
+      s.items.forEach((item) => {
+        const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
         const returnedQty =
           s.itemReturnedQuantities?.[lineKey] || s.itemReturnedQuantities?.[item.id] || 0;
         totalItemsNet += Math.max(0, item.quantity - returnedQty);
@@ -165,8 +165,8 @@ export const useRealTimeSalesAnalytics = ({
     const categoryCounts: Record<string, number> = {};
     
     todaysSales.forEach((s) => {
-      s.items.forEach((i, idx) => {
-        const lineKey = `${i.id}_${idx}`;
+      s.items.forEach((i) => {
+        const lineKey = i.isUnit ? `${i.id}_unit` : `${i.id}_pack`;
         const returnedQty = s.itemReturnedQuantities?.[lineKey] || s.itemReturnedQuantities?.[i.id] || 0;
         const actualQty = Math.max(0, i.quantity - returnedQty);
         if (actualQty > 0) {
