@@ -1,11 +1,11 @@
 import type React from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -36,6 +36,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
   language,
   onViewChange,
 }) => {
+  const [timeRange, setTimeRange] = useState('30');
   const isRTL = language === 'AR';
 
   // Calculate loyalty statistics
@@ -94,11 +95,16 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
       .slice(0, 10);
   }, [customers]);
 
-  // Points trend over last 30 days
+  // Points trend over selected time range
   const pointsTrend = useMemo(() => {
-    const last30Days = Array.from({ length: 30 }, (_, i) => {
+    let days = 30;
+    if (timeRange === '1') days = 1;
+    else if (timeRange === '7') days = 7;
+    else if (timeRange === 'ALL') days = 90; // Limit 'All' to 90 days for performance/readability
+
+    const history = Array.from({ length: days }, (_, i) => {
       const date = new Date();
-      date.setDate(date.getDate() - (29 - i));
+      date.setDate(date.getDate() - (days - 1 - i));
       return {
         date: date.toISOString().split('T')[0],
         points: 0,
@@ -107,7 +113,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
 
     sales.forEach((sale) => {
       const saleDate = new Date(sale.date).toISOString().split('T')[0];
-      const dayData = last30Days.find((d) => d.date === saleDate);
+      const dayData = history.find((d) => d.date === saleDate);
 
       if (dayData && sale.customerName !== 'Guest Customer') {
         const points = calculateSalePoints(sale);
@@ -115,14 +121,20 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
       }
     });
 
-    return last30Days.map((d) => ({
-      name: new Date(d.date).toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', {
-        month: 'short',
-        day: 'numeric',
-      }),
+    return history.map((d) => ({
+      name:
+        days === 1
+          ? new Date(d.date).toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })
+          : new Date(d.date).toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', {
+              month: 'short',
+              day: 'numeric',
+            }),
       points: parseFloat(d.points.toFixed(1)),
     }));
-  }, [sales, language]);
+  }, [sales, language, timeRange]);
 
   const getTierInfo = (points: number) => {
     if (points > 2000)
@@ -185,6 +197,19 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
             shape="pill"
           />
         }
+        rightContent={
+          <SegmentedControl
+            options={[
+              { label: language === 'AR' ? 'اليوم' : 'Today', value: '1' },
+              { label: language === 'AR' ? '٧ أيام' : '7 Days', value: '7' },
+              { label: language === 'AR' ? 'شهر' : 'Month', value: '30' },
+              { label: language === 'AR' ? 'الكل' : 'All', value: 'ALL' },
+            ]}
+            value={timeRange}
+            onChange={(val) => setTimeRange(String(val))}
+            size='sm'
+          />
+        }
       />
 
       {/* Summary Cards */}
@@ -234,7 +259,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
               data={loyaltyStats.distribution}
               margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
             >
-              <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='#e2e8f0' />
+              <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='var(--border-divider)' />
               <XAxis
                 dataKey='range'
                 axisLine={false}
@@ -248,7 +273,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
                 orientation={isRTL ? 'right' : 'left'}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(148, 163, 184, 0.1)' }} />
-              <Bar dataKey='count' fill='var(--primary-500)' radius={[8, 8, 0, 0]} />
+              <Bar dataKey='count' fill='var(--primary-500)' radius={[20, 20, 20, 20]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -256,11 +281,17 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
         {/* Points Trend */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-80`}>
           <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 mb-3'>
-            {t.loyalty?.trend || 'Points Issued (30 Days)'}
+            {t.loyalty?.trend || 'Points Issued'} ({timeRange === '1' ? (language === 'AR' ? 'اليوم' : 'Today') : timeRange === '7' ? (language === 'AR' ? '٧ أيام' : '7 Days') : timeRange === '30' ? (language === 'AR' ? '٣٠ يوم' : '30 Days') : (language === 'AR' ? '٩٠ يوم' : '90 Days')})
           </h3>
           <ResponsiveContainer width='100%' height='90%'>
-            <LineChart data={pointsTrend} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='#e2e8f0' />
+            <AreaChart data={pointsTrend} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id='pointsTrendGrad' x1='0' y1='0' x2='0' y2='1'>
+                  <stop offset='5%' stopColor='var(--primary-500)' stopOpacity={0.3} />
+                  <stop offset='95%' stopColor='var(--primary-500)' stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='var(--border-divider)' />
               <XAxis
                 dataKey='name'
                 axisLine={false}
@@ -274,14 +305,15 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
                 orientation={isRTL ? 'right' : 'left'}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Line
+              <Area
                 type='monotone'
                 dataKey='points'
                 stroke='var(--primary-500)'
                 strokeWidth={3}
-                dot={{ fill: 'var(--primary-500)', r: 4 }}
+                fill='url(#pointsTrendGrad)'
+                animationDuration={1000}
               />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
