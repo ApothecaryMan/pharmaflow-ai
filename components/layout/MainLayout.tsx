@@ -85,6 +85,9 @@ const GlobalContextMenuWrapper: React.FC<{
   );
 };
 
+import { TitleBar } from './TitleBar';
+import { isTauri } from '../../utils/platform';
+
 export const MainLayout: React.FC<MainLayoutProps> = ({
   children,
   view,
@@ -154,8 +157,21 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           }}
           dir={language === 'AR' ? 'rtl' : 'ltr'}
         >
-          {/* Navbar */}
-          {!isStandalone && (
+          {/* TitleBar (Only in Tauri) */}
+          {isTauri() && !isStandalone && (
+            <TitleBar 
+              onLogout={onLogout}
+              onOpenInWindow={onOpenInWindow}
+              onModuleChange={handleModuleChange}
+              onNavigate={handleNavigate}
+              view={view}
+              activeModule={activeModule}
+              dashboardSubView={dashboardSubView}
+            />
+          )}
+
+          {/* Navbar (Only in Web) */}
+          {!isStandalone && !isTauri() && (
             <Navbar
               menuItems={filteredMenuItems}
               activeModule={activeModule}
@@ -166,7 +182,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               setProfileImage={setProfileImage}
               onLogoClick={() => setSidebarVisible(!sidebarVisible)}
               currentView={
-                activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view
+                (activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view) as ViewState
               }
               onNavigate={handleNavigate}
               employees={employees.map((e) => ({

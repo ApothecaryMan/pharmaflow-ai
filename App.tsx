@@ -24,6 +24,7 @@ import { useAuthenticatedData } from './hooks/auth/useAuthenticatedData';
 import { useOnboardingStatus } from './hooks/auth/useOnboardingStatus';
 import { useEntityHandlers } from './hooks/useEntityHandlers';
 import { useGlobalEventHandlers } from './hooks/infrastructure/useGlobalEventHandlers';
+import { usePreventZoom } from './hooks/infrastructure/usePreventZoom';
 import { useNavigation } from './hooks/layout/useNavigation';
 import { useSessionHandlers } from './hooks/auth/useSessionHandlers';
 import { ShiftProvider, useShift } from './hooks/sales/useShift';
@@ -489,6 +490,9 @@ const App: React.FC = () => {
     storage.validateVersion();
   }, []);
 
+  // 0.1 Prevent accidental pinch-to-zoom (touchpads)
+  usePreventZoom();
+
   // 1. Initialize App State (View, Toast, etc.)
 
   const appState = useAppState();
@@ -557,7 +561,7 @@ const App: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-black">
-      <TitleBar />
+      {!authState.isAuthenticated && <TitleBar />}
       <div className="flex-1 overflow-hidden relative">
         {finalContent}
       </div>

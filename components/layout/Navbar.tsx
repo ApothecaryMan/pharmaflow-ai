@@ -25,6 +25,9 @@ import { SidebarDropdown } from './SidebarDropdown';
 import { SettingsMenu } from './StatusBar/items/SettingsMenu';
 import { Icons, getIconByName } from '../common/Icons';
 import { AttendanceQuickAction } from './AttendanceQuickAction';
+import { isTauri } from '../../utils/platform';
+import { NavModules } from './navbar/NavModules';
+import { NavUserActions } from './navbar/NavUserActions';
 
 interface NavbarProps {
   menuItems: MenuItem[];
@@ -355,112 +358,23 @@ const NavbarComponent: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Desktop: Horizontal Module Tabs */}
-      <div
-        className={`hidden md:flex items-center gap-0.5 flex-1 scrollbar-hide ${activeDropdown && navStyle === 2 ? 'overflow-hidden' : 'overflow-x-auto'}`}
-        ref={dropdownRef}
-        onWheel={handleWheel}
-      >
-        {menuItems
-          .filter((m) => (m.id !== 'test' || developerMode))
-          .map((module) => {
-            const isActive = activeModule === module.id;
-            const isDropdownOpen = activeDropdown === module.id;
-            const hasPage = module.hasPage !== false; // Default to true if not specified
-            const hasImplementedSubItems =
-              module.submenus?.some((submenu) =>
-                submenu.items.some((item) => typeof item === 'object' && !!item.view)
-              ) ?? false;
-
-            const isEffectivelyDisabled =
-              !developerMode && !hasPage && !hasImplementedSubItems;
-
-            return (
-              <div 
-                key={module.id} 
-                id={`navbar-tab-${module.id}`}
-                className='relative group/item' 
-                onMouseLeave={handleMouseLeave}
-              >
-                <button
-                  onMouseEnter={(e) => handleMouseEnter(module.id, e)}
-                  onClick={(e) => handleModuleClick(module.id, e)}
-                  disabled={isEffectivelyDisabled}
-                  className={`main-nav-tab flex items-center gap-2 px-2.5 py-1 rounded-lg whitespace-nowrap relative type-interactive transition-all duration-200
-                      ${
-                        isEffectivelyDisabled
-                          ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
-                          : isActive
-                            ? `bg-primary-100 dark:bg-primary-500/15 text-primary-700 dark:text-primary-400 font-bold shadow-xs border-(--border-divider)`
-                            : isDropdownOpen
-                              ? `bg-(--bg-navbar-hover) text-gray-800 dark:text-gray-200 font-medium`
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-(--bg-navbar-hover) hover:text-gray-900 dark:hover:text-white'
-                      }
-                    `}
-                  title={!hasPage && !hasImplementedSubItems && navStyle !== 2 ? t.settings.comingSoon : ''}
-                >
-                  <span
-                    className={`flex items-center justify-center`}
-                  >
-                    {(() => {
-                      const iconName = module.icon || module.id;
-                      const IconComponent = getIconByName(iconName);
-                      return (
-                        <IconComponent 
-                          size={22} 
-                          active={isActive || isDropdownOpen}
-                          className="transition-all duration-200" 
-                        />
-                      );
-                    })()}
-                  </span>
-
-                  <span className='text-sm font-medium'>
-                    {getMenuTranslation(module.label, language)}
-                  </span>
-
-                  {isActive && (hasPage || hasImplementedSubItems) && navStyle !== 2 && (
-                    <motion.div
-                      layoutId="nav-indicator"
-                      className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-[1.5px] bg-primary-600 rounded-full`}
-                    />
-                  )}
-                </button>
-
-                {/* Dropdown Menu */}
-                {isDropdownOpen && navStyle === 2 && (
-                  <SidebarDropdown
-                    module={module}
-                    currentView={activeModule === module.id ? currentView || '' : ''}
-                    onNavigate={(viewId) => {
-                      // Update active module to ensure highlighting works
-                      onModuleChange(module.id);
-
-                      if (onNavigate) {
-                        onNavigate(viewId);
-                      }
-
-                      setActiveDropdown(null);
-                      setActiveAnchor(null);
-                    }}
-                    onClose={() => {
-                      setActiveDropdown(null);
-                      setActiveAnchor(null);
-                    }}
-                    theme={theme}
-                    language={language}
-                    hideInactiveModules={hideInactiveModules}
-                    blur={sidebarBlur}
-                    anchorEl={activeAnchor}
-                    onMouseEnter={cancelClose}
-                    onMouseLeave={handleMouseLeave}
-                    onOpenInWindow={onOpenInWindow}
-                  />
-                )}
-              </div>
-            );
-          })}
-      </div>
+      <NavModules
+        menuItems={menuItems}
+        activeModule={activeModule}
+        onModuleChange={onModuleChange}
+        currentView={currentView}
+        onNavigate={onNavigate}
+        onOpenInWindow={onOpenInWindow}
+        activeDropdown={activeDropdown}
+        setActiveDropdown={setActiveDropdown}
+        activeAnchor={activeAnchor}
+        setActiveAnchor={setActiveAnchor}
+        dropdownRef={dropdownRef}
+        handleWheel={handleWheel}
+        handleMouseEnter={handleMouseEnter}
+        handleMouseLeave={handleMouseLeave}
+        cancelClose={cancelClose}
+      />
 
       {/* Mobile: Hamburger Menu & Settings */}
       {authService.getCurrentUserSync() && (
@@ -482,300 +396,30 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
       {/* Right Side Actions (Desktop) */}
       {authService.getCurrentUserSync() && (
-      <div className='hidden md:flex items-center gap-2 ltr:ml-4 rtl:mr-4'>
-        
-        {/* Quick Attendance Action */}
-        <AttendanceQuickAction language={language} />
-
-        {/* User Profile & Settings */}
-        <div className='relative' ref={profileRef}>
-          <button
-            onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className={`flex items-center gap-3 p-1 ltr:pr-3 rtl:pl-3 rounded-full border border-transparent hover:border-(--border-divider) hover:bg-(--bg-navbar-hover) ${showProfileMenu ? 'border-(--border-divider) bg-(--bg-navbar-hover)' : ''}`}
-          >
-            {profileImage ? (
-              <img
-                src={profileImage}
-                alt='Profile'
-                className='w-8 h-8 rounded-full object-cover border border-(--border-divider)'
-              />
-            ) : (
-              <div
-                className="flex items-center justify-center rounded-full border border-white/20"
-                style={{
-                  backgroundColor: currentTheme.hex,
-                  width: '32px',
-                  height: '32px',
-                }}
-              >
-                <Icons.Store size="var(--icon-md)" stroke={2.5} color="white" />
-              </div>
-            )}
-            <div className='hidden md:flex flex-col items-start'>
-                <span className='text-xs font-bold text-gray-700 dark:text-gray-200 leading-none mb-0.5'>
-                  {currentEmployeeId 
-                    ? (currentEmployee?.name || authService.getCurrentUserSync()?.username || (language === 'AR' ? 'Zinc' : 'Zinc'))
-                    : (language === 'AR' ? 'تسجيل دخول الموظف' : 'Employee Login')
-                  }
-                </span>
-                {currentEmployeeId && (
-                  <span className='text-[10px] text-gray-400 leading-none h-2.5 flex items-center'>
-                    {isDataLoading || !activeBranch ? (
-                      <span className="w-16 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full" />
-                    ) : (
-                      activeBranch.name
-                    )}
-                  </span>
-                )}
-            </div>
-            <Icons.ExpandMore size="var(--icon-base)" className="hidden md:block text-gray-400" />
-          </button>
-
-          {/* Profile Dropdown */}
-          {showProfileMenu && (
-            <div className='absolute ltr:right-0 rtl:left-0 mt-2 w-72 bg-(--bg-menu) rounded-2xl shadow-[0_0_15px_rgba(0,0,0,0.15)] dark:shadow-[0_0_15px_rgba(0,0,0,0.4)] border border-(--border-divider) overflow-hidden z-50 animate-fade-in'>
-              {/* User Info */}
-              <div className='p-4 border-b border-(--border-divider) bg-(--bg-page-surface)'>
-                <div className='flex items-center gap-3'>
-                  <div className='relative group'>
-                    {profileImage ? (
-                      <img
-                        src={profileImage}
-                        alt='Profile'
-                        className='w-12 h-12 rounded-full object-cover border border-(--border-divider)'
-                      />
-                    ) : (
-                      <div
-                        className="flex items-center justify-center rounded-full border border-white/10"
-                        style={{
-                          backgroundColor: currentTheme.hex,
-                          width: '48px',
-                          height: '48px',
-                        }}
-                      >
-                        <Icons.Store size="var(--icon-lg)" stroke={2} color="white" />
-                      </div>
-                    )}
-                    {currentEmployeeId && (
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        style={{
-                          WebkitAppearance: 'none',
-                          appearance: 'none',
-                          width: '20px',
-                          height: '20px',
-                          minWidth: '20px',
-                          minHeight: '20px',
-                        }}
-                        className='absolute bottom-0 right-0 w-5 h-5 bg-black/30 backdrop-blur-xs text-white rounded-full flex items-center justify-center hover:bg-black/50 shadow-xs'
-                        title='Change Photo'
-                      >
-                        <Icons.Edit size="var(--icon-xs)" />
-                      </button>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className='font-bold text-gray-900 dark:text-white'>
-                      {currentEmployeeId 
-                        ? (currentEmployee?.name || authService.getCurrentUserSync()?.username || (language === 'AR' ? 'Zinc' : 'Zinc'))
-                        : (language === 'AR' ? 'تسجيل دخول الموظف' : 'Employee Login')
-                      }
-                    </h3>
-                    <div className='flex items-center gap-2'>
-                      <p className='text-xs text-gray-500 dark:text-gray-400'>
-                        {isDataLoading || !activeOrg ? (
-                          <span className="inline-block w-20 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full" />
-                        ) : (
-                          activeOrg.name
-                        )}
-                      </p>
-                      {currentEmployeeId && (
-                        <>
-                          <span className='w-1 h-1 bg-gray-300 rounded-full' />
-                          <p className='text-xs text-gray-500 dark:text-gray-400'>
-                            {isDataLoading || !activeBranch ? (
-                              <span className="inline-block w-12 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full" />
-                            ) : (
-                              activeBranch.name
-                            )}
-                          </p>
-                        </>
-                      )}
-                      {profileImage && (
-                        <button
-                          onClick={() => setProfileImage(null)}
-                          className='text-[10px] text-red-500 hover:text-red-600 hover:underline'
-                          title='Remove Photo'
-                        >
-                          {t.profile.reset}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <input
-                    type='file'
-                    ref={fileInputRef}
-                    className='hidden'
-                    accept='image/*'
-                    onChange={handleFileChange}
-                  />
-                </div>
-              </div>
-
-              {/* Branch Management & Switcher (Only show if employee is logged in) */}
-              {currentEmployeeId && (
-                <div className='p-2 border-t border-(--border-divider)'>
-                  <div className='flex items-center justify-between px-2 mb-2'>
-                    <div className='flex items-center gap-1.5'>
-                      <Icons.Branch size={16} className="text-gray-400" />
-                      <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
-                        {language === 'AR' ? 'فروع الصيدلية' : 'Pharmacy Branches'}
-                      </p>
-                    </div>
-                    {permissionsService.isOrgAdmin() && (
-                      <button
-                        onClick={() => {
-                          if (onNavigate) onNavigate('branch-management');
-                          setShowProfileMenu(false);
-                        }}
-                        className='text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-(--bg-menu-hover) flex items-center gap-1 py-1 px-3 rounded-full border border-primary-100 dark:border-primary-900/50 hover:shadow-sm active:scale-95'
-                      >
-                        <Icons.Settings size={13} />
-                        {language === 'AR' ? 'الإدارة' : 'Manage'}
-                      </button>
-                    )}
-                  </div>
-
-                  {branches.length > 1 ? (
-                    <div className='space-y-1 max-h-[200px] overflow-y-auto scrollbar-hide'>
-                      {branches.map((branch) => (
-                        <button
-                          key={branch.id}
-                          onClick={async () => {
-                            if (activeBranchId === branch.id) return;
-                            await switchBranch(branch.id);                           
-                            setShowProfileMenu(false);
-                          }}
-                          className={`w-full p-2 text-sm font-medium rounded-lg flex items-center justify-between transition-colors
-                            ${
-                              activeBranchId === branch.id
-                                ? 'bg-primary-50 dark:bg-primary-500/15 text-primary-600 dark:text-primary-400'
-                                : 'text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover)'
-                            }
-                          `}
-                        >
-                          <div className='flex items-center gap-2'>
-                            {activeBranchId === branch.id ? <Icons.Success size="var(--icon-md)" /> : <Icons.Circle size="var(--icon-md)" />}
-                            {branch.name}
-                          </div>
-                          {branch.code && <span className='text-[10px] opacity-60'>{branch.code}</span>}
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className='px-2.5 py-2 mt-1 mx-1 text-xs text-gray-500 dark:text-gray-400 bg-(--bg-page-surface) rounded-lg border border-(--border-divider) flex items-center gap-2'>
-                      <Icons.Info size={16} className="text-gray-400" />
-                      {language === 'AR' ? 'فرع واحد متاح.' : 'One branch available.'}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Management & Settings (Combined) */}
-              {currentEmployeeId && (permissionsService.isOrgAdmin() || permissionsService.can('settings.view')) && (
-                <div className='flex flex-col gap-1 p-2 border-t border-(--border-divider)'>
-                  {permissionsService.isOrgAdmin() && (
-                    <button
-                      onClick={() => {
-                        setShowProfileMenu(false);
-                        if (onNavigate) onNavigate('org-settings');
-                      }}
-                      className='flex items-center justify-center gap-2 p-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) w-full'
-                    >
-                      <Icons.Organization size="var(--icon-md)" />
-                      {language === 'AR' ? 'إدارة المنظمة' : 'Manage Organization'}
-                    </button>
-                  )}
-                  {permissionsService.can('settings.view') && (
-                    <button
-                      onClick={() => {
-                        setShowProfileMenu(false);
-                        if (onNavigate) onNavigate('branch-management');
-                      }}
-                      className='flex items-center justify-center gap-2 p-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) w-full'
-                    >
-                      <Icons.Settings size="var(--icon-md)" />
-                      {language === 'AR' ? 'إعدادات الفرع' : 'Branch Settings'}
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Settings have been moved to StatusBar Settings Menu */}
-
-              {/* Printer Settings Button */}
-              {currentEmployeeId && (
-                <div className='p-2 border-t border-(--border-divider)'>
-                  <button
-                    onClick={() => {
-                      setShowPrinterSettings(true);
-                      setShowProfileMenu(false);
-                    }}
-                    className={`w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg flex items-center justify-center gap-2`}
-                  >
-                    <Icons.Print size="var(--icon-md)" />
-                    {(t as any).printerSettings?.title || 'Printer Settings'}
-                  </button>
-                </div>
-              )}
-
-
-
-              {/* Sign Out */}
-              <div className='p-2 border-t border-(--border-divider) bg-(--bg-page-surface)'>
-                <button
-                  onClick={async () => {
-                    if (isLoggingOut) return;
-                    setIsLoggingOut(true);
-                    try {
-                      if (onLogout) {
-                        await onLogout();
-                      } else {
-                        await authService.logout();
-                        if (onNavigate) {
-                          onNavigate('login-test');
-                        } else {
-                          window.location.reload();
-                        }
-                      }
-                      setShowProfileMenu(false);
-                    } catch (error) {
-                      console.error('Logout failed', error);
-                    } finally {
-                      // We might unmount, so this is just for safety if we don't navigate
-                      setIsLoggingOut(false);
-                    }
-                  }}
-                  disabled={isLoggingOut}
-                  className='w-full p-2 text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-500 hover:text-white dark:hover:bg-red-500 dark:hover:text-white rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
-                >
-                  {isLoggingOut ? (
-                    <>
-                      <Icons.Loading size="var(--icon-md)" className="animate-spin" />
-                      {t.profile.signOut}...
-                    </>
-                  ) : (
-                    <>
-                      <Icons.Logout size="var(--icon-md)" />
-                      {t.profile.signOut}
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+        <NavUserActions
+          language={language}
+          theme={currentTheme}
+          profileImage={profileImage}
+          setProfileImage={setProfileImage}
+          showProfileMenu={showProfileMenu}
+          setShowProfileMenu={setShowProfileMenu}
+          profileRef={profileRef}
+          fileInputRef={fileInputRef}
+          currentEmployeeId={currentEmployeeId}
+          currentEmployee={currentEmployee}
+          activeOrg={activeOrg}
+          activeBranch={activeBranch}
+          activeBranchId={activeBranchId}
+          branches={branches}
+          switchBranch={switchBranch}
+          onNavigate={onNavigate}
+          onLogout={onLogout}
+          isDataLoading={isDataLoading}
+          handleFileChange={handleFileChange}
+          isLoggingOut={isLoggingOut}
+          setIsLoggingOut={setIsLoggingOut}
+          setShowPrinterSettings={setShowPrinterSettings}
+        />
       )}
 
       {/* Printer Settings Modal */}
