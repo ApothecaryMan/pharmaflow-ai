@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "ZINC",
-  "version": "2.023",
+  "version": "2.0.23",
   "identifier": "com.zinc.pharmacy",
   "build": {
     "frontendDist": "../dist",
@@ -10,10 +10,10 @@
     "beforeBuildCommand": "npm run build"
   },
   "app": {
-    "title": "ZINC - نظام إدارة الصيدليات",
     "windows": [
       {
-        "title": "ZINC",
+        "label": "main",
+        "title": "ZINC - نظام إدارة الصيدليات",
         "width": 1280,
         "height": 800,
         "minWidth": 1024,
@@ -25,10 +25,6 @@
     ],
     "security": {
       "csp": null
-    },
-    "trayIcon": {
-      "tooltip": "ZINC - نظام إدارة الصيدليات",
-      "iconAsTemplate": true
     }
   },
   "bundle": {
