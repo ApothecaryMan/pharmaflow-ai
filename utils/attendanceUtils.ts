@@ -170,13 +170,41 @@ export function calculateSessionDuration(
 
 /**
  * Format minutes into a human-readable duration string.
- * Examples: 65 → "1h 05m", 480 → "8h 00m", 30 → "30m"
+ * Supports English (Xh Ym) and Arabic with proper pluralization.
  */
-export function formatDuration(minutes: number): string {
-  if (minutes < 0) return '0m';
+export function formatDuration(minutes: number, language: 'EN' | 'AR' = 'EN'): string {
+  if (minutes <= 0) return language === 'AR' ? '0 دقيقة' : '0m';
+  
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
 
+  if (language === 'AR') {
+    const formatArabicUnit = (value: number, units: { singular: string; dual: string; plural: string; elevenPlus: string }) => {
+      if (value === 1) return units.singular;
+      if (value === 2) return units.dual;
+      if (value >= 3 && value <= 10) return `${value} ${units.plural}`;
+      return `${value} ${units.elevenPlus}`;
+    };
+
+    const hourText = hours > 0 ? formatArabicUnit(hours, {
+      singular: 'ساعة',
+      dual: 'ساعتين',
+      plural: 'ساعات',
+      elevenPlus: 'ساعة'
+    }) : '';
+
+    const minText = mins > 0 ? formatArabicUnit(mins, {
+      singular: 'دقيقة',
+      dual: 'دقيقتين',
+      plural: 'دقائق',
+      elevenPlus: 'دقيقة'
+    }) : '';
+
+    if (hours > 0 && mins > 0) return `${hourText} و ${minText}`;
+    return hourText || minText;
+  }
+
+  // English (Compact)
   if (hours === 0) return `${mins}m`;
   return `${hours}h ${mins.toString().padStart(2, '0')}m`;
 }

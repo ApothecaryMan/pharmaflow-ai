@@ -31,6 +31,8 @@ import { isWebAuthnSupported } from '../../../utils/webAuthnUtils';
 import { startAuthentication } from '@simplewebauthn/browser';
 import type { AttendanceEvent, AttendanceEventType, Employee } from '../../../types/hr';
 import { AttendanceTimeline } from './AttendanceTimeline';
+import { SearchInput } from '../../common/SearchInput';
+
 
 // ═══════════════════════════════════════════
 // Props
@@ -388,7 +390,7 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
   return (
     <div className="h-full flex flex-col overflow-hidden bg-transparent">
       {/* ─── Header ─── */}
-      <div className="pb-3">
+      <div className="pb-3 shrink-0">
         <div className="flex items-center justify-between mb-1">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white page-title">
             {t.attendance.title}
@@ -397,7 +399,7 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
           <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="font-mono tabular-nums">
-              {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+              {new Date().toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
         </div>
@@ -405,17 +407,17 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
       </div>
 
       {/* ─── Main Content ─── */}
-      <div className="flex-1 overflow-y-auto space-y-4">
-        {/* ─── Success Banner ─── */}
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* ─── Success Banner (Sticky-like at top of content) ─── */}
         {lastAction && (
           <div
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all animate-in slide-in-from-top-2 ${
+            className={`mb-4 flex items-center gap-3 px-4 py-3 rounded-lg border transition-all animate-in slide-in-from-top-2 shrink-0 ${
               lastAction.type === 'IN'
-                ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-400'
-                : 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800/40 text-rose-700 dark:text-rose-400'
+                ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400'
+                : 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400'
             }`}
           >
-            <span className="material-symbols-rounded text-xl">
+            <span className="material-symbols-rounded" style={{ fontSize: '24px' }}>
               {lastAction.type === 'IN' ? 'check_circle' : 'logout'}
             </span>
             <span className="text-sm font-bold">
@@ -424,212 +426,221 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
           </div>
         )}
 
-        {/* ─── Employee Selector ─── */}
-        <div className="p-4 rounded-xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10">
-          <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 block">
-            {t.attendance.selectEmployee}
-          </label>
+        {/* ─── Side-by-Side Cards (Stretching to bottom) ─── */}
+        <div className="flex-1 flex flex-col lg:flex-row gap-4 items-stretch min-h-0 pb-4">
+          {/* Left Column: Selector & Clock Action */}
+          <div className="flex-1 flex flex-col gap-4 min-h-0">
+            {/* ─── Employee Selector ─── */}
+            <div className="flex-1 min-h-[300px] flex flex-col p-4 rounded-xl bg-white dark:bg-gray-800/40 border border-gray-200 dark:border-white/10 shadow-sm overflow-hidden">
+              <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 block shrink-0">
+                {t.attendance.selectEmployee}
+              </label>
 
-          {/* Search Input */}
-          <div className="relative mb-3">
-            <span className="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
-              search
-            </span>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t.attendance.searchEmployee}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-            />
-          </div>
-
-          {/* Employee List */}
-          <div className="max-h-40 overflow-y-auto space-y-1">
-            {filteredEmployees.map((emp) => {
-              const isSelected = selectedEmployee?.id === emp.id;
-              return (
-                <button
-                  key={emp.id}
-                  onClick={() => {
-                    setSelectedEmployee(emp);
-                    setSearchQuery('');
-                  }}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                    isSelected
-                      ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40'
-                      : 'hover:bg-gray-50 dark:hover:bg-white/5 border border-transparent'
-                  }`}
-                >
-                  {/* Avatar */}
-                  <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden shrink-0">
-                    {emp.image ? (
-                      <img src={emp.image} alt={emp.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
-                        {emp.name.charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Name & Role */}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-gray-800 dark:text-white truncate">
-                      {emp.name}
-                    </div>
-                    <div className="text-[10px] text-gray-400 dark:text-gray-500">
-                      {emp.position || emp.role}
-                    </div>
-                  </div>
-
-                  {/* Biometric Indicator */}
-                  {emp.biometricCredentialId && (
-                    <span className="material-symbols-rounded text-sm text-emerald-500">
-                      fingerprint
-                    </span>
-                  )}
-
-                  {/* Selected Check */}
-                  {isSelected && (
-                    <span className="material-symbols-rounded text-blue-500 text-lg">check_circle</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ─── Clock Button (Large Fingerprint Action) ─── */}
-        {selectedEmployee && (
-          <div className="flex flex-col items-center py-4">
-            {/* Status Label */}
-            <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
-              {employeeStatus === 'IN'
-                ? t.attendance.currentlyIn
-                : employeeStatus === 'OUT'
-                ? t.attendance.currentlyOut
-                : t.attendance.notClockedIn}
-            </p>
-
-            {/* PIN Input (shown when biometric fails/unavailable) */}
-            {showPinInput ? (
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
-                  <span className="material-symbols-rounded text-4xl text-amber-600 dark:text-amber-400">pin</span>
-                </div>
-                <input
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={4}
-                  value={pinInput}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '').slice(0, 4);
-                    setPinInput(val);
-                    setPinError('');
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && pinInput.length === 4) {
-                      handleClock(pinInput);
-                    } else if (e.key === 'Escape') {
-                      setShowPinInput(false);
-                      setPinInput('');
-                      setPinError('');
-                    }
-                  }}
-                  placeholder={t.attendance.pinPlaceholder}
-                  className="w-32 text-center text-2xl font-bold tracking-[0.5em] px-4 py-3 rounded-xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-                  autoFocus
-                  dir="ltr"
+              {/* Search Input */}
+              <div className="mb-3 shrink-0">
+                <SearchInput
+                  value={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  onClear={() => setSearchQuery('')}
+                  placeholder={t.attendance.searchEmployee}
                 />
-                {pinError && (
-                  <p className="text-xs text-rose-500 flex items-center gap-1">
-                    <span className="material-symbols-rounded text-sm">error</span>
-                    {pinError}
-                  </p>
-                )}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleClock(pinInput)}
-                    disabled={pinInput.length !== 4 || isClocking}
-                    className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white text-sm font-bold transition-colors"
-                  >
-                    {t.attendance.enterPin}
-                  </button>
-                  <button
-                    onClick={() => { setShowPinInput(false); setPinInput(''); setPinError(''); }}
-                    className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 text-sm font-bold transition-colors hover:bg-gray-200 dark:hover:bg-white/15"
-                  >
-                    ✕
-                  </button>
-                </div>
               </div>
-            ) : (
-              <>
-                {/* Big Fingerprint Button */}
-                <button
-                  onClick={() => handleClock()}
-                  disabled={isClocking}
-                  className={`w-28 h-28 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-95 ${
-                    isClocking
-                      ? 'bg-gray-200 dark:bg-gray-700 cursor-wait'
-                      : isClockIn
-                      ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30'
-                      : 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/30'
-                  }`}
-                >
-                  <span className="material-symbols-rounded text-5xl text-white">
-                    {isClocking ? 'progress_activity' : 'fingerprint'}
-                  </span>
-                </button>
 
-                {/* Button Label */}
-                <p
-                  className={`mt-3 text-sm font-bold ${
-                    isClockIn
-                      ? 'text-emerald-600 dark:text-emerald-400'
-                      : 'text-rose-600 dark:text-rose-400'
-                  }`}
-                >
-                  {buttonLabel}
+              {/* Employee List - Fills available space in selector card */}
+              <div className="flex-1 overflow-y-auto space-y-1 custom-scrollbar pr-1">
+                {filteredEmployees.map((emp) => {
+                  const isSelected = selectedEmployee?.id === emp.id;
+                  return (
+                    <button
+                      key={emp.id}
+                      onClick={() => {
+                        setSelectedEmployee(emp);
+                        setSearchQuery('');
+                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-start transition-all ${
+                        isSelected
+                          ? 'bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 ring-1 ring-blue-500/10'
+                          : 'hover:bg-gray-50 dark:hover:bg-white/5 border border-transparent'
+                      }`}
+                    >
+                      {/* Avatar */}
+                      <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden shrink-0 border border-gray-200 dark:border-white/10">
+                        {emp.image ? (
+                          <img src={emp.image} alt={emp.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-sm font-bold text-gray-400 dark:text-gray-500">
+                            {emp.name.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Name & Role */}
+                      <div className="min-w-0">
+                        <div className="text-sm font-bold text-gray-800 dark:text-white truncate">
+                          {emp.name}
+                        </div>
+                        <div className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+                          {emp.position || emp.role}
+                        </div>
+                      </div>
+
+                      {/* Spacer to push icons to the end */}
+                      <div className="flex-1" />
+
+                      {/* Biometric Indicator */}
+                      {emp.biometricCredentialId && (
+                        <span className="material-symbols-rounded text-emerald-500 opacity-60" style={{ fontSize: '18px' }}>
+                          fingerprint
+                        </span>
+                      )}
+
+                      {/* Selected Check */}
+                      {isSelected && (
+                        <span className="material-symbols-rounded text-blue-500 animate-in zoom-in duration-200" style={{ fontSize: '20px' }}>check_circle</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ─── Clock Button (Shown if employee selected) ─── */}
+            {selectedEmployee && (
+              <div className="shrink-0 flex flex-col items-center py-6 p-4 rounded-xl bg-white dark:bg-gray-800/40 border border-gray-200 dark:border-white/10 shadow-sm animate-in slide-in-from-bottom-2 duration-300">
+                {/* Status Label */}
+                <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">
+                  {employeeStatus === 'IN'
+                    ? t.attendance.currentlyIn
+                    : employeeStatus === 'OUT'
+                    ? t.attendance.currentlyOut
+                    : t.attendance.notClockedIn}
                 </p>
 
-                {/* Verification Method Hint */}
-                {selectedEmployee.biometricCredentialId && (
-                  <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
-                    {t.attendance.touchSensor}
-                  </p>
+                {/* PIN Input */}
+                {showPinInput ? (
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 rounded-xl bg-amber-100 dark:bg-amber-500/10 flex items-center justify-center border border-transparent dark:border-amber-500/20">
+                      <span className="material-symbols-rounded text-amber-600 dark:text-amber-400" style={{ fontSize: '32px' }}>pin</span>
+                    </div>
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      maxLength={4}
+                      value={pinInput}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                        setPinInput(val);
+                        setPinError('');
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && pinInput.length === 4) {
+                          handleClock(pinInput);
+                        } else if (e.key === 'Escape') {
+                          setShowPinInput(false);
+                          setPinInput('');
+                          setPinError('');
+                        }
+                      }}
+                      placeholder={t.attendance.pinPlaceholder}
+                      className="w-40 text-center text-3xl font-bold tracking-[0.6em] px-4 py-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition-all"
+                      autoFocus
+                      dir="ltr"
+                    />
+                    {pinError && (
+                      <p className="text-xs text-rose-500 flex items-center gap-1 font-bold">
+                        <span className="material-symbols-rounded text-sm">error</span>
+                        {pinError}
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleClock(pinInput)}
+                        disabled={pinInput.length !== 4 || isClocking}
+                        className="px-6 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white text-sm font-bold shadow-lg shadow-amber-500/20 transition-all"
+                      >
+                        {t.attendance.enterPin}
+                      </button>
+                      <button
+                        onClick={() => { setShowPinInput(false); setPinInput(''); setPinError(''); }}
+                        className="px-4 py-2.5 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 text-sm font-bold transition-all hover:bg-gray-200 dark:hover:bg-white/10"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Big Fingerprint Button */}
+                    <button
+                      onClick={() => handleClock()}
+                      disabled={isClocking}
+                      className={`relative w-32 h-32 rounded-3xl flex items-center justify-center transition-all shadow-xl active:scale-95 ${
+                        isClocking
+                          ? 'bg-gray-200 dark:bg-gray-700 cursor-wait'
+                          : isClockIn
+                          ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30'
+                          : 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/30'
+                      }`}
+                    >
+                      {/* Ripple Effect for Clock In */}
+                      {isClockIn && !isClocking && (
+                        <span className="absolute inset-0 rounded-3xl bg-emerald-500 animate-ping opacity-20 pointer-events-none" />
+                      )}
+                      
+                      <span className="material-symbols-rounded text-white relative z-10" style={{ fontSize: '64px' }}>
+                        {isClocking ? 'progress_activity' : 'fingerprint'}
+                      </span>
+                    </button>
+
+                    {/* Button Label */}
+                    <p
+                      className={`mt-4 text-lg font-black tracking-tight ${
+                        isClockIn
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-rose-600 dark:text-rose-400'
+                      }`}
+                    >
+                      {buttonLabel}
+                    </p>
+
+                    {/* Verification Method Hint */}
+                    {selectedEmployee.biometricCredentialId && (
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2 font-medium">
+                        {t.attendance.touchSensor}
+                      </p>
+                    )}
+                    {!selectedEmployee.biometricCredentialId && selectedEmployee.attendancePin && (
+                      <p className="text-[10px] text-amber-500 dark:text-amber-400 mt-2 flex items-center gap-1 font-bold">
+                        <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>pin</span>
+                        {t.attendance.pinOrBiometric}
+                      </p>
+                    )}
+                  </>
                 )}
-                {!selectedEmployee.biometricCredentialId && selectedEmployee.attendancePin && (
-                  <p className="text-[10px] text-amber-500 dark:text-amber-400 mt-1 flex items-center gap-1">
-                    <span className="material-symbols-rounded text-xs">pin</span>
-                    {t.attendance.pinOrBiometric}
-                  </p>
-                )}
-                {!selectedEmployee.biometricCredentialId && !selectedEmployee.attendancePin && (
-                  <p className="text-[10px] text-amber-500 dark:text-amber-400 mt-1 flex items-center gap-1">
-                    <span className="material-symbols-rounded text-xs">warning</span>
-                    {t.attendance.noPinNoBiometric}
-                  </p>
-                )}
-              </>
+              </div>
             )}
           </div>
-        )}
 
-        {/* ─── Today's Timeline ─── */}
-        <div className="p-4 rounded-xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10">
-          <AttendanceTimeline
-            events={timeline}
-            language={language}
-            t={{
-              todayTimeline: t.attendance.todayTimeline,
-              noEventsToday: t.attendance.noEventsToday,
-              eventIn: t.attendance.eventIn,
-              eventOut: t.attendance.eventOut,
-              totalHours: t.attendance.totalHours,
-              ongoing: t.attendance.ongoing,
-            }}
-          />
+          {/* Right Column: Timeline - Fills full height */}
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* ─── Today's Timeline ─── */}
+            <div className="flex-1 flex flex-col p-4 rounded-xl bg-white dark:bg-gray-800/40 border border-gray-200 dark:border-white/10 shadow-sm overflow-hidden">
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
+                <AttendanceTimeline
+                  events={timeline}
+                  language={language}
+                  t={{
+                    todayTimeline: t.attendance.todayTimeline,
+                    noEventsToday: t.attendance.noEventsToday,
+                    eventIn: t.attendance.eventIn,
+                    eventOut: t.attendance.eventOut,
+                    totalHours: t.attendance.totalHours,
+                    ongoing: t.attendance.ongoing,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -20,6 +20,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
     filteredEmployees,
     columns,
     isRTL,
+    language,
     t,
     setSearchQuery,
     handleDateChange,
@@ -52,7 +53,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
       <SmallCard
         title={t.attendance.avgHours}
         value={report?.avgMinutes ? Math.floor(report.avgMinutes / 60) : 0}
-        valueSuffix={isRTL ? 'ساعة' : 'hrs'}
+        valueSuffix={formatDuration((report?.avgMinutes || 0), language).replace(/[0-9]/g, '').trim()}
         icon="timer"
         iconColor="indigo"
         className="w-full"
@@ -91,10 +92,10 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                 key: c.key as any,
                 header: c.label,
                 format: (val, row) => {
-                  if (c.id === 'duration') return formatDuration(val);
+                  if (c.id === 'duration') return formatDuration(val, language);
                   if (c.id === 'status') return val ? t.attendance.lateStatusLate : t.attendance.lateStatusOk;
                   if (c.id === 'firstIn' || c.id === 'lastOut') {
-                    return val ? new Date(val).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
+                    return val ? new Date(val).toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : '-';
                   }
                   return val;
                 }
@@ -155,7 +156,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                           <div className="flex items-center gap-2">
                             <span className="material-symbols-rounded text-emerald-500" style={{ fontSize: 'var(--icon-sm)' }}>login</span>
                             <span className="text-sm font-medium tabular-nums">
-                              {new Date(emp.firstIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {new Date(emp.firstIn).toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
                         ) : (
@@ -167,7 +168,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                           <div className="flex items-center gap-2">
                             <span className="material-symbols-rounded text-rose-500" style={{ fontSize: 'var(--icon-sm)' }}>logout</span>
                             <span className="text-sm font-medium tabular-nums">
-                              {new Date(emp.lastOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {new Date(emp.lastOut).toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
                         ) : emp.isOngoing ? (
@@ -181,7 +182,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                       </td>
                       <td className="py-3 px-4">
                         <span className="text-sm font-bold tabular-nums text-gray-700 dark:text-gray-300">
-                          {formatDuration(emp.totalMinutes)}
+                          {formatDuration(emp.totalMinutes, language)}
                         </span>
                       </td>
                       <td className="py-3 px-4">
@@ -205,7 +206,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                       <td className="py-3 px-4 rounded-r-2xl rtl:rounded-r-none rtl:rounded-l-2xl">
                         {emp.lateMinutes > 0 && (
                           <span className="text-xs font-bold text-rose-600 tabular-nums">
-                            +{emp.lateMinutes} {isRTL ? 'د' : 'm'}
+                            +{formatDuration(emp.lateMinutes, language)}
                           </span>
                         )}
                       </td>

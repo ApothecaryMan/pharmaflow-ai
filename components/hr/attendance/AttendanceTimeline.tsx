@@ -34,23 +34,22 @@ interface AttendanceTimelineProps {
   };
 }
 
-/**
- * Formats a timestamp string to a localized time string (e.g., "09:00 AM")
- */
-function formatTime(timestamp: string): string {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-  });
-}
+
 
 export const AttendanceTimeline: React.FC<AttendanceTimelineProps> = ({
   events,
   language,
   t,
 }) => {
+  // ─── Localized Time Formatter ───
+  const formatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
   // ─── Calculate working hours summary ───
   const summaries = useMemo(() => calculateWorkingHours(events), [events]);
   const summaryEntries = useMemo(() => Array.from(summaries.values()), [summaries]);
@@ -65,7 +64,7 @@ export const AttendanceTimeline: React.FC<AttendanceTimelineProps> = ({
       {/* Empty State */}
       {events.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8 text-gray-400 dark:text-gray-500">
-          <span className="material-symbols-rounded text-3xl mb-2 opacity-40">event_busy</span>
+          <span className="material-symbols-rounded mb-2 opacity-40" style={{ fontSize: '32px' }}>event_busy</span>
           <p className="text-sm">{t.noEventsToday}</p>
         </div>
       ) : (
@@ -76,13 +75,13 @@ export const AttendanceTimeline: React.FC<AttendanceTimelineProps> = ({
               {summaryEntries.map((summary) => (
                 <div
                   key={summary.employeeId}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30"
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 shadow-sm"
                 >
                   <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 truncate max-w-[80px]">
                     {summary.employeeName || summary.employeeId.substring(0, 6)}
                   </span>
                   <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 tabular-nums">
-                    {formatDuration(summary.totalMinutes)}
+                    {formatDuration(summary.totalMinutes, language)}
                   </span>
                   {summary.isOngoing && (
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -102,7 +101,7 @@ export const AttendanceTimeline: React.FC<AttendanceTimelineProps> = ({
               return (
                 <div
                   key={event.id}
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 transition-colors"
+                  className="flex items-center gap-3 px-3 py-2 rounded-md bg-white dark:bg-gray-800/40 border border-gray-100 dark:border-white/10 shadow-sm transition-all hover:bg-gray-50 dark:hover:bg-gray-800/60"
                 >
                   {/* Status Indicator Dot */}
                   <div
@@ -125,17 +124,17 @@ export const AttendanceTimeline: React.FC<AttendanceTimelineProps> = ({
 
                   {/* Session Duration Badge (OUT events only) */}
                   {sessionMinutes !== null && sessionMinutes > 0 && (
-                    <span className="text-[9px] font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 rounded tabular-nums">
-                      {formatDuration(sessionMinutes)}
+                    <span className="text-[9px] font-bold text-gray-500 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 rounded-md tabular-nums border border-transparent dark:border-white/5">
+                      {formatDuration(sessionMinutes, language)}
                     </span>
                   )}
 
                   {/* Event Type Label */}
                   <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
                       isIn
-                        ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30'
-                        : 'text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/30'
+                        ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-100/50 dark:bg-emerald-500/10 border border-emerald-200/50 dark:border-emerald-500/20'
+                        : 'text-rose-700 dark:text-rose-400 bg-rose-100/50 dark:bg-rose-500/10 border border-rose-200/50 dark:border-rose-500/20'
                     }`}
                   >
                     {isIn ? t.eventIn : t.eventOut}
@@ -144,8 +143,9 @@ export const AttendanceTimeline: React.FC<AttendanceTimelineProps> = ({
                   {/* Biometric Indicator */}
                   {event.isBiometric && (
                     <span
-                      className="material-symbols-rounded text-sm text-emerald-500 dark:text-emerald-400"
+                      className="material-symbols-rounded text-emerald-500 dark:text-emerald-400"
                       title="Verified by biometric"
+                      style={{ fontSize: '18px' }}
                     >
                       fingerprint
                     </span>
