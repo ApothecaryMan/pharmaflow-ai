@@ -215,6 +215,7 @@ interface DatePickerProps {
   size?: 'sm' | 'md' | 'lg';
   rounded?: 'full' | 'xl' | 'lg' | 'md' | 'none';
   variant?: 'default' | 'ghost' | 'pill-dark';
+  maxDate?: string;
 }
 
 export const DatePicker: React.FC<DatePickerProps> = ({
@@ -231,6 +232,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   size = 'sm',
   rounded = 'full',
   variant = 'default',
+  maxDate,
 }) => {
   const { language, numeralSystem } = useSettings();
   const isAR = language === 'AR';
@@ -478,6 +480,15 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         newDate.setHours(currentHours + 12);
       } else if (!isPM && currentHours >= 12) {
         newDate.setHours(currentHours - 12);
+      }
+    }
+
+    if (maxDate) {
+      const limit = new Date(maxDate);
+      if (newDate > limit) {
+        // Clamp to maxDate
+        setTempDate(new Date(limit));
+        return;
       }
     }
 

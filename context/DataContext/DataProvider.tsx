@@ -23,6 +23,7 @@ interface DataProviderProps {
 
 export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInventory, initialSuppliers }) => {
   const state = useDataState(initialInventory, initialSuppliers);
+  const hasInitialized = React.useRef(false);
   
   const {
     activeBranchId, activeOrgId, rawInventory, currentEmployee, setIsLoading,
@@ -55,6 +56,9 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
   // Initialization logic
   useEffect(() => {
     const initData = async () => {
+      if (hasInitialized.current) return;
+      hasInitialized.current = true;
+
       setIsLoading(true);
       try {
         const { orgService } = await import('../../services/org/orgService');

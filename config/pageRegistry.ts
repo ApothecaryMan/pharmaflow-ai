@@ -655,6 +655,16 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     requiredProps: ['onViewChange'],
     permission: 'attendance.view',
   },
+  'employee-attendance-profile': {
+    id: 'employee-attendance-profile',
+    component: React.lazy(() => import('../components/hr/attendance/EmployeeAttendanceProfile')),
+    menuLabel: 'Employee Attendance',
+    menuLabelAr: 'حضور الموظف',
+    icon: 'person_check',
+    category: 'hr',
+    requiredProps: ['onViewChange'],
+    permission: 'attendance.view',
+  },
 };
 
 // Helper function to get page config

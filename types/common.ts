@@ -65,7 +65,8 @@ export type ViewState =
   | 'services'
   | 'org-management'
   | 'attendance-terminal'
-  | 'attendance-reports';
+  | 'attendance-reports'
+  | 'employee-attendance-profile';
 
 /** Dashboard widget expand options */
 export type ExpandedView =

@@ -23,11 +23,17 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
       // Only check orgs if we have a real ID or if we're in local mode.
       const isDevPlaceholder = ownerId === devOwnerId;
       const orgs = isDevPlaceholder ? [] : await orgService.getUserOrgs(ownerId);
-      const activeOrgId = orgService.getActiveOrgId();
+      let activeOrgId = orgService.getActiveOrgId();
 
       if (orgs.length === 0 && !activeOrgId) {
         setActiveStep(1);
         return;
+      }
+
+      // Auto-set activeOrgId if we found orgs but none was persisted
+      if (!activeOrgId && orgs.length > 0) {
+        activeOrgId = orgs[0].id;
+        orgService.setActiveOrgId(activeOrgId);
       }
 
       // 2. Check Branches
@@ -58,13 +64,15 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
   };
 
   useEffect(() => {
-    if (isAuthenticated === true || isAuthenticated === undefined) {
+    // Only run check if authenticated and NO error has occurred yet.
+    // This prevents infinite loops if the check fails and sets an error state.
+    if ((isAuthenticated === true || isAuthenticated === undefined) && !error && !isChecking) {
       checkStatus();
-    } else {
-      // Not authenticated, no need to check onboarding, clearing checking state
+    } else if (isAuthenticated === false) {
+      // Not authenticated, no need to check onboarding
       setIsChecking(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, error, isChecking]);
 
   return {
     activeStep,

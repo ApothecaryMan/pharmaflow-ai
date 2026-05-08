@@ -141,7 +141,12 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                     <tr key={emp.employeeId} className="bg-gray-50/50 dark:bg-(--bg-surface-neutral) hover:bg-gray-50 dark:hover:bg-(--bg-input) transition-colors group">
                       <td className="py-3 px-4 rounded-l-2xl rtl:rounded-l-none rtl:rounded-r-2xl">
                         <div className="flex flex-col">
-                          <span className="font-bold text-gray-900 dark:text-gray-100">{emp.employeeName}</span>
+                          <span 
+                            className="font-bold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 hover:underline cursor-pointer transition-colors"
+                            onClick={() => onViewChange?.('employee-attendance-profile', { employeeId: emp.employeeId })}
+                          >
+                            {emp.employeeName}
+                          </span>
                           <span className="text-[10px] text-gray-500 font-mono">{emp.employeeCode}</span>
                         </div>
                       </td>
