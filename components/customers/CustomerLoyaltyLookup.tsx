@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Customer, Sale } from '../../types';
 import { CARD_BASE, CONTAINER_BASE } from '../../utils/themeStyles';
 import { calculateSalePoints } from '../../services/customers/loyaltyUtils';
+import { formatCurrency } from '../../utils/currency';
 import { SearchDropdown, type SearchDropdownColumn, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
 import { SmallCard } from '../common/SmallCard';
@@ -132,7 +133,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
         meta: { align: 'start' },
       },
       {
-        accessorKey: 'id',
+        accessorKey: 'serialId',
         header: t.orderId || 'Order ID',
         cell: (info) => (
           <span className='font-mono text-gray-500'>#{info.getValue() as string}</span>
@@ -240,7 +241,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
       className: 'justify-center',
       render: (customer) => (
         <span className='font-bold text-gray-500 font-mono tracking-tight'>
-          {customer.code || customer.serialId}
+          {customer.code}
         </span>
       ),
     },
@@ -345,7 +346,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
                   </h3>
                   <div className='flex items-center gap-2 mt-1'>
                     <span className='font-bold text-gray-500 font-mono tracking-tight text-xs'>
-                      {selectedCustomer.code || selectedCustomer.serialId}
+                      {selectedCustomer.code}
                     </span>
                     <span
                       className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-current text-[10px] font-bold uppercase tracking-wider bg-transparent ${
@@ -465,7 +466,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
                         <span className='opacity-70'>
                           {t.loyalty?.totalPurchases || 'Total Purchases'}
                         </span>
-                        <span>{derivedTotals.totalPurchases.toFixed(2)}</span>
+                        <span>{formatCurrency(derivedTotals.totalPurchases, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US')}</span>
                       </div>
                       <div className='flex justify-between gap-4 border-b border-white/10 pb-1'>
                         <span className='opacity-70'>
@@ -476,10 +477,13 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
                       <div className='flex justify-between gap-4 pt-1 text-amber-400 font-bold uppercase tracking-widest text-[9px]'>
                         <span>Result</span>
                         <span className='text-xs'>
-                          {(derivedTotals.totalOrders > 0
-                            ? derivedTotals.totalPurchases / derivedTotals.totalOrders
-                            : 0
-                          ).toFixed(2)}
+                          {formatCurrency(
+                            derivedTotals.totalOrders > 0
+                              ? derivedTotals.totalPurchases / derivedTotals.totalOrders
+                              : 0,
+                            'EGP',
+                            language === 'AR' ? 'ar-EG' : 'en-US'
+                          )}
                         </span>
                       </div>
                     </div>

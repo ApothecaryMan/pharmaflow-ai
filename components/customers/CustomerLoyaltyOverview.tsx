@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import { calculateSalePoints } from '../../services/customers/loyaltyUtils';
 import type { Customer, Sale } from '../../types';
+import { formatCurrency } from '../../utils/currency';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { SmallCard } from '../common/SmallCard';
 import { PageHeader } from '../common/PageHeader';
@@ -306,11 +307,14 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
                 >
                   <div className='flex justify-between items-start mb-1'>
                     <div>
-                      <p className='font-medium text-sm text-gray-900 dark:text-gray-100'>
+                      <p className='font-medium text-sm text-gray-900 dark:text-gray-100 flex items-center gap-2'>
                         {sale.customerName}
+                        <span className='text-[10px] font-mono text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded'>
+                          {sale.customerCode}
+                        </span>
                       </p>
                       <p className='text-xs text-gray-500'>
-                        {new Date(sale.date).toLocaleDateString()} • #{sale.id}
+                        {new Date(sale.date).toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US')} • #{sale.serialId}
                       </p>
                     </div>
                     <span className='px-2 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'>
@@ -318,7 +322,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
                     </span>
                   </div>
                   <p className='text-xs text-gray-600 dark:text-gray-400'>
-                    {t.loyalty?.order || 'Order'}: ${sale.total.toFixed(2)}
+                    {t.loyalty?.order || 'Order'}: {formatCurrency(sale.total, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US')}
                   </p>
                 </div>
               ))
@@ -354,11 +358,14 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
                         {index + 1}
                       </div>
                       <div className='overflow-hidden'>
-                        <p className='text-sm font-medium text-gray-700 dark:text-gray-200 truncate'>
+                        <p className='text-sm font-medium text-gray-700 dark:text-gray-200 truncate flex items-center gap-2'>
                           {customer.name}
+                          <span className='text-[10px] font-mono text-gray-400 bg-gray-100 dark:bg-gray-800/50 px-1.5 py-0.5 rounded shrink-0'>
+                            {customer.code}
+                          </span>
                         </p>
                         <p className='text-xs text-gray-500'>
-                          ${customer.totalPurchases.toFixed(2)} {t.loyalty?.totalSuffix || 'total'}
+                          {formatCurrency(customer.totalPurchases, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US')} {t.loyalty?.totalSuffix || 'total'}
                         </p>
                       </div>
                     </div>
