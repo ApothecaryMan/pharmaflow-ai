@@ -284,7 +284,8 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
         governorate: '',
         city: '',
         area: '',
-        address: ''
+        address: '',
+        shiftStartTime: '09:00'
       });
       setSelectedEmployees([]);
     }
@@ -582,6 +583,38 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
 
     return (
       <div className="flex flex-col gap-5">
+        {/* Shift Start Time */}
+        <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
+              <span className="material-symbols-rounded text-amber-600 dark:text-amber-400" style={{ fontSize: '18px' }}>schedule</span>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{t.attendance.shiftStartTime}</h4>
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                {language === 'AR' ? 'تحديد موعد بدء العمل لاحتساب التأخير' : 'Define work start time to calculate lateness'}
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+             <input
+               type="time"
+               value={editingBranch?.shiftStartTime || '09:00'}
+               onChange={(e) => setEditingBranch(prev => ({ ...prev!, shiftStartTime: e.target.value }))}
+               className="flex-1 px-4 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-bold focus:ring-2 focus:ring-(--color-primary) transition-all outline-none"
+             />
+             <div className="flex flex-col">
+               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">
+                 {language === 'AR' ? 'الحالي' : 'Current'}
+               </span>
+               <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">{editingBranch?.shiftStartTime || '09:00'}</span>
+             </div>
+          </div>
+        </div>
+
+        <div className="h-px bg-zinc-100 dark:bg-zinc-800/50" />
+
         {/* Title */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">

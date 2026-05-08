@@ -94,6 +94,8 @@ export interface Branch {
   phone?: string;
   /** Default delivery fee for this branch */
   deliveryFee?: number;
+  /** Standard shift start time (e.g., "09:00") for late detection */
+  shiftStartTime?: string;
   /** Active status */
   status: 'active' | 'inactive';
   /** ISO date of creation */

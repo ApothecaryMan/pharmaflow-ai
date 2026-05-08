@@ -16,6 +16,7 @@ export const branchRepository = {
       city: db.city || undefined,
       area: db.area || undefined,
       deliveryFee: db.delivery_fee || 0,
+      shiftStartTime: db.shift_start_time || '09:00',
       status: db.status || 'active',
       createdAt: db.created_at || new Date().toISOString(),
       updatedAt: db.updated_at || new Date().toISOString(),
@@ -34,6 +35,7 @@ export const branchRepository = {
     if (b.city !== undefined) db.city = b.city;
     if (b.area !== undefined) db.area = b.area;
     if (b.deliveryFee !== undefined) db.delivery_fee = b.deliveryFee;
+    if (b.shiftStartTime !== undefined) db.shift_start_time = b.shiftStartTime;
     if (b.status !== undefined) db.status = b.status;
     return db;
   },
