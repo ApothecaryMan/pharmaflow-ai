@@ -610,6 +610,15 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
                </span>
                <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">{editingBranch?.shiftStartTime || '09:00'}</span>
              </div>
+             {editingBranch?.id && (
+               <button
+                 onClick={handleSave}
+                 disabled={isSubmitting}
+                 className="px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-bold rounded-lg uppercase tracking-wider hover:opacity-90 disabled:opacity-50 transition-all"
+               >
+                 {isSubmitting ? '...' : (language === 'AR' ? 'حفظ الوقت' : 'Save Time')}
+               </button>
+             )}
           </div>
         </div>
 
@@ -796,23 +805,25 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
               {error}
             </div>
           )}
-        </div>
 
-        <div className="flex gap-3 pt-6 border-t border-zinc-100 dark:border-zinc-800/50 mt-6">
-          <button onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-none">
-            {language === 'AR' ? 'إلغاء' : 'Cancel'}
-          </button>
-          <button
-            disabled={isSubmitting} onClick={handleSave}
-            className="flex-1 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest text-white shadow-sm disabled:opacity-50 flex items-center justify-center transition-none"
-            style={{ backgroundColor: color }}
-          >
-            {isSubmitting ? (
-              <span className="text-[10px] font-bold">{language === 'AR' ? 'جاري الحفظ...' : 'SAVING...'}</span>
-            ) : (
-              t.settings.saveBranch
-            )}
-          </button>
+          {modalView !== 'attendance' && (
+            <div className="flex gap-3 pt-6 border-t border-zinc-100 dark:border-zinc-800/50 mt-6">
+              <button onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-none">
+                {language === 'AR' ? 'إلغاء' : 'Cancel'}
+              </button>
+              <button
+                disabled={isSubmitting} onClick={handleSave}
+                className="flex-1 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest text-white shadow-sm disabled:opacity-50 flex items-center justify-center transition-none"
+                style={{ backgroundColor: color }}
+              >
+                {isSubmitting ? (
+                  <span className="text-[10px] font-bold">{language === 'AR' ? 'جاري الحفظ...' : 'SAVING...'}</span>
+                ) : (
+                  t.settings.saveBranch
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </Modal>
     </div>
