@@ -242,11 +242,11 @@ layer(base);
   }
 
   /* Force stable gutters on internal scrollable containers only (exclude main window) */
-  :not(html):not(body).overflow-y-auto,
-  :not(html):not(body).overflow-y-scroll,
-  :not(html):not(body).overflow-auto,
-  :not(html):not(body)[class*="overflow-y-auto"],
-  :not(html):not(body)[class*="overflow-y-scroll"] {
+  :not(html):not(body).overflow-y-auto:not(.no-scrollbar),
+  :not(html):not(body).overflow-y-scroll:not(.no-scrollbar),
+  :not(html):not(body).overflow-auto:not(.no-scrollbar),
+  :not(html):not(body)[class*="overflow-y-auto"]:not(.no-scrollbar),
+  :not(html):not(body)[class*="overflow-y-scroll"]:not(.no-scrollbar) {
     scrollbar-gutter: stable !important;
   }
 }
@@ -282,6 +282,15 @@ layer(base);
   &::-webkit-scrollbar {
     display: none !important;
   }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 @utility glass-surface {

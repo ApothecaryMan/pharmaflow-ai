@@ -52,30 +52,27 @@ const WheelPicker: React.FC<WheelPickerProps> = ({
   loop = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const highlightItemsRef = useRef<HTMLDivElement>(null);
   const ITEM_HEIGHT = 40;
   const isScrollingRef = useRef(false);
   const syncFrameRef = useRef<number | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const lastIndexRef = useRef(0);
 
   const displayItems = useMemo(() => {
-    return loop ? [...items, ...items, ...items, ...items, ...items] : items;
+    return loop ? [...items, ...items, ...items] : items;
   }, [items, loop]);
 
-  // High-performance sync using requestAnimationFrame
-  const syncScroll = () => {
-    if (containerRef.current && highlightItemsRef.current) {
-      const top = containerRef.current.scrollTop;
-      highlightItemsRef.current.style.transform = `translate3d(0, -${top}px, 0)`;
-    }
-  };
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
 
   useLayoutEffect(() => {
     if (containerRef.current) {
       const originalIndex = items.findIndex((i) => i.value === value);
       if (originalIndex !== -1) {
-        const targetIndex = loop ? originalIndex + items.length * 2 : originalIndex;
+        const targetIndex = loop ? originalIndex + items.length : originalIndex;
         containerRef.current.scrollTop = targetIndex * ITEM_HEIGHT;
-        syncScroll();
+        setActiveIndex(targetIndex);
       }
     }
   }, [value, items, loop]);
@@ -87,11 +84,14 @@ const WheelPicker: React.FC<WheelPickerProps> = ({
     let debounceTimer: any;
 
     const onScroll = () => {
-      isScrollingRef.current = true;
-
-      // Zero-lag sync
-      if (syncFrameRef.current) cancelAnimationFrame(syncFrameRef.current);
-      syncFrameRef.current = requestAnimationFrame(syncScroll);
+      syncFrameRef.current = requestAnimationFrame(() => {
+        const scrollTop = container.scrollTop;
+        const index = Math.round(scrollTop / ITEM_HEIGHT);
+        if (index !== lastIndexRef.current) {
+          lastIndexRef.current = index;
+          setActiveIndex(index);
+        }
+      });
 
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
@@ -105,15 +105,14 @@ const WheelPicker: React.FC<WheelPickerProps> = ({
 
         if (loop) {
           const sectionSize = items.length * ITEM_HEIGHT;
-          const normalizedScrollTop = actualIndex * ITEM_HEIGHT + sectionSize * 2;
+          const normalizedScrollTop = actualIndex * ITEM_HEIGHT + sectionSize;
           if (Math.abs(scrollTop - normalizedScrollTop) > 10) {
             container.scrollTo({ top: normalizedScrollTop, behavior: 'auto' });
-            syncScroll();
           }
         }
 
         if (newValue !== undefined && newValue !== value) {
-          onChange(newValue);
+          onChangeRef.current(newValue);
         }
       }, 50);
     };
@@ -124,71 +123,52 @@ const WheelPicker: React.FC<WheelPickerProps> = ({
       clearTimeout(debounceTimer);
       if (syncFrameRef.current) cancelAnimationFrame(syncFrameRef.current);
     };
-  }, [items, value, onChange, loop]);
-
-  const ItemList = ({ isLens }: { isLens: boolean }) => (
-    <>
-      {displayItems.map((item, i) => (
-        <div
-          key={`${item.value}-${i}`}
-          className='h-[40px] flex items-center justify-center snap-center cursor-pointer'
-          onClick={() => {
-            if (containerRef.current)
-              containerRef.current.scrollTo({ top: i * ITEM_HEIGHT, behavior: 'smooth' });
-          }}
-        >
-          <span
-            className='text-sm whitespace-nowrap px-2'
-            style={{
-              fontOpticalSizing: 'auto',
-              fontVariationSettings: isLens
-                ? '"slnt" 0, "wdth" 151, "wght" 1000, "GRAD" 144'
-                : '"slnt" 0, "wdth" 100, "wght" 400, "GRAD" 0',
-              fontSize: '16px',
-              color: isLens ? 'inherit' : 'currentColor',
-            }}
-          >
-            {item.label}
-          </span>
-        </div>
-      ))}
-    </>
-  );
+  }, [items, value, loop]);
 
   return (
     <div className='relative h-[200px] overflow-hidden group select-none' style={{ width }}>
-      {/* Layer 1: Background (Normal / Faded) */}
       <div
         ref={containerRef}
-        className='h-full overflow-y-auto no-scrollbar snap-y snap-mandatory py-[80px] relative z-10 text-gray-500/60 dark:text-gray-500/60'
+        className='h-full overflow-y-auto no-scrollbar snap-y snap-mandatory py-[80px] relative z-10 w-[calc(100%+20px)] pr-[20px]'
         style={{
           WebkitMaskImage:
-            'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.1) 10%, black 40%, black 60%, rgba(0,0,0,0.1) 90%, transparent 100%)',
+            'linear-gradient(to bottom, transparent 0%, black 40%, black 60%, transparent 100%)',
           maskImage:
-            'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.1) 10%, black 40%, black 60%, rgba(0,0,0,0.1) 90%, transparent 100%)',
+            'linear-gradient(to bottom, transparent 0%, black 40%, black 60%, transparent 100%)',
         }}
       >
-        <ItemList isLens={false} />
-      </div>
+        {displayItems.map((item, i) => {
+          const distance = Math.abs(i - activeIndex);
+          const opacity = distance === 0 ? 1 : distance === 1 ? 0.4 : 0.15;
+          const scale = distance === 0 ? 1.1 : distance === 1 ? 0.9 : 0.8;
+          const fontWeight = distance === 0 ? 600 : 400;
 
-      {/* Layer 2: Foreground Lens (Bold / Sharp) */}
-      <div
-        className='absolute inset-x-0 top-0 bottom-0 z-20 pointer-events-none'
-        style={{
-          // Sharp cut for the lens at the center 40px (from 80px to 120px)
-          WebkitMaskImage:
-            'linear-gradient(to bottom, transparent 80px, black 80px, black 120px, transparent 120px)',
-          maskImage:
-            'linear-gradient(to bottom, transparent 80px, black 80px, black 120px, transparent 120px)',
-        }}
-      >
-        <div
-          ref={highlightItemsRef}
-          className='absolute top-0 left-0 w-full pt-[80px] text-gray-900 dark:text-white'
-          style={{ willChange: 'transform' }}
-        >
-          <ItemList isLens={true} />
-        </div>
+          return (
+            <div
+              key={`${item.value}-${i}`}
+              className='h-[40px] flex items-center justify-center snap-center cursor-pointer transition-all duration-200'
+              style={{
+                opacity,
+                transform: `scale(${scale})`,
+              }}
+              onClick={() => {
+                if (containerRef.current)
+                  containerRef.current.scrollTo({ top: i * ITEM_HEIGHT, behavior: 'smooth' });
+              }}
+            >
+              <span
+                className='text-sm whitespace-nowrap px-2'
+                style={{
+                  fontFamily: 'var(--font-en), var(--font-ar), sans-serif',
+                  fontSize: '16px',
+                  fontWeight,
+                }}
+              >
+                {item.label}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -264,6 +244,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   // Sync state with props
   useEffect(() => {
+    if (!isOpen) return;
+
     if (value) {
       const d = new Date(value);
       setSelectedDate(d);
@@ -272,7 +254,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     } else {
       setSelectedDate(null);
       // If open but no value, default to current date so wheels render
-      setTempDate(isOpen ? new Date() : null);
+      setTempDate(new Date());
       setViewDate(new Date());
     }
   }, [value, isOpen]);
@@ -355,39 +337,6 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   // --- Wheel Logic ---
 
-  // Generate Date Items (e.g. +/- 5 years from viewDate)
-  const dateWheelItems = useMemo(() => {
-    const items = [];
-    const centerDate = new Date(); // Always center around today/selected for generation loop?
-    // Actually, iOS picker is infinite. We'll simulate a wide range centered on the selected date.
-    // If we want it truly smooth, we need a lot of items.
-    // Let's go +/- 365 days for now to keep it responsive, or just render "current month" days?
-    // User requested "Mon 19 Feb" style.
-
-    const base = tempDate || new Date();
-    const range = 600; // days before and after
-
-    for (let i = -range; i <= range; i++) {
-      const d = new Date(base);
-      d.setDate(base.getDate() + i);
-
-      // Labels for date wheel (e.g., "Mon 19 Feb")
-      const weekday = d.toLocaleDateString(languageLocale, { weekday: 'short' });
-      const month = d.toLocaleDateString(languageLocale, { month: 'short' });
-      const day = d.getDate().toLocaleString(activeLocale, { useGrouping: false });
-      
-      const label = isAR ? `${weekday} ${day} ${month}` : `${weekday} ${day} ${month}`;
-
-      // Value: ISO string date part for uniqueness? Or just timestamp?
-      // We use full date string YYYY-MM-DD
-      const val = d.toISOString().split('T')[0];
-
-      items.push({ label, value: val });
-    }
-    return items;
-  }, [locale]); // Recalculate if locale changes. Note: heavily dependent on 'tempDate' might cause jitters if we re-generate on every scroll.
-  // Better to generate around a STABLE center (e.g. initial viewDate) and just select the correct one.
-  // Implemented: Generate around Initial Open Date (viewDate) is better to avoid array shifts.
 
   // Dynamic Day Items based on selected Month/Year
   const currentYearForDays = tempDate?.getFullYear() || new Date().getFullYear();
@@ -622,7 +571,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             onClick={clearSelection}
             className={`flex items-center justify-center ml-1.5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors`}
           >
-            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>close</span>
+            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>close</span>
           </div>
         )}
       </button>
