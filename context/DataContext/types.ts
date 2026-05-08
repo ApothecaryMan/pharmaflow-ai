@@ -10,7 +10,8 @@ import type {
   Sale,
   StockBatch,
   Supplier,
-  Branch
+  Branch,
+  Organization
 } from '../../types';
 
 export type {
@@ -40,6 +41,7 @@ export interface DataState {
   batches: StockBatch[];
   branches: Branch[];
   activeBranch: Branch | null;
+  activeOrg: Organization | null;
   isLoading: boolean;
 }
 
@@ -119,6 +121,8 @@ export interface DataActions {
 
   // Refresh all data from storage
   refreshAll: () => Promise<void>;
+
+  setActiveOrg: (org: Organization | null) => void;
 
   // Switch to a different branch and reload all data
   switchBranch: (branchId: string, skipClearEmployee?: boolean) => Promise<void>;

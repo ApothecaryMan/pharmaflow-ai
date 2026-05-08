@@ -556,9 +556,11 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className={`h-screen overflow-hidden ${isTauri() ? 'pt-10' : ''}`}>
+    <div className="h-screen flex flex-col overflow-hidden bg-black">
       <TitleBar />
-      {finalContent}
+      <div className="flex-1 overflow-hidden relative">
+        {finalContent}
+      </div>
     </div>
   );
 };

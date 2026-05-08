@@ -27,6 +27,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
   
   const {
     activeBranchId, activeOrgId, rawInventory, currentEmployee, setIsLoading,
+    activeOrg, setActiveOrg,
     setActiveBranchId, setActiveOrgId, setRawInventory, setSalesState,
     setSuppliersState, setPurchasesState, setPurchaseReturnsState,
     setReturnsState, setCustomersState, setEmployeesState, setCurrentEmployee,
@@ -35,7 +36,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
 
   const actions = useDataActions({
     activeBranchId, activeOrgId, rawInventory, currentEmployee, setIsLoading,
-    setActiveBranchId, setActiveOrgId, setRawInventory, setSalesState,
+    setActiveBranchId, setActiveOrgId, setActiveOrg, setRawInventory, setSalesState,
     setSuppliersState, setPurchasesState, setPurchaseReturnsState,
     setReturnsState, setCustomersState, setEmployeesState, setCurrentEmployee,
     setBatchesState, setBranches, lastLoadedBranchId
@@ -63,6 +64,13 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
       try {
         const { orgService } = await import('../../services/org/orgService');
         const defaultOrgId = orgService.getActiveOrgId() || '';
+        
+        // Fetch full Org details to get the name
+        let activeOrg = null;
+        if (defaultOrgId) {
+          activeOrg = await orgService.getById(defaultOrgId);
+        }
+
         const allBranches = await branchService.getAll(defaultOrgId);
         
         if (allBranches.length === 0) {
@@ -83,6 +91,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
         setBranches(allBranches);
         setActiveBranchId(finalBranchId);
         setActiveOrgId(defaultOrgId);
+        setActiveOrg(activeOrg);
         lastLoadedBranchId.current = finalBranchId;
 
         await settingsService.setMultiple({ 

@@ -1,10 +1,11 @@
 import { useState, useRef, useMemo } from 'react';
-import type { Drug, Sale, Supplier, Purchase, PurchaseReturn, Return, Customer, Employee, StockBatch, Branch } from '../../types';
+import type { Drug, Sale, Supplier, Purchase, PurchaseReturn, Return, Customer, Employee, StockBatch, Branch, Organization } from '../../types';
 import { useComputedInventory } from '../../hooks/inventory/useComputedInventory';
 
 export const useDataState = (initialInventory?: Drug[], initialSuppliers?: Supplier[]) => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeOrgId, setActiveOrgId] = useState<string>('');
+  const [activeOrg, setActiveOrg] = useState<Organization | null>(null);
   const [activeBranchId, setActiveBranchId] = useState<string>('');
   const [rawInventory, setRawInventory] = useState<Drug[]>(initialInventory || []);
   const [sales, setSalesState] = useState<Sale[]>([]);
@@ -35,6 +36,7 @@ export const useDataState = (initialInventory?: Drug[], initialSuppliers?: Suppl
     activeOrgId, setActiveOrgId,
     activeBranchId, setActiveBranchId,
     activeBranch,
+    activeOrg, setActiveOrg,
     rawInventory, setRawInventory,
     sales, setSalesState,
     suppliers, setSuppliersState,

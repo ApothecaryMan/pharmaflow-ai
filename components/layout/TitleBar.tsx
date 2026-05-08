@@ -2,12 +2,19 @@ import React from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useSettings } from '../../context';
 import { isTauri } from '../../utils/platform';
+import { useData } from '../../context/DataContext';
 
 const appWindow = isTauri() ? getCurrentWindow() : null;
 
 export const TitleBar: React.FC = () => {
   const { darkMode } = useSettings();
+  const { branches, activeBranchId, activeOrg } = useData();
+  
   if (!isTauri()) return null;
+
+  const activeBranch = branches.find(b => b.id === activeBranchId);
+  const orgName = activeOrg?.name || ''; 
+  const branchName = activeBranch?.name || '';
   const handleMinimize = () => appWindow.minimize();
   const handleMaximize = () => appWindow.toggleMaximize();
   const handleClose = () => appWindow.close();
@@ -16,10 +23,9 @@ export const TitleBar: React.FC = () => {
     <div 
       data-tauri-drag-region 
       dir="ltr"
-      className="h-10 backdrop-blur-md border-b flex items-center justify-between px-3 select-none fixed top-0 left-0 right-0 z-[9999]"
+      className="h-10 backdrop-blur-md flex items-center justify-between px-3 select-none z-[9999]"
       style={{
         backgroundColor: 'var(--bg-navbar)',
-        borderColor: 'var(--border-divider)',
         color: 'var(--text-primary)'
       }}
     >
@@ -30,8 +36,29 @@ export const TitleBar: React.FC = () => {
           className="w-5 h-5 object-contain" 
         />
         <span className="text-xs font-bold text-gray-500 dark:text-gray-400 tracking-wide uppercase">
-          ZINC <span className="mx-1 opacity-20">|</span> نظام إدارة الصيدليات
+          ZINC <span className="mx-1 opacity-20">|</span> Pharmacy
         </span>
+      </div>
+
+      {/* Middle Content: Org - Branch */}
+      <div 
+        className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 pointer-events-none"
+        dir="rtl"
+        style={{ fontFamily: 'GraphicSansFont, sans-serif' }}
+      >
+        {orgName && (
+          <span className="text-[14px] font-normal text-gray-500 dark:text-gray-400">
+            {orgName}
+          </span>
+        )}
+        {orgName && branchName && (
+          <span className="text-gray-500 dark:text-gray-400 opacity-40">-</span>
+        )}
+        {branchName && (
+          <span className="text-[16px] font-medium text-gray-500 dark:text-gray-400">
+            {branchName}
+          </span>
+        )}
       </div>
 
       <div className="flex items-center gap-0.5">

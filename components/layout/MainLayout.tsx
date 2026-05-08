@@ -147,7 +147,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         toggleFullscreen={toggleFullscreen}
       >
         <div
-          className='h-screen flex flex-col transition-colors duration-200 select-none overflow-hidden'
+          className='h-full flex flex-col transition-colors duration-200 select-none overflow-hidden'
           style={{
             backgroundColor: 'var(--bg-primary)',
             color: 'var(--text-primary)',
@@ -258,14 +258,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           </div>
 
           {/* Status Bar */}
-          {!isStandalone && (
-            <StatusBar
-              t={t.statusBar}
-              currentEmployeeId={currentEmployeeId}
-              onSelectEmployee={setCurrentEmployeeId}
-              isRecoveringPassword={isRecoveringPassword}
-            />
-          )}
+          <StatusBar
+            t={t.statusBar}
+            currentEmployeeId={currentEmployeeId}
+            onSelectEmployee={setCurrentEmployeeId}
+            isRecoveringPassword={isRecoveringPassword}
+          />
         </div>
       </GlobalContextMenuWrapper>
     </ContextMenuProvider>

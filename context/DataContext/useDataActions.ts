@@ -23,6 +23,7 @@ interface DataActionsProps {
   setIsLoading: (loading: boolean) => void;
   setActiveBranchId: (id: string) => void;
   setActiveOrgId: (id: string) => void;
+  setActiveOrg: (org: any) => void;
   setRawInventory: (data: any) => void;
   setSalesState: (data: any) => void;
   setSuppliersState: (data: any) => void;
@@ -45,6 +46,7 @@ export const useDataActions = ({
   setIsLoading,
   setActiveBranchId,
   setActiveOrgId,
+  setActiveOrg,
   setRawInventory,
   setSalesState,
   setSuppliersState,
@@ -65,7 +67,8 @@ export const useDataActions = ({
     if (!branchId || !orgId) return;
 
     try {
-      const [inv, sal, sup, pur, pRet, ret, cust, emp, bat, allBranches] = await Promise.all([
+      const { orgService } = await import('../../services/org/orgService');
+      const [inv, sal, sup, pur, pRet, ret, cust, emp, bat, allBranches, activeOrgData] = await Promise.all([
         inventoryService.getAll(branchId),
         salesService.getAll(branchId),
         supplierService.getAll(branchId),
@@ -76,6 +79,7 @@ export const useDataActions = ({
         employeeService.getAll(branchId),
         batchService.getAllBatches(branchId),
         branchService.getAll(orgId),
+        orgService.getById(orgId),
       ]);
 
       const currentSession = authService.getCurrentUserSync();
@@ -93,6 +97,7 @@ export const useDataActions = ({
       setCurrentEmployee(loggedInEmployee);
       setBatchesState(bat);
       setBranches(allBranches);
+      setActiveOrg(activeOrgData);
     } catch (error) {
       console.error('Error refreshing data:', error);
     }
@@ -137,6 +142,8 @@ export const useDataActions = ({
 
       orgService.setActiveOrgId(orgId);
       setActiveOrgId(orgId);
+      const fullOrg = await orgService.getById(orgId);
+      setActiveOrg(fullOrg);
       await settingsService.set('orgId', orgId);
       const branches = await branchService.getAll(orgId);
       if (branches.length > 0) await switchBranch(branches[0].id);
