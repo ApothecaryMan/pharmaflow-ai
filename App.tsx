@@ -32,6 +32,8 @@ import { TRANSLATIONS } from './i18n/translations';
 import { DataProvider, useData } from './context/DataContext';
 import { authService } from './services/auth/authService';
 import { type Supplier, ViewState } from './types';
+import { TitleBar } from './components/layout/TitleBar';
+import { isTauri } from './utils/platform';
 
 const INITIAL_SUPPLIERS: Supplier[] = [
   { id: '1', orgId: '', branchId: '1', name: 'B2B', contactPerson: 'B2B', phone: '', email: '', address: '', status: 'active' },
@@ -535,50 +537,29 @@ const App: React.FC = () => {
     }
   }, [authState.isAuthenticated]);
 
-  // 8. Not Authenticated -> Show Login
-  if (!authState.isAuthenticated) {
-    return (
-      <AuthPage
-        onLoginSuccess={handleLoginSuccess}
-        language={language}
-      />
-    );
-  }
-
-  // 9. ONBOARDING GATE (Explicit Step State)
-  if (activeStep === 1) {
-    return (
-      <OrgSetupScreen 
-        language={language} 
-        onComplete={() => setActiveStep(2)} 
-      />
-    );
-  }
-
-  if (activeStep === 2) {
-    return (
-      <BranchSetupScreen 
-        language={language} 
-        color={theme.primary} 
-        onBack={() => setActiveStep(1)}
-        onComplete={() => setActiveStep(3)} 
-      />
-    );
-  }
-
-  if (activeStep === 3) {
-    return (
-      <EmployeeSetupScreen 
-        language={language} 
-        color={theme.primary} 
-        onBack={() => setActiveStep(2)}
-      />
-    );
-  }
-
   // 10. Authenticated & Setup Done -> Show Secure Content wrapped in Providers
-  return (
+  const content = authState.isAuthenticated ? (
     <AuthenticatedContent {...appState} {...authState} />
+  ) : (
+    <AuthPage
+      onLoginSuccess={handleLoginSuccess}
+      language={language}
+    />
+  );
+
+  // Handle Onboarding Steps
+  let finalContent = content;
+  if (authState.isAuthenticated) {
+    if (activeStep === 1) finalContent = <OrgSetupScreen language={language} onComplete={() => setActiveStep(2)} />;
+    else if (activeStep === 2) finalContent = <BranchSetupScreen language={language} color={theme.primary} onBack={() => setActiveStep(1)} onComplete={() => setActiveStep(3)} />;
+    else if (activeStep === 3) finalContent = <EmployeeSetupScreen language={language} color={theme.primary} onBack={() => setActiveStep(2)} />;
+  }
+
+  return (
+    <div className={`h-screen overflow-hidden ${isTauri() ? 'pt-10' : ''}`}>
+      <TitleBar />
+      {finalContent}
+    </div>
   );
 };
 
