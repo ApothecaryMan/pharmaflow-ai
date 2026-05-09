@@ -62,6 +62,7 @@ interface BranchCardProps {
 
 
 const BranchCard: React.FC<BranchCardProps> = ({ branch, employees, language, onEdit, onDelete, isSubmitting, isLoading }) => {
+  const t = TRANSLATIONS[language];
   const maxAvatars = 9;
   const displayEmployees = employees.slice(0, maxAvatars);
   const remainingCount = employees.length - maxAvatars;
@@ -96,7 +97,7 @@ const BranchCard: React.FC<BranchCardProps> = ({ branch, employees, language, on
                 : 'bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-500/10 dark:text-zinc-400 dark:border-zinc-500/20'
             }`}>
               <span className={`w-1 h-1 rounded-full ${branch?.status === 'active' ? 'bg-emerald-500' : 'bg-zinc-400'}`} />
-              {branch?.status === 'active' ? (language === 'AR' ? 'نشط' : 'Active') : (language === 'AR' ? 'ملغي' : 'Inactive')}
+              {branch?.status === 'active' ? t.settings.active : t.settings.inactive}
             </div>
           )}
         </div>
@@ -165,14 +166,14 @@ const BranchCard: React.FC<BranchCardProps> = ({ branch, employees, language, on
                 <span className="material-symbols-rounded text-zinc-400 shrink-0" style={{ fontSize: '16px' }}>location_on</span>
                 <div className="flex flex-col min-w-0">
                   <span className="text-[11px] text-zinc-950 dark:text-zinc-50 font-bold leading-normal truncate">
-                    {branch?.address || (language === 'AR' ? 'لم يتم تحديد عنوان تفصيلي' : 'No street address set')}
+                    {branch?.address || t.settings.noStreetAddress}
                   </span>
                   <span className="text-[10px] text-zinc-500 dark:text-zinc-500 leading-normal truncate">
                     {[
                       getLocationName(branch?.governorate || '', 'gov', language),
                       getLocationName(branch?.city || '', 'city', language),
                       getLocationName(branch?.area || '', 'area', language)
-                    ].filter(Boolean).join(language === 'AR' ? '، ' : ', ') || (language === 'AR' ? 'لم يتم تحديد موقع' : 'No location set')}
+                    ].filter(Boolean).join(language === 'AR' ? '، ' : ', ') || t.settings.noLocationSet}
                   </span>
                 </div>
               </div>
@@ -203,7 +204,7 @@ const BranchCard: React.FC<BranchCardProps> = ({ branch, employees, language, on
               className="flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer transition-none"
             >
               <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>edit</span>
-              {language === 'AR' ? 'تعديل' : 'Edit'}
+              {t.common.edit}
             </button>
             <button
               disabled={isSubmitting}
@@ -304,9 +305,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
       let savedBranch: Branch;
       if (editingBranch.id) {
         if (editingBranch.id === activeBranchId && editingBranch.status === 'inactive') {
-          showAlertError(language === 'AR' 
-            ? 'لا يمكن الغاء تفعيل الفرع الحالي النشط' 
-            : 'Cannot deactivate the currently active branch');
+          showAlertError(t.settings.cannotDeactivateActive);
           setIsSubmitting(false);
           return;
         }
@@ -324,7 +323,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
       // Move employee assignment logic to service
       await branchService.assignEmployees(savedBranch.id, selectedEmployees);
       
-      success(language === 'AR' ? 'تم حفظ بيانات الفرع بنجاح' : 'Branch data saved successfully');
+      success(t.settings.saveSuccess);
       setIsModalOpen(false);
       await loadData();
       await refreshAll();
@@ -341,7 +340,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
 
   const handleDelete = async (id: string, name: string) => {
     if (id === activeBranchId) {
-      showAlertError(language === 'AR' ? 'لا يمكن الغاء تفعيل الفرع الحالي النشط' : 'Cannot deactivate the currently active branch');
+      showAlertError(t.settings.cannotDeactivateActive);
       return;
     }
 
@@ -349,7 +348,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
       setIsSubmitting(true);
       try {
         await branchService.update(id, { status: 'inactive' });
-        success(language === 'AR' ? 'تم إلغاء تفعيل الفرع' : 'Branch deactivated');
+        success(t.settings.deactivated);
         await loadData();
         await refreshAll();
       } catch (err: any) {
@@ -398,7 +397,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${s === 'active' ? 'bg-emerald-500' : 'bg-zinc-400'}`} />
               <span className="text-sm font-medium">
-                {s === 'active' ? (language === 'AR' ? 'نشط' : 'Active') : (language === 'AR' ? 'غير نشط' : 'Inactive')}
+                {s === 'active' ? t.settings.active : t.settings.inactive}
               </span>
             </div>
           )}
@@ -406,37 +405,24 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
             <div className="flex items-center gap-2 py-1">
               <div className={`w-2 h-2 rounded-full ${s === 'active' ? 'bg-emerald-500' : 'bg-zinc-400'}`} />
               <span className="text-sm font-medium">
-                {s === 'active' ? (language === 'AR' ? 'نشط' : 'Active') : (language === 'AR' ? 'غير نشط' : 'Inactive')}
+                {s === 'active' ? t.settings.active : t.settings.inactive}
               </span>
             </div>
           )}
         />
       </FormField>
 
-      <FormField label={t.settings?.branchAddress || 'Address'} className="col-span-2">
-        <LocationSelector
-          language={language}
-          t={t}
-          selectedGovernorate={editingBranch?.governorate}
-          selectedCity={editingBranch?.city}
-          selectedArea={editingBranch?.area}
-          onGovernorateChange={(val) => setEditingBranch(prev => ({ ...prev!, governorate: val }))}
-          onCityChange={(val) => setEditingBranch(prev => ({ ...prev!, city: val }))}
-          onAreaChange={(val) => setEditingBranch(prev => ({ ...prev!, area: val }))}
-        />
-      </FormField>
-
-      <FormField label={language === 'AR' ? 'العنوان بالتفصيل' : 'Street Address'} className="col-span-2" id="branch-address">
+      <FormField label={t.settings.streetAddress} className="col-span-2" id="branch-address">
         <SmartInput
           id="branch-address"
           type="text"
-          placeholder={language === 'AR' ? 'رقم المبنى، اسم الشارع...' : 'Building no, street name...'}
+          placeholder={t.settings.streetAddressPlaceholder}
           value={editingBranch?.address || ''}
           onChange={(e) => setEditingBranch(prev => ({ ...prev!, address: e.target.value }))}
         />
       </FormField>
       
-      <FormField label={t.settings?.branchPhone || 'Phone Number'} className="col-span-2" id="branch-phone">
+      <FormField label={t.settings.branchPhone} className="col-span-2" id="branch-phone">
         <SmartPhoneInput
           id="branch-phone"
           placeholder="+20..."
@@ -468,8 +454,8 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
             value={employeeView}
             onChange={(val) => setEmployeeView(val as 'all' | 'selected')}
             options={[
-        { label: language === 'AR' ? 'الكل' : 'All', value: 'all', count: employees.filter(e => (e.role as any) !== 'god' && e.employeeCode !== 'EMP-000').length },
-              { label: language === 'AR' ? 'المختارة' : 'Selected', value: 'selected', count: selectedEmployees.length }
+              { label: t.settings.all, value: 'all', count: employees.filter(e => (e.role as any) !== 'god' && e.employeeCode !== 'EMP-000').length },
+              { label: t.settings.selected, value: 'selected', count: selectedEmployees.length }
             ]}
             className="w-44"
           />
@@ -481,7 +467,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
             type="text"
             value={employeeSearchTerm}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmployeeSearchTerm(e.target.value)}
-            placeholder={language === 'AR' ? 'ابحث عن موظف...' : 'Search employee...'}
+            placeholder={t.settings.searchEmployee}
             className="ps-10"
           />
         </div>
@@ -494,8 +480,8 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
               </span>
               <p className="text-xs text-zinc-500 mt-2 font-medium">
                 {employeeView === 'selected' 
-                  ? (language === 'AR' ? 'لا يوجد موظفين مختارين' : 'No selected employees')
-                  : (language === 'AR' ? 'لا توجد نتائج' : 'No results found')}
+                  ? t.settings.noSelectedEmployees
+                  : t.settings.noResults}
               </p>
             </div>
           ) : (
@@ -544,7 +530,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
         <div className="py-12 flex flex-col items-center justify-center text-center opacity-40">
           <span className="material-symbols-rounded text-zinc-400" style={{ fontSize: '40px' }}>save</span>
           <p className="text-xs text-zinc-500 mt-2 font-medium">
-            {language === 'AR' ? 'احفظ الفرع أولاً لتتمكن من توليد رمز الحضور' : 'Save the branch first to generate an attendance token'}
+            {t.settings.saveFirstForToken}
           </p>
         </div>
       );
@@ -592,7 +578,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
             <div>
               <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{t.attendance.shiftStartTime}</h4>
               <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
-                {language === 'AR' ? 'تحديد موعد بدء العمل لاحتساب التأخير' : 'Define work start time to calculate lateness'}
+                {t.attendance.shiftStartDesc}
               </p>
             </div>
           </div>
@@ -606,7 +592,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
              />
              <div className="flex flex-col">
                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">
-                 {language === 'AR' ? 'الحالي' : 'Current'}
+                 {t.settings.current}
                </span>
                <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">{editingBranch?.shiftStartTime || '09:00'}</span>
              </div>
@@ -616,7 +602,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
                  disabled={isSubmitting}
                  className="px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-bold rounded-lg uppercase tracking-wider hover:opacity-90 disabled:opacity-50 transition-all"
                >
-                 {isSubmitting ? '...' : (language === 'AR' ? 'حفظ الوقت' : 'Save Time')}
+                 {isSubmitting ? '...' : t.attendance.saveTime}
                </button>
              )}
           </div>
@@ -632,7 +618,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
           <div>
             <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{t.attendance.terminalToken}</h3>
             <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
-              {language === 'AR' ? 'رمز تفعيل جهاز الحضور لهذا الفرع' : 'Terminal activation token for this branch'}
+              {t.attendance.terminalTokenDesc}
             </p>
           </div>
         </div>
@@ -698,9 +684,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
               {t.attendance.generateToken}
             </button>
             <p className="text-[10px] text-zinc-400 mt-3 text-center max-w-xs">
-              {language === 'AR'
-                ? 'ولّد رمز جديد وانسخه والصقه في جهاز الحضور لتفعيله'
-                : 'Generate a token, copy it, and paste it on the attendance terminal device to activate it'}
+                {t.attendance.generateTokenHint}
             </p>
           </div>
         )}
@@ -726,9 +710,9 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
 
   // Modal Tabs — add Attendance tab if user can generate tokens
   const modalTabs = [
-    { label: language === 'AR' ? 'البيانات' : 'General', value: 'general' },
-    { label: language === 'AR' ? 'الموظفين' : 'Employees', value: 'employees' },
-    ...(canGenerateToken ? [{ label: language === 'AR' ? 'الحضور' : 'Attendance', value: 'attendance' }] : []),
+    { label: t.settings.tabGeneral, value: 'general' },
+    { label: t.settings.tabEmployees, value: 'employees' },
+    ...(canGenerateToken ? [{ label: t.settings.tabAttendance, value: 'attendance' }] : []),
   ];
 
 
@@ -769,8 +753,8 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
           ) : branches.length === 0 ? (
              <div className="col-span-full py-20 flex flex-col items-center justify-center text-center opacity-40">
                <span className="material-symbols-rounded text-zinc-400" style={{ fontSize: '64px' }}>domain_disabled</span>
-               <h3 className="text-lg font-bold mt-4">{language === 'AR' ? 'لا توجد فروع بعد' : 'No branches yet'}</h3>
-               <p className="text-sm mt-1">{language === 'AR' ? 'ابدأ بإضافة فرعك الأول للمنظمة' : 'Start by adding your first branch to the organization'}</p>
+               <h3 className="text-lg font-bold mt-4">{t.settings.noBranchesYet}</h3>
+               <p className="text-sm mt-1">{t.settings.startAddingFirst}</p>
              </div>
           ) : (
             branches.map((branch) => (

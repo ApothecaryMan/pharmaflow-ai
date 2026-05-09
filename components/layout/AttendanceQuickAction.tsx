@@ -50,7 +50,7 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
     const token = sessionStorage.getItem(SESSION_TOKEN_KEY);
     if (!token) {
       setStep('error');
-      setErrorMessage(isAR ? 'المحطة غير مفعلة' : 'Terminal not activated');
+      setErrorMessage(t.attendance.terminalNotActivated);
       setTimeout(reset, 3000);
       return;
     }
@@ -74,12 +74,12 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
         setStep('pin');
       } else {
         setStep('error');
-        setErrorMessage(isAR ? 'لا توجد بصمة أو كود' : 'No biometric or PIN');
+        setErrorMessage(t.attendance.noPinNoBiometric);
         setTimeout(reset, 3000);
       }
     } else {
       setStep('error');
-      setErrorMessage(isAR ? 'الموظف غير موجود' : 'Employee not found');
+      setErrorMessage(t.attendance.employeeNotFound);
       setTimeout(reset, 3000);
     }
   };
@@ -133,8 +133,8 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
       console.error('[AttendanceQuickAction] Error:', err);
       setStep('error');
       setErrorMessage(err.message === 'INVALID_TERMINAL_TOKEN' 
-        ? (isAR ? 'توكن غير صالحة' : 'Invalid Token') 
-        : (isAR ? 'فشل التحقق' : 'Auth Failed'));
+        ? t.attendance.invalidToken 
+        : t.attendance.authFailed);
       setTimeout(reset, 3000);
     } finally {
       setIsLoading(false);
@@ -151,7 +151,7 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
     try {
       const isValid = await attendanceService.verifyEmployeePin(pin, selectedEmployee.attendancePin!);
       if (!isValid) {
-        throw new Error(isAR ? 'الكود غير صحيح' : 'Invalid PIN');
+        throw new Error(t.attendance.invalidPin);
       }
 
       const currentStatus = await attendanceService.getEmployeeStatus(selectedEmployee.id, activeBranchId);
@@ -183,7 +183,7 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
   return (
     <div className="flex items-center justify-center min-w-[40px] h-9 transition-all duration-300">
       {step === 'idle' && (
-        <Tooltip content={isAR ? 'تسجيل الحضور السريع' : 'Quick Attendance'}>
+        <Tooltip content={t.attendance.quickAttendance}>
           <button
             onClick={handleStart}
             className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 transition-colors"
@@ -201,7 +201,7 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             onBlur={() => !username && reset()}
-            placeholder={isAR ? 'اسم المستخدم...' : 'Username...'}
+            placeholder={t.attendance.usernamePlaceholder}
             className="w-32 h-8 px-3 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
           />
         </form>

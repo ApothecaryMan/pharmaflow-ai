@@ -114,7 +114,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20 gap-4">
                 <div className="w-12 h-12 border-4 border-primary-500/20 border-t-blue-500 rounded-full animate-spin" />
-                <span className="text-gray-500 font-medium">{isRTL ? 'جاري التحميل...' : 'Loading...'}</span>
+                <span className="text-gray-500 font-medium">{t.common.loading}</span>
               </div>
             ) : filteredEmployees.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -122,7 +122,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                   <span className="material-symbols-rounded text-gray-400" style={{ fontSize: 'var(--icon-2xl)' }}>person_search</span>
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                  {isRTL ? 'لا توجد بيانات' : 'No Data Found'}
+                  {t.attendance.noDataFound}
                 </h3>
                 <p className="text-gray-500 max-w-xs">
                   {t.attendance.noReportData}

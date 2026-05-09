@@ -50,7 +50,7 @@ export const EmployeeAttendanceProfile: React.FC<EmployeeAttendanceProfileProps>
             <DatePicker
               value={currentMonthDateStr}
               onChange={handleMonthChange}
-              label={isRTL ? 'اختر الشهر' : 'Select Month'}
+              label={t.common.selectMonth}
               color="blue"
               maxDate={new Date().toISOString()}
             />
@@ -93,7 +93,7 @@ export const EmployeeAttendanceProfile: React.FC<EmployeeAttendanceProfileProps>
           <SmallCard
             title={t.attendance.totalHoursMonth}
             value={isLoading ? '...' : `${Math.floor((report?.totalMinutes || 0) / 60)}`}
-            valueSuffix={isRTL ? 'ساعة' : 'hrs'}
+            valueSuffix={t.attendance.hourSymbol}
             icon="timer"
             iconColor="indigo"
           />
@@ -136,7 +136,7 @@ export const EmployeeAttendanceProfile: React.FC<EmployeeAttendanceProfileProps>
                     <td colSpan={columns.length} className="px-6 py-20 text-center">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                        <span className="text-sm text-zinc-500">{isRTL ? 'جاري التحميل...' : 'Loading...'}</span>
+                        <span className="text-sm text-zinc-500">{t.common.loading}</span>
                       </div>
                     </td>
                   </tr>
@@ -145,7 +145,7 @@ export const EmployeeAttendanceProfile: React.FC<EmployeeAttendanceProfileProps>
                     <td colSpan={columns.length} className="px-6 py-20 text-center text-zinc-500">
                       <div className="flex flex-col items-center gap-2">
                         <span className="material-symbols-rounded text-4xl opacity-20">person_search</span>
-                        <span className="text-sm font-medium">{t.attendance.noReportData || (isRTL ? 'لا توجد بيانات' : 'No data')}</span>
+                        <span className="text-sm font-medium">{t.attendance.noDataFound}</span>
                       </div>
                     </td>
                   </tr>
@@ -244,7 +244,7 @@ export const EmployeeAttendanceProfile: React.FC<EmployeeAttendanceProfileProps>
                         <td className="px-6 py-4">
                           {day.lateMinutes > 0 && (
                             <span className="text-sm font-bold text-rose-600 dark:text-rose-400">
-                              +{day.lateMinutes} {isRTL ? 'د' : 'm'}
+                              +{day.lateMinutes} {t.attendance.minuteSymbol}
                             </span>
                           )}
                         </td>

@@ -281,7 +281,13 @@ The skill maintains a persistent memory file at:
 
   // 📁 FILE SCAN HISTORY — prevents redundant re-scans
   "scannedFiles": {
-    "components/sales/ReturnModal.tsx":     { "lastScan": "2026-05-09", "violations": 8, "fixed": 8, "clean": true },
+    "components/sales/ReturnModal.tsx": { 
+      "lastScan": "2026-05-09", 
+      "violations": 8, 
+      "fixed": 8, 
+      "clean": true,
+      "tokensConsumed": 1450   // 🪙 TRACKS PER-FILE COST
+    },
     "components/settings/BranchSettings.tsx": { "lastScan": "2026-05-09", "violations": 52, "fixed": 40, "clean": false }
   },
 

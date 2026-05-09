@@ -219,7 +219,7 @@ export function DataPortButton<T extends Record<string, any>>({
       {/* Dropdown Menu */}
       {isOpen && (
         <div
-          className={`absolute top-full mt-1 ${isAR ? 'left-0' : 'right-0'} min-w-[180px] rounded-xl bg-white dark:bg-[--bg-menu] border border-gray-200 dark:border-white/10 shadow-xl shadow-black/10 dark:shadow-black/30 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150`}
+          className={`absolute top-full mt-2 ${isAR ? 'left-0' : 'right-0'} min-w-[200px] rounded-2xl bg-white dark:bg-(--bg-menu) border border-gray-200 dark:border-white/10 shadow-2xl shadow-black/10 dark:shadow-black/40 py-2 z-50 animate-in fade-in zoom-in-95 duration-200`}
         >
           {/* Export Section Header */}
           <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
@@ -231,7 +231,7 @@ export function DataPortButton<T extends Record<string, any>>({
             <button
               onClick={handleCSV}
               disabled={data.length === 0}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors disabled:opacity-30"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/10 transition-all disabled:opacity-30 group"
             >
               <span className="material-symbols-rounded text-base text-emerald-500">csv</span>
               <span>{t.global.actions.exportCSV}</span>
@@ -245,7 +245,7 @@ export function DataPortButton<T extends Record<string, any>>({
             <button
               onClick={handleExcel}
               disabled={data.length === 0}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors disabled:opacity-30"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/10 transition-all disabled:opacity-30 group"
             >
               <span className="material-symbols-rounded text-base text-green-600">table_chart</span>
               <span>{t.global.actions.exportExcel}</span>
@@ -259,7 +259,7 @@ export function DataPortButton<T extends Record<string, any>>({
             <button
               onClick={handlePDF}
               disabled={data.length === 0}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors disabled:opacity-30"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/10 transition-all disabled:opacity-30 group"
             >
               <span className="material-symbols-rounded text-base text-rose-500">picture_as_pdf</span>
               <span>{t.global.actions.exportPDF}</span>
@@ -277,7 +277,7 @@ export function DataPortButton<T extends Record<string, any>>({
               </div>
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/10 transition-all group"
               >
                 <span className="material-symbols-rounded text-base text-blue-500">upload_file</span>
                 <span>{t.global.actions.importCSV}</span>

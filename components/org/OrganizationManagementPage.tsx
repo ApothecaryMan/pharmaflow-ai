@@ -54,7 +54,7 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
       setData(orgData);
     } catch (err) {
       console.error('Failed to fetch org data:', err);
-      setError(language === 'AR' ? 'فشل جلب البيانات' : 'Failed to fetch data');
+      setError(t.fetchError);
     } finally {
       setIsLoading(false);
     }
@@ -90,13 +90,13 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
   const availableTabs = [
     { 
       value: 'org-management', 
-      label: language === 'AR' ? 'إدارة المنظمة' : 'Organization',
+      label: t.organization,
       icon: 'corporate_fare',
       permission: PERMISSIONS_MAPPING['org-management']
     },
     { 
       value: 'branch-management', 
-      label: language === 'AR' ? 'إدارة الفروع' : 'Branches',
+      label: t.branches,
       icon: 'domain',
       permission: PERMISSIONS_MAPPING['branch-management']
     }
@@ -177,10 +177,10 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
               </div>
               <div>
                 <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                  {activeMatrixTab === 'managers' ? t.permissionsTitle : (language === 'AR' ? 'كافة الموظفين' : 'All Staff')}
+                  {activeMatrixTab === 'managers' ? t.permissionsTitle : t.allStaff}
                 </h3>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  {activeMatrixTab === 'managers' ? t.permissionsSubtitle : (language === 'AR' ? 'قائمة الموظفين المسجلين في كافة الفروع' : 'List of employees registered across all branches')}
+                  {activeMatrixTab === 'managers' ? t.permissionsSubtitle : t.allStaffSubtitle}
                 </p>
               </div>
             </div>
@@ -188,8 +188,8 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
             <div className="w-full sm:w-[280px]">
               <SegmentedControl
                 options={[
-                  { value: 'managers', label: language === 'AR' ? 'المدراء' : 'Managers', icon: 'admin_panel_settings' },
-                  { value: 'staff', label: language === 'AR' ? 'الموظفين' : 'Staff', icon: 'group' }
+                  { value: 'managers', label: t.managers, icon: 'admin_panel_settings' },
+                  { value: 'staff', label: t.staff, icon: 'group' }
                 ]}
                 value={activeMatrixTab}
                 onChange={(val) => setActiveMatrixTab(val as any)}
