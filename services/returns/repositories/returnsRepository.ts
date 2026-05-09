@@ -32,7 +32,6 @@ export const returnsRepository = {
     if (r.date !== undefined) db.date = r.date;
     if (r.saleId !== undefined) db.sale_id = r.saleId;
     if (r.returnType !== undefined) db.return_type = r.returnType;
-    if (r.items !== undefined) db.items = r.items;
     if (r.totalRefund !== undefined) db.total_refund = r.totalRefund;
     if (r.reason !== undefined) db.reason = r.reason;
     if (r.notes !== undefined) db.notes = r.notes;
@@ -66,7 +65,6 @@ export const returnsRepository = {
     if (r.purchaseId !== undefined) db.purchase_id = r.purchaseId;
     if (r.supplierId !== undefined) db.supplier_id = r.supplierId;
     if (r.supplierName !== undefined) db.supplier_name_snapshot = r.supplierName;
-    if (r.items !== undefined) db.items = r.items;
     if (r.totalRefund !== undefined) db.total_refund = r.totalRefund;
     if (r.status !== undefined) db.status = r.status;
     if (r.notes !== undefined) db.notes = r.notes;

@@ -6,7 +6,7 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
 import { pricingService } from '../../services/sales/pricingService';
-import { money, tax } from '../../utils/money';
+import { money, tax, pricing } from '../../utils/money';
 import { useSmartDirection } from '../common/SmartInputs';
 import { idGenerator } from '../../utils/idGenerator';
 import { useData } from '../../context/DataContext';
@@ -46,7 +46,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   // Resolve role internally
   const userRole = permissionsService.getEffectiveRole();
   const { getVerifiedDate } = useStatusBar();
-  const { activeBranchId } = useData();
+  const { activeBranchId, inventory } = useData();
 
   const [step, setStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -260,8 +260,12 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         const sharePerIndividualItem = money.divide(totalLineAllocation, item.quantity);
         const refundAmount = money.multiply(sharePerIndividualItem, quantity, 0);
 
+        // Resolve the true drug ID (item.id might be a batch ID in some sales)
+        const drug = inventory.find(d => d.id === item.id || d.batches?.some(b => b.id === item.id));
+        const actualDrugId = (item as any).drugId || drug?.id || item.id;
+
         returnItems.push({
-          drugId: (item as any).drugId || item.id,
+          drugId: actualDrugId,
           saleItemId: (item as any).saleItemId || item.id,
           name: item.name,
           quantityReturned: quantity,
@@ -453,7 +457,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                             <p className='font-bold text-gray-900 dark:text-gray-100 text-base'>
                               {(() => {
                                 const basePrice = item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
-                                const discounted = money.multiply(basePrice, (1 - (item.discount || 0) / 100), 2);
+                                const discounted = pricing.afterDiscount(basePrice, item.discount || 0);
                                 return formatCurrency(discounted);
                               })()}
                             </p>

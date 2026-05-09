@@ -126,6 +126,7 @@ export const transactionService = {
 
         return {
           ...item,
+          drugId: drug?.id || actualDrugId, // Ensure the true drug ID is persisted
           batchAllocations: alloc?.allocations || [],
         };
       });
@@ -598,7 +599,6 @@ export const transactionService = {
         await batchService.returnStock(op.allocations, op.quantityToReturn, op.drugId, activeBranchId, verifiedReturnDate);
         undoManager.push(async () => {
           // Rollback: Re-deduct from these specific batches
-          // This is a simplified rollback but better than nothing
           await batchService.allocateStockBulk([{
             drugId: op.drugId,
             quantity: op.quantityToReturn,
@@ -608,7 +608,18 @@ export const transactionService = {
         });
       }
 
-      // 2. Log Movements
+      // 2. Restore Global Stock
+      if (stockMutations.length > 0) {
+        await inventoryService.updateStockBulk(stockMutations, true);
+        undoManager.push(async () => {
+          await inventoryService.updateStockBulk(
+            stockMutations.map(m => ({ id: m.id, quantity: -m.quantity })),
+            true
+          );
+        });
+      }
+
+      // 3. Log Movements
       const createdMovements = await stockMovementService.logMovementsBulk(movementEntries);
       undoManager.push(async () => {
         const movementIds = createdMovements.map(m => m.id);
