@@ -47,12 +47,12 @@ export function useAppState(): AppState {
   
   const [view, setView] = usePersistedState<ViewState>(
     StorageKeys.VIEW, 
-    urlView || (authService.hasSession() ? ROUTES.DASHBOARD : ROUTES.LOGIN), 
+    urlView || (authService.hasSession() ? 'landing' as ViewState : ROUTES.LOGIN), 
     false
   );
   const [activeModule, setActiveModule] = usePersistedState<string>(
     StorageKeys.ACTIVE_MODULE,
-    urlView || (authService.hasSession() ? ROUTES.DASHBOARD : ROUTES.LOGIN),
+    urlView || (authService.hasSession() ? '' : ROUTES.LOGIN),
     false
   );
   const [dashboardSubView, setDashboardSubView] = useState<string>('dashboard');

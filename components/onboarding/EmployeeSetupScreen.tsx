@@ -20,9 +20,10 @@ interface EmployeeSetupScreenProps {
   language: 'EN' | 'AR';
   color: string;
   onBack: () => void;
+  onComplete?: () => void;
 }
 
-export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ language, color, onBack }) => {
+export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ language, color, onBack, onComplete }) => {
   const { theme } = useSettings();
   const activeColor = theme.hex || color;
   const [activeBranchId, setActiveBranchId] = useState<string>('');
@@ -124,8 +125,12 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
         console.warn('Auto-login failed, user will need to log in manually:', loginErr);
       }
 
-      // 4. Finalize and reload
-      window.location.reload();
+      // 4. Finalize and trigger soft transition
+      if (onComplete) {
+        onComplete();
+      } else {
+        window.location.reload();
+      }
     } catch (err: any) {
       console.error('Failed to setup employee:', err);
       setError(err.message || (isRTL ? 'حدث خطأ أثناء إنشاء الحساب' : 'An error occurred during account creation'));

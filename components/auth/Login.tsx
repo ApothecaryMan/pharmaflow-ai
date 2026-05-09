@@ -111,14 +111,8 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
 
       if (user) {
         setState((prev) => ({ ...prev, isLoading: false, error: null, success: true, user: user }));
-        // Redirect to dashboard after short delay
-        setTimeout(() => {
-          if (onLoginSuccess) {
-            onLoginSuccess();
-          } else if (onViewChange) {
-            onViewChange('dashboard');
-          }
-        }, 1500);
+        // Trigger login success immediately — Loading Guard handles the transition
+        onLoginSuccess?.();
       } else {
         setState((prev) => ({
           ...prev,

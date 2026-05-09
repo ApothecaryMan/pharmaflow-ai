@@ -277,23 +277,30 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 
   // --- URL Synchronization ---
   React.useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      const currentHash = window.location.hash;
+      const allowedAuthHashes = [`#/${ROUTES.LOGIN}`, `#/${ROUTES.SIGNUP}`, `#/${ROUTES.FORGOT_PASSWORD}`];
+      if (!allowedAuthHashes.includes(currentHash)) {
+        window.history.replaceState(null, '', `#/${ROUTES.LOGIN}`);
+      }
+      return;
+    }
 
-    const currentHash = window.location.hash;
-    const isAuthHash = [`#/${ROUTES.LOGIN}`, `#/${ROUTES.SIGNUP}`, `#/${ROUTES.FORGOT_PASSWORD}`].includes(currentHash);
-
+    // Authenticated — build URL based on available data
     if (activeOrgId && activeBranchId) {
       const activeBranch = branches.find(b => b.id === activeBranchId);
       if (activeBranch) {
         const newHash = `#/${activeOrgId}/${activeBranch.code}/${view}`;
-        if (currentHash !== newHash) {
+        if (window.location.hash !== newHash) {
           window.history.replaceState(null, '', newHash);
         }
       }
-    } else if (isAuthHash) {
-      // If we are authenticated but still on an auth hash, and data isn't ready yet,
-      // move away from login hash to prevent routing conflicts.
-      window.history.replaceState(null, '', `#/${view}`);
+    } else if (activeOrgId) {
+      // Org-only URL: #/{orgId}/{view}
+      const newHash = `#/${activeOrgId}/${view}`;
+      if (window.location.hash !== newHash) {
+        window.history.replaceState(null, '', newHash);
+      }
     }
   }, [isAuthenticated, activeOrgId, activeBranchId, view, branches]);
 
@@ -301,11 +308,8 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   // --- Login Success Handler ---
   const handleLoginSuccess = useCallback(() => {
     setIsAuthenticated(true);
-    setActiveModule(ROUTES.DASHBOARD);
-    setView(ROUTES.DASHBOARD);
-    
-    // Force immediate hash update to prevent "stuck on login" issue
-    window.history.replaceState(null, '', `#/${ROUTES.DASHBOARD}`);
+    setView('landing' as ViewState);
+    setActiveModule('');
   }, [setIsAuthenticated, setActiveModule, setView]);
 
 
@@ -529,34 +533,30 @@ const App: React.FC = () => {
   // 6. Stable Login Callbacks
   const { setIsAuthenticated } = authState;
   const { setActiveModule, setView } = appState;
+  const { reinitialize } = useData();
 
   const handleLoginSuccess = useCallback(() => {
     setIsAuthenticated(true);
-    setActiveModule(ROUTES.DASHBOARD);
-    setView(ROUTES.DASHBOARD);
-
-    // Force immediate hash update to prevent "stuck on login" issue
-    window.history.replaceState(null, '', `#/${ROUTES.DASHBOARD}`);
-  }, [setIsAuthenticated, setActiveModule, setView]);
+    reinitialize();
+  }, [setIsAuthenticated, reinitialize]);
 
 
 
-  // 7. URL Synchronization for Login
-  React.useEffect(() => {
-    if (!authState.isAuthenticated) {
-      const currentHash = window.location.hash;
-      const allowedAuthHashes = [`#/${ROUTES.LOGIN}`, `#/${ROUTES.SIGNUP}`, `#/${ROUTES.FORGOT_PASSWORD}`];
-      
-      if (!allowedAuthHashes.includes(currentHash)) {
-         // Only set to login if we're not on a valid auth path
-         window.history.replaceState(null, '', `#/${ROUTES.LOGIN}`);
-      }
-    }
-  }, [authState.isAuthenticated]);
+
 
   // 10. Authenticated & Setup Done -> Show Secure Content wrapped in Providers
+  const isOnboardingReady = !isCheckingOnboarding;
+
+  const OnboardingLoadingScreen = () => (
+    <div className="h-full w-full flex items-center justify-center bg-zinc-50 dark:bg-black">
+      <div className="flex flex-col items-center gap-4">
+        <img src="/logo_icon_white.svg" className="h-12 w-12 animate-pulse opacity-50" alt="Loading" />
+      </div>
+    </div>
+  );
+
   const content = authState.isAuthenticated ? (
-    <AuthenticatedContent {...appState} {...authState} />
+    isOnboardingReady ? <AuthenticatedContent {...appState} {...authState} /> : <OnboardingLoadingScreen />
   ) : (
     <AuthPage
       onLoginSuccess={handleLoginSuccess}
@@ -566,10 +566,14 @@ const App: React.FC = () => {
 
   // Handle Onboarding Steps
   let finalContent = content;
-  if (authState.isAuthenticated) {
+  if (authState.isAuthenticated && isOnboardingReady) {
     if (activeStep === 1) finalContent = <OrgSetupScreen language={language} onComplete={() => setActiveStep(2)} />;
     else if (activeStep === 2) finalContent = <BranchSetupScreen language={language} color={theme.primary} onBack={() => setActiveStep(1)} onComplete={() => setActiveStep(3)} />;
-    else if (activeStep === 3) finalContent = <EmployeeSetupScreen language={language} color={theme.primary} onBack={() => setActiveStep(2)} />;
+    else if (activeStep === 3) finalContent = <EmployeeSetupScreen language={language} color={theme.primary} onBack={() => setActiveStep(2)} onComplete={async () => {
+      await reinitialize();
+      setActiveStep(0);
+      setView('landing' as ViewState);
+    }} />;
   }
 
   return (

@@ -122,6 +122,9 @@ export interface DataActions {
   // Refresh all data from storage
   refreshAll: () => Promise<void>;
 
+  // Re-initialize all data from server (used post-login)
+  reinitialize: () => Promise<void>;
+
   setActiveOrg: (org: Organization | null) => void;
 
   // Switch to a different branch and reload all data

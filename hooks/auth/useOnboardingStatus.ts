@@ -7,10 +7,12 @@ export type OnboardingStep = 1 | 2 | 3 | 0;
 
 export const useOnboardingStatus = (isAuthenticated?: boolean) => {
   const [activeStep, setActiveStep] = useState<OnboardingStep>(0);
-  const [isChecking, setIsChecking] = useState(true);
+  const [isChecking, setIsChecking] = useState(false);
+  const [hasChecked, setHasChecked] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const checkStatus = async () => {
+    if (isChecking) return;
     try {
       setIsChecking(true);
       setError(null);
@@ -60,19 +62,20 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
       setError('Failed to verify onboarding status');
     } finally {
       setIsChecking(false);
+      setHasChecked(true);
     }
   };
 
   useEffect(() => {
     // Only run check if authenticated and NO error has occurred yet.
     // This prevents infinite loops if the check fails and sets an error state.
-    if ((isAuthenticated === true || isAuthenticated === undefined) && !error && !isChecking) {
+    if ((isAuthenticated === true || isAuthenticated === undefined) && !error && !hasChecked) {
       checkStatus();
     } else if (isAuthenticated === false) {
       // Not authenticated, no need to check onboarding
-      setIsChecking(false);
+      setHasChecked(true);
     }
-  }, [isAuthenticated, error, isChecking]);
+  }, [isAuthenticated, error, hasChecked]);
 
   return {
     activeStep,
