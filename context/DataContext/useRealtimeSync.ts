@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { salesService } from '../../services/sales';
 import { returnService } from '../../services/returns';
