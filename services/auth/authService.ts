@@ -79,6 +79,7 @@ export const authService = {
           userId: userId,
           username: employeeData.username || employeeData.name,
           employeeId: employeeData.id,
+          employeeCode: employeeData.employeeCode,
           branchId: employeeData.branchId || '',
           orgId: orgId || employeeData.orgId,
           role: employeeData.role,
@@ -202,6 +203,7 @@ export const authService = {
         userId: authData.user.id,
         username: employeeData.username || employeeData.name,
         employeeId: employeeData.id,
+        employeeCode: employeeData.employeeCode,
         branchId: employeeData.branchId || '',
         orgId: orgId || employeeData.orgId,
         role: employeeData.role,
@@ -223,11 +225,36 @@ export const authService = {
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     if (session.orgId) orgService.setActiveOrgId(session.orgId);
     
+    // Log System Login
+    this.logAuditEvent({
+      username: session.username,
+      role: session.role,
+      branchId: session.branchId || '',
+      action: 'system_login',
+      employeeId: session.employeeId,
+      employeeCode: session.employeeCode,
+      details: `Account: ${session.username}`
+    });
+
     return session;
   },
 
   async logout(): Promise<void> {
     try {
+      const session = this.getCurrentUserSync();
+      if (session) {
+        // Log System Logout
+        this.logAuditEvent({
+          username: session.username,
+          role: session.role,
+          branchId: session.branchId || '',
+          action: 'system_logout',
+          employeeId: session.employeeId,
+          employeeCode: session.employeeCode,
+          details: 'Account Logout'
+        });
+      }
+
       cachedSession = null;
       await supabase.auth.signOut();
       this.clearEmployeeSession();
@@ -288,19 +315,35 @@ export const authService = {
   },
 
   logAuditEvent(entry: Omit<LoginAuditEntry, 'id' | 'timestamp'>): void {
-    const history = this.getLoginHistory();
+    // 1. Sync to Supabase (Server-side)
+    import('./repositories/auditRepository').then(({ auditRepository }) => {
+      auditRepository.insert(entry);
+    });
+
+    // 2. Keep a small local cache for immediate UI feedback (Optional)
+    const history = this.getLoginHistorySync();
     const newEntry: LoginAuditEntry = {
       ...entry,
       id: Math.random().toString(36).substring(2, 11),
       timestamp: new Date().toISOString(),
     };
-    localStorage.setItem(AUDIT_KEY, JSON.stringify([newEntry, ...history].slice(0, 500)));
+    localStorage.setItem(AUDIT_KEY, JSON.stringify([newEntry, ...history].slice(0, 50)));
   },
 
-  getLoginHistory(branchId?: string): LoginAuditEntry[] {
+  /**
+   * Fetch logs from Server (Supabase)
+   */
+  async getLoginHistory(branchId?: string): Promise<LoginAuditEntry[]> {
+    const { auditRepository } = await import('./repositories/auditRepository');
+    return auditRepository.getAll(branchId);
+  },
+
+  /**
+   * Quick sync fetch from localStorage (for immediate UI needs)
+   */
+  getLoginHistorySync(): LoginAuditEntry[] {
     try {
-      const all: LoginAuditEntry[] = JSON.parse(localStorage.getItem(AUDIT_KEY) || '[]');
-      return branchId ? all.filter((e) => e.branchId === branchId) : all;
+      return JSON.parse(localStorage.getItem(AUDIT_KEY) || '[]');
     } catch {
       return [];
     }
@@ -325,6 +368,7 @@ export const authService = {
     const session: UserSession = {
       username: employee.username || employee.name,
       employeeId: employee.id,
+      employeeCode: employee.employeeCode,
       branchId: employee.branchId || '',
       role: employee.role,
       orgRole: employee.orgRole,
@@ -334,6 +378,17 @@ export const authService = {
 
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     if (session.orgId) orgService.setActiveOrgId(session.orgId);
+
+    // Log Biometric Login
+    this.logAuditEvent({
+      username: session.username,
+      role: session.role,
+      branchId: session.branchId || '',
+      action: 'login',
+      employeeId: session.employeeId,
+      employeeCode: session.employeeCode,
+      details: 'Biometric Login'
+    });
 
     return { session, id: employee.id };
   },

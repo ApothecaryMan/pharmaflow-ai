@@ -27,6 +27,9 @@ export interface UserSession {
   /** Linked employee ID (UUID) */
   employeeId?: string;
   
+  /** Linked employee code (e.g. EMP-001) */
+  employeeCode?: string;
+  
   /** Active branch ID (UUID) */
   branchId: string;
   
@@ -77,4 +80,7 @@ export interface LoginAuditEntry {
   
   /** Linked employee ID */
   employeeId?: string;
+
+  /** Linked employee Code (e.g. EMP-001) */
+  employeeCode?: string;
 }

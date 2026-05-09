@@ -20,13 +20,24 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
   const { theme: currentTheme } = useSettings();
   const [showAllBranches, setShowAllBranches] = useState(false);
 
+  const [history, setHistory] = useState<LoginAuditEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   // Check if current user is Super Admin to show the toggle
   const currentUser = authService.getCurrentUserSync();
 
-  const history: LoginAuditEntry[] = useMemo(
-    () => authService.getLoginHistory(showAllBranches ? undefined : activeBranchId),
-    [activeBranchId, showAllBranches]
-  );
+  React.useEffect(() => {
+    const fetchHistory = async () => {
+      setIsLoading(true);
+      try {
+        const data = await authService.getLoginHistory(showAllBranches ? undefined : activeBranchId);
+        setHistory(data);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchHistory();
+  }, [activeBranchId, showAllBranches]);
 
   const getActionInfo = (action: string) => {
     switch (action) {
@@ -234,7 +245,17 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             </div>
           );
         },
-        meta: { width: 160, align: 'center' },
+        meta: { width: 140, align: 'center' },
+      },
+      {
+        accessorKey: 'employeeCode',
+        header: t.loginAudit.headers.code || 'CODE',
+        cell: (info) => (
+          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-white/10">
+            {String(info.getValue() || '-')}
+          </span>
+        ),
+        meta: { width: 90, align: 'center' },
       },
       {
         accessorKey: 'username',
@@ -244,8 +265,8 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
           const row = info.row.original;
           const isAdmin = username === 'Admin';
 
-          // Try to find the employee by ID or Name
-          const employee = employees.find((e) => e.id === row.employeeId || e.name === username);
+          // Try to find the employee by ID only for the image/avatar
+          const employee = employees.find((e) => e.id === row.employeeId);
           const hasImage = employee?.image && !isAdmin;
 
           return (
@@ -276,11 +297,12 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
                   username.charAt(0).toUpperCase()
                 )}
               </div>
+              {/* Name is now static - showing exactly what was recorded at time of event */}
               <span className='font-semibold text-gray-800 dark:text-gray-200'>{username}</span>
             </div>
           );
         },
-        meta: { width: 150, align: 'start' },
+        meta: { width: 140, align: 'start' },
       },
       {
         accessorKey: 'action',
@@ -364,6 +386,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
           enableVirtualization={false}
           pageSize='auto'
           enableShowAll={true}
+          isLoading={isLoading}
         />
       </div>
     </div>

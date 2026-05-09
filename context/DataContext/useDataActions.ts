@@ -106,6 +106,7 @@ export const useDataActions = ({
   const switchBranch = useCallback(async (branchId: string, skipClearEmployee?: boolean) => {
     setIsLoading(true);
     try {
+      const sessionBeforeClear = authService.getCurrentUserSync();
       const isManagerOrAdmin = permissionsService.isManager() || permissionsService.isOrgAdmin();
       const belongsToBranch = currentEmployee?.branchId === branchId;
       
@@ -115,14 +116,31 @@ export const useDataActions = ({
         setCurrentEmployee(null);
         authService.clearEmployeeSession();
       } else if (currentEmployee?.id) {
-        const session = authService.getCurrentUserSync();
-        if (session?.userId) {
-          const key = `pharma_last_branch_${session.userId}_${currentEmployee.id}`;
+        if (sessionBeforeClear?.userId) {
+          const key = `pharma_last_branch_${sessionBeforeClear.userId}_${currentEmployee.id}`;
           localStorage.setItem(key, branchId);
         }
       }
 
       await branchService.setActive(branchId);
+      
+      // Log Branch Switch (Using the session captured before clearing)
+      if (sessionBeforeClear) {
+        const allBranches = await branchService.getAll();
+        const oldBranch = allBranches.find(b => b.id === activeBranchId);
+        const newBranch = allBranches.find(b => b.id === branchId);
+        
+        authService.logAuditEvent({
+          username: sessionBeforeClear.username,
+          role: sessionBeforeClear.role,
+          branchId: branchId,
+          action: 'switch_branch',
+          employeeId: sessionBeforeClear.employeeId,
+          employeeCode: sessionBeforeClear.employeeCode,
+          details: `Switched from ${oldBranch?.name || activeBranchId} to ${newBranch?.name || branchId}`
+        });
+      }
+
       setActiveBranchId(branchId);
       lastLoadedBranchId.current = branchId;
       authService.updateSession({ branchId });

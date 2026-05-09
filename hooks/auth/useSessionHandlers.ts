@@ -49,6 +49,8 @@ export const useSessionHandlers = ({
             role: currentEmp?.role || session.role,
             branchId: session.branchId,
             action: 'logout',
+            employeeId: currentEmployeeId || undefined,
+            employeeCode: session.employeeCode,
             details: `Employee signed out`,
           });
 
@@ -101,6 +103,7 @@ export const useSessionHandlers = ({
               branchId: session.branchId,
               action: isFirstSelection ? 'login' : 'switch_user',
               employeeId: selectedEmployee.id,
+              employeeCode: selectedEmployee.employeeCode,
               details: isFirstSelection
                 ? `Employee session started`
                 : `Switched from ${previousName || 'unknown'}`,
