@@ -164,6 +164,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               onOpenInWindow={onOpenInWindow}
               onModuleChange={handleModuleChange}
               onNavigate={handleNavigate}
+              onToggleFullscreen={toggleFullscreen}
               view={view}
               activeModule={activeModule}
               dashboardSubView={dashboardSubView}

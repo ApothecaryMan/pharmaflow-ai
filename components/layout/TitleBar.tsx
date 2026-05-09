@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { LogicalPosition } from '@tauri-apps/api/dpi';
 import { useSettings } from '../../context';
 import { isTauri } from '../../utils/platform';
 import { useData } from '../../context/DataContext';
@@ -22,6 +23,7 @@ interface TitleBarProps {
   onOpenInWindow?: (view: ViewState) => void;
   onModuleChange?: (moduleId: string) => void;
   onNavigate?: (view: ViewState) => void;
+  onToggleFullscreen?: () => void;
   view?: ViewState;
   activeModule?: string;
   dashboardSubView?: string;
@@ -37,6 +39,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   onOpenInWindow,
   onModuleChange: propsOnModuleChange,
   onNavigate: propsOnNavigate,
+  onToggleFullscreen,
   view: propsView,
   activeModule: propsActiveModule,
   dashboardSubView: propsDashboardSubView,
@@ -205,10 +208,12 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   const currentView = activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view;
 
   const handleMinimize = () => appWindow?.minimize();
-  const handleMaximize = async () => {
-    if (!appWindow) return;
-    await appWindow.toggleMaximize();
-    // The listener above will update the state
+  const handleMaximize = () => {
+    if (onToggleFullscreen) {
+      onToggleFullscreen();
+    } else {
+      appWindow?.toggleMaximize();
+    }
   };
   const handleClose = () => appWindow?.close();
 
@@ -242,19 +247,44 @@ export const TitleBar: React.FC<TitleBarProps> = ({
     }
   };
 
+  const handleSystemMenu = async (e: React.MouseEvent) => {
+    // Check if the click was on an interactive element
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, [role="button"]')) {
+      return; // Let it bubble to GlobalContextMenuWrapper in MainLayout
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!appWindow) return;
+
+    try {
+      // Create a LogicalPosition instance for proper scaling handling on Windows
+      const position = new LogicalPosition(e.clientX, e.clientY);
+      
+      // Use the native system menu provided by the OS
+      await appWindow.showSystemMenu(position);
+    } catch (err) {
+      console.error('Failed to show system menu:', err);
+    }
+  };
+
   return (
     <div 
       className="h-11 backdrop-blur-md flex items-center justify-between px-1 select-none z-[9999] relative overflow-visible"
+      onContextMenu={handleSystemMenu}
       style={{
         backgroundColor: 'var(--bg-navbar)',
         color: 'var(--text-primary)'
       }}
     >
-      {/* Background Drag Region - Allows dragging and double-click to maximize */}
+      {/* Background Drag Region - Captures events in empty areas */}
       <div 
         data-tauri-drag-region 
         className="absolute inset-0 z-0"
         onDoubleClick={handleMaximize}
+        onContextMenu={handleSystemMenu} // Added here specifically for Windows compatibility
       />
 
       {/* Left: Window Controls - Wrapped in z-10 for interactivity */}
