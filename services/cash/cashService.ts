@@ -50,6 +50,7 @@ export const cashService: CashServiceInterface = {
     if (current) throw new Error('A shift is already open for this branch');
 
     const newShift: Shift = {
+      id: idGenerator.uuid(), // Generate ID client-side
       status: 'open',
       openTime: new Date().toISOString(),
       openedBy,

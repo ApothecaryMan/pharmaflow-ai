@@ -43,174 +43,74 @@ export const transactionService = {
       items: CartItem[];
       customerName: string;
       customerCode?: string;
+      customerPhone?: string;
       paymentMethod: 'cash' | 'visa';
       saleType?: 'walk-in' | 'delivery';
       total: number;
       subtotal: number;
       globalDiscount: number;
+      deliveryFee?: number;
     },
-    inventory: Drug[],
+    _inventory: Drug[], // Kept for signature compatibility, unused now
     context: ActionContext
   ): Promise<CheckoutResult> {
-    const { branchId: activeBranchId, performerId: currentEmployeeId, timestamp, orgId, shiftId } = context;
-    const verifiedDate = new Date(timestamp);
-    const undoManager = new UndoManager();
-    const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode || 'PF';
     try {
-      const stockMutations: { id: string; quantity: number }[] = [];
-      const movementEntries: any[] = [];
-
-      // 1. Allocate Batches
-      const allocationRequests = saleData.items.map((item) => {
-        const drug = inventory.find((d) => d.id === item.id || d.batches?.some(b => b.id === item.id));
-        const actualDrugId = (item as any).dbId || drug?.id || item.id;
-        const quantityToDeduct = resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack || drug?.unitsPerPack);
+      // 1. Prepare minimal payload for server-side processing
+      const payload = {
+        branchId: context.branchId,
+        orgId: context.orgId,
+        shiftId: context.shiftId,
+        timestamp: context.timestamp,
+        performerName: context.performerName,
+        branchCode: (await settingsService.getAll()).branchCode || 'PF',
         
-        return {
-          drugId: actualDrugId,
-          quantity: quantityToDeduct,
-          name: item.name,
-          // Support explicit batch selection if available, else default to the item id (which may be the batch itself in the current UI)
-          preferredBatchId: item.preferredBatchId || item.id
-        };
-      });
-
-      const bulkAllocations = await batchService.allocateStockBulk(allocationRequests, activeBranchId, verifiedDate);
-
-      // Register Rollback for Batches
-      undoManager.push(async () => {
-        for (const alloc of bulkAllocations) {
-          const totalToRestore = alloc.allocations.reduce((sum, a) => sum + a.quantity, 0);
-          await batchService.returnStock(alloc.allocations, totalToRestore, alloc.drugId, activeBranchId);
-        }
-      });
-
-      // 2. Prepare Inventory Mutations & Movement Logs
-      const processedItems: CartItem[] = saleData.items.map((item) => {
-        // Resolve the true actualDrugId to match with global inventory (templates)
-        const itemAsDb = (item as any).dbId;
-        const actualDrugId = itemAsDb || item.id;
+        // Items minimal data
+        items: saleData.items.map(item => ({
+          id: item.id,
+          quantity: item.quantity,
+          isUnit: !!item.isUnit,
+          publicPrice: item.publicPrice,
+          name: item.name // snapshot for logging
+        })),
         
-        // Find the parent group drug reliably
-        const drug = inventory.find((d) => d.id === actualDrugId || d.batches?.some(b => b.id === actualDrugId || b.id === item.id));
-        
-        const alloc = bulkAllocations.find((a) => a.drugId === actualDrugId);
-        const unitsToDeduct = resolveUnits(item.quantity, !!item.isUnit, drug?.unitsPerPack || item.unitsPerPack);
+        customerName: saleData.customerName,
+        customerPhone: saleData.customerPhone,
+        paymentMethod: saleData.paymentMethod,
+        saleType: saleData.saleType || 'walk-in',
+        deliveryFee: saleData.deliveryFee || 0,
+        globalDiscount: saleData.globalDiscount || 0,
+        total: saleData.total,
+        subtotal: saleData.subtotal
+      };
 
-        stockMutations.push({ id: actualDrugId, quantity: -unitsToDeduct });
-        
-        if (alloc?.allocations && alloc.allocations.length > 0) {
-          // Reliable running stock calculation
-          let runningStock = drug?.stock !== undefined ? drug.stock : (item.stock || 0);
-          
-          alloc.allocations.forEach(a => {
-            movementEntries.push({
-              drugId: actualDrugId,
-              drugName: item.name,
-              branchId: activeBranchId,
-              type: 'sale',
-              quantity: -a.quantity,
-              previousStock: runningStock,
-              newStock: runningStock - a.quantity,
-              reason: 'Sale Transaction',
-              performedBy: currentEmployeeId,
-              status: 'approved',
-              batchId: a.batchId,
-              expiryDate: a.expiryDate,
-              orgId,
-            });
-            runningStock -= a.quantity;
-          });
-        }
 
-        return {
-          ...item,
-          drugId: drug?.id || actualDrugId, // Ensure the true drug ID is persisted
-          batchAllocations: alloc?.allocations || [],
-        };
+      // 2. Invoke the Atomic Edge Function
+      const { data, error } = await supabase.functions.invoke('process-checkout', {
+        body: payload
       });
 
-      // 3. Generate IDs
-      const internalId = idGenerator.uuid();
-      
-      const dailyOrderNumber = await salesRepository.getNextDailyOrderNumber(activeBranchId);
-
-      // Generate the Global Serial ID (e.g. PF-0042)
-      const serialId = await idGenerator.generate('sales', activeBranchId, branchCode);
-      movementEntries.forEach(m => m.referenceId = internalId);
-
-      const newSale: Sale = {
-        ...saleData,
-        id: internalId,
-        serialId,
-        branchId: activeBranchId,
-        orgId,
-        date: verifiedDate.toISOString(),
-        soldByEmployeeId: currentEmployeeId,
-        status: saleData.saleType === 'delivery' ? 'pending' : 'completed',
-        updatedAt: verifiedDate.toISOString(),
-        dailyOrderNumber,
-        items: processedItems,
-      } as Sale;
-
-      // 4. Persistence Phase — run critical writes sequentially with full undo coverage
-      
-      // A. Update Stock
-      await inventoryService.updateStockBulk(stockMutations, true);
-      undoManager.push(async () => {
-        await inventoryService.updateStockBulk(
-          stockMutations.map(m => ({ id: m.id, quantity: -m.quantity })),
-          true
-        );
-      });
-
-      // B. Log Movements
-      const createdMovements = await stockMovementService.logMovementsBulk(movementEntries);
-      undoManager.push(async () => {
-        const movementIds = createdMovements.map(m => m.id);
-        await stockMovementRepository.deleteByIds(movementIds);
-      });
-
-      // C. Create Sale
-      const createdSale = await salesService.create(newSale, activeBranchId);
-      undoManager.push(async () => {
-        await salesRepository.delete(createdSale.id);
-        // If there were any other tables linked (like sale_items), we'd delete them here too.
-        // Currently, salesService.create handles everything via the JSONB 'items' column in 'sales'.
-      });
-
-      // D. Shift Transaction + Audit — fire-and-forget (non-critical, shouldn't block checkout)
-      const isImmediateComplete = !saleData.saleType || saleData.saleType === 'walk-in';
-      if (isImmediateComplete && shiftId) {
-        cashService.addTransaction(shiftId, {
-          branchId: activeBranchId,
-          orgId: orgId,
-          shiftId: shiftId,
-          time: timestamp,
-          type: saleData.paymentMethod === 'cash' ? 'sale' : 'card_sale',
-          amount: saleData.total,
-          reason: `Sale #${serialId}`,
-          userId: context.performerId || 'System',
-          relatedSaleId: internalId,
-        }).catch(err => console.warn('[TransactionService] Shift transaction failed (non-blocking):', err));
+      if (error) {
+        console.error('[TransactionService] Edge Function error:', error);
+        return { success: false, error: 'Server error during checkout' };
       }
 
-      auditService.log('sale.complete', {
-        userId: currentEmployeeId,
-        details: `Completed Sale #${serialId} - Total: ${saleData.total}`,
-        entityId: internalId,
-        branchId: activeBranchId,
-      });
+      if (data && !data.success) {
+        console.error('[TransactionService] Transaction failed:', data.error);
+        return { success: false, error: data.error || 'Transaction failed' };
+      }
 
-      return { success: true, sale: createdSale };
+      // 3. Return the result (the RPC returns basic sale info)
+      return { 
+        success: true, 
+        sale: data as unknown as Sale // Cast for compatibility
+      };
 
     } catch (err: any) {
       console.error('[TransactionService] Fatal error:', err);
-      await undoManager.undoAll();
-      return { success: false, error: err.message || 'Transaction failed' };
+      return { success: false, error: err.message || 'Checkout failed' };
     }
   },
+
 
   /**
    * Orchestrates the cancellation of a sale, ensuring stock is returned

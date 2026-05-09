@@ -84,9 +84,15 @@ export const cashRepository = {
     return data ? this.mapShiftFromDb(data) : null;
   },
 
-  async insertShift(shift: Shift): Promise<void> {
-    const { error } = await supabase.from('shifts').insert(this.mapShiftToDb(shift));
+  async insertShift(shift: Shift): Promise<Shift> {
+    const { data, error } = await supabase
+      .from('shifts')
+      .insert(this.mapShiftToDb(shift))
+      .select()
+      .single();
+    
     if (error) throw error;
+    return this.mapShiftFromDb(data);
   },
 
   async updateShift(id: string, updates: Partial<Shift>): Promise<void> {
