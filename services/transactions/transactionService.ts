@@ -14,6 +14,7 @@ import { auditService } from '../audit/auditService';
 import { money } from '../../utils/money';
 import { returnService } from '../returns/returnService';
 import { settingsService } from '../settings/settingsService';
+import { resolveUnits } from '../../utils/stockUtils';
 import * as stockOps from '../../utils/stockOperations';
 import { supabase } from '../../lib/supabase';
 import { salesRepository } from '../sales/repositories/salesRepository';
@@ -64,7 +65,7 @@ export const transactionService = {
       const allocationRequests = saleData.items.map((item) => {
         const drug = inventory.find((d) => d.id === item.id || d.batches?.some(b => b.id === item.id));
         const actualDrugId = (item as any).dbId || drug?.id || item.id;
-        const quantityToDeduct = stockOps.resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack || drug?.unitsPerPack);
+        const quantityToDeduct = resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack || drug?.unitsPerPack);
         
         return {
           drugId: actualDrugId,
@@ -95,7 +96,7 @@ export const transactionService = {
         const drug = inventory.find((d) => d.id === actualDrugId || d.batches?.some(b => b.id === actualDrugId || b.id === item.id));
         
         const alloc = bulkAllocations.find((a) => a.drugId === actualDrugId);
-        const unitsToDeduct = stockOps.resolveUnits(item.quantity, !!item.isUnit, drug?.unitsPerPack || item.unitsPerPack);
+        const unitsToDeduct = resolveUnits(item.quantity, !!item.isUnit, drug?.unitsPerPack || item.unitsPerPack);
 
         stockMutations.push({ id: actualDrugId, quantity: -unitsToDeduct });
         
@@ -264,7 +265,7 @@ export const transactionService = {
         );
 
         // Track for bulk inventory update and undo
-        const unitsToRestore = stockOps.resolveUnits(item.quantity, !!item.isUnit, drug.unitsPerPack);
+        const unitsToRestore = resolveUnits(item.quantity, !!item.isUnit, drug.unitsPerPack);
         stockUpdates.push({ id: item.id, quantity: unitsToRestore });
 
         // Undo for batch return (re-allocate)
@@ -373,7 +374,7 @@ export const transactionService = {
             sale.id
           );
 
-          const unitsToRestore = stockOps.resolveUnits(oldItem.quantity, !!oldItem.isUnit, drug.unitsPerPack);
+          const unitsToRestore = resolveUnits(oldItem.quantity, !!oldItem.isUnit, drug.unitsPerPack);
           await inventoryService.updateStock(oldItem.id, unitsToRestore);
 
           undoManager.push(async () => {
@@ -560,7 +561,7 @@ export const transactionService = {
         const currentReturned = updatedReturnedQuantities[lineKey] || 0;
         updatedReturnedQuantities[lineKey] = currentReturned + returnedItem.quantityReturned;
 
-        const unitsToRestore = stockOps.resolveUnits(returnedItem.quantityReturned, !!returnedItem.isUnit, drug?.unitsPerPack);
+        const unitsToRestore = resolveUnits(returnedItem.quantityReturned, !!returnedItem.isUnit, drug?.unitsPerPack);
         stockMutations.push({ id: returnedItem.drugId, quantity: unitsToRestore });
 
         movementEntries.push({

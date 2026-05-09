@@ -5,7 +5,7 @@ import type { Drug } from '../../../../types';
 import { PriceDisplay } from '../../../common/TanStackTable';
 import { money } from '../../../../utils/currency';
 import { Tooltip } from '../../../common/Tooltip';
-import { resolveUnits } from '../../../../utils/stockOperations';
+import { resolveUnits } from '../../../../utils/stockUtils';
 import { formatStockAmount } from '../../../../utils/inventory';
 
 interface POSDrugAnalyticsProps {

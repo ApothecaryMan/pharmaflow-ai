@@ -26,10 +26,10 @@ import { InsightTooltip } from '../../common/InsightTooltip';
 import { Tooltip } from '../../common/Tooltip';
 import { isToday, isAfter, subHours, parseISO } from 'date-fns';
 import { pricingService } from '../../../services/sales/pricingService';
+import { resolveUnits, resolvePrice } from '../../../utils/stockUtils';
 import * as stockOps from '../../../utils/stockOperations';
 import { idGenerator } from '../../../utils/idGenerator';
 import { useShift } from '../../../hooks/sales/useShift';
-import { resolvePrice } from '../../../utils/stockOperations';
 
 const ShiftWarning = ({ t, compact = false }: { t: any; compact?: boolean }) => (
   <div className={`flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 ${compact ? 'h-7 px-2 w-full' : 'h-[42px] px-4'}`}>
@@ -351,15 +351,15 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // 3. Calculate Limits (Total Units)
       // drug.stock is typically stored as Total Units in the system (based on POS analysis)
       // Available Limit = Actual Stock in Inventory + What we already own in this Order
-      const totalOriginalUnitsOwned = stockOps.resolveUnits(originalPackQty, false, unitsPerPack) + 
-                                     stockOps.resolveUnits(originalUnitQty, true, unitsPerPack);
+      const totalOriginalUnitsOwned = resolveUnits(originalPackQty, false, unitsPerPack) + 
+                                     resolveUnits(originalUnitQty, true, unitsPerPack);
       const maxUnitsAvailable = drug.stock + totalOriginalUnitsOwned;
 
       // 4. Calculate Proposed Total Usage
       const proposedPackQty = isUnit ? currentPendingPackQty : proposedQty;
       const proposedUnitQty = isUnit ? proposedQty : currentPendingUnitQty;
-      const proposedTotalUnits = stockOps.resolveUnits(proposedPackQty, false, unitsPerPack) + 
-                                stockOps.resolveUnits(proposedUnitQty, true, unitsPerPack);
+      const proposedTotalUnits = resolveUnits(proposedPackQty, false, unitsPerPack) + 
+                                resolveUnits(proposedUnitQty, true, unitsPerPack);
 
       // 5. Validation & Clamping
       let finalQty = proposedQty;

@@ -5,7 +5,7 @@ import type { Drug } from '../../../../types';
 import { getArabicDisplayName, getDisplayName } from '../../../../utils/drugDisplayName';
 import { PriceDisplay } from '../../../common/TanStackTable';
 import { formatExpiryDate, parseExpiryEndOfMonth, getExpiryColorClass } from '../../../../utils/expiryUtils';
-import { resolveUnits } from '../../../../utils/stockOperations';
+import { resolveUnits } from '../../../../utils/stockUtils';
 import { formatStockAmount } from '../../../../utils/inventory';
 
 const formatDrugQty = (units: number, unitsPerPack: number, lang: string) => {

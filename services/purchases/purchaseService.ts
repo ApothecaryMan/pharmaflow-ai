@@ -10,6 +10,7 @@ import { settingsService } from '../settings/settingsService';
 import { inventoryService } from '../inventory/inventoryService';
 import { batchService } from '../inventory/batchService';
 import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
+import { resolveUnits } from '../../utils/stockUtils';
 import * as stockOps from '../../utils/stockOperations';
 import { money } from '../../utils/money';
 import { purchaseRepository } from './repositories/purchaseRepository';
@@ -109,7 +110,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
 
     for (const item of purchase.items) {
       const currentStock = await batchService.getTotalStock(item.drugId);
-      const unitsToAdd = stockOps.resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack);
+      const unitsToAdd = resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack);
 
       let expiryDate = item.expiryDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
       
@@ -154,7 +155,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     await inventoryService.updateStockBulk(
       purchase.items.map(i => ({ 
         id: i.drugId, 
-        quantity: stockOps.resolveUnits(i.quantity, !!i.isUnit, i.unitsPerPack) 
+        quantity: resolveUnits(i.quantity, !!i.isUnit, i.unitsPerPack) 
       })),
       true
     );

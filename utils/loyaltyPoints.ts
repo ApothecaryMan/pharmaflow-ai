@@ -1,4 +1,5 @@
 import type { CartItem } from '../types';
+import { resolvePrice } from './stockUtils';
 import * as stockOps from './stockOperations';
 
 /**
@@ -56,7 +57,7 @@ export function calculateLoyaltyPoints(total: number, items: CartItem[]): number
   let itemPoints = 0;
   items.forEach((item) => {
     // Normalize price for unit items
-    const price = stockOps.resolvePrice(item.publicPrice, !!item.isUnit, item.unitsPerPack);
+    const price = resolvePrice(item.publicPrice, !!item.isUnit, item.unitsPerPack);
 
     const itemRate = getRateForValue(price, ITEM_RATE_TIERS);
     if (itemRate > 0) {

@@ -11,7 +11,7 @@ import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { type UserRole } from '../../../../config/permissions';
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import type { CartItem, Drug } from '../../../../types';
-import * as stockOps from '../../../../utils/stockOperations';
+import { resolvePrice } from '../../../../utils/stockUtils';
 import { isStockConstraintMet } from '../../../../utils/stockOperations';
 import { batchService } from '../../../../services/inventory/batchService';
 import type { GroupedDrug } from '../../../../types';
@@ -157,7 +157,7 @@ export const usePOSCart = ({
         ...prev,
         {
           ...drug,
-          publicPrice: stockOps.resolvePrice(drug.publicPrice, isUnitMode, drug.unitsPerPack, drug.unitPrice),
+          publicPrice: resolvePrice(drug.publicPrice, isUnitMode, drug.unitsPerPack, drug.unitPrice),
           quantity: initialQuantity,
           discount: prev.find((i) => i.id === drug.id && !!i.isUnit !== isUnitMode)?.discount || 0,
           isUnit: isUnitMode,
@@ -230,7 +230,7 @@ export const usePOSCart = ({
               quantity: packsTake,
               discount: currentItem.discount || 0,
               isUnit: false,
-              publicPrice: stockOps.resolvePrice(batch.publicPrice, false, unitsPerPack, batch.unitPrice),
+              publicPrice: resolvePrice(batch.publicPrice, false, unitsPerPack, batch.unitPrice),
               preferredBatchId: batch.id,
             });
             remainingPacks -= packsTake;
@@ -250,7 +250,7 @@ export const usePOSCart = ({
               quantity: unitsTake,
               discount: currentItem.discount || 0,
               isUnit: true,
-              publicPrice: stockOps.resolvePrice(batch.publicPrice, true, unitsPerPack, batch.unitPrice),
+              publicPrice: resolvePrice(batch.publicPrice, true, unitsPerPack, batch.unitPrice),
               preferredBatchId: batch.id,
             });
             remainingUnits -= unitsTake;
@@ -348,7 +348,7 @@ export const usePOSCart = ({
                 ...i, 
                 isUnit: newIsUnit, 
                 quantity: convertedQty,
-                publicPrice: stockOps.resolvePrice(
+                publicPrice: resolvePrice(
                   i.basePackPrice || drug?.publicPrice || i.publicPrice,
                   newIsUnit,
                   unitsPerPack,

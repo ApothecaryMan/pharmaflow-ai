@@ -31,6 +31,7 @@ import { useSettings } from '../../context';
 import { SearchEngineInput } from '../common/SearchEngineInput';
 import { DrugSearchEngine } from '../../services/search/drugSearchService';
 
+import { resolveUnits, convertToPacks } from '../../utils/stockUtils';
 import * as stockOps from '../../utils/stockOperations';
 import { batchService } from '../../services/inventory/batchService';
 
@@ -174,7 +175,7 @@ export const Inventory: React.FC<InventoryProps> = ({
   const handleOpenEdit = (drug: Drug) => {
     setEditingDrug(drug);
     // Load stock as PACKS for editing
-    const stockInPacks = stockOps.convertToPacks(drug.stock, drug.unitsPerPack);
+    const stockInPacks = convertToPacks(drug.stock, drug.unitsPerPack);
     setFormData({
       ...drug,
       stock: stockInPacks,
@@ -213,7 +214,7 @@ export const Inventory: React.FC<InventoryProps> = ({
       const val = parseFloat(newStock);
       if (!isNaN(val)) {
         // Save as Total Units
-        onUpdateDrug({ ...drug, stock: validateStock(stockOps.resolveUnits(val, false, drug.unitsPerPack)) });
+        onUpdateDrug({ ...drug, stock: validateStock(resolveUnits(val, false, drug.unitsPerPack)) });
       }
     }
     setActiveMenuId(null);
@@ -230,7 +231,7 @@ export const Inventory: React.FC<InventoryProps> = ({
     // Prepare data: Convert stock (Packs) to Total Units
     const submissionData = {
       ...formData,
-      stock: validateStock(stockOps.resolveUnits(formData.stock || 0, false, formData.unitsPerPack)),
+      stock: validateStock(resolveUnits(formData.stock || 0, false, formData.unitsPerPack)),
     };
 
     if (editingDrug) {
@@ -332,7 +333,7 @@ export const Inventory: React.FC<InventoryProps> = ({
     return groupedInventory.reduce(
       (acc, drug) => {
         acc.totalItems += 1;
-        const packs = stockOps.convertToPacks(drug.totalStock || 0, drug.unitsPerPack || 1);
+        const packs = convertToPacks(drug.totalStock || 0, drug.unitsPerPack || 1);
         
         acc.totalCost = money.add(
           acc.totalCost,

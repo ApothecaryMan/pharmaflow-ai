@@ -18,6 +18,7 @@ import { getArabicDisplayName, getDisplayName } from '../../../utils/drugDisplay
 import { batchService, getGroupingKey } from '../../../services/inventory/batchService';
 import { inventorySearchEngine } from '../../../services/search/drugSearchService';
 import { formatStock } from '../../../utils/inventory';
+import { resolveDisplayStock } from '../../../utils/stockUtils';
 import * as stockOps from '../../../utils/stockOperations';
 import { parseSearchTerm } from '../../../utils/searchUtils';
 import { formatExpiryDate, getExpiryColorClass, parseExpiryEndOfMonth } from '../../../utils/expiryUtils';
@@ -577,7 +578,7 @@ export const POS: React.FC<POSProps> = ({
             );
           }
 
-          const displayValue = stockOps.resolveDisplayStock(
+          const displayValue = resolveDisplayStock(
             info.getValue(), 
             unitsPerPack, 
             mode as 'pack' | 'unit'

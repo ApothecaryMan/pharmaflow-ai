@@ -8,7 +8,7 @@ import type { CartItem, Drug, Employee, Language } from '../../../../types';
 import { BUTTON_INACTIVE, CARD_MD } from '../../../../utils/themeStyles';
 import { Tooltip } from '../../../common/Tooltip';
 import { SortableCartItem } from '../SortableCartItem';
-import { resolvePrice } from '../../../../utils/stockOperations';
+import { resolvePrice } from '../../../../utils/stockUtils';
 import { useNetworkStatus } from '../../../../hooks/common/useNetworkStatus';
 import { money } from '../../../../utils/money';
 import { formatCurrency } from '../../../../utils/currency';

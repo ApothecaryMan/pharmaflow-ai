@@ -13,6 +13,7 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs';
 import { Tooltip } from '../common/Tooltip';
 import { CARD_LG, INPUT_BASE } from '../../utils/themeStyles';
+import { resolveUnits } from '../../utils/stockUtils';
 import * as stockOps from '../../utils/stockOperations';
 import { pricing } from '../../utils/money';
 import { SegmentedControl } from '../common/SegmentedControl';
@@ -184,7 +185,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
       costPrice: formData.costPrice || 0,
       unitCostPrice: formData.unitCostPrice || 0,
       tax: formData.tax,
-      stock: validateStock(stockOps.resolveUnits(formData.stock || 0, false, formData.unitsPerPack)),
+      stock: validateStock(resolveUnits(formData.stock || 0, false, formData.unitsPerPack)),
       expiryDate: formData.expiryDate || '',
       description: formData.description,
       barcode: finalBarcode,

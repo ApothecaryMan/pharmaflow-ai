@@ -3,6 +3,7 @@ import { stockMovementService } from '../services/inventory/stockMovement/stockM
 import type { Drug, StockBatch, BatchAllocation, StockMovementType, CartItem } from '../types';
 import { validateStock, assertStockSufficient } from './inventory';
 import { money } from './money';
+import { resolveUnits, resolvePrice, convertToPacks, resolveDisplayStock } from './stockUtils';
 
 /**
  * Context for stock operations to ensure accurate movement logging.
@@ -25,42 +26,6 @@ export interface StockMutation {
   allocations?: BatchAllocation[];
 }
 
-/**
- * Resolves total unit quantity based on input type (units or packs).
- */
-export const resolveUnits = (qty: number, isUnit: boolean, unitsPerPack: number = 1): number => {
-  const perPack = unitsPerPack || 1;
-  return isUnit ? qty : qty * perPack;
-};
-
-/**
- * Resolves unit price based on input type.
- * Priority: 
- * 1. manualUnitPrice (if provided)
- * 2. Calculated via money.divide (if not provided)
- */
-export const resolvePrice = (
-  price: number, 
-  isUnit: boolean, 
-  unitsPerPack: number = 1,
-  manualUnitPrice?: number
-): number => {
-  const perPack = unitsPerPack || 1;
-  if (!isUnit) return price;
-  
-  // Use manual unit price if available (Bottom-Up)
-  if (manualUnitPrice !== undefined && manualUnitPrice > 0) return manualUnitPrice;
-  
-  // Fallback to safe division
-  return money.divide(price, perPack);
-};
-
-/**
- * Converts total units back to pack quantity.
- */
-export const convertToPacks = (totalUnits: number, unitsPerPack: number = 1): number => {
-  return money.divide(totalUnits, unitsPerPack || 1);
-};
 
 /**
  * Deducts stock from inventory, handles batch allocation and movement logging.
@@ -456,12 +421,3 @@ export const isStockConstraintMet = (
   return existingUnits + newUnits <= totalStockUnits;
 };
 
-/**
- * Resolves stock value for display based on mode (pack vs unit).
- * Packs are shown as fractional values (e.g. 1.5 packs).
- */
-export const resolveDisplayStock = (stock: number, unitsPerPack: number = 1, mode: 'pack' | 'unit'): number => {
-  if (mode === 'unit') return stock;
-  const packs = stock / (unitsPerPack || 1);
-  return parseFloat(packs.toFixed(2));
-};

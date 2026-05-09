@@ -11,6 +11,7 @@ import { MaterialTabs } from '../common/MaterialTabs';
 import { MobileSearchCartDrawer } from './MobileSearchCartDrawer';
 import { CartItemQuantityControl } from '../sales/pos/CartItemControls';
 import { usePosSounds } from '../common/hooks/usePosSounds';
+import { convertToPacks } from '../../utils/stockUtils';
 import * as stockOps from '../../utils/stockOperations';
 
 interface MobileMedicineSearchProps {
@@ -370,7 +371,7 @@ const DrugActionPill: React.FC<{
 }> = ({ drug, cart, isExpanded, language, onAddToCart }) => {
   const currentQtyInCart = cart
     .filter(c => c.id === drug.id)
-    .reduce((sum, c) => sum + (c.isUnit ? stockOps.convertToPacks(c.quantity, drug.unitsPerPack) : c.quantity), 0);
+    .reduce((sum, c) => sum + (c.isUnit ? convertToPacks(c.quantity, drug.unitsPerPack) : c.quantity), 0);
   const isOutOfStock = currentQtyInCart >= drug.stock;
   
   const parts = formatCurrencyParts(drug.publicPrice);
@@ -385,7 +386,7 @@ const DrugActionPill: React.FC<{
       }`}>
         {currentQtyInCart > 0 
           ? currentQtyInCart.toLocaleString('en-US', { maximumFractionDigits: 1 })
-          : (drug.stock <= 0 ? '0' : (stockOps.convertToPacks(drug.stock, drug.unitsPerPack)).toLocaleString('en-US', { maximumFractionDigits: 1 }))
+          : (drug.stock <= 0 ? '0' : (convertToPacks(drug.stock, drug.unitsPerPack)).toLocaleString('en-US', { maximumFractionDigits: 1 }))
         }
       </div>
 
