@@ -24,6 +24,7 @@ import { StockAdjustment } from '../components/inventory/StockAdjustment';
 import { StockMovementReport, ExpiryManagement } from '../components/inventory';
 import { BranchSettings } from '../components/settings/BranchSettings';
 import { PricingPage } from '../components/settings/PricingPage';
+import { DesktopSettings } from '../components/settings/DesktopSettings';
 import { LandingPage } from '../components/layout/LandingPage';
 import { PendingApproval } from '../components/purchases/PendingApproval';
 import { PurchaseHistory } from '../components/purchases/PurchaseHistory';
@@ -41,6 +42,7 @@ import { ShiftHistory } from '../components/sales/ShiftHistory';
 import { ModalTests } from '../components/test/ModalTests';
 import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
 import type { PermissionAction } from './permissions';
+import { PERMISSIONS_MAPPING } from './permissionsMapping';
 
 export interface PageConfig {
   id: string;
@@ -77,7 +79,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'language',
       'onViewChange',
     ],
-    permission: 'dashboard.view',
+    permission: PERMISSIONS_MAPPING['dashboard'],
     layout: 'dashboard',
   },
   inventory: {
@@ -98,7 +100,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'language',
       'onViewChange',
     ],
-    permission: 'inventory.view',
+    permission: PERMISSIONS_MAPPING['inventory'],
   },
   'stock-movement': {
     id: 'stock-movement',
@@ -108,7 +110,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'timeline',
     category: 'inventory',
     requiredProps: ['onViewChange'],
-    permission: 'reports.view_stock_movement',
+    permission: PERMISSIONS_MAPPING['stock-movement'],
   },
   'expiry-calendar': {
     id: 'expiry-calendar',
@@ -118,7 +120,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'calendar_today',
     category: 'inventory',
     requiredProps: ['inventory', 'batches', 'color', 't', 'language', 'onUpdateInventory', 'onBatchesChanged'],
-    permission: 'inventory.view',
+    permission: PERMISSIONS_MAPPING['expiry-calendar'],
   },
   'inventory-beta': {
     id: 'inventory-beta',
@@ -129,7 +131,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'inventory',
 
     requiredProps: ['inventory', 'color', 't', 'language'],
-    permission: 'inventory.view_beta',
+    permission: PERMISSIONS_MAPPING['inventory-beta'],
   },
   pos: {
     id: 'pos',
@@ -152,7 +154,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'onUpdateSale',
     ],
 
-    permission: 'sale.create',
+    permission: PERMISSIONS_MAPPING['pos'],
     layout: 'full-bleed',
   },
   'sales-history': {
@@ -175,7 +177,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'employees',
       'onViewChange',
     ],
-    permission: 'sale.view_history',
+    permission: PERMISSIONS_MAPPING['sales-history'],
   },
   'return-history': {
     id: 'return-history',
@@ -185,7 +187,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'assignment_return',
     category: 'sales',
     requiredProps: ['returns', 'sales', 'color', 't', 'language', 'navigationParams'],
-    permission: 'sale.refund',
+    permission: PERMISSIONS_MAPPING['return-history'],
   },
   suppliers: {
     id: 'suppliers',
@@ -204,7 +206,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       't',
       'language',
     ],
-    permission: 'supplier.view',
+    permission: PERMISSIONS_MAPPING['suppliers'],
   },
   purchases: {
     id: 'purchases',
@@ -231,7 +233,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'navigationParams',
       'onViewChange',
     ],
-    permission: 'purchase.view',
+    permission: PERMISSIONS_MAPPING['purchases'],
   },
   'pending-approval': {
     id: 'pending-approval',
@@ -253,7 +255,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'employees',
       'onViewChange',
     ],
-    permission: 'purchase.approve',
+    permission: PERMISSIONS_MAPPING['pending-approval'],
   },
   'purchase-history': {
     id: 'purchase-history',
@@ -275,7 +277,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'onMarkAsReceived',
       'employees',
     ],
-    permission: 'purchase.view',
+    permission: PERMISSIONS_MAPPING['purchase-history'],
   },
   'purchase-returns': {
     id: 'purchase-returns',
@@ -295,7 +297,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'language',
       'onCreatePurchaseReturn',
     ],
-    permission: 'purchase.view',
+    permission: PERMISSIONS_MAPPING['purchase-returns'],
   },
   'barcode-printer': {
     id: 'barcode-printer',
@@ -305,7 +307,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'print',
     category: 'tools',
     requiredProps: ['inventory', 'color', 't', 'language', 'textTransform'],
-    permission: 'inventory.update',
+    permission: PERMISSIONS_MAPPING['barcode-printer'],
   },
   'barcode-studio': {
     id: 'barcode-studio',
@@ -315,7 +317,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'qr_code_2',
     category: 'tools',
     requiredProps: ['inventory', 'color', 't', 'language'],
-    permission: 'inventory.update',
+    permission: PERMISSIONS_MAPPING['barcode-studio'],
   },
   customers: {
     id: 'customers',
@@ -336,7 +338,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'onViewChange',
       'navigationParams',
     ],
-    permission: 'customer.view',
+    permission: PERMISSIONS_MAPPING['customers'],
   },
   'customer-overview': {
     id: 'customer-overview',
@@ -346,7 +348,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'analytics',
     category: 'customer-dashboard',
     requiredProps: ['customers', 'sales', 'color', 't', 'language', 'isLoading', 'onViewChange'],
-    permission: 'customer.view',
+    permission: PERMISSIONS_MAPPING['customer-overview'],
     layout: 'dashboard',
   },
   'customer-history': {
@@ -367,7 +369,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'isLoading',
       'onViewChange',
     ],
-    permission: 'customer.view',
+    permission: PERMISSIONS_MAPPING['customer-history'],
   },
   'loyalty-overview': {
     id: 'loyalty-overview',
@@ -377,7 +379,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'stars',
     category: 'customer-dashboard',
     requiredProps: ['customers', 'sales', 'color', 't', 'language', 'onViewChange'],
-    permission: 'customer.view_loyalty',
+    permission: PERMISSIONS_MAPPING['loyalty-overview'],
     layout: 'dashboard',
   },
   'loyalty-lookup': {
@@ -388,7 +390,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'person_search',
     category: 'customer-dashboard',
     requiredProps: ['customers', 'sales', 'color', 't', 'language', 'onViewChange'],
-    permission: 'customer.view_loyalty',
+    permission: PERMISSIONS_MAPPING['loyalty-lookup'],
   },
   'real-time-sales': {
     id: 'real-time-sales',
@@ -398,7 +400,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'monitoring',
     category: 'sales-dashboard',
     requiredProps: ['sales', 'customers', 'products', 'color', 't', 'language', 'onViewChange'],
-    permission: 'reports.view_financial',
+    permission: PERMISSIONS_MAPPING['real-time-sales'],
     layout: 'dashboard',
   },
   'add-product': {
@@ -416,7 +418,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'language',
       'onViewChange',
     ],
-    permission: 'inventory.add',
+    permission: PERMISSIONS_MAPPING['add-product'],
   },
   'cash-register': {
     id: 'cash-register',
@@ -426,7 +428,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'point_of_sale',
     category: 'sales',
     requiredProps: ['color', 't', 'language', 'employees', 'currentEmployeeId', 'onViewChange'],
-    permission: 'shift.open',
+    permission: PERMISSIONS_MAPPING['cash-register'],
   },
   'shift-history': {
     id: 'shift-history',
@@ -436,7 +438,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'history',
     category: 'sales',
     requiredProps: ['color', 't', 'language', 'employees', 'onViewChange'],
-    permission: 'shift.reports',
+    permission: PERMISSIONS_MAPPING['shift-history'],
   },
   'stock-adjustment': {
     id: 'stock-adjustment',
@@ -446,7 +448,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'inventory',
     category: 'inventory',
     requiredProps: ['inventory', 'batches', 'onUpdateInventory', 'color', 't'],
-    permission: 'inventory.adjust',
+    permission: PERMISSIONS_MAPPING['stock-adjustment'],
   },
   'receipt-designer': {
     id: 'receipt-designer',
@@ -456,7 +458,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'brush',
     category: 'sales',
     requiredProps: ['color', 't', 'language'],
-    permission: 'settings.update',
+    permission: PERMISSIONS_MAPPING['receipt-designer'],
   },
   'dashboard-experiments': {
     id: 'dashboard-experiments',
@@ -466,7 +468,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'science',
     category: 'test',
     requiredProps: ['color', 't', 'language'],
-    permission: 'system.debug',
+    permission: PERMISSIONS_MAPPING['dashboard-experiments'],
   },
   'advanced-sm-card': {
     id: 'advanced-sm-card',
@@ -476,7 +478,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'dashboard_customize',
     category: 'test',
     requiredProps: ['color', 't', 'language'],
-    permission: 'system.debug',
+    permission: PERMISSIONS_MAPPING['advanced-sm-card'],
   },
   'modal-tests': {
     id: 'modal-tests',
@@ -486,7 +488,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'dialogs',
     category: 'test',
     requiredProps: ['color', 't', 'language'],
-    permission: 'system.debug',
+    permission: PERMISSIONS_MAPPING['modal-tests'],
   },
   'employee-list': {
     id: 'employee-list',
@@ -506,7 +508,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'isLoading',
       'onViewChange',
     ],
-    permission: 'users.view',
+    permission: PERMISSIONS_MAPPING['employee-list'],
   },
   'employee-profile': {
     id: 'employee-profile',
@@ -516,7 +518,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'id_card',
     category: 'hr',
     requiredProps: ['sales', 'employees', 'color', 't', 'language', 'isLoading', 'onViewChange'],
-    permission: 'users.view',
+    permission: PERMISSIONS_MAPPING['employee-profile'],
   },
   login: {
     id: 'login',
@@ -579,7 +581,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'isLoading',
       'onViewChange',
     ],
-    permission: 'users.view',
+    permission: PERMISSIONS_MAPPING['staff-overview'],
     layout: 'dashboard',
   },
   'branch-management': {
@@ -590,7 +592,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'domain',
     category: 'pharmacy-configuration',
     requiredProps: ['language', 'color', 'onViewChange'],
-    permission: 'settings.update',
+    permission: PERMISSIONS_MAPPING['branch-management'],
     isProtected: true,
     storageKey: 'branch_settings_unlocked',
   },
@@ -601,7 +603,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'بحث الأدوية',
     icon: 'search',
     category: 'inventory',
-    permission: 'inventory.view',
+    permission: PERMISSIONS_MAPPING['medicine-search'],
   },
   'customer-density-map': {
     id: 'customer-density-map',
@@ -611,7 +613,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'map',
     category: 'customer-dashboard',
     requiredProps: ['color', 't', 'language'],
-    permission: 'customer.view',
+    permission: PERMISSIONS_MAPPING['customer-density-map'],
     layout: 'full-screen',
   },
   'org-management': {
@@ -643,7 +645,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'touch_app',
     category: 'hr',
     requiredProps: ['language'],
-    permission: 'attendance.clock',
+    permission: PERMISSIONS_MAPPING['attendance-terminal'],
   },
   'attendance-reports': {
     id: 'attendance-reports',
@@ -653,7 +655,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'assessment',
     category: 'hr',
     requiredProps: ['onViewChange'],
-    permission: 'attendance.view',
+    permission: PERMISSIONS_MAPPING['attendance-reports'],
   },
   'employee-attendance-profile': {
     id: 'employee-attendance-profile',
@@ -663,7 +665,18 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'person_check',
     category: 'hr',
     requiredProps: ['onViewChange'],
-    permission: 'attendance.view',
+    permission: PERMISSIONS_MAPPING['employee-attendance-profile'],
+  },
+  'desktop-settings': {
+    id: 'desktop-settings',
+    component: DesktopSettings,
+    menuLabel: 'Desktop Settings',
+    menuLabelAr: 'إعدادات سطح المكتب',
+    icon: 'desktop_windows',
+    category: 'settings',
+    requiredProps: ['color', 't', 'language'],
+    permission: PERMISSIONS_MAPPING['desktop-settings'],
+    layout: 'standard',
   },
 };
 

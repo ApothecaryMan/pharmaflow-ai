@@ -15,6 +15,7 @@ import { usePosSounds } from '../common/hooks/usePosSounds';
 import { useContextMenu } from '../common/ContextMenu';
 import { useSmartDirection } from '../common/SmartInputs';
 import { formatCurrencyParts } from '../../utils/currency';
+import { resolvePrice } from '../../utils/stockUtils';
 import * as stockOps from '../../utils/stockOperations';
 import type { Employee, CartItem, Drug, ViewState } from '../../types';
 
@@ -489,7 +490,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
           ...drug, 
           quantity, 
           isUnit,
-          publicPrice: stockOps.resolvePrice(drug.publicPrice, isUnit, drug.unitsPerPack, drug.unitPrice)
+          publicPrice: resolvePrice(drug.publicPrice, isUnit, drug.unitsPerPack, drug.unitPrice)
         }
       ];
     });

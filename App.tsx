@@ -262,6 +262,18 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     onNavigate: (targetView) => handleViewChange(targetView),
   });
 
+  // --- Global Navigation Event Listener ---
+  React.useEffect(() => {
+    const handleGlobalNavigate = (e: any) => {
+      const { detail } = e;
+      if (detail) {
+        handleViewChange(detail);
+      }
+    };
+    window.addEventListener('navigate-to-view', handleGlobalNavigate);
+    return () => window.removeEventListener('navigate-to-view', handleGlobalNavigate);
+  }, [handleViewChange]);
+
   // --- URL Synchronization ---
   React.useEffect(() => {
     if (!isAuthenticated) return;

@@ -14,7 +14,7 @@ import { ORG_MANAGEMENT_HELP } from '../../i18n/helpInstructions';
 import { useSettings } from '../../context';
 import { PageHeader } from '../common/PageHeader';
 import { permissionsService } from '../../services/auth/permissionsService';
-import { PAGE_REGISTRY } from '../../config/pageRegistry';
+import { PERMISSIONS_MAPPING } from '../../config/permissionsMapping';
 import { UpgradeTunnelTransition } from './UpgradeTunnelTransition';
 
 interface OrganizationManagementPageProps {
@@ -92,13 +92,13 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
       value: 'org-management', 
       label: language === 'AR' ? 'إدارة المنظمة' : 'Organization',
       icon: 'corporate_fare',
-      permission: PAGE_REGISTRY['org-management']?.permission
+      permission: PERMISSIONS_MAPPING['org-management']
     },
     { 
       value: 'branch-management', 
       label: language === 'AR' ? 'إدارة الفروع' : 'Branches',
       icon: 'domain',
-      permission: PAGE_REGISTRY['branch-management']?.permission
+      permission: PERMISSIONS_MAPPING['branch-management']
     }
   ];
 

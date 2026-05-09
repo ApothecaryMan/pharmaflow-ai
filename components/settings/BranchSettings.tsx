@@ -18,7 +18,7 @@ import { useAlert } from '../../context';
 import { getLocationName } from '../../data/locations';
 import { PageHeader } from '../common/PageHeader';
 import { permissionsService } from '../../services/auth/permissionsService';
-import { PAGE_REGISTRY } from '../../config/pageRegistry';
+import { PERMISSIONS_MAPPING } from '../../config/permissionsMapping';
 
 interface BranchSettingsProps {
   language: 'EN' | 'AR';
@@ -714,13 +714,13 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
       value: 'org-management', 
       label: language === 'AR' ? 'إدارة المنظمة' : 'Organization',
       icon: 'corporate_fare',
-      permission: PAGE_REGISTRY['org-management']?.permission
+      permission: PERMISSIONS_MAPPING['org-management']
     },
     { 
       value: 'branch-management', 
       label: language === 'AR' ? 'إدارة الفروع' : 'Branches',
       icon: 'domain',
-      permission: PAGE_REGISTRY['branch-management']?.permission
+      permission: PERMISSIONS_MAPPING['branch-management']
     }
   ].filter(tab => !tab.permission || permissionsService.can(tab.permission));
 

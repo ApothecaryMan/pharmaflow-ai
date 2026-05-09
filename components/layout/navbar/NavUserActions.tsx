@@ -5,6 +5,7 @@ import { Language, Organization, ViewState } from '../../../types';
 import { authService } from '../../../services/auth/authService';
 import { permissionsService } from '../../../services/auth/permissionsService';
 import { TRANSLATIONS } from '../../../i18n/translations';
+import { isTauri } from '../../../utils/platform';
 
 interface NavUserActionsProps {
   language: Language;
@@ -232,6 +233,22 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                     {language === 'AR' ? 'فرع واحد متاح.' : 'One branch available.'}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Desktop Settings (Tauri Only) */}
+            {isTauri() && (
+              <div className='p-2 border-t border-(--border-divider)'>
+                <button
+                  onClick={() => {
+                    onNavigate?.('desktop-settings');
+                    setShowProfileMenu(false);
+                  }}
+                  className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg flex items-center gap-2'
+                >
+                  <Icons.Desktop size="var(--icon-md)" />
+                  {language === 'AR' ? 'إعدادات سطح المكتب' : 'Desktop Settings'}
+                </button>
               </div>
             )}
 

@@ -14,6 +14,7 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { Switch } from '../common/Switch';
+import { isTauri } from '../../utils/platform';
 
 interface PrinterSettingsProps {
   isOpen: boolean;
@@ -128,6 +129,35 @@ export const PrinterSettings: React.FC<PrinterSettingsProps> = ({
       icon='print'
     >
       <div className='space-y-6'>
+        {/* Desktop Version Banner */}
+        {isTauri() && (
+          <div className={`p-4 bg-${color}-50 dark:bg-${color}-900/20 border border-${color}-100 dark:border-${color}-800/30 rounded-2xl flex items-center gap-4`}>
+            <div className={`w-10 h-10 rounded-full bg-${color}-100 dark:bg-${color}-800/50 flex items-center justify-center flex-shrink-0`}>
+              <span className={`material-symbols-rounded text-${color}-600 dark:text-${color}-400`}>desktop_windows</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                {language === 'AR' ? 'استخدم إعدادات سطح المكتب' : 'Use Desktop Settings'}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {language === 'AR' 
+                  ? 'للحصول على أفضل أداء مع الطابعة الحرارية، استخدم التكامل الأصلي.' 
+                  : 'For best performance with thermal printers, use native integration.'}
+              </p>
+            </div>
+            <button 
+              onClick={() => {
+                onClose();
+                // We use a custom event to trigger navigation from the app root
+                window.dispatchEvent(new CustomEvent('navigate-to-view', { detail: 'desktop-settings' }));
+              }}
+              className={`px-3 py-1.5 bg-white dark:bg-zinc-800 border border-${color}-200 dark:border-${color}-700 rounded-lg text-xs font-bold text-${color}-600 dark:text-${color}-400 hover:bg-${color}-50 transition-colors`}
+            >
+              {language === 'AR' ? 'فتح' : 'Open'}
+            </button>
+          </div>
+        )}
+
         {/* Connection Section */}
         <div className='bg-gray-50 dark:bg-zinc-900/40 border border-transparent dark:border-(--border-divider) rounded-2xl p-4'>
           <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3 block'>
