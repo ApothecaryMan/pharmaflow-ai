@@ -206,153 +206,57 @@ export class AttendanceReportService extends BaseReportService<AttendanceEvent, 
     branchId: string,
     employeeId: string,
     year: number,
-    month: number // 1-indexed: 1=Jan, 12=Dec
+    month: number
   ): Promise<MonthlyEmployeeReport> {
-    // 1. Date range with ±1 day buffer for overnight shift safety
-    const monthStart = new Date(year, month - 1, 1);           // e.g., May 1 00:00
-    const monthEnd = new Date(year, month, 0);                  // e.g., May 31
-    const daysInMonth = monthEnd.getDate();                     // e.g., 31
-
-    const queryStart = new Date(year, month - 1, 0);            // Apr 30 (buffer before)
-    queryStart.setHours(0, 0, 0, 0);
-    const queryEnd = new Date(year, month, 1, 23, 59, 59, 999); // Jun 1 end (buffer after)
-
-    // 2. Fetch shift start time for the branch
-    const { data: branchData } = await supabase
-      .from('branches')
-      .select('shift_start_time')
-      .eq('id', branchId)
-      .single();
-    const shiftStartTime = branchData?.shift_start_time || '09:00';
-
-    // 3. Fetch ALL events in extended range for this specific employee
-    const { data: events, error } = await supabase
-      .from(this.tableName)
-      .select('*, employees(name, employee_code)')
-      .eq('branch_id', branchId)
-      .eq('employee_id', employeeId)
-      .gte('timestamp', queryStart.toISOString())
-      .lte('timestamp', queryEnd.toISOString())
-      .order('timestamp', { ascending: true });
+    // [Supabase RPC] Uses: supabase/attendance_report_rpc.sql
+    // This RPC handles high-performance server-side pairing and aggregation.
+    const { data, error } = await supabase.rpc('get_monthly_attendance_report', {
+      p_branch_id: branchId,
+      p_employee_id: employeeId,
+      p_year: year,
+      p_month: month
+    });
 
     if (error) {
-      console.error('[AttendanceReportService] Monthly report error:', error);
+      console.error('[AttendanceReportService] RPC Error:', error);
       throw error;
     }
 
-    // 4. Map and run global IN→OUT pairing on the full event set
-    const mappedEvents = (events || []).map(e => this.mapDbToDomain(e));
-    const summaries = calculateWorkingHours(mappedEvents);
-    const empSummary = summaries.get(employeeId);
+    // 2. Fetch employee basic info (one simple query)
+    const { data: empInfo } = await supabase
+      .from('employees')
+      .select('name, employee_code')
+      .eq('id', employeeId)
+      .single();
 
-    // Get basic employee info
-    const empName = mappedEvents[0]?.employeeName || '';
-    const empCode = mappedEvents[0]?.employeeCode || '';
+    // 3. Transform the RPC results into the MonthlyEmployeeReport structure
+    const days: DayAttendanceSummary[] = (data.days || []).map((d: any) => ({
+      date: d.date,
+      dayOfWeek: new Date(d.date).getDay(),
+      firstIn: d.firstIn,
+      lastOut: d.lastOut,
+      totalMinutes: d.totalMinutes,
+      isPresent: d.isPresent,
+      isLate: d.lateMinutes > 0,
+      lateMinutes: d.lateMinutes,
+      isOngoing: d.isOngoing,
+      sessions: 0 // Not strictly needed for the profile view
+    }));
 
-    // 5. Bucket sessions by IN-date (anchored to the day the shift started)
-    const dayBuckets = new Map<string, {
-      sessions: { inTime: string; outTime: string | null; minutes: number }[];
-      firstIn: string | null;
-      lastOut: string | null;
-      totalMinutes: number;
-      isOngoing: boolean;
-    }>();
-
-    if (empSummary) {
-      for (const session of empSummary.sessions) {
-        const inDate = new Date(session.inTime);
-        const inDay = inDate.getDate();
-        const inMonth = inDate.getMonth() + 1; // 1-indexed
-        const inYear = inDate.getFullYear();
-
-        // CRITICAL: Only include session if it started within the target month
-        if (inYear !== year || inMonth !== month) continue;
-
-        const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(inDay).padStart(2, '0')}`;
-
-        if (!dayBuckets.has(dateKey)) {
-          dayBuckets.set(dateKey, {
-            sessions: [],
-            firstIn: null,
-            lastOut: null,
-            totalMinutes: 0,
-            isOngoing: false,
-          });
-        }
-
-        const bucket = dayBuckets.get(dateKey)!;
-        bucket.sessions.push({
-          inTime: session.inTime,
-          outTime: session.outTime,
-          minutes: session.minutes,
-        });
-        bucket.totalMinutes += session.minutes;
-
-        // Track firstIn (earliest IN of the day)
-        if (!bucket.firstIn || new Date(session.inTime) < new Date(bucket.firstIn)) {
-          bucket.firstIn = session.inTime;
-        }
-
-        // Track lastOut (could be early next morning for overnight shifts)
-        if (session.outTime) {
-          if (!bucket.lastOut || new Date(session.outTime) > new Date(bucket.lastOut)) {
-            bucket.lastOut = session.outTime;
-          }
-        } else {
-          bucket.isOngoing = true;
-        }
-      }
-    }
-
-    // 6. Build final calendar: iterate through all days of the month (e.g., 1-31)
-    const now = new Date();
-    const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const days: DayAttendanceSummary[] = [];
-
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const dateObj = new Date(year, month - 1, d);
-      const bucket = dayBuckets.get(dateKey);
-
-      let isLate = false;
-      let lateMinutes = 0;
-
-      if (bucket?.firstIn) {
-        const lateness = checkLateness(bucket.firstIn, shiftStartTime);
-        isLate = lateness.isLate;
-        lateMinutes = lateness.lateMinutes;
-      }
-
-      days.push({
-        date: dateKey,
-        dayOfWeek: dateObj.getDay(),
-        firstIn: bucket?.firstIn || null,
-        lastOut: bucket?.lastOut || null,
-        totalMinutes: bucket?.totalMinutes || 0,
-        sessions: bucket?.sessions.filter(s => s.outTime !== null).length || 0,
-        isPresent: !!bucket?.firstIn,
-        isLate,
-        lateMinutes,
-        isOngoing: dateKey === todayKey && (bucket?.isOngoing || false),
-      });
-    }
-
-    // 7. Aggregate KPIs
+    const daysInMonth = days.length;
     const presentDays = days.filter(d => d.isPresent).length;
-    const absentDays = daysInMonth - presentDays;
-    const lateDays = days.filter(d => d.isLate).length;
     const totalMinutes = days.reduce((sum, d) => sum + d.totalMinutes, 0);
     const totalLateMinutes = days.reduce((sum, d) => sum + d.lateMinutes, 0);
 
     return {
       employeeId,
-      employeeName: empName,
-      employeeCode: empCode,
+      employeeName: empInfo?.name || '',
+      employeeCode: empInfo?.employee_code || '',
       month: `${year}-${String(month).padStart(2, '0')}`,
       totalDays: daysInMonth,
       presentDays,
-      absentDays,
-      lateDays,
+      absentDays: daysInMonth - presentDays,
+      lateDays: days.filter(d => d.isLate).length,
       totalMinutes,
       attendanceRate: daysInMonth > 0 ? Math.round((presentDays / daysInMonth) * 1000) / 10 : 0,
       avgDailyMinutes: presentDays > 0 ? Math.round(totalMinutes / presentDays) : 0,
