@@ -25,6 +25,9 @@ export const useComputedInventory = (
       ? rawInventory.filter(d => d.branchId === activeBranchId)
       : rawInventory;
 
+    // 0c. Index inventory by ID for O(1) lookup during batch processing (Optimization)
+    const inventoryMap = new Map(filteredInventory.map(d => [d.id, d]));
+
     // 1. Group batches by Unified Grouping Key for efficient lookup
     const drugDataMap = new Map<string, { 
       total: number; 
@@ -34,8 +37,8 @@ export const useComputedInventory = (
     }>();
  
     filteredBatches.forEach((batch) => {
-      // Find the template drug for this batch to inherit properties (name, price, etc)
-      const drugTemplate = filteredInventory.find(d => d.id === batch.drugId);
+      // Optimized: Use Map lookup instead of .find() inside a loop (O(1) vs O(N))
+      const drugTemplate = inventoryMap.get(batch.drugId);
       if (!drugTemplate) return;
 
       const groupKey = getGroupingKey(drugTemplate);
@@ -53,12 +56,11 @@ export const useComputedInventory = (
       };
 
       if (existing) {
-        drugDataMap.set(groupKey, {
-          ...existing,
-          total: existing.total + batch.quantity,
-          earliestExpiry: batch.expiryDate < existing.earliestExpiry ? batch.expiryDate : existing.earliestExpiry,
-          batches: [...existing.batches, batchAsDrug]
-        });
+        existing.total += batch.quantity;
+        if (batch.expiryDate < existing.earliestExpiry) {
+          existing.earliestExpiry = batch.expiryDate;
+        }
+        existing.batches.push(batchAsDrug);
       } else {
         drugDataMap.set(groupKey, {
           total: batch.quantity,
