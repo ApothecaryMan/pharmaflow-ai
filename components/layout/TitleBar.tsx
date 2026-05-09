@@ -11,6 +11,8 @@ import { ViewState } from '../../types';
 import { useAuth } from '../../hooks/auth/useAuth';
 import { authService } from '../../services/auth/authService';
 import { Tooltip } from '../common/Tooltip';
+import { Icons } from '../common/Icons';
+import { check } from '@tauri-apps/plugin-updater';
 
 
 const appWindow = isTauri() ? getCurrentWindow() : null;
@@ -111,6 +113,9 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showPrinterSettings, setShowPrinterSettings] = useState(false);
   const [isWindowMaximized, setIsWindowMaximized] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [hasUpdate, setHasUpdate] = useState(false);
+  const [printerReady, setPrinterReady] = useState(true); // Default to true, update later if possible
   
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -136,6 +141,33 @@ export const TitleBar: React.FC<TitleBarProps> = ({
 
     return () => {
       unlisten.then(f => f());
+    };
+  }, []);
+
+  // Monitor online/offline and updates
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    if (isTauri()) {
+      const checkUpdates = async () => {
+        try {
+          const update = await check();
+          setHasUpdate(!!update);
+        } catch (e) {
+          console.error('Failed to check for updates', e);
+        }
+      };
+      checkUpdates();
+      const interval = setInterval(checkUpdates, 1000 * 60 * 60); // Check every hour
+      return () => clearInterval(interval);
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, []);
 
@@ -288,6 +320,37 @@ export const TitleBar: React.FC<TitleBarProps> = ({
       <div className="flex items-center gap-1 shrink-0 px-1 z-10 relative">
         {isAuthenticated && (
           <>
+            {/* Desktop Status Indicators */}
+            <div className="flex items-center gap-2 px-3 py-1 bg-white/5 dark:bg-black/10 rounded-full border border-white/5 mr-2">
+              {/* Online Status */}
+              <Tooltip content={isOnline ? "متصل بالإنترنت" : "غير متصل"} position="bottom">
+                <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500'}`} />
+              </Tooltip>
+
+              <span className="w-[1px] h-3 bg-white/10" />
+
+              {/* Printer Status */}
+              <Tooltip content="الطابعة الحرارية جاهزة" position="bottom">
+                <Icons.Printer size={14} className={printerReady ? 'text-emerald-500' : 'text-gray-400'} />
+              </Tooltip>
+
+              {/* Update Indicator */}
+              {hasUpdate && (
+                <>
+                  <span className="w-[1px] h-3 bg-white/10" />
+                  <Tooltip content="تحديث جديد متاح" position="bottom">
+                    <button 
+                      onClick={() => handleNavigate('desktop-settings')}
+                      className="flex items-center gap-1 text-[10px] font-bold text-emerald-500 animate-pulse"
+                    >
+                      <Icons.Download size={14} />
+                      UPDT
+                    </button>
+                  </Tooltip>
+                </>
+              )}
+            </div>
+
             {/* Quick Access Group */}
             <div className="flex items-center gap-0.5">
               <Tooltip 

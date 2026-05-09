@@ -11,9 +11,7 @@ export type IconProps = {
 };
 
 // Internal Registry mapping common names to MynaUI components
-// Cleaned up to remove duplicates and consolidate aliases
 const InternalRegistry: Record<string, any> = {
-  // Core App Components
   Dashboard: Myna.Grid,
   Inventory: Myna.Box,
   Sales: Myna.Cart,
@@ -23,14 +21,13 @@ const InternalRegistry: Record<string, any> = {
   Settings: Myna.CogFour,
   Organization: Myna.BuildingOne,
   Printer: Myna.Printer,
+  Desktop: Myna.Monitor,
   Download: Myna.Download,
   Upload: Myna.Upload,
   Logout: Myna.Logout,
   Menu: Myna.Menu,
   ChevronDown: Myna.ChevronDown,
   Search: Myna.Search,
-  
-  // Feature IDs & Aliases (Consolidated)
   dashboard_customize: Myna.Grid,
   package_2: Myna.Box,
   point_of_sale: Myna.Cart,
@@ -45,8 +42,6 @@ const InternalRegistry: Record<string, any> = {
   printer_settings: Myna.Printer,
   administration: Myna.Cog,
   branch_settings: Myna.GitBranch,
-  
-  // Legacy & Navbar Aliases
   ExpandMore: Myna.ChevronDown,
   Branch: Myna.GitBranch,
   Success: Myna.CheckCircle,
@@ -57,47 +52,56 @@ const InternalRegistry: Record<string, any> = {
 };
 
 /**
- * Icons Registry Proxy
- * Automatically switches to Solid version if active prop is true
+ * Base Icon Component Factory
  */
-export const Icons: any = new Proxy(InternalRegistry, {
-  get: (target, prop: string) => {
-    return (props: IconProps) => {
-      const { active, ...otherProps } = props;
-      
-      // Find the base icon
-      let BaseIcon = target[prop];
-      if (!BaseIcon) {
-        const foundKey = Object.keys(target).find(k => k.toLowerCase() === prop.toLowerCase());
-        BaseIcon = foundKey ? target[foundKey] : (Myna as any)[prop];
-      }
-      
-      if (!BaseIcon) BaseIcon = Myna.Circle || (() => null);
+const createIcon = (name: string) => {
+  return (props: IconProps) => {
+    const { active, ...otherProps } = props;
+    let BaseIcon = InternalRegistry[name];
+    
+    if (!BaseIcon) {
+      // Fallback to Myna direct lookup or Circle
+      BaseIcon = (Myna as any)[name] || Myna.Circle;
+    }
 
-      // If active, try to find the Solid version
-      if (active) {
-        const solidName = `${BaseIcon.displayName || prop}Solid`;
-        const SolidIcon = (Myna as any)[solidName];
-        if (SolidIcon) return <SolidIcon {...otherProps} />;
-      }
+    if (active) {
+      const solidName = `${BaseIcon.displayName || name}Solid`;
+      const SolidIcon = (Myna as any)[solidName];
+      if (SolidIcon) return <SolidIcon {...otherProps} />;
+    }
 
-      return <BaseIcon {...otherProps} />;
-    };
-  }
-});
-
-export const getIconByName = (name: string): React.FC<any> => {
-  return (props: any) => {
-    const Icon = Icons[name];
-    return <Icon {...props} />;
+    return <BaseIcon {...otherProps} />;
   };
 };
 
-// Direct Exports for common usage
-export const {
-  Dashboard, Inventory, Sales, Customers, Reports, Settings,
-  Logout, Organization, Printer, Download, Upload, Menu,
-  ChevronDown, Search, Print, Edit, Store
-} = Icons;
+// Static Exports to satisfy Rollup analysis
+export const Dashboard = createIcon('Dashboard');
+export const Inventory = createIcon('Inventory');
+export const Sales = createIcon('Sales');
+export const Customers = createIcon('Customers');
+export const Reports = createIcon('Reports');
+export const Settings = createIcon('Settings');
+export const Organization = createIcon('Organization');
+export const Printer = createIcon('Printer');
+export const Desktop = createIcon('Desktop');
+export const Download = createIcon('Download');
+export const Upload = createIcon('Upload');
+export const Logout = createIcon('Logout');
+export const Menu = createIcon('Menu');
+export const ChevronDown = createIcon('ChevronDown');
+export const Search = createIcon('Search');
+export const Print = createIcon('Print');
+export const Edit = createIcon('Edit');
+export const Store = createIcon('Store');
+
+// Dynamic lookup helper
+export const getIconByName = (name: string): React.FC<any> => {
+  return createIcon(name);
+};
+
+// Legacy support
+export const Icons: any = new Proxy(InternalRegistry, {
+  get: (target, prop: string) => createIcon(prop)
+});
 
 export default Icons;

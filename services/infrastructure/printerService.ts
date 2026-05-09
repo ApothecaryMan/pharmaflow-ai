@@ -1,62 +1,128 @@
-import { isTauri } from '@/utils/platform';
-
 /**
- * Receipt Printer Service
- * 
- * Handles direct printing for POS receipts.
- * Falls back to standard window.print() if not running in Tauri (desktop mode).
+ * Printer Service (Orchestrator)
+ *
+ * Unified interface for printing across all platforms.
+ * Prioritizes Tauri native thermal printer plugin when running on desktop,
+ * falls back to QZ Tray or browser printing elsewhere.
  */
 
-export const printerService = {
-  /**
-   * Print a POS receipt
-   * @param data Receipt structure for tauri-plugin-thermal-printer
-   */
-  async printReceipt(data: any): Promise<boolean> {
+import { isTauri } from '../../utils/platform';
+import * as qz from '../../utils/qzPrinter';
+import { list_thermal_printers, print_thermal_printer } from 'tauri-plugin-thermal-printer';
+
+export type PrinterInterface = 'tauri' | 'qz' | 'browser';
+
+export interface UniversalPrinterSettings extends qz.PrinterSettings {
+  /** Preferred interface: 'auto', 'tauri', 'qz' */
+  preferredInterface: 'auto' | 'tauri' | 'qz';
+  /** Native Tauri printer name */
+  tauriPrinter: string | null;
+}
+
+class UniversalPrinterService {
+  private settings: UniversalPrinterSettings;
+
+  constructor() {
+    this.settings = this.loadSettings();
+  }
+
+  private loadSettings(): UniversalPrinterSettings {
+    const qzSettings = qz.getPrinterSettings();
+    const tauriPrinter = localStorage.getItem('desktop_receipt_printer');
+    const preferredInterface = (localStorage.getItem('preferred_printer_interface') as any) || 'auto';
+
+    return {
+      ...qzSettings,
+      tauriPrinter,
+      preferredInterface,
+    };
+  }
+
+  public getSettings(): UniversalPrinterSettings {
+    return this.settings;
+  }
+
+  public async getAvailablePrinters(): Promise<string[]> {
     if (isTauri()) {
       try {
-        // Dynamically import the plugin only when running in Tauri
-        const { print_thermal_printer, list_thermal_printers } = await import('tauri-plugin-thermal-printer');
-        
-        const printers = await list_thermal_printers();
-        if (!printers || printers.length === 0) {
-          console.warn('No printers found for direct printing');
-          return false;
+        const tauriPrinters = await list_thermal_printers();
+        if (tauriPrinters && tauriPrinters.length > 0) {
+          return tauriPrinters.map(p => p.name);
         }
-
-        // Use the first printer by default or logic to pick the correct one
-        await print_thermal_printer({
-          printer: printers[0].name,
-          sections: data.sections,
-          options: { code_page: 0 },
-          paper_size: 'Mm80'
-        });
-        return true;
-      } catch (error) {
-        console.error('Failed to print via Tauri:', error);
-        return false;
-      }
-    } else {
-      // Fallback for web mode: standard window print
-      console.log('Running in web mode, using browser print dialog');
-      window.print();
-      return true;
-    }
-  },
-
-  /**
-   * List available printers (Desktop only)
-   */
-  async getPrinters(): Promise<any[]> {
-    if (isTauri()) {
-      try {
-        const { list_thermal_printers } = await import('tauri-plugin-thermal-printer');
-        return await list_thermal_printers();
-      } catch (error) {
-        console.error('Failed to list printers:', error);
-        return [];
+      } catch (e) {
+        console.warn('[PrinterService] Failed to list Tauri printers:', e);
       }
     }
+
+    // Fallback to QZ if connected
+    if (qz.isConnected()) {
+      return await qz.getPrinters();
+    }
+
     return [];
   }
-};
+
+  /**
+   * Universal print receipt function
+   */
+  public async printReceipt(html: string, rawData?: string): Promise<boolean> {
+    const { preferredInterface, tauriPrinter, enabled, silentMode } = this.settings;
+
+    // 1. Try Tauri Native (if on desktop and prioritized)
+    if (isTauri() && (preferredInterface === 'auto' || preferredInterface === 'tauri')) {
+      const printerName = tauriPrinter || localStorage.getItem('desktop_receipt_printer');
+      if (printerName) {
+        try {
+          // If we have raw ESC/POS data, it's better for thermal printers
+          // But usually we have HTML. The plugin might handle HTML to image conversion.
+          // For now, let's assume the plugin wants ESC/POS or we have a way to convert.
+          await print_thermal_printer({ 
+            printer: printerName,
+            sections: [{ Text: { text: html, styles: { align: 'left', size: 'normal' } } }],
+            options: { code_page: 0 },
+            paper_size: 'Mm80'
+          }); 
+          return true;
+        } catch (e) {
+          console.error('[PrinterService] Tauri print failed:', e);
+          if (preferredInterface === 'tauri') return false; // Strict mode
+        }
+      }
+    }
+
+    // 2. Try QZ Tray
+    if (enabled && silentMode !== 'off' && (preferredInterface === 'auto' || preferredInterface === 'qz')) {
+      try {
+        const success = await qz.printReceiptSilently(html);
+        if (success) return true;
+      } catch (e) {
+        console.error('[PrinterService] QZ print failed:', e);
+      }
+    }
+
+    // 3. Fallback to Browser
+    return false;
+  }
+
+  /**
+   * Universal print label function
+   */
+  public async printLabel(html: string, size: { width: number; height: number }): Promise<boolean> {
+    // Labels are more complex, QZ Tray is usually better for custom sizes unless plugin supports it
+    const { enabled, silentMode } = this.settings;
+    
+    if (enabled && silentMode !== 'off') {
+      try {
+        const success = await qz.printLabelSilently(html, size);
+        if (success) return true;
+      } catch (e) {
+        console.error('[PrinterService] QZ label print failed:', e);
+      }
+    }
+
+    return false;
+  }
+}
+
+export const printerService = new UniversalPrinterService();
+export default printerService;
