@@ -25,7 +25,7 @@ export const NotificationOverlay: React.FC = () => {
     <div 
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`fixed top-13 right-5 z-[10000] pointer-events-auto flex flex-col items-end w-full max-w-[420px] px-4`}
+      className={`fixed top-13 right-5 z-[10000] pointer-events-auto flex flex-col items-end w-full max-w-[420px] px-4 select-none`}
       style={{ perspective: '1000px' }}
     >
       <AnimatePresence mode="popLayout">
@@ -52,10 +52,34 @@ interface NotificationCardProps {
 
 const NotificationCard: React.FC<NotificationCardProps> = ({ alert, index, onClose, isExpanded }) => {
   const config = {
-    success: { icon: 'check_circle', color: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/20' },
-    error: { icon: 'error', color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20' },
-    warning: { icon: 'warning', color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
-    info: { icon: 'info', color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
+    success: { 
+      icon: 'check_circle', 
+      cardBg: 'bg-green-50 dark:bg-zinc-900',
+      cardBorder: 'border-green-200 dark:border-green-900',
+      iconBg: 'bg-green-100 dark:bg-green-900',
+      iconColor: 'text-green-600 dark:text-green-400'
+    },
+    error: { 
+      icon: 'error', 
+      cardBg: 'bg-red-50 dark:bg-zinc-900',
+      cardBorder: 'border-red-200 dark:border-red-900',
+      iconBg: 'bg-red-100 dark:bg-red-900',
+      iconColor: 'text-red-600 dark:text-red-400'
+    },
+    warning: { 
+      icon: 'warning', 
+      cardBg: 'bg-amber-50 dark:bg-zinc-900',
+      cardBorder: 'border-amber-200 dark:border-amber-900',
+      iconBg: 'bg-amber-100 dark:bg-amber-900',
+      iconColor: 'text-amber-600 dark:text-amber-400'
+    },
+    info: { 
+      icon: 'info', 
+      cardBg: 'bg-blue-50 dark:bg-zinc-900',
+      cardBorder: 'border-blue-200 dark:border-blue-900',
+      iconBg: 'bg-blue-100 dark:bg-blue-900',
+      iconColor: 'text-blue-600 dark:text-blue-400'
+    },
   }[alert.type];
 
   return (
@@ -85,7 +109,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ alert, index, onClo
       }}
       className={`
         relative w-full pointer-events-auto
-        bg-white dark:bg-zinc-900 rounded-xl border border-zinc-300 dark:border-zinc-700 p-4 shadow-2xl
+        ${config.cardBg} rounded-xl border-2 ${config.cardBorder} p-4 shadow-2xl
         flex items-start group overflow-hidden
       `}
       dir="ltr"
@@ -102,8 +126,8 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ alert, index, onClo
 
       {/* Content - Fixed Left */}
       <div className="flex-1 flex items-start justify-start gap-4 min-w-0">
-        <div className={`w-5 h-5 rounded flex items-center justify-center ${config.bg} flex-shrink-0 transition-transform mt-0.5`}>
-          <span className={`material-symbols-rounded ${config.color} block`} style={{ fontSize: '16px' }}>
+        <div className={`w-5 h-5 rounded flex items-center justify-center ${config.iconBg} flex-shrink-0 transition-transform mt-0.5`}>
+          <span className={`material-symbols-rounded ${config.iconColor} block`} style={{ fontSize: '16px', fontVariationSettings: "'FILL' 1" }}>
             {config.icon}
           </span>
         </div>
