@@ -2,12 +2,12 @@
  * Purchase Types - Purchase orders management
  */
 
-import type { Purchase } from '../../types';
+import type { Purchase, PurchaseStatus } from '../../types';
 
 export type { Purchase };
 
 export interface PurchaseFilters {
-  status?: 'pending' | 'completed' | 'rejected' | 'received';
+  status?: PurchaseStatus;
   supplierId?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -23,7 +23,7 @@ export interface PurchaseService {
   getAll(branchId?: string): Promise<Purchase[]>;
   getById(id: string, branchId?: string): Promise<Purchase | null>;
   getBySupplier(supplierId: string, branchId?: string): Promise<Purchase[]>;
-  getByStatus(status: 'pending' | 'completed' | 'rejected' | 'received', branchId?: string): Promise<Purchase[]>;
+  getByStatus(status: PurchaseStatus, branchId?: string): Promise<Purchase[]>;
   getPending(branchId?: string): Promise<Purchase[]>;
   filter(filters: PurchaseFilters, branchId?: string): Promise<Purchase[]>;
   create(purchase: Omit<Purchase, 'id'>, branchId?: string): Promise<Purchase>;

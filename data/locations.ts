@@ -8,20 +8,9 @@
  */
 
 import { AREAS as SPECIFIC_AREAS } from './areas';
+import type { Location, City, Area } from '../types/locationTypes';
 
-export interface Location {
-  id: string;
-  name_ar: string;
-  name_en: string;
-}
-
-export interface City extends Location {
-  governorate_id: string;
-}
-
-export interface Area extends Location {
-  city_id: string;
-}
+export type { Location, City, Area };
 
 export const GOVERNORATES: Location[] = [
   { id: '1', name_ar: 'القاهرة', name_en: 'Cairo' },

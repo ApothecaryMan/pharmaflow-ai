@@ -1,0 +1,52 @@
+import type { PermissionAction } from './permissions';
+
+/**
+ * Centralized mapping of page IDs to their required permissions.
+ * Moving this out of pageRegistry.ts prevents circular dependencies
+ * when components need to check permissions for navigation or UI logic.
+ */
+export const PERMISSIONS_MAPPING: Record<string, PermissionAction> = {
+  dashboard: 'dashboard.view',
+  inventory: 'inventory.view',
+  'stock-movement': 'reports.view_stock_movement',
+  'expiry-calendar': 'inventory.view',
+  'inventory-beta': 'inventory.view_beta',
+  pos: 'sale.create',
+  'sales-history': 'sale.view_history',
+  'return-history': 'sale.refund',
+  suppliers: 'supplier.view',
+  purchases: 'purchase.view',
+  'pending-approval': 'purchase.approve',
+  'purchase-history': 'purchase.view',
+  'purchase-returns': 'purchase.view',
+  'barcode-printer': 'inventory.update',
+  'barcode-studio': 'inventory.update',
+  customers: 'customer.view',
+  'customer-overview': 'customer.view',
+  'customer-history': 'customer.view',
+  'loyalty-overview': 'customer.view_loyalty',
+  'loyalty-lookup': 'customer.view_loyalty',
+  'real-time-sales': 'reports.view_financial',
+  'add-product': 'inventory.add',
+  'cash-register': 'shift.open',
+  'shift-history': 'shift.reports',
+  'stock-adjustment': 'inventory.adjust',
+  'receipt-designer': 'settings.update',
+  'dashboard-experiments': 'system.debug',
+  'advanced-sm-card': 'system.debug',
+  'modal-tests': 'system.debug',
+  'employee-list': 'users.view',
+  'employee-profile': 'users.view',
+  intelligence: 'reports.view_financial',
+  'login-audit': 'reports.view_financial',
+  'staff-overview': 'users.view',
+  'branch-management': 'settings.update',
+  'medicine-search': 'inventory.view',
+  'customer-density-map': 'customer.view',
+  'org-management': 'settings.view',
+  'services': 'settings.view',
+  'attendance-terminal': 'attendance.clock',
+  'attendance-reports': 'attendance.view',
+  'employee-attendance-profile': 'attendance.view',
+  'desktop-settings': 'settings.view',
+} as const;

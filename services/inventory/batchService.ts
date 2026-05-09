@@ -4,7 +4,7 @@
  */
 
 import { money } from '../../utils/money';
-import * as stockOps from '../../utils/stockOperations';
+import { resolveUnits } from '../../utils/stockUtils';
 import type { BatchAllocation, StockBatch, Drug, GroupedDrug, GroupingKey, CartItem } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
@@ -392,7 +392,7 @@ export const batchService = {
     const groupedRequirements = new Map<string, number>();
     
     cart.forEach(item => {
-      const units = stockOps.resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack);
+      const units = resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack);
       groupedRequirements.set(item.id, (groupedRequirements.get(item.id) || 0) + units);
     });
 

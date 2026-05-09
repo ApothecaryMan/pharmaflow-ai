@@ -66,7 +66,8 @@ export type ViewState =
   | 'org-management'
   | 'attendance-terminal'
   | 'attendance-reports'
-  | 'employee-attendance-profile';
+  | 'employee-attendance-profile'
+  | 'desktop-settings';
 
 /** Dashboard widget expand options */
 export type ExpandedView =

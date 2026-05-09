@@ -7,7 +7,7 @@
  * - Mapping: City-specific districts with unique IDs
  */
 
-import type { Area } from './locations';
+import type { Area } from '../types/locationTypes';
 
 export const AREAS: Area[] = [
   // --- CAIRO (1) ---

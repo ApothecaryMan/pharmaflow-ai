@@ -1,5 +1,6 @@
 import { batchService } from '../services/inventory/batchService';
 import { type CartItem, type Drug, Sale } from '../types';
+import { resolveUnits } from './stockUtils';
 import * as stockOps from './stockOperations';
 
 export interface ValidationResult {
@@ -26,7 +27,7 @@ export const validateStockAvailability = (
     // Determine the actual batch inside the group if the cart item was a batch
     const targetBatch = drug.id === item.id ? drug : drug.batches?.find(b => b.id === item.id) || drug;
 
-    const requestedQty = stockOps.resolveUnits(item.quantity, !!item.isUnit, targetBatch.unitsPerPack);
+    const requestedQty = resolveUnits(item.quantity, !!item.isUnit, targetBatch.unitsPerPack);
 
     // 1. Check total stock against the specific batch or group
     // We check against targetBatch.stock so it validates the exact batch added
