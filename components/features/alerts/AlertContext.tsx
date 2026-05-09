@@ -17,45 +17,44 @@ interface AlertContextType {
   warning: (message: string, title?: string, duration?: number) => void;
   info: (message: string, title?: string, duration?: number) => void;
   removeAlert: (id: string) => void;
-  currentAlert: AlertData | null;
+  alerts: AlertData[];
+  currentAlert: AlertData | null; // Keep for backward compatibility with status bar
 }
 
 const AlertContext = createContext<AlertContextType | undefined>(undefined);
 
 export const AlertProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentAlert, setCurrentAlert] = useState<AlertData | null>(null);
+  const [alerts, setAlerts] = useState<AlertData[]>([]);
 
   const addAlert = useCallback((options: Omit<AlertData, 'id'>) => {
-    const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+    const id = Date.now().toString() + Math.random().toString(36).substring(2, 9);
     const newAlert = { ...options, id };
 
-    // Set current alert for the status bar
-    setCurrentAlert(newAlert);
+    setAlerts((prev) => [...prev, newAlert]);
 
-    // Clear current alert reference after duration (roughly)
     if (options.duration && options.duration > 0) {
       setTimeout(() => {
-        setCurrentAlert((prev) => (prev?.id === id ? null : prev));
+        setAlerts((prev) => prev.filter((a) => a.id !== id));
       }, options.duration);
     }
   }, []);
 
   const removeAlert = useCallback((id: string) => {
-    setCurrentAlert((prev) => (prev?.id === id ? null : prev));
+    setAlerts((prev) => prev.filter((a) => a.id !== id));
   }, []);
 
   const helpers = {
-    alert: addAlert, // Generic internal helper
     success: (message: string, title?: string, duration?: number) =>
-      addAlert({ type: 'success', message, title, duration }),
+      addAlert({ type: 'success', message, title, duration: duration || 5000 }),
     error: (message: string, title?: string, duration?: number) =>
-      addAlert({ type: 'error', message, title, duration }),
+      addAlert({ type: 'error', message, title, duration: duration || 8000 }),
     warning: (message: string, title?: string, duration?: number) =>
-      addAlert({ type: 'warning', message, title, duration }),
+      addAlert({ type: 'warning', message, title, duration: duration || 6000 }),
     info: (message: string, title?: string, duration?: number) =>
-      addAlert({ type: 'info', message, title, duration }),
+      addAlert({ type: 'info', message, title, duration: duration || 5000 }),
     removeAlert,
-    currentAlert,
+    alerts,
+    currentAlert: alerts[alerts.length - 1] || null,
   };
 
   return <AlertContext.Provider value={helpers}>{children}</AlertContext.Provider>;

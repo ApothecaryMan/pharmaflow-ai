@@ -35,6 +35,7 @@ import { authService } from './services/auth/authService';
 import { type Supplier, ViewState } from './types';
 import { TitleBar } from './components/layout/TitleBar';
 import { isTauri } from './utils/platform';
+import { NotificationOverlay } from './components/features/alerts/NotificationOverlay';
 
 const INITIAL_SUPPLIERS: Supplier[] = [
   { id: '1', orgId: '', branchId: '1', name: 'B2B', contactPerson: 'B2B', phone: '', email: '', address: '', status: 'active' },
@@ -575,6 +576,7 @@ const App: React.FC = () => {
     <div className="h-screen flex flex-col overflow-hidden bg-black">
       {!authState.isAuthenticated && <TitleBar />}
       <div className="flex-1 overflow-hidden relative">
+        <NotificationOverlay />
         {finalContent}
       </div>
     </div>
