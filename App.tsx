@@ -547,16 +547,10 @@ const App: React.FC = () => {
   // 10. Authenticated & Setup Done -> Show Secure Content wrapped in Providers
   const isOnboardingReady = !isCheckingOnboarding;
 
-  const OnboardingLoadingScreen = () => (
-    <div className="h-full w-full flex items-center justify-center bg-zinc-50 dark:bg-black">
-      <div className="flex flex-col items-center gap-4">
-        <img src="/logo_icon_white.svg" className="h-12 w-12 animate-pulse opacity-50" alt="Loading" />
-      </div>
-    </div>
-  );
+
 
   const content = authState.isAuthenticated ? (
-    isOnboardingReady ? <AuthenticatedContent {...appState} {...authState} /> : <OnboardingLoadingScreen />
+    <AuthenticatedContent {...appState} {...authState} />
   ) : (
     <AuthPage
       onLoginSuccess={handleLoginSuccess}
@@ -577,7 +571,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-black">
+    <div className="h-screen flex flex-col overflow-hidden bg-[var(--bg-page-surface)]">
       {!authState.isAuthenticated && <TitleBar />}
       <div className="flex-1 overflow-hidden relative">
         <NotificationOverlay />
