@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "lastUpdated": null,
+  "totalRuns": 0,
+  "stats": {
+    "totalViolationsFound": 0,
+    "totalFixed": 0,
+    "totalSkipped": 0,
+    "totalFalsePositives": 0,
+    "totalKeysAdded": 0
+  },
+  "patterns": {
+    "P1_ternary":    { "hits": 0, "falsePositives": 0, "precision": 1.0 },
+    "P2_fallback":   { "hits": 0, "falsePositives": 0, "precision": 1.0 },
+    "P3_raw_arabic": { "hits": 0, "falsePositives": 0, "precision": 1.0 },
+    "P4_attributes": { "hits": 0, "falsePositives": 0, "precision": 1.0 },
+    "P5_jsx_text":   { "hits": 0, "falsePositives": 0, "precision": 1.0 }
+  },
+  "learnedSkips": [],
+  "hotKeys": {},
+  "scannedFiles": {},
+  "pendingPatterns": [],
+  "retiredPatterns": []
+}
