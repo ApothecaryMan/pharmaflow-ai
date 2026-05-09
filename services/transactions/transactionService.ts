@@ -64,13 +64,18 @@ export const transactionService = {
         performerName: context.performerName,
         branchCode: (await settingsService.getAll()).branchCode || 'PF',
         
-        // Items minimal data
+        // Items FULL data snapshot to ensure accurate history rendering
         items: saleData.items.map(item => ({
           id: item.id,
+          name: item.name,
           quantity: item.quantity,
           isUnit: !!item.isUnit,
           publicPrice: item.publicPrice,
-          name: item.name // snapshot for logging
+          discount: item.discount || 0,
+          dosageForm: item.dosageForm,
+          unitsPerPack: item.unitsPerPack,
+          expiryDate: item.expiryDate,
+          batchAllocations: item.batchAllocations,
         })),
         
         customerName: saleData.customerName,
@@ -118,120 +123,33 @@ export const transactionService = {
    */
   async processCancellation(
     sale: Sale,
-    inventory: Drug[],
+    _inventory: Drug[],
     context: ActionContext
   ): Promise<{ success: boolean; error?: string }> {
-    const { branchId: activeBranchId, performerId: currentEmployeeId, performerName, shiftId } = context;
-    const undoManager = new UndoManager();
-
     try {
-      // 1. Validations
-      if (sale.status === 'cancelled') {
-        throw new Error('Sale is already cancelled.');
-      }
-
-      if (sale.status === 'completed' && sale.saleType === 'delivery') {
-        throw new Error('Cannot cancel a completed delivery order. Please use the Return flow instead.');
-      }
-
-      if (sale.saleType === 'walk-in' || sale.status === 'completed') {
-        if (!shiftId) {
-          throw new Error('An active shift must be open to cancel a completed sale and issue a refund.');
+      const { data, error } = await supabase.functions.invoke('process-cancellation', {
+        body: {
+          saleId: sale.id,
+          branchId: context.branchId,
+          orgId: context.orgId,
+          performerId: context.performerId,
+          performerName: context.performerName
         }
-      }
-
-      // 2. Return stock for each item
-      const stockUpdates: { id: string; quantity: number }[] = [];
-
-      for (const item of sale.items) {
-        const drug = inventory.find((d) => d.id === item.id);
-        if (!drug) continue;
-
-        const allocations = item.batchAllocations || [];
-        
-        // Return stock to batches
-        await stockOps.returnStock(
-          drug,
-          item.quantity,
-          !!item.isUnit,
-          allocations,
-          'correction',
-          `Cancellation of Sale #${sale.serialId || sale.id}`,
-          {
-            branchId: activeBranchId,
-            performedBy: currentEmployeeId,
-            performedByName: performerName,
-          },
-          sale.id
-        );
-
-        // Track for bulk inventory update and undo
-        const unitsToRestore = resolveUnits(item.quantity, !!item.isUnit, drug.unitsPerPack);
-        stockUpdates.push({ id: item.id, quantity: unitsToRestore });
-
-        // Undo for batch return (re-allocate)
-        undoManager.push(async () => {
-          // Note: re-allocating specifically to the same batches if possible
-          // This is a complex undo, but for cancellation, it's mostly about reversing the numbers.
-          await inventoryService.updateStock(item.id, -unitsToRestore);
-          if (allocations.length > 0) {
-            await batchService.allocateStockBulk([{
-              drugId: item.id,
-              quantity: unitsToRestore,
-              preferredBatchId: allocations[0]?.batchId
-            }], activeBranchId);
-          }
-        });
-      }
-
-      // 3. Bulk update inventory quantities
-      if (stockUpdates.length > 0) {
-        await inventoryService.updateStockBulk(stockUpdates, true); // true = increment
-      }
-
-      // 4. Shift Balancing
-      if (shiftId && (sale.saleType === 'walk-in' || sale.status === 'completed')) {
-        const type = sale.paymentMethod === 'visa' ? 'card_return' : 'return';
-        const txId = idGenerator.generateSync('transactions', activeBranchId);
-        
-        await cashService.addTransaction(shiftId, {
-          branchId: activeBranchId,
-          shiftId: shiftId,
-          time: new Date().toISOString(),
-          type: type,
-          amount: sale.total,
-          reason: `Cancellation of Sale #${sale.serialId || sale.id}`,
-          userId: performerName || 'System',
-          relatedSaleId: sale.id
-        });
-
-        undoManager.push(async () => {
-          // We don't have a direct 'delete transaction' but we could add a reversal
-          // For now, most shift transactions are additive. 
-          // In a real rollback, we'd want to remove the tx record if possible.
-          await cashRepository.deleteTransaction(txId);
-        });
-      }
-
-      // 5. Update Sale Status
-      await salesService.update(sale.id, { 
-        status: 'cancelled',
-        updatedAt: new Date().toISOString()
       });
 
-      // 6. Log Audit
-      auditService.log('sale.cancel', {
-        userId: currentEmployeeId,
-        details: `Cancelled Sale #${sale.serialId || sale.id}`,
-        entityId: sale.id,
-        branchId: activeBranchId,
-      });
+      if (error) {
+        console.error('[TransactionService] Edge Function error:', error);
+        return { success: false, error: 'Server error during cancellation' };
+      }
+
+      if (data && !data.success) {
+        return { success: false, error: data.error || 'Cancellation failed' };
+      }
 
       return { success: true };
 
     } catch (err: any) {
       console.error('[TransactionService] Cancellation failed:', err);
-      await undoManager.undoAll();
       return { success: false, error: err.message || 'Cancellation failed' };
     }
   },
@@ -428,170 +346,48 @@ export const transactionService = {
 
   async processReturn(
     returnData: Return,
-    inventory: Drug[],
+    _inventory: Drug[],
     sale: Sale,
     context: ActionContext
   ): Promise<{ success: boolean; error?: string }> {
-    const { branchId: activeBranchId, performerId: currentEmployeeId, timestamp, orgId, shiftId } = context;
-    const undoManager = new UndoManager();
-    const stockMutations: { id: string; quantity: number }[] = [];
-    const movementEntries: any[] = [];
-    const batchReturnOps: { allocations: any[]; quantityToReturn: number; drugId: string }[] = [];
-    
     try {
-      // Validation using high-precision money engine
-      const currentNetTotal = (sale.netTotal !== undefined && sale.netTotal !== null) ? sale.netTotal : sale.total;
-      const remainingBalance = currentNetTotal; 
-      
-      if (!money.isGte(remainingBalance, returnData.totalRefund)) {
-        return {
-          success: false,
-          error: `Refund amount (${returnData.totalRefund}) exceeds remaining balance (${remainingBalance})`,
-        };
-      }
-
-      const updatedReturnedQuantities = { ...(sale.itemReturnedQuantities || {}) };
-
-      for (const returnedItem of returnData.items) {
-        const drug = inventory.find(d => d.id === returnedItem.drugId);
-        const saleItem = sale.items.find((i) => i.id === returnedItem.saleItemId);
-
-        if (!saleItem) continue;
-        
-        const lineKey = returnedItem.isUnit ? `${saleItem.id}_unit` : `${saleItem.id}_pack`;
-        const currentReturned = updatedReturnedQuantities[lineKey] || 0;
-        updatedReturnedQuantities[lineKey] = currentReturned + returnedItem.quantityReturned;
-
-        const unitsToRestore = resolveUnits(returnedItem.quantityReturned, !!returnedItem.isUnit, drug?.unitsPerPack);
-        stockMutations.push({ id: returnedItem.drugId, quantity: unitsToRestore });
-
-        movementEntries.push({
-          drugId: returnedItem.drugId,
-          drugName: drug?.name || 'Unknown Drug',
-          branchId: activeBranchId,
-          orgId,
-          type: 'return_customer',
-          quantity: unitsToRestore,
-          previousStock: drug?.stock || 0,
-          newStock: (drug?.stock || 0) + unitsToRestore,
-          reason: `Return for Sale #${sale.serialId}`,
-          referenceId: returnData.id,
-          batchId: saleItem.batchAllocations?.[0]?.batchId,
-          expiryDate: saleItem.expiryDate || saleItem.batchAllocations?.[0]?.expiryDate,
-          performedBy: currentEmployeeId,
-          status: 'approved',
-        });
-
-        if (saleItem?.batchAllocations) {
-          batchReturnOps.push({ 
-            allocations: saleItem.batchAllocations, 
-            quantityToReturn: unitsToRestore,
-            drugId: returnedItem.drugId 
-          });
-        }
-      }
-
-      // Execution Phase with Undo Support
-      const verifiedReturnDate = new Date(timestamp);
-
-      // 1. Restore Batches (Sequential or with individual rollback)
-      for (const op of batchReturnOps) {
-        await batchService.returnStock(op.allocations, op.quantityToReturn, op.drugId, activeBranchId, verifiedReturnDate);
-        undoManager.push(async () => {
-          // Rollback: Re-deduct from these specific batches
-          await batchService.allocateStockBulk([{
-            drugId: op.drugId,
-            quantity: op.quantityToReturn,
-            name: 'Return Rollback',
-            preferredBatchId: op.allocations[0]?.batchId
-          }], activeBranchId, verifiedReturnDate);
-        });
-      }
-
-      // 2. Restore Global Stock
-      if (stockMutations.length > 0) {
-        await inventoryService.updateStockBulk(stockMutations, true);
-        undoManager.push(async () => {
-          await inventoryService.updateStockBulk(
-            stockMutations.map(m => ({ id: m.id, quantity: -m.quantity })),
-            true
-          );
-        });
-      }
-
-      // 3. Log Movements
-      const createdMovements = await stockMovementService.logMovementsBulk(movementEntries);
-      undoManager.push(async () => {
-        const movementIds = createdMovements.map(m => m.id);
-        await stockMovementRepository.deleteByIds(movementIds);
-      });
-
-      await returnsRepository.insertReturn(returnData, currentEmployeeId);
-      undoManager.push(async () => {
-        await returnsRepository.deleteReturn(returnData.id);
-      });
-
-      await returnsRepository.insertReturnItems(
-        returnData.items.map(item => ({
-          branch_id: activeBranchId,
-          return_id: returnData.id,
-          drug_id: item.drugId,
+      const payload = {
+        saleId: sale.id,
+        branchId: context.branchId,
+        orgId: context.orgId,
+        performerId: context.performerId,
+        performerName: context.performerName,
+        returnType: returnData.returnType,
+        reason: returnData.reason,
+        notes: returnData.notes,
+        totalRefund: returnData.totalRefund,
+        items: returnData.items.map(item => ({
+          drugId: item.drugId,
           name: item.name,
-          quantity_returned: item.quantityReturned,
-          is_unit: item.isUnit,
-          public_price: item.publicPrice,
-          refund_amount: item.refundAmount,
-          reason: item.reason || returnData.reason,
-          condition: item.condition,
-          dosage_form: item.dosageForm,
+          quantity: item.quantityReturned,
+          publicPrice: item.publicPrice,
+          refundAmount: item.refundAmount,
+          condition: item.condition
         }))
-      );
-      undoManager.push(async () => {
-        await returnsRepository.deleteReturnItems(returnData.id);
+      };
+
+      const { data, error } = await supabase.functions.invoke('process-return', {
+        body: payload
       });
 
-      // 5. Update Original Sale
-      await salesService.update(sale.id, { 
-        netTotal: money.subtract(currentNetTotal, returnData.totalRefund),
-        itemReturnedQuantities: updatedReturnedQuantities 
-      }, true);
-      undoManager.push(async () => {
-        await salesService.update(sale.id, { 
-          netTotal: currentNetTotal,
-          itemReturnedQuantities: sale.itemReturnedQuantities 
-        }, true);
-      });
-
-      // 6. Cash Transaction (Financial impact)
-      if (shiftId && returnData.totalRefund > 0) {
-        const cashTx = await cashService.addTransaction(shiftId, {
-          branchId: activeBranchId,
-          orgId: orgId,
-          shiftId: shiftId,
-          time: timestamp,
-          type: 'return',
-          amount: returnData.totalRefund,
-          reason: `Return for Sale #${sale.serialId}`,
-          userId: context.performerId || 'System',
-          relatedSaleId: sale.id,
-        });
-        undoManager.push(async () => {
-          await cashRepository.deleteTransaction(cashTx.id);
-        });
+      if (error) {
+        console.error('[TransactionService] Edge Function error:', error);
+        return { success: false, error: 'Server error during return processing' };
       }
 
-      auditService.log('sale.return', {
-        userId: currentEmployeeId,
-        details: `Processed Return for Sale #${sale.serialId} - Refund: ${returnData.totalRefund}`,
-        entityId: returnData.id,
-        branchId: activeBranchId,
-      });
+      if (data && !data.success) {
+        return { success: false, error: data.error || 'Return failed' };
+      }
 
       return { success: true };
 
     } catch (err: any) {
-      console.error('[TransactionService] Return processing failed:', err);
-      await undoManager.undoAll();
+      console.error('[TransactionService] Return failed:', err);
       return { success: false, error: err.message || 'Return failed' };
     }
   },

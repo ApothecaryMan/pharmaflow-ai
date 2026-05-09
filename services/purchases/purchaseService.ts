@@ -11,6 +11,7 @@ import { inventoryService } from '../inventory/inventoryService';
 import { batchService } from '../inventory/batchService';
 import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
 import { resolveUnits } from '../../utils/stockUtils';
+import { normalizeExpiryToISO } from '../../utils/expiryUtils';
 import * as stockOps from '../../utils/stockOperations';
 import { money } from '../../utils/money';
 import { purchaseRepository } from './repositories/purchaseRepository';
@@ -112,11 +113,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
       const currentStock = await batchService.getTotalStock(item.drugId);
       const unitsToAdd = resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack);
 
-      let expiryDate = item.expiryDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
-      
-      if (expiryDate && expiryDate.length === 7 && expiryDate.includes('-')) {
-        expiryDate = `${expiryDate}-01`;
-      }
+      let expiryDate = normalizeExpiryToISO(item.expiryDate) || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
       const batch = await batchService.createBatch({
         drugId: item.drugId,

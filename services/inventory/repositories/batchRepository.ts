@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import type { StockBatch } from '../../../types';
+import { normalizeExpiryToISO } from '../../../utils/expiryUtils';
 
 export const mapBatchToDb = (b: Partial<StockBatch>): any => {
   const db: any = {};
@@ -8,9 +9,7 @@ export const mapBatchToDb = (b: Partial<StockBatch>): any => {
   if (b.drugId !== undefined) db.drug_id = b.drugId;
   if (b.quantity !== undefined) db.quantity = b.quantity;
   if (b.expiryDate !== undefined) {
-    if (b.expiryDate === '') db.expiry_date = null;
-    else if (b.expiryDate.length === 7 && /^\d{4}-\d{2}$/.test(b.expiryDate)) db.expiry_date = `${b.expiryDate}-01`;
-    else db.expiry_date = b.expiryDate;
+    db.expiry_date = normalizeExpiryToISO(b.expiryDate);
   }
   if (b.costPrice !== undefined) db.cost_price = b.costPrice;
   if (b.purchaseId !== undefined) db.purchase_id = b.purchaseId;
@@ -64,9 +63,7 @@ export const batchRepository = {
       .eq('branch_id', branchId);
       
     if (expiryDate) {
-      let expDate = expiryDate;
-      if (expDate.length === 7 && /^\d{4}-\d{2}$/.test(expDate)) expDate = `${expDate}-01`;
-      query = query.eq('expiry_date', expDate);
+      query = query.eq('expiry_date', normalizeExpiryToISO(expiryDate));
     } else {
       query = query.is('expiry_date', null);
     }

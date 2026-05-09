@@ -116,7 +116,7 @@ export const POS: React.FC<POSProps> = ({
     closedTabs, restoreTab,
   } = usePOSTabs(activeBranchId);
 
-  const { currentShift } = useShift();
+  const { currentShift, refreshShifts } = useShift();
   const hasOpenShift = !!currentShift;
 
   const { playBeep, playError, playSuccess, playClick } = usePosSounds();
@@ -210,7 +210,7 @@ export const POS: React.FC<POSProps> = ({
     cart, mergedCartItems, showToastError, addNotification, getVerifiedDate,
     activeTab, activeTabId, removeTab, onCompleteSale, customerName, customerCode,
     selectedCustomer, language, t, cartTotal, subtotal, globalDiscount, playSuccess,
-    activeBranchId, sales: sales || [],
+    activeBranchId, sales: sales || [], refreshShifts,
   });
 
   const { totalDiscountAmount, orderDiscountPercent, totalItems } = useMemo(() => {
@@ -937,8 +937,8 @@ export const POS: React.FC<POSProps> = ({
               enableVirtualization={true}
               dense={true}
               enablePagination={false}
-              onRowClick={(item) => addGroupToCart(item.batches)}
-              onRowLongPress={(e, item) => {
+              onRowClick={(item: any) => addGroupToCart(item.batches)}
+              onRowLongPress={(e, item: any) => {
                 showMenu(e.touches[0].clientX, e.touches[0].clientY, [
                   {
                     label: t.addToCart,
@@ -953,7 +953,7 @@ export const POS: React.FC<POSProps> = ({
                   },
                 ]);
               }}
-              onRowContextMenu={(e, item) => {
+              onRowContextMenu={(e, item: any) => {
                 showMenu(e.clientX, e.clientY, [
                   {
                     label: t.addToCart,

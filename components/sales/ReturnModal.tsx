@@ -12,6 +12,7 @@ import { idGenerator } from '../../utils/idGenerator';
 import { useData } from '../../context/DataContext';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { formatCurrency } from '../../utils/currency';
+import { getDisplayName } from '../../utils/drugDisplayName';
 
 interface ReturnModalProps {
   isOpen: boolean;
@@ -60,22 +61,35 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   // Get available items for return (items that haven't been fully returned yet)
   const availableItems = useMemo(() => {
     return sale.items
-      .map((item) => {
-        // BUG-R6: Use stable composite key (drugId + mode) instead of fragile array index
-        const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
-        // Check both new composite key and legacy plain drugId for backward compatibility
+      .map((item: any) => {
+        const drugId = item.drugId ?? item.drug_id ?? item.id;
+        const drug = inventory.find(d => d.id === drugId);
+        
+        // Normalize essential fields
+        const isUnit = item.isUnit ?? item.is_unit ?? false;
+        const publicPrice = item.publicPrice ?? item.public_price ?? 0;
+        const unitsPerPack = item.unitsPerPack ?? drug?.unitsPerPack ?? 1;
+
+        const lineKey = isUnit ? `${drugId}_unit` : `${drugId}_pack`;
         const returnedQty =
-          sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
-        const availableQty = item.quantity - returnedQty;
+          sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[drugId] || 0;
+        const availableQty = (item.quantity ?? item.quantity_sold ?? 0) - returnedQty;
+
         return {
           ...item,
+          drugId,
+          isUnit,
+          publicPrice,
+          unitsPerPack,
+          dosageForm: item.dosageForm ?? item.dosage_form ?? drug?.dosageForm,
+          expiryDate: item.expiryDate ?? drug?.expiryDate,
           lineKey,
           returnedQty,
           availableQty,
-        };
+        } as any;
       })
       .filter((item) => item.availableQty > 0);
-  }, [sale]);
+  }, [sale, inventory]);
 
   const reasonOptions = [
     { id: 'customer_request', label: t.returns.reasons.customer_request, icon: 'person' },
@@ -218,10 +232,15 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
       // BUG-010: Split balance check by payment method
       const isCashSale = sale.paymentMethod === 'cash';
       if (isCashSale) {
+        // Calculate total cash available in drawer
         const cashBalance = money.subtract(
-          money.add(openShift.cashSales || 0, openShift.cashIn || 0),
-          openShift.returns || 0
+          money.add(
+            money.add(openShift.openingBalance || 0, openShift.cashSales || 0), 
+            openShift.cashIn || 0
+          ),
+          money.add(openShift.returns || 0, openShift.cashOut || 0)
         );
+        
         if (money.isGt(calculateRefund, cashBalance)) {
           setValidationError(
             t.returns.validation?.insufficientBalance ||
@@ -231,9 +250,15 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           return;
         }
       } else {
+        // For non-cash sales (Visa/Insurance), we check total shift sales volume or just allow it if needed,
+        // but typically card returns don't depend on cash drawer. 
+        // However, we follow the existing logic but fix it to include opening balance.
         const totalBalance = money.subtract(
-          money.add(money.add(openShift.cashSales || 0, openShift.cardSales || 0), openShift.cashIn || 0),
-          openShift.returns || 0
+          money.add(
+            money.add(money.add(openShift.openingBalance || 0, openShift.cashSales || 0), openShift.cardSales || 0), 
+            openShift.cashIn || 0
+          ),
+          money.add(openShift.returns || 0, openShift.cashOut || 0)
         );
         if (money.isGt(calculateRefund, totalBalance)) {
           setValidationError(
@@ -409,8 +434,10 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                             className='font-bold text-gray-900 dark:text-gray-100 truncate text-base leading-tight'
                             style={{ textTransform: 'var(--text-transform)' }}
                           >
-                            {item.name}
-                            {item.dosageForm && <span className='ml-1'>{item.dosageForm}</span>}
+                            {getDisplayName({
+                              name: item.name,
+                              dosageForm: item.dosageForm
+                            })}
                             {item.isUnit && (
                               <span className='ml-1 text-base bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-wider'>
                                 U
@@ -456,16 +483,16 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                           <div className='flex flex-col items-end leading-tight'>
                             <p className='font-bold text-gray-900 dark:text-gray-100 text-base'>
                               {(() => {
-                                const basePrice = item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
-                                const discounted = pricing.afterDiscount(basePrice, item.discount || 0);
+                                // IMPORTANT: Use normalized publicPrice. 
+                                // Only divide if it's a unit return and publicPrice is still a pack price.
+                                const price = item.isUnit ? (item.publicPrice / (item.unitsPerPack || 1)) : item.publicPrice;
+                                const discounted = pricing.afterDiscount(price, item.discount || 0);
                                 return formatCurrency(discounted);
                               })()}
                             </p>
                             {item.discount > 0 && (
                               <p className='text-[10px] text-gray-400 line-through opacity-60'>
-                                {formatCurrency(item.isUnit && item.unitsPerPack
-                                  ? item.publicPrice / item.unitsPerPack
-                                  : item.publicPrice)}
+                                {formatCurrency(item.isUnit ? (item.publicPrice / (item.unitsPerPack || 1)) : item.publicPrice)}
                               </p>
                             )}
                           </div>
@@ -669,17 +696,29 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                       >
                         <div className='flex-1 min-w-0 flex items-center gap-2'>
                           <h4
-                            className='font-bold text-gray-900 dark:text-gray-100 truncate text-base'
+                            className='font-bold text-gray-900 dark:text-gray-100 truncate text-base leading-tight'
                             style={{ textTransform: 'var(--text-transform)' }}
                           >
-                            {item.name}
-                            {item.dosageForm && <span className='ml-1'>{item.dosageForm}</span>}
+                            {getDisplayName({
+                              name: item.name,
+                              dosageForm: item.dosageForm
+                            })}
                             {item.isUnit && (
                               <span className='ml-1 text-base bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-wider'>
                                 U
                               </span>
                             )}
                           </h4>
+                          <div className='flex items-center gap-2 mt-0 leading-none h-4'>
+                            <span className="text-[10px] font-mono font-bold text-gray-400 select-none">
+                              {item.expiryDate ? (() => {
+                                const d = new Date(item.expiryDate);
+                                const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                                const year = d.getFullYear().toString().slice(-2);
+                                return `${month}/${year}`;
+                              })() : '--/--'}
+                            </span>
+                          </div>
                         </div>
 
                         <div className='flex items-center gap-6 shrink-0'>

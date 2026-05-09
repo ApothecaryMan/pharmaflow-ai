@@ -219,6 +219,51 @@ export const getExpiryStatusStyle = (
 };
 
 /**
+ * Normalizes any expiry date format into YYYY-MM-DD for database storage.
+ * Handles:
+ * - MMYY (0324 -> 2024-03-01)
+ * - YYYY-MM (2024-03 -> 2024-03-01)
+ * - ISO strings
+ */
+export const normalizeExpiryToISO = (dateStr: string | null | undefined): string | null => {
+  if (!dateStr) return null;
+  const trimmed = dateStr.trim();
+  if (!trimmed) return null;
+
+  // 1. Handle MMYY (4 digits) or MYY (3 digits)
+  if (/^\d{3,4}$/.test(trimmed)) {
+    const padded = trimmed.padStart(4, '0');
+    const month = padded.slice(0, 2);
+    const year = '20' + padded.slice(2);
+    return `${year}-${month}-01`;
+  }
+
+  // 2. Handle YYYY-MM (7 chars with dash)
+  if (/^\d{4}-\d{2}$/.test(trimmed)) {
+    return `${trimmed}-01`;
+  }
+
+  // 3. Handle MM/YY, MM/YYYY, MM-YY, or MM-YYYY
+  if (trimmed.includes('/') || (trimmed.includes('-') && trimmed.length <= 7 && !trimmed.startsWith('20'))) {
+    const separator = trimmed.includes('/') ? '/' : '-';
+    const parts = trimmed.split(separator);
+    if (parts.length === 2) {
+      const month = parts[0].padStart(2, '0');
+      let year = parts[1];
+      if (year.length === 2) year = '20' + year;
+      return `${year}-${month}-01`;
+    }
+  }
+
+  // 4. Handle YYYY-MM-DD (already correct)
+  if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+    return trimmed.split('T')[0];
+  }
+
+  return trimmed;
+};
+
+/**
  * Parses an expiry date string (YYYY-MM-DD or YYYY-MM) and returns a Date object
  * representing the LAST second of the LAST day of that month.
  * This is used for logical calculations (isExpired, nearExpiry) so that

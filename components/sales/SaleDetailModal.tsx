@@ -8,6 +8,7 @@ import { Modal } from '../common/Modal';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { ReturnModal } from './ReturnModal';
 import { getActiveReceiptSettings, printInvoice, type InvoiceTemplateOptions } from './InvoiceTemplate';
+import { useData } from '../../context/DataContext';
 
 interface SaleDetailModalProps {
   sale: Sale | null;
@@ -153,6 +154,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
   sale, isOpen, onClose, t, language, color, textTransform,
   currentShift, currentEmployeeId, currentDailyRefunds = 0, onProcessReturn,
 }) => {
+  const { inventory } = useData();
   const [returnModalOpen, setReturnModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'items' | 'history'>('items');
 
@@ -230,18 +232,27 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                   <ListWrapper>
                     {(() => {
                       const groups: Record<string, any> = {};
-                      sale.items.forEach((item, idx) => {
-                        const g = groups[item.id] ||= { 
-                          id: item.id, 
+                      sale.items.forEach((item: any, idx) => {
+                        const drugId = item.drugId ?? item.drug_id ?? item.id;
+                        const drug = inventory.find(d => d.id === drugId);
+                        
+                        const dosageForm = item.dosageForm ?? item.dosage_form ?? drug?.dosageForm;
+                        const unitsPerPack = item.unitsPerPack ?? item.units_per_pack ?? drug?.unitsPerPack ?? 1;
+                        const publicPrice = item.publicPrice ?? item.public_price ?? 0;
+                        const itemDiscount = item.discount ?? item.discount_percentage ?? 0;
+
+                        const g: any = groups[drugId] ||= { 
+                          id: drugId, 
                           name: item.name, 
-                          dosageForm: item.dosageForm, 
+                          dosageForm: dosageForm, 
                           packQty: 0, 
                           unitQty: 0, 
                           totalPrice: 0, 
                           preDiscountTotal: 0, 
                           returnedQty: 0, 
-                          unitsPerPack: item.unitsPerPack || 1, 
-                          itemBasePrice: item.publicPrice,
+                          unitsPerPack: unitsPerPack, 
+                          itemBasePrice: publicPrice,
+                          itemDiscount: itemDiscount,
                           expiries: new Set<string>()
                         };
                         
@@ -251,17 +262,17 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                         
                         if (isUnit) g.unitQty += item.quantity; else g.packQty += item.quantity;
                         const realQty = item.quantity - ret;
-                        const price = isUnit ? money.divide(item.publicPrice, item.unitsPerPack || 1) : item.publicPrice;
+                        const price = isUnit ? (publicPrice / (unitsPerPack || 1)) : publicPrice;
                         
                         const lineTotal = money.multiply(price, realQty, 0);
-                        const discountedTotal = pricing.afterDiscount(lineTotal, item.discount || 0);
+                        const discountedTotal = pricing.afterDiscount(lineTotal, itemDiscount);
                         
                         g.totalPrice = money.add(g.totalPrice, discountedTotal);
                         g.preDiscountTotal = money.add(g.preDiscountTotal, lineTotal);
                         g.returnedQty += ret;
 
-                        // Add expiry date from batch allocations or item fallback
-                        const expiry = item.batchAllocations?.[0]?.expiryDate || item.expiryDate;
+                        // Add expiry date from batch allocations, item fallback, or inventory
+                        const expiry = item.batchAllocations?.[0]?.expiryDate || item.expiryDate || item.expiry_date || drug?.expiryDate;
                         if (expiry) {
                           const d = new Date(expiry);
                           const month = (d.getMonth() + 1).toString().padStart(2, '0');
