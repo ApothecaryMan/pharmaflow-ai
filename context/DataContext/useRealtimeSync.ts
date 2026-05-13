@@ -39,8 +39,6 @@ export const useRealtimeSync = ({
           filter: `branch_id=eq.${activeBranchId}`,
         },
         (payload: any) => {
-          if (import.meta.env.DEV) console.log('Real-time Sale Event:', payload);
-          
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newSale = salesService.mapFromDb(payload.new);
             setSales(prev => [newSale, ...prev.filter(s => s.id !== newSale.id)]);
@@ -50,7 +48,6 @@ export const useRealtimeSync = ({
         }
       )
       .subscribe((status) => {
-        if (import.meta.env.DEV) console.log(`Sales Subscription Status (${activeBranchId}):`, status);
       });
 
     // Subscribe to Returns
@@ -65,8 +62,6 @@ export const useRealtimeSync = ({
           filter: `branch_id=eq.${activeBranchId}`,
         },
         (payload: any) => {
-          if (import.meta.env.DEV) console.log('Real-time Return Event:', payload);
-          
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newReturn = returnService.mapFromDb(payload.new);
             setReturns(prev => [newReturn, ...prev.filter(r => r.id !== newReturn.id)]);
@@ -76,7 +71,6 @@ export const useRealtimeSync = ({
         }
       )
       .subscribe((status) => {
-        if (import.meta.env.DEV) console.log(`Returns Subscription Status (${activeBranchId}):`, status);
       });
 
     // Subscribe to Inventory (Drugs)
@@ -91,8 +85,6 @@ export const useRealtimeSync = ({
           filter: `branch_id=eq.${activeBranchId}`,
         },
         (payload: any) => {
-          if (import.meta.env.DEV) console.log('Real-time Drug Event:', payload);
-          
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newDrug = inventoryService.mapFromDb(payload.new);
             setInventory(prev => [newDrug, ...prev.filter(d => d.id !== newDrug.id)]);
@@ -117,8 +109,6 @@ export const useRealtimeSync = ({
           filter: `branch_id=eq.${activeBranchId}`,
         },
         (payload: any) => {
-          if (import.meta.env.DEV) console.log('Real-time Batch Event:', payload);
-          
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newBatch: StockBatch = {
               id: payload.new.id,
@@ -153,8 +143,6 @@ export const useRealtimeSync = ({
           filter: `branch_id=eq.${activeBranchId}`,
         },
         (payload: any) => {
-          if (import.meta.env.DEV) console.log('Real-time Purchase Event:', payload);
-          
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newPurchase = purchaseService.mapFromDb(payload.new);
             setPurchases(prev => [newPurchase, ...prev.filter(p => p.id !== newPurchase.id)]);

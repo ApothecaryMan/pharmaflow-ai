@@ -46,16 +46,13 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   // --- Load from database on mount ---
   const refreshShifts = useCallback(async () => {
     if (!activeBranchId) {
-      if (import.meta.env.DEV) console.log('[ShiftProvider] refreshShifts: No activeBranchId, skipping');
       return;
     }
     
     setIsLoading(true);
-    if (import.meta.env.DEV) console.log('[ShiftProvider] refreshShifts: Starting for branch', activeBranchId);
     
     try {
       const loadedShifts = await cashService.getAllShifts(activeBranchId);
-      if (import.meta.env.DEV) console.log(`[ShiftProvider] refreshShifts: Loaded ${loadedShifts.length} shifts`);
       
       // Sort by openTime descending
       loadedShifts.sort((a, b) => new Date(b.openTime).getTime() - new Date(a.openTime).getTime());
@@ -63,9 +60,7 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       // Fetch transactions for the open shift if it exists
       const openShift = loadedShifts.find(s => s.status === 'open');
       if (openShift) {
-        if (import.meta.env.DEV) console.log('[ShiftProvider] refreshShifts: Open shift found', openShift.id, 'fetching transactions');
         const txs = await cashService.getTransactions(openShift.id);
-        if (import.meta.env.DEV) console.log(`[ShiftProvider] refreshShifts: Fetched ${txs.length} transactions for open shift`);
         openShift.transactions = txs;
       }
 
@@ -82,8 +77,6 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     refreshShifts();
 
-    if (import.meta.env.DEV) console.log('[Shift Realtime] Subscribing for branch:', activeBranchId);
-
     // Listen for realtime updates from Supabase
     const channel = supabase.channel(`shifts-realtime-${activeBranchId}`)
       .on(
@@ -95,8 +88,6 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           filter: `branch_id=eq.${activeBranchId}` 
         },
         (payload: any) => {
-          if (import.meta.env.DEV) console.log('[Shift Realtime] Shift Event:', payload.eventType, payload.new?.id);
-          
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newShift = cashService.mapFromDb(payload.new);
             setShifts(prev => {
@@ -124,8 +115,6 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           filter: `branch_id=eq.${activeBranchId}`
         },
         (payload: any) => {
-          if (import.meta.env.DEV) console.log('[Shift Realtime] Transaction Event:', payload.eventType, payload.new?.id);
-          
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newTx = cashService.mapFromDbTransaction(payload.new);
             
@@ -152,7 +141,6 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
       )
       .subscribe((status) => {
-        if (import.meta.env.DEV) console.log(`[Shift Realtime] Subscription Status (${activeBranchId}):`, status);
         if (status === 'SUBSCRIBED') {
            // Optionally refresh again on successful subscription to avoid misses
            refreshShifts();
@@ -160,7 +148,6 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       });
 
     return () => {
-      if (import.meta.env.DEV) console.log('[Shift Realtime] Unsubscribing for branch:', activeBranchId);
       supabase.removeChannel(channel);
     };
   }, [activeBranchId, refreshShifts]);
