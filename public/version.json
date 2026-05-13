@@ -1,9 +1,9 @@
 {
-  "version": "2.023",
-  "releaseDate": "2026-05-08",
+  "version": "2.024",
+  "releaseDate": "2026-05-14",
   "notes": {
-    "AR": "تحسينات عامة وتحديثات في استقرار النظام.",
-    "EN": "General improvements and system stability updates."
+    "AR": "تحسين استقرار عمليات نقطة البيع (POS) عبر تحويلها إلى عمليات ذرية (Atomic RPCs)، حل مشكلات هوية الموظفين في المعاملات، وتحديث واجهة تقارير الحضور بنظام Pure Flat مع إضافة فلاتر التواجد.",
+    "EN": "Stabilized POS operations via atomic RPC migrations, fixed employee authentication issues in transactions, and refined the Attendance UI with Pure Flat standards and presence filtering."
   },
   "forceUpdate": false
 }
