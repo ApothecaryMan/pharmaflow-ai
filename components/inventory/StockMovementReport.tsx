@@ -323,43 +323,63 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                   />
                 </div>
 
-                {/* End: Detailed Stats Capsule */}
+                {/* End: Detailed Stats Capsule (Interactive Filters) */}
                 <div className="justify-self-end">
                   <div className={`flex items-center rounded-2xl border border-gray-100 dark:border-(--border-divider) ${CARD_BASE} overflow-hidden divide-x divide-gray-100 dark:divide-(--border-divider) rtl:divide-x-reverse`}>
-                    {/* Sale */}
-                    <div className="px-3 py-1.5 flex items-center gap-2">
-                      <span className="text-[9px] font-black tracking-tighter uppercase text-rose-600 dark:text-rose-400">
+                    {/* Sale Filter */}
+                    <button 
+                      onClick={() => handleUpdateFilter('type', activeFilters.type?.[0] === 'sale' ? [] : ['sale'])}
+                      className={`px-3 py-1.5 flex items-center gap-2 transition-all cursor-pointer ${activeFilters.type?.[0] === 'sale' ? 'bg-rose-50 dark:bg-rose-500/10' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                    >
+                      <span className={`text-[9px] font-black tracking-tighter uppercase ${activeFilters.type?.[0] === 'sale' ? 'text-rose-700 dark:text-rose-300' : 'text-rose-600 dark:text-rose-400'}`}>
                         {isRTL ? 'بيع' : 'SALE'}
                       </span>
                       <span className="text-[11px] font-black tabular-nums text-gray-900 dark:text-gray-100">{typeCounts.sale}</span>
-                    </div>
-                    {/* Purchase */}
-                    <div className="px-3 py-1.5 flex items-center gap-2">
-                      <span className="text-[9px] font-black tracking-tighter uppercase text-emerald-600 dark:text-emerald-400">
+                    </button>
+
+                    {/* Purchase Filter */}
+                    <button 
+                      onClick={() => handleUpdateFilter('type', activeFilters.type?.[0] === 'purchase' ? [] : ['purchase'])}
+                      className={`px-3 py-1.5 flex items-center gap-2 transition-all cursor-pointer ${activeFilters.type?.[0] === 'purchase' ? 'bg-emerald-50 dark:bg-emerald-500/10' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                    >
+                      <span className={`text-[9px] font-black tracking-tighter uppercase ${activeFilters.type?.[0] === 'purchase' ? 'text-emerald-700 dark:text-emerald-300' : 'text-emerald-600 dark:text-emerald-400'}`}>
                         {isRTL ? 'شراء' : 'PURCHASE'}
                       </span>
                       <span className="text-[11px] font-black tabular-nums text-gray-900 dark:text-gray-100">{typeCounts.purchase}</span>
-                    </div>
-                    {/* Adjustment */}
-                    <div className="px-3 py-1.5 flex items-center gap-2">
-                      <span className="text-[9px] font-black tracking-tighter uppercase text-blue-600 dark:text-blue-400">
+                    </button>
+
+                    {/* Adjustment Filter */}
+                    <button 
+                      onClick={() => handleUpdateFilter('type', activeFilters.type?.[0] === 'adjustment' ? [] : ['adjustment'])}
+                      className={`px-3 py-1.5 flex items-center gap-2 transition-all cursor-pointer ${activeFilters.type?.[0] === 'adjustment' ? 'bg-blue-50 dark:bg-blue-500/10' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                    >
+                      <span className={`text-[9px] font-black tracking-tighter uppercase ${activeFilters.type?.[0] === 'adjustment' ? 'text-blue-700 dark:text-blue-300' : 'text-blue-600 dark:text-blue-400'}`}>
                         {isRTL ? 'تسوية' : 'ADJUST'}
                       </span>
                       <span className="text-[11px] font-black tabular-nums text-gray-900 dark:text-gray-100">{typeCounts.adjustment}</span>
-                    </div>
-                    {/* Damage */}
-                    <div className="px-3 py-1.5 flex items-center gap-2">
-                      <span className="text-[9px] font-black tracking-tighter uppercase text-orange-600 dark:text-orange-400">
+                    </button>
+
+                    {/* Damage Filter */}
+                    <button 
+                      onClick={() => handleUpdateFilter('type', activeFilters.type?.[0] === 'damage' ? [] : ['damage'])}
+                      className={`px-3 py-1.5 flex items-center gap-2 transition-all cursor-pointer ${activeFilters.type?.[0] === 'damage' ? 'bg-orange-50 dark:bg-orange-500/10' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                    >
+                      <span className={`text-[9px] font-black tracking-tighter uppercase ${activeFilters.type?.[0] === 'damage' ? 'text-orange-700 dark:text-orange-300' : 'text-orange-600 dark:text-orange-400'}`}>
                         {isRTL ? 'هالك' : 'DAMAGE'}
                       </span>
                       <span className="text-[11px] font-black tabular-nums text-gray-900 dark:text-gray-100">{typeCounts.damage}</span>
-                    </div>
-                    {/* Total Count */}
-                    <div className="px-4 py-1.5 bg-gray-50 dark:bg-white/5 flex items-center gap-2">
+                    </button>
+
+                    {/* Clear Filters / Total Count */}
+                    <button 
+                      onClick={() => handleUpdateFilter('type', [])}
+                      className="px-4 py-1.5 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 flex items-center gap-2 transition-all cursor-pointer"
+                      title={isRTL ? 'عرض الكل' : 'Show All'}
+                    >
                       <span className="text-[10px] font-black tracking-widest uppercase text-primary-600 dark:text-primary-400">
                         {filteredHistory.length}
                       </span>
-                    </div>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -413,6 +433,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                         expiryDate={m.expiryDate}
                         value={stockMovementService.calculateMovementValue(m, selectedDrug)}
                         unitsPerPack={selectedDrug?.unitsPerPack}
+                        drugName={showAll ? getDisplayName({ name: m.drugName }, textTransform) : undefined}
                       />
                     ))}
                   </div>
@@ -434,7 +455,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                               {showAll && (
                                 <td style={{ width: columns[1].width }} className="py-2">
                                   <span className="text-xs font-bold text-gray-900 dark:text-gray-100 block truncate max-w-[180px]" title={m.drugName}>
-                                    {m.drugName}
+                                    {getDisplayName({ name: m.drugName }, textTransform)}
                                   </span>
                                 </td>
                               )}

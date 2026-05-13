@@ -18,6 +18,7 @@ interface TimelineItemProps {
   expiryDate?: string;
   value?: number;
   unitsPerPack?: number;
+  drugName?: string;
 }
 
 const typeConfig: Record<StockMovementType, { color: string, label: string, arLabel: string }> = {
@@ -46,7 +47,8 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
   batchId,
   expiryDate,
   value,
-  unitsPerPack = 1
+  unitsPerPack = 1,
+  drugName
 }) => {
   const config = typeConfig[type] || typeConfig.adjustment;
   const dateObj = new Date(date);
@@ -111,6 +113,14 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
         <div className='flex flex-col gap-3'>
           {/* Header */}
           <div className='flex items-center gap-2 text-sm leading-none'>
+            {drugName && (
+              <>
+                <span className='font-black text-gray-900 dark:text-gray-100 truncate max-w-[200px]' title={drugName}>
+                  {drugName}
+                </span>
+                <span className='text-gray-300 dark:text-gray-700 text-[10px]'>•</span>
+              </>
+            )}
             <span className={`font-bold text-sm tracking-tight ${colorClass.split(' ')[1]}`}>
               {isRTL ? config.arLabel : config.label}
             </span>
