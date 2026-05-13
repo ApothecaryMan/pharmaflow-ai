@@ -108,9 +108,9 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ alert, index, onClo
         layout: { type: 'tween', ease: 'linear', duration: 0.25 }
       }}
       className={`
-        relative w-full pointer-events-auto
-        ${config.cardBg} rounded-xl border-2 ${config.cardBorder} p-4 shadow-2xl
-        flex items-start group overflow-hidden
+        relative w-full h-[64px] pointer-events-auto
+        ${config.cardBg} rounded-xl border-2 ${config.cardBorder} px-4 py-2.5 shadow-2xl
+        flex items-center group overflow-hidden
       `}
       dir="ltr"
     >
@@ -125,20 +125,20 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ alert, index, onClo
       </button>
 
       {/* Content - Fixed Left */}
-      <div className="flex-1 flex items-start justify-start gap-4 min-w-0">
+      <div className="flex-1 flex items-start justify-start gap-3 min-w-0 pr-9">
         <div className={`w-5 h-5 rounded flex items-center justify-center ${config.iconBg} flex-shrink-0 transition-transform mt-0.5`}>
           <span className={`material-symbols-rounded ${config.iconColor} block`} style={{ fontSize: '16px', fontVariationSettings: "'FILL' 1" }}>
             {config.icon}
           </span>
         </div>
 
-        <div className="min-w-0 py-0.5 text-left" dir="auto">
+        <div className="min-w-0 text-left" dir="auto">
           {alert.title && (
             <h4 className="text-sm font-bold text-gray-900 dark:text-gray-50 mb-0.5 truncate">
               {alert.title}
             </h4>
           )}
-          <p className="text-[13px] leading-relaxed text-gray-700 dark:text-gray-300 font-medium">
+          <p className="text-[13px] leading-relaxed text-gray-700 dark:text-gray-300 font-medium line-clamp-2">
             {alert.message}
           </p>
         </div>

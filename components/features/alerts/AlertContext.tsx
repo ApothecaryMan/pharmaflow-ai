@@ -32,11 +32,11 @@ export const AlertProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     setAlerts((prev) => [...prev, newAlert]);
 
-    if (options.duration && options.duration > 0) {
-      setTimeout(() => {
-        setAlerts((prev) => prev.filter((a) => a.id !== id));
-      }, options.duration);
-    }
+    // if (options.duration && options.duration > 0) {
+    //   setTimeout(() => {
+    //     setAlerts((prev) => prev.filter((a) => a.id !== id));
+    //   }, options.duration);
+    // }
   }, []);
 
   const removeAlert = useCallback((id: string) => {
