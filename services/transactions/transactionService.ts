@@ -65,18 +65,13 @@ export const transactionService = {
         performerName: context.performerName,
         branchCode: (await settingsService.getAll()).branchCode || 'PF',
         
-        // Items FULL data snapshot to ensure accurate history rendering
+        // Items: minimal payload — server resolves name/dosage from drugs table
         items: saleData.items.map(item => ({
           id: item.id,
-          name: item.name,
           quantity: item.quantity,
           isUnit: !!item.isUnit,
           publicPrice: item.publicPrice,
           discount: item.discount || 0,
-          dosageForm: item.dosageForm,
-          unitsPerPack: item.unitsPerPack,
-          expiryDate: item.expiryDate,
-          batchAllocations: item.batchAllocations,
         })),
         
         customerName: saleData.customerName,
