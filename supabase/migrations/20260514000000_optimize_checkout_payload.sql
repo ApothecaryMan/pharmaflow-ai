@@ -40,15 +40,16 @@ BEGIN
 
     SET LOCAL "app.disable_stock_sync" = 'true';
 
-    -- 1. Shift Resolution
-    IF (p_payload->>'isWalkIn')::BOOLEAN THEN
+    -- 1. Shift Resolution (use shiftId from payload, or find active shift)
+    v_shift_id := (p_payload->>'shiftId')::UUID;
+    IF v_shift_id IS NULL THEN
         SELECT id INTO v_shift_id FROM shifts 
         WHERE branch_id = v_branch_id AND status = 'open'
         ORDER BY (opened_by = v_performer_id) DESC LIMIT 1;
+    END IF;
 
-        IF v_shift_id IS NULL THEN
-            RETURN jsonb_build_object('success', false, 'error', 'No active shift found. Please open a shift first.');
-        END IF;
+    IF v_shift_id IS NULL AND (p_payload->>'saleType') = 'walk-in' THEN
+        RETURN jsonb_build_object('success', false, 'error', 'No active shift found. Please open a shift first.');
     END IF;
 
     -- 2. Serial & Sale Record
@@ -69,7 +70,7 @@ BEGIN
         v_org_id, v_branch_id, v_serial_id, v_order_number,
         v_total, v_subtotal, v_global_discount,
         (p_payload->>'paymentMethod')::payment_method,
-        CASE WHEN (p_payload->>'isWalkIn')::BOOLEAN THEN 'walk-in'::sale_type ELSE 'delivery'::sale_type END,
+        (p_payload->>'saleType')::sale_type,
         'completed',
         v_performer_id, v_shift_id,
         p_payload->>'customerName', p_payload->>'customerPhone', p_payload->'items'
@@ -166,3 +167,8 @@ EXCEPTION WHEN OTHERS THEN
     RETURN jsonb_build_object('success', false, 'error', SQLERRM);
 END;
 $$;
+
+-- FEFO Index: Speeds up the batch deduction query (WHERE drug_id AND branch_id AND qty > 0 ORDER BY expiry)
+CREATE INDEX IF NOT EXISTS idx_stock_batches_fefo 
+ON stock_batches (drug_id, branch_id, expiry_date ASC, created_at ASC)
+WHERE quantity > 0;

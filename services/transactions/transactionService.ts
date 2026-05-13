@@ -63,7 +63,6 @@ export const transactionService = {
         timestamp: context.timestamp,
         performerId: context.performerId,
         performerName: context.performerName,
-        branchCode: (await settingsService.getAll()).branchCode || 'PF',
         
         // Items: minimal payload — server resolves name/dosage from drugs table
         items: saleData.items.map(item => ({

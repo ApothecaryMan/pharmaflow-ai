@@ -5,7 +5,7 @@ import { batchService } from '../../services/inventory/batchService';
 import { inventoryService } from '../../services/inventory/inventoryService';
 import { salesService } from '../../services/sales/salesService';
 import { transactionService } from '../../services/transactions/transactionService';
-import { validateSaleData, validateStockAvailability } from '../../utils/validation';
+import { validateSaleData } from '../../utils/validation';
 import { formatCurrency } from '../../utils/currency';
 import { measurePerformance } from '../../utils/monitoring';
 import type { 
@@ -133,7 +133,6 @@ export function useSalesHandlers({
       employees,
       activeBranchId,
       activeOrgId,
-      inventory,
       getVerifiedDate,
       validateTransactionTime,
       currentShift,
