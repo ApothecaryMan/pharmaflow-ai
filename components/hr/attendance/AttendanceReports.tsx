@@ -4,6 +4,7 @@ import { PageHeader } from '../../common/PageHeader';
 import { SmallCard } from '../../common/SmallCard';
 import { SearchInput } from '../../common/SearchInput';
 import { DataPortButton } from '../../common/DataPortButton';
+import { DatePicker } from '../../common/DatePicker';
 import { CARD_LG } from '../../../utils/themeStyles';
 import { formatDuration } from '../../../utils/attendanceUtils';
 
@@ -24,6 +25,8 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
     t,
     setSearchQuery,
     handleDateChange,
+    showStats,
+    setShowStats,
   } = useAttendanceReports({ onViewChange });
 
   const renderStats = () => (
@@ -78,16 +81,26 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
         }
         rightContent={
           <div className="flex items-center gap-3">
-            <input
-              type="date"
+            <DatePicker
               value={targetDate}
-              onChange={(e) => handleDateChange(e.target.value)}
-              className="px-4 py-2 bg-gray-100 dark:bg-(--bg-surface-neutral) border-none rounded-xl text-gray-700 dark:text-gray-200 font-medium outline-none focus:ring-2 focus:ring-blue-500/20"
+              onChange={(val) => handleDateChange(val)}
+              label={t.attendance.date || 'Date'}
+              color="primary"
+              variant="pill-dark"
+              size="md"
+              translations={{
+                cancel: t.common.cancel,
+                ok: t.global.datePicker.ok,
+                hour: t.global.datePicker.hour,
+                minute: t.global.datePicker.minute,
+                am: t.common.am,
+                pm: t.common.pm
+              }}
             />
             <DataPortButton
               language={isRTL ? 'AR' : 'EN'}
               data={filteredEmployees}
-              filename={`attendance-report-${targetDate}`}
+               filename={`attendance-report-${targetDate.replace(/:/g, '-')}`}
               columns={columns.map(c => ({
                 key: c.key as any,
                 header: c.label,
@@ -104,7 +117,8 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
           </div>
         }
         showStatsToggle={true}
-        showBottom={true}
+        showBottom={showStats}
+        onToggleBottom={() => setShowStats(!showStats)}
         bottomContent={renderStats()}
       />
 
@@ -139,17 +153,17 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                 </thead>
                 <tbody>
                   {filteredEmployees.map((emp) => (
-                    <tr key={emp.employeeId} className="bg-gray-50/50 dark:bg-(--bg-surface-neutral) hover:bg-gray-50 dark:hover:bg-(--bg-input) transition-colors group">
+                    <tr key={emp.employeeId} className="bg-gray-100 dark:bg-(--bg-input) transition-colors group">
                       <td className="py-3 px-4 rounded-l-2xl rtl:rounded-l-none rtl:rounded-r-2xl">
-                        <div className="flex flex-col">
-                          <span 
-                            className="font-bold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 hover:underline cursor-pointer transition-colors"
-                            onClick={() => onViewChange?.('employee-attendance-profile', { employeeId: emp.employeeId })}
-                          >
-                            {emp.employeeName}
-                          </span>
-                          <span className="text-[10px] text-gray-500 font-mono">{emp.employeeCode}</span>
-                        </div>
+                        <span className="text-sm text-gray-500 font-mono font-bold">{emp.employeeCode}</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span 
+                          className="font-bold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 hover:underline cursor-pointer transition-colors"
+                          onClick={() => onViewChange?.('employee-attendance-profile', { employeeId: emp.employeeId })}
+                        >
+                          {emp.employeeName}
+                        </span>
                       </td>
                       <td className="py-3 px-4">
                         {emp.firstIn ? (

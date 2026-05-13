@@ -4,6 +4,8 @@ import { useData } from '../../../services';
 import { attendanceReportService, type AttendanceReportSummary } from '../../../services/hr/attendanceReportService';
 import { formatDuration } from '../../../utils/attendanceUtils';
 import { TRANSLATIONS } from '../../../i18n/translations';
+import { usePersistedState } from '../../../hooks/common/usePersistedState';
+import { StorageKeys } from '../../../config/storageKeys';
 
 interface UseAttendanceReportsProps {
   onViewChange?: (view: string, params?: any) => void;
@@ -16,10 +18,18 @@ export const useAttendanceReports = ({ onViewChange }: UseAttendanceReportsProps
   const branchId = activeBranch?.id;
   const t = TRANSLATIONS[language];
 
-  const [targetDate, setTargetDate] = useState(new Date().toISOString().split('T')[0]);
+  // Helper to get local ISO string (YYYY-MM-DDTHH:mm)
+  const getLocalISO = () => {
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - offset).toISOString().slice(0, 16);
+  };
+
+  const [targetDate, setTargetDate] = useState(getLocalISO());
   const [report, setReport] = useState<AttendanceReportSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showStats, setShowStats] = usePersistedState(StorageKeys.HEADER_STATS_VISIBLE, true);
 
   // --- Fetch Data ---
   useEffect(() => {
@@ -59,9 +69,15 @@ export const useAttendanceReports = ({ onViewChange }: UseAttendanceReportsProps
   // --- Column Configuration ---
   const columns = useMemo(() => [
     { 
+      id: 'code', 
+      label: t.attendance.employeeCode, 
+      width: '10%',
+      key: 'employeeCode'
+    },
+    { 
       id: 'employee', 
       label: t.attendance.employeeName, 
-      width: '25%',
+      width: '20%',
       key: 'employeeName'
     },
     { 
@@ -109,5 +125,7 @@ export const useAttendanceReports = ({ onViewChange }: UseAttendanceReportsProps
     setSearchQuery,
     handleDateChange,
     formatDuration,
+    showStats,
+    setShowStats,
   };
 };

@@ -15,6 +15,8 @@ export const TRANSLATIONS = {
       selectMonth: 'Select Month',
       close: 'Close',
       actions: 'Actions',
+      am: 'AM',
+      pm: 'PM',
     },
     zincAcronym: {
       Z: {
@@ -2433,6 +2435,8 @@ export const TRANSLATIONS = {
       selectMonth: 'اختر الشهر',
       close: 'إغلاق',
       actions: 'إجراءات',
+      am: 'ص',
+      pm: 'م',
     },
     employeeList: {
       title: 'قائمة الموظفين',
