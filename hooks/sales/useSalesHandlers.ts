@@ -101,12 +101,6 @@ export function useSalesHandlers({
           return false;
         }
 
-        const stockValidation = validateStockAvailability(saleData.items, inventory);
-        if (!stockValidation.success) {
-          error(stockValidation.message || 'Insufficient stock');
-          return false;
-        }
-
         const saleDate = getVerifiedDate();
         const timeValidation = validateTransactionTime(saleDate);
         if (!timeValidation.valid) {
