@@ -119,6 +119,16 @@ BEGIN
             EXIT WHEN v_remaining_qty <= 0;
             v_qty_to_take := LEAST(v_remaining_qty, v_batch_record.quantity);
             
+            -- 🟢 NEW: Store first expiry date encountered in the item snapshot for UI visibility
+            IF v_total_deducted_for_drug = 0 THEN
+               UPDATE sales SET items = (
+                 SELECT jsonb_agg(
+                   CASE WHEN (elem->>'id')::UUID = v_payload_id THEN elem || jsonb_build_object('expiryDate', v_batch_record.expiry_date)
+                   ELSE elem END
+                 ) FROM jsonb_array_elements(items) elem
+               ) WHERE id = v_sale_id;
+            END IF;
+
             UPDATE stock_batches SET quantity = quantity - v_qty_to_take WHERE id = v_batch_record.id;
             
             -- Record Movement (using cached stock to avoid SELECT)

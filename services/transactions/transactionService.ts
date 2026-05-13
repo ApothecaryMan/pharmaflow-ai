@@ -156,186 +156,38 @@ export const transactionService = {
   async processOrderModification(
     sale: Sale,
     updates: Partial<Sale>,
-    inventory: Drug[],
+    _inventory: Drug[],
     context: ActionContext
-  ): Promise<{ success: boolean; error?: string; modificationHistory?: any[] }> {
-    const { branchId: activeBranchId, performerId: currentEmployeeId, performerName, timestamp } = context;
-    const undoManager = new UndoManager();
-    const modifications: any[] = [];
-    
-    if (!updates.items) return { success: true };
-
+  ): Promise<{ success: boolean; error?: string }> {
     try {
-      // Logic from useEntityHandlers adapted for TransactionService
-      for (const oldItem of sale.items) {
-        const newItem = updates.items.find(
-          (i) => i.id === oldItem.id && i.isUnit === oldItem.isUnit
-        );
-
-        const drug = inventory.find(d => d.id === oldItem.id);
-        if (!drug) continue;
-
-        if (!newItem) {
-          // 1. Item was deleted - return all stock
-          await stockOps.returnStock(
-            drug,
-            oldItem.quantity,
-            !!oldItem.isUnit,
-            oldItem.batchAllocations,
-            'correction',
-            `Item Removed from Delivery #${sale.id}`,
-            { branchId: activeBranchId, performedBy: currentEmployeeId, performedByName: performerName },
-            sale.id
-          );
-
-          const unitsToRestore = resolveUnits(oldItem.quantity, !!oldItem.isUnit, drug.unitsPerPack);
-          await inventoryService.updateStock(oldItem.id, unitsToRestore);
-
-          undoManager.push(async () => {
-            await inventoryService.updateStock(oldItem.id, -unitsToRestore);
-            if (oldItem.batchAllocations) {
-              await batchService.allocateStockBulk([{
-                drugId: oldItem.id,
-                quantity: unitsToRestore,
-                preferredBatchId: oldItem.batchAllocations[0]?.batchId
-              }], activeBranchId);
-            }
-          });
-
-          modifications.push({
-            type: 'item_removed',
-            itemId: oldItem.id,
-            itemName: oldItem.name,
-            dosageForm: oldItem.dosageForm,
-            previousQuantity: oldItem.quantity,
-            newQuantity: 0,
-            stockReturned: unitsToRestore,
-          });
-        } else {
-          // 2. Check for quantity changes
-          if (newItem.quantity !== oldItem.quantity) {
-            const oldUnits = oldItem.isUnit ? oldItem.quantity : oldItem.quantity * (drug.unitsPerPack || 1);
-            const newUnits = newItem.isUnit ? newItem.quantity : newItem.quantity * (drug.unitsPerPack || 1);
-            const diff = oldUnits - newUnits;
-
-            if (diff > 0) {
-              // Quantity reduced - return partial stock
-              await stockOps.returnStock(
-                drug, diff, true, oldItem.batchAllocations, 'correction',
-                `Quantity Reduced in Delivery #${sale.id}`,
-                { branchId: activeBranchId, performedBy: currentEmployeeId, performedByName: performerName },
-                sale.id
-              );
-              await inventoryService.updateStock(oldItem.id, diff);
-              undoManager.push(async () => {
-                await inventoryService.updateStock(oldItem.id, -diff);
-                // Partial re-allocation is complex, but batchService handles it
-                await batchService.allocateStockBulk([{
-                  drugId: oldItem.id,
-                  quantity: diff,
-                  preferredBatchId: oldItem.batchAllocations![0].batchId
-                }], activeBranchId);
-              });
-
-              modifications.push({
-                type: 'quantity_update',
-                itemId: oldItem.id,
-                itemName: oldItem.name,
-                dosageForm: oldItem.dosageForm,
-                previousQuantity: oldItem.quantity,
-                newQuantity: newItem.quantity,
-                stockReturned: diff,
-              });
-            } else if (diff < 0) {
-              // Quantity increased - allocate more
-              const unitsToAdd = Math.abs(diff);
-              const mutation = await stockOps.deductStock(
-                drug, unitsToAdd, true, 'sale',
-                `Quantity Increased in Delivery #${sale.id}`,
-                { branchId: activeBranchId, performedBy: currentEmployeeId, performedByName: performerName },
-                sale.id
-              );
-
-              if (mutation) {
-                newItem.batchAllocations = [...(oldItem.batchAllocations || []), ...(mutation.allocations || [])];
-                await inventoryService.updateStock(oldItem.id, -unitsToAdd);
-                undoManager.push(async () => {
-                   await inventoryService.updateStock(oldItem.id, unitsToAdd);
-                   for (const alloc of mutation.allocations) {
-                     await batchService.returnStock([alloc], alloc.quantity, oldItem.id, activeBranchId);
-                   }
-                });
-
-                modifications.push({
-                  type: 'quantity_update',
-                  itemId: oldItem.id,
-                  itemName: oldItem.name,
-                  dosageForm: oldItem.dosageForm,
-                  previousQuantity: oldItem.quantity,
-                  newQuantity: newItem.quantity,
-                  stockDeducted: unitsToAdd,
-                });
-              }
-            }
-          }
+      const { data, error } = await supabase.rpc('process_order_modification', {
+        p_payload: {
+          saleId: sale.id,
+          branchId: context.branchId,
+          orgId: context.orgId,
+          performerId: context.performerId,
+          performerName: context.performerName,
+          total: updates.total ?? sale.total,
+          subtotal: updates.subtotal ?? sale.subtotal,
+          globalDiscount: updates.globalDiscount ?? sale.globalDiscount,
+          items: (updates.items || sale.items).map(item => ({
+            id: item.id,
+            quantity: item.quantity,
+            isUnit: !!item.isUnit,
+            publicPrice: item.publicPrice,
+            discount: item.discount || 0
+          }))
         }
+      });
+
+      if (error || !data?.success) {
+        return { success: false, error: error?.message || data?.error || 'Modification failed' };
       }
 
-      // 3. Handle NEW items
-      for (const newItem of updates.items) {
-        const isNew = !sale.items.some(old => old.id === newItem.id && old.isUnit === newItem.isUnit);
-        if (isNew) {
-          const drug = inventory.find(d => d.id === newItem.id);
-          if (drug) {
-            const mutation = await stockOps.deductStock(
-              drug, newItem.quantity, !!newItem.isUnit, 'sale',
-              `Item Added to Delivery #${sale.id}`,
-              { branchId: activeBranchId, performedBy: currentEmployeeId, performedByName: performerName },
-              sale.id
-            );
-
-            if (mutation) {
-              newItem.batchAllocations = mutation.allocations;
-              await inventoryService.updateStock(newItem.id, -mutation.unitsChanged);
-              undoManager.push(async () => {
-                 await inventoryService.updateStock(newItem.id, mutation.unitsChanged);
-                 for (const alloc of mutation.allocations) {
-                   await batchService.returnStock([alloc], alloc.quantity, newItem.id, activeBranchId);
-                 }
-              });
-
-              modifications.push({
-                type: 'item_added',
-                itemId: newItem.id,
-                itemName: newItem.name,
-                dosageForm: newItem.dosageForm,
-                previousQuantity: 0,
-                newQuantity: newItem.quantity,
-                stockDeducted: mutation.unitsChanged,
-              });
-            }
-          }
-        }
-      }
-
-      // 4. Build history
-      let modificationHistory = sale.modificationHistory || [];
-      if (modifications.length > 0) {
-        const historyRecord = {
-          id: idGenerator.generateSync('generic', activeBranchId),
-          timestamp: timestamp || new Date().toISOString(),
-          modifiedBy: performerName || 'System',
-          modifications,
-        };
-        modificationHistory = [...modificationHistory, historyRecord];
-      }
-
-      return { success: true, modificationHistory };
-
+      return { success: true };
     } catch (err: any) {
-      console.error('[TransactionService] Modification failed:', err);
-      await undoManager.undoAll();
-      return { success: false, error: err.message || 'Modification failed' };
+      console.error('[TransactionService] Modification fatal error:', err);
+      return { success: false, error: err.message || 'Unexpected error during modification' };
     }
   },
 

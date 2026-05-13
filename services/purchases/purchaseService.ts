@@ -7,6 +7,7 @@ import { BaseDomainService } from '../core/baseDomainService';
 import type { Purchase, PurchaseStatus, StockMovement, StockBatch } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { settingsService } from '../settings/settingsService';
+import { supabase } from '../../lib/supabase';
 import { inventoryService } from '../inventory/inventoryService';
 import { batchService } from '../inventory/batchService';
 import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
@@ -94,18 +95,59 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     if (!purchase) throw new Error('Purchase not found');
     if (purchase.status === 'received' || purchase.status === 'completed') return purchase;
 
+    // Use atomic server-side processing
     await this.processInventoryReceipt(purchase, receiverId, receiverName);
 
-    const updates = {
-      status: 'received' as PurchaseStatus,
-      receivedBy: receiverName,
-      receivedAt: new Date().toISOString(),
-    };
-    
-    return this.update(id, updates);
+    // Refresh the local purchase record after processing
+    const updatedPurchase = await this.getById(id);
+    return updatedPurchase || purchase;
   }
 
   private async processInventoryReceipt(purchase: Purchase, performerId: string, performerName: string): Promise<void> {
+    try {
+      // 🚀 Performance Optimization: Use Atomic Server-Side RPC
+      const { data, error } = await supabase.rpc('process_purchase_receipt', {
+        p_payload: {
+          purchaseId: purchase.id,
+          performerId,
+          performerName,
+          items: purchase.items.map(item => ({
+            drugId: item.drugId,
+            name: item.name,
+            quantity: resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack),
+            expiryDate: normalizeExpiryToISO(item.expiryDate) || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            costPrice: item.costPrice,
+            publicPrice: item.publicPrice,
+            unitPrice: item.unitPrice,
+            unitCostPrice: item.unitCostPrice
+          }))
+        }
+      });
+
+      if (error || !data?.success) {
+        throw new Error(error?.message || data?.error || 'RPC failed');
+      }
+
+      console.log('[PurchaseService] Successfully processed inventory via atomic RPC');
+    } catch (err) {
+      console.warn('[PurchaseService] Atomic RPC failed, falling back to legacy processing:', err);
+      // 🛡️ Safety Fallback: Use legacy sequential processing
+      await this.processInventoryReceiptLegacy(purchase, performerId, performerName);
+      
+      // Update status manually since legacy path doesn't do it inside
+      await this.update(purchase.id, {
+        status: 'received',
+        receivedBy: performerName,
+        receivedAt: new Date().toISOString()
+      });
+    }
+  }
+
+  /**
+   * 🛡️ Legacy Sequential Processing (Fallback Path)
+   * This logic is kept to ensure system stability if the RPC is unavailable.
+   */
+  private async processInventoryReceiptLegacy(purchase: Purchase, performerId: string, performerName: string): Promise<void> {
     const settings = await settingsService.getAll();
     const branchId = purchase.branchId;
 
