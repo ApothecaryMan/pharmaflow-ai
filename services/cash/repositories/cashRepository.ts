@@ -22,6 +22,8 @@ export const cashRepository = {
       cashSales: Number(db.cash_sales || 0),
       cardSales: Number(db.card_sales || 0),
       returns: Number(db.returns || 0),
+      cashPurchases: Number(db.cash_purchases || 0),
+      cashPurchaseReturns: Number(db.cash_purchase_returns || 0),
       notes: db.notes,
       transactions: [],
     };
@@ -46,6 +48,8 @@ export const cashRepository = {
     if (s.cashSales !== undefined) db.cash_sales = s.cashSales;
     if (s.cardSales !== undefined) db.card_sales = s.cardSales;
     if (s.returns !== undefined) db.returns = s.returns;
+    if (s.cashPurchases !== undefined) db.cash_purchases = s.cashPurchases;
+    if (s.cashPurchaseReturns !== undefined) db.cash_purchase_returns = s.cashPurchaseReturns;
     if (s.notes !== undefined) db.notes = s.notes;
     return db;
   },
@@ -164,7 +168,15 @@ export const cashRepository = {
     return true;
   },
 
-  async incrementShiftTotals(shiftId: string, amounts: { cashIn: number; cashOut: number; cashSales: number; cardSales: number; returns: number }): Promise<void> {
+  async incrementShiftTotals(shiftId: string, amounts: { 
+    cashIn: number; 
+    cashOut: number; 
+    cashSales: number; 
+    cardSales: number; 
+    returns: number;
+    cashPurchases?: number;
+    cashPurchaseReturns?: number;
+  }): Promise<void> {
     const { error } = await supabase.rpc('atomic_increment_shift', {
       p_shift_id: shiftId,
       p_cash_in: amounts.cashIn,
@@ -172,6 +184,8 @@ export const cashRepository = {
       p_cash_sales: amounts.cashSales,
       p_card_sales: amounts.cardSales,
       p_returns: amounts.returns,
+      p_cash_purchases: amounts.cashPurchases || 0,
+      p_cash_purchase_returns: amounts.cashPurchaseReturns || 0,
     });
     if (error) throw error;
   }

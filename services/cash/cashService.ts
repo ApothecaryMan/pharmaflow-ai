@@ -100,15 +100,29 @@ export const cashService: CashServiceInterface = {
     await cashRepository.insertTransaction(newTx);
 
     // Update shift totals atomically
-    const incrementArgs = {
+    const incrementArgs: { 
+      cashIn: number; cashOut: number; cashSales: number; cardSales: number; returns: number;
+      cashPurchases: number; cashPurchaseReturns: number;
+    } = {
       cashIn: 0, cashOut: 0, cashSales: 0, cardSales: 0, returns: 0,
+      cashPurchases: 0, cashPurchaseReturns: 0,
     };
     switch (transaction.type) {
-      case 'in':        incrementArgs.cashIn = transaction.amount; break;
-      case 'out':       incrementArgs.cashOut = transaction.amount; break;
-      case 'sale':      incrementArgs.cashSales = transaction.amount; break;
-      case 'card_sale': incrementArgs.cardSales = transaction.amount; break;
-      case 'return':    incrementArgs.returns = transaction.amount; break;
+      case 'in':        incrementArgs.cashIn = Math.abs(transaction.amount); break;
+      case 'out':       incrementArgs.cashOut = Math.abs(transaction.amount); break;
+      case 'sale':      incrementArgs.cashSales = Math.abs(transaction.amount); break;
+      case 'card_sale': incrementArgs.cardSales = Math.abs(transaction.amount); break;
+      case 'return':    incrementArgs.returns = Math.abs(transaction.amount); break;
+      case 'purchase':  incrementArgs.cashPurchases = Math.abs(transaction.amount); break;
+      case 'purchase_return': incrementArgs.cashPurchaseReturns = Math.abs(transaction.amount); break;
+      case 'adjustment':
+        // Adjustments are special: they can be negative to reduce a total
+        if (transaction.amount < 0) {
+           incrementArgs.cashSales = transaction.amount; 
+        } else {
+           incrementArgs.cashIn = transaction.amount;
+        }
+        break;
     }
     
     await cashRepository.incrementShiftTotals(shiftId, incrementArgs);

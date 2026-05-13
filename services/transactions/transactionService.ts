@@ -89,14 +89,14 @@ export const transactionService = {
       };
 
 
-      // 2. Invoke the Atomic Edge Function
-      const { data, error } = await supabase.functions.invoke('process-checkout', {
-        body: payload
+      // 2. Invoke the Atomic RPC directly
+      const { data, error } = await supabase.rpc('process_checkout', {
+        p_payload: payload
       });
 
       if (error) {
-        console.error('[TransactionService] Edge Function error:', error);
-        return { success: false, error: 'Server error during checkout' };
+        console.error('[TransactionService] RPC error:', error);
+        return { success: false, error: error.message || 'Server error during checkout' };
       }
 
       if (data && !data.success) {
@@ -127,8 +127,8 @@ export const transactionService = {
     context: ActionContext
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { data, error } = await supabase.functions.invoke('process-cancellation', {
-        body: {
+      const { data, error } = await supabase.rpc('process_cancellation', {
+        p_payload: {
           saleId: sale.id,
           branchId: context.branchId,
           orgId: context.orgId,
@@ -138,8 +138,8 @@ export const transactionService = {
       });
 
       if (error) {
-        console.error('[TransactionService] Edge Function error:', error);
-        return { success: false, error: 'Server error during cancellation' };
+        console.error('[TransactionService] RPC error:', error);
+        return { success: false, error: error.message || 'Server error during cancellation' };
       }
 
       if (data && !data.success) {
@@ -371,13 +371,13 @@ export const transactionService = {
         }))
       };
 
-      const { data, error } = await supabase.functions.invoke('process-return', {
-        body: payload
+      const { data, error } = await supabase.rpc('process_return', {
+        p_payload: payload
       });
 
       if (error) {
-        console.error('[TransactionService] Edge Function error:', error);
-        return { success: false, error: 'Server error during return processing' };
+        console.error('[TransactionService] RPC error:', error);
+        return { success: false, error: error.message || 'Server error during return processing' };
       }
 
       if (data && !data.success) {
@@ -408,13 +408,12 @@ export const transactionService = {
       if (purchase.paymentMethod === 'cash' && context.shiftId) {
         await cashService.addTransaction(context.shiftId, {
           branchId: context.branchId,
-          orgId: context.orgId,
           shiftId: context.shiftId,
           time: context.timestamp,
-          type: 'out',
-          amount: purchase.totalCost,
-          reason: `PO #${purchase.invoiceId || purchase.id} from ${purchase.supplierName}`,
-          userId: context.performerId,
+          type: 'purchase',
+          amount: -purchase.totalCost,
+          reason: `Purchase #${purchase.id}`,
+          userId: context.performerId
         });
       }
 
@@ -462,8 +461,8 @@ export const transactionService = {
           orgId: context.orgId,
           shiftId: context.shiftId,
           time: context.timestamp,
-          type: 'out',
-          amount: purchase.totalCost,
+          type: 'purchase',
+          amount: -purchase.totalCost,
           reason: `Direct PO #${newPurchase.invoiceId || newPurchase.id} from ${purchase.supplierName}`,
           userId: context.performerId,
         });
@@ -503,7 +502,7 @@ export const transactionService = {
           orgId: context.orgId,
           shiftId: context.shiftId,
           time: context.timestamp,
-          type: 'in',
+          type: 'purchase_return',
           amount: savedReturn.totalRefund,
           reason: `Purchase Return #${savedReturn.id} for PO #${originalPurchase.invoiceId || originalPurchase.id}`,
           userId: context.performerId || 'System',

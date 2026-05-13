@@ -9,7 +9,8 @@ export type CashTransactionType =
   | 'return'
   | 'card_return'
   | 'purchase'
-  | 'purchase_return';
+  | 'purchase_return'
+  | 'adjustment';
 
 /**
  * CashTransaction - individual cash movement record.
