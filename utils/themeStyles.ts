@@ -28,3 +28,11 @@ export const INPUT_BASE =
   'w-full px-3 py-2.5 rounded-xl bg-(--bg-input) border border-(--border-divider) outline-hidden focus:border-gray-400 dark:focus:border-gray-500 focus:shadow-sm text-sm transition-colors duration-0 text-(--text-primary) placeholder-(--text-tertiary)';
 
 export const THEME_COLORS = ['zinc', 'purple', 'green', 'orange', 'red', 'pink', 'teal'];
+
+// Flat icon button (square/rounded-xl) with border and high-contrast active state
+export const ICON_BUTTON_BASE = 'flex items-center justify-center w-10 h-10 rounded-xl border transition-all';
+export const ICON_BUTTON_FLAT = `${ICON_BUTTON_BASE} bg-white dark:bg-(--bg-surface-neutral) border-gray-200 dark:border-(--border-divider) text-gray-500 dark:text-gray-400`;
+export const ICON_BUTTON_FLAT_ACTIVE = `${ICON_BUTTON_BASE} bg-gray-900 border-gray-900 text-white dark:bg-white dark:border-white dark:text-gray-900`;
+
+// Shorthand for easier usage: ICON_BTN(showAll)
+export const ICON_BTN = (active?: boolean) => active ? ICON_BUTTON_FLAT_ACTIVE : ICON_BUTTON_FLAT;

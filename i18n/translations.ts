@@ -2237,6 +2237,10 @@ export const TRANSLATIONS = {
     stockMovement: {
       title: 'Stock Movement',
       summary: 'Summary',
+      showAll: 'Show All',
+      todayOnly: 'Specific Drug',
+      allProductsReport: 'All Products Report',
+      allMovements: 'All Movements',
       details: 'Details',
       stockIn: 'Stock In',
       stockOut: 'Stock Out',
@@ -4676,6 +4680,10 @@ export const TRANSLATIONS = {
     stockMovement: {
       title: 'حركة الصنف',
       summary: 'الملخص',
+      showAll: 'إظهار الكل',
+      todayOnly: 'صنف محدد',
+      allProductsReport: 'تقرير كل الأصناف',
+      allMovements: 'جميع الحركات',
       details: 'التفاصيل',
       stockIn: 'وارد',
       stockOut: 'صادر',

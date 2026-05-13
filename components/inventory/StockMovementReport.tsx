@@ -6,7 +6,7 @@ import { SearchDropdown } from '../common/SearchDropdown';
 import { DateRangePicker } from '../common/DatePicker';
 import { TimelineItem } from './stockMovement';
 import { SmallCard } from '../common/SmallCard';
-import { CARD_LG } from '../../utils/themeStyles';
+import { CARD_LG, CARD_BASE, ICON_BTN } from '../../utils/themeStyles';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatCurrency } from '../../utils/currency';
 import { formatExpiryDate, checkExpiryStatus, getExpiryStatusConfig } from '../../utils/expiryUtils';
@@ -30,6 +30,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
     selectedDrug,
     searchQuery,
     showSearch,
+    showAll,
     dateRange,
     history,
     summary,
@@ -57,9 +58,24 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
     handleUpdateFilter,
     handleSearchChange,
     handleClearSearch,
+    toggleShowAll,
   } = useStockMovementReport({ onViewChange });
 
   const [showStats, setShowStats] = React.useState(true);
+
+  // --- Analytics ---
+  const typeCounts = useMemo(() => {
+    const counts: Record<string, number> = { sale: 0, purchase: 0, adjustment: 0, damage: 0, return: 0 };
+    filteredHistory.forEach(m => {
+      // Basic grouping logic for the capsule
+      if (m.type === 'sale') counts.sale++;
+      else if (m.type === 'purchase') counts.purchase++;
+      else if (m.type === 'adjustment') counts.adjustment++;
+      else if (m.type === 'damage') counts.damage++;
+      else counts.return++;
+    });
+    return counts;
+  }, [filteredHistory]);
 
   // --- Column Configuration ---
   // moved to useStockMovementReport.ts
@@ -198,6 +214,15 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
         }
         rightContent={
           <div className="flex items-center gap-3">
+            <button
+              onClick={toggleShowAll}
+              title={showAll ? t.stockMovement.todayOnly : t.stockMovement.showAll}
+              className={ICON_BTN(showAll)}
+            >
+              <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-md)' }}>
+                {showAll ? 'filter_alt_off' : 'all_inclusive'}
+              </span>
+            </button>
             <DateRangePicker
               startDate={dateRange.start}
               endDate={dateRange.end}
@@ -210,10 +235,10 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
             <button
               onClick={exportCSV}
               disabled={history.length === 0}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-(--bg-surface-neutral) hover:bg-gray-200 dark:hover:bg-(--bg-input) text-gray-700 dark:text-gray-200 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              title={isRTL ? 'تصدير' : 'Export'}
+              className={`${ICON_BTN(false)} disabled:opacity-30 disabled:cursor-not-allowed`}
             >
               <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-md)' }}>download</span>
-              <span className="hidden sm:inline font-semibold">{isRTL ? 'تصدير' : 'Export'}</span>
             </button>
           </div>
         }
@@ -264,37 +289,79 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
         }
       />
 
-      {!selectedDrug ? renderEmptyState() : (
+      {!selectedDrug && !showAll ? renderEmptyState() : (
         <div className="flex flex-col gap-0 items-start flex-1 overflow-hidden">
           {/* Main Content Area - Scrollable Table */}
           <div className="flex-1 w-full min-w-0 h-full flex flex-col overflow-hidden">
             <div className={`overflow-hidden rounded-3xl ${CARD_LG} flex flex-col h-full`}>
-              <div className="p-6 flex items-center justify-between shrink-0" dir="ltr">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                      {getDisplayName(selectedDrug, textTransform)}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="material-symbols-rounded text-gray-400" style={{ fontSize: 'var(--icon-sm)' }}>qr_code_2</span>
-                      <span className="text-sm font-mono text-gray-500 font-medium">
-                        {selectedDrug?.barcode || (isRTL ? 'لا يوجد باركود' : 'No Barcode')}
+              <div className="p-6 grid grid-cols-3 items-center shrink-0">
+                {/* Start: Title & Info */}
+                <div className="flex flex-col gap-1 justify-self-start">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    {showAll ? t.stockMovement.allProductsReport : getDisplayName(selectedDrug, textTransform)}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-rounded text-gray-400" style={{ fontSize: 'var(--icon-sm)' }}>{showAll ? 'inventory' : 'qr_code_2'}</span>
+                    <span className="text-xs font-mono text-gray-500 font-medium">
+                      {showAll ? t.stockMovement.allMovements : (selectedDrug?.barcode || (isRTL ? 'لا يوجد باركود' : 'No Barcode'))}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Center: View Switcher */}
+                <div className="justify-self-center">
+                  <SegmentedControl
+                    value={viewType}
+                    onChange={(v) => setViewType(v as 'summary' | 'timeline')}
+                    options={[
+                      { label: isRTL ? 'ملخص' : 'Summary', value: 'summary', icon: 'list' },
+                      { label: isRTL ? 'الخط الزمني' : 'Timeline', value: 'timeline', icon: 'schedule' }
+                    ]}
+                    size="xs"
+                    iconSize="var(--icon-md)"
+                    className="min-w-[240px]"
+                  />
+                </div>
+
+                {/* End: Detailed Stats Capsule */}
+                <div className="justify-self-end">
+                  <div className={`flex items-center rounded-2xl border border-gray-100 dark:border-(--border-divider) ${CARD_BASE} overflow-hidden divide-x divide-gray-100 dark:divide-(--border-divider) rtl:divide-x-reverse`}>
+                    {/* Sale */}
+                    <div className="px-3 py-1.5 flex items-center gap-2">
+                      <span className="text-[9px] font-black tracking-tighter uppercase text-rose-600 dark:text-rose-400">
+                        {isRTL ? 'بيع' : 'SALE'}
+                      </span>
+                      <span className="text-[11px] font-black tabular-nums text-gray-900 dark:text-gray-100">{typeCounts.sale}</span>
+                    </div>
+                    {/* Purchase */}
+                    <div className="px-3 py-1.5 flex items-center gap-2">
+                      <span className="text-[9px] font-black tracking-tighter uppercase text-emerald-600 dark:text-emerald-400">
+                        {isRTL ? 'شراء' : 'PURCHASE'}
+                      </span>
+                      <span className="text-[11px] font-black tabular-nums text-gray-900 dark:text-gray-100">{typeCounts.purchase}</span>
+                    </div>
+                    {/* Adjustment */}
+                    <div className="px-3 py-1.5 flex items-center gap-2">
+                      <span className="text-[9px] font-black tracking-tighter uppercase text-blue-600 dark:text-blue-400">
+                        {isRTL ? 'تسوية' : 'ADJUST'}
+                      </span>
+                      <span className="text-[11px] font-black tabular-nums text-gray-900 dark:text-gray-100">{typeCounts.adjustment}</span>
+                    </div>
+                    {/* Damage */}
+                    <div className="px-3 py-1.5 flex items-center gap-2">
+                      <span className="text-[9px] font-black tracking-tighter uppercase text-orange-600 dark:text-orange-400">
+                        {isRTL ? 'هالك' : 'DAMAGE'}
+                      </span>
+                      <span className="text-[11px] font-black tabular-nums text-gray-900 dark:text-gray-100">{typeCounts.damage}</span>
+                    </div>
+                    {/* Total Count */}
+                    <div className="px-4 py-1.5 bg-gray-50 dark:bg-white/5 flex items-center gap-2">
+                      <span className="text-[10px] font-black tracking-widest uppercase text-primary-600 dark:text-primary-400">
+                        {filteredHistory.length}
                       </span>
                     </div>
                   </div>
                 </div>
-
-                <SegmentedControl
-                  value={viewType}
-                  onChange={(v) => setViewType(v as 'summary' | 'timeline')}
-                  options={[
-                    { label: isRTL ? 'ملخص' : 'Summary', value: 'summary', icon: 'list' },
-                    { label: isRTL ? 'الخط الزمني' : 'Timeline', value: 'timeline', icon: 'schedule' }
-                  ]}
-                  size="xs"
-                  iconSize="var(--icon-md)"
-                  className="min-w-[240px]"
-                />
               </div>
 
               {/* Fixed Table Header (Sync with body) */}
@@ -364,7 +431,14 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                   {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                               </td>
-                              <td style={{ width: columns[1].width }} className="py-2">
+                              {showAll && (
+                                <td style={{ width: columns[1].width }} className="py-2">
+                                  <span className="text-xs font-bold text-gray-900 dark:text-gray-100 block truncate max-w-[180px]" title={m.drugName}>
+                                    {m.drugName}
+                                  </span>
+                                </td>
+                              )}
+                              <td style={{ width: columns[showAll ? 2 : 1].width }} className="py-2">
                                 <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-[10px] font-normal uppercase tracking-wider bg-transparent ${
                                   m.type === 'sale' ? 'text-rose-700 dark:text-rose-400' :
                                   m.type === 'purchase' ? 'text-emerald-700 dark:text-emerald-400' :
@@ -396,13 +470,13 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                   }
                                 </span>
                               </td>
-                              <td style={{ width: columns[2].width }} className="py-2">
+                              <td style={{ width: columns[showAll ? 3 : 2].width }} className="py-2">
                                 <span className={`text-sm font-bold tabular-nums ${m.quantity > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                                   {m.quantity > 0 ? '+' : m.quantity < 0 ? '-' : ''}
                                   {formatStockAmount(Math.abs(m.quantity), selectedDrug?.unitsPerPack, isRTL ? 'علبة' : 'Packs')}
                                 </span>
                               </td>
-                              <td style={{ width: columns[3].width }} className="py-2">
+                              <td style={{ width: columns[showAll ? 4 : 3].width }} className="py-2">
                                 <div className="flex flex-col gap-1 items-start">
                                   {m.batchId ? (
                                     <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-gray-100 dark:border-(--border-divider) text-gray-600 dark:text-gray-400 text-[10px] font-bold uppercase tracking-wider bg-transparent">
@@ -426,25 +500,25 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                   })()}
                                 </div>
                               </td>
-                              <td style={{ width: columns[4].width }} className="py-2">
+                              <td style={{ width: columns[showAll ? 5 : 4].width }} className="py-2">
                                 <span className={`text-sm font-medium tabular-nums text-(--text-secondary)`}>
                                   {formatCurrency(Math.abs(stockMovementService.calculateMovementValue(m, selectedDrug)))}
                                 </span>
                               </td>
-                              <td style={{ width: columns[5].width }} className="py-2">
+                              <td style={{ width: columns[showAll ? 6 : 5].width }} className="py-2">
                                 <div className="text-xs text-gray-500 flex items-center gap-1">
                                   <span className="font-normal text-gray-400">{formatStockAmount(m.previousStock, selectedDrug?.unitsPerPack, '')}</span>
                                   <span className="material-symbols-rounded text-(--text-tertiary)" style={{ fontSize: 'var(--icon-sm)' }}>{isRTL ? 'arrow_back' : 'arrow_forward'}</span>
                                   <span className="font-medium text-gray-900 dark:text-gray-100">{formatStockAmount(m.newStock, selectedDrug?.unitsPerPack, '')}</span>
                                 </div>
                               </td>
-                              <td style={{ width: columns[6].width }} className="py-2">
+                              <td style={{ width: columns[showAll ? 7 : 6].width }} className="py-2">
                                 <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-xl border border-gray-100 dark:border-(--border-divider) text-[10px] font-bold uppercase tracking-widest text-(--text-secondary) bg-transparent">
                                   <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-sm)' }}>person</span>
                                   <span className="truncate">{m.performedByName || m.performedBy || (isRTL ? 'النظام' : 'System')}</span>
                                 </span>
                               </td>
-                              <td style={{ width: columns[7].width }} className="py-2 pr-4 rtl:pr-0 rtl:pl-4 rounded-r-2xl rtl:rounded-r-none rtl:rounded-l-2xl text-right rtl:text-left">
+                              <td style={{ width: columns[showAll ? 8 : 7].width }} className="py-2 pr-4 rtl:pr-0 rtl:pl-4 rounded-r-2xl rtl:rounded-r-none rtl:rounded-l-2xl text-right rtl:text-left">
                                   <span className="material-symbols-rounded transition-transform duration-200 text-gray-400" style={{ fontSize: 'var(--icon-md)', transform: expandedRows.has(m.id) ? 'rotate(180deg)' : 'none' }}>
                                     expand_more
                                   </span>

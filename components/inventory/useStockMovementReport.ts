@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useData } from '../../services';
 import { useSettings } from '../../context';
 import { stockMovementService } from '../../services/inventory/stockMovement/stockMovementService';
 import { DrugSearchEngine } from '../../services/search/drugSearchService';
-import { StockMovement, StockMovementSummary, Drug } from '../../types';
+import { StockMovement, StockMovementSummary, Drug, StockMovementFilters } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { TRANSLATIONS } from '../../i18n/translations';
@@ -23,6 +23,7 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
   const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>(() => {
     const now = new Date();
     const start = new Date(now);
@@ -43,16 +44,27 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
   const lastLoadedBranchId = useRef<string>('');
 
   // --- Column Configuration ---
-  const columns = useMemo(() => [
-    { id: 'date', label: isRTL ? 'التاريخ' : 'DATE', width: '12%' },
-    { id: 'type', label: isRTL ? 'النوع' : 'TYPE', width: '11%' },
-    { id: 'quantity', label: isRTL ? 'الكمية' : 'QUANTITY', width: '14%' },
-    { id: 'batch', label: isRTL ? 'التشغيلة / الصلاحية' : 'BATCH / EXPIRY', width: '21%' },
-    { id: 'value', label: isRTL ? 'القيمة' : 'VALUE', width: '10%' },
-    { id: 'stock', label: isRTL ? 'المخزون' : 'STOCK', width: '10%' },
-    { id: 'user', label: isRTL ? 'بواسطة' : 'USER', width: '17%' },
-    { id: 'actions', label: '', width: '5%' }
-  ], [isRTL]);
+  const columns = useMemo(() => {
+    const cols = [
+      { id: 'date', label: isRTL ? 'التاريخ' : 'DATE', width: showAll ? '10%' : '12%' },
+    ];
+
+    if (showAll) {
+      cols.push({ id: 'drug', label: isRTL ? 'الصنف' : 'PRODUCT', width: '20%' });
+    }
+
+    cols.push(
+      { id: 'type', label: isRTL ? 'النوع' : 'TYPE', width: '11%' },
+      { id: 'quantity', label: isRTL ? 'الكمية' : 'QUANTITY', width: '14%' },
+      { id: 'batch', label: isRTL ? 'التشغيلة / الصلاحية' : 'BATCH / EXPIRY', width: showAll ? '15%' : '21%' },
+      { id: 'value', label: isRTL ? 'القيمة' : 'VALUE', width: '10%' },
+      { id: 'stock', label: isRTL ? 'المخزون' : 'STOCK', width: '10%' },
+      { id: 'user', label: isRTL ? 'بواسطة' : 'USER', width: '17%' },
+      { id: 'actions', label: '', width: '5%' }
+    );
+
+    return cols;
+  }, [isRTL, showAll]);
 
   // --- Data Filtering & Processing ---
   const filteredHistory = useMemo(() => {
@@ -88,20 +100,31 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
 
   // --- Data Fetching ---
   const fetchData = useCallback(async () => {
-    if (!selectedDrug) return;
+    // If neither drug is selected nor showAll is active, we don't fetch
+    if (!selectedDrug && !showAll) return;
+    
     setIsLoading(true);
     try {
-      const filters = {
-        drugId: selectedDrug.id,
+      const filters: StockMovementFilters = {
         branchId: activeBranchId,
         startDate: dateRange.start,
         endDate: dateRange.end,
         type: activeFilters.type?.[0] as any,
         status: activeFilters.status?.[0] as any,
       };
+
+      // Only add drugId if we are not in "Show All" (All Products) mode
+      if (!showAll && selectedDrug) {
+        filters.drugId = selectedDrug.id;
+      }
       
       const moveHistory = await stockMovementService.getHistory(filters) as StockMovement[];
-      const moveSummary = await stockMovementService.getSummaryByDrug(selectedDrug.id, filters);
+      
+      // Only fetch summary if a specific drug is selected
+      let moveSummary = null;
+      if (selectedDrug) {
+        moveSummary = await stockMovementService.getSummaryByDrug(selectedDrug.id, filters);
+      }
       
       setHistory(moveHistory);
       setSummary(moveSummary);
@@ -110,7 +133,7 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
     } finally {
       setIsLoading(false);
     }
-  }, [selectedDrug, dateRange, activeFilters, activeBranchId]);
+  }, [selectedDrug, dateRange, showAll, activeFilters, activeBranchId]);
 
   useEffect(() => {
     fetchData();
@@ -163,11 +186,23 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
     setSelectedDrug(null);
   };
 
+  // Toggle between showing all history or date-filtered history
+  const toggleShowAll = () => {
+    setShowAll(prev => !prev);
+  };
+
+  // When date range changes manually, exit showAll mode
+  const handleSetDateRange = (updater: React.SetStateAction<{ start: string; end: string }>) => {
+    setShowAll(false);
+    setDateRange(updater);
+  };
+
   return {
     // State
     selectedDrug,
     searchQuery,
     showSearch,
+    showAll,
     dateRange,
     history,
     summary,
@@ -190,7 +225,7 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
     setSelectedDrug,
     setSearchQuery,
     setShowSearch,
-    setDateRange,
+    setDateRange: handleSetDateRange,
     setViewType,
     setActiveFilters,
     handleSelectDrug,
@@ -200,5 +235,6 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
     handleUpdateFilter,
     handleSearchChange,
     handleClearSearch,
+    toggleShowAll,
   };
 };
