@@ -1,6 +1,5 @@
-import type React from 'react';
-import { useEffect, useRef, useState, useMemo } from 'react';
-import { type Notification, useStatusBar } from '../StatusBarContext';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { useAlert, type AlertData } from '../../../features/alerts/AlertContext';
 import { StatusBarItem } from '../StatusBarItem';
 import { formatCurrency } from '../../../../utils/currency';
 
@@ -20,17 +19,16 @@ interface NotificationBellProps {
 }
 
 // Helpers moved outside for better performance and separation of concerns
-const getVariantIcon = (type: Notification['type']) => {
+const getVariantIcon = (type: AlertData['type']) => {
   switch (type) {
     case 'success': return 'check_circle';
     case 'warning': return 'warning';
     case 'error': return 'error';
-    case 'out_of_stock': return 'inventory_2';
     default: return 'info';
   }
 };
 
-const getVariantColor = (type: Notification['type']) => {
+const getVariantColor = (type: AlertData['type']) => {
   switch (type) {
     case 'success': return 'text-emerald-500';
     case 'warning': return 'text-amber-500';
@@ -39,37 +37,17 @@ const getVariantColor = (type: Notification['type']) => {
   }
 };
 
-const getNotificationMessage = (notification: Notification, messages?: NotificationBellProps['t']['messages']): string => {
-  if (notification.messageKey && messages) {
-    const template = messages[notification.messageKey];
-    if (template) {
-      let result = template;
-      if (notification.messageParams) {
-        Object.entries(notification.messageParams).forEach(([key, value]) => {
-          let displayValue = value || '';
-          
-          // Smart formatting for monetary values
-          if ((key === 'total' || key === 'amount' || key === 'refund' || key === 'price') && !isNaN(Number(value))) {
-            displayValue = formatCurrency(Number(value));
-          }
-          
-          result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), displayValue);
-        });
-      }
-      return result.trim();
-    }
-  }
+const getNotificationMessage = (notification: AlertData): string => {
   return notification.message || '';
 };
 
 // Extracted Notification Item for Flattening and Readability
 const NotificationItem: React.FC<{
-  notification: Notification;
-  messages?: NotificationBellProps['t']['messages'];
+  notification: AlertData;
   onRemove: (id: string) => void;
   dismissText: string;
-}> = ({ notification, messages, onRemove, dismissText }) => (
-  <div className="px-3 py-2 transition-colors flex items-start gap-2 hover:bg-black/5 dark:hover:bg-white/5" role="listitem">
+}> = ({ notification, onRemove, dismissText }) => (
+  <div className="px-3 py-2 flex items-start gap-2 hover:bg-black/5 dark:hover:bg-white/5" role="listitem">
     <span
       className={`material-symbols-rounded mt-0.5 ${getVariantColor(notification.type)}`}
       style={{ fontSize: 'var(--status-icon-size, 16px)' }}
@@ -77,16 +55,18 @@ const NotificationItem: React.FC<{
       {getVariantIcon(notification.type)}
     </span>
     <div className="flex-1 min-w-0">
+      {notification.title && (
+        <p className="text-[10px] font-bold text-(--text-primary) uppercase tracking-wider mb-0.5">
+          {notification.title}
+        </p>
+      )}
       <p className="text-xs leading-relaxed text-(--text-primary)">
-        {getNotificationMessage(notification, messages)}
-      </p>
-      <p className="text-[10px] mt-0.5 text-(--text-tertiary)">
-        {new Date(notification.timestamp).toLocaleTimeString('en-US')}
+        {getNotificationMessage(notification)}
       </p>
     </div>
     <button
       onClick={() => onRemove(notification.id)}
-      className="text-gray-400 hover:text-black dark:hover:text-white transition-colors"
+      className="text-gray-400 hover:text-black dark:hover:text-white"
       title={dismissText}
     >
       <span 
@@ -112,13 +92,13 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
     },
   },
 }) => {
-  const { state, removeNotification, clearNotifications, markAsRead } = useStatusBar();
+  const { alerts, removeAlert } = useAlert();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Smart Memoization: Avoid redundant calculations on every render
-  const unreadCount = useMemo(() => state.notifications.filter((n) => !n.read).length, [state.notifications]);
-  const displayedNotifications = useMemo(() => state.notifications.slice(0, 10), [state.notifications]);
+  const unreadCount = alerts.length;
+  const displayedNotifications = useMemo(() => alerts.slice().reverse().slice(0, 10), [alerts]);
   const isRTL = language === 'AR';
 
   // Close dropdown when clicking outside
@@ -134,12 +114,6 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
-    // Batch marking as read when opening
-    if (!isOpen) {
-      state.notifications.forEach((n) => {
-        if (!n.read) markAsRead(n.id);
-      });
-    }
   };
 
   return (
@@ -155,27 +129,19 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
       {/* Dropdown Container */}
       {isOpen && (
         <div
-          className="absolute bottom-full end-0 mb-1 w-72 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-50 animate-scale-in origin-bottom-end"
+          className="absolute bottom-full right-0 mb-1 w-72 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-50 animate-scale-in origin-bottom-right"
           dir={isRTL ? 'rtl' : 'ltr'}
           role="log"
           aria-live="polite"
         >
           {/* Arrow Indicator */}
-          <div className="absolute bottom-[-5px] end-3 w-2.5 h-2.5 rotate-45 border-b border-r border-(--border-divider) bg-(--bg-menu) z-50" />
+          <div className="absolute bottom-[-5px] right-3 w-2.5 h-2.5 rotate-45 border-b border-r border-(--border-divider) bg-(--bg-menu) z-50" />
 
           {/* Dropdown Header */}
           <div className="flex items-center justify-between px-3 py-2 border-b border-(--border-divider)">
             <span className="text-sm font-semibold text-(--text-primary)">
               {t.notifications}
             </span>
-            {state.notifications.length > 0 && (
-              <button
-                onClick={clearNotifications}
-                className="text-xs text-primary-500 hover:text-primary-600 transition-colors font-medium"
-              >
-                {t.clearAll}
-              </button>
-            )}
           </div>
 
           {/* Notifications Scroll Area */}
@@ -189,8 +155,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                 <NotificationItem
                   key={notification.id}
                   notification={notification}
-                  messages={t.messages}
-                  onRemove={removeNotification}
+                  onRemove={removeAlert}
                   dismissText={t.dismiss}
                 />
               ))

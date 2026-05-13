@@ -153,10 +153,10 @@ export const EmployeeAttendanceProfile: React.FC<EmployeeAttendanceProfileProps>
                   </tr>
                 ) : !report || report.days.length === 0 ? (
                   <tr>
-                    <td colSpan={columns.length} className="px-6 py-20 text-center text-zinc-500">
-                      <div className="flex flex-col items-center gap-2">
-                        <span className="material-symbols-rounded text-4xl opacity-20">person_search</span>
-                        <span className="text-sm font-medium">{t.attendance.noDataFound}</span>
+                    <td colSpan={columns.length} className="px-6 py-32 text-center text-zinc-500">
+                      <div className="flex flex-col items-center justify-center gap-6">
+                        <img src="/empty-attendance.png" alt="Empty" className="w-48 h-48 object-contain opacity-80 drop-shadow-sm" />
+                        <span className="text-lg font-medium text-zinc-600 dark:text-zinc-400">{t.attendance.noDataFound}</span>
                       </div>
                     </td>
                   </tr>

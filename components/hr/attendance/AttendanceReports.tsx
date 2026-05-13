@@ -162,14 +162,14 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                 <span className="text-gray-500 font-medium">{t.common.loading}</span>
               </div>
             ) : filteredEmployees.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-20 h-20 bg-gray-100 dark:bg-(--bg-surface-neutral) rounded-full flex items-center justify-center mb-6">
-                  <span className="material-symbols-rounded text-gray-400" style={{ fontSize: 'var(--icon-2xl)' }}>person_search</span>
+              <div className="flex flex-col items-center justify-center h-full min-h-[50vh] text-center">
+                <div className="flex items-center justify-center mb-8">
+                  <img src="/empty-attendance.png" alt="Empty" className="w-56 h-56 object-contain opacity-90 drop-shadow-sm" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
                   {t.attendance.noDataFound}
                 </h3>
-                <p className="text-gray-500 max-w-xs">
+                <p className="text-lg text-gray-500 max-w-sm">
                   {t.attendance.noReportData}
                 </p>
               </div>
