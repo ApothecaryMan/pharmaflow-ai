@@ -2331,6 +2331,10 @@ export const TRANSLATIONS = {
     attendance: {
       title: 'Attendance Terminal',
       subtitle: 'Biometric attendance tracking',
+      reportsTitle: 'Attendance Reports',
+      reportsSubtitle: 'Monitor staff presence and punctuality',
+      showPresentOnly: 'Show Present Only',
+      profileSubtitle: 'Review monthly presence and metrics',
       // Terminal States
       terminalLocked: 'Terminal Locked',
       enterToken: 'Enter Terminal Token',
@@ -4766,6 +4770,10 @@ export const TRANSLATIONS = {
     attendance: {
       title: 'لوحة الحضور',
       subtitle: 'تسجيل الحضور بالبصمة',
+      reportsTitle: 'تقارير الحضور',
+      reportsSubtitle: 'مراقبة حضور وانضباط الموظفين',
+      showPresentOnly: 'عرض الحاضرين فقط',
+      profileSubtitle: 'مراجعة سجل الحضور الشهري والمؤشرات',
       // Terminal States
       terminalLocked: 'الجهاز مقفل',
       enterToken: 'أدخل رمز الجهاز',

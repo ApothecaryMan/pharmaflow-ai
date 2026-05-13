@@ -30,6 +30,7 @@ export const useAttendanceReports = ({ onViewChange }: UseAttendanceReportsProps
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showStats, setShowStats] = usePersistedState(StorageKeys.HEADER_STATS_VISIBLE, true);
+  const [showOnlyPresent, setShowOnlyPresent] = useState(true);
 
   // --- Fetch Data ---
   useEffect(() => {
@@ -52,14 +53,22 @@ export const useAttendanceReports = ({ onViewChange }: UseAttendanceReportsProps
   // --- Filtering ---
   const filteredEmployees = useMemo(() => {
     if (!report) return [];
-    if (!searchQuery.trim()) return report.employees;
+    
+    let baseList = report.employees;
+    
+    // Filter by presence if requested
+    if (showOnlyPresent) {
+      baseList = baseList.filter(e => e.firstIn !== null);
+    }
+
+    if (!searchQuery.trim()) return baseList;
 
     const q = searchQuery.toLowerCase();
-    return report.employees.filter(e => 
+    return baseList.filter(e => 
       e.employeeName.toLowerCase().includes(q) || 
       e.employeeCode.toLowerCase().includes(q)
     );
-  }, [report, searchQuery]);
+  }, [report, searchQuery, showOnlyPresent]);
 
   // --- Handlers ---
   const handleDateChange = (date: string) => {
@@ -127,5 +136,7 @@ export const useAttendanceReports = ({ onViewChange }: UseAttendanceReportsProps
     formatDuration,
     showStats,
     setShowStats,
+    showOnlyPresent,
+    setShowOnlyPresent,
   };
 };

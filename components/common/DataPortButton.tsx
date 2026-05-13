@@ -63,6 +63,8 @@ interface DataPortButtonProps<T extends Record<string, any>> {
   className?: string;
   /** Disabled state */
   disabled?: boolean;
+  /** Show only icon */
+  iconOnly?: boolean;
 }
 
 // ═══════════════════════════════════════════
@@ -80,6 +82,7 @@ export function DataPortButton<T extends Record<string, any>>({
   size = 'sm',
   className = '',
   disabled = false,
+  iconOnly = false,
 }: DataPortButtonProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState<string | null>(null);
@@ -188,16 +191,20 @@ export function DataPortButton<T extends Record<string, any>>({
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-gray-50 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 transition-colors disabled:opacity-40 ${
-          isSm ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-sm'
+        className={`inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-gray-50 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 transition-colors disabled:opacity-40 ${
+          iconOnly 
+            ? 'p-2.5' 
+            : isSm ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-sm'
         }`}
       >
         <span className={`material-symbols-rounded ${isSm ? 'text-sm' : 'text-base'}`}>
           {isExporting ? 'progress_activity' : 'swap_vert'}
         </span>
-        <span className="font-semibold">
-          {isAR ? 'بيانات' : 'Data'}
-        </span>
+        {!iconOnly && (
+          <span className="font-semibold">
+            {isAR ? 'بيانات' : 'Data'}
+          </span>
+        )}
         <span className={`material-symbols-rounded ${isSm ? 'text-xs' : 'text-sm'} opacity-50`}>
           expand_more
         </span>

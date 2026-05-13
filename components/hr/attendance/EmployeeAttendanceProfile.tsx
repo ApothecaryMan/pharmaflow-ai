@@ -31,12 +31,12 @@ export const EmployeeAttendanceProfile: React.FC<EmployeeAttendanceProfileProps>
   const languageLocale = isRTL ? 'ar-EG' : 'en-US';
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in duration-500">
+    <div className="flex flex-col h-full">
       <PageHeader
         leftContent={
           <button
             onClick={() => onViewChange?.('attendance-reports')}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
           >
             <span className="material-symbols-rounded text-lg">
               {isRTL ? 'arrow_forward' : 'arrow_back'}
@@ -45,20 +45,31 @@ export const EmployeeAttendanceProfile: React.FC<EmployeeAttendanceProfileProps>
           </button>
         }
         title={report ? `${report.employeeName} (${report.employeeCode})` : t.attendance.attendanceProfile}
+        subtitle={t.attendance.profileSubtitle || 'Review monthly presence and metrics'}
         rightContent={
           <div className="flex items-center gap-3">
             <DatePicker
               value={currentMonthDateStr}
               onChange={handleMonthChange}
               label={t.common.selectMonth}
-              color="blue"
+              color="primary"
+              variant="pill-dark"
               maxDate={new Date().toISOString()}
+              translations={{
+                cancel: t.common.cancel,
+                ok: t.global.datePicker.ok,
+                hour: t.global.datePicker.hour,
+                minute: t.global.datePicker.minute,
+                am: t.common.am,
+                pm: t.common.pm
+              }}
             />
             {report && (
               <DataPortButton
                 language={isRTL ? 'AR' : 'EN'}
                 data={report.days}
                 filename={`attendance-${report.employeeName}-${report.month}`}
+                iconOnly={true}
                 columns={columns.map(c => ({
                   key: c.key as any,
                   header: c.label,
@@ -122,7 +133,7 @@ export const EmployeeAttendanceProfile: React.FC<EmployeeAttendanceProfileProps>
                   {columns.map((col) => (
                     <th
                       key={col.id}
-                      className={`px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-${isRTL ? 'right' : 'left'}`}
+                      className="px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center"
                       style={{ width: col.width }}
                     >
                       {col.label}
@@ -157,26 +168,26 @@ export const EmployeeAttendanceProfile: React.FC<EmployeeAttendanceProfileProps>
                     return (
                       <tr 
                         key={day.date}
-                        className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20 transition-colors group"
+                        className="bg-gray-100 dark:bg-(--bg-input) border-b border-white dark:border-zinc-800 group"
                       >
                         {/* Date */}
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-center">
                           <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
                             {new Date(day.date).toLocaleDateString(languageLocale, { day: 'numeric', month: 'short' })}
                           </span>
                         </td>
 
                         {/* Day */}
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-center">
                           <span className="text-sm text-zinc-500 dark:text-zinc-400 capitalize">
                             {new Date(day.date).toLocaleDateString(languageLocale, { weekday: 'short' })}
                           </span>
                         </td>
 
                         {/* First IN */}
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-center">
                           {day.firstIn ? (
-                            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                            <div className="flex items-center justify-center gap-2 text-emerald-600 dark:text-emerald-400">
                               <span className="material-symbols-rounded text-lg">login</span>
                               <span className="text-sm font-medium">
                                 {new Date(day.firstIn).toLocaleTimeString(languageLocale, { hour: '2-digit', minute: '2-digit' })}
@@ -188,11 +199,11 @@ export const EmployeeAttendanceProfile: React.FC<EmployeeAttendanceProfileProps>
                         </td>
 
                         {/* Last OUT */}
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-center">
                           {day.lastOut ? (
-                            <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+                            <div className="flex items-center justify-center gap-2 text-rose-600 dark:text-rose-400">
                               <span className="material-symbols-rounded text-lg">logout</span>
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center justify-center gap-1">
                                 <span className="text-sm font-medium">
                                   {new Date(day.lastOut).toLocaleTimeString(languageLocale, { hour: '2-digit', minute: '2-digit' })}
                                 </span>
@@ -204,7 +215,7 @@ export const EmployeeAttendanceProfile: React.FC<EmployeeAttendanceProfileProps>
                               </div>
                             </div>
                           ) : day.isOngoing ? (
-                            <div className="flex items-center gap-2 text-emerald-500">
+                            <div className="flex items-center justify-center gap-2 text-emerald-500">
                               <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -217,14 +228,14 @@ export const EmployeeAttendanceProfile: React.FC<EmployeeAttendanceProfileProps>
                         </td>
 
                         {/* Duration */}
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-center">
                           <span className={`text-sm font-mono ${day.totalMinutes > 0 ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-300 dark:text-zinc-700'}`}>
                             {day.totalMinutes > 0 ? formatDuration(day.totalMinutes) : '-'}
                           </span>
                         </td>
 
                         {/* Status */}
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-center">
                           {!day.isPresent ? (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
                               {t.attendance.absent}
@@ -241,7 +252,7 @@ export const EmployeeAttendanceProfile: React.FC<EmployeeAttendanceProfileProps>
                         </td>
 
                         {/* Late Minutes */}
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-center">
                           {day.lateMinutes > 0 && (
                             <span className="text-sm font-bold text-rose-600 dark:text-rose-400">
                               +{day.lateMinutes} {t.attendance.minuteSymbol}

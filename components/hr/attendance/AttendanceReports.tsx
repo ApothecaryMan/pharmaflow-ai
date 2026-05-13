@@ -27,10 +27,12 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
     handleDateChange,
     showStats,
     setShowStats,
+    showOnlyPresent,
+    setShowOnlyPresent,
   } = useAttendanceReports({ onViewChange });
 
   const renderStats = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <SmallCard
         title={t.attendance.present}
         value={report?.presentCount || 0}
@@ -65,18 +67,20 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
   );
 
   return (
-    <div className={`h-full flex flex-col gap-4 animate-fade-in pb-10 overflow-y-auto ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className={`h-full flex flex-col gap-4 pb-10 overflow-y-auto ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       <PageHeader
         title={t.attendance.attendanceReports}
         mb="mb-0"
         leftContent={
-          <div className="max-w-md w-full">
-            <SearchInput
-              placeholder={t.attendance.searchEmployee}
-              value={searchQuery}
-              onSearchChange={setSearchQuery}
-              onClear={() => setSearchQuery('')}
-            />
+          <div className="flex items-center gap-3 w-full max-w-lg">
+            <div className="flex-1">
+              <SearchInput
+                placeholder={t.attendance.searchEmployee}
+                value={searchQuery}
+                onSearchChange={setSearchQuery}
+                onClear={() => setSearchQuery('')}
+              />
+            </div>
           </div>
         }
         rightContent={
@@ -97,10 +101,24 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                 pm: t.common.pm
               }}
             />
+            <button
+              onClick={() => setShowOnlyPresent(!showOnlyPresent)}
+              className={`p-2.5 rounded-xl flex items-center justify-center border ${
+                showOnlyPresent 
+                  ? 'bg-zinc-900 dark:bg-zinc-100 border-zinc-900 dark:border-zinc-100 text-white dark:text-zinc-900 shadow-sm' 
+                  : 'bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300'
+              }`}
+              title={showOnlyPresent ? t.global.table.showAll : t.attendance.showPresentOnly}
+            >
+              <span className="material-symbols-rounded text-xl">
+                {showOnlyPresent ? 'person_check' : 'group'}
+              </span>
+            </button>
             <DataPortButton
               language={isRTL ? 'AR' : 'EN'}
               data={filteredEmployees}
-               filename={`attendance-report-${targetDate.replace(/:/g, '-')}`}
+              filename={`attendance-report-${targetDate.replace(/:/g, '-')}`}
+              iconOnly={true}
               columns={columns.map(c => ({
                 key: c.key as any,
                 header: c.label,
@@ -114,9 +132,22 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                 }
               }))}
             />
+            <button
+              onClick={() => setShowStats(!showStats)}
+              className={`flex items-center justify-center w-10 h-10 rounded-xl cursor-pointer ${
+                showStats 
+                  ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm' 
+                  : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+              }`}
+              title={showStats ? t.global.actions.hideStats : t.global.actions.showStats}
+            >
+              <span className={`material-symbols-rounded ${showStats ? 'rotate-180' : ''}`}>
+                expand_more
+              </span>
+            </button>
           </div>
         }
-        showStatsToggle={true}
+        showStatsToggle={false}
         showBottom={showStats}
         onToggleBottom={() => setShowStats(!showStats)}
         bottomContent={renderStats()}
@@ -147,27 +178,27 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                 <thead>
                   <tr className="text-[11px] font-black tracking-widest text-(--text-tertiary) uppercase">
                     {columns.map(col => (
-                      <th key={col.id} className="pb-2 px-4" style={{ width: col.width }}>{col.label}</th>
+                      <th key={col.id} className="pb-2 px-4 text-center" style={{ width: col.width }}>{col.label}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filteredEmployees.map((emp) => (
-                    <tr key={emp.employeeId} className="bg-gray-100 dark:bg-(--bg-input) transition-colors group">
-                      <td className="py-3 px-4 rounded-l-2xl rtl:rounded-l-none rtl:rounded-r-2xl">
+                    <tr key={emp.employeeId} className="bg-gray-100 dark:bg-(--bg-input) group">
+                      <td className="py-3 px-4 rounded-l-2xl rtl:rounded-l-none rtl:rounded-r-2xl text-center">
                         <span className="text-sm text-gray-500 font-mono font-bold">{emp.employeeCode}</span>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 text-center">
                         <span 
-                          className="font-bold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 hover:underline cursor-pointer transition-colors"
+                          className="font-bold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 hover:underline cursor-pointer"
                           onClick={() => onViewChange?.('employee-attendance-profile', { employeeId: emp.employeeId })}
                         >
                           {emp.employeeName}
                         </span>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 text-center">
                         {emp.firstIn ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center justify-center gap-2">
                             <span className="material-symbols-rounded text-emerald-500" style={{ fontSize: 'var(--icon-sm)' }}>login</span>
                             <span className="text-sm font-medium tabular-nums">
                               {new Date(emp.firstIn).toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
@@ -177,16 +208,16 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                           <span className="text-gray-400">-</span>
                         )}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 text-center">
                         {emp.lastOut ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center justify-center gap-2">
                             <span className="material-symbols-rounded text-rose-500" style={{ fontSize: 'var(--icon-sm)' }}>logout</span>
                             <span className="text-sm font-medium tabular-nums">
                               {new Date(emp.lastOut).toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
                         ) : emp.isOngoing ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center justify-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                             <span className="text-xs text-emerald-600 font-medium">{t.attendance.ongoing}</span>
                           </div>
@@ -194,14 +225,14 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                           <span className="text-gray-400">-</span>
                         )}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 text-center">
                         <span className="text-sm font-bold tabular-nums text-gray-700 dark:text-gray-300">
                           {formatDuration(emp.totalMinutes, language)}
                         </span>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 text-center">
                         {emp.firstIn ? (
-                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${
+                          <span className={`inline-flex items-center justify-center gap-1.5 px-2 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${
                             emp.isLate 
                               ? 'border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-400' 
                               : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400'
@@ -217,7 +248,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
                           </span>
                         )}
                       </td>
-                      <td className="py-3 px-4 rounded-r-2xl rtl:rounded-r-none rtl:rounded-l-2xl">
+                      <td className="py-3 px-4 rounded-r-2xl rtl:rounded-r-none rtl:rounded-l-2xl text-center">
                         {emp.lateMinutes > 0 && (
                           <span className="text-xs font-bold text-rose-600 tabular-nums">
                             +{formatDuration(emp.lateMinutes, language)}
