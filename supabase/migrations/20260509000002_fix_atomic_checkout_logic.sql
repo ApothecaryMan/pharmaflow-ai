@@ -10,8 +10,7 @@ AS $$
 DECLARE
     v_branch_id UUID := (p_payload->>'branchId')::UUID;
     v_org_id UUID := (p_payload->>'orgId')::UUID;
-    v_performer_auth_id UUID := (p_payload->>'performerId')::UUID;
-    v_performer_id UUID;
+    v_performer_id UUID := (p_payload->>'performerId')::UUID;
     v_shift_id UUID;
     v_sale_id UUID;
     v_item JSONB;
@@ -28,10 +27,9 @@ DECLARE
     v_subtotal DECIMAL := (p_payload->>'subtotal')::DECIMAL;
     v_global_discount DECIMAL := (p_payload->>'globalDiscount')::DECIMAL;
 BEGIN
-    -- 0. Resolve Employee ID from Auth ID
-    SELECT id INTO v_performer_id FROM public.employees WHERE auth_user_id = v_performer_auth_id;
-    IF v_performer_id IS NULL THEN
-        RETURN jsonb_build_object('success', false, 'error', 'Employee record not found for auth user ' || v_performer_auth_id);
+    -- 0. Verify Employee ID
+    IF NOT EXISTS (SELECT 1 FROM public.employees WHERE id = v_performer_id) THEN
+        RETURN jsonb_build_object('success', false, 'error', 'Employee record not found: ' || v_performer_id);
     END IF;
 
     -- 1. Disable sync_drug_stock trigger for this transaction to prevent double-counting

@@ -13,8 +13,7 @@ DECLARE
     v_branch_id UUID := (p_payload->>'branchId')::UUID;
     v_org_id UUID := (p_payload->>'orgId')::UUID;
     v_sale_id UUID := (p_payload->>'saleId')::UUID;
-    v_performer_auth_id UUID := (p_payload->>'performerId')::UUID;
-    v_performer_id UUID;
+    v_performer_id UUID := (p_payload->>'performerId')::UUID;
     v_shift_id UUID;
     v_item JSONB;
     v_total_refund DECIMAL := (p_payload->>'totalRefund')::DECIMAL;
@@ -24,9 +23,8 @@ DECLARE
     v_return_serial TEXT;
     v_payment_method TEXT;
 BEGIN
-    -- Resolve Performer
-    SELECT id INTO v_performer_id FROM public.employees WHERE auth_user_id = v_performer_auth_id;
-    IF v_performer_id IS NULL THEN
+    -- Verify Performer
+    IF NOT EXISTS (SELECT 1 FROM public.employees WHERE id = v_performer_id) THEN
         RETURN jsonb_build_object('success', false, 'error', 'Employee not found');
     END IF;
 
@@ -140,8 +138,7 @@ AS $$
 DECLARE
     v_sale_id UUID := (p_payload->>'saleId')::UUID;
     v_branch_id UUID := (p_payload->>'branchId')::UUID;
-    v_performer_auth_id UUID := (p_payload->>'performerId')::UUID;
-    v_performer_id UUID;
+    v_performer_id UUID := (p_payload->>'performerId')::UUID;
     v_shift_id UUID;
     v_item RECORD;
     v_batch_record RECORD;
@@ -149,7 +146,9 @@ DECLARE
     v_payment_method TEXT;
     v_sale_serial TEXT;
 BEGIN
-    SELECT id INTO v_performer_id FROM public.employees WHERE auth_user_id = v_performer_auth_id;
+    IF NOT EXISTS (SELECT 1 FROM public.employees WHERE id = v_performer_id) THEN
+        RETURN jsonb_build_object('success', false, 'error', 'Employee not found');
+    END IF;
     SELECT id INTO v_shift_id FROM shifts WHERE branch_id = v_branch_id AND status = 'open' LIMIT 1;
     
     SELECT total, payment_method, serial_id INTO v_sale_total, v_payment_method, v_sale_serial

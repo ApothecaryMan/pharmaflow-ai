@@ -77,8 +77,7 @@ AS $$
 DECLARE
     v_branch_id UUID := (p_payload->>'branchId')::UUID;
     v_org_id UUID := (p_payload->>'orgId')::UUID;
-    v_performer_auth_id UUID := (p_payload->>'performerId')::UUID;
-    v_performer_id UUID;
+    v_performer_id UUID := (p_payload->>'performerId')::UUID;
     v_shift_id UUID;
     v_sale_id UUID;
     v_item JSONB;
@@ -94,9 +93,8 @@ DECLARE
     v_global_discount DECIMAL := (p_payload->>'globalDiscount')::DECIMAL;
     v_is_walk_in BOOLEAN := (p_payload->>'saleType' = 'walk-in' OR COALESCE((p_payload->>'isWalkIn')::BOOLEAN, false));
 BEGIN
-    -- Resolve performer
-    SELECT id INTO v_performer_id FROM public.employees WHERE auth_user_id = v_performer_auth_id;
-    IF v_performer_id IS NULL THEN
+    -- Verify performer exists
+    IF NOT EXISTS (SELECT 1 FROM public.employees WHERE id = v_performer_id) THEN
         RETURN jsonb_build_object('success', false, 'error', 'Employee record not found');
     END IF;
 

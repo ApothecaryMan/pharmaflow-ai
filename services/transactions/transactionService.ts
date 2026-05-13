@@ -61,6 +61,7 @@ export const transactionService = {
         orgId: context.orgId,
         shiftId: context.shiftId,
         timestamp: context.timestamp,
+        performerId: context.performerId,
         performerName: context.performerName,
         branchCode: (await settingsService.getAll()).branchCode || 'PF',
         
