@@ -66,17 +66,42 @@ Create a prioritized plan:
 - **Priority 🟡 (Medium)**: UX improvements, UI glitches.
 - **Priority 🟢 (Low)**: Refactoring, code cleanup.
 
-## 📝 Output Format (MANDATORY ARTIFACT)
+## 📝 Output Format (MANDATORY EXPERT ARTIFACT)
 
-**Every analysis MUST be written to a dedicated markdown artifact** in the `artifacts/` or `scratch/` directory. You are NOT allowed to present the analysis solely as a chat message.
+**Every analysis MUST be written to a dedicated markdown artifact**. This is a non-negotiable professional requirement.
 
-The artifact (e.g., `problem_analysis.md`) must contain:
-1. **🔍 Analysis Summary**: A high-level overview.
-2. **📍 Architecture Map**: Tree of involved files.
-3. **🔴 Flow Analysis**: Mermaid sequence diagram of the current or proposed flow.
-4. **🧪 Edge Case Table**: Detailed scenarios and their impact (10 EC Rule).
-5. **📋 Fix Plan**: Step-by-step prioritized tasks.
+The artifact (e.g., `expert_architectural_analysis.md`) must include:
+
+### 1. 🔍 Executive Summary
+- High-level technical overview.
+- Business impact and urgency assessment.
+
+### 2. 📍 Structural Blueprint
+- **Architecture Map**: Dependency tree of all involved entities.
+- **Data Schema (Mermaid ER)**: Visualization of table relationships and constraints.
+
+### 3. 🔄 Behavioral Analysis (The Multi-View Suite)
+You MUST include at least **two** of the following diagrams to provide multi-perspective clarity:
+- **Sequence Diagram**: For async flows and race conditions.
+- **State Machine**: For complex lifecycle transitions.
+- **Flowchart**: For decision logic and conditional paths.
+
+### 4. 🛡️ Expert Analysis Suite
+- **Security Audit**: Potential vulnerabilities (SQLi, RLS bypass, Auth leaks).
+- **Performance Profile**: Complexity analysis (O-notation) and DB query efficiency.
+- **Scalability Check**: How the solution behaves with 10x more data or concurrent users.
+
+### 5. 🧪 Edge Case Matrix (The "Expert 10" Rule)
+A detailed table identifying at least 10 scenarios, including:
+- **Concurrency**: What happens if two identical actions happen at the exact same ms?
+- **Failure Modes**: Partial DB writes, network timeout mid-request.
+- **State Corruption**: Stale UI state or cache inconsistencies.
+
+### 6. 📋 Implementation Roadmap
+- **Priority 🔴 (Critical)**: Security, Data Integrity, Core Logic.
+- **Priority 🟡 (Enhanced)**: UX, Performance, Error Handling.
+- **Priority 🟢 (Polish)**: Refactoring, Logging, Documentation.
 
 ---
 
-**CRITICAL RULE**: Do NOT start editing files until the user reviews the **generated artifact** and gives the "Go Ahead".
+**CRITICAL RULE**: Do NOT start editing files until the user reviews the **comprehensive expert artifact** and gives the "Go Ahead".
