@@ -66,15 +66,17 @@ Create a prioritized plan:
 - **Priority 🟡 (Medium)**: UX improvements, UI glitches.
 - **Priority 🟢 (Low)**: Refactoring, code cleanup.
 
-## 📝 Output Format (The "Analysis Artifact")
+## 📝 Output Format (MANDATORY ARTIFACT)
 
-Always output the analysis into a dedicated markdown artifact (e.g., `problem_analysis.md`) containing:
+**Every analysis MUST be written to a dedicated markdown artifact** in the `artifacts/` or `scratch/` directory. You are NOT allowed to present the analysis solely as a chat message.
+
+The artifact (e.g., `problem_analysis.md`) must contain:
 1. **🔍 Analysis Summary**: A high-level overview.
 2. **📍 Architecture Map**: Tree of involved files.
-3. **🔴 Broken Flow**: Mermaid sequence diagram of the current state.
-4. **🧪 Edge Case Table**: Detailed scenarios and their impact.
+3. **🔴 Flow Analysis**: Mermaid sequence diagram of the current or proposed flow.
+4. **🧪 Edge Case Table**: Detailed scenarios and their impact (10 EC Rule).
 5. **📋 Fix Plan**: Step-by-step prioritized tasks.
 
 ---
 
-**CRITICAL RULE**: Do NOT start editing files until the user reviews this analysis and gives the "Go Ahead".
+**CRITICAL RULE**: Do NOT start editing files until the user reviews the **generated artifact** and gives the "Go Ahead".
