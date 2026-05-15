@@ -9,10 +9,12 @@ Use this skill when you encounter a complex bug, a race condition, or a requirem
 
 ## 📋 Analysis Workflow
 
-### 1. Context Gathering
+### 1. Context Gathering & Live Inspection
+- **MANDATORY**: Use `mcp_supabase_list_tables` and `mcp_supabase_execute_sql` (READ-ONLY) to inspect the current database state.
+- **NEVER** trust migration files as the absolute ground truth; they may contain errors or be out of sync with the live production schema.
 - Identify all affected components, hooks, services, and database tables.
 - Read the relevant code sections completely (don't assume based on snippets).
-- Look for error logs, stack traces, and user descriptions.
+- Look for error logs via `mcp_supabase_get_logs` and stack traces.
 
 ### 2. Architectural Mapping
 Create a tree or list of the involved entities to understand the data flow.
