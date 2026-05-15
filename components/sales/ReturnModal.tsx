@@ -287,11 +287,12 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
 
         // Resolve the true drug ID (item.id might be a batch ID in some sales)
         const drug = inventory.find(d => d.id === item.id || d.batches?.some(b => b.id === item.id));
-        const actualDrugId = (item as any).drugId || drug?.id || item.id;
 
+        const actualDrugId = (item as any).drugId || drug?.id || item.id;
+        
         returnItems.push({
           drugId: actualDrugId,
-          saleItemId: (item as any).saleItemId || item.id,
+          saleItemId: (item as any).saleItemId || null,
           name: item.name,
           quantityReturned: quantity,
           isUnit: item.isUnit || false,
@@ -300,6 +301,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           reason: returnReason,
           condition: 'sellable',
           dosageForm: item.dosageForm,
+          expiryDate: item.expiryDate,
         });
       }
     });

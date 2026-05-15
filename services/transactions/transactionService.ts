@@ -229,8 +229,10 @@ export const transactionService = {
         totalRefund: returnData.totalRefund,
         items: returnData.items.map(item => ({
           drugId: item.drugId,
+          saleItemId: item.saleItemId,
           name: item.name,
           quantity: item.quantityReturned,
+          isUnit: !!item.isUnit,
           publicPrice: item.publicPrice,
           refundAmount: item.refundAmount,
           condition: item.condition
