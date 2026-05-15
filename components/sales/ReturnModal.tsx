@@ -483,16 +483,14 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                           <div className='flex flex-col items-end leading-tight'>
                             <p className='font-bold text-gray-900 dark:text-gray-100 text-base'>
                               {(() => {
-                                // IMPORTANT: Use normalized publicPrice. 
-                                // Only divide if it's a unit return and publicPrice is still a pack price.
-                                const price = item.isUnit ? (item.publicPrice / (item.unitsPerPack || 1)) : item.publicPrice;
+                                const price = item.isUnit ? money.divide(item.publicPrice, item.unitsPerPack || 1) : item.publicPrice;
                                 const discounted = pricing.afterDiscount(price, item.discount || 0);
                                 return formatCurrency(discounted);
                               })()}
                             </p>
                             {item.discount > 0 && (
                               <p className='text-[10px] text-gray-400 line-through opacity-60'>
-                                {formatCurrency(item.isUnit ? (item.publicPrice / (item.unitsPerPack || 1)) : item.publicPrice)}
+                                {formatCurrency(item.isUnit ? money.divide(item.publicPrice, item.unitsPerPack || 1) : item.publicPrice)}
                               </p>
                             )}
                           </div>
@@ -725,15 +723,15 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                           <div className='flex flex-col items-end leading-tight'>
                             <p className='font-bold text-gray-900 dark:text-gray-100 text-base'>
                               {(() => {
-                                const basePrice = item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
-                                const discounted = money.multiply(basePrice, (1 - (item.discount || 0) / 100), 2);
+                                const basePrice = item.isUnit && item.unitsPerPack ? money.divide(item.publicPrice, item.unitsPerPack) : item.publicPrice;
+                                const discounted = pricing.afterDiscount(basePrice, item.discount || 0);
                                 return formatCurrency(discounted);
                               })()}
                             </p>
                             {item.discount > 0 && (
                               <p className='text-[10px] text-gray-400 line-through opacity-60'>
                                 {formatCurrency(item.isUnit && item.unitsPerPack
-                                  ? item.publicPrice / item.unitsPerPack
+                                  ? money.divide(item.publicPrice, item.unitsPerPack)
                                   : item.publicPrice)}
                               </p>
                             )}

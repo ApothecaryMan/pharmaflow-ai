@@ -326,17 +326,26 @@ BEGIN
     LOOP
         SELECT jsonb_agg(
             item || jsonb_build_object(
-                'name', COALESCE(item->>'name', si.name, 'Unknown Drug'),
-                'dosageForm', COALESCE(item->>'dosageForm', d.dosage_form)
+                'name', COALESCE(item->>'name', si.name, d.name, 'Unknown Drug'),
+                'dosageForm', COALESCE(item->>'dosageForm', item->>'dosage_form', d.dosage_form)
             )
         )
         INTO v_updated_items
         FROM jsonb_array_elements(v_sale_record.items) item
-        LEFT JOIN sale_items si ON si.sale_id = v_sale_record.id AND si.drug_id = (item->>'id')::UUID
-        LEFT JOIN drugs d ON d.id = (item->>'id')::UUID;
+        LEFT JOIN sale_items si ON si.sale_id = v_sale_record.id AND (
+            si.drug_id = (item->>'id')::UUID OR 
+            si.drug_id = (item->>'drugId')::UUID OR
+            EXISTS (SELECT 1 FROM stock_batches b WHERE b.id = (item->>'id')::UUID AND b.drug_id = si.drug_id)
+        )
+        LEFT JOIN drugs d ON (
+            d.id = (item->>'id')::UUID OR 
+            d.id = (item->>'drugId')::UUID OR
+            EXISTS (SELECT 1 FROM stock_batches b WHERE b.id = (item->>'id')::UUID AND b.drug_id = d.id)
+        );
 
         IF v_updated_items IS NOT NULL AND v_updated_items <> v_sale_record.items THEN
             UPDATE sales SET items = v_updated_items WHERE id = v_sale_record.id;
         END IF;
     END LOOP;
 END $$;
+

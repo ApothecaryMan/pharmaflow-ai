@@ -93,7 +93,13 @@ export const pricingService = {
 
     // 1. Calculate the weights for all items in the original sale
     const itemWeights = sale.items.map((item: any) => {
-      const itemTotal = money.multiply(item.publicPrice, item.quantity, 0);
+      // Use Unit-First logic to get the correct line total
+      const totalUnits = (item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1));
+      const unitPrice = (item.unitsPerPack && item.unitsPerPack > 1) 
+        ? money.divide(item.publicPrice, item.unitsPerPack) 
+        : item.publicPrice;
+      
+      const itemTotal = money.multiply(unitPrice, totalUnits, 0);
       return money.toSmallestUnit(itemTotal);
     });
 
@@ -103,7 +109,7 @@ export const pricingService = {
     // 3. Sum up the allocated shares for the selected items and their quantities
     let totalRefund = 0;
     sale.items.forEach((item: any, index: number) => {
-      const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
+      const lineKey = item.isUnit ? `${item.drugId ?? item.id}_unit` : `${item.drugId ?? item.id}_pack`;
       if (selectedItems.has(lineKey)) {
         const returnedQty = selectedItems.get(lineKey) || 0;
         // Share per single unit/pack in this line
@@ -117,6 +123,7 @@ export const pricingService = {
 
     return totalRefund;
   },
+
 
   /**
    * Calculates the maximum allowed discount for an item based on its profit margin.
