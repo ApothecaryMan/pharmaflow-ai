@@ -58,7 +58,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
     closeModal,
   } = useCashRegister({
     t,
-    language,
+    language: language as Language,
     employees,
     currentEmployeeId,
   });
@@ -175,7 +175,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
               {isPositive ? '+' : '-'}
               {(() => {
                 const { amount, symbol } = formatCurrencyParts(
-                  amountVal,
+                  Math.abs(amountVal),
                   'EGP',
                   language === 'AR' ? 'ar-EG' : 'en-US'
                 );
