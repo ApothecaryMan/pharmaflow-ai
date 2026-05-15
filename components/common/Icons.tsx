@@ -49,6 +49,16 @@ const InternalRegistry: Record<string, any> = {
   Print: Myna.Printer,
   Store: Myna.BuildingOne,
   Edit: Myna.Pencil,
+  description: Myna.FileText,
+  prescriptions: Myna.FileText,
+  payments: Myna.Dollar,
+  finance: Myna.DollarCircle,
+  verified: Myna.ShieldCheck,
+  compliance: Myna.ShieldCheck,
+  settings: Myna.CogFour,
+  science: Myna.FlaskConical,
+  test: Myna.FlaskConical,
+  hr: Myna.User,
 };
 
 /**
@@ -93,6 +103,10 @@ export const Search = createIcon('Search');
 export const Print = createIcon('Print');
 export const Edit = createIcon('Edit');
 export const Store = createIcon('Store');
+export const Prescriptions = createIcon('prescriptions');
+export const Finance = createIcon('finance');
+export const Compliance = createIcon('compliance');
+export const Test = createIcon('test');
 
 // Dynamic lookup helper
 export const getIconByName = (name: string): React.FC<any> => {
