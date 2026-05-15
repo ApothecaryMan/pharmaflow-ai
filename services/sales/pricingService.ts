@@ -88,7 +88,7 @@ export const pricingService = {
    * Calculates the precise refund amount for selected items using the allocate algorithm.
    * This ensures that partial returns always sum up to the original net total.
    */
-  calculateRefundAmount: (sale: any, selectedItems: Map<string, number>): number => {
+  calculateRefundAmount: (sale: any, selectedItems: Map<string, number>, inventoryMap?: Map<string, any>): number => {
     if (selectedItems.size === 0) return 0;
 
     // 1. Calculate the weights for all items in the original sale
@@ -109,7 +109,13 @@ export const pricingService = {
     // 3. Sum up the allocated shares for the selected items and their quantities
     let totalRefund = 0;
     sale.items.forEach((item: any, index: number) => {
-      const lineKey = item.isUnit ? `${item.drugId ?? item.id}_unit` : `${item.drugId ?? item.id}_pack`;
+      // Improved drugId resolution using the optimized Map
+      const rawId = item.drugId ?? item.drug_id ?? item.id;
+      const drug = inventoryMap?.get(rawId);
+      const drugId = item.drugId ?? item.drug_id ?? drug?.id ?? item.id;
+
+      const lineKey = item.isUnit ? `${drugId}_unit` : `${drugId}_pack`;
+      
       if (selectedItems.has(lineKey)) {
         const returnedQty = selectedItems.get(lineKey) || 0;
         // Share per single unit/pack in this line

@@ -49,6 +49,15 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   const { getVerifiedDate } = useStatusBar();
   const { activeBranchId, inventory } = useData();
 
+  const inventoryMap = useMemo(() => {
+    const map = new Map();
+    inventory.forEach(d => {
+      map.set(d.id, d);
+      d.batches?.forEach((b: any) => map.set(b.id, d));
+    });
+    return map;
+  }, [inventory]);
+
   const [step, setStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Map<string, number>>(new Map());
@@ -62,8 +71,9 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   const availableItems = useMemo(() => {
     return sale.items
       .map((item: any) => {
-        const drugId = item.drugId ?? item.drug_id ?? item.id;
-        const drug = inventory.find(d => d.id === drugId);
+        const rawId = item.drugId ?? item.drug_id ?? item.id;
+        const drug = inventoryMap.get(rawId);
+        const drugId = item.drugId ?? item.drug_id ?? drug?.id ?? item.id;
         
         // Normalize essential fields
         const isUnit = item.isUnit ?? item.is_unit ?? false;
@@ -89,7 +99,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         } as any;
       })
       .filter((item) => item.availableQty > 0);
-  }, [sale, inventory]);
+  }, [sale, inventory, inventoryMap]);
 
   const reasonOptions = [
     { id: 'customer_request', label: t.returns.reasons.customer_request, icon: 'person' },
@@ -156,8 +166,8 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
     availableItems.length > 0 && availableItems.every((item) => selectedItems.has(item.lineKey));
 
   const calculateRefund = useMemo(() => {
-    return pricingService.calculateRefundAmount(sale, selectedItems);
-  }, [selectedItems, sale]);
+    return pricingService.calculateRefundAmount(sale, selectedItems, inventoryMap);
+  }, [selectedItems, sale, inventoryMap]);
 
   const handleConfirm = async () => {
     if (isProcessing) return;
@@ -273,35 +283,27 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
       console.error('Failed to validate shift:', e);
     }
 
-    const itemWeights = sale.items.map((item: any) => money.toSmallestUnit(money.multiply(item.publicPrice, item.quantity, 0)));
-    const allocatedAmounts = money.allocate(sale.netTotal, itemWeights);
-
     const returnItems: ReturnItem[] = [];
-    sale.items.forEach((item, index) => {
-      const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
+    sale.items.forEach((item) => {
+      const rawId = item.drugId ?? item.drug_id ?? item.id;
+      const drug = inventoryMap.get(rawId);
+      const drugId = item.drugId ?? item.drug_id ?? drug?.id ?? item.id;
+      
+      const lineKey = item.isUnit ? `${drugId}_unit` : `${drugId}_pack`;
       if (selectedItems.has(lineKey)) {
         const quantity = selectedItems.get(lineKey) || 0;
-        const totalLineAllocation = allocatedAmounts[index];
-        const sharePerIndividualItem = money.divide(totalLineAllocation, item.quantity);
-        const refundAmount = money.multiply(sharePerIndividualItem, quantity, 0);
-
-        // Resolve the true drug ID (item.id might be a batch ID in some sales)
-        const drug = inventory.find(d => d.id === item.id || d.batches?.some(b => b.id === item.id));
-
-        const actualDrugId = (item as any).drugId || drug?.id || item.id;
         
         returnItems.push({
-          drugId: actualDrugId,
+          drugId: drugId,
           saleItemId: (item as any).saleItemId || null,
           name: item.name,
           quantityReturned: quantity,
           isUnit: item.isUnit || false,
-          publicPrice: sharePerIndividualItem,
-          refundAmount: refundAmount,
           reason: returnReason,
           condition: 'sellable',
-          dosageForm: item.dosageForm,
-          expiryDate: item.expiryDate,
+          // Financials are now calculated server-side, passing 0 as placeholder
+          publicPrice: 0, 
+          refundAmount: 0,
         });
       }
     });
@@ -546,8 +548,8 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                             <div
                               className={`w-8 h-8 rounded-full flex items-center justify-center transition-all border-2 ${
                                 isSelected
-                                  ? `bg-primary-600 border-primary-600 text-white`
-                                  : 'border-gray-200 dark:border-gray-700 text-transparent'
+                                  ? `bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-500/20`
+                                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-transparent'
                               }`}
                             >
                               <span

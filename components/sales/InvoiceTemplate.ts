@@ -336,11 +336,11 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
                     const suffix = parts.length > 1 ? parts[1] : null;
                     
                     const item = sale.items.find((it) => {
-                      if (it.id !== drugId) return false;
+                      const itDrugId = (it as any).drugId ?? (it as any).drug_id ?? it.id;
+                      if (itDrugId !== drugId) return false;
                       if (!suffix) return true;
                       if (suffix === 'unit') return !!it.isUnit;
                       if (suffix === 'pack') return !it.isUnit;
-                      // Fallback for old index-based keys if they exist
                       return true; 
                     });
                     if (!item) return '';

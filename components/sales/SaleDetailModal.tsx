@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { Sale, Return, Shift } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatCurrency } from '../../utils/currency';
@@ -158,6 +158,15 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
   const [returnModalOpen, setReturnModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'items' | 'history'>('items');
 
+  const inventoryMap = useMemo(() => {
+    const map = new Map();
+    inventory.forEach(d => {
+      map.set(d.id, d);
+      d.batches?.forEach((b: any) => map.set(b.id, d));
+    });
+    return map;
+  }, [inventory]);
+
   if (!sale) return null;
 
   const bdr = 'border-gray-100 dark:border-white/5';
@@ -178,188 +187,168 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
         ] : undefined} 
         activeTab={activeTab} onTabChange={setActiveTab}
       >
-        <div className='space-y-4'>
-          <ListWrapper>
-            {[
-              { label: t.modal.date, icon: 'calendar_today', value: (() => {
-                  const d = new Date(sale.date);
-                  let timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true, numberingSystem: 'latn' });
-                  if (language === 'AR') timeStr = timeStr.replace('AM', 'ص').replace('PM', 'م');
-                  return (
-                    <div className='flex items-center gap-1.5'>
-                      <span>{d.toLocaleDateString('en-US')}</span>
-                      <span className='opacity-30'>•</span>
-                      <span>{timeStr}</span>
-                    </div>
-                  );
-                })()
-              },
-              { label: t.modal.id, icon: 'tag', value: (
-                  <div className='flex items-center gap-2'>
-                    {sale.status && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-lg border font-bold uppercase tracking-wider ${
-                        sale.status === 'completed' ? 'border-emerald-500/50 text-emerald-500 bg-emerald-500/5' :
-                        'border-primary-500/50 text-primary-500 bg-primary-500/5'
-                      }`}>
-                        {(language === 'AR' ? { 'completed': 'مكتمل', 'cancelled': 'ملغي' }[sale.status] : sale.status.toUpperCase()) || sale.status}
-                      </span>
-                    )}
-                    <span className='font-mono'>{sale.serialId || sale.id}</span>
-                  </div>
-                )
-              },
-              { label: t.modal.customer, icon: 'person', value: (
-                  <div className='flex items-center gap-1.5 truncate'>
-                    <span className='font-bold'>{sale.customerName || 'Guest'}</span>
-                    {sale.customerCode && <><span className='opacity-30'>•</span><span className='text-xs'>{sale.customerCode}</span></>}
-                  </div>
-                )
-              },
-              { label: t.modal.payment, icon: 'payments', value: sale.paymentMethod === 'visa' ? t.visa : t.cash }
-            ].map((item, i, arr) => (
-              <ListItem key={i} index={i} total={arr.length}>
-                <div className='flex items-center gap-2 shrink-0'><span className='material-symbols-rounded text-base opacity-40'>{item.icon}</span><span className={labelText}>{item.label}</span></div>
-                <div className='text-[12px] font-bold text-right pl-2'>{item.value}</div>
-              </ListItem>
-            ))}
-          </ListWrapper>
-
-          <div>
-            {activeTab === 'items' ? (
-              <>
-                <div className='pt-1'>
-                  <p className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2 tracking-widest'>{t.modal.items}</p>
-                  <ListWrapper>
-                    {(() => {
-                      const groups: Record<string, any> = {};
-                      sale.items.forEach((item: any, idx) => {
-                        const drugId = item.drugId ?? item.drug_id ?? item.id;
-                        const drug = inventory.find(d => d.id === drugId);
-                        
-                        const dosageForm = item.dosageForm ?? item.dosage_form ?? drug?.dosageForm;
-                        const unitsPerPack = item.unitsPerPack ?? item.units_per_pack ?? drug?.unitsPerPack ?? 1;
-                        const publicPrice = item.publicPrice ?? item.public_price ?? 0;
-                        const itemDiscount = item.discount ?? item.discount_percentage ?? 0;
-
-                        const g: any = groups[drugId] ||= { 
-                          id: drugId, 
-                          name: item.name, 
-                          dosageForm: dosageForm, 
-                          packQty: 0, 
-                          unitQty: 0, 
-                          totalPrice: 0, 
-                          preDiscountTotal: 0, 
-                          returnedQty: 0, 
-                          unitsPerPack: unitsPerPack, 
-                          itemBasePrice: publicPrice,
-                          itemDiscount: itemDiscount,
-                          expiries: new Set<string>()
-                        };
-                        
-                        const isUnit = !!item.isUnit;
-                        const lineKey = `${item.id}_${isUnit ? 'unit' : 'pack'}`;
-                        const ret = sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
-                        
-                        if (isUnit) g.unitQty += item.quantity; else g.packQty += item.quantity;
-                        const realQty = item.quantity - ret;
-                        const price = isUnit ? (publicPrice / (unitsPerPack || 1)) : publicPrice;
-                        
-                        const lineTotal = money.multiply(price, realQty, 0);
-                        const discountedTotal = pricing.afterDiscount(lineTotal, itemDiscount);
-                        
-                        g.totalPrice = money.add(g.totalPrice, discountedTotal);
-                        g.preDiscountTotal = money.add(g.preDiscountTotal, lineTotal);
-                        g.returnedQty += ret;
-
-                        // Add expiry date from batch allocations, item fallback, or inventory
-                        const expiry = item.batchAllocations?.[0]?.expiryDate || item.expiryDate || item.expiry_date || drug?.expiryDate;
-                        if (expiry) {
-                          const d = new Date(expiry);
-                          const month = (d.getMonth() + 1).toString().padStart(2, '0');
-                          const year = d.getFullYear().toString().slice(-2);
-                          g.expiries.add(`${month}/${year}`);
-                        }
-                      });
-
-                      const groupList = Object.values(groups);
-                      return groupList.map((g: any, i) => {
-                        const hasRet = g.returnedQty > 0;
-                        const isFullRet = g.returnedQty >= (g.packQty + g.unitQty);
-                        const hasDisc = g.preDiscountTotal > g.totalPrice + 0.01;
-                        const disc = hasDisc ? Math.round(((g.preDiscountTotal - g.totalPrice) / g.preDiscountTotal) * 100) : 0;
-                        const expiryList = Array.from(g.expiries as Set<string>);
-
-                        return (
-                          <ListItem key={g.id} index={i} total={groupList.length} className={hasRet ? '!bg-orange-50/30 !border-orange-500/20' : ''}>
-                            <div className='flex justify-between items-center w-full min-w-0' dir='ltr'>
-                              <div className='flex items-center gap-2.5 min-w-0 flex-1'>
-                                <SmartQuantityBadge packQty={g.packQty} unitQty={g.unitQty} hasDiscount={hasDisc} avgDiscount={disc} language={language} />
-                                <div className='text-left min-w-0 flex-1 py-0.5'>
-                                  <p className='font-bold truncate text-[13px]'>{getDisplayName({ name: g.name, dosageForm: g.dosageForm }, textTransform)}</p>
-                                  <div className='text-[10px] text-gray-400 flex items-center flex-wrap gap-1.5 mt-0.5'>
-                                    {!permissionsService.can('sale.view_assigned_only') && (
-                                      <>
-                                        <span>{formatCurrency(g.itemBasePrice)}</span>
-                                        {hasDisc && <span className='px-1 rounded bg-green-500/10 text-green-600 font-black text-[9px]'>-{disc}%</span>}
-                                        {expiryList.length > 0 && <span className='opacity-30 self-center'>•</span>}
-                                      </>
-                                    )}
-                                    {expiryList.length > 0 && (
-                                      <span className='font-mono font-bold text-gray-400'>
-                                        {expiryList.join(', ')}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className='text-right flex flex-col items-end shrink-0 pl-1'>
-                                {hasRet && (
-                                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1 mb-1 ${isFullRet ? 'bg-red-100/80 text-red-600' : 'bg-orange-100/80 text-orange-600'}`}>
-                                    <span className='material-symbols-rounded text-[13px]'>{isFullRet ? 'assignment_return' : 'replay'}</span>
-                                    {isFullRet ? (language === 'AR' ? 'مرتجع كلي' : 'FULL RETURN') : (language === 'AR' ? `مرتجع (${g.returnedQty})` : `RET (${g.returnedQty})`)}
-                                  </span>
-                                )}
-                                {!isFullRet && (
-                                  <div className='flex flex-col items-end leading-tight'>
-                                    <span className='font-bold'>{formatCurrency(g.totalPrice)}</span>
-                                    {hasDisc && <span className='text-[9px] text-gray-400 line-through opacity-60'>{formatCurrency(g.preDiscountTotal)}</span>}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </ListItem>
-                        );
-                      });
-                    })()}
-                  </ListWrapper>
-                </div>
-
-                <div className={`mt-5 pt-5 border-t ${bdr} space-y-3`}>
-                  {sale.subtotal !== undefined && sale.subtotal !== sale.total && !permissionsService.can('sale.view_assigned_only') && (
-                    <div className='flex justify-between items-center text-[13px] text-gray-500 px-1'>
-                      <div className='flex items-center gap-2'><span className='material-symbols-rounded text-base opacity-40'>payments</span><span>{t.modal.subtotal}</span></div>
-                      <span className='font-medium'>{formatCurrency(sale.subtotal)}</span>
-                    </div>
-                  )}
-                  {(() => {
-                    const hasDel = Number(sale.deliveryFee) > 0;
-                    const subAndDel = money.add(sale.subtotal || 0, sale.deliveryFee || 0);
-                    const sav = money.subtract(subAndDel, sale.total);
-                    const hasSav = sav > 0.01;
-                    if (!hasDel && !hasSav) return null;
+        <div className='flex flex-col h-full max-h-[80vh]'>
+          {/* 1. Header Info Section (Fixed) */}
+          <div className='shrink-0 mb-4'>
+            <ListWrapper>
+              {[
+                { label: t.modal.date, icon: 'calendar_today', value: (() => {
+                    const d = new Date(sale.date);
+                    let timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true, numberingSystem: 'latn' });
+                    if (language === 'AR') timeStr = timeStr.replace('AM', 'ص').replace('PM', 'م');
                     return (
-                      <div className='flex items-stretch gap-1'>
-                        {hasDel && <StatCapsule label={t.pos?.deliveryOrder || t.deliveryFee || 'Delivery'} value={`+${formatCurrency(sale.deliveryFee!)}`} icon='delivery_dining' side={hasSav ? 'start' : 'full'} />}
-                        {hasSav && <StatCapsule label={language === 'AR' ? 'إجمالي الخصم' : 'Savings'} value={`-${formatCurrency(sav)}`} icon='savings' variant='success' side={hasDel ? 'end' : 'full'} />}
+                      <div className='flex items-center gap-1.5'>
+                        <span>{d.toLocaleDateString('en-US')}</span>
+                        <span className='opacity-30'>•</span>
+                        <span>{timeStr}</span>
                       </div>
                     );
+                  })()
+                },
+                { label: t.modal.id, icon: 'tag', value: (
+                    <div className='flex items-center gap-2'>
+                      {sale.status && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-lg border font-bold uppercase tracking-wider ${
+                          sale.status === 'completed' ? 'border-emerald-500/50 text-emerald-500 bg-emerald-500/5' :
+                          'border-primary-500/50 text-primary-500 bg-primary-500/5'
+                        }`}>
+                          {(language === 'AR' ? { 'completed': 'مكتمل', 'cancelled': 'ملغي', 'returned': 'مرتجع' }[sale.status] : sale.status.toUpperCase()) || sale.status}
+                        </span>
+                      )}
+                      <span className='font-mono'>{sale.serialId || sale.id}</span>
+                    </div>
+                  )
+                },
+                { label: t.modal.customer, icon: 'person', value: (
+                    <div className='flex items-center gap-1.5 truncate'>
+                      <span className='font-bold'>{sale.customerName || 'Guest'}</span>
+                      {sale.customerCode && <><span className='opacity-30'>•</span><span className='text-xs'>{sale.customerCode}</span></>}
+                    </div>
+                  )
+                },
+                { label: t.modal.payment, icon: 'payments', value: sale.paymentMethod === 'visa' ? t.visa : t.cash }
+              ].map((item, i, arr) => (
+                <ListItem key={i} index={i} total={arr.length}>
+                  <div className='flex items-center gap-2 shrink-0'><span className='material-symbols-rounded text-base opacity-40'>{item.icon}</span><span className={labelText}>{item.label}</span></div>
+                  <div className='text-[12px] font-bold text-right pl-2'>{item.value}</div>
+                </ListItem>
+              ))}
+            </ListWrapper>
+          </div>
+
+          {/* 2. Scrollable Middle Section (Items or History) */}
+          <div className='flex-1 overflow-y-auto min-h-0 custom-scrollbar pr-1'>
+            {activeTab === 'items' ? (
+              <div className='pt-1'>
+                <p className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2 tracking-widest'>{t.modal.items}</p>
+                <ListWrapper>
+                  {(() => {
+                    const groups: Record<string, any> = {};
+                    sale.items.forEach((item: any) => {
+                      const rawId = item.drugId ?? item.drug_id ?? item.id;
+                      const drug = inventoryMap.get(rawId);
+                      const drugId = item.drugId ?? item.drug_id ?? drug?.id ?? item.id;
+                      
+                      const dosageForm = item.dosageForm ?? item.dosage_form ?? drug?.dosageForm;
+                      const unitsPerPack = item.unitsPerPack ?? item.units_per_pack ?? drug?.unitsPerPack ?? 1;
+                      const publicPrice = item.publicPrice ?? item.public_price ?? 0;
+                      const itemDiscount = item.discount ?? item.discount_percentage ?? 0;
+
+                      const g: any = groups[drugId] ||= { 
+                        id: drugId, 
+                        name: item.name, 
+                        dosageForm: dosageForm, 
+                        packQty: 0, 
+                        unitQty: 0, 
+                        totalPrice: 0, 
+                        preDiscountTotal: 0, 
+                        returnedQty: 0, 
+                        unitsPerPack: unitsPerPack, 
+                        itemBasePrice: publicPrice,
+                        itemDiscount: itemDiscount,
+                        expiries: new Set<string>()
+                      };
+                      
+                      const isUnit = !!item.isUnit;
+                      const lineKey = `${drugId}_${isUnit ? 'unit' : 'pack'}`;
+                      const ret = sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[drugId] || 0;
+                      
+                      if (isUnit) g.unitQty += item.quantity; else g.packQty += item.quantity;
+                      const realQty = item.quantity - ret;
+                      const price = isUnit ? (publicPrice / (unitsPerPack || 1)) : publicPrice;
+                      
+                      const lineTotal = money.multiply(price, realQty, 0);
+                      const discountedTotal = pricing.afterDiscount(lineTotal, itemDiscount);
+                      
+                      g.totalPrice = money.add(g.totalPrice, discountedTotal);
+                      g.preDiscountTotal = money.add(g.preDiscountTotal, lineTotal);
+                      g.returnedQty += ret;
+
+                      const expiry = item.batchAllocations?.[0]?.expiryDate || item.expiryDate || item.expiry_date || drug?.expiryDate;
+                      if (expiry) {
+                        const d = new Date(expiry);
+                        const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                        const year = d.getFullYear().toString().slice(-2);
+                        g.expiries.add(`${month}/${year}`);
+                      }
+                    });
+
+                    const groupList = Object.values(groups);
+                    return groupList.map((g: any, i) => {
+                      const hasRet = g.returnedQty > 0;
+                      const isFullRet = g.returnedQty >= (g.packQty + g.unitQty);
+                      const hasDisc = g.preDiscountTotal > g.totalPrice + 0.01;
+                      const disc = hasDisc ? Math.round(((g.preDiscountTotal - g.totalPrice) / g.preDiscountTotal) * 100) : 0;
+                      const expiryList = Array.from(g.expiries as Set<string>);
+
+                      return (
+                        <ListItem 
+                          key={g.id} 
+                          index={i} 
+                          total={groupList.length} 
+                          className={hasRet ? `!bg-rose-50/50 dark:!bg-rose-950/20 !border-rose-200 dark:!border-rose-900/30` : ''}
+                        >
+                          <div className='flex justify-between items-center w-full min-w-0' dir='ltr'>
+                            <div className='flex items-center gap-2.5 min-w-0 flex-1'>
+                              <SmartQuantityBadge packQty={g.packQty} unitQty={g.unitQty} hasDiscount={hasDisc} avgDiscount={disc} language={language} />
+                              <div className='text-left min-w-0 flex-1 py-0.5'>
+                                <p className='font-bold truncate text-[13px]'>{getDisplayName({ name: g.name, dosageForm: g.dosageForm }, textTransform)}</p>
+                                <div className='text-[10px] text-gray-400 flex items-center flex-wrap gap-1.5 mt-0.5'>
+                                  {!permissionsService.can('sale.view_assigned_only') && (
+                                    <>
+                                      <span>{formatCurrency(g.itemBasePrice)}</span>
+                                      {hasDisc && <span className='px-1 rounded bg-green-500/10 text-green-600 font-black text-[9px]'>-{disc}%</span>}
+                                      {expiryList.length > 0 && <span className='opacity-30 self-center'>•</span>}
+                                    </>
+                                  )}
+                                  {expiryList.length > 0 && (
+                                    <span className='font-mono font-bold text-gray-400'>
+                                      {expiryList.join(', ')}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <div className='text-right flex flex-col items-end shrink-0 pl-1'>
+                              {hasRet && (
+                                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1 mb-1 ${isFullRet ? 'bg-red-100/80 text-red-600' : 'bg-orange-100/80 text-orange-600'}`}>
+                                  {isFullRet ? (language === 'AR' ? 'مرتجع كلي' : 'FULL RETURN') : (language === 'AR' ? `مرتجع (${g.returnedQty})` : `RET (${g.returnedQty})`)}
+                                </span>
+                              )}
+                              {!isFullRet && (
+                                <div className='flex flex-col items-end leading-tight'>
+                                  <span className='font-bold'>{formatCurrency(g.totalPrice)}</span>
+                                  {hasDisc && <span className='text-[9px] text-gray-400 line-through opacity-60'>{formatCurrency(g.preDiscountTotal)}</span>}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </ListItem>
+                      );
+                    });
                   })()}
-                  <div className={`flex justify-between items-center py-4 px-4 bg-gray-100/50 dark:bg-white/[0.03] rounded-2xl border ${bdr}`}>
-                    <span className='font-bold text-[15px]'>{language === 'AR' ? 'الإجمالي الصافي' : t.modal.total}</span>
-                    <span className='text-2xl font-black tabular-nums tracking-tight'>{formatCurrency(sale.netTotal !== undefined ? sale.netTotal : sale.total)}</span>
-                  </div>
-                </div>
-              </>
+                </ListWrapper>
+              </div>
             ) : (
               <div className='pt-1'>
                 <div className='flex items-center gap-2 mb-3'><span className='material-symbols-rounded text-base text-gray-400'>history</span><p className={labelText}>{t.modal.modificationHistory || 'History'}</p></div>
@@ -383,30 +372,63 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
               </div>
             )}
           </div>
-        </div>
 
-        <div className={`pt-4 border-t ${bdr} flex gap-3 mt-0`}>
-          {(() => {
-            const hasRemaining = sale.items.some((it) => {
-              const lineKey = `${it.id}_${it.isUnit ? 'unit' : 'pack'}`;
-              const returned = sale.itemReturnedQuantities?.[lineKey] || 0;
-              return returned < it.quantity;
-            });
-            const inShift = !!currentShift && new Date(sale.date) >= new Date(currentShift.openTime);
-            const canRef = onProcessReturn && permissionsService.can('sale.refund') && !(sale.saleType === 'delivery' && sale.status !== 'completed') && (permissionsService.getEffectiveRole() !== 'cashier' || inShift);
-            return (
-              <>
-                {hasRemaining && canRef && (
-                  <button onClick={() => setReturnModalOpen(true)} className='flex-1 py-3 rounded-full font-bold text-white bg-orange-600 hover:opacity-90 cursor-pointer transition-opacity flex items-center justify-center gap-2'>
-                    <span className='material-symbols-rounded text-base'>assignment_return</span>{t.returns?.processReturn || 'Return'}
-                  </button>
-                )}
-                <button onClick={handlePrint} className='flex-1 py-3 rounded-full font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 cursor-pointer transition-colors flex items-center justify-center gap-2'>
-                  <span className='material-symbols-rounded text-base'>print</span>{t.modal.print}
-                </button>
-              </>
-            );
-          })()}
+          {/* 3. Footer Section (Totals & Buttons - Fixed) */}
+          <div className='shrink-0 pt-3'>
+            <div className={`pt-2 border-t ${bdr} space-y-2`}>
+              {sale.subtotal !== undefined && sale.subtotal !== sale.total && !permissionsService.can('sale.view_assigned_only') && (
+                <div className='flex justify-between items-center text-[12px] text-gray-500 px-1'>
+                  <div className='flex items-center gap-2'><span className='material-symbols-rounded text-base opacity-40'>payments</span><span>{t.modal.subtotal}</span></div>
+                  <span className='font-medium'>{formatCurrency(sale.subtotal)}</span>
+                </div>
+              )}
+              {(() => {
+                const hasDel = Number(sale.deliveryFee) > 0;
+                const subAndDel = money.add(sale.subtotal || 0, sale.deliveryFee || 0);
+                const sav = money.subtract(subAndDel, sale.total);
+                const hasSav = sav > 0.01;
+                if (!hasDel && !hasSav) return null;
+                return (
+                  <div className='flex items-stretch gap-1'>
+                    {hasDel && <StatCapsule label={t.pos?.deliveryOrder || t.deliveryFee || 'Delivery'} value={`+${formatCurrency(sale.deliveryFee!)}`} icon='delivery_dining' side={hasSav ? 'start' : 'full'} />}
+                    {hasSav && <StatCapsule label={language === 'AR' ? 'إجمالي الخصم' : 'Savings'} value={`-${formatCurrency(sav)}`} icon='savings' variant='success' side={hasDel ? 'end' : 'full'} />}
+                  </div>
+                );
+              })()}
+              <div className={`flex justify-between items-center py-3 px-4 bg-gray-100/50 dark:bg-white/[0.03] rounded-2xl border ${bdr}`}>
+                <span className='font-bold text-[14px]'>{language === 'AR' ? 'الإجمالي الصافي' : t.modal.total}</span>
+                <span className='text-xl font-black tabular-nums tracking-tight'>{formatCurrency(sale.netTotal !== undefined ? sale.netTotal : sale.total)}</span>
+              </div>
+            </div>
+
+            <div className={`pt-4 flex gap-3`}>
+              {(() => {
+                const hasRemaining = sale.items.some((it) => {
+                  const rawId = (it as any).drugId ?? (it as any).drug_id ?? it.id;
+                  const drug = inventoryMap.get(rawId);
+                  const drugId = (it as any).drugId ?? (it as any).drug_id ?? drug?.id ?? it.id;
+                  
+                  const lineKey = `${drugId}_${it.isUnit ? 'unit' : 'pack'}`;
+                  const returned = sale.itemReturnedQuantities?.[lineKey] || 0;
+                  return returned < it.quantity;
+                });
+                const inShift = !!currentShift && new Date(sale.date) >= new Date(currentShift.openTime);
+                const canRef = onProcessReturn && permissionsService.can('sale.refund') && !(sale.saleType === 'delivery' && sale.status !== 'completed') && (permissionsService.getEffectiveRole() !== 'cashier' || inShift);
+                return (
+                  <>
+                    {hasRemaining && canRef && (
+                      <button onClick={() => setReturnModalOpen(true)} className='flex-1 py-3 rounded-full font-bold text-white bg-orange-600 hover:opacity-90 cursor-pointer transition-opacity flex items-center justify-center gap-2'>
+                        <span className='material-symbols-rounded text-base'>assignment_return</span>{t.returns?.processReturn || 'Return'}
+                      </button>
+                    )}
+                    <button onClick={handlePrint} className='flex-1 py-3 rounded-full font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 cursor-pointer transition-colors flex items-center justify-center gap-2'>
+                      <span className='material-symbols-rounded text-base'>print</span>{t.modal.print}
+                    </button>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
         </div>
       </Modal>
 
