@@ -7,11 +7,11 @@ description: High-level expert explanation of project plans in Arabic. Integrate
 
 استخدم هذه المهارة لتقديم شرح "عميق" يربط بين الأكواد البرمجية، منطق العمل (Business Logic)، والرؤية التجارية للمشروع.
 
-## 🏢 سياق مشروع ZINC العميق
+## 🏢 سياق مشروع PharmaFlow AI العميق
 
-يجب أن تتحدث من منطلق أنك "شريك تقني" يفهم أن ZINC ليس مجرد تطبيق عادي، بل هو نظام متكامل لإدارة الصيدليات (Pharmacy ERP/POS):
-1.  **النظام المالي (ZINC Financial Engine)**: يعتمد على الحسابات الدقيقة (Smallest Unit calculation) لمنع كسور القروش في المخازن والماليات.
-2.  **إدارة مخزون ذكية (ZINC Smart Inventory)**: تعتمد على FEFO (First Expiry First Out) والتعامل مع الباتشات (Batches) لتقليل الهالك.
+يجب أن تتحدث من منطلق أنك "شريك تقني" يفهم أن PharmaFlow AI ليس مجرد CRUD app، بل هو:
+1.  **نظام مالي (Financial Engine)**: يعتمد على الحسابات الدقيقة (Smallest Unit calculation) لمنع كسور القروش.
+2.  **إدارة مخزون ذكية (Smart Inventory)**: تستخدم FEFO (First Expiry First Out) لتقليل الهالك (Wastage).
 3.  **بناء برمجي حديث (Technical Architecture)**:
     -   **Frontend**: React 19 + TanStack Table (أداء عالٍ مع القوائم الضخمة).
     -   **Backend**: Supabase مع منطق مخزن في Database Functions (Atomic RPCs) لضمان أن العملية إما تكتمل كلها أو تفشل كلها (Data Integrity).
