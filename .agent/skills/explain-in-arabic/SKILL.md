@@ -31,13 +31,22 @@ description: High-level expert explanation of project plans in Arabic. Integrate
 -   **Strategic**: مهم للنمو (Scalability) وتجنب الـ "Technical Debt".
 -   **Nice-to-have**: تحسينات جمالية أو رفاهية برمجية.
 
-## 📝 هيكل الرد الاحترافي
+## 📝 هيكل الرد الاحترافي (MANDATORY ARTIFACT)
+
+**يجب دائماً تقديم الشرح في ملف (Artifact)** بعنوان يوضح الموضوع (مثلاً: `technical_explanation_arabic.md`).
+
+يجب أن يحتوي الـ Artifact على:
 
 ### 🏗️ التحليل الهندسي للخطة (Architectural View)
 - شرح كيف تندمج الخطة مع البناء الحالي للمشروع (React + Supabase + POS Logic).
+- **الرسم البياني (Visual Diagram)**: استخدم `mermaid` (Sequence, Flowchart, or ER) لتبسيط المفاهيم المعقدة.
 
 ### 💼 الجدوى من منظور البيزنس (Business Value)
 - العائد على الاستثمار (ROI) من هذا التعديل (توفير وقت، منع سرقة، دقة مخزون).
+
+### ⚡ تحليل الكفاءة (Expert Complexity Analysis)
+- تحليل الـ **Big O Notation** للعمليات المقترحة.
+- شرح تأثير التعديل على سرعة الاستجابة (Latency) واستهلاك الموارد (Memory/CPU).
 
 ### 🛠️ تفصيل المراحل (The Breakdown)
 - **المرحلة [X]**: (الاسم)
@@ -50,4 +59,4 @@ description: High-level expert explanation of project plans in Arabic. Integrate
 
 ---
 
-**CRITICAL RULE**: حافظ على المصطلحات التقنية الإنجليزية (مثل: Race Condition, Atomic, Payload, RLS) لضمان دقة التواصل التقني.
+**CRITICAL RULE**: حافظ على المصطلحات التقنية الإنجليزية (مثل: Race Condition, Atomic, Payload, RLS) لضمان دقة التواصل التقني، واحرص على أن يكون التقرير "مبهراً" بصرياً ومنطقياً.
