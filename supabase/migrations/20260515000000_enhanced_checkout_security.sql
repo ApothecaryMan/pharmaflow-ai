@@ -35,6 +35,15 @@ DECLARE
     v_global_discount DECIMAL := (p_payload->>'globalDiscount')::DECIMAL;
     v_delivery_fee DECIMAL := COALESCE((p_payload->>'deliveryFee')::DECIMAL, 0);
     v_calculated_total DECIMAL;
+    v_calculated_gross_subtotal_cents BIGINT := 0;
+    v_calculated_net_subtotal_cents BIGINT := 0;
+    v_item_gross_cents BIGINT;
+    v_item_discount_cents BIGINT;
+    v_global_discount_cents BIGINT;
+    v_calculated_total_cents BIGINT;
+    v_item_qty INT;
+    v_item_price DECIMAL;
+    v_item_discount_pct DECIMAL;
     v_current_user_id UUID := auth.uid();
 BEGIN
     -- 0. Security & Identity Check
@@ -48,14 +57,42 @@ BEGIN
         RETURN jsonb_build_object('success', false, 'error', 'Employee record not found: ' || v_performer_id);
     END IF;
 
-    -- 0.1 Business Logic Validation
+    -- 0.1 Business Logic Validation & EXACT Cent-Based Calculation (Matches money.ts)
     IF v_total < 0 OR v_subtotal < 0 OR v_global_discount < 0 OR v_delivery_fee < 0 THEN
         RETURN jsonb_build_object('success', false, 'error', 'Validation Error: Negative values are not allowed.');
     END IF;
 
-    v_calculated_total := v_subtotal - v_global_discount + v_delivery_fee;
-    IF ABS(v_total - v_calculated_total) > 0.01 THEN
-        RETURN jsonb_build_object('success', false, 'error', 'Validation Error: Total mismatch. Expected ' || v_calculated_total || ' but got ' || v_total);
+    -- Calculate expected totals from items using EXACT cent-based math
+    FOR v_item IN SELECT * FROM jsonb_array_elements(p_payload->'items')
+    LOOP
+        v_item_qty := (v_item->>'quantity')::INT;
+        v_item_price := (v_item->>'publicPrice')::DECIMAL;
+        v_item_discount_pct := COALESCE((v_item->>'discount')::DECIMAL, 0);
+
+        -- toSmallestUnit(price) * qty
+        v_item_gross_cents := ROUND(v_item_price * 100) * v_item_qty;
+        
+        -- pricing.discountAmount(gross, pct) -> money.multiply(price, Math.round(pct * 100), 4)
+        -- which is: Math.round((priceCents * factorInt) / 10000)
+        v_item_discount_cents := ROUND((v_item_gross_cents * ROUND(v_item_discount_pct * 100)) / 10000.0);
+        
+        v_calculated_gross_subtotal_cents := v_calculated_gross_subtotal_cents + v_item_gross_cents;
+        v_calculated_net_subtotal_cents := v_calculated_net_subtotal_cents + (v_item_gross_cents - v_item_discount_cents);
+    END LOOP;
+
+    -- Global Discount Calculation (Exact match to pricingService.ts)
+    v_global_discount_cents := ROUND((v_calculated_net_subtotal_cents * ROUND(v_global_discount * 100)) / 10000.0);
+    
+    -- Final total in cents
+    v_calculated_total_cents := v_calculated_net_subtotal_cents - v_global_discount_cents + ROUND(v_delivery_fee * 100);
+
+    -- Strict Comparison (Zero discrepancy allowed)
+    IF ROUND(v_subtotal * 100) != v_calculated_gross_subtotal_cents THEN
+        RETURN jsonb_build_object('success', false, 'error', 'Validation Error: Subtotal mismatch. Expected ' || (v_calculated_gross_subtotal_cents / 100.0) || ' but got ' || v_subtotal);
+    END IF;
+
+    IF ROUND(v_total * 100) != v_calculated_total_cents THEN
+        RETURN jsonb_build_object('success', false, 'error', 'Validation Error: Total mismatch. Expected ' || (v_calculated_total_cents / 100.0) || ' but got ' || v_total);
     END IF;
 
     SET LOCAL "app.disable_stock_sync" = 'true';
