@@ -109,6 +109,8 @@ export const transactionService = {
       
       items: saleData.items.map((item: CartItem) => ({
         id: item.id,
+        name: item.name,
+        dosageForm: item.dosageForm,
         quantity: item.quantity,
         isUnit: !!item.isUnit,
         publicPrice: item.publicPrice,
@@ -187,6 +189,8 @@ export const transactionService = {
           globalDiscount: updates.globalDiscount ?? sale.globalDiscount,
           items: (updates.items || sale.items).map(item => ({
             id: item.id,
+            name: (item as any).name,
+            dosageForm: (item as any).dosageForm,
             quantity: item.quantity,
             isUnit: !!item.isUnit,
             publicPrice: item.publicPrice,
