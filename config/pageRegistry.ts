@@ -38,6 +38,7 @@ import { ReceiptDesigner } from '../components/sales/ReceiptDesigner';
 import { ReturnHistory } from '../components/sales/ReturnHistory';
 import { SalesHistory } from '../components/sales/SalesHistory';
 import { ShiftHistory } from '../components/sales/ShiftHistory';
+import { ProfitLossPage } from '../components/reports/ProfitLossPage';
 
 import { ModalTests } from '../components/test/ModalTests';
 import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
@@ -676,6 +677,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'settings',
     requiredProps: ['color', 't', 'language'],
     permission: PERMISSIONS_MAPPING['desktop-settings'],
+    layout: 'standard',
+  },
+  'profit-loss': {
+    id: 'profit-loss',
+    component: ProfitLossPage,
+    menuLabel: 'Profit & Loss',
+    menuLabelAr: 'الأرباح والخسائر',
+    icon: 'analytics',
+    category: 'reports',
+    requiredProps: ['t', 'language'],
+    permission: 'reports.view_financial',
     layout: 'standard',
   },
 };

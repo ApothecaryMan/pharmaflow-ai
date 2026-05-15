@@ -180,6 +180,39 @@ export interface FinancialKPIs {
   };
 }
 
+export interface FinancialReportSummary {
+  gross_revenue: number;
+  return_revenue: number;
+  net_revenue: number;
+  gross_cogs: number;
+  return_cogs: number;
+  net_cogs: number;
+  gross_profit: number;
+}
+
+export interface DailyFinancialData {
+  day: string;
+  revenue: number;
+  refund: number;
+  net: number;
+  sale_count: number;
+  return_count: number;
+}
+
+export interface CategoryFinancialReport {
+  category: string;
+  revenue: number;
+  cogs: number;
+  profit: number;
+}
+
+export interface FinancialReport {
+  summary: FinancialReportSummary;
+  daily: DailyFinancialData[];
+  categories: CategoryFinancialReport[];
+  generated_at: string;
+}
+
 // ============================================================================
 // AUDIT DOMAIN
 // ============================================================================

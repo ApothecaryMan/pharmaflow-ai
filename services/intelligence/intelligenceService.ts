@@ -23,6 +23,8 @@ import { returnService } from '../returns/returnService';
 import { salesService } from '../sales/salesService';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { money, pricing } from '../../utils/money';
+import { supabase } from '../../lib/supabase';
+import type { FinancialReport } from '../../types/intelligence';
 
 // === Period Helpers ===
 
@@ -768,5 +770,28 @@ export const intelligenceService = {
 
     // Return limited results
     return transactions.slice(0, limit);
+  },
+
+  /**
+   * Get Server-side Financial Report (RPC)
+   * This is the source of truth for P&L
+   */
+  getFinancialReport: async (
+    dateFrom: string,
+    dateTo: string,
+    branchId?: string
+  ): Promise<FinancialReport> => {
+    const { data, error } = await supabase.rpc('get_financial_report', {
+      p_date_from: dateFrom,
+      p_date_to: dateTo,
+      p_branch_id: branchId || null
+    });
+
+    if (error) {
+      console.error('Error fetching financial report:', error);
+      throw error;
+    }
+
+    return data as FinancialReport;
   },
 };

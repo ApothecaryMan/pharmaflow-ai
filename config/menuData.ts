@@ -771,7 +771,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: 'financial-reports',
         label: 'Financial Reports',
         items: [
-          { label: 'Profit & Loss', icon: 'analytics' },
+          { label: 'Profit & Loss', icon: 'analytics', view: 'profit-loss' as any },
           { label: 'Balance Sheet', icon: 'account_balance_wallet' },
           { label: 'Cash Flow', icon: 'savings' },
           { label: 'Income Statement', icon: 'summarize' },

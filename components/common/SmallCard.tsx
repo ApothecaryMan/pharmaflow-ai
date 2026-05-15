@@ -171,7 +171,7 @@ export const SmallCard = ({
 
         <div className="flex flex-col">
           {isLoading ? (
-            <div className="h-8 w-20 bg-(--bg-input) rounded-lg animate-pulse" />
+            <div className="h-8 w-20 bg-gray-200 dark:bg-zinc-800 rounded-lg animate-pulse" />
           ) : (
             <div className="flex flex-col">
               <div className="flex items-center gap-2 group/val">
