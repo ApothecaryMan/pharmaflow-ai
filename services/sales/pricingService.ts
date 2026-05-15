@@ -7,33 +7,39 @@ import { money, tax, pricing } from '../../utils/money';
  */
 export const pricingService = {
   /**
+   * Calculates the gross subtotal for a single cart item (before discounts).
+   * Always uses Unit-First logic: UnitPrice * TotalUnits.
+   */
+  calculateItemGrossTotal: (item: CartItem): number => {
+    const totalUnits = (item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1));
+    const unitPrice = item.unitPrice || (item.unitsPerPack && item.unitsPerPack > 1 
+      ? money.divide(item.publicPrice, item.unitsPerPack) 
+      : item.publicPrice);
+    
+    return money.multiply(unitPrice, totalUnits, 0);
+  },
+
+  /**
    * Calculates the total for a single cart item, including precision-safe discounts.
    */
   calculateItemTotal: (item: CartItem): number => {
-    // 1. Get base price
-    const basePrice = item.publicPrice;
-    const qty = item.quantity;
+    const gross = pricingService.calculateItemGrossTotal(item);
     
-    // 2. Subtotal = Price * Quantity
-    const subtotal = money.multiply(basePrice, qty, 0);
-    
-    // 3. Apply discount if exists
     if (item.discount && item.discount > 0) {
-      // Amount * (Discount / 100)
-      const discountAmount = money.multiply(subtotal, item.discount, 2);
-      return money.subtract(subtotal, discountAmount);
+      const discountAmount = money.multiply(gross, item.discount, 2);
+      return money.subtract(gross, discountAmount);
     }
     
-    return subtotal;
+    return gross;
   },
 
   /**
    * Calculates the grand total for a list of items and a global discount.
    */
   calculateOrderTotals: (items: CartItem[], globalDiscountPercent: number = 0) => {
-    // 1. Sum up all individual item totals (Gross Subtotal)
+    // 1. Sum up all individual item gross totals
     const grossSubtotal = items.reduce((sum, item) => {
-      return money.add(sum, money.multiply(item.publicPrice, item.quantity, 0));
+      return money.add(sum, pricingService.calculateItemGrossTotal(item));
     }, 0);
 
     // 2. Sum up all individual item net totals (after item-level discounts)

@@ -1118,7 +1118,17 @@ export const Purchases: React.FC<PurchasesProps> = ({
       date: getVerifiedDate().toISOString(),
       supplierId: selectedSupplierId,
       supplierName: supplier?.name || 'Unknown',
-      items: cart,
+      items: cart.map(item => ({
+        ...item,
+        // Standardize: costPrice and unitCostPrice MUST be saved as Net (exclusive of tax)
+        // for accurate inventory valuation and profit reporting.
+        costPrice: taxMode === 'inclusive' 
+          ? tax.inclusiveBase(item.costPrice, item.tax || 0) 
+          : item.costPrice,
+        unitCostPrice: item.unitCostPrice 
+          ? (taxMode === 'inclusive' ? tax.inclusiveBase(item.unitCostPrice, item.tax || 0) : item.unitCostPrice)
+          : undefined
+      })),
       totalCost: taxResults.total,
       totalTax: taxResults.taxAmount,
       status: 'completed',
@@ -1212,7 +1222,17 @@ export const Purchases: React.FC<PurchasesProps> = ({
       date: getVerifiedDate().toISOString(),
       supplierId: selectedSupplierId,
       supplierName: supplier?.name || 'Unknown',
-      items: cart,
+      items: cart.map(item => ({
+        ...item,
+        // Standardize: costPrice and unitCostPrice MUST be saved as Net (exclusive of tax)
+        // for accurate inventory valuation and profit reporting.
+        costPrice: taxMode === 'inclusive' 
+          ? tax.inclusiveBase(item.costPrice, item.tax || 0) 
+          : item.costPrice,
+        unitCostPrice: item.unitCostPrice 
+          ? (taxMode === 'inclusive' ? tax.inclusiveBase(item.unitCostPrice, item.tax || 0) : item.unitCostPrice)
+          : undefined
+      })),
       totalCost: cart.reduce((sum, i) => money.add(sum, money.multiply(i.costPrice, i.quantity, 0)), 0),
       totalTax: cart.reduce((sum, i) => {
         const lineTotal = money.multiply(i.costPrice, i.quantity, 0);

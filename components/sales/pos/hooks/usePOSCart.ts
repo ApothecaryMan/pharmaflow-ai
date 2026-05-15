@@ -15,6 +15,7 @@ import { resolvePrice } from '../../../../utils/stockUtils';
 import { isStockConstraintMet } from '../../../../utils/stockOperations';
 import { batchService } from '../../../../services/inventory/batchService';
 import type { GroupedDrug } from '../../../../types';
+import { money } from '../../../../utils/money';
 
 interface UsePOSCartProps {
   activeTab: any;
@@ -157,11 +158,18 @@ export const usePOSCart = ({
         ...prev,
         {
           ...drug,
+          // Unit-First baseline: ensure these exist for accurate math
+          unitPrice: drug.unitPrice || (drug.unitsPerPack && drug.unitsPerPack > 1 
+            ? money.divide(drug.publicPrice, drug.unitsPerPack) 
+            : drug.publicPrice),
+          unitCostPrice: drug.unitCostPrice || (drug.unitsPerPack && drug.unitsPerPack > 1 
+            ? money.divide(drug.costPrice || 0, drug.unitsPerPack) 
+            : (drug.costPrice || 0)),
           publicPrice: resolvePrice(drug.publicPrice, isUnitMode, drug.unitsPerPack, drug.unitPrice),
           quantity: initialQuantity,
           discount: prev.find((i) => i.id === drug.id && !!i.isUnit !== isUnitMode)?.discount || 0,
           isUnit: isUnitMode,
-          basePackPrice: drug.publicPrice, // Preserve base price for future toggles
+          basePackPrice: drug.publicPrice,
           preferredBatchId: drug.id,
         },
       ];

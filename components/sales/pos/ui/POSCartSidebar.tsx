@@ -239,16 +239,24 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
   const discountedCount = cart.filter(item => (item.discount || 0) > 0).length;
 
   // Calculate total profit margin (Accounts for item-level and global discounts)
-  // Formula: Net Sale Total - Total Cost of Goods Sold
+  // Formula: (Net Sale Total - Tax) - Total Cost of Goods Sold
+  // Uses Unit-First logic for both revenue and cost to ensure zero discrepancy.
   const totalProfit = useMemo(() => {
     if (!permissionsService.can('reports.view_financial')) return 0;
     
-    const cost = cart.reduce((acc, item) => {
-      const unitCost = resolvePrice(item.costPrice || 0, !!item.isUnit, item.unitsPerPack);
-      return money.add(acc, money.multiply(unitCost, item.quantity, 0));
+    const totalCost = cart.reduce((acc, item) => {
+      const totalUnits = (item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1));
+      const unitCost = item.unitCostPrice || (item.unitsPerPack && item.unitsPerPack > 1 
+        ? money.divide(item.costPrice || 0, item.unitsPerPack) 
+        : (item.costPrice || 0));
+        
+      return money.add(acc, money.multiply(unitCost, totalUnits, 0));
     }, 0);
-    return money.subtract(cartTotal, cost);
-  }, [cart, cartTotal]);
+
+    // Profit = (Revenue - Tax) - Cost
+    const netRevenue = money.subtract(cartTotal, taxAmount || 0);
+    return money.subtract(netRevenue, totalCost);
+  }, [cart, cartTotal, taxAmount]);
 
   return (
     <>
