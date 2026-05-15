@@ -38,6 +38,10 @@ export interface CheckoutResult extends TransactionResult<Sale> {
 import { UndoManager } from './undoManager';
 
 export const transactionService = {
+  /**
+   * Orchestrates the checkout process by invoking the atomic process_checkout RPC.
+   * Includes performance monitoring and comprehensive error handling.
+   */
   async processCheckout(
     saleData: {
       items: CartItem[];
@@ -54,40 +58,19 @@ export const transactionService = {
     _inventory: Drug[], // Kept for signature compatibility, unused now
     context: ActionContext
   ): Promise<CheckoutResult> {
+    const perfLabel = `[TransactionService] processCheckout:${context.branchId}:${Date.now()}`;
+    console.time(perfLabel);
+
     try {
-      // 1. Prepare minimal payload for server-side processing
-      const payload = {
-        branchId: context.branchId,
-        orgId: context.orgId,
-        shiftId: context.shiftId,
-        timestamp: context.timestamp,
-        performerId: context.performerId,
-        performerName: context.performerName,
-        
-        // Items: minimal payload — server resolves name/dosage from drugs table
-        items: saleData.items.map(item => ({
-          id: item.id,
-          quantity: item.quantity,
-          isUnit: !!item.isUnit,
-          publicPrice: item.publicPrice,
-          discount: item.discount || 0,
-        })),
-        
-        customerName: saleData.customerName,
-        customerPhone: saleData.customerPhone,
-        paymentMethod: saleData.paymentMethod,
-        saleType: saleData.saleType || 'walk-in',
-        deliveryFee: saleData.deliveryFee || 0,
-        globalDiscount: saleData.globalDiscount || 0,
-        total: saleData.total,
-        subtotal: saleData.subtotal
-      };
+      // 1. Build structured payload (Factory Pattern)
+      const payload = this._buildCheckoutPayload(saleData, context);
 
-
-      // 2. Invoke the Atomic RPC directly
+      // 2. Invoke the Atomic RPC
       const { data, error } = await supabase.rpc('process_checkout', {
         p_payload: payload
       });
+
+      console.timeEnd(perfLabel);
 
       if (error) {
         console.error('[TransactionService] RPC error:', error);
@@ -95,20 +78,52 @@ export const transactionService = {
       }
 
       if (data && !data.success) {
-        console.error('[TransactionService] Transaction failed:', data.error);
+        console.error('[TransactionService] Transaction logic failed:', data.error);
         return { success: false, error: data.error || 'Transaction failed' };
       }
 
-      // 3. Return the result (the RPC returns basic sale info)
+      // 3. Return the result
       return { 
         success: true, 
-        sale: data as unknown as Sale // Cast for compatibility
+        sale: data as unknown as Sale 
       };
 
     } catch (err: any) {
+      console.timeEnd(perfLabel);
       console.error('[TransactionService] Fatal error:', err);
       return { success: false, error: err.message || 'Checkout failed' };
     }
+  },
+
+  /**
+   * Internal factory to standardize the checkout payload structure.
+   */
+  _buildCheckoutPayload(saleData: any, context: ActionContext) {
+    return {
+      branchId: context.branchId,
+      orgId: context.orgId,
+      shiftId: context.shiftId,
+      timestamp: context.timestamp,
+      performerId: context.performerId,
+      performerName: context.performerName,
+      
+      items: saleData.items.map((item: CartItem) => ({
+        id: item.id,
+        quantity: item.quantity,
+        isUnit: !!item.isUnit,
+        publicPrice: item.publicPrice,
+        discount: item.discount || 0,
+      })),
+      
+      customerName: saleData.customerName,
+      customerPhone: saleData.customerPhone,
+      paymentMethod: saleData.paymentMethod,
+      saleType: saleData.saleType || 'walk-in',
+      deliveryFee: saleData.deliveryFee || 0,
+      globalDiscount: saleData.globalDiscount || 0,
+      total: saleData.total,
+      subtotal: saleData.subtotal
+    };
   },
 
 

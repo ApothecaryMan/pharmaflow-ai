@@ -149,6 +149,7 @@ export const usePOSCheckout = ({
 
       if (success === false) {
         console.warn('[POS] Checkout failed. Cart preserved.');
+        // onCompleteSale already throws or triggers error handling in context
         return;
       }
 
