@@ -4,7 +4,7 @@ import { useSettings } from '../../context';
 import { stockMovementService } from '../../services/inventory/stockMovement/stockMovementService';
 import { DrugSearchEngine } from '../../services/search/drugSearchService';
 import { StockMovement, StockMovementSummary, Drug, StockMovementFilters } from '../../types';
-import { getDisplayName } from '../../utils/drugDisplayName';
+import { getDisplayName, getFullDisplayName } from '../../utils/drugDisplayName';
 import { useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { TRANSLATIONS } from '../../i18n/translations';
 
@@ -83,12 +83,12 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
   }, [searchQuery, inventory]);
 
   const suggestions = useMemo(() => {
-    return inventory.map(d => getDisplayName(d, textTransform));
+    return inventory.map(d => getFullDisplayName(d, textTransform));
   }, [inventory, textTransform]);
 
   const handleSelectDrug = (drug: Drug) => {
     setSelectedDrug(drug);
-    setSearchQuery(getDisplayName(drug, textTransform));
+    setSearchQuery(getFullDisplayName(drug, textTransform));
     setShowSearch(false);
   };
 
@@ -165,7 +165,7 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `stock_movement_${getDisplayName(selectedDrug, textTransform) || 'report'}.csv`);
+    link.setAttribute("download", `stock_movement_${getFullDisplayName(selectedDrug, textTransform) || 'report'}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();

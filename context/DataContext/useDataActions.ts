@@ -251,7 +251,8 @@ export const useDataActions = ({
   const processSalesReturn = useCallback(async (returnData: any, sale: Sale, context: ActionContext) => {
     const result = await transactionService.processReturn(returnData, rawInventory, sale, context);
     if (!result.success) throw new Error(result.error);
-  }, [rawInventory]);
+    await refreshAll();
+  }, [rawInventory, refreshAll]);
 
   const createPurchaseReturn = useCallback(async (ret: any, context: ActionContext) => {
     const result = await transactionService.processPurchaseReturnTransaction(ret, context);

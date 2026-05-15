@@ -112,7 +112,7 @@ export class DrugSearchEngine {
         ? (drug as Drug).genericName.join(' ').toLowerCase() 
         : String(substance).toLowerCase();
         
-      // Trade Name Key: includes Name (with strength) + Dosage (EN/AR) + Arabic Name
+      // Trade Name Key: includes Name + Dosage (EN/AR) + Arabic Name
       const searchKey = `${nameEn} ${dosageEn.toLowerCase()} ${nameAr} ${dosageAr}`;
       this.nameSearchKeys.set(drug.id, searchKey);
       this.ingredientSearchKeys.set(drug.id, generic);

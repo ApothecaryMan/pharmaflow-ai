@@ -67,30 +67,13 @@ export const returnService: ReturnService = {
 
     // 1. Process Inventory Deductions (FEFO)
     for (const item of newReturn.items) {
-      const currentStock = await batchService.getTotalStock(item.drugId, effectiveBranchId);
-      
+      // allocateStock with commitChanges=true (default) updates the batches.
+      // The DB Trigger will automatically log movements and update drugs.stock.
       const allocations = await batchService.allocateStock(item.drugId, item.quantityReturned, effectiveBranchId, true);
       
-      if (allocations) {
-        for (const allocation of allocations) {
-          await stockMovementService.logMovement({
-            drugId: item.drugId,
-            drugName: item.name,
-            branchId: effectiveBranchId,
-            type: 'return_supplier',
-            quantity: -allocation.quantity,
-            previousStock: currentStock,
-            newStock: currentStock - allocation.quantity,
-            referenceId: newReturn.id,
-            batchId: allocation.batchId,
-            expiryDate: allocation.expiryDate,
-            status: 'approved',
-            orgId: settings.orgId,
-          });
-        }
+      if (!allocations) {
+        throw new Error(`Insufficient stock for drug: ${item.name}`);
       }
-
-      await inventoryService.updateStock(item.drugId, -item.quantityReturned, true);
     }
 
     // 2. Save Return Record

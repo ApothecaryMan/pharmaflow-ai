@@ -15,7 +15,19 @@ export const returnsRepository = {
       date: db.date,
       saleId: db.sale_id,
       returnType: db.return_type || 'partial',
-      items: db.items || [],
+      items: (db.items || []).map((item: any) => ({
+        drugId: item.drug_id,
+        saleItemId: item.sale_item_id,
+        name: item.name,
+        quantityReturned: item.quantity_returned,
+        isUnit: item.is_unit,
+        publicPrice: item.public_price,
+        refundAmount: item.refund_amount,
+        reason: item.reason,
+        condition: item.condition,
+        dosageForm: item.dosage_form,
+        expiryDate: item.expiry_date,
+      })),
       totalRefund: db.total_refund || db.total_amount || 0,
       reason: db.reason,
       notes: db.notes,
@@ -49,7 +61,15 @@ export const returnsRepository = {
       purchaseId: db.purchase_id,
       supplierId: db.supplier_id,
       supplierName: db.supplier_name_snapshot,
-      items: db.items || [],
+      items: (db.items || []).map((item: any) => ({
+        drugId: item.drug_id,
+        name: item.name,
+        quantityReturned: item.quantity_returned,
+        isUnit: item.is_unit,
+        costPrice: item.cost_price,
+        refundAmount: item.refund_amount,
+        dosageForm: item.dosage_form,
+      })),
       totalRefund: db.total_refund,
       status: db.status || 'completed',
       notes: db.notes,
@@ -73,7 +93,7 @@ export const returnsRepository = {
 
   // --- Sales Return Methods ---
   async getAllSales(effectiveBranchId: string): Promise<Return[]> {
-    let query = supabase.from(this.salesTableName).select('*');
+    let query = supabase.from(this.salesTableName).select('*, items:return_items(*)');
     if (effectiveBranchId !== 'all') {
       query = query.eq('branch_id', effectiveBranchId);
     }
@@ -84,7 +104,7 @@ export const returnsRepository = {
 
   async getSalesById(id: string): Promise<Return | null> {
     const { data, error } = await supabase.from(this.salesTableName)
-      .select('*')
+      .select('*, items:return_items(*)')
       .eq('id', id)
       .maybeSingle();
     if (error) throw error;
@@ -128,7 +148,7 @@ export const returnsRepository = {
 
   // --- Purchase Return Methods ---
   async getAllPurchases(effectiveBranchId: string): Promise<PurchaseReturn[]> {
-    let query = supabase.from(this.purchaseTableName).select('*');
+    let query = supabase.from(this.purchaseTableName).select('*, items:purchase_return_items(*)');
     if (effectiveBranchId !== 'all') {
       query = query.eq('branch_id', effectiveBranchId);
     }
@@ -139,7 +159,7 @@ export const returnsRepository = {
 
   async getPurchaseById(id: string): Promise<PurchaseReturn | null> {
     const { data, error } = await supabase.from(this.purchaseTableName)
-      .select('*')
+      .select('*, items:purchase_return_items(*)')
       .eq('id', id)
       .maybeSingle();
     if (error) throw error;

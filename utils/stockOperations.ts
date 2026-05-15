@@ -4,6 +4,7 @@ import type { Drug, StockBatch, BatchAllocation, StockMovementType, CartItem } f
 import { validateStock, assertStockSufficient } from './inventory';
 import { money } from './money';
 import { resolveUnits, resolvePrice, convertToPacks, resolveDisplayStock } from './stockUtils';
+import { getFullDisplayName } from './drugDisplayName';
 
 /**
  * Context for stock operations to ensure accurate movement logging.
@@ -45,6 +46,15 @@ export const deductStock = async (
   // BUG-S1: Assert stock sufficiency BEFORE allocating batches
   assertStockSufficient(drug.stock, unitsToDeduct, drug.name);
   
+  // 1. Set Context for Trigger
+  await stockMovementService.setContext(
+    type,
+    referenceId,
+    ctx.performedBy,
+    ctx.performedByName,
+    reason
+  );
+
   const allocations = await batchService.allocateStock(drug.id, unitsToDeduct, ctx.branchId, true);
 
   if (!allocations) return null;
@@ -52,21 +62,7 @@ export const deductStock = async (
   const previousStock = drug.stock;
   const newStock = validateStock(previousStock - unitsToDeduct);
 
-  stockMovementService.logMovement({
-    drugId: drug.id,
-    drugName: drug.name,
-    branchId: ctx.branchId,
-    orgId: ctx.orgId,
-    type,
-    quantity: -unitsToDeduct,
-    previousStock,
-    newStock,
-    reason,
-    referenceId,
-    performedBy: ctx.performedBy,
-    performedByName: ctx.performedByName,
-    status: 'approved',
-  });
+  // Note: Manual logMovement removed (handled by DB trigger)
 
   return {
     drugId: drug.id,
@@ -99,7 +95,16 @@ export const addStock = async (
   const previousStock = previousStockOverride !== undefined ? previousStockOverride : drug.stock;
   const newStock = validateStock(previousStock + unitsToAdd);
 
-  // 1. Create Batch
+  // 1. Set Context for Trigger
+  await stockMovementService.setContext(
+    type,
+    referenceId,
+    ctx.performedBy,
+    ctx.performedByName,
+    reason
+  );
+
+  // 2. Create Batch
   await batchService.createBatch({
     drugId: drug.id,
     quantity: unitsToAdd,
@@ -113,22 +118,7 @@ export const addStock = async (
     version: 1,
   }, ctx.branchId);
 
-  // 2. Log Movement
-  stockMovementService.logMovement({
-    drugId: drug.id,
-    drugName: drug.name,
-    branchId: ctx.branchId,
-    orgId: ctx.orgId,
-    type,
-    quantity: unitsToAdd,
-    previousStock,
-    newStock,
-    reason,
-    referenceId,
-    performedBy: ctx.performedBy,
-    performedByName: ctx.performedByName,
-    status: 'approved',
-  });
+  // Note: Manual logMovement removed (handled by DB trigger)
 
   return {
     drugId: drug.id,
@@ -155,7 +145,16 @@ export const returnStock = async (
   const previousStock = drug.stock;
   const newStock = validateStock(previousStock + unitsToRestore);
 
-  // 1. Return to batches if allocations exist
+  // 1. Set Context for Trigger
+  await stockMovementService.setContext(
+    type,
+    referenceId,
+    ctx.performedBy,
+    ctx.performedByName,
+    reason
+  );
+
+  // 2. Return to batches if allocations exist
   if (allocations && allocations.length > 0) {
     let remainingToReturn = unitsToRestore;
     const returnsToMake: BatchAllocation[] = [];
@@ -173,22 +172,7 @@ export const returnStock = async (
     }
   }
 
-  // 2. Log Movement
-  stockMovementService.logMovement({
-    drugId: drug.id,
-    drugName: drug.name,
-    branchId: ctx.branchId,
-    orgId: ctx.orgId,
-    type,
-    quantity: unitsToRestore,
-    previousStock,
-    newStock,
-    reason,
-    referenceId,
-    performedBy: ctx.performedBy,
-    performedByName: ctx.performedByName,
-    status: 'approved',
-  });
+  // Note: Manual logMovement removed (handled by DB trigger)
 
   return {
     drugId: drug.id,
@@ -201,7 +185,7 @@ export const returnStock = async (
 /**
  * Removes stock (e.g. for supplier returns) and logs movement.
  */
-export const deductStockSimple = (
+export const deductStockSimple = async (
   drug: Drug,
   quantity: number,
   isUnit: boolean,
@@ -209,30 +193,25 @@ export const deductStockSimple = (
   reason: string,
   ctx: StockOperationContext,
   referenceId?: string
-): StockMutation => {
+): Promise<StockMutation> => {
   const unitsToRemove = resolveUnits(quantity, isUnit, drug.unitsPerPack);
   
   // BUG-S3: Assert stock sufficiency before deduction (purchase returns path)
   assertStockSufficient(drug.stock, unitsToRemove, drug.name);
   
+  // 1. Set Context for Trigger
+  await stockMovementService.setContext(
+    type,
+    referenceId,
+    ctx.performedBy,
+    ctx.performedByName,
+    reason
+  );
+
   const previousStock = drug.stock;
   const newStock = validateStock(previousStock - unitsToRemove);
 
-  stockMovementService.logMovement({
-    drugId: drug.id,
-    drugName: drug.name,
-    branchId: ctx.branchId,
-    orgId: ctx.orgId,
-    type,
-    quantity: -unitsToRemove,
-    previousStock,
-    newStock,
-    reason,
-    referenceId,
-    performedBy: ctx.performedBy,
-    performedByName: ctx.performedByName,
-    status: 'approved',
-  });
+  // Note: Manual logMovement removed (handled by DB trigger)
 
   return {
     drugId: drug.id,
@@ -264,9 +243,19 @@ export const adjustStock = async (
 
   if (diff === 0) return null;
 
+  // 1. Set Context for Trigger (Database Audit)
+  await stockMovementService.setContext(
+    'adjustment',
+    options?.transactionId,
+    ctx.performedBy,
+    ctx.performedByName,
+    reason,
+    options?.notes
+  );
+
   const status = options?.status || 'approved';
 
-  // 1. Update Batch logic
+  // 2. Update Batch logic
   if (status === 'approved') {
     if (options?.batchId) {
       // Direct batch update
@@ -295,25 +284,8 @@ export const adjustStock = async (
     }
   }
 
-  // 2. Log Movement
-  stockMovementService.logMovement({
-    drugId: drug.id,
-    drugName: drug.name,
-    branchId: ctx.branchId,
-    orgId: ctx.orgId,
-    type: 'adjustment',
-    quantity: diff,
-    previousStock,
-    newStock,
-    reason,
-    notes: options?.notes,
-    transactionId: options?.transactionId,
-    batchId: options?.batchId,
-    expiryDate: options?.expiryDate || drug.expiryDate,
-    performedBy: ctx.performedBy,
-    performedByName: ctx.performedByName,
-    status,
-  });
+  // Note: Manual logMovement removed because it is handled by the unified DB trigger
+  // For offline/IndexedDB support, we might need a different sync strategy later.
 
   return {
     drugId: drug.id,
@@ -338,28 +310,20 @@ export const deductFromBatch = async (
   const previousStock = drug.stock;
   const newStock = validateStock(previousStock - quantityUnits);
 
-  // 1. Target specific batch
+  // 1. Set Context for Trigger
+  await stockMovementService.setContext(
+    type,
+    options?.referenceId,
+    ctx.performedBy,
+    ctx.performedByName,
+    reason,
+    options?.notes
+  );
+
+  // 2. Target specific batch
   await batchService.updateBatchQuantity(batchId, -quantityUnits);
 
-  // 2. Log Movement
-  stockMovementService.logMovement({
-    drugId: drug.id,
-    drugName: drug.name,
-    branchId: ctx.branchId,
-    orgId: ctx.orgId,
-    type,
-    quantity: -quantityUnits,
-    previousStock,
-    newStock,
-    reason,
-    notes: options?.notes,
-    referenceId: options?.referenceId,
-    batchId,
-    expiryDate: options?.expiryDate || drug.expiryDate,
-    performedBy: ctx.performedBy,
-    performedByName: ctx.performedByName,
-    status: 'approved',
-  });
+  // Note: Manual logMovement removed (handled by DB trigger)
 
   return {
     drugId: drug.id,
@@ -372,15 +336,15 @@ export const deductFromBatch = async (
 /**
  * Logs an 'initial' movement for new product creation.
  */
-export const logInitialStock = (
+export const logInitialStock = async (
   drug: Drug,
   ctx: StockOperationContext
-): void => {
+): Promise<void> => {
   if (drug.stock <= 0) return;
 
-  stockMovementService.logMovement({
+  await stockMovementService.logMovement({
     drugId: drug.id,
-    drugName: drug.name,
+    drugName: getFullDisplayName(drug), // Use full display name snapshot
     branchId: ctx.branchId,
     orgId: ctx.orgId,
     type: 'initial',

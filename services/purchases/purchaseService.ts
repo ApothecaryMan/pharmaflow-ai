@@ -157,7 +157,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
 
       let expiryDate = normalizeExpiryToISO(item.expiryDate) || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-      const batch = await batchService.createBatch({
+      await batchService.createBatch({
         drugId: item.drugId,
         quantity: unitsToAdd,
         expiryDate: expiryDate,
@@ -168,36 +168,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
         orgId: purchase.orgId || settings.orgId,
         version: 1,
       }, branchId);
-
-      await stockMovementService.logMovement({
-        drugId: item.drugId,
-        drugName: item.name,
-        branchId: branchId || '',
-        type: 'purchase',
-        quantity: unitsToAdd,
-        previousStock: currentStock,
-        newStock: currentStock + unitsToAdd,
-        referenceId: purchase.id,
-        batchId: batch.id,
-        expiryDate: batch.expiryDate,
-        performedBy: performerId,
-        performedByName: performerName,
-        status: 'approved',
-        orgId: purchase.orgId || settings.orgId,
-        publicPrice: item.publicPrice,
-        unitPrice: item.unitPrice,
-        costPrice: item.costPrice,
-        unitCostPrice: item.unitCostPrice,
-      });
     }
-
-    await inventoryService.updateStockBulk(
-      purchase.items.map(i => ({ 
-        id: i.drugId, 
-        quantity: resolveUnits(i.quantity, !!i.isUnit, i.unitsPerPack) 
-      })),
-      true
-    );
 
     for (const item of purchase.items) {
       const earliestExpiry = await batchService.getEarliestExpiry(item.drugId, branchId);

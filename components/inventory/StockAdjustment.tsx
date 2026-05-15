@@ -26,6 +26,7 @@ import { SmartInput, useSmartDirection } from '../common/SmartInputs';
 import { TanStackTable, PriceDisplay } from '../common/TanStackTable';
 import { StockAdjustmentPrint } from './StockAdjustmentPrint';
 import { money } from '../../utils/money';
+import { formatCurrency } from '../../utils/currency';
 
 interface StockAdjustmentProps {
   onUpdateInventory: (drugs: Drug[]) => void;
@@ -849,6 +850,20 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         meta: { align: 'center', width: 80 },
       },
       {
+        id: 'valueImpact',
+        header: t.stockAdjustment.table.valueImpact,
+        cell: (info) => {
+          const m = info.row.original;
+          const impact = (m.costPrice || 0) * (m.quantity || 0);
+          return (
+            <span className={`font-mono font-bold text-xs tabular-nums ${impact >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+              {formatCurrency(Math.abs(impact))}
+            </span>
+          );
+        },
+        meta: { align: 'center', width: 100 },
+      },
+      {
         accessorKey: 'reason',
         header: t.stockAdjustment.table.reason,
         cell: (info) => (
@@ -937,7 +952,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         header: t.stockAdjustment?.table?.product || 'Name',
         width: 'flex-1',
         className: 'text-gray-900 dark:text-gray-400',
-        render: (drug: Drug) => getDisplayName(drug, textTransform), // Passed textTransform
+        render: (drug: Drug) => getFullDisplayName(drug, textTransform), // Use full name with dosage form
       },
       {
         header: t.inventory?.headers?.expiry || 'Expiry',

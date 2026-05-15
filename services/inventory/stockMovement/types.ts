@@ -99,4 +99,5 @@ export interface StockMovementService {
   approveMovement: (id: string, userId: string) => Promise<void>;
   rejectMovement: (id: string, userId: string) => Promise<void>;
   calculateMovementValue: (movement: StockMovement, drug: any) => number;
+  setContext: (type: string, refId?: string, perfId?: string, perfName?: string, reason?: string, notes?: string) => Promise<void>;
 }

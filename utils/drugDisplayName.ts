@@ -14,7 +14,6 @@ export interface DrugDisplayItem {
   nameAr?: string;
   dosageForm?: string;
   genericName?: string[];
-  strength?: string;
 }
 
 /**
@@ -74,7 +73,7 @@ export const getDisplayName = (
 };
 
 /**
- * Returns a formatted display name with strength included.
+ * Returns a formatted display name with dosage form included.
  *
  * @param item - The drug item object
  * @param forcedTransform - Optional override for text transform
@@ -87,10 +86,6 @@ export const getFullDisplayName = (
   if (!item) return '';
 
   const parts: string[] = [item.name];
-
-  if (item.strength) {
-    parts.push(item.strength);
-  }
 
   // Only append dosage form if it's not already in the name
   if (item.dosageForm && !item.name.toLowerCase().includes(item.dosageForm.toLowerCase())) {

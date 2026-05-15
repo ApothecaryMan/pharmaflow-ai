@@ -7,6 +7,8 @@ import { settingsService } from '../settings/settingsService';
 import type { InventoryFilters, InventoryService, InventoryStats } from './types';
 import { inventoryRepository } from './repositories/inventoryRepository';
 import { permissionsService } from '../auth/permissionsService';
+import { authService } from '../auth/authService';
+import { supabase } from '../../lib/supabase';
 
 class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryService {
   protected tableName = 'drugs';
@@ -111,24 +113,25 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
   }
 
   async updateStock(id: string, quantity: number, skipBatch: boolean = false, batchId?: string, skipFetch: boolean = false): Promise<Drug> {
-    if (skipBatch) {
-      const newStock = await inventoryRepository.atomicIncrement(id, quantity);
-      if (skipFetch) {
-        return { id, stock: newStock } as any; 
-      }
-      const drug = await this.getById(id);
-      return drug || ({ id, stock: newStock } as any);
-    }
-
     const drug = await this.getById(id);
     if (!drug) throw new Error('Drug not found');
     
     const settings = await settingsService.getAll();
     const branchId = drug.branchId || settings.activeBranchId || settings.branchCode;
+    const performer = authService.getCurrentUserSync();
     
+    // 🟢 SET MOVEMENT CONTEXT for manual adjustments
+    await supabase.rpc('set_stock_context', {
+      p_type: 'adjustment',
+      p_ref_id: id, // For adjustments, we use drug ID as ref
+      p_performer_id: performer?.employeeId || performer?.userId,
+      p_performer_name: performer?.username
+    });
+    
+    // 🟢 Everything goes through batches now. Trigger handles drugs.stock sync.
     if (quantity > 0) {
       if (batchId) {
-        await batchService.updateBatchQuantity(batchId, quantity);
+        await batchService.updateBatchQuantity(batchId, (await batchService.getBatchById(batchId))?.quantity! + quantity);
       } else {
         await batchService.createBatch({
           drugId: id,
@@ -156,16 +159,16 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
       }
     }
 
-    const newStock = await inventoryRepository.atomicIncrement(id, quantity);
-    return { ...drug, stock: newStock };
+    if (skipFetch) {
+      return { ...drug, stock: (drug.stock || 0) + quantity };
+    }
+    const updatedDrug = await this.getById(id);
+    return updatedDrug || { ...drug, stock: (drug.stock || 0) + quantity };
   }
 
   async updateStockCount(id: string, quantity: number): Promise<void> {
-    const drug = await this.getById(id);
-    if (!drug) throw new Error('Drug not found');
-    
-    const updatedStock = Math.max(0, (drug.stock || 0) + quantity);
-    await inventoryRepository.update(id, { stock: updatedStock });
+    // 🟢 Deprecated direct updates. Use updateStock which uses batches.
+    await this.updateStock(id, quantity);
   }
 
   async updateStockBulk(mutations: { id: string; quantity: number; batchId?: string }[], skipBatch: boolean = false, skipFetch: boolean = true): Promise<void> {

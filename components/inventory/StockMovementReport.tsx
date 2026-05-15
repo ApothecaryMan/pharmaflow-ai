@@ -7,7 +7,7 @@ import { DateRangePicker } from '../common/DatePicker';
 import { TimelineItem } from './stockMovement';
 import { SmallCard } from '../common/SmallCard';
 import { CARD_LG, CARD_BASE, ICON_BTN } from '../../utils/themeStyles';
-import { getDisplayName } from '../../utils/drugDisplayName';
+import { getDisplayName, getFullDisplayName } from '../../utils/drugDisplayName';
 import { formatCurrency } from '../../utils/currency';
 import { formatExpiryDate, checkExpiryStatus, getExpiryStatusConfig } from '../../utils/expiryUtils';
 import { SegmentedControl } from '../common/SegmentedControl';
@@ -165,7 +165,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                   header: t.inventory.headers.name, 
                   width: 'flex-4',
                   render: (d: Drug) => {
-                    const displayName = getDisplayName(d, textTransform);
+                    const displayName = getFullDisplayName(d, textTransform);
                     const itemDir = /[\u0600-\u06FF]/.test(displayName) ? 'rtl' : 'ltr';
                     return (
                       <div className="font-bold whitespace-normal" dir={itemDir}>

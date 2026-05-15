@@ -16,6 +16,7 @@ import { SearchInput } from '../common/SearchInput';
 import { TanStackTable } from '../common/TanStackTable';
 import { SaleDetailModal } from './SaleDetailModal';
 import { formatCurrency } from '../../utils/currency';
+import { formatExpiryDate } from '../../utils/expiryUtils';
 
 interface ReturnHistoryProps {
   returns: Return[];
@@ -214,7 +215,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
 
       {/* Table Section */}
       <div className='flex-1 flex flex-col min-h-0'>
-        <TanStackTable
+        <TanStackTable<Return, any>
           data={filteredReturns}
           columns={columns}
           tableId='return_history'
@@ -226,8 +227,8 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
           enableTopToolbar={true}
           enableSearch={true}
           searchPlaceholder={t.searchPlaceholder}
-          onRowClick={(row) => setSelectedReturn(row)}
-          onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row))}
+          onRowClick={(row: Return) => setSelectedReturn(row)}
+          onRowContextMenu={(e, row: Return) => showMenu(e.clientX, e.clientY, getRowActions(row))}
           color={color}
           enablePagination={true}
           enableVirtualization={false}
@@ -346,6 +347,11 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
                           <span className='text-[8px] border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-1 py-1 leading-none rounded-sm font-bold tracking-tighter uppercase whitespace-nowrap'>
                             {item.isUnit ? t.modal?.unit : t.modal?.pack}
                           </span>
+                          {item.expiryDate && (
+                            <span className='text-[9px] bg-gray-100 dark:bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded-sm font-medium border border-gray-200 dark:border-gray-700 ml-auto'>
+                              {formatExpiryDate(item.expiryDate)}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className='font-bold text-red-600 dark:text-red-400 text-right'>
