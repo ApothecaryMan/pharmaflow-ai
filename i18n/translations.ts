@@ -81,6 +81,9 @@ export const TRANSLATIONS = {
         loading: 'Loading rates...',
         error: 'Failed to fetch rates',
       },
+      calculator: {
+        title: 'Calculator',
+      },
       settings: 'Settings',
       theme: 'Theme',
       language: 'Language',
@@ -2847,11 +2850,14 @@ export const TRANSLATIONS = {
       currencyConverter: {
         title: 'تحويل العملات',
         amount: 'المبلغ',
-        from: 'من',
-        to: 'إلى',
+        from: 'مــــن',
+        to: 'إلــــى',
         result: 'النتيجة',
         loading: 'جاري تحميل الأسعار...',
         error: 'فشل في جلب الأسعار',
+      },
+      calculator: {
+        title: 'آلة حاسبة',
       },
       settings: 'الإعدادات',
       theme: 'السمة',

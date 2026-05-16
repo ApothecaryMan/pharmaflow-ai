@@ -4,6 +4,7 @@ import { TRANSLATIONS } from '../../../../i18n/translations';
 import { StatusBarItem } from '../StatusBarItem';
 import { FilterDropdown } from '../../../common/FilterDropdown';
 import { formatCurrencyParts } from '../../../../utils/currency';
+import { Calculator } from './Calculator';
 
 const getMenuSurfaceClasses = (isBlur: boolean, isMobile: boolean = false) => {
   if (!isBlur) return isMobile ? 'bg-(--bg-page-surface)' : 'bg-(--bg-menu)';
@@ -29,6 +30,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   const { language, settingsBlur } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
+  const [activeTool, setActiveTool] = useState<'converter' | 'calculator'>('converter');
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   // Currency Converter State
@@ -50,7 +52,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   }, [isPinned]);
 
   useEffect(() => {
-    if (isOpen && Object.keys(rates).length === 0) {
+    if (isOpen && Object.keys(rates).length === 0 && activeTool === 'converter') {
       setLoadingRates(true);
       fetch('https://api.exchangerate-api.com/v4/latest/USD')
         .then(res => res.json())
@@ -63,7 +65,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           setLoadingRates(false);
         });
     }
-  }, [isOpen, rates]);
+  }, [isOpen, rates, activeTool]);
 
   const convertedAmount = useMemo(() => {
     if (!rates[fromCurrency] || !rates[toCurrency]) return 0;
@@ -94,7 +96,14 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       {isOpen && (
         <div className={menuContainerClasses}>
           <div className="px-3 py-2 border-b border-(--border-divider) relative flex items-center justify-center">
-            <span className="text-xs font-bold text-(--text-primary)">{cT?.title || t.tools}</span>
+            <button 
+              onClick={() => setActiveTool(activeTool === 'converter' ? 'calculator' : 'converter')}
+              className="flex items-center gap-1 text-xs font-bold text-(--text-primary) hover:text-primary-500 transition-colors select-none"
+              title="Click to switch tool"
+            >
+              <span>{activeTool === 'converter' ? (cT?.title || 'Currency Converter') : (t.calculator?.title || 'Calculator')}</span>
+              <span className="material-symbols-rounded text-sm opacity-60">{language === 'AR' ? 'chevron_left' : 'chevron_right'}</span>
+            </button>
             <button 
               onClick={() => setIsPinned(!isPinned)}
               className={`absolute end-2 flex items-center justify-center w-6 h-6 rounded-md transition-colors hover:bg-black/5 dark:hover:bg-white/5 ${
@@ -107,7 +116,9 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           </div>
           
           <div className="p-3 space-y-3" style={{ direction: language === 'AR' ? 'rtl' : 'ltr' }}>
-            {loadingRates ? (
+            {activeTool === 'calculator' ? (
+              <Calculator />
+            ) : loadingRates ? (
               <div className="flex flex-col items-center justify-center p-4 text-(--text-tertiary)">
                 <span className="material-symbols-rounded animate-spin mb-2">sync</span>
                 <span className="text-xs">{cT?.loading}</span>
@@ -125,7 +136,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                     type="number" 
                     value={amount} 
                     onChange={(e) => setAmount(Number(e.target.value))}
-                    className="w-full h-8 bg-black/5 dark:bg-white/5 border-none rounded-lg px-2 text-xs font-bold focus:ring-1 focus:ring-primary-500/50 outline-hidden"
+                    className="w-full h-8 bg-black/5 dark:bg-white/5 border-none rounded-lg px-2 text-xs font-bold focus:ring-1 focus:ring-primary-500/50 outline-hidden font-mono"
                   />
                 </div>
                 
@@ -183,12 +194,12 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                     const fractionPart = match ? match[2] : '';
                     
                     return (
-                      <span className="text-sm font-bold text-primary-500 flex items-baseline gap-1" dir="auto">
+                      <span className="text-sm font-bold text-primary-500 flex items-baseline gap-1 font-mono" dir="auto">
                         <span>
                           {integerPart}
                           {fractionPart && <span className="text-[10px] ml-[1px]">{fractionPart}</span>}
                         </span>
-                        <span className="text-[10px] text-(--text-tertiary)">{symbol}</span>
+                        <span className="text-[10px] text-(--text-tertiary) font-sans">{symbol}</span>
                       </span>
                     );
                   })()}
