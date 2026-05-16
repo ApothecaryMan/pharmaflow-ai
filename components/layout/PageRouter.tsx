@@ -193,6 +193,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     'customer-overview': t.customerOverview,
     employees: t.employeeList,
     'add-product': t.inventory.addProduct,
+    'drug-interactions': t.drugInteractions,
   };
 
   if (viewTranslations[view]) {

@@ -603,6 +603,7 @@ export const TRANSLATIONS = {
       noInteractions: 'No interactions found in FDA database',
       combinationDrug: 'Combination Product',
       ingredientCount: 'active ingredients',
+      usage: 'Usage',
     },
     barcodePrinter: {
       title: 'Barcode Printer',
@@ -2780,6 +2781,7 @@ export const TRANSLATIONS = {
       noInteractions: 'لم يتم العثور على تفاعلات في قاعدة بيانات FDA',
       combinationDrug: 'منتج مركب',
       ingredientCount: 'مواد فعالة',
+      usage: 'دواعي الاستعمال',
     },
     appTitle: 'Zinc',
     zincAcronym: {

@@ -260,7 +260,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             />
             {ghostText && (
                 <div className={`absolute inset-y-0 ${dir === 'rtl' ? 'right-0' : 'left-0'} flex items-center pointer-events-none overflow-hidden select-none`}>
-                    <span className="invisible whitespace-pre text-base">{value}</span>
+                    <span className="invisible whitespace-pre text-base font-medium">{value}</span>
                     <span className={`
                         inline-flex items-center px-1.5 py-0.5 ms-1
                         rounded-lg 

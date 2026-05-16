@@ -67,7 +67,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({ t, l
       return (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <div className="w-12 h-12 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
-          <p className="text-gray-500 animate-pulse">{t.drugInteractions.loading}</p>
+          <p className="text-gray-500 animate-pulse">{t.loading}</p>
         </div>
       );
     }
@@ -76,7 +76,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({ t, l
       return (
         <div className="flex flex-col items-center justify-center py-20 text-gray-400 opacity-60">
           <span className="material-symbols-rounded text-6xl mb-4">clinical_notes</span>
-          <p className="text-lg">{t.drugInteractions.selectDrug}</p>
+          <p className="text-lg">{t.selectDrug}</p>
         </div>
       );
     }
@@ -88,8 +88,8 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({ t, l
             <span className="material-symbols-rounded text-3xl">error</span>
           </div>
           <div>
-            <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{t.drugInteractions.noFdaData}</h4>
-            <p className="text-sm text-gray-500">{t.drugInteractions.notApproved}</p>
+            <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{t.noFdaData}</h4>
+            <p className="text-sm text-gray-500">{t.notApproved}</p>
           </div>
         </div>
       );
@@ -114,7 +114,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({ t, l
                     </div>
                     <div>
                       <h4 className="font-black text-gray-900 dark:text-white uppercase tracking-wider">{name}</h4>
-                      <p className="text-[10px] text-gray-500 font-bold uppercase">{t.drugInteractions.activeIngredients}</p>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase">{t.activeIngredients}</p>
                     </div>
                   </div>
                   {data?.effective_time && (
@@ -129,7 +129,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({ t, l
                     <div className="space-y-4">
                       {activeTab === 'interactions' && (
                         <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                          {data.drug_interactions?.[0] || t.drugInteractions.noInteractions}
+                          {data.drug_interactions?.[0] || t.noInteractions}
                         </div>
                       )}
                       {activeTab === 'warnings' && (
@@ -150,7 +150,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({ t, l
                     </div>
                   ) : (
                     <div className="text-gray-400 italic py-4">
-                      {t.drugInteractions.noFdaData}
+                      {t.noFdaData}
                     </div>
                   )}
                 </div>
@@ -161,7 +161,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({ t, l
 
         <div className="flex items-center justify-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-widest pt-4">
           <span className="material-symbols-rounded text-[14px]">info</span>
-          {t.drugInteractions.source}
+          {t.source}
         </div>
       </div>
     );
@@ -178,7 +178,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({ t, l
               onSearchChange={setSearchQuery}
               inventory={inventory}
               onResultsChange={setResults}
-              placeholder={t.drugInteractions.searchPlaceholder}
+              placeholder={t.searchPlaceholder}
               autoFocus
             />
           </div>
@@ -189,13 +189,13 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({ t, l
               <SmallCard
                 title={selectedDrug.name}
                 value={Array.isArray(selectedDrug.genericName) ? selectedDrug.genericName.length : 1}
-                valueSuffix={` ${t.drugInteractions.ingredientCount}`}
+                valueSuffix={` ${t.ingredientCount}`}
                 icon="medication"
                 iconColor="primary"
                 isLoading={loading}
               />
               <SmallCard
-                title={t.drugInteractions.activeIngredients}
+                title={t.activeIngredients}
                 value={selectedDrug.genericName.toString().substring(0, 30) + '...'}
                 type="text"
                 icon="science"
@@ -219,7 +219,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({ t, l
         {/* Sidebar: Search Results */}
         <div className="lg:col-span-1 space-y-4">
           <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] px-2 flex items-center justify-between">
-            {language === 'ar' ? 'نتائج البحث' : 'Search Results'}
+            {language.toLowerCase() === 'ar' ? 'نتائج البحث' : 'Search Results'}
             <span className="bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 rounded text-[10px]">{results.length}</span>
           </h3>
           
@@ -255,10 +255,10 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({ t, l
             <div className="flex justify-center mb-6">
               <SegmentedControl
                 options={[
-                  { label: t.drugInteractions.interactions, value: 'interactions' },
-                  { label: t.drugInteractions.warnings, value: 'warnings' },
-                  { label: t.drugInteractions.contraindications, value: 'contraindications' },
-                  { label: language === 'ar' ? 'دواعي الاستعمال' : 'Usage', value: 'usage' },
+                  { label: t.interactions, value: 'interactions' },
+                  { label: t.warnings, value: 'warnings' },
+                  { label: t.contraindications, value: 'contraindications' },
+                  { label: t.usage || (language.toLowerCase() === 'ar' ? 'دواعي الاستعمال' : 'Usage'), value: 'usage' },
                 ]}
                 value={activeTab}
                 onChange={(v) => setActiveTab(v as any)}

@@ -695,7 +695,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'تفاعلات الأدوية',
     icon: 'medication',
     category: 'prescriptions',
-    requiredProps: ['t', 'language'],
+    requiredProps: ['t', 'language', 'inventory'],
     permission: PERMISSIONS_MAPPING['drug-interactions'],
     layout: 'standard',
   },
