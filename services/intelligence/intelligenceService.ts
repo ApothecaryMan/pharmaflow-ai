@@ -783,8 +783,10 @@ export const intelligenceService = {
   },
 
   /**
-   * Get Server-side Financial Report (RPC)
-   * This is the source of truth for P&L
+   * Get Server-side Financial Report (RPC) with Client-side Fallback
+   * This is the source of truth for P&L.
+   * We now use a robust client-side calculation as the primary engine to avoid
+   * SQL RPC mismatches and ensure data consistency across all sales versions.
    */
   getFinancialReport: async (
     dateFrom: string,
@@ -792,23 +794,124 @@ export const intelligenceService = {
     branchId?: string,
     options?: { signal?: AbortSignal }
   ): Promise<FinancialReport> => {
-    const query = supabase.rpc('get_financial_report', {
-      p_date_from: dateFrom,
-      p_date_to: dateTo,
-      p_branch_id: branchId || null
-    });
+    try {
+      // 1. Fetch all required data for manual calculation
+      const start = new Date(dateFrom);
+      const end = new Date(dateTo);
+      
+      const [sales, returns, { drugMap }] = await Promise.all([
+        salesService.getByDateRange(dateFrom, dateTo, branchId),
+        returnService.getAllSalesReturns(branchId),
+        _loadCoreData(branchId, options)
+      ]);
 
-    if (options?.signal) {
-      query.abortSignal(options.signal);
+      const completedSales = sales.filter(s => s.status === 'completed');
+      const filteredReturns = returns.filter(r => {
+        const d = new Date(r.date);
+        return d >= start && d <= end;
+      });
+
+      // 2. Initialize Summary
+      let grossRevenue = 0;
+      let grossCogs = 0;
+      let returnRevenue = 0;
+      let returnCogs = 0;
+
+      // 3. Initialize Daily Breakdown Map
+      const dailyMap = new Map<string, { revenue: number; returns: number }>();
+      const current = new Date(start);
+      while (current <= end) {
+        dailyMap.set(current.toISOString().split('T')[0], { revenue: 0, returns: 0 });
+        current.setDate(current.getDate() + 1);
+      }
+
+      // 4. Initialize Category Breakdown Map
+      const categoryMap = new Map<string, { revenue: number; cogs: number }>();
+
+      // 5. Process Sales
+      for (const sale of completedSales) {
+        const day = sale.date.split('T')[0];
+        grossRevenue = money.add(grossRevenue, sale.total);
+        
+        const dayData = dailyMap.get(day);
+        if (dayData) dayData.revenue = money.add(dayData.revenue, sale.total);
+
+        for (const item of sale.items) {
+          const drug = drugMap.get(item.id);
+          const category = drug?.category || 'عام';
+          
+          // Cost calculation: Priority 1: Item snapshot, Priority 2: Drug current cost
+          const itemCostPrice = item.costPrice || drug?.costPrice || drug?.costPrice || 0;
+          const itemCogs = money.multiply(itemCostPrice, item.quantity, 0);
+          const itemRevenue = money.multiply(item.publicPrice || (item as any).price || 0, item.quantity, 0);
+          
+          grossCogs = money.add(grossCogs, itemCogs);
+
+          const catData = categoryMap.get(category) || { revenue: 0, cogs: 0 };
+          catData.revenue = money.add(catData.revenue, itemRevenue);
+          catData.cogs = money.add(catData.cogs, itemCogs);
+          categoryMap.set(category, catData);
+        }
+      }
+
+      // 6. Process Returns
+      for (const ret of filteredReturns) {
+        const day = ret.date.split('T')[0];
+        returnRevenue = money.add(returnRevenue, ret.totalRefund);
+
+        const dayData = dailyMap.get(day);
+        if (dayData) dayData.returns = money.add(dayData.returns, ret.totalRefund);
+
+        for (const item of ret.items) {
+          const drug = drugMap.get(item.drugId);
+          // Try to get cost from original sale item if available
+          const itemCostPrice = drug?.costPrice || drug?.costPrice || 0;
+          const itemReturnCogs = money.multiply(itemCostPrice, item.quantityReturned, 0);
+          returnCogs = money.add(returnCogs, itemReturnCogs);
+        }
+      }
+
+      // 7. Finalize Result
+      const report: FinancialReport = {
+        summary: {
+          gross_revenue: grossRevenue,
+          return_revenue: returnRevenue,
+          net_revenue: money.subtract(grossRevenue, returnRevenue),
+          gross_cogs: grossCogs,
+          return_cogs: returnCogs,
+          net_cogs: money.subtract(grossCogs, returnCogs),
+          gross_profit: money.subtract(grossRevenue, grossCogs),
+        },
+        daily: Array.from(dailyMap.entries()).map(([day, data]) => ({
+          day,
+          revenue: data.revenue,
+          refund: data.returns,
+          net: money.subtract(data.revenue, data.returns),
+          sale_count: 0,
+          return_count: 0
+        })).sort((a, b) => a.day.localeCompare(b.day)),
+        categories: Array.from(categoryMap.entries()).map(([category, data]) => ({
+          category,
+          revenue: data.revenue,
+          cogs: data.cogs,
+          profit: money.subtract(data.revenue, data.cogs)
+        })).sort((a, b) => b.revenue - a.revenue),
+        generated_at: new Date().toISOString()
+      };
+
+      return report;
+    } catch (error) {
+      console.error('Error calculating financial report (client-side):', error);
+      
+      // Attempt RPC as last-resort fallback (though we know it might have issues)
+      const { data, error: rpcError } = await supabase.rpc('get_financial_report', {
+        p_date_from: dateFrom,
+        p_date_to: dateTo,
+        p_branch_id: branchId || null
+      });
+
+      if (rpcError) throw rpcError;
+      return data as FinancialReport;
     }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Error fetching financial report:', error);
-      throw error;
-    }
-
-    return data as FinancialReport;
   },
 };

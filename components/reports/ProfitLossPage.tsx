@@ -17,6 +17,8 @@ import { SmallCard } from '../common/SmallCard';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { PageHeader } from '../common/PageHeader';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 
 const categoryHelper = createColumnHelper<CategoryFinancialReport>();
 
@@ -37,6 +39,12 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
   const [period, setPeriod] = useState<'this_month' | 'last_month' | 'last_3_months' | 'this_year'>('this_month');
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastPeriodRef = useRef<string | null>(null);
+
+  const [showStats, setShowStats] = useState(() => storage.get<boolean>(StorageKeys.HEADER_STATS_VISIBLE, true));
+
+  useEffect(() => {
+    storage.set(StorageKeys.HEADER_STATS_VISIBLE, showStats);
+  }, [showStats]);
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -140,44 +148,48 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
         }
         sticky={true}
         mb="mb-4"
+        showBottom={showStats}
+        showStatsToggle={true}
+        onToggleBottom={() => setShowStats(!showStats)}
+        toggleTooltip={showStats ? t.global.actions.hideStats : t.global.actions.showStats}
+        bottomContent={
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <SmallCard 
+              title={t.intelligence.financials.profitLoss.netRevenue}
+              value={summary?.net_revenue || 0}
+              icon="account_balance_wallet"
+              iconColor="emerald"
+              type="currency"
+              isLoading={loading}
+            />
+            <SmallCard 
+              title={t.intelligence.financials.profitLoss.grossProfit}
+              value={summary?.gross_profit || 0}
+              icon="trending_up"
+              iconColor="primary"
+              type="currency"
+              isLoading={loading}
+            />
+            <SmallCard 
+              title={t.intelligence.financials.profitLoss.netCogs}
+              value={summary?.net_cogs || 0}
+              icon="inventory_2"
+              iconColor="amber"
+              type="currency"
+              isLoading={loading}
+            />
+            <SmallCard 
+              title={t.intelligence.financials.profitLoss.margin}
+              value={summary?.net_revenue ? (summary.gross_profit / summary.net_revenue) * 100 : 0}
+              icon="leaderboard"
+              iconColor="indigo"
+              fractionDigits={1}
+              valueSuffix="%"
+              isLoading={loading}
+            />
+          </div>
+        }
       />
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <SmallCard 
-          title={t.intelligence.financials.profitLoss.netRevenue}
-          value={summary?.net_revenue || 0}
-          icon="account_balance_wallet"
-          iconColor="emerald"
-          type="currency"
-          isLoading={loading}
-        />
-        <SmallCard 
-          title={t.intelligence.financials.profitLoss.grossProfit}
-          value={summary?.gross_profit || 0}
-          icon="trending_up"
-          iconColor="primary"
-          type="currency"
-          isLoading={loading}
-        />
-        <SmallCard 
-          title={t.intelligence.financials.profitLoss.netCogs}
-          value={summary?.net_cogs || 0}
-          icon="inventory_2"
-          iconColor="amber"
-          type="currency"
-          isLoading={loading}
-        />
-        <SmallCard 
-          title={t.intelligence.financials.profitLoss.margin}
-          value={summary?.net_revenue ? (summary.gross_profit / summary.net_revenue) * 100 : 0}
-          icon="leaderboard"
-          iconColor="indigo"
-          fractionDigits={1}
-          valueSuffix="%"
-          isLoading={loading}
-        />
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main P&L Statement */}
