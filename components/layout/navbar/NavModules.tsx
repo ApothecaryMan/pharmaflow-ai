@@ -120,7 +120,7 @@ export const NavModules: React.FC<NavModulesProps> = ({
                 onMouseEnter={(e) => handleMouseEnter(module.id, e)}
                 onClick={(e) => handleModuleClick(module.id, e)}
                 disabled={isEffectivelyDisabled}
-                className={`main-nav-tab flex items-center gap-2 px-2.5 py-1 rounded-lg whitespace-nowrap relative type-interactive transition-all duration-200
+                className={`main-nav-tab flex items-center gap-2 ${module.id === 'settings' || module.id === 'test' ? 'px-2' : 'px-2.5'} py-1 rounded-lg whitespace-nowrap relative type-interactive transition-all duration-200
                     ${
                       isEffectivelyDisabled
                         ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
@@ -131,7 +131,11 @@ export const NavModules: React.FC<NavModulesProps> = ({
                             : 'text-gray-600 dark:text-gray-400 hover:bg-(--bg-navbar-hover) hover:text-gray-900 dark:hover:text-white'
                     }
                   `}
-                title={!hasPage && !hasImplementedSubItems && navStyle !== 2 ? t.settings.comingSoon : ''}
+                title={
+                  (module.id === 'settings' || module.id === 'test') 
+                  ? getMenuTranslation(module.label, language) 
+                  : (!hasPage && !hasImplementedSubItems && navStyle !== 2 ? t.settings.comingSoon : '')
+                }
               >
                 <span className={`flex items-center justify-center`}>
                   {(() => {
@@ -147,7 +151,7 @@ export const NavModules: React.FC<NavModulesProps> = ({
                   })()}
                 </span>
 
-                {!isCompact && (
+                {!isCompact && module.id !== 'settings' && module.id !== 'test' && (
                   <span className='text-sm font-medium'>
                     {getMenuTranslation(module.label, language)}
                   </span>
