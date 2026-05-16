@@ -1,3 +1,7 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@100..700&display=swap")
 layer(base);
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@100;200;300;400;500;600;700&display=swap")
@@ -100,10 +104,6 @@ layer(base);
   font-size: var(--page-title-font-size) !important;
   font-family: var(--page-title-font-family) !important;
 }
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
 
 @custom-variant dark (&:is(.dark *));
 
