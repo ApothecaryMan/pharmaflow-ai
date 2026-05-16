@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   Legend, LineChart, Line, AreaChart, Area
 } from 'recharts';
-import { useFinancials } from '../../hooks/sales/useFinancials';
+
 import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { Icons } from '../common/Icons';
 import { TanStackTable } from '../common/TanStackTable';
@@ -191,15 +191,15 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
         }
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Main P&L Statement */}
         <div className={`lg:col-span-1 ${CARD_BASE} rounded-2xl p-6`}>
-          <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
             <span className="material-symbols-rounded text-gray-400" style={{ fontSize: '20px' }}>summarize</span>
             {t.intelligence.financials.profitLoss.statement}
           </h3>
           
-          <div className="space-y-4">
+          <div className="space-y-2">
             <PLRow label={t.intelligence.financials.profitLoss.grossSales} value={summary?.gross_revenue || 0} isLoading={loading} />
             <PLRow label={t.intelligence.financials.profitLoss.returns} value={-(summary?.return_revenue || 0)} isLoading={loading} />
             <hr className="border-(--border-divider)" />
@@ -213,11 +213,19 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
               isLoading={loading}
             />
             
-            <div className="mt-8 pt-8 border-t border-dashed border-(--border-divider) opacity-50">
-              <PLRow label={t.intelligence.financials.profitLoss.operatingExpenses} value={0} isLoading={loading} />
-              <p className="text-[10px] text-gray-400 mt-1 italic">
-                {t.intelligence.financials.profitLoss.noExpenses}
-              </p>
+            <div className="mt-4 pt-4 border-t border-dashed border-(--border-divider)">
+              <PLRow 
+                label={
+                  <div className="flex items-center gap-2">
+                    <span>{t.intelligence.financials.profitLoss.operatingExpenses}</span>
+                    <span className="text-[10px] text-gray-400 italic font-normal">
+                      * {t.intelligence.financials.profitLoss.noExpenses}
+                    </span>
+                  </div>
+                } 
+                value={0} 
+                isLoading={loading} 
+              />
             </div>
             
             <hr className="border-(--border-divider)" />
@@ -231,66 +239,65 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
           </div>
         </div>
 
-        {/* Charts Section */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className={`${CARD_BASE} rounded-2xl p-6 h-[400px]`}>
-             <h3 className="text-lg font-bold mb-4 flex items-center justify-between">
-              <span>{t.intelligence.financials.profitLoss.dailyPerformance}</span>
-              <span className="text-xs font-normal text-gray-400">{t.intelligence.financials.profitLoss.salesVsReturns}</span>
-            </h3>
-            {loading ? (
-              <div className="h-full w-full flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={daily}>
-                  <defs>
-                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={theme.primary} stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor={theme.primary} stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
-                  <XAxis 
-                    dataKey="day" 
-                    tickFormatter={(val) => new Date(val).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' })}
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 10, fill: '#888' }}
-                  />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#888' }} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                    labelFormatter={(val) => new Date(val).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                  />
-                  <Area type="monotone" dataKey="revenue" name={t.intelligence.financials.profitLoss.sales} stroke={theme.primary} fillOpacity={1} fill="url(#colorRev)" strokeWidth={3} />
-                  <Area type="monotone" dataKey="refund" name={t.intelligence.financials.profitLoss.refunds} stroke="#ef4444" fill="#ef444410" strokeWidth={2} strokeDasharray="5 5" />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-
-          <div className={`${CARD_BASE} rounded-2xl p-6`}>
-            <h3 className="text-lg font-bold mb-4">{t.intelligence.financials.profitLoss.profitabilityByCategory}</h3>
-            <div className="h-[300px]">
-              <TanStackTable 
-                data={categories}
-                columns={categoryColumns}
-                lite={true}
-                tableId="pl-category-table"
-                pageSize={5}
-                isLoading={loading}
-              />
-            </div>
+        {/* Category Table */}
+        <div className={`lg:col-span-2 ${CARD_BASE} rounded-2xl p-6`}>
+          <h3 className="text-lg font-bold mb-4">{t.intelligence.financials.profitLoss.profitabilityByCategory}</h3>
+          <div className="h-full min-h-[300px]">
+            <TanStackTable 
+              data={categories}
+              columns={categoryColumns}
+              lite={true}
+              tableId="pl-category-table"
+              pageSize={5}
+              isLoading={loading}
+            />
           </div>
         </div>
+      </div>
+
+      {/* Charts Section */}
+      <div className={`${CARD_BASE} rounded-2xl p-6 h-[400px]`}>
+        <h3 className="text-lg font-bold mb-4 flex items-center justify-between">
+          <span>{t.intelligence.financials.profitLoss.dailyPerformance}</span>
+          <span className="text-xs font-normal text-gray-400">{t.intelligence.financials.profitLoss.salesVsReturns}</span>
+        </h3>
+        {loading ? (
+          <div className="h-full w-full flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={daily}>
+              <defs>
+                <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={theme.primary} stopOpacity={0.1}/>
+                  <stop offset="95%" stopColor={theme.primary} stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
+              <XAxis 
+                dataKey="day" 
+                tickFormatter={(val) => new Date(val).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' })}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 10, fill: '#888' }}
+              />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#888' }} />
+              <Tooltip 
+                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                labelFormatter={(val) => new Date(val).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              />
+              <Area type="monotone" dataKey="revenue" name={t.intelligence.financials.profitLoss.sales} stroke={theme.primary} fillOpacity={1} fill="url(#colorRev)" strokeWidth={3} />
+              <Area type="monotone" dataKey="refund" name={t.intelligence.financials.profitLoss.refunds} stroke="#ef4444" fill="#ef444410" strokeWidth={2} strokeDasharray="5 5" />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   );
 };
 
-const PLRow: React.FC<{ label: string; value: number; isBold?: boolean; isNegative?: boolean; isFinal?: boolean; isLoading?: boolean }> = ({ 
+const PLRow: React.FC<{ label: React.ReactNode; value: number; isBold?: boolean; isNegative?: boolean; isFinal?: boolean; isLoading?: boolean }> = ({ 
   label, value, isBold, isNegative, isFinal, isLoading 
 }) => (
   <div className={`flex items-center justify-between py-1 ${isBold ? 'font-bold py-2' : 'text-sm'} ${isFinal ? 'text-lg mt-2' : ''}`}>
