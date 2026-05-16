@@ -1,0 +1,43 @@
+/*
+The default border color has changed to `currentcolor` in Tailwind CSS v4,
+so we've added these compatibility styles to make sure everything still
+looks the same as it did with Tailwind CSS v3.
+If we ever want to remove these styles, we need to add an explicit border
+color utility to any element that depends on these defaults.
+*/
+@layer base  { *, ::after, ::before, ::backdrop, ::file-selector-button  { border-color: var(--color-gray-200, currentcolor); }
+::selection  { background-color: color-mix(in srgb, var(--primary) 25%, transparent); }
+.maplibregl-popup-content  { @apply bg-transparent! shadow-none! p-0! rounded-none!; }
+.maplibregl-popup-tip  { @apply hidden!; }
+*  { @apply border-border outline-ring/50; }
+body  { @apply bg-background text-foreground; cursor: var(--global-cursor), auto; }
+
+/* Apply dynamic cursor to all interactive elements */
+a, button, [role="button"], .interactive, .type-interactive  { cursor: var(--global-pointer), pointer; }
+html  { @apply font-sans; } }
+@layer base  {
+
+/* --- Global Scrollbar System --- */
+*  { scrollbar-width: thin !important; scrollbar-color: var(--color-gray-300) transparent !important; }
+.dark *  { scrollbar-color: var(--color-gray-600) transparent !important; }
+
+/* Global Webkit Scrollbars (Chrome, Safari, Edge) */
+::-webkit-scrollbar  { width: 8px !important; height: 8px !important; display: block !important; }
+::-webkit-scrollbar-track  { background: transparent !important; }
+::-webkit-scrollbar-thumb  { background-color: var(--color-gray-300) !important; border-radius: 20px !important; border: 2px solid transparent !important; background-clip: content-box !important; }
+.dark ::-webkit-scrollbar-thumb  { background-color: var(--color-gray-600) !important; }
+::-webkit-scrollbar-thumb:hover  { background-color: var(--color-gray-400) !important; }
+.dark ::-webkit-scrollbar-thumb:hover  { background-color: var(--color-gray-500) !important; }
+
+/* Force stable gutters on internal scrollable containers only (exclude main window) */
+:not(html):not(body).overflow-y-auto:not(.no-scrollbar), :not(html):not(body).overflow-y-scroll:not(.no-scrollbar), :not(html):not(body).overflow-auto:not(.no-scrollbar), :not(html):not(body)[class*="overflow-y-auto"]:not(.no-scrollbar), :not(html):not(body)[class*="overflow-y-scroll"]:not(.no-scrollbar)  { scrollbar-gutter: stable !important; } }
+
+/* Material Symbols Override - Force Font Family */
+@layer base  { .material-symbols-rounded  { font-family: "Material Symbols Rounded" !important; font-size-adjust: none !important;
+
+/* Protect from Arabic scaling shrink */
+direction: ltr !important;
+
+/* Prevent RTL flipping */
+display: inline-block; line-height: 1; vertical-align: middle; }
+.font-fill  { font-variation-settings: 'FILL' 1 !important; } }

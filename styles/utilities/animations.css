@@ -1,0 +1,37 @@
+/* --- Real-Time Sales Animations --- */
+@keyframes slideIn  { 0%  { opacity: 0; transform: translateY(-12px); filter: blur(4px); background-color: color-mix(in srgb, var(--color-primary-500) 15%, transparent); }
+100%  { opacity: 1; transform: translateY(0); filter: blur(0); background-color: transparent; } }
+.new-transaction  { animation: slideIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; will-change: transform, opacity, background-color; position: relative; z-index: 10; }
+
+/* YouTube-style Roll Up Animation for Order ID */
+@keyframes rollUp  { 0%  { transform: translateY(100%); opacity: 0; }
+30%  { opacity: 1; }
+100%  { transform: translateY(0); opacity: 1; } }
+@keyframes pulse-green  { 0%, 100%  { color: inherit; }
+50%  { color: #22c55e; } }
+@keyframes loading  { from  { width: 0%; }
+to  { width: 100%; } }
+
+/* --- Toast Animations --- */
+@keyframes toast-in  { from  { transform: translateX(100%); opacity: 0; }
+to  { transform: translateX(0); opacity: 1; } }
+@keyframes toast-out  { from  { transform: translateX(0); opacity: 1; }
+to  { transform: translateX(100%); opacity: 0; } }
+@keyframes toast-progress  { from  { width: 100%; }
+to  { width: 0%; } }
+
+/* --- Animation Utility Classes --- */
+.transition-fluid  { transition-property: all; transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1); transition-duration: 0.4s; }
+@keyframes wordEntrance  { from  { opacity: 0; transform: translateY(4px); filter: blur(4px); }
+to  { opacity: 1; transform: translateY(0); filter: blur(0); } }
+.animate-word-entrance  { animation: wordEntrance 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
+.mask-fade-edges  { mask-image: linear-gradient( to right, transparent, black 15%, black 85%, transparent ); }
+@keyframes scaleIn  { from  { opacity: 0; transform: scale(0.8); }
+to  { opacity: 1; transform: scale(1); } }
+@keyframes spin  { from  { transform: rotate(0deg); }
+to  { transform: rotate(360deg); } }
+@keyframes fadeIn  { from  { opacity: 0; }
+to  { opacity: 1; } }
+.animate-scale-in  { animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-spin-slow  { animation: spin 3s linear infinite; }
+.animate-fade-in  { animation: fadeIn 0.2s ease-out forwards; }

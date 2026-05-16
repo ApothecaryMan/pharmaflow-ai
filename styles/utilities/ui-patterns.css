@@ -1,0 +1,43 @@
+@utility custom-scrollbar  { scrollbar-width: thin !important; scrollbar-color: var(--color-gray-400) transparent !important; scrollbar-gutter: stable !important; &::-webkit-scrollbar  { width: 8px !important; height: 8px !important; display: block !important; }
+&::-webkit-scrollbar-thumb  { background-color: var(--color-gray-400) !important; border-radius: 20px !important; } }
+@utility scrollbar-hide  { scrollbar-width: none !important; -ms-overflow-style: none !important; &::-webkit-scrollbar  { display: none !important; } }
+@utility no-scrollbar  { scrollbar-width: none !important; -ms-overflow-style: none !important; &::-webkit-scrollbar  { display: none !important; } }
+.no-scrollbar::-webkit-scrollbar  { display: none !important; }
+.no-scrollbar  { -ms-overflow-style: none !important; scrollbar-width: none !important; }
+@utility glass-surface  { @apply backdrop-blur-2xl bg-(--bg-menu)/80 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]; }
+
+/* PWA Styles - iOS/iPad Safe Areas & Standalone Mode */
+@supports (padding: env(safe-area-inset-top))  { body  {
+
+/* Handle notch/home indicator safe areas */
+padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); } }
+
+/* Prevent iOS rubber-band scrolling on the body */
+html, body  { overscroll-behavior: none; -webkit-overflow-scrolling: touch; scrollbar-gutter: auto;
+
+/* Return to default for the main window */
+}
+
+/* Scroll Lock for Mobile Drawer/Modals */
+.drawer-open, .drawer-open html, .drawer-open body  { overflow: hidden !important; }
+.drawer-open .main-content-scroll  { overflow: hidden !important; touch-action: none !important; }
+
+/* PWA Standalone Mode Detection */
+@media (display-mode: standalone)  {
+
+/* Add any standalone-specific styles here */
+body  {
+
+/* Slightly different styling when running as PWA */
+} }
+
+/* Prevent text selection on UI elements (PWA feel) */
+.no-select  { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+
+/* Global Disabled Button Styling */
+button:disabled, .btn-disabled  { cursor: default !important; pointer-events: none !important; opacity: 0.5; }
+
+/* Custom Card Shadow (User Request 2025-12-09) */
+
+/* Light Mode Only Override */
+html:not(.dark) .card-shadow  { box-shadow: none !important; border: 2px solid #e5e7eb !important; }
