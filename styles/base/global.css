@@ -15,22 +15,8 @@ body  { @apply bg-background text-foreground; cursor: var(--global-cursor), auto
 /* Apply dynamic cursor to all interactive elements */
 a, button, [role="button"], .interactive, .type-interactive  { cursor: var(--global-pointer), pointer; }
 html  { @apply font-sans; } }
-@layer base  {
+/* Scrollbar system moved to scrollbars.css */
 
-/* --- Global Scrollbar System --- */
-*  { scrollbar-width: thin !important; scrollbar-color: var(--color-gray-300) transparent !important; }
-.dark *  { scrollbar-color: var(--color-gray-600) transparent !important; }
-
-/* Global Webkit Scrollbars (Chrome, Safari, Edge) */
-::-webkit-scrollbar  { width: 8px !important; height: 8px !important; display: block !important; }
-::-webkit-scrollbar-track  { background: transparent !important; }
-::-webkit-scrollbar-thumb  { background-color: var(--color-gray-300) !important; border-radius: 20px !important; border: 2px solid transparent !important; background-clip: content-box !important; }
-.dark ::-webkit-scrollbar-thumb  { background-color: var(--color-gray-600) !important; }
-::-webkit-scrollbar-thumb:hover  { background-color: var(--color-gray-400) !important; }
-.dark ::-webkit-scrollbar-thumb:hover  { background-color: var(--color-gray-500) !important; }
-
-/* Force stable gutters on internal scrollable containers only (exclude main window) */
-:not(html):not(body).overflow-y-auto:not(.no-scrollbar), :not(html):not(body).overflow-y-scroll:not(.no-scrollbar), :not(html):not(body).overflow-auto:not(.no-scrollbar), :not(html):not(body)[class*="overflow-y-auto"]:not(.no-scrollbar), :not(html):not(body)[class*="overflow-y-scroll"]:not(.no-scrollbar)  { scrollbar-gutter: stable !important; } }
 
 /* Material Symbols Override - Force Font Family */
 @layer base  { .material-symbols-rounded  { font-family: "Material Symbols Rounded" !important; font-size-adjust: none !important;

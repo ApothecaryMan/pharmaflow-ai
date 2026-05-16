@@ -197,6 +197,13 @@
   /* Global Dynamic Cursors */
   --global-cursor: auto;
   --global-pointer: pointer;
+
+  /* ── 4. Scrollbar Tokens ── */
+  --scrollbar-width: 8px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #d4d4d8; /* gray-300 */
+  --scrollbar-thumb-hover: #a1a1aa; /* gray-400 */
+  --scrollbar-radius: 20px;
 }
 
 .dark {
@@ -236,6 +243,10 @@
   --text-secondary: #d1d5db; /* gray-300 */
   --text-tertiary: #9ca3af; /* gray-400 */
   --bg-internal-card: #202020;
+
+  /* Scrollbar Overrides */
+  --scrollbar-thumb: #52525b; /* gray-600 */
+  --scrollbar-thumb-hover: #71717a; /* gray-500 */
 }
 
 /* ── 5. Graphic Mode Overrides (RTL) ── */

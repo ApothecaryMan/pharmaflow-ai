@@ -1,9 +1,5 @@
-@utility custom-scrollbar  { scrollbar-width: thin !important; scrollbar-color: var(--color-gray-400) transparent !important; scrollbar-gutter: stable !important; &::-webkit-scrollbar  { width: 8px !important; height: 8px !important; display: block !important; }
-&::-webkit-scrollbar-thumb  { background-color: var(--color-gray-400) !important; border-radius: 20px !important; } }
-@utility scrollbar-hide  { scrollbar-width: none !important; -ms-overflow-style: none !important; &::-webkit-scrollbar  { display: none !important; } }
-@utility no-scrollbar  { scrollbar-width: none !important; -ms-overflow-style: none !important; &::-webkit-scrollbar  { display: none !important; } }
-.no-scrollbar::-webkit-scrollbar  { display: none !important; }
-.no-scrollbar  { -ms-overflow-style: none !important; scrollbar-width: none !important; }
+/* Scrollbar utilities moved to scrollbars.css */
+
 @utility glass-surface  { @apply backdrop-blur-2xl bg-(--bg-menu)/80 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]; }
 
 /* PWA Styles - iOS/iPad Safe Areas & Standalone Mode */
