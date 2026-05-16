@@ -431,6 +431,10 @@ export const MENU_TRANSLATIONS = {
     'Doctor Management': 'إدارة الأطباء',
     'Prescription History': 'سجل الوصفات',
     'Insurance & Claims': 'التأمين والمطالبات',
+    'Drug Safety': 'سلامة الأدوية',
+    'Interaction Checker': 'فاحص التفاعلات',
+    'FDA Label Search': 'بحث بيانات FDA',
+    'Safety Alerts': 'تنبيهات السلامة',
 
     // Prescription Processing Items
     'Upload Prescription': 'رفع وصفة',

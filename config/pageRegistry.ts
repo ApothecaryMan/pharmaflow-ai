@@ -688,6 +688,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     permission: 'reports.view_financial',
     layout: 'standard',
   },
+  'drug-interactions': {
+    id: 'drug-interactions',
+    component: React.lazy(() => import('../components/prescriptions/DrugInteractionsPage')),
+    menuLabel: 'Drug Interactions',
+    menuLabelAr: 'تفاعلات الأدوية',
+    icon: 'medication',
+    category: 'prescriptions',
+    requiredProps: ['t', 'language'],
+    permission: PERMISSIONS_MAPPING['drug-interactions'],
+    layout: 'standard',
+  },
 };
 
 // Helper function to get page config

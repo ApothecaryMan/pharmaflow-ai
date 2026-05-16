@@ -30,7 +30,7 @@ export const MODULE_VIEW_MAPPING: Record<string, ViewState> = {
   purchase: 'purchases',
   customers: 'customers',
   'customer-overview': 'customer-overview',
-  prescriptions: 'dashboard',
+  prescriptions: 'drug-interactions',
   finance: 'dashboard',
   reports: 'intelligence',
   hr: 'staff-overview',
@@ -642,6 +642,15 @@ export const PHARMACY_MENU: MenuItem[] = [
     order: 6,
     hasPage: false,
     submenus: [
+      {
+        id: 'drug-safety',
+        label: 'Drug Safety',
+        items: [
+          { label: 'Interaction Checker', view: 'drug-interactions', icon: 'medication' },
+          { label: 'FDA Label Search', icon: 'search' },
+          { label: 'Safety Alerts', icon: 'warning' },
+        ],
+      },
       {
         id: 'prescription-processing',
         label: 'Prescription Processing',
