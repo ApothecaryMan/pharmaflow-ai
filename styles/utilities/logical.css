@@ -1,5 +1,5 @@
 /* Thin Border White Mode Override */
-html:not(.dark).thin-border-mode .card-shadow  { border: 1px solid #d1d5db !important;
+html:not(.dark).thin-border-mode .card-shadow  { border: 1px solid var(--border-secondary) !important;
 
 /* gray-300 for darker color and 1px thickness */
 }

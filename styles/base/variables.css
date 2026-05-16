@@ -91,9 +91,49 @@
 /* Custom Variants */
 @custom-variant dark (&:is(.dark *));
 @variant dark (&:where(.dark, .dark *));
-
 :root {
   /* ── 1. Semantic Color Tokens (Light Mode) ── */
+
+  /* ── 1. Unified Semantic UI Tokens (Light Mode) ── */
+  
+  /* Backgrounds */
+  --bg-primary: transparent; 
+  --bg-secondary: var(--color-gray-100);
+  --bg-tertiary: var(--color-gray-200);
+  --bg-accent: oklch(0.967 0.001 286.375 / 55%); /* gray-100 with opacity */
+  --bg-hover: var(--color-gray-100);
+  --bg-navbar: #ffffff;
+  --bg-card: #ffffff;
+  --bg-input: #ffffff;
+  --bg-page-surface: #f1f3f5;
+  --bg-surface-neutral: rgba(250, 250, 250, 0.8);
+  --bg-statusbar: var(--bg-secondary);
+  --bg-menu: #ffffff;
+  --bg-menu-hover: var(--color-gray-100);
+  --bg-navbar-hover: var(--bg-menu-hover);
+  --button-base-inactive: rgba(228, 228, 231, 0.6); 
+  --button-base-active: #9a9a9a;
+  --bg-internal-card: #ffffff;
+
+  /* Text & Contrast */
+  --text-primary: var(--color-gray-900);
+  --text-secondary: #71717a;
+  --text-tertiary: var(--color-gray-400);
+  --text-inverse: #ffffff;
+
+  /* Borders & Dividers */
+  --border-color: var(--color-gray-200);
+  --border-primary: var(--color-gray-200);
+  --border-secondary: var(--color-gray-300);
+  --border-divider: var(--color-gray-100);
+  --border-search: var(--color-gray-200);
+
+  /* Semantic UI States */
+  --color-success: #22c55e;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+
+  /* Shadcn-like Semantic Mapping (OKLCH) */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -114,6 +154,7 @@
   --ring: oklch(0.708 0 0);
   --radius: 0.625rem;
 
+
   /* Sidebar Tokens */
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -130,12 +171,6 @@
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-
-  /* Structural Variables (Legacy & Recharts Compatibility) */
-  --border-color: #e5e7eb; /* gray-200 */
-  --text-primary: #111827; /* gray-900 */
-  --text-secondary: #4b5563; /* gray-600 */
-  --text-tertiary: #9ca3af; /* gray-400 */
 
   /* ── 2. Typography Tokens (Roboto Flex Axes) ── */
   --font-en: "IBM Plex Sans";
@@ -208,6 +243,40 @@
 
 .dark {
   /* ── 4. Semantic Overrides (Dark Mode) ── */
+  
+  /* Backgrounds Overrides */
+  --bg-primary: transparent; 
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #333333;
+  --bg-accent: #3d3d3d;
+  --bg-hover: rgba(60, 60, 60, 0.5);
+  --bg-navbar: #1f1f1f;
+  --bg-card: #323232;
+  --bg-input: #1f1f1f;
+  --bg-page-surface: #282828;
+  --bg-statusbar: var(--bg-navbar);
+  --bg-menu: #262626;
+  --bg-menu-hover: #323232;
+  --bg-navbar-hover: #323232;
+  --bg-surface-neutral: #2d2d2d;
+  --button-base-inactive: rgba(80, 80, 80, 0.4);
+  --button-base-active: #141413;
+  --bg-internal-card: #202020;
+
+  /* Text & Contrast Overrides */
+  --text-primary: #f3f4f6;
+  --text-secondary: #d1d5db;
+  --text-tertiary: #9ca3af;
+  --text-inverse: #111827;
+
+  /* Borders & Dividers Overrides */
+  --border-color: #3d3d3d;
+  --border-primary: #3d3d3d;
+  --border-secondary: #525252;
+  --border-divider: rgba(80, 80, 80, 0.5);
+  --border-search: rgba(80, 80, 80, 0.5);
+
+  /* Shadcn Overrides (OKLCH) */
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -227,6 +296,7 @@
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
 
+
   /* Sidebar Overrides */
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
@@ -237,12 +307,6 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 
-  /* Structural Overrides */
-  --border-color: #3f3f46; /* zinc-700 */
-  --text-primary: oklch(0.985 0 0);
-  --text-secondary: #d1d5db; /* gray-300 */
-  --text-tertiary: #9ca3af; /* gray-400 */
-  --bg-internal-card: #202020;
 
   /* Scrollbar Overrides */
   --scrollbar-thumb: #52525b; /* gray-600 */
