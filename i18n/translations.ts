@@ -71,6 +71,16 @@ export const TRANSLATIONS = {
       unit: 'Unit',
     },
     settings: {
+      tools: 'Tools',
+      currencyConverter: {
+        title: 'Currency Converter',
+        amount: 'Amount',
+        from: 'From',
+        to: 'To',
+        result: 'Result',
+        loading: 'Loading rates...',
+        error: 'Failed to fetch rates',
+      },
       settings: 'Settings',
       theme: 'Theme',
       language: 'Language',
@@ -2833,6 +2843,16 @@ export const TRANSLATIONS = {
       unit: 'وحدة',
     },
     settings: {
+      tools: 'أدوات',
+      currencyConverter: {
+        title: 'تحويل العملات',
+        amount: 'المبلغ',
+        from: 'من',
+        to: 'إلى',
+        result: 'النتيجة',
+        loading: 'جاري تحميل الأسعار...',
+        error: 'فشل في جلب الأسعار',
+      },
       settings: 'الإعدادات',
       theme: 'السمة',
       language: 'اللغة',

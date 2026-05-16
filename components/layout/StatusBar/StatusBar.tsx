@@ -10,6 +10,7 @@ import { DateTime } from './items/DateTime';
 import { DynamicTicker } from './items/DynamicTicker';
 import { NotificationBell } from './items/NotificationBell';
 import { SettingsMenu } from './items/SettingsMenu';
+import { ToolsMenu } from './items/ToolsMenu';
 import { QuickLogin } from './items/QuickLogin';
 import { VersionInfo } from './items/VersionInfo';
 import { StatusBarItem } from './StatusBarItem';
@@ -184,6 +185,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
         {/* Left Section: System & Time */}
         <StatusBarSection>
           <VersionInfo version={t.version} />
+          {currentEmployeeId && <ToolsMenu />}
           {currentEmployeeId && <SettingsMenu />}
           <ConnectionStatus onlineText={t.online} offlineText={t.offline} />
           {currentEmployeeId && (
