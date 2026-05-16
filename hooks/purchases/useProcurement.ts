@@ -4,7 +4,7 @@
  * Provides procurement summary and items from real inventory/sales data
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { intelligenceService } from '../../services/intelligence/intelligenceService';
 import { useData } from '../../context/DataContext';
 import { permissionsService } from '../../services/auth/permissionsService';
@@ -35,25 +35,48 @@ export function useProcurement(filters: UseProcurementFilters = {}): UseProcurem
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const lastBranchIdRef = useRef<string | undefined>(undefined);
+
+  const fetchData = useCallback(async (isRefresh = false) => {
+    // Prevent duplicate fetches for the same branch unless it's a manual refresh
+    if (!isRefresh && lastBranchIdRef.current === activeBranchId && (summary || items.length > 0)) {
+      return;
+    }
+
+    // Abort previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    lastBranchIdRef.current = activeBranchId;
+
     setLoading(true);
     setError(null);
 
     try {
       const [summaryData, itemsData] = await Promise.all([
-        intelligenceService.getProcurementSummary(activeBranchId),
-        intelligenceService.getProcurementItems(activeBranchId),
+        intelligenceService.getProcurementSummary(activeBranchId, { signal: controller.signal }),
+        intelligenceService.getProcurementItems(activeBranchId, { signal: controller.signal }),
       ]);
 
-      setSummary(summaryData);
-      setItems(itemsData);
-    } catch (err) {
+      if (!controller.signal.aborted) {
+        setSummary(summaryData);
+        setItems(itemsData);
+        setLoading(false);
+      }
+    } catch (err: any) {
+      if (err.name === 'AbortError') return;
+
       console.error('[useProcurement] Error fetching data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load procurement data');
-    } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) {
+        setError(err instanceof Error ? err.message : 'Failed to load procurement data');
+        setLoading(false);
+      }
     }
-  }, [activeBranchId]);
+  }, [activeBranchId, summary, items.length]);
 
   useEffect(() => {
     const canView = permissionsService.can('reports.view_intelligence');
@@ -62,6 +85,12 @@ export function useProcurement(filters: UseProcurementFilters = {}): UseProcurem
     } else {
       setLoading(false);
     }
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [fetchData]);
 
   // Extract unique suppliers and categories
@@ -98,7 +127,7 @@ export function useProcurement(filters: UseProcurementFilters = {}): UseProcurem
     filteredItems,
     loading,
     error,
-    refresh: fetchData,
+    refresh: () => fetchData(true),
     suppliers,
     categories,
   };

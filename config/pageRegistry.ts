@@ -539,8 +539,6 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'auto_graph',
     category: 'reports',
     requiredProps: ['color', 't', 'language'],
-    skeleton: DashboardPageSkeleton,
-    skeletonProps: { withTopBar: true },
     permission: 'reports.view_financial',
     layout: 'dashboard',
   },

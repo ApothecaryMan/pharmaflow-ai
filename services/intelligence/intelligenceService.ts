@@ -183,10 +183,16 @@ function calculateParetoABC<T extends { revenue: number }>(items: T[]): (T & { a
 
 // === Internal Data Loaders ===
 
-async function _loadCoreData(branchId?: string) {
+async function _loadCoreData(branchId?: string, options?: { signal?: AbortSignal }) {
+  const fetchDrugs = inventoryService.getAll(branchId);
+  const fetchBatches = batchService.getAllBatches(branchId);
+
+  // In a real scenario, we would pass options.signal to these service methods too.
+  // For now, we'll focus on the top-level orchestration.
+
   const [drugs, allBatches] = await Promise.all([
-    inventoryService.getAll(branchId),
-    batchService.getAllBatches(branchId),
+    fetchDrugs,
+    fetchBatches,
   ]);
 
   const drugMap = new Map(drugs.map((d) => [d.id, d]));
@@ -206,8 +212,8 @@ export const intelligenceService = {
   /**
    * Get Procurement Summary from real inventory data
    */
-  getProcurementSummary: async (branchId?: string): Promise<ProcurementSummary> => {
-    const items = await intelligenceService.getProcurementItems(branchId);
+  getProcurementSummary: async (branchId?: string, options?: { signal?: AbortSignal }): Promise<ProcurementSummary> => {
+    const items = await intelligenceService.getProcurementItems(branchId, options);
 
     const needingOrder = items.filter((i) => i.suggested_order_qty > 0);
     const outOfStock = items.filter((i) => i.stock_status === 'OUT_OF_STOCK');
@@ -227,8 +233,8 @@ export const intelligenceService = {
   /**
    * Get Procurement Items from real inventory and sales data
    */
-  getProcurementItems: async (branchId?: string): Promise<ProcurementItem[]> => {
-    const { drugs, drugMap, allBatches, stockMap } = await _loadCoreData(branchId);
+  getProcurementItems: async (branchId?: string, options?: { signal?: AbortSignal }): Promise<ProcurementItem[]> => {
+    const { drugs, drugMap, allBatches, stockMap } = await _loadCoreData(branchId, options);
     
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -379,8 +385,8 @@ export const intelligenceService = {
   /**
    * Get Risk Summary computed from real batch expiry data
    */
-  getRiskSummary: async (branchId?: string): Promise<RiskSummary> => {
-    const riskItems = await intelligenceService.getExpiryRiskItems(branchId);
+  getRiskSummary: async (branchId?: string, options?: { signal?: AbortSignal }): Promise<RiskSummary> => {
+    const riskItems = await intelligenceService.getExpiryRiskItems(branchId, options);
 
     const summary: RiskSummary = {
       total_value_at_risk: 0,
@@ -415,8 +421,8 @@ export const intelligenceService = {
   /**
    * Get Expiry Risk Items computed from real batch data
    */
-  getExpiryRiskItems: async (branchId?: string): Promise<ExpiryRiskItem[]> => {
-    const { drugs, drugMap, allBatches } = await _loadCoreData(branchId);
+  getExpiryRiskItems: async (branchId?: string, options?: { signal?: AbortSignal }): Promise<ExpiryRiskItem[]> => {
+    const { drugs, drugMap, allBatches } = await _loadCoreData(branchId, options);
 
     const now = new Date();
     const ninetyDaysFromNow = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
@@ -524,9 +530,10 @@ export const intelligenceService = {
    */
   getFinancialKPIs: async (
     period: FinancialPeriod = 'this_month',
-    branchId?: string
+    branchId?: string,
+    options?: { signal?: AbortSignal }
   ): Promise<FinancialKPIs> => {
-    const { drugs, drugMap } = await _loadCoreData(branchId);
+    const { drugs, drugMap } = await _loadCoreData(branchId, options);
 
     // Optimized Fetching: Only fetch for the periods we need
     const currentRange = getDateRangeForPeriod(period);
@@ -586,9 +593,10 @@ export const intelligenceService = {
    */
   getProductFinancials: async (
     period: FinancialPeriod = 'this_month',
-    branchId?: string
+    branchId?: string,
+    options?: { signal?: AbortSignal }
   ): Promise<ProductFinancialItem[]> => {
-    const { drugs, drugMap } = await _loadCoreData(branchId);
+    const { drugs, drugMap } = await _loadCoreData(branchId, options);
 
     const range = getDateRangeForPeriod(period);
     const periodSales = await salesService.getByDateRange(range.start.toISOString(), range.end.toISOString(), branchId);
@@ -651,9 +659,10 @@ export const intelligenceService = {
    */
   getCategoryFinancials: async (
     period: FinancialPeriod = 'this_month',
-    branchId?: string
+    branchId?: string,
+    options?: { signal?: AbortSignal }
   ): Promise<CategoryFinancialItem[]> => {
-    const products = await intelligenceService.getProductFinancials(period, branchId);
+    const products = await intelligenceService.getProductFinancials(period, branchId, options);
     
     const categoryAgg = new Map<string, CategoryFinancialItem>();
     
@@ -700,7 +709,8 @@ export const intelligenceService = {
    */
   getAuditTransactions: async (
     limit: number = 100,
-    branchId?: string
+    branchId?: string,
+    options?: { signal?: AbortSignal }
   ): Promise<AuditTransaction[]> => {
     // Optimized: Use filter/limit if possible, or at least only fetch recent
     const thirtyDaysAgo = new Date();
@@ -779,13 +789,20 @@ export const intelligenceService = {
   getFinancialReport: async (
     dateFrom: string,
     dateTo: string,
-    branchId?: string
+    branchId?: string,
+    options?: { signal?: AbortSignal }
   ): Promise<FinancialReport> => {
-    const { data, error } = await supabase.rpc('get_financial_report', {
+    const query = supabase.rpc('get_financial_report', {
       p_date_from: dateFrom,
       p_date_to: dateTo,
       p_branch_id: branchId || null
     });
+
+    if (options?.signal) {
+      query.abortSignal(options.signal);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching financial report:', error);

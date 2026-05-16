@@ -4,7 +4,7 @@
  * Provides transaction history from real sales and returns data
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { intelligenceService } from '../../services/intelligence/intelligenceService';
 import { useData } from '../../context/DataContext';
 import { permissionsService } from '../../services/auth/permissionsService';
@@ -23,20 +23,46 @@ export function useAudit(limit: number = 100): UseAuditResult {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const lastFetchKeyRef = useRef<string | undefined>(undefined);
+
+  const fetchData = useCallback(async (isRefresh = false) => {
+    const fetchKey = `${activeBranchId}-${limit}`;
+
+    // Prevent duplicate fetches for the same branch and limit unless it's a manual refresh
+    if (!isRefresh && lastFetchKeyRef.current === fetchKey && transactions.length > 0) {
+      return;
+    }
+
+    // Abort previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    lastFetchKeyRef.current = fetchKey;
+
     setLoading(true);
     setError(null);
 
     try {
-      const data = await intelligenceService.getAuditTransactions(limit, activeBranchId);
-      setTransactions(data);
-    } catch (err) {
+      const data = await intelligenceService.getAuditTransactions(limit, activeBranchId, { signal: controller.signal });
+      
+      if (!controller.signal.aborted) {
+        setTransactions(data);
+        setLoading(false);
+      }
+    } catch (err: any) {
+      if (err.name === 'AbortError') return;
+
       console.error('[useAudit] Error fetching data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load audit data');
-    } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) {
+        setError(err instanceof Error ? err.message : 'Failed to load audit data');
+        setLoading(false);
+      }
     }
-  }, [limit, activeBranchId]);
+  }, [limit, activeBranchId, transactions.length]);
 
   useEffect(() => {
     const canView = permissionsService.can('reports.view_intelligence') || permissionsService.can('reports.view_financial');
@@ -45,12 +71,18 @@ export function useAudit(limit: number = 100): UseAuditResult {
     } else {
       setLoading(false);
     }
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [fetchData]);
 
   return {
     transactions,
     loading,
     error,
-    refresh: fetchData,
+    refresh: () => fetchData(true),
   };
 }

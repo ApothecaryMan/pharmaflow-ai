@@ -4,7 +4,7 @@
  * Provides risk summary and expiring batch items from real data
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { intelligenceService } from '../../services/intelligence/intelligenceService';
 import { useData } from '../../context/DataContext';
 import { permissionsService } from '../../services/auth/permissionsService';
@@ -24,26 +24,49 @@ export function useRisk(): UseRiskResult {
   const [items, setItems] = useState<ExpiryRiskItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const lastBranchIdRef = useRef<string | undefined>(undefined);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (isRefresh = false) => {
+    // Prevent duplicate fetches for the same branch unless it's a manual refresh
+    if (!isRefresh && lastBranchIdRef.current === activeBranchId && (summary || items.length > 0)) {
+      return;
+    }
+
+    // Abort previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    lastBranchIdRef.current = activeBranchId;
+
     setLoading(true);
     setError(null);
 
     try {
       const [summaryData, itemsData] = await Promise.all([
-        intelligenceService.getRiskSummary(activeBranchId),
-        intelligenceService.getExpiryRiskItems(activeBranchId),
+        intelligenceService.getRiskSummary(activeBranchId, { signal: controller.signal }),
+        intelligenceService.getExpiryRiskItems(activeBranchId, { signal: controller.signal }),
       ]);
 
-      setSummary(summaryData);
-      setItems(itemsData);
-    } catch (err) {
+      if (!controller.signal.aborted) {
+        setSummary(summaryData);
+        setItems(itemsData);
+        setLoading(false);
+      }
+    } catch (err: any) {
+      if (err.name === 'AbortError') return;
+      
       console.error('[useRisk] Error fetching data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load risk data');
-    } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) {
+        setError(err instanceof Error ? err.message : 'Failed to load risk data');
+        setLoading(false);
+      }
     }
-  }, [activeBranchId]);
+  }, [activeBranchId, summary, items.length]);
 
   useEffect(() => {
     const canView = permissionsService.can('reports.view_intelligence') || permissionsService.can('reports.view_inventory');
@@ -52,6 +75,12 @@ export function useRisk(): UseRiskResult {
     } else {
       setLoading(false);
     }
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [fetchData]);
 
   return {
@@ -59,6 +88,6 @@ export function useRisk(): UseRiskResult {
     items,
     loading,
     error,
-    refresh: fetchData,
+    refresh: () => fetchData(true),
   };
 }
