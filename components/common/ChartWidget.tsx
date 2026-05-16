@@ -5,6 +5,7 @@ import {
   Bar,
   CartesianGrid,
   ComposedChart,
+  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -25,19 +26,21 @@ export const CustomTooltipContent = memo(
     selectedEmployeeId,
     showComparison,
     primaryLabel,
+    dataKeys,
+    tooltipLabelFormatter,
   }: any) => {
     if (active && payload && payload.length) {
-      // Find the main employee's data (sales)
-      const mainData = payload.find((p: any) => p.dataKey === 'sales');
-      const otherEmployees = payload.filter(
-        (p: any) => p.dataKey !== 'sales' && p.dataKey !== 'profit'
-      );
+      // Find the main data
+      const mainData = payload.find((p: any) => p.dataKey === dataKeys?.primary) || payload[0];
+      const otherData = payload.filter((p: any) => p.dataKey !== mainData?.dataKey);
 
       return (
         <div className='backdrop-blur-md bg-(--bg-card)/80 saturate-150 p-2.5 px-3.5 rounded-xl shadow-xl border border-(--border-divider) flex flex-col gap-1.5'>
           {/* Header: Date/Label */}
           <div className='flex items-center justify-between gap-4 border-b border-(--border-divider) pb-1 mb-0.5'>
-            <span className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider'>{label}</span>
+            <span className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider'>
+              {tooltipLabelFormatter ? tooltipLabelFormatter(label) : label}
+            </span>
             <span className='text-[10px] font-medium text-gray-400 dark:text-gray-500'>{primaryLabel || 'Overview'}</span>
           </div>
 
@@ -63,21 +66,29 @@ export const CustomTooltipContent = memo(
             </div>
           )}
 
-          {/* Comparison Section */}
-          {showComparison && otherEmployees.length > 0 && (
+          {/* Comparison / Secondary Section */}
+          {(showComparison || dataKeys?.secondary?.length > 0) && otherData.length > 0 && (
             <div className='flex flex-col gap-1 pt-1 border-t border-(--border-divider)'>
-              {otherEmployees.map((emp: any, idx: number) => {
-                const employee = employees?.find((e: any) => e.id === emp.dataKey);
-                const name = employee?.name || emp.dataKey;
+              {otherData.map((item: any, idx: number) => {
+                const secondaryDef = dataKeys?.secondary?.find((s: any) => s.key === item.dataKey);
+                const employee = employees?.find((e: any) => e.id === item.dataKey);
+                const name = secondaryDef?.name || employee?.name || item.name || item.dataKey;
                 return (
                   <div key={idx} className='flex items-center justify-between gap-6'>
                     <div className='flex items-center gap-1.5'>
-                      <div className='w-1.5 h-1.5 rounded-full' style={{ backgroundColor: emp.color || emp.fill || '#9ca3af' }} />
+                      <div className='w-1.5 h-1.5 rounded-full' style={{ backgroundColor: item.color || item.stroke || item.fill || '#9ca3af' }} />
                       <span className='text-[11px] font-medium text-gray-600 dark:text-gray-400 truncate max-w-[80px]'>{name}</span>
                     </div>
-                    <span className='text-[11px] font-bold text-gray-700 dark:text-gray-200 tabular-nums'>
-                      {formatCompactCurrencyParts(emp.value).amount}
-                    </span>
+                    <div className="flex items-baseline gap-1">
+                      <span className='text-[11px] font-bold text-gray-700 dark:text-gray-200 tabular-nums'>
+                        {formatCompactCurrencyParts(item.value).amount}
+                      </span>
+                      {unit && (
+                        <span className='text-[9px] font-medium text-gray-500 uppercase'>
+                          {unit}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -100,6 +111,7 @@ interface ChartWidgetProps {
   dataKeys: {
     primary: string; // e.g., 'sales'
     comparison?: string[]; // IDs for comparison lines
+    secondary?: { key: string; name: string; color: string; isDashed?: boolean }[];
   };
   color: string; // Hex color
   language: 'AR' | 'EN';
@@ -118,6 +130,9 @@ interface ChartWidgetProps {
 
   // Customization
   xAxisInterval?: number | 'preserveStartEnd' | 'equidistantPreserveStart';
+  xAxisKey?: string;
+  xAxisFormatter?: (value: any) => string;
+  tooltipLabelFormatter?: (value: any) => string;
 
   // External State Control (Optional, component can manage self if not provided)
   chartType?: 'area' | 'bar';
@@ -125,8 +140,6 @@ interface ChartWidgetProps {
 
   // Labels
   primaryLabel?: string;
-
-  // Styling
   className?: string;
   chartClassName?: string;
   headerClassName?: string;
@@ -160,6 +173,9 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
   chartMargin,
   isLoading = false,
   children,
+  xAxisKey = 'date',
+  xAxisFormatter,
+  tooltipLabelFormatter,
 }) => {
   const [internalChartType, setInternalChartType] = useState<'area' | 'bar'>('area');
   const [isReady, setIsReady] = useState(false);
@@ -265,21 +281,10 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
         style={{ minHeight: 200, minWidth: 0 }}
       >
         {isLoading && (
-          <div className="absolute inset-0 z-10 flex flex-col justify-end gap-6 p-2 mb-4">
-             <div className="flex-1 w-full flex items-end gap-3 px-2">
-                {[40, 70, 45, 90, 65, 30, 80, 50].map((h, i) => (
-                  <div 
-                    key={i} 
-                    className="flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-t-xl animate-pulse" 
-                    style={{ height: `${h}%` }}
-                  />
-                ))}
-             </div>
-             <div className="h-4 w-full flex gap-3 px-2">
-                {[1,2,3,4,5,6,7,8].map(i => (
-                  <div key={i} className="flex-1 bg-zinc-50 dark:bg-zinc-800/30 rounded animate-pulse" />
-                ))}
-             </div>
+          <div className="absolute inset-0 z-10 flex items-center justify-center">
+             <span className="material-symbols-rounded animate-spin text-primary-500 dark:text-primary-400" style={{ fontSize: '32px' }}>
+                progress_activity
+             </span>
           </div>
         )}
         {isReady && !isLoading && (
@@ -304,12 +309,13 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
               </defs>
               <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='var(--border-color)' />
               <XAxis
-                dataKey='date'
+                dataKey={xAxisKey}
                 axisLine={false}
                 tickLine={false}
+                tickFormatter={xAxisFormatter}
                 tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
                 interval={xAxisInterval ?? 0}
-                padding={{ left: 1, right: 3 }}
+                padding={{ left: 20, right: 20 }}
                 dy={10}
               />
               <YAxis
@@ -333,6 +339,8 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                     selectedEmployeeId={selectedEmployeeId}
                     showComparison={showComparison}
                     primaryLabel={primaryLabel}
+                    dataKeys={dataKeys}
+                    tooltipLabelFormatter={tooltipLabelFormatter}
                   />
                 }
                 cursor={false}
@@ -357,6 +365,47 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                     activeDot={false}
                   />
                 ))}
+
+              {/* Secondary Lines - Explicit Multi-line Support */}
+              {dataKeys.secondary?.map((sec, idx) => {
+                if (activeChartType === 'area') {
+                  return (
+                    <Area
+                      key={sec.key}
+                      type='monotone'
+                      dataKey={sec.key}
+                      name={sec.name}
+                      stroke={sec.color}
+                      strokeWidth={sec.isDashed ? 2 : 3}
+                      strokeOpacity={sec.isDashed ? 0.7 : 1}
+                      strokeDasharray={sec.isDashed ? '5 5' : undefined}
+                      fill={sec.isDashed ? `${sec.color}10` : 'none'}
+                      animationDuration={600}
+                      animationBegin={idx * 150}
+                      animationEasing="ease-out"
+                      activeDot={false}
+                    />
+                  );
+                } else {
+                  // For Bar chart (or others), render secondary as a Line over the bars
+                  return (
+                    <Line
+                      key={sec.key}
+                      type='monotone'
+                      dataKey={sec.key}
+                      name={sec.name}
+                      stroke={sec.color}
+                      strokeWidth={sec.isDashed ? 2 : 3}
+                      strokeDasharray={sec.isDashed ? '5 5' : undefined}
+                      dot={false}
+                      activeDot={{ r: 4, strokeWidth: 0, fill: sec.color }}
+                      animationDuration={600}
+                      animationBegin={idx * 150}
+                      animationEasing="ease-out"
+                    />
+                  );
+                }
+              })}
 
               {/* Main Chart - Render LAST (On Top) */}
               {activeChartType === 'area' ? (

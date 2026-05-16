@@ -1,8 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  Legend, LineChart, Line, AreaChart, Area
-} from 'recharts';
+import { ChartWidget } from '../common/ChartWidget';
 
 import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { Icons } from '../common/Icons';
@@ -68,10 +65,10 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
 
         if (period === 'last_month') {
           start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+          const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
           end.setTime(lastMonthEnd.getTime());
         } else if (period === 'last_3_months') {
-          start = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+          start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
         } else if (period === 'this_year') {
           start = new Date(now.getFullYear(), 0, 1);
         }
@@ -125,6 +122,39 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
   // Full-page skeleton removed for progressive rendering
 
   const { summary, daily = [], categories = [] } = report || {};
+
+  const aggregatedChartData = useMemo(() => {
+    if (!daily || daily.length === 0) return [];
+
+    if (period === 'this_year') {
+      const monthlyMap = new Map<string, any>();
+      daily.forEach((d: any) => {
+        const monthKey = d.day.substring(0, 7); // YYYY-MM
+        const existing = monthlyMap.get(monthKey) || { day: `${monthKey}-01`, revenue: 0, refund: 0 };
+        existing.revenue += d.revenue || 0;
+        existing.refund += d.refund || 0;
+        monthlyMap.set(monthKey, existing);
+      });
+      return Array.from(monthlyMap.values());
+    } else if (period === 'last_3_months') {
+      const weeklyMap = new Map<string, any>();
+      daily.forEach((d: any) => {
+        const dateObj = new Date(d.day);
+        const day = dateObj.getDate();
+        const weekNum = Math.ceil(day / 7);
+        const monthKey = d.day.substring(0, 7); // YYYY-MM
+        const weekKey = `${monthKey}-W${weekNum}`;
+        
+        const existing = weeklyMap.get(weekKey) || { day: weekKey, revenue: 0, refund: 0 };
+        existing.revenue += d.revenue || 0;
+        existing.refund += d.refund || 0;
+        weeklyMap.set(weekKey, existing);
+      });
+      return Array.from(weeklyMap.values());
+    }
+    
+    return daily;
+  }, [daily, period]);
 
   return (
     <div className="h-full overflow-y-auto pb-8 scrollbar-hide">
@@ -256,43 +286,53 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
       </div>
 
       {/* Charts Section */}
-      <div className={`${CARD_BASE} rounded-2xl p-6 h-[400px]`}>
-        <h3 className="text-lg font-bold mb-4 flex items-center justify-between">
-          <span>{t.intelligence.financials.profitLoss.dailyPerformance}</span>
-          <span className="text-xs font-normal text-gray-400">{t.intelligence.financials.profitLoss.salesVsReturns}</span>
-        </h3>
-        {loading ? (
-          <div className="h-full w-full flex items-center justify-center">
-            <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={daily}>
-              <defs>
-                <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={theme.primary} stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor={theme.primary} stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
-              <XAxis 
-                dataKey="day" 
-                tickFormatter={(val) => new Date(val).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' })}
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 10, fill: '#888' }}
-              />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#888' }} />
-              <Tooltip 
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                labelFormatter={(val) => new Date(val).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              />
-              <Area type="monotone" dataKey="revenue" name={t.intelligence.financials.profitLoss.sales} stroke={theme.primary} fillOpacity={1} fill="url(#colorRev)" strokeWidth={3} />
-              <Area type="monotone" dataKey="refund" name={t.intelligence.financials.profitLoss.refunds} stroke="#ef4444" fill="#ef444410" strokeWidth={2} strokeDasharray="5 5" />
-            </AreaChart>
-          </ResponsiveContainer>
-        )}
-      </div>
+      <ChartWidget
+        title={t.intelligence.financials.profitLoss.dailyPerformance}
+        icon="monitoring"
+        data={aggregatedChartData}
+        dataKeys={{
+          primary: 'revenue',
+          secondary: [
+            { key: 'refund', name: t.intelligence.financials.profitLoss.refunds, color: '#ef4444', isDashed: true }
+          ]
+        }}
+        color="#10b981"
+        language={language}
+        unit={summary?.currency || 'ج.م'}
+        primaryLabel={t.intelligence.financials.profitLoss.sales}
+        isLoading={loading}
+        xAxisKey="day"
+        xAxisFormatter={(val) => {
+          const locale = language === 'ar' ? 'ar-EG-u-nu-latn' : 'en-US';
+          if (period === 'this_year') {
+            const date = new Date(val);
+            return date.toLocaleDateString(locale, { month: 'short' });
+          }
+          if (period === 'last_3_months') {
+            const [yyyy, mm, w] = val.split('-');
+            const monthName = new Date(parseInt(yyyy), parseInt(mm) - 1, 1).toLocaleDateString(locale, { month: 'short' });
+            return `${monthName} ${w.replace('W', language === 'ar' ? 'أسبوع ' : 'W')}`;
+          }
+          const date = new Date(val);
+          return date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+        }}
+        tooltipLabelFormatter={(val) => {
+          const locale = language === 'ar' ? 'ar-EG-u-nu-latn' : 'en-US';
+          if (period === 'this_year') {
+            const date = new Date(val);
+            return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+          }
+          if (period === 'last_3_months') {
+            const [yyyy, mm, w] = val.split('-');
+            const monthName = new Date(parseInt(yyyy), parseInt(mm) - 1, 1).toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+            return `${language === 'ar' ? 'الأسبوع' : 'Week'} ${w.replace('W', '')} - ${monthName}`;
+          }
+          const date = new Date(val);
+          return date.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }}
+        className="mb-0 h-[400px]"
+        chartClassName="h-[300px]"
+      />
     </div>
   );
 };

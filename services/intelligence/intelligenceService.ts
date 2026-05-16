@@ -45,7 +45,7 @@ function getDateRangeForPeriod(period: FinancialPeriod): { start: Date; end: Dat
       return { start, end: endOfLastMonth };
     }
     case 'last_3_months': {
-      const start = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+      const start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
       return { start, end };
     }
     case 'this_year': {
@@ -75,8 +75,8 @@ function getPreviousPeriodRange(period: FinancialPeriod): { start: Date; end: Da
     }
     case 'last_3_months': {
       // Previous 3 months before current 3
-      const start = new Date(now.getFullYear(), now.getMonth() - 6, 1);
-      const end = new Date(now.getFullYear(), now.getMonth() - 3, 0, 23, 59, 59);
+      const start = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() - 2, 0, 23, 59, 59);
       return { start, end };
     }
     case 'this_year': {
@@ -820,8 +820,16 @@ export const intelligenceService = {
       // 3. Initialize Daily Breakdown Map
       const dailyMap = new Map<string, { revenue: number; returns: number }>();
       const current = new Date(start);
-      while (current <= end) {
-        dailyMap.set(current.toISOString().split('T')[0], { revenue: 0, returns: 0 });
+      // Strip time from current for clean day-by-day iteration
+      current.setHours(0, 0, 0, 0);
+      const endClean = new Date(end);
+      endClean.setHours(23, 59, 59, 999);
+      
+      while (current <= endClean) {
+        const yyyy = current.getFullYear();
+        const mm = String(current.getMonth() + 1).padStart(2, '0');
+        const dd = String(current.getDate()).padStart(2, '0');
+        dailyMap.set(`${yyyy}-${mm}-${dd}`, { revenue: 0, returns: 0 });
         current.setDate(current.getDate() + 1);
       }
 
@@ -830,7 +838,12 @@ export const intelligenceService = {
 
       // 5. Process Sales
       for (const sale of completedSales) {
-        const day = sale.date.split('T')[0];
+        const saleLocal = new Date(sale.date);
+        const yyyy = saleLocal.getFullYear();
+        const mm = String(saleLocal.getMonth() + 1).padStart(2, '0');
+        const dd = String(saleLocal.getDate()).padStart(2, '0');
+        const day = `${yyyy}-${mm}-${dd}`;
+        
         grossRevenue = money.add(grossRevenue, sale.total);
         
         const dayData = dailyMap.get(day);
@@ -856,7 +869,12 @@ export const intelligenceService = {
 
       // 6. Process Returns
       for (const ret of filteredReturns) {
-        const day = ret.date.split('T')[0];
+        const retLocal = new Date(ret.date);
+        const yyyy = retLocal.getFullYear();
+        const mm = String(retLocal.getMonth() + 1).padStart(2, '0');
+        const dd = String(retLocal.getDate()).padStart(2, '0');
+        const day = `${yyyy}-${mm}-${dd}`;
+        
         returnRevenue = money.add(returnRevenue, ret.totalRefund);
 
         const dayData = dailyMap.get(day);
