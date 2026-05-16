@@ -97,22 +97,22 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
 
   const categoryColumns = useMemo(() => [
     categoryHelper.accessor('category', {
-      header: language === 'ar' ? 'التصنيف' : 'Category',
-      cell: info => <span className="font-bold text-gray-900 dark:text-white">{info.getValue() || 'غير مصنف'}</span>
+      header: t.intelligence.financials.profitLoss.category,
+      cell: info => <span className="font-bold text-gray-900 dark:text-white">{info.getValue() || t.intelligence.financials.profitLoss.unclassified}</span>
     }),
     categoryHelper.accessor('revenue', {
-      header: language === 'ar' ? 'الإيرادات' : 'Revenue',
+      header: t.intelligence.financials.profitLoss.revenue,
       cell: info => <span className="font-medium"><CurrencyDisplay value={info.getValue()} /></span>
     }),
     categoryHelper.accessor('profit', {
-      header: language === 'ar' ? 'الربح' : 'Profit',
+      header: t.intelligence.financials.profitLoss.profit,
       cell: info => <span className="font-bold"><CurrencyDisplay value={info.getValue()} /></span>
     }),
     categoryHelper.accessor('cogs', {
-      header: language === 'ar' ? 'التكلفة' : 'COGS',
+      header: t.intelligence.financials.profitLoss.cogs,
       cell: info => <span className="text-gray-500 dark:text-gray-400"><CurrencyDisplay value={info.getValue()} /></span>
     })
-  ], [language]);
+  ], [t]);
 
   // Full-page skeleton removed for progressive rendering
 
@@ -125,10 +125,10 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
         centerContent={
           <SegmentedControl
             options={[
-              { label: language === 'ar' ? 'هذا الشهر' : 'This Month', value: 'this_month' },
-              { label: language === 'ar' ? 'الشهر الماضي' : 'Last Month', value: 'last_month' },
-              { label: language === 'ar' ? 'آخر 3 أشهر' : '3 Months', value: 'last_3_months' },
-              { label: language === 'ar' ? 'هذا العام' : 'This Year', value: 'this_year' },
+              { label: t.intelligence.financials.filters.periods.this_month, value: 'this_month' },
+              { label: t.intelligence.financials.filters.periods.last_month, value: 'last_month' },
+              { label: t.intelligence.financials.filters.periods.last_3_months, value: 'last_3_months' },
+              { label: t.intelligence.financials.filters.periods.this_year, value: 'this_year' },
             ]}
             value={period}
             onChange={(v) => setPeriod(v as any)}
@@ -145,7 +145,7 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <SmallCard 
-          title={language === 'ar' ? 'صافي الإيرادات' : 'Net Revenue'}
+          title={t.intelligence.financials.profitLoss.netRevenue}
           value={summary?.net_revenue || 0}
           icon="account_balance_wallet"
           iconColor="emerald"
@@ -153,7 +153,7 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
           isLoading={loading}
         />
         <SmallCard 
-          title={language === 'ar' ? 'إجمالي الربح' : 'Gross Profit'}
+          title={t.intelligence.financials.profitLoss.grossProfit}
           value={summary?.gross_profit || 0}
           icon="trending_up"
           iconColor="primary"
@@ -161,7 +161,7 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
           isLoading={loading}
         />
         <SmallCard 
-          title={language === 'ar' ? 'تكلفة البضاعة' : 'Net COGS'}
+          title={t.intelligence.financials.profitLoss.netCogs}
           value={summary?.net_cogs || 0}
           icon="inventory_2"
           iconColor="amber"
@@ -169,7 +169,7 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
           isLoading={loading}
         />
         <SmallCard 
-          title={language === 'ar' ? 'نسبة الهامش' : 'Margin %'}
+          title={t.intelligence.financials.profitLoss.margin}
           value={summary?.net_revenue ? (summary.gross_profit / summary.net_revenue) * 100 : 0}
           icon="leaderboard"
           iconColor="indigo"
@@ -184,33 +184,33 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
         <div className={`lg:col-span-1 ${CARD_BASE} rounded-2xl p-6`}>
           <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
             <span className="material-symbols-rounded text-gray-400" style={{ fontSize: '20px' }}>summarize</span>
-            {language === 'ar' ? 'القائمة المالية' : 'Financial Statement'}
+            {t.intelligence.financials.profitLoss.statement}
           </h3>
           
           <div className="space-y-4">
-            <PLRow label={language === 'ar' ? 'إجمالي المبيعات' : 'Gross Sales'} value={summary?.gross_revenue || 0} isLoading={loading} />
-            <PLRow label={language === 'ar' ? 'المرتجعات' : 'Returns'} value={-(summary?.return_revenue || 0)} isLoading={loading} />
+            <PLRow label={t.intelligence.financials.profitLoss.grossSales} value={summary?.gross_revenue || 0} isLoading={loading} />
+            <PLRow label={t.intelligence.financials.profitLoss.returns} value={-(summary?.return_revenue || 0)} isLoading={loading} />
             <hr className="border-(--border-divider)" />
-            <PLRow label={language === 'ar' ? 'صافي المبيعات' : 'Net Sales'} value={summary?.net_revenue || 0} isBold isLoading={loading} />
-            <PLRow label={language === 'ar' ? 'تكلفة المبيعات' : 'Cost of Sales (COGS)'} value={-(summary?.net_cogs || 0)} isLoading={loading} />
+            <PLRow label={t.intelligence.financials.profitLoss.netSales} value={summary?.net_revenue || 0} isBold isLoading={loading} />
+            <PLRow label={t.intelligence.financials.profitLoss.costOfSales} value={-(summary?.net_cogs || 0)} isLoading={loading} />
             <hr className="border-(--border-divider)" />
             <PLRow 
-              label={language === 'ar' ? 'الربح الإجمالي' : 'Gross Profit'} 
+              label={t.intelligence.financials.profitLoss.grossProfit} 
               value={summary?.gross_profit || 0} 
               isBold 
               isLoading={loading}
             />
             
             <div className="mt-8 pt-8 border-t border-dashed border-(--border-divider) opacity-50">
-              <PLRow label={language === 'ar' ? 'مصاريف تشغيلية' : 'Operating Expenses'} value={0} isLoading={loading} />
+              <PLRow label={t.intelligence.financials.profitLoss.operatingExpenses} value={0} isLoading={loading} />
               <p className="text-[10px] text-gray-400 mt-1 italic">
-                {language === 'ar' ? '* لم يتم تسجيل مصاريف لهذه الفترة' : '* No expenses recorded for this period'}
+                {t.intelligence.financials.profitLoss.noExpenses}
               </p>
             </div>
             
             <hr className="border-(--border-divider)" />
             <PLRow 
-              label={language === 'ar' ? 'صافي الربح التقديري' : 'Estimated Net Profit'} 
+              label={t.intelligence.financials.profitLoss.estimatedNetProfit} 
               value={summary?.gross_profit || 0} 
               isBold 
               isFinal
@@ -223,8 +223,8 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
         <div className="lg:col-span-2 space-y-6">
           <div className={`${CARD_BASE} rounded-2xl p-6 h-[400px]`}>
              <h3 className="text-lg font-bold mb-4 flex items-center justify-between">
-              <span>{language === 'ar' ? 'أداء الإيرادات اليومي' : 'Daily Revenue Performance'}</span>
-              <span className="text-xs font-normal text-gray-400">{language === 'ar' ? 'مقارنة المبيعات بالمرتجات' : 'Sales vs Returns'}</span>
+              <span>{t.intelligence.financials.profitLoss.dailyPerformance}</span>
+              <span className="text-xs font-normal text-gray-400">{t.intelligence.financials.profitLoss.salesVsReturns}</span>
             </h3>
             {loading ? (
               <div className="h-full w-full flex items-center justify-center">
@@ -252,15 +252,15 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                     labelFormatter={(val) => new Date(val).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                   />
-                  <Area type="monotone" dataKey="revenue" name={language === 'ar' ? 'المبيعات' : 'Sales'} stroke={theme.primary} fillOpacity={1} fill="url(#colorRev)" strokeWidth={3} />
-                  <Area type="monotone" dataKey="refund" name={language === 'ar' ? 'المرتجعات' : 'Refunds'} stroke="#ef4444" fill="#ef444410" strokeWidth={2} strokeDasharray="5 5" />
+                  <Area type="monotone" dataKey="revenue" name={t.intelligence.financials.profitLoss.sales} stroke={theme.primary} fillOpacity={1} fill="url(#colorRev)" strokeWidth={3} />
+                  <Area type="monotone" dataKey="refund" name={t.intelligence.financials.profitLoss.refunds} stroke="#ef4444" fill="#ef444410" strokeWidth={2} strokeDasharray="5 5" />
                 </AreaChart>
               </ResponsiveContainer>
             )}
           </div>
 
           <div className={`${CARD_BASE} rounded-2xl p-6`}>
-            <h3 className="text-lg font-bold mb-4">{language === 'ar' ? 'الربحية حسب التصنيف' : 'Profitability by Category'}</h3>
+            <h3 className="text-lg font-bold mb-4">{t.intelligence.financials.profitLoss.profitabilityByCategory}</h3>
             <div className="h-[300px]">
               <TanStackTable 
                 data={categories}
