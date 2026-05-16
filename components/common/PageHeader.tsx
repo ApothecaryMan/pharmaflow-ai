@@ -105,7 +105,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         </div>
 
         {/* Center Section: Tabs / Switchers */}
-        <div className="flex-none mx-4 empty:hidden">
+        <div className="flex-1 flex justify-center mx-4 empty:hidden">
           {centerContent}
         </div>
 

@@ -255,6 +255,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 w-full h-full bg-transparent
                 text-base font-medium text-gray-900 dark:text-gray-100 
                 placeholder-gray-400 outline-hidden
+                [&-webkit-search-cancel-button]:appearance-none
                 ${className}
               `}
             />

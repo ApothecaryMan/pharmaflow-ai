@@ -604,6 +604,8 @@ export const TRANSLATIONS = {
       combinationDrug: 'Combination Product',
       ingredientCount: 'active ingredients',
       usage: 'Usage',
+      noResults: 'No products found',
+      safetyStatus: 'Safety Status',
     },
     barcodePrinter: {
       title: 'Barcode Printer',
@@ -2782,6 +2784,8 @@ export const TRANSLATIONS = {
       combinationDrug: 'منتج مركب',
       ingredientCount: 'مواد فعالة',
       usage: 'دواعي الاستعمال',
+      noResults: 'لم يتم العثور على منتجات',
+      safetyStatus: 'حالة السلامة',
     },
     appTitle: 'Zinc',
     zincAcronym: {
