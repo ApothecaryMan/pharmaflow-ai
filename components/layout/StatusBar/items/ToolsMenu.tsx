@@ -4,6 +4,7 @@ import { TRANSLATIONS } from '../../../../i18n/translations';
 import { StatusBarItem } from '../StatusBarItem';
 import { Calculator } from './Calculator';
 import { CurrencyConverter } from './CurrencyConverter';
+import { HolidaysTracker } from './HolidaysTracker';
 
 const getMenuSurfaceClasses = (isBlur: boolean, isMobile: boolean = false) => {
   if (!isBlur) return isMobile ? 'bg-(--bg-page-surface)' : 'bg-(--bg-menu)';
@@ -27,7 +28,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   const { language, settingsBlur } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
-  const [activeTool, setActiveTool] = useState<'converter' | 'calculator'>('converter');
+  const [activeTool, setActiveTool] = useState<'converter' | 'calculator' | 'holidays'>('converter');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const t = TRANSLATIONS[language].settings;
@@ -63,34 +64,50 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
 
       {isOpen && (
         <div className={menuContainerClasses}>
-          <div className="px-3 py-2 border-b border-(--border-divider) relative flex items-center justify-center">
-            <button 
-              type="button"
-              onClick={() => setActiveTool(activeTool === 'converter' ? 'calculator' : 'converter')}
-              className="flex items-center gap-1 text-xs font-bold text-(--text-primary) hover:text-primary-500 transition-colors select-none"
-              title="Click to switch tool"
-            >
-              <span>{activeTool === 'converter' ? (cT?.title || 'Currency Converter') : (t.calculator?.title || 'Calculator')}</span>
-              <span className="material-symbols-rounded text-sm opacity-60">{language === 'AR' ? 'chevron_left' : 'chevron_right'}</span>
-            </button>
+          {/* Segmented Control Header */}
+          <div className="px-2 py-1.5 border-b border-(--border-divider) flex items-center justify-between">
+            <div className="flex bg-black/5 dark:bg-white/5 p-0.5 rounded-lg border border-(--border-divider) w-[80%]">
+              {(['converter', 'calculator', 'holidays'] as const).map(tool => (
+                <button
+                  key={tool}
+                  type="button"
+                  onClick={() => setActiveTool(tool)}
+                  className={`flex-1 py-1 flex items-center justify-center rounded-md transition-all duration-200 focus:outline-none ${
+                    activeTool === tool
+                      ? 'bg-white dark:bg-white/10 text-primary-500 shadow-xs'
+                      : 'text-(--text-secondary) hover:text-(--text-primary)'
+                  }`}
+                  title={
+                    tool === 'converter' 
+                      ? (cT?.title || 'Converter') 
+                      : tool === 'calculator' 
+                        ? (t.calculator?.title || 'Calculator') 
+                        : (t.holidays?.title || 'Holidays')
+                  }
+                >
+                  <span className="material-symbols-rounded text-base leading-none">
+                    {tool === 'converter' ? 'payments' : tool === 'calculator' ? 'calculate' : 'calendar_month'}
+                  </span>
+                </button>
+              ))}
+            </div>
+            
             <button 
               type="button"
               onClick={() => setIsPinned(!isPinned)}
-              className={`absolute end-2 flex items-center justify-center w-6 h-6 rounded-md transition-colors hover:bg-black/5 dark:hover:bg-white/5 ${
+              className={`flex items-center justify-center w-6 h-6 rounded-md transition-colors hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none ${
                 isPinned ? 'text-primary-500' : 'text-(--text-tertiary)'
               }`}
               title={isPinned ? 'Unpin' : 'Pin to stay open'}
             >
-              <span className="material-symbols-rounded text-[16px]">keep</span>
+              <span className="material-symbols-rounded text-[16px] leading-none">keep</span>
             </button>
           </div>
           
           <div className="p-3 space-y-3" style={{ direction: language === 'AR' ? 'rtl' : 'ltr' }}>
-            {activeTool === 'calculator' ? (
-              <Calculator />
-            ) : (
-              <CurrencyConverter />
-            )}
+            {activeTool === 'calculator' && <Calculator />}
+            {activeTool === 'converter' && <CurrencyConverter />}
+            {activeTool === 'holidays' && <HolidaysTracker />}
           </div>
         </div>
       )}
