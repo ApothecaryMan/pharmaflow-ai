@@ -17,6 +17,9 @@ export const branchRepository = {
       area: db.area || undefined,
       deliveryFee: db.delivery_fee || 0,
       shiftStartTime: db.shift_start_time || '09:00',
+      latitude: db.latitude !== null && db.latitude !== undefined ? Number(db.latitude) : undefined,
+      longitude:
+        db.longitude !== null && db.longitude !== undefined ? Number(db.longitude) : undefined,
       status: db.status || 'active',
       createdAt: db.created_at || new Date().toISOString(),
       updatedAt: db.updated_at || new Date().toISOString(),
@@ -36,6 +39,8 @@ export const branchRepository = {
     if (b.area !== undefined) db.area = b.area;
     if (b.deliveryFee !== undefined) db.delivery_fee = b.deliveryFee;
     if (b.shiftStartTime !== undefined) db.shift_start_time = b.shiftStartTime;
+    if (b.latitude !== undefined) db.latitude = b.latitude;
+    if (b.longitude !== undefined) db.longitude = b.longitude;
     if (b.status !== undefined) db.status = b.status;
     return db;
   },
@@ -48,7 +53,7 @@ export const branchRepository = {
       .order('name', { ascending: true });
 
     if (error) throw error;
-    return (data || []).map(item => this.mapFromDb(item));
+    return (data || []).map((item) => this.mapFromDb(item));
   },
 
   async getById(id: string): Promise<Branch | null> {
@@ -68,12 +73,15 @@ export const branchRepository = {
   },
 
   async update(id: string, updates: Partial<Branch>): Promise<void> {
-    const { error } = await supabase.from(this.tableName).update(this.mapToDb(updates)).eq('id', id);
+    const { error } = await supabase
+      .from(this.tableName)
+      .update(this.mapToDb(updates))
+      .eq('id', id);
     if (error) throw error;
   },
 
   async delete(id: string): Promise<void> {
     const { error } = await supabase.from(this.tableName).delete().eq('id', id);
     if (error) throw error;
-  }
+  },
 };

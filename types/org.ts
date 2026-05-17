@@ -1,4 +1,4 @@
-import { OrgRole, SubscriptionPlan, SubscriptionStatus } from './auth';
+import type { OrgRole, SubscriptionPlan, SubscriptionStatus } from './auth';
 
 /**
  * Organization entity — the top-level tenant.
@@ -96,6 +96,9 @@ export interface Branch {
   deliveryFee?: number;
   /** Standard shift start time (e.g., "09:00") for late detection */
   shiftStartTime?: string;
+  /** Geographic coordinates for mapping and pharmacy network */
+  latitude?: number;
+  longitude?: number;
   /** Active status */
   status: 'active' | 'inactive';
   /** ISO date of creation */
