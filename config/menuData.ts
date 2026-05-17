@@ -315,6 +315,12 @@ export const PHARMACY_MENU: MenuItem[] = [
         label: 'Product Management',
         items: [
           { label: 'Inventory', view: 'inventory', icon: 'package_2' },
+          {
+            label: 'Drug Approval Queue',
+            view: 'drug-approval-queue',
+            icon: 'assignment_turned_in',
+            permission: 'inventory.approve',
+          },
           { label: 'Bulk Import', icon: 'upload_file' },
           { label: 'Bulk Update', icon: 'update' },
           { label: 'Product Categories', icon: 'category' },

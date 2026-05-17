@@ -17,6 +17,7 @@ export const PERMISSIONS_MAPPING: Record<string, PermissionAction> = {
   suppliers: 'supplier.view',
   purchases: 'purchase.view',
   'pending-approval': 'purchase.approve',
+  'drug-approval-queue': 'inventory.approve',
   'purchase-history': 'purchase.view',
   'purchase-returns': 'purchase.view',
   'barcode-printer': 'inventory.update',

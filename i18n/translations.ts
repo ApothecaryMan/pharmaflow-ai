@@ -21,20 +21,20 @@ export const TRANSLATIONS = {
     zincAcronym: {
       Z: {
         title: 'Zero Errors',
-        desc: 'Ensures maximum precision in dispensing and inventory tracking to guarantee patient safety.'
+        desc: 'Ensures maximum precision in dispensing and inventory tracking to guarantee patient safety.',
       },
       I: {
         title: 'Integrated Solutions',
-        desc: 'A seamless ecosystem connecting sales, purchases, and insurance claims in one place.'
+        desc: 'A seamless ecosystem connecting sales, purchases, and insurance claims in one place.',
       },
       N: {
         title: 'Next-Gen Innovation',
-        desc: 'Empowering pharmacies with AI-driven insights and smart automation for a faster workflow.'
+        desc: 'Empowering pharmacies with AI-driven insights and smart automation for a faster workflow.',
       },
       C: {
         title: 'Comprehensive Control',
-        desc: 'Full authority over your stock, finances, and staff performance with real-time analytics.'
-      }
+        desc: 'Full authority over your stock, finances, and staff performance with real-time analytics.',
+      },
     },
     location: {
       governorate: 'Governorate',
@@ -155,7 +155,8 @@ export const TRANSLATIONS = {
       assignEmployees: 'Assign Employees',
       saveBranch: 'Save Branch',
       deleteBranch: 'Delete Branch',
-      deleteBranchConfirm: 'Are you sure you want to delete this branch? This will affect all data linked to it.',
+      deleteBranchConfirm:
+        'Are you sure you want to delete this branch? This will affect all data linked to it.',
       sidebarStyle: 'Sidebar Mode',
       sidebarFixed: 'Fixed',
       sidebarMini: 'Mini',
@@ -213,7 +214,8 @@ export const TRANSLATIONS = {
       multiBranchAccessNote: 'Roles (Owner/Admin) grant full access to all branches',
       searchPlaceholder: 'Search member...',
       lastOwnerWarning: 'Cannot change role: This is the last owner of the organization.',
-      noAccountNote: 'This employee does not have a system account and cannot be assigned a global role.',
+      noAccountNote:
+        'This employee does not have a system account and cannot be assigned a global role.',
       fetchError: 'Failed to fetch data',
       organization: 'Organization',
       branches: 'Branches',
@@ -233,8 +235,8 @@ export const TRANSLATIONS = {
         success: 'Invitation link generated!',
         copy: 'Copy Link',
         copied: 'Copied!',
-        close: 'Close'
-      }
+        close: 'Close',
+      },
     },
 
     profile: {
@@ -794,6 +796,39 @@ export const TRANSLATIONS = {
         credit: 'Credit',
       },
     },
+    drugApproval: {
+      title: 'Drug Approval Queue',
+      subtitle:
+        'Review new catalog drugs and decide whether to approve them into your pharmacy inventory.',
+      statusPending: 'Pending',
+      statusApproved: 'Approved',
+      statusSuspended: 'Suspended',
+      approveSelected: 'Approve Selected',
+      suspendSelected: 'Suspend Selected',
+      reactivateSelected: 'Reactivate Selected',
+      noPendingDrugs: 'No pending global catalog additions requiring review.',
+      tableHeaders: {
+        drug: 'Drug Name',
+        barcode: 'Barcode',
+        dosageForm: 'Dosage Form',
+        category: 'Category',
+        price: 'Public Price',
+        manufacturer: 'Manufacturer',
+        status: 'Status',
+        actions: 'Actions',
+      },
+      confirmApproveTitle: 'Approve {{count}} Drug(s)?',
+      confirmApproveDesc:
+        'This will instantly add the selected drug(s) to all branches in your pharmacy network with 0 initial stock and cost price.',
+      confirmSuspendTitle: 'Suspend {{count}} Drug(s)?',
+      confirmSuspendDesc:
+        'This will mark the selected drug(s) as suspended. You can reactivate them later.',
+      successApprove: 'Selected drug(s) approved successfully!',
+      successSuspend: 'Selected drug(s) suspended successfully!',
+      successReactivate: 'Selected drug(s) reactivated successfully!',
+      filterAll: 'All',
+      searchPlaceholder: 'Search by name, active substance or barcode...',
+    },
     purchases: {
       title: 'New Purchase',
       subtitle: 'Restock inventory from suppliers',
@@ -875,7 +910,8 @@ export const TRANSLATIONS = {
         enterExpiry: 'Please enter an Expiry Date for',
         incompleteExpiry: 'Please enter a complete expiry date (4 digits: MMYY)',
         promptQuantity: 'Enter quantity:',
-        confirmCloseTab: 'This tab contains items. Are you sure you want to close it and move it to history?',
+        confirmCloseTab:
+          'This tab contains items. Are you sure you want to close it and move it to history?',
       },
       // Other labels
       unknown: 'Unknown',
@@ -1107,7 +1143,8 @@ export const TRANSLATIONS = {
       pendingValueInsightFooter: 'Analyzing pending values helps improve delivery speed.',
       orderPlural: 'Orders',
       orderSingular: 'Order',
-      cancelOrderConfirm: 'Are you sure you want to cancel this order? This cannot be undone and all items will be returned to stock.',
+      cancelOrderConfirm:
+        'Are you sure you want to cancel this order? This cannot be undone and all items will be returned to stock.',
       keepOrder: 'No, Keep it',
       modal: {
         stock: 'Stock',
@@ -2363,7 +2400,7 @@ export const TRANSLATIONS = {
       filters: {
         dateRange: 'Date Range',
         allTypes: 'All Types',
-      }
+      },
     },
     expiryManagement: {
       invalidQuantity: 'Invalid quantity',
@@ -2380,7 +2417,7 @@ export const TRANSLATIONS = {
         days: 'Days',
       },
       details: {
-        packs: 'Packs'
+        packs: 'Packs',
       },
       title: 'Expiry Management',
       subtitle: 'Track and manage batch expiration dates alerts',
@@ -2406,7 +2443,7 @@ export const TRANSLATIONS = {
         costPrice: 'Cost Price',
         potentialLoss: 'Potential Loss',
         expiryDate: 'Expiry Date',
-      }
+      },
     },
     // ═══════════════════════════════════════════
     // Attendance Module
@@ -2457,7 +2494,8 @@ export const TRANSLATIONS = {
       shiftStartDesc: 'Define work start time to calculate lateness',
       saveTime: 'Save Time',
       terminalTokenDesc: 'Terminal activation token for this branch',
-      generateTokenHint: 'Generate a token, copy it, and paste it on the attendance terminal device to activate it',
+      generateTokenHint:
+        'Generate a token, copy it, and paste it on the attendance terminal device to activate it',
       // Success/Error
       clockInSuccess: 'Clocked in successfully',
       clockOutSuccess: 'Clocked out successfully',
@@ -2824,20 +2862,20 @@ export const TRANSLATIONS = {
     zincAcronym: {
       Z: {
         title: 'Zero Errors (دقة بلا أخطاء)',
-        desc: 'يضمن أعلى معايير الدقة في صرف الوصفات وإدارة المخزون لضمان سلامة المرضى.'
+        desc: 'يضمن أعلى معايير الدقة في صرف الوصفات وإدارة المخزون لضمان سلامة المرضى.',
       },
       I: {
         title: 'Integrated Management (إدارة متكاملة)',
-        desc: 'نظام موحد يربط المبيعات والمشتريات وشركات التأمين في منصة تقنية واحدة.'
+        desc: 'نظام موحد يربط المبيعات والمشتريات وشركات التأمين في منصة تقنية واحدة.',
       },
       N: {
         title: 'Next-Gen Tech (تقنيات الجيل القادم)',
-        desc: 'واجهة ذكية تعتمد على الأتمتة لتقليل الجهد اليدوي وتسريع وتيرة العمل اليومي.'
+        desc: 'واجهة ذكية تعتمد على الأتمتة لتقليل الجهد اليدوي وتسريع وتيرة العمل اليومي.',
       },
       C: {
         title: 'Constant Control (رقابة مستمرة)',
-        desc: 'تحكم كامل وشامل في الأرباح، النواقص، وحركة الأصناف من خلال تقارير لحظية دقيقة.'
-      }
+        desc: 'تحكم كامل وشامل في الأرباح، النواقص، وحركة الأصناف من خلال تقارير لحظية دقيقة.',
+      },
     },
     date: 'التاريخ',
     orderId: 'رقم الطلب',
@@ -2939,7 +2977,8 @@ export const TRANSLATIONS = {
       dataManagement: 'إدارة البيانات',
       exportBackup: 'تصدير نسخة احتياطية',
       importBackup: 'استيراد نسخة احتياطية',
-      importWarning: 'تحذير: استيراد نسخة احتياطية سيؤدي إلى مسح جميع البيانات الحالية. هل تريد الاستمرار؟',
+      importWarning:
+        'تحذير: استيراد نسخة احتياطية سيؤدي إلى مسح جميع البيانات الحالية. هل تريد الاستمرار؟',
       branchManagement: 'إدارة الفروع',
       addBranch: 'إضافة فرع جديد',
       branchName: 'اسم الفرع',
@@ -2950,7 +2989,8 @@ export const TRANSLATIONS = {
       assignEmployees: 'تعيين الموظفين',
       saveBranch: 'حفظ الفرع',
       deleteBranch: 'حذف الفرع',
-      deleteBranchConfirm: 'هل أنت متأكد من حذف هذا الفرع؟ سيؤثر هذا على جميع البيانات المرتبطة به.',
+      deleteBranchConfirm:
+        'هل أنت متأكد من حذف هذا الفرع؟ سيؤثر هذا على جميع البيانات المرتبطة به.',
       sidebarStyle: 'شكل القائمة الجانبية',
       sidebarFixed: 'ثابت',
       sidebarMini: 'منكمش',
@@ -3028,8 +3068,8 @@ export const TRANSLATIONS = {
         success: 'تم إنشاء رابط الدعوة!',
         copy: 'نسخ الرابط',
         copied: 'تم النسخ!',
-        close: 'إغلاق'
-      }
+        close: 'إغلاق',
+      },
     },
 
     profile: {
@@ -3169,7 +3209,8 @@ export const TRANSLATIONS = {
         resetSent: 'تم إرسال رابط إعادة التعيين لبريدك',
         passwordUpdated: 'تم تحديث كلمة المرور بنجاح',
         changeSuccess: 'تم تغيير كلمة المرور بنجاح',
-        biometricUnsupported: 'هذا المتصفح لا يدعم مفاتيح المرور (Passkeys). تأكد من استخدام HTTPS.',
+        biometricUnsupported:
+          'هذا المتصفح لا يدعم مفاتيح المرور (Passkeys). تأكد من استخدام HTTPS.',
         contactManager: 'تواصل مع المدير لإعادة تعيين كلمة المرور',
         passkeyTooltip: 'تسجيل الدخول بمفتاح مرور',
       },
@@ -3582,6 +3623,38 @@ export const TRANSLATIONS = {
         credit: 'آجل',
       },
     },
+    drugApproval: {
+      title: 'موافقات الأدوية الجديدة',
+      subtitle:
+        'مراجعة الأدوية الجديدة المضافة للكتالوج العام واتخاذ القرار بإضافتها للمخزن المحلي.',
+      statusPending: 'قيد الانتظار',
+      statusApproved: 'مقبول',
+      statusSuspended: 'معلق',
+      approveSelected: 'الموافقة على المحدد',
+      suspendSelected: 'تعليق المحدد',
+      reactivateSelected: 'إعادة تنشيط المحدد',
+      noPendingDrugs: 'لا توجد أدوية جديدة مضافة للكتالوج العام بانتظار المراجعة.',
+      tableHeaders: {
+        drug: 'اسم الدواء',
+        barcode: 'الباركود',
+        dosageForm: 'الشكل الدوائي',
+        category: 'التصنيف',
+        price: 'سعر الجمهور',
+        manufacturer: 'الشركة المصنعة',
+        status: 'الحالة',
+        actions: 'الإجراءات',
+      },
+      confirmApproveTitle: 'الموافقة على {{count}} دواء؟',
+      confirmApproveDesc:
+        'سيتم إضافة الأدوية المحددة فوراً لجميع فروع صيدليتك برصيد ابتدائي صفر وسعر تكلفة صفر.',
+      confirmSuspendTitle: 'تعليق {{count}} دواء؟',
+      confirmSuspendDesc: 'سيتم تعليم الأدوية المحددة كمعلقة. يمكنك إعادة تنشيطها في أي وقت لاحق.',
+      successApprove: 'تمت الموافقة على الأدوية المحددة بنجاح!',
+      successSuspend: 'تم تعليق الأدوية المحددة بنجاح!',
+      successReactivate: 'تم إعادة تنشيط الأدوية المحددة بنجاح!',
+      filterAll: 'الكل',
+      searchPlaceholder: 'بحث بالاسم، المادة الفعالة أو الباركود...',
+    },
     purchases: {
       title: 'شـــــراء جديد',
       subtitle: 'إعادة تعبئة المخزون من الموردين',
@@ -3666,7 +3739,8 @@ export const TRANSLATIONS = {
         enterExpiry: 'الرجاء إدخال تاريخ صلاحية لـ',
         incompleteExpiry: 'الرجاء إدخال تاريخ صلاحية كامل (4 أرقام: شهر سنة)',
         promptQuantity: 'أدخل الكمية:',
-        confirmCloseTab: 'هذا التبويب يحتوي على أصناف. هل أنت متأكد من رغبتك في إغلاقه ونقله إلى السجل؟',
+        confirmCloseTab:
+          'هذا التبويب يحتوي على أصناف. هل أنت متأكد من رغبتك في إغلاقه ونقله إلى السجل؟',
       },
       // Other labels
       unknown: 'غير معروف',
@@ -3903,7 +3977,8 @@ export const TRANSLATIONS = {
       pendingValueInsightFooter: 'تحليل القيم المعلقة يساعد في تحسين سرعة التوصيل',
       orderPlural: 'طلب',
       orderSingular: 'طلب',
-      cancelOrderConfirm: 'هل أنت متأكد من إلغاء هذا الطلب؟ لا يمكن التراجع عن هذه العملية وسيتم إرجاع جميع المواد للمخزون.',
+      cancelOrderConfirm:
+        'هل أنت متأكد من إلغاء هذا الطلب؟ لا يمكن التراجع عن هذه العملية وسيتم إرجاع جميع المواد للمخزون.',
       keepOrder: 'تراجع',
       modal: {
         stock: 'المخزون',
@@ -4885,7 +4960,7 @@ export const TRANSLATIONS = {
       filters: {
         dateRange: 'الفترة الزمنية',
         allTypes: 'كل الأنواع',
-      }
+      },
     },
     expiryManagement: {
       invalidQuantity: 'الكمية غير صحيحة',
@@ -4902,7 +4977,7 @@ export const TRANSLATIONS = {
         days: 'يوم',
       },
       details: {
-        packs: 'علبة'
+        packs: 'علبة',
       },
       title: 'إدارة الصلاحيـــــات',
       subtitle: 'تتبع تواريخ انتهاء الصلاحية والتنبيهات',
@@ -4928,7 +5003,7 @@ export const TRANSLATIONS = {
         costPrice: 'سعر التكلفة',
         potentialLoss: 'خسارة محتملة',
         expiryDate: 'تاريخ الانتهاء',
-      }
+      },
     },
     // ═══════════════════════════════════════════
     // Attendance Module

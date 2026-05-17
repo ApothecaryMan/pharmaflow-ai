@@ -763,6 +763,7 @@ export const MENU_TRANSLATIONS = {
     'Dashboard Overview': 'نظرة عامة على اللوحة',
 
     // Inventory
+    'Drug Approval Queue': 'موافقات الأدوية',
     'Bulk Import': 'استيراد جماعي',
     'Bulk Update': 'تحديث جماعي',
     'Product Categories': 'فئات المنتجات',

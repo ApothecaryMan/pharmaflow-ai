@@ -25,6 +25,7 @@ export type ViewState =
   | 'suppliers'
   | 'purchases'
   | 'pending-approval'
+  | 'drug-approval-queue'
   | 'purchase-returns'
   | 'barcode-printer'
   | 'barcode-studio'

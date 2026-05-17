@@ -211,3 +211,16 @@ export interface StockMovement {
 }
 
 export * from '../services/inventory/stockMovement/types';
+
+export interface DrugApproval {
+  id: string;
+  globalDrugId: string;
+  orgId: string;
+  status: 'pending' | 'approved' | 'suspended';
+  reviewedBy?: string;
+  reviewedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  globalDrug?: GlobalDrug;
+}
+

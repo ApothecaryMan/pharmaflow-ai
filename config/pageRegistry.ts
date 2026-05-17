@@ -7,8 +7,6 @@ import { CustomerLoyaltyOverview } from '../components/customers/CustomerLoyalty
 import { CustomerManagement } from '../components/customers/CustomerManagement';
 import { CustomerOverview } from '../components/customers/CustomerOverview';
 import { Dashboard } from '../components/dashboard/Dashboard';
-// Skeletons
-import { DashboardPageSkeleton } from '../components/intelligence/common/IntelligenceSkeletons';
 import { RealTimeSalesMonitor } from '../components/dashboard/RealTimeSalesMonitor';
 import { AdvancedSmCard } from '../components/experiments/AdvancedSmCard';
 import { DashboardExperiments } from '../components/experiments/DashboardExperiments';
@@ -21,7 +19,7 @@ import { AddProduct } from '../components/inventory/AddProduct';
 import { Inventory } from '../components/inventory/Inventory';
 import { InventoryManagement } from '../components/inventory/InventoryManagement';
 import { StockAdjustment } from '../components/inventory/StockAdjustment';
-import { StockMovementReport, ExpiryManagement } from '../components/inventory';
+import { StockMovementReport, ExpiryManagement, DrugApprovalQueue } from '../components/inventory';
 import { BranchSettings } from '../components/settings/BranchSettings';
 import { PricingPage } from '../components/settings/PricingPage';
 import { DesktopSettings } from '../components/settings/DesktopSettings';
@@ -120,7 +118,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'تقويم الانتهاء',
     icon: 'calendar_today',
     category: 'inventory',
-    requiredProps: ['inventory', 'batches', 'color', 't', 'language', 'onUpdateInventory', 'onBatchesChanged'],
+    requiredProps: [
+      'inventory',
+      'batches',
+      'color',
+      't',
+      'language',
+      'onUpdateInventory',
+      'onBatchesChanged',
+    ],
     permission: PERMISSIONS_MAPPING['expiry-calendar'],
   },
   'inventory-beta': {
@@ -257,6 +263,16 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'onViewChange',
     ],
     permission: PERMISSIONS_MAPPING['pending-approval'],
+  },
+  'drug-approval-queue': {
+    id: 'drug-approval-queue',
+    component: DrugApprovalQueue,
+    menuLabel: 'Drug Approval Queue',
+    menuLabelAr: 'موافقات الأدوية الجديدة',
+    icon: 'assignment_turned_in',
+    category: 'inventory',
+    requiredProps: ['color', 't', 'language', 'onViewChange'],
+    permission: PERMISSIONS_MAPPING['drug-approval-queue'],
   },
   'purchase-history': {
     id: 'purchase-history',
@@ -411,14 +427,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'إضافة منتج جديد',
     icon: 'add_box',
     category: 'inventory',
-    requiredProps: [
-      'inventory',
-      'onAddDrug',
-      'color',
-      't',
-      'language',
-      'onViewChange',
-    ],
+    requiredProps: ['inventory', 'onAddDrug', 'color', 't', 'language', 'onViewChange'],
     permission: PERMISSIONS_MAPPING['add-product'],
   },
   'cash-register': {
@@ -617,16 +626,28 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'org-management': {
     id: 'org-management',
-    component: React.lazy(() => import('../components/org/OrganizationManagementPage').then(m => ({ default: m.OrganizationManagementPage }))) as any,
+    component: React.lazy(() =>
+      import('../components/org/OrganizationManagementPage').then((m) => ({
+        default: m.OrganizationManagementPage,
+      }))
+    ) as any,
     menuLabel: 'Org Management',
     menuLabelAr: 'إدارة المنظمة',
     icon: 'corporate_fare',
     category: 'settings',
-    requiredProps: ['color', 't', 'language', 'employees', 'currentEmployeeId', 'activeOrgId', 'onViewChange'],
+    requiredProps: [
+      'color',
+      't',
+      'language',
+      'employees',
+      'currentEmployeeId',
+      'activeOrgId',
+      'onViewChange',
+    ],
     permission: 'settings.view',
     layout: 'standard',
   },
-  'services': {
+  services: {
     id: 'services',
     component: PricingPage,
     menuLabel: 'Services & Pricing',
