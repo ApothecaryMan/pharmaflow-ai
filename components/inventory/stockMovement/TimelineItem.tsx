@@ -112,7 +112,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
       <div className='flex-1 pt-[30px] pb-7 group-last:pb-7 border-b border-gray-100 dark:border-(--border) group-last:border-0 min-w-0'>
         <div className='flex flex-col gap-3'>
           {/* Header */}
-          <div className='flex items-center gap-2 text-sm leading-none'>
+          <div className='flex items-center gap-2 text-sm leading-normal'>
             {drugName && (
               <>
                 <span className='font-black text-gray-900 dark:text-gray-100 truncate max-w-[200px]' title={drugName}>

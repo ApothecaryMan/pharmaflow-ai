@@ -59,7 +59,7 @@ export function SegmentedControl<T extends string | number | boolean>({
         style={{ width: 'var(--iw)', height: 'var(--ih)', top: 'var(--it)', insetInlineStart: 'var(--ix)' }} />
       {filtered.map((o) => (
         <button key={String(o.value)} onClick={() => onChange(o.value)} data-active={value === o.value} disabled={o.disabled}
-          className={`${fullWidth ? 'flex-1' : ''} ${sz.b} ${pill ? 'rounded-full' : 'rounded-lg'} z-10 relative flex items-center justify-center gap-2 whitespace-nowrap font-bold transition-colors ${value === o.value ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:hover:text-white'} ${o.disabled ? 'opacity-50 pointer-events-none' : ''}`}
+          className={`${fullWidth ? 'flex-1' : ''} ${sz.b} ${pill ? 'rounded-full' : 'rounded-lg'} z-10 relative flex items-center justify-center gap-2 whitespace-nowrap font-bold ${value === o.value ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:hover:text-white'} ${o.disabled ? 'opacity-50 pointer-events-none' : ''}`}
         >
           {o.icon && <span className="material-symbols-rounded" style={{ fontSize: `var(${iconSize || sz.i})` }}>{o.icon}</span>}
           {o.dotColor && <div className="w-3 h-3 rounded-full" style={{ backgroundColor: o.dotColor }} />}

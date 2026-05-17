@@ -98,10 +98,9 @@ const ExpandButton: React.FC<{ onClick: () => void; title?: string }> = ({ onCli
   </button>
 );
 
-const SectionHeader: React.FC<{ icon: string; title: string; onExpand?: () => void; iconColor?: string }> = ({ icon, title, onExpand, iconColor = 'text-primary-500' }) => (
+const SectionHeader: React.FC<{ icon?: string; title: string; onExpand?: () => void; iconColor?: string }> = ({ title, onExpand }) => (
   <div className="flex justify-between items-center mb-3">
     <h3 className="text-base font-semibold text-(--text-primary) flex items-center gap-2">
-      <span className={`material-symbols-rounded ${iconColor}`} style={{ fontSize: 'var(--icon-navbar-dropdown)' }}>{icon}</span>
       {title}
     </h3>
     {onExpand && <ExpandButton onClick={onExpand} />}
@@ -140,7 +139,7 @@ const GenericListItem: React.FC<{
   <div className="p-4 rounded-xl bg-(--bg-page-surface) border border-(--border-divider) flex items-center justify-between hover:bg-(--bg-menu-hover) transition-colors">
     <div className="flex items-center gap-4 min-w-0">
       {icon && (
-        <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-950 flex items-center justify-center text-primary-600 shrink-0">
+        <div className="badge-purple w-10 h-10! rounded-full! border! flex! items-center justify-center shrink-0">
           <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-md)' }}>{icon}</span>
         </div>
       )}
@@ -148,7 +147,17 @@ const GenericListItem: React.FC<{
         <p className="font-bold text-(--text-primary) truncate">{title}</p>
         <div className="flex items-center gap-2 mt-0.5">
           <p className="text-xs text-(--text-tertiary)">{subtitle}</p>
-          {badge && <span className={`text-[10px] font-bold uppercase ${badgeColor}`}>{badge}</span>}
+          {badge && (
+            <span
+              className={
+                badgeColor.includes('badge-')
+                  ? badgeColor
+                  : `text-[10px] font-bold uppercase ${badgeColor}`
+              }
+            >
+              {badge}
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -470,7 +479,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 title={getDisplayName(item, textTransform)}
                 subtitle={item.category || ''}
                 badge={`${item.stock} ${t.expand?.allItems || 'left'}`}
-                badgeColor="text-orange-600"
+                badgeColor="badge-orange"
                 onClick={() => { setRestockDrug(item); setExpandedView(null); }}
                 actionLabel={t.restock}
               />
@@ -510,7 +519,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   title={getDisplayName(item, textTransform)}
                   subtitle={`${item.category} • ${item.stock} in stock`}
                   badge={isExpired ? t.expired : `${days} ${t.days}`}
-                  badgeColor={isExpired ? 'text-red-600' : 'text-yellow-600'}
+                  badgeColor={isExpired ? 'badge-danger' : 'badge-warning'}
                   value={item.expiryDate}
                 />
               );
@@ -530,7 +539,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <MaterialTabs index={index} total={recentSales20.length} className='h-auto! py-2 flex-col! items-stretch! gap-1 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors shadow-xs'>
                   <div className='flex items-center justify-between gap-3'>
                     <div className='flex items-center gap-3'>
-                      <div className='w-8 h-8 rounded-full bg-primary-50 dark:bg-primary-950 flex items-center justify-center text-primary-600 shrink-0'>
+                      <div className='badge-purple w-8 h-8! rounded-full! border! flex! items-center justify-center shrink-0'>
                         <span className='material-symbols-rounded text-lg'>shopping_bag</span>
                       </div>
                       <div>
@@ -728,7 +737,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       {getDisplayName(item, textTransform)}
                     </span>
                   </div>
-                  <span className='text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md whitespace-nowrap'>
+                  <span className='badge-zinc whitespace-nowrap'>
                     {item.qty} {t.sold}
                   </span>
                 </div>
@@ -755,7 +764,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               renderItem: (item: any) => (
                 <div key={item.id} className='flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'>
                   <div className='flex items-center gap-3 overflow-hidden'>
-                    <div className='w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0'>
+                    <div className='badge-orange w-8 h-8! rounded-full! border! flex! items-center justify-center shrink-0'>
                       <span className='material-symbols-rounded text-base'>warning</span>
                     </div>
                     <div className='min-w-0'>
@@ -790,7 +799,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 return (
                   <div key={item.id} className='flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'>
                     <div className='flex items-center gap-3 overflow-hidden'>
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isExpired ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'}`}>
+                      <div className={`${isExpired ? 'badge-danger' : 'badge-warning'} w-8 h-8! rounded-full! border! flex! items-center justify-center shrink-0`}>
                         <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-base)' }}>event_busy</span>
                       </div>
                       <div className='min-w-0'>
@@ -802,7 +811,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </p>
                       </div>
                     </div>
-                    <span className='text-xs text-gray-400 font-medium shrink-0 ms-2 bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded-lg'>
+                    <span className='badge-zinc shrink-0 ms-2'>
                       {formatExpiryDate(item.expiryDate)}
                     </span>
                   </div>
@@ -850,10 +859,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
             title={t.recentSales} 
             onExpand={() => setExpandedView('recentSales')} 
           />
-          <div className='flex-1 overflow-y-auto space-y-0 divide-y divide-gray-100 dark:divide-gray-800'>
+          <div className='flex-1 overflow-y-auto space-y-2 pe-1'>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className='py-3 flex items-center justify-between px-2 animate-pulse'>
+                <div key={i} className='flex items-center justify-between p-2 rounded-xl animate-pulse'>
                   <div className='flex items-center gap-3'>
                     <div className='w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 shrink-0' />
                     <div className='space-y-2'>
@@ -875,11 +884,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
               recentSales.map((sale, idx) => (
                 <div
                   key={sale.key || sale.id || `rs-${idx}`}
-                  className='py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/30 px-2 rounded-lg transition-colors'
+                  className='flex items-center justify-between p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
                 >
                   <div className='flex items-center gap-3'>
                     <div
-                      className={`w-10 h-10 flex items-center justify-center rounded-xl bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400`}
+                      className="badge-purple w-10 h-10! rounded-xl! border! flex! items-center justify-center"
                     >
                       <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>shopping_bag</span>
                     </div>
@@ -889,7 +898,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         {sale.customerCode && (
                           <span
                             dir='ltr'
-                            className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-gray-100 dark:border-gray-800 text-gray-500 dark:text-gray-400 text-[10px] font-bold uppercase tracking-wider bg-transparent'
+                            className='badge-zinc inline-flex items-center gap-1.5! px-1.5! py-0.5! text-[10px]! tracking-wider'
                           >
                             <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>tag</span>
                             {sale.customerCode}
@@ -910,7 +919,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             {sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}
                           </span>
                         </span>
-                        <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-gray-100 dark:border-gray-800 text-gray-500 dark:text-gray-400 text-[10px] font-bold uppercase tracking-wider bg-transparent'>
+                        <span className='badge-zinc inline-flex items-center gap-1! px-1.5! py-0.5! text-[10px]! tracking-wider'>
                           <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>package_2</span>
                           {sale.items.length}
                         </span>

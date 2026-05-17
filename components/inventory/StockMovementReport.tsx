@@ -460,14 +460,14 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                 </td>
                               )}
                               <td style={{ width: columns[showAll ? 2 : 1].width }} className="py-2">
-                                <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-[10px] font-normal uppercase tracking-wider bg-transparent ${
-                                  m.type === 'sale' ? 'text-rose-700 dark:text-rose-400' :
-                                  m.type === 'purchase' ? 'text-emerald-700 dark:text-emerald-400' :
-                                  m.type === 'return_customer' ? 'text-sky-700 dark:text-sky-400' :
-                                  m.type === 'return_supplier' ? 'text-orange-700 dark:text-orange-400' :
-                                  m.type === 'adjustment' ? 'text-amber-700 dark:text-amber-400' :
-                                  m.type === 'damage' ? 'text-red-700 dark:text-red-400' :
-                                  'text-gray-600 dark:text-gray-400'
+                                <span className={`gap-1.5 ${
+                                  m.type === 'sale' ? 'badge-danger' :
+                                  m.type === 'purchase' ? 'badge-success' :
+                                  m.type === 'return_customer' ? 'badge-info' :
+                                  m.type === 'return_supplier' ? 'badge-orange' :
+                                  m.type === 'adjustment' ? 'badge-warning' :
+                                  m.type === 'damage' ? 'badge-danger' :
+                                  'badge-neutral'
                                 }`}>
                                   <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-sm)' }}>
                                     {m.type === 'sale' ? 'north_east' :
@@ -499,26 +499,25 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                               </td>
                               <td style={{ width: columns[showAll ? 4 : 3].width }} className="py-2">
                                 <div className="flex flex-col gap-1 items-start">
-                                  {m.batchId ? (
-                                    <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-gray-100 dark:border-(--border-divider) text-gray-600 dark:text-gray-400 text-[10px] font-bold uppercase tracking-wider bg-transparent">
-                                      <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-sm)' }}>tag</span>
-                                      {m.batchId.substring(0, 6)}
-                                    </span>
-                                  ) : (
-                                    <span className="text-[10px] text-gray-400">-</span>
-                                  )}
-                                  {m.expiryDate && (() => {
+                                  {m.expiryDate ? (() => {
                                     const status = checkExpiryStatus(m.expiryDate);
                                     const config = getExpiryStatusConfig(status);
                                     return (
-                                      <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-[10px] font-bold uppercase tracking-wider bg-transparent text-${config.color}-700 dark:text-${config.color}-400`}>
+                                      <span className={`gap-1.5 ${
+                                         config.color === 'emerald' ? 'badge-success' :
+                                         config.color === 'amber' ? 'badge-warning' :
+                                         config.color === 'orange' ? 'badge-orange' :
+                                         'badge-danger'
+                                       }`}>
                                         <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-sm)' }}>
                                           {status === 'invalid' ? 'event_busy' : 'event_available'}
                                         </span>
                                         {formatExpiryDate(m.expiryDate)}
                                       </span>
                                     );
-                                  })()}
+                                  })() : (
+                                    <span className="text-[10px] text-gray-400">-</span>
+                                  )}
                                 </div>
                               </td>
                               <td style={{ width: columns[showAll ? 5 : 4].width }} className="py-2">
@@ -534,7 +533,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                 </div>
                               </td>
                               <td style={{ width: columns[showAll ? 7 : 6].width }} className="py-2">
-                                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-xl border border-gray-100 dark:border-(--border-divider) text-[10px] font-bold uppercase tracking-widest text-(--text-secondary) bg-transparent">
+                                <span className="badge-neutral gap-1.5">
                                   <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-sm)' }}>person</span>
                                   <span className="truncate">{m.performedByName || m.performedBy || (isRTL ? 'النظام' : 'System')}</span>
                                 </span>

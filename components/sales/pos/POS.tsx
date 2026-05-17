@@ -572,7 +572,7 @@ export const POS: React.FC<POSProps> = ({
 
           if (info.getValue() <= 0) {
             return (
-              <span className='inline-flex items-center justify-center px-2 py-1 text-xs font-bold text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400 rounded-lg border border-red-200 dark:border-red-800'>
+              <span className='badge-danger'>
                 {t.outOfStock || 'Out of Stock'}
               </span>
             );
@@ -664,7 +664,7 @@ export const POS: React.FC<POSProps> = ({
           if (availableBatches.length === 0) {
             return (
               <div className='w-full h-full flex items-center justify-center'>
-                <span className='inline-flex items-center px-2 py-0.5 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-900/20 rounded-sm border border-red-100 dark:border-red-800/50'>
+                <span className='badge-danger'>
                   {t.noStock || 'Out of Stock'}
                 </span>
               </div>
@@ -679,7 +679,7 @@ export const POS: React.FC<POSProps> = ({
                   {i ? (
                     formatExpiryDate(i.expiryDate) + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                   ) : (
-                    <span className='inline-flex items-center px-2 py-0.5 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-900/20 rounded-sm border border-red-100 dark:border-red-800/50'>
+                    <span className='badge-danger'>
                       {t.noStock}
                     </span>
                   )}

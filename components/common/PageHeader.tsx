@@ -76,7 +76,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   onToggleBottom,
   toggleTooltip,
 }) => {
-  const baseClasses = `flex flex-col shrink-0 transition-all duration-300 ${mb}`;
+  const baseClasses = `flex flex-col shrink-0 ${mb}`;
   const stickyClasses = sticky ? 'sticky top-0 z-40 bg-(--bg-page-surface)/80 backdrop-blur-md' : '';
   const borderClasses = border ? 'border-b border-zinc-200/50 dark:border-zinc-800/50' : '';
 
@@ -122,7 +122,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                 className='flex items-center justify-center w-8 h-8 rounded-full bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer'
                 aria-label={showBottom ? 'Hide Summary' : 'Show Summary'}
               >
-                <span className={`material-symbols-rounded transition-transform duration-300 ${showBottom ? 'rotate-180' : ''}`}>
+                <span className={`material-symbols-rounded ${showBottom ? 'rotate-180' : ''}`}>
                   expand_more
                 </span>
               </button>

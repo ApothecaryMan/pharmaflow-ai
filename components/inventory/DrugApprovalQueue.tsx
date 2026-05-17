@@ -416,17 +416,17 @@ export const DrugApprovalQueue: React.FC<DrugApprovalQueueProps> = ({
                       </td>
                       <td className='p-4 text-center'>
                         {app.status === 'pending' && (
-                          <span className='inline-flex items-center px-1.5 py-0.5 rounded-lg border border-amber-500 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider bg-transparent'>
+                          <span className='badge-warning'>
                             {t.drugApproval?.statusPending || 'Pending'}
                           </span>
                         )}
                         {app.status === 'suspended' && (
-                          <span className='inline-flex items-center px-1.5 py-0.5 rounded-lg border border-red-500 text-red-600 dark:text-red-400 text-[10px] font-bold uppercase tracking-wider bg-transparent'>
+                          <span className='badge-danger'>
                             {t.drugApproval?.statusSuspended || 'Suspended'}
                           </span>
                         )}
                         {app.status === 'approved' && (
-                          <span className='inline-flex items-center px-1.5 py-0.5 rounded-lg border border-green-500 text-green-600 dark:text-green-400 text-[10px] font-bold uppercase tracking-wider bg-transparent'>
+                          <span className='badge-success'>
                             {t.drugApproval?.statusApproved || 'Approved'}
                           </span>
                         )}

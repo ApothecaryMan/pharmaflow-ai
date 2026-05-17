@@ -35,6 +35,24 @@ import { resolveUnits, convertToPacks } from '../../utils/stockUtils';
 import * as stockOps from '../../utils/stockOperations';
 import { batchService } from '../../services/inventory/batchService';
 
+/**
+ * Maps a product category to a premium static status badge style,
+ * providing clinical and clear category separation regardless of the workspace theme color.
+ */
+const getCategoryBadgeClass = (category: string): string => {
+  const normalized = (category || 'General').toLowerCase();
+  switch (normalized) {
+    case 'medicine':
+    case 'دواء':
+      return 'badge-info';
+    case 'cosmetics':
+    case 'تجميل':
+      return 'badge-purple';
+    default:
+      return 'badge-neutral';
+  }
+};
+
 interface InventoryProps {
   inventory: Drug[];
   onAddDrug: (drug: Omit<Drug, 'id' | 'branchId' | 'createdAt' | 'updatedAt'>) => void;
@@ -475,9 +493,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         accessorKey: 'category',
         header: t.headers.category,
         cell: ({ row }) => (
-          <span
-            className={`inline-flex items-center px-1.5 py-0.5 rounded-lg border border-current text-primary-700 dark:text-primary-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
-          >
+          <span className={getCategoryBadgeClass(row.original.category)}>
             {getLocalizedCategory(row.original.category || 'General', currentLang)}
           </span>
         ),
@@ -487,14 +503,14 @@ export const Inventory: React.FC<InventoryProps> = ({
         header: t.headers.status || 'Status',
         cell: ({ row }) => {
           const status = row.original.status || 'active';
-          const colors = {
-            active: 'text-green-600 dark:text-green-400',
-            inactive: 'text-amber-600 dark:text-amber-400',
-            discontinued: 'text-red-600 dark:text-red-400',
-          }[status as 'active' | 'inactive' | 'discontinued'] || 'text-gray-500';
+          const badgeClass = {
+            active: 'badge-success',
+            inactive: 'badge-warning',
+            discontinued: 'badge-danger',
+          }[status as 'active' | 'inactive' | 'discontinued'] || 'badge-neutral';
           
           return (
-             <span className={`inline-flex items-center px-1.5 py-0.5 rounded-lg border border-current bg-transparent text-xs font-bold uppercase tracking-wider ${colors}`}>
+            <span className={badgeClass}>
               {t[status] || status}
             </span>
           );
@@ -507,7 +523,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         cell: ({ row }) => {
           if (row.original.stock <= 0) {
             return (
-              <span className='inline-flex items-center px-1.5 py-0.5 rounded-lg border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-widest bg-red-50 dark:bg-red-900/10 shadow-xs shadow-red-500/10'>
+              <span className='badge-danger'>
                 {t.outOfStockShort || 'OUT'}
               </span>
             );
@@ -943,9 +959,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                     : (viewingDrug.genericName as any)}
                 </p>
               </div>
-              <span
-                className={`inline-flex items-center px-1.5 py-0.5 rounded-lg border border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
-              >
+              <span className={getCategoryBadgeClass(viewingDrug.category)}>
                 {getLocalizedCategory(viewingDrug.category || 'General', currentLang)}
               </span>
             </div>
@@ -1197,13 +1211,13 @@ export const Inventory: React.FC<InventoryProps> = ({
                   </label>
                   <div className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus-within:ring-2 focus-within:ring-blue-500 transition-all flex flex-wrap gap-2 items-center min-h-[42px]'>
                     {formData.barcode && (
-                      <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium border border-gray-200 dark:border-blue-800'>
+                      <span className='badge-info gap-1'>
                         <span className='material-symbols-rounded text-[14px]'>qr_code_2</span>
                         {formData.barcode}
                         <button
                           type='button'
                           onClick={() => setFormData({ ...formData, barcode: '' })}
-                          className='hover:text-blue-900 dark:hover:text-blue-100'
+                          className='hover:text-blue-950 dark:hover:text-blue-100'
                         >
                           <span className='material-symbols-rounded text-[14px]'>close</span>
                         </button>
@@ -1212,7 +1226,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                     {formData.additionalBarcodes?.map((code, idx) => (
                       <span
                         key={idx}
-                        className='inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium border border-gray-300 dark:border-gray-600'
+                        className='badge-neutral gap-1'
                       >
                         {code}
                         <button
@@ -1222,7 +1236,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                             newCodes.splice(idx, 1);
                             setFormData({ ...formData, additionalBarcodes: newCodes });
                           }}
-                          className='hover:text-gray-900 dark:hover:text-gray-100'
+                          className='hover:text-gray-950 dark:hover:text-gray-100'
                         >
                           <span className='material-symbols-rounded text-[14px]'>close</span>
                         </button>

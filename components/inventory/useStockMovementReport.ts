@@ -56,7 +56,7 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
     cols.push(
       { id: 'type', label: isRTL ? 'النوع' : 'TYPE', width: '11%' },
       { id: 'quantity', label: isRTL ? 'الكمية' : 'QUANTITY', width: '14%' },
-      { id: 'batch', label: isRTL ? 'التشغيلة / الصلاحية' : 'BATCH / EXPIRY', width: showAll ? '15%' : '21%' },
+      { id: 'batch', label: isRTL ? 'الصلاحية' : 'EXPIRY', width: showAll ? '15%' : '21%' },
       { id: 'value', label: isRTL ? 'القيمة' : 'VALUE', width: '10%' },
       { id: 'stock', label: isRTL ? 'المخزون' : 'STOCK', width: '10%' },
       { id: 'user', label: isRTL ? 'بواسطة' : 'USER', width: '17%' },

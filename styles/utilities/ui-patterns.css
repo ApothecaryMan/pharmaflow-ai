@@ -99,12 +99,11 @@ html:not(.dark) .card-shadow  { box-shadow: none !important; border: 2px solid v
 }
 
 @utility badge-neutral {
-  @apply inline-flex items-center justify-center px-2 py-1 text-xs font-bold rounded-lg border select-none text-gray-700 bg-gray-100 dark:bg-zinc-800/30 dark:text-gray-400 border-gray-200 dark:border-zinc-800;
+  @apply inline-flex items-center justify-center px-2 py-1 text-xs font-bold rounded-lg border select-none text-gray-700 bg-gray-100 dark:bg-zinc-800/60 dark:text-zinc-200 border-gray-200 dark:border-zinc-700;
 }
 
-/* Branch theme badge colors mapped dynamically */
 @utility badge-zinc {
-  @apply inline-flex items-center justify-center px-2 py-1 text-xs font-bold rounded-lg border select-none text-gray-700 bg-gray-100 dark:bg-zinc-800/30 dark:text-gray-400 border-gray-200 dark:border-zinc-800;
+  @apply inline-flex items-center justify-center px-2 py-1 text-xs font-bold rounded-lg border select-none text-gray-700 bg-gray-100 dark:bg-zinc-800/60 dark:text-zinc-200 border-gray-200 dark:border-zinc-700;
 }
 
 @utility badge-purple {
@@ -137,4 +136,15 @@ html:not(.dark) .card-shadow  { box-shadow: none !important; border: 2px solid v
 
 @utility badge-teal {
   @apply inline-flex items-center justify-center px-2 py-1 text-xs font-bold rounded-lg border select-none text-teal-700 bg-teal-100 dark:bg-teal-900/30 dark:text-teal-400 border-teal-200 dark:border-teal-800;
+}
+
+/* Custom Icon scaling inside premium badges */
+[class*="badge-"] .material-symbols-rounded {
+  font-size: 20px !important;
+  width: 12px !important;
+  height: 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
 }
