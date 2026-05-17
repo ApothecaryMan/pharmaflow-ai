@@ -13,16 +13,13 @@ import { DashboardExperiments } from '../components/experiments/DashboardExperim
 import { EmployeeList } from '../components/hr/EmployeeList';
 import { EmployeeProfile } from '../components/hr/EmployeeProfile';
 import { StaffOverview } from '../components/hr/StaffOverview';
+import { DrugApprovalQueue, ExpiryManagement, StockMovementReport } from '../components/inventory';
+import { AddProduct } from '../components/inventory/AddProduct';
 import { BarcodePrinter } from '../components/inventory/BarcodePrinter';
 import { BarcodeStudio } from '../components/inventory/BarcodeStudio';
-import { AddProduct } from '../components/inventory/AddProduct';
 import { Inventory } from '../components/inventory/Inventory';
 import { InventoryManagement } from '../components/inventory/InventoryManagement';
 import { StockAdjustment } from '../components/inventory/StockAdjustment';
-import { StockMovementReport, ExpiryManagement, DrugApprovalQueue } from '../components/inventory';
-import { BranchSettings } from '../components/settings/BranchSettings';
-import { PricingPage } from '../components/settings/PricingPage';
-import { DesktopSettings } from '../components/settings/DesktopSettings';
 import { LandingPage } from '../components/layout/LandingPage';
 import { PendingApproval } from '../components/purchases/PendingApproval';
 import { PurchaseHistory } from '../components/purchases/PurchaseHistory';
@@ -30,13 +27,16 @@ import { PurchaseReturns } from '../components/purchases/PurchaseReturns';
 import { Purchases } from '../components/purchases/Purchases';
 import { SuppliersList } from '../components/purchases/SuppliersList';
 import { LoginAuditList } from '../components/reports/LoginAuditList';
+import { ProfitLossPage } from '../components/reports/ProfitLossPage';
 import { CashRegister } from '../components/sales/CashRegister';
 import { POS } from '../components/sales/pos/POS';
 import { ReceiptDesigner } from '../components/sales/ReceiptDesigner';
 import { ReturnHistory } from '../components/sales/ReturnHistory';
 import { SalesHistory } from '../components/sales/SalesHistory';
 import { ShiftHistory } from '../components/sales/ShiftHistory';
-import { ProfitLossPage } from '../components/reports/ProfitLossPage';
+import { BranchSettings } from '../components/settings/BranchSettings';
+import { DesktopSettings } from '../components/settings/DesktopSettings';
+import { PricingPage } from '../components/settings/PricingPage';
 
 import { ModalTests } from '../components/test/ModalTests';
 import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
@@ -718,6 +718,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'prescriptions',
     requiredProps: ['t', 'language', 'inventory'],
     permission: PERMISSIONS_MAPPING['drug-interactions'],
+    layout: 'standard',
+  },
+  shortages: {
+    id: 'shortages',
+    component: React.lazy(() => import('../components/inventory/ShortagesPage')),
+    menuLabel: 'Shortages & Predictive Alerts',
+    menuLabelAr: 'النواقص والإنذارات التنبؤية',
+    icon: 'warning',
+    category: 'inventory',
+    requiredProps: ['t', 'language', 'inventory', 'onViewChange', 'navigationParams'],
+    permission: PERMISSIONS_MAPPING['inventory'],
     layout: 'standard',
   },
 };

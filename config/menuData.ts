@@ -408,6 +408,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: 'stock-alerts',
         label: 'Stock Alerts',
         items: [
+          { label: 'Shortages & Alerts', view: 'shortages' as any, icon: 'warning' },
           { label: 'Low Stock Items', icon: 'trending_down' },
           { label: 'Out of Stock', icon: 'remove_shopping_cart' },
           { label: 'Overstock Items', icon: 'production_quantity_limits' },

@@ -69,7 +69,8 @@ export type ViewState =
   | 'attendance-reports'
   | 'employee-attendance-profile'
   | 'desktop-settings'
-  | 'drug-interactions';
+  | 'drug-interactions'
+  | 'shortages';
 
 /** Dashboard widget expand options */
 export type ExpandedView =

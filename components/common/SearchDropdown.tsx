@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSettings } from '../../context/SettingsContext';
 
 export interface SearchDropdownColumn<T> {
   header: string;
@@ -26,6 +27,8 @@ export function SearchDropdown<T extends { id: string | number }>({
   highlightedIndex = -1,
   className = 'left-0 right-0',
 }: SearchDropdownProps<T>) {
+  const { language } = useSettings();
+  const isAR = language === 'AR';
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const rowRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -43,30 +46,46 @@ export function SearchDropdown<T extends { id: string | number }>({
 
   if (results.length === 0) {
     return (
-      <div className={`absolute top-full mt-2 bg-white dark:bg-(--bg-card) rounded-xl shadow-xl border border-gray-100 dark:border-(--border-divider) p-4 text-center text-gray-500 text-sm z-50 ${className}`}>
+      <div
+        className={`absolute top-full mt-2 bg-white dark:bg-(--bg-card) rounded-xl shadow-xl border border-gray-100 dark:border-(--border-divider) p-4 text-center text-gray-500 text-sm z-50 ${className}`}
+      >
         {emptyMessage}
       </div>
     );
   }
 
   return (
-    <div className={`absolute top-full mt-1.5 bg-white dark:bg-(--bg-card) rounded-xl shadow-xl border border-gray-100 dark:border-(--border-divider) overflow-hidden isolate z-40 ${className}`}>
+    <div
+      className={`absolute top-full mt-1.5 bg-white dark:bg-(--bg-card) rounded-xl shadow-xl border border-gray-100 dark:border-(--border-divider) overflow-hidden isolate z-40 ${className}`}
+    >
       {/* Fixed Header Row */}
       <div className='flex items-stretch w-full bg-gray-50/95 dark:bg-(--bg-card) backdrop-blur-xs border-b border-gray-100 dark:border-(--border-divider) text-[10px] font-bold uppercase tracking-wider text-gray-400 rounded-t-xl'>
-        {columns.map((col, index) => (
-          <div
-            key={index}
-            className={`${col.width || 'flex-1'} p-2 border-e border-gray-100 dark:border-(--border-divider) last:border-e-0 ${col.className || ''}`}
-          >
-            {col.header}
-          </div>
-        ))}
+        {columns.map((col, index) => {
+          const headerLower = String(col.header || '').toLowerCase();
+          const isNameCol = ['name', 'الاسم', 'المنتج', 'product'].some((k) =>
+            headerLower.includes(k)
+          );
+          const headerAlignClass = isNameCol
+            ? isAR
+              ? 'justify-end text-end'
+              : 'justify-start text-start'
+            : '';
+
+          return (
+            <div
+              key={index}
+              className={`${col.width || 'flex-1'} p-2 border-e border-gray-100 dark:border-(--border-divider) last:border-e-0 flex items-center ${headerAlignClass} ${col.className || ''}`}
+            >
+              {col.header}
+            </div>
+          );
+        })}
       </div>
 
       {/* Scrollable Data Rows Area */}
       <div
         ref={scrollContainerRef}
-        className='max-h-[340px] overflow-y-auto overflow-x-hidden'
+        className='max-h-[340px] overflow-y-auto overflow-x-hidden scrollbar-hide'
       >
         {results.map((item, index) => (
           <button
@@ -83,14 +102,27 @@ export function SearchDropdown<T extends { id: string | number }>({
             }`}
           >
             <div className='flex items-stretch w-full text-sm text-gray-600 dark:text-white'>
-              {columns.map((col, colIndex) => (
-                <div
-                  key={colIndex}
-                  className={`${col.width || 'flex-1'} py-1.5 px-3 border-e border-gray-100/80 dark:border-(--border-divider) last:border-e-0 flex items-center ${col.className || ''}`}
-                >
-                  {col.render(item)}
-                </div>
-              ))}
+              {columns.map((col, colIndex) => {
+                const headerLower = String(col.header || '').toLowerCase();
+                const isNameCol = ['name', 'الاسم', 'المنتج', 'product'].some((k) =>
+                  headerLower.includes(k)
+                );
+                const cellAlignClass = isNameCol ? 'justify-start text-start' : '';
+
+                return (
+                  <div
+                    key={colIndex}
+                    className={`${col.width || 'flex-1'} py-1.5 px-3 border-e border-gray-100/80 dark:border-(--border-divider) last:border-e-0 flex items-center ${cellAlignClass} ${col.className || ''}`}
+                  >
+                    <div
+                      dir={isNameCol ? 'ltr' : undefined}
+                      className='w-full flex items-center justify-start'
+                    >
+                      {col.render(item)}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </button>
         ))}

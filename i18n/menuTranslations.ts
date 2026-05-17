@@ -872,6 +872,8 @@ export const MENU_TRANSLATIONS = {
     'Stock Movement Report': 'تقرير حركة المخزون',
     'Sales by Product Analysis': 'تحليل المبيعات حسب المنتج',
     'Login Audit Report': 'تقرير سجل تسجيل الدخول',
+    'Shortages & Alerts': 'النواقص والإنذارات التنبؤية',
+    'Shortages & Predictive Alerts': 'النواقص والإنذارات التنبؤية',
   },
 };
 

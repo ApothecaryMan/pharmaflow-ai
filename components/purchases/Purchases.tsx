@@ -1,15 +1,45 @@
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import type { ColumnDef } from '@tanstack/react-table';
-import React from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
-import { permissionsService } from '../../services/auth/permissionsService';
-import { authService } from '../../services/auth/authService';
+import { TabBar } from '../../components/layout/TabBar';
+import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
-import { useLongPress } from '../../hooks/common/useLongPress';
-import { settingsService } from '../../services';
 import { useData } from '../../context/DataContext';
-import type { Drug, Purchase, PurchaseItem, PurchaseReturn, PurchaseTab, Shift, Supplier } from '../../types';
+import { useLongPress } from '../../hooks/common/useLongPress';
+import { usePurchaseTabs } from '../../hooks/purchases/usePurchaseTabs';
+import { settingsService } from '../../services';
+import { authService } from '../../services/auth/authService';
+import { permissionsService } from '../../services/auth/permissionsService';
+import { DrugSearchEngine } from '../../services/search/drugSearchService';
+import type {
+  Drug,
+  Purchase,
+  PurchaseItem,
+  PurchaseReturn,
+  PurchaseTab,
+  Shift,
+  Supplier,
+} from '../../types';
+import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import {
   checkExpiryStatus,
@@ -18,47 +48,24 @@ import {
   getExpiryStatusStyle,
   sanitizeExpiryInput,
 } from '../../utils/expiryUtils';
-import { formatStock } from '../../utils/inventory';
-import { DrugSearchEngine } from '../../services/search/drugSearchService';
-import { CARD_BASE } from '../../utils/themeStyles';
 import { idGenerator } from '../../utils/idGenerator';
-import { storage } from '../../utils/storage';
-import { StorageKeys } from '../../config/storageKeys';
+import { formatStock } from '../../utils/inventory';
 import { money, pricing, tax } from '../../utils/money';
-import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
+import { storage } from '../../utils/storage';
+import { CARD_BASE } from '../../utils/themeStyles';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { FilterDropdown } from '../common/FilterDropdown';
+import { type FilterConfig, FilterPill } from '../common/FilterPill';
 import { FloatingInput } from '../common/FloatingInput';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { Modal } from '../common/Modal';
+import { PageHeader } from '../common/PageHeader';
 import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useSmartDirection } from '../common/SmartInputs';
-import { FilterPill, type FilterConfig } from '../common/FilterPill';
 import { TanStackTable } from '../common/TanStackTable';
-import { PageHeader } from '../common/PageHeader';
-import { TabBar } from '../../components/layout/TabBar';
-import { usePurchaseTabs } from '../../hooks/purchases/usePurchaseTabs';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
 
 interface PurchasesProps {
   inventory: Drug[];
@@ -99,388 +106,397 @@ interface SortableCartItemProps {
   taxMode: 'exclusive' | 'inclusive';
 }
 
-const SortableCartItem = React.memo(({
-  item,
-  index,
-  selectedCartIndex,
-  setSelectedCartIndex,
-  removeItem,
-  updateItem,
-  showMenu,
-  t,
-  isLoading,
-  textTransform,
-  language,
-  focusedInput,
-  setFocusedInput,
-  inputRefs,
-  handleInputKeyDown,
-  money,
-  tax,
-  taxMode,
-}: SortableCartItemProps) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: item.id });
+const SortableCartItem = React.memo(
+  ({
+    item,
+    index,
+    selectedCartIndex,
+    setSelectedCartIndex,
+    removeItem,
+    updateItem,
+    showMenu,
+    t,
+    isLoading,
+    textTransform,
+    language,
+    focusedInput,
+    setFocusedInput,
+    inputRefs,
+    handleInputKeyDown,
+    money,
+    tax,
+    taxMode,
+  }: SortableCartItemProps) => {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+      id: item.id,
+    });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    zIndex: isDragging ? 50 : undefined,
-  };
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      zIndex: isDragging ? 50 : undefined,
+    };
 
-  const lineTotal = money.multiply(item.costPrice, item.quantity, 0);
-  const calculatedSubtotal = taxMode === 'exclusive' 
-    ? lineTotal 
-    : tax.inclusiveBase(lineTotal, item.tax ?? 14);
-  const calculatedTotal = taxMode === 'inclusive' 
-    ? lineTotal 
-    : money.add(lineTotal, tax.exclusiveAmount(lineTotal, item.tax ?? 14));
+    const lineTotal = money.multiply(item.costPrice, item.quantity, 0);
+    const calculatedSubtotal =
+      taxMode === 'exclusive' ? lineTotal : tax.inclusiveBase(lineTotal, item.tax ?? 14);
+    const calculatedTotal =
+      taxMode === 'inclusive'
+        ? lineTotal
+        : money.add(lineTotal, tax.exclusiveAmount(lineTotal, item.tax ?? 14));
 
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      dir='ltr'
-      onClick={() => setSelectedCartIndex(index)}
-      className={`p-3 rounded-2xl relative group pr-2 type-functional cursor-pointer border border-transparent ${
-        selectedCartIndex === index
-          ? `bg-primary-50 dark:bg-(--bg-navbar) border-primary-100 dark:border-primary-900/30`
-          : 'bg-gray-50 dark:bg-(--bg-navbar) hover:bg-gray-100 dark:hover:bg-(--bg-surface-neutral)'
-      } ${isDragging ? 'z-50 bg-white dark:bg-gray-800 border-primary-500/50' : ''}`}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        showMenu(e.clientX, e.clientY, [
-          {
-            label: t.actions.viewDetails,
-            icon: 'visibility',
-            action: () =>
-              alert(
-                `Details for ${item.name}\nQuantity: ${item.quantity}\nCost Price: ${item.costPrice}`
-              ),
-          },
-          {
-            label: t.actions.editQty,
-            icon: 'edit',
-            action: () => {
-              const qty = prompt('Enter quantity:', item.quantity.toString());
-              if (qty) updateItem(item.id, 'quantity', parseFloat(qty) || 1);
-            },
-          },
-          { separator: true },
-          {
-            label: t.contextMenu?.removeItem || 'Remove Item',
-            icon: 'delete',
-            action: () => removeItem(item.id),
-            danger: true,
-          },
-        ]);
-      }}
-    >
-      {/* Drag Handle */}
-      <div 
-        {...attributes} 
-        {...listeners}
-        className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-40 hover:!opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-1 z-20"
-      >
-        <span className="material-symbols-rounded text-lg">drag_indicator</span>
-      </div>
-
-      <button
-        onClick={() => removeItem(item.id)}
-        className='absolute top-1/2 -translate-y-1/2 right-0 w-6 h-full flex items-center justify-center text-gray-400 hover:text-red-500 z-10 opacity-0 group-hover:opacity-100 transition-opacity rounded-r-2xl'
-      >
-        <span className='material-symbols-rounded text-lg'>close</span>
-      </button>
-
-      {/* Single Row: Name + All Inputs */}
-      <div className='flex gap-1.5 items-center pe-4 ps-5'>
-        {/* Product Name */}
-        <div className='flex-1 min-w-0'>
-          <p className='font-bold text-md drug-name truncate mb-1' title={item.name}>
-            {getDisplayName(item, textTransform)}
-          </p>
-        </div>
-
-        {/* 1. Qty */}
-        <div className='w-12 relative group/qty'>
-          <FloatingInput
-            inputRef={(el) => {
-              inputRefs.current[`${index}-quantity`] = el;
-            }}
-            onKeyDown={(e) => handleInputKeyDown(e, index, 'quantity')}
-            label={t.cartFields?.qty || 'Qty'}
-            isLoading={isLoading}
-            type='number'
-            maxLength={4}
-            value={item.quantity}
-            labelBgClassName={
-              selectedCartIndex === index
-                ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                : 'bg-gray-50 dark:bg-(--bg-navbar)'
-            }
-            onFocus={(e) => {
-              setSelectedCartIndex(index);
-              e.target.select();
-            }}
-            onChange={(e) => {
-              const val = e.target.value.slice(0, 4);
-              updateItem(item.id, 'quantity', parseFloat(val) || 0);
-            }}
-          />
-          {item.unitsPerPack > 1 && (
-            <div className='absolute -bottom-3 left-1/2 -translate-x-1/2 text-[8px] font-bold text-blue-500 whitespace-nowrap opacity-0 group-hover/qty:opacity-100 transition-opacity pointer-events-none'>
-              x{item.unitsPerPack} u
-            </div>
-          )}
-        </div>
-
-        {/* 2. Expiry */}
-        <div className='w-[74px]'>
-          <FloatingInput
-            inputRef={(el) => {
-              inputRefs.current[`${index}-expiryDate`] = el;
-            }}
-            onKeyDown={(e) => handleInputKeyDown(e, index, 'expiryDate')}
-            label={t.cartFields?.expiry || 'Expiry'}
-            isLoading={isLoading}
-            type='text'
-            maxLength={4}
-            inputClassName={(() => {
-              const isFocused =
-                focusedInput?.id === item.id &&
-                focusedInput?.field === 'expiryDate';
-              const status = checkExpiryStatus(item.expiryDate || '', {
-                checkIncomplete: !isFocused,
-              });
-              return getExpiryStatusStyle(status, 'input');
-            })()}
-            labelBgClassName={
-              selectedCartIndex === index
-                ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                : 'bg-gray-50 dark:bg-(--bg-navbar)'
-            }
-            value={
-              focusedInput?.id === item.id && focusedInput?.field === 'expiryDate'
-                ? (item.expiryDate?.includes('-') ? item.expiryDate.split('-')[1] + item.expiryDate.split('-')[0].slice(2) : item.expiryDate)
-                : formatExpiryDate(item.expiryDate || '')
-            }
-            onFocus={(e) => {
-              setSelectedCartIndex(index);
-              setFocusedInput({ id: item.id, field: 'expiryDate' });
-              setTimeout(() => e.target.select(), 10);
-            }}
-            onBlur={() => {
-              setFocusedInput(null);
-              // Alert if expiry date is incomplete (1-3 digits)
-              const status = checkExpiryStatus(item.expiryDate || '');
-              if (status === 'incomplete') {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        dir='ltr'
+        onClick={() => setSelectedCartIndex(index)}
+        className={`p-3 rounded-2xl relative group pr-2 type-functional cursor-pointer border border-transparent ${
+          selectedCartIndex === index
+            ? `bg-primary-50 dark:bg-(--bg-navbar) border-primary-100 dark:border-primary-900/30`
+            : 'bg-gray-50 dark:bg-(--bg-navbar) hover:bg-gray-100 dark:hover:bg-(--bg-surface-neutral)'
+        } ${isDragging ? 'z-50 bg-white dark:bg-gray-800 border-primary-500/50' : ''}`}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          showMenu(e.clientX, e.clientY, [
+            {
+              label: t.actions.viewDetails,
+              icon: 'visibility',
+              action: () =>
                 alert(
-                  t.alerts?.incompleteExpiry ||
-                    'Please enter a complete expiry date (4 digits: MMYY)'
-                );
-              }
-            }}
-            onChange={(e) => {
-              const sanitized = sanitizeExpiryInput(
-                e.target.value,
-                item.expiryDate || ''
-              );
-              if (sanitized !== null) {
-                updateItem(item.id, 'expiryDate', sanitized);
-              }
-            }}
-          />
+                  `Details for ${item.name}\nQuantity: ${item.quantity}\nCost Price: ${item.costPrice}`
+                ),
+            },
+            {
+              label: t.actions.editQty,
+              icon: 'edit',
+              action: () => {
+                const qty = prompt('Enter quantity:', item.quantity.toString());
+                if (qty) updateItem(item.id, 'quantity', parseFloat(qty) || 1);
+              },
+            },
+            { separator: true },
+            {
+              label: t.contextMenu?.removeItem || 'Remove Item',
+              icon: 'delete',
+              action: () => removeItem(item.id),
+              danger: true,
+            },
+          ]);
+        }}
+      >
+        {/* Drag Handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          className='absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-40 hover:!opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-1 z-20'
+        >
+          <span className='material-symbols-rounded text-lg'>drag_indicator</span>
         </div>
 
-        {/* 3. Cost */}
-        <div className='w-14'>
-          <FloatingInput
-            inputRef={(el) => {
-              inputRefs.current[`${index}-costPrice`] = el;
-            }}
-            onKeyDown={(e) => handleInputKeyDown(e, index, 'costPrice')}
-            label={t.cartFields?.cost || 'Cost'}
-            isLoading={isLoading}
-            type='number'
-            value={item.costPrice}
-            labelBgClassName={
-              selectedCartIndex === index
-                ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                : 'bg-gray-50 dark:bg-(--bg-navbar)'
-            }
-            onFocus={(e) => {
-              setSelectedCartIndex(index);
-              e.target.select();
-            }}
-            onChange={(e) =>
-              updateItem(item.id, 'costPrice', parseFloat(e.target.value) || 0)
-            }
-          />
-        </div>
+        <button
+          onClick={() => removeItem(item.id)}
+          className='absolute top-1/2 -translate-y-1/2 right-0 w-6 h-full flex items-center justify-center text-gray-400 hover:text-red-500 z-10 opacity-0 group-hover:opacity-100 transition-opacity rounded-r-2xl'
+        >
+          <span className='material-symbols-rounded text-lg'>close</span>
+        </button>
 
-        {/* 3b. Unit Cost */}
-        <div className='w-14'>
-          <FloatingInput
-            inputRef={(el) => {
-              inputRefs.current[`${index}-unitCostPrice`] = el;
-            }}
-            onKeyDown={(e) => handleInputKeyDown(e, index, 'unitCostPrice')}
-            label={language === 'AR' ? 'ت. وحدة' : 'U. Cost'}
-            isLoading={isLoading}
-            type='number'
-            value={item.unitCostPrice || 0}
-            placeholder={item.costPrice && item.unitsPerPack ? money.divide(item.costPrice, item.unitsPerPack).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
-            labelBgClassName={
-              selectedCartIndex === index
-                ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                : 'bg-gray-50 dark:bg-(--bg-navbar)'
-            }
-            onFocus={(e) => {
-              setSelectedCartIndex(index);
-              e.target.select();
-            }}
-            onChange={(e) =>
-              updateItem(item.id, 'unitCostPrice', parseFloat(e.target.value) || 0)
-            }
-          />
-        </div>
-
-        {/* 4. Discount */}
-        <div className='w-14'>
-          <FloatingInput
-            inputRef={(el) => {
-              inputRefs.current[`${index}-discount`] = el;
-            }}
-            onKeyDown={(e) => handleInputKeyDown(e, index, 'discount')}
-            label={t.cartFields?.discount || 'Disc %'}
-            isLoading={isLoading}
-            type='number'
-            min={0}
-            max={100}
-            value={item.discount || 0}
-            labelBgClassName={
-              selectedCartIndex === index
-                ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                : 'bg-gray-50 dark:bg-(--bg-navbar)'
-            }
-            onFocus={(e) => {
-              setSelectedCartIndex(index);
-              e.target.select();
-            }}
-            onChange={(e) =>
-              updateItem(item.id, 'discount', parseFloat(e.target.value) || 0)
-            }
-          />
-        </div>
-
-        {/* 5. Sale Price */}
-        <div className='w-14'>
-          <FloatingInput
-            inputRef={(el) => {
-              inputRefs.current[`${index}-publicPrice`] = el;
-            }}
-            onKeyDown={(e) => handleInputKeyDown(e, index, 'publicPrice')}
-            label={t.cartFields?.sale || 'Sale'}
-            isLoading={isLoading}
-            type='number'
-            value={item.publicPrice || 0}
-            labelBgClassName={
-              selectedCartIndex === index
-                ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                : 'bg-gray-50 dark:bg-(--bg-navbar)'
-            }
-            onFocus={(e) => {
-              setSelectedCartIndex(index);
-              e.target.select();
-            }}
-            onChange={(e) =>
-              updateItem(item.id, 'publicPrice', parseFloat(e.target.value) || 0)
-            }
-          />
-        </div>
-
-        {/* 5b. Unit Sale */}
-        <div className='w-14'>
-          <FloatingInput
-            inputRef={(el) => {
-              inputRefs.current[`${index}-unitPrice`] = el;
-            }}
-            onKeyDown={(e) => handleInputKeyDown(e, index, 'unitPrice')}
-            label={language === 'AR' ? 'س. وحدة' : 'U. Sale'}
-            isLoading={isLoading}
-            type='number'
-            value={item.unitPrice || 0}
-            placeholder={item.publicPrice && item.unitsPerPack ? money.divide(item.publicPrice, item.unitsPerPack).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
-            labelBgClassName={
-              selectedCartIndex === index
-                ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                : 'bg-gray-50 dark:bg-(--bg-navbar)'
-            }
-            onFocus={(e) => {
-              setSelectedCartIndex(index);
-              e.target.select();
-            }}
-            onChange={(e) =>
-              updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)
-            }
-          />
-        </div>
-
-        {/* 6. Tax % */}
-        <div className='w-12'>
-          <FloatingInput
-            inputRef={(el) => {
-              inputRefs.current[`${index}-tax`] = el;
-            }}
-            onKeyDown={(e) => handleInputKeyDown(e, index, 'tax')}
-            label={t.cartFields?.tax || 'Tax %'}
-            isLoading={isLoading}
-            type='number'
-            value={item.tax ?? 14}
-            labelBgClassName={
-              selectedCartIndex === index
-                ? `bg-primary-50 dark:bg-(--bg-navbar)`
-                : 'bg-gray-50 dark:bg-(--bg-navbar)'
-            }
-            onFocus={(e) => {
-              setSelectedCartIndex(index);
-              e.target.select();
-            }}
-            onChange={(e) =>
-              updateItem(item.id, 'tax', parseFloat(e.target.value) || 0)
-            }
-          />
-        </div>
-
-        {/* 7. Subtotal */}
-        <div className='w-16 flex flex-col items-center gap-0.5'>
-          <span className='text-[8px] text-gray-400 uppercase font-bold leading-none'>
-            {t.headers?.subtotal || 'Subtotal'}
-          </span>
-          <div className='tabular-nums text-[15px] font-black text-(--text-primary)'>
-            {calculatedSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        {/* Single Row: Name + All Inputs */}
+        <div className='flex gap-1.5 items-center pe-4 ps-5'>
+          {/* Product Name */}
+          <div className='flex-1 min-w-0'>
+            <p className='font-bold text-md drug-name truncate mb-1' title={item.name}>
+              {getDisplayName(item, textTransform)}
+            </p>
           </div>
-        </div>
 
-        {/* 8. Total */}
-        <div className='w-16 flex flex-col items-center gap-0.5'>
-          <span className='text-[8px] text-primary-500 uppercase font-bold leading-none'>
-            {t.headers?.totalPlusTax || 'Total+Tax'}
-          </span>
-          <div className='tabular-nums text-[15px] font-black text-primary-600 dark:text-primary-400'>
-            {calculatedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {/* 1. Qty */}
+          <div className='w-12 relative group/qty'>
+            <FloatingInput
+              inputRef={(el) => {
+                inputRefs.current[`${index}-quantity`] = el;
+              }}
+              onKeyDown={(e) => handleInputKeyDown(e, index, 'quantity')}
+              label={t.cartFields?.qty || 'Qty'}
+              isLoading={isLoading}
+              type='number'
+              maxLength={4}
+              value={item.quantity}
+              labelBgClassName={
+                selectedCartIndex === index
+                  ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                  : 'bg-gray-50 dark:bg-(--bg-navbar)'
+              }
+              onFocus={(e) => {
+                setSelectedCartIndex(index);
+                e.target.select();
+              }}
+              onChange={(e) => {
+                const val = e.target.value.slice(0, 4);
+                updateItem(item.id, 'quantity', parseFloat(val) || 0);
+              }}
+            />
+            {item.unitsPerPack > 1 && (
+              <div className='absolute -bottom-3 left-1/2 -translate-x-1/2 text-[8px] font-bold text-blue-500 whitespace-nowrap opacity-0 group-hover/qty:opacity-100 transition-opacity pointer-events-none'>
+                x{item.unitsPerPack} u
+              </div>
+            )}
+          </div>
+
+          {/* 2. Expiry */}
+          <div className='w-[74px]'>
+            <FloatingInput
+              inputRef={(el) => {
+                inputRefs.current[`${index}-expiryDate`] = el;
+              }}
+              onKeyDown={(e) => handleInputKeyDown(e, index, 'expiryDate')}
+              label={t.cartFields?.expiry || 'Expiry'}
+              isLoading={isLoading}
+              type='text'
+              maxLength={4}
+              inputClassName={(() => {
+                const isFocused =
+                  focusedInput?.id === item.id && focusedInput?.field === 'expiryDate';
+                const status = checkExpiryStatus(item.expiryDate || '', {
+                  checkIncomplete: !isFocused,
+                });
+                return getExpiryStatusStyle(status, 'input');
+              })()}
+              labelBgClassName={
+                selectedCartIndex === index
+                  ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                  : 'bg-gray-50 dark:bg-(--bg-navbar)'
+              }
+              value={
+                focusedInput?.id === item.id && focusedInput?.field === 'expiryDate'
+                  ? item.expiryDate?.includes('-')
+                    ? item.expiryDate.split('-')[1] + item.expiryDate.split('-')[0].slice(2)
+                    : item.expiryDate
+                  : formatExpiryDate(item.expiryDate || '')
+              }
+              onFocus={(e) => {
+                setSelectedCartIndex(index);
+                setFocusedInput({ id: item.id, field: 'expiryDate' });
+                setTimeout(() => e.target.select(), 10);
+              }}
+              onBlur={() => {
+                setFocusedInput(null);
+                // Alert if expiry date is incomplete (1-3 digits)
+                const status = checkExpiryStatus(item.expiryDate || '');
+                if (status === 'incomplete') {
+                  alert(
+                    t.alerts?.incompleteExpiry ||
+                      'Please enter a complete expiry date (4 digits: MMYY)'
+                  );
+                }
+              }}
+              onChange={(e) => {
+                const sanitized = sanitizeExpiryInput(e.target.value, item.expiryDate || '');
+                if (sanitized !== null) {
+                  updateItem(item.id, 'expiryDate', sanitized);
+                }
+              }}
+            />
+          </div>
+
+          {/* 3. Cost */}
+          <div className='w-14'>
+            <FloatingInput
+              inputRef={(el) => {
+                inputRefs.current[`${index}-costPrice`] = el;
+              }}
+              onKeyDown={(e) => handleInputKeyDown(e, index, 'costPrice')}
+              label={t.cartFields?.cost || 'Cost'}
+              isLoading={isLoading}
+              type='number'
+              value={item.costPrice}
+              labelBgClassName={
+                selectedCartIndex === index
+                  ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                  : 'bg-gray-50 dark:bg-(--bg-navbar)'
+              }
+              onFocus={(e) => {
+                setSelectedCartIndex(index);
+                e.target.select();
+              }}
+              onChange={(e) => updateItem(item.id, 'costPrice', parseFloat(e.target.value) || 0)}
+            />
+          </div>
+
+          {/* 3b. Unit Cost */}
+          <div className='w-14'>
+            <FloatingInput
+              inputRef={(el) => {
+                inputRefs.current[`${index}-unitCostPrice`] = el;
+              }}
+              onKeyDown={(e) => handleInputKeyDown(e, index, 'unitCostPrice')}
+              label={language === 'AR' ? 'ت. وحدة' : 'U. Cost'}
+              isLoading={isLoading}
+              type='number'
+              value={item.unitCostPrice || 0}
+              placeholder={
+                item.costPrice && item.unitsPerPack
+                  ? money
+                      .divide(item.costPrice, item.unitsPerPack)
+                      .toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })
+                  : ''
+              }
+              labelBgClassName={
+                selectedCartIndex === index
+                  ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                  : 'bg-gray-50 dark:bg-(--bg-navbar)'
+              }
+              onFocus={(e) => {
+                setSelectedCartIndex(index);
+                e.target.select();
+              }}
+              onChange={(e) =>
+                updateItem(item.id, 'unitCostPrice', parseFloat(e.target.value) || 0)
+              }
+            />
+          </div>
+
+          {/* 4. Discount */}
+          <div className='w-14'>
+            <FloatingInput
+              inputRef={(el) => {
+                inputRefs.current[`${index}-discount`] = el;
+              }}
+              onKeyDown={(e) => handleInputKeyDown(e, index, 'discount')}
+              label={t.cartFields?.discount || 'Disc %'}
+              isLoading={isLoading}
+              type='number'
+              min={0}
+              max={100}
+              value={item.discount || 0}
+              labelBgClassName={
+                selectedCartIndex === index
+                  ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                  : 'bg-gray-50 dark:bg-(--bg-navbar)'
+              }
+              onFocus={(e) => {
+                setSelectedCartIndex(index);
+                e.target.select();
+              }}
+              onChange={(e) => updateItem(item.id, 'discount', parseFloat(e.target.value) || 0)}
+            />
+          </div>
+
+          {/* 5. Sale Price */}
+          <div className='w-14'>
+            <FloatingInput
+              inputRef={(el) => {
+                inputRefs.current[`${index}-publicPrice`] = el;
+              }}
+              onKeyDown={(e) => handleInputKeyDown(e, index, 'publicPrice')}
+              label={t.cartFields?.sale || 'Sale'}
+              isLoading={isLoading}
+              type='number'
+              value={item.publicPrice || 0}
+              labelBgClassName={
+                selectedCartIndex === index
+                  ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                  : 'bg-gray-50 dark:bg-(--bg-navbar)'
+              }
+              onFocus={(e) => {
+                setSelectedCartIndex(index);
+                e.target.select();
+              }}
+              onChange={(e) => updateItem(item.id, 'publicPrice', parseFloat(e.target.value) || 0)}
+            />
+          </div>
+
+          {/* 5b. Unit Sale */}
+          <div className='w-14'>
+            <FloatingInput
+              inputRef={(el) => {
+                inputRefs.current[`${index}-unitPrice`] = el;
+              }}
+              onKeyDown={(e) => handleInputKeyDown(e, index, 'unitPrice')}
+              label={language === 'AR' ? 'س. وحدة' : 'U. Sale'}
+              isLoading={isLoading}
+              type='number'
+              value={item.unitPrice || 0}
+              placeholder={
+                item.publicPrice && item.unitsPerPack
+                  ? money
+                      .divide(item.publicPrice, item.unitsPerPack)
+                      .toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })
+                  : ''
+              }
+              labelBgClassName={
+                selectedCartIndex === index
+                  ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                  : 'bg-gray-50 dark:bg-(--bg-navbar)'
+              }
+              onFocus={(e) => {
+                setSelectedCartIndex(index);
+                e.target.select();
+              }}
+              onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+            />
+          </div>
+
+          {/* 6. Tax % */}
+          <div className='w-12'>
+            <FloatingInput
+              inputRef={(el) => {
+                inputRefs.current[`${index}-tax`] = el;
+              }}
+              onKeyDown={(e) => handleInputKeyDown(e, index, 'tax')}
+              label={t.cartFields?.tax || 'Tax %'}
+              isLoading={isLoading}
+              type='number'
+              value={item.tax ?? 14}
+              labelBgClassName={
+                selectedCartIndex === index
+                  ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                  : 'bg-gray-50 dark:bg-(--bg-navbar)'
+              }
+              onFocus={(e) => {
+                setSelectedCartIndex(index);
+                e.target.select();
+              }}
+              onChange={(e) => updateItem(item.id, 'tax', parseFloat(e.target.value) || 0)}
+            />
+          </div>
+
+          {/* 7. Subtotal */}
+          <div className='w-16 flex flex-col items-center gap-0.5'>
+            <span className='text-[8px] text-gray-400 uppercase font-bold leading-none'>
+              {t.headers?.subtotal || 'Subtotal'}
+            </span>
+            <div className='tabular-nums text-[15px] font-black text-(--text-primary)'>
+              {calculatedSubtotal.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </div>
+          </div>
+
+          {/* 8. Total */}
+          <div className='w-16 flex flex-col items-center gap-0.5'>
+            <span className='text-[8px] text-primary-500 uppercase font-bold leading-none'>
+              {t.headers?.totalPlusTax || 'Total+Tax'}
+            </span>
+            <div className='tabular-nums text-[15px] font-black text-primary-600 dark:text-primary-400'>
+              {calculatedTotal.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 export const Purchases: React.FC<PurchasesProps> = ({
   inventory,
@@ -494,7 +510,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
   onMarkAsReceived,
   onRejectPurchase,
   language,
-  // @ts-ignore
   navigationParams,
   onViewChange,
   currentShift,
@@ -540,13 +555,16 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const paymentMethod = activeTab?.paymentMethod || 'cash';
   const externalInvoiceId = activeTab?.externalInvoiceId || '';
 
-
   const [selectedCartIndex, setSelectedCartIndex] = useState(-1);
   const [isSupplierOpen, setIsSupplierOpen] = useState(false);
   const [focusedInput, setFocusedInput] = useState<{ id: string; field: string } | null>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [taxRate, setTaxRate] = useState(14); // Default 14%, loaded from settings
+
+  // Track navigation parameters from shortages or other pages to avoid duplicates
+  const processedNavParamsRef = useRef<any>(null);
+
   const [showPurchaseTabs, setShowPurchaseTabs] = useState(() => {
     if (!activeBranchId) return true;
     return storage.get<boolean>(`purchases_show_tabs_${activeBranchId}`, true);
@@ -566,13 +584,47 @@ export const Purchases: React.FC<PurchasesProps> = ({
     }
   }, [showPurchaseTabs, activeBranchId]);
 
+  // Load navigation items (e.g. shortages bulk reorder list)
+  useEffect(() => {
+    if (
+      navigationParams?.autoPopulateItems &&
+      Array.isArray(navigationParams.autoPopulateItems) &&
+      navigationParams.autoPopulateItems.length > 0 &&
+      processedNavParamsRef.current !== navigationParams
+    ) {
+      processedNavParamsRef.current = navigationParams;
+      const itemsToOrder = navigationParams.autoPopulateItems;
+
+      const formattedItems = itemsToOrder.map((item: any) => ({
+        id: idGenerator.generateSync('generic', activeBranchId),
+        drugId: item.id,
+        name: language === 'AR' ? item.nameAr || item.name : item.name,
+        quantity: item.quantity || 10,
+        costPrice: item.costPrice || 0,
+        unitCostPrice: item.unitCostPrice || 0,
+        dosageForm: item.dosageForm || '',
+        publicPrice: item.publicPrice || 0,
+        unitPrice: item.unitPrice || 0,
+        discount: 0,
+        expiryDate: '',
+        tax: taxRate,
+        unitsPerPack: item.unitsPerPack || 1,
+      }));
+
+      setCart((prev) => {
+        const existingDrugIds = new Set(prev.map((i) => i.drugId));
+        const newUniqueItems = formattedItems.filter((i: any) => !existingDrugIds.has(i.drugId));
+        return [...prev, ...newUniqueItems];
+      });
+    }
+  }, [navigationParams, activeBranchId, language, taxRate]);
 
   // Sync helpers
   const setCart = (newCart: PurchaseItem[] | ((prev: PurchaseItem[]) => PurchaseItem[])) => {
     updateTab(activeTabId, (prev) => {
       const updatedCart = typeof newCart === 'function' ? (newCart as any)(prev.cart) : newCart;
       const updates: Partial<PurchaseTab> = { cart: updatedCart };
-      
+
       // Set createdAt only when first item is added
       if ((!prev.createdAt || prev.createdAt === 0) && updatedCart.length > 0) {
         updates.createdAt = Date.now();
@@ -582,7 +634,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
       if (updatedCart.length === 0) {
         updates.createdAt = 0;
       }
-      
+
       return updates;
     });
   };
@@ -603,19 +655,22 @@ export const Purchases: React.FC<PurchasesProps> = ({
     updateTab(activeTabId, { externalInvoiceId: id });
   };
 
-  const purchaseFilterConfigs: FilterConfig[] = useMemo(() => [
-    {
-      id: 'stockStatus',
-      label: t.headers?.stock || 'Stock',
-      icon: 'inventory_2',
-      mode: 'single',
-      options: [
-        { label: t.filters?.all || 'All', value: 'all' },
-        { label: t.filters?.inStock || 'In Stock', value: 'in-stock' },
-        { label: t.filters?.outOfStock || 'Out Stock', value: 'out-stock' },
-      ],
-    },
-  ], [t]);
+  const purchaseFilterConfigs: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: 'stockStatus',
+        label: t.headers?.stock || 'Stock',
+        icon: 'inventory_2',
+        mode: 'single',
+        options: [
+          { label: t.filters?.all || 'All', value: 'all' },
+          { label: t.filters?.inStock || 'In Stock', value: 'in-stock' },
+          { label: t.filters?.outOfStock || 'Out Stock', value: 'out-stock' },
+        ],
+      },
+    ],
+    [t]
+  );
 
   const supplierDropdownRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -725,7 +780,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     if (!over || active.id === over.id) return;
 
     // Get fresh cart from activeTab directly to ensure we have current state
-    const currentActiveTab = tabs.find(t => t.id === activeTabId);
+    const currentActiveTab = tabs.find((t) => t.id === activeTabId);
     const currentCart = currentActiveTab?.cart || [];
 
     const oldIndex = currentCart.findIndex((item) => item.id === active.id);
@@ -842,7 +897,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
       localStorage.setItem(`purchases_cart_${activeBranchId}_width`, sidebarWidth.toString());
     }
   }, [sidebarWidth, activeBranchId]);
-
 
   // Load tax rate from settings
   useEffect(() => {
@@ -965,9 +1019,10 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
         // T3: Allow empty string to pass through for better typing UX
         const updatedItem = { ...i, [field]: value };
-        
+
         // Convert to number for calculations, but keep string for display if empty
-        const numValue = value === '' ? 0 : (typeof value === 'number' ? value : parseFloat(value as string) || 0);
+        const numValue =
+          value === '' ? 0 : typeof value === 'number' ? value : parseFloat(value as string) || 0;
 
         // Auto-format expiry date: 1125 -> 2025-11-01 (ISO format)
         if (
@@ -985,14 +1040,12 @@ export const Purchases: React.FC<PurchasesProps> = ({
         if (field === 'discount') {
           updatedItem.costPrice = pricing.afterDiscount(i.publicPrice, numValue);
           updatedItem.unitCostPrice = money.divide(updatedItem.costPrice, i.unitsPerPack || 1);
-        } 
-        else if (field === 'costPrice') {
+        } else if (field === 'costPrice') {
           if (i.publicPrice > 0) {
             updatedItem.discount = pricing.actualMargin(numValue, i.publicPrice);
           }
           updatedItem.unitCostPrice = money.divide(numValue, i.unitsPerPack || 1);
-        } 
-        else if (field === 'unitCostPrice') {
+        } else if (field === 'unitCostPrice') {
           const newCost = money.multiply(numValue, i.unitsPerPack || 1, 0);
           const currentCostFromThisUnit = money.divide(i.costPrice, i.unitsPerPack || 1);
           if (!money.isEqual(currentCostFromThisUnit, numValue)) {
@@ -1001,13 +1054,11 @@ export const Purchases: React.FC<PurchasesProps> = ({
               updatedItem.discount = pricing.actualMargin(updatedItem.costPrice, i.publicPrice);
             }
           }
-        }
-        else if (field === 'publicPrice') {
+        } else if (field === 'publicPrice') {
           updatedItem.costPrice = pricing.afterDiscount(numValue, i.discount || 0);
           updatedItem.unitPrice = money.divide(numValue, i.unitsPerPack || 1);
           updatedItem.unitCostPrice = money.divide(updatedItem.costPrice, i.unitsPerPack || 1);
-        } 
-        else if (field === 'unitPrice') {
+        } else if (field === 'unitPrice') {
           const newSale = money.multiply(numValue, i.unitsPerPack || 1, 0);
           const currentSaleFromThisUnit = money.divide(i.publicPrice, i.unitsPerPack || 1);
           if (!money.isEqual(currentSaleFromThisUnit, numValue)) {
@@ -1016,8 +1067,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
               updatedItem.discount = pricing.actualMargin(i.costPrice, updatedItem.publicPrice);
             }
           }
-        }
-        else if (field === 'tax') {
+        } else if (field === 'tax') {
           updatedItem.tax = numValue;
         }
 
@@ -1053,9 +1103,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
     if (!selectedSupplierId || cart.length === 0) return;
 
     // 1. Validate Invoice ID
-    if (!externalInvoiceId || externalInvoiceId.trim() === "") {
-      alert(t.alerts?.enterInvoice || "Please enter the Invoice Number (Inv #) from the supplier.");
-      inputRefs.current["externalInvoiceId"]?.focus();
+    if (!externalInvoiceId || externalInvoiceId.trim() === '') {
+      alert(t.alerts?.enterInvoice || 'Please enter the Invoice Number (Inv #) from the supplier.');
+      inputRefs.current['externalInvoiceId']?.focus();
       return;
     }
 
@@ -1064,9 +1114,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
     if (isDuplicate) {
       alert(
         t.alerts?.duplicateInvoice ||
-          "This Invoice ID already exists. Please enter a unique Invoice ID."
+          'This Invoice ID already exists. Please enter a unique Invoice ID.'
       );
-      inputRefs.current["externalInvoiceId"]?.focus();
+      inputRefs.current['externalInvoiceId']?.focus();
       return;
     }
     // 2. Validate Cart Items
@@ -1075,25 +1125,34 @@ export const Purchases: React.FC<PurchasesProps> = ({
       if (!item.quantity || item.quantity <= 0) {
         alert(`Please enter a valid quantity for ${item.name}`);
         inputRefs.current[`${i}-quantity`]?.focus();
-        inputRefs.current[`${i}-quantity`]?.scrollIntoView({ behavior: "smooth", block: "center" });
+        inputRefs.current[`${i}-quantity`]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
       if (!item.costPrice || item.costPrice <= 0) {
         alert(`Please enter a valid Cost Price for ${item.name}`);
         inputRefs.current[`${i}-costPrice`]?.focus();
-        inputRefs.current[`${i}-costPrice`]?.scrollIntoView({ behavior: "smooth", block: "center" });
+        inputRefs.current[`${i}-costPrice`]?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
         return;
       }
       if (!item.publicPrice || item.publicPrice <= 0) {
         alert(`Please enter a valid Sale Price for ${item.name}`);
         inputRefs.current[`${i}-publicPrice`]?.focus();
-        inputRefs.current[`${i}-publicPrice`]?.scrollIntoView({ behavior: "smooth", block: "center" });
+        inputRefs.current[`${i}-publicPrice`]?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
         return;
       }
       if (!item.expiryDate) {
         alert(`Please enter an Expiry Date for ${item.name}`);
         inputRefs.current[`${i}-expiryDate`]?.focus();
-        inputRefs.current[`${i}-expiryDate`]?.scrollIntoView({ behavior: "smooth", block: "center" });
+        inputRefs.current[`${i}-expiryDate`]?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
         return;
       }
     }
@@ -1102,7 +1161,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
     // Get unique order ID (auto-increment if duplicate)
     const uniqueOrderId = getUniqueOrderId();
-
 
     const taxResults = tax.multiRate(
       cart.map((item) => ({
@@ -1118,16 +1176,19 @@ export const Purchases: React.FC<PurchasesProps> = ({
       date: getVerifiedDate().toISOString(),
       supplierId: selectedSupplierId,
       supplierName: supplier?.name || 'Unknown',
-      items: cart.map(item => ({
+      items: cart.map((item) => ({
         ...item,
         // Standardize: costPrice and unitCostPrice MUST be saved as Net (exclusive of tax)
         // for accurate inventory valuation and profit reporting.
-        costPrice: taxMode === 'inclusive' 
-          ? tax.inclusiveBase(item.costPrice, item.tax || 0) 
-          : item.costPrice,
-        unitCostPrice: item.unitCostPrice 
-          ? (taxMode === 'inclusive' ? tax.inclusiveBase(item.unitCostPrice, item.tax || 0) : item.unitCostPrice)
-          : undefined
+        costPrice:
+          taxMode === 'inclusive'
+            ? tax.inclusiveBase(item.costPrice, item.tax || 0)
+            : item.costPrice,
+        unitCostPrice: item.unitCostPrice
+          ? taxMode === 'inclusive'
+            ? tax.inclusiveBase(item.unitCostPrice, item.tax || 0)
+            : item.unitCostPrice
+          : undefined,
       })),
       totalCost: taxResults.total,
       totalTax: taxResults.taxAmount,
@@ -1166,9 +1227,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
     if (!selectedSupplierId || cart.length === 0) return;
 
     // 1. Validate Invoice ID
-    if (!externalInvoiceId || externalInvoiceId.trim() === "") {
-      alert(t.alerts?.enterInvoice || "Please enter the Invoice Number (Inv #) from the supplier.");
-      inputRefs.current["externalInvoiceId"]?.focus();
+    if (!externalInvoiceId || externalInvoiceId.trim() === '') {
+      alert(t.alerts?.enterInvoice || 'Please enter the Invoice Number (Inv #) from the supplier.');
+      inputRefs.current['externalInvoiceId']?.focus();
       return;
     }
 
@@ -1177,9 +1238,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
     if (isDuplicate) {
       alert(
         t.alerts?.duplicateInvoice ||
-          "This Invoice ID already exists. Please enter a unique Invoice ID."
+          'This Invoice ID already exists. Please enter a unique Invoice ID.'
       );
-      inputRefs.current["externalInvoiceId"]?.focus();
+      inputRefs.current['externalInvoiceId']?.focus();
       return;
     }
     // 2. Validate Cart Items
@@ -1188,25 +1249,34 @@ export const Purchases: React.FC<PurchasesProps> = ({
       if (!item.quantity || item.quantity <= 0) {
         alert(`Please enter a valid quantity for ${item.name}`);
         inputRefs.current[`${i}-quantity`]?.focus();
-        inputRefs.current[`${i}-quantity`]?.scrollIntoView({ behavior: "smooth", block: "center" });
+        inputRefs.current[`${i}-quantity`]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
       if (!item.costPrice || item.costPrice <= 0) {
         alert(`Please enter a valid Cost Price for ${item.name}`);
         inputRefs.current[`${i}-costPrice`]?.focus();
-        inputRefs.current[`${i}-costPrice`]?.scrollIntoView({ behavior: "smooth", block: "center" });
+        inputRefs.current[`${i}-costPrice`]?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
         return;
       }
       if (!item.publicPrice || item.publicPrice <= 0) {
         alert(`Please enter a valid Sale Price for ${item.name}`);
         inputRefs.current[`${i}-publicPrice`]?.focus();
-        inputRefs.current[`${i}-publicPrice`]?.scrollIntoView({ behavior: "smooth", block: "center" });
+        inputRefs.current[`${i}-publicPrice`]?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
         return;
       }
       if (!item.expiryDate) {
         alert(`Please enter an Expiry Date for ${item.name}`);
         inputRefs.current[`${i}-expiryDate`]?.focus();
-        inputRefs.current[`${i}-expiryDate`]?.scrollIntoView({ behavior: "smooth", block: "center" });
+        inputRefs.current[`${i}-expiryDate`]?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
         return;
       }
     }
@@ -1222,18 +1292,24 @@ export const Purchases: React.FC<PurchasesProps> = ({
       date: getVerifiedDate().toISOString(),
       supplierId: selectedSupplierId,
       supplierName: supplier?.name || 'Unknown',
-      items: cart.map(item => ({
+      items: cart.map((item) => ({
         ...item,
         // Standardize: costPrice and unitCostPrice MUST be saved as Net (exclusive of tax)
         // for accurate inventory valuation and profit reporting.
-        costPrice: taxMode === 'inclusive' 
-          ? tax.inclusiveBase(item.costPrice, item.tax || 0) 
-          : item.costPrice,
-        unitCostPrice: item.unitCostPrice 
-          ? (taxMode === 'inclusive' ? tax.inclusiveBase(item.unitCostPrice, item.tax || 0) : item.unitCostPrice)
-          : undefined
+        costPrice:
+          taxMode === 'inclusive'
+            ? tax.inclusiveBase(item.costPrice, item.tax || 0)
+            : item.costPrice,
+        unitCostPrice: item.unitCostPrice
+          ? taxMode === 'inclusive'
+            ? tax.inclusiveBase(item.unitCostPrice, item.tax || 0)
+            : item.unitCostPrice
+          : undefined,
       })),
-      totalCost: cart.reduce((sum, i) => money.add(sum, money.multiply(i.costPrice, i.quantity, 0)), 0),
+      totalCost: cart.reduce(
+        (sum, i) => money.add(sum, money.multiply(i.costPrice, i.quantity, 0)),
+        0
+      ),
       totalTax: cart.reduce((sum, i) => {
         const lineTotal = money.multiply(i.costPrice, i.quantity, 0);
         return money.add(sum, tax.exclusiveAmount(lineTotal, i.tax || 0));
@@ -1258,7 +1334,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
       if (success) {
         setCart([]);
         setSelectedSupplierId('');
-        
+
         // Generate Next ID
         const nextNum = parseInt(uniqueOrderId.replace('INV-', ''), 10) + 1;
         setInvoiceId(`INV-${String(nextNum).padStart(6, '0')}`);
@@ -1275,9 +1351,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
     // 1. Apply active filters first
     const stockFilter = activeFilters['stockStatus']?.[0];
     if (stockFilter === 'in-stock') {
-      result = result.filter(d => d.stock > 0);
+      result = result.filter((d) => d.stock > 0);
     } else if (stockFilter === 'out-stock') {
-      result = result.filter(d => d.stock <= 0);
+      result = result.filter((d) => d.stock <= 0);
     }
 
     // 2. Search within filtered results
@@ -1339,7 +1415,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     <div className='h-full flex flex-col gap-2 animate-fade-in overflow-hidden'>
       {/* Header with toggle */}
       <PageHeader
-        mb="mb-0"
+        mb='mb-0'
         leftContent={
           <div className='relative w-48 xl:w-120' ref={searchRef}>
             <SearchInput
@@ -1357,67 +1433,86 @@ export const Purchases: React.FC<PurchasesProps> = ({
               rounded='full'
               filterConfigs={purchaseFilterConfigs}
               activeFilters={activeFilters}
-              onUpdateFilter={(groupId, values) => setActiveFilters((prev) => ({ ...prev, [groupId]: values }))}
+              onUpdateFilter={(groupId, values) =>
+                setActiveFilters((prev) => ({ ...prev, [groupId]: values }))
+              }
             />
 
-              <SearchDropdown
-                results={filteredDrugs}
-                onSelect={(drug) => {
-                  handleAddItem(drug);
-                  setSearch('');
-                }}
-                columns={[
-                  {
-                    header: t.headers?.codes || 'Codes',
-                    width: 'w-32 shrink-0',
-                    className: 'text-gray-900 dark:text-gray-400 justify-center text-center',
-                    render: (drug: Drug) => drug.barcode || drug.internalCode || '---',
+            <SearchDropdown
+              results={filteredDrugs}
+              onSelect={(drug) => {
+                handleAddItem(drug);
+                setSearch('');
+              }}
+              columns={[
+                {
+                  header: t.headers?.codes || 'Codes',
+                  width: 'w-32 shrink-0',
+                  className: 'text-gray-900 dark:text-gray-400 justify-center text-center',
+                  render: (drug: Drug) => drug.barcode || drug.internalCode || '---',
+                },
+                {
+                  header: t.headers?.name || 'Name',
+                  width: 'flex-1',
+                  className: 'text-gray-900 dark:text-gray-400',
+                  render: (drug: Drug) => (
+                    <span className='truncate'>{getDisplayName(drug, textTransform)}</span>
+                  ),
+                },
+                {
+                  header: t.headers?.expiry || 'Expiry',
+                  width: 'w-24 shrink-0',
+                  className: 'justify-center text-center text-gray-900 dark:text-gray-400',
+                  render: (drug: Drug) => formatExpiryDate(drug.expiryDate),
+                },
+                {
+                  header: t.headers?.stock || 'Stock',
+                  width: 'w-[60px] shrink-0',
+                  className: 'justify-center text-center text-gray-900 dark:text-gray-400',
+                  render: (drug: Drug) => {
+                    const packs = Math.floor(drug.stock / (drug.unitsPerPack || 1));
+                    const units = drug.stock % (drug.unitsPerPack || 1);
+                    return (
+                      <div className='tabular-nums border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-0.5 rounded-lg shrink-0 min-w-[36px] text-center font-bold'>
+                        {packs}
+                        {units > 0 && (
+                          <span className='text-[8px] opacity-50 ml-0.5 text-blue-500'>
+                            {units}u
+                          </span>
+                        )}
+                      </div>
+                    );
                   },
-                  {
-                    header: t.headers?.name || 'Name',
-                    width: 'flex-1',
-                    className: 'text-gray-900 dark:text-gray-400',
-                    render: (drug: Drug) => (
-                      <span className='truncate'>
-                        {getDisplayName(drug, textTransform)}
-                      </span>
-                    ),
-                  },
-                  {
-                    header: t.headers?.expiry || 'Expiry',
-                    width: 'w-24 shrink-0',
-                    className: 'justify-center text-center text-gray-900 dark:text-gray-400',
-                    render: (drug: Drug) => formatExpiryDate(drug.expiryDate),
-                  },
-                  {
-                    header: t.headers?.stock || 'Stock',
-                    width: 'w-[60px] shrink-0',
-                    className: 'justify-center text-center text-gray-900 dark:text-gray-400',
-                    render: (drug: Drug) => {
-                      const packs = Math.floor(drug.stock / (drug.unitsPerPack || 1));
-                      const units = drug.stock % (drug.unitsPerPack || 1);
-                      return (
-                        <div className='tabular-nums border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-0.5 rounded-lg shrink-0 min-w-[36px] text-center font-bold'>
-                          {packs}
-                          {units > 0 && <span className='text-[8px] opacity-50 ml-0.5 text-blue-500'>{units}u</span>}
-                        </div>
-                      );
-                    },
-                  },
-                ]}
-                isVisible={showSuggestions && !!search.trim()}
-                highlightedIndex={selectedSuggestionIndex}
-                emptyMessage={t.noResults}
-                className="start-0 w-[700px] lg:w-[900px]"
-              />
-            </div>
-          }
+                },
+              ]}
+              isVisible={showSuggestions && !!search.trim()}
+              highlightedIndex={selectedSuggestionIndex}
+              emptyMessage={t.noResults}
+              className='start-0 w-[700px] lg:w-[900px]'
+            />
+          </div>
+        }
         centerContent={
           <SegmentedControl
             options={[
-              { value: 'create', label: t.newPurchase || 'Purchase', icon: 'shopping_cart', permission: 'purchase.create' },
-              { value: 'approve', label: t.pendingApproval?.title || 'Approve', icon: 'assignment_turned_in', permission: 'purchase.approve' },
-              { value: 'history', label: t.viewHistory || 'History', icon: 'history', permission: 'purchase.view' },
+              {
+                value: 'create',
+                label: t.newPurchase || 'Purchase',
+                icon: 'shopping_cart',
+                permission: 'purchase.create',
+              },
+              {
+                value: 'approve',
+                label: t.pendingApproval?.title || 'Approve',
+                icon: 'assignment_turned_in',
+                permission: 'purchase.approve',
+              },
+              {
+                value: 'history',
+                label: t.viewHistory || 'History',
+                icon: 'history',
+                permission: 'purchase.view',
+              },
             ]}
             value='create'
             onChange={(val) => {
@@ -1425,11 +1520,11 @@ export const Purchases: React.FC<PurchasesProps> = ({
               if (val === 'approve') onViewChange?.('pending-approval');
               else if (val === 'history') onViewChange?.('purchase-history');
             }}
-            shape="pill"
-            size="md"
-            iconSize="--icon-lg"
+            shape='pill'
+            size='md'
+            iconSize='--icon-lg'
             useGraphicFont={true}
-            className="w-full sm:w-[520px]"
+            className='w-full sm:w-[520px]'
           />
         }
         rightContent={
@@ -1449,10 +1544,13 @@ export const Purchases: React.FC<PurchasesProps> = ({
               onClear={() => {
                 setSupplierSearch('');
                 setSelectedSupplierId('');
-                
+
                 // --- Optional: Reset Tab Name if cart is empty ---
                 if (cart.length === 0) {
-                  renameTab(activeTabId, `Purchase ${tabs.findIndex(t => t.id === activeTabId) + 1}`);
+                  renameTab(
+                    activeTabId,
+                    `Purchase ${tabs.findIndex((t) => t.id === activeTabId) + 1}`
+                  );
                 }
               }}
               placeholder={t.placeholders?.searchSupplier || 'Search and select supplier...'}
@@ -1466,10 +1564,13 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 setSelectedSupplierId(supplier.id);
                 setSupplierSearch('');
                 setIsSupplierOpen(false);
-                
+
                 // --- Auto Rename Tab ---
-                const activeTab = tabs.find(t => t.id === activeTabId);
-                if (activeTab && (activeTab.name.startsWith('Purchase ') || activeTab.name === 'New Purchase')) {
+                const activeTab = tabs.find((t) => t.id === activeTabId);
+                if (
+                  activeTab &&
+                  (activeTab.name.startsWith('Purchase ') || activeTab.name === 'New Purchase')
+                ) {
                   renameTab(activeTabId, supplier.name);
                 }
               }}
@@ -1517,357 +1618,405 @@ export const Purchases: React.FC<PurchasesProps> = ({
           )
         }
       />
-      
+
       <div className='flex flex-col gap-1.5 h-full overflow-hidden'>
-          {/* BOTTOM: Order Cart */}
-          <div className={`flex-1 ${CARD_BASE} p-5 pb-0 rounded-3xl flex flex-col overflow-hidden`}>
-            <div className='flex justify-between items-center mb-4 gap-4'>
-              {/* Left: Selected Item Details (Existing Inventory) */}
-              <div className='flex-1 min-w-0'>
-                {(() => {
-                  if (selectedCartIndex === -1 || !cart[selectedCartIndex]) return null;
-                  const selectedItem = cart[selectedCartIndex];
-                  const invItem = inventory.find((d) => d.id === selectedItem.drugId);
-                  if (!invItem) return null;
+        {/* BOTTOM: Order Cart */}
+        <div className={`flex-1 ${CARD_BASE} p-5 pb-0 rounded-3xl flex flex-col overflow-hidden`}>
+          <div className='flex justify-between items-center mb-4 gap-4'>
+            {/* Left: Selected Item Details (Existing Inventory) */}
+            <div className='flex-1 min-w-0'>
+              {(() => {
+                if (selectedCartIndex === -1 || !cart[selectedCartIndex]) return null;
+                const selectedItem = cart[selectedCartIndex];
+                const invItem = inventory.find((d) => d.id === selectedItem.drugId);
+                if (!invItem) return null;
 
-                  const profit =
-                    invItem.costPrice > 0
-                      ? ((invItem.publicPrice - invItem.costPrice) / invItem.costPrice) * 100
-                      : 0;
+                const profit =
+                  invItem.costPrice > 0
+                    ? ((invItem.publicPrice - invItem.costPrice) / invItem.costPrice) * 100
+                    : 0;
 
-                  return (
-                    <div className='flex items-center gap-3 animate-fadeIn'>
-                      {/* Stock */}
-                      <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-gray-100 dark:border-(--border-divider)'>
-                        <span className='material-symbols-rounded text-gray-400 text-lg'>
-                          inventory_2
+                return (
+                  <div className='flex items-center gap-3 animate-fadeIn'>
+                    {/* Stock */}
+                    <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-gray-100 dark:border-(--border-divider)'>
+                      <span className='material-symbols-rounded text-gray-400 text-lg'>
+                        inventory_2
+                      </span>
+                      <div className='flex flex-col'>
+                        <span className='text-[9px] text-gray-400 uppercase font-bold leading-none mb-0.5'>
+                          {t.headers?.stock || 'Stock'}
                         </span>
-                        <div className='flex flex-col'>
-                          <span className='text-[9px] text-gray-400 uppercase font-bold leading-none mb-0.5'>
-                            {t.headers?.stock || 'Stock'}
-                          </span>
-                          <span className='text-xs font-bold text-gray-700 dark:text-gray-200 font-mono leading-none'>
-                            {Math.floor(invItem.stock / invItem.unitsPerPack)} {t.pack || 'Packs'}
-                            {invItem.stock % invItem.unitsPerPack > 0 &&
-                              ` + ${invItem.stock % invItem.unitsPerPack} ${t.unit || 'Units'}`}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Expiry */}
-                      <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-gray-100 dark:border-(--border-divider)'>
-                        <span className='material-symbols-rounded text-orange-400 text-lg'>
-                          event_upcoming
+                        <span className='text-xs font-bold text-gray-700 dark:text-gray-200 font-mono leading-none'>
+                          {Math.floor(invItem.stock / invItem.unitsPerPack)} {t.pack || 'Packs'}
+                          {invItem.stock % invItem.unitsPerPack > 0 &&
+                            ` + ${invItem.stock % invItem.unitsPerPack} ${t.unit || 'Units'}`}
                         </span>
-                        <div className='flex flex-col'>
-                          <span className='text-[9px] text-gray-400 uppercase font-bold leading-none mb-0.5'>
-                            {t.cartFields?.expiry || 'Expiry'}
-                          </span>
-                          <span className='text-xs font-bold text-gray-700 dark:text-gray-200 font-mono leading-none'>
-                            {formatExpiryDate(invItem.expiryDate)}
-                          </span>
-                        </div>
                       </div>
+                    </div>
 
-                      {/* Profit */}
-                      <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-gray-100 dark:border-(--border-divider)'>
+                    {/* Expiry */}
+                    <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-gray-100 dark:border-(--border-divider)'>
+                      <span className='material-symbols-rounded text-orange-400 text-lg'>
+                        event_upcoming
+                      </span>
+                      <div className='flex flex-col'>
+                        <span className='text-[9px] text-gray-400 uppercase font-bold leading-none mb-0.5'>
+                          {t.cartFields?.expiry || 'Expiry'}
+                        </span>
+                        <span className='text-xs font-bold text-gray-700 dark:text-gray-200 font-mono leading-none'>
+                          {formatExpiryDate(invItem.expiryDate)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Profit */}
+                    <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-gray-100 dark:border-(--border-divider)'>
+                      <span
+                        className={`material-symbols-rounded text-lg ${profit >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                      >
+                        {profit >= 0 ? 'trending_up' : 'trending_down'}
+                      </span>
+                      <div className='flex flex-col'>
+                        <span className='text-[9px] text-gray-400 uppercase font-bold leading-none mb-0.5'>
+                          {t.headers?.profit || 'Profit'}
+                        </span>
                         <span
-                          className={`material-symbols-rounded text-lg ${profit >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                          className={`text-xs font-bold font-mono leading-none ${profit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
                         >
-                          {profit >= 0 ? 'trending_up' : 'trending_down'}
+                          {profit.toFixed(1)}%
                         </span>
-                        <div className='flex flex-col'>
-                          <span className='text-[9px] text-gray-400 uppercase font-bold leading-none mb-0.5'>
-                            {t.headers?.profit || 'Profit'}
-                          </span>
-                          <span
-                            className={`text-xs font-bold font-mono leading-none ${profit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
-                          >
-                            {profit.toFixed(1)}%
-                          </span>
-                        </div>
                       </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            <div className='flex items-center gap-4'>
+              {/* Session Timestamp */}
+              {activeTab?.createdAt > 0 && (
+                <div className='group relative'>
+                  <label className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1 whitespace-nowrap'>
+                    {language === 'AR' ? 'وقت البدء' : 'Started at'}
+                  </label>
+                  <div className='flex items-center h-7 gap-1 text-base font-bold text-gray-600 dark:text-gray-300 bg-gray-50/50 dark:bg-white/5 px-2 rounded-lg border border-gray-100/50 dark:border-white/5 transition-all duration-300 group-hover:bg-gray-100 dark:group-hover:bg-white/10'>
+                    <span className='material-symbols-rounded text-lg opacity-60'>schedule</span>
+                    {new Intl.DateTimeFormat(language === 'AR' ? 'ar-EG' : 'en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true,
+                    }).format(activeTab.createdAt)}
+                  </div>
+                </div>
+              )}
+
+              {/* System Order ID (Read Only) */}
+              <div className='group relative'>
+                <label className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
+                  {t.tableHeaders?.orderId || 'Order #'}
+                </label>
+                <div className='relative h-10 flex items-center'>
+                  <div
+                    className={`text-xl font-mono font-bold px-2 py-0.5 select-none transition-all duration-500 ease-out ${
+                      isOrderIdAnimating
+                        ? 'text-green-500 dark:text-green-400'
+                        : 'text-gray-600 dark:text-gray-300'
+                    }`}
+                    style={{
+                      animation: isOrderIdAnimating ? 'rollUp 0.5s ease-out' : 'none',
+                    }}
+                  >
+                    {invoiceId}
+                  </div>
+                </div>
+              </div>
+
+              {/* Manual Invoice ID */}
+              <div className='group relative'>
+                <label className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
+                  {t.tableHeaders?.invId || 'Invoice #'}
+                </label>
+                <div className='relative inline-grid items-center h-10'>
+                  <span className='invisible text-xl font-mono font-bold px-2 py-0.5 whitespace-pre min-w-[6rem]'>
+                    {externalInvoiceId || t.placeholders?.enterId || 'Enter ID'}
+                  </span>
+                  <input
+                    ref={(el) => {
+                      inputRefs.current['externalInvoiceId'] = el;
+                    }}
+                    type='text'
+                    placeholder={t.placeholders?.enterId || 'Enter ID'}
+                    value={externalInvoiceId}
+                    onChange={(e) => setExternalInvoiceId(e.target.value)}
+                    dir={externalInvoiceIdDir}
+                    className='absolute inset-0 text-xl font-mono font-bold bg-transparent border border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary-500 rounded-lg px-2 py-0.5 outline-hidden transition-all text-left text-gray-600 dark:text-gray-300 placeholder-gray-300 w-full h-full'
+                  />
+                </div>
+              </div>
+
+              {/* Payment Method Toggle */}
+              {activeTab && (
+                <div className='group relative'>
+                  <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
+                    {t.paymentMethod || 'Payment Method'}
+                  </label>
+                  <SegmentedControl
+                    value={paymentMethod}
+                    onChange={(val) => setPaymentMethod(val as 'cash' | 'credit')}
+                    size='xs'
+                    options={[
+                      { label: t.cash || 'Cash', value: 'cash', activeColor: 'green' },
+                      { label: t.credit || 'Credit', value: 'credit', activeColor: 'blue' },
+                    ]}
+                    className='w-fit'
+                    disableAnimation={!activeTab}
+                  />
+                </div>
+              )}
+
+              {/* Tax Mode Toggle */}
+              {activeTab && (
+                <div className='group relative'>
+                  <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
+                    {language === 'AR' ? 'نظام الضريبة' : 'Tax Mode'}
+                  </label>
+                  <SegmentedControl
+                    value={taxMode}
+                    onChange={(val) => setTaxMode(val as 'exclusive' | 'inclusive')}
+                    size='xs'
+                    options={[
+                      {
+                        label: language === 'AR' ? 'غير شامل' : 'Excl.',
+                        value: 'exclusive',
+                        activeColor: 'blue',
+                      },
+                      {
+                        label: language === 'AR' ? 'شامل' : 'Incl.',
+                        value: 'inclusive',
+                        activeColor: 'green',
+                      },
+                    ]}
+                    className='w-fit'
+                    disableAnimation={!activeTab}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div
+            className={`flex-1 space-y-1.5 mb-4 custom-scrollbar pe-3 ${cart.length > 0 ? 'overflow-y-auto' : 'overflow-hidden'}`}
+          >
+            {isLoading && cart.length === 0 ? (
+              <div className='space-y-2'>
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className='p-3 rounded-2xl bg-gray-50 dark:bg-(--bg-navbar) animate-pulse'
+                  >
+                    <div className='flex gap-2 items-center'>
+                      <div className='flex-1 space-y-2'>
+                        <div className='h-4 w-3/4 bg-gray-200 dark:bg-neutral-800 rounded-md' />
+                        <div className='h-3 w-1/4 bg-gray-100 dark:bg-neutral-800/50 rounded-md' />
+                      </div>
+                      <div className='flex gap-1.5 items-center'>
+                        {[1, 2, 3, 4, 5].map((j) => (
+                          <div
+                            key={j}
+                            className={`${j === 1 ? 'w-12' : 'w-14'} h-8 bg-gray-200 dark:bg-neutral-800 rounded-lg`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : cart.length === 0 ? (
+              <div className='text-center text-gray-400 py-10'>{t.emptyCart}</div>
+            ) : (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+                modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
+              >
+                <SortableContext
+                  items={cart.map((i) => i.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className='space-y-1.5'>
+                    {cart.map((item, index) => (
+                      <SortableCartItem
+                        key={item.id}
+                        item={item}
+                        index={index}
+                        selectedCartIndex={selectedCartIndex}
+                        setSelectedCartIndex={setSelectedCartIndex}
+                        removeItem={removeItem}
+                        updateItem={updateItem}
+                        showMenu={showMenu}
+                        t={t}
+                        isLoading={!!isLoading}
+                        textTransform={textTransform}
+                        language={language}
+                        focusedInput={focusedInput}
+                        setFocusedInput={setFocusedInput}
+                        inputRefs={inputRefs}
+                        handleInputKeyDown={handleInputKeyDown}
+                        money={money}
+                        tax={tax}
+                        taxMode={taxMode}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            )}
+          </div>
+
+          <div className='border-t border-gray-100 dark:border-(--border-divider) mt-auto px-1 py-4'>
+            <div className='flex items-center justify-between gap-3'>
+              {/* Left: Metrics Group */}
+              <div className='flex items-center gap-2 text-sm py-1'>
+                {/* Items Count */}
+                <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
+                  <span className='text-[10px] uppercase text-gray-400 font-bold tracking-wider'>
+                    {t.summary.totalItems}
+                  </span>
+                  <span className='text-lg font-black text-gray-900 dark:text-white leading-none'>
+                    {cart.reduce((a, b) => a + (Number(b.quantity) || 0), 0)}
+                  </span>
+                </div>
+
+                {/* Discount */}
+                {(() => {
+                  const totalCost = cart.reduce(
+                    (sum, i) => money.add(sum, money.multiply(i.costPrice, i.quantity, 0)),
+                    0
+                  );
+                  const totalSale = cart.reduce(
+                    (sum, i) => money.add(sum, money.multiply(i.publicPrice, i.quantity, 0)),
+                    0
+                  );
+                  const totalDiscount = money.subtract(totalSale, totalCost);
+                  const discountPercent = pricing.actualMargin(totalCost, totalSale);
+
+                  const { amount: formattedDiscount, symbol } = formatCurrencyParts(totalDiscount);
+                  return (
+                    <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
+                      <span
+                        className={`text-[10px] uppercase font-bold tracking-wider ${totalDiscount > 0 ? 'text-green-600' : 'text-gray-400'}`}
+                      >
+                        {t.summary.discount || 'Disc'}
+                      </span>
+                      <span className='text-lg font-black leading-none text-gray-900 dark:text-white flex items-center gap-1.5 h-full'>
+                        <span>
+                          {formattedDiscount}{' '}
+                          <span className='text-[10px] text-gray-400 font-normal'>{symbol}</span>
+                        </span>
+                        <span className='h-full w-px bg-gray-200 dark:bg-gray-700 mx-0.5' />
+                        <span>({discountPercent.toFixed(1)}%)</span>
+                      </span>
+                    </div>
+                  );
+                })()}
+
+                {/* Tax */}
+                {(() => {
+                  const taxResults = tax.multiRate(
+                    cart.map((item) => ({
+                      amount: money.multiply(item.costPrice, item.quantity, 0),
+                      taxPct: item.tax || 0,
+                    })),
+                    taxMode
+                  );
+                  const { amount: formattedTax, symbol } = formatCurrencyParts(
+                    taxResults.taxAmount
+                  );
+                  return (
+                    <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
+                      <span className='text-[10px] uppercase text-orange-600 font-bold tracking-wider'>
+                        {t.summary.tax || 'Tax'}
+                      </span>
+                      <span className='text-lg font-black text-gray-900 dark:text-white leading-none'>
+                        {formattedTax}{' '}
+                        <span className='text-[10px] text-gray-400 font-normal'>{symbol}</span>
+                      </span>
                     </div>
                   );
                 })()}
               </div>
 
-              <div className='flex items-center gap-4'>
-                {/* Session Timestamp */}
-                {activeTab?.createdAt > 0 && (
-                  <div className='group relative'>
-                    <label className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1 whitespace-nowrap'>
-                      {language === 'AR' ? 'وقت البدء' : 'Started at'}
-                    </label>
-                    <div className='flex items-center h-7 gap-1 text-base font-bold text-gray-600 dark:text-gray-300 bg-gray-50/50 dark:bg-white/5 px-2 rounded-lg border border-gray-100/50 dark:border-white/5 transition-all duration-300 group-hover:bg-gray-100 dark:group-hover:bg-white/10'>
-                      <span className='material-symbols-rounded text-lg opacity-60'>schedule</span>
-                      {new Intl.DateTimeFormat(language === 'AR' ? 'ar-EG' : 'en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true,
-                      }).format(activeTab.createdAt)}
-                    </div>
-                  </div>
-                )}
-
-                {/* System Order ID (Read Only) */}
-                <div className='group relative'>
-                  <label className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
-                    {t.tableHeaders?.orderId || 'Order #'}
-                  </label>
-                  <div className='relative h-10 flex items-center'>
-                    <div 
-                      className={`text-xl font-mono font-bold px-2 py-0.5 select-none transition-all duration-500 ease-out ${
-                        isOrderIdAnimating
-                          ? 'text-green-500 dark:text-green-400'
-                          : 'text-gray-600 dark:text-gray-300'
-                      }`}
-                      style={{
-                        animation: isOrderIdAnimating ? 'rollUp 0.5s ease-out' : 'none',
-                      }}
-                    >
-                      {invoiceId}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Manual Invoice ID */}
-                <div className='group relative'>
-                  <label className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
-                    {t.tableHeaders?.invId || 'Invoice #'}
-                  </label>
-                  <div className="relative inline-grid items-center h-10">
-                    <span className="invisible text-xl font-mono font-bold px-2 py-0.5 whitespace-pre min-w-[6rem]">
-                      {externalInvoiceId || (t.placeholders?.enterId || 'Enter ID')}
-                    </span>
-                    <input
-                      ref={(el) => {
-                        inputRefs.current['externalInvoiceId'] = el;
-                      }}
-                      type='text'
-                      placeholder={t.placeholders?.enterId || 'Enter ID'}
-                      value={externalInvoiceId}
-                      onChange={(e) => setExternalInvoiceId(e.target.value)}
-                      dir={externalInvoiceIdDir}
-                      className='absolute inset-0 text-xl font-mono font-bold bg-transparent border border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary-500 rounded-lg px-2 py-0.5 outline-hidden transition-all text-left text-gray-600 dark:text-gray-300 placeholder-gray-300 w-full h-full'
-                    />
-                  </div>
-                </div>
-
-                {/* Payment Method Toggle */}
-                {activeTab && (
-                  <div className='group relative'>
-                    <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
-                      {t.paymentMethod || 'Payment Method'}
-                    </label>
-                    <SegmentedControl
-                      value={paymentMethod}
-                      onChange={(val) => setPaymentMethod(val as 'cash' | 'credit')}
-                      size='xs'
-                      options={[
-                        { label: t.cash || 'Cash', value: 'cash', activeColor: 'green' },
-                        { label: t.credit || 'Credit', value: 'credit', activeColor: 'blue' },
-                      ]}
-                      className='w-fit'
-                      disableAnimation={!activeTab}
-                    />
-                  </div>
-                )}
-
-                {/* Tax Mode Toggle */}
-                {activeTab && (
-                  <div className='group relative'>
-                    <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
-                      {language === 'AR' ? 'نظام الضريبة' : 'Tax Mode'}
-                    </label>
-                    <SegmentedControl
-                      value={taxMode}
-                      onChange={(val) => setTaxMode(val as 'exclusive' | 'inclusive')}
-                      size='xs'
-                      options={[
-                        { label: language === 'AR' ? 'غير شامل' : 'Excl.', value: 'exclusive', activeColor: 'blue' },
-                        { label: language === 'AR' ? 'شامل' : 'Incl.', value: 'inclusive', activeColor: 'green' },
-                      ]}
-                      className='w-fit'
-                      disableAnimation={!activeTab}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div
-              className={`flex-1 space-y-1.5 mb-4 custom-scrollbar pe-3 ${cart.length > 0 ? 'overflow-y-auto' : 'overflow-hidden'}`}
-            >
-
-              {isLoading && cart.length === 0 ? (
-                <div className="space-y-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="p-3 rounded-2xl bg-gray-50 dark:bg-(--bg-navbar) animate-pulse">
-                      <div className="flex gap-2 items-center">
-                        <div className="flex-1 space-y-2">
-                          <div className="h-4 w-3/4 bg-gray-200 dark:bg-neutral-800 rounded-md" />
-                          <div className="h-3 w-1/4 bg-gray-100 dark:bg-neutral-800/50 rounded-md" />
-                        </div>
-                        <div className="flex gap-1.5 items-center">
-                          {[1, 2, 3, 4, 5].map(j => (
-                            <div key={j} className={`${j === 1 ? 'w-12' : 'w-14'} h-8 bg-gray-200 dark:bg-neutral-800 rounded-lg`} />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : cart.length === 0 ? (
-                <div className='text-center text-gray-400 py-10'>{t.emptyCart}</div>
-              ) : (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                  modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
-                >
-                  <SortableContext items={cart.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-1.5">
-                      {cart.map((item, index) => (
-                        <SortableCartItem
-                          key={item.id}
-                          item={item}
-                          index={index}
-                          selectedCartIndex={selectedCartIndex}
-                          setSelectedCartIndex={setSelectedCartIndex}
-                          removeItem={removeItem}
-                          updateItem={updateItem}
-                          showMenu={showMenu}
-                          t={t}
-                          isLoading={!!isLoading}
-                          textTransform={textTransform}
-                          language={language}
-                          focusedInput={focusedInput}
-                          setFocusedInput={setFocusedInput}
-                          inputRefs={inputRefs}
-                          handleInputKeyDown={handleInputKeyDown}
-                          money={money}
-                          tax={tax}
-                          taxMode={taxMode}
-                        />
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-              )}
-            </div>
-
-            <div className='border-t border-gray-100 dark:border-(--border-divider) mt-auto px-1 py-4'>
-              <div className='flex items-center justify-between gap-3'>
-                {/* Left: Metrics Group */}
-                <div className='flex items-center gap-2 text-sm py-1'>
-                  {/* Items Count */}
-                  <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
-                    <span className='text-[10px] uppercase text-gray-400 font-bold tracking-wider'>{t.summary.totalItems}</span>
-                    <span className='text-lg font-black text-gray-900 dark:text-white leading-none'>
-                      {cart.reduce((a, b) => a + (Number(b.quantity) || 0), 0)}
-                    </span>
-                  </div>
-
-                  {/* Discount */}
-                  {(() => {
-                    const totalCost = cart.reduce((sum, i) => money.add(sum, money.multiply(i.costPrice, i.quantity, 0)), 0);
-                    const totalSale = cart.reduce((sum, i) => money.add(sum, money.multiply(i.publicPrice, i.quantity, 0)), 0);
-                    const totalDiscount = money.subtract(totalSale, totalCost);
-                    const discountPercent = pricing.actualMargin(totalCost, totalSale);
-
-                    const { amount: formattedDiscount, symbol } = formatCurrencyParts(totalDiscount);
-                    return (
-                      <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
-                        <span className={`text-[10px] uppercase font-bold tracking-wider ${totalDiscount > 0 ? 'text-green-600' : 'text-gray-400'}`}>{t.summary.discount || 'Disc'}</span>
-                        <span className='text-lg font-black leading-none text-gray-900 dark:text-white flex items-center gap-1.5 h-full'>
-                          <span>{formattedDiscount} <span className='text-[10px] text-gray-400 font-normal'>{symbol}</span></span>
-                          <span className='h-full w-px bg-gray-200 dark:bg-gray-700 mx-0.5' />
-                          <span>({discountPercent.toFixed(1)}%)</span>
-                        </span>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Tax */}
+              {/* Right: Total & Actions */}
+              <div className='flex items-center gap-3'>
+                {/* Total Display - Fixed Height for alignment */}
+                <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
+                  <span
+                    className={`text-[10px] uppercase font-bold tracking-wider ${paymentMethod === 'cash' ? 'text-green-600' : 'text-primary-600'}`}
+                  >
+                    {t.summary.totalCost}
+                  </span>
                   {(() => {
                     const taxResults = tax.multiRate(
-                      cart.map((item) => ({ amount: money.multiply(item.costPrice, item.quantity, 0), taxPct: item.tax || 0 })),
+                      cart.map((item) => ({
+                        amount: money.multiply(item.costPrice, item.quantity, 0),
+                        taxPct: item.tax || 0,
+                      })),
                       taxMode
                     );
-                    const { amount: formattedTax, symbol } = formatCurrencyParts(taxResults.taxAmount);
+                    const { amount: formattedTotal, symbol } = formatCurrencyParts(
+                      taxResults.total
+                    );
                     return (
-                      <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
-                        <span className='text-[10px] uppercase text-orange-600 font-bold tracking-wider'>{t.summary.tax || 'Tax'}</span>
-                        <span className='text-lg font-black text-gray-900 dark:text-white leading-none'>{formattedTax} <span className='text-[10px] text-gray-400 font-normal'>{symbol}</span></span>
-                      </div>
+                      <span className='text-xl font-black leading-none text-gray-900 dark:text-white'>
+                        {formattedTotal}{' '}
+                        <span className='text-xs text-gray-400 font-normal'>{symbol}</span>
+                      </span>
                     );
                   })()}
                 </div>
 
-                {/* Right: Total & Actions */}
-                <div className='flex items-center gap-3'>
-                  {/* Total Display - Fixed Height for alignment */}
-                  <div className='flex items-center gap-2 bg-gray-50 dark:bg-neutral-800/50 px-3 h-10 rounded-xl border border-gray-100 dark:border-(--border-divider)'>
-                    <span className={`text-[10px] uppercase font-bold tracking-wider ${paymentMethod === 'cash' ? 'text-green-600' : 'text-primary-600'}`}>
-                      {t.summary.totalCost}
-                    </span>
-                    {(() => {
-                      const taxResults = tax.multiRate(
-                        cart.map((item) => ({ amount: money.multiply(item.costPrice, item.quantity, 0), taxPct: item.tax || 0 })),
-                        taxMode
-                      );
-                      const { amount: formattedTotal, symbol } = formatCurrencyParts(taxResults.total);
-                      return (
-                        <span className='text-xl font-black leading-none text-gray-900 dark:text-white'>
-                          {formattedTotal} <span className='text-xs text-gray-400 font-normal'>{symbol}</span>
-                        </span>
-                      );
-                    })()}
-                  </div>
+                {/* Action Buttons */}
+                <div className='flex items-center gap-2'>
+                  <button
+                    onClick={handlePendingPO}
+                    disabled={cart.length === 0 || !selectedSupplierId}
+                    className='h-10 w-10 flex items-center justify-center rounded-xl bg-orange-500 hover:bg-orange-600 text-white disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-gray-800 transition-all active:scale-95 shadow-sm shadow-orange-200 dark:shadow-none'
+                  >
+                    <span className='material-symbols-rounded text-xl'>pending_actions</span>
+                  </button>
 
-                  {/* Action Buttons */}
-                  <div className='flex items-center gap-2'>
+                  {paymentMethod === 'cash' && !currentShift ? (
+                    <div className='h-10 px-4 flex items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-bold border border-amber-200 dark:border-amber-900/50 gap-2 text-xs'>
+                      <span className='material-symbols-rounded text-base'>lock</span>
+                      {t.summary?.openShiftFirst || 'Open Shift First'}
+                    </div>
+                  ) : (
                     <button
-                      onClick={handlePendingPO}
-                      disabled={cart.length === 0 || !selectedSupplierId}
-                      className='h-10 w-10 flex items-center justify-center rounded-xl bg-orange-500 hover:bg-orange-600 text-white disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-gray-800 transition-all active:scale-95 shadow-sm shadow-orange-200 dark:shadow-none'
+                      onClick={handleConfirm}
+                      disabled={cart.length === 0 || !selectedSupplierId || isConfirming}
+                      className={`h-10 px-10 justify-center rounded-xl flex items-center gap-2 shadow-sm ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700' : 'bg-primary-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 text-white font-bold transition-all active:scale-95 text-sm relative overflow-hidden`}
                     >
-                      <span className='material-symbols-rounded text-xl'>pending_actions</span>
+                      {isConfirming ? (
+                        <div className='flex items-center gap-2'>
+                          <span className='w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin'></span>
+                          <span>{language === 'AR' ? 'جاري التأكيد...' : 'Confirming...'}</span>
+                        </div>
+                      ) : (
+                        <>
+                          <span className='material-symbols-rounded text-lg'>check_circle</span>
+                          <span>{t.summary.confirm}</span>
+                        </>
+                      )}
                     </button>
-
-                    {paymentMethod === 'cash' && !currentShift ? (
-                      <div className='h-10 px-4 flex items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-bold border border-amber-200 dark:border-amber-900/50 gap-2 text-xs'>
-                        <span className='material-symbols-rounded text-base'>lock</span>
-                        {t.summary?.openShiftFirst || 'Open Shift First'}
-                      </div>
-                    ) : (
-                      <button
-                        onClick={handleConfirm}
-                        disabled={cart.length === 0 || !selectedSupplierId || isConfirming}
-                        className={`h-10 px-10 justify-center rounded-xl flex items-center gap-2 shadow-sm ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700' : 'bg-primary-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 text-white font-bold transition-all active:scale-95 text-sm relative overflow-hidden`}
-                      >
-                        {isConfirming ? (
-                          <div className='flex items-center gap-2'>
-                            <span className='w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin'></span>
-                            <span>{language === 'AR' ? 'جاري التأكيد...' : 'Confirming...'}</span>
-                          </div>
-                        ) : (
-                          <>
-                            <span className='material-symbols-rounded text-lg'>check_circle</span>
-                            <span>{t.summary.confirm}</span>
-                          </>
-                        )}
-                      </button>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
-      
+      </div>
     </div>
   );
 };

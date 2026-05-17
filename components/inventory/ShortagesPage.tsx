@@ -1,0 +1,921 @@
+import type { ColumnDef } from '@tanstack/react-table';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAlert } from '../../context';
+import { useData } from '../../context/DataContext';
+import { intelligenceService } from '../../services/intelligence/intelligenceService';
+import type { ViewState } from '../../types';
+import type { ProcurementItem } from '../../types/intelligence';
+import type { Drug } from '../../types/inventory';
+import { getDisplayName } from '../../utils/drugDisplayName';
+import { CARD_BASE } from '../../utils/themeStyles';
+import { FilterDropdown } from '../common/FilterDropdown';
+import { PageHeader } from '../common/PageHeader';
+import { SearchEngineInput } from '../common/SearchEngineInput';
+import { SmallCard } from '../common/SmallCard';
+import { TanStackTable } from '../common/TanStackTable';
+
+interface ShortagesPageProps {
+  t: Record<string, string>; // Mapped to t.shortages
+  language: 'AR' | 'EN';
+  inventory: Drug[];
+  onViewChange?: (view: ViewState, params?: Record<string, unknown>) => void;
+  navigationParams?: Record<string, unknown>;
+}
+
+interface EnrichedShortageItem {
+  id: string; // Satisfy TanStackTable id requirement
+  drug: Drug;
+  pItem?: ProcurementItem;
+  stock: number;
+  minStock: number;
+  avgDailySales: number;
+  stockDays: number | null;
+  alertType:
+    | 'OUT_OF_STOCK_SOLD'
+    | 'MANUAL_MINIMUM_REACHED'
+    | 'PREDICTIVE_SHORTAGE'
+    | 'OUT_OF_STOCK_DEFAULT'
+    | 'NORMAL';
+  suggestedQty: number;
+  weeklyLostSales: number;
+  abcClass: 'A' | 'B' | 'C';
+}
+
+type FilterAlertType =
+  | 'ALL'
+  | 'OUT_OF_STOCK_SOLD'
+  | 'MANUAL_MINIMUM_REACHED'
+  | 'PREDICTIVE_SHORTAGE'
+  | 'OUT_OF_STOCK_DEFAULT';
+
+export const ShortagesPage: React.FC<ShortagesPageProps> = ({
+  t,
+  language = 'AR',
+  inventory = [],
+  onViewChange,
+  navigationParams: _navigationParams,
+}) => {
+  const isAR = language === 'AR';
+  const { activeBranchId } = useData();
+  const { success, warning, error: alertError } = useAlert();
+
+  // Async states for loading live intelligence calculations
+  const [procurementItems, setProcurementItems] = useState<ProcurementItem[]>([]);
+  const [loadingProcurement, setLoadingProcurement] = useState<boolean>(true);
+
+  // Filter and selection states
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedAlertFilter, setSelectedAlertFilter] = useState<FilterAlertType>('ALL');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('ALL');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [isAlertDropdownOpen, setIsAlertDropdownOpen] = useState(false);
+
+  // Fetch live daily sales velocities and AI predicted reorders from intelligence service
+  useEffect(() => {
+    let isMounted = true;
+    const fetchProcurementData = async () => {
+      try {
+        setLoadingProcurement(true);
+        const data = await intelligenceService.getProcurementItems(activeBranchId);
+        if (isMounted) {
+          setProcurementItems(data);
+        }
+      } catch (err) {
+        console.error('Failed to load procurement intelligence items:', err);
+      } finally {
+        if (isMounted) {
+          setLoadingProcurement(false);
+        }
+      }
+    };
+    fetchProcurementData();
+    return () => {
+      isMounted = false;
+    };
+  }, [activeBranchId]);
+
+  // Combine drug inventory data with sales velocities and AI predicted remaining days
+  const enrichedData = useMemo((): EnrichedShortageItem[] => {
+    const procMap = new Map<string, ProcurementItem>(
+      procurementItems.map((item) => [item.product_id, item])
+    );
+
+    return inventory.map((drug): EnrichedShortageItem => {
+      const pItem = procMap.get(drug.id);
+      const stock = drug.stock ?? 0;
+      const minStock = drug.minStock ?? 0;
+
+      // 1. Calculate sales velocity and remaining stock days
+      const avgDailySales = pItem?.avg_daily_sales ?? 0;
+      const stockDays = pItem?.stock_days ?? (avgDailySales > 0 ? stock / avgDailySales : null);
+
+      // 2. Classify the item based on our 4 shortages taxonomies:
+      // - OUT_OF_STOCK_SOLD (stock === 0, velocity > 0)
+      // - MANUAL_MINIMUM_REACHED (stock > 0, stock <= minStock)
+      // - PREDICTIVE_SHORTAGE (stock > 0, stock_days < 14)
+      // - OUT_OF_STOCK_DEFAULT (stock === 0, velocity === 0)
+      let alertType: EnrichedShortageItem['alertType'] = 'NORMAL';
+
+      if (stock === 0) {
+        if (avgDailySales > 0) {
+          alertType = 'OUT_OF_STOCK_SOLD';
+        } else {
+          alertType = 'OUT_OF_STOCK_DEFAULT';
+        }
+      } else if (minStock > 0 && stock <= minStock) {
+        alertType = 'MANUAL_MINIMUM_REACHED';
+      } else if (stockDays !== null && stockDays < 14) {
+        alertType = 'PREDICTIVE_SHORTAGE';
+      }
+
+      // Calculate estimated weekly lost sales if out of stock
+      // weekly_lost_sales = avgDailySales * 7 * costPrice
+      const weeklyLostSales = stock === 0 ? avgDailySales * 7 * (drug.costPrice ?? 0) : 0;
+
+      // Suggested qty: use the procurement one if available, otherwise safety stock calculation
+      const suggestedQty =
+        pItem?.suggested_order_qty ??
+        (avgDailySales > 0 ? Math.max(0, Math.ceil(14 * avgDailySales * 1.5 - stock)) : 0);
+
+      return {
+        id: drug.id,
+        drug,
+        pItem,
+        stock,
+        minStock,
+        avgDailySales,
+        stockDays,
+        alertType,
+        suggestedQty,
+        weeklyLostSales,
+        abcClass: pItem?.abc_class ?? 'C',
+      };
+    });
+  }, [inventory, procurementItems]);
+
+  // Extract list of all unique categories present in the branch
+  const categories = useMemo(() => {
+    const list = new Set<string>();
+    inventory.forEach((drug) => {
+      if (drug.category) {
+        list.add(drug.category);
+      }
+    });
+    return Array.from(list).sort();
+  }, [inventory]);
+
+  // Filter list to only contain products that are classified as shortages/alerts
+  const shortagesData = useMemo(() => {
+    return enrichedData.filter((item) => item.alertType !== 'NORMAL');
+  }, [enrichedData]);
+
+  // Dynamic counts for KPI Cards
+  const stats = useMemo(() => {
+    let outOfStockCount = 0;
+    let predictiveCount = 0;
+    let manualMinCount = 0;
+    let totalLostWeeklySales = 0;
+
+    shortagesData.forEach((item) => {
+      if (item.alertType === 'OUT_OF_STOCK_SOLD' || item.alertType === 'OUT_OF_STOCK_DEFAULT') {
+        outOfStockCount++;
+        totalLostWeeklySales += item.weeklyLostSales;
+      } else if (item.alertType === 'PREDICTIVE_SHORTAGE') {
+        predictiveCount++;
+      } else if (item.alertType === 'MANUAL_MINIMUM_REACHED') {
+        manualMinCount++;
+      }
+    });
+
+    return {
+      total: shortagesData.length,
+      outOfStock: outOfStockCount,
+      predictive: predictiveCount,
+      manualMin: manualMinCount,
+      lostSales: totalLostWeeklySales,
+    };
+  }, [shortagesData]);
+
+  // Perform search and filter combinations on client side
+  const filteredData = useMemo(() => {
+    return shortagesData.filter((item) => {
+      // 1. Alert Type filter
+      if (selectedAlertFilter !== 'ALL' && item.alertType !== selectedAlertFilter) {
+        return false;
+      }
+
+      // 2. Category filter
+      if (selectedCategoryFilter !== 'ALL' && item.drug.category !== selectedCategoryFilter) {
+        return false;
+      }
+
+      // 3. Text Search (name, genericName, barcode)
+      if (searchTerm.trim() !== '') {
+        const query = searchTerm.toLowerCase();
+        const brandName = getDisplayName(item.drug).toLowerCase();
+        const genericNames = (item.drug.genericName || []).map((g) => g.toLowerCase());
+        const barcode = (item.drug.barcode || '').toLowerCase();
+        const internalCode = (item.drug.internalCode || '').toLowerCase();
+
+        const matchesBrand = brandName.includes(query);
+        const matchesGeneric = genericNames.some((g) => g.includes(query));
+        const matchesCode = barcode.includes(query) || internalCode.includes(query);
+
+        return matchesBrand || matchesGeneric || matchesCode;
+      }
+
+      return true;
+    });
+  }, [shortagesData, selectedAlertFilter, selectedCategoryFilter, searchTerm]);
+
+  // Toggle selection for a single row
+  const handleToggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  // Toggle selection for all currently visible rows in the table
+  const handleSelectAll = useCallback((rows: EnrichedShortageItem[]) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      const allSelected = rows.length > 0 && rows.every((row) => prev.has(row.drug.id));
+      rows.forEach((row) => {
+        if (allSelected) {
+          next.delete(row.drug.id);
+        } else {
+          next.add(row.drug.id);
+        }
+      });
+      return next;
+    });
+  }, []);
+
+  // Export selected shortages (or all shortages if none selected) to CSV with UTF-8 BOM
+  const handleExportCSV = () => {
+    const itemsToExport =
+      selectedIds.size > 0
+        ? shortagesData.filter((item) => selectedIds.has(item.drug.id))
+        : shortagesData;
+
+    if (itemsToExport.length === 0) {
+      warning(t.warningNoDataToExportTitle, t.warningNoDataToExportDesc);
+      return;
+    }
+
+    const csvHeaders = [
+      t.csvHeaderProduct,
+      t.csvHeaderGeneric,
+      t.csvHeaderCategory,
+      t.tableStock,
+      t.tableMinStock,
+      t.tableVelocity,
+      t.tableStockDays,
+      t.tableAbcClass,
+      t.tableAlertStatus,
+      t.tableSuggestedQty,
+    ];
+
+    const getAlertStatusText = (alertType: string) => {
+      switch (alertType) {
+        case 'OUT_OF_STOCK_SOLD':
+          return t.statusOutOfStockSold;
+        case 'MANUAL_MINIMUM_REACHED':
+          return t.statusManualMinimumReached;
+        case 'PREDICTIVE_SHORTAGE':
+          return t.statusPredictiveShortage;
+        case 'OUT_OF_STOCK_DEFAULT':
+          return t.statusOutOfStockDefault;
+        default:
+          return t.statusNormal;
+      }
+    };
+
+    const csvRows = itemsToExport.map((item) => {
+      const prodName = getDisplayName(item.drug);
+      const genName = Array.isArray(item.drug.genericName)
+        ? item.drug.genericName.join(' + ')
+        : item.drug.genericName || '';
+      const cat = item.drug.category || t.generalCategory;
+      const stock = item.stock;
+      const min = item.minStock || 0;
+      const velocity = item.avgDailySales.toFixed(2);
+      const days = item.stockDays === null ? 'Infinity' : item.stockDays;
+      const abc = item.abcClass;
+      const statusText = getAlertStatusText(item.alertType);
+      const sugQty = item.suggestedQty;
+
+      return [
+        `"${prodName.replace(/"/g, '""')}"`,
+        `"${genName.replace(/"/g, '""')}"`,
+        `"${cat.replace(/"/g, '""')}"`,
+        stock,
+        min,
+        velocity,
+        days,
+        abc,
+        `"${statusText}"`,
+        sugQty,
+      ];
+    });
+
+    const csvContent = [csvHeaders.join(','), ...csvRows.map((e) => e.join(','))].join('\n');
+    const blob = new Blob([new Uint8Array([0xef, 0xbb, 0xbf]), csvContent], {
+      type: 'text/csv;charset=utf-8;',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${t.exportCsvFilename || 'shortages_report'}_${dateStr}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    success(t.exportSuccess, t.exportSuccessDesc.replace('{count}', String(itemsToExport.length)));
+  };
+
+  // Bulk reorder trigger to pre-populate purchases cart
+  const handleBulkReorder = () => {
+    if (selectedIds.size === 0) {
+      warning(t.warningNoItemsSelectedTitle, t.warningNoItemsSelectedDesc);
+      return;
+    }
+
+    const itemsToOrder = shortagesData
+      .filter((item) => selectedIds.has(item.drug.id))
+      .map((item) => ({
+        id: item.drug.id,
+        name: item.drug.name,
+        nameAr: item.drug.nameAr,
+        dosageForm: item.drug.dosageForm,
+        unitsPerPack: item.drug.unitsPerPack || 1,
+        quantity: item.suggestedQty > 0 ? item.suggestedQty : 10,
+        costPrice: item.drug.costPrice || 0,
+        publicPrice: item.drug.publicPrice || 0,
+        barcode: item.drug.barcode,
+        supplierId: item.drug.supplierId,
+      }));
+
+    if (onViewChange) {
+      onViewChange('purchases', {
+        autoPopulateItems: itemsToOrder,
+      });
+      success(
+        t.navigatingToPurchases,
+        t.preparedOrderDesc.replace('{count}', String(itemsToOrder.length))
+      );
+    } else {
+      alertError(t.navigationError, t.navigationErrorDesc);
+    }
+  };
+
+  // Define Table Columns inline to gain close access to selection states
+  const columns = useMemo((): ColumnDef<EnrichedShortageItem>[] => {
+    const isAllSelected =
+      filteredData.length > 0 && filteredData.every((row) => selectedIds.has(row.drug.id));
+    const isSomeSelected =
+      filteredData.some((row) => selectedIds.has(row.drug.id)) && !isAllSelected;
+
+    return [
+      {
+        id: 'select',
+        size: 40,
+        header: () => (
+          <div className='flex items-center justify-center'>
+            <input
+              type='checkbox'
+              className='rounded border-zinc-300 dark:border-zinc-700 text-primary-600 focus:ring-primary-500 h-4.5 w-4.5 cursor-pointer bg-white dark:bg-zinc-900'
+              ref={(input) => {
+                if (input) {
+                  input.indeterminate = isSomeSelected;
+                }
+              }}
+              checked={isAllSelected}
+              onChange={() => handleSelectAll(filteredData)}
+            />
+          </div>
+        ),
+        cell: ({ row }) => {
+          const item = row.original;
+          return (
+            <div className='flex items-center justify-center'>
+              <input
+                type='checkbox'
+                className='rounded border-zinc-300 dark:border-zinc-700 text-primary-600 focus:ring-primary-500 h-4.5 w-4.5 cursor-pointer bg-white dark:bg-zinc-900'
+                checked={selectedIds.has(item.drug.id)}
+                onChange={() => handleToggleSelect(item.drug.id)}
+              />
+            </div>
+          );
+        },
+        enableSorting: false,
+        meta: {
+          width: 40,
+          align: 'center',
+        },
+      },
+      {
+        id: 'Name',
+        size: 320,
+        header: t.tableProduct,
+        accessorFn: (row) => getDisplayName(row.drug),
+        cell: ({ row }) => {
+          const item = row.original;
+          const prodName = getDisplayName(item.drug);
+
+          return (
+            <div className='flex flex-col gap-1 py-1 w-[320px] max-w-[320px]'>
+              <span
+                className='font-bold text-gray-900 dark:text-white text-sm tracking-tight leading-snug truncate'
+                title={prodName}
+              >
+                {prodName}
+              </span>
+            </div>
+          );
+        },
+        meta: {
+          flex: false,
+          width: 320,
+          align: 'start',
+        },
+      },
+      {
+        id: 'alert_status',
+        header: t.tableAlertStatus,
+        accessorKey: 'alertType',
+        cell: ({ row }) => {
+          const item = row.original;
+          let badgeClass = '';
+          let icon = '';
+          let label = '';
+
+          switch (item.alertType) {
+            case 'OUT_OF_STOCK_SOLD':
+              badgeClass =
+                'border-red-200 bg-red-50 text-red-700 dark:border-red-900/30 dark:bg-red-950/10 dark:text-red-400';
+              icon = 'dangerous';
+              label = t.statusOutOfStockSold;
+              break;
+            case 'MANUAL_MINIMUM_REACHED':
+              badgeClass =
+                'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/30 dark:bg-amber-950/10 dark:text-amber-400';
+              icon = 'low_priority';
+              label = t.statusManualMinimumReached;
+              break;
+            case 'PREDICTIVE_SHORTAGE':
+              badgeClass =
+                'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-900/30 dark:bg-purple-950/10 dark:text-purple-400';
+              icon = 'psychology';
+              label = t.statusPredictiveShortage;
+              break;
+            case 'OUT_OF_STOCK_DEFAULT':
+              badgeClass =
+                'border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/20 dark:text-zinc-400';
+              icon = 'block';
+              label = t.statusOutOfStockDefault;
+              break;
+            default:
+              badgeClass =
+                'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/30 dark:bg-emerald-950/10 dark:text-emerald-400';
+              icon = 'check_circle';
+              label = t.statusNormal;
+          }
+
+          return (
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[11px] font-bold uppercase tracking-wide bg-transparent ${badgeClass}`}
+            >
+              <span className='material-symbols-rounded text-sm'>{icon}</span>
+              {label}
+            </span>
+          );
+        },
+        meta: {
+          align: 'center',
+        },
+      },
+      {
+        id: 'stock',
+        header: t.tableStock,
+        accessorKey: 'stock',
+        cell: ({ row }) => {
+          const item = row.original;
+          const isOutOfStock = item.stock === 0;
+
+          return (
+            <div className='flex flex-col items-center'>
+              <span
+                className={`text-sm font-black tabular-nums ${
+                  isOutOfStock ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'
+                }`}
+              >
+                {item.stock}
+              </span>
+              {item.drug.unitsPerPack && item.drug.unitsPerPack > 1 && (
+                <span className='text-[10px] text-gray-400'>
+                  {item.stock} {t.units}
+                </span>
+              )}
+            </div>
+          );
+        },
+        meta: {
+          align: 'center',
+        },
+      },
+      {
+        id: 'min_stock',
+        header: t.tableMinStock,
+        accessorKey: 'minStock',
+        cell: ({ row }) => {
+          const item = row.original;
+          return (
+            <span className='text-sm font-bold tabular-nums text-gray-600 dark:text-zinc-400'>
+              {item.minStock > 0 ? item.minStock : '-'}
+            </span>
+          );
+        },
+        meta: {
+          align: 'center',
+        },
+      },
+      {
+        id: 'velocity',
+        header: t.tableVelocity,
+        accessorKey: 'avgDailySales',
+        cell: ({ row }) => {
+          const item = row.original;
+          return (
+            <span className='text-sm font-bold tabular-nums text-gray-800 dark:text-zinc-300'>
+              {item.avgDailySales.toFixed(1)}
+            </span>
+          );
+        },
+        meta: {
+          align: 'center',
+        },
+      },
+      {
+        id: 'days_left',
+        header: t.tableStockDays,
+        accessorKey: 'stockDays',
+        cell: ({ row }) => {
+          const item = row.original;
+          if (item.stockDays === null || item.stockDays === undefined) {
+            return (
+              <span className='text-base font-bold text-emerald-600 dark:text-emerald-400 select-none'>
+                ∞
+              </span>
+            );
+          }
+
+          let colorClass = 'text-emerald-600 dark:text-emerald-400';
+          if (item.stockDays < 7) {
+            colorClass = 'text-red-600 dark:text-red-400 font-black';
+          } else if (item.stockDays < 14) {
+            colorClass = 'text-amber-600 dark:text-amber-400 font-bold';
+          }
+
+          return (
+            <div className='flex flex-col items-center'>
+              <span className={`text-sm tabular-nums ${colorClass}`}>{item.stockDays}</span>
+              <span className='text-[10px] text-gray-400'>{t.daysLeft}</span>
+            </div>
+          );
+        },
+        meta: {
+          align: 'center',
+        },
+      },
+      {
+        id: 'abc_class',
+        header: t.tableAbcClass,
+        accessorKey: 'abcClass',
+        cell: ({ row }) => {
+          const item = row.original;
+          let badgeClass = '';
+
+          switch (item.abcClass) {
+            case 'A':
+              badgeClass =
+                'bg-purple-100 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400 border-purple-200 dark:border-purple-900/30';
+              break;
+            case 'B':
+              badgeClass =
+                'bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border-blue-200 dark:border-blue-900/30';
+              break;
+            case 'C':
+              badgeClass =
+                'bg-gray-100 text-gray-700 dark:bg-zinc-800 dark:text-zinc-400 border-gray-200 dark:border-zinc-700';
+              break;
+          }
+
+          return (
+            <span
+              className={`inline-flex items-center justify-center w-7 h-7 rounded-full border text-xs font-black select-none ${badgeClass}`}
+              title={t.abcDescription}
+            >
+              {item.abcClass}
+            </span>
+          );
+        },
+        meta: {
+          align: 'center',
+        },
+      },
+      {
+        id: 'suggested_qty',
+        header: t.tableSuggestedQty,
+        accessorKey: 'suggestedQty',
+        cell: ({ row }) => {
+          const item = row.original;
+          return (
+            <span
+              className='inline-flex px-2 py-0.5 rounded-md bg-primary-50 dark:bg-primary-950/10 border border-primary-100 dark:border-primary-900/30 text-primary-700 dark:text-primary-400 text-sm font-black tabular-nums'
+              title={t.suggestedOrderTooltip}
+            >
+              {item.suggestedQty}
+            </span>
+          );
+        },
+        meta: {
+          align: 'center',
+        },
+      },
+    ];
+  }, [filteredData, selectedIds, t, handleSelectAll, handleToggleSelect]);
+
+  return (
+    <div
+      className='h-full flex flex-col bg-(--bg-page-surface) selection:bg-primary-100 dark:selection:bg-primary-900/30'
+      dir={isAR ? 'rtl' : 'ltr'}
+    >
+      <PageHeader
+        title={t.title}
+        subtitle={t.subtitle}
+        rightContent={
+          <div className='flex items-center gap-2'>
+            {/* Export Shortages button */}
+            <button
+              type='button'
+              onClick={handleExportCSV}
+              className='flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-gray-700 bg-white dark:text-zinc-300 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/80 cursor-pointer'
+            >
+              <span className='material-symbols-rounded text-lg'>download</span>
+              {t.exportButtonLabel}
+            </button>
+
+            {/* Create Purchase Order button */}
+            <button
+              type='button'
+              onClick={handleBulkReorder}
+              className='flex items-center gap-1.5 px-4 py-2 text-sm font-black text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-500 rounded-xl transition-all shadow-sm hover:shadow cursor-pointer'
+            >
+              <span className='material-symbols-rounded text-lg'>shopping_cart</span>
+              {t.reorderBtn}
+            </button>
+          </div>
+        }
+      />
+
+      {/* Summary KPI Cards Panels */}
+      <div className='px-page mb-6'>
+        <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+          {/* Total Monitored Card */}
+          <SmallCard
+            title={t.statsTotal}
+            value={stats.total}
+            icon='inventory_2'
+            iconColor='zinc'
+            isLoading={loadingProcurement}
+          />
+
+          {/* Out of Stock Card */}
+          <SmallCard
+            title={t.statsCritical}
+            value={stats.outOfStock}
+            icon='dangerous'
+            iconColor='red'
+            subValue={
+              stats.lostSales > 0
+                ? `-${Math.round(stats.lostSales)} EGP / ${t.weekAbbreviation}`
+                : undefined
+            }
+            isLoading={loadingProcurement}
+          />
+
+          {/* Below Limit Card */}
+          <SmallCard
+            title={t.statusManualMinimumReached}
+            value={stats.manualMin}
+            icon='low_priority'
+            iconColor='amber'
+            isLoading={loadingProcurement}
+          />
+
+          {/* AI Predictive Depletion Card */}
+          <SmallCard
+            title={t.statsPredictive}
+            value={stats.predictive}
+            icon='psychology'
+            iconColor='purple'
+            isLoading={loadingProcurement}
+          />
+        </div>
+      </div>
+
+      {/* Filter and Search Bar Panel */}
+      <div className='px-page mb-6 flex flex-col md:flex-row gap-3 items-center justify-between'>
+        {/* Unified Search Engine UI Shell */}
+        <div className='w-full md:w-[450px]'>
+          <SearchEngineInput
+            value={searchTerm}
+            onSearchChange={setSearchTerm}
+            placeholder={t.searchPlaceholder}
+            onClear={() => setSearchTerm('')}
+            color='primary'
+          />
+        </div>
+
+        {/* Quick Filters Group */}
+        <div className='flex items-center flex-wrap gap-2 w-full md:w-auto'>
+          {/* Category Dropdown Filter */}
+          <FilterDropdown
+            items={['ALL', ...categories]}
+            selectedItem={selectedCategoryFilter}
+            isOpen={isCategoryDropdownOpen}
+            onToggle={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+            onSelect={(val) => {
+              setSelectedCategoryFilter(val);
+              setIsCategoryDropdownOpen(false);
+            }}
+            renderSelected={(val) => (val === 'ALL' ? t.filterCategory : val)}
+            renderItem={(val) => (val === 'ALL' ? t.filterCategory : val)}
+            className='w-48 text-sm'
+            minHeight={38}
+            variant='input'
+            floating
+            color='primary'
+            keyExtractor={(item) => item}
+          />
+
+          {/* Alert Type Dropdown Filter */}
+          <FilterDropdown
+            items={
+              [
+                'ALL',
+                'OUT_OF_STOCK_SOLD',
+                'MANUAL_MINIMUM_REACHED',
+                'PREDICTIVE_SHORTAGE',
+                'OUT_OF_STOCK_DEFAULT',
+              ] as FilterAlertType[]
+            }
+            selectedItem={selectedAlertFilter}
+            isOpen={isAlertDropdownOpen}
+            onToggle={() => setIsAlertDropdownOpen(!isAlertDropdownOpen)}
+            onSelect={(val) => {
+              setSelectedAlertFilter(val);
+              setIsAlertDropdownOpen(false);
+            }}
+            renderSelected={(val) => {
+              switch (val) {
+                case 'OUT_OF_STOCK_SOLD':
+                  return t.statusOutOfStockSold;
+                case 'MANUAL_MINIMUM_REACHED':
+                  return t.statusManualMinimumReached;
+                case 'PREDICTIVE_SHORTAGE':
+                  return t.statusPredictiveShortage;
+                case 'OUT_OF_STOCK_DEFAULT':
+                  return t.statusOutOfStockDefault;
+                default:
+                  return t.filterAlert;
+              }
+            }}
+            renderItem={(val) => {
+              switch (val) {
+                case 'OUT_OF_STOCK_SOLD':
+                  return t.statusOutOfStockSold;
+                case 'MANUAL_MINIMUM_REACHED':
+                  return t.statusManualMinimumReached;
+                case 'PREDICTIVE_SHORTAGE':
+                  return t.statusPredictiveShortage;
+                case 'OUT_OF_STOCK_DEFAULT':
+                  return t.statusOutOfStockDefault;
+                default:
+                  return t.filterAlert;
+              }
+            }}
+            className='w-56 text-sm'
+            minHeight={38}
+            variant='input'
+            floating
+            color='primary'
+            keyExtractor={(item) => item}
+          />
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className='flex-1 px-page pb-8 overflow-hidden flex flex-col'>
+        <div className={`${CARD_BASE} rounded-3xl flex-1 overflow-hidden flex flex-col p-0`}>
+          <div className='flex-1 overflow-y-auto scrollbar-hide relative'>
+            {loadingProcurement ? (
+              // Progressive Skeletons loader matching PharmaFlow AI Skeleton guidelines
+              <div className='space-y-4 p-6'>
+                {['sk-1', 'sk-2', 'sk-3', 'sk-4', 'sk-5', 'sk-6'].map((key) => (
+                  <div
+                    key={key}
+                    className='flex items-center justify-between py-4 border-b border-zinc-100 dark:border-zinc-800/40 animate-pulse'
+                  >
+                    <div className='space-y-2 flex-1'>
+                      <div className='h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-2/5' />
+                      <div className='h-3 bg-zinc-100 dark:bg-zinc-800/60 rounded w-1/4' />
+                    </div>
+                    <div className='flex gap-4'>
+                      <div className='h-6 bg-zinc-200 dark:bg-zinc-800 rounded w-20' />
+                      <div className='h-6 bg-zinc-100 dark:bg-zinc-800/60 rounded w-14' />
+                      <div className='h-6 bg-zinc-200 dark:bg-zinc-800 rounded w-16' />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredData.length === 0 ? (
+              // Sleek Empty State Treatment per Zinc principles
+              <div className='flex flex-col items-center justify-center py-24 text-center'>
+                <span className='material-symbols-rounded text-6xl text-zinc-300 dark:text-zinc-700 mb-4 block select-none'>
+                  check_circle
+                </span>
+                <h3 className='text-lg font-bold text-gray-900 dark:text-white mb-2'>
+                  {t.allGoodText}
+                </h3>
+                <p className='text-sm font-medium text-gray-400 dark:text-zinc-500 max-w-md'>
+                  {t.noShortagesFound}
+                </p>
+              </div>
+            ) : (
+              // Render standard high-performance TanStack Table v8
+              <TanStackTable
+                data={filteredData}
+                columns={columns}
+                tableId='shortages-alerts-table'
+                dense
+                lite
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Floaty Action Dock Bar showing at the bottom when items are selected */}
+      {selectedIds.size > 0 && (
+        <div className='fixed bottom-14 inset-x-0 mx-auto w-fit z-50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md px-6 py-3.5 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl shadow-xl flex items-center gap-6 animate-in slide-in-from-bottom duration-300'>
+          <div className='flex items-center gap-2'>
+            <span className='w-2.5 h-2.5 rounded-full bg-primary-600 animate-pulse' />
+            <span className='text-sm font-black text-gray-900 dark:text-white'>
+              {t.itemsSelectedText.replace('{count}', String(selectedIds.size))}
+            </span>
+          </div>
+
+          <div className='h-5 w-px bg-zinc-200 dark:bg-zinc-800' />
+
+          <div className='flex items-center gap-2'>
+            {/* Quick Export selection */}
+            <button
+              type='button'
+              onClick={handleExportCSV}
+              className='flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-700 bg-transparent dark:text-zinc-300 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer'
+            >
+              <span className='material-symbols-rounded text-base'>download</span>
+              {t.exportSelectedButtonLabel}
+            </button>
+
+            {/* Quick Purchase selection */}
+            <button
+              type='button'
+              onClick={handleBulkReorder}
+              className='flex items-center gap-1.5 px-4 py-2 text-xs font-black text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-500 rounded-xl transition-all shadow-sm cursor-pointer'
+            >
+              <span className='material-symbols-rounded text-base'>shopping_cart</span>
+              {t.reorderBtn}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ShortagesPage;

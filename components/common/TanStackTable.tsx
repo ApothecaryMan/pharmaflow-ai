@@ -55,9 +55,9 @@ declare module '@tanstack/react-table' {
 import { useSettings } from '../../context/SettingsContext';
 import { useLongPress } from '../../hooks/common/useLongPress';
 import { TRANSLATIONS } from '../../i18n/translations';
-import { formatCurrencyParts, formatCompactCurrencyParts } from '../../utils/currency';
+import { formatCompactCurrencyParts, formatCurrencyParts } from '../../utils/currency';
 import { normalizeDigits } from '../../utils/localization';
-import { getSmartDirection } from './SmartInputs';
+import { CARD_BASE } from '../../utils/themeStyles';
 import {
   ContextMenuCheckboxItem,
   ContextMenuItem,
@@ -67,13 +67,13 @@ import {
 } from './ContextMenu';
 import type { FilterConfig } from './FilterPill';
 import { SearchInput } from './SearchInput';
+import { getSmartDirection } from './SmartInputs';
 import {
   AlignButton,
   getHeaderJustifyClass,
   getItemsAlignClass,
   getTextAlignClass,
 } from './TableAlignment';
-import { CARD_BASE } from '../../utils/themeStyles';
 
 export const PriceDisplay: React.FC<{
   value: number;
@@ -92,7 +92,7 @@ export const PriceDisplay: React.FC<{
     base: 'text-[0.75em]',
     lg: 'text-[0.75em]',
     xl: 'text-[0.6em]',
-    '2xl': 'text-[0.5em]'
+    '2xl': 'text-[0.5em]',
   } as const;
 
   const symbolClass = SYMBOL_SCALES[size] || SYMBOL_SCALES.base;
@@ -116,10 +116,10 @@ const checkValueMatchesFilter = (value: any, filterValue: any): boolean => {
   // 1. Handle Array-based filters (Pills)
   if (Array.isArray(filterValue)) {
     if (filterValue.length === 0 || filterValue.includes('all')) return true;
-    
+
     // Cell value might be an array or a scalar
     if (Array.isArray(value)) {
-      return value.some(v => filterValue.includes(v));
+      return value.some((v) => filterValue.includes(v));
     }
     return filterValue.includes(value);
   }
@@ -128,7 +128,7 @@ const checkValueMatchesFilter = (value: any, filterValue: any): boolean => {
   const normalizedSearch = normalizeDigits(String(filterValue || ''));
   const regex = createSearchRegex(normalizedSearch);
   const strValue = normalizeDigits(String(value || ''));
-  
+
   return regex.test(strValue);
 };
 
@@ -158,8 +158,18 @@ const globalFilterFnStable: FilterFn<any> = (row, columnId, filterValue) => {
 
 // ─── Optimization: technical column detection set for O(1) lookups ───
 const TECHNICAL_COLUMN_KEYWORDS = new Set([
-  'id', 'sku', 'barcode', 'batch', 'serial', 'email',
-  'address', 'phone', 'mobile', 'invoice', 'receipt', 'code',
+  'id',
+  'sku',
+  'barcode',
+  'batch',
+  'serial',
+  'email',
+  'address',
+  'phone',
+  'mobile',
+  'invoice',
+  'receipt',
+  'code',
 ]);
 
 /**
@@ -239,11 +249,18 @@ const getStoredSettings = (tableId: string) => {
 };
 
 const getSmartAlignment = (columnId: string, meta?: any): 'start' | 'end' | 'center' => {
-  if (meta?.align) return meta.align === 'left' ? 'start' : meta.align === 'right' ? 'end' : meta.align;
-  
+  if (meta?.align)
+    return meta.align === 'left' ? 'start' : meta.align === 'right' ? 'end' : meta.align;
+
   const id = columnId.toLowerCase();
-  if (['price', 'cost', 'revenue', 'profit', 'qty', 'quantity', 'amount', 'total', 'balance'].some(key => id.includes(key))) return 'end';
-  if (['status', 'active', 'is_', 'action', 'driver', 'man'].some(key => id.includes(key))) return 'center';
+  if (
+    ['price', 'cost', 'revenue', 'profit', 'qty', 'quantity', 'amount', 'total', 'balance'].some(
+      (key) => id.includes(key)
+    )
+  )
+    return 'end';
+  if (['status', 'active', 'is_', 'action', 'driver', 'man'].some((key) => id.includes(key)))
+    return 'center';
   return 'start';
 };
 
@@ -264,144 +281,178 @@ const MemoizedCell = React.memo(({ cell, dense, meta, cellDir, content }: any) =
     >
       <div className={`flex items-center gap-1.5 w-full ${meta.justifyClass}`}>
         {meta.isId && (
-          <span className='material-symbols-rounded text-gray-400 shrink-0' style={{ fontSize: 'var(--icon-md)' }}>
+          <span
+            className='material-symbols-rounded text-gray-400 shrink-0'
+            style={{ fontSize: 'var(--icon-md)' }}
+          >
             tag
           </span>
         )}
-        <span dir={meta.isId ? 'ltr' : undefined}>
-          {content}
-        </span>
+        <span dir={meta.isId ? 'ltr' : undefined}>{content}</span>
       </div>
     </td>
   );
 });
 
 // Memoized Row Component
-const MemoizedRow = React.memo(React.forwardRef(({ 
-  row, 
-  dense, 
-  onRowClick, 
-  onRowTouchStart, 
-  onRowTouchEnd, 
-  onRowTouchMove, 
-  onRowContextMenu,
-  pendingRowIds,
-  newRowIds,
-  updatedRowIds,
-  localLoading,
-  columnMetaMap,
-  rowsCount,
-  rowIndex,
-  currentTouchRow,
-  // Date-related props for SmartDate
-  todayTs,
-  yesterdayTs,
-  isRtl,
-  isAR,
-  isLoading
-}: any, ref: any) => {
-  const isPending = pendingRowIds.has(row.original.id);
-  const isNew = newRowIds.has(row.original.id);
-  const isUpdated = updatedRowIds.has(row.original.id);
+const MemoizedRow = React.memo(
+  React.forwardRef(
+    (
+      {
+        row,
+        dense,
+        onRowClick,
+        onRowTouchStart,
+        onRowTouchEnd,
+        onRowTouchMove,
+        onRowContextMenu,
+        pendingRowIds,
+        newRowIds,
+        updatedRowIds,
+        localLoading,
+        columnMetaMap,
+        rowsCount,
+        rowIndex,
+        currentTouchRow,
+        // Date-related props for SmartDate
+        todayTs,
+        yesterdayTs,
+        isRtl,
+        isAR,
+        isLoading,
+      }: any,
+      ref: any
+    ) => {
+      const isPending = pendingRowIds.has(row.original.id);
+      const isNew = newRowIds.has(row.original.id);
+      const isUpdated = updatedRowIds.has(row.original.id);
 
-  return (
-    <tr
-      ref={ref}
-      data-index={rowIndex}
-      id={`drug-row-${rowIndex}`}
-      onClick={() => onRowClick?.(row.original)}
-      onTouchStart={(e) => {
-        if (currentTouchRow) currentTouchRow.current = row.original;
-        onRowTouchStart?.(e);
-      }}
-      onTouchEnd={onRowTouchEnd}
-      onTouchMove={onRowTouchMove}
-      onContextMenu={(e) => {
-        if (onRowContextMenu) {
-          e.preventDefault();
-          onRowContextMenu(e, row.original);
-        }
-      }}
-      className={`group/row transition-all duration-200 outline-none
+      return (
+        <tr
+          ref={ref}
+          data-index={rowIndex}
+          id={`drug-row-${rowIndex}`}
+          onClick={() => onRowClick?.(row.original)}
+          onTouchStart={(e) => {
+            if (currentTouchRow) currentTouchRow.current = row.original;
+            onRowTouchStart?.(e);
+          }}
+          onTouchEnd={onRowTouchEnd}
+          onTouchMove={onRowTouchMove}
+          onContextMenu={(e) => {
+            if (onRowContextMenu) {
+              e.preventDefault();
+              onRowContextMenu(e, row.original);
+            }
+          }}
+          className={`group/row transition-all duration-200 outline-none
         ${onRowClick ? 'cursor-pointer hover:bg-gray-50/80 dark:hover:bg-white/[0.03]' : ''}
-        ${(isPending || localLoading || isLoading) ? 'animate-pulse' : ''}
+        ${isPending || localLoading || isLoading ? 'animate-pulse' : ''}
         ${isPending ? 'opacity-60 grayscale-[0.5]' : ''}
         ${isNew ? 'bg-emerald-500/[0.08] dark:bg-emerald-500/[0.12] animate-in fade-in zoom-in-95 duration-300 ease-out' : ''}
         ${isUpdated ? 'bg-amber-500/[0.08] dark:bg-amber-500/[0.12] transition-colors duration-300' : ''}
       `}
-    >
-      {row.getVisibleCells().map((cell: any) => {
-        const meta = columnMetaMap.get(cell.column.id);
-        const cellValue = cell.getValue();
-        // Exception: IDs and Actions should strictly follow table direction (isRtl)
-        // to ensure 'justify-start' always matches the header alignment.
-        // Others use 'Smart Direction' for natural language flow.
-        const cellDir = (meta.isId || meta.isAction) 
-          ? (isRtl ? 'rtl' : 'ltr') 
-          : (meta.dir === 'auto' ? getSmartDirection(String(cellValue || '')) : (meta.dir || 'auto'));
-        
-        let content = null;
+        >
+          {row.getVisibleCells().map((cell: any) => {
+            const meta = columnMetaMap.get(cell.column.id);
+            const cellValue = cell.getValue();
+            // Exception: IDs and Actions should strictly follow table direction (isRtl)
+            // to ensure 'justify-start' always matches the header alignment.
+            // Others use 'Smart Direction' for natural language flow.
+            const cellDir =
+              cell.column.id.toLowerCase() === 'name'
+                ? 'ltr'
+                : meta.isId || meta.isAction
+                  ? isRtl
+                    ? 'rtl'
+                    : 'ltr'
+                  : meta.dir === 'auto'
+                    ? getSmartDirection(String(cellValue || ''))
+                    : meta.dir || 'auto';
 
-        // --- Smart Date Formatting ---
-        if (meta.smartDate && meta.isDate && cellValue) {
-          const date = new Date(cellValue);
-          if (!isNaN(date.getTime())) {
-            const targetTs = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-            const isToday = targetTs === todayTs;
-            const isYesterday = targetTs === yesterdayTs;
-            const dateLabel = isToday ? (isRtl ? 'اليوم' : 'Today') : isYesterday ? (isRtl ? 'أمس' : 'Yesterday') : date.toLocaleDateString();
-            
-            const hourRaw = date.getHours();
-            const ampm = isRtl ? (hourRaw >= 12 ? 'م' : 'ص') : (hourRaw >= 12 ? 'PM' : 'AM');
-            const displayHour = (hourRaw % 12 || 12).toLocaleString(undefined, { useGrouping: false });
-            const displayMinute = date.getMinutes().toLocaleString(undefined, { minimumIntegerDigits: 2, useGrouping: false });
-            const formattedTime = `${displayHour}:${displayMinute} ${ampm}`;
+            let content = null;
 
-            content = (
-              <div className={`flex flex-col ${meta.itemsAlignClass}`}>
-                <span className='font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight'>
-                  {isToday ? formattedTime : dateLabel}
-                </span>
-                {!isToday && (
-                  <span className='text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap -mt-0.5 tracking-tight'>
-                    {formattedTime}
-                  </span>
-                )}
-              </div>
+            // --- Smart Date Formatting ---
+            if (meta.smartDate && meta.isDate && cellValue) {
+              const date = new Date(cellValue);
+              if (!isNaN(date.getTime())) {
+                const targetTs = new Date(
+                  date.getFullYear(),
+                  date.getMonth(),
+                  date.getDate()
+                ).getTime();
+                const isToday = targetTs === todayTs;
+                const isYesterday = targetTs === yesterdayTs;
+                const dateLabel = isToday
+                  ? isRtl
+                    ? 'اليوم'
+                    : 'Today'
+                  : isYesterday
+                    ? isRtl
+                      ? 'أمس'
+                      : 'Yesterday'
+                    : date.toLocaleDateString();
+
+                const hourRaw = date.getHours();
+                const ampm = isRtl ? (hourRaw >= 12 ? 'م' : 'ص') : hourRaw >= 12 ? 'PM' : 'AM';
+                const displayHour = (hourRaw % 12 || 12).toLocaleString(undefined, {
+                  useGrouping: false,
+                });
+                const displayMinute = date
+                  .getMinutes()
+                  .toLocaleString(undefined, { minimumIntegerDigits: 2, useGrouping: false });
+                const formattedTime = `${displayHour}:${displayMinute} ${ampm}`;
+
+                content = (
+                  <div className={`flex flex-col ${meta.itemsAlignClass}`}>
+                    <span className='font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight'>
+                      {isToday ? formattedTime : dateLabel}
+                    </span>
+                    {!isToday && (
+                      <span className='text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap -mt-0.5 tracking-tight'>
+                        {formattedTime}
+                      </span>
+                    )}
+                  </div>
+                );
+              }
+            }
+
+            if (!content) {
+              content = flexRender(cell.column.columnDef.cell, cell.getContext());
+            }
+
+            if (isPending && rowsCount > 0) {
+              const isActionColumn =
+                cell.column.id === 'actions' ||
+                cell.column.id === 'status' ||
+                cell.column.id.includes('select');
+              if (!isActionColumn) {
+                content = (
+                  <div className='animate-pulse'>
+                    <div className='h-3 w-3/4 bg-zinc-200/60 dark:bg-zinc-800/40 rounded' />
+                    <div className='h-2 w-1/2 bg-zinc-100/80 dark:bg-zinc-800/20 rounded mt-1' />
+                  </div>
+                );
+              }
+            }
+
+            return (
+              <MemoizedCell
+                key={cell.id}
+                cell={cell}
+                dense={dense}
+                meta={meta}
+                cellDir={cellDir}
+                content={content}
+              />
             );
-          }
-        }
-
-        if (!content) {
-          content = flexRender(cell.column.columnDef.cell, cell.getContext());
-        }
-
-        if (isPending && rowsCount > 0) {
-          const isActionColumn = cell.column.id === 'actions' || cell.column.id === 'status' || cell.column.id.includes('select');
-          if (!isActionColumn) {
-            content = (
-              <div className="animate-pulse">
-                <div className="h-3 w-3/4 bg-zinc-200/60 dark:bg-zinc-800/40 rounded" />
-                <div className="h-2 w-1/2 bg-zinc-100/80 dark:bg-zinc-800/20 rounded mt-1" />
-              </div>
-            );
-          }
-        }
-
-        return (
-          <MemoizedCell
-            key={cell.id}
-            cell={cell}
-            dense={dense}
-            meta={meta}
-            cellDir={cellDir}
-            content={content}
-          />
-        );
-      })}
-    </tr>
-  );
-}));
+          })}
+        </tr>
+      );
+    }
+  )
+);
 
 export function TanStackTable<TData extends { id: string | number }, TValue>({
   data,
@@ -471,8 +522,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   // Build default visibility from defaultHiddenColumns
   const defaultVisibility = React.useMemo(() => {
     const visibility: VisibilityState = {};
-    defaultHiddenColumns.forEach(id => { visibility[id] = false; });
-    columns.forEach(col => {
+    defaultHiddenColumns.forEach((id) => {
+      visibility[id] = false;
+    });
+    columns.forEach((col) => {
       const id = (col as any).id || (col as any).accessorKey;
       if (id && (col as any).meta?.hideFromSettings) visibility[id] = false;
     });
@@ -490,7 +543,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   const initialFiltersJson = JSON.stringify(initialFilters);
   React.useEffect(() => {
     const propFilters = Object.entries(initialFilters).map(([id, value]) => ({ id, value }));
-    setColumnFilters(prev => {
+    setColumnFilters((prev) => {
       const prevStr = JSON.stringify(prev);
       const nextStr = JSON.stringify(propFilters);
       return prevStr === nextStr ? prev : propFilters;
@@ -503,20 +556,26 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
   const globalFilter =
     externalGlobalFilter !== undefined ? externalGlobalFilter : internalGlobalFilter;
-    
+
   const globalFilterRef = useRef(globalFilter);
   globalFilterRef.current = globalFilter;
 
-  const setGlobalFilter = React.useCallback((updaterOrValue: string | ((prev: string) => string)) => {
-    const newValue = typeof updaterOrValue === 'function' ? updaterOrValue(globalFilterRef.current) : updaterOrValue;
-    
-    if (onSearchChange) {
-      onSearchChange(newValue);
-    }
-    if (externalGlobalFilter === undefined) {
-      setInternalGlobalFilter(newValue);
-    }
-  }, [onSearchChange, externalGlobalFilter]);
+  const setGlobalFilter = React.useCallback(
+    (updaterOrValue: string | ((prev: string) => string)) => {
+      const newValue =
+        typeof updaterOrValue === 'function'
+          ? updaterOrValue(globalFilterRef.current)
+          : updaterOrValue;
+
+      if (onSearchChange) {
+        onSearchChange(newValue);
+      }
+      if (externalGlobalFilter === undefined) {
+        setInternalGlobalFilter(newValue);
+      }
+    },
+    [onSearchChange, externalGlobalFilter]
+  );
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     storedSettings?.columnVisibility || defaultVisibility
@@ -558,7 +617,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
   const [pagination, setPagination] = React.useState({
     pageIndex: storedSettings?.pagination?.pageIndex ?? 0,
-    pageSize: storedSettings?.pagination?.pageSize === 'auto' ? 20 : (storedSettings?.pagination?.pageSize ?? (pageSize === 'auto' ? 20 : pageSize)),
+    pageSize:
+      storedSettings?.pagination?.pageSize === 'auto'
+        ? 20
+        : (storedSettings?.pagination?.pageSize ?? (pageSize === 'auto' ? 20 : pageSize)),
   });
 
   const persistSettings = React.useCallback(
@@ -613,13 +675,13 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   // between the new memoized defaults and the current state.
   React.useEffect(() => {
     setColumnAlignment((current) => {
-      // If we already have alignments, and they are essentially the same as 
+      // If we already have alignments, and they are essentially the same as
       // the memoized ones (which include latest stored settings), we don't need to force update
       // this helps avoid jitter during re-renders.
       const hasChanged = Object.keys(memoizedInitialAlignment).some(
         (key) => current[key] !== memoizedInitialAlignment[key]
       );
-      
+
       return hasChanged ? memoizedInitialAlignment : current;
     });
   }, [memoizedInitialAlignment]);
@@ -653,13 +715,13 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   const [newRowIds, setNewRowIds] = React.useState<Set<string | number>>(new Set());
   const prevDataRef = React.useRef<any[]>(data);
   const isFirstRun = React.useRef(true);
-  
+
   // Stable refs for callbacks to prevent MemoizedRow re-renders
   const onRowClickRef = useRef(onRowClick);
   onRowClickRef.current = onRowClick;
   const onRowContextMenuRef = useRef(onRowContextMenu);
   onRowContextMenuRef.current = onRowContextMenu;
-  
+
   const handleRowClick = React.useCallback((rowData: TData) => {
     onRowClickRef.current?.(rowData);
   }, []);
@@ -703,9 +765,9 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
       const addedIds = new Set<string | number>();
       const changedIds = new Set<string | number>();
-      
-      const oldDataMap = new Map(prevDataRef.current.map(r => [r.id, r]));
-      
+
+      const oldDataMap = new Map(prevDataRef.current.map((r) => [r.id, r]));
+
       for (const row of data) {
         const oldRow = oldDataMap.get(row.id);
         if (!oldRow) {
@@ -716,11 +778,11 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       }
 
       if (addedIds.size > 0) {
-        setNewRowIds(prev => new Set([...prev, ...addedIds]));
+        setNewRowIds((prev) => new Set([...prev, ...addedIds]));
         setTimeout(() => {
-          setNewRowIds(prev => {
+          setNewRowIds((prev) => {
             const next = new Set(prev);
-            addedIds.forEach(id => next.delete(id));
+            addedIds.forEach((id) => next.delete(id));
             return next;
           });
         }, 1500); // Shorter duration for snappier feel
@@ -782,25 +844,27 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   }, [columnFilters]);
 
   // Helper to update our unifying "SearchInput" state
-  const handleFilterUpdate = React.useCallback((groupId: string, newValues: any[]) => {
-    // Notify parent immediately if controlled
-    if (onFilterChange) {
-      const nextFilters = { ...activeFiltersRecord };
-      if (newValues.length === 0) {
-        delete nextFilters[groupId];
-      } else {
-        nextFilters[groupId] = newValues;
+  const handleFilterUpdate = React.useCallback(
+    (groupId: string, newValues: any[]) => {
+      // Notify parent immediately if controlled
+      if (onFilterChange) {
+        const nextFilters = { ...activeFiltersRecord };
+        if (newValues.length === 0) {
+          delete nextFilters[groupId];
+        } else {
+          nextFilters[groupId] = newValues;
+        }
+        onFilterChange(nextFilters);
       }
-      onFilterChange(nextFilters);
-    }
 
-    // Always update internal state to keep useReactTable sync
-    setColumnFilters((prev) => {
-      const other = prev.filter((f) => f.id !== groupId);
-      return newValues.length === 0 ? other : [...other, { id: groupId, value: newValues }];
-    });
-  }, [activeFiltersRecord, onFilterChange]);
-
+      // Always update internal state to keep useReactTable sync
+      setColumnFilters((prev) => {
+        const other = prev.filter((f) => f.id !== groupId);
+        return newValues.length === 0 ? other : [...other, { id: groupId, value: newValues }];
+      });
+    },
+    [activeFiltersRecord, onFilterChange]
+  );
 
   /* State specific for Context Menu tracking to enable live updates */
   const menuPosRef = React.useRef<{ x: number; y: number; columnId?: string } | null>(null);
@@ -877,8 +941,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
             {table
               .getAllLeafColumns()
               .filter(
-                (col) =>
-                  col.id !== 'actions' && !(col.columnDef.meta as any)?.hideFromSettings
+                (col) => col.id !== 'actions' && !(col.columnDef.meta as any)?.hideFromSettings
               )
               .map((col) => {
                 const headerValue =
@@ -915,7 +978,12 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
               {/* Alignment Controls Container */}
               <div className='px-3 py-3'>
                 <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase mb-2.5 flex items-center gap-2'>
-                  <span className='material-symbols-rounded opacity-60' style={{ fontSize: 'var(--icon-sm)' }}>format_align_left</span>
+                  <span
+                    className='material-symbols-rounded opacity-60'
+                    style={{ fontSize: 'var(--icon-sm)' }}
+                  >
+                    format_align_left
+                  </span>
                   {currentT?.alignment || 'Alignment'}
                 </div>
                 {/* Unified Alignment */}
@@ -948,25 +1016,28 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     [table, showMenu, persistSettings, language]
   );
 
-  const onContextMenuOpen = React.useCallback((x: number, y: number, columnId?: string) => {
-    menuPosRef.current = { x, y, columnId };
-    showMenu(x, y, getMenuContent(columnId));
-  }, [showMenu, getMenuContent]);
+  const onContextMenuOpen = React.useCallback(
+    (x: number, y: number, columnId?: string) => {
+      menuPosRef.current = { x, y, columnId };
+      showMenu(x, y, getMenuContent(columnId));
+    },
+    [showMenu, getMenuContent]
+  );
 
   // --- Fix: Auto Page Size Calculation (Accurate) ---
   React.useEffect(() => {
     if (pageSize === 'auto' && tableContainerRef.current && !isShowAll) {
       const calculatePageSize = () => {
         if (!tableContainerRef.current) return;
-        
+
         const containerHeight = tableContainerRef.current.clientHeight;
         const headHeight = headerRef.current?.offsetHeight || 45;
         const rowHeight = firstRowRef.current?.offsetHeight || (dense ? 36 : 48);
-        
+
         const availableHeight = containerHeight - headHeight;
         // Use a more realistic minimum to avoid 1-row tables on glitchy initial renders
         const calculated = Math.max(10, Math.floor(availableHeight / rowHeight));
-        
+
         // Remove pagination.pageSize dependency to prevent loops
         if (calculated > 0) {
           table.setPageSize(calculated);
@@ -979,18 +1050,21 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       const observer = new ResizeObserver(() => {
         calculatePageSize();
       });
-      
+
       observer.observe(tableContainerRef.current);
       return () => observer.disconnect();
     }
   }, [pageSize, dense, isShowAll, table]);
 
-  const handleColumnContextMenu = React.useCallback((e: React.MouseEvent, columnId?: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onContextMenuOpen(e.clientX, e.clientY, columnId);
-  }, [onContextMenuOpen]);
-  
+  const handleColumnContextMenu = React.useCallback(
+    (e: React.MouseEvent, columnId?: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onContextMenuOpen(e.clientX, e.clientY, columnId);
+    },
+    [onContextMenuOpen]
+  );
+
   const { rows } = table.getRowModel();
 
   // --- Fix 5: Pre-compute Date Constants ---
@@ -1010,7 +1084,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   // --- Unified Column Metadata ---
   const columnMetaMap = React.useMemo(() => {
     const map = new Map<string, any>();
-    
+
     // Use the internal table leaf columns for guaranteed sync with state
     const leafColumns = table.getAllLeafColumns();
 
@@ -1019,15 +1093,18 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       const colId = id.toLowerCase();
       const meta = column.columnDef.meta as any;
       const header = String(column.columnDef.header || '').toLowerCase();
-      
-      const align = (meta?.disableAlignment ? null : columnAlignment[id]) || getSmartAlignment(id, meta);
-      
+
+      const align =
+        (meta?.disableAlignment ? null : columnAlignment[id]) || getSmartAlignment(id, meta);
+
       const isId = meta?.isId ?? (colId.includes('id') || colId.includes('code'));
-      const isDate = (['date', 'time', 'timestamp', 'visit'].some(k => colId.includes(k)) || 
-                     (colId.includes('at') && !colId.includes('csat'))) && !colId.includes('expiry');
+      const isDate =
+        (['date', 'time', 'timestamp', 'visit'].some((k) => colId.includes(k)) ||
+          (colId.includes('at') && !colId.includes('csat'))) &&
+        !colId.includes('expiry');
 
       const isTechnical = isTechnicalColumn(colId, header, meta);
-      
+
       map.set(id, {
         align,
         isId,
@@ -1057,9 +1134,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   const virtualItems = enableVirtualization ? rowVirtualizer.getVirtualItems() : null;
 
   const paddingTop = virtualItems && virtualItems.length > 0 ? virtualItems[0].start : 0;
-  const paddingBottom = virtualItems && virtualItems.length > 0
-    ? rowVirtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end
-    : 0;
+  const paddingBottom =
+    virtualItems && virtualItems.length > 0
+      ? rowVirtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end
+      : 0;
 
   const itemsToRender = enableVirtualization ? virtualItems! : rows;
 
@@ -1067,14 +1145,14 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     <div className='flex flex-col h-full w-full'>
       {/* Header Controls */}
       {enableTopToolbar && (
-        <div className={`flex flex-wrap items-center gap-4 justify-between ${enableSearch || leftCustomControls || rightCustomControls ? 'mb-4' : ''}`}>
+        <div
+          className={`flex flex-wrap items-center gap-4 justify-between ${enableSearch || leftCustomControls || rightCustomControls ? 'mb-4' : ''}`}
+        >
           <div className='flex items-center gap-3 flex-1 min-w-0'>
             {leftCustomControls && (
-              <div className='flex items-center gap-2'>
-                {leftCustomControls}
-              </div>
+              <div className='flex items-center gap-2'>{leftCustomControls}</div>
             )}
-            
+
             {enableSearch && (
               <div className='w-full max-w-xl'>
                 <SearchInput
@@ -1095,9 +1173,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
           </div>
 
           {rightCustomControls && (
-            <div className='flex items-center gap-2'>
-              {rightCustomControls}
-            </div>
+            <div className='flex items-center gap-2'>{rightCustomControls}</div>
           )}
         </div>
       )}
@@ -1105,9 +1181,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       {/* Unified Card Wrapper */}
       <div
         className={`flex flex-col flex-1 min-h-0 ${
-          lite
-            ? 'bg-transparent'
-            : `${CARD_BASE} rounded-2xl overflow-hidden`
+          lite ? 'bg-transparent' : `${CARD_BASE} rounded-2xl overflow-hidden`
         }`}
       >
         {/* Table Scroll Area */}
@@ -1118,7 +1192,12 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
               onOpen={(x, y) => onContextMenuOpen(x, y)}
             >
               <div className='h-full min-h-[400px] flex flex-col items-center justify-center text-gray-400 dark:text-gray-600 gap-3 select-none'>
-                <span className='material-symbols-rounded opacity-40' style={{ fontSize: 'var(--icon-5xl)' }}>view_column</span>
+                <span
+                  className='material-symbols-rounded opacity-40'
+                  style={{ fontSize: 'var(--icon-5xl)' }}
+                >
+                  view_column
+                </span>
                 <div className='text-center'>
                   <p className='text-lg font-medium mb-1'>{t.global.table.noColumnsVisible}</p>
                   <p className='text-sm opacity-70'>{t.global.table.manageColumnsHint}</p>
@@ -1132,7 +1211,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
                       const meta = columnMetaMap.get(header.column.id);
-                      const headerAlign = header.column.columnDef.meta?.headerAlign;
+                      let headerAlign = header.column.columnDef.meta?.headerAlign;
+                      if (!headerAlign && header.column.id.toLowerCase() === 'name') {
+                        headerAlign = isRtl ? 'end' : 'start';
+                      }
                       const align = headerAlign || meta?.align || 'start';
                       const justifyClass = getHeaderJustifyClass(align);
                       const textAlignClass = getTextAlignClass(align);
@@ -1185,12 +1267,18 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                                   >
                                     {{
                                       asc: (
-                                        <span className='material-symbols-rounded leading-none text-current opacity-70' style={{ fontSize: 'var(--icon-lg)' }}>
+                                        <span
+                                          className='material-symbols-rounded leading-none text-current opacity-70'
+                                          style={{ fontSize: 'var(--icon-lg)' }}
+                                        >
                                           arrow_drop_up
                                         </span>
                                       ),
                                       desc: (
-                                        <span className='material-symbols-rounded leading-none text-current opacity-70' style={{ fontSize: 'var(--icon-lg)' }}>
+                                        <span
+                                          className='material-symbols-rounded leading-none text-current opacity-70'
+                                          style={{ fontSize: 'var(--icon-lg)' }}
+                                        >
                                           arrow_drop_down
                                         </span>
                                       ),
@@ -1220,28 +1308,36 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
               </thead>
               {/* Enforce var(--icon-sm) on all material-symbols-rounded icons inside table cells using arbitrary variants, except action columns */}
               <tbody className='[&_td:not(.action-col):not(.empty-state)_.material-symbols-rounded]:!text-[length:var(--icon-sm)] [&_td:not(.action-col):not(.empty-state)_.material-symbols-rounded]:!text-sm'>
-                {((isLoading || localLoading) && rows.length === 0) ? (
+                {(isLoading || localLoading) && rows.length === 0 ? (
                   <>
-                    {[...Array(Math.max(5, typeof pageSize === 'number' ? pageSize : 10))].map((_, i) => (
-                      <tr key={`skeleton-row-${i}`} className='animate-pulse border-b border-(--border-divider)'>
-                        {visibleColumns.map((col) => (
-                          <td key={`skeleton-cell-${col.id}-${i}`} className={`${dense ? 'py-2' : 'py-4'} px-4`}>
-                            <div className="flex flex-col gap-2 [direction:ltr] items-start">
-                              <div className='h-3 bg-zinc-200/60 dark:bg-zinc-800/40 rounded-md w-24' />
-                              {/* Sub-line for some columns to look more natural */}
-                              {col.id.toLowerCase().includes('name') && (
-                                <div className='h-2 bg-zinc-100/80 dark:bg-zinc-800/20 rounded-md w-16' />
-                              )}
-                            </div>
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
+                    {[...Array(Math.max(5, typeof pageSize === 'number' ? pageSize : 10))].map(
+                      (_, i) => (
+                        <tr
+                          key={`skeleton-row-${i}`}
+                          className='animate-pulse border-b border-(--border-divider)'
+                        >
+                          {visibleColumns.map((col) => (
+                            <td
+                              key={`skeleton-cell-${col.id}-${i}`}
+                              className={`${dense ? 'py-2' : 'py-4'} px-4`}
+                            >
+                              <div className='flex flex-col gap-2 [direction:ltr] items-start'>
+                                <div className='h-3 bg-zinc-200/60 dark:bg-zinc-800/40 rounded-md w-24' />
+                                {/* Sub-line for some columns to look more natural */}
+                                {col.id.toLowerCase().includes('name') && (
+                                  <div className='h-2 bg-zinc-100/80 dark:bg-zinc-800/20 rounded-md w-16' />
+                                )}
+                              </div>
+                            </td>
+                          ))}
+                        </tr>
+                      )
+                    )}
                   </>
                 ) : rows.length > 0 ? (
                   <>
                     {enableVirtualization && paddingTop > 0 && (
-                      <tr className="padding-row">
+                      <tr className='padding-row'>
                         <td style={{ height: paddingTop }} colSpan={visibleColumnsCount} />
                       </tr>
                     )}
@@ -1249,7 +1345,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                       const isVirtual = enableVirtualization;
                       const row = isVirtual ? rows[(item as any).index] : (item as any);
                       const rowIndex = isVirtual ? (item as any).index : index;
-                      
+
                       return (
                         <MemoizedRow
                           key={row.id}
@@ -1281,7 +1377,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                       );
                     })}
                     {enableVirtualization && paddingBottom > 0 && (
-                      <tr className="padding-row">
+                      <tr className='padding-row'>
                         <td style={{ height: paddingBottom }} colSpan={visibleColumnsCount} />
                       </tr>
                     )}
@@ -1296,7 +1392,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                         customEmptyState
                       ) : (
                         <div className='flex flex-col items-center justify-center'>
-                          <span className='material-symbols-rounded mb-4 opacity-20' style={{ fontSize: 'var(--icon-5xl)' }}>
+                          <span
+                            className='material-symbols-rounded mb-4 opacity-20'
+                            style={{ fontSize: 'var(--icon-5xl)' }}
+                          >
                             inbox
                           </span>
                           <p>{emptyMessage}</p>
@@ -1317,20 +1416,30 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
             className={`flex items-center justify-between h-10 border-t shrink-0 select-none bg-(--bg-card) border-(--border-divider)`}
           >
             {/* Left Zone: Data Summary (Fixed width to prevent jitter) */}
-            <div dir='auto' className={`w-56 flex items-center h-full ${isRtl ? 'justify-end' : ''}`}>
+            <div
+              dir='auto'
+              className={`w-56 flex items-center h-full ${isRtl ? 'justify-end' : ''}`}
+            >
               <div className='flex items-center gap-1 px-2.5 h-full text-[11px] uppercase font-bold tracking-wide text-(--text-secondary) tabular-nums'>
                 {isShowAll ? (
-                  <span className='whitespace-nowrap font-bold'>{t.global?.table?.showingAll || 'Showing All Items'}</span>
+                  <span className='whitespace-nowrap font-bold'>
+                    {t.global?.table?.showingAll || 'Showing All Items'}
+                  </span>
                 ) : (
                   <div className='flex items-center gap-1'>
                     <span className='shrink-0'>{t.global?.table?.showing || 'Showing'}</span>
                     <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
-                      {(table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1).toLocaleString()}
+                      {(
+                        table.getState().pagination.pageIndex *
+                          table.getState().pagination.pageSize +
+                        1
+                      ).toLocaleString()}
                     </span>
                     <span className='text-(--text-primary) px-0.5'>-</span>
                     <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
                       {Math.min(
-                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                        (table.getState().pagination.pageIndex + 1) *
+                          table.getState().pagination.pageSize,
                         table.getFilteredRowModel().rows.length
                       ).toLocaleString()}
                     </span>
@@ -1353,7 +1462,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                     className='px-2.5 h-full flex items-center justify-center transition-colors text-(--text-secondary) hover:enabled:text-(--text-primary) hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 disabled:opacity-10'
                     title='First Page'
                   >
-                    <span className='material-symbols-rounded leading-none' style={{ fontSize: '18px' }}>
+                    <span
+                      className='material-symbols-rounded leading-none'
+                      style={{ fontSize: '18px' }}
+                    >
                       first_page
                     </span>
                   </button>
@@ -1363,7 +1475,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                     className='px-2.5 h-full flex items-center justify-center transition-colors text-(--text-secondary) hover:enabled:text-(--text-primary) hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 disabled:opacity-10'
                     title='Previous Page'
                   >
-                    <span className='material-symbols-rounded leading-none' style={{ fontSize: '18px' }}>
+                    <span
+                      className='material-symbols-rounded leading-none'
+                      style={{ fontSize: '18px' }}
+                    >
                       chevron_left
                     </span>
                   </button>
@@ -1433,7 +1548,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                     className='px-2.5 h-full flex items-center justify-center transition-colors text-(--text-secondary) hover:enabled:text-(--text-primary) hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 disabled:opacity-10'
                     title='Next Page'
                   >
-                    <span className='material-symbols-rounded leading-none' style={{ fontSize: '18px' }}>
+                    <span
+                      className='material-symbols-rounded leading-none'
+                      style={{ fontSize: '18px' }}
+                    >
                       chevron_right
                     </span>
                   </button>
@@ -1443,7 +1561,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                     className='px-2.5 h-full flex items-center justify-center transition-colors text-(--text-secondary) hover:enabled:text-(--text-primary) hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 disabled:opacity-10'
                     title='Last Page'
                   >
-                    <span className='material-symbols-rounded leading-none' style={{ fontSize: '18px' }}>
+                    <span
+                      className='material-symbols-rounded leading-none'
+                      style={{ fontSize: '18px' }}
+                    >
                       last_page
                     </span>
                   </button>
