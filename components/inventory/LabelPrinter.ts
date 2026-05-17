@@ -465,9 +465,9 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
       width: 36,
       barcodeFormat: 'code128',
       hitboxOffsetX: 0.0,
-      hitboxOffsetY: 0.0,
+      hitboxOffsetY: -0.5,
       hitboxWidth: 36,
-      hitboxHeight: 8,
+      hitboxHeight: 5,
     },
     {
       id: 'barcodeNumber',

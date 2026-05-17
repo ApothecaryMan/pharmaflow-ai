@@ -132,7 +132,7 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
         : 10;
     const defaultHeight =
       el.type === 'image' || el.type === 'qrcode' || el.type === 'barcode'
-        ? el.height || (el.type === 'barcode' ? 8 : 4)
+        ? el.height || (el.type === 'barcode' ? (el.fontSize ? el.fontSize * 0.17 : 5.5) : 4)
         : 4;
 
     // Base style - simple clickable area
