@@ -375,7 +375,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         const status = (drug as any).status || 'active';
         if (status === 'active') {
           if (drug.totalStock === 0) acc.criticalRestock += 1;
-          else if (drug.totalStock <= (drug.minStock || 5)) acc.nearReorder += 1;
+          else if (drug.totalStock <= (drug.minStock || 5) * (drug.unitsPerPack || 1)) acc.nearReorder += 1;
         } else if (status === 'discontinued') {
           acc.discontinuedCount += 1;
         }

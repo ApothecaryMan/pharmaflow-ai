@@ -163,7 +163,8 @@ export const POSDrugOverview: React.FC<POSDrugOverviewProps> = ({
                 }, {})
               )
               .sort(([dateA], [dateB]) => parseExpiryEndOfMonth(dateA).getTime() - parseExpiryEndOfMonth(dateB).getTime())
-              .map(([expiryDate, totalStock], idx) => {
+              .map(([expiryDate, rawStock], idx) => {
+                const totalStock = rawStock as number;
                 return (
                   <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/10 transition-colors">
                     <td className="px-4 py-2">
@@ -172,7 +173,7 @@ export const POSDrugOverview: React.FC<POSDrugOverviewProps> = ({
                       </span>
                     </td>
                     <td className="px-4 py-2">
-                      <span className={`font-black tabular-nums ${totalStock < (viewingDrug.minStock || 5) ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                      <span className={`font-black tabular-nums ${totalStock < (viewingDrug.minStock || 5) * (viewingDrug.unitsPerPack || 1) ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
                         {formatDrugQty(totalStock, viewingDrug.unitsPerPack || 1, currentLang)}
                       </span>
                     </td>

@@ -180,7 +180,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                 const units = d.stock % (d.unitsPerPack || 1);
                 return (
                   <div className={`tabular-nums border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-0.5 rounded-lg shrink-0 min-w-[36px] text-center font-bold ${
-                    d.stock < (d.minStock || 5) ? 'text-rose-600 dark:text-rose-400' : 'text-gray-700 dark:text-gray-300'
+                    d.stock < (d.minStock || 5) * (d.unitsPerPack || 1) ? 'text-rose-600 dark:text-rose-400' : 'text-gray-700 dark:text-gray-300'
                   }`}>
                     {packs}
                     {units > 0 && <span className='text-[8px] opacity-50 ml-0.5 text-blue-500'>{units}u</span>}

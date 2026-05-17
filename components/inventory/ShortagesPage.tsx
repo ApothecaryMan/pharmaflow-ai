@@ -17,6 +17,7 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
+import { money } from '../../utils/money';
 
 interface ShortagesPageProps {
   t: Record<string, string>; // Mapped to t.shortages
@@ -119,6 +120,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
       // - PREDICTIVE_SHORTAGE (stock > 0, stock_days < 14)
       // - OUT_OF_STOCK_DEFAULT (stock === 0, velocity === 0)
       let alertType: EnrichedShortageItem['alertType'] = 'NORMAL';
+      const unitsPerPack = drug.unitsPerPack || 1;
 
       if (stock === 0) {
         if (avgDailySales > 0) {
@@ -126,7 +128,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
         } else {
           alertType = 'OUT_OF_STOCK_DEFAULT';
         }
-      } else if (minStock > 0 && stock <= minStock) {
+      } else if (minStock > 0 && stock <= minStock * unitsPerPack) {
         alertType = 'MANUAL_MINIMUM_REACHED';
       } else if (stockDays !== null && stockDays < 14) {
         alertType = 'PREDICTIVE_SHORTAGE';
@@ -134,12 +136,20 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
 
       // Calculate estimated weekly lost sales if out of stock
       // weekly_lost_sales = avgDailySales * 7 * costPrice
-      const weeklyLostSales = stock === 0 ? avgDailySales * 7 * (drug.costPrice ?? 0) : 0;
+      const weeklyLostPacks = (avgDailySales / unitsPerPack) * 7;
+      const weeklyLostSales = stock === 0
+        ? money.multiply(drug.costPrice ?? 0, Math.round(weeklyLostPacks * 10000), 4)
+        : 0;
 
       // Suggested qty: use the procurement one if available, otherwise safety stock calculation
+      const safetyStockPacks = avgDailySales > 0
+        ? Math.max(0, Math.ceil((14 * avgDailySales * 1.5 - stock) / unitsPerPack))
+        : 0;
+      const minStockReplenishPacks = (stock <= minStock * unitsPerPack && minStock > 0)
+        ? Math.max(0, minStock - Math.floor(stock / unitsPerPack))
+        : 0;
       const suggestedQty =
-        pItem?.suggested_order_qty ??
-        (avgDailySales > 0 ? Math.max(0, Math.ceil(14 * avgDailySales * 1.5 - stock)) : 0);
+        pItem?.suggested_order_qty ?? Math.max(safetyStockPacks, minStockReplenishPacks);
 
       return {
         id: drug.id,
@@ -218,7 +228,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
     shortagesData.forEach((item) => {
       if (item.alertType === 'OUT_OF_STOCK_SOLD' || item.alertType === 'OUT_OF_STOCK_DEFAULT') {
         outOfStockCount++;
-        totalLostWeeklySales += item.weeklyLostSales;
+        totalLostWeeklySales = money.add(totalLostWeeklySales, item.weeklyLostSales);
       } else if (item.alertType === 'PREDICTIVE_SHORTAGE') {
         predictiveCount++;
       } else if (item.alertType === 'MANUAL_MINIMUM_REACHED') {
@@ -686,7 +696,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
         accessorKey: 'suggestedQty',
         cell: ({ row }) => {
           const item = row.original;
-          const suggestedPacks = Math.ceil(item.suggestedQty / (item.drug.unitsPerPack || 1));
+          const suggestedPacks = item.suggestedQty;
           return (
             <span
               className='inline-flex px-2 py-0.5 rounded-md bg-primary-50 dark:bg-primary-950/10 border border-primary-100 dark:border-primary-900/30 text-primary-700 dark:text-primary-400 text-sm font-black tabular-nums'

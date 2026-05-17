@@ -308,7 +308,15 @@ export const intelligenceService = {
 
       // Suggested order quantity
       const targetStock = REORDER_POINT_DAYS * avgDailySales * 1.5; // 1.5x buffer
-      const suggestedQty = Math.max(0, Math.ceil(targetStock - currentStock));
+      const minStock = drug.minStock ?? 0;
+      const unitsPerPack = drug.unitsPerPack || 1;
+      const safetyStockPacks = avgDailySales > 0
+        ? Math.max(0, Math.ceil((targetStock - currentStock) / unitsPerPack))
+        : 0;
+      const minStockReplenishPacks = (currentStock <= minStock * unitsPerPack && minStock > 0)
+        ? Math.max(0, minStock - Math.floor(currentStock / unitsPerPack))
+        : 0;
+      const suggestedQty = Math.max(safetyStockPacks, minStockReplenishPacks);
 
       // Confidence score based on data quality
       const hasRecentSales = velocity.last7 > 0;

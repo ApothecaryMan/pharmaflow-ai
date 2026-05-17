@@ -1,6 +1,7 @@
--- High-performance, RLS-compliant Database RPC for Shortages and Predictive Alerts
+-- Fix shortages and predictive alerts RPC unit/pack mismatch
 -- Name: get_shortages(UUID)
--- Computes sales velocity, stock days remaining, and categorizes shortages efficiently.
+-- Redefines the function to compare stock (units) with min_stock * units_per_pack (units)
+-- and compute suggested order quantities in full packs accurately.
 
 CREATE OR REPLACE FUNCTION public.get_shortages(p_branch_id UUID)
 RETURNS TABLE (
@@ -96,21 +97,28 @@ BEGIN
         WHEN abc.avg_daily_sales > 0 THEN ROUND(d.stock::numeric / abc.avg_daily_sales, 1)
         ELSE NULL
       END AS c_stock_days,
-      CASE 
-        WHEN abc.avg_daily_sales > 0 THEN
-          CEIL(GREATEST(0, (14.0 * abc.avg_daily_sales * 1.5) - d.stock::numeric) / COALESCE(d.units_per_pack, 1))::integer
-        ELSE 
-          CASE 
-            WHEN d.stock <= COALESCE(d.min_stock, 0) THEN 
-              CEIL(COALESCE(d.min_stock, 10)::numeric / COALESCE(d.units_per_pack, 1))::integer
-            ELSE 0
-          END
-      END AS c_suggested_order_qty,
+      GREATEST(
+        0,
+        -- 1. Safety stock packs (based on velocity)
+        CASE 
+          WHEN abc.avg_daily_sales > 0 THEN
+            CEIL(GREATEST(0, (14.0 * abc.avg_daily_sales * 1.5) - d.stock::numeric) / COALESCE(d.units_per_pack, 1))::integer
+          ELSE 0
+        END,
+        -- 2. Min stock replenishment packs (based on manual minimum)
+        CASE 
+          WHEN COALESCE(d.min_stock, 0) > 0 AND d.stock <= COALESCE(d.min_stock, 0) * COALESCE(d.units_per_pack, 1) THEN
+            GREATEST(0, COALESCE(d.min_stock, 0) - FLOOR(d.stock::numeric / COALESCE(d.units_per_pack, 1))::integer)
+          WHEN d.stock <= 0 THEN
+            COALESCE(d.min_stock, 10)
+          ELSE 0
+        END
+      ) AS c_suggested_order_qty,
       abc.abc_class AS c_abc_class,
       CASE
         WHEN d.stock <= 0 AND abc.avg_daily_sales > 0 THEN 'OUT_OF_STOCK_SOLD'
-        WHEN d.stock <= COALESCE(d.min_stock, 0) AND d.stock > 0 THEN 'MANUAL_MINIMUM_REACHED'
-        WHEN d.stock > COALESCE(d.min_stock, 0) AND d.stock > 0 AND abc.avg_daily_sales > 0 AND (d.stock::numeric / abc.avg_daily_sales) < 14.0 THEN 'PREDICTIVE_SHORTAGE'
+        WHEN d.stock <= COALESCE(d.min_stock, 0) * COALESCE(d.units_per_pack, 1) AND d.stock > 0 THEN 'MANUAL_MINIMUM_REACHED'
+        WHEN d.stock > COALESCE(d.min_stock, 0) * COALESCE(d.units_per_pack, 1) AND d.stock > 0 AND abc.avg_daily_sales > 0 AND (d.stock::numeric / abc.avg_daily_sales) < 14.0 THEN 'PREDICTIVE_SHORTAGE'
         WHEN d.stock <= 0 AND abc.avg_daily_sales = 0 THEN 'OUT_OF_STOCK_DEFAULT'
         ELSE 'NORMAL'
       END AS c_alert_type

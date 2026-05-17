@@ -294,10 +294,10 @@ export const POSDrugAnalytics: React.FC<POSDrugAnalyticsProps> = ({ viewingDrug,
             />
             <InfoRow 
               label={currentLang === 'ar' ? 'حالة الطلب' : 'Restock Recommendation'}
-              value={viewingDrug.stock <= (viewingDrug.minStock || 0) 
+              value={viewingDrug.stock <= (viewingDrug.minStock || 0) * (viewingDrug.unitsPerPack || 1)
                 ? (currentLang === 'ar' ? 'يجب الطلب فوراً' : 'Order Now') 
                 : (currentLang === 'ar' ? 'المخزون كافٍ' : 'Stock Sufficient')}
-              valueClass={viewingDrug.stock <= (viewingDrug.minStock || 0) ? 'text-red-500' : 'text-emerald-500'}
+              valueClass={viewingDrug.stock <= (viewingDrug.minStock || 0) * (viewingDrug.unitsPerPack || 1) ? 'text-red-500' : 'text-emerald-500'}
               isLast
             />
           </div>
