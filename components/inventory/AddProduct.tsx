@@ -18,7 +18,7 @@ import * as stockOps from '../../utils/stockOperations';
 import { pricing } from '../../utils/money';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { validationService } from '../../services/validation/validationService';
-import { PageHeader } from '../common/PageHeader';
+
 
 import { permissionsService } from '../../services/auth/permissionsService';
 
@@ -249,23 +249,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
 
   return (
     <div className="h-full flex flex-col gap-6 animate-fade-in pb-10 overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
-      <PageHeader
-        mb="mb-0"
-        centerContent={
-          <SegmentedControl
-            options={[
-              { label: t.inventory?.tabs?.inventory || 'المخزون', value: 'inventory' },
-              { label: t.inventory?.tabs?.addProduct || 'إضافة منتج', value: 'add-product' },
-              { label: t.inventory?.tabs?.stockMovement || 'حركة المخزون', value: 'stock-movement' },
-              { label: t.inventory?.tabs?.shortages || 'النواقص', value: 'shortages' },
-            ]}
-            value='add-product'
-            onChange={(val) => onViewChange?.(String(val))}
-            size="md"
-            shape="pill"
-          />
-        }
-      />
+
 
       {/* Progress Indicator */}
       {false && (

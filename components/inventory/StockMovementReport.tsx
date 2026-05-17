@@ -15,7 +15,7 @@ import { SearchInput } from '../common/SearchInput';
 import { type FilterConfig } from '../common/FilterPill';
 import { useStockMovementReport } from './useStockMovementReport';
 import { formatStockAmount } from '../../utils/inventory';
-import { PageHeader } from '../common/PageHeader';
+import { useInventoryHeader } from './InventoryHeaderContext';
 
 interface StockMovementReportProps {
   onViewChange: (view: string, params?: any) => void;
@@ -61,7 +61,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
     toggleShowAll,
   } = useStockMovementReport({ onViewChange });
 
-  const [showStats, setShowStats] = React.useState(true);
+  const { setLeftContent, setRightContent, setBottomContent, setShowStatsToggle } = useInventoryHeader();
 
   // --- Analytics ---
   const typeCounts = useMemo(() => {
@@ -136,159 +136,153 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
     </div>
   );
 
+  React.useEffect(() => {
+    setLeftContent(
+      <div className="relative flex-1 max-w-md">
+        <SearchInput
+          placeholder={isRTL ? 'البحث عن صنف...' : 'Search for drug...'}
+          value={searchQuery}
+          onSearchChange={handleSearchChange}
+          onFocus={() => setShowSearch(true)}
+          onKeyDown={onKeyDown}
+          onClear={handleClearSearch}
+          enableAutocomplete
+          suggestions={suggestions}
+          filterConfigs={filterConfigs}
+          activeFilters={activeFilters}
+          onUpdateFilter={handleUpdateFilter}
+        />
+        {/* Absolute positioned dropdown for search results */}
+        <SearchDropdown
+          isVisible={showSearch && searchResults.length > 0}
+          results={searchResults}
+          highlightedIndex={highlightedIndex}
+          onSelect={handleSelectDrug}
+          columns={[
+            { 
+              header: t.inventory.headers.name, 
+              width: 'flex-4',
+              render: (d: Drug) => {
+                const displayName = getFullDisplayName(d, textTransform);
+                const itemDir = /[\u0600-\u06FF]/.test(displayName) ? 'rtl' : 'ltr';
+                return (
+                  <div className="font-bold whitespace-normal" dir={itemDir}>
+                    {displayName}
+                  </div>
+                );
+              } 
+            },
+            { 
+              header: t.inventory.headers.stock, 
+              width: 'w-24 shrink-0',
+              render: (d: Drug) => {
+                const packs = Math.floor(d.stock / (d.unitsPerPack || 1));
+                const units = d.stock % (d.unitsPerPack || 1);
+                return (
+                  <div className={`tabular-nums border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-0.5 rounded-lg shrink-0 min-w-[36px] text-center font-bold ${
+                    d.stock < (d.minStock || 5) ? 'text-rose-600 dark:text-rose-400' : 'text-gray-700 dark:text-gray-300'
+                  }`}>
+                    {packs}
+                    {units > 0 && <span className='text-[8px] opacity-50 ml-0.5 text-blue-500'>{units}u</span>}
+                  </div>
+                );
+              }
+            },
+            { 
+              header: t.inventory.headers.publicPrice, 
+              width: 'w-28 shrink-0',
+              render: (d: Drug) => <span className="font-medium text-gray-700 dark:text-gray-300">{formatCurrency(d.publicPrice)}</span> 
+            }
+          ]}
+        />
+      </div>
+    );
+
+    setRightContent(
+      <div className="flex items-center gap-3">
+        <button
+          onClick={toggleShowAll}
+          title={showAll ? t.stockMovement.todayOnly : t.stockMovement.showAll}
+          className={ICON_BTN(showAll)}
+        >
+          <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-md)' }}>
+            {showAll ? 'filter_alt_off' : 'all_inclusive'}
+          </span>
+        </button>
+        <DateRangePicker
+          startDate={dateRange.start}
+          endDate={dateRange.end}
+          onStartDateChange={(val) => setDateRange(prev => ({ ...prev, start: val }))}
+          onEndDateChange={(val) => setDateRange(prev => ({ ...prev, end: val }))}
+          color={themeColor}
+          size="sm"
+          locale={language === 'AR' ? 'ar-EG' : 'en-US'}
+        />
+        <button
+          onClick={exportCSV}
+          disabled={history.length === 0}
+          title={isRTL ? 'تصدير' : 'Export'}
+          className={`${ICON_BTN(false)} disabled:opacity-30 disabled:cursor-not-allowed`}
+        >
+          <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-md)' }}>download</span>
+        </button>
+      </div>
+    );
+
+    setShowStatsToggle(!!selectedDrug);
+
+    setBottomContent(
+      selectedDrug ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
+          <SmallCard
+            title={isRTL ? 'وارد المخزون' : 'Stock In'}
+            value={(summary?.totalIn || 0) / (selectedDrug?.unitsPerPack || 1)}
+            fractionDigits={(summary?.totalIn || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
+            valueSuffix={isRTL ? 'علبة' : 'Packs'}
+            icon="south_west"
+            iconColor="emerald"
+            className="w-full"
+          />
+          <SmallCard
+            title={isRTL ? 'صادر المخزون' : 'Stock Out'}
+            value={(summary?.totalOut || 0) / (selectedDrug?.unitsPerPack || 1)}
+            fractionDigits={(summary?.totalOut || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
+            valueSuffix={isRTL ? 'علبة' : 'Packs'}
+            icon="north_east"
+            iconColor="rose"
+            className="w-full"
+          />
+          <SmallCard
+            title={isRTL ? 'المرتجعات' : 'Returns'}
+            value={(summary?.returns || 0) / (selectedDrug?.unitsPerPack || 1)}
+            fractionDigits={(summary?.returns || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
+            valueSuffix={isRTL ? 'علبة' : 'Packs'}
+            icon="rotate_left"
+            iconColor="sky"
+            className="w-full"
+          />
+          <SmallCard
+            title={isRTL ? 'المخزون الحالي' : 'Current Stock'}
+            value={(summary?.currentStock || 0) / (selectedDrug?.unitsPerPack || 1)}
+            fractionDigits={(summary?.currentStock || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
+            valueSuffix={isRTL ? 'علبة' : 'Packs'}
+            icon="package_2"
+            iconColor="indigo"
+            className="w-full"
+          />
+        </div>
+      ) : null
+    );
+  }, [
+    searchQuery, showSearch, searchResults, highlightedIndex, activeFilters, filterConfigs,
+    suggestions, handleSearchChange, handleClearSearch, handleUpdateFilter, handleSelectDrug,
+    onKeyDown, t, isRTL, textTransform, showAll, dateRange, themeColor, language, exportCSV,
+    history.length, toggleShowAll, setDateRange, selectedDrug, summary,
+    setLeftContent, setRightContent, setBottomContent, setShowStatsToggle
+  ]);
+
   return (
     <div className={`h-full flex flex-col gap-2 animate-fade-in pb-10 overflow-y-auto ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-      <PageHeader
-        mb="mb-0"
-        leftContent={
-          <div className="relative flex-1 max-w-md">
-            <SearchInput
-              placeholder={isRTL ? 'البحث عن صنف...' : 'Search for drug...'}
-              value={searchQuery}
-              onSearchChange={handleSearchChange}
-              onFocus={() => setShowSearch(true)}
-              onKeyDown={onKeyDown}
-              onClear={handleClearSearch}
-              enableAutocomplete
-              suggestions={suggestions}
-              filterConfigs={filterConfigs}
-              activeFilters={activeFilters}
-              onUpdateFilter={handleUpdateFilter}
-            />
-            <SearchDropdown
-              isVisible={showSearch && searchResults.length > 0}
-              results={searchResults}
-              highlightedIndex={highlightedIndex}
-              onSelect={handleSelectDrug}
-              columns={[
-                { 
-                  header: t.inventory.headers.name, 
-                  width: 'flex-4',
-                  render: (d: Drug) => {
-                    const displayName = getFullDisplayName(d, textTransform);
-                    const itemDir = /[\u0600-\u06FF]/.test(displayName) ? 'rtl' : 'ltr';
-                    return (
-                      <div className="font-bold whitespace-normal" dir={itemDir}>
-                        {displayName}
-                      </div>
-                    );
-                  } 
-                },
-                { 
-                  header: t.inventory.headers.stock, 
-                  width: 'w-24 shrink-0',
-                  render: (d: Drug) => {
-                    const packs = Math.floor(d.stock / (d.unitsPerPack || 1));
-                    const units = d.stock % (d.unitsPerPack || 1);
-                    return (
-                      <div className={`tabular-nums border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-0.5 rounded-lg shrink-0 min-w-[36px] text-center font-bold ${
-                        d.stock < (d.minStock || 5) ? 'text-rose-600 dark:text-rose-400' : 'text-gray-700 dark:text-gray-300'
-                      }`}>
-                        {packs}
-                        {units > 0 && <span className='text-[8px] opacity-50 ml-0.5 text-blue-500'>{units}u</span>}
-                      </div>
-                    );
-                  }
-                },
-                { 
-                  header: t.inventory.headers.publicPrice, 
-                  width: 'w-28 shrink-0',
-                  render: (d: Drug) => <span className="font-medium text-gray-700 dark:text-gray-300">{formatCurrency(d.publicPrice)}</span> 
-                }
-              ]}
-            />
-          </div>
-        }
-        centerContent={
-          <SegmentedControl
-            options={[
-              { label: t.inventory?.tabs?.inventory || 'المخزون', value: 'inventory' },
-              { label: t.inventory?.tabs?.addProduct || 'إضافة منتج', value: 'add-product' },
-              { label: t.inventory?.tabs?.stockMovement || 'حركة المخزون', value: 'stock-movement' },
-              { label: t.inventory?.tabs?.shortages || 'النواقص', value: 'shortages' },
-            ]}
-            value='stock-movement'
-            onChange={(val) => onViewChange?.(String(val))}
-            size="md"
-            shape="pill"
-          />
-        }
-        rightContent={
-          <div className="flex items-center gap-3">
-            <button
-              onClick={toggleShowAll}
-              title={showAll ? t.stockMovement.todayOnly : t.stockMovement.showAll}
-              className={ICON_BTN(showAll)}
-            >
-              <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-md)' }}>
-                {showAll ? 'filter_alt_off' : 'all_inclusive'}
-              </span>
-            </button>
-            <DateRangePicker
-              startDate={dateRange.start}
-              endDate={dateRange.end}
-              onStartDateChange={(val) => setDateRange(prev => ({ ...prev, start: val }))}
-              onEndDateChange={(val) => setDateRange(prev => ({ ...prev, end: val }))}
-              color={themeColor}
-              size="sm"
-              locale={language === 'AR' ? 'ar-EG' : 'en-US'}
-            />
-            <button
-              onClick={exportCSV}
-              disabled={history.length === 0}
-              title={isRTL ? 'تصدير' : 'Export'}
-              className={`${ICON_BTN(false)} disabled:opacity-30 disabled:cursor-not-allowed`}
-            >
-              <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-md)' }}>download</span>
-            </button>
-          </div>
-        }
-        showStatsToggle={!!selectedDrug}
-        showBottom={showStats}
-        onToggleBottom={() => setShowStats(!showStats)}
-        bottomContent={
-          selectedDrug && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
-              <SmallCard
-                title={isRTL ? 'وارد المخزون' : 'Stock In'}
-                value={(summary?.totalIn || 0) / (selectedDrug?.unitsPerPack || 1)}
-                fractionDigits={(summary?.totalIn || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
-                valueSuffix={isRTL ? 'علبة' : 'Packs'}
-                icon="south_west"
-                iconColor="emerald"
-                className="w-full"
-              />
-              <SmallCard
-                title={isRTL ? 'صادر المخزون' : 'Stock Out'}
-                value={(summary?.totalOut || 0) / (selectedDrug?.unitsPerPack || 1)}
-                fractionDigits={(summary?.totalOut || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
-                valueSuffix={isRTL ? 'علبة' : 'Packs'}
-                icon="north_east"
-                iconColor="rose"
-                className="w-full"
-              />
-              <SmallCard
-                title={isRTL ? 'المرتجعات' : 'Returns'}
-                value={(summary?.returns || 0) / (selectedDrug?.unitsPerPack || 1)}
-                fractionDigits={(summary?.returns || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
-                valueSuffix={isRTL ? 'علبة' : 'Packs'}
-                icon="rotate_left"
-                iconColor="sky"
-                className="w-full"
-              />
-              <SmallCard
-                title={isRTL ? 'المخزون الحالي' : 'Current Stock'}
-                value={(summary?.currentStock || 0) / (selectedDrug?.unitsPerPack || 1)}
-                fractionDigits={(summary?.currentStock || 0) % (selectedDrug?.unitsPerPack || 1) === 0 ? 0 : 2}
-                valueSuffix={isRTL ? 'علبة' : 'Packs'}
-                icon="package_2"
-                iconColor="indigo"
-                className="w-full"
-              />
-            </div>
-          )
-        }
-      />
 
       {!selectedDrug && !showAll ? renderEmptyState() : (
         <div className="flex flex-col gap-0 items-start flex-1 overflow-hidden">

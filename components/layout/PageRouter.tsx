@@ -6,6 +6,7 @@ import { useSettings } from '../../context';
 import { LandingPage } from '../layout/LandingPage';
 import { type ViewState } from '../../types';
 import { batchService } from '../../services/inventory/batchService';
+import { InventoryModuleShell } from '../inventory/InventoryModuleShell';
 
 interface PageRouterProps {
   view: ViewState;
@@ -202,6 +203,14 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     props.t = vt;
     if (vt.datePickerTranslations) props.datePickerTranslations = vt.datePickerTranslations;
     if (vt.initialMode) props.initialMode = vt.initialMode;
+  }
+
+  if (['inventory', 'add-product', 'stock-movement', 'shortages'].includes(view)) {
+    return (
+      <InventoryModuleShell activeView={view} onViewChange={handleNavigate} t={t}>
+        <PageComponent {...props} />
+      </InventoryModuleShell>
+    );
   }
 
   return <PageComponent {...props} />;

@@ -9,7 +9,7 @@ import type { ProcurementItem } from '../../types/intelligence';
 import type { Drug } from '../../types/inventory';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { CARD_BASE } from '../../utils/themeStyles';
-import { PageHeader } from '../common/PageHeader';
+import { useInventoryHeader } from './InventoryHeaderContext';
 import { SearchEngineInput } from '../common/SearchEngineInput';
 import { SmallCard } from '../common/SmallCard';
 import { TanStackTable } from '../common/TanStackTable';
@@ -72,15 +72,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [showStats, setShowStats] = useState<boolean>(() =>
-    storage.get<boolean>(StorageKeys.HEADER_STATS_VISIBLE, true)
-  );
-
-  const handleToggleStats = () => {
-    const nextVal = !showStats;
-    setShowStats(nextVal);
-    storage.set(StorageKeys.HEADER_STATS_VISIBLE, nextVal);
-  };
+  const { setLeftContent, setRightContent, setBottomContent, setShowStatsToggle } = useInventoryHeader();
 
   // Fetch live daily sales velocities and AI predicted reorders from intelligence service
   useEffect(() => {
@@ -705,114 +697,93 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
     ];
   }, [filteredData, selectedIds, t, handleSelectAll, handleToggleSelect]);
 
+  useEffect(() => {
+    setLeftContent(
+      <div className='relative flex-1 max-w-xl'>
+        <SearchEngineInput
+          value={searchTerm}
+          onSearchChange={setSearchTerm}
+          placeholder={t.searchPlaceholder}
+          onClear={() => setSearchTerm('')}
+          color='primary'
+          filterConfigs={filterConfigs}
+          activeFilters={activeFilters}
+          onUpdateFilter={handleUpdateFilter}
+        />
+      </div>
+    );
+
+    setRightContent(
+      <div className='flex items-center gap-2'>
+        <button
+          type='button'
+          onClick={handleExportCSV}
+          className='flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-gray-700 bg-white dark:text-zinc-300 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/80 cursor-pointer'
+        >
+          <span className='material-symbols-rounded text-lg'>download</span>
+          {t.exportButtonLabel}
+        </button>
+        <button
+          type='button'
+          onClick={handleBulkReorder}
+          className='flex items-center gap-1.5 px-4 py-2 text-sm font-black text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-500 rounded-xl transition-all shadow-sm hover:shadow cursor-pointer'
+        >
+          <span className='material-symbols-rounded text-lg'>shopping_cart</span>
+          {t.reorderBtn}
+        </button>
+      </div>
+    );
+
+    setShowStatsToggle(true);
+
+    setBottomContent(
+      <div className='grid grid-cols-1 md:grid-cols-4 gap-4 w-full'>
+        <SmallCard
+          title={t.statsTotal}
+          value={stats.total}
+          icon='inventory_2'
+          iconColor='zinc'
+          isLoading={loadingProcurement}
+        />
+        <SmallCard
+          title={t.statsCritical}
+          value={stats.outOfStock}
+          icon='dangerous'
+          iconColor='red'
+          subValue={
+            stats.lostSales > 0
+              ? `-${Math.round(stats.lostSales)} EGP / ${t.weekAbbreviation}`
+              : undefined
+          }
+          isLoading={loadingProcurement}
+        />
+        <SmallCard
+          title={t.statusManualMinimumReached}
+          value={stats.manualMin}
+          icon='low_priority'
+          iconColor='amber'
+          isLoading={loadingProcurement}
+        />
+        <SmallCard
+          title={t.statsPredictive}
+          value={stats.predictive}
+          icon='psychology'
+          iconColor='purple'
+          isLoading={loadingProcurement}
+        />
+      </div>
+    );
+  }, [
+    searchTerm, setSearchTerm, t, filterConfigs, activeFilters, handleUpdateFilter,
+    handleExportCSV, handleBulkReorder, stats, loadingProcurement,
+    setLeftContent, setRightContent, setBottomContent, setShowStatsToggle
+  ]);
+
   return (
     <div
       className='h-full flex flex-col bg-(--bg-page-surface) selection:bg-primary-100 dark:selection:bg-primary-900/30'
       dir={isAR ? 'rtl' : 'ltr'}
     >
-      <PageHeader
-        leftContent={
-          <div className='relative flex-1 max-w-xl'>
-            <SearchEngineInput
-              value={searchTerm}
-              onSearchChange={setSearchTerm}
-              placeholder={t.searchPlaceholder}
-              onClear={() => setSearchTerm('')}
-              color='primary'
-              filterConfigs={filterConfigs}
-              activeFilters={activeFilters}
-              onUpdateFilter={handleUpdateFilter}
-            />
-          </div>
-        }
-        centerContent={
-          <SegmentedControl
-            options={[
-              { label: fullT.inventory?.tabs?.inventory || 'المخزون', value: 'inventory' },
-              { label: fullT.inventory?.tabs?.addProduct || 'إضافة منتج', value: 'add-product' },
-              { label: fullT.inventory?.tabs?.stockMovement || 'حركة المخزون', value: 'stock-movement' },
-              { label: fullT.inventory?.tabs?.shortages || 'النواقص', value: 'shortages' },
-            ]}
-            value='shortages'
-            onChange={(val) => onViewChange?.(val as ViewState)}
-            size="md"
-            shape="pill"
-          />
-        }
-        rightContent={
-          <div className='flex items-center gap-2'>
-            {/* Export Shortages button */}
-            <button
-              type='button'
-              onClick={handleExportCSV}
-              className='flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-gray-700 bg-white dark:text-zinc-300 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/80 cursor-pointer'
-            >
-              <span className='material-symbols-rounded text-lg'>download</span>
-              {t.exportButtonLabel}
-            </button>
-
-            {/* Create Purchase Order button */}
-            <button
-              type='button'
-              onClick={handleBulkReorder}
-              className='flex items-center gap-1.5 px-4 py-2 text-sm font-black text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-500 rounded-xl transition-all shadow-sm hover:shadow cursor-pointer'
-            >
-              <span className='material-symbols-rounded text-lg'>shopping_cart</span>
-              {t.reorderBtn}
-            </button>
-          </div>
-        }
-        showStatsToggle={true}
-        showBottom={showStats}
-        onToggleBottom={handleToggleStats}
-        bottomContent={
-          <div className='grid grid-cols-1 md:grid-cols-4 gap-4 w-full'>
-            {/* Total Monitored Card */}
-            <SmallCard
-              title={t.statsTotal}
-              value={stats.total}
-              icon='inventory_2'
-              iconColor='zinc'
-              isLoading={loadingProcurement}
-            />
-
-            {/* Out of Stock Card */}
-            <SmallCard
-              title={t.statsCritical}
-              value={stats.outOfStock}
-              icon='dangerous'
-              iconColor='red'
-              subValue={
-                stats.lostSales > 0
-                  ? `-${Math.round(stats.lostSales)} EGP / ${t.weekAbbreviation}`
-                  : undefined
-              }
-              isLoading={loadingProcurement}
-            />
-
-            {/* Below Limit Card */}
-            <SmallCard
-              title={t.statusManualMinimumReached}
-              value={stats.manualMin}
-              icon='low_priority'
-              iconColor='amber'
-              isLoading={loadingProcurement}
-            />
-
-            {/* AI Predictive Depletion Card */}
-            <SmallCard
-              title={t.statsPredictive}
-              value={stats.predictive}
-              icon='psychology'
-              iconColor='purple'
-              isLoading={loadingProcurement}
-            />
-          </div>
-        }
-      />
-
-
-
       {/* Main Content Area */}
       <div className='flex-1 px-page pb-8 overflow-hidden flex flex-col'>
         <div className={`${CARD_BASE} rounded-3xl flex-1 overflow-hidden flex flex-col p-0`}>

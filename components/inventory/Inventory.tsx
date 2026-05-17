@@ -25,6 +25,7 @@ import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs
 import { TanStackTable, PriceDisplay } from '../common/TanStackTable';
 import { InteractiveCard } from '../common/InteractiveCard';
 import { PageHeader } from '../common/PageHeader';
+import { useInventoryHeader } from './InventoryHeaderContext';
 import { AddProduct } from './AddProduct';
 import { useStatusBar } from '../layout/StatusBar';
 import { useSettings } from '../../context';
@@ -94,7 +95,15 @@ export const Inventory: React.FC<InventoryProps> = ({
   const [selectedBatches, setSelectedBatches] = useState<Record<string, string>>({}); // groupId -> drugId
   const [openBatchDropdown, setOpenBatchDropdown] = useState<string | null>(null);
   const [isDataSettled, setIsDataSettled] = useState(false);
-  const [showStats, setShowStats] = useState(true);
+
+  const {
+    setLeftContent,
+    setRightContent,
+    setBottomContent,
+    setShowStatsToggle,
+    setShowStats,
+    showStats,
+  } = useInventoryHeader();
 
   // Synchronization Buffer: Ensures skeleton stays until data is actually available
   useEffect(() => {
@@ -739,152 +748,156 @@ export const Inventory: React.FC<InventoryProps> = ({
     [tableColumns, t, getVerifiedDate]
   );
 
+  // Set header slots dynamically
+  useEffect(() => {
+    if (mode === 'list') {
+      setLeftContent(
+        <div className="relative flex-1 max-w-xl">
+          <SearchEngineInput
+            value={searchTerm}
+            onSearchChange={setSearchTerm}
+            activeFilters={activeFilters}
+            filterConfigs={filterConfigs}
+            onUpdateFilter={(id, vals) => setActiveFilters(prev => ({ ...prev, [id]: vals }))}
+            onClear={() => setSearchTerm('')}
+            placeholder={t.searchPlaceholder}
+            color={color}
+            inventory={baseFilteredInventory}
+          />
+        </div>
+      );
+      setBottomContent(
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">
+          <InteractiveCard
+            isLoading={isLoading || !isDataSettled}
+            className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
+            pages={[
+              {
+                theme: 'bg-primary-50 dark:bg-primary-900/20',
+                content: (
+                  <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
+                    <span className="text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400">
+                      {t.summary?.totalItems || 'Total Items'}
+                    </span>
+                    <span className="text-xl font-bold text-primary-900 dark:text-primary-100">
+                      {summaryStats.totalItems >= 1000 
+                        ? new Intl.NumberFormat('en-US', { notation: 'compact', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(summaryStats.totalItems)
+                        : summaryStats.totalItems}
+                    </span>
+                  </div>
+                ),
+              }
+            ]}
+          />
+          {canViewFinancials && (
+            <InteractiveCard
+              isLoading={isLoading || !isDataSettled}
+              className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
+              pages={[
+                {
+                  theme: 'bg-green-50 dark:bg-green-900/20',
+                  content: (
+                    <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
+                      <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400">
+                        {t.summary?.totalCost || 'Inventory Cost'}
+                      </span>
+                      <span className="text-xl font-bold text-green-900 dark:text-primary-100 tabular-nums">
+                        <PriceDisplay value={summaryStats.totalCost} compact={summaryStats.totalCost >= 1000} />
+                      </span>
+                    </div>
+                  ),
+                },
+                {
+                  theme: 'bg-indigo-50 dark:bg-indigo-900/20',
+                  content: (
+                    <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
+                      <span className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">
+                        {t.summary?.totalSaleValue || 'Sale Value'}
+                      </span>
+                      <span className="text-xl font-bold text-indigo-900 dark:text-primary-100 tabular-nums">
+                        <PriceDisplay value={summaryStats.totalSaleValue} compact={summaryStats.totalSaleValue >= 1000} />
+                      </span>
+                    </div>
+                  ),
+                }
+              ]}
+            />
+          )}
+          <InteractiveCard
+            isLoading={isLoading || !isDataSettled}
+            className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
+            pages={[
+              {
+                theme: 'bg-red-50 dark:bg-red-900/20',
+                content: (
+                  <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
+                    <span className="text-[10px] font-bold uppercase text-red-600 dark:text-red-400">
+                      {t.summary?.restock || 'Critical Restock'}
+                    </span>
+                    <span className="text-xl font-bold text-red-900 dark:text-primary-100">
+                      {summaryStats.criticalRestock}
+                    </span>
+                  </div>
+                ),
+              },
+              {
+                theme: 'bg-amber-50 dark:bg-amber-900/20',
+                content: (
+                  <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
+                    <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">
+                      {t.summary?.nearReorder || 'Near Reorder'}
+                    </span>
+                    <span className="text-xl font-bold text-amber-900 dark:text-primary-100">
+                      {summaryStats.nearReorder}
+                    </span>
+                  </div>
+                ),
+              },
+              {
+                theme: 'bg-gray-100 dark:bg-gray-800',
+                content: (
+                  <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
+                    <span className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400">
+                      {t.summary?.discontinued || 'Discontinued'}
+                    </span>
+                    <span className="text-xl font-bold text-gray-700 dark:text-gray-300">
+                      {summaryStats.discontinuedCount}
+                    </span>
+                  </div>
+                ),
+              }
+            ]}
+          />
+        </div>
+      );
+      setShowStatsToggle(true);
+    } else {
+      setLeftContent(null);
+      setBottomContent(null);
+      setShowStatsToggle(false);
+    }
+
+    return () => {
+      setLeftContent(null);
+      setBottomContent(null);
+      setShowStatsToggle(false);
+    };
+  }, [
+    mode,
+    searchTerm,
+    activeFilters,
+    filterConfigs,
+    isLoading,
+    isDataSettled,
+    summaryStats,
+    canViewFinancials,
+    isRTL,
+    t,
+  ]);
+
   return (
     <div className='h-full flex flex-col gap-2 animate-fade-in pb-10 overflow-y-auto'>
-      {/* Header with toggle */}
-      <PageHeader
-        mb="mb-0"
-        leftContent={
-          mode === 'list' && (
-            <div className="relative flex-1 max-w-xl">
-              <SearchEngineInput
-                value={searchTerm}
-                onSearchChange={setSearchTerm}
-                activeFilters={activeFilters}
-                filterConfigs={filterConfigs}
-                onUpdateFilter={(id, vals) => setActiveFilters(prev => ({ ...prev, [id]: vals }))}
-                onClear={() => setSearchTerm('')}
-                placeholder={t.searchPlaceholder}
-                color={color}
-                inventory={baseFilteredInventory}
-              />
-            </div>
-          )
-        }
-        centerContent={
-          <SegmentedControl
-            options={[
-              { label: t.inventory?.tabs?.inventory || 'المخزون', value: 'inventory' },
-              { label: t.inventory?.tabs?.addProduct || 'إضافة منتج', value: 'add-product' },
-              { label: t.inventory?.tabs?.stockMovement || 'حركة المخزون', value: 'stock-movement' },
-              { label: t.inventory?.tabs?.shortages || 'النواقص', value: 'shortages' },
-            ]}
-            value='inventory'
-            onChange={(val) => onViewChange?.(String(val))}
-            size="md"
-            shape="pill"
-          />
-        }
-        showStatsToggle={mode === 'list'}
-        showBottom={showStats}
-        onToggleBottom={() => setShowStats(!showStats)}
-        bottomContent={
-          mode === 'list' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">
-              <InteractiveCard
-                isLoading={isLoading || !isDataSettled}
-                className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
-                pages={[
-                  {
-                    theme: 'bg-primary-50 dark:bg-primary-900/20',
-                    content: (
-                      <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                        <span className="text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400">
-                          {t.summary?.totalItems || 'Total Items'}
-                        </span>
-                        <span className="text-xl font-bold text-primary-900 dark:text-primary-100">
-                          {summaryStats.totalItems >= 1000 
-                            ? new Intl.NumberFormat('en-US', { notation: 'compact', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(summaryStats.totalItems)
-                            : summaryStats.totalItems}
-                        </span>
-                      </div>
-                    ),
-                  }
-                ]}
-              />
-              {canViewFinancials && (
-                <InteractiveCard
-                  isLoading={isLoading || !isDataSettled}
-                  className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
-                  pages={[
-                    {
-                      theme: 'bg-green-50 dark:bg-green-900/20',
-                      content: (
-                        <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                          <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400">
-                            {t.summary?.totalCost || 'Inventory Cost'}
-                          </span>
-                          <span className="text-xl font-bold text-green-900 dark:text-primary-100 tabular-nums">
-                            <PriceDisplay value={summaryStats.totalCost} compact={summaryStats.totalCost >= 1000} />
-                          </span>
-                        </div>
-                      ),
-                    },
-                    {
-                      theme: 'bg-indigo-50 dark:bg-indigo-900/20',
-                      content: (
-                        <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                          <span className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">
-                            {t.summary?.totalSaleValue || 'Sale Value'}
-                          </span>
-                          <span className="text-xl font-bold text-indigo-900 dark:text-primary-100 tabular-nums">
-                            <PriceDisplay value={summaryStats.totalSaleValue} compact={summaryStats.totalSaleValue >= 1000} />
-                          </span>
-                        </div>
-                      ),
-                    }
-                  ]}
-                />
-              )}
-              <InteractiveCard
-                isLoading={isLoading || !isDataSettled}
-                className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
-                pages={[
-                  {
-                    theme: 'bg-red-50 dark:bg-red-900/20',
-                    content: (
-                      <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                        <span className="text-[10px] font-bold uppercase text-red-600 dark:text-red-400">
-                          {t.summary?.restock || 'Critical Restock'}
-                        </span>
-                        <span className="text-xl font-bold text-red-900 dark:text-primary-100">
-                          {summaryStats.criticalRestock}
-                        </span>
-                      </div>
-                    ),
-                  },
-                  {
-                    theme: 'bg-amber-50 dark:bg-amber-900/20',
-                    content: (
-                      <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                        <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">
-                          {t.summary?.nearReorder || 'Near Reorder'}
-                        </span>
-                        <span className="text-xl font-bold text-amber-900 dark:text-primary-100">
-                          {summaryStats.nearReorder}
-                        </span>
-                      </div>
-                    ),
-                  },
-                  {
-                    theme: 'bg-gray-100 dark:bg-gray-800',
-                    content: (
-                      <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                        <span className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400">
-                          {t.summary?.discontinued || 'Discontinued'}
-                        </span>
-                        <span className="text-xl font-bold text-gray-700 dark:text-gray-300">
-                          {summaryStats.discontinuedCount}
-                        </span>
-                      </div>
-                    ),
-                  }
-                ]}
-              />
-            </div>
-          )
-        }
-      />
+      {/* Header slots are registered in the useEffect above */}
 
       {mode === 'list' ? (
         <div className='flex flex-col flex-1 min-h-0'>
