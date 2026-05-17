@@ -75,7 +75,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
     return (
       <div className="flex flex-col p-1.5 animate-pulse border-b border-gray-100 dark:border-gray-800/50 last:border-0 relative">
         {/* Subtle Accent Bar placeholder */}
-        <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-gray-100 dark:bg-zinc-800 opacity-50" />
+        {/* <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-gray-100 dark:bg-zinc-800 opacity-50" /> */}
 
         <div className='flex flex-wrap items-center justify-between gap-x-1 gap-y-1 relative pl-2'>
           {/* Name Section */}
@@ -304,9 +304,9 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
       onTouchMove={onLongPressTouchMove}
     >
       {/* Subtle Drag Handle / Accent */}
-      <div className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full transition-all duration-300
+      {/* <div className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full transition-all duration-300
         ${isHighlighted ? 'bg-primary-500 opacity-100 scale-y-100' : 'bg-primary-500/40 opacity-0 group-hover:opacity-100 scale-y-50 group-hover:scale-y-100'}
-      `} />
+      `} /> */}
 
       <div className='flex flex-wrap items-center justify-between gap-x-1 gap-y-1 relative pl-2'>
         {/* Name Section */}
