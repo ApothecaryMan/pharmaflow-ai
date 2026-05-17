@@ -555,11 +555,7 @@ export const POS: React.FC<POSProps> = ({
       columnHelper.accessor('publicPrice', {
         header: t.publicPrice,
         size: 100,
-        cell: (info) => (
-          <span className='font-bold text-sm text-gray-700 dark:text-gray-300 tabular-nums'>
-            <PriceDisplay value={info.getValue()} />
-          </span>
-        ),
+        cell: (info) => <PriceDisplay value={info.getValue()} />,
       }),
       columnHelper.accessor('totalStock', {
         id: 'stock',

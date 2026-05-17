@@ -288,11 +288,11 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
       {...attributes}
       {...listeners}
       className={`flex flex-col p-1.5 transition-all touch-manipulation relative group outline-hidden select-none
-        ${isDragging ? `z-50 opacity-100 bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-sm shadow-2xl scale-[1.02] rounded-xl` : 'rounded-lg'}
+        ${isDragging ? `z-50 opacity-100 shadow-2xl scale-[1.01] rounded-xl` : 'rounded-lg'}
         ${
           isHighlighted
-            ? `bg-primary-100 dark:bg-primary-900`
-            : 'bg-transparent hover:bg-black/[0.02] dark:hover:bg-white/[0.04]'
+            ? `bg-primary-100 dark:bg-zinc-100/10`
+            : 'bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-100/5'
         }`}
       onContextMenu={(e) => {
         e.preventDefault();
@@ -358,7 +358,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
             cart={cart}
           />
 
-            <div className='text-xs font-bold text-gray-900 dark:text-white shrink-0 text-end tabular-nums' dir='ltr' style={{ unicodeBidi: 'isolate' }}>
+            <div className='text-xs font-bold text-gray-900 dark:text-white shrink-0 text-end tabular-nums w-[4rem] overflow-hidden text-ellipsis' dir='ltr' style={{ unicodeBidi: 'isolate' }}>
               {formatCurrency(
                 (packItem ? pricingService.calculateItemTotal(packItem) : 0) +
                 (unitItem ? pricingService.calculateItemTotal(unitItem) : 0),

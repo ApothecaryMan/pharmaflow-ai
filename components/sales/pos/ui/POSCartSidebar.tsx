@@ -11,23 +11,15 @@ import { SortableCartItem } from '../SortableCartItem';
 import { resolvePrice } from '../../../../utils/stockUtils';
 import { useNetworkStatus } from '../../../../hooks/common/useNetworkStatus';
 import { money } from '../../../../utils/money';
-import { formatCurrency } from '../../../../utils/currency';
+import { formatCurrency, getCurrencySymbol } from '../../../../utils/currency';
 import { getGroupingKey } from '../../../../services/inventory/batchService';
 import { useData } from '../../../../context/DataContext';
 import { useContextMenu, useContextMenuTrigger } from '../../../common/ContextMenu';
 
-
-const cartScrollStyles = `
-  .cart-scroll::-webkit-scrollbar { width: 2px; background: transparent; }
-  .cart-scroll::-webkit-scrollbar-track { background: transparent; border: none; box-shadow: none; }
-  .cart-scroll::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.6); border-radius: 9999px; }
-  .cart-scroll::-webkit-scrollbar-corner { background: transparent; }
-`;
-
 // --- Isolated Calculator Component to ensure reactivity inside Context Menu ---
 const DeliveryCalculatorContent = ({ globalDeliveryFee, setDeliveryFee, hideMenu, t }: any) => {
   const [val, setVal] = React.useState('');
-  
+
   const handleApply = () => {
     const dist = parseFloat(val);
     if (!isNaN(dist)) {
@@ -330,7 +322,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                       )}
                     </div>
                   }>
-                    <span className="uppercase text-emerald-600 dark:text-emerald-400 whitespace-nowrap">{cart.length} {t.items || 'أصناف'}</span>
+                    <span className="uppercase text-emerald-600 dark:text-emerald-400 whitespace-nowrap">{cart.length} {t.drugTypes}</span>
                   </Tooltip>
                   <svg className="size-1 shrink-0 mx-0.5" viewBox="0 0 6 6" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="3" cy="3" r="2" className="fill-gray-300 dark:fill-gray-600" />
@@ -354,7 +346,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                       )}
                     </div>
                   }>
-                    <span className="whitespace-nowrap">{totalItems} {t.items}</span>
+                    <span className="whitespace-nowrap">{totalItems} {t.totalQty}</span>
                   </Tooltip>
 
                   {/* Estimated Profit Display (Managers Only) */}
@@ -379,8 +371,8 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                           </p>
                         </div>
                       }>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-bold tabular-nums bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-800/30 whitespace-nowrap animate-in fade-in zoom-in duration-300 leading-none">
-                          {totalProfit >= 0 ? '+' : ''}{formatCurrency(totalProfit, 'EGP', undefined, 2, true)}
+                        <span className="badge-green leading-none">
+                          {totalProfit >= 0 ? '+' : ''}{formatCurrency(totalProfit, 'EGP', undefined, 2, true)} <span className="text-[9px] opacity-60">{getCurrencySymbol('EGP')}</span>
                         </span>
                       </Tooltip>
                     </>
@@ -391,7 +383,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                   <svg className="size-1.5 shrink-0" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="4" cy="4" r="3" className="fill-gray-400 dark:fill-gray-500" />
                   </svg>
-                  <span className="whitespace-nowrap">{t.emptyCart || 'سلة فارغة'}</span>
+                  <span className="whitespace-nowrap">{t.emptyCart}</span>
                 </>
               )}
             </div>
@@ -412,7 +404,6 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
           className={`flex-1 p-1 space-y-1 cart-scroll ${cart.length > 0 ? 'overflow-y-auto' : 'overflow-hidden'}`}
           dir='ltr'
         >
-          <style>{cartScrollStyles}</style>
           {isLoading ? (
             <div className="flex flex-col space-y-1">
               {[...Array(4)].map((_, i) => (
