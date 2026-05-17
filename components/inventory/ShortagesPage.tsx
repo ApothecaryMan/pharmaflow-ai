@@ -553,6 +553,9 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
         cell: ({ row }) => {
           const item = row.original;
           const isOutOfStock = item.stock === 0;
+          const unitsPerPack = item.drug.unitsPerPack || 1;
+          const packs = Math.floor(item.stock / unitsPerPack);
+          const remainingUnits = item.stock % unitsPerPack;
 
           return (
             <div className='flex flex-col items-center'>
@@ -561,11 +564,11 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
                   isOutOfStock ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'
                 }`}
               >
-                {item.stock}
+                {packs}
               </span>
-              {item.drug.unitsPerPack && item.drug.unitsPerPack > 1 && (
+              {remainingUnits > 0 && (
                 <span className='text-[10px] text-gray-400'>
-                  {item.stock} {t.units}
+                  +{remainingUnits} {t.units}
                 </span>
               )}
             </div>
@@ -581,9 +584,10 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
         accessorKey: 'minStock',
         cell: ({ row }) => {
           const item = row.original;
+          const minPacks = Math.floor(item.minStock / (item.drug.unitsPerPack || 1));
           return (
             <span className='text-sm font-bold tabular-nums text-gray-600 dark:text-zinc-400'>
-              {item.minStock > 0 ? item.minStock : '-'}
+              {minPacks > 0 ? minPacks : '-'}
             </span>
           );
         },
@@ -597,9 +601,10 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
         accessorKey: 'avgDailySales',
         cell: ({ row }) => {
           const item = row.original;
+          const velocityPacks = item.avgDailySales / (item.drug.unitsPerPack || 1);
           return (
             <span className='text-sm font-bold tabular-nums text-gray-800 dark:text-zinc-300'>
-              {item.avgDailySales.toFixed(1)}
+              {velocityPacks.toFixed(1)}
             </span>
           );
         },
@@ -681,12 +686,13 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
         accessorKey: 'suggestedQty',
         cell: ({ row }) => {
           const item = row.original;
+          const suggestedPacks = Math.ceil(item.suggestedQty / (item.drug.unitsPerPack || 1));
           return (
             <span
               className='inline-flex px-2 py-0.5 rounded-md bg-primary-50 dark:bg-primary-950/10 border border-primary-100 dark:border-primary-900/30 text-primary-700 dark:text-primary-400 text-sm font-black tabular-nums'
               title={t.suggestedOrderTooltip}
             >
-              {item.suggestedQty}
+              {suggestedPacks}
             </span>
           );
         },

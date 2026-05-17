@@ -86,13 +86,13 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       dir={dir}
     >
       {/* Top Row: Left, Center, Right slots */}
-      <div className="flex items-center justify-between w-full px-page py-3.5">
+      <div className="flex flex-wrap md:flex-nowrap items-center justify-between w-full px-page py-3 md:py-3.5 gap-y-3">
         {/* Left Section: Actions / Title */}
-        <div className="flex-1 flex justify-start items-center min-w-0 gap-3">
+        <div className="flex-1 flex justify-start items-center min-w-0 gap-2 md:gap-3 order-1">
           {leftContent}
           {title && (
             <div className="flex flex-col min-w-0">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate tracking-tight page-title">
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white truncate tracking-tight page-title">
                 {title}
               </h1>
               {subtitle && (
@@ -105,12 +105,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         </div>
 
         {/* Center Section: Tabs / Switchers */}
-        <div className="flex-1 flex justify-center mx-4 empty:hidden">
+        <div className="w-full md:w-auto md:flex-1 flex justify-start md:justify-center mx-0 md:mx-4 empty:hidden order-3 md:order-2 overflow-x-auto scrollbar-hide pb-1 md:pb-0 -mb-1 md:mb-0">
           {centerContent}
         </div>
 
         {/* Right Section: Filters / Search / Actions */}
-        <div className="flex-1 flex justify-end items-center min-w-0 gap-3">
+        <div className="shrink-0 md:flex-1 flex justify-end items-center min-w-0 gap-2 md:gap-3 order-2 md:order-3">
           {rightContent}
           {showStatsToggle && (
             <Tooltip content={toggleTooltip || (showBottom ? 'Hide Summary' : 'Show Summary')}>
