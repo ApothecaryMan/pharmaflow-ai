@@ -97,6 +97,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const [editingTemplateName, setEditingTemplateName] = useState(false);
   const [tempTemplateName, setTempTemplateName] = useState('');
   const [showHitboxCalibration, setShowHitboxCalibration] = useState(false);
+  const [showBlueprint, setShowBlueprint] = useState(false);
 
   // Data State - Dynamically synced from ReceiptDesigner storage
   const [receiptSettings, setLocalReceiptSettings] = useState(getReceiptSettings);
@@ -1198,28 +1199,74 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                 <p>{t.noProductSelected}</p>
               </div>
             ) : (
-              <BarcodePreview
-                elements={elements}
-                selectedElementId={selectedElementId}
-                zoom={zoom}
-                dims={dims}
-                showPairedPreview={showPairedPreview}
-                drug={selectedDrug!} // Safe assertion as check is above
-                receiptSettings={receiptSettings}
-                barcodeSource={barcodeSource}
-                showPrintBorders={showPrintBorders}
-                uploadedLogo={uploadedLogo}
-                qrCodeDataUrl={qrCodeDataUrl}
-                printOffsetX={printOffsetX}
-                printOffsetY={printOffsetY}
-                showVCenterGuide={showVGuide}
-                showHCenterGuide={showHGuide}
-                alignmentGuides={alignmentGuides}
-                onSelect={setSelectedElementId}
-                onDragStart={(e, id) => {
-                  handleMouseDown(e as React.MouseEvent, id);
-                }}
-              />
+              <>
+                <BarcodePreview
+                  elements={elements}
+                  selectedElementId={selectedElementId}
+                  zoom={zoom}
+                  dims={dims}
+                  showPairedPreview={showPairedPreview}
+                  drug={selectedDrug!} // Safe assertion as check is above
+                  receiptSettings={receiptSettings}
+                  barcodeSource={barcodeSource}
+                  showPrintBorders={showPrintBorders}
+                  uploadedLogo={uploadedLogo}
+                  qrCodeDataUrl={qrCodeDataUrl}
+                  printOffsetX={printOffsetX}
+                  printOffsetY={printOffsetY}
+                  showVCenterGuide={showVGuide}
+                  showHCenterGuide={showHGuide}
+                  alignmentGuides={alignmentGuides}
+                  onSelect={setSelectedElementId}
+                  onDragStart={(e, id) => {
+                    handleMouseDown(e as React.MouseEvent, id);
+                  }}
+                />
+
+                {/* Floating Live Dimensions Blueprint */}
+                <div className="absolute bottom-4 left-4 z-20 flex flex-col items-start gap-2">
+                  {showBlueprint ? (
+                    <div className="bg-white/95 dark:bg-muted/95 backdrop-blur-md p-4 rounded-2xl border border-gray-200 dark:border-border shadow-xl w-80 max-h-72 overflow-y-auto animate-fade-in flex flex-col gap-2">
+                      <div className="flex items-center justify-between border-b border-gray-100 dark:border-border pb-2">
+                        <div className="flex items-center gap-1.5 text-primary-600 dark:text-primary-400">
+                          <span className="material-symbols-rounded text-lg">square_foot</span>
+                          <span className="text-xs font-black uppercase tracking-wider">مخطط أبعاد المكونات بالمللي</span>
+                        </div>
+                        <button
+                          onClick={() => setShowBlueprint(false)}
+                          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-all flex items-center justify-center"
+                        >
+                          <span className="material-symbols-rounded text-sm">close</span>
+                        </button>
+                      </div>
+                      <div className="text-[10px] font-mono bg-gray-50 dark:bg-black/20 p-2.5 rounded-lg border border-gray-100 dark:border-border/30 overflow-x-auto text-gray-700 dark:text-gray-300 select-all cursor-pointer" title="انقر لتحديد الكل ونسخ الكود">
+                        {`{\n` +
+                          elements.map(el => {
+                            const props = [
+                              `"x": ${el.x}`,
+                              `"y": ${el.y}`,
+                              el.fontSize ? `"fontSize": ${el.fontSize}` : null,
+                              el.fontWeight ? `"fontWeight": "${el.fontWeight}"` : null,
+                              `"align": "${el.align || 'left'}"`,
+                              el.width ? `"width": ${el.width}` : null,
+                              el.height ? `"height": ${el.height}` : null,
+                            ].filter(Boolean).join(', ');
+                            return `  "${el.id}": { ${props} }`;
+                          }).join(',\n') +
+                        `\n}`}
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowBlueprint(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white/90 dark:bg-muted/90 backdrop-blur-md rounded-xl border border-gray-200 dark:border-border shadow-md hover:bg-gray-50 dark:hover:bg-accent text-primary-600 dark:text-primary-400 text-[10px] font-black uppercase tracking-wider transition-all"
+                    >
+                      <span className="material-symbols-rounded text-sm">square_foot</span>
+                      <span>عرض مخطط الأبعاد (Live Blueprint)</span>
+                    </button>
+                  )}
+                </div>
+              </>
             )}
           </div>
         </div>
