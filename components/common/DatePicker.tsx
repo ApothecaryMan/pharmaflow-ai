@@ -322,7 +322,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
     document.addEventListener('mousedown', handleOutsideInteractions);
     document.addEventListener('touchstart', handleOutsideInteractions);
-    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
     window.addEventListener('resize', handleResize);
 
     return () => {

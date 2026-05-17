@@ -270,7 +270,7 @@ export const ContextMenuProvider: React.FC<{
 
     document.addEventListener('contextmenu', handleGlobalContextMenu);
     window.addEventListener('mousedown', handleOutsideClick, true);
-    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
     window.addEventListener('resize', hideMenu);
 
     return () => {

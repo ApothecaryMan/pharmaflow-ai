@@ -64,12 +64,23 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
       };
 
       updatePosition();
+      
+      let frameId: number | null = null;
+      const handleScroll = () => {
+        if (frameId !== null) return;
+        frameId = requestAnimationFrame(() => {
+          updatePosition();
+          frameId = null;
+        });
+      };
+
       window.addEventListener('resize', updatePosition);
-      window.addEventListener('scroll', updatePosition, true); // Capture scroll to update if needed
+      window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
 
       return () => {
         window.removeEventListener('resize', updatePosition);
-        window.removeEventListener('scroll', updatePosition, true);
+        window.removeEventListener('scroll', handleScroll, true);
+        if (frameId !== null) cancelAnimationFrame(frameId);
       };
     }
   }, [anchorEl, language]);

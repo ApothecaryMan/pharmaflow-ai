@@ -37,8 +37,26 @@ export const Tooltip: React.FC<{ children: ReactNode; content: ReactNode; positi
       const tl = toolRef.current!; tl.style.setProperty('--tx', `${x}px`); tl.style.setProperty('--ty', `${y}px`); tl.dataset.settled = 'true';
       setPath(genPath(cw, ch, s, ax, ay));
     };
-    upd(); const obs = new ResizeObserver(upd); obs.observe(trigRef.current); obs.observe(contentRef.current);
-    window.addEventListener('scroll', upd, true); return () => { obs.disconnect(); window.removeEventListener('scroll', upd, true); };
+    upd(); 
+    const obs = new ResizeObserver(upd); 
+    obs.observe(trigRef.current); 
+    obs.observe(contentRef.current);
+
+    let frameId: number | null = null;
+    const handleScroll = () => {
+      if (frameId !== null) return;
+      frameId = requestAnimationFrame(() => {
+        upd();
+        frameId = null;
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { capture: true, passive: true }); 
+    return () => { 
+      obs.disconnect(); 
+      window.removeEventListener('scroll', handleScroll, true); 
+      if (frameId !== null) cancelAnimationFrame(frameId);
+    };
   }, [show, content, position]);
 
   const hE = () => { if (timeout.current) clearTimeout(timeout.current); timeout.current = setTimeout(() => setShow(true), delay); };
