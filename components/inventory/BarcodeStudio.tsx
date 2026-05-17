@@ -194,6 +194,19 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       ? customDims
       : LABEL_PRESETS[selectedPreset] || LABEL_PRESETS['38x25'];
 
+  // --- Auto-align Center Elements on Width Change ---
+  useEffect(() => {
+    if (!isLoaded) return;
+    setElements((prev) =>
+      prev.map((el) => {
+        if (el.align === 'center') {
+          return { ...el, x: dims.w / 2 };
+        }
+        return el;
+      })
+    );
+  }, [dims.w, isLoaded]);
+
   // Load Templates & Last State
   useEffect(() => {
     // Load Templates
@@ -353,7 +366,26 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       // Merge missing elements from DEFAULT_LABEL_DESIGN
       const existingIds = new Set(state.elements.map((el: any) => el.id));
       const missingElements = DEFAULT_LABEL_DESIGN.elements.filter((el) => !existingIds.has(el.id));
-      setElements([...state.elements, ...missingElements]);
+      
+      const activePreset = state.selectedPreset || '38x25';
+      const presetW = activePreset === 'custom'
+        ? (state.customDims?.w || 38)
+        : (LABEL_PRESETS[activePreset] || LABEL_PRESETS['38x25']).w;
+
+      const sanitizedElements = [...state.elements, ...missingElements].map((el: any) => {
+        if (el.align === 'center') {
+          return {
+            ...el,
+            x: presetW / 2,
+            hitboxOffsetX: el.hitboxOffsetX === -1.1 ? 0.0 : el.hitboxOffsetX,
+            hitboxWidth: el.id === 'barcode' && el.hitboxWidth === 34 ? 36 : el.hitboxWidth,
+            hitboxHeight: el.id === 'barcode' && el.hitboxHeight === 3 ? 8 : el.hitboxHeight,
+          };
+        }
+        return el;
+      });
+
+      setElements(sanitizedElements);
     }
 
     // storeName and hotline are now read from ReceiptDesigner storage
@@ -571,12 +603,23 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     const centerY = dims.h / 2;
     const snapThreshold = 0.5;
 
-    if (Math.abs(newX - centerX) < snapThreshold) {
+    // Check if the current element is center-aligned
+    const currentEl = elements.find((el) => el.id === selectedElementId);
+    const isCenterAligned = currentEl?.align === 'center';
+
+    if (isCenterAligned) {
+      // Force lock to exact center of the page width
       newX = centerX;
       setShowVGuide(true);
     } else {
-      setShowVGuide(false);
+      if (Math.abs(newX - centerX) < snapThreshold) {
+        newX = centerX;
+        setShowVGuide(true);
+      } else {
+        setShowVGuide(false);
+      }
     }
+
     if (Math.abs(newY - centerY) < snapThreshold) {
       newY = centerY;
       setShowHGuide(true);
@@ -594,8 +637,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
         newY = other.y;
         guides.push({ y: other.y });
       }
-      // Vertical alignment (same X)
-      if (Math.abs(newX - other.x) < snapThreshold) {
+      // Vertical alignment (same X) - ignore if locked to center
+      if (!isCenterAligned && Math.abs(newX - other.x) < snapThreshold) {
         newX = other.x;
         guides.push({ x: other.x });
       }
@@ -689,7 +732,17 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     if (!selectedElementId) return;
     saveToHistory();
     setElements((prev) =>
-      prev.map((el) => (el.id === selectedElementId ? { ...el, [key]: value } : el))
+      prev.map((el) => {
+        if (el.id === selectedElementId) {
+          const updated = { ...el, [key]: value };
+          // If alignment is set to center, automatically set X to the exact center of the page width
+          if (key === 'align' && value === 'center') {
+            updated.x = dims.w / 2;
+          }
+          return updated;
+        }
+        return el;
+      })
     );
   };
   const toggleVisibility = (id: string) => {

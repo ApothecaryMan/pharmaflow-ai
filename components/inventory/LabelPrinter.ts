@@ -257,6 +257,7 @@ export const generateTemplateCSS = (
                 ${el.fontSize ? `font-size: ${el.fontSize}px;` : ''}
                 ${el.fontWeight ? `font-weight: ${el.fontWeight};` : ''}
                 ${el.color ? `color: ${el.color};` : ''}
+                text-align: ${el.align || 'left'};
                 white-space: nowrap;
                 ${el.width ? `width: ${el.width}mm;` : ''}
                 ${el.height ? `height: ${el.height}mm;` : ''}
@@ -434,10 +435,10 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
       isVisible: true,
       width: 36,
       barcodeFormat: 'code128',
-      hitboxOffsetX: -1.1,
-      hitboxOffsetY: -0.1,
-      hitboxWidth: 34,
-      hitboxHeight: 3,
+      hitboxOffsetX: 0.0,
+      hitboxOffsetY: 0.0,
+      hitboxWidth: 36,
+      hitboxHeight: 8,
     },
     {
       id: 'barcodeNumber',
