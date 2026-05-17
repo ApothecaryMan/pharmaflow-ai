@@ -652,6 +652,13 @@ export const printLabels = async (
       ? labelHeight * 2 + innerGap + outerGap // (12*2) + 1 + 3 = 28mm
       : labelHeight + outerGap;
 
+    // Printable height of the page, excluding the physical outer gap.
+    // This matches the hardware printable area (25mm) and prevents the printer's Gap Sensor
+    // from double-feeding or causing cumulative alignment drift.
+    const printablePageHeight = isDouble
+      ? labelHeight * 2 + innerGap // (12*2) + 1 = 25mm
+      : labelHeight;
+
     // Correct dimensions for the individual label HTML generation
     const renderDims = { w: dims.w, h: labelHeight };
 
@@ -690,7 +697,7 @@ export const printLabels = async (
       // to only fit the actual labels, preventing the printer from feeding blank stock
       const actualContentHeight = isPartialPage
         ? pageLabels.length * labelHeight + Math.max(0, pageLabels.length - 1) * innerGap
-        : pageHeight - outerGap;
+        : printablePageHeight;
 
       const pageHTML = `<div class="page-container" style="height: ${actualContentHeight}mm; page-break-after: ${isLastPage ? 'auto' : 'always'};">
                 ${labelsContent}
@@ -700,7 +707,9 @@ export const printLabels = async (
 
     const allPagesHTML = pages.join('');
 
-    const htmlContent = generatePageHTML(allPagesHTML, templateCSS, dims, pageHeight, {
+    // Pass printablePageHeight (e.g. 25mm) instead of the total pageHeight (28mm).
+    // This aligns the HTML document bounds with the physical label height so the hardware sensor can control the gap.
+    const htmlContent = generatePageHTML(allPagesHTML, templateCSS, dims, printablePageHeight, {
       x: printOffsetX,
       y: printOffsetY,
     });

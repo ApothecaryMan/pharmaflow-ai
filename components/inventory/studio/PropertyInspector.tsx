@@ -162,23 +162,6 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                     {t.printSettings.pairedPreviewDesc}
                   </p>
                 </div>
-
-                <div>
-                  <label className='flex items-center gap-2 cursor-pointer p-3 bg-gray-50 dark:bg-muted rounded-xl border border-gray-100 dark:border-border hover:bg-gray-100 dark:hover:bg-accent transition-colors'>
-                    <input
-                      type='checkbox'
-                      checked={showPrintBorders}
-                      onChange={(e) => setShowPrintBorders(e.target.checked)}
-                      className={`w-4 h-4 rounded-sm text-primary-600 focus:ring-primary-500`}
-                    />
-                    <span className='text-sm font-medium text-gray-700 dark:text-muted-foreground'>
-                      {t.printSettings.showBorders}
-                    </span>
-                  </label>
-                  <p className='text-[10px] text-gray-500 mt-1 px-1'>
-                    {t.printSettings.showBordersDesc}
-                  </p>
-                </div>
               </div>
             </SidebarSection>
 

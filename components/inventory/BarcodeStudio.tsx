@@ -88,7 +88,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const [barcodeSource, setBarcodeSource] = useState<'global' | 'internal'>('global');
   // Constants
   const [showPairedPreview, setShowPairedPreview] = useState(false);
-  const [showPrintBorders, setShowPrintBorders] = useState(true);
+  const [showPrintBorders, setShowPrintBorders] = useState(false);
   const [printOffsetX, setPrintOffsetX] = useState(0);
   const [printOffsetY, setPrintOffsetY] = useState(0);
   const [labelGap, setLabelGap] = useState<0 | 0.5 | 1>(0);
