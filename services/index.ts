@@ -30,5 +30,6 @@ export { salesService } from './sales/salesService';
 // Domain Services
 export * from './settings';
 export { settingsService } from './settings/settingsService';
+export { holidaysService } from './settings/holidaysService';
 export * from './suppliers';
 export { supplierService } from './suppliers/supplierService';
