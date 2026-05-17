@@ -86,11 +86,11 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
     return inventory.map(d => getFullDisplayName(d, textTransform));
   }, [inventory, textTransform]);
 
-  const handleSelectDrug = (drug: Drug) => {
+  const handleSelectDrug = useCallback((drug: Drug) => {
     setSelectedDrug(drug);
     setSearchQuery(getFullDisplayName(drug, textTransform));
     setShowSearch(false);
-  };
+  }, [textTransform]);
 
   const { highlightedIndex, onKeyDown } = useSearchKeyboardNavigation({
     results: searchResults,
@@ -140,14 +140,16 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
   }, [fetchData]);
 
   // --- Helpers ---
-  const toggleRow = (id: string) => {
-    const newExpanded = new Set(expandedRows);
-    if (newExpanded.has(id)) newExpanded.delete(id);
-    else newExpanded.add(id);
-    setExpandedRows(newExpanded);
-  };
+  const toggleRow = useCallback((id: string) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
-  const exportCSV = () => {
+  const exportCSV = useCallback(() => {
     if (history.length === 0 || !selectedDrug) return;
     const headers = ["Date", "Type", "Quantity", "Previous", "New", "Reason", "Performed By"];
     const rows = history.map(m => [
@@ -170,32 +172,32 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
+  }, [history, selectedDrug, textTransform]);
 
-  const handleUpdateFilter = (id: string, vals: any[]) => {
+  const handleUpdateFilter = useCallback((id: string, vals: any[]) => {
     setActiveFilters(prev => ({ ...prev, [id]: vals }));
-  };
+  }, []);
 
-  const handleSearchChange = (val: string) => {
+  const handleSearchChange = useCallback((val: string) => {
     setSearchQuery(val);
     setShowSearch(true);
-  };
+  }, []);
 
-  const handleClearSearch = () => {
+  const handleClearSearch = useCallback(() => {
     setSearchQuery('');
     setSelectedDrug(null);
-  };
+  }, []);
 
   // Toggle between showing all history or date-filtered history
-  const toggleShowAll = () => {
+  const toggleShowAll = useCallback(() => {
     setShowAll(prev => !prev);
-  };
+  }, []);
 
   // When date range changes manually, exit showAll mode
-  const handleSetDateRange = (updater: React.SetStateAction<{ start: string; end: string }>) => {
+  const handleSetDateRange = useCallback((updater: React.SetStateAction<{ start: string; end: string }>) => {
     setShowAll(false);
     setDateRange(updater);
-  };
+  }, []);
 
   return {
     // State

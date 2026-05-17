@@ -14,7 +14,6 @@ import { SearchEngineInput } from '../common/SearchEngineInput';
 import { SmallCard } from '../common/SmallCard';
 import { TanStackTable } from '../common/TanStackTable';
 import { SegmentedControl } from '../common/SegmentedControl';
-import { TRANSLATIONS } from '../../i18n/translations';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 import { money } from '../../utils/money';
@@ -61,9 +60,8 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
   navigationParams: _navigationParams,
 }) => {
   const isAR = language === 'AR';
-  const fullT = TRANSLATIONS[language];
   const { activeBranchId } = useData();
-  const { success, warning, error: alertError } = useAlert();
+  const { success, warning } = useAlert();
 
   // Async states for loading live intelligence calculations
   const [procurementItems, setProcurementItems] = useState<ProcurementItem[]>([]);
@@ -310,7 +308,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
   }, []);
 
   // Export selected shortages (or all shortages if none selected) to CSV with UTF-8 BOM
-  const handleExportCSV = () => {
+  const handleExportCSV = useCallback(() => {
     const itemsToExport =
       selectedIds.size > 0
         ? shortagesData.filter((item) => selectedIds.has(item.drug.id))
@@ -393,42 +391,9 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
     document.body.removeChild(link);
 
     success(t.exportSuccess, t.exportSuccessDesc.replace('{count}', String(itemsToExport.length)));
-  };
+  }, [selectedIds, shortagesData, warning, success, t]);
 
-  // Bulk reorder trigger to pre-populate purchases cart
-  const handleBulkReorder = () => {
-    if (selectedIds.size === 0) {
-      warning(t.warningNoItemsSelectedTitle, t.warningNoItemsSelectedDesc);
-      return;
-    }
 
-    const itemsToOrder = shortagesData
-      .filter((item) => selectedIds.has(item.drug.id))
-      .map((item) => ({
-        id: item.drug.id,
-        name: item.drug.name,
-        nameAr: item.drug.nameAr,
-        dosageForm: item.drug.dosageForm,
-        unitsPerPack: item.drug.unitsPerPack || 1,
-        quantity: item.suggestedQty > 0 ? item.suggestedQty : 10,
-        costPrice: item.drug.costPrice || 0,
-        publicPrice: item.drug.publicPrice || 0,
-        barcode: item.drug.barcode,
-        supplierId: item.drug.supplierId,
-      }));
-
-    if (onViewChange) {
-      onViewChange('purchases', {
-        autoPopulateItems: itemsToOrder,
-      });
-      success(
-        t.navigatingToPurchases,
-        t.preparedOrderDesc.replace('{count}', String(itemsToOrder.length))
-      );
-    } else {
-      alertError(t.navigationError, t.navigationErrorDesc);
-    }
-  };
 
   // Define Table Columns inline to gain close access to selection states
   const columns = useMemo((): ColumnDef<EnrichedShortageItem>[] => {
@@ -513,41 +478,34 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
 
           switch (item.alertType) {
             case 'OUT_OF_STOCK_SOLD':
-              badgeClass =
-                'border-red-200 bg-red-50 text-red-700 dark:border-red-900/30 dark:bg-red-950/10 dark:text-red-400';
+              badgeClass = 'badge-danger';
               icon = 'dangerous';
               label = t.statusOutOfStockSold;
               break;
             case 'MANUAL_MINIMUM_REACHED':
-              badgeClass =
-                'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/30 dark:bg-amber-950/10 dark:text-amber-400';
+              badgeClass = 'badge-warning';
               icon = 'low_priority';
               label = t.statusManualMinimumReached;
               break;
             case 'PREDICTIVE_SHORTAGE':
-              badgeClass =
-                'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-900/30 dark:bg-purple-950/10 dark:text-purple-400';
+              badgeClass = 'badge-purple';
               icon = 'psychology';
               label = t.statusPredictiveShortage;
               break;
             case 'OUT_OF_STOCK_DEFAULT':
-              badgeClass =
-                'border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/20 dark:text-zinc-400';
+              badgeClass = 'badge-neutral';
               icon = 'block';
               label = t.statusOutOfStockDefault;
               break;
             default:
-              badgeClass =
-                'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/30 dark:bg-emerald-950/10 dark:text-emerald-400';
+              badgeClass = 'badge-success';
               icon = 'check_circle';
               label = t.statusNormal;
           }
 
           return (
-            <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[11px] font-bold uppercase tracking-wide bg-transparent ${badgeClass}`}
-            >
-              <span className='material-symbols-rounded text-sm'>{icon}</span>
+            <span className={`${badgeClass} gap-1.5`}>
+              <span className='material-symbols-rounded'>{icon}</span>
               {label}
             </span>
           );
@@ -636,7 +594,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
             );
           }
 
-          let colorClass = 'text-emerald-600 dark:text-emerald-400';
+          let colorClass = 'text-emerald-600 dark:text-emerald-400 font-medium';
           if (item.stockDays < 7) {
             colorClass = 'text-red-600 dark:text-red-400 font-black';
           } else if (item.stockDays < 14) {
@@ -644,10 +602,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
           }
 
           return (
-            <div className='flex flex-col items-center'>
-              <span className={`text-sm tabular-nums ${colorClass}`}>{item.stockDays}</span>
-              <span className='text-[10px] text-gray-400'>{t.daysLeft}</span>
-            </div>
+            <span className={`text-sm tabular-nums ${colorClass}`}>{item.stockDays}</span>
           );
         },
         meta: {
@@ -664,22 +619,19 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
 
           switch (item.abcClass) {
             case 'A':
-              badgeClass =
-                'bg-purple-100 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400 border-purple-200 dark:border-purple-900/30';
+              badgeClass = 'badge-purple';
               break;
             case 'B':
-              badgeClass =
-                'bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border-blue-200 dark:border-blue-900/30';
+              badgeClass = 'badge-blue';
               break;
             case 'C':
-              badgeClass =
-                'bg-gray-100 text-gray-700 dark:bg-zinc-800 dark:text-zinc-400 border-gray-200 dark:border-zinc-700';
+              badgeClass = 'badge-neutral';
               break;
           }
 
           return (
             <span
-              className={`inline-flex items-center justify-center w-7 h-7 rounded-full border text-xs font-black select-none ${badgeClass}`}
+              className={`${badgeClass} w-7 h-7 rounded-full p-0`}
               title={t.abcDescription}
             >
               {item.abcClass}
@@ -699,7 +651,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
           const suggestedPacks = item.suggestedQty;
           return (
             <span
-              className='inline-flex px-2 py-0.5 rounded-md bg-primary-50 dark:bg-primary-950/10 border border-primary-100 dark:border-primary-900/30 text-primary-700 dark:text-primary-400 text-sm font-black tabular-nums'
+              className='text-sm font-black text-gray-900 dark:text-white tabular-nums'
               title={t.suggestedOrderTooltip}
             >
               {suggestedPacks}
@@ -734,18 +686,10 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
         <button
           type='button'
           onClick={handleExportCSV}
-          className='flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-gray-700 bg-white dark:text-zinc-300 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/80 cursor-pointer'
+          className='flex items-center justify-center p-2 bg-black text-white dark:bg-white dark:text-black border border-zinc-950 dark:border-zinc-100 rounded-xl cursor-pointer'
+          title={t.exportButtonLabel}
         >
           <span className='material-symbols-rounded text-lg'>download</span>
-          {t.exportButtonLabel}
-        </button>
-        <button
-          type='button'
-          onClick={handleBulkReorder}
-          className='flex items-center gap-1.5 px-4 py-2 text-sm font-black text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-500 rounded-xl transition-all shadow-sm hover:shadow cursor-pointer'
-        >
-          <span className='material-symbols-rounded text-lg'>shopping_cart</span>
-          {t.reorderBtn}
         </button>
       </div>
     );
@@ -790,8 +734,8 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
       </div>
     );
   }, [
-    searchTerm, setSearchTerm, t, filterConfigs, activeFilters, handleUpdateFilter,
-    handleExportCSV, handleBulkReorder, stats, loadingProcurement,
+    searchTerm, t, filterConfigs, activeFilters, handleUpdateFilter,
+    handleExportCSV, stats, loadingProcurement,
     setLeftContent, setRightContent, setBottomContent, setShowStatsToggle
   ]);
 
@@ -804,49 +748,27 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
       <div className='flex-1 px-page pb-8 overflow-hidden flex flex-col'>
         <div className={`${CARD_BASE} rounded-3xl flex-1 overflow-hidden flex flex-col p-0`}>
           <div className='flex-1 overflow-y-auto scrollbar-hide relative'>
-            {loadingProcurement ? (
-              // Progressive Skeletons loader matching PharmaFlow AI Skeleton guidelines
-              <div className='space-y-4 p-6'>
-                {['sk-1', 'sk-2', 'sk-3', 'sk-4', 'sk-5', 'sk-6'].map((key) => (
-                  <div
-                    key={key}
-                    className='flex items-center justify-between py-4 border-b border-zinc-100 dark:border-zinc-800/40 animate-pulse'
-                  >
-                    <div className='space-y-2 flex-1'>
-                      <div className='h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-2/5' />
-                      <div className='h-3 bg-zinc-100 dark:bg-zinc-800/60 rounded w-1/4' />
-                    </div>
-                    <div className='flex gap-4'>
-                      <div className='h-6 bg-zinc-200 dark:bg-zinc-800 rounded w-20' />
-                      <div className='h-6 bg-zinc-100 dark:bg-zinc-800/60 rounded w-14' />
-                      <div className='h-6 bg-zinc-200 dark:bg-zinc-800 rounded w-16' />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : filteredData.length === 0 ? (
-              // Sleek Empty State Treatment per Zinc principles
-              <div className='flex flex-col items-center justify-center py-24 text-center'>
-                <span className='material-symbols-rounded text-6xl text-zinc-300 dark:text-zinc-700 mb-4 block select-none'>
-                  check_circle
-                </span>
-                <h3 className='text-lg font-bold text-gray-900 dark:text-white mb-2'>
-                  {t.allGoodText}
-                </h3>
-                <p className='text-sm font-medium text-gray-400 dark:text-zinc-500 max-w-md'>
-                  {t.noShortagesFound}
-                </p>
-              </div>
-            ) : (
-              // Render standard high-performance TanStack Table v8
               <TanStackTable
                 data={filteredData}
                 columns={columns}
                 tableId='shortages-alerts-table'
                 dense
                 lite
+                isLoading={loadingProcurement}
+                customEmptyState={
+                  <div className='flex flex-col items-center justify-center py-24 text-center'>
+                    <span className='material-symbols-rounded text-6xl text-zinc-300 dark:text-zinc-700 mb-4 block select-none'>
+                      check_circle
+                    </span>
+                    <h3 className='text-lg font-bold text-gray-900 dark:text-white mb-2'>
+                      {t.allGoodText}
+                    </h3>
+                    <p className='text-sm font-medium text-gray-400 dark:text-zinc-500 max-w-md'>
+                      {t.noShortagesFound}
+                    </p>
+                  </div>
+                }
               />
-            )}
           </div>
         </div>
       </div>
@@ -868,20 +790,10 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
             <button
               type='button'
               onClick={handleExportCSV}
-              className='flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-700 bg-transparent dark:text-zinc-300 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer'
+              className='flex items-center justify-center p-1.5 bg-black text-white dark:bg-white dark:text-black border border-zinc-950 dark:border-zinc-100 rounded-lg cursor-pointer'
+              title={t.exportSelectedButtonLabel}
             >
               <span className='material-symbols-rounded text-base'>download</span>
-              {t.exportSelectedButtonLabel}
-            </button>
-
-            {/* Quick Purchase selection */}
-            <button
-              type='button'
-              onClick={handleBulkReorder}
-              className='flex items-center gap-1.5 px-4 py-2 text-xs font-black text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-500 rounded-xl transition-all shadow-sm cursor-pointer'
-            >
-              <span className='material-symbols-rounded text-base'>shopping_cart</span>
-              {t.reorderBtn}
             </button>
           </div>
         </div>

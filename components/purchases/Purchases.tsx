@@ -562,8 +562,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [taxRate, setTaxRate] = useState(14); // Default 14%, loaded from settings
 
-  // Track navigation parameters from shortages or other pages to avoid duplicates
-  const processedNavParamsRef = useRef<any>(null);
+
 
   const [showPurchaseTabs, setShowPurchaseTabs] = useState(() => {
     if (!activeBranchId) return true;
@@ -584,40 +583,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     }
   }, [showPurchaseTabs, activeBranchId]);
 
-  // Load navigation items (e.g. shortages bulk reorder list)
-  useEffect(() => {
-    if (
-      navigationParams?.autoPopulateItems &&
-      Array.isArray(navigationParams.autoPopulateItems) &&
-      navigationParams.autoPopulateItems.length > 0 &&
-      processedNavParamsRef.current !== navigationParams
-    ) {
-      processedNavParamsRef.current = navigationParams;
-      const itemsToOrder = navigationParams.autoPopulateItems;
 
-      const formattedItems = itemsToOrder.map((item: any) => ({
-        id: idGenerator.generateSync('generic', activeBranchId),
-        drugId: item.id,
-        name: language === 'AR' ? item.nameAr || item.name : item.name,
-        quantity: item.quantity || 10,
-        costPrice: item.costPrice || 0,
-        unitCostPrice: item.unitCostPrice || 0,
-        dosageForm: item.dosageForm || '',
-        publicPrice: item.publicPrice || 0,
-        unitPrice: item.unitPrice || 0,
-        discount: 0,
-        expiryDate: '',
-        tax: taxRate,
-        unitsPerPack: item.unitsPerPack || 1,
-      }));
-
-      setCart((prev) => {
-        const existingDrugIds = new Set(prev.map((i) => i.drugId));
-        const newUniqueItems = formattedItems.filter((i: any) => !existingDrugIds.has(i.drugId));
-        return [...prev, ...newUniqueItems];
-      });
-    }
-  }, [navigationParams, activeBranchId, language, taxRate]);
 
   // Sync helpers
   const setCart = (newCart: PurchaseItem[] | ((prev: PurchaseItem[]) => PurchaseItem[])) => {

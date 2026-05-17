@@ -258,7 +258,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
         size: 100,
         meta: { align: 'start' },
         cell: ({ row }) => (
-          <span className='text-xs font-mono text-gray-500 dark:text-gray-400'>
+          <span className='truncate block'>
             {row.original.supplierCode || row.original.id.slice(0, 8)}
           </span>
         ),
@@ -269,7 +269,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
         size: 200,
         meta: { align: 'start' },
         cell: ({ getValue }) => (
-          <span className='text-sm font-bold text-gray-800 dark:text-gray-100 truncate'>
+          <span className='truncate block'>
             {getValue() as string}
           </span>
         ),
@@ -278,9 +278,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
         accessorKey: 'contactPerson',
         header: t.headers?.contactPerson || 'Contact Person',
         size: 180,
-        meta: { align: 'start' },
+        meta: { align: 'center' },
         cell: ({ getValue }) => (
-          <span className='text-sm text-gray-700 dark:text-gray-300 truncate'>
+          <span className='truncate block'>
             {getValue() as string}
           </span>
         ),
@@ -291,7 +291,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
         size: 140,
         meta: { align: 'start', dir: 'ltr' },
         cell: ({ getValue }) => (
-          <span className='text-sm font-mono text-gray-600 dark:text-gray-400 truncate' dir='ltr'>
+          <span className='truncate block' dir='ltr'>
             {getValue() as string}
           </span>
         ),
@@ -302,7 +302,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
         size: 200,
         meta: { align: 'start' },
         cell: ({ getValue }) => (
-          <span className='text-sm text-gray-600 dark:text-gray-400 truncate'>
+          <span className='truncate block'>
             {getValue() as string}
           </span>
         ),
@@ -317,7 +317,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
           const id = row.original.governorate;
           const gov = GOVERNORATES.find(g => g.id === id);
           return (
-            <span className='text-sm text-gray-600 dark:text-gray-400'>
+            <span className='truncate block'>
               {gov ? (language === 'AR' ? gov.name_ar : gov.name_en) : (id || '-')}
             </span>
           );
@@ -340,12 +340,12 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
           const align = column.columnDef.meta?.align || 'start';
           
           return (
-            <div className={`flex flex-col py-1 overflow-hidden items-${align}`}>
-              <span className='text-sm font-medium text-gray-700 dark:text-gray-200 truncate'>
+            <div className={`flex flex-col py-0.5 overflow-hidden items-${align}`}>
+              <span className='truncate block'>
                 {locationLine || '-'}
               </span>
               {s.address && (
-                <span className='text-xs text-gray-500 dark:text-gray-400 truncate opacity-80' title={s.address}>
+                <span className='truncate block pt-1.5 opacity-75 text-[0.8em]' title={s.address}>
                   {s.address}
                 </span>
               )}
@@ -416,6 +416,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
               filterableColumns={[governorateFilterConfig]}
               initialFilters={activeFilters}
               onFilterChange={setActiveFilters}
+              dense={true}
             />
           </div>
         </>

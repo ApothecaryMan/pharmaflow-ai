@@ -65,7 +65,7 @@ BEGIN
     (p_supplier->>'governorate'),
     (p_supplier->>'city'),
     (p_supplier->>'area'),
-    COALESCE((p_supplier->>'status'), 'active'),
+    COALESCE((p_supplier->>'status'), 'active')::public.supplier_status,
     now(),
     now()
   ) RETURNING * INTO v_result;
