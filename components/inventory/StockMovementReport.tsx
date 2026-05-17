@@ -202,9 +202,10 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
         centerContent={
           <SegmentedControl
             options={[
-              { label: language === 'AR' ? 'المخزون' : 'Inventory', value: 'inventory' },
-              { label: language === 'AR' ? 'إضافة منتج' : 'Add Product', value: 'add-product' },
-              { label: language === 'AR' ? 'حركة المخزون' : 'Stock Movement', value: 'stock-movement' },
+              { label: t.inventory?.tabs?.inventory || 'المخزون', value: 'inventory' },
+              { label: t.inventory?.tabs?.addProduct || 'إضافة منتج', value: 'add-product' },
+              { label: t.inventory?.tabs?.stockMovement || 'حركة المخزون', value: 'stock-movement' },
+              { label: t.inventory?.tabs?.shortages || 'النواقص', value: 'shortages' },
             ]}
             value='stock-movement'
             onChange={(val) => onViewChange?.(String(val))}

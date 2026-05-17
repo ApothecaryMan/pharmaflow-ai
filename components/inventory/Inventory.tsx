@@ -764,9 +764,10 @@ export const Inventory: React.FC<InventoryProps> = ({
         centerContent={
           <SegmentedControl
             options={[
-              { label: t.inventory?.titleAr || 'المخزون', value: 'inventory' },
-              { label: t.inventory?.addProductAr || 'إضافة منتج', value: 'add-product' },
-              { label: t.inventory?.stockMovementAr || 'حركة المخزون', value: 'stock-movement' },
+              { label: t.inventory?.tabs?.inventory || 'المخزون', value: 'inventory' },
+              { label: t.inventory?.tabs?.addProduct || 'إضافة منتج', value: 'add-product' },
+              { label: t.inventory?.tabs?.stockMovement || 'حركة المخزون', value: 'stock-movement' },
+              { label: t.inventory?.tabs?.shortages || 'النواقص', value: 'shortages' },
             ]}
             value='inventory'
             onChange={(val) => onViewChange?.(String(val))}

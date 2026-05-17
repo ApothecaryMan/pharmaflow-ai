@@ -9,11 +9,14 @@ import type { ProcurementItem } from '../../types/intelligence';
 import type { Drug } from '../../types/inventory';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { CARD_BASE } from '../../utils/themeStyles';
-import { FilterDropdown } from '../common/FilterDropdown';
 import { PageHeader } from '../common/PageHeader';
 import { SearchEngineInput } from '../common/SearchEngineInput';
 import { SmallCard } from '../common/SmallCard';
 import { TanStackTable } from '../common/TanStackTable';
+import { SegmentedControl } from '../common/SegmentedControl';
+import { TRANSLATIONS } from '../../i18n/translations';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 
 interface ShortagesPageProps {
   t: Record<string, string>; // Mapped to t.shortages
@@ -57,6 +60,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
   navigationParams: _navigationParams,
 }) => {
   const isAR = language === 'AR';
+  const fullT = TRANSLATIONS[language];
   const { activeBranchId } = useData();
   const { success, warning, error: alertError } = useAlert();
 
@@ -66,12 +70,17 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
 
   // Filter and selection states
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [selectedAlertFilter, setSelectedAlertFilter] = useState<FilterAlertType>('ALL');
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('ALL');
+  const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [showStats, setShowStats] = useState<boolean>(() =>
+    storage.get<boolean>(StorageKeys.HEADER_STATS_VISIBLE, true)
+  );
 
-  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
-  const [isAlertDropdownOpen, setIsAlertDropdownOpen] = useState(false);
+  const handleToggleStats = () => {
+    const nextVal = !showStats;
+    setShowStats(nextVal);
+    storage.set(StorageKeys.HEADER_STATS_VISIBLE, nextVal);
+  };
 
   // Fetch live daily sales velocities and AI predicted reorders from intelligence service
   useEffect(() => {
@@ -167,6 +176,41 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
     return Array.from(list).sort();
   }, [inventory]);
 
+  const filterConfigs = useMemo(() => [
+    {
+      id: 'category',
+      label: t.filterCategory || (isAR ? 'التصنيف' : 'Category'),
+      icon: 'category',
+      mode: 'single' as const,
+      defaultValue: 'ALL',
+      options: [
+        { value: 'ALL', label: t.filterCategory || (isAR ? 'الكل' : 'ALL') },
+        ...categories.map(cat => ({ value: cat, label: cat })),
+      ],
+    },
+    {
+      id: 'alertType',
+      label: t.filterAlert || (isAR ? 'نوع التنبيه' : 'Alert Type'),
+      icon: 'warning',
+      mode: 'single' as const,
+      defaultValue: 'ALL',
+      options: [
+        { value: 'ALL', label: t.filterAlert || (isAR ? 'الكل' : 'ALL') },
+        { value: 'OUT_OF_STOCK_SOLD', label: t.statusOutOfStockSold },
+        { value: 'MANUAL_MINIMUM_REACHED', label: t.statusManualMinimumReached },
+        { value: 'PREDICTIVE_SHORTAGE', label: t.statusPredictiveShortage },
+        { value: 'OUT_OF_STOCK_DEFAULT', label: t.statusOutOfStockDefault },
+      ],
+    },
+  ], [categories, t, isAR]);
+
+  const handleUpdateFilter = useCallback((groupId: string, newValues: any[]) => {
+    setActiveFilters((prev) => ({
+      ...prev,
+      [groupId]: newValues,
+    }));
+  }, []);
+
   // Filter list to only contain products that are classified as shortages/alerts
   const shortagesData = useMemo(() => {
     return enrichedData.filter((item) => item.alertType !== 'NORMAL');
@@ -201,6 +245,9 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
 
   // Perform search and filter combinations on client side
   const filteredData = useMemo(() => {
+    const selectedCategoryFilter = activeFilters.category?.[0] || 'ALL';
+    const selectedAlertFilter = activeFilters.alertType?.[0] || 'ALL';
+
     return shortagesData.filter((item) => {
       // 1. Alert Type filter
       if (selectedAlertFilter !== 'ALL' && item.alertType !== selectedAlertFilter) {
@@ -229,7 +276,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
 
       return true;
     });
-  }, [shortagesData, selectedAlertFilter, selectedCategoryFilter, searchTerm]);
+  }, [shortagesData, activeFilters, searchTerm]);
 
   // Toggle selection for a single row
   const handleToggleSelect = useCallback((id: string) => {
@@ -664,8 +711,34 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
       dir={isAR ? 'rtl' : 'ltr'}
     >
       <PageHeader
-        title={t.title}
-        subtitle={t.subtitle}
+        leftContent={
+          <div className='relative flex-1 max-w-xl'>
+            <SearchEngineInput
+              value={searchTerm}
+              onSearchChange={setSearchTerm}
+              placeholder={t.searchPlaceholder}
+              onClear={() => setSearchTerm('')}
+              color='primary'
+              filterConfigs={filterConfigs}
+              activeFilters={activeFilters}
+              onUpdateFilter={handleUpdateFilter}
+            />
+          </div>
+        }
+        centerContent={
+          <SegmentedControl
+            options={[
+              { label: fullT.inventory?.tabs?.inventory || 'المخزون', value: 'inventory' },
+              { label: fullT.inventory?.tabs?.addProduct || 'إضافة منتج', value: 'add-product' },
+              { label: fullT.inventory?.tabs?.stockMovement || 'حركة المخزون', value: 'stock-movement' },
+              { label: fullT.inventory?.tabs?.shortages || 'النواقص', value: 'shortages' },
+            ]}
+            value='shortages'
+            onChange={(val) => onViewChange?.(val as ViewState)}
+            size="md"
+            shape="pill"
+          />
+        }
         rightContent={
           <div className='flex items-center gap-2'>
             {/* Export Shortages button */}
@@ -689,144 +762,56 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
             </button>
           </div>
         }
+        showStatsToggle={true}
+        showBottom={showStats}
+        onToggleBottom={handleToggleStats}
+        bottomContent={
+          <div className='grid grid-cols-1 md:grid-cols-4 gap-4 w-full'>
+            {/* Total Monitored Card */}
+            <SmallCard
+              title={t.statsTotal}
+              value={stats.total}
+              icon='inventory_2'
+              iconColor='zinc'
+              isLoading={loadingProcurement}
+            />
+
+            {/* Out of Stock Card */}
+            <SmallCard
+              title={t.statsCritical}
+              value={stats.outOfStock}
+              icon='dangerous'
+              iconColor='red'
+              subValue={
+                stats.lostSales > 0
+                  ? `-${Math.round(stats.lostSales)} EGP / ${t.weekAbbreviation}`
+                  : undefined
+              }
+              isLoading={loadingProcurement}
+            />
+
+            {/* Below Limit Card */}
+            <SmallCard
+              title={t.statusManualMinimumReached}
+              value={stats.manualMin}
+              icon='low_priority'
+              iconColor='amber'
+              isLoading={loadingProcurement}
+            />
+
+            {/* AI Predictive Depletion Card */}
+            <SmallCard
+              title={t.statsPredictive}
+              value={stats.predictive}
+              icon='psychology'
+              iconColor='purple'
+              isLoading={loadingProcurement}
+            />
+          </div>
+        }
       />
 
-      {/* Summary KPI Cards Panels */}
-      <div className='px-page mb-6'>
-        <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
-          {/* Total Monitored Card */}
-          <SmallCard
-            title={t.statsTotal}
-            value={stats.total}
-            icon='inventory_2'
-            iconColor='zinc'
-            isLoading={loadingProcurement}
-          />
 
-          {/* Out of Stock Card */}
-          <SmallCard
-            title={t.statsCritical}
-            value={stats.outOfStock}
-            icon='dangerous'
-            iconColor='red'
-            subValue={
-              stats.lostSales > 0
-                ? `-${Math.round(stats.lostSales)} EGP / ${t.weekAbbreviation}`
-                : undefined
-            }
-            isLoading={loadingProcurement}
-          />
-
-          {/* Below Limit Card */}
-          <SmallCard
-            title={t.statusManualMinimumReached}
-            value={stats.manualMin}
-            icon='low_priority'
-            iconColor='amber'
-            isLoading={loadingProcurement}
-          />
-
-          {/* AI Predictive Depletion Card */}
-          <SmallCard
-            title={t.statsPredictive}
-            value={stats.predictive}
-            icon='psychology'
-            iconColor='purple'
-            isLoading={loadingProcurement}
-          />
-        </div>
-      </div>
-
-      {/* Filter and Search Bar Panel */}
-      <div className='px-page mb-6 flex flex-col md:flex-row gap-3 items-center justify-between'>
-        {/* Unified Search Engine UI Shell */}
-        <div className='w-full md:w-[450px]'>
-          <SearchEngineInput
-            value={searchTerm}
-            onSearchChange={setSearchTerm}
-            placeholder={t.searchPlaceholder}
-            onClear={() => setSearchTerm('')}
-            color='primary'
-          />
-        </div>
-
-        {/* Quick Filters Group */}
-        <div className='flex items-center flex-wrap gap-2 w-full md:w-auto'>
-          {/* Category Dropdown Filter */}
-          <FilterDropdown
-            items={['ALL', ...categories]}
-            selectedItem={selectedCategoryFilter}
-            isOpen={isCategoryDropdownOpen}
-            onToggle={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-            onSelect={(val) => {
-              setSelectedCategoryFilter(val);
-              setIsCategoryDropdownOpen(false);
-            }}
-            renderSelected={(val) => (val === 'ALL' ? t.filterCategory : val)}
-            renderItem={(val) => (val === 'ALL' ? t.filterCategory : val)}
-            className='w-48 text-sm'
-            minHeight={38}
-            variant='input'
-            floating
-            color='primary'
-            keyExtractor={(item) => item}
-          />
-
-          {/* Alert Type Dropdown Filter */}
-          <FilterDropdown
-            items={
-              [
-                'ALL',
-                'OUT_OF_STOCK_SOLD',
-                'MANUAL_MINIMUM_REACHED',
-                'PREDICTIVE_SHORTAGE',
-                'OUT_OF_STOCK_DEFAULT',
-              ] as FilterAlertType[]
-            }
-            selectedItem={selectedAlertFilter}
-            isOpen={isAlertDropdownOpen}
-            onToggle={() => setIsAlertDropdownOpen(!isAlertDropdownOpen)}
-            onSelect={(val) => {
-              setSelectedAlertFilter(val);
-              setIsAlertDropdownOpen(false);
-            }}
-            renderSelected={(val) => {
-              switch (val) {
-                case 'OUT_OF_STOCK_SOLD':
-                  return t.statusOutOfStockSold;
-                case 'MANUAL_MINIMUM_REACHED':
-                  return t.statusManualMinimumReached;
-                case 'PREDICTIVE_SHORTAGE':
-                  return t.statusPredictiveShortage;
-                case 'OUT_OF_STOCK_DEFAULT':
-                  return t.statusOutOfStockDefault;
-                default:
-                  return t.filterAlert;
-              }
-            }}
-            renderItem={(val) => {
-              switch (val) {
-                case 'OUT_OF_STOCK_SOLD':
-                  return t.statusOutOfStockSold;
-                case 'MANUAL_MINIMUM_REACHED':
-                  return t.statusManualMinimumReached;
-                case 'PREDICTIVE_SHORTAGE':
-                  return t.statusPredictiveShortage;
-                case 'OUT_OF_STOCK_DEFAULT':
-                  return t.statusOutOfStockDefault;
-                default:
-                  return t.filterAlert;
-              }
-            }}
-            className='w-56 text-sm'
-            minHeight={38}
-            variant='input'
-            floating
-            color='primary'
-            keyExtractor={(item) => item}
-          />
-        </div>
-      </div>
 
       {/* Main Content Area */}
       <div className='flex-1 px-page pb-8 overflow-hidden flex flex-col'>
