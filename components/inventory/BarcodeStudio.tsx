@@ -200,7 +200,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     if (!isLoaded) return;
     setElements((prev) =>
       prev.map((el) => {
-        if (el.align === 'center') {
+        if (el.align === 'center' && el.id !== 'hotline') {
           return { ...el, x: dims.w / 2 };
         }
         return el;
@@ -377,7 +377,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
         if (el.align === 'center') {
           return {
             ...el,
-            x: presetW / 2,
+            x: el.id === 'hotline' ? el.x : presetW / 2,
             hitboxOffsetX: el.hitboxOffsetX === -1.1 ? 0.0 : el.hitboxOffsetX,
             hitboxWidth: el.id === 'barcode' && el.hitboxWidth === 34 ? 36 : el.hitboxWidth,
             hitboxHeight: el.id === 'barcode' && el.hitboxHeight === 3 ? 8 : el.hitboxHeight,
@@ -606,7 +606,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
     // Check if the current element is center-aligned
     const currentEl = elements.find((el) => el.id === selectedElementId);
-    const isCenterAligned = currentEl?.align === 'center';
+    const isCenterAligned = currentEl?.align === 'center' && currentEl?.id !== 'hotline';
 
     if (isCenterAligned) {
       // Force lock to exact center of the page width
