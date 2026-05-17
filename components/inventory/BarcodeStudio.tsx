@@ -27,6 +27,7 @@ import {
   LABEL_PRESETS,
 } from './LabelPrinter';
 import { PropertyInspector } from './studio/PropertyInspector';
+import { useData } from '../../context/DataContext';
 
 interface BarcodeStudioProps {
   inventory: Drug[];
@@ -43,6 +44,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
   const { playError } = usePosSounds();
+  const { branches, activeBranchId } = useData();
+  const activeBranch = useMemo(() => branches?.find((b: any) => b.id === activeBranchId), [branches, activeBranchId]);
   const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -100,17 +103,17 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const [showBlueprint, setShowBlueprint] = useState(false);
 
   // Data State - Dynamically synced from ReceiptDesigner storage
-  const [receiptSettings, setLocalReceiptSettings] = useState(getReceiptSettings);
+  const [receiptSettings, setLocalReceiptSettings] = useState(() => getReceiptSettings(activeBranchId, activeBranch?.name, activeBranch?.phone));
   const [isLoaded, setIsLoaded] = useState(false);
 
   // --- Receipt Settings Polling (Optimized) ---
   useEffect(() => {
     // Initial load
-    setLocalReceiptSettings(getReceiptSettings());
+    setLocalReceiptSettings(getReceiptSettings(activeBranchId, activeBranch?.name, activeBranch?.phone));
 
     // Check every 3 seconds for changes
     const interval = setInterval(() => {
-      const newSettings = getReceiptSettings();
+      const newSettings = getReceiptSettings(activeBranchId, activeBranch?.name, activeBranch?.phone);
       setLocalReceiptSettings((current) => {
         // Only update if changed to avoid re-renders
         if (
@@ -124,7 +127,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     }, 3000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [activeBranchId, activeBranch]);
 
   const storeName = receiptSettings.storeName;
   const hotline = receiptSettings.hotline;

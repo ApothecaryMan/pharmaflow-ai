@@ -44,6 +44,12 @@ export interface PrintOptions {
   design?: LabelDesign;
   /** Overrides for specific element visibility by ID */
   elementVisibility?: Record<string, boolean>;
+  /** Optional active branch ID for scoping receipt settings */
+  activeBranchId?: string;
+  /** Optional active branch name for fallback store name */
+  activeBranchName?: string;
+  /** Optional active branch phone number for fallback hotline */
+  activeBranchPhone?: string;
 }
 
 // --- Constants ---
@@ -152,16 +158,38 @@ export const getLabelElementContent = (
  * Used to populate 'store' and 'hotline' fields on labels.
  * @returns Object with storeName and hotline
  */
-export const getReceiptSettings = (): { storeName: string; hotline: string } => {
-  const defaultSettings = { storeName: 'ZINC', hotline: '19099' };
+export const getReceiptSettings = (
+  activeBranchId?: string,
+  activeBranchName?: string,
+  activeBranchPhone?: string
+): { storeName: string; hotline: string } => {
+  const branchId = activeBranchId || storage.get<string>('pharma_activeBranchId', '');
+  const defaultSettings = { 
+    storeName: activeBranchName || 'ZINC', 
+    hotline: activeBranchPhone || '19099' 
+  };
 
   try {
-    const templates = storage.get<any[]>(StorageKeys.RECEIPT_TEMPLATES, []);
+    const templateKey = branchId 
+      ? `receipt_designer_${branchId}_${StorageKeys.RECEIPT_TEMPLATES}` 
+      : StorageKeys.RECEIPT_TEMPLATES;
+    
+    let templates = storage.get<any[]>(templateKey, []);
+    
+    // Fallback if branch-scoped templates is empty, but we have global
+    if (templates.length === 0 && branchId) {
+      templates = storage.get<any[]>(StorageKeys.RECEIPT_TEMPLATES, []);
+    }
+
     if (templates.length === 0) {
       return defaultSettings;
     }
 
-    const activeId = storage.get<string | null>(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID, null);
+    const activeTemplateIdKey = branchId 
+      ? `receipt_designer_${branchId}_${StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID}` 
+      : StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID;
+      
+    const activeId = storage.get<string | null>(activeTemplateIdKey, null);
     const activeTemplate =
       templates.find((t: any) => t?.id === activeId) ||
       templates.find((t: any) => t?.isDefault) ||
@@ -634,7 +662,7 @@ export const printLabels = async (
         ? design.customDims || { w: 38, h: 25 }
         : LABEL_PRESETS[design.selectedPreset] || { w: 38, h: 25 };
 
-    const receiptSettings = getReceiptSettings();
+    const receiptSettings = getReceiptSettings(options.activeBranchId, options.activeBranchName, options.activeBranchPhone);
     const offsets = getPrintOffsets();
     const printOffsetX = offsets.x;
     const printOffsetY = offsets.y;

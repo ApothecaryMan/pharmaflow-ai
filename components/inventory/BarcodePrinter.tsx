@@ -12,6 +12,7 @@ import { useSmartDirection } from '../common/SmartInputs';
 import { useStatusBar } from '../layout/StatusBar';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
+import { useData } from '../../context/DataContext';
 import { 
   type PrintLabelItem, 
   printLabels,
@@ -48,6 +49,8 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
   const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
   const { playBeep, playError } = usePosSounds();
+  const { branches, activeBranchId } = useData();
+  const activeBranch = useMemo(() => branches?.find((b: any) => b.id === activeBranchId), [branches, activeBranchId]);
   const [search, setSearch] = useState('');
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [isPrinting, setIsPrinting] = useState(false);
@@ -296,6 +299,9 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
     printLabels(itemsToPrint, {
       design: currentDesign,
       elementVisibility: printConfig,
+      activeBranchId,
+      activeBranchName: activeBranch?.name,
+      activeBranchPhone: activeBranch?.phone,
     });
 
     // Optional: Clear queue after print? Or keep for re-print?
@@ -340,7 +346,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
       const renderDims = { w: dims.w, h: labelHeight };
 
       const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
-      const receiptSettings = getReceiptSettings();
+      const receiptSettings = getReceiptSettings(activeBranchId, activeBranch?.name, activeBranch?.phone);
 
       const labelHTML = generateLabelHTML(
         selectedDrug,
