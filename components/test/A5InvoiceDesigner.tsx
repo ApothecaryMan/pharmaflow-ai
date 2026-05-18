@@ -510,8 +510,8 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                 We dynamically chunk items based on orientation to prevent overflow.
               */}
               {(() => {
-                const maxIntermediate = orientation === 'portrait' ? 17 : 8;
-                const maxLast = orientation === 'portrait' ? 11 : 4;
+                const maxIntermediate = orientation === 'portrait' ? 18 : 13;
+                const maxLast = orientation === 'portrait' ? 11 : 8;
 
                 const pageChunks = [];
                 let tempItems = [...items];
@@ -567,66 +567,79 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                           }}
                         >
                           <div>
-                            {/* 1. Header Band with Egyptian Supplier Details */}
-                            <div 
-                              className="flex items-start justify-between border-b-2 pb-1.5 mb-1.5"
-                              style={{ borderColor: accentColor }}
+                            {/* Wrapper container for side-by-side in landscape, stacked in portrait */}
+                            <div className={
+                              orientation === 'landscape'
+                                ? "grid grid-cols-[1.1fr_0.9fr] gap-3 items-stretch border-b-2 pb-1.5 mb-1.5"
+                                : "block"
+                            }
+                            style={{ borderColor: orientation === 'landscape' ? accentColor : 'transparent' }}
                             >
-                              {/* Supplier info */}
-                              <div className="space-y-1 max-w-[65%]">
-                                <div className="flex items-center gap-2">
-                                  <span className="material-symbols-rounded text-2xl" style={{ color: accentColor }}>
-                                    {supplier.logo}
-                                  </span>
-                                  <h1 className="text-sm font-black tracking-tight" style={{ color: accentColor }}>
-                                    {language === 'AR' ? supplier.nameAr : supplier.nameEn}
-                                  </h1>
+                              {/* 1. Header Band with Egyptian Supplier Details */}
+                              <div 
+                                className={`flex items-start justify-between ${
+                                  orientation === 'landscape' ? 'pb-0 mb-0 border-b-0' : 'border-b-2 pb-1.5 mb-1.5'
+                                }`}
+                                style={{ borderColor: orientation === 'landscape' ? 'transparent' : accentColor }}
+                              >
+                                {/* Supplier info */}
+                                <div className="space-y-1 max-w-[65%]">
+                                  <div className="flex items-center gap-2">
+                                    <span className="material-symbols-rounded text-2xl" style={{ color: accentColor }}>
+                                      {supplier.logo}
+                                    </span>
+                                    <h1 className="text-sm font-black tracking-tight" style={{ color: accentColor }}>
+                                      {language === 'AR' ? supplier.nameAr : supplier.nameEn}
+                                    </h1>
+                                  </div>
+                                  <p className="text-[10px] text-zinc-500 font-bold">
+                                    {language === 'AR' ? supplier.typeAr : supplier.typeEn}
+                                  </p>
+                                  <p className="text-[9px] text-zinc-555 leading-relaxed">
+                                    {language === 'AR' ? supplier.addressAr : supplier.addressEn}
+                                  </p>
                                 </div>
-                                <p className="text-[10px] text-zinc-500 font-bold">
-                                  {language === 'AR' ? supplier.typeAr : supplier.typeEn}
-                                </p>
-                                <p className="text-[9px] text-zinc-555 leading-relaxed">
-                                  {language === 'AR' ? supplier.addressAr : supplier.addressEn}
-                                </p>
+
+                                {/* Corporate/Warehouse Registration Metadata */}
+                                <div className="text-right space-y-1">
+                                  <span className="inline-block px-2 py-0.5 text-[8px] font-black text-white rounded" style={{ backgroundColor: accentColor }}>
+                                    {supplier.phone}
+                                  </span>
+                                  <p className="text-[9px] text-zinc-650 font-extrabold">
+                                    {supplier.commercialRegister}
+                                  </p>
+                                  <p className="text-[9px] text-zinc-650 font-extrabold">
+                                    {supplier.taxCard}
+                                  </p>
+                                </div>
                               </div>
 
-                              {/* Corporate/Warehouse Registration Metadata */}
-                              <div className="text-right space-y-1">
-                                <span className="inline-block px-2 py-0.5 text-[8px] font-black text-white rounded" style={{ backgroundColor: accentColor }}>
-                                  {supplier.phone}
-                                </span>
-                                <p className="text-[9px] text-zinc-650 font-extrabold">
-                                  {supplier.commercialRegister}
-                                </p>
-                                <p className="text-[9px] text-zinc-650 font-extrabold">
-                                  {supplier.taxCard}
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* 2. Bill To & Invoice Info block */}
-                            <div className="grid grid-cols-2 gap-4 bg-zinc-50 p-2.5 rounded-lg border border-zinc-200 mb-3 text-[10px]">
-                              <div className="space-y-1">
-                                <p className="font-extrabold text-zinc-500 text-[8px] uppercase tracking-wider">
-                                  {language === 'AR' ? 'الجهة المستلمة (الصيدلية)' : 'Billed To (Pharmacy)'}
-                                </p>
-                                <p className="font-black text-zinc-900 text-xs">
-                                  {pharmacyName}
-                                </p>
-                                <p className="text-[9px] text-zinc-600 font-bold">
-                                  {language === 'AR' ? 'الرقم الضريبي الصيدلية:' : 'Pharmacy Tax ID:'} {pharmacyTaxId}
-                                </p>
-                              </div>
-                              <div className="space-y-1 text-right">
-                                <p className="font-extrabold text-zinc-500 text-[8px] uppercase tracking-wider">
-                                  {language === 'AR' ? 'بيانات الحركة الماليّة' : 'Document Details'}
-                                </p>
-                                <p className="font-bold text-zinc-900">
-                                  {language === 'AR' ? 'رقم الفاتورة:' : 'Invoice No:'} <span className="font-mono">{invoiceNumber}</span>
-                                </p>
-                                <p className="text-[9px] text-zinc-600 font-bold">
-                                  {language === 'AR' ? 'تاريخ التوريد:' : 'Supply Date:'} <span className="font-mono">{invoiceDate}</span>
-                                </p>
+                              {/* 2. Bill To & Invoice Info block */}
+                              <div className={`grid grid-cols-2 gap-3 bg-zinc-50 rounded-lg border border-zinc-200 text-[10px] ${
+                                orientation === 'landscape' ? 'p-2 mb-0' : 'p-2.5 mb-3'
+                              }`}>
+                                <div className="space-y-1">
+                                  <p className="font-extrabold text-zinc-500 text-[8px] uppercase tracking-wider">
+                                    {language === 'AR' ? 'الجهة المستلمة (الصيدلية)' : 'Billed To (Pharmacy)'}
+                                  </p>
+                                  <p className="font-black text-zinc-900 text-xs">
+                                    {pharmacyName}
+                                  </p>
+                                  <p className="text-[9px] text-zinc-600 font-bold">
+                                    {language === 'AR' ? 'الرقم الضريبي الصيدلية:' : 'Pharmacy Tax ID:'} {pharmacyTaxId}
+                                  </p>
+                                </div>
+                                <div className="space-y-1 text-right">
+                                  <p className="font-extrabold text-zinc-500 text-[8px] uppercase tracking-wider">
+                                    {language === 'AR' ? 'بيانات الحركة الماليّة' : 'Document Details'}
+                                  </p>
+                                  <p className="font-bold text-zinc-900">
+                                    {language === 'AR' ? 'رقم الفاتورة:' : 'Invoice No:'} <span className="font-mono">{invoiceNumber}</span>
+                                  </p>
+                                  <p className="text-[9px] text-zinc-600 font-bold">
+                                    {language === 'AR' ? 'تاريخ التوريد:' : 'Supply Date:'} <span className="font-mono">{invoiceDate}</span>
+                                  </p>
+                                </div>
                               </div>
                             </div>
 
@@ -729,7 +742,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                                   <div className={`border border-zinc-200 rounded-lg bg-zinc-50/50 flex flex-col justify-between ${
                                     orientation === 'landscape' ? 'p-1.5 space-y-1' : 'p-2 space-y-1.5'
                                   }`}>
-                                    <div className="space-y-1">
+                                    <div>
                                       <p className="font-extrabold text-[8px] text-zinc-500 uppercase tracking-wider">
                                         {language === 'AR' ? 'الشروط والملاحظات الضريبية' : 'Terms & Tax Declaration'}
                                       </p>
@@ -740,26 +753,23 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
                                           ? 'تخضع هذه الأصناف لقوانين وزارة الصحة المصرية. الفاتورة تشمل ضريبة القيمة المضافة 14% لغير المعفى منها. الدفع مستحق خلال 45 يوماً من تاريخ التوريد.'
                                           : 'Items subject to MOH regulations. Pricing includes 14% VAT where applicable. Payment terms: NET 45 days.'}
                                       </p>
-                                      {showDisclaimers && (
-                                        <p className={`leading-tight text-zinc-450 font-bold ${
-                                          orientation === 'landscape' ? 'text-[6.5px]' : 'text-[7.5px]'
-                                        }`}>
-                                          {language === 'AR' 
-                                            ? '• معتمدة إلكترونياً ومتصلة بالفحص المالي لمخازن الأدوية المركزية.' 
-                                            : '• Electronically approved and mapped to central warehouses clearance.'}
-                                        </p>
-                                      )}
                                     </div>
                                     {showDisclaimers && (
-                                      <div className={`border-t border-dashed border-zinc-300 flex items-center justify-center ${
-                                        orientation === 'landscape' ? 'pt-1.5' : 'pt-2'
+                                      <div className={`border-t border-dashed border-zinc-300 flex items-center gap-2 ${
+                                        orientation === 'landscape' ? 'pt-0.5' : 'pt-1'
                                       }`}>
-                                        <div className={`border border-zinc-400 flex flex-col items-center justify-center font-mono font-black text-zinc-700 bg-white rounded shadow-sm ${
-                                          orientation === 'landscape' ? 'w-10 h-10 text-[9px]' : 'w-12 h-12 text-[10px]'
+                                        <div className={`border border-zinc-300 dark:border-zinc-700 flex items-center justify-center font-mono font-bold text-zinc-400 shrink-0 ${
+                                          orientation === 'landscape' ? 'w-9 h-9 text-[8px]' : 'w-12 h-12 text-[10px]'
                                         }`}>
-                                          <span className="text-[6px] text-zinc-400 leading-none mb-0.5 font-bold">E-INVOICE</span>
-                                          <span className="font-black tracking-wider leading-none">QR</span>
+                                          QR
                                         </div>
+                                        <p className={`leading-tight text-zinc-400 ${
+                                          orientation === 'landscape' ? 'text-[6.5px]' : 'text-[7px]'
+                                        }`}>
+                                          {language === 'AR' 
+                                            ? 'معتمدة إلكترونياً ومتصلة بالفحص المالي لمخازن الأدوية المركزية.' 
+                                            : 'Electronically approved and mapped to central warehouses clearance.'}
+                                        </p>
                                       </div>
                                     )}
                                   </div>
