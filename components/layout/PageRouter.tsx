@@ -196,6 +196,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     'add-product': t.inventory.addProduct,
     'drug-interactions': t.drugInteractions,
     shortages: t.shortages,
+    'scrollbar-lab': t.newTests,
   };
 
   if (viewTranslations[view]) {

@@ -39,6 +39,7 @@ import { DesktopSettings } from '../components/settings/DesktopSettings';
 import { PricingPage } from '../components/settings/PricingPage';
 
 import { ModalTests } from '../components/test/ModalTests';
+import { ScrollbarLab } from '../components/test/ScrollbarLab';
 import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
 import type { PermissionAction } from './permissions';
 import { PERMISSIONS_MAPPING } from './permissionsMapping';
@@ -499,6 +500,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'test',
     requiredProps: ['color', 't', 'language'],
     permission: PERMISSIONS_MAPPING['modal-tests'],
+  },
+  'scrollbar-lab': {
+    id: 'scrollbar-lab',
+    component: ScrollbarLab,
+    menuLabel: 'Scrollbar Lab',
+    menuLabelAr: 'مختبر شريط التمرير',
+    icon: 'science',
+    category: 'test',
+    requiredProps: ['color', 't', 'language'],
+    permission: PERMISSIONS_MAPPING['scrollbar-lab'],
+    layout: 'standard',
   },
   'employee-list': {
     id: 'employee-list',

@@ -1216,6 +1216,7 @@ export const PHARMACY_MENU: MenuItem[] = [
           { label: 'POS Test', view: 'pos-test', icon: 'point_of_sale' },
           { label: 'Create PO (Test)', view: 'purchases-test', icon: 'add_shopping_cart' },
           { label: 'Modal Tests', view: 'modal-tests', icon: 'dialogs' },
+          { label: 'Scrollbar Lab', view: 'scrollbar-lab', icon: 'science' },
         ],
       },
     ],

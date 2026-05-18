@@ -874,6 +874,7 @@ export const MENU_TRANSLATIONS = {
     'Login Audit Report': 'تقرير سجل تسجيل الدخول',
     'Shortages & Alerts': 'النواقص والإنذارات التنبؤية',
     'Shortages & Predictive Alerts': 'النواقص والإنذارات التنبؤية',
+    'New Tests': 'اختبارات جديدة',
   },
 };
 

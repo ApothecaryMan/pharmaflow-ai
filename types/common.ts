@@ -70,7 +70,8 @@ export type ViewState =
   | 'employee-attendance-profile'
   | 'desktop-settings'
   | 'drug-interactions'
-  | 'shortages';
+  | 'shortages'
+  | 'scrollbar-lab';
 
 /** Dashboard widget expand options */
 export type ExpandedView =

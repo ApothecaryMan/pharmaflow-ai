@@ -2611,6 +2611,14 @@ export const TRANSLATIONS = {
       generalCategory: 'General',
       weekAbbreviation: 'wk',
     },
+    newTests: {
+      title: 'Scrollbar Lab',
+      subtitle: 'Premium testing ground for custom scrollbars and UI patterns',
+      description: 'An interactive playground built for developers to test and copy advanced custom scrollbar styles.',
+      welcome: 'Welcome to the Scrollbar Lab',
+      getStarted: 'Ready to write your next feature?',
+      designAesthetic: 'Premium Design Language Active',
+    },
   },
   AR: {
     common: {
@@ -5231,6 +5239,14 @@ export const TRANSLATIONS = {
       csvHeaderCategory: 'القسم',
       generalCategory: 'عام',
       weekAbbreviation: 'أسبوع',
+    },
+    newTests: {
+      title: 'مختبر شريط التمرير',
+      subtitle: 'بيئة اختبار متميزة لأشرطة التمرير المخصصة وأنماط الواجهة',
+      description: 'بيئة تفاعلية مصممة للمطورين لاختبار ونسخ تصميمات أشرطة التمرير المخصصة والمتقدمة.',
+      welcome: 'مرحباً بك في مختبر شريط التمرير',
+      getStarted: 'هل أنت جاهز لكتابة ميزتك التالية؟',
+      designAesthetic: 'لغة التصميم المتميزة نشطة',
     },
   },
 };
