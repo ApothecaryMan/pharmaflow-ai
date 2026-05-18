@@ -3,30 +3,88 @@
   Uses centralized tokens from variables.css
 */
 
+
+
+/* 
+  ZINC - Unified Global Scrollbar System (Ghost Stripe Style)
+  -------------------------------------------------------------
+  This file configures the premium custom scrollbar styling globally for Pharmaflow AI.
+  
+  [CRITICAL ENGINEERING NOTE - CHROMIUM 121+ COLLISION WORKAROUND]
+  =================================================================
+  * Problem 1: 
+    Starting from Chrome 121+, Chromium browsers natively support standard standard CSS properties 
+    `scrollbar-width` and `scrollbar-color`. However, specifying standard rules globally 
+    automatically disables all custom Webkit pseudo-elements (`::-webkit-scrollbar`).
+    
+  * Solution 1:
+    We isolate Firefox styles inside `@supports not selector(::-webkit-scrollbar)`. Since Chrome/Safari/Edge 
+    do support `::-webkit-scrollbar`, they completely skip this block, enabling full custom rendering.
+    
+  * Problem 2:
+    Chromium browsers DO NOT support standard CSS transition/animation properties directly 
+    on pseudo-elements like `::-webkit-scrollbar-thumb`. Writing a transition directly 
+    on the thumb causes it to snap abruptly, ruining the premium, fluid feel of the interface.
+    
+  * Solution 2 (CSS Variable @property Interpolation):
+    We define a registered CSS Custom Property `--global-scrollbar-color` with color syntax. 
+    By registering the property, the browser knows how to transition/interpolate its value!
+    We apply the `transition` to the host element (`*`) on its `--global-scrollbar-color` variable. 
+    When the container is hovered, the color variable fades smoothly from transparent to faded gray.
+    The webkit thumb simply references `var(--global-scrollbar-color)` as its background, 
+    inheriting the gorgeous, hardware-accelerated fade-in/fade-out transition flawlessly!
+*/
+
+@property --global-scrollbar-color {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgba(156, 163, 175, 0);
+}
+
 @layer base {
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  /* Firefox specific isolation (only applied to browsers lacking webkit pseudo-elements support) */
+  @supports not selector(::-webkit-scrollbar) {
+    *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *) {
+      scrollbar-width: none !important;
+      transition: scrollbar-color 0.25s ease !important;
+    }
+    *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *):hover {
+      scrollbar-width: thin !important;
+      scrollbar-color: rgba(156, 163, 175, 0.3) transparent !important;
+    }
   }
 
-  ::-webkit-scrollbar {
-    width: var(--scrollbar-width);
-    height: var(--scrollbar-width);
+  /* Chrome / Safari / Edge / Webkit global overrides */
+  *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *) {
+    --global-scrollbar-color: rgba(156, 163, 175, 0) !important;
+    transition: --global-scrollbar-color 0.25s ease-in-out !important;
   }
 
-  ::-webkit-scrollbar-track {
-    background: var(--scrollbar-track);
+  /* Transition to visible state when container is hovered */
+  *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *):hover {
+    --global-scrollbar-color: rgba(156, 163, 175, 0.3) !important;
   }
 
-  ::-webkit-scrollbar-thumb {
-    background-color: var(--scrollbar-thumb);
-    border-radius: var(--scrollbar-radius);
-    border: 2px solid transparent;
-    background-clip: content-box;
+  *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *)::-webkit-scrollbar {
+    width: 3px !important;
+    height: 3px !important;
   }
 
-  ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--scrollbar-thumb-hover);
+  *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *)::-webkit-scrollbar-track {
+    background: transparent !important;
+    border: none !important;
+  }
+
+  *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *)::-webkit-scrollbar-thumb {
+    background: var(--global-scrollbar-color) !important;
+    border-radius: 0px !important;
+    border: none !important;
+    background-clip: border-box !important;
+  }
+
+  /* Direct hover state on the scrollbar thumb itself - snaps to slightly darker */
+  *:not(.no-scrollbar):not(.scrollbar-hide):not(.sandbox-scroll)::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.6) !important;
   }
 }
 
