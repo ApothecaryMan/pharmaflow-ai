@@ -64,8 +64,9 @@ import { PageHeader } from '../common/PageHeader';
 import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
-import { useSmartDirection } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
+import { useSmartDirection } from '../common/SmartInputs';
+import { SupplierDirectoryModal } from './SupplierDirectoryModal';
 
 interface PurchasesProps {
   inventory: Drug[];
@@ -561,6 +562,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [taxRate, setTaxRate] = useState(14); // Default 14%, loaded from settings
+
+  const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
 
 
 
@@ -1336,7 +1339,10 @@ export const Purchases: React.FC<PurchasesProps> = ({
     if (!supplierSearch.trim()) return suppliers;
     const searchLower = supplierSearch.toLowerCase();
     return suppliers.filter(
-      (s) => s.name.toLowerCase().includes(searchLower) || s.id.toLowerCase().includes(searchLower)
+      (s) =>
+        s.name.toLowerCase().includes(searchLower) ||
+        s.id.toLowerCase().includes(searchLower) ||
+        s.supplierCode?.toLowerCase().includes(searchLower)
     );
   }, [suppliers, supplierSearch]);
 
@@ -1523,6 +1529,18 @@ export const Purchases: React.FC<PurchasesProps> = ({
               rounded='full'
               color={color}
               className='h-9 text-sm'
+              icon={
+                <span
+                  className="material-symbols-rounded cursor-pointer hover:text-primary-500"
+                  style={{ fontSize: '22px' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsSupplierModalOpen(true);
+                  }}
+                >
+                  search
+                </span>
+              }
             />
             <SearchDropdown
               results={filteredSuppliers}
@@ -1551,7 +1569,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   header: t.headers?.codes || 'Codes',
                   width: 'w-24 shrink-0',
                   className: 'text-gray-900 dark:text-gray-400 justify-center text-center',
-                  render: (supplier: Supplier) => supplier.id,
+                  render: (supplier: Supplier) => supplier.supplierCode || supplier.id.slice(0, 8),
                 },
               ]}
               isVisible={isSupplierOpen}
@@ -1983,6 +2001,29 @@ export const Purchases: React.FC<PurchasesProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Suppliers Directory Modal */}
+      <SupplierDirectoryModal
+        isOpen={isSupplierModalOpen}
+        onClose={() => setIsSupplierModalOpen(false)}
+        suppliers={suppliers}
+        selectedSupplierId={selectedSupplierId}
+        onSelectSupplier={(supplier) => {
+          setSelectedSupplierId(supplier.id);
+
+          // Auto Rename Tab
+          const activeTab = tabs.find((t) => t.id === activeTabId);
+          if (
+            activeTab &&
+            (activeTab.name.startsWith('Purchase ') || activeTab.name === 'New Purchase')
+          ) {
+            renameTab(activeTabId, supplier.name);
+          }
+        }}
+        language={language}
+        t={t}
+        color={color}
+      />
     </div>
   );
 };

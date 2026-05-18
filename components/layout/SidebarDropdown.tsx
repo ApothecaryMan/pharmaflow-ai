@@ -109,7 +109,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
 
   return (
     <div
-      className={`fixed w-64 rounded-2xl shadow-xl border border-(--border-divider) overflow-hidden z-99999 animate-fade-in origin-top ${
+      className={`fixed w-64 rounded-2xl shadow-xl border border-(--border-divider) overflow-hidden z-[99999] animate-fade-in origin-top ${
         blur ? 'glass-surface' : 'bg-(--bg-menu)'
       }`}
       style={{
