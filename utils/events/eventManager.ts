@@ -68,5 +68,5 @@ export const EventManager = {
     return events
       .filter((e) => e.type === 'CURSOR')
       .map((e) => ({ payload: e.payload, selector: e.targetSelector }));
-  }
+  },
 };

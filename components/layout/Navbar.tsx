@@ -1,33 +1,32 @@
+import { motion } from 'framer-motion';
 import React, { useEffect, useRef, useState } from 'react';
 import type { MenuItem } from '../../config/menuData';
-import { motion } from 'framer-motion';
 import type { UserRole } from '../../config/permissions';
-import { useShift } from '../../hooks/sales/useShift';
 import { useSettings } from '../../context';
+import { useData } from '../../context/DataContext';
+import { useShift } from '../../hooks/sales/useShift';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { authService } from '../../services/auth/authService';
-import { Language, ThemeColor, ViewState } from '../../types';
+import { permissionsService } from '../../services/auth/permissionsService';
+import { branchService } from '../../services/org/branchService';
+import { orgService } from '../../services/org/orgService';
+import type { Organization } from '../../types';
+import { Language, ThemeColor, type ViewState } from '../../types';
+import { EventManager } from '../../utils/events/eventManager';
+import { isTauri } from '../../utils/platform';
 import { ContextMenuTrigger } from '../common/ContextMenu';
+import { getIconByName, Icons } from '../common/Icons';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { Switch } from '../common/Switch';
 import { Tooltip } from '../common/Tooltip';
-
-import { useData } from '../../context/DataContext';
-import { branchService } from '../../services/org/branchService';
-import { orgService } from '../../services/org/orgService';
-import { permissionsService } from '../../services/auth/permissionsService';
-import type { Organization } from '../../types';
-
 import { PrinterSettings } from '../settings/PrinterSettings';
-import { SidebarDropdown } from './SidebarDropdown';
-import { SettingsMenu } from './StatusBar/items/SettingsMenu';
-import { Icons, getIconByName } from '../common/Icons';
 import { AttendanceQuickAction } from './AttendanceQuickAction';
-import { isTauri } from '../../utils/platform';
 import { NavModules } from './navbar/NavModules';
 import { NavUserActions } from './navbar/NavUserActions';
+import { SidebarDropdown } from './SidebarDropdown';
+import { SettingsMenu } from './StatusBar/items/SettingsMenu';
 
 interface NavbarProps {
   menuItems: MenuItem[];
@@ -82,13 +81,32 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     developerMode,
   } = useSettings();
 
-  const currentEmployee = employees.find(e => e.id === currentEmployeeId);
+  // Resolve active dynamic events to see if there is a custom logo or navbar icon set
+  const activeEvents = React.useMemo(() => {
+    if (typeof window === 'undefined') return [];
+    return EventManager.getActiveEvents({
+      currentPath: window.location.pathname,
+      view: currentView,
+    });
+  }, [currentView]);
 
-  const { activeBranchId, switchBranch, activeOrgId, switchOrg, branches, isLoading: isDataLoading } = useData();
-  
+  const navbarIconsEvent = activeEvents.find((e) => e.type === 'NAVBAR_ICONS');
+  const customLogo = (navbarIconsEvent?.payload as any)?.logo;
+
+  const currentEmployee = employees.find((e) => e.id === currentEmployeeId);
+
+  const {
+    activeBranchId,
+    switchBranch,
+    activeOrgId,
+    switchOrg,
+    branches,
+    isLoading: isDataLoading,
+  } = useData();
+
   const [userOrgs, setUserOrgs] = useState<Organization[]>([]);
   const [activeOrg, setActiveOrg] = useState<Organization | null>(null);
-  
+
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showPrinterSettings, setShowPrinterSettings] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -113,12 +131,12 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   // Update activeOrg when userOrgs or activeOrgId changes
   useEffect(() => {
     if (userOrgs.length > 0) {
-      const current = userOrgs.find(o => o.id === activeOrgId) || userOrgs[0];
+      const current = userOrgs.find((o) => o.id === activeOrgId) || userOrgs[0];
       setActiveOrg(current);
     }
   }, [userOrgs, activeOrgId]);
 
-  const activeBranch = branches.find(b => b.id === activeBranchId);
+  const activeBranch = branches.find((b) => b.id === activeBranchId);
   const profileRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
@@ -216,10 +234,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     };
   }, []);
 
-  const handleModuleClick = (
-    moduleId: string,
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
+  const handleModuleClick = (moduleId: string, event: React.MouseEvent<HTMLButtonElement>) => {
     if (navStyle === 2) {
       // Toggle dropdown
       if (activeDropdown === moduleId) {
@@ -231,10 +246,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({
       }
     } else {
       onModuleChange(moduleId);
-      
+
       // Auto-navigate to first implemented sub-page if available
       if (onNavigate) {
-        const module = menuItems.find(m => m.id === moduleId);
+        const module = menuItems.find((m) => m.id === moduleId);
         if (module?.submenus) {
           for (const submenu of module.submenus) {
             for (const item of submenu.items) {
@@ -304,7 +319,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     }
   };
 
- 
   return (
     <nav
       className='h-12 flex items-center justify-between w-full px-4 sticky top-0 z-50'
@@ -319,36 +333,50 @@ const NavbarComponent: React.FC<NavbarProps> = ({
       >
         {/* Dynamic Logo based on darkMode prop */}
         <img
-          src={darkMode ? '/logo_icon_white.svg' : '/logo_icon_black.svg'}
+          src={
+            customLogo
+              ? darkMode
+                ? customLogo.dark
+                : customLogo.light
+              : darkMode
+                ? '/logo_icon_white.svg'
+                : '/logo_icon_black.svg'
+          }
           alt={appTitle}
-          className='h-8 w-auto'
-          id="navbar-logo-icon"
+          className={
+            customLogo ? 'h-9 w-auto filter drop-shadow-md py-0.5 object-contain' : 'h-8 w-auto'
+          }
+          id='navbar-logo-icon'
         />
-        <div className='hidden md:flex items-center' id="navbar-app-title" dir="ltr">
-          {"Zinc".split('').map((char, index) => {
+        <div className='hidden md:flex items-center' id='navbar-app-title' dir='ltr'>
+          {'Zinc'.split('').map((char, index) => {
             const charKey = char.toUpperCase();
             const acronym = (t as any).zincAcronym?.[charKey];
-            
+
             return (
-              <Tooltip 
+              <Tooltip
                 key={index}
-                position="bottom"
+                position='bottom'
                 content={
                   acronym ? (
-                    <div className={`flex flex-col gap-0.5 p-0.5 min-w-[180px] max-w-[250px] ${language === 'AR' ? 'text-right' : 'text-left'}`}>
-                      <div className="font-bold text-primary-600 dark:text-primary-400 text-[11px]">
+                    <div
+                      className={`flex flex-col gap-0.5 p-0.5 min-w-[180px] max-w-[250px] ${language === 'AR' ? 'text-right' : 'text-left'}`}
+                    >
+                      <div className='font-bold text-primary-600 dark:text-primary-400 text-[11px]'>
                         {acronym.title}
                       </div>
-                      <div className="text-[10px] text-gray-600 dark:text-gray-300 leading-relaxed whitespace-normal">
+                      <div className='text-[10px] text-gray-600 dark:text-gray-300 leading-relaxed whitespace-normal'>
                         {acronym.desc}
                       </div>
                     </div>
-                  ) : char
+                  ) : (
+                    char
+                  )
                 }
               >
-                <span 
+                <span
                   id={`nav-char-${char}-${index}`}
-                  className="text-lg font-bold tracking-tight text-gray-900 dark:text-white transition-transform hover:scale-125 hover:text-primary-500 cursor-default px-0.5"
+                  className='text-lg font-bold tracking-tight text-gray-900 dark:text-white transition-transform hover:scale-125 hover:text-primary-500 cursor-default px-0.5'
                 >
                   {char}
                 </span>
@@ -389,7 +417,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
             onClick={onMobileMenuToggle}
             className='flex items-center justify-center w-10 h-10 text-gray-600 dark:text-gray-300'
           >
-            <Icons.Menu size="var(--icon-navbar-mobile)" />
+            <Icons.Menu size='var(--icon-navbar-mobile)' />
           </button>
         </div>
       )}

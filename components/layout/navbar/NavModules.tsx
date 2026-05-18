@@ -1,13 +1,14 @@
-import React from 'react';
 import { motion } from 'framer-motion';
-import { MenuItem } from '../../../config/menuData';
+import React from 'react';
+import type { MenuItem } from '../../../config/menuData';
+import { useSettings } from '../../../context';
 import { getMenuTranslation } from '../../../i18n/menuTranslations';
 import { TRANSLATIONS } from '../../../i18n/translations';
-import { useSettings } from '../../../context';
-import { Icons, getIconByName } from '../../common/Icons';
+import type { ViewState } from '../../../types';
+import { EventManager } from '../../../utils/events/eventManager';
+import { getIconByName, Icons } from '../../common/Icons';
 import { Tooltip } from '../../common/Tooltip';
 import { SidebarDropdown } from '../SidebarDropdown';
-import { ViewState } from '../../../types';
 
 interface NavModulesProps {
   menuItems: MenuItem[];
@@ -59,10 +60,21 @@ export const NavModules: React.FC<NavModulesProps> = ({
   const t = TRANSLATIONS[language];
   const theme = currentTheme.primary;
 
-  const handleModuleClick = (
-    moduleId: string,
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
+  // Resolve active dynamic events to see if there is a custom navbar icon set
+  const activeEvents = React.useMemo(() => {
+    if (typeof window === 'undefined') return [];
+    return EventManager.getActiveEvents({
+      currentPath: window.location.pathname,
+      view: currentView,
+    });
+  }, [currentView]);
+
+  const navbarIconsEvent = activeEvents.find((e) => e.type === 'NAVBAR_ICONS');
+  const customIcons = navbarIconsEvent?.payload as Record<string, any> | undefined;
+  const customGradient = customIcons?.gradient;
+  const gradRef = customGradient ? 'url(#navbar-event-gradient)' : undefined;
+
+  const handleModuleClick = (moduleId: string, event: React.MouseEvent<HTMLButtonElement>) => {
     if (navStyle === 2) {
       if (activeDropdown === moduleId) {
         setActiveDropdown(null);
@@ -74,7 +86,7 @@ export const NavModules: React.FC<NavModulesProps> = ({
     } else {
       onModuleChange(moduleId);
       if (onNavigate) {
-        const module = menuItems.find(m => m.id === moduleId);
+        const module = menuItems.find((m) => m.id === moduleId);
         if (module?.submenus) {
           for (const submenu of module.submenus) {
             for (const item of submenu.items) {
@@ -95,8 +107,21 @@ export const NavModules: React.FC<NavModulesProps> = ({
       ref={dropdownRef}
       onWheel={handleWheel}
     >
+      {customGradient && (
+        <svg style={{ position: 'absolute', width: 0, height: 0 }} aria-hidden='true'>
+          <linearGradient id='navbar-event-gradient'>
+            {customGradient.colors.map((c: string, i: number) => (
+              <stop
+                key={c}
+                offset={`${i * (100 / (customGradient.colors.length - 1))}%`}
+                stopColor={c}
+              />
+            ))}
+          </linearGradient>
+        </svg>
+      )}
       {menuItems
-        .filter((m) => (m.id !== 'test' || developerMode))
+        .filter((m) => m.id !== 'test' || developerMode)
         .map((module) => {
           const isActive = activeModule === module.id;
           const isDropdownOpen = activeDropdown === module.id;
@@ -106,8 +131,7 @@ export const NavModules: React.FC<NavModulesProps> = ({
               submenu.items.some((item) => typeof item === 'object' && !!item.view)
             ) ?? false;
 
-          const isEffectivelyDisabled =
-            !developerMode && !hasPage && !hasImplementedSubItems;
+          const isEffectivelyDisabled = !developerMode && !hasPage && !hasImplementedSubItems;
 
           return (
             <div
@@ -132,20 +156,29 @@ export const NavModules: React.FC<NavModulesProps> = ({
                     }
                   `}
                 title={
-                  (module.id === 'settings' || module.id === 'test') 
-                  ? getMenuTranslation(module.label, language) 
-                  : (!hasPage && !hasImplementedSubItems && navStyle !== 2 ? t.settings.comingSoon : '')
+                  module.id === 'settings' || module.id === 'test'
+                    ? getMenuTranslation(module.label, language)
+                    : !hasPage && !hasImplementedSubItems && navStyle !== 2
+                      ? t.settings.comingSoon
+                      : ''
                 }
               >
                 <span className={`flex items-center justify-center`}>
                   {(() => {
-                    const iconName = module.icon || module.id;
+                    const customIconName = customIcons?.[module.id];
+                    const iconName = customIconName || module.icon || module.id;
                     const IconComponent = getIconByName(iconName);
                     return (
                       <IconComponent
                         size={isCompact ? 20 : 22}
                         active={isActive || isDropdownOpen}
-                        className="transition-all duration-200"
+                        className='transition-all duration-200'
+                        style={
+                          gradRef && {
+                            stroke: gradRef,
+                            fill: isActive || isDropdownOpen ? gradRef : 'none',
+                          }
+                        }
                       />
                     );
                   })()}
@@ -159,7 +192,7 @@ export const NavModules: React.FC<NavModulesProps> = ({
 
                 {isActive && (hasPage || hasImplementedSubItems) && navStyle !== 2 && (
                   <motion.div
-                    layoutId="nav-indicator"
+                    layoutId='nav-indicator'
                     className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-[1.5px] bg-primary-600 rounded-full`}
                   />
                 )}
