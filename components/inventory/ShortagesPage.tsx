@@ -72,6 +72,15 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
   const [visibleRows, setVisibleRows] = useState<EnrichedShortageItem[]>([]);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
+
+  // Auto-disable focus mode if no items are selected
+  useEffect(() => {
+    if (selectedIds.size === 0) {
+      setIsFocusMode(false);
+    }
+  }, [selectedIds.size]);
+
   const { setLeftContent, setRightContent, setBottomContent, setShowStatsToggle } = useInventoryHeader();
 
   // Fetch live daily sales velocities and AI predicted reorders from intelligence service
@@ -250,6 +259,11 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
     const selectedAlertFilter = activeFilters.alertType?.[0] || 'ALL';
 
     return shortagesData.filter((item) => {
+      // 0. Focus mode filter (must be one of the selected IDs)
+      if (isFocusMode && !selectedIds.has(item.drug.id)) {
+        return false;
+      }
+
       // 1. Alert Type filter
       if (selectedAlertFilter !== 'ALL' && item.alertType !== selectedAlertFilter) {
         return false;
@@ -277,7 +291,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
 
       return true;
     });
-  }, [shortagesData, activeFilters, searchTerm]);
+  }, [shortagesData, activeFilters, searchTerm, isFocusMode, selectedIds]);
 
   // Toggle selection for a single row
   const handleToggleSelect = useCallback((id: string) => {
@@ -822,6 +836,23 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
                 {t.itemsSelectedText.replace('{count}', '').trim()}
               </span>
             </div>
+
+            {/* Focus Mode Toggle Button */}
+            <button
+              type='button'
+              onClick={() => setIsFocusMode(!isFocusMode)}
+              className={`transition-colors p-1 rounded-lg cursor-pointer flex items-center justify-center ${
+                isFocusMode
+                  ? 'text-primary-400 bg-primary-950/40 hover:bg-primary-950/60 hover:text-primary-300'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+              }`}
+              title={t.focusModeToggle}
+            >
+              <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
+                {isFocusMode ? 'visibility' : 'visibility_off'}
+              </span>
+            </button>
+
             <button
               onClick={handleClearSelection}
               className='text-zinc-400 hover:text-white transition-colors p-1 hover:bg-zinc-800/60 rounded-lg cursor-pointer flex items-center justify-center'
