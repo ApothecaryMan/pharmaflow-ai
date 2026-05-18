@@ -40,6 +40,7 @@ import { PricingPage } from '../components/settings/PricingPage';
 
 import { ModalTests } from '../components/test/ModalTests';
 import { ScrollbarLab } from '../components/test/ScrollbarLab';
+import { A5InvoiceDesigner } from '../components/test/A5InvoiceDesigner';
 import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
 import type { PermissionAction } from './permissions';
 import { PERMISSIONS_MAPPING } from './permissionsMapping';
@@ -510,6 +511,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'test',
     requiredProps: ['color', 't', 'language'],
     permission: PERMISSIONS_MAPPING['scrollbar-lab'],
+    layout: 'standard',
+  },
+  'a5-invoice-designer': {
+    id: 'a5-invoice-designer',
+    component: A5InvoiceDesigner,
+    menuLabel: 'A5 Invoice Designer',
+    menuLabelAr: 'مصمم فواتير A5',
+    icon: 'print',
+    category: 'test',
+    requiredProps: ['color', 't', 'language'],
+    permission: PERMISSIONS_MAPPING['a5-invoice-designer'],
     layout: 'standard',
   },
   'employee-list': {

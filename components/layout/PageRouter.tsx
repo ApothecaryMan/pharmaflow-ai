@@ -197,6 +197,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     'drug-interactions': t.drugInteractions,
     shortages: t.shortages,
     'scrollbar-lab': t.newTests,
+    'a5-invoice-designer': t.a5InvoiceDesigner,
   };
 
   if (viewTranslations[view]) {

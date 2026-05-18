@@ -2619,6 +2619,11 @@ export const TRANSLATIONS = {
       getStarted: 'Ready to write your next feature?',
       designAesthetic: 'Premium Design Language Active',
     },
+    a5InvoiceDesigner: {
+      title: 'A5 Purchase Invoice Designer',
+      subtitle: 'Design, preview, and test print high-fidelity A5 pharmaceutical invoices',
+      description: 'An interactive design lab to customize A5 templates for major Egyptian drug suppliers and print them with perfect page scaling.',
+    },
   },
   AR: {
     common: {
@@ -5247,6 +5252,11 @@ export const TRANSLATIONS = {
       welcome: 'مرحباً بك في مختبر شريط التمرير',
       getStarted: 'هل أنت جاهز لكتابة ميزتك التالية؟',
       designAesthetic: 'لغة التصميم المتميزة نشطة',
+    },
+    a5InvoiceDesigner: {
+      title: 'مصمم فواتير المشتريات A5',
+      subtitle: 'تصميم ومعاينة واختبار طباعة فواتير شركات ومخازن الأدوية المصرية بدقة فائقة',
+      description: 'مختبر تفاعلي لتخصيص فواتير A5 لأشهر موزعي الأدوية في مصر وطباعتها بمقاسات وهوامش مثالية.',
     },
   },
 };

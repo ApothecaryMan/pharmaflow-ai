@@ -37,6 +37,7 @@ export const PERMISSIONS_MAPPING: Record<string, PermissionAction> = {
   'advanced-sm-card': 'system.debug',
   'modal-tests': 'system.debug',
   'scrollbar-lab': 'system.debug',
+  'a5-invoice-designer': 'system.debug',
   'employee-list': 'users.view',
   'employee-profile': 'users.view',
   intelligence: 'reports.view_financial',

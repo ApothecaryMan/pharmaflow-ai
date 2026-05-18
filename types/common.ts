@@ -71,7 +71,8 @@ export type ViewState =
   | 'desktop-settings'
   | 'drug-interactions'
   | 'shortages'
-  | 'scrollbar-lab';
+  | 'scrollbar-lab'
+  | 'a5-invoice-designer';
 
 /** Dashboard widget expand options */
 export type ExpandedView =
