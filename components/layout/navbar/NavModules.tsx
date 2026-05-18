@@ -107,19 +107,6 @@ export const NavModules: React.FC<NavModulesProps> = ({
       ref={dropdownRef}
       onWheel={handleWheel}
     >
-      {customGradient && (
-        <svg style={{ position: 'absolute', width: 0, height: 0 }} aria-hidden='true'>
-          <linearGradient id='navbar-event-gradient'>
-            {customGradient.colors.map((c: string, i: number) => (
-              <stop
-                key={c}
-                offset={`${i * (100 / (customGradient.colors.length - 1))}%`}
-                stopColor={c}
-              />
-            ))}
-          </linearGradient>
-        </svg>
-      )}
       {menuItems
         .filter((m) => m.id !== 'test' || developerMode)
         .map((module) => {
