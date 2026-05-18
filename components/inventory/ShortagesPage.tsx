@@ -69,6 +69,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
 
   // Filter and selection states
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [visibleRows, setVisibleRows] = useState<EnrichedShortageItem[]>([]);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [searchTerm, setSearchTerm] = useState<string>('');
   const { setLeftContent, setRightContent, setBottomContent, setShowStatsToggle } = useInventoryHeader();
@@ -307,6 +308,22 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
     });
   }, []);
 
+  // Select all filtered items across all pages
+  const handleSelectAllFiltered = useCallback(() => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      filteredData.forEach((row) => {
+        next.add(row.drug.id);
+      });
+      return next;
+    });
+  }, [filteredData]);
+
+  // Clear all selections
+  const handleClearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
   // Export selected shortages (or all shortages if none selected) to CSV with UTF-8 BOM
   const handleExportCSV = useCallback(() => {
     const itemsToExport =
@@ -398,9 +415,9 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
   // Define Table Columns inline to gain close access to selection states
   const columns = useMemo((): ColumnDef<EnrichedShortageItem>[] => {
     const isAllSelected =
-      filteredData.length > 0 && filteredData.every((row) => selectedIds.has(row.drug.id));
+      visibleRows.length > 0 && visibleRows.every((row) => selectedIds.has(row.drug.id));
     const isSomeSelected =
-      filteredData.some((row) => selectedIds.has(row.drug.id)) && !isAllSelected;
+      visibleRows.some((row) => selectedIds.has(row.drug.id)) && !isAllSelected;
 
     return [
       {
@@ -417,7 +434,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
                 }
               }}
               checked={isAllSelected}
-              onChange={() => handleSelectAll(filteredData)}
+              onChange={() => handleSelectAll(visibleRows)}
             />
           </div>
         ),
@@ -663,7 +680,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
         },
       },
     ];
-  }, [filteredData, selectedIds, t, handleSelectAll, handleToggleSelect]);
+  }, [visibleRows, selectedIds, t, handleSelectAll, handleToggleSelect]);
 
   useEffect(() => {
     setLeftContent(
@@ -747,13 +764,19 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
       {/* Main Content Area */}
       <div className='flex-1 px-page pb-8 overflow-hidden flex flex-col'>
         <div className={`${CARD_BASE} rounded-3xl flex-1 overflow-hidden flex flex-col p-0`}>
-          <div className='flex-1 overflow-y-auto scrollbar-hide relative'>
+          <div className='flex-1 overflow-hidden flex flex-col relative'>
+
               <TanStackTable
                 data={filteredData}
                 columns={columns}
                 tableId='shortages-alerts-table'
                 dense
                 lite
+                enablePagination={true}
+                enableVirtualization={true}
+                pageSize='auto'
+                enableShowAll={true}
+                onVisibleRowsChange={setVisibleRows}
                 isLoading={loadingProcurement}
                 customEmptyState={
                   <div className='flex flex-col items-center justify-center py-24 text-center'>
@@ -775,25 +798,36 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
 
       {/* Floaty Action Dock Bar showing at the bottom when items are selected */}
       {selectedIds.size > 0 && (
-        <div className='fixed bottom-14 inset-x-0 mx-auto w-fit z-50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md px-6 py-3.5 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl shadow-xl flex items-center gap-6 animate-in slide-in-from-bottom duration-300'>
-          <div className='flex items-center gap-2'>
-            <span className='w-2.5 h-2.5 rounded-full bg-primary-600 animate-pulse' />
-            <span className='text-sm font-black text-gray-900 dark:text-white'>
-              {t.itemsSelectedText.replace('{count}', String(selectedIds.size))}
-            </span>
-          </div>
+        <div 
+          dir='ltr'
+          className='fixed bottom-22 inset-x-0 mx-auto w-fit z-50 bg-zinc-900/95 dark:bg-zinc-950/95 text-white pl-2 py-2 pr-3.5 rounded-2xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-5 duration-300 select-none'
+        >
+          {/* Quick Export selection (always on the left) */}
+          <button
+            type='button'
+            onClick={handleExportCSV}
+            className='flex items-center justify-center w-10 h-10 bg-white text-zinc-900 hover:bg-zinc-100 border border-zinc-200 rounded-xl cursor-pointer'
+            title={t.exportSelectedButtonLabel}
+          >
+            <span className='material-symbols-rounded font-bold' style={{ fontSize: '20px' }}>download</span>
+          </button>
 
-          <div className='h-5 w-px bg-zinc-200 dark:bg-zinc-800' />
-
-          <div className='flex items-center gap-2'>
-            {/* Quick Export selection */}
+          {/* Selection text and cancel close action */}
+          <div className='flex items-center gap-3' dir={isAR ? 'rtl' : 'ltr'}>
+            <div className='flex items-center gap-1.5'>
+              <span className='text-lg font-black text-white tabular-nums leading-none'>
+                {selectedIds.size}
+              </span>
+              <span className='text-xs font-medium text-zinc-400 whitespace-nowrap'>
+                {t.itemsSelectedText.replace('{count}', '').trim()}
+              </span>
+            </div>
             <button
-              type='button'
-              onClick={handleExportCSV}
-              className='flex items-center justify-center p-1.5 bg-black text-white dark:bg-white dark:text-black border border-zinc-950 dark:border-zinc-100 rounded-lg cursor-pointer'
-              title={t.exportSelectedButtonLabel}
+              onClick={handleClearSelection}
+              className='text-zinc-400 hover:text-white transition-colors p-1 hover:bg-zinc-800/60 rounded-lg cursor-pointer flex items-center justify-center'
+              title={t.clearSelection}
             >
-              <span className='material-symbols-rounded text-base'>download</span>
+              <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>close</span>
             </button>
           </div>
         </div>

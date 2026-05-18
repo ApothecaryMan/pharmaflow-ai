@@ -241,6 +241,7 @@ export interface TanStackTableProps<TData extends { id: string | number }, TValu
   enableShowAll?: boolean;
   pendingRowIds?: Set<string | number>;
   enableNewRowAnimation?: boolean;
+  onVisibleRowsChange?: (visibleRows: TData[]) => void;
 }
 
 // Helper to get stored settings
@@ -490,6 +491,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   rightCustomControls,
   pendingRowIds = new Set(),
   enableNewRowAnimation = true,
+  onVisibleRowsChange,
 }: TanStackTableProps<TData, TValue>) {
   const { language, numeralLocale, textLocale } = useSettings();
   const isAR = language === 'AR';
@@ -1066,6 +1068,17 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   );
 
   const { rows } = table.getRowModel();
+
+  // --- Notify parent of visible rows for paginated selection ---
+  const visibleRowIdsStr = React.useMemo(() => {
+    return rows.map((r) => r.original.id).join(',');
+  }, [rows]);
+
+  React.useEffect(() => {
+    if (onVisibleRowsChange) {
+      onVisibleRowsChange(rows.map((r) => r.original));
+    }
+  }, [visibleRowIdsStr, onVisibleRowsChange]);
 
   // --- Fix 5: Pre-compute Date Constants ---
   const { todayTs, yesterdayTs } = React.useMemo(() => {
