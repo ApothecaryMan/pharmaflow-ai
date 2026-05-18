@@ -2,7 +2,7 @@ import type { DynamicEvent } from '../types';
 
 export const walkingCowEvent: DynamicEvent = {
   id: 'walking-cow',
-  enabled: true,
+  enabled: false,
   type: 'WALKING_COW',
   payload: {
     emoji: '🐄',
