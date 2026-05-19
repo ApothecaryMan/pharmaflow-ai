@@ -266,8 +266,100 @@ const getSmartAlignment = (columnId: string, meta?: any): 'start' | 'end' | 'cen
 };
 
 // Memoized Cell Component for extreme performance
-const MemoizedCell = React.memo(({ cell, dense, meta, cellDir, content }: any) => {
+const MemoizedCell = React.memo(({
+  cell,
+  dense,
+  meta,
+  isRtl,
+  isAR,
+  isPending,
+  rowsCount,
+  todayTs,
+  yesterdayTs
+}: any) => {
   const isTechnical = meta.isTechnical;
+  const cellValue = cell.getValue();
+
+  // Exception: IDs and Actions should strictly follow table direction (isRtl)
+  // to ensure 'justify-start' always matches the header alignment.
+  // Others use 'Smart Direction' for natural language flow.
+  const cellDir =
+    cell.column.id.toLowerCase() === 'name'
+      ? 'ltr'
+      : meta.isId || meta.isAction
+        ? isRtl
+          ? 'rtl'
+          : 'ltr'
+        : meta.dir === 'auto'
+          ? getSmartDirection(String(cellValue || ''))
+          : meta.dir || 'auto';
+
+  let content = null;
+
+  // --- Smart Date Formatting ---
+  if (meta.smartDate && meta.isDate && cellValue) {
+    const date = new Date(cellValue);
+    if (!isNaN(date.getTime())) {
+      const targetTs = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate()
+      ).getTime();
+      const isToday = targetTs === todayTs;
+      const isYesterday = targetTs === yesterdayTs;
+      const dateLabel = isToday
+        ? isRtl
+          ? 'اليوم'
+          : 'Today'
+        : isYesterday
+          ? isRtl
+            ? 'أمس'
+            : 'Yesterday'
+          : date.toLocaleDateString();
+
+      const hourRaw = date.getHours();
+      const ampm = isRtl ? (hourRaw >= 12 ? 'م' : 'ص') : hourRaw >= 12 ? 'PM' : 'AM';
+      const displayHour = (hourRaw % 12 || 12).toLocaleString(undefined, {
+        useGrouping: false,
+      });
+      const displayMinute = date
+        .getMinutes()
+        .toLocaleString(undefined, { minimumIntegerDigits: 2, useGrouping: false });
+      const formattedTime = `${displayHour}:${displayMinute} ${ampm}`;
+
+      content = (
+        <div className={`flex flex-col ${meta.itemsAlignClass}`}>
+          <span className='font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight'>
+            {isToday ? formattedTime : dateLabel}
+          </span>
+          {!isToday && (
+            <span className='text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap -mt-0.5 tracking-tight'>
+              {formattedTime}
+            </span>
+          )}
+        </div>
+      );
+    }
+  }
+
+  if (!content) {
+    content = flexRender(cell.column.columnDef.cell, cell.getContext());
+  }
+
+  if (isPending && rowsCount > 0) {
+    const isActionColumn =
+      cell.column.id === 'actions' ||
+      cell.column.id === 'status' ||
+      cell.column.id.includes('select');
+    if (!isActionColumn) {
+      content = (
+        <div className='animate-pulse'>
+          <div className='h-3 w-3/4 bg-zinc-200/60 dark:bg-zinc-800/40 rounded' />
+          <div className='h-2 w-1/2 bg-zinc-100/80 dark:bg-zinc-800/20 rounded mt-1' />
+        </div>
+      );
+    }
+  }
 
   return (
     <td
@@ -353,99 +445,21 @@ const MemoizedRow = React.memo(
         ${isNew ? 'bg-emerald-500/[0.08] dark:bg-emerald-500/[0.12] animate-in fade-in zoom-in-95 duration-300 ease-out' : ''}
         ${isUpdated ? 'bg-amber-500/[0.08] dark:bg-amber-500/[0.12] transition-colors duration-300' : ''}
       `}
-        >
+      >
           {row.getVisibleCells().map((cell: any) => {
             const meta = columnMetaMap.get(cell.column.id);
-            const cellValue = cell.getValue();
-            // Exception: IDs and Actions should strictly follow table direction (isRtl)
-            // to ensure 'justify-start' always matches the header alignment.
-            // Others use 'Smart Direction' for natural language flow.
-            const cellDir =
-              cell.column.id.toLowerCase() === 'name'
-                ? 'ltr'
-                : meta.isId || meta.isAction
-                  ? isRtl
-                    ? 'rtl'
-                    : 'ltr'
-                  : meta.dir === 'auto'
-                    ? getSmartDirection(String(cellValue || ''))
-                    : meta.dir || 'auto';
-
-            let content = null;
-
-            // --- Smart Date Formatting ---
-            if (meta.smartDate && meta.isDate && cellValue) {
-              const date = new Date(cellValue);
-              if (!isNaN(date.getTime())) {
-                const targetTs = new Date(
-                  date.getFullYear(),
-                  date.getMonth(),
-                  date.getDate()
-                ).getTime();
-                const isToday = targetTs === todayTs;
-                const isYesterday = targetTs === yesterdayTs;
-                const dateLabel = isToday
-                  ? isRtl
-                    ? 'اليوم'
-                    : 'Today'
-                  : isYesterday
-                    ? isRtl
-                      ? 'أمس'
-                      : 'Yesterday'
-                    : date.toLocaleDateString();
-
-                const hourRaw = date.getHours();
-                const ampm = isRtl ? (hourRaw >= 12 ? 'م' : 'ص') : hourRaw >= 12 ? 'PM' : 'AM';
-                const displayHour = (hourRaw % 12 || 12).toLocaleString(undefined, {
-                  useGrouping: false,
-                });
-                const displayMinute = date
-                  .getMinutes()
-                  .toLocaleString(undefined, { minimumIntegerDigits: 2, useGrouping: false });
-                const formattedTime = `${displayHour}:${displayMinute} ${ampm}`;
-
-                content = (
-                  <div className={`flex flex-col ${meta.itemsAlignClass}`}>
-                    <span className='font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight'>
-                      {isToday ? formattedTime : dateLabel}
-                    </span>
-                    {!isToday && (
-                      <span className='text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap -mt-0.5 tracking-tight'>
-                        {formattedTime}
-                      </span>
-                    )}
-                  </div>
-                );
-              }
-            }
-
-            if (!content) {
-              content = flexRender(cell.column.columnDef.cell, cell.getContext());
-            }
-
-            if (isPending && rowsCount > 0) {
-              const isActionColumn =
-                cell.column.id === 'actions' ||
-                cell.column.id === 'status' ||
-                cell.column.id.includes('select');
-              if (!isActionColumn) {
-                content = (
-                  <div className='animate-pulse'>
-                    <div className='h-3 w-3/4 bg-zinc-200/60 dark:bg-zinc-800/40 rounded' />
-                    <div className='h-2 w-1/2 bg-zinc-100/80 dark:bg-zinc-800/20 rounded mt-1' />
-                  </div>
-                );
-              }
-            }
-
             return (
               <MemoizedCell
                 key={cell.id}
                 cell={cell}
                 dense={dense}
                 meta={meta}
-                cellDir={cellDir}
-                content={content}
+                isRtl={isRtl}
+                isAR={isAR}
+                isPending={isPending}
+                rowsCount={rowsCount}
+                todayTs={todayTs}
+                yesterdayTs={yesterdayTs}
               />
             );
           })}
@@ -518,8 +532,8 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   const headerRef = useRef<HTMLTableSectionElement>(null);
   const firstRowRef = useRef<HTMLTableRowElement>(null);
 
-  // Load initial state from localStorage
-  const [storedSettings, setStoredSettings] = useState(() => getStoredSettings(tableId));
+  // Load initial settings from localStorage once on mount/tableId change
+  const initialSettings = React.useMemo(() => getStoredSettings(tableId), [tableId]);
 
   // Build default visibility from defaultHiddenColumns
   const defaultVisibility = React.useMemo(() => {
@@ -580,7 +594,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   );
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-    storedSettings?.columnVisibility || defaultVisibility
+    initialSettings?.columnVisibility || defaultVisibility
   );
 
   // Initialize alignment: Priority = Stored > Prop > Meta > Smart Default
@@ -594,8 +608,8 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       }
     });
 
-    return { ...alignment, ...(storedSettings?.columnAlignment || {}) };
-  }, [columns, defaultColumnAlignment, storedSettings]);
+    return { ...alignment, ...(initialSettings?.columnAlignment || {}) };
+  }, [columns, defaultColumnAlignment, initialSettings]);
 
   const [columnAlignment, setColumnAlignment] =
     useState<Record<string, 'start' | 'center' | 'end'>>(memoizedInitialAlignment);
@@ -618,29 +632,22 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   );
 
   const [pagination, setPagination] = React.useState({
-    pageIndex: storedSettings?.pagination?.pageIndex ?? 0,
+    pageIndex: initialSettings?.pagination?.pageIndex ?? 0,
     pageSize:
-      storedSettings?.pagination?.pageSize === 'auto'
+      initialSettings?.pagination?.pageSize === 'auto'
         ? 20
-        : (storedSettings?.pagination?.pageSize ?? (pageSize === 'auto' ? 20 : pageSize)),
+        : (initialSettings?.pagination?.pageSize ?? (pageSize === 'auto' ? 20 : pageSize)),
   });
 
-  const persistSettings = React.useCallback(
-    (
-      newColVis: VisibilityState,
-      newAlign: Record<string, 'start' | 'center' | 'end'>,
-      newPagination?: { pageIndex: number; pageSize: number }
-    ) => {
-      const settings = {
-        columnVisibility: newColVis,
-        columnAlignment: getDiff(newAlign, defaultColumnAlignment),
-        pagination: newPagination || pagination,
-      };
-      storage.set(`table-settings-${tableId}`, settings);
-      setStoredSettings(settings);
-    },
-    [tableId, defaultColumnAlignment, getDiff, pagination]
-  );
+  // Persist settings to localStorage on change
+  React.useEffect(() => {
+    const settings = {
+      columnVisibility,
+      columnAlignment: getDiff(columnAlignment, defaultColumnAlignment),
+      pagination,
+    };
+    storage.set(`table-settings-${tableId}`, settings);
+  }, [tableId, columnVisibility, columnAlignment, pagination, defaultColumnAlignment, getDiff]);
 
   // ─── Optimization: stable global keydown handler via refs ───
   const enableGlobalSearchFocusRef = useRef(enableGlobalSearchFocus);
@@ -692,24 +699,16 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
   const handleColumnVisibilityChange = React.useCallback(
     (updaterOrValue: any) => {
-      setColumnVisibility((old) => {
-        const newVal = typeof updaterOrValue === 'function' ? updaterOrValue(old) : updaterOrValue;
-        persistSettings(newVal, columnAlignment);
-        return newVal;
-      });
+      setColumnVisibility(updaterOrValue);
     },
-    [persistSettings, columnAlignment]
+    []
   );
 
   const handlePaginationChange = React.useCallback(
     (updaterOrValue: any) => {
-      setPagination((old) => {
-        const newVal = typeof updaterOrValue === 'function' ? updaterOrValue(old) : updaterOrValue;
-        persistSettings(columnVisibility, columnAlignment, newVal);
-        return newVal;
-      });
+      setPagination(updaterOrValue);
     },
-    [persistSettings, columnVisibility, columnAlignment]
+    []
   );
 
   const [localLoading, setLocalLoading] = React.useState(data.length > 0);
@@ -893,7 +892,6 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
         if (!columnId) return;
         const newAlign = { ...columnAlignmentRef.current, [columnId]: align };
         setColumnAlignment(newAlign);
-        persistSettings(columnVisibilityRef.current, newAlign);
 
         if (menuPosRef.current) {
           showMenu(menuPosRef.current.x, menuPosRef.current.y, getMenuContent(columnId, newAlign));
@@ -1015,7 +1013,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
         </div>
       );
     },
-    [table, showMenu, persistSettings, language]
+    [table, showMenu, language]
   );
 
   const onContextMenuOpen = React.useCallback(
@@ -1074,11 +1072,16 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     return rows.map((r) => r.original.id).join(',');
   }, [rows]);
 
+  const onVisibleRowsChangeRef = React.useRef(onVisibleRowsChange);
   React.useEffect(() => {
-    if (onVisibleRowsChange) {
-      onVisibleRowsChange(rows.map((r) => r.original));
+    onVisibleRowsChangeRef.current = onVisibleRowsChange;
+  }, [onVisibleRowsChange]);
+
+  React.useEffect(() => {
+    if (onVisibleRowsChangeRef.current) {
+      onVisibleRowsChangeRef.current(rows.map((r) => r.original));
     }
-  }, [visibleRowIdsStr, onVisibleRowsChange]);
+  }, [visibleRowIdsStr]);
 
   // --- Fix 5: Pre-compute Date Constants ---
   const { todayTs, yesterdayTs } = React.useMemo(() => {
@@ -1092,7 +1095,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   const { visibleColumns, visibleColumnsCount } = React.useMemo(() => {
     const cols = table.getVisibleLeafColumns();
     return { visibleColumns: cols, visibleColumnsCount: cols.length };
-  }, [table, columnVisibility]);
+  }, [columns, columnVisibility]);
 
   // --- Unified Column Metadata ---
   const columnMetaMap = React.useMemo(() => {
@@ -1134,7 +1137,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       });
     });
     return map;
-  }, [table, columnAlignment]);
+  }, [columns, columnVisibility, columnAlignment]);
 
   // Virtualizer Setup
   const rowVirtualizer = useVirtualizer({
@@ -1358,6 +1361,8 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                       const isVirtual = enableVirtualization;
                       const row = isVirtual ? rows[(item as any).index] : (item as any);
                       const rowIndex = isVirtual ? (item as any).index : index;
+
+                      if (!row) return null;
 
                       return (
                         <MemoizedRow
