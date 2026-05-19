@@ -611,14 +611,14 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   const memoizedInitialAlignment = React.useMemo(() => {
     const alignment: Record<string, 'start' | 'center' | 'end'> = { ...defaultColumnAlignment };
 
-    columns.forEach((col) => {
-      const id = (col as any).id || (col as any).accessorKey;
+    for (const col of columns as any[]) {
+      const id = col.id || col.accessorKey;
       if (id) {
-        alignment[id] = alignment[id] || getSmartAlignment(id, (col as any).meta);
+        alignment[id] ||= getSmartAlignment(id, col.meta);
       }
-    });
+    }
 
-    return { ...alignment, ...(initialSettings?.columnAlignment || {}) };
+    return { ...alignment, ...initialSettings?.columnAlignment };
   }, [columns, defaultColumnAlignment, initialSettings]);
 
   const [columnAlignment, setColumnAlignment] =
@@ -630,13 +630,9 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       current: Record<string, 'start' | 'center' | 'end'>,
       defaults: Record<string, 'start' | 'center' | 'end'>
     ) => {
-      const diff: Record<string, 'start' | 'center' | 'end'> = {};
-      Object.keys(current).forEach((key) => {
-        if (current[key] !== defaults[key]) {
-          diff[key] = current[key];
-        }
-      });
-      return diff;
+      return Object.fromEntries(
+        Object.entries(current).filter(([key, val]) => val !== defaults[key])
+      ) as Record<string, 'start' | 'center' | 'end'>;
     },
     []
   );
@@ -707,19 +703,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
   const { showMenu } = useContextMenu();
 
-  const handleColumnVisibilityChange = React.useCallback(
-    (updaterOrValue: any) => {
-      setColumnVisibility(updaterOrValue);
-    },
-    []
-  );
 
-  const handlePaginationChange = React.useCallback(
-    (updaterOrValue: any) => {
-      setPagination(updaterOrValue);
-    },
-    []
-  );
 
   const [localLoading, setLocalLoading] = React.useState(data.length > 0);
   const [updatedRowIds, setUpdatedRowIds] = React.useState<Set<string | number>>(new Set());
@@ -822,8 +806,8 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: handleColumnVisibilityChange,
-    onPaginationChange: handlePaginationChange,
+    onColumnVisibilityChange: setColumnVisibility,
+    onPaginationChange: setPagination,
     onColumnSizingChange: setColumnSizing,
     enableColumnResizing: true,
     columnResizeMode: 'onChange',
