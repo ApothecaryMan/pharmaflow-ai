@@ -892,11 +892,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
   // Convert columnFilters array back to Record for SearchInput prop
   const activeFiltersRecord = React.useMemo(() => {
-    const rec: Record<string, any[]> = {};
-    columnFilters.forEach((f) => {
-      rec[f.id] = f.value;
-    });
-    return rec;
+    return Object.fromEntries(columnFilters.map((f) => [f.id, f.value]));
   }, [columnFilters]);
 
   // Helper to update our unifying "SearchInput" state
@@ -904,10 +900,8 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     (groupId: string, newValues: any[]) => {
       // Notify parent immediately if controlled
       if (onFilterChange) {
-        const nextFilters = { ...activeFiltersRecord };
-        if (newValues.length === 0) {
-          delete nextFilters[groupId];
-        } else {
+        const { [groupId]: _, ...nextFilters } = activeFiltersRecord;
+        if (newValues.length > 0) {
           nextFilters[groupId] = newValues;
         }
         onFilterChange(nextFilters);
