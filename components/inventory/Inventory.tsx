@@ -86,6 +86,7 @@ export const Inventory: React.FC<InventoryProps> = ({
 
   const [mode, setMode] = useState<'list' | 'add'>('list');
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDrug, setEditingDrug] = useState<Drug | null>(null);
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
@@ -93,8 +94,18 @@ export const Inventory: React.FC<InventoryProps> = ({
   const menuRef = useRef<HTMLDivElement>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [selectedBatches, setSelectedBatches] = useState<Record<string, string>>({}); // groupId -> drugId
-  const [openBatchDropdown, setOpenBatchDropdown] = useState<string | null>(null);
   const [isDataSettled, setIsDataSettled] = useState(false);
+
+  useEffect(() => {
+    if (searchTerm === '') {
+      setDebouncedSearchTerm('');
+      return;
+    }
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const {
     setLeftContent,
@@ -288,9 +299,6 @@ export const Inventory: React.FC<InventoryProps> = ({
   // Categories are now determined dynamically using helper
   const allCategories = getCategories(currentLang);
 
-  // --- Search Engine Integration ---
-  const localEngine = useMemo(() => new DrugSearchEngine(inventory as any), [inventory]);
-
   // 1. Base filtering (Pills/Status only - No Search)
   const baseFilteredInventory = useMemo(() => {
     let result = [...inventory];
@@ -339,21 +347,34 @@ export const Inventory: React.FC<InventoryProps> = ({
     });
 
     return result;
-  }, [inventory, activeFilters, t]);
+  }, [inventory, activeFilters, getVerifiedDate]);
+
+  // Memoized Search Engine instance for the current baseFilteredInventory
+  const searchEngine = useMemo(() => {
+    return new DrugSearchEngine(baseFilteredInventory as any);
+  }, [baseFilteredInventory]);
 
   // 2. Final filtering (Apply Search on top of Base)
   const filteredInventory = useMemo(() => {
-    if (searchTerm) {
-      const searchEngine = new DrugSearchEngine(baseFilteredInventory as any);
-      return searchEngine.search(searchTerm, activeFilters) as Drug[];
+    if (debouncedSearchTerm) {
+      return searchEngine.search(debouncedSearchTerm, activeFilters) as Drug[];
     }
     return baseFilteredInventory;
-  }, [baseFilteredInventory, searchTerm, activeFilters]);
+  }, [baseFilteredInventory, searchEngine, debouncedSearchTerm, activeFilters]);
 
 
   const groupedInventory = useMemo(() => {
-    return batchService.groupInventory(filteredInventory);
-  }, [filteredInventory]);
+    const groups = batchService.groupInventory(filteredInventory);
+    return groups.map((group) => {
+      const selectedId = selectedBatches[group.groupId] || group.id;
+      const selectedBatch = group.batches.find((d: any) => d.id === selectedId) || group;
+      return {
+        ...group,
+        selectedBatchId: selectedId,
+        selectedBatch,
+      };
+    });
+  }, [filteredInventory, selectedBatches]);
 
   // Calculate summary stats
   const summaryStats = useMemo(() => {
@@ -394,9 +415,8 @@ export const Inventory: React.FC<InventoryProps> = ({
   }, [groupedInventory]);
 
     const getRowActions = (drugRow: any) => {
-      const groupData = drugRow as GroupedDrug;
-      const selectedId = selectedBatches[groupData.groupId] || groupData.id;
-      const drug = groupData.batches.find((d) => d.id === selectedId) || groupData;
+      const groupData = drugRow as GroupedDrug & { selectedBatch?: Drug };
+      const drug = groupData.selectedBatch || groupData;
 
       const actions = [];
   
@@ -576,9 +596,8 @@ export const Inventory: React.FC<InventoryProps> = ({
           accessorKey: 'costPrice',
           header: t.headers.cost,
           cell: ({ row }) => {
-            const groupData = row.original as GroupedDrug;
-            const selectedId = selectedBatches[groupData.groupId] || groupData.id;
-            const drug = groupData.batches.find((d: any) => d.id === selectedId) || groupData;
+            const groupData = row.original as GroupedDrug & { selectedBatch?: Drug };
+            const drug = groupData.selectedBatch || groupData;
 
             if (!drug.costPrice) return <span className='text-gray-500 text-xs'>-</span>;
             const parts = formatCurrencyParts(drug.costPrice);
@@ -597,10 +616,9 @@ export const Inventory: React.FC<InventoryProps> = ({
         accessorKey: 'expiryDate',
         header: t.headers.expiry,
         cell: ({ row }) => {
-          const groupData = row.original as GroupedDrug;
+          const groupData = row.original as GroupedDrug & { selectedBatch?: Drug };
           const batches = groupData.batches || [groupData];
-          const selectedId = selectedBatches[groupData.groupId] || groupData.id;
-          const drug = batches.find((d: any) => d.id === selectedId) || groupData;
+          const drug = groupData.selectedBatch || groupData;
 
           const renderDateWrapper = (val: string, isDropdownTrigger = false) => {
             if (!val) return <span className='text-gray-400'>-</span>;
@@ -622,15 +640,8 @@ export const Inventory: React.FC<InventoryProps> = ({
                   variant='input'
                   items={batches}
                   selectedItem={drug}
-                  isOpen={openBatchDropdown === groupData.groupId}
-                  onToggle={() =>
-                    setOpenBatchDropdown(
-                      openBatchDropdown === groupData.groupId ? null : groupData.groupId
-                    )
-                  }
                   onSelect={(b: any) => {
-                    setSelectedBatches({ ...selectedBatches, [groupData.groupId]: b.id });
-                    setOpenBatchDropdown(null);
+                    setSelectedBatches((prev) => ({ ...prev, [groupData.groupId]: b.id }));
                   }}
                   keyExtractor={(b: any) => b.id}
                   renderSelected={(b: any) => (
@@ -665,7 +676,7 @@ export const Inventory: React.FC<InventoryProps> = ({
 
       return cols;
     },
-    [color, currentLang, t, selectedBatches, openBatchDropdown, textTransform]
+    [color, currentLang, t, textTransform, canViewFinancials]
   );
 
   // Define Filter Config
@@ -748,152 +759,150 @@ export const Inventory: React.FC<InventoryProps> = ({
     [tableColumns, t, getVerifiedDate]
   );
 
-  // Set header slots dynamically
-  useEffect(() => {
-    if (mode === 'list') {
-      setLeftContent(
-        <div className="relative flex-1 max-w-xl">
-          <SearchEngineInput
-            value={searchTerm}
-            onSearchChange={setSearchTerm}
-            activeFilters={activeFilters}
-            filterConfigs={filterConfigs}
-            onUpdateFilter={(id, vals) => setActiveFilters(prev => ({ ...prev, [id]: vals }))}
-            onClear={() => setSearchTerm('')}
-            placeholder={t.searchPlaceholder}
-            color={color}
-            inventory={baseFilteredInventory}
-          />
-        </div>
-      );
-      setBottomContent(
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">
-          <InteractiveCard
-            isLoading={isLoading || !isDataSettled}
-            className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
-            pages={[
-              {
-                theme: 'bg-primary-50 dark:bg-primary-900/20',
-                content: (
-                  <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                    <span className="text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400">
-                      {t.summary?.totalItems || 'Total Items'}
-                    </span>
-                    <span className="text-xl font-bold text-primary-900 dark:text-primary-100">
-                      {summaryStats.totalItems >= 1000 
-                        ? new Intl.NumberFormat('en-US', { notation: 'compact', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(summaryStats.totalItems)
-                        : summaryStats.totalItems}
-                    </span>
-                  </div>
-                ),
-              }
-            ]}
-          />
-          {canViewFinancials && (
-            <InteractiveCard
-              isLoading={isLoading || !isDataSettled}
-              className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
-              pages={[
-                {
-                  theme: 'bg-green-50 dark:bg-green-900/20',
-                  content: (
-                    <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                      <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400">
-                        {t.summary?.totalCost || 'Inventory Cost'}
-                      </span>
-                      <span className="text-xl font-bold text-green-900 dark:text-primary-100 tabular-nums">
-                        <PriceDisplay value={summaryStats.totalCost} compact={summaryStats.totalCost >= 1000} />
-                      </span>
-                    </div>
-                  ),
-                },
-                {
-                  theme: 'bg-indigo-50 dark:bg-indigo-900/20',
-                  content: (
-                    <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                      <span className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">
-                        {t.summary?.totalSaleValue || 'Sale Value'}
-                      </span>
-                      <span className="text-xl font-bold text-indigo-900 dark:text-primary-100 tabular-nums">
-                        <PriceDisplay value={summaryStats.totalSaleValue} compact={summaryStats.totalSaleValue >= 1000} />
-                      </span>
-                    </div>
-                  ),
-                }
-              ]}
-            />
-          )}
-          <InteractiveCard
-            isLoading={isLoading || !isDataSettled}
-            className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
-            pages={[
-              {
-                theme: 'bg-red-50 dark:bg-red-900/20',
-                content: (
-                  <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                    <span className="text-[10px] font-bold uppercase text-red-600 dark:text-red-400">
-                      {t.summary?.restock || 'Critical Restock'}
-                    </span>
-                    <span className="text-xl font-bold text-red-900 dark:text-primary-100">
-                      {summaryStats.criticalRestock}
-                    </span>
-                  </div>
-                ),
-              },
-              {
-                theme: 'bg-amber-50 dark:bg-amber-900/20',
-                content: (
-                  <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                    <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">
-                      {t.summary?.nearReorder || 'Near Reorder'}
-                    </span>
-                    <span className="text-xl font-bold text-amber-900 dark:text-primary-100">
-                      {summaryStats.nearReorder}
-                    </span>
-                  </div>
-                ),
-              },
-              {
-                theme: 'bg-gray-100 dark:bg-gray-800',
-                content: (
-                  <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                    <span className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400">
-                      {t.summary?.discontinued || 'Discontinued'}
-                    </span>
-                    <span className="text-xl font-bold text-gray-700 dark:text-gray-300">
-                      {summaryStats.discontinuedCount}
-                    </span>
-                  </div>
-                ),
-              }
-            ]}
-          />
-        </div>
-      );
-      setShowStatsToggle(true);
-    } else {
-      setLeftContent(null);
-      setBottomContent(null);
-      setShowStatsToggle(false);
-    }
+  // Memoized header slot elements
+  const leftContentElement = useMemo(() => {
+    if (mode !== 'list') return null;
+    return (
+      <div className="relative flex-1 max-w-xl">
+        <SearchEngineInput
+          value={searchTerm}
+          onSearchChange={setSearchTerm}
+          activeFilters={activeFilters}
+          filterConfigs={filterConfigs}
+          onUpdateFilter={(id, vals) => setActiveFilters(prev => ({ ...prev, [id]: vals }))}
+          onClear={() => setSearchTerm('')}
+          placeholder={t.searchPlaceholder}
+          color={color}
+          inventory={baseFilteredInventory}
+        />
+      </div>
+    );
+  }, [mode, searchTerm, activeFilters, filterConfigs, t, color, baseFilteredInventory]);
 
+  const bottomContentElement = useMemo(() => {
+    if (mode !== 'list') return null;
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">
+        <InteractiveCard
+          isLoading={isLoading || !isDataSettled}
+          className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
+          pages={[
+            {
+              theme: 'bg-primary-50 dark:bg-primary-900/20',
+              content: (
+                <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
+                  <span className="text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400">
+                    {t.summary?.totalItems || 'Total Items'}
+                  </span>
+                  <span className="text-xl font-bold text-primary-900 dark:text-primary-100">
+                    {summaryStats.totalItems >= 1000 
+                      ? new Intl.NumberFormat('en-US', { notation: 'compact', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(summaryStats.totalItems)
+                      : summaryStats.totalItems}
+                  </span>
+                </div>
+              ),
+            }
+          ]}
+        />
+        {canViewFinancials && (
+          <InteractiveCard
+            isLoading={isLoading || !isDataSettled}
+            className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
+            pages={[
+              {
+                theme: 'bg-green-50 dark:bg-green-900/20',
+                content: (
+                  <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
+                    <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400">
+                      {t.summary?.totalCost || 'Inventory Cost'}
+                    </span>
+                    <span className="text-xl font-bold text-green-900 dark:text-primary-100 tabular-nums">
+                      <PriceDisplay value={summaryStats.totalCost} compact={summaryStats.totalCost >= 1000} />
+                    </span>
+                  </div>
+                ),
+              },
+              {
+                theme: 'bg-indigo-50 dark:bg-indigo-900/20',
+                content: (
+                  <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
+                    <span className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">
+                      {t.summary?.totalSaleValue || 'Sale Value'}
+                    </span>
+                    <span className="text-xl font-bold text-indigo-900 dark:text-primary-100 tabular-nums">
+                      <PriceDisplay value={summaryStats.totalSaleValue} compact={summaryStats.totalSaleValue >= 1000} />
+                    </span>
+                  </div>
+                ),
+              }
+            ]}
+          />
+        )}
+        <InteractiveCard
+          isLoading={isLoading || !isDataSettled}
+          className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
+          pages={[
+            {
+              theme: 'bg-red-50 dark:bg-red-900/20',
+              content: (
+                <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
+                  <span className="text-[10px] font-bold uppercase text-red-600 dark:text-red-400">
+                    {t.summary?.restock || 'Critical Restock'}
+                  </span>
+                  <span className="text-xl font-bold text-red-900 dark:text-primary-100">
+                    {summaryStats.criticalRestock}
+                  </span>
+                </div>
+              ),
+            },
+            {
+              theme: 'bg-amber-50 dark:bg-amber-900/20',
+              content: (
+                <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
+                  <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">
+                    {t.summary?.nearReorder || 'Near Reorder'}
+                  </span>
+                  <span className="text-xl font-bold text-amber-900 dark:text-primary-100">
+                    {summaryStats.nearReorder}
+                  </span>
+                </div>
+              ),
+            },
+            {
+              theme: 'bg-gray-100 dark:bg-gray-800',
+              content: (
+                <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
+                  <span className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400">
+                    {t.summary?.discontinued || 'Discontinued'}
+                  </span>
+                  <span className="text-xl font-bold text-gray-700 dark:text-gray-300">
+                    {summaryStats.discontinuedCount}
+                  </span>
+                </div>
+              ),
+            }
+          ]}
+        />
+      </div>
+    );
+  }, [mode, isLoading, isDataSettled, isRTL, t, summaryStats, canViewFinancials]);
+
+  // Set header slots dynamically when the elements change
+  useEffect(() => {
+    setLeftContent(leftContentElement);
     return () => {
       setLeftContent(null);
+    };
+  }, [leftContentElement, setLeftContent]);
+
+  useEffect(() => {
+    setBottomContent(bottomContentElement);
+    setShowStatsToggle(mode === 'list');
+    return () => {
       setBottomContent(null);
       setShowStatsToggle(false);
     };
-  }, [
-    mode,
-    searchTerm,
-    activeFilters,
-    filterConfigs,
-    isLoading,
-    isDataSettled,
-    summaryStats,
-    canViewFinancials,
-    isRTL,
-    t,
-  ]);
+  }, [bottomContentElement, mode, setBottomContent, setShowStatsToggle]);
 
   return (
     <div className='h-full flex flex-col gap-2 animate-fade-in pb-10 overflow-y-auto'>
