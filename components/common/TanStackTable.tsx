@@ -246,6 +246,31 @@ const getStoredSettings = (tableId: string) => {
   return storage.get(`table-settings-${tableId}`, null);
 };
 
+// Encapsulates clipboard copying with fallback for non-secure contexts
+const copyTextToClipboard = (text: string): Promise<boolean> => {
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+  }
+
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.style.position = "fixed";
+  textArea.style.left = "-9999px";
+  textArea.style.top = "0";
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
+  let success = false;
+  try {
+    success = document.execCommand('copy');
+  } catch (err) {
+    console.error('Fallback copy failed:', err);
+  }
+  document.body.removeChild(textArea);
+  return Promise.resolve(success);
+};
+
 const ALIGN_END_KEYWORDS = ['price', 'cost', 'revenue', 'profit', 'qty', 'quantity', 'amount', 'total', 'balance'];
 const ALIGN_CENTER_KEYWORDS = ['status', 'active', 'is_', 'action', 'driver', 'man'];
 
@@ -857,36 +882,12 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       };
     });
 
-    const configJson = JSON.stringify(columnConfigs, null, 2);
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(configJson)
-        .then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        })
-        .catch((err) => {
-          console.error('Failed to copy table layout config:', err);
-        });
-    } else {
-      const textArea = document.createElement("textarea");
-      textArea.value = configJson;
-      textArea.style.position = "fixed";
-      textArea.style.left = "-9999px";
-      textArea.style.top = "0";
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      try {
-        const successful = document.execCommand('copy');
-        if (successful) {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        }
-      } catch (err) {
-        console.error('Fallback: Oops, unable to copy table layout config', err);
+    copyTextToClipboard(JSON.stringify(columnConfigs, null, 2)).then((success) => {
+      if (success) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
       }
-      document.body.removeChild(textArea);
-    }
+    });
   }, [table, columnAlignment]);
 
   // Convert columnFilters array back to Record for SearchInput prop
