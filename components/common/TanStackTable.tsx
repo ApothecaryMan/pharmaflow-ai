@@ -117,16 +117,24 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
   // Long-press support for rows
   const currentTouchRow = useRef<TData | null>(null);
+  const onRowLongPressRef = useRef(onRowLongPress);
+  onRowLongPressRef.current = onRowLongPress;
+
+  const handleLongPress = React.useCallback(
+    (e: React.TouchEvent) => {
+      if (onRowLongPressRef.current && currentTouchRow.current) {
+        onRowLongPressRef.current(e, currentTouchRow.current);
+      }
+    },
+    []
+  );
+
   const {
     onTouchStart: onRowTouchStart,
     onTouchEnd: onRowTouchEnd,
     onTouchMove: onRowTouchMove,
   } = useLongPress({
-    onLongPress: (e) => {
-      if (onRowLongPress && currentTouchRow.current) {
-        onRowLongPress(e, currentTouchRow.current);
-      }
-    },
+    onLongPress: handleLongPress,
   });
 
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -193,6 +201,19 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     },
     [onSearchChange, externalGlobalFilter]
   );
+
+  const [debouncedGlobalFilter, setDebouncedGlobalFilter] = useState(globalFilter);
+
+  React.useEffect(() => {
+    if (!globalFilter) {
+      setDebouncedGlobalFilter('');
+      return;
+    }
+    const handler = setTimeout(() => {
+      setDebouncedGlobalFilter(globalFilter);
+    }, 150);
+    return () => clearTimeout(handler);
+  }, [globalFilter]);
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     initialSettings?.columnVisibility || defaultVisibility
@@ -388,7 +409,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     columns,
     state: {
       sorting,
-      globalFilter,
+      globalFilter: debouncedGlobalFilter,
       columnFilters,
       columnVisibility,
       columnSizing,
@@ -655,12 +676,29 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   );
 
   // Virtualizer Setup
+  const getScrollElement = React.useCallback(() => tableContainerRef.current, []);
+  const estimateSize = React.useCallback(() => (dense ? 36 : 48), [dense]);
+
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
-    getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => (dense ? 36 : 48), // Default estimate based on row density
+    getScrollElement,
+    estimateSize,
     overscan: 10,
   });
+
+  const measureRow = React.useCallback(
+    (el: HTMLTableRowElement | null) => {
+      if (!el) return;
+      if (enableVirtualization) {
+        rowVirtualizer.measureElement(el);
+      }
+      const indexAttr = el.getAttribute('data-index');
+      if (indexAttr === '0') {
+        firstRowRef.current = el;
+      }
+    },
+    [enableVirtualization, rowVirtualizer]
+  );
 
   const virtualItems = enableVirtualization ? rowVirtualizer.getVirtualItems() : null;
 
@@ -862,10 +900,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                       return (
                         <MemoizedRow
                           key={row.id}
-                          ref={(el: any) => {
-                            if (isVirtual) rowVirtualizer.measureElement(el);
-                            if (rowIndex === 0) (firstRowRef.current as any) = el;
-                          }}
+                          ref={measureRow}
                           row={row}
                           dense={dense}
                           onRowClick={handleRowClick}
