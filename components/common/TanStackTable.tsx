@@ -266,6 +266,49 @@ const getColumnWidth = (column: any, isFlex: boolean, columnSizing: any) => {
   return isFlex && !isResized ? 'auto' : column.getSize();
 };
 
+const getCellDirection = (columnId: string, meta: any, cellValue: any, isRtl: boolean) => {
+  const id = columnId.toLowerCase();
+  if (id === 'name') return 'ltr';
+  if (meta?.isId || meta?.isAction) return isRtl ? 'rtl' : 'ltr';
+  if (meta?.dir === 'auto') return getSmartDirection(String(cellValue || ''));
+  return meta?.dir || 'auto';
+};
+
+const formatSmartDate = (
+  dateVal: string | number | Date,
+  todayTs: number,
+  yesterdayTs: number,
+  isRtl: boolean
+) => {
+  const date = new Date(dateVal);
+  if (isNaN(date.getTime())) return null;
+
+  const targetTs = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const isToday = targetTs === todayTs;
+  const isYesterday = targetTs === yesterdayTs;
+
+  const dateLabel = isToday
+    ? isRtl ? 'اليوم' : 'Today'
+    : isYesterday
+      ? isRtl ? 'أمس' : 'Yesterday'
+      : date.toLocaleDateString();
+
+  const hourRaw = date.getHours();
+  const ampm = isRtl ? (hourRaw >= 12 ? 'م' : 'ص') : hourRaw >= 12 ? 'PM' : 'AM';
+  const displayHour = (hourRaw % 12 || 12).toLocaleString(undefined, { useGrouping: false });
+  const displayMinute = date.getMinutes().toLocaleString(undefined, {
+    minimumIntegerDigits: 2,
+    useGrouping: false,
+  });
+  const formattedTime = `${displayHour}:${displayMinute} ${ampm}`;
+
+  return {
+    isToday,
+    dateLabel,
+    formattedTime,
+  };
+};
+
 // Memoized Cell Component for extreme performance
 const MemoizedCell = React.memo(({
   cell,
@@ -282,53 +325,15 @@ const MemoizedCell = React.memo(({
   const isTechnical = meta.isTechnical;
   const cellValue = cell.getValue();
 
-  // Exception: IDs and Actions should strictly follow table direction (isRtl)
-  // to ensure 'justify-start' always matches the header alignment.
-  // Others use 'Smart Direction' for natural language flow.
-  const cellDir =
-    cell.column.id.toLowerCase() === 'name'
-      ? 'ltr'
-      : meta.isId || meta.isAction
-        ? isRtl
-          ? 'rtl'
-          : 'ltr'
-        : meta.dir === 'auto'
-          ? getSmartDirection(String(cellValue || ''))
-          : meta.dir || 'auto';
+  const cellDir = getCellDirection(cell.column.id, meta, cellValue, isRtl);
 
   let content = null;
 
   // --- Smart Date Formatting ---
   if (meta.smartDate && meta.isDate && cellValue) {
-    const date = new Date(cellValue);
-    if (!isNaN(date.getTime())) {
-      const targetTs = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate()
-      ).getTime();
-      const isToday = targetTs === todayTs;
-      const isYesterday = targetTs === yesterdayTs;
-      const dateLabel = isToday
-        ? isRtl
-          ? 'اليوم'
-          : 'Today'
-        : isYesterday
-          ? isRtl
-            ? 'أمس'
-            : 'Yesterday'
-          : date.toLocaleDateString();
-
-      const hourRaw = date.getHours();
-      const ampm = isRtl ? (hourRaw >= 12 ? 'م' : 'ص') : hourRaw >= 12 ? 'PM' : 'AM';
-      const displayHour = (hourRaw % 12 || 12).toLocaleString(undefined, {
-        useGrouping: false,
-      });
-      const displayMinute = date
-        .getMinutes()
-        .toLocaleString(undefined, { minimumIntegerDigits: 2, useGrouping: false });
-      const formattedTime = `${displayHour}:${displayMinute} ${ampm}`;
-
+    const formatted = formatSmartDate(cellValue, todayTs, yesterdayTs, isRtl);
+    if (formatted) {
+      const { isToday, dateLabel, formattedTime } = formatted;
       content = (
         <div className={`flex flex-col ${meta.itemsAlignClass}`}>
           <span className='font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight'>
