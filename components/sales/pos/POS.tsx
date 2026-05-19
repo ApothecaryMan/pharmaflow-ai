@@ -143,7 +143,7 @@ export const POS: React.FC<POSProps> = ({
     openUnitDropdown, setOpenUnitDropdown, selectedBatches, setSelectedBatches,
     openBatchDropdown, setOpenBatchDropdown,
   } = usePOSCart({
-    activeTab, activeTabId, updateTab, inventory, showToastError, addNotification, 
+    activeTab, activeTabId, updateTab, inventory, showToastError, addNotification,
     playBeep, playError, t,
   });
 
@@ -194,9 +194,9 @@ export const POS: React.FC<POSProps> = ({
 
   const { grossSubtotal, cartTotal, subtotal, taxAmount } = useMemo(() => {
     const totals = pricingService.calculateOrderTotals(cart, globalDiscount || 0);
-    return { 
-      grossSubtotal: totals.grossSubtotal, 
-      cartTotal: totals.finalTotal, 
+    return {
+      grossSubtotal: totals.grossSubtotal,
+      cartTotal: totals.finalTotal,
       subtotal: totals.grossSubtotal,
       taxAmount: totals.taxAmount
     };
@@ -215,10 +215,10 @@ export const POS: React.FC<POSProps> = ({
 
   const { totalDiscountAmount, orderDiscountPercent, totalItems } = useMemo(() => {
     const discountAmt = money.subtract(grossSubtotal, cartTotal);
-    const discountPct = grossSubtotal > 0 
+    const discountPct = grossSubtotal > 0
       ? money.multiply(money.divide(discountAmt, grossSubtotal), 100, 0)
       : 0;
-    
+
     return {
       totalDiscountAmount: discountAmt,
       orderDiscountPercent: discountPct,
@@ -241,9 +241,9 @@ export const POS: React.FC<POSProps> = ({
       if (activeCartRow) {
         // Use requestAnimationFrame to ensure the DOM has rendered the new state
         requestAnimationFrame(() => {
-          activeCartRow.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'nearest' 
+          activeCartRow.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
           });
         });
       }
@@ -284,7 +284,7 @@ export const POS: React.FC<POSProps> = ({
   const highlightMatch = useCallback((text: string, forceHighlight: boolean = true) => {
     // Only enable highlighting for scientific search (starting with @)
     if (!search.trimStart().startsWith('@')) return text;
-    
+
     if (!highlightRegex || !text) return text;
 
     try {
@@ -395,17 +395,17 @@ export const POS: React.FC<POSProps> = ({
     const detailTabs = [
       { label: currentLang === 'ar' ? 'نظرة عامة' : 'Overview', value: 'overview', icon: 'dashboard' },
       { label: currentLang === 'ar' ? 'الفروع' : 'Branches', value: 'branches', icon: 'location_on' },
-      ...(permissionsService.can('reports.view_financial') 
-        ? [{ label: currentLang === 'ar' ? 'تحليلات' : 'Analytics', value: 'analytics', icon: 'analytics' }] 
+      ...(permissionsService.can('reports.view_financial')
+        ? [{ label: currentLang === 'ar' ? 'تحليلات' : 'Analytics', value: 'analytics', icon: 'analytics' }]
         : []
       ),
     ];
 
-    return { 
-      sortedBatches: summary.batches, 
-      substitutes, 
-      totalStock: summary.totalStock, 
-      detailTabs 
+    return {
+      sortedBatches: summary.batches,
+      substitutes,
+      totalStock: summary.totalStock,
+      detailTabs
     };
   }, [viewingDrug, inventory, batchesMap, currentLang]);
 
@@ -510,7 +510,7 @@ export const POS: React.FC<POSProps> = ({
     () => [
       columnHelper.accessor('barcode', {
         header: t.code,
-        size: 95,
+        size: 167,
         cell: (info) => (
           <span className='text-sm font-bold text-gray-700 dark:text-gray-300'>
             {info.row.original.internalCode || info.row.original.barcode}
@@ -519,10 +519,10 @@ export const POS: React.FC<POSProps> = ({
       }),
       columnHelper.accessor('name', {
         header: t.name,
-        size: 400,
         meta: {
           headerAlign: language === 'AR' ? 'end' : 'start',
           disableAlignment: true,
+          flex: true,
         },
         cell: (info) => {
           const drug = info.row.original;
@@ -530,15 +530,15 @@ export const POS: React.FC<POSProps> = ({
           const genericNameStr = Array.isArray(drug.genericName)
             ? drug.genericName.join(' + ')
             : String(drug.genericName || '');
-          
+
           const isScientificSearch = search.trimStart().startsWith('@');
-          
+
           return (
-            <div className="flex flex-col w-full min-w-0 items-start text-start">
-              <span className='font-bold text-sm text-gray-900 dark:text-gray-100 drug-name truncate'>
+            <div className="flex flex-col w-full min-w-0 items-start text-start overflow-hidden">
+              <span className='font-bold text-sm text-gray-900 dark:text-gray-100 drug-name truncate w-full'>
                 {displayName}
               </span>
-              <span className='text-xs text-gray-500 whitespace-normal wrap-break-word w-full text-start' dir='auto'>
+              <span className='text-xs text-gray-500 w-full text-start truncate' dir='auto'>
                 {highlightMatch(genericNameStr)}
               </span>
             </div>
@@ -548,6 +548,7 @@ export const POS: React.FC<POSProps> = ({
       columnHelper.accessor('category', {
         header: t.category,
         size: 120,
+        meta: { align: 'center' },
         cell: (info) => (
           <span className='text-xs text-gray-600 dark:text-gray-400'>{info.getValue()}</span>
         ),
@@ -555,12 +556,14 @@ export const POS: React.FC<POSProps> = ({
       columnHelper.accessor('publicPrice', {
         header: t.publicPrice,
         size: 100,
+        meta: { align: 'center' },
         cell: (info) => <PriceDisplay value={info.getValue()} />,
       }),
       columnHelper.accessor('totalStock', {
         id: 'stock',
         header: t.stock,
         size: 100,
+        meta: { align: 'center' },
         cell: (info) => {
           const row = info.row.original;
           const mode = selectedUnits[row.id] || 'pack';
@@ -575,8 +578,8 @@ export const POS: React.FC<POSProps> = ({
           }
 
           const displayValue = resolveDisplayStock(
-            info.getValue(), 
-            unitsPerPack, 
+            info.getValue(),
+            unitsPerPack,
             mode as 'pack' | 'unit'
           );
 
@@ -591,6 +594,7 @@ export const POS: React.FC<POSProps> = ({
         id: 'unit',
         header: t.unit,
         size: 120,
+        meta: { align: 'center' },
         cell: (info) => {
           const row = info.row.original;
           return (
@@ -640,20 +644,21 @@ export const POS: React.FC<POSProps> = ({
         id: 'batches',
         header: t.batches,
         size: 150,
+        meta: { align: 'center' },
         cell: (info) => {
           const row = info.row.original;
           if (!row.batches || row.batches.length === 0)
             return <span className='text-xs text-gray-400'>-</span>;
 
           const selectedBatchId = selectedBatches[row.id];
-          
+
           const availableBatches = (row.batches || []).filter((d: Drug) => d.stock > 0);
-          
+
           // Auto-fallback: Prefer the selected batch IF IT HAS STOCK, otherwise pick the earliest available batch
-          const selectedBatchWithInventory = selectedBatchId 
+          const selectedBatchWithInventory = selectedBatchId
             ? availableBatches.find((d: Drug) => d.id === selectedBatchId)
             : null;
-            
+
           const defaultBatch = availableBatches[0];
           const displayBatch = selectedBatchWithInventory || defaultBatch;
 
@@ -788,9 +793,8 @@ export const POS: React.FC<POSProps> = ({
       <div className='flex-1 flex flex-col lg:flex-row gap-3 animate-fade-in relative overflow-hidden'>
         {/* Product Grid - Hidden on Mobile if Cart Tab is active */}
         <div
-          className={`flex-1 flex flex-col gap-2 h-full overflow-hidden ${
-            mobileTab === 'cart' ? 'hidden lg:flex' : 'flex'
-          }`}
+          className={`flex-1 flex flex-col gap-2 h-full overflow-hidden ${mobileTab === 'cart' ? 'hidden lg:flex' : 'flex'
+            }`}
         >
           {/* Customer Details */}
           <POSCustomerPanel
@@ -833,93 +837,93 @@ export const POS: React.FC<POSProps> = ({
                 filterConfigs={posFilterConfigs}
                 activeFilters={posActiveFilters}
                 onUpdateFilter={handlePosFilterUpdate}
-                    
-                    onKeyDown={(e) => {
-                      const term = search.trim();
-    
-                      // --- Grid Navigation ---
-                      if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        if (tableData.length > 0) {
-                          setActiveIndex((prev) => (prev + 1) % tableData.length);
-                        }
+
+                onKeyDown={(e) => {
+                  const term = search.trim();
+
+                  // --- Grid Navigation ---
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (tableData.length > 0) {
+                      setActiveIndex((prev) => (prev + 1) % tableData.length);
+                    }
+                    return;
+                  }
+                  if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (tableData.length > 0) {
+                      setActiveIndex(
+                        (prev) => (prev - 1 + tableData.length) % tableData.length
+                      );
+                    }
+                    return;
+                  }
+
+                  // --- Execution (Enter) ---
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (!term) return;
+
+                    // 1. Smart Barcode Detection
+                    const isBarcodeLike = /^\d+$/.test(term) && term.length > 3;
+
+                    if (isBarcodeLike) {
+                      const match = inventorySearchEngine.searchByBarcode(term) as Drug;
+                      if (match) {
+                        addToCart(match);
+                        setSearch('');
                         return;
                       }
-                      if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        if (tableData.length > 0) {
-                          setActiveIndex(
-                            (prev) => (prev - 1 + tableData.length) % tableData.length
-                          );
-                        }
-                        return;
-                      }
-    
-                      // --- Execution (Enter) ---
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (!term) return;
-    
-                        // 1. Smart Barcode Detection
-                        const isBarcodeLike = /^\d+$/.test(term) && term.length > 3;
-    
-                        if (isBarcodeLike) {
-                          const match = inventorySearchEngine.searchByBarcode(term) as Drug;
-                          if (match) {
-                            addToCart(match);
-                            setSearch('');
-                            return;
-                          }
-                        }
-    
-                        // 2. Add Active Item
-                        if (tableData.length > 0) {
-                          const activeGroup = tableData[activeIndex];
-                          addGroupToCart(activeGroup.batches);
-                          setSearch('');
-                          setActiveIndex(0);
-                          // Ensure focus remains/returns to search (though it's already there)
-                        }
-                      }
-                    }}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      const selection = window.getSelection()?.toString();
-                      showMenu(e.clientX, e.clientY, [
-                        ...(selection
-                          ? [
-                              {
-                                label: t.copy,
-                                icon: 'content_copy',
-                                action: () => navigator.clipboard.writeText(selection),
-                                danger: false,
-                              },
-                            ]
-                          : []),
+                    }
+
+                    // 2. Add Active Item
+                    if (tableData.length > 0) {
+                      const activeGroup = tableData[activeIndex];
+                      addGroupToCart(activeGroup.batches);
+                      setSearch('');
+                      setActiveIndex(0);
+                      // Ensure focus remains/returns to search (though it's already there)
+                    }
+                  }
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const selection = window.getSelection()?.toString();
+                  showMenu(e.clientX, e.clientY, [
+                    ...(selection
+                      ? [
                         {
-                          label: t.paste,
-                          icon: 'content_paste',
-                          action: async () => {
-                            try {
-                              const text = await navigator.clipboard.readText();
-                              setSearch((prev) => prev + text);
-                            } catch (err) {
-                              console.error('Failed to read clipboard', err);
-                            }
-                          },
+                          label: t.copy,
+                          icon: 'content_copy',
+                          action: () => navigator.clipboard.writeText(selection),
                           danger: false,
                         },
-                        { separator: true } as any,
-                        {
-                          label: t.clear,
-                          icon: 'backspace',
-                          action: () => setSearch(''),
-                          danger: false,
-                        },
-                      ]);
-                    }}
-                  />
+                      ]
+                      : []),
+                    {
+                      label: t.paste,
+                      icon: 'content_paste',
+                      action: async () => {
+                        try {
+                          const text = await navigator.clipboard.readText();
+                          setSearch((prev) => prev + text);
+                        } catch (err) {
+                          console.error('Failed to read clipboard', err);
+                        }
+                      },
+                      danger: false,
+                    },
+                    { separator: true } as any,
+                    {
+                      label: t.clear,
+                      icon: 'backspace',
+                      action: () => setSearch(''),
+                      danger: false,
+                    },
+                  ]);
+                }}
+              />
             </div>
           </div>
 
@@ -1068,7 +1072,7 @@ export const POS: React.FC<POSProps> = ({
           >
             <div className='flex flex-col gap-6 p-1' dir="ltr">
               {viewingDrugTab === 'overview' && (
-                <POSDrugOverview 
+                <POSDrugOverview
                   viewingDrug={viewingDrug}
                   drugBatches={viewingDrugDetails.sortedBatches}
                   substitutes={viewingDrugDetails.substitutes}
@@ -1077,7 +1081,7 @@ export const POS: React.FC<POSProps> = ({
                   setViewingDrug={setViewingDrug}
                 />
               )}
-              
+
               {viewingDrugTab === 'branches' && (
                 <POSDrugBranches viewingDrug={viewingDrug} t={t} />
               )}
