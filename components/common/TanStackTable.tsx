@@ -543,6 +543,26 @@ const MemoizedRow = React.memo(
   )
 );
 
+interface PageButtonProps {
+  onClick: () => void;
+  disabled: boolean;
+  icon: string;
+  title: string;
+}
+
+const PageButton = ({ onClick, disabled, icon, title }: PageButtonProps) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className='px-2.5 h-full flex items-center justify-center transition-colors text-(--text-secondary) hover:enabled:text-(--text-primary) hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 disabled:opacity-10'
+    title={title}
+  >
+    <span className='material-symbols-rounded leading-none' style={{ fontSize: '18px' }}>
+      {icon}
+    </span>
+  </button>
+);
+
 export function TanStackTable<TData extends { id: string | number }, TValue>({
   data,
   columns,
@@ -1471,32 +1491,18 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
             {!isShowAll && (
               <div className='flex-1 flex justify-center h-full'>
                 <div className='flex items-center h-full'>
-                  <button
+                  <PageButton
                     onClick={() => table.setPageIndex(0)}
                     disabled={!table.getCanPreviousPage()}
-                    className='px-2.5 h-full flex items-center justify-center transition-colors text-(--text-secondary) hover:enabled:text-(--text-primary) hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 disabled:opacity-10'
+                    icon='first_page'
                     title='First Page'
-                  >
-                    <span
-                      className='material-symbols-rounded leading-none'
-                      style={{ fontSize: '18px' }}
-                    >
-                      first_page
-                    </span>
-                  </button>
-                  <button
+                  />
+                  <PageButton
                     onClick={() => table.previousPage()}
                     disabled={!table.getCanPreviousPage()}
-                    className='px-2.5 h-full flex items-center justify-center transition-colors text-(--text-secondary) hover:enabled:text-(--text-primary) hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 disabled:opacity-10'
+                    icon='chevron_left'
                     title='Previous Page'
-                  >
-                    <span
-                      className='material-symbols-rounded leading-none'
-                      style={{ fontSize: '18px' }}
-                    >
-                      chevron_left
-                    </span>
-                  </button>
+                  />
 
                   <div
                     onClick={() => {
@@ -1556,47 +1562,30 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                     )}
                   </div>
 
-                  <button
+                  <PageButton
                     onClick={() => table.nextPage()}
                     disabled={!table.getCanNextPage()}
-                    className='px-2.5 h-full flex items-center justify-center transition-colors text-(--text-secondary) hover:enabled:text-(--text-primary) hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 disabled:opacity-10'
+                    icon='chevron_right'
                     title='Next Page'
-                  >
-                    <span
-                      className='material-symbols-rounded leading-none'
-                      style={{ fontSize: '18px' }}
-                    >
-                      chevron_right
-                    </span>
-                  </button>
-                  <button
+                  />
+                  <PageButton
                     onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                     disabled={!table.getCanNextPage()}
-                    className='px-2.5 h-full flex items-center justify-center transition-colors text-(--text-secondary) hover:enabled:text-(--text-primary) hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 disabled:opacity-10'
+                    icon='last_page'
                     title='Last Page'
-                  >
-                    <span
-                      className='material-symbols-rounded leading-none'
-                      style={{ fontSize: '18px' }}
-                    >
-                      last_page
-                    </span>
-                  </button>
+                  />
                 </div>
               </div>
             )}
 
             {/* Right Zone: Utility Tools (Fixed width for balance) */}
             <div className='w-56 flex items-center justify-end h-full'>
-              <button
+              <PageButton
                 onClick={() => tableContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
-                className='px-2.5 h-full flex items-center justify-center transition-colors text-(--text-secondary) hover:text-(--text-primary) hover:bg-black/5 dark:hover:bg-white/10'
+                disabled={false}
+                icon='vertical_align_top'
                 title='Jump to Top'
-              >
-                <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
-                  vertical_align_top
-                </span>
-              </button>
+              />
 
               {enableShowAll && (
                 <button
