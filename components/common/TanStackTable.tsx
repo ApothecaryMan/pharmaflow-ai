@@ -334,6 +334,46 @@ const formatSmartDate = (
   };
 };
 
+const computeColumnMeta = (column: any, columnAlignment: Record<string, any>) => {
+  const id = column.id;
+  const colId = id.toLowerCase();
+  const meta = column.columnDef.meta;
+  const header = String(column.columnDef.header || '').toLowerCase();
+
+  const align = (meta?.disableAlignment ? null : columnAlignment[id]) || getSmartAlignment(id, meta);
+
+  const isId = meta?.isId ?? (colId.includes('id') || colId.includes('code'));
+  const isDate =
+    (['date', 'time', 'timestamp', 'visit'].some((k) => colId.includes(k)) ||
+      (colId.includes('at') && !colId.includes('csat'))) &&
+    !colId.includes('expiry');
+
+  const isTechnical = isTechnicalColumn(colId, header, meta);
+
+  return {
+    align,
+    isId,
+    isDate,
+    isTechnical,
+    isAction: colId.includes('action'),
+    isFlex: meta?.flex ?? colId.includes('name'),
+    justifyClass: getHeaderJustifyClass(align),
+    textAlignClass: getTextAlignClass(align),
+    itemsAlignClass: getItemsAlignClass(align),
+    width: meta?.width,
+    minWidth: meta?.minWidth,
+    smartDate: meta?.smartDate !== false,
+  };
+};
+
+const getHeaderAlignment = (column: any, meta: any, isRtl: boolean) => {
+  let headerAlign = column.columnDef.meta?.headerAlign;
+  if (!headerAlign && column.id.toLowerCase() === 'name') {
+    headerAlign = isRtl ? 'end' : 'start';
+  }
+  return headerAlign || meta?.align || 'start';
+};
+
 // Memoized Cell Component for extreme performance
 const MemoizedCell = React.memo(({
   cell,
@@ -1149,41 +1189,8 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   // --- Unified Column Metadata ---
   const columnMetaMap = React.useMemo(() => {
     const map = new Map<string, any>();
-
-    // Use the internal table leaf columns for guaranteed sync with state
-    const leafColumns = table.getAllLeafColumns();
-
-    leafColumns.forEach((column) => {
-      const id = column.id;
-      const colId = id.toLowerCase();
-      const meta = column.columnDef.meta as any;
-      const header = String(column.columnDef.header || '').toLowerCase();
-
-      const align =
-        (meta?.disableAlignment ? null : columnAlignment[id]) || getSmartAlignment(id, meta);
-
-      const isId = meta?.isId ?? (colId.includes('id') || colId.includes('code'));
-      const isDate =
-        (['date', 'time', 'timestamp', 'visit'].some((k) => colId.includes(k)) ||
-          (colId.includes('at') && !colId.includes('csat'))) &&
-        !colId.includes('expiry');
-
-      const isTechnical = isTechnicalColumn(colId, header, meta);
-
-      map.set(id, {
-        align,
-        isId,
-        isDate,
-        isTechnical,
-        isAction: colId.includes('action'),
-        isFlex: meta?.flex ?? colId.includes('name'),
-        justifyClass: getHeaderJustifyClass(align),
-        textAlignClass: getTextAlignClass(align),
-        itemsAlignClass: getItemsAlignClass(align),
-        width: meta?.width,
-        minWidth: meta?.minWidth,
-        smartDate: meta?.smartDate !== false,
-      });
+    table.getAllLeafColumns().forEach((column) => {
+      map.set(column.id, computeColumnMeta(column, columnAlignment));
     });
     return map;
   }, [columns, columnVisibility, columnAlignment]);
@@ -1275,17 +1282,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
                       const meta = columnMetaMap.get(header.column.id);
-                      let headerAlign = header.column.columnDef.meta?.headerAlign;
-                      if (!headerAlign && header.column.id.toLowerCase() === 'name') {
-                        headerAlign = isRtl ? 'end' : 'start';
-                      }
-                      const align = headerAlign || meta?.align || 'start';
+                      const align = getHeaderAlignment(header.column, meta, isRtl);
                       const justifyClass = getHeaderJustifyClass(align);
                       const textAlignClass = getTextAlignClass(align);
-
-                      const isFlex =
-                        header.column.columnDef.meta?.flex ??
-                        header.column.id.toLowerCase().includes('name');
+                      const isFlex = meta?.isFlex;
 
                       return (
                         <th
@@ -1321,32 +1321,20 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                                   {/* Absolute Sort Indicators */}
                                   <span
                                     className={`absolute top-1/2 -translate-y-1/2 flex items-center
-                                ${align === 'start'
-                                        ? 'ltr:left-full ltr:pl-1 rtl:right-full rtl:pr-1'
-                                        : align === 'end'
-                                          ? 'ltr:right-full ltr:pr-1 rtl:left-full rtl:pl-1 opacity-100'
-                                          : 'ltr:left-full ltr:pl-1 rtl:right-full rtl:pr-1'
+                                      ${align === 'end'
+                                        ? 'ltr:right-full ltr:pr-1 rtl:left-full rtl:pl-1 opacity-100'
+                                        : 'ltr:left-full ltr:pl-1 rtl:right-full rtl:pr-1'
                                       }
-                             `}
+                                    `}
                                   >
-                                    {{
-                                      asc: (
-                                        <span
-                                          className='material-symbols-rounded leading-none text-current opacity-70'
-                                          style={{ fontSize: 'var(--icon-lg)' }}
-                                        >
-                                          arrow_drop_up
-                                        </span>
-                                      ),
-                                      desc: (
-                                        <span
-                                          className='material-symbols-rounded leading-none text-current opacity-70'
-                                          style={{ fontSize: 'var(--icon-lg)' }}
-                                        >
-                                          arrow_drop_down
-                                        </span>
-                                      ),
-                                    }[header.column.getIsSorted() as string] ?? null}
+                                    {header.column.getIsSorted() && (
+                                      <span
+                                        className='material-symbols-rounded leading-none text-current opacity-70'
+                                        style={{ fontSize: 'var(--icon-lg)' }}
+                                      >
+                                        {header.column.getIsSorted() === 'asc' ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                      </span>
+                                    )}
                                   </span>
                                 </div>
                               </div>
