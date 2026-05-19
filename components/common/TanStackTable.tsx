@@ -180,10 +180,7 @@ const isTechnicalColumn = (columnId: string, header: string, meta: any): boolean
   if (meta?.isId || meta?.noConvert) return true;
   const id = columnId.toLowerCase();
   const h = header.toLowerCase();
-  for (const kw of TECHNICAL_COLUMN_KEYWORDS) {
-    if (id.includes(kw) || h.includes(kw)) return true;
-  }
-  return false;
+  return Array.from(TECHNICAL_COLUMN_KEYWORDS).some((kw) => id.includes(kw) || h.includes(kw));
 };
 
 export interface TanStackTableProps<TData extends { id: string | number }, TValue> {
@@ -249,20 +246,24 @@ const getStoredSettings = (tableId: string) => {
   return storage.get(`table-settings-${tableId}`, null);
 };
 
+const ALIGN_END_KEYWORDS = ['price', 'cost', 'revenue', 'profit', 'qty', 'quantity', 'amount', 'total', 'balance'];
+const ALIGN_CENTER_KEYWORDS = ['status', 'active', 'is_', 'action', 'driver', 'man'];
+
 const getSmartAlignment = (columnId: string, meta?: any): 'start' | 'end' | 'center' => {
   if (meta?.align)
     return meta.align === 'left' ? 'start' : meta.align === 'right' ? 'end' : meta.align;
 
   const id = columnId.toLowerCase();
-  if (
-    ['price', 'cost', 'revenue', 'profit', 'qty', 'quantity', 'amount', 'total', 'balance'].some(
-      (key) => id.includes(key)
-    )
-  )
+  if (ALIGN_END_KEYWORDS.some((key) => id.includes(key)))
     return 'end';
-  if (['status', 'active', 'is_', 'action', 'driver', 'man'].some((key) => id.includes(key)))
+  if (ALIGN_CENTER_KEYWORDS.some((key) => id.includes(key)))
     return 'center';
   return 'start';
+};
+
+const getColumnWidth = (column: any, isFlex: boolean, columnSizing: any) => {
+  const isResized = columnSizing && !!columnSizing[column.id];
+  return isFlex && !isResized ? 'auto' : column.getSize();
 };
 
 // Memoized Cell Component for extreme performance
@@ -275,7 +276,8 @@ const MemoizedCell = React.memo(({
   isPending,
   rowsCount,
   todayTs,
-  yesterdayTs
+  yesterdayTs,
+  columnSizing
 }: any) => {
   const isTechnical = meta.isTechnical;
   const cellValue = cell.getValue();
@@ -365,15 +367,15 @@ const MemoizedCell = React.memo(({
     <td
       data-no-convert={isTechnical ? 'true' : undefined}
       className={`${dense ? 'py-1 text-xs' : 'py-3 text-sm'} px-4 font-medium text-(--text-primary) align-middle border-b border-(--border-divider) group-last/row:border-b-0
-      ${meta.isFlex ? '' : 'whitespace-nowrap'} ${meta.isAction ? 'action-col' : ''}`}
+      ${meta?.isFlex ? 'min-w-0 overflow-hidden' : 'whitespace-nowrap'} ${meta?.isAction ? 'action-col' : ''}`}
       style={{
-        width: cell.column.getSize(),
-        minWidth: meta.minWidth,
+        width: getColumnWidth(cell.column, meta?.isFlex, columnSizing),
+        minWidth: meta?.minWidth,
       }}
       dir={cellDir}
     >
-      <div className={`flex items-center gap-1.5 w-full ${meta.justifyClass}`}>
-        {meta.isId && (
+      <div className={`flex items-center gap-1.5 w-full min-w-0 ${meta?.justifyClass}`}>
+        {meta?.isId && (
           <span
             className='material-symbols-rounded text-gray-400 shrink-0'
             style={{ fontSize: 'var(--icon-md)' }}
@@ -381,7 +383,7 @@ const MemoizedCell = React.memo(({
             tag
           </span>
         )}
-        <span dir={meta.isId ? 'ltr' : undefined}>{content}</span>
+        <span className={meta?.isFlex ? 'min-w-0 w-full block' : undefined} dir={meta?.isId ? 'ltr' : undefined}>{content}</span>
       </div>
     </td>
   );
@@ -413,6 +415,7 @@ const MemoizedRow = React.memo(
         isRtl,
         isAR,
         isLoading,
+        columnSizing,
       }: any,
       ref: any
     ) => {
@@ -445,7 +448,7 @@ const MemoizedRow = React.memo(
         ${isNew ? 'bg-emerald-500/[0.08] dark:bg-emerald-500/[0.12] animate-in fade-in zoom-in-95 duration-300 ease-out' : ''}
         ${isUpdated ? 'bg-amber-500/[0.08] dark:bg-amber-500/[0.12] transition-colors duration-300' : ''}
       `}
-      >
+        >
           {row.getVisibleCells().map((cell: any) => {
             const meta = columnMetaMap.get(cell.column.id);
             return (
@@ -460,6 +463,7 @@ const MemoizedRow = React.memo(
                 rowsCount={rowsCount}
                 todayTs={todayTs}
                 yesterdayTs={yesterdayTs}
+                columnSizing={columnSizing}
               />
             );
           })}
@@ -550,6 +554,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [internalGlobalFilter, setInternalGlobalFilter] = useState('');
+  const [copied, setCopied] = useState(false);
   // We manage "Active Pills" as Column Filters
   const [columnFilters, setColumnFilters] = useState<{ id: string; value: any }[]>(() =>
     Object.entries(initialFilters).map(([id, value]) => ({ id, value }))
@@ -834,6 +839,66 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       filterFn: unifiedFilterFn,
     },
   });
+
+  const handleCopyTableConfig = React.useCallback(() => {
+    // Measure actual rendered widths from the DOM
+    const domWidths: Record<string, number> = {};
+    if (headerRef.current) {
+      const thElements = headerRef.current.querySelectorAll('th');
+      thElements.forEach((th) => {
+        const colId = th.getAttribute('data-column-id');
+        if (colId) {
+          const rect = th.getBoundingClientRect();
+          if (rect.width > 0) {
+            domWidths[colId] = Math.round(rect.width);
+          }
+        }
+      });
+    }
+
+    const columnConfigs = table.getAllLeafColumns().map((col) => {
+      const id = col.id;
+      const meta = col.columnDef.meta as any;
+      const align = columnAlignment[id] || getSmartAlignment(id, meta);
+      const size = domWidths[id] ?? col.getSize();
+      return {
+        id,
+        size,
+        align,
+      };
+    });
+
+    const configJson = JSON.stringify(columnConfigs, null, 2);
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(configJson)
+        .then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        })
+        .catch((err) => {
+          console.error('Failed to copy table layout config:', err);
+        });
+    } else {
+      const textArea = document.createElement("textarea");
+      textArea.value = configJson;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      textArea.style.top = "0";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }
+      } catch (err) {
+        console.error('Fallback: Oops, unable to copy table layout config', err);
+      }
+      document.body.removeChild(textArea);
+    }
+  }, [table, columnAlignment]);
 
   // Convert columnFilters array back to Record for SearchInput prop
   const activeFiltersRecord = React.useMemo(() => {
@@ -1158,7 +1223,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   const itemsToRender = enableVirtualization ? virtualItems! : rows;
 
   return (
-    <div className='flex flex-col h-full w-full'>
+    <div className='flex flex-col h-full w-full relative group/table-root'>
       {/* Header Controls */}
       {enableTopToolbar && (
         <div
@@ -1196,12 +1261,11 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
       {/* Unified Card Wrapper */}
       <div
-        className={`flex flex-col flex-1 min-h-0 ${
-          lite ? 'bg-transparent' : `${CARD_BASE} rounded-2xl overflow-hidden`
-        }`}
+        className={`flex flex-col flex-1 min-h-0 ${lite ? 'bg-transparent' : `${CARD_BASE} rounded-2xl overflow-hidden`
+          }`}
       >
         {/* Table Scroll Area */}
-        <div ref={tableContainerRef} className='flex-1 overflow-y-scroll custom-scrollbar relative'>
+        <div ref={tableContainerRef} className='flex-1 overflow-y-scroll  custom-scrollbar relative'>
           {visibleColumnsCount === 0 ? (
             <ContextMenuTrigger
               className='h-full w-full'
@@ -1221,7 +1285,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
               </div>
             </ContextMenuTrigger>
           ) : (
-            <table className='w-full text-left border-separate border-spacing-0'>
+            <table className='w-full text-left border-separate border-spacing-0 table-fixed'>
               <thead ref={headerRef} className='sticky top-0 z-10 bg-(--bg-card)'>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
@@ -1242,11 +1306,12 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                       return (
                         <th
                           key={header.id}
+                          data-column-id={header.column.id}
                           className={`p-0 text-xs font-bold text-(--text-tertiary) uppercase tracking-wider select-none relative group border-b border-(--border-divider)
                         ${textAlignClass}
                         ${isFlex ? '' : 'w-[1%] whitespace-nowrap'}`}
                           style={{
-                            width: header.getSize(),
+                            width: getColumnWidth(header.column, isFlex, columnSizing),
                             minWidth: header.column.columnDef.meta?.minWidth,
                           }}
                         >
@@ -1272,13 +1337,12 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                                   {/* Absolute Sort Indicators */}
                                   <span
                                     className={`absolute top-1/2 -translate-y-1/2 flex items-center
-                                ${
-                                  align === 'start'
-                                    ? 'ltr:left-full ltr:pl-1 rtl:right-full rtl:pr-1'
-                                    : align === 'end'
-                                      ? 'ltr:right-full ltr:pr-1 rtl:left-full rtl:pl-1 opacity-100'
-                                      : 'ltr:left-full ltr:pl-1 rtl:right-full rtl:pr-1'
-                                }
+                                ${align === 'start'
+                                        ? 'ltr:left-full ltr:pl-1 rtl:right-full rtl:pr-1'
+                                        : align === 'end'
+                                          ? 'ltr:right-full ltr:pr-1 rtl:left-full rtl:pl-1 opacity-100'
+                                          : 'ltr:left-full ltr:pl-1 rtl:right-full rtl:pr-1'
+                                      }
                              `}
                                   >
                                     {{
@@ -1391,6 +1455,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                           yesterdayTs={yesterdayTs}
                           isRtl={isRtl}
                           isAR={isAR}
+                          columnSizing={table.getState().columnSizing}
                         />
                       );
                     })}
@@ -1449,7 +1514,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                     <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
                       {(
                         table.getState().pagination.pageIndex *
-                          table.getState().pagination.pageSize +
+                        table.getState().pagination.pageSize +
                         1
                       ).toLocaleString()}
                     </span>
@@ -1457,7 +1522,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                     <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
                       {Math.min(
                         (table.getState().pagination.pageIndex + 1) *
-                          table.getState().pagination.pageSize,
+                        table.getState().pagination.pageSize,
                         table.getFilteredRowModel().rows.length
                       ).toLocaleString()}
                     </span>
@@ -1508,9 +1573,8 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                         setJumpValue((table.getState().pagination.pageIndex + 1).toString());
                       }
                     }}
-                    className={`px-4 flex items-center h-full text-[12px] font-bold text-(--text-secondary) tabular-nums transition-colors group ${
-                      !isJumping ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/10' : ''
-                    }`}
+                    className={`px-4 flex items-center h-full text-[12px] font-bold text-(--text-secondary) tabular-nums transition-colors group ${!isJumping ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/10' : ''
+                      }`}
                   >
                     {isJumping ? (
                       <div className='flex items-center gap-1'>
@@ -1605,11 +1669,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
               {enableShowAll && (
                 <button
                   onClick={() => setIsShowAll(!isShowAll)}
-                  className={`px-2.5 h-full flex items-center justify-center transition-colors ${
-                    isShowAll
+                  className={`px-2.5 h-full flex items-center justify-center transition-colors ${isShowAll
                       ? `text-primary-600 bg-primary-500/10 dark:text-primary-400 dark:bg-primary-400/10`
                       : 'text-(--text-secondary) hover:text-(--text-primary) hover:bg-black/5 dark:hover:bg-white/10'
-                  }`}
+                    }`}
                   title={isShowAll ? 'Paginated View' : t.global?.table?.showAll || 'Show All'}
                 >
                   <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
@@ -1621,6 +1684,22 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
           </div>
         )}
       </div>
+
+      {import.meta.env.DEV && (
+        <button
+          onClick={handleCopyTableConfig}
+          className={`absolute z-40 p-2.5 rounded-xl border border-primary-500/20 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/50 hover:bg-white dark:hover:bg-zinc-900 text-primary-600 dark:text-primary-400 transition-all duration-300 active:scale-95 group/dev-btn flex items-center gap-1.5 right-4 ${enablePagination && (table.getPageCount() > 1 || isShowAll) ? 'bottom-16' : 'bottom-4'
+            }`}
+          title='Copy Column Layout & Alignment (Dev Only)'
+        >
+          <span className='material-symbols-rounded block text-lg transition-transform duration-300 group-hover/dev-btn:rotate-6'>
+            {copied ? 'check' : 'grid_view'}
+          </span>
+          <span className='text-[10px] font-bold tracking-wider uppercase opacity-0 max-w-0 overflow-hidden transition-all duration-300 group-hover/dev-btn:opacity-100 group-hover/dev-btn:max-w-[150px] whitespace-nowrap'>
+            {copied ? 'Copied!' : 'Copy Column Layout'}
+          </span>
+        </button>
+      )}
     </div>
   );
 }

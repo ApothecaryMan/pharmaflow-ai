@@ -304,10 +304,10 @@ export const Inventory: React.FC<InventoryProps> = ({
     let result = [...inventory];
 
     // Apply Stock Status Filter
-    const stockVals = (activeFilters['stock_status'] && activeFilters['stock_status'].length > 0) 
-      ? activeFilters['stock_status'] 
+    const stockVals = (activeFilters['stock_status'] && activeFilters['stock_status'].length > 0)
+      ? activeFilters['stock_status']
       : ['in_stock'];
-    
+
     if (!stockVals.includes('all')) {
       result = result.filter((d) => {
         if (stockVals.includes('in_stock') && stockVals.includes('out_of_stock')) return true;
@@ -382,12 +382,12 @@ export const Inventory: React.FC<InventoryProps> = ({
       (acc, drug) => {
         acc.totalItems += 1;
         const packs = convertToPacks(drug.totalStock || 0, drug.unitsPerPack || 1);
-        
+
         acc.totalCost = money.add(
           acc.totalCost,
           money.multiply(drug.costPrice || 0, packs, 0)
         );
-        
+
         acc.totalSaleValue = money.add(
           acc.totalSaleValue,
           money.multiply(drug.publicPrice || 0, packs, 0)
@@ -414,180 +414,185 @@ export const Inventory: React.FC<InventoryProps> = ({
     );
   }, [groupedInventory]);
 
-    const getRowActions = (drugRow: any) => {
-      const groupData = drugRow as GroupedDrug & { selectedBatch?: Drug };
-      const drug = groupData.selectedBatch || groupData;
+  const getRowActions = (drugRow: any) => {
+    const groupData = drugRow as GroupedDrug & { selectedBatch?: Drug };
+    const drug = groupData.selectedBatch || groupData;
 
-      const actions = [];
-  
-      if (permissionsService.can('inventory.update')) {
-        actions.push({
-          label: t.actionsMenu.edit,
-          icon: 'edit',
-          action: () => handleOpenEdit(drug),
-        });
-      }
+    const actions = [];
 
+    if (permissionsService.can('inventory.update')) {
       actions.push({
-        label: t.actionsMenu.viewDetails || t.actionsMenu.view,
-        icon: 'visibility',
-        action: () => handleViewDetails(drug.id),
+        label: t.actionsMenu.edit,
+        icon: 'edit',
+        action: () => handleOpenEdit(drug),
       });
+    }
+
+    actions.push({
+      label: t.actionsMenu.viewDetails || t.actionsMenu.view,
+      icon: 'visibility',
+      action: () => handleViewDetails(drug.id),
+    });
+    actions.push({ separator: true });
+    actions.push({
+      label: t.actionsMenu.printBarcode,
+      icon: 'print',
+      action: () => handlePrintBarcode(drug),
+    });
+    if (permissionsService.can('inventory.add')) {
+      actions.push({
+        label: t.actionsMenu.duplicate,
+        icon: 'content_copy',
+        action: () => handleDuplicate(drug),
+      });
+    }
+
+    if (permissionsService.can('inventory.restock')) {
       actions.push({ separator: true });
       actions.push({
-        label: t.actionsMenu.printBarcode,
-        icon: 'print',
-        action: () => handlePrintBarcode(drug),
+        label: t.actionsMenu.adjustStock,
+        icon: 'inventory',
+        action: () => handleQuickStockAdjust(drug),
       });
-      if (permissionsService.can('inventory.add')) {
-        actions.push({
-          label: t.actionsMenu.duplicate,
-          icon: 'content_copy',
-          action: () => handleDuplicate(drug),
-        });
-      }
+    }
 
-      if (permissionsService.can('inventory.restock')) {
-        actions.push({ separator: true });
-        actions.push({
-          label: t.actionsMenu.adjustStock,
-          icon: 'inventory',
-          action: () => handleQuickStockAdjust(drug),
-        });
-      }
+    if (permissionsService.can('inventory.delete')) {
+      actions.push({ separator: true });
+      actions.push({
+        label: t.actionsMenu.delete,
+        icon: 'delete',
+        action: () => handleDelete(drug.id),
+        danger: true,
+      });
+    }
 
-      if (permissionsService.can('inventory.delete')) {
-        actions.push({ separator: true });
-        actions.push({
-          label: t.actionsMenu.delete,
-          icon: 'delete',
-          action: () => handleDelete(drug.id),
-          danger: true,
-        });
-      }
-
-      return actions;
-    };
+    return actions;
+  };
 
   const canViewFinancials = permissionsService.can('reports.view_financial');
 
   const tableColumns = useMemo<ColumnDef<Drug>[]>(
     () => {
       const cols: ColumnDef<Drug>[] = [
-      {
-        id: 'code',
-        header: t.headers.codes,
-        cell: ({ row }) => {
-          const drug = row.original;
-          return (
-            <div className='flex flex-col gap-0.5'>
-              {drug.barcode && (
-                <div className='text-gray-900 dark:text-gray-100 text-xs'>{drug.barcode}</div>
-              )}
-              {drug.internalCode && (
-                <div className='text-gray-900 dark:text-gray-100 text-xs'>{drug.internalCode}</div>
-              )}
-              {!drug.barcode && !drug.internalCode && <span className='text-gray-400'>-</span>}
-            </div>
-          );
-        },
-        size: 150,
-      },
-      {
-        accessorKey: 'name',
-        header: t.headers.name,
-        meta: {
-          headerAlign: isRTL ? 'end' : 'start',
-          disableAlignment: true,
-        },
-        cell: ({ row }) => {
-          const drug = row.original;
-          const displayName = getDisplayName(drug, textTransform);
-          return (
-            <div className='flex flex-col whitespace-normal items-start text-start w-full'>
-              <div className='font-medium text-gray-900 dark:text-gray-100 text-xs drug-name'>
-                {displayName}
+        {
+          id: 'code',
+          header: t.headers.codes,
+          cell: ({ row }) => {
+            const drug = row.original;
+            return (
+              <div className='flex flex-col gap-0.5'>
+                {drug.barcode && (
+                  <div className='text-gray-900 dark:text-gray-100 text-xs'>{drug.barcode}</div>
+                )}
+                {drug.internalCode && (
+                  <div className='text-gray-900 dark:text-gray-100 text-xs'>{drug.internalCode}</div>
+                )}
+                {!drug.barcode && !drug.internalCode && <span className='text-gray-400'>-</span>}
               </div>
+            );
+          },
+          size: 136,
+        },
+        {
+          accessorKey: 'name',
+          header: t.headers.name,
+          meta: {
+            headerAlign: isRTL ? 'end' : 'start',
+            disableAlignment: true,
+          },
+          cell: ({ row }) => {
+            const drug = row.original;
+            const displayName = getDisplayName(drug, textTransform);
+            return (
+              <div className='flex flex-col whitespace-normal items-start text-start w-full'>
+                <div className='font-medium text-gray-900 dark:text-gray-100 text-xs drug-name'>
+                  {displayName}
+                </div>
                 <span className='text-gray-500 dark:text-gray-400'>
-                  {Array.isArray(drug.genericName) 
-                    ? drug.genericName.join(' + ') 
+                  {Array.isArray(drug.genericName)
+                    ? drug.genericName.join(' + ')
                     : (drug.genericName as any)}
                 </span>
-            </div>
-          );
+              </div>
+            );
+          },
+          size: 700,
         },
-        size: 250,
-      },
-      {
-        accessorKey: 'category',
-        header: t.headers.category,
-        cell: ({ row }) => (
-          <span className={getCategoryBadgeClass(row.original.category)}>
-            {getLocalizedCategory(row.original.category || 'General', currentLang)}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'status',
-        header: t.headers.status || 'Status',
-        cell: ({ row }) => {
-          const status = row.original.status || 'active';
-          const badgeClass = {
-            active: 'badge-success',
-            inactive: 'badge-warning',
-            discontinued: 'badge-danger',
-          }[status as 'active' | 'inactive' | 'discontinued'] || 'badge-neutral';
-          
-          return (
-            <span className={badgeClass}>
-              {t[status] || status}
+        {
+          accessorKey: 'category',
+          header: t.headers.category,
+          meta: { align: 'center' },
+          cell: ({ row }) => (
+            <span className={getCategoryBadgeClass(row.original.category)}>
+              {getLocalizedCategory(row.original.category || 'General', currentLang)}
             </span>
-          );
+          ),
+          size: 76,
         },
-        size: 150,
-      },
-      {
-        accessorKey: 'stock',
-        header: t.headers.stock,
-        cell: ({ row }) => {
-          if (row.original.stock <= 0) {
+        {
+          accessorKey: 'status',
+          header: t.headers.status || 'Status',
+          cell: ({ row }) => {
+            const status = row.original.status || 'active';
+            const badgeClass = {
+              active: 'badge-success',
+              inactive: 'badge-warning',
+              discontinued: 'badge-danger',
+            }[status as 'active' | 'inactive' | 'discontinued'] || 'badge-neutral';
+
             return (
-              <span className='badge-danger'>
-                {t.outOfStockShort || 'OUT'}
+              <span className={badgeClass}>
+                {t[status] || status}
               </span>
             );
-          }
-
-          const parts = formatStockParts(row.original.stock, row.original.unitsPerPack, {
-            packs: t.details?.packs || 'Packs',
-            outOfStock: t.outOfStock || 'Out of Stock',
-          });
-
-          return (
-            <div
-              className={`font-medium text-xs ${row.original.stock < (row.original.unitsPerPack || 1) ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}
-            >
-              {parts.value}{' '}
-              {parts.label && (
-                <span className='text-[10px] text-gray-400 font-normal'>{parts.label}</span>
-              )}
-            </div>
-          );
+          },
+          size: 79,
         },
-      },
-      {
-        accessorKey: 'publicPrice',
-        header: t.headers.publicPrice,
-        cell: ({ row }) => {
-          const parts = formatCurrencyParts(row.original.publicPrice);
-          return (
-            <span className='text-gray-700 dark:text-gray-300 text-xs font-bold'>
-              {parts.amount}{' '}
-              <span className='text-[10px] text-gray-400 font-normal'>{parts.symbol}</span>
-            </span>
-          );
+        {
+          accessorKey: 'stock',
+          header: t.headers.stock,
+          meta: { align: 'end' },
+          cell: ({ row }) => {
+            if (row.original.stock <= 0) {
+              return (
+                <span className='badge-danger'>
+                  {t.outOfStockShort || 'OUT'}
+                </span>
+              );
+            }
+
+            const parts = formatStockParts(row.original.stock, row.original.unitsPerPack, {
+              packs: t.details?.packs || 'Packs',
+              outOfStock: t.outOfStock || 'Out of Stock',
+            });
+
+            return (
+              <div
+                className={`font-medium text-xs ${row.original.stock < (row.original.unitsPerPack || 1) ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}
+              >
+                {parts.value}{' '}
+                {parts.label && (
+                  <span className='text-[10px] text-gray-400 font-normal'>{parts.label}</span>
+                )}
+              </div>
+            );
+          },
+          size: 90,
         },
-      },
+        {
+          accessorKey: 'publicPrice',
+          header: t.headers.publicPrice,
+          cell: ({ row }) => {
+            const parts = formatCurrencyParts(row.original.publicPrice);
+            return (
+              <span className='text-gray-700 dark:text-gray-300 text-xs font-bold'>
+                {parts.amount}{' '}
+                <span className='text-[10px] text-gray-400 font-normal'>{parts.symbol}</span>
+              </span>
+            );
+          },
+          size: 89,
+        },
       ];
 
       // Insert cost column only if authorized
@@ -608,6 +613,7 @@ export const Inventory: React.FC<InventoryProps> = ({
               </span>
             );
           },
+          size: 90,
         });
       }
 
@@ -672,6 +678,7 @@ export const Inventory: React.FC<InventoryProps> = ({
           return <div className='flex justify-center'>{renderDateWrapper(drug.expiryDate)}</div>;
         },
         meta: { align: 'center', smartDate: false },
+        size: 143,
       });
 
       return cols;
@@ -795,7 +802,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                     {t.summary?.totalItems || 'Total Items'}
                   </span>
                   <span className="text-xl font-bold text-primary-900 dark:text-primary-100">
-                    {summaryStats.totalItems >= 1000 
+                    {summaryStats.totalItems >= 1000
                       ? new Intl.NumberFormat('en-US', { notation: 'compact', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(summaryStats.totalItems)
                       : summaryStats.totalItems}
                   </span>
