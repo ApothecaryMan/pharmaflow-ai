@@ -612,12 +612,12 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   // Build default visibility from defaultHiddenColumns
   const defaultVisibility = React.useMemo(() => {
     const visibility: VisibilityState = {};
-    defaultHiddenColumns.forEach((id) => {
-      visibility[id] = false;
-    });
+    defaultHiddenColumns.forEach((id) => (visibility[id] = false));
     columns.forEach((col) => {
       const id = (col as any).id || (col as any).accessorKey;
-      if (id && (col as any).meta?.hideFromSettings) visibility[id] = false;
+      if (id && (col as any).meta?.hideFromSettings) {
+        visibility[id] = false;
+      }
     });
     return visibility;
   }, [defaultHiddenColumns, columns]);
@@ -634,11 +634,9 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   const initialFiltersJson = JSON.stringify(initialFilters);
   React.useEffect(() => {
     const propFilters = Object.entries(initialFilters).map(([id, value]) => ({ id, value }));
-    setColumnFilters((prev) => {
-      const prevStr = JSON.stringify(prev);
-      const nextStr = JSON.stringify(propFilters);
-      return prevStr === nextStr ? prev : propFilters;
-    });
+    setColumnFilters((prev) =>
+      JSON.stringify(prev) === JSON.stringify(propFilters) ? prev : propFilters
+    );
   }, [initialFiltersJson]);
 
   const [isShowAll, setIsShowAll] = useState(false);
@@ -897,18 +895,13 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   const handleCopyTableConfig = React.useCallback(() => {
     // Measure actual rendered widths from the DOM
     const domWidths: Record<string, number> = {};
-    if (headerRef.current) {
-      const thElements = headerRef.current.querySelectorAll('th');
-      thElements.forEach((th) => {
-        const colId = th.getAttribute('data-column-id');
-        if (colId) {
-          const rect = th.getBoundingClientRect();
-          if (rect.width > 0) {
-            domWidths[colId] = Math.round(rect.width);
-          }
-        }
-      });
-    }
+    headerRef.current?.querySelectorAll('th').forEach((th) => {
+      const colId = th.getAttribute('data-column-id');
+      const w = th.getBoundingClientRect().width;
+      if (colId && w > 0) {
+        domWidths[colId] = Math.round(w);
+      }
+    });
 
     const columnConfigs = table.getAllLeafColumns().map((col) => {
       const id = col.id;
@@ -959,27 +952,19 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   /* State specific for Context Menu tracking to enable live updates */
   const menuPosRef = React.useRef<{ x: number; y: number; columnId?: string } | null>(null);
 
-  // Keep dynamic dependencies in refs for stable callback
-  const columnAlignmentRef = useRef(columnAlignment);
-  columnAlignmentRef.current = columnAlignment;
-  const columnVisibilityRef = useRef(columnVisibility);
-  columnVisibilityRef.current = columnVisibility;
-  const translationsRef = useRef(t.global.table);
-  translationsRef.current = t.global.table;
-
   const getMenuContent = React.useCallback(
     (columnId?: string, overrideAlign?: Record<string, 'start' | 'center' | 'end'>) => {
       const column = columnId ? table.getColumn(columnId) : null;
 
-      // Use override values if provided, otherwise fall back to latest ref state
-      const effectiveAlign = overrideAlign ?? columnAlignmentRef.current;
+      // Use override values if provided, otherwise fall back to latest state
+      const effectiveAlign = overrideAlign ?? columnAlignment;
       const currentAlign = columnId ? effectiveAlign[columnId] || 'start' : 'start';
-      const currentT = translationsRef.current;
+      const currentT = t.global.table;
 
       // Handlers (re-create handlers that use the state/props)
       const handleAlign = (align: 'start' | 'center' | 'end') => {
         if (!columnId) return;
-        const newAlign = { ...columnAlignmentRef.current, [columnId]: align };
+        const newAlign = { ...columnAlignment, [columnId]: align };
         setColumnAlignment(newAlign);
 
         if (menuPosRef.current) {
@@ -1102,7 +1087,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
         </div>
       );
     },
-    [table, showMenu, language]
+    [table, showMenu, language, columnAlignment, t.global.table]
   );
 
   const onContextMenuOpen = React.useCallback(
@@ -1113,36 +1098,20 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     [showMenu, getMenuContent]
   );
 
-  // --- Fix: Auto Page Size Calculation (Accurate) ---
   React.useEffect(() => {
-    if (pageSize === 'auto' && tableContainerRef.current && !isShowAll) {
-      const calculatePageSize = () => {
-        if (!tableContainerRef.current) return;
+    if (pageSize !== 'auto' || isShowAll || !tableContainerRef.current) return;
 
-        const containerHeight = tableContainerRef.current.clientHeight;
-        const headHeight = headerRef.current?.offsetHeight || 45;
-        const rowHeight = firstRowRef.current?.offsetHeight || (dense ? 36 : 48);
+    const observer = new ResizeObserver(() => {
+      const el = tableContainerRef.current;
+      if (!el) return;
+      const headHeight = headerRef.current?.offsetHeight || 45;
+      const rowHeight = firstRowRef.current?.offsetHeight || (dense ? 36 : 48);
+      const calculated = Math.max(10, Math.floor((el.clientHeight - headHeight) / rowHeight));
+      table.setPageSize(calculated);
+    });
 
-        const availableHeight = containerHeight - headHeight;
-        // Use a more realistic minimum to avoid 1-row tables on glitchy initial renders
-        const calculated = Math.max(10, Math.floor(availableHeight / rowHeight));
-
-        // Remove pagination.pageSize dependency to prevent loops
-        if (calculated > 0) {
-          table.setPageSize(calculated);
-        }
-      };
-
-      // Initial calculation
-      calculatePageSize();
-
-      const observer = new ResizeObserver(() => {
-        calculatePageSize();
-      });
-
-      observer.observe(tableContainerRef.current);
-      return () => observer.disconnect();
-    }
+    observer.observe(tableContainerRef.current);
+    return () => observer.disconnect();
   }, [pageSize, dense, isShowAll, table]);
 
   const handleColumnContextMenu = React.useCallback(
@@ -1156,21 +1125,12 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
   const { rows } = table.getRowModel();
 
-  // --- Notify parent of visible rows for paginated selection ---
-  const visibleRowIdsStr = React.useMemo(() => {
-    return rows.map((r) => r.original.id).join(',');
-  }, [rows]);
-
   const onVisibleRowsChangeRef = React.useRef(onVisibleRowsChange);
-  React.useEffect(() => {
-    onVisibleRowsChangeRef.current = onVisibleRowsChange;
-  }, [onVisibleRowsChange]);
+  onVisibleRowsChangeRef.current = onVisibleRowsChange;
 
   React.useEffect(() => {
-    if (onVisibleRowsChangeRef.current) {
-      onVisibleRowsChangeRef.current(rows.map((r) => r.original));
-    }
-  }, [visibleRowIdsStr]);
+    onVisibleRowsChangeRef.current?.(rows.map((r) => r.original));
+  }, [rows]);
 
   // --- Fix 5: Pre-compute Date Constants ---
   const { todayTs, yesterdayTs } = React.useMemo(() => {
