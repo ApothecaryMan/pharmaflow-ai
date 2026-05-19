@@ -387,7 +387,7 @@ const MemoizedCell = React.memo(({
   yesterdayTs,
   columnSizing
 }: any) => {
-  const isTechnical = meta.isTechnical;
+  const isTechnical = meta?.isTechnical;
   const cellValue = cell.getValue();
 
   const cellDir = getCellDirection(cell.column.id, meta, cellValue, isRtl);
@@ -395,12 +395,12 @@ const MemoizedCell = React.memo(({
   let content = null;
 
   // --- Smart Date Formatting ---
-  if (meta.smartDate && meta.isDate && cellValue) {
+  if (meta?.smartDate && meta?.isDate && cellValue) {
     const formatted = formatSmartDate(cellValue, todayTs, yesterdayTs, isRtl);
     if (formatted) {
       const { isToday, dateLabel, formattedTime } = formatted;
       content = (
-        <div className={`flex flex-col ${meta.itemsAlignClass}`}>
+        <div className={`flex flex-col ${meta.itemsAlignClass || ''}`}>
           <span className='font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight'>
             {isToday ? formattedTime : dateLabel}
           </span>
@@ -953,17 +953,22 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     (groupId: string, newValues: any[]) => {
       // Notify parent immediately if controlled
       if (onFilterChange) {
-        const { [groupId]: _, ...nextFilters } = activeFiltersRecord;
+        const nextFilters = { ...activeFiltersRecord };
         if (newValues.length > 0) {
           nextFilters[groupId] = newValues;
+        } else {
+          delete nextFilters[groupId];
         }
         onFilterChange(nextFilters);
       }
 
       // Always update internal state to keep useReactTable sync
       setColumnFilters((prev) => {
-        const other = prev.filter((f) => f.id !== groupId);
-        return newValues.length === 0 ? other : [...other, { id: groupId, value: newValues }];
+        const next = prev.filter((f) => f.id !== groupId);
+        if (newValues.length > 0) {
+          next.push({ id: groupId, value: newValues });
+        }
+        return next;
       });
     },
     [activeFiltersRecord, onFilterChange]
@@ -989,37 +994,6 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
         if (menuPosRef.current) {
           showMenu(menuPosRef.current.x, menuPosRef.current.y, getMenuContent(columnId, newAlign));
-        }
-      };
-
-      // Sorting handlers
-      const handleSortAsc = () => {
-        if (!column) return;
-        if (column.getIsSorted() === 'asc') {
-          column.clearSorting();
-        } else {
-          column.toggleSorting(false); // false = ascending
-        }
-        // Refresh menu to show updated state
-        if (menuPosRef.current) {
-          setTimeout(() => {
-            showMenu(menuPosRef.current!.x, menuPosRef.current!.y, getMenuContent(columnId));
-          }, 0);
-        }
-      };
-
-      const handleSortDesc = () => {
-        if (!column) return;
-        if (column.getIsSorted() === 'desc') {
-          column.clearSorting();
-        } else {
-          column.toggleSorting(true); // true = descending
-        }
-        // Refresh menu to show updated state
-        if (menuPosRef.current) {
-          setTimeout(() => {
-            showMenu(menuPosRef.current!.x, menuPosRef.current!.y, getMenuContent(columnId));
-          }, 0);
         }
       };
 
@@ -1167,13 +1141,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   }, [columns, columnVisibility]);
 
   // --- Unified Column Metadata ---
-  const columnMetaMap = React.useMemo(() => {
-    const map = new Map<string, any>();
-    table.getAllLeafColumns().forEach((column) => {
-      map.set(column.id, computeColumnMeta(column, columnAlignment));
-    });
-    return map;
-  }, [columns, columnVisibility, columnAlignment]);
+  const columnMetaMap = React.useMemo(
+    () => new Map(table.getAllLeafColumns().map((column) => [column.id, computeColumnMeta(column, columnAlignment)])),
+    [columns, columnAlignment]
+  );
 
   // Virtualizer Setup
   const rowVirtualizer = useVirtualizer({
