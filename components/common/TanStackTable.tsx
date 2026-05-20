@@ -70,6 +70,259 @@ export { PriceDisplay };
 
 const EMPTY_ALIGNMENT = {};
 
+// ─── Hook: Row Change Animation ───
+// Tracks newly added and updated rows for animation purposes.
+function useRowChangeAnimation(
+  data: { id: string | number; status?: string; updated_at?: string; quantity?: number; price?: number }[],
+  enableNewRowAnimation: boolean,
+  pendingRowIds: Set<string | number>
+) {
+  const [updatedRowIds, setUpdatedRowIds] = React.useState<Set<string | number>>(new Set());
+  const [newRowIds, setNewRowIds] = React.useState<Set<string | number>>(new Set());
+  const prevDataRef = React.useRef(data);
+  const isFirstRun = React.useRef(true);
+
+  React.useEffect(() => {
+    if (prevDataRef.current !== data && data.length > 0) {
+      // Baseline Capture: Don't animate initial load
+      if (isFirstRun.current) {
+        isFirstRun.current = false;
+        prevDataRef.current = data;
+        return;
+      }
+
+      const addedIds = new Set<string | number>();
+      const changedIds = new Set<string | number>();
+      const oldDataMap = new Map<string | number, any>(prevDataRef.current.map((r) => [r.id, r]));
+
+      for (const row of data) {
+        const oldRow = oldDataMap.get(row.id);
+        if (!oldRow) {
+          if (enableNewRowAnimation) addedIds.add(row.id);
+        } else if (pendingRowIds.has(row.id)) {
+          // Efficient shallow comparison on common sync fields
+          const changed =
+            oldRow.status !== row.status ||
+            oldRow.updated_at !== row.updated_at ||
+            oldRow.quantity !== row.quantity ||
+            oldRow.price !== row.price;
+          if (changed) changedIds.add(row.id);
+        }
+      }
+
+      if (addedIds.size > 0) {
+        setNewRowIds((prev) => new Set([...prev, ...addedIds]));
+        setTimeout(() => {
+          setNewRowIds((prev) => {
+            const next = new Set(prev);
+            addedIds.forEach((id) => next.delete(id));
+            return next;
+          });
+        }, 1500);
+      }
+
+      if (changedIds.size > 0) {
+        setUpdatedRowIds(changedIds);
+        setTimeout(() => setUpdatedRowIds(new Set()), 1500);
+      }
+    }
+    prevDataRef.current = data;
+  }, [data, enableNewRowAnimation, pendingRowIds]);
+
+  return { newRowIds, updatedRowIds };
+}
+
+// ─── Component: Table Pagination Bar ───
+// StatusBar-style pagination with page navigation, jump-to-page, and show-all toggle.
+interface TablePaginationBarProps {
+  table: import('@tanstack/react-table').Table<any>;
+  isShowAll: boolean;
+  setIsShowAll: (v: boolean) => void;
+  isRtl: boolean;
+  translations: {
+    showingAll?: string;
+    showing?: string;
+    of?: string;
+    showAll?: string;
+  };
+  enableShowAll: boolean;
+  tableContainerRef: React.RefObject<HTMLDivElement | null>;
+}
+
+const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
+  table,
+  isShowAll,
+  setIsShowAll,
+  isRtl,
+  translations: t,
+  enableShowAll,
+  tableContainerRef,
+}) => {
+  // Jump-to-page state lives here — only pagination needs it
+  const [isJumping, setIsJumping] = React.useState(false);
+  const [jumpValue, setJumpValue] = React.useState('');
+
+  return (
+    <div
+      dir='ltr'
+      className='flex items-center justify-between h-10 border-t shrink-0 select-none bg-(--bg-card) border-(--border-divider)'
+    >
+      {/* Left Zone: Data Summary (Fixed width to prevent jitter) */}
+      <div
+        dir='auto'
+        className={`w-56 flex items-center h-full ${isRtl ? 'justify-end' : ''}`}
+      >
+        <div className='flex items-center gap-1 px-2.5 h-full text-[11px] uppercase font-bold tracking-wide text-(--text-secondary) tabular-nums'>
+          {isShowAll ? (
+            <span className='whitespace-nowrap font-bold'>
+              {t.showingAll || 'Showing All Items'}
+            </span>
+          ) : (
+            <div className='flex items-center gap-1'>
+              <span className='shrink-0'>{t.showing || 'Showing'}</span>
+              <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
+                {(
+                  table.getState().pagination.pageIndex *
+                  table.getState().pagination.pageSize +
+                  1
+                ).toLocaleString()}
+              </span>
+              <span className='text-(--text-primary) px-0.5'>-</span>
+              <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
+                {Math.min(
+                  (table.getState().pagination.pageIndex + 1) *
+                  table.getState().pagination.pageSize,
+                  table.getFilteredRowModel().rows.length
+                ).toLocaleString()}
+              </span>
+              <span className='shrink-0 px-1'>{t.of || 'of'}</span>
+              <span className='text-(--text-primary) inline-block min-w-[24px] text-center text-[12px]'>
+                {table.getFilteredRowModel().rows.length.toLocaleString()}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Center Zone: Navigation Controls */}
+      {!isShowAll && (
+        <div className='flex-1 flex justify-center h-full'>
+          <div className='flex items-center h-full'>
+            <PageButton
+              onClick={() => table.setPageIndex(0)}
+              disabled={!table.getCanPreviousPage()}
+              icon='first_page'
+              title='First Page'
+            />
+            <PageButton
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              icon='chevron_left'
+              title='Previous Page'
+            />
+
+            <div
+              onClick={() => {
+                if (!isJumping) {
+                  setIsJumping(true);
+                  setJumpValue((table.getState().pagination.pageIndex + 1).toString());
+                }
+              }}
+              className={`px-4 flex items-center h-full text-[12px] font-bold text-(--text-secondary) tabular-nums transition-colors group ${!isJumping ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/10' : ''
+                }`}
+            >
+              {isJumping ? (
+                <div className='flex items-center gap-1'>
+                  <input
+                    autoFocus
+                    type='text'
+                    value={jumpValue}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      if (val === '') {
+                        setJumpValue('');
+                        return;
+                      }
+                      const num = parseInt(val);
+                      if (num >= 1 && num <= table.getPageCount()) {
+                        setJumpValue(val);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && jumpValue) {
+                        table.setPageIndex(parseInt(jumpValue) - 1);
+                        setIsJumping(false);
+                      } else if (e.key === 'Escape') {
+                        setIsJumping(false);
+                      }
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => setIsJumping(false), 150);
+                    }}
+                    className='w-8 h-4 bg-transparent border-b border-(--border-primary)/50 focus:border-primary-500 text-center outline-none text-(--text-primary) rounded-none'
+                  />
+                  <span className='opacity-50 mx-0.5'>/</span>
+                  <span className='opacity-70 inline-block min-w-[24px] text-center'>
+                    {table.getPageCount().toLocaleString()}
+                  </span>
+                </div>
+              ) : (
+                <>
+                  <span className='group-hover:text-(--text-primary) inline-block min-w-[24px] text-center'>
+                    {(table.getState().pagination.pageIndex + 1).toLocaleString()}
+                  </span>
+                  <span className='opacity-50 mx-1'>/</span>
+                  <span className='opacity-70 inline-block min-w-[24px] text-center'>
+                    {table.getPageCount().toLocaleString()}
+                  </span>
+                </>
+              )}
+            </div>
+
+            <PageButton
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              icon='chevron_right'
+              title='Next Page'
+            />
+            <PageButton
+              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+              disabled={!table.getCanNextPage()}
+              icon='last_page'
+              title='Last Page'
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Right Zone: Utility Tools (Fixed width for balance) */}
+      <div className='w-56 flex items-center justify-end h-full'>
+        <PageButton
+          onClick={() => tableContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+          disabled={false}
+          icon='vertical_align_top'
+          title='Jump to Top'
+        />
+
+        {enableShowAll && (
+          <button
+            onClick={() => setIsShowAll(!isShowAll)}
+            className={`px-2.5 h-full flex items-center justify-center transition-colors ${isShowAll
+                ? `text-primary-600 bg-primary-500/10 dark:text-primary-400 dark:bg-primary-400/10`
+                : 'text-(--text-secondary) hover:text-(--text-primary) hover:bg-black/5 dark:hover:bg-white/10'
+              }`}
+            title={isShowAll ? 'Paginated View' : t.showAll || 'Show All'}
+          >
+            <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
+              {isShowAll ? 'splitscreen' : 'view_day'}
+            </span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export function TanStackTable<TData extends { id: string | number }, TValue>({
   data,
   columns,
@@ -177,8 +430,6 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   }, [initialFiltersJson]);
 
   const [isShowAll, setIsShowAll] = useState(false);
-  const [isJumping, setIsJumping] = useState(false);
-  const [jumpValue, setJumpValue] = useState('');
 
   const globalFilter =
     externalGlobalFilter !== undefined ? externalGlobalFilter : internalGlobalFilter;
@@ -319,10 +570,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
 
   const [localLoading, setLocalLoading] = React.useState(data.length > 0);
-  const [updatedRowIds, setUpdatedRowIds] = React.useState<Set<string | number>>(new Set());
-  const [newRowIds, setNewRowIds] = React.useState<Set<string | number>>(new Set());
-  const prevDataRef = React.useRef<any[]>(data);
-  const isFirstRun = React.useRef(true);
+  const { newRowIds, updatedRowIds } = useRowChangeAnimation(data as any, enableNewRowAnimation, pendingRowIds);
 
   // Stable refs for callbacks to prevent MemoizedRow re-renders
   const onRowClickRef = useRef(onRowClick);
@@ -344,65 +592,6 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
     const timer = setTimeout(() => setLocalLoading(false), 100);
     return () => clearTimeout(timer);
   }, []);
-
-  /**
-   * Efficient row comparison to avoid JSON.stringify overhead.
-   */
-  const areRowsEqual = React.useCallback((row1: any, row2: any) => {
-    if (row1 === row2) return true;
-    if (!row1 || !row2) return false;
-    // Check ID and common sync fields
-    return (
-      row1.id === row2.id &&
-      row1.status === row2.status &&
-      row1.updated_at === row2.updated_at &&
-      row1.quantity === row2.quantity &&
-      row1.price === row2.price
-    );
-  }, []);
-
-  // Row-level Change Detection (Live Sync Feel)
-  React.useEffect(() => {
-    if (prevDataRef.current !== data && data.length > 0) {
-      // Baseline Capture: Don't animate initial load
-      if (isFirstRun.current) {
-        isFirstRun.current = false;
-        prevDataRef.current = data;
-        return;
-      }
-
-      const addedIds = new Set<string | number>();
-      const changedIds = new Set<string | number>();
-
-      const oldDataMap = new Map(prevDataRef.current.map((r) => [r.id, r]));
-
-      for (const row of data) {
-        const oldRow = oldDataMap.get(row.id);
-        if (!oldRow) {
-          if (enableNewRowAnimation) addedIds.add(row.id);
-        } else if (pendingRowIds.has(row.id) && !areRowsEqual(oldRow, row)) {
-          changedIds.add(row.id);
-        }
-      }
-
-      if (addedIds.size > 0) {
-        setNewRowIds((prev) => new Set([...prev, ...addedIds]));
-        setTimeout(() => {
-          setNewRowIds((prev) => {
-            const next = new Set(prev);
-            addedIds.forEach((id) => next.delete(id));
-            return next;
-          });
-        }, 1500); // Shorter duration for snappier feel
-      }
-
-      if (changedIds.size > 0) {
-        setUpdatedRowIds(changedIds);
-        setTimeout(() => setUpdatedRowIds(new Set()), 1500);
-      }
-    }
-    prevDataRef.current = data;
-  }, [data, enableNewRowAnimation, pendingRowIds]);
 
   const [columnSizing, setColumnSizing] = React.useState({});
   const table = useReactTable({
@@ -883,163 +1072,20 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
         {/* StatusBar-Style Pagination & Tools Toolbar */}
         {enablePagination && (table.getPageCount() > 1 || isShowAll) && (
-          <div
-            dir='ltr'
-            className={`flex items-center justify-between h-10 border-t shrink-0 select-none bg-(--bg-card) border-(--border-divider)`}
-          >
-            {/* Left Zone: Data Summary (Fixed width to prevent jitter) */}
-            <div
-              dir='auto'
-              className={`w-56 flex items-center h-full ${isRtl ? 'justify-end' : ''}`}
-            >
-              <div className='flex items-center gap-1 px-2.5 h-full text-[11px] uppercase font-bold tracking-wide text-(--text-secondary) tabular-nums'>
-                {isShowAll ? (
-                  <span className='whitespace-nowrap font-bold'>
-                    {t.global?.table?.showingAll || 'Showing All Items'}
-                  </span>
-                ) : (
-                  <div className='flex items-center gap-1'>
-                    <span className='shrink-0'>{t.global?.table?.showing || 'Showing'}</span>
-                    <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
-                      {(
-                        table.getState().pagination.pageIndex *
-                        table.getState().pagination.pageSize +
-                        1
-                      ).toLocaleString()}
-                    </span>
-                    <span className='text-(--text-primary) px-0.5'>-</span>
-                    <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
-                      {Math.min(
-                        (table.getState().pagination.pageIndex + 1) *
-                        table.getState().pagination.pageSize,
-                        table.getFilteredRowModel().rows.length
-                      ).toLocaleString()}
-                    </span>
-                    <span className='shrink-0 px-1'>{t.global?.table?.of || 'of'}</span>
-                    <span className='text-(--text-primary) inline-block min-w-[24px] text-center text-[12px]'>
-                      {table.getFilteredRowModel().rows.length.toLocaleString()}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Center Zone: Navigation Controls (StatusBarItem Style) */}
-            {!isShowAll && (
-              <div className='flex-1 flex justify-center h-full'>
-                <div className='flex items-center h-full'>
-                  <PageButton
-                    onClick={() => table.setPageIndex(0)}
-                    disabled={!table.getCanPreviousPage()}
-                    icon='first_page'
-                    title='First Page'
-                  />
-                  <PageButton
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
-                    icon='chevron_left'
-                    title='Previous Page'
-                  />
-
-                  <div
-                    onClick={() => {
-                      if (!isJumping) {
-                        setIsJumping(true);
-                        setJumpValue((table.getState().pagination.pageIndex + 1).toString());
-                      }
-                    }}
-                    className={`px-4 flex items-center h-full text-[12px] font-bold text-(--text-secondary) tabular-nums transition-colors group ${!isJumping ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/10' : ''
-                      }`}
-                  >
-                    {isJumping ? (
-                      <div className='flex items-center gap-1'>
-                        <input
-                          autoFocus
-                          type='text'
-                          value={jumpValue}
-                          onChange={(e) => {
-                            const val = e.target.value.replace(/\D/g, '');
-                            if (val === '') {
-                              setJumpValue('');
-                              return;
-                            }
-                            const num = parseInt(val);
-                            if (num >= 1 && num <= table.getPageCount()) {
-                              setJumpValue(val);
-                            }
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && jumpValue) {
-                              table.setPageIndex(parseInt(jumpValue) - 1);
-                              setIsJumping(false);
-                            } else if (e.key === 'Escape') {
-                              setIsJumping(false);
-                            }
-                          }}
-                          onBlur={() => {
-                            setTimeout(() => setIsJumping(false), 150);
-                          }}
-                          className='w-8 h-4 bg-transparent border-b border-(--border-primary)/50 focus:border-primary-500 text-center outline-none text-(--text-primary) rounded-none'
-                        />
-                        <span className='opacity-50 mx-0.5'>/</span>
-                        <span className='opacity-70 inline-block min-w-[24px] text-center'>
-                          {table.getPageCount().toLocaleString()}
-                        </span>
-                      </div>
-                    ) : (
-                      <>
-                        <span className='group-hover:text-(--text-primary) inline-block min-w-[24px] text-center'>
-                          {(table.getState().pagination.pageIndex + 1).toLocaleString()}
-                        </span>
-                        <span className='opacity-50 mx-1'>/</span>
-                        <span className='opacity-70 inline-block min-w-[24px] text-center'>
-                          {table.getPageCount().toLocaleString()}
-                        </span>
-                      </>
-                    )}
-                  </div>
-
-                  <PageButton
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
-                    icon='chevron_right'
-                    title='Next Page'
-                  />
-                  <PageButton
-                    onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                    disabled={!table.getCanNextPage()}
-                    icon='last_page'
-                    title='Last Page'
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Right Zone: Utility Tools (Fixed width for balance) */}
-            <div className='w-56 flex items-center justify-end h-full'>
-              <PageButton
-                onClick={() => tableContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
-                disabled={false}
-                icon='vertical_align_top'
-                title='Jump to Top'
-              />
-
-              {enableShowAll && (
-                <button
-                  onClick={() => setIsShowAll(!isShowAll)}
-                  className={`px-2.5 h-full flex items-center justify-center transition-colors ${isShowAll
-                      ? `text-primary-600 bg-primary-500/10 dark:text-primary-400 dark:bg-primary-400/10`
-                      : 'text-(--text-secondary) hover:text-(--text-primary) hover:bg-black/5 dark:hover:bg-white/10'
-                    }`}
-                  title={isShowAll ? 'Paginated View' : t.global?.table?.showAll || 'Show All'}
-                >
-                  <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
-                    {isShowAll ? 'splitscreen' : 'view_day'}
-                  </span>
-                </button>
-              )}
-            </div>
-          </div>
+          <TablePaginationBar
+            table={table}
+            isShowAll={isShowAll}
+            setIsShowAll={setIsShowAll}
+            isRtl={isRtl}
+            translations={{
+              showingAll: t.global?.table?.showingAll,
+              showing: t.global?.table?.showing,
+              of: t.global?.table?.of,
+              showAll: t.global?.table?.showAll,
+            }}
+            enableShowAll={enableShowAll}
+            tableContainerRef={tableContainerRef}
+          />
         )}
       </div>
 
