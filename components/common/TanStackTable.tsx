@@ -41,15 +41,13 @@ import { TRANSLATIONS } from '../../i18n/translations';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { storage } from '../../utils/storage';
 import {
-  ContextMenuCheckboxItem,
   ContextMenuItem,
-  ContextMenuSeparator,
   ContextMenuTrigger,
   useContextMenu,
 } from './ContextMenu';
 import type { FilterConfig } from './FilterPill';
 import { SearchInput } from './SearchInput';
-import { AlignButton, getHeaderJustifyClass, getTextAlignClass } from './TableAlignment';
+import { getHeaderJustifyClass, getTextAlignClass } from './TableAlignment';
 
 // Modular Table Imports
 import { type TanStackTableProps } from './table/types';
@@ -67,6 +65,7 @@ import { PriceDisplay } from './table/PriceDisplay';
 import { MemoizedCell } from './table/MemoizedCell';
 import { MemoizedRow } from './table/MemoizedRow';
 import { PageButton } from './table/PageButton';
+import { TableContextMenu } from './table/TableContextMenu';
 export { PriceDisplay };
 
 const EMPTY_ALIGNMENT = {};
@@ -508,119 +507,41 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   /* State specific for Context Menu tracking to enable live updates */
   const menuPosRef = React.useRef<{ x: number; y: number; columnId?: string } | null>(null);
 
-  const getMenuContent = React.useCallback(
-    (columnId?: string, overrideAlign?: Record<string, 'start' | 'center' | 'end'>) => {
-      const column = columnId ? table.getColumn(columnId) : null;
-
-      // Use override values if provided, otherwise fall back to latest state
-      const effectiveAlign = overrideAlign ?? columnAlignment;
-      const currentAlign = columnId ? effectiveAlign[columnId] || 'start' : 'start';
-      const currentT = t.global.table;
-
-      // Handlers (re-create handlers that use the state/props)
-      const handleAlign = (align: 'start' | 'center' | 'end') => {
-        if (!columnId) return;
-        const newAlign = { ...columnAlignment, [columnId]: align };
-        setColumnAlignment(newAlign);
-
-        if (menuPosRef.current) {
-          showMenu(menuPosRef.current.x, menuPosRef.current.y, getMenuContent(columnId, newAlign));
-        }
-      };
-
-      const isSorted = column?.getIsSorted();
-
-      return (
-        <div className='font-sans'>
-          {/* All Columns Visibility */}
-          <div className='space-y-1'>
-            <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase py-2 px-3 border-b border-gray-100 dark:border-(--border-divider) mb-1'>
-              {currentT?.columns || 'Columns'}
-            </div>
-            {table
-              .getAllLeafColumns()
-              .filter(
-                (col) => col.id !== 'actions' && !(col.columnDef.meta as any)?.hideFromSettings
-              )
-              .map((col) => {
-                const headerValue =
-                  typeof col.columnDef.header === 'function' ? col.id : col.columnDef.header;
-
-                return (
-                  <ContextMenuCheckboxItem
-                    key={col.id}
-                    label={headerValue as React.ReactNode}
-                    checked={col.getIsVisible()}
-                    onCheckedChange={(val) => {
-                      col.toggleVisibility(val);
-
-                      // Force refresh menu state live
-                      if (menuPosRef.current) {
-                        setTimeout(() => {
-                          showMenu(
-                            menuPosRef.current!.x,
-                            menuPosRef.current!.y,
-                            getMenuContent(menuPosRef.current!.columnId)
-                          );
-                        }, 0);
-                      }
-                    }}
-                  />
-                );
-              })}
-          </div>
-
-          {column && !column.columnDef.meta?.disableAlignment && column.id !== 'actions' && (
-            <>
-              <ContextMenuSeparator />
-
-              {/* Alignment Controls Container */}
-              <div className='px-3 py-3'>
-                <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase mb-2.5 flex items-center gap-2'>
-                  <span
-                    className='material-symbols-rounded opacity-60'
-                    style={{ fontSize: 'var(--icon-sm)' }}
-                  >
-                    format_align_left
-                  </span>
-                  {currentT?.alignment || 'Alignment'}
-                </div>
-                {/* Unified Alignment */}
-                <div className='bg-gray-50 dark:bg-gray-800/80 p-1.5 rounded-xl border border-gray-100 dark:border-(--border-divider) flex items-center justify-between gap-1'>
-                  <AlignButton
-                    align='start'
-                    isActive={currentAlign === 'start'}
-                    onClick={() => handleAlign('start')}
-                    isRtl={language === 'AR'}
-                  />
-                  <AlignButton
-                    align='center'
-                    isActive={currentAlign === 'center'}
-                    onClick={() => handleAlign('center')}
-                    isRtl={language === 'AR'}
-                  />
-                  <AlignButton
-                    align='end'
-                    isActive={currentAlign === 'end'}
-                    onClick={() => handleAlign('end')}
-                    isRtl={language === 'AR'}
-                  />
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      );
-    },
-    [table, showMenu, language, columnAlignment, t.global.table]
-  );
-
   const onContextMenuOpen = React.useCallback(
     (x: number, y: number, columnId?: string) => {
       menuPosRef.current = { x, y, columnId };
-      showMenu(x, y, getMenuContent(columnId));
+
+      const renderMenu = (currentAlign: Record<string, 'start' | 'center' | 'end'>) => {
+        const currentT = t.global.table;
+        const translations = {
+          columns: currentT?.columns || t.global.table.columns,
+          alignment: currentT?.alignment || t.global.table.alignment,
+        };
+
+        const handleRefresh = (updatedAlign?: Record<string, 'start' | 'center' | 'end'>) => {
+          if (menuPosRef.current) {
+            renderMenu(updatedAlign ?? currentAlign);
+          }
+        };
+
+        showMenu(
+          menuPosRef.current?.x ?? x,
+          menuPosRef.current?.y ?? y,
+          <TableContextMenu
+            table={table}
+            columnId={menuPosRef.current?.columnId ?? columnId}
+            columnAlignment={currentAlign}
+            setColumnAlignment={setColumnAlignment}
+            language={language}
+            translations={translations}
+            onRefresh={handleRefresh}
+          />
+        );
+      };
+
+      renderMenu(columnAlignment);
     },
-    [showMenu, getMenuContent]
+    [table, showMenu, language, columnAlignment, t.global.table]
   );
 
   React.useEffect(() => {
