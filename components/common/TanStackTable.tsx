@@ -109,6 +109,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   enableNewRowAnimation = true,
   onVisibleRowsChange,
 }: TanStackTableProps<TData, TValue>) {
+
   const { language, numeralLocale, textLocale } = useSettings();
   const isAR = language === 'AR';
   const isRtl = isAR; // Source of truth from state, not DOM, to prevent sync lag
@@ -162,9 +163,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   const [internalGlobalFilter, setInternalGlobalFilter] = useState('');
   const [copied, setCopied] = useState(false);
   // We manage "Active Pills" as Column Filters
-  const [columnFilters, setColumnFilters] = useState<{ id: string; value: any }[]>(() =>
-    Object.entries(initialFilters).map(([id, value]) => ({ id, value }))
-  );
+  const [columnFilters, setColumnFilters] = useState<{ id: string; value: any }[]>(() => {
+    const propFilters = Object.entries(initialFilters).map(([id, value]) => ({ id, value }));
+    return propFilters;
+  });
 
   // ─── Optimization: stringify once per effect for stable comparison ───
   const initialFiltersJson = JSON.stringify(initialFilters);
