@@ -122,6 +122,13 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
       });
 
       await refreshAll(finalBranchId, defaultOrgId);
+
+      // Perform localStorage cleanup of closed tabs and stale branches
+      try {
+        storage.performCleanup(finalBranchId, allBranches.map(b => b.id));
+      } catch (cleanupErr) {
+        console.error('[DataProvider] Storage cleanup failed:', cleanupErr);
+      }
     } catch (error) {
       console.error('Initialization Error:', error);
     } finally {
@@ -133,6 +140,20 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
   useEffect(() => {
     initData();
   }, [initData]);
+
+  // Update last access timestamp for active branch to prevent it from being pruned as stale
+  useEffect(() => {
+    if (activeBranchId) {
+      try {
+        const ACCESS_REGISTRY_KEY = 'pharma_branch_last_access';
+        const accessRegistry = storage.get<Record<string, number>>(ACCESS_REGISTRY_KEY, {});
+        accessRegistry[activeBranchId] = Date.now();
+        storage.set(ACCESS_REGISTRY_KEY, accessRegistry);
+      } catch (err) {
+        console.error('[DataProvider] Failed to update branch last access time:', err);
+      }
+    }
+  }, [activeBranchId]);
 
   // Listen for storage changes to sync active branch and employee session (same-tab and cross-tab)
   useEffect(() => {

@@ -16,7 +16,7 @@ import { PAGE_REGISTRY } from './config/pageRegistry';
 import { UserRole } from './config/permissions';
 import { SecureGate } from './components/common/SecureGate';
 import { ROUTES } from './config/routes';
-import { LANGUAGES, THEMES, useSettings } from './context';
+import { LANGUAGES, THEMES, useSettings, useAlert } from './context';
 // App State Hooks
 import { type AppState, useAppState } from './hooks/layout/useAppState';
 import { type AuthState, useAuth } from './hooks/auth/useAuth';
@@ -499,6 +499,63 @@ const App: React.FC = () => {
 
   // 3. Settings Hook (for Language)
   const { theme, darkMode, language } = useSettings();
+  const t = TRANSLATIONS[language];
+
+  // 3.1 Storage Quota Monitoring & Events
+  const alert = useAlert();
+  const hasShownWarningRef = React.useRef(false);
+
+  const checkQuota = React.useCallback(() => {
+    try {
+      const info = storage.getQuotaInfo();
+      if (info.isCloseToLimit) {
+        if (!hasShownWarningRef.current) {
+          const limitMb = (info.limit / (1024 * 1024)).toFixed(0);
+          const message = t.settings.storageQuota.warningMessage
+            .replace('{{percentage}}', info.percentage.toString())
+            .replace('{{limit}}', limitMb);
+          
+          alert.warning(message, t.settings.storageQuota.warningTitle);
+          hasShownWarningRef.current = true;
+        }
+      } else {
+        hasShownWarningRef.current = false;
+      }
+    } catch (e) {
+      console.error('[Storage] Error checking quota:', e);
+    }
+  }, [alert, t]);
+
+  React.useEffect(() => {
+    checkQuota();
+
+    const handleFocus = () => {
+      checkQuota();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkQuota();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    const handleQuotaExceeded = (e: Event) => {
+      alert.error(
+        t.settings.storageQuota.criticalMessage,
+        t.settings.storageQuota.criticalTitle
+      );
+    };
+    window.addEventListener('pharma_storage_quota_exceeded', handleQuotaExceeded);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pharma_storage_quota_exceeded', handleQuotaExceeded);
+    };
+  }, [checkQuota, t, alert]);
 
   // 4. Onboarding Status Hook (Architectural Abstraction)
   const { activeStep, setActiveStep, isChecking: isCheckingOnboarding, error: onboardingError } = useOnboardingStatus(authState.isAuthenticated);
