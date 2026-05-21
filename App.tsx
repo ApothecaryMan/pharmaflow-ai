@@ -29,6 +29,7 @@ import { useNavigation } from './hooks/layout/useNavigation';
 import { useSessionHandlers } from './hooks/auth/useSessionHandlers';
 import { ShiftProvider, useShift } from './hooks/sales/useShift';
 import { useTheme } from './hooks/layout/useTheme';
+import { useUrlSync } from './hooks/layout/useUrlSync';
 import { TRANSLATIONS } from './i18n/translations';
 import { DataProvider, useData } from './context/DataContext';
 import { authService } from './services/auth/authService';
@@ -275,34 +276,6 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     return () => window.removeEventListener('navigate-to-view', handleGlobalNavigate);
   }, [handleViewChange]);
 
-  // --- URL Synchronization ---
-  React.useEffect(() => {
-    if (!isAuthenticated) {
-      const currentHash = window.location.hash;
-      const allowedAuthHashes = [`#/${ROUTES.LOGIN}`, `#/${ROUTES.SIGNUP}`, `#/${ROUTES.FORGOT_PASSWORD}`];
-      if (!allowedAuthHashes.includes(currentHash)) {
-        window.history.replaceState(null, '', `#/${ROUTES.LOGIN}`);
-      }
-      return;
-    }
-
-    // Authenticated — build URL based on available data
-    if (activeOrgId && activeBranchId) {
-      const activeBranch = branches.find(b => b.id === activeBranchId);
-      if (activeBranch) {
-        const newHash = `#/${activeOrgId}/${activeBranch.code}/${view}`;
-        if (window.location.hash !== newHash) {
-          window.history.replaceState(null, '', newHash);
-        }
-      }
-    } else if (activeOrgId) {
-      // Org-only URL: #/{orgId}/{view}
-      const newHash = `#/${activeOrgId}/${view}`;
-      if (window.location.hash !== newHash) {
-        window.history.replaceState(null, '', newHash);
-      }
-    }
-  }, [isAuthenticated, activeOrgId, activeBranchId, view, branches]);
 
 
   // --- Login Success Handler ---
@@ -543,6 +516,10 @@ const App: React.FC = () => {
     setIsAuthenticated(true);
     reinitialize();
   }, [setIsAuthenticated, reinitialize]);
+
+  // --- URL Synchronization ---
+  // Synchronize browser hash with authentication state & current view
+  useUrlSync(authState.isAuthenticated, appState.view, appState.currentEmployeeId);
 
 
 
