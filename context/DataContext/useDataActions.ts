@@ -62,12 +62,39 @@ export const useDataActions = ({
 }: DataActionsProps) => {
 
   const refreshAll = useCallback(async (targetBranchId?: string, targetOrgId?: string) => {
-    const branchId = targetBranchId || activeBranchId;
-    const orgId = targetOrgId || activeOrgId;
-    if (!branchId || !orgId) return;
+    const branchId = targetBranchId !== undefined ? targetBranchId : activeBranchId;
+    const orgId = targetOrgId !== undefined ? targetOrgId : activeOrgId;
+    if (!orgId) return;
 
     try {
       const { orgService } = await import('../../services/org/orgService');
+      
+      if (!branchId) {
+        // No active branch! Load only org data and all org employees so the switcher works
+        const [emp, allBranches, activeOrgData] = await Promise.all([
+          employeeService.getAll('all', orgId),
+          branchService.getAll(orgId),
+          orgService.getById(orgId),
+        ]);
+
+        const currentSession = authService.getCurrentUserSync();
+        const loggedInEmployee = emp.find(e => e.id === currentSession?.employeeId) || null;
+
+        setRawInventory([]);
+        setSalesState([]);
+        setSuppliersState([]);
+        setPurchasesState([]);
+        setPurchaseReturnsState([]);
+        setReturnsState([]);
+        setCustomersState([]);
+        setEmployeesState(emp);
+        setCurrentEmployee(loggedInEmployee);
+        setBatchesState([]);
+        setBranches(allBranches);
+        setActiveOrg(activeOrgData);
+        return;
+      }
+
       const [inv, sal, sup, pur, pRet, ret, cust, emp, bat, allBranches, activeOrgData] = await Promise.all([
         inventoryService.getAll(branchId),
         salesService.getAll(branchId),
@@ -101,7 +128,7 @@ export const useDataActions = ({
     } catch (error) {
       console.error('Error refreshing data:', error);
     }
-  }, [activeBranchId, activeOrgId, setRawInventory, setSalesState, setSuppliersState, setPurchasesState, setPurchaseReturnsState, setReturnsState, setCustomersState, setEmployeesState, setCurrentEmployee, setBatchesState, setBranches]);
+  }, [activeBranchId, activeOrgId, setRawInventory, setSalesState, setSuppliersState, setPurchasesState, setPurchaseReturnsState, setReturnsState, setCustomersState, setEmployeesState, setCurrentEmployee, setBatchesState, setBranches, setActiveOrg]);
 
   const switchBranch = useCallback(async (branchId: string, skipClearEmployee?: boolean) => {
     setIsLoading(true);

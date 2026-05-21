@@ -196,8 +196,11 @@ export function useNavigation({
 
   // Filter menu items based on permissions and settings
   const filteredMenuItems = useMemo(
-    () => filterMenuItems(PHARMACY_MENU, hideInactiveModules, developerMode, currentEmployeeId),
-    [hideInactiveModules, developerMode, currentEmployeeId]
+    () => {
+      if (!activeBranchId) return [];
+      return filterMenuItems(PHARMACY_MENU, hideInactiveModules, developerMode, currentEmployeeId);
+    },
+    [hideInactiveModules, developerMode, currentEmployeeId, activeBranchId]
   );
 
   return {

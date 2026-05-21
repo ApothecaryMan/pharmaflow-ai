@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { orgService } from '../../services/org/orgService';
 import { branchService } from '../../services/org/branchService';
 import { authService } from '../../services/auth/authService';
+import { permissionsService } from '../../services/auth/permissionsService';
 
 export type OnboardingStep = 1 | 2 | 3 | 0;
 
@@ -16,6 +17,12 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
     try {
       setIsChecking(true);
       setError(null);
+
+      // 0. Regular employees / non-admins bypass onboarding entirely
+      if (!permissionsService.isOrgAdmin()) {
+        setActiveStep(0);
+        return;
+      }
 
       // 1. Check Organizations
       const user = authService.getCurrentUserSync();

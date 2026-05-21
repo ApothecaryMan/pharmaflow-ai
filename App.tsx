@@ -440,6 +440,8 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
         currentShift={currentShift}
         handlers={handlers}
         data={data}
+        onSelectEmployee={handleSelectEmployee}
+        onLogout={onLogoutClick}
       />
 
       {/* Windowed Mode Modal */}
@@ -477,6 +479,8 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
               currentShift={currentShift}
               handlers={handlers}
               data={data}
+              onSelectEmployee={handleSelectEmployee}
+              onLogout={onLogoutClick}
             />
           )}
         </div>

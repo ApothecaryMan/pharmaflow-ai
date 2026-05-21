@@ -6,6 +6,7 @@ import { useRealtimeSync } from './useRealtimeSync';
 import { branchService } from '../../services/org/branchService';
 import { authService } from '../../services/auth/authService';
 import { settingsService } from '../../services/settings/settingsService';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 // Separate contexts for performance optimization
 const CoreDataContext = createContext<any>(null);
@@ -83,20 +84,28 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
       }
 
       const allBranches = await branchService.getAll(defaultOrgId);
-      
-      if (allBranches.length === 0) {
-        setIsLoading(false);
-        return;
-      }
-
       const activeBranch = await branchService.getActive();
       const session = await authService.getCurrentUser();
       
-      let finalBranchId = session?.branchId || activeBranch?.id || allBranches[0].id;
+      const isManagerOrAdmin = permissionsService.isOrgAdmin() || permissionsService.isManager();
 
-      if (!allBranches.some(b => b.id === finalBranchId)) {
-        finalBranchId = allBranches[0].id;
-        await branchService.setActive(finalBranchId);
+      let finalBranchId = session?.branchId || activeBranch?.id || '';
+
+      if (!finalBranchId && allBranches.length > 0) {
+        if (isManagerOrAdmin) {
+          finalBranchId = allBranches[0].id;
+        } else {
+          finalBranchId = '';
+        }
+      }
+
+      if (finalBranchId && !allBranches.some(b => b.id === finalBranchId)) {
+        if (isManagerOrAdmin && allBranches.length > 0) {
+          finalBranchId = allBranches[0].id;
+          await branchService.setActive(finalBranchId);
+        } else {
+          finalBranchId = '';
+        }
       }
 
       setBranches(allBranches);

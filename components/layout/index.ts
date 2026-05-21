@@ -4,3 +4,4 @@ export { SidebarContent } from './SidebarContent';
 export { SidebarDropdown } from './SidebarDropdown';
 export { SidebarMenu } from './SidebarMenu';
 export { TabBar } from './TabBar';
+export { PendingBranchAssignment } from './PendingBranchAssignment';

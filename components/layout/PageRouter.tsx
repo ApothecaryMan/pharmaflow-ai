@@ -4,6 +4,7 @@ import { ROUTES } from '../../config/routes';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { useSettings } from '../../context';
 import { LandingPage } from '../layout/LandingPage';
+import { PendingBranchAssignment } from './PendingBranchAssignment';
 import { type ViewState } from '../../types';
 import { batchService } from '../../services/inventory/batchService';
 import { InventoryModuleShell } from '../inventory/InventoryModuleShell';
@@ -22,6 +23,8 @@ interface PageRouterProps {
   handlers: Record<string, any>;
   data: Record<string, any>;
   currentShift: any;
+  onSelectEmployee?: (id: string | null) => void;
+  onLogout?: () => Promise<void>;
 }
 
 /**
@@ -44,11 +47,25 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   handlers,
   data,
   currentShift,
+  onSelectEmployee,
+  onLogout,
 }) => {
   const { language, theme, darkMode, textTransform } = useSettings();
 
   if (!currentEmployeeId) {
     return <LandingPage language={language} darkMode={darkMode} />;
+  }
+
+  if (!isLoading && !data?.activeBranchId) {
+    return (
+      <PendingBranchAssignment
+        branches={data?.branches || []}
+        switchBranch={data?.switchBranch}
+        onSelectEmployee={onSelectEmployee}
+        onLogout={onLogout}
+        t={t}
+      />
+    );
   }
 
 

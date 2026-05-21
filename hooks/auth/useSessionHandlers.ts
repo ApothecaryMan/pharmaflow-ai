@@ -124,14 +124,19 @@ export const useSessionHandlers = ({
               }
             }
 
-            // Fallback to first branch if no branch is assigned or found
-            if (!targetBranchId && branches.length > 0) {
+            // Fallback to first branch if no branch is assigned or found (Managers/Admins only)
+            if (!targetBranchId && branches.length > 0 && isManagerOrAdmin) {
               targetBranchId = branches[0].id;
             }
 
             // Perform branch switch if necessary
-            if (targetBranchId && targetBranchId !== session.branchId) {
-              await switchBranch(targetBranchId, true);
+            if (targetBranchId) {
+              if (targetBranchId !== session.branchId) {
+                await switchBranch(targetBranchId, true);
+              }
+            } else {
+              // Employee has no branch assigned! Clear active branch context
+              await switchBranch('', true);
             }
 
             // --- Smart Redirection: Find first allowed module ---
