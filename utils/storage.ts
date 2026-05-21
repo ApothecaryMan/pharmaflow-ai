@@ -3,7 +3,7 @@ import { CURRENT_APP_VERSION, StorageKeys } from '../config/storageKeys';
 /**
  * Type-safe interface for storage operations
  */
-const SESSION_KEY = 'branch_pilot_session';
+const SESSION_KEY = StorageKeys.SESSION;
 
 // Keys that should be shared across all users on the same device (UI preferences)
 const GLOBAL_KEYS: string[] = [

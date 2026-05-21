@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ROUTES, TEST_ROUTES } from '../../config/routes';
 import { useAlert } from '../../context';
 import { authService } from '../../services/auth/authService';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 import type { ViewState, UserSession } from '../../types';
 
 export interface AuthState {
@@ -30,12 +32,7 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
   // Optimistic Init: Check session synchronously to prevent "flash of loading"
   const [isAuthenticated, setIsAuthenticated] = useState(() => authService.hasSession());
   const [user, setUser] = useState<UserSession | null>(() => {
-    try {
-      const stored = localStorage.getItem('branch_pilot_session');
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
+    return storage.get<UserSession | null>(StorageKeys.SESSION, null);
   });
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isRecoveringPassword, setIsRecoveringPassword] = useState(() => {
@@ -100,6 +97,30 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
 
     checkAuth();
 
+    // Storage Event Listener for cross-tab session synchronization (e.g. logout in another tab)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === StorageKeys.SESSION) {
+        if (!e.newValue) {
+          // Deletion (logout)
+          setIsAuthenticated(false);
+          setUser(null);
+          setView(ROUTES.LOGIN);
+        } else {
+          // Changed session (login or switch profile)
+          try {
+            const newSession = JSON.parse(e.newValue);
+            setUser(newSession);
+            setIsAuthenticated(true);
+          } catch {
+            setIsAuthenticated(false);
+            setUser(null);
+            setView(ROUTES.LOGIN);
+          }
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
     // Supabase Auth Listener for external logouts (e.g., from another tab)
     const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
     let authListener: { unsubscribe: () => void } | null = null;
@@ -123,6 +144,7 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
 
     return () => {
       if (authListener) authListener.unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, [setView]); // Removed 'view' to prevent re-running on every navigation
 

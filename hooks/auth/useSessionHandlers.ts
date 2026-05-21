@@ -3,6 +3,8 @@ import { ROUTES } from '../../config/routes';
 import { authService } from '../../services/auth/authService';
 import { PHARMACY_MENU, MODULE_VIEW_MAPPING } from '../../config/menuData';
 import { permissionsService } from '../../services/auth/permissionsService';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 import type { ViewState } from '../../types';
 
 interface SessionHandlersProps {
@@ -55,9 +57,8 @@ export const useSessionHandlers = ({
           });
 
           // --- Restore the original system role on employee logout ---
-          const stored = localStorage.getItem('branch_pilot_session');
-          if (stored) {
-            const storedSession = JSON.parse(stored);
+          const storedSession = storage.get<any>(StorageKeys.SESSION, null);
+          if (storedSession) {
             if (storedSession._originalRole) {
               storedSession.role = storedSession._originalRole;
               storedSession.department = storedSession._originalDepartment;
@@ -69,15 +70,14 @@ export const useSessionHandlers = ({
               delete storedSession._originalUsername;
             }
             delete storedSession.employeeId;
-            localStorage.setItem('branch_pilot_session', JSON.stringify(storedSession));
+            storage.set(StorageKeys.SESSION, storedSession);
           }
         } else {
           const selectedEmployee = employees.find((e) => e.id === id);
           if (selectedEmployee) {
             // --- Sync employee role to session for permissionsService ---
-            const stored = localStorage.getItem('branch_pilot_session');
-            if (stored) {
-              const storedSession = JSON.parse(stored);
+            const storedSession = storage.get<any>(StorageKeys.SESSION, null);
+            if (storedSession) {
               // Save original credentials & sync employee's role
               if (!storedSession._originalRole) {
                 storedSession._originalRole = storedSession.role;
@@ -90,7 +90,7 @@ export const useSessionHandlers = ({
               storedSession.orgRole = selectedEmployee.orgRole || 'member';
               storedSession.username = selectedEmployee.username || selectedEmployee.name;
               storedSession.employeeId = selectedEmployee.id;
-              localStorage.setItem('branch_pilot_session', JSON.stringify(storedSession));
+              storage.set(StorageKeys.SESSION, storedSession);
             }
 
             const isFirstSelection = !currentEmployeeId;
@@ -117,7 +117,7 @@ export const useSessionHandlers = ({
             
             if (isManagerOrAdmin) {
               const lastBranchKey = `pharma_last_branch_${session.userId}_${selectedEmployee.id}`;
-              const lastBranchId = localStorage.getItem(lastBranchKey);
+              const lastBranchId = storage.get<string | null>(lastBranchKey, null);
               
               if (lastBranchId && branches.some(b => b.id === lastBranchId)) {
                 targetBranchId = lastBranchId;

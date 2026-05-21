@@ -9,13 +9,14 @@ import {
 } from '../../types';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 import { employeeRepository } from '../hr/repositories/employeeRepository';
 import { orgRepository } from '../org/repositories/orgRepository';
 import { orgService } from '../org/orgService';
 import { isTauri } from '../../utils/platform';
 
-const SESSION_KEY = 'branch_pilot_session';
-const AUDIT_KEY = 'pharmaflow_login_audit';
+const SESSION_KEY = StorageKeys.SESSION;
+const AUDIT_KEY = StorageKeys.LOGIN_AUDIT;
 
 let cachedSession: UserSession | null = null;
 
@@ -34,7 +35,7 @@ export const authService = {
       const { data: { user: sbUser }, error } = await supabase.auth.getUser();
       
       if (error || !sbUser) {
-        localStorage.removeItem(SESSION_KEY);
+        storage.remove(SESSION_KEY);
         cachedSession = null;
         return null;
       }
@@ -51,8 +52,7 @@ export const authService = {
    */
   async syncSessionWithDatabase(userId: string): Promise<UserSession | null> {
     try {
-      const stored = localStorage.getItem(SESSION_KEY);
-      const existingSession: UserSession | null = stored ? JSON.parse(stored) : null;
+      const existingSession = storage.get<UserSession | null>(SESSION_KEY, null);
 
       const [employeeData, memberData] = await Promise.all([
         employeeRepository.getByAuthUserId(userId),
@@ -97,7 +97,7 @@ export const authService = {
         };
       }
 
-      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      storage.set(SESSION_KEY, session);
       cachedSession = session;
       return session;
     } catch (err) {
@@ -109,9 +109,9 @@ export const authService = {
   getCurrentUserSync(): UserSession | null {
     if (cachedSession) return cachedSession;
     try {
-      const stored = localStorage.getItem(SESSION_KEY);
+      const stored = storage.get<UserSession | null>(SESSION_KEY, null);
       if (stored) {
-        cachedSession = JSON.parse(stored);
+        cachedSession = stored;
         return cachedSession;
       }
       return null;
@@ -124,7 +124,7 @@ export const authService = {
     const current = this.getCurrentUserSync();
     if (current) {
       const updated = { ...current, ...updates };
-      localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
+      storage.set(SESSION_KEY, updated);
       cachedSession = updated;
       return updated;
     }
@@ -222,7 +222,7 @@ export const authService = {
       };
     }
 
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    storage.set(SESSION_KEY, session);
     if (session.orgId) orgService.setActiveOrgId(session.orgId);
     
     // Log System Login
@@ -284,10 +284,9 @@ export const authService = {
 
   clearEmployeeSession(): void {
     storage.remove('pharma_currentEmployeeId');
-    const stored = localStorage.getItem(SESSION_KEY);
-    if (stored) {
+    const session = storage.get<any>(SESSION_KEY, null);
+    if (session) {
       try {
-        const session = JSON.parse(stored);
         if (session._originalRole) {
           session.role = session._originalRole;
           session.department = session._originalDepartment;
@@ -299,7 +298,7 @@ export const authService = {
           delete session._originalUsername;
         }
         delete session.employeeId;
-        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+        storage.set(SESSION_KEY, session);
       } catch (e) {
         console.error('Failed to restore session:', e);
       }
@@ -311,7 +310,7 @@ export const authService = {
   },
 
   hasSession(): boolean {
-    return !!localStorage.getItem(SESSION_KEY);
+    return !!storage.get<any>(SESSION_KEY, null);
   },
 
   logAuditEvent(entry: Omit<LoginAuditEntry, 'id' | 'timestamp'>): void {
@@ -327,7 +326,7 @@ export const authService = {
       id: Math.random().toString(36).substring(2, 11),
       timestamp: new Date().toISOString(),
     };
-    localStorage.setItem(AUDIT_KEY, JSON.stringify([newEntry, ...history].slice(0, 50)));
+    storage.set(AUDIT_KEY, [newEntry, ...history].slice(0, 50));
   },
 
   /**
@@ -342,11 +341,7 @@ export const authService = {
    * Quick sync fetch from localStorage (for immediate UI needs)
    */
   getLoginHistorySync(): LoginAuditEntry[] {
-    try {
-      return JSON.parse(localStorage.getItem(AUDIT_KEY) || '[]');
-    } catch {
-      return [];
-    }
+    return storage.get<LoginAuditEntry[]>(AUDIT_KEY, []);
   },
 
   async registerBiometric(employeeId: string, credentialId: string, publicKey: string): Promise<boolean> {
@@ -376,7 +371,7 @@ export const authService = {
       orgId: employee.orgId,
     };
 
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    storage.set(SESSION_KEY, session);
     if (session.orgId) orgService.setActiveOrgId(session.orgId);
 
     // Log Biometric Login

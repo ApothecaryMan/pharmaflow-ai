@@ -1,4 +1,6 @@
 import React, { useCallback } from 'react';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 import { inventoryService } from '../../services/inventory';
 import { salesService } from '../../services/sales';
 import { supplierService } from '../../services/suppliers';
@@ -145,7 +147,7 @@ export const useDataActions = ({
       } else if (currentEmployee?.id) {
         if (sessionBeforeClear?.userId) {
           const key = `pharma_last_branch_${sessionBeforeClear.userId}_${currentEmployee.id}`;
-          localStorage.setItem(key, branchId);
+          storage.set(key, branchId);
         }
       }
 

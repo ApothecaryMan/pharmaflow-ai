@@ -52,6 +52,8 @@ export const StorageKeys = {
   STOCK_MOVEMENTS: 'pharma_stock_movements',
 
   // User/Session
+  SESSION: 'branch_pilot_session',
+  LOGIN_AUDIT: 'pharmaflow_login_audit',
   PROFILE_IMAGE: 'pharma_profileImage',
   CURRENT_EMPLOYEE_ID: 'pharma_currentEmployeeId',
   ACTIVE_ORG_ID: 'pharma_active_org_id',
