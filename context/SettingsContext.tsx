@@ -252,10 +252,34 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<SettingsState>(loadSettings);
 
-  // Persist to storage
+  // Persist to storage with guard to prevent redundant writes and loops
   useEffect(() => {
-    storage.set(STORAGE_KEY, settings);
+    const currentStored = localStorage.getItem(storage.getScopedKey(STORAGE_KEY));
+    const newSettingsStr = JSON.stringify(settings);
+    if (currentStored !== newSettingsStr) {
+      storage.set(STORAGE_KEY, settings);
+    }
   }, [settings]);
+
+  // Synchronize settings from storage updates (cross-tab and same-tab)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === storage.getScopedKey(STORAGE_KEY) && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setSettings((prev) => {
+            if (JSON.stringify(prev) === e.newValue) return prev;
+            return { ...prev, ...parsed };
+          });
+        } catch (err) {
+          console.error('Failed to parse settings storage update:', err);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Apply dark mode to document
   useEffect(() => {

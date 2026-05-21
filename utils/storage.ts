@@ -108,11 +108,22 @@ export const storage = {
 
     try {
       const scopedKey = storage.getScopedKey(key);
-      localStorage.setItem(scopedKey, JSON.stringify(value));
+      const stringValue = JSON.stringify(value);
+      localStorage.setItem(scopedKey, stringValue);
       
       // Auto-stamp version if missing
       if (!localStorage.getItem(StorageKeys.STORAGE_VERSION)) {
         localStorage.setItem(StorageKeys.STORAGE_VERSION, CURRENT_APP_VERSION);
+      }
+
+      // Dispatch simulated StorageEvent locally for same-tab reactivity
+      if (typeof window !== 'undefined' && typeof StorageEvent !== 'undefined') {
+        const event = new StorageEvent('storage', {
+          key: scopedKey,
+          newValue: stringValue,
+          storageArea: localStorage,
+        });
+        window.dispatchEvent(event);
       }
     } catch (error) {
       console.error(`Error writing storage key "${key}":`, error);
@@ -126,6 +137,16 @@ export const storage = {
     if (typeof localStorage === 'undefined') return;
     const scopedKey = storage.getScopedKey(key);
     localStorage.removeItem(scopedKey);
+
+    // Dispatch simulated StorageEvent locally for same-tab reactivity
+    if (typeof window !== 'undefined' && typeof StorageEvent !== 'undefined') {
+      const event = new StorageEvent('storage', {
+        key: scopedKey,
+        newValue: null,
+        storageArea: localStorage,
+      });
+      window.dispatchEvent(event);
+    }
   },
 
   /**

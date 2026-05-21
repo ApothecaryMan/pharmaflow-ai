@@ -30,7 +30,7 @@ export function usePersistedState<T>(
 
     const handleStorageChange = (e: StorageEvent) => {
       // If the key matches and there is a new value
-      if (e.key === key && e.newValue) {
+      if (e.key === storage.getScopedKey(key) && e.newValue) {
         try {
           const newValue = JSON.parse(e.newValue);
           // Use functional update to compare with latest state without dependency

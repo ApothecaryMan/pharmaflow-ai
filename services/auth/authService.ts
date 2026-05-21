@@ -303,10 +303,13 @@ export const authService = {
         console.error('Failed to restore session:', e);
       }
     }
-    window.dispatchEvent(new StorageEvent('storage', {
-      key: 'pharma_currentEmployeeId',
-      newValue: null
-    }));
+    if (typeof window !== 'undefined' && typeof StorageEvent !== 'undefined') {
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: storage.getScopedKey('pharma_currentEmployeeId'),
+        newValue: null,
+        storageArea: localStorage,
+      }));
+    }
   },
 
   hasSession(): boolean {

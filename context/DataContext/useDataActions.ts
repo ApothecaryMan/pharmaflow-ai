@@ -153,11 +153,18 @@ export const useDataActions = ({
 
       await branchService.setActive(branchId);
       
+      const allBranches = await branchService.getAll();
+      const newBranch = allBranches.find(b => b.id === branchId);
+      const branchCode = newBranch?.code || '';
+
+      await settingsService.setMultiple({
+        activeBranchId: branchId,
+        branchCode,
+      });
+      
       // Log Branch Switch (Using the session captured before clearing)
       if (sessionBeforeClear) {
-        const allBranches = await branchService.getAll();
         const oldBranch = allBranches.find(b => b.id === activeBranchId);
-        const newBranch = allBranches.find(b => b.id === branchId);
         
         authService.logAuditEvent({
           username: sessionBeforeClear.username,
@@ -177,7 +184,7 @@ export const useDataActions = ({
     } finally {
       setIsLoading(false);
     }
-  }, [refreshAll, currentEmployee, setIsLoading, setActiveBranchId, setCurrentEmployee, lastLoadedBranchId]);
+  }, [refreshAll, currentEmployee, setIsLoading, setActiveBranchId, setCurrentEmployee, lastLoadedBranchId, activeBranchId]);
 
   const switchOrg = useCallback(async (orgId: string) => {
     setIsLoading(true);

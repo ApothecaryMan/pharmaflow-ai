@@ -8,6 +8,7 @@ import { authService } from '../../services/auth/authService';
 import { settingsService } from '../../services/settings/settingsService';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { storage } from '../../utils/storage';
 // Separate contexts for performance optimization
 const CoreDataContext = createContext<any>(null);
 const InventoryDataContext = createContext<any>(null);
@@ -132,6 +133,55 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
   useEffect(() => {
     initData();
   }, [initData]);
+
+  // Listen for storage changes to sync active branch and employee session (same-tab and cross-tab)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (!e.newValue) return;
+
+      // 1. Sync Active Branch
+      const activeBranchScopedKey = storage.getScopedKey('pharma_active_branch_id');
+      if (e.key === activeBranchScopedKey) {
+        try {
+          const newBranchId = JSON.parse(e.newValue);
+          if (newBranchId && newBranchId !== activeBranchId) {
+            // Call switchBranch reactively and skip clearing employee if we are doing sync
+            actions.switchBranch(newBranchId, true);
+          }
+        } catch (err) {
+          // If it's a raw string in storage
+          if (e.newValue !== activeBranchId) {
+            actions.switchBranch(e.newValue, true);
+          }
+        }
+      }
+
+      // 2. Sync Active Employee (Session changes)
+      if (e.key === 'branch_pilot_session') {
+        try {
+          const session = JSON.parse(e.newValue);
+          const newEmployeeId = session?.employeeId;
+          const currentEmployeeId = currentEmployee?.id || null;
+          
+          if (newEmployeeId !== currentEmployeeId) {
+            if (newEmployeeId) {
+              const matchedEmployee = employees.find(emp => emp.id === newEmployeeId);
+              if (matchedEmployee) {
+                setCurrentEmployee(matchedEmployee);
+              }
+            } else {
+              setCurrentEmployee(null);
+            }
+          }
+        } catch (err) {
+          console.error('[DataProvider] Failed to parse session storage update:', err);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [activeBranchId, currentEmployee, employees, actions.switchBranch, setCurrentEmployee]);
 
   // Callable re-initialization (for post-login)
   const reinitialize = useCallback(async () => {

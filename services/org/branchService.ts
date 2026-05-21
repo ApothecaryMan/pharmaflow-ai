@@ -51,7 +51,10 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
   }
 
   setActive(branchId: string): void {
-    storage.set(ACTIVE_BRANCH_KEY, branchId);
+    const currentActive = storage.get(ACTIVE_BRANCH_KEY, '');
+    if (currentActive !== branchId) {
+      storage.set(ACTIVE_BRANCH_KEY, branchId);
+    }
   }
 
   async generateCode(orgId?: string): Promise<string> {
