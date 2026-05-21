@@ -12,6 +12,7 @@ import { useSmartDirection } from '../common/SmartInputs';
 import { PageHeader } from '../common/PageHeader';
 import { AnimatedCounter } from '../common/AnimatedCounter';
 import { TanStackTable } from '../common/TanStackTable';
+import { PriceDisplay } from '../common/table/PriceDisplay';
 import { useCashRegister } from './useCashRegister';
 
 interface CashRegisterProps {
@@ -79,10 +80,12 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         accessorKey: 'time',
         header: t.cashRegister?.transactions?.time || 'Time',
         meta: { align: 'center' },
+        size: 109,
       },
       {
         accessorKey: 'type',
         header: t.cashRegister?.transactions?.type || 'Type',
+        meta: { align: 'center' },
         cell: (info) => {
           const type = info.getValue() as CashTransactionType;
           return (
@@ -120,10 +123,12 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
             </span>
           );
         },
+        size: 236,
       },
       {
         accessorKey: 'userId',
         header: t.cashRegister?.transactions?.user || 'User',
+        meta: { align: 'start' },
         cell: (info) => {
           const empIdOrName = info.getValue() as string;
           const employee = employees?.find((e) => e.id === empIdOrName);
@@ -133,10 +138,12 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
             </span>
           );
         },
+        size: 236,
       },
       {
         accessorKey: 'reason',
         header: t.cashRegister?.transactions?.reason || 'Reason',
+        meta: { align: 'center' },
         cell: (info) => {
           const reason = info.getValue() as string;
           if (!reason) return '-';
@@ -159,36 +166,27 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
             </span>
           );
         },
+        size: 236,
       },
       {
         accessorKey: 'amount',
         header: t.cashRegister?.transactions?.amount || 'Amount',
+        meta: { align: 'end' },
         cell: (info) => {
           const amountVal = info.getValue() as number;
           const row = info.row.original;
           const isPositive = ['in', 'opening', 'sale', 'card_sale', 'purchase_return'].includes(row.type);
+          const displayValue = isPositive ? Math.abs(amountVal) : -Math.abs(amountVal);
 
           return (
             <div
               className={`text-[11px] font-bold ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}
             >
-              {isPositive ? '+' : '-'}
-              {(() => {
-                const { amount, symbol } = formatCurrencyParts(
-                  Math.abs(amountVal),
-                  'EGP',
-                  language === 'AR' ? 'ar-EG' : 'en-US'
-                );
-                return (
-                  <>
-                    {amount} <span className='text-[9px] opacity-60 font-normal'>{symbol}</span>
-                  </>
-                );
-              })()}
+              <PriceDisplay value={displayValue} showSign size="sm" />
             </div>
           );
         },
-        meta: { align: 'end' },
+        size: 236,
       },
     ],
     [t, language, employees]
@@ -683,21 +681,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 <div className='flex justify-between'>
                   <span>{t.cashRegister.messages.expected}</span>
                   <span className='font-bold'>
-                    {(() => {
-                      const { amount, symbol } = formatCurrencyParts(
-                        currentBalance,
-                        'EGP',
-                        language === 'AR' ? 'ar-EG' : 'en-US'
-                      );
-                      return (
-                        <>
-                          {amount}{' '}
-                          <span className='text-[0.7em] opacity-60 font-normal ml-0.5'>
-                            {symbol}
-                          </span>
-                        </>
-                      );
-                    })()}
+                    <PriceDisplay value={currentBalance} />
                   </span>
                 </div>
                 {amountInput && !isNaN(parseFloat(amountInput)) && (
@@ -706,21 +690,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     <span
                       className={`font-bold ${Math.abs(parseFloat(amountInput) - currentBalance) <= 50 ? 'text-emerald-500' : 'text-red-500'}`}
                     >
-                      {(() => {
-                        const { amount, symbol } = formatCurrencyParts(
-                          parseFloat(amountInput) - currentBalance,
-                          'EGP',
-                          language === 'AR' ? 'ar-EG' : 'en-US'
-                        );
-                        return (
-                          <>
-                            {amount}{' '}
-                            <span className='text-[0.7em] opacity-60 font-normal ml-0.5'>
-                              {symbol}
-                            </span>
-                          </>
-                        );
-                      })()}
+                      <PriceDisplay value={parseFloat(amountInput) - currentBalance} showSign />
                     </span>
                   </div>
                 )}

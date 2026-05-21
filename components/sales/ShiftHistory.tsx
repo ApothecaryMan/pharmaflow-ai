@@ -101,8 +101,8 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   };
 
   const shifts = useMemo(() => {
-    // Only show closed shifts
-    return allShiftsFromHook.filter((s) => s.status === 'closed');
+    // Show all shifts including active (open) ones
+    return allShiftsFromHook;
   }, [allShiftsFromHook]);
 
   const formatRelativeDate = (date: Date) => {
@@ -129,14 +129,74 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
     return timeString;
   };
 
-  const formatDuration = (openTime: string, closeTime?: string) => {
+  const formatDuration = (openTime: string, closeTime?: string): React.ReactNode => {
     if (!closeTime) return '-';
     const duration = new Date(closeTime).getTime() - new Date(openTime).getTime();
     const hours = Math.floor(duration / (1000 * 60 * 60));
     const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
-    const hourLabel = language === 'AR' ? 'س' : 'h';
-    const minuteLabel = language === 'AR' ? 'د' : 'm';
-    return `${hours}${hourLabel} ${minutes}${minuteLabel}`;
+
+    const labels = t.shiftHistory?.durationLabels;
+
+    const renderUnit = (val: number, isHour: boolean) => {
+      let label = '';
+      let showNumber = true;
+
+      if (language === 'AR') {
+        if (val === 1) {
+          label = isHour ? labels?.hourSingular : labels?.minuteSingular;
+          showNumber = false;
+        } else if (val === 2) {
+          label = isHour ? labels?.hourDual : labels?.minuteDual;
+          showNumber = false;
+        } else if (val >= 3 && val <= 10) {
+          label = isHour ? labels?.hours3to10 : labels?.minutes3to10;
+        } else {
+          label = isHour ? labels?.hours11plus : labels?.minutes11plus;
+        }
+      } else {
+        if (val === 1) {
+          label = isHour ? labels?.hourSingular : labels?.minuteSingular;
+        } else if (val === 2) {
+          label = isHour ? labels?.hourDual : labels?.minuteDual;
+        } else {
+          label = isHour ? (labels?.hourPlural || labels?.hours3to10) : (labels?.minutePlural || labels?.minutes3to10);
+        }
+      }
+
+      if (!showNumber) {
+        return <span className="font-bold text-sm">{label}</span>;
+      }
+
+      return (
+        <span className="inline-flex items-baseline gap-1">
+          <span className="font-bold text-sm">{val}</span>
+          <span className="text-xs text-gray-500 font-light dark:text-gray-400">{label}</span>
+        </span>
+      );
+    };
+
+    const hasHours = hours > 0;
+    const hasMinutes = minutes > 0;
+
+    if (!hasHours && !hasMinutes) {
+      return renderUnit(0, false);
+    }
+
+    if (hasHours && hasMinutes) {
+      return (
+        <span className="inline-flex items-baseline gap-1">
+          {renderUnit(hours, true)}
+          <span className="text-xs text-gray-500 font-light dark:text-gray-400">{labels?.and}</span>
+          {renderUnit(minutes, false)}
+        </span>
+      );
+    }
+
+    if (hasHours) {
+      return renderUnit(hours, true);
+    }
+
+    return renderUnit(minutes, false);
   };
 
   // Column definitions for TanStackTable
@@ -146,10 +206,16 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         id: 'id',
         accessorFn: (row) => row.handoverReceiptNumber || row.id.slice(-6),
         header: t.shiftHistory?.headers?.shiftNumber || 'Shift #',
-        cell: ({ getValue }) => (
+        cell: ({ getValue, row }) => (
           <span className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
             <span className="material-symbols-rounded text-[18px] text-gray-400">tag</span>
             {getValue() as string}
+            {row.original.status === 'open' && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-[9px] font-bold uppercase tracking-wider bg-transparent ms-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                {t.cashRegister?.status?.open || 'Open'}
+              </span>
+            )}
           </span>
         ),
         meta: { align: 'start' },
@@ -160,18 +226,66 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         meta: { align: 'center' },
       },
       {
+        id: 'openedBy',
+        header: t.shiftHistory?.headers?.openedBy || 'Opened By',
+        accessorFn: (row) => {
+          const emp = employees?.find(e => e.id === row.openedBy);
+          return emp?.name || row.openedBy;
+        },
+        cell: ({ getValue }) => (
+          <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{getValue() as string}</span>
+        ),
+        meta: { align: 'center' },
+      },
+      {
         accessorKey: 'closeTime',
         header: t.shiftHistory?.headers?.closeTime || 'Close Time',
+        cell: ({ getValue, row }) => {
+          if (row.original.status === 'open' || !getValue()) {
+            return (
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider bg-transparent">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                {t.shiftHistory?.activeNow || 'Active Now'}
+              </span>
+            );
+          }
+          return undefined; // fallback to smartDate auto-formatting
+        },
+        meta: { align: 'center' },
+      },
+      {
+        id: 'closedBy',
+        header: t.shiftHistory?.headers?.closedBy || 'Closed By',
+        accessorFn: (row) => {
+          if (row.status === 'open' || !row.closedBy) return '-';
+          const emp = employees?.find(e => e.id === row.closedBy);
+          return emp?.name || row.closedBy;
+        },
+        cell: ({ getValue }) => (
+          <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{getValue() as string}</span>
+        ),
         meta: { align: 'center' },
       },
       {
         id: 'duration',
         header: t.shiftHistory?.headers?.duration || 'Duration',
-        accessorFn: (row) => formatDuration(row.openTime, row.closeTime),
-        cell: ({ getValue }) => (
-          <span className='text-sm text-gray-600 dark:text-gray-400'>{getValue() as string}</span>
-        ),
-        meta: { align: 'center' },
+        accessorFn: (row) => {
+          const endTime = row.status === 'open' ? new Date().toISOString() : row.closeTime;
+          if (!endTime) return 0;
+          return new Date(endTime).getTime() - new Date(row.openTime).getTime();
+        },
+        cell: ({ row }) => {
+          const durationElement = formatDuration(
+            row.original.openTime,
+            row.original.status === 'open' ? new Date().toISOString() : row.original.closeTime
+          );
+          return (
+            <span className={`text-sm ${row.original.status === 'open' ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-gray-600 dark:text-gray-400'}`}>
+              {durationElement}
+            </span>
+          );
+        },
+        meta: { align: 'center', smartDate: false },
       },
       {
         accessorKey: 'openingBalance',
@@ -182,13 +296,19 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
       {
         accessorKey: 'closingBalance',
         header: t.shiftHistory?.headers?.closingBalance || 'Closing',
-        cell: ({ getValue }) => <PriceDisplay value={(getValue() as number) || 0} />,
+        cell: ({ getValue, row }) => {
+          if (row.original.status === 'open') {
+            return <span className="text-sm text-gray-400">-</span>;
+          }
+          return <PriceDisplay value={(getValue() as number) || 0} />;
+        },
         meta: { align: 'center' },
       },
       {
         id: 'variance',
         header: t.shiftHistory?.headers?.variance || 'Variance',
         accessorFn: (row) => {
+          if (row.status === 'open') return null;
           // BUG-SH-04: Variance must account for returns and purchases
           const expected = row.openingBalance 
             + row.cashSales 
@@ -200,20 +320,22 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
           return (row.closingBalance || 0) - expected;
         },
         cell: ({ getValue }) => {
-          const variance = getValue() as number;
+          const variance = getValue() as number | null;
+          if (variance === null) {
+            return <span className="text-sm text-gray-400">-</span>;
+          }
           return (
             <span
               className={`font-bold ${variance === 0 ? 'text-gray-500' : variance > 0 ? 'text-green-600' : 'text-red-600'}`}
             >
-              {variance > 0 ? '+' : ''}
-              <PriceDisplay value={variance} />
+              <PriceDisplay value={variance} showSign />
             </span>
           );
         },
         meta: { align: 'center' },
       },
     ],
-    [t, language]
+    [t, language, employees]
   );
 
   const filteredShifts = useMemo(() => {
@@ -247,7 +369,9 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
     const headers = [
       'Shift ID',
       'Opened',
+      'Opened By',
       'Closed',
+      'Closed By',
       'Duration (hrs)',
       'Opening Balance',
       'Closing Balance',
@@ -273,20 +397,25 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         - shift.cashOut 
         - (shift.returns || 0)
         - (shift.cashPurchases || 0);
-      const variance = (shift.closingBalance || 0) - expected;
+      const variance = shift.status === 'open' ? 'N/A' : ((shift.closingBalance || 0) - expected).toFixed(2);
+
+      const openedByName = employees?.find(e => e.id === shift.openedBy)?.name || shift.openedBy;
+      const closedByName = shift.closedBy ? (employees?.find(e => e.id === shift.closedBy)?.name || shift.closedBy) : 'N/A';
 
       return [
         shift.id,
         new Date(shift.openTime).toLocaleString(),
+        openedByName,
         shift.closeTime ? new Date(shift.closeTime).toLocaleString() : 'N/A',
+        closedByName,
         duration.toFixed(2),
         shift.openingBalance.toFixed(2),
-        (shift.closingBalance || 0).toFixed(2),
+        shift.status === 'open' ? 'N/A' : (shift.closingBalance || 0).toFixed(2),
         shift.cashSales.toFixed(2),
         (shift.cardSales || 0).toFixed(2),
         shift.cashIn.toFixed(2),
         shift.cashOut.toFixed(2),
-        variance.toFixed(2),
+        variance,
       ];
     });
 

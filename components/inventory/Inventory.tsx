@@ -551,7 +551,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         {
           accessorKey: 'stock',
           header: t.headers.stock,
-          meta: { align: 'end' },
+          meta: { align: 'start' },
           cell: ({ row }) => {
             if (row.original.stock <= 0) {
               return (
@@ -582,6 +582,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         {
           accessorKey: 'publicPrice',
           header: t.headers.publicPrice,
+          meta: { align: 'start' },
           cell: ({ row }) => {
             const parts = formatCurrencyParts(row.original.publicPrice);
             return (
@@ -600,6 +601,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         cols.push({
           accessorKey: 'costPrice',
           header: t.headers.cost,
+          meta: { align: 'start' },
           cell: ({ row }) => {
             const groupData = row.original as GroupedDrug & { selectedBatch?: Drug };
             const drug = groupData.selectedBatch || groupData;

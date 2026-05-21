@@ -6,12 +6,25 @@ export const PriceDisplay: React.FC<{
   value: number;
   size?: 'sm' | 'base' | 'lg' | 'xl' | '2xl';
   compact?: boolean;
-}> = ({ value, size = 'base', compact = false }) => {
+  showSign?: boolean;
+}> = ({ value, size = 'base', compact = false, showSign = false }) => {
   const { language } = useSettings();
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
-  const { amount, symbol } = compact
-    ? formatCompactCurrencyParts(value, 'EGP', locale, 2)
-    : formatCurrencyParts(value, 'EGP', locale);
+
+  const absoluteValue = showSign ? Math.abs(value) : value;
+
+  const { amount: rawAmount, symbol } = compact
+    ? formatCompactCurrencyParts(absoluteValue, 'EGP', locale, 2)
+    : formatCurrencyParts(absoluteValue, 'EGP', locale);
+
+  let amount = rawAmount;
+  if (showSign) {
+    if (value > 0) {
+      amount = `+${rawAmount}`;
+    } else if (value < 0) {
+      amount = `-${rawAmount}`;
+    }
+  }
 
   // Scale symbol based on text size approximately
   const SYMBOL_SCALES = {
@@ -25,8 +38,9 @@ export const PriceDisplay: React.FC<{
   const symbolClass = SYMBOL_SCALES[size] || SYMBOL_SCALES.base;
 
   return (
-    <span className='tabular-nums inline-block' dir='ltr' style={{ unicodeBidi: 'isolate' }}>
+    <span className='tabular-nums inline-block'>
       {amount} <span className={`${symbolClass} text-gray-400 font-normal`}>{symbol}</span>
     </span>
   );
 };
+

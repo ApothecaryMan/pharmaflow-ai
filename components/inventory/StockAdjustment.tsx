@@ -65,7 +65,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 }) => {
   const { branchCode, language, textTransform } = useSettings();
   const { activeBranchId, activeOrgId, branches, currentEmployee, inventory } = useData();
-  
+
   // Try to get pharmacy name from active branch, then storage/organization fallbacks
   const activeBranch = branches.find(b => b.id === activeBranchId);
   const pharmacyName = activeBranch?.name || storage.get('pharma_name', 'Zinc Pharmacy');
@@ -482,9 +482,9 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
     // Log movements for each adjustment
     try {
       const currentEmployeeId = currentEmployee?.id || 'user';
-      const currentEmployeeName = 
-        currentEmployee?.name || 
-        currentEmployee?.username || 
+      const currentEmployeeName =
+        currentEmployee?.name ||
+        currentEmployee?.username ||
         (import.meta.env.VITE_SUPER_USER || (language === 'AR' ? 'مستخدم النظام' : 'System User'));
 
       // RBAC Check for Approval
@@ -659,11 +659,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
             type='number'
             inputMode='decimal'
             className={`w-20 text-center px-2 py-1 rounded-md border text-sm tabular-nums outline-hidden focus:ring-2 ring-blue-500/20 transition-colors
-                ${
-                  info.row.original.newStock !== info.row.original.currentStock
-                    ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/10 text-amber-700'
-                    : 'border-(--border-divider) bg-(--bg-input) text-(--text-primary)'
-                }`}
+                ${info.row.original.newStock !== info.row.original.currentStock
+                ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/10 text-amber-700'
+                : 'border-(--border-divider) bg-(--bg-input) text-(--text-primary)'
+              }`}
             value={info.getValue() as number}
             onChange={(e) => updateAdjustment(info.row.index, 'newStock', e.target.value)}
             onClick={(e) => (e.target as HTMLInputElement).select()}
@@ -696,8 +695,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           if (impact === 0) return <span className="text-gray-300">-</span>;
           return (
             <div className={`text-xs font-bold tabular-nums ${impact > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-              {impact > 0 ? '+' : ''}
-              <PriceDisplay value={impact} />
+              <PriceDisplay value={impact} showSign />
             </div>
           );
         },
@@ -837,11 +835,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         header: t.stockAdjustment.table.diff,
         cell: (info) => (
           <span
-            className={`font-mono font-bold text-xs tabular-nums px-1.5 py-0.5 rounded-lg border ${
-              (info.getValue() as number) > 0
+            className={`font-mono font-bold text-xs tabular-nums px-1.5 py-0.5 rounded-lg border ${(info.getValue() as number) > 0
                 ? 'bg-transparent border-green-200 text-green-700 dark:border-green-900/50 dark:text-green-400'
                 : 'bg-transparent border-red-200 text-red-700 dark:border-red-900/50 dark:text-red-400'
-            }`}
+              }`}
           >
             {(info.getValue() as number) > 0 ? '+' : ''}
             {info.getValue() as number}
@@ -895,13 +892,12 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
             <div className='flex items-center justify-end gap-3 w-full'>
               {/* Status Badge */}
               <span
-                className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-transparent border ${
-                  isPending
+                className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-transparent border ${isPending
                     ? 'text-amber-700 border-amber-200 dark:text-amber-400 dark:border-amber-900/50'
                     : status === 'rejected'
                       ? 'text-red-700 border-red-200 dark:text-red-400 dark:border-red-900/50'
                       : 'text-emerald-700 border-emerald-200 dark:text-emerald-400 dark:border-emerald-900/50'
-                }`}
+                  }`}
               >
                 <span className='material-symbols-rounded text-sm'>
                   {isPending ? 'schedule' : status === 'rejected' ? 'cancel' : 'check_circle'}

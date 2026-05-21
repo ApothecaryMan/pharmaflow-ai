@@ -246,7 +246,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
               </div>
               {totalReturned > 0 && (
                 <span className='text-[10px] text-orange-600 dark:text-orange-400 font-medium'>
-                  -<PriceDisplay value={totalReturned} /> {t.detailsModal?.returnedLabel || 'returned'}
+                  <PriceDisplay value={-totalReturned} /> {t.detailsModal?.returnedLabel || 'returned'}
                 </span>
               )}
             </div>
@@ -379,7 +379,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
       />
 
       <div className='flex-1 overflow-hidden'>
-        <TanStackTable
+        <TanStackTable<Purchase, any>
           data={sortedHistory}
           columns={columns}
           color={color}
