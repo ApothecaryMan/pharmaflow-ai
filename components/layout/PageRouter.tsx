@@ -50,7 +50,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   onSelectEmployee,
   onLogout,
 }) => {
-  const { language, theme, darkMode, textTransform } = useSettings();
+  const { language, theme, darkMode, textTransform, developerMode } = useSettings();
 
   if (!currentEmployeeId) {
     return <LandingPage language={language} darkMode={darkMode} />;
@@ -88,7 +88,8 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   }
 
   // RBAC: Check Page Permissions
-  if (pageConfig.permission && !permissionsService.can(pageConfig.permission)) {
+  const isDebugOverride = pageConfig.permission === 'system.debug' && developerMode;
+  if (pageConfig.permission && !isDebugOverride && !permissionsService.can(pageConfig.permission)) {
     return (
       <div className='flex flex-col items-center justify-center h-full p-8 animate-fade-in select-none text-center'>
         <div className='mb-12'>

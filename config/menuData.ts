@@ -1193,7 +1193,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     id: 'test',
     label: 'Test',
     icon: 'science',
-    permission: 'settings.view',
+    permission: 'system.debug',
     order: 12,
     hasPage: true,
     submenus: [

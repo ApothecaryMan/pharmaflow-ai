@@ -22,8 +22,11 @@ function filterMenuItems(
   return menu
     .filter((module) => {
       // 1. Permission Check
-      if (module.permission && !permissionsService.can(module.permission)) {
-        return false;
+      if (module.permission) {
+        const isDebugOverride = module.permission === 'system.debug' && developerMode;
+        if (!isDebugOverride && !permissionsService.can(module.permission)) {
+          return false;
+        }
       }
 
       // 2. Activity Check (if enabled)
@@ -42,8 +45,11 @@ function filterMenuItems(
       submenus: module.submenus
         ?.filter((submenu) => {
           // Filter submenus by permission
-          if (submenu.permission && !permissionsService.can(submenu.permission)) {
-            return false;
+          if (submenu.permission) {
+            const isDebugOverride = submenu.permission === 'system.debug' && developerMode;
+            if (!isDebugOverride && !permissionsService.can(submenu.permission)) {
+              return false;
+            }
           }
           return true;
         })
@@ -53,10 +59,12 @@ function filterMenuItems(
             // Filter items by permission
             if (
               typeof item === 'object' &&
-              item.permission &&
-              !permissionsService.can(item.permission)
+              item.permission
             ) {
-              return false;
+              const isDebugOverride = item.permission === 'system.debug' && developerMode;
+              if (!isDebugOverride && !permissionsService.can(item.permission)) {
+                return false;
+              }
             }
             return true;
           }),
