@@ -701,10 +701,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       menuPosRef.current = { x, y, columnId };
 
       const renderMenu = (currentAlign: Record<string, 'start' | 'center' | 'end'>) => {
-        const currentT = t.global.table;
+        const currentT = t?.global?.table;
         const translations = {
-          columns: currentT?.columns || t.global.table.columns,
-          alignment: currentT?.alignment || t.global.table.alignment,
+          columns: currentT?.columns || 'Columns',
+          alignment: currentT?.alignment || 'Alignment',
         };
 
         const handleRefresh = (updatedAlign?: Record<string, 'start' | 'center' | 'end'>) => {
@@ -730,7 +730,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
       renderMenu(columnAlignment);
     },
-    [table, showMenu, language, columnAlignment, t.global.table]
+    [table, showMenu, language, columnAlignment, t?.global?.table]
   );
 
   React.useEffect(() => {

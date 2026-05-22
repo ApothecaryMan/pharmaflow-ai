@@ -56,13 +56,13 @@ describe('TanStackTable', () => {
         expect(screen.getByText('20')).toBeInTheDocument();
     });
 
-    it('shows empty message when no data', () => {
+    it('shows empty message when no data', async () => {
         render(
             <Wrapper>
                 <TanStackTable data={[]} columns={columns} emptyMessage="No items" />
             </Wrapper>
         );
-        expect(screen.getByText('No items')).toBeInTheDocument();
+        expect(await screen.findByText('No items')).toBeInTheDocument();
     });
 
     it('sorts data when interacting via context menu (simulation)', async () => {
