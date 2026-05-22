@@ -10,9 +10,32 @@ export interface SalesFilters {
   dateFrom?: string;
   dateTo?: string;
   customerCode?: string;
+  search?: string;
+  status?: string;
   paymentMethod?: string;
+  soldByEmployeeId?: string;
+  deliveryEmployeeId?: string;
   minAmount?: number;
   maxAmount?: number;
+}
+
+export interface PagedResult<T> {
+  rows: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface SalesPageOptions {
+  branchId?: string;
+  orgId?: string;
+  page?: number;
+  pageSize?: number;
+  filters?: SalesFilters;
+  sort?: {
+    column?: string;
+    ascending?: boolean;
+  };
 }
 
 export interface SalesStats {
@@ -25,6 +48,8 @@ export interface SalesStats {
 
 export interface SalesService {
   getAll(branchId?: string): Promise<Sale[]>;
+  getRecent(branchId?: string, limit?: number): Promise<Sale[]>;
+  listPage(options: SalesPageOptions): Promise<PagedResult<Sale>>;
   getById(id: string, branchId?: string): Promise<Sale | null>;
   getByCustomer(customerId: string, branchId?: string): Promise<Sale[]>;
   getByDateRange(from: string, to: string, branchId?: string): Promise<Sale[]>;

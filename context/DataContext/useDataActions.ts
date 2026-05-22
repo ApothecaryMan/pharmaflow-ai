@@ -99,7 +99,7 @@ export const useDataActions = ({
 
       const [inv, sal, sup, pur, pRet, ret, cust, emp, bat, allBranches, activeOrgData] = await Promise.all([
         inventoryService.getAll(branchId),
-        salesService.getAll(branchId),
+        salesService.getRecent(branchId, 100),
         supplierService.getAll(branchId),
         purchaseService.getAll(branchId),
         returnService.getAllPurchaseReturns(branchId),

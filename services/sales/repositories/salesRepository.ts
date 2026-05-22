@@ -1,7 +1,38 @@
 import { supabase } from '../../../lib/supabase';
 import type { Sale } from '../../../types';
 import { money } from '../../../utils/money';
-import type { SalesFilters } from '../types';
+import type { PagedResult, SalesFilters, SalesPageOptions } from '../types';
+
+const SALE_LIST_COLUMNS = [
+  'id',
+  'serial_id',
+  'org_id',
+  'branch_id',
+  'date',
+  'updated_at',
+  'customer_code',
+  'customer_name',
+  'customer_phone',
+  'customer_address',
+  'customer_street_address',
+  'subtotal',
+  'global_discount',
+  'tax',
+  'total',
+  'payment_method',
+  'status',
+  'sold_by_employee_id',
+  'shift_id',
+  'sale_type',
+  'delivery_fee',
+  'delivery_employee_id',
+  'processing_time_min',
+  'shift_transaction_recorded',
+  'version',
+  'net_total',
+  'item_returned_quantities',
+  'daily_order_number',
+].join(',');
 
 export const salesRepository = {
   tableName: 'sales',
@@ -91,6 +122,85 @@ export const salesRepository = {
     const { data, error } = await query.order('date', { ascending: false });
     if (error) throw error;
     return (data || []).map(item => this.mapFromDb(item));
+  },
+
+  async getRecent(effectiveBranchId: string, orgId?: string, limit = 100): Promise<Sale[]> {
+    let query = supabase.from(this.tableName).select(SALE_LIST_COLUMNS);
+    const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+
+    if (effectiveBranchId && !isAll) {
+      query = query.eq('branch_id', effectiveBranchId);
+    } else if (isAll && orgId) {
+      query = query.eq('org_id', orgId);
+    }
+
+    const { data, error } = await query
+      .order('date', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return (data || []).map(item => this.mapFromDb(item));
+  },
+
+  async listPage(options: SalesPageOptions): Promise<PagedResult<Sale>> {
+    const page = Math.max(1, options.page || 1);
+    const pageSize = Math.min(Math.max(1, options.pageSize || 50), 200);
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    const filters = options.filters || {};
+    const effectiveBranchId = options.branchId || '';
+    const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+
+    let query = supabase
+      .from(this.tableName)
+      .select(SALE_LIST_COLUMNS, { count: 'exact' });
+
+    if (effectiveBranchId && !isAll) {
+      query = query.eq('branch_id', effectiveBranchId);
+    } else if (isAll && options.orgId) {
+      query = query.eq('org_id', options.orgId);
+    }
+
+    if (filters.dateFrom) query = query.gte('date', filters.dateFrom);
+    if (filters.dateTo) query = query.lte('date', filters.dateTo);
+    if (filters.customerCode) query = query.eq('customer_code', filters.customerCode);
+    if (filters.paymentMethod) query = query.eq('payment_method', filters.paymentMethod);
+    if (filters.soldByEmployeeId) query = query.eq('sold_by_employee_id', filters.soldByEmployeeId);
+    if (filters.deliveryEmployeeId) query = query.eq('delivery_employee_id', filters.deliveryEmployeeId);
+    if (filters.status && filters.status !== 'returned') query = query.eq('status', filters.status);
+    if (filters.minAmount !== undefined) query = query.gte('total', filters.minAmount);
+    if (filters.maxAmount !== undefined) query = query.lte('total', filters.maxAmount);
+    if (filters.search?.trim()) {
+      const term = filters.search.trim().replace(/[%_,]/g, '');
+      query = query.or([
+        `id.ilike.%${term}%`,
+        `customer_name.ilike.%${term}%`,
+        `customer_code.ilike.%${term}%`,
+        `customer_phone.ilike.%${term}%`,
+      ].join(','));
+    }
+
+    const sortColumn = options.sort?.column || 'date';
+    const ascending = options.sort?.ascending ?? false;
+    const { data, error, count } = await query
+      .order(sortColumn, { ascending })
+      .range(from, to);
+
+    if (error) throw error;
+
+    let rows = (data || []).map(item => this.mapFromDb(item));
+    if (filters.status === 'returned') {
+      rows = rows.filter((sale) => {
+        const returnedQuantities = sale.itemReturnedQuantities || {};
+        return (sale.netTotal !== undefined && sale.netTotal < sale.total) || Object.keys(returnedQuantities).length > 0;
+      });
+    }
+
+    return {
+      rows,
+      total: count || 0,
+      page,
+      pageSize,
+    };
   },
 
   async getById(id: string): Promise<Sale | null> {

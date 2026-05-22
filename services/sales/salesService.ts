@@ -9,7 +9,7 @@ import type { Sale } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { settingsService } from '../settings/settingsService';
 import { salesRepository } from './repositories/salesRepository';
-import type { SalesFilters, SalesService, SalesStats } from './types';
+import type { PagedResult, SalesFilters, SalesPageOptions, SalesService, SalesStats } from './types';
 
 class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
   protected tableName = 'sales';
@@ -26,6 +26,21 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     return salesRepository.getAll(effectiveBranchId, settings.orgId);
+  }
+
+  async getRecent(branchId?: string, limit = 100): Promise<Sale[]> {
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    return salesRepository.getRecent(effectiveBranchId, settings.orgId, limit);
+  }
+
+  async listPage(options: SalesPageOptions): Promise<PagedResult<Sale>> {
+    const settings = await settingsService.getAll();
+    return salesRepository.listPage({
+      ...options,
+      branchId: options.branchId || settings.activeBranchId || settings.branchCode,
+      orgId: options.orgId || settings.orgId,
+    });
   }
 
   async getById(id: string): Promise<Sale | null> {

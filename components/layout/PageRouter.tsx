@@ -1,11 +1,10 @@
 import React from 'react';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
-import { ROUTES } from '../../config/routes';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { useSettings } from '../../context';
 import { LandingPage } from '../layout/LandingPage';
 import { PendingBranchAssignment } from './PendingBranchAssignment';
-import { type ViewState } from '../../types';
+import type { ViewState } from '../../types';
 import { batchService } from '../../services/inventory/batchService';
 import { InventoryModuleShell } from '../inventory/InventoryModuleShell';
 
@@ -131,6 +130,8 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     darkMode: darkMode,
     employees: data.employees,
     isLoading: isLoading,
+    activeBranchId: data.activeBranchId,
+    activeOrgId: data.activeOrgId,
   };
 
   // 2. Define Data & Handler Mappings

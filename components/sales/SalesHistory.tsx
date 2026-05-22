@@ -1,29 +1,18 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useSettings } from '../../context';
-import { type UserRole } from '../../config/permissions';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
 import type { Customer, Employee, Return, Sale, Shift } from '../../types';
-import { getDisplayName } from '../../utils/drugDisplayName';
 import { POSCustomerHistoryModal } from './pos/ui/POSCustomerHistoryModal';
-import { createSearchRegex } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
-import { DatePicker, DateRangePicker } from '../common/DatePicker';
+import { DateRangePicker } from '../common/DatePicker';
 import { HelpButton, HelpModal } from '../common/HelpModal';
-import { MaterialTabs } from '../common/MaterialTabs';
-import { Modal } from '../common/Modal';
-import { SearchInput } from '../common/SearchInput';
 import { TanStackTable } from '../common/TanStackTable';
-import { ReturnModal } from '../sales/ReturnModal';
-import {
-  getActiveReceiptSettings,
-  type InvoiceTemplateOptions,
-  printInvoice,
-} from './InvoiceTemplate';
 import { SaleDetailModal } from './SaleDetailModal';
 import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { money } from '../../utils/money';
+import { salesService } from '../../services/sales';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -39,6 +28,8 @@ interface SalesHistoryProps {
   customers: Customer[];
   employees: Employee[];
   isLoading?: boolean;
+  activeBranchId?: string;
+  activeOrgId?: string;
 }
 
 export const SalesHistory: React.FC<SalesHistoryProps> = ({
@@ -48,27 +39,38 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   color,
   t,
   language,
-  datePickerTranslations,
+  datePickerTranslations: _datePickerTranslations,
   currentEmployeeId,
   currentShift,
-  // @ts-ignore
   navigationParams,
   customers = [],
   employees = [],
   isLoading = false,
+  activeBranchId,
+  activeOrgId,
 }) => {
   // Determine locale based on language
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
   const [searchTerm, setSearchTerm] = useState('');
-  const [startDate, setStartDate] = useState('');
+  const [startDate, setStartDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return date.toISOString().slice(0, 10);
+  });
   const [endDate, setEndDate] = useState('');
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [selectedCust, setSelectedCust] = useState<Customer | null>(null);
   const [isHistOpen, setIsHistOpen] = useState(false);
   const [pendingIds, setPendingIds] = useState<Set<string | number>>(new Set());
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
+  const [page, setPage] = useState(1);
+  const [pagedSales, setPagedSales] = useState<Sale[]>(sales || []);
+  const [totalSales, setTotalSales] = useState(sales?.length || 0);
+  const [isPageLoading, setIsPageLoading] = useState(false);
   const { textTransform } = useSettings();
+  const pageSize = 50;
 
   // Calculate daily refunds for the current employee (used for pharmacist limits)
   const currentDailyRefunds = React.useMemo(() => {
@@ -90,13 +92,13 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     if (navigationParams?.id) {
       const saleId = navigationParams.id;
       setSearchTerm(saleId);
-      // Wait for next tick to ensure search term is applied if needed, but here we scan the array directly
-      const sale = sales.find(s => s.id === saleId);
-      if (sale) {
-        setSelectedSale(sale);
-      }
+      salesService.getById(saleId).then((sale) => {
+        if (sale) setSelectedSale(sale);
+      }).catch((error) => {
+        console.error('[SalesHistory] Failed to load linked sale:', error);
+      });
     }
-  }, [navigationParams, sales]);
+  }, [navigationParams]);
 
   // Get help content
   const helpContent = SALES_HISTORY_HELP[language as 'EN' | 'AR'] || SALES_HISTORY_HELP.EN;
@@ -134,8 +136,9 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           const customer = customers.find(c => c.code === code);
           const isClickable = !!customer;
 
-          return (
-            <span
+          return isClickable ? (
+            <button
+              type='button'
               onClick={(e) => {
                 if (isClickable) {
                   e.stopPropagation();
@@ -143,11 +146,12 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
                   setIsHistOpen(true);
                 }
               }}
-              className={`font-mono font-bold text-sm ${isClickable
-                ? 'text-gray-900 dark:text-gray-100 cursor-pointer hover:opacity-70 transition-opacity'
-                : 'text-gray-400'
-                }`}
+              className='font-mono font-bold text-sm text-gray-900 dark:text-gray-100 cursor-pointer hover:opacity-70 transition-opacity bg-transparent p-0'
             >
+              {code || '-'}
+            </button>
+          ) : (
+            <span className='font-mono font-bold text-sm text-gray-400'>
               {code || '-'}
             </span>
           );
@@ -287,7 +291,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
               icon = 'local_shipping';
             }
 
-            const statusText = t[sale.status!] || sale.status;
+            const statusText = sale.status ? (t[sale.status] || sale.status) : '';
 
             return (
               <span className={`${badgeClass} gap-1.5`} dir={language === 'AR' ? 'rtl' : 'ltr'}>
@@ -324,7 +328,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         },
       },
     ],
-    [t, textTransform, customers, employees, language]
+    [t, customers, employees, language]
   );
 
   const filterableColumns = React.useMemo(
@@ -368,35 +372,91 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     [t, employees]
   );
 
-  const filteredSales = React.useMemo(() => {
-    return sales.filter((sale) => {
-      // 1. Date Filtering (Manual because TanStackTable doesn't have a built-in range filter UI yet)
-      const saleDate = new Date(sale.date);
-      const start = startDate ? new Date(startDate) : null;
-      const end = endDate ? new Date(endDate) : null;
+  const serverFilters = React.useMemo(() => {
+    const status = activeFilters.status?.[0];
+    const paymentMethod = activeFilters.paymentMethod?.[0];
+    const soldByEmployeeId = activeFilters.soldByEmployeeId?.[0];
+    return {
+      dateFrom: startDate ? `${startDate}T00:00:00` : undefined,
+      dateTo: endDate ? `${endDate}T23:59:59` : undefined,
+      search: searchTerm || undefined,
+      status,
+      paymentMethod,
+      soldByEmployeeId,
+      deliveryEmployeeId:
+        !permissionsService.isOrgAdmin() && permissionsService.can('sale.view_assigned_only')
+          ? currentEmployeeId
+          : undefined,
+    };
+  }, [activeFilters, startDate, endDate, searchTerm, currentEmployeeId]);
 
-      if (start) {
-        start.setHours(0, 0, 0, 0);
-        if (saleDate < start) return false;
-      }
-      if (end) {
-        end.setHours(23, 59, 59, 999);
-        if (saleDate > end) return false;
-      }
+  React.useEffect(() => {
+    let isCancelled = false;
+    setIsPageLoading(true);
 
-      // 2. Role Restrictions
-      if (!permissionsService.isOrgAdmin() && permissionsService.can('sale.view_assigned_only')) {
-        return sale.deliveryEmployeeId === currentEmployeeId;
-      }
-
-      return true;
+    salesService.listPage({
+      branchId: activeBranchId,
+      orgId: activeOrgId,
+      page,
+      pageSize,
+      filters: serverFilters,
+      sort: { column: 'date', ascending: false },
+    }).then((result) => {
+      if (isCancelled) return;
+      setPagedSales(result.rows);
+      setTotalSales(result.total);
+    }).catch((error) => {
+      if (isCancelled) return;
+      console.error('[SalesHistory] Failed to load sales page:', error);
+      setPagedSales([]);
+      setTotalSales(0);
+    }).finally(() => {
+      if (!isCancelled) setIsPageLoading(false);
     });
-  }, [sales, startDate, endDate, currentEmployeeId]);
 
-  const totalRevenue = filteredSales.reduce((sum, sale) => money.add(sum, sale.total), 0);
+    return () => {
+      isCancelled = true;
+    };
+  }, [activeBranchId, activeOrgId, page, serverFilters]);
+
+  const totalRevenue = pagedSales.reduce((sum, sale) => money.add(sum, sale.total), 0);
+  const totalPages = Math.max(1, Math.ceil(totalSales / pageSize));
+
+  const handleSearchChange = React.useCallback((value: string) => {
+    setSearchTerm(value);
+    setPage(1);
+  }, []);
+
+  const handleStartDateChange = React.useCallback((value: string) => {
+    setStartDate(value);
+    setPage(1);
+  }, []);
+
+  const handleEndDateChange = React.useCallback((value: string) => {
+    setEndDate(value);
+    setPage(1);
+  }, []);
+
+  const handleFilterChange = React.useCallback((filters: Record<string, any[]>) => {
+    setActiveFilters(filters);
+    setPage(1);
+  }, []);
+
+  const handleSelectSale = async (sale: Sale) => {
+    setIsDetailLoading(true);
+    try {
+      const fullSale = await salesService.getById(sale.id);
+      setSelectedSale(fullSale || sale);
+    } catch (error) {
+      console.error('[SalesHistory] Failed to load sale details:', error);
+      setSelectedSale(sale);
+    } finally {
+      setIsDetailLoading(false);
+    }
+  };
 
   const exportToCSV = () => {
-    if (filteredSales.length === 0) return;
+    if (pagedSales.length === 0) return;
 
     const headers = [
       'ID',
@@ -409,10 +469,10 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
       'Global Discount (%)',
       'Total',
     ];
-    const escape = (str: string | number | undefined) =>
+    const escapeCsv = (str: string | number | undefined) =>
       `"${String(str || '').replace(/"/g, '""')}"`;
 
-    const rows = filteredSales.map((sale) => [
+    const rows = pagedSales.map((sale) => [
       sale.id,
       new Date(sale.date).toLocaleString(locale, { numberingSystem: 'latn' }),
       sale.customerName || 'Guest',
@@ -425,8 +485,8 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     ]);
 
     const csvContent = [
-      headers.map(escape).join(','),
-      ...rows.map((row) => row.map(escape).join(',')),
+      headers.map(escapeCsv).join(','),
+      ...rows.map((row) => row.map(escapeCsv).join(',')),
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -438,15 +498,6 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  const handlePrint = (sale: Sale) => {
-    const activeSettings = getActiveReceiptSettings(sale.branchId);
-    const options: InvoiceTemplateOptions = {
-      ...activeSettings,
-      language: language as 'EN' | 'AR',
-    };
-    printInvoice(sale, options);
   };
 
   // Wrap onProcessReturn to track pending state for the "real" duration
@@ -478,7 +529,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
-  const showLoading = isLoading || isMounting;
+  const showLoading = isLoading || isMounting || isPageLoading || isDetailLoading;
 
   return (
     <div className='h-full flex flex-col space-y-4 animate-fade-in' dir={language === 'AR' ? 'rtl' : 'ltr'}>
@@ -502,6 +553,9 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             <span className={`text-xl font-bold text-primary-900 dark:text-primary-100`}>
               {formatCurrency(totalRevenue)}
             </span>
+            <span className='text-[10px] text-primary-600/70 dark:text-primary-400/70 font-semibold'>
+              {language === 'AR' ? 'الصفحة الحالية' : 'current page'}
+            </span>
           </div>
         )}
       </div>
@@ -510,7 +564,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
       {/* Table Section */}
       <div className={`flex-1 flex flex-col min-h-0 transition-opacity${isMounting ? 'opacity-50' : 'opacity-100'}`}>
         <TanStackTable
-          data={filteredSales}
+          data={pagedSales}
           columns={tableColumns}
           tableId='sales_history_table'
           color={color}
@@ -519,39 +573,64 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           enableSearch={true}
           searchPlaceholder={t.searchPlaceholder || 'Search sales…'}
           globalFilter={searchTerm}
-          onSearchChange={setSearchTerm}
+          onSearchChange={handleSearchChange}
           filterableColumns={filterableColumns}
           initialFilters={activeFilters}
-          onFilterChange={setActiveFilters}
-          onRowClick={(sale) => setSelectedSale(sale)}
+          onFilterChange={handleFilterChange}
+          manualFiltering={true}
+          onRowClick={handleSelectSale}
           emptyMessage={t.noResults}
           lite={false}
           dense={true}
           initialSorting={[{ id: 'date', desc: true }]}
           enablePagination={true}
           enableVirtualization={true}
-          pageSize='auto'
-          enableShowAll={true}
+          pageSize={pageSize}
+          enableShowAll={false}
           pendingRowIds={pendingIds}
           rightCustomControls={
             <>
               <DateRangePicker
                 startDate={startDate}
                 endDate={endDate}
-                onStartDateChange={setStartDate}
-                onEndDateChange={setEndDate}
+                onStartDateChange={handleStartDateChange}
+                onEndDateChange={handleEndDateChange}
                 color={color}
                 locale={locale}
               />
 
               <button
+                type='button'
                 onClick={exportToCSV}
-                disabled={filteredSales.length === 0}
+                disabled={pagedSales.length === 0}
                 className='h-9 px-3 rounded-full bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-xs font-semibold disabled:opacity-50 text-gray-700 dark:text-gray-200'
               >
                 <span className='material-symbols-rounded text-lg'>download</span>
                 <span className='hidden lg:inline'>{t.exportCSV}</span>
               </button>
+              <div className='h-9 rounded-full border border-(--border-divider) bg-white dark:bg-gray-900 flex items-center overflow-hidden'>
+                <button
+                  type='button'
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1 || isPageLoading}
+                  className='h-full w-9 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  title={language === 'AR' ? 'السابق' : 'Previous'}
+                >
+                  <span className='material-symbols-rounded text-lg'>chevron_left</span>
+                </button>
+                <span className='px-2 text-xs font-bold tabular-nums text-gray-600 dark:text-gray-300'>
+                  {page} / {totalPages}
+                </span>
+                <button
+                  type='button'
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages || isPageLoading}
+                  className='h-full w-9 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  title={language === 'AR' ? 'التالي' : 'Next'}
+                >
+                  <span className='material-symbols-rounded text-lg'>chevron_right</span>
+                </button>
+              </div>
             </>
           }
         />
