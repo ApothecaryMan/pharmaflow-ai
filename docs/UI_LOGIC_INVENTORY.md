@@ -10,7 +10,6 @@
 | 8 | components/common/CompactProgressCard.tsx | CompactProgressCard | ? SKIP | Pure UI primitive/barrel (parents: components/experiments/AdvancedSmCard.tsx) | - |
 | 9 | components/common/ContextMenu.tsx | useContextMenu | ? SKIP | Effect orchestration (parents: components/common/SearchInput.tsx, components/common/FilterPill.tsx, components/common/TanStackTable.tsx, components/customers/CustomerManagement.tsx, components/inventory/BarcodePrinter.tsx, ...) | - |
 | 10 | components/common/DatePicker.tsx | DatePicker | ?? HIGH | Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation (parents: components/inventory/StockAdjustment.tsx, components/purchases/Purchases.tsx, components/sales/ReturnHistory.tsx, components/sales/SalesHistory.tsx, components/sales/ShiftHistory.tsx, ...) | domain.service.ts / useDatePicker.ts |
-| 11 | components/common/ErrorBoundary.tsx | ErrorBoundary | ?? HIGH | Validation/permission rules (parents: components/hr/StaffOverview.tsx) | domain.service.ts / useErrorBoundary.ts |
 | 12 | components/common/ExpandedModal.tsx | ExpandedModal | ? SKIP | Pure UI primitive/barrel (parents: components/customers/CustomerOverview.tsx, components/dashboard/Dashboard.tsx, components/dashboard/RealTimeSalesMonitor.tsx) | - |
 | 13 | components/common/FilterDropdown.tsx | FilterDropdown | ? SKIP | Effect orchestration; Derived data/transformation; Validation/permission rules (parents: components/customers/CustomerManagement.tsx, components/common/LocationSelector.tsx, components/hr/EmployeeList.tsx, components/hr/EmployeeProfile.tsx, components/inventory/BarcodeStudio.tsx, ...) | - |
 | 14 | components/common/FilterPill.tsx | FilterPill | ? SKIP | Derived data/transformation (parents: components/common/SearchInput.tsx, components/common/TanStackTable.tsx, components/hr/EmployeeList.tsx, components/inventory/Inventory.tsx, components/purchases/Purchases.tsx, ...) | - |
@@ -161,7 +160,6 @@
 3. ?? HIGH components/auth/Login.tsx ? Effect orchestration; Validation/permission rules.
 4. ?? HIGH components/auth/SignUp.tsx ? Validation/permission rules.
 5. ?? HIGH components/common/DatePicker.tsx ? Direct Supabase/query logic; Complex local state; Effect orchestration; Derived data/transformation.
-6. ?? HIGH components/common/ErrorBoundary.tsx ? Validation/permission rules.
 7. ?? HIGH components/common/SecureGate.tsx ? Storage side effects; Complex local state; Effect orchestration; Validation/permission rules.
 8. ?? HIGH components/common/SmartInputs.tsx ? Complex local state; Effect orchestration; Derived data/transformation; Validation/permission rules.
 9. ?? HIGH components/common/TanStackTable.tsx ? Storage side effects; Complex local state; Effect orchestration; Derived data/transformation.

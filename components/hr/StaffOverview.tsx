@@ -1,7 +1,6 @@
 import type React from 'react';
 import { useCallback, useMemo } from 'react';
 import { CARD_BASE } from '../../utils/themeStyles';
-import { ErrorBoundary } from '../common/ErrorBoundary';
 import { TanStackTable } from '../common/TanStackTable';
 import { useStaffAnalytics } from './hooks/useStaffAnalytics';
 import { StaffSpotlightTicker } from './StaffSpotlightTicker';
@@ -128,7 +127,5 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
 };
 
 export const StaffOverview: React.FC<StaffOverviewProps> = (props) => (
-  <ErrorBoundary>
-    <StaffOverviewContent {...props} />
-  </ErrorBoundary>
+  <StaffOverviewContent {...props} />
 );

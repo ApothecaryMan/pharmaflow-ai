@@ -185,11 +185,10 @@
 ---
 
 ## Task 11: Verify Error Boundary Coverage
-**File**: `App.tsx`, `components/common/ErrorBoundary.tsx`
+**File**: `App.tsx`
 **Estimate**: 20 min
 **Depends on**: Nothing
 
-- [ ] Verify `ErrorBoundary` wraps every top-level page component in `App.tsx`
 - [ ] Test: throw an error in Dashboard component → verify fallback UI shown
 - [ ] Test: throw an error in POS component → verify fallback UI shown
 - [ ] Verify "Try Again" button resets the error state correctly

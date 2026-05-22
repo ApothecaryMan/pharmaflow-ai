@@ -131,7 +131,6 @@ Found issues in 30 categories.
 - `components\common\ChartWidget.tsx`
 - `components\common\ContextMenu.tsx`
 - `components\common\DatePicker.tsx`
-- `components\common\ErrorBoundary.tsx`
 - `components\common\HelpModal.tsx`
 - `components\common\Modal.tsx`
 - `components\common\ScreenCalibration.tsx`
@@ -356,7 +355,6 @@ Found issues in 30 categories.
 - `App.tsx`
 - `components\common\AnimatedCounter.tsx`
 - `components\common\DataTable.tsx`
-- `components\common\ErrorBoundary.tsx`
 - `components\common\TanStackTable.tsx`
 - `components\common\hooks\usePosSounds.ts`
 - `components\customers\CustomerLoyaltyLookup.tsx`

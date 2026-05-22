@@ -43,7 +43,6 @@ PharmaFlow **fast, responsive, and production-ready**. The work is split into th
 
 | Area | Action |
 |------|--------|
-| Error boundaries | Verify `ErrorBoundary` wraps all route-level components |
 | Offline detection | `useNetworkStatus` should show a banner when offline |
 | Supabase fallback | All services must gracefully degrade to local storage when Supabase is unreachable |
 | Build config | Verify `vite.config.ts` has proper chunk splitting, minification, and source maps |

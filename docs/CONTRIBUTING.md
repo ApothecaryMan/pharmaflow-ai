@@ -531,7 +531,6 @@ When logging dynamic events (e.g., "Switched from Employee A"), **do not log tra
 
 **RULE:** Fail predictably. Catch early.
 
-- **Boundary Protection**: Use React `<ErrorBoundary>` wrappers around critical modules (e.g., the POS grid) so a single bug doesn't crash the entire app shell.
 - **Zod Validations**: Input data MUST be schema-validated using Zod at the boundary (before calling services or syncing) to guarantee type safety at runtime.
 - **User-Friendly Errors**: Raw exception text (e.g., `TypeError: Failed to fetch`) should never reach the UI. Catch at the service boundary and convert to a `TRANSLATIONS` warning toast via `AlertContext`.
 
@@ -541,7 +540,6 @@ When logging dynamic events (e.g., "Switched from Employee A"), **do not log tra
 
 1.  **Create Component**: Build your page in `components/[module]/MyPage.tsx`.
     - Ensure it uses `useData()` from `DataContext` for global state and `useEntityHandlers()` for domain logic.
-    - Wrap the page export in an `<ErrorBoundary>` if it controls critical workflows.
 2.  **Add Skeleton**: Create a loading state in `components/skeletons/` and map it in `PageSkeletonRegistry.tsx`.
 3.  **Define Permissions**: If the page is restricted, define the new permission in `config/permissions.ts`.
 4.  **Register Page**: Add it to `config/pageRegistry.ts`.
@@ -572,7 +570,6 @@ Before submitting code, ensure:
   - Using `FilterDropdown` and `TanStackTable`?
 - [ ] **Translations**: 100% coverage (EN + AR)? No dynamic string concatenation for text?
 - [ ] **RBAC**: Sensitive UI buttons explicitly use `canPerformAction`?
-- [ ] **Error Handling**: Wrapped in `<ErrorBoundary>`? Errors logged and translated via `AlertContext` instead of crashing the view?
 
 ---
 

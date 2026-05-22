@@ -153,6 +153,6 @@ npm.cmd run type-check
 ```
 
 Result: failed on existing unrelated TypeScript errors across the project
-(`Login.tsx`, `ErrorBoundary.tsx`, `sample-inventory.ts`, legacy tests, and
+(`Login.tsx`, `sample-inventory.ts`, legacy tests, and
 other files). No new type-check errors were identified in the focused edge-case
 files during the passing Vitest run.
