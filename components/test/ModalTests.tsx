@@ -4,6 +4,7 @@ import { Modal, BUTTON_CLOSE_BASE } from '../common/Modal';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { SmartInput, SmartPhoneInput, SmartEmailInput } from '../common/SmartInputs';
 import { INPUT_BASE, BUTTON_BASE, GLASS_CARD_BASE } from '../../utils/themeStyles';
+import { BANNER_STYLES, renderBanner } from '../../utils/banners';
 
 interface ModalTestsProps {
   color: string;
@@ -387,7 +388,7 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
   const [isOpen, setIsOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState<ModalConfig>({});
   const [activePage, setActivePage] = useState('page1');
-  const [bannerStyle, setBannerStyle] = useState<'pharma' | 'synthwave' | 'abstract' | 'cyberhex'>('pharma');
+  const [bannerStyle, setBannerStyle] = useState<string>('pharma');
   const [userStatus, setUserStatus] = useState<'online' | 'idle' | 'dnd' | 'offline'>('online');
   const [customBio, setCustomBio] = useState('');
 
@@ -414,7 +415,7 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
 
   // Edit form states
   const [editForm, setEditForm] = useState<ProfileData>({ ...profileData });
-  const [editBannerStyle, setEditBannerStyle] = useState(bannerStyle);
+  const [editBannerStyle, setEditBannerStyle] = useState<string>(bannerStyle);
   const [editUserStatus, setEditUserStatus] = useState(userStatus);
   const [editCustomBio, setEditCustomBio] = useState(customBio);
   const [editTab, setEditTab] = useState('appearance');
@@ -751,46 +752,7 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
               <div className='animate-fade-in'>
                 {/* Banner Graphics */}
                 <div className='relative w-full h-36 bg-(--bg-secondary) overflow-hidden'>
-                  {bannerStyle === 'pharma' && (
-                    <div className='absolute inset-0 w-full h-full animate-fade-in' style={{ background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 40%, #1e3a8a 100%)' }}>
-                      <svg className='absolute end-4 bottom-2 opacity-20 w-32 h-32 text-teal-300' viewBox='0 0 100 100' fill='currentColor'>
-                        <circle cx='20' cy='30' r='4' />
-                        <circle cx='50' cy='20' r='5' />
-                        <circle cx='80' cy='40' r='4' />
-                        <circle cx='50' cy='60' r='6' />
-                        <circle cx='20' cy='80' r='5' />
-                        <line x1='20' y1='30' x2='50' y2='20' stroke='currentColor' strokeWidth='1' />
-                        <line x1='50' y1='20' x2='80' y2='40' stroke='currentColor' strokeWidth='1' />
-                        <line x1='80' y1='40' x2='50' y2='60' stroke='currentColor' strokeWidth='1' />
-                        <line x1='50' y1='60' x2='20' y2='80' stroke='currentColor' strokeWidth='1' />
-                        <line x1='20' y1='80' x2='20' y2='30' stroke='currentColor' strokeWidth='1' />
-                        <line x1='50' y1='20' x2='50' y2='60' stroke='currentColor' strokeWidth='1' />
-                      </svg>
-                      <div className='absolute inset-0 bg-gradient-to-t from-black/40 to-transparent' />
-                    </div>
-                  )}
-                  {bannerStyle === 'synthwave' && (
-                    <div className='absolute inset-0 w-full h-full animate-fade-in' style={{ background: 'linear-gradient(180deg, #1f1035 0%, #0b0518 100%)' }}>
-                      <div className='absolute bottom-0 left-1/2 -translate-x-1/2 w-28 h-28 rounded-full bg-gradient-to-t from-pink-500 to-amber-400 opacity-50 filter blur-[2px]' />
-                      <div className='absolute inset-0 bg-[linear-gradient(to_right,#e11d4812_1px,transparent_1px),linear-gradient(to_bottom,#e11d4812_1px,transparent_1px)] bg-[size:14px_14px] opacity-40' />
-                      <div className='absolute inset-0 bg-gradient-to-t from-pink-500/10 to-transparent' />
-                    </div>
-                  )}
-                  {bannerStyle === 'abstract' && (
-                    <div className='absolute inset-0 w-full h-full animate-fade-in' style={{ background: 'linear-gradient(135deg, #f43f5e 0%, #8b5cf6 50%, #3b82f6 100%)' }}>
-                      <div className='absolute -top-8 -left-8 w-28 h-28 rounded-full bg-amber-400/30 filter blur-xl animate-pulse' />
-                      <div className='absolute -bottom-8 right-8 w-32 h-32 rounded-full bg-cyan-400/30 filter blur-xl animate-pulse' />
-                      <div className='absolute inset-0 bg-black/10' />
-                    </div>
-                  )}
-                  {bannerStyle === 'cyberhex' && (
-                    <div className='absolute inset-0 w-full h-full animate-fade-in' style={{ background: 'linear-gradient(135deg, #090d16 0%, #111827 100%)' }}>
-                      <div className='absolute inset-0 opacity-15 bg-[radial-gradient(#10b981_1px,transparent_1px)] bg-[size:10px_10px]' />
-                      <div className='absolute top-3 end-3 w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981] animate-ping' />
-                      <div className='absolute top-3 end-3 w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]' />
-                      <div className='absolute bottom-3 start-3 w-20 h-0.5 bg-gradient-to-r from-emerald-500 to-transparent opacity-60' />
-                    </div>
-                  )}
+                  {renderBanner(bannerStyle)}
                 </div>
 
                 {/* Profile Avatar Overlapping & Content Container */}
@@ -1097,23 +1059,21 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
                       {LOCAL_TRANSLATIONS[language].graphicsBanner}
                     </label>
                     <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
-                      {[
-                        { id: 'pharma', name: language === 'AR' ? 'صيدلي' : 'Pharma', class: 'bg-gradient-to-r from-teal-500 to-blue-600' },
-                        { id: 'synthwave', name: language === 'AR' ? 'مستقبلي' : 'Synth', class: 'bg-gradient-to-r from-indigo-900 to-purple-800' },
-                        { id: 'abstract', name: language === 'AR' ? 'أمواج' : 'Waves', class: 'bg-gradient-to-r from-rose-500 to-violet-600' },
-                        { id: 'cyberhex', name: language === 'AR' ? 'سيبر' : 'Cyber', class: 'bg-gradient-to-r from-zinc-800 to-zinc-900' },
-                      ].map((ban) => (
+                      {BANNER_STYLES.map((ban) => (
                         <button
                           key={ban.id}
                           type='button'
-                          onClick={() => setEditBannerStyle(ban.id as any)}
+                          onClick={() => setEditBannerStyle(ban.id)}
                           className={`h-12 rounded-xl overflow-hidden relative border transition-all ${editBannerStyle === ban.id
                             ? 'ring-2 ring-primary-500 border-transparent scale-102 shadow-md'
                             : 'border-(--border-divider) hover:scale-102 hover:shadow-xs'
                             }`}
                         >
-                          <div className={`w-full h-full ${ban.class} flex items-center justify-center text-[11px] font-bold text-white shadow-inner`}>
-                            {ban.name}
+                          {/* Live mini-preview inside the button */}
+                          {ban.render()}
+                          {/* Title overlay */}
+                          <div className='absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/20 transition-colors text-[11px] font-bold text-white shadow-inner'>
+                            {language === 'AR' ? ban.nameAR : ban.nameEN}
                           </div>
                         </button>
                       ))}
