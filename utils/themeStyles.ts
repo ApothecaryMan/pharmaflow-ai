@@ -36,3 +36,7 @@ export const ICON_BUTTON_FLAT_ACTIVE = `${ICON_BUTTON_BASE} bg-gray-900 border-g
 
 // Shorthand for easier usage: ICON_BTN(showAll)
 export const ICON_BTN = (active?: boolean) => active ? ICON_BUTTON_FLAT_ACTIVE : ICON_BUTTON_FLAT;
+
+// Semi-interactive card for onPage only
+export const GLASS_CARD_BASE = 'p-2.5 rounded-xl bg-(--bg-secondary)/40 border border-(--border-divider)/50 hover:bg-(--bg-hover)';
+

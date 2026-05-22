@@ -216,27 +216,31 @@ export const Modal: React.FC<ModalProps> = ({
         style={{ height: height || 'auto' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {title ? (
+        {title || tabs || headerActions ? (
           <div className='h-full flex flex-col overflow-hidden'>
             {/* Header - Windows 10 Style (Compact & Functional) */}
             <div className='shrink-0 border-b border-(--border-divider)/50 bg-(--bg-card) px-4 h-11 flex items-center relative'>
               {/* Title Section: Icon + Title */}
-              <div className='flex items-center gap-2 min-w-0 pe-12'>
-                {icon ? (
-                  <span 
-                    className='material-symbols-rounded text-(--text-tertiary)' 
-                    style={{ 
-                      fontSize: 'var(--icon-lg)',
-                      fontVariationSettings: "'FILL' 0, 'wght' 400"
-                    }}
-                  >
-                    {icon}
-                  </span>
-                ) : null}
-                <h2 className='text-sm font-semibold text-(--text-primary) tracking-tight truncate py-1'>
-                  {title}
-                </h2>
-              </div>
+              {title || icon ? (
+                <div className='flex items-center gap-2 min-w-0 pe-12'>
+                  {icon ? (
+                    <span 
+                      className='material-symbols-rounded text-(--text-tertiary)' 
+                      style={{ 
+                        fontSize: 'var(--icon-lg)',
+                        fontVariationSettings: "'FILL' 0, 'wght' 400"
+                      }}
+                    >
+                      {icon}
+                    </span>
+                  ) : null}
+                  {title ? (
+                    <h2 className='text-sm font-semibold text-(--text-primary) tracking-tight truncate py-1'>
+                      {title}
+                    </h2>
+                  ) : null}
+                </div>
+              ) : null}
 
               {/* Tabs Section - Strictly Centered */}
               {tabs && activeTab && onTabChange ? (
