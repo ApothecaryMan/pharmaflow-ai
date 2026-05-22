@@ -17,7 +17,7 @@ interface ModalConfig {
   icon?: string;
   closeOnBackdropClick?: boolean;
   headerActions?: React.ReactNode;
-  testType?: 'standard' | 'multipage';
+  testType?: 'standard' | 'multipage' | 'profile-card';
 }
 
 export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) => {
@@ -29,7 +29,7 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
     setModalConfig(config);
     setIsOpen(true);
     // Reset page on open if it is a multipage modal
-    if (config.testType === 'multipage') {
+    if (config.testType === 'multipage' || config.testType === 'profile-card') {
       setActivePage('page1');
     }
   };
@@ -199,6 +199,53 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
         />
       </SectionCard>
 
+      {/* Profile Modal Tests */}
+      <SectionCard title={language === 'AR' ? 'نافذة الملف الشخصي' : 'Profile Modal'} icon='person'>
+        <TestButton
+          label={language === 'AR' ? 'بطاقة الملف' : 'Profile Card'}
+          config={{
+            title: language === 'AR' ? 'الملف الشخصي' : 'Profile',
+            subtitle: language === 'AR' ? 'عرض بيانات الملف الشخصي' : 'View profile details',
+            icon: 'badge',
+            size: 'lg',
+            testType: 'profile-card',
+          }}
+          icon='badge'
+          variant='primary'
+        />
+        <TestButton
+          label={language === 'AR' ? 'تعديل الملف' : 'Edit Profile'}
+          config={{
+            title: language === 'AR' ? 'تعديل الملف الشخصي' : 'Edit Profile',
+            subtitle: language === 'AR' ? 'تعديل البيانات الشخصية' : 'Update your personal information',
+            icon: 'edit',
+            size: 'lg',
+          }}
+          icon='edit'
+        />
+        <TestButton
+          label={language === 'AR' ? 'الصورة الشخصية' : 'Avatar Upload'}
+          config={{
+            title: language === 'AR' ? 'تغيير الصورة الشخصية' : 'Change Avatar',
+            icon: 'account_circle',
+            size: 'sm',
+          }}
+          icon='account_circle'
+        />
+        <TestButton
+          label={language === 'AR' ? 'ملف كامل' : 'Full Profile'}
+          config={{
+            title: language === 'AR' ? 'الملف الشخصي الكامل' : 'Full Profile',
+            subtitle: language === 'AR' ? 'جميع البيانات والإعدادات' : 'All details and settings',
+            icon: 'person',
+            size: 'xl',
+            headerActions: sampleHeaderAction,
+          }}
+          icon='person'
+          variant='primary'
+        />
+      </SectionCard>
+
       {/* The Modal */}
       <Modal
         isOpen={isOpen}
@@ -221,11 +268,24 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
                   icon: 'settings',
                 },
               ]
-            : undefined
+            : modalConfig.testType === 'profile-card'
+              ? [
+                  {
+                    label: language === 'AR' ? 'نظرة عامة' : 'Overview',
+                    value: 'page1',
+                    icon: 'person',
+                  },
+                  {
+                    label: language === 'AR' ? 'التفاصيل' : 'Details',
+                    value: 'page2',
+                    icon: 'info',
+                  },
+                ]
+              : undefined
         }
-        activeTab={modalConfig.testType === 'multipage' ? activePage : undefined}
+        activeTab={modalConfig.testType === 'multipage' || modalConfig.testType === 'profile-card' ? activePage : undefined}
         onTabChange={
-          modalConfig.testType === 'multipage' ? (val) => setActivePage(val as string) : undefined
+          modalConfig.testType === 'multipage' || modalConfig.testType === 'profile-card' ? (val) => setActivePage(val as string) : undefined
         }
         headerActions={modalConfig.headerActions}
         closeOnBackdropClick={modalConfig.closeOnBackdropClick ?? true}
@@ -264,6 +324,121 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
                 </div>
               )}
             </div>
+          </div>
+        ) : modalConfig.testType === 'profile-card' ? (
+          <div className='animate-fade-in'>
+            {activePage === 'page1' ? (
+              /* ── Page 1: Overview ── */
+              <div className='animate-fade-in space-y-5'>
+                {/* Avatar + Name Hero */}
+                <div className='flex flex-col items-center gap-3 py-2'>
+                  <div
+                    className='w-24 h-24 rounded-full flex items-center justify-center shadow-lg'
+                    style={{ background: 'linear-gradient(135deg, var(--color-primary-400, #60a5fa), var(--color-primary-600, #2563eb))' }}
+                  >
+                    <span className='material-symbols-rounded text-white' style={{ fontSize: '48px' }}>person</span>
+                  </div>
+                  <div className='text-center'>
+                    <h3 className='text-xl font-bold text-gray-900 dark:text-white'>
+                      {language === 'AR' ? 'أحمد محمد' : 'Ahmed Mohamed'}
+                    </h3>
+                    <span
+                      className='inline-block mt-1 px-3 py-0.5 rounded-full text-xs font-semibold text-white'
+                      style={{ backgroundColor: 'var(--color-primary-500, #3b82f6)' }}
+                    >
+                      {language === 'AR' ? 'صيدلي مدير' : 'Pharmacist Manager'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Info Grid */}
+                <div className='grid grid-cols-2 gap-3'>
+                  {[
+                    { icon: 'store', label: language === 'AR' ? 'الفرع' : 'Branch', value: language === 'AR' ? 'الفرع الرئيسي' : 'Main Branch' },
+                    { icon: 'calendar_month', label: language === 'AR' ? 'تاريخ الانضمام' : 'Joined', value: '2024-01-15' },
+                    { icon: 'badge', label: language === 'AR' ? 'كود الموظف' : 'Employee ID', value: 'EMP-0042' },
+                    { icon: 'schedule', label: language === 'AR' ? 'الحالة' : 'Status', value: language === 'AR' ? 'نشط' : 'Active' },
+                  ].map((item) => (
+                    <div key={item.icon} className='flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/60'>
+                      <span className='material-symbols-rounded text-[20px] text-gray-400 dark:text-gray-500'>{item.icon}</span>
+                      <div className='min-w-0'>
+                        <p className='text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide'>{item.label}</p>
+                        <p className='text-sm font-semibold text-gray-800 dark:text-gray-200 truncate'>{item.value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              /* ── Page 2: Details ── */
+              <div className='animate-fade-in space-y-5'>
+                {/* Contact Info */}
+                <div>
+                  <h4 className='text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3'>
+                    {language === 'AR' ? 'بيانات التواصل' : 'Contact Information'}
+                  </h4>
+                  <div className='space-y-2'>
+                    {[
+                      { icon: 'mail', label: language === 'AR' ? 'البريد الإلكتروني' : 'Email', value: 'ahmed@pharmaflow.com' },
+                      { icon: 'phone', label: language === 'AR' ? 'الهاتف' : 'Phone', value: '+20 100 123 4567' },
+                      { icon: 'location_on', label: language === 'AR' ? 'العنوان' : 'Address', value: language === 'AR' ? 'القاهرة، مصر' : 'Cairo, Egypt' },
+                    ].map((item) => (
+                      <div key={item.icon} className='flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/60'>
+                        <span className='material-symbols-rounded text-[20px] text-gray-400 dark:text-gray-500'>{item.icon}</span>
+                        <div className='min-w-0 flex-1'>
+                          <p className='text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide'>{item.label}</p>
+                          <p className='text-sm font-semibold text-gray-800 dark:text-gray-200 truncate'>{item.value}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div>
+                  <h4 className='text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3'>
+                    {language === 'AR' ? 'إحصائيات' : 'Activity Stats'}
+                  </h4>
+                  <div className='grid grid-cols-3 gap-3'>
+                    {[
+                      { label: language === 'AR' ? 'المبيعات' : 'Sales', value: '1,247', icon: 'point_of_sale', color: '#10b981' },
+                      { label: language === 'AR' ? 'أيام الحضور' : 'Attendance', value: '96%', icon: 'event_available', color: '#6366f1' },
+                      { label: language === 'AR' ? 'التقييم' : 'Rating', value: '4.8', icon: 'star', color: '#f59e0b' },
+                    ].map((stat) => (
+                      <div key={stat.icon} className='text-center p-3 rounded-xl bg-gray-50 dark:bg-gray-800/60'>
+                        <span className='material-symbols-rounded text-[24px] mb-1 block' style={{ color: stat.color }}>{stat.icon}</span>
+                        <p className='text-lg font-bold text-gray-900 dark:text-white'>{stat.value}</p>
+                        <p className='text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase'>{stat.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Permissions Summary */}
+                <div>
+                  <h4 className='text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3'>
+                    {language === 'AR' ? 'الصلاحيات' : 'Permissions'}
+                  </h4>
+                  <div className='flex flex-wrap gap-2'>
+                    {[
+                      language === 'AR' ? 'إدارة المخزون' : 'Inventory Mgmt',
+                      language === 'AR' ? 'نقطة البيع' : 'POS Access',
+                      language === 'AR' ? 'إدارة المشتريات' : 'Purchases',
+                      language === 'AR' ? 'التقارير' : 'Reports',
+                      language === 'AR' ? 'إدارة الموظفين' : 'Staff Mgmt',
+                    ].map((perm) => (
+                      <span
+                        key={perm}
+                        className='inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
+                      >
+                        <span className='material-symbols-rounded text-[14px]'>check_circle</span>
+                        {perm}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className='space-y-4'>
