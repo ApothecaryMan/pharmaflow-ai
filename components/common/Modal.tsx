@@ -102,6 +102,14 @@ interface ModalProps {
    * Useful for overriding the default padding (p-5).
    */
   bodyClassName?: string;
+  /**
+   * Optional inline style overrides for the modal content container card.
+   */
+  style?: React.CSSProperties;
+  /**
+   * Optional inline style overrides for the modal background backdrop overlay.
+   */
+  backdropStyle?: React.CSSProperties;
 }
 
 import ReactDOM from 'react-dom';
@@ -132,6 +140,8 @@ export const Modal: React.FC<ModalProps> = ({
   footer,
   height,
   bodyClassName = 'p-5',
+  style,
+  backdropStyle,
 }) => {
   const [actualZIndex, setActualZIndex] = useState(() => {
     if (isOpen) {
@@ -205,7 +215,8 @@ export const Modal: React.FC<ModalProps> = ({
         className='absolute inset-0 bg-black/10 dark:bg-black/60 animate-fade-in'
         style={{ 
           backdropFilter: 'blur(16px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(16px) saturate(180%)' 
+          WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+          ...backdropStyle
         }}
         onClick={closeOnBackdropClick ? onClose : undefined}
       />
@@ -213,7 +224,7 @@ export const Modal: React.FC<ModalProps> = ({
       {/* Modal Content Wrapper */}
       <div
         className={`relative w-full ${maxWidthClass} bg-(--bg-card) rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col animate-scale-in max-h-[95vh] border border-zinc-400/40 dark:border-zinc-500/30 ring-1 ring-inset ring-white/20 dark:ring-white/10 select-none ${className}`}
-        style={{ height: height || 'auto' }}
+        style={{ height: height || 'auto', ...style }}
         onClick={(e) => e.stopPropagation()}
       >
         {title || tabs || headerActions ? (

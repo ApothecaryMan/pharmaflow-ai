@@ -69,7 +69,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   border = false,
   className = '',
   dir,
-  mb = 'mb-6',
+  mb = 'mb-0',
   bottomContent,
   showBottom = false,
   showStatsToggle = false,
@@ -81,7 +81,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   const borderClasses = border ? 'border-b border-zinc-200/50 dark:border-zinc-800/50' : '';
 
   return (
-    <header 
+    <header
       className={`${baseClasses} ${stickyClasses} ${borderClasses} ${className}`}
       dir={dir}
     >

@@ -253,6 +253,11 @@ export const TRANSLATIONS = {
       updateProfile: 'Update Profile',
       avatar: 'Profile Avatar',
       contactInfo: 'Contact Information',
+      adjustBanner: 'Adjust Banner Position',
+      dragToPan: 'Drag to position background',
+      bannerZoom: 'Zoom',
+      resetPosition: 'Reset',
+      done: 'Done',
     },
 
     global: {
@@ -3358,6 +3363,11 @@ export const TRANSLATIONS = {
       updateProfile: 'تحديث الملف الشخصي',
       avatar: 'الصورة الشخصية',
       contactInfo: 'معلومات الاتصال',
+      adjustBanner: 'تعديل موضع الغلاف',
+      dragToPan: 'اسحب لضبط موضع الخلفية',
+      bannerZoom: 'التكبير',
+      resetPosition: 'إعادة تعيين',
+      done: 'تم',
     },
 
     global: {
