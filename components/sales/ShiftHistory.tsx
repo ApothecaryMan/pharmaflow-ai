@@ -25,6 +25,34 @@ interface ShiftHistoryProps {
   onViewChange?: (view: string) => void;
 }
 
+const getTxBadgeClass = (type: string): string => {
+  switch (type) {
+    case 'in':
+    case 'opening':
+    case 'purchase_return':
+      return 'badge-neutral';
+    case 'out':
+    case 'closing':
+    case 'purchase':
+      return 'badge-danger';
+    case 'sale':
+      return 'badge-success';
+    case 'card_sale':
+      return 'badge-purple';
+    case 'return':
+      return 'badge-orange';
+    default:
+      return 'badge-neutral';
+  }
+};
+
+const renderPendingBadge = (t: any) => (
+  <span className="badge-neutral gap-1.5">
+    <span className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-zinc-500" />
+    {t.salesHistory?.pending || 'Pending'}
+  </span>
+);
+
 export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   color,
   t,
@@ -49,25 +77,25 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
       ...shift,
       printCount: (shift.printCount || 1) + 1,
     };
-    
+
     // 2. Audit reprint action
     auditService.log('shift.reprint', {
-      details: { 
-        shiftId: shift.id, 
+      details: {
+        shiftId: shift.id,
         receiptNumber: shift.handoverReceiptNumber,
-        originalPrintCount: shift.printCount || 1 
+        originalPrintCount: shift.printCount || 1
       },
       entityId: shift.id,
       entityType: 'shift'
     });
-    
+
     // 3. Update local selection for receipt generation
     setSelectedShift(updatedShift);
 
     // 3. Print
     try {
       const html = generateShiftReceiptHTML(updatedShift, language as any, employees);
-      
+
       const printerSettings = getPrinterSettings();
       const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
       let printedSilently = false;
@@ -206,18 +234,22 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         id: 'id',
         accessorFn: (row) => row.handoverReceiptNumber || row.id.slice(-6),
         header: t.shiftHistory?.headers?.shiftNumber || 'Shift #',
-        cell: ({ getValue, row }) => (
-          <span className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
-            <span className="material-symbols-rounded text-[18px] text-gray-400">tag</span>
-            {getValue() as string}
-            {row.original.status === 'open' && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-[9px] font-bold uppercase tracking-wider bg-transparent ms-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                {t.cashRegister?.status?.open || 'Open'}
+        cell: ({ getValue, row }) => {
+          const shiftId = getValue() as string;
+          if (row.original.status === 'open') {
+            return (
+              <span className="badge-success gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400 animate-pulse" />
+                {shiftId}
               </span>
-            )}
-          </span>
-        ),
+            );
+          }
+          return (
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              {shiftId}
+            </span>
+          );
+        },
         meta: { align: 'start' },
       },
       {
@@ -243,8 +275,8 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         cell: ({ getValue, row }) => {
           if (row.original.status === 'open' || !getValue()) {
             return (
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider bg-transparent">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="badge-success gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400 animate-pulse" />
                 {t.shiftHistory?.activeNow || 'Active Now'}
               </span>
             );
@@ -257,13 +289,18 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         id: 'closedBy',
         header: t.shiftHistory?.headers?.closedBy || 'Closed By',
         accessorFn: (row) => {
-          if (row.status === 'open' || !row.closedBy) return '-';
+          if (row.status === 'open' || !row.closedBy) return '';
           const emp = employees?.find(e => e.id === row.closedBy);
           return emp?.name || row.closedBy;
         },
-        cell: ({ getValue }) => (
-          <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{getValue() as string}</span>
-        ),
+        cell: ({ getValue, row }) => {
+          if (row.original.status === 'open' || !row.original.closedBy) {
+            return renderPendingBadge(t);
+          }
+          return (
+            <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{getValue() as string}</span>
+          );
+        },
         meta: { align: 'center' },
       },
       {
@@ -285,7 +322,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
             </span>
           );
         },
-        meta: { align: 'center', smartDate: false },
+        meta: { align: 'start', smartDate: false },
       },
       {
         accessorKey: 'openingBalance',
@@ -298,11 +335,11 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         header: t.shiftHistory?.headers?.closingBalance || 'Closing',
         cell: ({ getValue, row }) => {
           if (row.original.status === 'open') {
-            return <span className="text-sm text-gray-400">-</span>;
+            return renderPendingBadge(t);
           }
           return <PriceDisplay value={(getValue() as number) || 0} />;
         },
-        meta: { align: 'center' },
+        meta: { align: 'start' },
       },
       {
         id: 'variance',
@@ -310,19 +347,19 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         accessorFn: (row) => {
           if (row.status === 'open') return null;
           // BUG-SH-04: Variance must account for returns and purchases
-          const expected = row.openingBalance 
-            + row.cashSales 
-            + row.cashIn 
-            + (row.cashPurchaseReturns || 0) 
-            - row.cashOut 
-            - (row.returns || 0) 
+          const expected = row.openingBalance
+            + row.cashSales
+            + row.cashIn
+            + (row.cashPurchaseReturns || 0)
+            - row.cashOut
+            - (row.returns || 0)
             - (row.cashPurchases || 0);
           return (row.closingBalance || 0) - expected;
         },
         cell: ({ getValue }) => {
           const variance = getValue() as number | null;
           if (variance === null) {
-            return <span className="text-sm text-gray-400">-</span>;
+            return renderPendingBadge(t);
           }
           return (
             <span
@@ -332,7 +369,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
             </span>
           );
         },
-        meta: { align: 'center' },
+        meta: { align: 'start' },
       },
     ],
     [t, language, employees]
@@ -387,14 +424,14 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
     const rows = filteredShifts.map((shift) => {
       const duration = shift.closeTime
         ? (new Date(shift.closeTime).getTime() - new Date(shift.openTime).getTime()) /
-          (1000 * 60 * 60)
+        (1000 * 60 * 60)
         : 0;
       // BUG-SH-05: Sync CSV export math with table logic
-      const expected = shift.openingBalance 
-        + shift.cashSales 
-        + shift.cashIn 
+      const expected = shift.openingBalance
+        + shift.cashSales
+        + shift.cashIn
         + (shift.cashPurchaseReturns || 0)
-        - shift.cashOut 
+        - shift.cashOut
         - (shift.returns || 0)
         - (shift.cashPurchases || 0);
       const variance = shift.status === 'open' ? 'N/A' : ((shift.closingBalance || 0) - expected).toFixed(2);
@@ -476,7 +513,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
             <button
               onClick={exportToCSV}
               disabled={filteredShifts.length === 0}
-              className={`px-4 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50 text-gray-700 dark:text-gray-200 shadow-sm`}
+              className={`px-4 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50 text-gray-700 dark:text-gray-200`}
             >
               <span className='material-symbols-rounded text-lg'>download</span>
               <span className='hidden md:inline'>{t.shiftHistory?.exportCSV || 'Export CSV'}</span>
@@ -560,7 +597,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
           headerActions={
             <button
               onClick={() => handleReprintShift(selectedShift)}
-              className='w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-500 hover:bg-primary-500 hover:text-white transition-all flex items-center justify-center border border-gray-100 dark:border-gray-700'
+              className='w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-500 hover:bg-primary-500 hover:text-white transition-all flex items-center justify-center border border-(--border-divider)'
               title={language === 'AR' ? 'إعادة طباعة' : 'Reprint'}
             >
               <span className='material-symbols-rounded text-[22px]'>print</span>
@@ -588,7 +625,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
               </div>
               <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
                 <p className='text-[10px] font-bold uppercase text-gray-500 mb-1'>
-                  {t.shiftHistory?.details?.cashPurchases || 'Cash Purchases'}
+                  {t.shiftHistory?.details?.cashPurchases}
                 </p>
                 <p className='text-sm font-bold text-red-600'>
                   <PriceDisplay value={selectedShift.cashPurchases || 0} />
@@ -615,7 +652,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
             {/* Balances */}
             <div className='grid grid-cols-2 gap-4'>
               <div
-                className={`p-4 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50`}
+                className={`p-4 rounded-2xl border border-(--border-divider) bg-white dark:bg-gray-900/50`}
               >
                 <div className='flex justify-between items-start mb-2'>
                   <p className='text-xs font-bold uppercase text-gray-400'>
@@ -633,7 +670,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                 </p>
               </div>
               <div
-                className={`p-4 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50`}
+                className={`p-4 rounded-2xl border border-(--border-divider) bg-white dark:bg-gray-900/50`}
               >
                 <div className='flex justify-between items-start mb-2'>
                   <p className='text-xs font-bold uppercase text-gray-400'>
@@ -670,13 +707,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                     >
                       <div className='flex items-center gap-3'>
                         <span
-                          className={`px-2 py-0.5 rounded-lg font-bold uppercase text-[9px] tracking-wider border
-                                           ${tx.type === 'in' || tx.type === 'opening' || tx.type === 'purchase_return' ? 'border-gray-200 text-gray-700 bg-gray-50/50 dark:border-gray-800/30 dark:text-gray-400 dark:bg-gray-800/10' : ''}
-                                           ${tx.type === 'out' || tx.type === 'closing' || tx.type === 'purchase' ? 'border-red-200 text-red-700 bg-red-50/50 dark:border-red-900/30 dark:text-red-400 dark:bg-red-900/10' : ''}
-                                           ${tx.type === 'sale' ? 'border-green-200 text-green-700 bg-green-50/50 dark:border-green-900/30 dark:text-green-400 dark:bg-green-900/10' : ''}
-                                           ${tx.type === 'card_sale' ? 'border-violet-200 text-violet-700 bg-violet-50/50 dark:border-violet-900/30 dark:text-violet-400 dark:bg-violet-900/10' : ''}
-                                           ${tx.type === 'return' ? 'border-orange-200 text-orange-700 bg-orange-50/50 dark:border-orange-900/30 dark:text-orange-400 dark:bg-orange-900/10' : ''}
-                                       `}
+                          className={getTxBadgeClass(tx.type)}
                         >
                           {t.cashRegister?.types?.[tx.type] || tx.type}
                         </span>
@@ -711,7 +742,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                   ))
                 ) : (
                   <div className='py-8 text-center text-gray-400 italic text-sm'>
-                    {t.shiftHistory?.details?.noTransactions || 'No transactions recorded'}
+                    {t.shiftHistory?.details?.noTransactions}
                   </div>
                 )}
               </div>

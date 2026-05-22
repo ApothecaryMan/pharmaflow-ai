@@ -4,12 +4,13 @@ import { formatCurrency } from '../../../utils/currency';
 import { Modal } from '../../common/Modal';
 import { useSettings } from '../../../context';
 import { getDisplayName } from '../../../utils/drugDisplayName';
+import { TRANSLATIONS } from '../../../i18n/translations';
 
 interface TransactionDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   transaction: AuditTransaction | null;
-  t?: any;
+  t?: typeof TRANSLATIONS.EN;
   language?: string;
 }
 
@@ -67,19 +68,17 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
               <span className='text-gray-500'>{t?.intelligence?.audit?.grid?.columns?.type || 'Type'}</span>
               {(() => {
-                let config = { color: 'gray', icon: 'edit', label: t?.intelligence?.audit?.types?.edit || 'Edit' };
+                let config = { badgeClass: 'badge-neutral', icon: 'edit', label: t?.intelligence?.audit?.types?.edit || 'Edit' };
                 if (transaction.type === 'SALE')
-                  config = { color: 'emerald', icon: 'check_circle', label: t?.intelligence?.audit?.types?.sale || 'Sale' };
+                  config = { badgeClass: 'badge-success', icon: 'check_circle', label: t?.intelligence?.audit?.types?.sale || 'Sale' };
                 else if (transaction.type === 'RETURN')
-                  config = { color: 'red', icon: 'keyboard_return', label: t?.intelligence?.audit?.types?.return || 'Return' };
+                  config = { badgeClass: 'badge-danger', icon: 'keyboard_return', label: t?.intelligence?.audit?.types?.return || 'Return' };
                 else if (transaction.type === 'VOID')
-                  config = { color: 'gray', icon: 'cancel', label: t?.intelligence?.audit?.types?.void || 'Void' };
+                  config = { badgeClass: 'badge-neutral', icon: 'cancel', label: t?.intelligence?.audit?.types?.void || 'Void' };
 
                 return (
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
-                  >
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>{config.icon}</span>
+                  <span className={`${config.badgeClass} gap-1.5`}>
+                    <span className='material-symbols-rounded'>{config.icon}</span>
                     {config.label}
                   </span>
                 );

@@ -120,22 +120,22 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
       {
         accessorKey: 'date',
         header: t.customerHistory?.table.date || 'Date',
-        meta: { width: 110, align: 'center' },
+        meta: { width: 117, align: 'center' },
       },
       {
         accessorKey: 'customerCode',
         header: t.modal.code || 'Code',
-        meta: { width: 100 },
+        meta: { width: 132, align: 'start' },
       },
       {
         accessorKey: 'customerName',
         header: t.headers.name || 'Customer',
-        meta: { width: 180 },
+        meta: { width: 593, align: 'end' },
       },
       {
         accessorKey: 'customerPhone',
         header: t.modal.phone || 'Phone',
-        meta: { width: 130 },
+        meta: { width: 150, align: 'center' },
       },
       {
         accessorKey: 'dailyOrderNumber',
@@ -144,38 +144,59 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
           info.row.original.dailyOrderNumber
             ? `#${info.row.original.dailyOrderNumber}`
             : info.row.original.id.substring(0, 8),
-        meta: { width: 100 },
+        meta: { width: 150, align: 'center' },
       },
       {
         accessorKey: 'items',
         header: t.customerHistory?.table.items || 'Items',
         cell: (info) => info.row.original.items?.length || 0,
-        meta: { align: 'center', width: 70 },
+        meta: { align: 'center', width: 150 },
       },
       {
         accessorKey: 'total',
         header: t.customerHistory?.table.total || 'Total',
         cell: (info) => `$${info.row.original.total?.toFixed(2)}`,
-        meta: { align: 'end', isNumeric: true, width: 90 },
+        meta: { align: 'center', isNumeric: true, width: 150 },
       },
       {
         accessorKey: 'status',
         header: t.customerHistory?.table.status || 'Status',
-        meta: { align: 'center', width: 100 },
+        meta: { align: 'center', width: 150 },
         cell: (info) => {
-          const status = info.row.original.status;
-          const isCompleted = status === 'completed';
-          const colorClasses = isCompleted
-            ? 'text-emerald-700 dark:text-emerald-400'
-            : 'text-gray-600 dark:text-gray-400';
-          const icon = isCompleted ? 'check_circle' : 'history';
+          const status = info.row.original.status || 'pending';
+          const statusLabel = t.customerHistory?.statuses?.[status as keyof typeof t.customerHistory.statuses] || status;
+
+          let badgeClass = 'badge-neutral';
+          let icon = 'help';
+
+          switch (status) {
+            case 'completed':
+              badgeClass = 'badge-success';
+              icon = 'check_circle';
+              break;
+            case 'pending':
+              badgeClass = 'badge-warning';
+              icon = 'history';
+              break;
+            case 'cancelled':
+              badgeClass = 'badge-danger';
+              icon = 'cancel';
+              break;
+            case 'with_delivery':
+            case 'on_way':
+              badgeClass = 'badge-info';
+              icon = 'local_shipping';
+              break;
+            case 'returned':
+              badgeClass = 'badge-purple';
+              icon = 'assignment_return';
+              break;
+          }
 
           return (
-            <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current bg-transparent text-[10px] font-bold uppercase tracking-wider ${colorClasses}`}
-            >
-              <span className='material-symbols-rounded text-sm'>{icon}</span>
-              {status}
+            <span className={`${badgeClass} gap-1.5`}>
+              <span className='material-symbols-rounded'>{icon}</span>
+              {statusLabel}
             </span>
           );
         },
@@ -247,9 +268,7 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
               if (val === 'add-customer') onViewChange?.('customers', { mode: 'add' });
               else onViewChange?.(val);
             }}
-            variant="onPage"
             shape="pill"
-            color={color}
             size="md"
             iconSize="--icon-lg"
             useGraphicFont={true}
@@ -269,7 +288,6 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
             <SegmentedControl
               value={activeTab}
               onChange={(val) => setActiveTab(val as 'sales' | 'returns')}
-              color={color}
               options={[
                 {
                   label: t.customerHistory?.tabs.invoices || 'Invoices',

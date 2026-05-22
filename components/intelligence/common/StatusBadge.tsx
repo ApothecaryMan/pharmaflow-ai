@@ -91,14 +91,21 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   const finalLabel = label || config.label;
   const color = config.color;
 
-  const sizeStyles = size === 'sm' ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1';
-  const iconSize = size === 'sm' ? 'var(--icon-xs)' : 'var(--icon-sm)';
+  const badgeClass =
+    {
+      emerald: 'badge-success',
+      amber: 'badge-warning',
+      red: 'badge-danger',
+      purple: 'badge-purple',
+      primary: 'badge-info',
+      gray: 'badge-neutral',
+    }[color] || 'badge-neutral';
+
+  const sizeStyles = size === 'sm' ? '!text-[10px] !px-1.5 !py-0.5' : '';
 
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-lg border border-current text-${color}-700 dark:text-${color}-400 font-bold uppercase tracking-wider bg-transparent ${sizeStyles} ${className}`}
-    >
-      <span className='material-symbols-rounded' style={{ fontSize: iconSize }}>{config.icon}</span>
+    <span className={`${badgeClass} gap-1.5 ${sizeStyles} ${className}`}>
+      <span className='material-symbols-rounded'>{config.icon}</span>
       {finalLabel}
     </span>
   );

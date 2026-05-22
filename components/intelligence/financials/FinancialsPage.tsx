@@ -73,15 +73,19 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
         header: t?.intelligence?.financials?.categoryGrid?.columns?.margin || 'Margin',
         cell: (info) => {
           const val = info.getValue();
-          let config = { color: 'red', icon: 'trending_down' };
-          if (val >= 35) config = { color: 'emerald', icon: 'trending_up' };
-          else if (val >= 25) config = { color: 'amber', icon: 'trending_flat' };
+          let badgeClass = 'badge-danger';
+          let icon = 'trending_down';
+          if (val >= 35) {
+            badgeClass = 'badge-success';
+            icon = 'trending_up';
+          } else if (val >= 25) {
+            badgeClass = 'badge-warning';
+            icon = 'trending_flat';
+          }
 
           return (
-            <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
-            >
-              <span className='material-symbols-rounded text-xs'>{config.icon}</span>
+            <span className={`${badgeClass} gap-1.5`}>
+              <span className='material-symbols-rounded'>{icon}</span>
               {val}%
             </span>
           );
@@ -93,13 +97,13 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
           const dist = info.getValue();
           return (
             <div className='flex gap-1.5'>
-              <span className='inline-flex items-center px-1.5 py-0.5 border border-current text-emerald-700 dark:text-emerald-400 rounded-lg text-xs font-bold bg-transparent'>
+              <span className='badge-success !px-1.5 !py-0.5'>
                 A:{dist.a}
               </span>
-              <span className='inline-flex items-center px-1.5 py-0.5 border border-current text-primary-700 dark:text-primary-400 rounded-lg text-xs font-bold bg-transparent'>
+              <span className='badge-info !px-1.5 !py-0.5'>
                 B:{dist.b}
               </span>
-              <span className='inline-flex items-center px-1.5 py-0.5 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-400 rounded-lg text-xs font-bold bg-transparent'>
+              <span className='badge-neutral !px-1.5 !py-0.5'>
                 C:{dist.c}
               </span>
             </div>
@@ -114,19 +118,20 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
     () => [
       productColumnHelper.accessor('abc_class', {
         header: 'ABC',
-        meta: { hideFromSettings: true },
+        meta: { hideFromSettings: true, width: 150, align: 'start' },
       }),
       productColumnHelper.accessor('product_name', {
         header: t?.intelligence?.financials?.productGrid?.columns?.product || 'Product',
+        meta: { width: 811, align: 'end' },
         cell: (info) => (
           <div className='flex items-center gap-2'>
             <span
-              className={`w-8 h-8 flex items-center justify-center rounded-lg border border-current text-base font-black bg-transparent ${
+              className={`w-8 h-8 !flex items-center justify-center text-base font-black ${
                 info.row.original.abc_class === 'A'
-                  ? 'text-emerald-700 dark:text-emerald-400'
+                  ? 'badge-success'
                   : info.row.original.abc_class === 'B'
-                    ? 'text-primary-700 dark:text-primary-400'
-                    : 'text-gray-700 dark:text-gray-400'
+                    ? 'badge-info'
+                    : 'badge-neutral'
               }`}
             >
               {info.row.original.abc_class}
@@ -139,10 +144,12 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
       }),
       productColumnHelper.accessor('quantity_sold', {
         header: t?.intelligence?.financials?.productGrid?.columns?.quantitySold || 'Qty Sold',
+        meta: { width: 150, align: 'center' },
         cell: (info) => <span className='text-gray-600 dark:text-gray-300'>{info.getValue()}</span>,
       }),
       productColumnHelper.accessor('revenue', {
         header: t?.intelligence?.financials?.productGrid?.columns?.revenue || 'Revenue',
+        meta: { width: 150, align: 'start' },
         cell: (info) => (
           <span className='font-medium text-emerald-600 dark:text-emerald-400'>
             {formatCurrency(info.getValue())}
@@ -151,7 +158,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
       }),
       productColumnHelper.accessor('cogs', {
         header: t?.intelligence?.financials?.productGrid?.columns?.cost || 'Cost',
-        meta: { align: 'end' },
+        meta: { width: 150, align: 'start' },
         cell: (info) => (
           <span className='text-gray-600 dark:text-gray-400'>
             {formatCurrency(info.getValue())}
@@ -160,6 +167,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
       }),
       productColumnHelper.accessor('gross_profit', {
         header: t?.intelligence?.financials?.productGrid?.columns?.profit || 'Profit',
+        meta: { width: 150, align: 'start' },
         cell: (info) => (
           <span className='font-bold text-primary-600 dark:text-primary-400'>
             {formatCurrency(info.getValue())}
@@ -168,17 +176,22 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
       }),
       productColumnHelper.accessor('margin_percent', {
         header: t?.intelligence?.financials?.productGrid?.columns?.margin || 'Margin %',
+        meta: { width: 150, align: 'center' },
         cell: (info) => {
           const val = info.getValue();
-          let config = { color: 'emerald', icon: 'trending_up' };
-          if (val < 15) config = { color: 'red', icon: 'trending_down' };
-          else if (val < 25) config = { color: 'amber', icon: 'trending_flat' };
+          let badgeClass = 'badge-success';
+          let icon = 'trending_up';
+          if (val < 15) {
+            badgeClass = 'badge-danger';
+            icon = 'trending_down';
+          } else if (val < 25) {
+            badgeClass = 'badge-warning';
+            icon = 'trending_flat';
+          }
 
           return (
-            <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
-            >
-              <span className='material-symbols-rounded text-xs'>{config.icon}</span>
+            <span className={`${badgeClass} gap-1.5`}>
+              <span className='material-symbols-rounded'>{icon}</span>
               {val.toLocaleString(undefined, { maximumFractionDigits: 1 })}%
             </span>
           );

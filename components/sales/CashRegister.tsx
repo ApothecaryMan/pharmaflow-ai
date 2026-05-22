@@ -24,6 +24,41 @@ interface CashRegisterProps {
   onViewChange?: (view: string) => void;
 }
 
+const getTxBadgeClass = (type: string): string => {
+  switch (type) {
+    case 'in':
+    case 'purchase_return':
+      return 'badge-neutral';
+    case 'out':
+    case 'closing':
+    case 'purchase':
+      return 'badge-danger';
+    case 'sale':
+      return 'badge-success';
+    case 'card_sale':
+      return 'badge-purple';
+    case 'opening':
+      return 'badge-purple';
+    case 'return':
+      return 'badge-orange';
+    default:
+      return 'badge-neutral';
+  }
+};
+
+const TX_ICONS: Record<string, string> = {
+  opening: 'lock_open',
+  closing: 'lock',
+  in: 'move_to_inbox',
+  out: 'outbox',
+  sale: 'receipt_long',
+  card_sale: 'credit_card',
+  return: 'assignment_return',
+  purchase: 'shopping_cart_checkout',
+  purchase_return: 'keyboard_return',
+};
+
+
 export const CashRegister: React.FC<CashRegisterProps> = ({
   color,
   t,
@@ -89,35 +124,9 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         cell: (info) => {
           const type = info.getValue() as CashTransactionType;
           return (
-            <span
-              className={`inline-flex items-center gap-1 px-1 py-0.5 rounded-lg border border-current text-[10px] font-bold uppercase tracking-tight bg-transparent
-                  ${type === 'in' || type === 'card_sale' || type === 'purchase_return' ? 'text-gray-700 dark:text-gray-400' : ''}
-                  ${type === 'out' || type === 'closing' || type === 'purchase' ? 'text-red-700 dark:text-red-400' : ''}
-                  ${type === 'sale' ? 'text-emerald-700 dark:text-emerald-400' : ''}
-                  ${type === 'opening' ? 'text-violet-700 dark:text-violet-400' : ''}
-                  ${type === 'return' ? 'text-orange-700 dark:text-orange-400' : ''}
-                `}
-            >
-              <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>
-                {type === 'opening'
-                  ? 'lock_open'
-                  : type === 'closing'
-                    ? 'lock'
-                    : type === 'in'
-                      ? 'move_to_inbox'
-                      : type === 'out'
-                        ? 'outbox'
-                        : type === 'sale'
-                          ? 'receipt_long'
-                          : type === 'card_sale'
-                            ? 'credit_card'
-                            : type === 'return'
-                              ? 'assignment_return'
-                              : type === 'purchase'
-                                ? 'shopping_cart_checkout'
-                                : type === 'purchase_return'
-                                  ? 'keyboard_return'
-                                  : 'receipt'}
+            <span className={`${getTxBadgeClass(type)} gap-1.5`} dir={language === 'AR' ? 'rtl' : 'ltr'}>
+              <span className={`material-symbols-rounded`}>
+                {TX_ICONS[type] || 'receipt'}
               </span>
               {t.cashRegister.types[type] || type}
             </span>
@@ -195,10 +204,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
   return (
     <div
       dir={language === 'AR' ? 'rtl' : 'ltr'}
-      className={`h-full flex flex-col gap-6 animate-fade-in pb-10 ${language === 'AR' ? 'text-right' : 'text-left'}`}
+      className={`h-full flex flex-col animate-fade-in pb-10 ${language === 'AR' ? 'text-right' : 'text-left'}`}
     >
       {/* Header */}
       <PageHeader
+        mb="mb-0"
         centerContent={
           <SegmentedControl
             size="md"
@@ -281,13 +291,12 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         <div className='md:col-span-1 space-y-4'>
           {/* Status Card */}
           <div className={`p-6 rounded-3xl ${CARD_BASE} relative overflow-hidden group`}>
-            <div className='absolute -bottom-6 ltr:-right-6 rtl:-left-6 opacity-10 pointer-events-none select-none'>
-              <span
-                className={`material-symbols-rounded ${currentShift ? `text-emerald-500` : 'text-zinc-400'}`}
-                style={{ fontSize: '180px' }}
-              >
-                {currentShift ? 'lock_open' : 'lock'}
-              </span>
+            <div className='absolute -bottom-8 ltr:-right-8 rtl:-left-8 opacity-10 pointer-events-none select-none'>
+              <img
+                src="/locker.png"
+                alt=""
+                className="w-[220px] h-[220px] object-contain"
+              />
             </div>
 
             <p className='text-sm font-bold uppercase text-gray-500 mb-2'>
@@ -312,8 +321,8 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     <div className='h-5 w-24 bg-zinc-200 dark:bg-zinc-700 rounded-lg animate-pulse' />
                   ) : (
                     <>
-                      <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-gray-700 dark:text-gray-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
-                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>schedule</span>
+                      <span className="badge-neutral gap-1.5">
+                        <span className="material-symbols-rounded">schedule</span>
                         {(() => {
                           const timeStr = new Date(currentShift!.openTime).toLocaleTimeString('en-US', {
                             hour: '2-digit',
@@ -357,8 +366,8 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   {isLoading ? (
                     <div className='h-5 w-32 bg-zinc-200 dark:bg-zinc-700 rounded-lg animate-pulse' />
                   ) : (
-                    <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-purple-700 dark:text-purple-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
-                      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>person</span>
+                    <span className="badge-purple gap-1.5">
+                      <span className="material-symbols-rounded">person</span>
                       {employees?.find((e) => e.id === currentShift!.openedBy)?.name || currentShift!.openedBy}
                     </span>
                   )}
@@ -372,8 +381,8 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   {isLoading ? (
                     <div className='h-5 w-16 bg-zinc-200 dark:bg-zinc-700 rounded-lg animate-pulse' />
                   ) : (
-                    <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-gray-700 dark:text-gray-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
-                      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>tag</span>
+                    <span className="badge-neutral gap-1.5">
+                      <span className="material-symbols-rounded">tag</span>
                       {currentShift!.id.slice(-6)}
                     </span>
                   )}
@@ -385,28 +394,28 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           {/* Balance Cards (Only if Open or Loading) */}
           {(currentShift || isLoading) ? (
             <div className='space-y-3'>
-               {(isLoading || (currentShift && permissions.canViewExpectedBalance)) && (
-                 <div
-                   className={`p-5 rounded-3xl ${CARD_BASE} border-2 !border-gray-200 dark:!border-gray-800 relative overflow-hidden group transition-all hover:shadow-md`}
-                 >
-                   <div className='flex items-center gap-2 mb-1.5 relative z-10'>
-                     <span className='material-symbols-rounded text-primary-600 dark:text-primary-400' style={{ fontSize: 'var(--icon-md)' }}>
-                       account_balance_wallet
-                     </span>
-                     <p className={`text-xs font-bold uppercase text-primary-800 dark:text-primary-300`}>
-                       {t.cashRegister.summary.expectedBalance}
-                     </p>
-                   </div>
-                    <div className={`text-3xl font-bold text-gray-900 dark:text-gray-100 tabular-nums relative z-10 flex items-baseline gap-2 ${isLoading ? "h-10 w-32 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse" : ""}`}>
-                      {!isLoading && (
-                        <>
-                          <AnimatedCounter value={currentBalance} />
-                          <span className="text-base font-normal opacity-40">{language === "AR" ? "ج.م" : "EGP"}</span>
-                        </>
-                      )}
-                    </div>
-                 </div>
-               )}
+              {(isLoading || (currentShift && permissions.canViewExpectedBalance)) && (
+                <div
+                  className={`p-5 rounded-3xl ${CARD_BASE} relative overflow-hidden group`}
+                >
+                  <div className='flex items-center gap-2 mb-1.5 relative z-10'>
+                    <span className='material-symbols-rounded text-primary-600 dark:text-primary-400' style={{ fontSize: 'var(--icon-md)' }}>
+                      account_balance_wallet
+                    </span>
+                    <p className={`text-xs font-bold uppercase text-primary-800 dark:text-primary-300`}>
+                      {t.cashRegister.summary.expectedBalance}
+                    </p>
+                  </div>
+                  <div className={`text-3xl font-bold text-gray-900 dark:text-gray-100 tabular-nums relative z-10 flex items-baseline gap-2 ${isLoading ? "h-10 w-32 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse" : ""}`}>
+                    {!isLoading && (
+                      <>
+                        <AnimatedCounter value={currentBalance} />
+                        <span className="text-base font-normal opacity-40">{language === "AR" ? "ج.م" : "EGP"}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className='grid grid-cols-2 gap-3'>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
@@ -480,7 +489,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 </div>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
-                    {t.cashRegister.summary.cashPurchases || 'Cash Purchases'}
+                    {t.cashRegister.summary.cashPurchases}
                   </p>
                   <div className={`text-base font-bold text-red-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
                     {!isLoading && (
@@ -494,7 +503,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 </div>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
-                    {t.cashRegister.summary.cashPurchaseReturns || 'Cash Purch. Returns'}
+                    {t.cashRegister.summary.cashPurchaseReturns}
                   </p>
                   <div className={`text-base font-bold text-primary-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
                     {!isLoading && (
@@ -537,7 +546,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         {/* Right Column: Transaction Log */}
         <div className='md:col-span-2 flex flex-col md:h-0 md:min-h-full'>
           <div className={`rounded-3xl ${CARD_BASE} flex-1 flex flex-col h-full overflow-hidden`}>
-            <div className='p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0'>
+            <div className='p-4 border-b border-(--border-divider) flex justify-between items-center shrink-0'>
               <h3 className='font-bold text-lg'>{t.cashRegister.transactions.title}</h3>
               <SegmentedControl
                 size='xs'
@@ -545,27 +554,27 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 value={filterType}
                 onChange={(val) => setFilterType(val as string)}
                 options={[
-                  { label: t.cashRegister?.filters?.all || 'All', value: 'all', count: counts.all },
+                  { label: t.cashRegister?.filters?.all, value: 'all', count: counts.all },
                   {
-                    label: t.cashRegister?.filters?.sales || 'Sales',
+                    label: t.cashRegister?.filters?.sales,
                     value: 'sales',
                     count: counts.sales,
                     activeColor: 'green',
                   },
                   {
-                    label: t.cashRegister?.filters?.returns || 'Returns',
+                    label: t.cashRegister?.filters?.returns,
                     value: 'returns',
                     count: counts.returns,
                     activeColor: 'orange',
                   },
                   {
-                    label: t.cashRegister?.filters?.purchases || 'Purchases',
+                    label: t.cashRegister?.filters?.purchases,
                     value: 'purchases',
                     count: counts.purchases,
                     activeColor: 'red',
                   },
                   {
-                    label: t.cashRegister?.filters?.operations || 'Ops',
+                    label: t.cashRegister?.filters?.operations,
                     value: 'operations',
                     count: counts.operations,
                     activeColor: 'blue',

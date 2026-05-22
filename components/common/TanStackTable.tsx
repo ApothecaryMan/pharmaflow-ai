@@ -332,7 +332,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   onRowLongPress,
   onRowContextMenu,
   isLoading = false,
-  emptyMessage = 'No results found.',
+  emptyMessage = '',
   color = 'primary',
   defaultHiddenColumns = [],
   activeIndex,
@@ -569,7 +569,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
 
 
-  const [localLoading, setLocalLoading] = React.useState(data.length > 0);
+  const [localLoading, setLocalLoading] = React.useState(true);
   const { newRowIds, updatedRowIds } = useRowChangeAnimation(data as any, enableNewRowAnimation, pendingRowIds);
 
   // Stable refs for callbacks to prevent MemoizedRow re-renders
@@ -1059,7 +1059,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                           >
                             inbox
                           </span>
-                          <p>{emptyMessage}</p>
+                          {emptyMessage && <p>{emptyMessage}</p>}
                         </div>
                       )}
                     </td>

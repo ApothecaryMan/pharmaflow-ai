@@ -305,24 +305,20 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         header: t.employeeList.table.status,
         cell: ({ row }) => {
           const status = row.original.status;
-          let config = {
-            color: 'gray',
-            icon: 'cancel',
-          };
+          let badgeClass = 'badge-neutral';
+          let icon = 'cancel';
 
-          if (status === 'active') config = { color: 'emerald', icon: 'check_circle' };
-          if (status === 'holiday') config = { color: 'amber', icon: 'beach_access' };
+          if (status === 'active') {
+            badgeClass = 'badge-success';
+            icon = 'check_circle';
+          } else if (status === 'holiday') {
+            badgeClass = 'badge-warning';
+            icon = 'beach_access';
+          }
 
           return (
-            <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
-            >
-              <span 
-                className='material-symbols-rounded'
-                style={{ fontSize: 'var(--icon-lg)' }}
-              >
-                {config.icon}
-              </span>
+            <span className={`${badgeClass} gap-1.5`}>
+              <span className='material-symbols-rounded'>{icon}</span>
               {t.employeeList.statusOptions[status] || status}
             </span>
           );
@@ -334,7 +330,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         cell: ({ row }) => {
           const branch = branches.find(b => b.id === row.original.branchId);
           return (
-            <span className='inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border border-current text-purple-700 dark:text-purple-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+            <span className='badge-neutral gap-1.5'>
               {branch?.name || t.employeeList.unassigned}
             </span>
           );
@@ -1872,21 +1868,19 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                     <div className='ml-auto'>
                       {(() => {
                         const status = viewingEmployee.status;
-                        let config = { color: 'gray', icon: 'cancel' };
-                        if (status === 'active')
-                          config = { color: 'emerald', icon: 'check_circle' };
-                        if (status === 'holiday') config = { color: 'amber', icon: 'beach_access' };
+                        let badgeClass = 'badge-neutral';
+                        let icon = 'cancel';
+                        if (status === 'active') {
+                          badgeClass = 'badge-success';
+                          icon = 'check_circle';
+                        } else if (status === 'holiday') {
+                          badgeClass = 'badge-warning';
+                          icon = 'beach_access';
+                        }
 
                         return (
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
-                          >
-                            <span 
-                              className='material-symbols-rounded'
-                              style={{ fontSize: 'var(--icon-md)' }}
-                            >
-                              {config.icon}
-                            </span>
+                          <span className={`${badgeClass} gap-1.5 text-[10px]`}>
+                            <span className='material-symbols-rounded'>{icon}</span>
                             {t.employeeList.statusOptions[status]}
                           </span>
                         );

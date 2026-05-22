@@ -84,7 +84,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
       })
       .reduce((sum, r) => money.add(sum, r.totalRefund), 0);
   }, [returns, currentEmployeeId]);
-  
+
   // Handle Navigation Params (Deep Linking)
   React.useEffect(() => {
     if (navigationParams?.id) {
@@ -135,7 +135,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           const isClickable = !!customer;
 
           return (
-            <span 
+            <span
               onClick={(e) => {
                 if (isClickable) {
                   e.stopPropagation();
@@ -143,11 +143,10 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
                   setIsHistOpen(true);
                 }
               }}
-              className={`font-mono font-bold text-sm ${
-                isClickable 
-                  ? 'text-gray-900 dark:text-gray-100 cursor-pointer hover:opacity-70 transition-opacity' 
-                  : 'text-gray-400'
-              }`}
+              className={`font-mono font-bold text-sm ${isClickable
+                ? 'text-gray-900 dark:text-gray-100 cursor-pointer hover:opacity-70 transition-opacity'
+                : 'text-gray-400'
+                }`}
             >
               {code || '-'}
             </span>
@@ -200,7 +199,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           const displayTotal = sale.netTotal !== undefined ? sale.netTotal : sale.total;
           const totalParts = formatCurrencyParts(displayTotal);
           const isReturned = sale.netTotal !== undefined && sale.netTotal < sale.total;
-          
+
           return (
             <div className='font-bold text-gray-900 dark:text-gray-100 tabular-nums text-sm flex flex-col items-end'>
               <div className='flex items-baseline gap-1'>
@@ -221,14 +220,14 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
               )}
             </div>
           );
-       },
+        },
       },
       {
         id: 'status',
         accessorFn: (sale) => {
           if (sale.status === 'cancelled') return 'cancelled';
-          const isReturned = (sale.netTotal !== undefined && sale.netTotal < sale.total) || 
-                            (sale.itemReturnedQuantities && Object.keys(sale.itemReturnedQuantities).length > 0);
+          const isReturned = (sale.netTotal !== undefined && sale.netTotal < sale.total) ||
+            (sale.itemReturnedQuantities && Object.keys(sale.itemReturnedQuantities).length > 0);
           if (isReturned) return 'returned';
           // If it's delivery and not completed, return its specific status
           if (sale.saleType === 'delivery' && sale.status !== 'completed') {
@@ -240,22 +239,24 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         meta: { align: 'end' },
         cell: ({ row }) => {
           const sale = row.original;
-          const isReturned = (sale.netTotal !== undefined && sale.netTotal < sale.total) || 
-                            (sale.itemReturnedQuantities && Object.keys(sale.itemReturnedQuantities).length > 0);
+          const isReturned = (sale.netTotal !== undefined && sale.netTotal < sale.total) ||
+            (sale.itemReturnedQuantities && Object.keys(sale.itemReturnedQuantities).length > 0);
 
           if (isReturned) {
             const totalReturned = sale.netTotal !== undefined ? money.subtract(sale.total, sale.netTotal) : 0;
             const isFullReturn = sale.netTotal === 0;
             const returnParts = formatCurrencyParts(totalReturned);
-            
+
             return (
-              <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-orange-500 text-orange-500 text-[10px] font-black uppercase tracking-wider bg-transparent'>
-                <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>assignment_return</span>
+              <span className={`${isFullReturn ? 'badge-purple' : 'badge-warning'} gap-1.5`} dir={language === 'AR' ? 'rtl' : 'ltr'}>
+                <span className='material-symbols-rounded'>assignment_return</span>
                 {isFullReturn ? (
                   t.fullReturn
                 ) : (
                   <span className='flex items-center gap-1'>
-                    {t.partialReturn} -{returnParts.amount} <span className='text-[8px] opacity-70'>{returnParts.symbol}</span>
+                    <span>{t.partialReturn}</span>
+                    <span dir='ltr' className='font-bold tabular-nums'>{returnParts.amount}</span>
+                    <span className='text-[8px] opacity-70'>{returnParts.symbol}</span>
                   </span>
                 )}
               </span>
@@ -264,8 +265,8 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
 
           if (sale.status === 'cancelled') {
             return (
-              <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-red-500 text-red-500 text-[10px] font-black uppercase tracking-wider bg-transparent'>
-                <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>cancel</span>
+              <span className='badge-danger gap-1.5' dir={language === 'AR' ? 'rtl' : 'ltr'}>
+                <span className='material-symbols-rounded'>cancel</span>
                 {t.cancelled || 'Cancelled'}
               </span>
             );
@@ -275,30 +276,30 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           if (sale.saleType === 'delivery' && sale.status !== 'completed') {
             const isWithDelivery = sale.status === 'with_delivery';
             const isOnWay = sale.status === 'on_way';
-            
-            let colorClass = 'border-blue-500 text-blue-500';
+
+            let badgeClass = 'badge-neutral';
             let icon = 'pending';
             if (isWithDelivery) {
-              colorClass = 'border-indigo-500 text-indigo-500';
+              badgeClass = 'badge-blue';
               icon = 'delivery_dining';
             } else if (isOnWay) {
-              colorClass = 'border-orange-500 text-orange-500';
+              badgeClass = 'badge-teal';
               icon = 'local_shipping';
             }
 
             const statusText = t[sale.status!] || sale.status;
 
             return (
-              <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border ${colorClass} text-[10px] font-black uppercase tracking-wider bg-transparent`}>
-                <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>{icon}</span>
+              <span className={`${badgeClass} gap-1.5`} dir={language === 'AR' ? 'rtl' : 'ltr'}>
+                <span className='material-symbols-rounded'>{icon}</span>
                 {statusText}
               </span>
             );
           }
 
           return (
-            <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-emerald-500 text-emerald-500 text-[10px] font-black uppercase tracking-wider bg-transparent'>
-              <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>check_circle</span>
+            <span className='badge-success gap-1.5' dir={language === 'AR' ? 'rtl' : 'ltr'}>
+              <span className='material-symbols-rounded'>check_circle</span>
               {t.completed || 'Completed'}
             </span>
           );
@@ -312,7 +313,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           const employee = employees.find(e => e.id === empId || e.userId === empId);
           return (
             <div className='flex items-center gap-1.5'>
-               <div className='w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0'>
+              <div className='w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0'>
                 <span className='material-symbols-rounded text-[14px] text-gray-400'>person</span>
               </div>
               <span className='text-xs font-medium text-gray-600 dark:text-gray-400'>
@@ -323,7 +324,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         },
       },
     ],
-    [t, textTransform, customers, employees]
+    [t, textTransform, customers, employees, language]
   );
 
   const filterableColumns = React.useMemo(
@@ -451,7 +452,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   // Wrap onProcessReturn to track pending state for the "real" duration
   const handleProcessReturn = async (returnData: Return) => {
     if (!returnData.saleId) return;
-    
+
     setPendingIds(prev => new Set(prev).add(returnData.saleId));
     try {
       await onProcessReturn(returnData);
@@ -480,7 +481,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   const showLoading = isLoading || isMounting;
 
   return (
-    <div className='h-full flex flex-col space-y-4 animate-fade-in'>
+    <div className='h-full flex flex-col space-y-4 animate-fade-in' dir={language === 'AR' ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
         <div>
@@ -546,7 +547,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
               <button
                 onClick={exportToCSV}
                 disabled={filteredSales.length === 0}
-                className='h-9 px-3 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-xs font-semibold disabled:opacity-50 text-gray-700 dark:text-gray-200'
+                className='h-9 px-3 rounded-full bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-xs font-semibold disabled:opacity-50 text-gray-700 dark:text-gray-200'
               >
                 <span className='material-symbols-rounded text-lg'>download</span>
                 <span className='hidden lg:inline'>{t.exportCSV}</span>
