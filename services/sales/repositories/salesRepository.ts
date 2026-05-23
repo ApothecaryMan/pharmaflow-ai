@@ -32,6 +32,7 @@ const SALE_LIST_COLUMNS = [
   'net_total',
   'item_returned_quantities',
   'daily_order_number',
+  'items',
 ].join(',');
 
 export const salesRepository = {

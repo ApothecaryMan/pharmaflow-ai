@@ -76,8 +76,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   onToggleBottom,
   toggleTooltip,
 }) => {
-  const baseClasses = `flex flex-col shrink-0 ${mb}`;
-  const stickyClasses = sticky ? 'sticky top-0 z-40 bg-(--bg-page-surface)/80 backdrop-blur-md' : '';
+  const baseClasses = `flex flex-col shrink-0 relative ${mb}`;
+  const stickyClasses = sticky ? 'sticky top-0 z-40' : '';
   const borderClasses = border ? 'border-b border-zinc-200/50 dark:border-zinc-800/50' : '';
 
   return (
@@ -85,6 +85,16 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       className={`${baseClasses} ${stickyClasses} ${borderClasses} ${className}`}
       dir={dir}
     >
+      {/* Blurry fade-out background */}
+      {sticky && (
+        <div 
+          className="absolute inset-0 -z-10 bg-(--bg-page-surface)/80 backdrop-blur-md pointer-events-none"
+          style={{
+            WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 24px), transparent 100%)',
+            maskImage: 'linear-gradient(to bottom, black calc(100% - 24px), transparent 100%)'
+          }}
+        />
+      )}
       {/* Top Row: Left, Center, Right slots */}
       <div className="flex flex-wrap md:flex-nowrap items-center justify-between w-full px-page py-3 md:py-3.5 gap-y-3">
         {/* Left Section: Actions / Title */}

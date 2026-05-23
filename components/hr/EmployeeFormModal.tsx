@@ -9,9 +9,10 @@ import { permissionsService } from '../../services/auth/permissionsService';
 import { authService } from '../../services/auth/authService';
 import { idGenerator } from '../../utils/idGenerator';
 import { DEPARTMENT_ROLES } from '../../config/employeeRoles';
-import { BUTTON_BASE, INPUT_BASE } from '../../utils/themeStyles';
+import { BUTTON_BASE, INPUT_BASE, PROFILE_GLASS_CARD_BASE } from '../../utils/themeStyles';
 import type { Branch, Employee } from '../../types';
 import { TRANSLATIONS } from '../../i18n/translations';
+import { renderBanner, BANNER_STYLES } from '../../utils/banners';
 
 interface EmployeeFormModalProps {
   isOpen: boolean;
@@ -58,8 +59,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
   const [passwordError, setPasswordError] = useState('');
   const [wantsToChangePassword, setWantsToChangePassword] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  // eslint-disable-next-line @typescript-eslint-no-unused-vars
-  const [generatedTempPassword, setGeneratedTempPassword] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Initialize form data when employee changes
   useEffect(() => {
@@ -76,8 +76,8 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     setIsOldPasswordVerified(false);
     setPasswordError('');
     setWantsToChangePassword(false);
-    setGeneratedTempPassword(null);
     setIsResetting(false);
+    setIsSaving(false);
   }, [employee, isOpen]);
 
   // Dependency Matrix: Filter Roles based on Selected Department
@@ -135,8 +135,8 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     setIsOldPasswordVerified(false);
     setPasswordError('');
     setWantsToChangePassword(false);
-    setGeneratedTempPassword(null);
     setIsResetting(false);
+    setIsSaving(false);
   };
 
   const getInitials = (name: string) => {
@@ -172,6 +172,8 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     // Secure Password Hashing
     let hashedPassword = employee?.password; // Default: keep existing password
 
+    const hasNoPassword = employee && !employee.password;
+
     // Only process password if user explicitly wants to change it
     if (wantsToChangePassword && formData.password && formData.password.trim().length > 0) {
       const { hashPassword } = await import('../../services/auth/hashUtils');
@@ -183,8 +185,8 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
       }
 
       hashedPassword = await hashPassword(formData.password);
-    } else if (!employee && formData.password && formData.password.trim().length > 0) {
-      // New employee: hash the password directly
+    } else if ((!employee || hasNoPassword) && formData.password && formData.password.trim().length > 0) {
+      // New employee or existing employee with no password: hash the password directly
       const { hashPassword } = await import('../../services/auth/hashUtils');
       hashedPassword = await hashPassword(formData.password);
     }
@@ -194,6 +196,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
       password: hashedPassword,
     };
 
+    setIsSaving(true);
     try {
       await onSave(finalFormData);
       playSuccess();
@@ -201,8 +204,26 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     } catch (error) {
       console.error('Failed to save employee', error);
       playError();
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  const getBannerStyleByDepartment = (dept: string) => {
+    switch (dept) {
+      case 'pharmacy': return 'pharma';
+      case 'it': return 'cyberhex';
+      case 'hr': return 'abstract';
+      case 'sales': return 'synthwave';
+      case 'logistics': return 'chaos';
+      case 'marketing': return 'floral';
+      default: return 'pattern';
+    }
+  };
+
+  const bannerStyle = getBannerStyleByDepartment(formData.department || 'pharmacy');
+  const activeBanner = BANNER_STYLES.find((b) => b.id === bannerStyle);
+  const bannerAccent = activeBanner?.accentColor || 'var(--primary-500)';
 
   return (
     <Modal
@@ -213,9 +234,24 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
       activeTab={activeTab}
       onTabChange={setActiveTab}
       icon='badge'
-      size='4xl'
+      size='2xl'
       height='80vh'
       hideCloseButton={true}
+      bodyClassName="p-0 bg-(--bg-card)"
+      style={
+        {
+          '--bg-card': `color-mix(in srgb, ${bannerAccent} 12%, var(--bg-card-base))`,
+          border: '4px solid transparent',
+          backgroundImage: `linear-gradient(var(--bg-card), var(--bg-card)), linear-gradient(135deg, ${bannerAccent}, var(--modal-border-gradient-end))`,
+          backgroundOrigin: 'border-box',
+          backgroundClip: 'content-box, border-box',
+          boxShadow: 'none',
+          '--primary-500': bannerAccent,
+          '--primary-600': `color-mix(in srgb, ${bannerAccent} 85%, black)`,
+          '--primary-400': `color-mix(in srgb, ${bannerAccent} 85%, white)`,
+          '--primary-300': `color-mix(in srgb, ${bannerAccent} 60%, white)`,
+        } as React.CSSProperties
+      }
       footer={
         <div className='flex items-center justify-end gap-3'>
           <button
@@ -226,109 +262,149 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
           </button>
           <button
             onClick={handleSave}
-            className={`${BUTTON_BASE} px-8 py-2.5 text-(--text-primary) font-bold`}
+            disabled={isSaving}
+            className={`${BUTTON_BASE} px-8 py-2.5 text-(--text-primary) font-bold flex items-center justify-center gap-2 min-w-[120px]`}
           >
-            {t.modal.save}
+            {isSaving ? (
+              <>
+                <span className="animate-spin rounded-full h-4 w-4 border-2 border-(--text-primary) border-t-transparent" />
+                {language === 'AR' ? 'جاري الحفظ...' : 'Saving...'}
+              </>
+            ) : (
+              t.modal.save
+            )}
           </button>
         </div>
       }
     >
-      <div className='space-y-6'>
-        {/* Top Section - Profile Picture & Identity */}
-        <div className='flex flex-col items-center justify-center gap-4 pb-6'>
-          <div className='relative group'>
-            <div className='relative'>
-              {formData.image ? (
-                <img
-                  src={formData.image}
-                  alt='Employee'
-                  className='w-32 h-32 rounded-[2rem] object-cover shadow-xl border-4 border-white dark:border-(--bg-card) ring-1 ring-(--border-divider)'
-                />
-              ) : (
-                <div
-                  className='w-32 h-32 rounded-[2rem] bg-gray-200 dark:bg-zinc-900/50 flex items-center justify-center text-gray-500 dark:text-gray-400 text-4xl font-bold border border-(--border-divider) shadow-inner animate-in fade-in zoom-in duration-500'
-                >
-                  {getInitials(formData.name || '') === '?' || !formData.name?.trim() ? (
-                    <span className='material-symbols-rounded' style={{ fontSize: '3rem' }}>photo_camera</span>
-                  ) : (
-                    getInitials(formData.name)
-                  )}
-                </div>
-              )}
-              
-              <label
-                className='absolute inset-0 flex items-center justify-center bg-black/60 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer backdrop-blur-[4px] border-2 border-white/10 overflow-hidden'
-                title={t.changePhoto}
-              >
-                <input
-                  type='file'
-                  accept='image/*'
-                  className='hidden'
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      if (file.size > 500 * 1024) {
-                        playError();
-                        alert(
-                          language === 'AR'
-                            ? 'حجم الصورة كبير جداً (الحد الأقصى 500KB)'
-                            : 'Image too large (max 500KB)'
-                        );
-                        return;
-                      }
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setFormData({ ...formData, image: reader.result as string });
-                      };
-                      reader.readAsDataURL(file);
-                    }
+      <>
+        <div className="animate-fade-in text-(--text-primary)">
+          {/* Banner Graphic with Selectable Cover styles */}
+          <div className="relative w-full aspect-[5/2] bg-(--bg-secondary) overflow-hidden select-none group/cover">
+            {renderBanner(bannerStyle, { x: 0, y: 0 }, 1.2)}
+            
+            {/* Dynamic Cover Customizer Buttons */}
+            <div className="absolute top-3 end-3 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10 opacity-0 group-hover/cover:opacity-100 transition-opacity duration-300 z-20">
+              <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider select-none pe-1">
+                {language === 'AR' ? 'نمط الغلاف:' : 'Cover Style:'}
+              </span>
+              {[
+                { dept: 'pharmacy', color: '#0d9488', label: language === 'AR' ? 'صيدلي' : 'Pharma' },
+                { dept: 'sales', color: '#ec4899', label: language === 'AR' ? 'نيون' : 'Synthwave' },
+                { dept: 'hr', color: '#8b5cf6', label: language === 'AR' ? 'تجريدي' : 'Abstract' },
+                { dept: 'it', color: '#10b981', label: language === 'AR' ? 'سيبر شبكي' : 'Cyberhex' },
+                { dept: 'logistics', color: '#f97316', label: language === 'AR' ? 'تموجات' : 'Chaos' },
+                { dept: 'marketing', color: '#f43f5e', label: language === 'AR' ? 'ورود' : 'Floral' },
+              ].map((opt) => (
+                <button
+                  key={opt.dept}
+                  type="button"
+                  onClick={() => {
+                    setFormData((prev) => ({ ...prev, department: opt.dept as any }));
+                    playBeep();
                   }}
+                  className={`w-4 h-4 rounded-full border-2 transition-all hover:scale-125 ${
+                    formData.department === opt.dept 
+                      ? 'border-white scale-110 shadow-sm' 
+                      : 'border-transparent opacity-60 hover:opacity-100'
+                  }`}
+                  style={{ backgroundColor: opt.color }}
+                  title={opt.label}
                 />
-              </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Content Section below banner */}
+          <div className="relative px-6 pb-6 pt-12">
+            {/* Overlapping Avatar */}
+            <div className="absolute -top-12 start-6 z-10">
+              <div className="relative group/avatar">
+                <div className="w-24 h-24 rounded-full border-4 border-(--bg-card) overflow-hidden bg-(--bg-secondary) shadow-md flex items-center justify-center relative">
+                  {formData.image ? (
+                    <img 
+                      src={formData.image} 
+                      alt={formData.name || ''} 
+                      className="w-full h-full object-cover" 
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-zinc-900/50 text-gray-500 dark:bg-zinc-900/50 text-3xl font-bold">
+                      {getInitials(formData.name || '') === '?' || !formData.name?.trim() ? (
+                        <span className="material-symbols-rounded text-3xl">photo_camera</span>
+                      ) : (
+                        getInitials(formData.name)
+                      )}
+                    </div>
+                  )}
+
+                  {/* Upload Image Overlay */}
+                  <label
+                    className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 cursor-pointer backdrop-blur-[2px] border border-white/10"
+                    title={t.changePhoto}
+                  >
+                    <span className="material-symbols-rounded text-white text-xl">photo_camera</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 500 * 1024) {
+                            playError();
+                            alert(
+                              language === 'AR'
+                                ? 'حجم الصورة كبير جداً (الحد الأقصى 500KB)'
+                                : 'Image too large (max 500KB)'
+                            );
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setFormData((prev) => ({ ...prev, image: reader.result as string }));
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+
+                {/* Remove Image Button */}
+                {formData.image && (
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, image: undefined }))}
+                    className={`absolute -top-1 -end-1 w-6 h-6 bg-white dark:bg-zinc-800 rounded-full border border-zinc-200 dark:border-zinc-700 text-gray-400 hover:text-red-500 shadow-md flex items-center justify-center z-20`}
+                    title={t.removePhoto}
+                  >
+                    <span className="material-symbols-rounded text-[14px] font-bold">close</span>
+                  </button>
+                )}
+              </div>
             </div>
 
-            {formData.image ? (
-              <button
-                type='button'
-                onClick={() => setFormData({ ...formData, image: undefined })}
-                className={`absolute -top-1 ${language === 'AR' ? '-right-1' : '-left-1'} w-8 h-8 bg-white dark:bg-(--bg-card) ${BUTTON_CLOSE_BASE} rounded-xl text-gray-400 hover:text-red-500 shadow-lg hover:shadow-red-500/10 flex items-center justify-center z-10`}
-                title={t.removePhoto}
-              >
-                <span
-                  className='material-symbols-rounded'
-                  style={{ 
-                    fontSize: 'var(--icon-lg)',
-                    fontVariationSettings: "'wght' 700" 
-                  }}
-                >
-                  close
-                </span>
-              </button>
-            ) : null}
-          </div>
-          
-          <div className='text-center space-y-1'>
-            <h3 className='text-lg font-bold text-(--text-primary)'>
-              {formData.name || t.newEmployee}
-            </h3>
-            <div className='flex items-center gap-2 justify-center'>
-              <span className='px-2 py-0.5 rounded-full bg-(--bg-surface-neutral) text-(--text-tertiary) text-[10px] font-bold uppercase tracking-wider border border-(--border-divider)'>
-                {availableRoles.find(r => r.key === (formData.role || 'pharmacist'))?.label}
-              </span>
-              <span className='w-1 h-1 rounded-full bg-(--border-divider)' />
-              <span className='text-[10px] text-gray-400 font-medium uppercase tracking-tight'>
-                Maximum 500KB
-              </span>
+            {/* Identity Live Preview Section next to avatar */}
+            <div className="ps-28 pb-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-xl font-bold text-(--text-primary)">
+                  {(language === 'AR' && formData.nameArabic) || formData.name || t.newEmployee}
+                </h3>
+              </div>
+              <p className="text-xs font-semibold text-primary-600 dark:text-primary-400">
+                {availableRoles.find(r => r.key === (formData.role || 'pharmacist'))?.label || ''} 
+                {formData.position ? ` • ${formData.position}` : ''}
+              </p>
             </div>
           </div>
         </div>
 
         {/* Main Form Area */}
-        <div className='space-y-6'>
+        <div className="px-6 pb-6 space-y-6">
           {activeTab === 'general' ? (
             <div className='animate-in fade-in slide-in-from-bottom-2 duration-300'>
               {/* General Info Card */}
-              <div className='bg-(--bg-surface-neutral)/50 rounded-2xl p-5 border border-(--border-divider) space-y-5'>
+              <div className={`${PROFILE_GLASS_CARD_BASE} p-5 space-y-5`}>
                 <div className='grid grid-cols-12 gap-x-4 gap-y-5'>
                   {/* Row 1: Names (EN + AR) */}
                   <div className='col-span-6 space-y-1.5'>
@@ -570,7 +646,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
           ) : activeTab === 'credentials' ? (
             <div className='animate-in fade-in slide-in-from-bottom-2 duration-300'>
               {/* Credentials Card */}
-              <div className='bg-(--bg-surface-neutral)/50 rounded-2xl p-5 border border-(--border-divider) space-y-4'>
+              <div className={`${PROFILE_GLASS_CARD_BASE} p-5 space-y-4`}>
                 <div className='flex items-center gap-2 pb-2 border-b border-(--border-divider)'>
                   <span 
                     className='material-symbols-rounded text-primary-500'
@@ -749,8 +825,8 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                   </div>
                 </div>
 
-                {/* Password field for NEW employees */}
-                {!employee && (
+                {/* Password field for NEW employees or EDITING employees with no password */}
+                {(!employee || !employee.password) && (
                   <div className='space-y-1.5 pt-2'>
                     <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
                       {t.password}
@@ -998,7 +1074,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
           ) : activeTab === 'documents' ? (
             <div className='animate-in fade-in slide-in-from-bottom-2 duration-300'>
               {/* Documents Card */}
-              <div className='bg-(--bg-surface-neutral)/50 rounded-2xl p-5 border border-(--border-divider) space-y-4'>
+              <div className={`${PROFILE_GLASS_CARD_BASE} p-5 space-y-4`}>
                 <div className='flex items-center gap-2 pb-2 border-b border-(--border-divider)'>
                   <span 
                     className='material-symbols-rounded text-primary-500'
@@ -1166,7 +1242,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                   </div>
 
                   {/* Syndicate Cards - Side by Side - Only for Pharmacists */}
-                  {(formData.role || 'pharmacist') === 'pharmacist' && (
+                  {((formData.role || 'pharmacist').includes('pharmacist')) && (
                     <div className='space-y-2'>
                       <label className='text-xs font-semibold text-gray-500 uppercase px-1 flex items-center gap-2'>
                         <span 
@@ -1327,7 +1403,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
           </div>
         ) : null}
       </div>
-    </div>
+    </>
   </Modal>
   );
 };

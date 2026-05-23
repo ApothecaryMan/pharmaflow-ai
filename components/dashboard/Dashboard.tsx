@@ -249,8 +249,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   // --- STATS & ANALYTICS ---
   const totalExpenses = useMemo(
-    () => purchases.reduce((sum, p) => sum + p.totalCost, 0),
-    [purchases]
+    () => filteredData.purchases.reduce((sum, p) => sum + p.totalCost, 0),
+    [filteredData.purchases]
   );
 
   const {
@@ -278,7 +278,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     sales: filteredData.sales, 
     inventory, 
     batches, 
-    totalExpenses: filteredData.purchases.reduce((sum, p) => sum + p.totalCost, 0), 
+    totalExpenses, 
     language, 
     branchId: activeBranchId 
   });
@@ -431,8 +431,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             { label: t.expenses, value: formatCurrency(totalExpenses) },
             { label: t.expand?.profitMargin || 'Margin', value: `${totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0'}%` }
           ] : [
-            { label: t.expand?.metrics || 'Total Count', value: id === 'expenses' ? purchases.length : sales.length },
-            { label: t.expand?.amount || 'Average', value: formatCurrency((id === 'expenses' ? (purchases.length > 0 ? totalExpenses / purchases.length : 0) : (sales.length > 0 ? totalRevenue / sales.length : 0))) }
+            { label: t.expand?.metrics || 'Total Count', value: id === 'expenses' ? filteredData.purchases.length : filteredData.sales.length },
+            { label: t.expand?.amount || 'Average', value: formatCurrency((id === 'expenses' ? (filteredData.purchases.length > 0 ? totalExpenses / filteredData.purchases.length : 0) : (filteredData.sales.length > 0 ? totalRevenue / filteredData.sales.length : 0))) }
           ]
         } />
 
@@ -561,10 +561,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
       salesChart: {
         title: t.trend,
         actions: exportBtn('sales_trend', salesData),
-        children: chartView('salesChart', sales.length)
+        children: chartView('salesChart', filteredData.sales.length)
       }
     };
-  }, [sales, purchases, totalRevenue, totalExpenses, netProfit, lowStockItems, topSelling20, expiringItems, recentSales20, salesData, chartColors, t, language, textTransform]);
+  }, [filteredData, totalRevenue, totalExpenses, netProfit, lowStockItems, topSelling20, expiringItems, recentSales20, salesData, chartColors, t, language, textTransform]);
 
 
   // --- CHART COLOR LOGIC ---
