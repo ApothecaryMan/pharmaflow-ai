@@ -1,5 +1,5 @@
-import React from 'react';
 import * as Myna from '@mynaui/icons-react';
+import type React from 'react';
 
 export type IconProps = {
   size?: number | string;
@@ -68,7 +68,7 @@ const createIcon = (name: string) => {
   return (props: IconProps) => {
     const { active, ...otherProps } = props;
     let BaseIcon = InternalRegistry[name];
-    
+
     if (!BaseIcon) {
       // Fallback to Myna direct lookup or Circle
       BaseIcon = (Myna as any)[name] || Myna.Circle;
@@ -108,14 +108,29 @@ export const Finance = createIcon('finance');
 export const Compliance = createIcon('compliance');
 export const Test = createIcon('test');
 
+// Component cache to ensure component references are stable across renders
+const componentCache: Record<string, React.FC<IconProps>> = {};
+
+const getOrCreateIcon = (name: string): React.FC<IconProps> => {
+  if (!componentCache[name]) {
+    componentCache[name] = createIcon(name);
+  }
+  return componentCache[name];
+};
+
 // Dynamic lookup helper
 export const getIconByName = (name: string): React.FC<any> => {
-  return createIcon(name);
+  return getOrCreateIcon(name);
 };
 
 // Legacy support
 export const Icons: any = new Proxy(InternalRegistry, {
-  get: (target, prop: string) => createIcon(prop)
+  get: (target, prop: string) => {
+    if (typeof prop === 'symbol' || prop === 'then') {
+      return (target as any)[prop];
+    }
+    return getOrCreateIcon(prop);
+  },
 });
 
 export default Icons;
