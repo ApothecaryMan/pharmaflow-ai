@@ -185,10 +185,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
       style={
         {
           '--bg-card': `color-mix(in srgb, ${bannerAccent} 12%, var(--bg-card-base))`,
-          border: '4px solid transparent',
-          backgroundImage: `linear-gradient(var(--bg-card), var(--bg-card)), linear-gradient(135deg, ${bannerAccent}, var(--modal-border-gradient-end))`,
-          backgroundOrigin: 'border-box',
-          backgroundClip: 'content-box, border-box',
+          border: `1.5px solid color-mix(in srgb, ${bannerAccent} 35%, var(--border-divider))`,
           boxShadow: 'none',
           '--primary-500': bannerAccent,
           '--primary-600': `color-mix(in srgb, ${bannerAccent} 85%, black)`,
@@ -211,11 +208,12 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
               {renderBanner(bannerStyle, { x: 0, y: 0 }, 1.2)}
             </div>
 
-            {/* Profile Avatar Overlapping & Content Container */}
-            <div className="relative px-6 pb-6 pt-20">
-              {/* Overlapping Avatar */}
-              <div className="absolute -top-16 start-6">
-                <div className="relative">
+            {/* Profile Avatar & Header Info Row */}
+            <div className="relative px-6 pb-6 pt-6">
+              {/* Flex Container for Avatar + Details */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5 -mt-24 mb-4 relative z-10">
+                {/* Avatar */}
+                <div className="relative shrink-0">
                   <div className="w-32 h-32 rounded-full border-4 border-(--bg-card) overflow-hidden bg-(--bg-secondary) shadow-md flex items-center justify-center">
                     {employee.image ? (
                       <img
@@ -245,22 +243,10 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                     </span>
                   </span>
                 </div>
-              </div>
 
-              {/* Custom Bio Status Badge next to Avatar styled as a Thinking Bubble */}
-              <div className="absolute -top-10 start-40 bg-white/15 dark:bg-black/40 backdrop-blur-md rounded-3xl rounded-bl-lg border border-white/20 dark:border-white/10 text-xs text-(--text-primary) px-4 py-2 shadow-md max-w-[calc(100%-11.5rem)] z-10">
-                <span className="truncate block max-w-[180px] font-medium italic">
-                  {employee.position && employee.position.trim() ? employee.position : t.emptyBio}
-                </span>
-              </div>
-              {/* Thinking Bubble Dots leading to Avatar */}
-              <div className="absolute -top-2 start-36 w-2.5 h-2.5 rounded-full bg-white/15 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 z-10" />
-              <div className="absolute top-0.5 start-32 w-1.5 h-1.5 rounded-full bg-white/15 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 z-10" />
-
-              {/* Info Details Section */}
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
+                {/* Header Text details next to Avatar */}
+                <div className="flex-1 min-w-0 pb-2">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <h3 className="text-xl font-bold text-(--text-primary) flex items-center gap-2 flex-wrap">
                       <span>{language === 'AR' && employee.nameArabic ? employee.nameArabic : employee.name}</span>
                       {employee.username && (
@@ -269,6 +255,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                         </span>
                       )}
                     </h3>
+
                     {employee.biometricCredentialId && (
                       <span
                         className="material-symbols-rounded text-emerald-500"
@@ -279,10 +266,24 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                       </span>
                     )}
                   </div>
-                  <p className="text-xs font-semibold text-primary-600 dark:text-primary-400">
+                  <p className="text-xs font-semibold text-primary-600 dark:text-primary-400 mt-1">
                     {getRoleLabel(employee.role, t.roles)} &bull; {t.departments[employee.department] || employee.department}
                   </p>
                 </div>
+              </div>
+
+              {/* Custom Bio Status Badge next to Avatar styled as a Thinking Bubble */}
+              <div className="absolute -top-10 start-40 bg-white/15 dark:bg-black/40 backdrop-blur-md rounded-3xl rounded-es-lg border border-white/20 dark:border-white/10 text-xs text-(--text-primary) px-4 py-2 shadow-md max-w-[calc(100%-11.5rem)] z-10">
+                <span className="truncate block max-w-[180px] font-medium italic">
+                  {employee.position && employee.position.trim() ? employee.position : t.emptyBio}
+                </span>
+              </div>
+              {/* Thinking Bubble Dots leading to Avatar */}
+              <div className="absolute -top-2 start-36 w-2.5 h-2.5 rounded-full bg-white/15 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 z-10" />
+              <div className="absolute top-0.5 start-32 w-1.5 h-1.5 rounded-full bg-white/15 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 z-10" />
+
+              {/* Info Details Section */}
+              <div className="space-y-4">
 
                 {/* Profile Grid */}
                 <div className="space-y-3 pt-2">
@@ -313,6 +314,11 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                         icon: 'health_and_safety',
                         label: t.license,
                         value: employee.license,
+                      }] : []),
+                      ...(canViewFinancial && employee.salary !== undefined ? [{
+                        icon: 'payments',
+                        label: t.salary,
+                        value: renderPrice(employee.salary),
                       }] : [])
                     ].map((item) => (
                       <div key={item.label} className={`${PROFILE_GLASS_CARD_BASE} flex items-center gap-2.5`}>
@@ -334,27 +340,6 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                     ))}
                   </div>
                 </div>
-
-                {/* Salary (Guarded) */}
-                {canViewFinancial && employee.salary !== undefined && (
-                  <div className="space-y-2 pt-2">
-                    <h4
-                      className="text-xs font-bold uppercase tracking-wider"
-                      style={{ color: bannerAccent }}
-                    >
-                      {t.salary}
-                    </h4>
-                    <div className={`${PROFILE_GLASS_CARD_BASE} flex items-center gap-2.5`}>
-                      <span className="material-symbols-rounded text-[18px] text-emerald-600 dark:text-emerald-400">payments</span>
-                      <div>
-                        <p className="text-[10px] text-(--text-tertiary) font-bold">{t.salary}</p>
-                        <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                          {renderPrice(employee.salary)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {/* Notes */}
                 {employee.notes && (
