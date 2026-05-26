@@ -51,7 +51,7 @@ export const useInventorySearch = ({
       filteredDrugs: results, 
       totalResults: uniqueGroups.size 
     };
-  }, [search, category, stockFilter, activeBranchId]);
+  }, [search, category, stockFilter, activeBranchId, inventory]);
 
   return { filteredDrugs, totalResults };
 };
