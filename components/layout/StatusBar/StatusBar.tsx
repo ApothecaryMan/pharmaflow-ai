@@ -118,15 +118,21 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
     } = useSettings();
 
     const tickerData = useDynamicTickerData();
-    const { employees, isLoading } = useData();
+    const { employees, isLoading, activeOrgId } = useData();
     const { currentShift, isLoading: isShiftLoading } = useShift();
 
     const isAR = language === 'AR';
 
+    // Filter employees by active organization to prevent database-wide checks in QuickLogin
+    const orgEmployees = useMemo(() => {
+      if (!activeOrgId) return [];
+      return employees.filter((emp) => emp.orgId === activeOrgId);
+    }, [employees, activeOrgId]);
+
     // 2. Smart Memoization: Prepare data outside JSX
     const currentEmployee = useMemo(() => 
-      employees.find((e) => e.id === currentEmployeeId),
-      [employees, currentEmployeeId]
+      orgEmployees.find((e) => e.id === currentEmployeeId),
+      [orgEmployees, currentEmployeeId]
     );
 
     const shiftTooltip = useMemo(() => {
@@ -221,7 +227,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
             userName={currentEmployee?.name}
             isLoading={isLoading}
             roleLabel={currentEmployee?.role}
-            employees={employees}
+            employees={orgEmployees}
             currentEmployeeId={currentEmployeeId}
             onSelectEmployee={onSelectEmployee}
             language={language}

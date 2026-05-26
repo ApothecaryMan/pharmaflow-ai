@@ -71,8 +71,9 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   }, []);
 
   // Fetch all employees when "Global View" is toggled
+  // Fetch all employees in the active organization on mount for validation & global view
   useEffect(() => {
-    if (showAllBranches && allEmployeesFetched.length === 0 && !isFetchingGlobal) {
+    if (allEmployeesFetched.length === 0 && !isFetchingGlobal) {
       const fetchAll = async () => {
         setIsFetchingGlobal(true);
         try {
@@ -87,7 +88,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
       };
       fetchAll();
     }
-  }, [showAllBranches, allEmployeesFetched.length, isFetchingGlobal]);
+  }, [allEmployeesFetched.length, isFetchingGlobal]);
 
   // 1. Access Matrix: Filter Departments based on User Role
   const availableDepartments = useMemo(() => {
@@ -445,7 +446,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         onClose={closeModal}
         employee={editingEmployee}
         onSave={handleFormSave}
-        employeesListToCheck={showAllBranches ? allEmployeesFetched : employees}
+        employeesListToCheck={allEmployeesFetched.length > 0 ? allEmployeesFetched : employees}
         branches={branches}
         availableDepartments={availableDepartments}
         language={language}

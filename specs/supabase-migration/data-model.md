@@ -145,7 +145,7 @@ CREATE TABLE employees (
   created_at      TIMESTAMPTZ DEFAULT now(),
   updated_at      TIMESTAMPTZ DEFAULT now(),
   UNIQUE(branch_id, employee_code),  -- ✅ Scoped to branch
-  UNIQUE(branch_id, username)        -- ✅ Scoped to branch
+  UNIQUE(org_id, username)           -- ✅ Scoped to organization
 );
 
 -- ═══════════════════════════════════════════
