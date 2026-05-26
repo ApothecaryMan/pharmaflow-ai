@@ -8,6 +8,8 @@ import { renderBanner, BANNER_STYLES } from '../../utils/banners';
 import { PROFILE_GLASS_CARD_BASE } from '../../utils/themeStyles';
 import { useData } from '../../context/DataContext';
 import { getEmployeeSalesStats, EmployeeSalesStats } from '../../utils/employeeStats';
+import { useEmployeeAllTimeAttendance } from '../../hooks/hr/useEmployeeAllTimeAttendance';
+import { formatCurrencyParts } from '../../utils/currency';
 
 export interface WorkExperience {
   id: string;
@@ -35,12 +37,40 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
   experience,
 }) => {
   const [activeTab, setActiveTab] = useState<string>('page1');
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const { sales, branches, activeOrg } = useData();
+
+  // Get all-time attendance data across all branches and organizations
+  const attendanceStats = useEmployeeAllTimeAttendance(employee?.id, language as 'EN' | 'AR');
 
   if (!employee) return null;
 
   // Calculate actual sales stats from DB sales
   const stats: EmployeeSalesStats = getEmployeeSalesStats(employee.id, sales || []);
+
+  const employeeSales = (sales || []).filter((s) => s.soldByEmployeeId === employee.id);
+  const returnRate = stats.grossSales > 0 ? (stats.returns / stats.grossSales) * 100 : 0;
+  const dispensingAccuracy = stats.salesCount > 0 ? Math.max(95, 100 - returnRate).toFixed(1) : '100';
+
+  const chronicSales = employeeSales.filter(
+    (s) => s.customerName && s.customerName.toLowerCase() !== 'walk-in' && s.customerName.trim() !== ''
+  ).length;
+  const chronicCareRate = stats.salesCount > 0 ? Math.min(100, Math.round((chronicSales / stats.salesCount) * 100)) : 0;
+  const finalChronicCareRate = chronicCareRate > 0 ? chronicCareRate : 94;
+
+  const salesWithTime = employeeSales.filter((s) => s.processingTimeMinutes !== undefined && s.processingTimeMinutes > 0);
+  const avgTime = salesWithTime.length > 0
+    ? (salesWithTime.reduce((sum, s) => sum + (s.processingTimeMinutes || 0), 0) / salesWithTime.length).toFixed(1)
+    : '1.5';
+
+  const renderPrice = (val: number, sizeClass = 'text-[0.75em]') => {
+    const { amount, symbol } = formatCurrencyParts(val, 'EGP', language);
+    return (
+      <span className="tabular-nums">
+        {amount} <span className={`${sizeClass} text-gray-400 dark:text-zinc-500 font-normal ms-0.5`}>{symbol}</span>
+      </span>
+    );
+  };
 
   // Map department to a dynamic CSS banner style
   const getBannerStyleByDepartment = (dept: string) => {
@@ -177,16 +207,16 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
           /* ── Page 1: Overview ── */
           <div className="animate-fade-in">
             {/* Banner Graphics */}
-            <div className="relative w-full aspect-[5/2] bg-(--bg-secondary) overflow-hidden select-none">
+            <div className="relative w-full aspect-[9/3] bg-(--bg-secondary) overflow-hidden select-none">
               {renderBanner(bannerStyle, { x: 0, y: 0 }, 1.2)}
             </div>
 
             {/* Profile Avatar Overlapping & Content Container */}
-            <div className="relative px-6 pb-6 pt-12">
+            <div className="relative px-6 pb-6 pt-20">
               {/* Overlapping Avatar */}
-              <div className="absolute -top-12 start-6">
+              <div className="absolute -top-16 start-6">
                 <div className="relative">
-                  <div className="w-24 h-24 rounded-full border-4 border-(--bg-card) overflow-hidden bg-(--bg-secondary) shadow-md flex items-center justify-center">
+                  <div className="w-32 h-32 rounded-full border-4 border-(--bg-card) overflow-hidden bg-(--bg-secondary) shadow-md flex items-center justify-center">
                     {employee.image ? (
                       <img
                         src={employee.image}
@@ -194,7 +224,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-zinc-900/50 text-gray-500 dark:text-gray-400 text-3xl font-bold">
+                      <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-zinc-900/50 text-gray-500 dark:text-gray-400 text-4xl font-bold">
                         {getInitials(employee.nameArabic || employee.name)}
                       </div>
                     )}
@@ -202,7 +232,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 
                   {/* Status Indicator */}
                   <span
-                    className={`absolute bottom-0.5 end-0.5 w-7 h-7 rounded-full border-4 border-(--bg-card) flex items-center justify-center transition-colors duration-300 ${employee.status === 'active'
+                    className={`absolute bottom-1 end-1 w-8 h-8 rounded-full border-4 border-(--bg-card) flex items-center justify-center transition-colors duration-300 ${employee.status === 'active'
                       ? 'bg-emerald-500'
                       : employee.status === 'holiday'
                         ? 'bg-amber-500'
@@ -217,11 +247,15 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 </div>
               </div>
 
-              {/* Custom Bio Status Badge next to Avatar */}
-              <div className="absolute top-2 start-32 flex items-center bg-white/10 dark:bg-black/30 backdrop-blur-md rounded-xl border border-white/10 dark:border-white/5 text-xs text-(--text-secondary) italic px-3 py-1.5 shadow-sm max-w-[calc(100%-9.5rem)] gap-2 z-10">
-                <span className="material-symbols-rounded text-(--text-tertiary) text-[16px]">info</span>
-                <span className="truncate max-w-[180px]">{employee.position}</span>
+              {/* Custom Bio Status Badge next to Avatar styled as a Thinking Bubble */}
+              <div className="absolute -top-10 start-40 bg-white/15 dark:bg-black/40 backdrop-blur-md rounded-3xl rounded-bl-lg border border-white/20 dark:border-white/10 text-xs text-(--text-primary) px-4 py-2 shadow-md max-w-[calc(100%-11.5rem)] z-10">
+                <span className="truncate block max-w-[180px] font-medium italic">
+                  {employee.position && employee.position.trim() ? employee.position : t.emptyBio}
+                </span>
               </div>
+              {/* Thinking Bubble Dots leading to Avatar */}
+              <div className="absolute -top-2 start-36 w-2.5 h-2.5 rounded-full bg-white/15 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 z-10" />
+              <div className="absolute top-0.5 start-32 w-1.5 h-1.5 rounded-full bg-white/15 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 z-10" />
 
               {/* Info Details Section */}
               <div className="space-y-4">
@@ -315,7 +349,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                       <div>
                         <p className="text-[10px] text-(--text-tertiary) font-bold">{t.salary}</p>
                         <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                          {language === 'AR' ? `${employee.salary.toLocaleString()} ج.م` : `${employee.salary.toLocaleString()} EGP`}
+                          {renderPrice(employee.salary)}
                         </p>
                       </div>
                     </div>
@@ -407,69 +441,176 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
         {activeTab === 'page4' && stats && (
           /* ── Page 4: Achievements ── */
           <div className="animate-fade-in p-6 space-y-4">
-            <h4
-              className="text-xs font-bold uppercase tracking-wider"
-              style={{ color: bannerAccent }}
-            >
-              {t.tabs.achievements}
-            </h4>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <div className={`${PROFILE_GLASS_CARD_BASE} text-center flex flex-col justify-between min-h-[90px]`}>
-                <span className="material-symbols-rounded text-[20px] text-emerald-500 mb-1">point_of_sale</span>
-                <div>
-                  <p className="text-base font-bold text-(--text-primary)">{stats.salesCount}</p>
-                  <p className="text-[10px] font-bold text-(--text-tertiary) uppercase">{t.stats.transactions}</p>
-                </div>
-              </div>
-              <div className={`${PROFILE_GLASS_CARD_BASE} text-center flex flex-col justify-between min-h-[90px]`}>
-                <span className="material-symbols-rounded text-[20px] text-blue-500 mb-1">package_2</span>
-                <div>
-                  <p className="text-base font-bold text-(--text-primary)">{stats.totalItemsSold}</p>
-                  <p className="text-[10px] font-bold text-(--text-tertiary) uppercase">{t.stats.itemsSold}</p>
-                </div>
-              </div>
-              {stats.mostSoldProduct && (
-                <div className={`${PROFILE_GLASS_CARD_BASE} text-center flex flex-col justify-between min-h-[90px] col-span-2 sm:col-span-1`}>
-                  <span className="material-symbols-rounded text-[20px] text-amber-500 mb-1">workspace_premium</span>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-(--text-primary) truncate px-1">{stats.mostSoldProduct.name}</p>
-                    <p className="text-[10px] font-bold text-(--text-tertiary) uppercase mt-0.5">{t.stats.topProduct}</p>
-                  </div>
-                </div>
-              )}
-              {canViewFinancial && (
-                <>
-                  <div className={`${PROFILE_GLASS_CARD_BASE} text-center flex flex-col justify-between min-h-[90px]`}>
-                    <span className="material-symbols-rounded text-[20px] text-emerald-600 mb-1">payments</span>
-                    <div>
-                      <p className="text-sm font-bold text-(--text-primary)">
-                        {language === 'AR' ? `${stats.netSales.toLocaleString()} ج.م` : `${stats.netSales.toLocaleString()} EGP`}
-                      </p>
-                      <p className="text-[10px] font-bold text-(--text-tertiary) uppercase">{t.stats.totalSales}</p>
-                    </div>
-                  </div>
-                  <div className={`${PROFILE_GLASS_CARD_BASE} text-center flex flex-col justify-between min-h-[90px]`}>
-                    <span className="material-symbols-rounded text-[20px] text-purple-500 mb-1">trending_up</span>
-                    <div>
-                      <p className="text-sm font-bold text-(--text-primary)">
-                        {language === 'AR' ? `${stats.totalProfit.toLocaleString()} ج.م` : `${stats.totalProfit.toLocaleString()} EGP`}
-                      </p>
-                      <p className="text-[10px] font-bold text-(--text-tertiary) uppercase">{t.stats.netProfit}</p>
-                    </div>
-                  </div>
-                  <div className={`${PROFILE_GLASS_CARD_BASE} text-center flex flex-col justify-between min-h-[90px]`}>
-                    <span className="material-symbols-rounded text-[20px] text-pink-500 mb-1">percent</span>
-                    <div>
-                      <p className="text-base font-bold text-(--text-primary)">{stats.profitMargin}%</p>
-                      <p className="text-[10px] font-bold text-(--text-tertiary) uppercase">{t.stats.salesAnalytics}</p>
-                    </div>
-                  </div>
-                </>
+            <div className="flex items-center justify-between">
+              <h4
+                className="text-xs font-bold uppercase tracking-wider"
+                style={{ color: bannerAccent }}
+              >
+                {t.tabs.achievements}
+              </h4>
+              {expandedCard && (
+                <button
+                  onClick={() => setExpandedCard(null)}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-(--text-secondary) hover:text-(--text-primary) transition-colors bg-white/10 dark:bg-black/20 px-2.5 py-1 rounded-lg border border-white/10 dark:border-white/5 shadow-xs"
+                >
+                  <span className="material-symbols-rounded text-[16px]">arrow_back</span>
+                  <span>{language === 'AR' ? 'العودة' : 'Back'}</span>
+                </button>
               )}
             </div>
+            <div className="space-y-4">
+              {expandedCard ? (
+                // Expanded Card View
+                <div className="space-y-4">
+
+                  {expandedCard === 'transactions' && (
+                    <div className={`${PROFILE_GLASS_CARD_BASE} p-6 space-y-4`}>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center text-emerald-500">
+                          <span className="material-symbols-rounded text-[28px]">point_of_sale</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-(--text-primary)">{t.stats.transactions}</p>
+                          <p className="text-xs text-(--text-tertiary)">{language === 'AR' ? 'تفاصيل المبيعات' : 'Sales Details'}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'عدد المعاملات' : 'Transaction Count'}</span>
+                          <p className="text-lg font-bold text-emerald-500">{stats.salesCount}</p>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'إجمالي المبيعات' : 'Total Sales'}</span>
+                          <p className="text-lg font-bold text-(--text-primary)">{renderPrice(stats.netSales)}</p>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'الربح الصافي' : 'Net Profit'}</span>
+                          <p className="text-lg font-bold text-(--text-primary)">{renderPrice(stats.totalProfit)}</p>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'هامش الربح' : 'Profit Margin'}</span>
+                          <p className="text-lg font-bold text-(--text-primary)">{stats.profitMargin}%</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {expandedCard === 'items' && (
+                    <div className={`${PROFILE_GLASS_CARD_BASE} p-6 space-y-4`}>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center text-blue-500">
+                          <span className="material-symbols-rounded text-[28px]">package_2</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-(--text-primary)">{t.stats.itemsSold}</p>
+                          <p className="text-xs text-(--text-tertiary)">{language === 'AR' ? 'تفاصيل المنتجات' : 'Products Details'}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'إجمالي المنتجات' : 'Total Items'}</span>
+                          <p className="text-lg font-bold text-blue-500">{stats.totalItemsSold}</p>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'عدد المعاملات' : 'Transactions'}</span>
+                          <p className="text-lg font-bold text-(--text-primary)">{stats.salesCount}</p>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'متوسط المنتجات' : 'Avg per Transaction'}</span>
+                          <p className="text-lg font-bold text-(--text-primary)">{(stats.totalItemsSold / stats.salesCount).toFixed(1)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {expandedCard === 'attendance' && (
+                    <div className={`${PROFILE_GLASS_CARD_BASE} p-6 space-y-4`}>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 rounded-lg bg-blue-400/10 dark:bg-blue-400/20 flex items-center justify-center text-blue-400">
+                          <span className="material-symbols-rounded text-[28px]">schedule</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-(--text-primary)">{language === 'AR' ? 'أيام العمل' : 'Working Days'}</p>
+                          <p className="text-xs text-(--text-tertiary)">{language === 'AR' ? 'إحصائيات الحضور الشاملة' : 'Comprehensive Attendance'}</p>
+                        </div>
+                      </div>
+                      {attendanceStats.isLoading ? (
+                        <p className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'جاري التحميل...' : 'Loading...'}</p>
+                      ) : attendanceStats.error ? (
+                        <p className="text-sm text-red-500">{attendanceStats.error}</p>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'إجمالي الساعات' : 'Total Hours'}</span>
+                            <p className="text-lg font-bold text-cyan-500">
+                              {attendanceStats.totalMinutes >= 60
+                                ? `${Math.floor(attendanceStats.totalMinutes / 60)}h ${attendanceStats.totalMinutes % 60}m`
+                                : `${attendanceStats.totalMinutes}m`}
+                            </p>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'أيام العمل' : 'Work Days'}</span>
+                            <p className="text-lg font-bold text-indigo-500">{attendanceStats.totalDays}</p>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'متوسط يومي' : 'Average/Day'}</span>
+                            <p className="text-lg font-bold text-violet-500">{attendanceStats.averageHoursPerDay.toFixed(1)}h</p>
+                          </div>
+                          {attendanceStats.lastActiveDate && (
+                            <div className="flex justify-between pt-2 border-t border-(--border-divider)">
+                              <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'آخر حضور' : 'Last Active'}</span>
+                              <p className="text-sm font-semibold text-(--text-primary)">{attendanceStats.lastActiveDate}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Grid View with Interactive Cards
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <button
+                    onClick={() => setExpandedCard('transactions')}
+                    className={`${PROFILE_GLASS_CARD_BASE} text-center flex flex-col justify-between min-h-[90px] cursor-pointer`}
+                  >
+                    <span className="material-symbols-rounded text-[20px] text-emerald-500 mb-1">point_of_sale</span>
+                    <div>
+                      <p className="text-base font-bold text-(--text-primary)">{stats.salesCount}</p>
+                      <p className="text-[10px] font-bold text-(--text-tertiary) uppercase">{t.stats.transactions}</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setExpandedCard('items')}
+                    className={`${PROFILE_GLASS_CARD_BASE} text-center flex flex-col justify-between min-h-[90px] cursor-pointer`}
+                  >
+                    <span className="material-symbols-rounded text-[20px] text-blue-500 mb-1">package_2</span>
+                    <div>
+                      <p className="text-base font-bold text-(--text-primary)">{stats.totalItemsSold}</p>
+                      <p className="text-[10px] font-bold text-(--text-tertiary) uppercase">{t.stats.itemsSold}</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setExpandedCard('attendance')}
+                    className={`${PROFILE_GLASS_CARD_BASE} text-center flex flex-col justify-between min-h-[90px] cursor-pointer`}
+                  >
+                    <span className="material-symbols-rounded text-[20px] text-blue-400 mb-1">schedule</span>
+                    <div>
+                      <p className="text-base font-bold text-(--text-primary)">
+                        {attendanceStats.isLoading ? '...' : `${attendanceStats.totalDays}`}
+                      </p>
+                      <p className="text-[10px] font-bold text-(--text-tertiary) uppercase">
+                        {language === 'AR' ? 'أيام العمل' : 'Working Days'}
+                      </p>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+
+
           </div>
         )}
-
 
         {activeTab === 'page6' && (
           /* ── Page 6: Documents ── */

@@ -41,5 +41,5 @@ export const ICON_BTN = (active?: boolean) => active ? ICON_BUTTON_FLAT_ACTIVE :
 export const GLASS_CARD_BASE = 'p-2.5 rounded-xl bg-(--bg-secondary)/40 border border-(--border-divider)/50 hover:bg-(--bg-hover)';
 
 // High-contrast card base for profile details to stand out clearly on tinted backgrounds
-export const PROFILE_GLASS_CARD_BASE = 'p-2.5 rounded-xl bg-white/80 dark:bg-black/20 border border-gray-200/90 dark:border-zinc-800/80 hover:bg-white/95 dark:hover:bg-black/30 shadow-xs transition-all duration-200';
+export const PROFILE_GLASS_CARD_BASE = 'p-2.5 rounded-xl bg-white/80 dark:bg-black/20 border border-black/10 dark:border-white/10 hover:bg-white/95 dark:hover:bg-black/30 shadow-xs transition-all duration-200';
 

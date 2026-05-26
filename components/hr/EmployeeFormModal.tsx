@@ -44,7 +44,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
 
   // --- States ---
   const [formData, setFormData] = useState<Partial<Employee> & { oldPassword?: string }>({});
-  
+
   // Tab State
   const [activeTab, setActiveTab] = useState<'general' | 'credentials' | 'documents'>('general');
 
@@ -280,9 +280,9 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
       <>
         <div className="animate-fade-in text-(--text-primary)">
           {/* Banner Graphic with Selectable Cover styles */}
-          <div className="relative w-full aspect-[5/2] bg-(--bg-secondary) overflow-hidden select-none group/cover">
+          <div className="relative w-full aspect-[9/3] bg-(--bg-secondary) overflow-hidden select-none group/cover">
             {renderBanner(bannerStyle, { x: 0, y: 0 }, 1.2)}
-            
+
             {/* Dynamic Cover Customizer Buttons */}
             <div className="absolute top-3 end-3 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10 opacity-0 group-hover/cover:opacity-100 transition-opacity duration-300 z-20">
               <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider select-none pe-1">
@@ -303,11 +303,10 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                     setFormData((prev) => ({ ...prev, department: opt.dept as any }));
                     playBeep();
                   }}
-                  className={`w-4 h-4 rounded-full border-2 transition-all hover:scale-125 ${
-                    formData.department === opt.dept 
-                      ? 'border-white scale-110 shadow-sm' 
+                  className={`w-4 h-4 rounded-full border-2 transition-all hover:scale-125 ${formData.department === opt.dept
+                      ? 'border-white scale-110 shadow-sm'
                       : 'border-transparent opacity-60 hover:opacity-100'
-                  }`}
+                    }`}
                   style={{ backgroundColor: opt.color }}
                   title={opt.label}
                 />
@@ -316,19 +315,19 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
           </div>
 
           {/* Content Section below banner */}
-          <div className="relative px-6 pb-6 pt-12">
+          <div className="relative px-6 pb-6 pt-20">
             {/* Overlapping Avatar */}
-            <div className="absolute -top-12 start-6 z-10">
+            <div className="absolute -top-16 start-6 z-10">
               <div className="relative group/avatar">
-                <div className="w-24 h-24 rounded-full border-4 border-(--bg-card) overflow-hidden bg-(--bg-secondary) shadow-md flex items-center justify-center relative">
+                <div className="w-32 h-32 rounded-full border-4 border-(--bg-card) overflow-hidden bg-(--bg-secondary) shadow-md flex items-center justify-center relative">
                   {formData.image ? (
-                    <img 
-                      src={formData.image} 
-                      alt={formData.name || ''} 
-                      className="w-full h-full object-cover" 
+                    <img
+                      src={formData.image}
+                      alt={formData.name || ''}
+                      className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-zinc-900/50 text-gray-500 dark:bg-zinc-900/50 text-3xl font-bold">
+                    <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-zinc-900/50 text-gray-500 dark:bg-zinc-900/50 text-4xl font-bold">
                       {getInitials(formData.name || '') === '?' || !formData.name?.trim() ? (
                         <span className="material-symbols-rounded text-3xl">photo_camera</span>
                       ) : (
@@ -385,17 +384,6 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
             </div>
 
             {/* Identity Live Preview Section next to avatar */}
-            <div className="ps-28 pb-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-xl font-bold text-(--text-primary)">
-                  {(language === 'AR' && formData.nameArabic) || formData.name || t.newEmployee}
-                </h3>
-              </div>
-              <p className="text-xs font-semibold text-primary-600 dark:text-primary-400">
-                {availableRoles.find(r => r.key === (formData.role || 'pharmacist'))?.label || ''} 
-                {formData.position ? ` • ${formData.position}` : ''}
-              </p>
-            </div>
           </div>
         </div>
 
@@ -648,7 +636,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
               {/* Credentials Card */}
               <div className={`${PROFILE_GLASS_CARD_BASE} p-5 space-y-4`}>
                 <div className='flex items-center gap-2 pb-2 border-b border-(--border-divider)'>
-                  <span 
+                  <span
                     className='material-symbols-rounded text-primary-500'
                     style={{ fontSize: 'var(--icon-base)' }}
                   >
@@ -683,13 +671,13 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                           // SECURITY CHECK: If passkey exists, verify identity first
                           if (formData.biometricCredentialId) {
                             let isVerified = false;
-                            
+
                             // 1. Try Biometric Verification first
                             try {
                               const { startAuthentication } = await import('@simplewebauthn/browser');
                               const { generateChallenge, bufferToBase64 } = await import('../../utils/webAuthnUtils');
                               const challengeBase64 = bufferToBase64(generateChallenge());
-                              
+
                               const asseResp = await startAuthentication({
                                 optionsJSON: {
                                   challenge: challengeBase64,
@@ -714,7 +702,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
 
                               const { verifyPassword } = await import('../../services/auth/hashUtils');
                               const currentHashedPassword = employee?.password || formData.password;
-                              
+
                               if (currentHashedPassword) {
                                 const isValid = await verifyPassword(pass, currentHashedPassword);
                                 if (!isValid) {
@@ -724,16 +712,16 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                                 }
                                 isVerified = true;
                               } else {
-                                isVerified = true; 
+                                isVerified = true;
                               }
                             }
 
                             if (isVerified) {
                               if (confirm(t.deletePasskeyConfirm)) {
-                                setFormData({ 
-                                  ...formData, 
-                                  biometricCredentialId: undefined, 
-                                  biometricPublicKey: undefined 
+                                setFormData({
+                                  ...formData,
+                                  biometricCredentialId: undefined,
+                                  biometricPublicKey: undefined
                                 });
                                 playSuccess();
                                 return;
@@ -808,11 +796,10 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                           alert(parseWebAuthnError(err, language as any));
                         }
                       }}
-                      className={`flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl border-2 transition-all font-medium ${
-                        formData.biometricCredentialId
+                      className={`flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl border-2 transition-all font-medium ${formData.biometricCredentialId
                           ? 'bg-green-50 border-green-200 text-green-700 dark:bg-green-900/10 dark:border-green-800/30 dark:text-green-400'
                           : 'border-(--border-divider) text-(--text-tertiary) hover:text-(--text-primary) hover:bg-(--bg-surface-neutral)'
-                      }`}
+                        }`}
                     >
                       <span
                         className={`material-symbols-rounded ${formData.biometricCredentialId ? 'text-green-500' : ''}`}
@@ -850,14 +837,14 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                         onClick={() => setWantsToChangePassword(true)}
                         className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors'
                       >
-                        <span 
+                        <span
                           className='material-symbols-rounded'
                           style={{ fontSize: 'var(--icon-lg)' }}
                         >
                           key
                         </span>
                         {t.changePassword}
-                        <span 
+                        <span
                           className='material-symbols-rounded'
                           style={{ fontSize: 'var(--icon-lg)' }}
                         >
@@ -880,7 +867,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                             </h4>
                             {isOldPasswordVerified ? (
                               <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'>
-                                <span 
+                                <span
                                   className='material-symbols-rounded'
                                   style={{ fontSize: 'var(--icon-md)' }}
                                 >
@@ -890,7 +877,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                               </span>
                             ) : (
                               <span className='inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800/50'>
-                                <span 
+                                <span
                                   className='material-symbols-rounded'
                                   style={{ fontSize: 'var(--icon-md)' }}
                                 >
@@ -910,7 +897,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                             }}
                             className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
                           >
-                            <span 
+                            <span
                               className='material-symbols-rounded'
                               style={{ fontSize: 'var(--icon-lg)' }}
                             >
@@ -970,7 +957,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                                   }}
                                   className='h-[42px] px-4 bg-primary-500 hover:bg-primary-600 text-white rounded-xl transition-all active:scale-95 font-medium flex items-center gap-2'
                                 >
-                                  <span 
+                                  <span
                                     className='material-symbols-rounded'
                                     style={{ fontSize: 'var(--icon-lg)' }}
                                   >
@@ -983,7 +970,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                             {passwordError && (
                               <div className='flex items-center justify-between mt-1 px-1 animate-in fade-in slide-in-from-top-1'>
                                 <p className='text-xs text-red-500 dark:text-red-400 flex items-center gap-1'>
-                                  <span 
+                                  <span
                                     className='material-symbols-rounded'
                                     style={{ fontSize: 'var(--icon-md)' }}
                                   >
@@ -1000,7 +987,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                                       return;
                                     }
                                     if (!confirm(t.modal.confirmReset)) return;
-                                    
+
                                     setIsResetting(true);
                                     try {
                                       const res = await authService.handleForgotPassword(employee.email);
@@ -1026,7 +1013,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                           <div className='space-y-3'>
                             <div className='border border-(--border-divider) rounded-xl p-3'>
                               <p className='text-xs text-green-800 dark:text-green-200 flex items-center gap-2'>
-                                <span 
+                                <span
                                   className='material-symbols-rounded'
                                   style={{ fontSize: 'var(--icon-md)' }}
                                 >
@@ -1059,7 +1046,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                 {employee && !employee.password && (
                   <div className='border border-(--border-divider) rounded-xl p-3 mt-4'>
                     <p className='text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2'>
-                      <span 
+                      <span
                         className='material-symbols-rounded'
                         style={{ fontSize: 'var(--icon-md)' }}
                       >
@@ -1076,7 +1063,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
               {/* Documents Card */}
               <div className={`${PROFILE_GLASS_CARD_BASE} p-5 space-y-4`}>
                 <div className='flex items-center gap-2 pb-2 border-b border-(--border-divider)'>
-                  <span 
+                  <span
                     className='material-symbols-rounded text-primary-500'
                     style={{ fontSize: 'var(--icon-base)' }}
                   >
@@ -1091,7 +1078,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                   {/* National ID Card - Both Faces */}
                   <div className='space-y-2'>
                     <label className='text-xs font-semibold text-gray-500 uppercase px-1 flex items-center gap-2'>
-                      <span 
+                      <span
                         className='material-symbols-rounded'
                         style={{ fontSize: 'var(--icon-md)' }}
                       >
@@ -1117,9 +1104,9 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                           >
                             <span
                               className='material-symbols-rounded'
-                              style={{ 
+                              style={{
                                 fontSize: 'var(--icon-md)',
-                                fontVariationSettings: "'wght' 700" 
+                                fontVariationSettings: "'wght' 700"
                               }}
                             >
                               close
@@ -1129,7 +1116,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                       ) : (
                         <div className='flex-1'>
                           <label className='flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50'>
-                            <span 
+                            <span
                               className='material-symbols-rounded text-gray-400'
                               style={{ fontSize: 'var(--icon-base)' }}
                             >
@@ -1188,9 +1175,9 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                               >
                                 <span
                                   className='material-symbols-rounded'
-                                  style={{ 
+                                  style={{
                                     fontSize: 'var(--icon-md)',
-                                    fontVariationSettings: "'wght' 700" 
+                                    fontVariationSettings: "'wght' 700"
                                   }}
                                 >
                                   close
@@ -1245,7 +1232,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                   {((formData.role || 'pharmacist').includes('pharmacist')) && (
                     <div className='space-y-2'>
                       <label className='text-xs font-semibold text-gray-500 uppercase px-1 flex items-center gap-2'>
-                        <span 
+                        <span
                           className='material-symbols-rounded'
                           style={{ fontSize: 'var(--icon-md)' }}
                         >
@@ -1270,20 +1257,20 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                               className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
                             >
                               <span
-                                  className='material-symbols-rounded'
-                                  style={{ 
-                                    fontSize: 'var(--icon-md)',
-                                    fontVariationSettings: "'wght' 700" 
-                                  }}
-                                >
-                                  close
-                                </span>
+                                className='material-symbols-rounded'
+                                style={{
+                                  fontSize: 'var(--icon-md)',
+                                  fontVariationSettings: "'wght' 700"
+                                }}
+                              >
+                                close
+                              </span>
                             </button>
                           </div>
                         ) : (
                           <div className='flex-1'>
                             <label className='flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50'>
-                              <span 
+                              <span
                                 className='material-symbols-rounded text-gray-400'
                                 style={{ fontSize: 'var(--icon-base)' }}
                               >
@@ -1342,9 +1329,9 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                                 >
                                   <span
                                     className='material-symbols-rounded'
-                                    style={{ 
+                                    style={{
                                       fontSize: 'var(--icon-md)',
-                                      fontVariationSettings: "'wght' 700" 
+                                      fontVariationSettings: "'wght' 700"
                                     }}
                                   >
                                     close
@@ -1377,33 +1364,33 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                                           language === 'AR'
                                             ? 'حجم الملف كبير جداً (الحد الأقصى 500KB)'
                                             : 'File too large (max 500KB)'
-                                      );
-                                      return;
+                                        );
+                                        return;
+                                      }
+                                      const reader = new FileReader();
+                                      reader.onloadend = () => {
+                                        setFormData({
+                                          ...formData,
+                                          subSyndicateCard: reader.result as string,
+                                        });
+                                      };
+                                      reader.readAsDataURL(file);
                                     }
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => {
-                                      setFormData({
-                                        ...formData,
-                                        subSyndicateCard: reader.result as string,
-                                      });
-                                    };
-                                    reader.readAsDataURL(file);
-                                  }
-                                }}
-                              />
-                            </label>
-                          )}
-                        </>
-                      )}
+                                  }}
+                                />
+                              </label>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ) : null}
-      </div>
-    </>
-  </Modal>
+          ) : null}
+        </div>
+      </>
+    </Modal>
   );
 };
