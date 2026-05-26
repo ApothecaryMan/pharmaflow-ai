@@ -136,7 +136,7 @@ export const NavModules: React.FC<NavModulesProps> = ({
                       isEffectivelyDisabled
                         ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
                         : isActive
-                          ? `bg-primary-100 dark:bg-primary-500/15 text-primary-700 dark:text-primary-400 font-bold shadow-xs border-(--border-divider)`
+                          ? `bg-(--bg-navbar-hover) text-primary-700 dark:text-primary-400 font-bold shadow-xs border-(--border-divider)`
                           : isDropdownOpen
                             ? `bg-(--bg-navbar-hover) text-gray-800 dark:text-gray-200 font-medium`
                             : 'text-gray-600 dark:text-gray-400 hover:bg-(--bg-navbar-hover) hover:text-gray-900 dark:hover:text-white'
