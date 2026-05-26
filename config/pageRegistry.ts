@@ -29,6 +29,7 @@ import { SuppliersList } from '../components/purchases/SuppliersList';
 import { LoginAuditList } from '../components/reports/LoginAuditList';
 import { ProfitLossPage } from '../components/reports/ProfitLossPage';
 import { CashRegister } from '../components/sales/CashRegister';
+import { ExpenseTracker } from '../components/finance/ExpenseTracker';
 import { POS } from '../components/sales/pos/POS';
 import { ReceiptDesigner } from '../components/sales/ReceiptDesigner';
 import { ReturnHistory } from '../components/sales/ReturnHistory';
@@ -441,6 +442,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'sales',
     requiredProps: ['color', 't', 'language', 'employees', 'currentEmployeeId', 'onViewChange'],
     permission: PERMISSIONS_MAPPING['cash-register'],
+  },
+  expenses: {
+    id: 'expenses',
+    component: ExpenseTracker,
+    menuLabel: 'Expense Tracker',
+    menuLabelAr: 'متتبع المصروفات',
+    icon: 'receipt_long',
+    category: 'finance',
+    requiredProps: ['t', 'language', 'employees', 'currentEmployeeId', 'onViewChange'],
+    permission: PERMISSIONS_MAPPING['expenses'],
+    layout: 'standard',
   },
   'shift-history': {
     id: 'shift-history',

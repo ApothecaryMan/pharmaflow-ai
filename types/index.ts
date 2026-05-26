@@ -19,3 +19,5 @@ export * from './suppliers';
 export * from './hr';
 export * from './cash';
 export * from './common';
+export * from './expense';
+

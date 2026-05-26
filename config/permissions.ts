@@ -92,7 +92,12 @@ export type PermissionAction =
   | 'attendance.generate_token' // Generate/regenerate terminal UUID in Branch Settings
   | 'attendance.activate_terminal' // Enter terminal token to activate attendance screen
   | 'attendance.view' // View attendance reports and dashboard
-  | 'attendance.clock'; // Clock in/out using biometric
+  | 'attendance.clock' // Clock in/out using biometric
+
+  // Expenses
+  | 'expense.create'
+  | 'expense.view'
+  | 'expense.approve';
 
 const ALL_PERMISSIONS: PermissionAction[] = [
   'inventory.view',
@@ -151,6 +156,9 @@ const ALL_PERMISSIONS: PermissionAction[] = [
   'attendance.activate_terminal',
   'attendance.view',
   'attendance.clock',
+  'expense.create',
+  'expense.view',
+  'expense.approve',
 ];
 
 export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
@@ -211,6 +219,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'attendance.activate_terminal',
     'attendance.view',
     'attendance.clock',
+    'expense.create',
+    'expense.view',
+    'expense.approve',
   ],
 
   pharmacist_manager: [
@@ -257,6 +268,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'shift.view_expected_balance',
     'attendance.view',
     'attendance.clock',
+    'expense.create',
+    'expense.view',
+    'expense.approve',
   ],
 
   pharmacist: [
@@ -286,6 +300,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     // NO CASH IN
     // NO REPORTS
     'attendance.clock',
+    'expense.create',
+    'expense.view',
   ],
 
   inventory_officer: [
@@ -351,6 +367,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'shift.cash_in',
     'shift.cash_out',
     'attendance.clock',
+    'expense.create',
+    'expense.view',
   ],
 
   cashier: [
@@ -362,6 +380,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'customer.view',
     'customer.add',
     'attendance.clock',
+    'expense.create',
   ],
 
   // --- Other ---
@@ -387,6 +406,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'shift.view_expected_balance',
     'attendance.view',
     'attendance.clock',
+    'expense.create',
+    'expense.view',
+    'expense.approve',
   ],
 
   hr_manager: [

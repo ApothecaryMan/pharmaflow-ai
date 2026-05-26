@@ -188,6 +188,8 @@ export interface FinancialReportSummary {
   return_cogs: number;
   net_cogs: number;
   gross_profit: number;
+  expenses_total?: number;
+  net_profit?: number;
 }
 
 export interface DailyFinancialData {

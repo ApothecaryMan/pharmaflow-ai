@@ -31,7 +31,7 @@ export const MODULE_VIEW_MAPPING: Record<string, ViewState> = {
   customers: 'customers',
   'customer-overview': 'customer-overview',
   prescriptions: 'drug-interactions',
-  finance: 'dashboard',
+  finance: 'expenses',
   reports: 'intelligence',
   hr: 'staff-overview',
   compliance: 'dashboard',
@@ -751,7 +751,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: 'expenses',
         label: 'Expenses',
         items: [
-          { label: 'Record Expense', icon: 'receipt_long' },
+          { label: 'Record Expense', view: 'expenses', icon: 'receipt_long' },
           { label: 'Expense Categories', icon: 'category' },
           { label: 'Recurring Expenses', icon: 'repeat' },
           { label: 'Expense Approval', icon: 'approval' },

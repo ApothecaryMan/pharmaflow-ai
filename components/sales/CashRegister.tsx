@@ -32,6 +32,7 @@ const getTxBadgeClass = (type: string): string => {
     case 'out':
     case 'closing':
     case 'purchase':
+    case 'expense':
       return 'badge-danger';
     case 'sale':
       return 'badge-success';
@@ -56,6 +57,7 @@ const TX_ICONS: Record<string, string> = {
   return: 'assignment_return',
   purchase: 'shopping_cart_checkout',
   purchase_return: 'keyboard_return',
+  expense: 'receipt_long',
 };
 
 

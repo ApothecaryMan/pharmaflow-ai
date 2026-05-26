@@ -78,7 +78,7 @@ export const useCashRegister = ({
       if (filterType === 'sales') return tx.type === 'sale' || tx.type === 'card_sale';
       if (filterType === 'returns') return tx.type === 'return';
       if (filterType === 'purchases') return tx.type === 'purchase' || tx.type === 'purchase_return';
-      if (filterType === 'operations') return ['in', 'out', 'opening', 'closing'].includes(tx.type);
+      if (filterType === 'operations') return ['in', 'out', 'opening', 'closing', 'expense'].includes(tx.type);
       return true;
     });
   }, [currentShift, filterType]);
@@ -90,7 +90,7 @@ export const useCashRegister = ({
       sales: currentShift.transactions.filter((tx) => tx.type === 'sale' || tx.type === 'card_sale').length,
       returns: currentShift.transactions.filter((tx) => tx.type === 'return').length,
       purchases: currentShift.transactions.filter((tx) => tx.type === 'purchase' || tx.type === 'purchase_return').length,
-      operations: currentShift.transactions.filter((tx) => ['in', 'out', 'opening', 'closing'].includes(tx.type)).length,
+      operations: currentShift.transactions.filter((tx) => ['in', 'out', 'opening', 'closing', 'expense'].includes(tx.type)).length,
     };
   }, [currentShift]);
 

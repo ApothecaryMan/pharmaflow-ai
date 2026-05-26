@@ -28,6 +28,8 @@ export { useSupplierHandlers } from './suppliers/useSupplierHandlers';
 export { useEmployeeHandlers } from './hr/useEmployeeHandlers';
 export { usePurchaseHandlers } from './purchases/usePurchaseHandlers';
 export { useSalesHandlers } from './sales/useSalesHandlers';
+export { useExpenses } from './finance/useExpenses';
+
 
 // Infrastructure Hooks
 export { useAudit } from './infrastructure/useAudit';

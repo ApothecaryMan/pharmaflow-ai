@@ -248,12 +248,14 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
                 label={
                   <div className="flex items-center gap-2">
                     <span>{t.intelligence.financials.profitLoss.operatingExpenses}</span>
-                    <span className="text-[10px] text-gray-400 italic font-normal">
-                      * {t.intelligence.financials.profitLoss.noExpenses}
-                    </span>
+                    {(!summary?.expenses_total || summary.expenses_total === 0) && (
+                      <span className="text-[10px] text-gray-400 italic font-normal">
+                        * {t.intelligence.financials.profitLoss.noExpenses}
+                      </span>
+                    )}
                   </div>
                 } 
-                value={0} 
+                value={-(summary?.expenses_total || 0)} 
                 isLoading={loading} 
               />
             </div>
@@ -261,7 +263,7 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
             <hr className="border-(--border-divider)" />
             <PLRow 
               label={t.intelligence.financials.profitLoss.estimatedNetProfit} 
-              value={summary?.gross_profit || 0} 
+              value={summary?.net_profit !== undefined ? summary.net_profit : (summary?.gross_profit || 0)} 
               isBold 
               isFinal
               isLoading={loading}

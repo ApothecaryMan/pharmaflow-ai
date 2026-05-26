@@ -72,7 +72,8 @@ export type ViewState =
   | 'drug-interactions'
   | 'shortages'
   | 'scrollbar-lab'
-  | 'a5-invoice-designer';
+  | 'a5-invoice-designer'
+  | 'expenses';
 
 /** Dashboard widget expand options */
 export type ExpandedView =

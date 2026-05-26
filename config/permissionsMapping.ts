@@ -12,6 +12,7 @@ export const PERMISSIONS_MAPPING: Record<string, PermissionAction> = {
   'expiry-calendar': 'inventory.view',
   'inventory-beta': 'inventory.view_beta',
   pos: 'sale.create',
+  expenses: 'expense.view',
   'sales-history': 'sale.view_history',
   'return-history': 'sale.refund',
   suppliers: 'supplier.view',
