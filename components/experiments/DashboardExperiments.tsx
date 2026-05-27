@@ -256,27 +256,28 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
   };
 
   const labels = {
-    title: isRTL ? 'تجارب بطاقات لوحة التحكم' : 'Dashboard Card Experiments',
-    card1: isRTL ? 'اتجاه المبيعات (مخطط خطي)' : 'Sales Trend (Line Chart)',
-    card2: isRTL ? 'الإيرادات حسب الفئة (مخطط شريطي)' : 'Revenue by Category (Bar Chart)',
-    card3: isRTL ? 'شرائح العملاء (مخطط دائري)' : 'Customer Segments (Pie Chart)',
-    card4: isRTL ? 'حالة المخزون (مخطط دائري مفرغ)' : 'Stock Status (Donut Chart)',
-    card5: isRTL ? 'حركة الزوار اليومية (مخطط مساحي)' : 'Daily Traffic (Area Chart)',
-    card6: isRTL ? 'أهداف الأداء (مخطط شعاعي)' : 'Performance Goals (Radial Bar)',
-    card7: isRTL ? 'إنجاز المهام (أشرطة التقدم)' : 'Task Completion (Progress Bars)',
-    card8: isRTL ? 'إحصائية سريعة (مع خط مصغر)' : 'Quick Stat (with Sparkline)',
-    card9: isRTL ? 'نشاط أسبوعي (خريطة حرارية)' : 'Weekly Activity (Heatmap)',
-    card10: isRTL ? 'السعر مقابل المبيعات (مخطط انتشار)' : 'Price vs Sales (Scatter Plot)',
-    card11: isRTL ? 'المبيعات الشهرية (أعمدة مكدسة)' : 'Monthly Sales (Stacked Bar)',
-    card12: isRTL ? 'قمع المبيعات' : 'Sales Funnel',
-    card13: isRTL ? 'مؤشر الهدف' : 'Target Gauge',
-    card14: isRTL ? 'أفضل المنتجات (أعمدة أفقية)' : 'Top Products (Horizontal Bar)',
-    card15: isRTL ? 'الإيرادات مقابل الطلبات (مخطط مركب)' : 'Revenue vs Orders (Composed)',
-    totalRevenue: isRTL ? 'إجمالي الإيرادات' : 'Total Revenue',
-    vsLastMonth: isRTL ? 'مقارنة بالشهر الماضي' : 'vs last month',
-    morning: isRTL ? 'صباحاً' : 'Morning',
-    afternoon: isRTL ? 'ظهراً' : 'Afternoon',
-    evening: isRTL ? 'مساءً' : 'Evening',
+    title: t?.dashboardExperiments?.title || (isRTL ? 'تجارب بطاقات لوحة التحكم' : 'Dashboard Card Experiments'),
+    card1: t?.dashboardExperiments?.card1 || (isRTL ? 'اتجاه المبيعات (مخطط خطي)' : 'Sales Trend (Line Chart)'),
+    card2: t?.dashboardExperiments?.card2 || (isRTL ? 'الإيرادات حسب الفئة (مخطط شريطي)' : 'Revenue by Category (Bar Chart)'),
+    card3: t?.dashboardExperiments?.card3 || (isRTL ? 'شرائح العملاء (مخطط دائري)' : 'Customer Segments (Pie Chart)'),
+    card4: t?.dashboardExperiments?.card4 || (isRTL ? 'حالة المخزون (مخطط دائري مفرغ)' : 'Stock Status (Donut Chart)'),
+    card5: t?.dashboardExperiments?.card5 || (isRTL ? 'حركة الزوار اليومية (مخطط مساحي)' : 'Daily Traffic (Area Chart)'),
+    card6: t?.dashboardExperiments?.card6 || (isRTL ? 'أهداف الأداء (مخطط شعاعي)' : 'Performance Goals (Radial Bar)'),
+    card7: t?.dashboardExperiments?.card7 || (isRTL ? 'إنجاز المهام (أشرطة التقدم)' : 'Task Completion (Progress Bars)'),
+    card8: t?.dashboardExperiments?.card8 || (isRTL ? 'إحصائية سريعة (مع خط مصغر)' : 'Quick Stat (with Sparkline)'),
+    card9: t?.dashboardExperiments?.card9 || (isRTL ? 'نشاط أسبوعي (خريطة حرارية)' : 'Weekly Activity (Heatmap)'),
+    card10: t?.dashboardExperiments?.card10 || (isRTL ? 'السعر مقابل المبيعات (مخطط انتشار)' : 'Price vs Sales (Scatter Plot)'),
+    card11: t?.dashboardExperiments?.card11 || (isRTL ? 'المبيعات الشهرية (أعمدة مكدسة)' : 'Monthly Sales (Stacked Bar)'),
+    card12: t?.dashboardExperiments?.card12 || (isRTL ? 'قمع المبيعات' : 'Sales Funnel'),
+    card13: t?.dashboardExperiments?.card13 || (isRTL ? 'مؤشر الهدف' : 'Target Gauge'),
+    card14: t?.dashboardExperiments?.card14 || (isRTL ? 'أفضل المنتجات (أعمدة أفقية)' : 'Top Products (Horizontal Bar)'),
+    card15: t?.dashboardExperiments?.card15 || (isRTL ? 'الإيرادات مقابل الطلبات (مخطط مركب)' : 'Revenue vs Orders (Composed)'),
+    totalRevenue: t?.dashboardExperiments?.totalRevenue || (isRTL ? 'إجمالي الإيرادات' : 'Total Revenue'),
+    vsLastMonth: t?.dashboardExperiments?.vsLastMonth || (isRTL ? 'مقارنة بالشهر الماضي' : 'vs last month'),
+    morning: t?.dashboardExperiments?.morning || (isRTL ? 'صباحاً' : 'Morning'),
+    afternoon: t?.dashboardExperiments?.afternoon || (isRTL ? 'ظهراً' : 'Afternoon'),
+    evening: t?.dashboardExperiments?.evening || (isRTL ? 'مساءً' : 'Evening'),
+    targetAchieved: t?.dashboardExperiments?.targetAchieved || (isRTL ? 'تحقيق الهدف' : 'Target Achieved'),
   };
 
   // Get heatmap color based on value
@@ -893,32 +894,48 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
             <span className='material-symbols-rounded text-emerald-500 text-[20px]'>speed</span>
             {labels.card13}
           </h3>
-          <div className='flex-1 flex flex-col items-center justify-center'>
-            <ResponsiveContainer width='100%' height={140}>
-              <RadialBarChart
-                cx='50%'
-                cy='100%'
-                innerRadius='70%'
-                outerRadius='100%'
-                barSize={16}
-                data={gaugeData}
-                startAngle={180}
-                endAngle={0}
-              >
-                <RadialBar
-                  background={{ fill: isDark ? '#374151' : '#e5e7eb' }}
-                  dataKey='value'
-                  cornerRadius={10}
+          <div className='flex-1 flex flex-col items-center justify-center relative w-full mt-4'>
+            <div className='w-56 h-32 relative'>
+              <svg viewBox='0 0 100 55' className='w-full h-full'>
+                <defs>
+                  <linearGradient id='gaugeGradient' x1='0%' y1='0%' x2='100%' y2='0%'>
+                    <stop offset='0%' stopColor='#10b981' />
+                    <stop offset='50%' stopColor='#06b6d4' />
+                    <stop offset='100%' stopColor='#3b82f6' />
+                  </linearGradient>
+                </defs>
+                {/* Background Track */}
+                <path
+                  d='M 6 50 A 44 44 0 0 1 96 50'
+                  fill='none'
+                  stroke={isDark ? '#374151' : '#e5e7eb'}
+                  strokeWidth='10'
+                  strokeLinecap='round'
                 />
-              </RadialBarChart>
-            </ResponsiveContainer>
-            <div className='text-center -mt-8'>
-              <p className='text-4xl font-bold text-gray-900 dark:text-gray-100'>
-                {gaugeData[0].value}%
-              </p>
-              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                {isRTL ? 'تحقيق الهدف' : 'Target Achieved'}
-              </p>
+                {/* Progress Track */}
+                <path
+                  d='M 6 50 A 44 44 0 0 1 96 50'
+                  fill='none'
+                  stroke='url(#gaugeGradient)'
+                  strokeWidth='10'
+                  strokeLinecap='round'
+                  pathLength='100'
+                  strokeDasharray='100'
+                  style={{
+                    strokeDashoffset: 100 - gaugeData[0].value,
+                    transition: 'stroke-dashoffset 1s ease-in-out',
+                  }}
+                />
+              </svg>
+              {/* Centered Text Overlay */}
+              <div className='absolute inset-0 flex flex-col items-center justify-end pb-1'>
+                <p className='text-4xl font-extrabold text-gray-900 dark:text-gray-100 leading-none'>
+                  {gaugeData[0].value}%
+                </p>
+                <p className='text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium'>
+                  {labels.targetAchieved}
+                </p>
+              </div>
             </div>
           </div>
         </div>
