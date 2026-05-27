@@ -31,9 +31,10 @@ const getTxBadgeClass = (type: string): string => {
       return 'badge-neutral';
     case 'out':
     case 'closing':
-    case 'purchase':
     case 'expense':
       return 'badge-danger';
+    case 'purchase':
+      return 'badge-indigo';
     case 'sale':
       return 'badge-success';
     case 'card_sale':
@@ -171,9 +172,21 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
               </span>
             );
           }
+          let displayReason = reason;
+          if (reason.startsWith('Expense: ')) {
+            const desc = reason.substring(9);
+            displayReason = language === 'AR' ? `مصروف: ${desc}` : `Expense: ${desc}`;
+          } else if (reason.startsWith('Purchase: ')) {
+            const desc = reason.substring(10);
+            displayReason = language === 'AR' ? `شراء: ${desc}` : `Purchase: ${desc}`;
+          } else if (reason.startsWith('Purchase Return: ')) {
+            const desc = reason.substring(17);
+            displayReason = language === 'AR' ? `مرتجع شراء: ${desc}` : `Purchase Return: ${desc}`;
+          }
+
           return (
             <span className='text-[11px] text-gray-700 dark:text-gray-300 max-w-xs truncate block'>
-              {reason}
+              {displayReason}
             </span>
           );
         },
@@ -247,7 +260,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 {permissions.canAddCash && (
                   <button
                     onClick={() => setModalMode('in')}
-                    className={`px-4 py-2 rounded-xl bg-emerald-100 text-emerald-700 hover:bg-emerald-200 font-bold transition-colors flex items-center gap-2`}
+                    className={`px-4 py-2 rounded-xl bg-emerald-100 text-emerald-700 hover:bg-emerald-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap`}
                   >
                     <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>add</span>
                     {t.cashRegister.actions.addCash}
@@ -256,7 +269,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 {permissions.canRemoveCash && (
                   <button
                     onClick={() => setModalMode('out')}
-                    className={`px-4 py-2 rounded-xl bg-orange-100 text-orange-700 hover:bg-orange-200 font-bold transition-colors flex items-center gap-2`}
+                    className={`px-4 py-2 rounded-xl bg-orange-100 text-orange-700 hover:bg-orange-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap`}
                   >
                     <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>remove</span>
                     {t.cashRegister.actions.removeCash}
@@ -265,7 +278,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 {permissions.canCloseShift && (
                   <button
                     onClick={() => setModalMode('close')}
-                    className={`px-4 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-bold transition-colors flex items-center gap-2`}
+                    className={`px-4 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap`}
                   >
                     <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>lock</span>
                     {t.cashRegister.actions.closeShift}

@@ -1314,6 +1314,8 @@ export const TRANSLATIONS = {
         closing: 'Closing Balance',
         return: 'Return',
         expense: 'Expense',
+        purchase: 'Purchase',
+        purchase_return: 'Purchase Return',
       },
       messages: {
         loading: 'Loading...',
@@ -5166,10 +5168,10 @@ export const TRANSLATIONS = {
         details: 'تفاصيل الوردية',
       },
       actions: {
-        openShift: 'فتح وردية',
-        closeShift: 'إغلاق وردية',
-        addCash: 'إضافة نقد (إيداع)',
-        removeCash: 'سحب نقد (صرف)',
+        openShift: 'فتح',
+        closeShift: 'إغلاق',
+        addCash: 'إيداع',
+        removeCash: 'سحب',
         printReport: 'طباعة التقرير',
       },
       summary: {
@@ -5210,6 +5212,8 @@ export const TRANSLATIONS = {
         closing: 'الرصيد الختامي',
         return: 'مرتجع',
         expense: 'مصروف',
+        purchase: 'شراء',
+        purchase_return: 'مرتجع شراء',
       },
       messages: {
         loading: 'جاري التحميل...',
