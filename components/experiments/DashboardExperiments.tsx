@@ -524,9 +524,11 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
 
         {/* Card 6: Radial Bar - Performance Goals */}
         <PerformanceGoalsCard
-          data={performanceGoalsData}
-          isRTL={isRTL}
-          labels={labels}
+          title={labels.card6}
+          data={performanceGoalsData.map((item) => ({
+            ...item,
+            name: labels[item.translationKey as keyof typeof labels] || item.name,
+          }))}
         />
 
         {/* Card 7: Progress Bars - Task Completion */}

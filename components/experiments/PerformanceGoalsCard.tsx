@@ -4,8 +4,7 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { useSettings } from '../../context/SettingsContext';
 
 export interface PerformanceGoalItem {
-  name: string;
-  translationKey: string;
+  name: string; // The display name (pre-translated)
   icon: string;
   value: number;
   fill: string;
@@ -16,113 +15,90 @@ export interface PerformanceGoalItem {
 }
 
 interface PerformanceGoalsCardProps {
+  title: string;
   data: PerformanceGoalItem[];
-  isRTL: boolean;
-  labels: {
-    card6: string;
-    salesTarget: string;
-    customerSatisfaction: string;
-    inventoryTurnover: string;
-    [key: string]: string;
-  };
 }
 
-export const PerformanceGoalsCard: React.FC<PerformanceGoalsCardProps> = ({
-  data,
-  isRTL,
-  labels,
-}) => {
-  const { darkMode: isDark } = useSettings();
+export const PerformanceGoalsCard: React.FC<PerformanceGoalsCardProps> = ({ title, data = [] }) => {
+  const { darkMode: isDark, language } = useSettings();
   const [legendLayout, setLegendLayout] = useState<'horizontal' | 'vertical'>('vertical');
 
-  const renderRadialChart = () => (
-    <svg viewBox='0 0 100 55' className='w-full h-full'>
-      {/* Outer Track (Yellow - Inventory Turnover - 65%) */}
-      <path
-        d='M 4 50 A 46 46 0 0 1 96 50'
-        fill='none'
-        stroke={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'}
-        strokeWidth='8'
-        strokeLinecap='round'
-      />
-      <path
-        d='M 4 50 A 46 46 0 0 1 96 50'
-        fill='none'
-        stroke='#f59e0b'
-        strokeWidth='8'
-        strokeLinecap='round'
-        pathLength='100'
-        strokeDasharray='100'
-        style={{
-          strokeDashoffset: 100 - data[2].value,
-          transition: 'stroke-dashoffset 1s ease-in-out',
-        }}
-      />
+  const isRTL = language === 'AR';
+  const step = 10;
+  const strokeWidth = 8;
 
-      {/* Middle Track (Green - Customer Satisfaction - 92%) */}
-      <path
-        d='M 14 50 A 36 36 0 0 1 86 50'
-        fill='none'
-        stroke={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'}
-        strokeWidth='8'
-        strokeLinecap='round'
-      />
-      <path
-        d='M 14 50 A 36 36 0 0 1 86 50'
-        fill='none'
-        stroke='#10b981'
-        strokeWidth='8'
-        strokeLinecap='round'
-        pathLength='100'
-        strokeDasharray='100'
-        style={{
-          strokeDashoffset: 100 - data[1].value,
-          transition: 'stroke-dashoffset 1s ease-in-out',
-        }}
-      />
+  const renderRadialChart = () => {
+    // Generate track parameters dynamically
+    const tracks = data.map((item, index) => {
+      const radius = 46 - (data.length - 1 - index) * step;
+      const angle = Math.PI * (1 - item.value / 100);
+      const cx = 50 + radius * Math.cos(angle);
+      const cy = 50 - radius * Math.sin(angle);
+      return {
+        ...item,
+        radius,
+        cx,
+        cy,
+      };
+    });
 
-      {/* Inner Track (Blue - Sales Target - 78%) */}
-      <path
-        d='M 24 50 A 26 26 0 0 1 76 50'
-        fill='none'
-        stroke={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'}
-        strokeWidth='8'
-        strokeLinecap='round'
-      />
-      <path
-        d='M 24 50 A 26 26 0 0 1 76 50'
-        fill='none'
-        stroke='#3b82f6'
-        strokeWidth='8'
-        strokeLinecap='round'
-        pathLength='100'
-        strokeDasharray='100'
-        style={{
-          strokeDashoffset: 100 - data[0].value,
-          transition: 'stroke-dashoffset 1s ease-in-out',
-        }}
-      />
+    return (
+      <svg viewBox='0 0 100 55' className='w-full h-full'>
+        {/* Unfilled background tracks */}
+        {tracks.map((track) => (
+          <path
+            key={`bg-${track.name}`}
+            d={`M ${50 - track.radius} 50 A ${track.radius} ${track.radius} 0 0 1 ${50 + track.radius} 50`}
+            fill='none'
+            stroke={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'}
+            strokeWidth={strokeWidth}
+            strokeLinecap='round'
+          />
+        ))}
 
-      {/* Circles with numbers at the start (base) of each curve */}
-      {/* Outer (Yellow) */}
-      <circle cx='4' cy='50' r='3.5' fill={isDark ? data[2].bgDark : data[2].bgLight} />
-      <text x='4' y='50' textAnchor='middle' fontSize='3.2' fontWeight='900' fill={isDark ? data[2].textDark : data[2].textLight} dominantBaseline='central'>
-        {data[2].value}
-      </text>
+        {/* Active colored tracks */}
+        {tracks.map((track) => (
+          <path
+            key={`active-${track.name}`}
+            d={`M ${50 - track.radius} 50 A ${track.radius} ${track.radius} 0 0 1 ${50 + track.radius} 50`}
+            fill='none'
+            stroke={track.fill}
+            strokeWidth={strokeWidth}
+            strokeLinecap='round'
+            pathLength='100'
+            strokeDasharray='100'
+            style={{
+              strokeDashoffset: 100 - track.value,
+              transition: 'stroke-dashoffset 1s ease-in-out',
+            }}
+          />
+        ))}
 
-      {/* Middle (Green) */}
-      <circle cx='14' cy='50' r='3.5' fill={isDark ? data[1].bgDark : data[1].bgLight} />
-      <text x='14' y='50' textAnchor='middle' fontSize='3.2' fontWeight='900' fill={isDark ? data[1].textDark : data[1].textLight} dominantBaseline='central'>
-        {data[1].value}
-      </text>
-
-      {/* Inner (Blue) */}
-      <circle cx='24' cy='50' r='3.5' fill={isDark ? data[0].bgDark : data[0].bgLight} />
-      <text x='24' y='50' textAnchor='middle' fontSize='3.2' fontWeight='900' fill={isDark ? data[0].textDark : data[0].textLight} dominantBaseline='central'>
-        {data[0].value}
-      </text>
-    </svg>
-  );
+        {/* Dynamic value badges positioned at the end of each active curve */}
+        {tracks.map((track) => (
+          <g key={`badge-${track.name}`}>
+            <circle
+              cx={track.cx}
+              cy={track.cy}
+              r='3.5'
+              fill={isDark ? track.bgDark : track.bgLight}
+            />
+            <text
+              x={track.cx}
+              y={track.cy}
+              textAnchor='middle'
+              fontSize='3.2'
+              fontWeight='900'
+              fill={isDark ? track.textDark : track.textLight}
+              dominantBaseline='central'
+            >
+              {track.value}
+            </text>
+          </g>
+        ))}
+      </svg>
+    );
+  };
 
   return (
     <div className={`p-5 rounded-3xl ${CARD_BASE} h-72 flex flex-col`}>
@@ -131,7 +107,7 @@ export const PerformanceGoalsCard: React.FC<PerformanceGoalsCardProps> = ({
           <span className='material-symbols-rounded text-indigo-500'>
             track_changes
           </span>
-          {labels.card6}
+          {title}
         </div>
         {/* Horizontal / Vertical layout selector */}
         <div className='flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg text-[10px]'>
@@ -186,13 +162,13 @@ export const PerformanceGoalsCard: React.FC<PerformanceGoalsCardProps> = ({
                   </div>
                   <div className='flex flex-col min-w-0 justify-center'>
                     <span
-                      className='text-[11px] leading-none line-clamp-1 truncate font-extrabold mb-0.5'
+                      className='text-[9.5px] xs:text-[10.5px] leading-tight font-extrabold mb-0.5 break-words whitespace-normal'
                       style={{ color: isDark ? item.textDark : item.textLight }}
                     >
-                      {labels[item.translationKey] || item.name}
+                      {item.name}
                     </span>
                     <span
-                      className='font-black text-base leading-none'
+                      className='font-black text-[13px] xs:text-sm leading-none'
                       style={{ color: isDark ? item.textDark : item.textLight }}
                     >
                       {item.value}%
@@ -233,13 +209,13 @@ export const PerformanceGoalsCard: React.FC<PerformanceGoalsCardProps> = ({
                   {/* Name and Number next to it */}
                   <div className='flex flex-col min-w-0 justify-center'>
                     <span
-                      className='text-[11px] leading-none line-clamp-1 truncate font-extrabold mb-0.5'
+                      className='text-[9.5px] xs:text-[10.5px] leading-tight font-extrabold mb-0.5 break-words whitespace-normal'
                       style={{ color: isDark ? item.textDark : item.textLight }}
                     >
-                      {labels[item.translationKey] || item.name}
+                      {item.name}
                     </span>
                     <span
-                      className='font-black text-base leading-none'
+                      className='font-black text-[13px] xs:text-sm leading-none'
                       style={{ color: isDark ? item.textDark : item.textLight }}
                     >
                       {item.value}%
