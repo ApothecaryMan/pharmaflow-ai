@@ -2868,6 +2868,9 @@ export const TRANSLATIONS = {
       afternoon: 'Afternoon',
       evening: 'Evening',
       targetAchieved: 'Target Achieved',
+      salesTarget: 'Sales Target',
+      customerSatisfaction: 'Customer Satisfaction',
+      inventoryTurnover: 'Inventory Turnover',
     },
   },
   AR: {
@@ -5747,6 +5750,9 @@ export const TRANSLATIONS = {
       afternoon: 'ظهراً',
       evening: 'مساءً',
       targetAchieved: 'تحقيق الهدف',
+      salesTarget: 'هدف المبيعات',
+      customerSatisfaction: 'رضا العملاء',
+      inventoryTurnover: 'معدل دوران المخزون',
     },
   },
 };

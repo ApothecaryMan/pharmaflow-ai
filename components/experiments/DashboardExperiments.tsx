@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -27,6 +27,8 @@ import {
   YAxis,
 } from 'recharts';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { useSettings } from '../../context/SettingsContext';
+import { PerformanceGoalsCard } from './PerformanceGoalsCard';
 
 interface DashboardExperimentsProps {
   color: string;
@@ -91,9 +93,9 @@ const dailyTrafficData = [
 
 // 6. Radial Bar - Performance Goals
 const performanceGoalsData = [
-  { name: 'Sales Target', value: 78, fill: '#3b82f6' },
-  { name: 'Customer Satisfaction', value: 92, fill: '#10b981' },
-  { name: 'Inventory Turnover', value: 65, fill: '#f59e0b' },
+  { name: 'Sales Target', translationKey: 'salesTarget', icon: 'ads_click', value: 78, fill: '#3b82f6', bgLight: '#bfdbfe', bgDark: '#1e3a8a', textLight: '#1d4ed8', textDark: '#dbeafe' },
+  { name: 'Customer Satisfaction', translationKey: 'customerSatisfaction', icon: 'sentiment_very_satisfied', value: 92, fill: '#10b981', bgLight: '#bbf7d0', bgDark: '#064e3b', textLight: '#047857', textDark: '#d1fae5' },
+  { name: 'Inventory Turnover', translationKey: 'inventoryTurnover', icon: 'inventory_2', value: 65, fill: '#f59e0b', bgLight: '#fed7aa', bgDark: '#78350f', textLight: '#b45309', textDark: '#fef3c7' },
 ];
 
 // 7. Progress Bars - Task Completion
@@ -205,13 +207,8 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
 }) => {
   const isRTL = language === 'AR';
 
-  // Detect dark mode
-  const isDark = useMemo(() => {
-    if (typeof window !== 'undefined') {
-      return document.documentElement.classList.contains('dark');
-    }
-    return false;
-  }, []);
+  // Detect dark mode dynamically using SettingsContext
+  const { darkMode: isDark } = useSettings();
 
   // Chart styling based on theme
   const chartStyle = useMemo(
@@ -278,7 +275,12 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
     afternoon: t?.dashboardExperiments?.afternoon || (isRTL ? 'ظهراً' : 'Afternoon'),
     evening: t?.dashboardExperiments?.evening || (isRTL ? 'مساءً' : 'Evening'),
     targetAchieved: t?.dashboardExperiments?.targetAchieved || (isRTL ? 'تحقيق الهدف' : 'Target Achieved'),
+    salesTarget: t?.dashboardExperiments?.salesTarget || (isRTL ? 'هدف المبيعات' : 'Sales Target'),
+    customerSatisfaction: t?.dashboardExperiments?.customerSatisfaction || (isRTL ? 'رضا العملاء' : 'Customer Satisfaction'),
+    inventoryTurnover: t?.dashboardExperiments?.inventoryTurnover || (isRTL ? 'معدل دوران المخزون' : 'Inventory Turnover'),
   };
+
+
 
   // Get heatmap color based on value
   const getHeatmapColor = (value: number) => {
@@ -383,7 +385,7 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
                   tick={{ fill: chartStyle.tick, fontSize: 10 }}
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
-                <Bar dataKey='revenue' fill='url(#barGradient1)' radius={[6, 6, 0, 0]} />
+                <Bar dataKey='revenue' fill='url(#barGradient1)' radius={[6, 6, 0, 0]} activeBar={{ fillOpacity: 0.85 }} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -521,50 +523,11 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
         </div>
 
         {/* Card 6: Radial Bar - Performance Goals */}
-        <div className={`p-5 rounded-3xl ${CARD_BASE} h-72 flex flex-col`}>
-          <h3 className='text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2'>
-            <span className='material-symbols-rounded text-primary-500 text-[20px]'>speed</span>
-            {labels.card6}
-          </h3>
-          <div className='flex-1 flex flex-col items-center justify-center'>
-            <ResponsiveContainer width='100%' height={150}>
-              <RadialBarChart
-                cx='50%'
-                cy='100%'
-                innerRadius='55%'
-                outerRadius='130%'
-                barSize={18}
-                data={performanceGoalsData}
-                startAngle={180}
-                endAngle={0}
-              >
-                <RadialBar
-                  background={{ fill: isDark ? '#374151' : '#e5e7eb' }}
-                  dataKey='value'
-                  cornerRadius={10}
-                />
-              </RadialBarChart>
-            </ResponsiveContainer>
-            <div className='w-full grid grid-cols-3 gap-2 px-2 mt-4'>
-              {performanceGoalsData.map((item) => (
-                <div key={item.name} className='flex flex-col items-center text-center'>
-                  <div className='flex items-center gap-1.5 mb-1'>
-                    <div
-                      className='w-2.5 h-2.5 rounded-full shrink-0'
-                      style={{ backgroundColor: item.fill }}
-                    ></div>
-                    <span className='font-bold text-gray-800 dark:text-gray-200 text-lg'>
-                      {item.value}%
-                    </span>
-                  </div>
-                  <span className='text-gray-500 dark:text-gray-400 text-[10px] leading-tight line-clamp-2 w-full'>
-                    {item.name}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <PerformanceGoalsCard
+          data={performanceGoalsData}
+          isRTL={isRTL}
+          labels={labels}
+        />
 
         {/* Card 7: Progress Bars - Task Completion */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-72 flex flex-col`}>
@@ -841,15 +804,17 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
                   name='Medicine'
                   stackId='a'
                   fill='#3b82f6'
-                  radius={[0, 0, 0, 0]}
+                  radius={[0, 0, 99, 99]}
+                  activeBar={{ fillOpacity: 0.85 }}
                 />
-                <Bar dataKey='cosmetics' name='Cosmetics' stackId='a' fill='#8b5cf6' />
+                <Bar dataKey='cosmetics' name='Cosmetics' stackId='a' fill='#8b5cf6' activeBar={{ fillOpacity: 0.85 }} />
                 <Bar
                   dataKey='equipment'
                   name='Equipment'
                   stackId='a'
                   fill='#10b981'
-                  radius={[4, 4, 0, 0]}
+                  radius={[99, 99, 0, 0]}
+                  activeBar={{ fillOpacity: 0.85 }}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -992,7 +957,7 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
                     return null;
                   }}
                 />
-                <Bar dataKey='sales' radius={[0, 6, 6, 0]}>
+                <Bar dataKey='sales' radius={[99, 99, 99, 99]} activeBar={{ fillOpacity: 0.85 }}>
                   {[
                     { fill: '#3b82f6' },
                     { fill: '#8b5cf6' },
