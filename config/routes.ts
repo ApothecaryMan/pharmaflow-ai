@@ -6,6 +6,7 @@ export const ROUTES = {
   SIGNUP: 'signup' as ViewState,
   FORGOT_PASSWORD: 'forgot-password' as ViewState,
   MODAL_TESTS: 'modal-tests' as ViewState,
+  FILTER_DROPDOWN_TEST: 'filter-dropdown-test' as ViewState,
   TEST_THEME: 'test-theme' as ViewState,
   INVENTORY: 'inventory' as ViewState,
   POS: 'pos' as ViewState,
@@ -19,4 +20,4 @@ export const ROUTES = {
   EXPIRY_CALENDAR: 'expiry-calendar' as ViewState,
 } as const;
 
-export const TEST_ROUTES = [ROUTES.LOGIN, ROUTES.MODAL_TESTS, ROUTES.TEST_THEME];
+export const TEST_ROUTES = [ROUTES.LOGIN, ROUTES.MODAL_TESTS, ROUTES.FILTER_DROPDOWN_TEST, ROUTES.TEST_THEME];

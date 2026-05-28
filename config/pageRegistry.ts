@@ -42,6 +42,7 @@ import { PricingPage } from '../components/settings/PricingPage';
 import { ModalTests } from '../components/test/ModalTests';
 import { ScrollbarLab } from '../components/test/ScrollbarLab';
 import { A5InvoiceDesigner } from '../components/test/A5InvoiceDesigner';
+import { FilterDropdownTest } from '../components/test/FilterDropdownTest';
 import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
 import type { PermissionAction } from './permissions';
 import { PERMISSIONS_MAPPING } from './permissionsMapping';
@@ -534,6 +535,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'test',
     requiredProps: ['color', 't', 'language'],
     permission: PERMISSIONS_MAPPING['a5-invoice-designer'],
+    layout: 'standard',
+  },
+  'filter-dropdown-test': {
+    id: 'filter-dropdown-test',
+    component: FilterDropdownTest,
+    menuLabel: 'Filter Dropdown Test',
+    menuLabelAr: 'اختبار القائمة المنسدلة',
+    icon: 'filter_alt',
+    category: 'test',
+    requiredProps: ['color', 't', 'language'],
+    permission: PERMISSIONS_MAPPING['filter-dropdown-test'],
     layout: 'standard',
   },
   'employee-list': {

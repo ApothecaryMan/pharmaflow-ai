@@ -73,6 +73,7 @@ export type ViewState =
   | 'shortages'
   | 'scrollbar-lab'
   | 'a5-invoice-designer'
+  | 'filter-dropdown-test'
   | 'expenses';
 
 /** Dashboard widget expand options */

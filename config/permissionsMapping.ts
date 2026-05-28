@@ -39,6 +39,7 @@ export const PERMISSIONS_MAPPING: Record<string, PermissionAction> = {
   'modal-tests': 'system.debug',
   'scrollbar-lab': 'system.debug',
   'a5-invoice-designer': 'system.debug',
+  'filter-dropdown-test': 'system.debug',
   'employee-list': 'users.view',
   'employee-profile': 'users.view',
   intelligence: 'reports.view_financial',

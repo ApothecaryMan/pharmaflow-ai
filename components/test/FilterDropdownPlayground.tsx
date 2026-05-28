@@ -1,0 +1,245 @@
+import React, { useEffect, useRef, useState } from 'react';
+// FilterDropdown Playground Component
+import { useFilterDropdown } from '../../hooks/layout/useFilterDropdown';
+
+export interface FilterDropdownPlaygroundProps<T> {
+  items: T[];
+  selectedItem: T | undefined;
+  isOpen?: boolean;
+  onToggle?: () => void;
+  onSelect: (item: T) => void;
+  renderItem: (item: T, isSelected: boolean) => React.ReactNode;
+  renderSelected: (item: T | undefined) => React.ReactNode;
+  keyExtractor: (item: T) => string;
+  onEnter?: () => void;
+  className?: string;
+  color?: string;
+  variant?: 'minimal' | 'input';
+  minHeight?: string | number;
+  style?: React.CSSProperties;
+  disabled?: boolean;
+  centered?: boolean;
+  rounded?: 'xl' | 'full';
+  /** If true, the arrow icon will be hidden. */
+  hideArrow?: boolean;
+  /** If true, the dropdown is more compact (for tables). */
+  dense?: boolean;
+  /** If true, hides the arrow automatically if the rendered text is long (string length > 4). */
+  autoHideArrow?: boolean;
+  /**
+   * NEW: If true, the dropdown is placed directly on the page background (e.g. gray toolbar).
+   * It swaps the colors: use "open" color for closed state and vice versa.
+   */
+  onBackground?: boolean;
+}
+
+/**
+ * FilterDropdownPlayground - A generic dropdown/combobox component for testing.
+ */
+export function FilterDropdownPlayground<T>({
+  items,
+  selectedItem,
+  isOpen,
+  onToggle,
+  onSelect,
+  renderItem,
+  renderSelected,
+  keyExtractor,
+  onEnter,
+  className = '',
+  color = 'primary',
+  variant = 'minimal',
+  minHeight,
+  style,
+  disabled = false,
+  centered = false,
+  rounded = 'xl',
+  hideArrow = false,
+  autoHideArrow = false,
+  onBackground = false,
+  dense = false,
+}: FilterDropdownPlaygroundProps<T>) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const isClickingRef = useRef(false);
+
+  const handleMouseDown = () => {
+    isClickingRef.current = true;
+    setTimeout(() => {
+      isClickingRef.current = false;
+    }, 200);
+  };
+
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isControlled = isOpen !== undefined && onToggle !== undefined;
+  const effectiveIsOpen = isControlled ? isOpen : internalIsOpen;
+  const handleToggle = isControlled ? onToggle : () => setInternalIsOpen((prev) => !prev);
+
+  useEffect(() => {
+    if (effectiveIsOpen) {
+      setIsAnimating(true);
+    } else {
+      const timer = setTimeout(() => setIsAnimating(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [effectiveIsOpen]);
+
+  const handleFocus = (e: React.FocusEvent) => {
+    if (!isClickingRef.current && !effectiveIsOpen && !disabled) {
+      handleToggle();
+    }
+  };
+
+  useEffect(() => {
+    if (!effectiveIsOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        if (isControlled) {
+          onToggle();
+        } else {
+          setInternalIsOpen(false);
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [effectiveIsOpen, isControlled, onToggle]);
+
+  const { handleKeyDown, handleBlur, handleClick, handleOptionClick } = useFilterDropdown({
+    items,
+    selectedItem,
+    isOpen: effectiveIsOpen,
+    onToggle: handleToggle,
+    onSelect: (item) => {
+      onSelect(item);
+    },
+    keyExtractor,
+    onEnter,
+  });
+
+  const isSingle = items.length <= 1;
+  const isTransparent = isSingle;
+  const isInput = variant === 'input';
+  const itemPaddingClasses = dense ? 'px-2 py-0.5' : 'px-3 py-1';
+
+  // Design Tokens & Variable Inversion
+  const bgClosed = onBackground
+    ? 'var(--bg-secondary)'
+    : isInput
+      ? 'var(--bg-input)'
+      : isTransparent
+        ? 'transparent'
+        : 'var(--bg-card)';
+  const bgOpen = isInput ? 'var(--bg-input)' : 'var(--bg-card)';
+  const currentBg = effectiveIsOpen ? bgOpen : bgClosed;
+  const currentBorder =
+    onBackground || effectiveIsOpen || isInput || !isTransparent
+      ? 'var(--border-divider)'
+      : 'transparent';
+
+  const outerClasses = `relative inline-block ${className}`;
+  const outerStyle = minHeight ? { ...style, height: minHeight, minHeight } : style;
+
+  const innerClasses = `absolute w-full flex flex-col overflow-hidden border outline-hidden group
+                    ${rounded === 'full' ? 'rounded-[20px]' : 'rounded-xl'}
+                    ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
+                    ${effectiveIsOpen || isAnimating ? 'z-40' : 'z-0'}
+                    ${onBackground ? 'shadow-xs' : ''}
+                    transition-all duration-300
+                    top-0 left-0
+                `;
+
+  return (
+    <div ref={containerRef} className={outerClasses} style={outerStyle}>
+      <style>{`
+                .filter-dropdown-scroll::-webkit-scrollbar { width: 2px; background: transparent; }
+                .filter-dropdown-scroll::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.6); border-radius: 9999px; }
+            `}</style>
+      <div
+        tabIndex={disabled ? -1 : 0}
+        onKeyDown={disabled ? undefined : handleKeyDown}
+        onBlur={handleBlur}
+        onFocus={handleFocus}
+        onMouseDown={handleMouseDown}
+        className={innerClasses}
+        style={{
+          backgroundColor: currentBg,
+          borderColor: effectiveIsOpen ? 'var(--border-divider-strong)' : currentBorder,
+          transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+        onClick={disabled ? undefined : handleClick}
+      >
+        {/* Trigger Area */}
+        <div
+          className={`w-full flex items-center ${
+            isInput
+              ? `justify-between ${onBackground ? (dense ? 'px-2 py-1' : 'px-3 py-[9px]') : itemPaddingClasses}`
+              : `justify-center items-center ${itemPaddingClasses}`
+          }`}
+          style={isInput ? { minHeight: minHeight || (onBackground ? (dense ? '34px' : '42px') : (dense ? '32px' : '40px')) } : {}}
+        >
+          {isInput ? (
+            <>
+               <div className={`flex-1 truncate ${dense ? 'text-xs' : 'text-sm'} font-medium text-gray-700 dark:text-gray-200 transition-colors group-hover:text-primary-600 dark:group-hover:text-primary-400`}>
+                {renderSelected(selectedItem)}
+              </div>
+              {!(
+                hideArrow ||
+                (autoHideArrow && extractTextContent(renderSelected(selectedItem)).length > 3)
+              ) && (
+                <span className='material-symbols-rounded text-gray-400 text-[20px] ml-1 shrink-0'>
+                  expand_more
+                </span>
+              )}
+            </>
+          ) : (
+            renderSelected(selectedItem)
+          )}
+        </div>
+
+        {/* Dropdown Menu Container */}
+        <div
+          className='w-full overflow-hidden'
+          style={{
+            display: 'grid',
+            gridTemplateRows: effectiveIsOpen ? '1fr' : '0fr',
+            transition: 'grid-template-rows 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+        >
+          <div className='min-h-0 overflow-hidden'>
+            <div
+              className={`filter-dropdown-scroll max-h-40 overflow-y-auto ${effectiveIsOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}
+            >
+              {items
+                .filter(
+                  (item) => keyExtractor(item) !== (selectedItem ? keyExtractor(selectedItem) : '')
+                )
+                .map((item) => (
+                  <div
+                    key={keyExtractor(item)}
+                    className='w-full cursor-pointer hover:bg-(--bg-menu-hover) px-3 py-1 transition-colors'
+                    onClick={(e) => handleOptionClick(e, item)}
+                  >
+                    {renderItem(item, false)}
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Helper function to extract text content recursively from React Nodes */
+const extractTextContent = (node: any): string => {
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (!node) return '';
+  if (React.isValidElement(node)) {
+    const children = (node.props as any).children;
+    return Array.isArray(children)
+      ? children.map(extractTextContent).join('')
+      : extractTextContent(children);
+  }
+  return Array.isArray(node) ? node.map(extractTextContent).join('') : '';
+};

@@ -1218,6 +1218,7 @@ export const PHARMACY_MENU: MenuItem[] = [
           { label: 'Modal Tests', view: 'modal-tests', icon: 'dialogs' },
           { label: 'Scrollbar Lab', view: 'scrollbar-lab', icon: 'science' },
           { label: 'A5 Invoice Lab', view: 'a5-invoice-designer', icon: 'print' },
+          { label: 'Filter Dropdown Test', view: 'filter-dropdown-test', icon: 'filter_alt' },
         ],
       },
     ],
