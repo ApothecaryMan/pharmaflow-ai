@@ -140,9 +140,9 @@ html:not(.dark) .card-shadow  { box-shadow: none !important; border: 2px solid v
 
 /* Custom Icon scaling inside premium badges */
 [class*="badge-"] .material-symbols-rounded {
-  font-size: 20px !important;
-  width: 12px !important;
-  height: 12px !important;
+  font-size: 1.15em !important;
+  width: 1.15em !important;
+  height: 1.15em !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;

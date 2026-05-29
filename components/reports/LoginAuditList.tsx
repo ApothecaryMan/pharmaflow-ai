@@ -45,43 +45,43 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
         return {
           label: t.loginAudit.actions.login,
           icon: 'login',
-          colors: 'text-emerald-700 dark:text-emerald-400',
+          badgeClass: 'badge-success',
         };
       case 'logout':
         return {
           label: t.loginAudit.actions.logout,
           icon: 'logout',
-          colors: 'text-rose-700 dark:text-rose-400',
+          badgeClass: 'badge-danger',
         };
       case 'switch_user':
         return {
           label: t.loginAudit.actions.switch,
           icon: 'sync_alt',
-          colors: 'text-amber-700 dark:text-amber-400',
+          badgeClass: 'badge-warning',
         };
       case 'system_login':
         return {
           label: t.loginAudit.actions.system_login,
           icon: 'admin_panel_settings',
-          colors: 'text-indigo-700 dark:text-indigo-400',
+          badgeClass: 'badge-indigo',
         };
       case 'system_logout':
         return {
           label: t.loginAudit.actions.system_logout,
           icon: 'no_accounts',
-          colors: 'text-indigo-700 dark:text-indigo-400',
+          badgeClass: 'badge-indigo',
         };
       case 'switch_branch':
         return {
           label: t.loginAudit.actions.switchBranch || 'SWITCH BRANCH',
           icon: 'storefront',
-          colors: 'text-cyan-700 dark:text-cyan-400',
+          badgeClass: 'badge-blue',
         };
       default:
         return {
           label: action,
           icon: 'info',
-          colors: 'text-gray-700 dark:text-gray-400',
+          badgeClass: 'badge-neutral',
         };
     }
   };
@@ -297,8 +297,10 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
                   username.charAt(0).toUpperCase()
                 )}
               </div>
-              {/* Name is now static - showing exactly what was recorded at time of event */}
-              <span className='font-semibold text-gray-800 dark:text-gray-200'>{username}</span>
+              {/* Display the recorded name at time of event, fallback to username */}
+              <span className='font-semibold text-gray-800 dark:text-gray-200'>
+                {row.employeeName || username}
+              </span>
             </div>
           );
         },
@@ -308,11 +310,9 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
         accessorKey: 'action',
         header: t.loginAudit.headers.action,
         cell: (info) => {
-          const { label, icon, colors } = getActionInfo(String(info.getValue()));
+          const { label, icon, badgeClass } = getActionInfo(String(info.getValue()));
           return (
-            <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current bg-transparent text-xs font-bold uppercase tracking-wider ${colors}`}
-            >
+            <span className={`gap-1 px-2 py-1 ${badgeClass}`}>
               <span className='material-symbols-rounded text-sm'>{icon}</span>
               {label}
             </span>

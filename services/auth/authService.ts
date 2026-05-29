@@ -80,6 +80,7 @@ export const authService = {
           username: employeeData.username || employeeData.name,
           employeeId: employeeData.id,
           employeeCode: employeeData.employeeCode,
+          employeeName: employeeData.name,
           branchId: employeeData.branchId || '',
           orgId: orgId || employeeData.orgId,
           role: employeeData.role,
@@ -204,6 +205,7 @@ export const authService = {
         username: employeeData.username || employeeData.name,
         employeeId: employeeData.id,
         employeeCode: employeeData.employeeCode,
+        employeeName: employeeData.name,
         branchId: employeeData.branchId || '',
         orgId: orgId || employeeData.orgId,
         role: employeeData.role,
@@ -233,6 +235,7 @@ export const authService = {
       action: 'system_login',
       employeeId: session.employeeId,
       employeeCode: session.employeeCode,
+      employeeName: session.employeeName,
       details: `Account: ${session.username}`
     });
 
@@ -251,6 +254,7 @@ export const authService = {
           action: 'system_logout',
           employeeId: session.employeeId,
           employeeCode: session.employeeCode,
+          employeeName: session.employeeName,
           details: 'Account Logout'
         });
       }
@@ -317,15 +321,23 @@ export const authService = {
   },
 
   logAuditEvent(entry: Omit<LoginAuditEntry, 'id' | 'timestamp'>): void {
+    const finalEntry: any = { ...entry };
+    if (!finalEntry.employeeName) {
+      const session = this.getCurrentUserSync();
+      if (session && session.employeeId === finalEntry.employeeId) {
+        finalEntry.employeeName = session.employeeName;
+      }
+    }
+
     // 1. Sync to Supabase (Server-side)
     import('./repositories/auditRepository').then(({ auditRepository }) => {
-      auditRepository.insert(entry);
+      auditRepository.insert(finalEntry);
     });
 
     // 2. Keep a small local cache for immediate UI feedback (Optional)
     const history = this.getLoginHistorySync();
     const newEntry: LoginAuditEntry = {
-      ...entry,
+      ...finalEntry,
       id: Math.random().toString(36).substring(2, 11),
       timestamp: new Date().toISOString(),
     };
@@ -367,6 +379,7 @@ export const authService = {
       username: employee.username || employee.name,
       employeeId: employee.id,
       employeeCode: employee.employeeCode,
+      employeeName: employee.name,
       branchId: employee.branchId || '',
       role: employee.role,
       orgRole: employee.orgRole,
@@ -385,6 +398,7 @@ export const authService = {
       action: 'login',
       employeeId: session.employeeId,
       employeeCode: session.employeeCode,
+      employeeName: session.employeeName,
       details: 'Biometric Login'
     });
 

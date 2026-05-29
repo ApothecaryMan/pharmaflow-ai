@@ -36,6 +36,9 @@ export interface UserSession {
   /** Department classification */
   department: 'sales' | 'pharmacy' | 'marketing' | 'hr' | 'it' | 'logistics';
   
+  /** Display name of the employee */
+  employeeName?: string;
+  
   /** System-wide functional role */
   role:
     | 'admin'
@@ -83,4 +86,7 @@ export interface LoginAuditEntry {
 
   /** Linked employee Code (e.g. EMP-001) */
   employeeCode?: string;
+
+  /** Display name of the employee at time of action */
+  employeeName?: string;
 }
