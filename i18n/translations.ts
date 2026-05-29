@@ -1739,6 +1739,7 @@ export const TRANSLATIONS = {
         actions: 'Actions',
         notes: 'Notes',
         totalRefund: 'Total Refund',
+        items: 'Items',
       },
       noResults: 'No return records found.',
       reasons: {
@@ -5049,6 +5050,7 @@ export const TRANSLATIONS = {
         actions: 'إجراءات',
         notes: 'ملاحظات',
         totalRefund: 'إجمالي الاسترداد',
+        items: 'الأصناف',
       },
       noResults: 'لا توجد سجلات مرتجعات.',
       reasons: {

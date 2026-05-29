@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { money, pricing } from '../../utils/money';
+import { money, pricing, tax } from '../../utils/money';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { useSettings } from '../../context';
 import { PENDING_APPROVAL_HELP } from '../../i18n/helpInstructions';
 import { type Purchase, type Employee, type Shift } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatCurrencyParts } from '../../utils/currency';
-import { HelpButton, HelpModal } from '../common/HelpModal';
-import { Modal } from '../common/Modal';
-import { useSmartDirection } from '../common/SmartInputs';
-import { PageHeader } from '../common/PageHeader';
-import { SearchInput } from '../common/SearchInput';
-import { SegmentedControl } from '../common/SegmentedControl';
+import {
+  HelpButton,
+  HelpModal,
+  Modal,
+  useSmartDirection,
+  PageHeader,
+  SearchInput,
+  SegmentedControl,
+} from '../common';
+import { checkExpiryStatus, formatExpiryDate, getExpiryStatusStyle } from '../../utils/expiryUtils';
 
 // --- Sub-components (SalesHistory Style) ---
 
@@ -178,9 +182,9 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
           }
           rightContent={
             <div className='flex items-center gap-2'>
-              <div className='px-4 py-2 rounded-2xl bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 flex items-center gap-2'>
-                <span className='w-2 h-2 rounded-full bg-orange-500 animate-pulse'></span>
-                <span className='text-sm font-bold text-orange-600 dark:text-orange-400'>
+              <div className='badge-warning inline-flex items-center gap-2'>
+                <span className='w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0'></span>
+                <span>
                   {pendingPurchases.length} {t.pendingReview || 'Pending'}
                 </span>
               </div>
@@ -237,93 +241,95 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
           </div>
         </div>
       ) : (
-        <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 flex-1 overflow-y-auto p-2 items-start content-start'>
-          {filteredPendingPurchases.map((purchase) => (
-            <div
-              key={purchase.id}
-              className={`bg-white dark:bg-(--bg-card) rounded-3xl p-5 border border-gray-100 dark:border-(--border-divider) shadow-sm flex flex-col relative overflow-hidden group cursor-pointer hover:border-gray-200 dark:hover:border-primary-500/50 transition-colors ${
-                isLoading ? 'animate-pulse pointer-events-none opacity-80' : ''
-              }`}
-              onClick={() => setSelectedPurchase(purchase)}
-            >
-              {/* Header */}
-              <div className='flex justify-between items-start mb-5'>
-                <div className='space-y-1 min-w-0 flex-1'>
-                  <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate'>
-                    {t.supplier || 'Supplier'}
-                  </p>
-                  <h3 className='text-base font-bold text-gray-800 dark:text-gray-100 truncate' title={purchase.supplierName}>
-                    {purchase.supplierName}
-                  </h3>
-                </div>
-                <div className='flex flex-col items-end shrink-0 ml-3 space-y-1.5'>
-                  <div className='px-2.5 py-0.5 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 text-[9px] font-bold uppercase flex items-center gap-1.5 border border-orange-100 dark:border-orange-900/50'>
-                    <span className='w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse'></span>
-                    {t.pendingReview || 'Pending'}
+        <div className='flex-1 overflow-y-auto p-2 min-h-0'>
+          <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-start'>
+            {filteredPendingPurchases.map((purchase) => (
+              <div
+                key={purchase.id}
+                className={`bg-white dark:bg-(--bg-card) rounded-3xl p-5 border border-gray-100 dark:border-(--border-divider) shadow-sm flex flex-col relative overflow-hidden group cursor-pointer hover:border-gray-200 dark:hover:border-primary-500/50 transition-colors ${
+                  isLoading ? 'animate-pulse pointer-events-none opacity-80' : ''
+                }`}
+                onClick={() => setSelectedPurchase(purchase)}
+              >
+                {/* Header */}
+                <div className='flex justify-between items-start mb-5'>
+                  <div className='space-y-1 min-w-0 flex-1'>
+                    <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate'>
+                      {t.supplier || 'Supplier'}
+                    </p>
+                    <h3 className='text-base font-bold text-gray-800 dark:text-gray-100 truncate' title={purchase.supplierName}>
+                      {purchase.supplierName}
+                    </h3>
                   </div>
-                  <p className='text-[10px] text-gray-400 font-mono'>
-                    {t.invCode || 'INV'}: {purchase.externalInvoiceId || purchase.invoiceId.slice(0, 8)}
-                  </p>
+                  <div className='flex flex-col items-end shrink-0 ml-3 space-y-1.5'>
+                    <div className='badge-warning inline-flex items-center gap-1.5 shrink-0'>
+                      <span className='w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0'></span>
+                      {t.pendingReview || 'Pending'}
+                    </div>
+                    <p className='text-[10px] text-gray-400 font-mono'>
+                      {t.invCode || 'INV'}: {purchase.externalInvoiceId || purchase.invoiceId.slice(0, 8)}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              {/* Data Rows */}
-              <div className='space-y-3 mb-5'>
-                <div className='flex justify-between items-center'>
-                  <span className='text-gray-500 dark:text-gray-400 text-xs font-medium'>{t.totalCost || 'Total Cost'}</span>
-                  <span className='font-bold text-primary-600 dark:text-primary-400 text-sm'>
-                    <CurrencyDisplay amount={purchase.totalCost} />
-                  </span>
-                </div>
-                <div className='flex justify-between items-center'>
-                  <span className='text-gray-500 dark:text-gray-400 text-xs font-medium'>{t.date || 'Date'}</span>
-                  <span className='font-medium text-gray-700 dark:text-gray-300 text-xs flex items-center gap-1'>
-                    {new Date(purchase.date).toLocaleDateString()} 
-                    <span className='text-[10px] opacity-50 font-mono'>({formatTime(new Date(purchase.date))})</span>
-                  </span>
-                </div>
-                <div className='flex justify-between items-center'>
-                  <span className='text-gray-500 dark:text-gray-400 text-xs font-medium'>{t.items || 'Items'}</span>
-                  <span className='font-medium text-gray-700 dark:text-gray-300 text-xs flex items-center gap-2'>
-                    <span>{purchase.items.reduce((acc, item) => acc + item.quantity, 0)} {t.items || 'Items'}</span>
-                    <span className='opacity-30'>•</span>
-                    <span className='flex items-center gap-1 bg-gray-50 dark:bg-white/5 px-1.5 py-0.5 rounded-md'>
-                      <span className='material-symbols-rounded text-[12px] opacity-60'>person</span>
-                      <span className='text-[10px]'>{purchase.createdByName || t.unknown || 'Unknown'}</span>
+                {/* Data Rows */}
+                <div className='space-y-3 mb-5'>
+                  <div className='flex justify-between items-center'>
+                    <span className='text-gray-500 dark:text-gray-400 text-xs font-medium'>{t.totalCost || 'Total Cost'}</span>
+                    <span className='font-bold text-primary-600 dark:text-primary-400 text-sm'>
+                      <CurrencyDisplay amount={purchase.totalCost} />
                     </span>
-                  </span>
+                  </div>
+                  <div className='flex justify-between items-center'>
+                    <span className='text-gray-500 dark:text-gray-400 text-xs font-medium'>{t.date || 'Date'}</span>
+                    <span className='font-medium text-gray-700 dark:text-gray-300 text-xs flex items-center gap-1'>
+                      {new Date(purchase.date).toLocaleDateString()} 
+                      <span className='text-[10px] opacity-50 font-mono'>({formatTime(new Date(purchase.date))})</span>
+                    </span>
+                  </div>
+                  <div className='flex justify-between items-center'>
+                    <span className='text-gray-500 dark:text-gray-400 text-xs font-medium'>{t.items || 'Items'}</span>
+                    <span className='font-medium text-gray-700 dark:text-gray-300 text-xs flex items-center gap-2'>
+                      <span>{purchase.items.reduce((acc, item) => acc + item.quantity, 0)} {t.items || 'Items'}</span>
+                      <span className='opacity-30'>•</span>
+                      <span className='flex items-center gap-1 bg-gray-50 dark:bg-white/5 px-1.5 py-0.5 rounded-md'>
+                        <span className='material-symbols-rounded text-[12px] opacity-60'>person</span>
+                        <span className='text-[10px]'>{purchase.createdByName || t.unknown || 'Unknown'}</span>
+                      </span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className='mt-auto pt-3 border-t border-gray-100 dark:border-(--border-divider) grid grid-cols-2 gap-3' onClick={(e) => e.stopPropagation()}>
+                  {permissionsService.can('purchase.approve') && (
+                    <button
+                      onClick={(e) => handleOpenApprove(purchase.id, e)}
+                      className='py-2 rounded-xl bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400 font-bold text-xs transition-colors flex items-center justify-center gap-1.5'
+                    >
+                      <span className='material-symbols-rounded text-[18px]'>check_circle</span>
+                      {t.approve || 'Approve'}
+                    </button>
+                  )}
+
+                  {purchase.paymentMethod === 'cash' && !currentShift ? (
+                    <div className='py-2 px-1 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 flex items-center justify-center gap-1 text-red-600 dark:text-red-400'>
+                      <span className='material-symbols-rounded text-[14px]'>warning</span>
+                      <span className='text-[9px] font-bold uppercase truncate'>{t.noOpenShift || 'Open Shift First'}</span>
+                    </div>
+                  ) : permissionsService.can('purchase.reject') ? (
+                    <button
+                      onClick={(e) => handleOpenReject(purchase.id, e)}
+                      className='py-2 rounded-xl bg-gray-50 hover:bg-red-50 dark:bg-white/5 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 font-bold text-xs transition-colors flex items-center justify-center gap-1.5 border border-transparent hover:border-red-100 dark:hover:border-red-900/50'
+                    >
+                      <span className='material-symbols-rounded text-[18px]'>cancel</span>
+                      {t.reject || 'Reject'}
+                    </button>
+                  ) : <div />}
                 </div>
               </div>
-
-              {/* Actions */}
-              <div className='mt-auto pt-3 border-t border-gray-100 dark:border-(--border-divider) grid grid-cols-2 gap-3' onClick={(e) => e.stopPropagation()}>
-                {permissionsService.can('purchase.approve') && (
-                  <button
-                    onClick={(e) => handleOpenApprove(purchase.id, e)}
-                    className='py-2 rounded-xl bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400 font-bold text-xs transition-colors flex items-center justify-center gap-1.5'
-                  >
-                    <span className='material-symbols-rounded text-[18px]'>check_circle</span>
-                    {t.approve || 'Approve'}
-                  </button>
-                )}
-
-                {purchase.paymentMethod === 'cash' && !currentShift ? (
-                  <div className='py-2 px-1 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 flex items-center justify-center gap-1 text-red-600 dark:text-red-400'>
-                    <span className='material-symbols-rounded text-[14px]'>warning</span>
-                    <span className='text-[9px] font-bold uppercase truncate'>{t.noOpenShift || 'Open Shift First'}</span>
-                  </div>
-                ) : permissionsService.can('purchase.reject') ? (
-                  <button
-                    onClick={(e) => handleOpenReject(purchase.id, e)}
-                    className='py-2 rounded-xl bg-gray-50 hover:bg-red-50 dark:bg-white/5 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 font-bold text-xs transition-colors flex items-center justify-center gap-1.5 border border-transparent hover:border-red-100 dark:hover:border-red-900/50'
-                  >
-                    <span className='material-symbols-rounded text-[18px]'>cancel</span>
-                    {t.reject || 'Reject'}
-                  </button>
-                ) : <div />}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
@@ -380,22 +386,44 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                     <thead className='bg-gray-50 dark:bg-gray-950'>
                       <tr className='border-b border-gray-200 dark:border-gray-800 text-[10px] text-gray-500 uppercase'>
                         <th className='p-2 font-bold'>{t.tableHeaders?.item || 'Item'}</th>
+                        <th className='p-2 font-bold text-center'>{t.tableHeaders?.expiry || 'Expiry'}</th>
                         <th className='p-2 font-bold text-center'>{t.tableHeaders?.qty || 'Qty'}</th>
                         <th className='p-2 font-bold text-right'>{t.tableHeaders?.cost || 'Cost'}</th>
                         <th className='p-2 font-bold text-center'>{t.tableHeaders?.discount || 'Disc%'}</th>
+                        <th className='p-2 font-bold text-center'>{t.tableHeaders?.tax || 'Tax%'}</th>
                         <th className='p-2 font-bold text-right'>{t.tableHeaders?.publicPrice || 'Sale'}</th>
                         <th className='p-2 font-bold text-right'>{t.tableHeaders?.total || 'Total'}</th>
                       </tr>
                     </thead>
                     <tbody className='text-[13px]'>
                       {selectedPurchase.items.map((item, idx) => (
-                        <tr key={idx} className='border-b border-gray-100 dark:border-gray-800 last:border-0'>
-                          <td className='p-2 font-bold text-gray-800 dark:text-gray-200'>{getDisplayName(item, textTransform)}</td>
+                        <tr key={idx} className='border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors'>
+                          <td className='p-2'>
+                            <div className='flex flex-col'>
+                              <span className='font-bold text-gray-800 dark:text-gray-200'>{getDisplayName(item, textTransform)}</span>
+                              {item.barcode && <span className='text-[9px] text-gray-400 font-mono'>{item.barcode}</span>}
+                            </div>
+                          </td>
+                          <td className='p-2 text-center'>
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${getExpiryStatusStyle(checkExpiryStatus(item.expiryDate || ''), 'badge')}`}>
+                              {formatExpiryDate(item.expiryDate || '')}
+                            </span>
+                          </td>
                           <td className='p-2 text-center font-bold'>{item.quantity}</td>
                           <td className='p-2 text-right'><CurrencyDisplay amount={item.costPrice} /></td>
                           <td className='p-2 text-center text-gray-500'>{item.discount || 0}%</td>
+                          <td className='p-2 text-center text-gray-500'>{item.tax ?? 14}%</td>
                           <td className='p-2 text-right text-primary-600 font-medium'><CurrencyDisplay amount={item.publicPrice || 0} /></td>
-                          <td className='p-2 text-right font-bold'><CurrencyDisplay amount={money.multiply(item.costPrice, item.quantity, 2)} /></td>
+                          <td className='p-2 text-right font-bold'>
+                            {(() => {
+                              const lineNet = money.multiply(item.costPrice, item.quantity, 0);
+                              const totalNet = selectedPurchase.items.reduce((sum, it) => money.add(sum, money.multiply(it.costPrice, it.quantity, 0)), 0);
+                              const totalTax = selectedPurchase.totalTax || 0;
+                              const itemTaxShare = totalNet > 0 ? (totalTax * lineNet) / totalNet : 0;
+                              const lineTotal = money.add(lineNet, Math.round(itemTaxShare * 100) / 100);
+                              return <CurrencyDisplay amount={lineTotal} />;
+                            })()}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

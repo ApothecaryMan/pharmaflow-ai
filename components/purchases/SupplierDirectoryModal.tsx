@@ -2,8 +2,7 @@ import type React from 'react';
 import { useMemo, useState } from 'react';
 import type { Supplier } from '../../types';
 import { usePosSounds } from '../common/hooks/usePosSounds';
-import { Modal } from '../common/Modal';
-import { SearchInput } from '../common/SearchInput';
+import { Modal, SearchInput } from '../common';
 
 // ==========================================
 // Localized Translation Dictionaries (EN/AR)

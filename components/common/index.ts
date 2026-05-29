@@ -20,5 +20,12 @@ export {
   isValidPhone,
   SmartDateInput,
   SmartInput,
+  SmartTextarea,
   useSmartDirection,
 } from './SmartInputs';
+export { Modal } from './Modal';
+export { Switch } from './Switch';
+export { TanStackTable, PriceDisplay } from './TanStackTable';
+export { FilterPill, type FilterConfig } from './FilterPill';
+export { FloatingInput } from './FloatingInput';
+export { SearchDropdown, useSearchKeyboardNavigation } from './SearchDropdown';

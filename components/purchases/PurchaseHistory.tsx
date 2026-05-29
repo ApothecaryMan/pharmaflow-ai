@@ -2,21 +2,25 @@ import type { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { type Purchase, type PurchaseReturn, type Drug, type Supplier, type Employee, type Shift } from '../../types';
 import { parseSearchTerm } from '../../utils/searchUtils';
-import { formatExpiryDate } from '../../utils/expiryUtils';
-import { money } from '../../utils/money';
-import { PageHeader } from '../common/PageHeader';
-import { SearchInput } from '../common/SearchInput';
-import { SegmentedControl } from '../common/SegmentedControl';
-import { DateRangePicker } from '../common/DatePicker';
-import { FilterPill, type FilterConfig } from '../common/FilterPill';
-import { TanStackTable, PriceDisplay } from '../common/TanStackTable';
-import { Modal } from '../common/Modal';
-import { useSmartDirection } from '../common/SmartInputs';
-import { Switch } from '../common/Switch';
+import { checkExpiryStatus, formatExpiryDate, getExpiryStatusStyle } from '../../utils/expiryUtils';
+import { money, tax } from '../../utils/money';
+import {
+  PageHeader,
+  SearchInput,
+  SegmentedControl,
+  DateRangePicker,
+  FilterPill,
+  type FilterConfig,
+  TanStackTable,
+  PriceDisplay,
+  Modal,
+  useSmartDirection,
+  Switch,
+  useContextMenu,
+} from '../common';
 import { useSettings } from '../../context';
 import { useData } from '../../context/DataContext';
 import { getDisplayName } from '../../utils/drugDisplayName';
-import { useContextMenu } from '../common/ContextMenu';
 import { permissionsService } from '../../services/auth/permissionsService';
 
 interface PurchaseHistoryProps {
@@ -212,12 +216,11 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
         cell: (info: any) => {
           const method = info.getValue() as string;
           const isCash = method === 'cash';
+          const badgeClass = isCash ? 'badge-success' : 'badge-info';
           return (
-            <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-${isCash ? 'emerald' : 'blue'}-700 dark:text-${isCash ? 'emerald' : 'blue'}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
-            >
+            <span className={`${badgeClass} inline-flex items-center gap-1.5`}>
               <span className='material-symbols-rounded text-xs'>{isCash ? 'payments' : 'credit_card'}</span>
-              {isCash ? t.cash || 'Cash' : t.credit || 'Credit'}
+              <span>{isCash ? t.cash || 'Cash' : t.credit || 'Credit'}</span>
             </span>
           );
         },
@@ -269,17 +272,36 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
         },
         cell: (info: any) => {
           const status = info.getValue() as string;
-          let config = { color: 'emerald', icon: 'check_circle', label: t.tooltips?.completed || 'Completed' };
-          if (status === 'pending') config = { color: 'amber', icon: 'pending', label: t.tooltips?.pending || 'Pending' };
-          else if (status === 'rejected') config = { color: 'red', icon: 'cancel', label: t.tooltips?.rejected || 'Rejected' };
-          else if (status === 'returned') config = { color: 'purple', icon: 'assignment_return', label: t.tooltips?.returned || 'Returned' };
-          else if (status === 'approved') config = { color: 'blue', icon: 'fact_check', label: t.tooltips?.approved || 'Approved' };
-          else if (status === 'received') config = { color: 'emerald', icon: 'task_alt', label: t.tooltips?.received || 'Received' };
+          let badgeClass = 'badge-success';
+          let icon = 'check_circle';
+          let label = t.tooltips?.completed || 'Completed';
+
+          if (status === 'pending') {
+            badgeClass = 'badge-warning';
+            icon = 'pending';
+            label = t.tooltips?.pending || 'Pending';
+          } else if (status === 'rejected') {
+            badgeClass = 'badge-danger';
+            icon = 'cancel';
+            label = t.tooltips?.rejected || 'Rejected';
+          } else if (status === 'returned') {
+            badgeClass = 'badge-neutral';
+            icon = 'assignment_return';
+            label = t.tooltips?.returned || 'Returned';
+          } else if (status === 'approved') {
+            badgeClass = 'badge-info';
+            icon = 'fact_check';
+            label = t.tooltips?.approved || 'Approved';
+          } else if (status === 'received') {
+            badgeClass = 'badge-success';
+            icon = 'task_alt';
+            label = t.tooltips?.received || 'Received';
+          }
 
           return (
-            <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-${config.color}-50 dark:bg-${config.color}-900/20 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider`}>
-              <span className='material-symbols-rounded text-xs'>{config.icon}</span>
-              {config.label}
+            <span className={`${badgeClass} inline-flex items-center gap-1.5`}>
+              <span className='material-symbols-rounded text-xs'>{icon}</span>
+              <span>{label}</span>
             </span>
           );
         },
@@ -482,37 +504,60 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
                 <thead>
                   <tr className='bg-gray-50 dark:bg-gray-900/30 text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
                     <th className='px-4 py-3'>{t.detailsModal?.item || 'Item'}</th>
+                    <th className='px-4 py-3 text-center'>{t.detailsModal?.expiry || 'Expiry'}</th>
                     <th className='px-4 py-3 text-center'>{t.detailsModal?.qty || 'Qty'}</th>
                     <th className='px-4 py-3 text-right'>{t.detailsModal?.cost || 'Cost'}</th>
+                    <th className='px-4 py-3 text-center'>{t.detailsModal?.discount || 'Disc%'}</th>
+                    <th className='px-4 py-3 text-center'>{t.detailsModal?.tax || 'Tax%'}</th>
+                    <th className='px-4 py-3 text-right'>{t.detailsModal?.publicPrice || 'Sale'}</th>
                     <th className='px-4 py-3 text-right'>{t.detailsModal?.total || 'Total'}</th>
                   </tr>
                 </thead>
-                <tbody className='divide-y divide-gray-50 dark:divide-gray-900'>
+                <tbody className='divide-y divide-gray-50 dark:divide-gray-900 text-sm'>
                   {selectedPurchase.items.map((item, idx) => (
-                    <tr key={idx} className='text-sm hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors'>
+                    <tr key={idx} className='hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors'>
                       <td className='px-4 py-3'>
                         <div className='flex flex-col'>
                           <span className='font-bold text-gray-900 dark:text-white'>{getDisplayName(item as any, textTransform)}</span>
-                          <span className='text-[10px] text-gray-400 font-mono'>{item.drugId}</span>
+                          {item.barcode && <span className='text-[10px] text-gray-400 font-mono'>{item.barcode}</span>}
                         </div>
                       </td>
                       <td className='px-4 py-3 text-center'>
-                        <span className='px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 font-mono font-bold text-gray-700 dark:text-gray-300'>
-                          {item.quantity}
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${getExpiryStatusStyle(checkExpiryStatus(item.expiryDate || ''), 'badge')}`}>
+                          {formatExpiryDate(item.expiryDate || '')}
                         </span>
+                      </td>
+                      <td className='px-4 py-3 text-center font-bold'>
+                        {item.quantity}
                       </td>
                       <td className='px-4 py-3 text-right font-mono text-gray-600 dark:text-gray-400'>
                         <PriceDisplay value={item.costPrice} size="sm" />
                       </td>
+                      <td className='px-4 py-3 text-center text-gray-500'>
+                        {item.discount || 0}%
+                      </td>
+                      <td className='px-4 py-3 text-center text-gray-500'>
+                        {item.tax ?? 14}%
+                      </td>
+                      <td className='px-4 py-3 text-right text-primary-600 font-medium'>
+                        <PriceDisplay value={item.publicPrice || 0} size="sm" />
+                      </td>
                       <td className='px-4 py-3 text-right font-bold text-gray-900 dark:text-white'>
-                        <PriceDisplay value={money.multiply(item.costPrice, item.quantity, 2)} size="sm" />
+                        {(() => {
+                          const lineNet = money.multiply(item.costPrice, item.quantity, 0);
+                          const totalNet = selectedPurchase.items.reduce((sum, it) => money.add(sum, money.multiply(it.costPrice, it.quantity, 0)), 0);
+                          const totalTax = selectedPurchase.totalTax || 0;
+                          const itemTaxShare = totalNet > 0 ? (totalTax * lineNet) / totalNet : 0;
+                          const lineTotal = money.add(lineNet, Math.round(itemTaxShare * 100) / 100);
+                          return <PriceDisplay value={lineTotal} size="sm" />;
+                        })()}
                       </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className='bg-gray-50/50 dark:bg-gray-900/30 font-bold border-t border-gray-100 dark:border-gray-800'>
-                    <td colSpan={3} className='px-4 py-4 text-right text-gray-400 uppercase text-[10px] tracking-widest'>{t.summary?.totalCost || 'Grand Total'}</td>
+                    <td colSpan={7} className='px-4 py-4 text-right text-gray-400 uppercase text-[10px] tracking-widest'>{t.summary?.totalCost || 'Grand Total'}</td>
                     <td className='px-4 py-4 text-right'>
                       <PriceDisplay value={selectedPurchase.totalCost} size="lg" />
                     </td>

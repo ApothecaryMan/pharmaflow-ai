@@ -77,15 +77,15 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
   }, [paymentFilterOptions, paymentMethodFilter]);
 
   // Category to badge style & icon mapping
-  const categoryStyleMap: Record<ExpenseCategory, { color: string; icon: string }> = {
-    utilities: { color: 'text-blue-500 bg-blue-500/10 border-blue-500/20', icon: 'power' },
-    rent: { color: 'text-purple-500 bg-purple-500/10 border-purple-500/20', icon: 'location_away' },
-    maintenance: { color: 'text-amber-500 bg-amber-500/10 border-amber-500/20', icon: 'build' },
-    supplies: { color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20', icon: 'shopping_bag' },
-    petty_cash: { color: 'text-orange-500 bg-orange-500/10 border-orange-500/20', icon: 'payments' },
-    transportation: { color: 'text-sky-500 bg-sky-500/10 border-sky-500/20', icon: 'local_shipping' },
-    salaries: { color: 'text-rose-500 bg-rose-500/10 border-rose-500/20', icon: 'badge' },
-    misc: { color: 'text-zinc-500 bg-zinc-500/10 border-zinc-500/20', icon: 'more_horiz' },
+  const categoryStyleMap: Record<ExpenseCategory, { badgeClass: string; icon: string; color: string }> = {
+    utilities: { badgeClass: 'badge-blue', icon: 'power', color: 'bg-blue-500' },
+    rent: { badgeClass: 'badge-purple', icon: 'location_away', color: 'bg-purple-500' },
+    maintenance: { badgeClass: 'badge-orange', icon: 'build', color: 'bg-amber-500' },
+    supplies: { badgeClass: 'badge-green', icon: 'shopping_bag', color: 'bg-emerald-500' },
+    petty_cash: { badgeClass: 'badge-orange', icon: 'payments', color: 'bg-orange-500' },
+    transportation: { badgeClass: 'badge-teal', icon: 'local_shipping', color: 'bg-sky-500' },
+    salaries: { badgeClass: 'badge-red', icon: 'badge', color: 'bg-rose-500' },
+    misc: { badgeClass: 'badge-neutral', icon: 'more_horiz', color: 'bg-zinc-500' },
   };
 
   // Find employee name helper
@@ -134,8 +134,8 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
         const cat = info.getValue() as ExpenseCategory;
         const style = categoryStyleMap[cat] || categoryStyleMap.misc;
         return (
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-xs font-semibold tracking-wide ${style.color}`}>
-            <span className="material-symbols-rounded text-sm" style={{ fontVariationSettings: "'FILL' 0" }}>
+          <span className={`gap-1.5 ${style.badgeClass}`}>
+            <span className="material-symbols-rounded" style={{ fontVariationSettings: "'FILL' 0" }}>
               {style.icon}
             </span>
             {t.expenses.categories[cat] || cat}
@@ -161,15 +161,15 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
             : method === 'bank_transfer'
             ? t.expenses.modal.bank_transfer
             : t.expenses.modal.card;
-        const color =
+        const badgeClass =
           method === 'cash'
-            ? 'text-emerald-500 bg-emerald-500/10'
+            ? 'badge-green'
             : method === 'bank_transfer'
-            ? 'text-blue-500 bg-blue-500/10'
-            : 'text-purple-500 bg-purple-500/10';
+            ? 'badge-blue'
+            : 'badge-purple';
 
         return (
-          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${color}`}>
+          <span className={badgeClass}>
             {label}
           </span>
         );
@@ -357,7 +357,7 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                       <div key={item.category} className="space-y-1">
                         <div className="flex justify-between items-center text-xs">
                           <div className="flex items-center gap-2">
-                            <span className={`w-2 h-2 rounded-full ${item.style.color.split(' ')[0]}`} />
+                             <span className={`w-2 h-2 rounded-full ${item.style.color}`} />
                             <span className="font-semibold text-(--text-primary)">{item.label}</span>
                           </div>
                           <span className="font-bold text-(--text-secondary) tabular-nums">
@@ -367,7 +367,7 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                         {/* Custom Progress Bar */}
                         <div className="h-1.5 w-full bg-zinc-500/10 dark:bg-zinc-400/10 rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full ${item.style.color.split(' ')[0].replace('text-', 'bg-')}`}
+                            className={`h-full rounded-full ${item.style.color}`}
                             style={{ width: `${item.percentage}%` }}
                           />
                         </div>

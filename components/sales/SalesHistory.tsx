@@ -115,12 +115,12 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             {getValue() as string}
           </span>
         ),
-        meta: { align: 'start' },
+        meta: { width: 202, align: 'start' },
       },
       {
         accessorKey: 'date',
         header: t.headers.date,
-        meta: { align: 'center' },
+        meta: { width: 202, align: 'center' },
         cell: ({ getValue }) => (
           <span className='text-sm text-gray-700 dark:text-gray-300'>
             {getValue() as string}
@@ -156,9 +156,10 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             </span>
           );
         },
+        meta: { width: 140, align: 'start' },
       },
       {
-        id: 'customerName',
+        id: 'customerInfo',
         accessorFn: (row) => row.customerName || 'Guest',
         header: t.headers.customer,
         cell: ({ getValue }) => (
@@ -166,6 +167,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             {getValue() as string}
           </div>
         ),
+        meta: { width: 202, align: 'start' },
       },
       {
         accessorKey: 'paymentMethod',
@@ -173,17 +175,17 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         cell: ({ getValue }) => {
           const method = getValue() as string;
           const isVisa = method === 'visa';
+          const badgeClass = isVisa ? 'badge-blue' : 'badge-green';
           return (
-            <span
-              className={`flex items-center gap-1 ${isVisa ? 'text-primary-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}
-            >
-              <span className='material-symbols-rounded text-[16px]'>
+            <span className={`gap-1.5 ${badgeClass}`}>
+              <span className='material-symbols-rounded'>
                 {isVisa ? 'credit_card' : 'payments'}
               </span>
-              <span className='text-sm font-medium'>{isVisa ? t.visa : t.cash}</span>
+              <span className='whitespace-nowrap'>{isVisa ? t.visa : t.cash}</span>
             </span>
           );
         },
+        meta: { width: 202, align: 'center' },
       },
       {
         id: 'items',
@@ -194,6 +196,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             {getValue() as number} {t.items || 'items'}
           </span>
         ),
+        meta: { width: 110, align: 'start' },
       },
       {
         accessorKey: 'total',
@@ -204,8 +207,35 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           const totalParts = formatCurrencyParts(displayTotal);
           const isReturned = sale.netTotal !== undefined && sale.netTotal < sale.total;
 
+          // Build tooltip text for detailed breakdown
+          const isAr = language === 'AR';
+          const discountVal = (sale.subtotal || 0) * ((sale.globalDiscount || 0) / 100);
+          const returnedAmount = sale.total - (sale.netTotal || 0);
+
+          const itemsText = sale.items?.map(i => `• ${i.quantity} ${i.isUnit ? (isAr ? 'شريط' : 'unit') : (isAr ? 'علبة' : 'pack')} * ${i.brandName || i.name || ''}`).join('\n');
+
+          const tooltipText = [
+            `--- ${isAr ? 'تفاصيل الطلب' : 'Order Details'} ---`,
+            itemsText,
+            '-------------------',
+            sale.subtotal && `${isAr ? 'المجموع الفرعي' : 'Subtotal'}: ${formatCurrency(sale.subtotal)}`,
+            sale.globalDiscount && `${isAr ? 'الخصم' : 'Discount'}: ${sale.globalDiscount}% (-${formatCurrency(discountVal)})`,
+            sale.tax && `${isAr ? 'الضريبة' : 'Tax'}: ${formatCurrency(sale.tax)}`,
+            sale.deliveryFee && `${t.headers.delivery || (isAr ? 'التوصيل' : 'Delivery')}: ${formatCurrency(sale.deliveryFee)}`,
+            isReturned 
+              ? `${isAr ? 'المرتجع' : 'Returned'}: -${formatCurrency(returnedAmount)}\n${isAr ? 'صافي الإجمالي' : 'Net Total'}: ${formatCurrency(sale.netTotal || 0)}`
+              : `${t.headers.total || (isAr ? 'الإجمالي' : 'Total')}: ${formatCurrency(sale.total)}`,
+            '-------------------',
+            `${isAr ? 'طريقة الدفع' : 'Payment Method'}: ${sale.paymentMethod === 'visa' ? t.visa : t.cash}`,
+            sale.saleType && `${isAr ? 'نوع المعاملة' : 'Transaction Type'}: ${sale.saleType === 'delivery' ? (isAr ? 'توصيل' : 'Delivery') : (isAr ? 'شراء مباشر' : 'Walk-in')}`,
+            sale.notes?.trim() && `${isAr ? 'ملاحظات' : 'Notes'}: ${sale.notes}`
+          ].filter(Boolean).join('\n');
+
           return (
-            <div className='font-bold text-gray-900 dark:text-gray-100 tabular-nums text-sm flex flex-col items-end'>
+            <div
+              className='font-bold text-gray-900 dark:text-gray-100 tabular-nums text-sm flex flex-col items-end'
+              title={tooltipText}
+            >
               <div className='flex items-baseline gap-1'>
                 <span className={isReturned ? 'text-orange-600 dark:text-orange-400' : ''}>{totalParts.amount}</span>
                 <span className='text-[10px] text-gray-400 font-medium'>{totalParts.symbol}</span>
@@ -225,6 +255,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             </div>
           );
         },
+        meta: { width: 202, align: 'end' },
       },
       {
         id: 'status',
@@ -240,7 +271,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           return 'completed';
         },
         header: t.status || 'Status',
-        meta: { align: 'end' },
+        meta: { width: 132, align: 'center' },
         cell: ({ row }) => {
           const sale = row.original;
           const isReturned = (sale.netTotal !== undefined && sale.netTotal < sale.total) ||
@@ -310,15 +341,32 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         },
       },
       {
+        id: 'seller',
         accessorKey: 'soldByEmployeeId',
         header: t.headers.soldBy,
         cell: ({ getValue }) => {
           const empId = getValue() as string;
+          
+          // Show a pulsing skeleton loader for the seller cell if employee data is still loading
+          if (employees.length === 0) {
+            return (
+              <div className='flex items-center gap-1.5 animate-pulse'>
+                <div className='w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-800 shrink-0' />
+                <div className='h-3 w-16 bg-gray-200 dark:bg-gray-800 rounded' />
+              </div>
+            );
+          }
+
           const employee = employees.find(e => e.id === empId || e.userId === empId);
+          const hasImage = !!employee?.image;
           return (
             <div className='flex items-center gap-1.5'>
-              <div className='w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0'>
-                <span className='material-symbols-rounded text-[14px] text-gray-400'>person</span>
+              <div className='w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden border border-gray-200/50 dark:border-gray-700/50'>
+                {hasImage ? (
+                  <img src={employee.image} className='w-full h-full object-cover' alt="" />
+                ) : (
+                  <span className='material-symbols-rounded text-[14px] text-gray-400'>person</span>
+                )}
               </div>
               <span className='text-xs font-medium text-gray-600 dark:text-gray-400'>
                 {employee ? (language === 'AR' ? (employee.nameArabic || employee.name) : employee.name) : (language === 'AR' ? 'غير معروف' : 'Unknown')}
@@ -326,6 +374,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             </div>
           );
         },
+        meta: { width: 202, align: 'start' },
       },
     ],
     [t, customers, employees, language]

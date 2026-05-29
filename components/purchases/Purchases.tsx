@@ -53,19 +53,25 @@ import { formatStock } from '../../utils/inventory';
 import { money, pricing, tax } from '../../utils/money';
 import { storage } from '../../utils/storage';
 import { CARD_BASE } from '../../utils/themeStyles';
-import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
-import { DatePicker, DateRangePicker } from '../common/DatePicker';
-import { FilterDropdown } from '../common/FilterDropdown';
-import { type FilterConfig, FilterPill } from '../common/FilterPill';
-import { FloatingInput } from '../common/FloatingInput';
+import {
+  useContextMenu,
+  useContextMenuTrigger,
+  DatePicker,
+  DateRangePicker,
+  FilterDropdown,
+  type FilterConfig,
+  FilterPill,
+  FloatingInput,
+  Modal,
+  PageHeader,
+  SearchDropdown,
+  useSearchKeyboardNavigation,
+  SearchInput,
+  SegmentedControl,
+  TanStackTable,
+  useSmartDirection,
+} from '../common';
 import { usePosSounds } from '../common/hooks/usePosSounds';
-import { Modal } from '../common/Modal';
-import { PageHeader } from '../common/PageHeader';
-import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
-import { SearchInput } from '../common/SearchInput';
-import { SegmentedControl } from '../common/SegmentedControl';
-import { TanStackTable } from '../common/TanStackTable';
-import { useSmartDirection } from '../common/SmartInputs';
 import { SupplierDirectoryModal } from './SupplierDirectoryModal';
 
 interface PurchasesProps {
@@ -1166,7 +1172,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
       externalInvoiceId,
       paymentMethod: paymentMethod,
       createdBy: authService.getCurrentUserSync()?.employeeId,
-      createdByName: authService.getCurrentUserSync()?.username,
+      createdByName: authService.getCurrentUserSync()?.employeeName || authService.getCurrentUserSync()?.username,
     };
 
     setIsConfirming(true);
@@ -1255,6 +1261,14 @@ export const Purchases: React.FC<PurchasesProps> = ({
     // Get unique order ID (auto-increment if duplicate)
     const uniqueOrderId = getUniqueOrderId();
 
+    const taxResults = tax.multiRate(
+      cart.map((item) => ({
+        amount: money.multiply(item.costPrice, item.quantity, 0),
+        taxPct: item.tax || 0,
+      })),
+      taxMode
+    );
+
     const purchase: Purchase = {
       id: idGenerator.generateSync('purchases', activeBranchId),
       branchId: activeBranchId,
@@ -1275,21 +1289,15 @@ export const Purchases: React.FC<PurchasesProps> = ({
             : item.unitCostPrice
           : undefined,
       })),
-      totalCost: cart.reduce(
-        (sum, i) => money.add(sum, money.multiply(i.costPrice, i.quantity, 0)),
-        0
-      ),
-      totalTax: cart.reduce((sum, i) => {
-        const lineTotal = money.multiply(i.costPrice, i.quantity, 0);
-        return money.add(sum, tax.exclusiveAmount(lineTotal, i.tax || 0));
-      }, 0),
+      totalCost: taxResults.total,
+      totalTax: taxResults.taxAmount,
       status: 'pending',
       invoiceId: uniqueOrderId,
       externalInvoiceId,
       paymentMethod: paymentMethod,
       orgId: activeOrgId,
       createdBy: authService.getCurrentUserSync()?.employeeId,
-      createdByName: authService.getCurrentUserSync()?.username,
+      createdByName: authService.getCurrentUserSync()?.employeeName || authService.getCurrentUserSync()?.username,
     };
 
     if (!permissionsService.can('purchase.create')) {

@@ -1,19 +1,26 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { money } from '../../utils/money';
-import React, { useMemo, useState } from 'react';
+import { formatCurrency } from '../../utils/currency';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { permissionsService } from '../../services/auth/permissionsService';
 import type { Drug, Purchase, PurchaseReturn, PurchaseReturnItem } from '../../types';
 import { useSettings } from '../../context';
 import { getDisplayName } from '../../utils/drugDisplayName';
-import { CARD_BASE } from '../../utils/themeStyles';
+import { CARD_BASE, INPUT_BASE } from '../../utils/themeStyles';
 import { idGenerator } from '../../utils/idGenerator';
 import { useData } from '../../context/DataContext';
-import { useContextMenu } from '../common/ContextMenu';
-import { Modal } from '../common/Modal';
-import { SearchInput } from '../common/SearchInput';
-import { SegmentedControl } from '../common/SegmentedControl';
-import { useSmartDirection } from '../common/SmartInputs';
-import { TanStackTable } from '../common/TanStackTable';
+import {
+  useContextMenu,
+  Modal,
+  SearchInput,
+  SegmentedControl,
+  SmartInput,
+  SmartTextarea,
+  TanStackTable,
+  PriceDisplay,
+  SearchDropdown,
+  useSearchKeyboardNavigation,
+} from '../common';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 
@@ -45,32 +52,116 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   const { showMenu } = useContextMenu();
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
-  const searchDir = useSmartDirection(
-    search,
-    t.purchaseReturns?.searchPlaceholder || 'Search returns...'
-  );
 
   // Create Return state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
-  const [returnItems, setReturnItems] = useState<PurchaseReturnItem[]>([]);
   const [notes, setNotes] = useState('');
-  const notesDir = useSmartDirection(
-    notes,
-    t.purchaseReturns?.notesPlaceholder || 'Add any additional notes about this return...'
-  );
 
-  // Track item-specific form data (quantity, reason, condition for each item)
-  const [itemFormData, setItemFormData] = useState<
-    Record<
-      string,
-      {
-        quantity: number;
-        reason: PurchaseReturnItem['reason'];
-        condition: PurchaseReturnItem['condition'];
+  // Helper: Get total returned quantity for an item
+  const getReturnedQuantity = (purchaseId: string, drugId: string): number => {
+    return purchaseReturns
+      .filter((r) => r.purchaseId === purchaseId)
+      .reduce((sum, r) => {
+        const item = r.items.find((i) => i.drugId === drugId);
+        return sum + (item?.quantityReturned || 0);
+      }, 0);
+  };
+
+  // Get available purchases (not fully returned)
+  const availablePurchases = purchases.filter((p) => {
+    if (p.status !== 'completed' && p.status !== 'received') return false;
+
+    // Check if all items are fully returned
+    const allReturned = p.items.every((item) => {
+      const returned = getReturnedQuantity(p.id, item.drugId);
+      return returned >= item.quantity;
+    });
+
+    return !allReturned;
+  });
+
+  // Search PO state
+  const [poSearch, setPoSearch] = useState('');
+  const [isPoDropdownOpen, setIsPoDropdownOpen] = useState(false);
+  const poDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Live Inline Return selection states
+  const [returnQuantities, setReturnQuantities] = useState<Record<string, number>>({});
+  const [returnReasons, setReturnReasons] = useState<Record<string, PurchaseReturnItem['reason']>>({});
+  const [returnConditions, setReturnConditions] = useState<Record<string, PurchaseReturnItem['condition']>>({});
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (poDropdownRef.current && !poDropdownRef.current.contains(e.target as Node)) {
+        setIsPoDropdownOpen(false);
       }
-    >
-  >({});
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  const filteredAvailablePurchases = useMemo(() => {
+    if (!poSearch) return availablePurchases;
+    const query = poSearch.toLowerCase();
+    return availablePurchases.filter(
+      (p) =>
+        p.id.toLowerCase().includes(query) ||
+        p.supplierName.toLowerCase().includes(query) ||
+        (p.externalInvoiceId && p.externalInvoiceId.toLowerCase().includes(query)) ||
+        (p.invoiceId && p.invoiceId.toLowerCase().includes(query))
+    );
+  }, [availablePurchases, poSearch]);
+
+  const { highlightedIndex, onKeyDown } = useSearchKeyboardNavigation({
+    results: filteredAvailablePurchases,
+    onSelect: (purchase) => {
+      setSelectedPurchase(purchase);
+      setPoSearch('');
+      setIsPoDropdownOpen(false);
+      setReturnQuantities({});
+      setReturnReasons({});
+      setReturnConditions({});
+    },
+    isOpen: isPoDropdownOpen,
+    onClose: () => setIsPoDropdownOpen(false),
+  });
+
+  // Calculate live total refund
+  const calculatedTotalRefund = useMemo(() => {
+    if (!selectedPurchase) return 0;
+    return selectedPurchase.items.reduce((sum, item) => {
+      const qty = returnQuantities[item.drugId] || 0;
+      return money.add(sum, money.multiply(qty, item.costPrice, 2));
+    }, 0);
+  }, [selectedPurchase, returnQuantities]);
+
+  const poColumns = useMemo(() => [
+    {
+      header: t.purchaseReturns?.tableHeaders?.purchaseId || 'PO ID',
+      width: 'w-36 shrink-0',
+      className: 'text-gray-900 dark:text-gray-400 justify-center text-center font-mono text-xs',
+      render: (p: Purchase) => `PO #${p.id.slice(0, 8)}`,
+    },
+    {
+      header: t.purchaseReturns?.tableHeaders?.supplier || 'Supplier',
+      width: 'flex-1',
+      className: 'text-gray-900 dark:text-gray-400 font-bold',
+      render: (p: Purchase) => p.supplierName,
+    },
+    {
+      header: t.purchaseReturns?.tableHeaders?.refund || 'Total Cost',
+      width: 'w-32 shrink-0',
+      className: 'justify-end text-end text-gray-900 dark:text-gray-400 font-bold',
+      render: (p: Purchase) => formatCurrency(p.totalCost, 'EGP', language === 'AR' ? 'ar' : 'en'),
+    },
+    {
+      header: t.purchaseReturns?.tableHeaders?.date || 'Date',
+      width: 'w-28 shrink-0',
+      className: 'justify-center text-center text-gray-900 dark:text-gray-400 text-xs',
+      render: (p: Purchase) => new Date(p.date).toLocaleDateString(),
+    },
+  ], [t, language]);
 
   // Details modal state
   const [viewingReturn, setViewingReturn] = useState<PurchaseReturn | null>(null);
@@ -123,7 +214,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
         meta: { align: 'end' },
         cell: ({ getValue }) => (
           <span className='text-sm font-bold text-red-600 dark:text-red-400 truncate'>
-            ${(getValue() as number).toFixed(2)}
+            <PriceDisplay value={getValue() as number} />
           </span>
         ),
       },
@@ -134,19 +225,20 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
         meta: { align: 'center' },
         cell: ({ getValue }) => {
           const val = getValue() as string;
-          const style =
-            val === 'completed'
-              ? { color: 'emerald', icon: 'check_circle' }
-              : val === 'approved'
-                ? { color: 'blue', icon: 'verified' }
-                : { color: 'amber', icon: 'hourglass_top' };
+          let badgeClass = 'badge-warning';
+          let icon = 'hourglass_top';
+          if (val === 'completed') {
+            badgeClass = 'badge-success';
+            icon = 'check_circle';
+          } else if (val === 'approved') {
+            badgeClass = 'badge-info';
+            icon = 'verified';
+          }
 
           return (
-            <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border bg-transparent border-${style.color}-200 dark:border-${style.color}-900/50 text-${style.color}-700 dark:text-${style.color}-400 text-xs font-bold uppercase tracking-wider`}
-            >
-              <span className='material-symbols-rounded text-sm'>{style.icon}</span>
-              {t.purchaseReturns?.status?.[val] || val}
+            <span className={`${badgeClass} inline-flex items-center gap-1.5`}>
+              <span className='material-symbols-rounded text-sm'>{icon}</span>
+              <span>{t.purchaseReturns?.status?.[val] || val}</span>
             </span>
           );
         },
@@ -173,75 +265,34 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
     [t, getRowActions, textTransform]
   ); // getRowActions is stable component reference but we just in case include it
 
-  // Add item to return
-  const handleAddReturnItem = (
-    drugId: string,
-    quantity: number,
-    reason: PurchaseReturnItem['reason'],
-    condition: PurchaseReturnItem['condition']
-  ) => {
-    if (!selectedPurchase) return;
-
-    const purchaseItem = selectedPurchase.items.find((item) => item.drugId === drugId);
-    if (!purchaseItem) return;
-
-    // Check if item with same drugId, reason, AND condition already exists
-    const existingItemIndex = returnItems.findIndex(
-      (item) => item.drugId === drugId && item.reason === reason && item.condition === condition
-    );
-
-    if (existingItemIndex >= 0) {
-      // Update existing item - merge quantities only if reason and condition match
-      setReturnItems((prev) =>
-        prev.map((item, index) => {
-          if (index === existingItemIndex) {
-            const newQuantity = item.quantityReturned + quantity;
-            return {
-              ...item,
-              quantityReturned: newQuantity,
-              refundAmount: money.multiply(newQuantity, item.costPrice, 2),
-            };
-          }
-          return item;
-        })
-      );
-    } else {
-      // Add new item (different reason/condition = separate entry)
-      const refundAmount = money.multiply(quantity, purchaseItem.costPrice, 2);
-
-      const newItem: PurchaseReturnItem = {
-        id: idGenerator.generateSync('returnItem', activeBranchId),
-        drugId,
-        name: purchaseItem.name,
-        quantityReturned: quantity,
-        costPrice: purchaseItem.costPrice,
-        refundAmount,
-        dosageForm: purchaseItem.dosageForm,
-        reason,
-        condition,
-      };
-
-      setReturnItems((prev) => [...prev, newItem]);
-    }
-  };
-
-  // Remove item from return
-  const handleRemoveReturnItem = (index: number) => {
-    setReturnItems((prev) => prev.filter((_, i) => i !== index));
-  };
-
   // Submit return
   const handleSubmitReturn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPurchase || returnItems.length === 0) {
+    if (!selectedPurchase || calculatedTotalRefund === 0) {
       alert(
         t.purchaseReturns?.messages?.selectPurchaseAlert ||
-          'Please select a purchase and add items to return'
+        'Please select a purchase and add items to return'
       );
       return;
     }
 
-    const totalRefund = returnItems.reduce((sum, item) => money.add(sum, item.refundAmount), 0);
+    const itemsToSubmit: PurchaseReturnItem[] = selectedPurchase.items
+      .filter((item) => (returnQuantities[item.drugId] || 0) > 0)
+      .map((item) => {
+        const qty = returnQuantities[item.drugId];
+        return {
+          id: idGenerator.generateSync('returnItem', activeBranchId),
+          drugId: item.drugId,
+          name: item.name,
+          quantityReturned: qty,
+          costPrice: item.costPrice,
+          refundAmount: money.multiply(qty, item.costPrice, 2),
+          dosageForm: item.dosageForm,
+          reason: returnReasons[item.drugId] || 'damaged',
+          condition: returnConditions[item.drugId] || 'damaged',
+        };
+      });
+
     const nextId = idGenerator.generateSync('returns', activeBranchId);
 
     const newReturn: PurchaseReturn = {
@@ -250,8 +301,8 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
       supplierId: selectedPurchase.supplierId,
       supplierName: selectedPurchase.supplierName,
       date: new Date().toISOString(),
-      items: returnItems,
-      totalRefund,
+      items: itemsToSubmit,
+      totalRefund: calculatedTotalRefund,
       status: 'pending',
       notes,
       branchId: activeBranchId || '',
@@ -261,16 +312,16 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
     if (onCreatePurchaseReturn) {
       await onCreatePurchaseReturn(newReturn);
     } else {
-      // Fallback (should not happen if wired correctly)
       console.error('onCreatePurchaseReturn prop likely missing');
       setPurchaseReturns([...purchaseReturns, newReturn]);
     }
 
     // Reset form
     setSelectedPurchase(null);
-    setReturnItems([]);
+    setReturnQuantities({});
+    setReturnReasons({});
+    setReturnConditions({});
     setNotes('');
-    setItemFormData({});
     setIsCreateModalOpen(false);
   };
 
@@ -282,53 +333,13 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   // Return all items from purchase
   const handleReturnAll = () => {
     if (!selectedPurchase) return;
-
-    const allItems: PurchaseReturnItem[] = selectedPurchase.items
-      .filter((item) => {
-        const returned = getReturnedQuantity(selectedPurchase.id, item.drugId);
-        return item.quantity > returned;
-      })
-      .map((item) => {
-        const returned = getReturnedQuantity(selectedPurchase.id, item.drugId);
-        const availableQty = item.quantity - returned;
-        return {
-          id: idGenerator.generateSync('returnItem', activeBranchId),
-          drugId: item.drugId,
-          name: item.name,
-          quantityReturned: availableQty,
-          costPrice: item.costPrice,
-          refundAmount: money.multiply(availableQty, item.costPrice, 2),
-          dosageForm: item.dosageForm,
-          reason: 'other' as const,
-          condition: 'other' as const,
-        };
-      });
-
-    setReturnItems(allItems);
-  };
-
-  // Helper: Get total returned quantity for an item
-  const getReturnedQuantity = (purchaseId: string, drugId: string): number => {
-    return purchaseReturns
-      .filter((r) => r.purchaseId === purchaseId)
-      .reduce((sum, r) => {
-        const item = r.items.find((i) => i.drugId === drugId);
-        return sum + (item?.quantityReturned || 0);
-      }, 0);
-  };
-
-  // Get available purchases (not fully returned)
-  const availablePurchases = purchases.filter((p) => {
-    if (p.status !== 'completed') return false;
-
-    // Check if all items are fully returned
-    const allReturned = p.items.every((item) => {
-      const returned = getReturnedQuantity(p.id, item.drugId);
-      return returned >= item.quantity;
+    const quantities: Record<string, number> = {};
+    selectedPurchase.items.forEach((item) => {
+      const returnedQty = getReturnedQuantity(selectedPurchase.id, item.drugId);
+      quantities[item.drugId] = item.quantity - returnedQty;
     });
-
-    return !allReturned;
-  });
+    setReturnQuantities(quantities);
+  };
 
   return (
     <div className='h-full flex flex-col space-y-4 animate-fade-in overflow-hidden'>
@@ -391,10 +402,12 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
           onClose={() => {
             setIsCreateModalOpen(false);
             setSelectedPurchase(null);
-            setReturnItems([]);
+            setReturnQuantities({});
+            setReturnReasons({});
+            setReturnConditions({});
             setNotes('');
           }}
-          size='2xl'
+          size='3xl'
           zIndex={50}
           title={t.purchaseReturns?.createReturn || 'Create Return'}
           icon='add_circle'
@@ -405,7 +418,9 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                 onClick={() => {
                   setIsCreateModalOpen(false);
                   setSelectedPurchase(null);
-                  setReturnItems([]);
+                  setReturnQuantities({});
+                  setReturnReasons({});
+                  setReturnConditions({});
                   setNotes('');
                 }}
                 className='px-6 py-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors text-sm font-medium'
@@ -414,12 +429,11 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
               </button>
               <button
                 onClick={(e) => handleSubmitReturn(e as any)}
-                disabled={returnItems.length === 0}
-                className={`px-8 py-3 rounded-xl shadow-lg transition-all font-bold flex items-center gap-2 ${
-                  returnItems.length === 0
+                disabled={calculatedTotalRefund === 0}
+                className={`px-8 py-3 rounded-xl shadow-lg transition-all font-bold flex items-center gap-2 ${calculatedTotalRefund === 0
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : `bg-primary-600 hover:bg-primary-700 text-white`
-                }`}
+                  }`}
               >
                 <span className='material-symbols-rounded'>check_circle</span>
                 {t.purchaseReturns?.submit || 'Submit Return'}
@@ -429,301 +443,292 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
         >
           <div className='space-y-6'>
             {/* Purchase Selection */}
-            <div>
+            <div className='relative' ref={poDropdownRef}>
               <h3 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4'>
                 <span className='material-symbols-rounded text-[18px]'>receipt_long</span>
                 {t.purchaseReturns?.selectPurchase || 'Select Purchase Order'}
               </h3>
-              <select
-                value={selectedPurchase?.id || ''}
-                onChange={(e) => {
-                  const purchase = purchases.find((p) => p.id === e.target.value);
-                  setSelectedPurchase(purchase || null);
-                  setReturnItems([]);
-                  setItemFormData({});
+
+              <div onKeyDown={onKeyDown}>
+                <SearchInput
+                  value={
+                    poSearch ||
+                    (selectedPurchase
+                      ? `PO #${selectedPurchase.id.slice(0, 8)} - ${selectedPurchase.supplierName}`
+                      : '')
+                  }
+                  onSearchChange={(val) => {
+                    setPoSearch(val);
+                    setIsPoDropdownOpen(true);
+                  }}
+                  onFocus={() => setIsPoDropdownOpen(true)}
+                  onClear={() => {
+                    setPoSearch('');
+                    setSelectedPurchase(null);
+                    setReturnQuantities({});
+                    setReturnReasons({});
+                    setReturnConditions({});
+                  }}
+                  placeholder={t.purchaseReturns?.selectPlaceholder || 'Search and select purchase order...'}
+                  className='h-11 text-sm'
+                />
+              </div>
+
+              <SearchDropdown
+                results={filteredAvailablePurchases}
+                onSelect={(purchase) => {
+                  setSelectedPurchase(purchase);
+                  setPoSearch('');
+                  setIsPoDropdownOpen(false);
+                  setReturnQuantities({});
+                  setReturnReasons({});
+                  setReturnConditions({});
                 }}
-                className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
-                style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
-                required
-              >
-                <option value=''>
-                  {t.purchaseReturns?.selectPlaceholder || 'Select a purchase order...'}
-                </option>
-                {availablePurchases.map((purchase) => (
-                  <option key={purchase.id} value={purchase.id}>
-                    PO #{purchase.id} - {purchase.supplierName} - ${purchase.totalCost.toFixed(2)} (
-                    {new Date(purchase.date).toLocaleDateString()})
-                  </option>
-                ))}
-              </select>
-
-              {selectedPurchase && (
-                <button
-                  type='button'
-                  onClick={handleReturnAll}
-                  className={`mt-3 w-full px-4 py-2 rounded-xl bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/50 text-sm font-bold transition-colors flex items-center justify-center gap-2`}
-                >
-                  <span className='material-symbols-rounded text-[18px]'>assignment_return</span>
-                  {t.purchaseReturns?.returnAll || 'Return All Items from This Purchase'}
-                </button>
-              )}
-            </div>
-
-            {/* Return Items (Redesigned as Card List) */}
-            {selectedPurchase && returnItems.length > 0 && (
-              <div>
-                <h3 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4'>
-                  <span className='material-symbols-rounded text-[18px]'>inventory_2</span>
-                  {t.purchaseReturns?.itemsToReturn || 'Items to Return'}
-                </h3>
-
-                <div className='space-y-2'>
-                  {returnItems.map((item, index) => (
-                    <div
-                      key={index}
-                      className='p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 flex justify-between items-center group hover:border-gray-200 dark:hover:border-gray-700 transition-colors'
-                    >
-                      <div className='flex-1 min-w-0'>
-                        <p className='font-bold text-gray-900 dark:text-white text-sm mb-1 truncate'>
-                          {getDisplayName({
-                            ...item,
-                            dosageForm:
-                              item.dosageForm ||
-                              drugs.find((d) => d.id === item.drugId)?.dosageForm,
-                          }, textTransform)}
-                        </p>
-                        <p className='text-xs text-gray-500'>
-                          <span className='opacity-70'>
-                            {t.purchaseReturns?.quantity || 'Qty'}:
-                          </span>{' '}
-                          {item.quantityReturned} <span className='mx-1 opacity-30'>|</span>
-                          <span className='opacity-70'>
-                            {t.purchaseReturns?.reason || 'Reason'}:
-                          </span>{' '}
-                          {t.purchaseReturns?.reasons?.[item.reason] || item.reason}{' '}
-                          <span className='mx-1 opacity-30'>|</span>
-                          <span className='opacity-70'>
-                            {t.purchaseReturns?.condition || 'Cond'}:
-                          </span>{' '}
-                          {t.purchaseReturns?.conditions?.[item.condition] || item.condition}
-                        </p>
-                      </div>
-                      <div className='flex items-center gap-3'>
-                        <p className='font-bold text-red-600 text-sm'>
-                          ${item.refundAmount.toFixed(2)}
-                        </p>
-                        <button
-                          type='button'
-                          onClick={() => handleRemoveReturnItem(index)}
-                          className='p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all'
-                        >
-                          <span className='material-symbols-rounded text-[20px]'>delete_sweep</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className='flex justify-between items-center p-3 rounded-xl bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 mt-4 shadow-xs'>
-                    <span className='text-sm text-gray-500 font-medium'>
-                      {t.purchaseReturns?.totalRefund || 'Total Refund'}
-                    </span>
-                    <span className='text-xl font-black text-red-600'>
-                      ${returnItems.reduce((sum, item) => money.add(sum, item.refundAmount), 0).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Available Items from Purchase */}
-            {selectedPurchase && (
-              <div>
-                <h3 className='text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4 h-4 flex items-center gap-2'>
-                  <div className='h-[2px] w-6 bg-gray-200 dark:bg-gray-800 rounded-full' />
-                  {t.purchaseReturns?.availableItems || 'Available Items from Purchase Order'}
-                </h3>
-                <div className='space-y-3'>
-                  {selectedPurchase.items
-                    .filter((item) => {
-                      const returned = getReturnedQuantity(selectedPurchase.id, item.drugId);
-                      const alreadyInReturn = returnItems
-                        .filter((ri) => ri.drugId === item.drugId)
-                        .reduce((sum, ri) => sum + ri.quantityReturned, 0);
-                      const available = item.quantity - returned - alreadyInReturn;
-                      return available > 0;
-                    })
-                    .map((purchaseItem, index) => {
-                      const itemKey = purchaseItem.drugId;
-                      const returnedQty = getReturnedQuantity(selectedPurchase.id, itemKey);
-                      const alreadyInReturn = returnItems
-                        .filter((ri) => ri.drugId === itemKey)
-                        .reduce((sum, ri) => sum + ri.quantityReturned, 0);
-                      const availableQty = purchaseItem.quantity - returnedQty - alreadyInReturn;
-                      const formData = itemFormData[itemKey] || {
-                        quantity: 1,
-                        reason: 'damaged' as const,
-                        condition: 'damaged' as const,
-                      };
-
-                      const updateItemFormData = (updates: Partial<typeof formData>) => {
-                        setItemFormData((prev) => ({
-                          ...prev,
-                          [itemKey]: { ...formData, ...updates },
-                        }));
-                      };
-
-                      return (
-                        <div
-                          key={index}
-                          className='p-4 bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-xs group hover:border-gray-200 dark:hover:border-gray-700 transition-all'
-                        >
-                          <div className='flex items-start justify-between mb-3 min-w-0'>
-                            <div className='flex-1 min-w-0'>
-                              <p className='font-black text-gray-900 dark:text-white text-base truncate'>
-                                {getDisplayName(purchaseItem, textTransform)}
-                              </p>
-                              <div className='flex flex-wrap items-center gap-2 mt-1'>
-                                <span
-                                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500`}
-                                >
-                                  {t.purchaseReturns?.available || 'Avail'}: {availableQty}
-                                </span>
-                                <span className='text-[10px] text-gray-400 font-medium'>
-                                  ${purchaseItem.costPrice.toFixed(2)}/
-                                  {t.purchaseReturns?.pack || 'pk'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className='grid grid-cols-2 md:grid-cols-4 gap-3 items-end'>
-                            <div className='space-y-1.5'>
-                              <label className='block text-[10px] font-black text-gray-400 uppercase tracking-wider'>
-                                {t.purchaseReturns?.quantity || 'Quantity'}
-                              </label>
-                              <input
-                                type='number'
-                                min='1'
-                                max={availableQty}
-                                value={formData.quantity}
-                                onChange={(e) =>
-                                  updateItemFormData({
-                                    quantity: Math.min(
-                                      availableQty,
-                                      Math.max(1, parseInt(e.target.value) || 1)
-                                    ),
-                                  })
-                                }
-                                className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
-                                style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
-                              />
-                            </div>
-
-                            <div className='space-y-1.5'>
-                              <label className='block text-[10px] font-black text-gray-400 uppercase tracking-wider'>
-                                {t.purchaseReturns?.reason || 'Reason'}
-                              </label>
-                              <select
-                                value={formData.reason}
-                                onChange={(e) =>
-                                  updateItemFormData({
-                                    reason: e.target.value as PurchaseReturnItem['reason'],
-                                  })
-                                }
-                                className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
-                                style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
-                              >
-                                <option value='damaged'>
-                                  {t.purchaseReturns?.reasons?.damaged || 'Damaged'}
-                                </option>
-                                <option value='expired'>
-                                  {t.purchaseReturns?.reasons?.expired || 'Expired'}
-                                </option>
-                                <option value='wrong_item'>
-                                  {t.purchaseReturns?.reasons?.wrong_item || 'Wrong Item'}
-                                </option>
-                                <option value='defective'>
-                                  {t.purchaseReturns?.reasons?.defective || 'Defective'}
-                                </option>
-                                <option value='overage'>
-                                  {t.purchaseReturns?.reasons?.overage || 'Overage'}
-                                </option>
-                                <option value='other'>
-                                  {t.purchaseReturns?.reasons?.other || 'Other'}
-                                </option>
-                              </select>
-                            </div>
-
-                            <div className='space-y-1.5'>
-                              <label className='block text-[10px] font-black text-gray-400 uppercase tracking-wider'>
-                                {t.purchaseReturns?.condition || 'Condition'}
-                              </label>
-                              <select
-                                value={formData.condition}
-                                onChange={(e) =>
-                                  updateItemFormData({
-                                    condition: e.target.value as PurchaseReturnItem['condition'],
-                                  })
-                                }
-                                className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
-                                style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
-                              >
-                                <option value='damaged'>
-                                  {t.purchaseReturns?.conditions?.damaged || 'Damaged'}
-                                </option>
-                                <option value='expired'>
-                                  {t.purchaseReturns?.conditions?.expired || 'Expired'}
-                                </option>
-                                <option value='other'>
-                                  {t.purchaseReturns?.conditions?.other || 'Other'}
-                                </option>
-                              </select>
-                            </div>
-
-                            <button
-                              type='button'
-                              onClick={() => {
-                                handleAddReturnItem(
-                                  purchaseItem.drugId,
-                                  formData.quantity,
-                                  formData.reason,
-                                  formData.condition
-                                );
-                                updateItemFormData({ quantity: 1 });
-                              }}
-                              className={`w-full py-2.5 rounded-xl bg-primary-600/10 hover:bg-primary-600 text-primary-600 hover:text-white text-xs font-black transition-all border border-primary-600/20 active:scale-95`}
-                            >
-                              <span className='material-symbols-rounded block mb-0.5'>
-                                add_shopping_cart
-                              </span>
-                              {t.purchaseReturns?.addToReturn || 'Add'}
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-            )}
-            {/* Additional Notes */}
-            <div>
-              <h3 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4'>
-                <span className='material-symbols-rounded text-[18px]'>notes</span>
-                {t.purchaseReturns?.additionalNotes || 'Additional Notes'}
-              </h3>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={3}
-                dir={notesDir}
-                className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all resize-none text-sm font-medium'
-                style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
-                placeholder={
-                  t.purchaseReturns?.notesPlaceholder ||
-                  'Add any additional notes about this return...'
-                }
+                isVisible={isPoDropdownOpen}
+                highlightedIndex={highlightedIndex}
+                columns={poColumns}
+                className='left-0 right-0'
               />
             </div>
+
+            {/* Selected Purchase Info & Interactive Items Table */}
+            {selectedPurchase ? (
+              <div className='space-y-5 animate-fade-in'>
+                {/* PO Summary Card */}
+                <div className='p-4 bg-gray-50 dark:bg-zinc-900/50 rounded-2xl border border-gray-100 dark:border-gray-800/80 flex flex-wrap gap-4 justify-between items-center'>
+                  <div className='space-y-1'>
+                    <p className='text-xs font-bold text-gray-400 uppercase tracking-wider'>
+                      {t.purchaseReturns?.selectedPO || 'Selected PO'}
+                    </p>
+                    <p className='text-sm font-bold text-gray-800 dark:text-gray-100'>
+                      PO #{selectedPurchase.id.slice(0, 8)} — {selectedPurchase.supplierName}
+                    </p>
+                  </div>
+                  <div className='flex gap-3 items-center'>
+                    <button
+                      type='button'
+                      onClick={handleReturnAll}
+                      className='px-4 py-2 rounded-xl bg-primary-50 hover:bg-primary-100 dark:bg-primary-950/20 dark:hover:bg-primary-950/40 text-primary-600 dark:text-primary-400 text-xs font-bold transition-all flex items-center gap-1.5 border border-primary-100/50 dark:border-primary-900/20'
+                    >
+                      <span className='material-symbols-rounded text-base'>assignment_return</span>
+                      {t.purchaseReturns?.returnAll || 'Return All Items'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Interactive Items Table */}
+                <div className='space-y-3'>
+                  <h4 className='text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-2'>
+                    <div className='h-[2px] w-6 bg-gray-200 dark:bg-gray-800 rounded-full' />
+                    {t.purchaseReturns?.itemsToReturn || 'Items to Return'}
+                  </h4>
+
+                  <div className='overflow-x-auto border border-gray-100 dark:border-gray-800/60 rounded-2xl bg-white dark:bg-gray-950'>
+                    <table className='w-full text-sm text-start border-collapse'>
+                      <thead>
+                        <tr className='bg-gray-50/50 dark:bg-zinc-900/50 border-b border-gray-100 dark:border-gray-800 text-[11px] font-bold text-gray-400 uppercase tracking-wider'>
+                          <th className='p-3 text-start font-bold'>{t.purchaseReturns?.itemName || 'Item'}</th>
+                          <th className='p-3 text-center font-bold w-24'>{t.purchaseReturns?.cost || 'Cost'}</th>
+                          <th className='p-3 text-center font-bold w-40'>{t.purchaseReturns?.quantity || 'Qty (Max)'}</th>
+                          <th className='p-3 text-center font-bold w-36'>{t.purchaseReturns?.reason || 'Reason'}</th>
+                          <th className='p-3 text-center font-bold w-36'>{t.purchaseReturns?.condition || 'Condition'}</th>
+                          <th className='p-3 text-end font-bold w-28'>{t.purchaseReturns?.totalRefund || 'Refund'}</th>
+                        </tr>
+                      </thead>
+                      <tbody className='divide-y divide-gray-100 dark:divide-gray-800/60'>
+                        {selectedPurchase.items.map((item) => {
+                          const returnedQty = getReturnedQuantity(selectedPurchase.id, item.drugId);
+                          const maxQty = item.quantity - returnedQty;
+                          const qty = returnQuantities[item.drugId] || 0;
+                          const reason = returnReasons[item.drugId] || 'damaged';
+                          const condition = returnConditions[item.drugId] || 'damaged';
+                          const refundAmount = money.multiply(qty, item.costPrice, 2);
+
+                          if (maxQty <= 0) return null; // Already fully returned
+
+                          return (
+                            <tr
+                              key={item.drugId}
+                              className={`transition-colors duration-150 ${qty > 0
+                                  ? 'bg-primary-50/10 dark:bg-primary-500/5 hover:bg-primary-50/20 dark:hover:bg-primary-500/10'
+                                  : 'hover:bg-gray-50/50 dark:hover:bg-zinc-900/30'
+                                }`}
+                            >
+                              <td className='p-3 font-medium text-gray-800 dark:text-gray-100'>
+                                <div className='truncate max-w-[180px] font-bold' title={item.name}>
+                                  {getDisplayName(item, textTransform)}
+                                </div>
+                                {item.expiryDate && (
+                                  <p className='text-[10px] text-gray-400 font-mono mt-0.5'>
+                                    Exp: {item.expiryDate}
+                                  </p>
+                                )}
+                              </td>
+                              <td className='p-3 text-center text-gray-500 dark:text-gray-400 tabular-nums font-medium'>
+                                <PriceDisplay value={item.costPrice} size="sm" />
+                              </td>
+                              <td className='p-3 text-center'>
+                                <div className='flex items-center justify-center gap-1.5'>
+                                  <button
+                                    type='button'
+                                    onClick={() =>
+                                      setReturnQuantities((prev) => ({
+                                        ...prev,
+                                        [item.drugId]: Math.max(0, qty - 1),
+                                      }))
+                                    }
+                                    disabled={qty === 0}
+                                    className={`w-6 h-6 rounded-md flex items-center justify-center border transition-all text-xs font-bold cursor-pointer ${qty === 0
+                                        ? 'border-gray-100 text-gray-300 dark:border-gray-800 dark:text-gray-600 cursor-not-allowed'
+                                        : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 active:scale-95'
+                                      }`}
+                                  >
+                                    —
+                                  </button>
+                                  <input
+                                    type='number'
+                                    min='0'
+                                    max={maxQty}
+                                    value={qty || ''}
+                                    onChange={(e) => {
+                                      const val = Math.min(
+                                        maxQty,
+                                        Math.max(0, parseInt(e.target.value) || 0)
+                                      );
+                                      setReturnQuantities((prev) => ({
+                                        ...prev,
+                                        [item.drugId]: val,
+                                      }));
+                                    }}
+                                    className='w-12 text-center py-0.5 px-1 rounded-md bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs font-black focus:ring-1 focus:ring-primary-500 outline-hidden'
+                                    placeholder='0'
+                                  />
+                                  <button
+                                    type='button'
+                                    onClick={() =>
+                                      setReturnQuantities((prev) => ({
+                                        ...prev,
+                                        [item.drugId]: Math.min(maxQty, qty + 1),
+                                      }))
+                                    }
+                                    disabled={qty >= maxQty}
+                                    className={`w-6 h-6 rounded-md flex items-center justify-center border transition-all text-xs font-bold cursor-pointer ${qty >= maxQty
+                                        ? 'border-gray-100 text-gray-300 dark:border-gray-800 dark:text-gray-600 cursor-not-allowed'
+                                        : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 active:scale-95'
+                                      }`}
+                                  >
+                                    +
+                                  </button>
+                                  <span className='text-[10px] text-gray-400 font-bold ml-1 shrink-0'>
+                                    / {maxQty}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className='p-3 text-center'>
+                                <select
+                                  value={reason}
+                                  disabled={qty === 0}
+                                  onChange={(e) =>
+                                    setReturnReasons((prev) => ({
+                                      ...prev,
+                                      [item.drugId]: e.target.value as any,
+                                    }))
+                                  }
+                                  className={`${INPUT_BASE} py-1 px-2 text-xs h-8 ${qty === 0 ? 'opacity-30 cursor-not-allowed' : ''
+                                    }`}
+                                >
+                                  <option value='damaged'>
+                                    {t.purchaseReturns?.reasons?.damaged || 'Damaged'}
+                                  </option>
+                                  <option value='expired'>
+                                    {t.purchaseReturns?.reasons?.expired || 'Expired'}
+                                  </option>
+                                  <option value='wrong_item'>
+                                    {t.purchaseReturns?.reasons?.wrong_item || 'Wrong Item'}
+                                  </option>
+                                  <option value='defective'>
+                                    {t.purchaseReturns?.reasons?.defective || 'Defective'}
+                                  </option>
+                                  <option value='overage'>
+                                    {t.purchaseReturns?.reasons?.overage || 'Overage'}
+                                  </option>
+                                  <option value='other'>
+                                    {t.purchaseReturns?.reasons?.other || 'Other'}
+                                  </option>
+                                </select>
+                              </td>
+                              <td className='p-3 text-center'>
+                                <select
+                                  value={condition}
+                                  disabled={qty === 0}
+                                  onChange={(e) =>
+                                    setReturnConditions((prev) => ({
+                                      ...prev,
+                                      [item.drugId]: e.target.value as any,
+                                    }))
+                                  }
+                                  className={`${INPUT_BASE} py-1 px-2 text-xs h-8 ${qty === 0 ? 'opacity-30 cursor-not-allowed' : ''
+                                    }`}
+                                >
+                                  <option value='damaged'>
+                                    {t.purchaseReturns?.conditions?.damaged || 'Damaged'}
+                                  </option>
+                                  <option value='expired'>
+                                    {t.purchaseReturns?.conditions?.expired || 'Expired'}
+                                  </option>
+                                  <option value='other'>
+                                    {t.purchaseReturns?.conditions?.other || 'Other'}
+                                  </option>
+                                </select>
+                              </td>
+                              <td className='p-3 text-end font-black text-red-600 dark:text-red-400 tabular-nums'>
+                                {qty > 0 ? <PriceDisplay value={refundAmount} /> : '---'}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Refund Live Total Box */}
+                {calculatedTotalRefund > 0 && (
+                  <div className='flex justify-between items-center p-4 rounded-2xl bg-red-50/50 dark:bg-red-950/10 border border-red-100/50 dark:border-red-900/20 shadow-xs animate-scale-up'>
+                    <span className='text-sm text-gray-500 font-bold dark:text-gray-400'>
+                      {t.purchaseReturns?.totalRefund || 'Total Refund'}
+                    </span>
+                    <span className='text-xl font-black text-red-600 dark:text-red-400 tabular-nums'>
+                      <PriceDisplay value={calculatedTotalRefund} />
+                    </span>
+                  </div>
+                )}
+
+                {/* Additional Notes */}
+                <div className='space-y-1.5'>
+                  <label className='block text-xs font-bold text-gray-700 dark:text-gray-300'>
+                    {t.purchaseReturns?.additionalNotes || 'Additional Notes'}
+                  </label>
+                  <SmartTextarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={2}
+                    placeholder={
+                      t.purchaseReturns?.notesPlaceholder ||
+                      'Add any additional notes about this return...'
+                    }
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className='py-12 flex flex-col items-center justify-center text-gray-400 space-y-3 rounded-2xl border-2 border-dashed border-gray-100 dark:border-gray-800 m-2'>
+                <span className='material-symbols-rounded text-4xl opacity-20'>receipt_long</span>
+                <p className='text-xs opacity-75 font-medium'>
+                  {t.purchaseReturns?.selectPurchaseToStart ||
+                    'Select a purchase order to start returning items.'}
+                </p>
+              </div>
+            )}
           </div>
         </Modal>
       )}
@@ -797,19 +802,20 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                   </label>
                   {(() => {
                     const status = viewingReturn.status;
-                    const style =
-                      status === 'completed'
-                        ? { color: 'emerald', icon: 'check_circle' }
-                        : status === 'approved'
-                          ? { color: 'blue', icon: 'verified' }
-                          : { color: 'amber', icon: 'hourglass_top' };
+                    let badgeClass = 'badge-warning';
+                    let icon = 'hourglass_top';
+                    if (status === 'completed') {
+                      badgeClass = 'badge-success';
+                      icon = 'check_circle';
+                    } else if (status === 'approved') {
+                      badgeClass = 'badge-info';
+                      icon = 'verified';
+                    }
 
                     return (
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border bg-transparent border-${style.color}-200 dark:border-${style.color}-900/50 text-${style.color}-700 dark:text-${style.color}-400 text-xs font-bold uppercase tracking-wider`}
-                      >
-                        <span className='material-symbols-rounded text-sm'>{style.icon}</span>
-                        {t.purchaseReturns?.status?.[status] || status}
+                      <span className={`${badgeClass} inline-flex items-center gap-1.5`}>
+                        <span className='material-symbols-rounded text-sm'>{icon}</span>
+                        <span>{t.purchaseReturns?.status?.[status] || status}</span>
                       </span>
                     );
                   })()}
@@ -819,7 +825,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                     {t.purchaseReturns?.totalRefund || 'Total Refund'}
                   </label>
                   <p className='font-bold text-red-600 text-sm'>
-                    ${viewingReturn.totalRefund.toFixed(2)}
+                    <PriceDisplay value={viewingReturn.totalRefund} />
                   </p>
                 </div>
               </div>
@@ -855,13 +861,13 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                         <span className='opacity-70'>
                           {t.purchases?.detailsModal?.cost || 'Cost'}:
                         </span>{' '}
-                        ${item.costPrice.toFixed(2)} <span className='mx-1 opacity-30'>|</span>
+                        <PriceDisplay value={item.costPrice} size="sm" /> <span className='mx-1 opacity-30'>|</span>
                         <span className='opacity-70'>{t.purchaseReturns?.reason || 'Reason'}:</span>{' '}
                         {t.purchaseReturns?.reasons?.[item.reason] || item.reason}
                       </p>
                     </div>
                     <p className='font-bold text-red-600 text-sm'>
-                      ${item.refundAmount.toFixed(2)}
+                      <PriceDisplay value={item.refundAmount} />
                     </p>
                   </div>
                 ))}

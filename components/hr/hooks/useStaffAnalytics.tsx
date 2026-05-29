@@ -646,22 +646,31 @@ export const useStaffAnalytics = ({
 
                 {staff.titles && staff.titles.length > 0 && (
                   <div className='flex flex-wrap gap-1'>
-                    {staff.titles.map((title, i) => (
-                      <div
-                        key={i}
-                        className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg border ${
-                          title.color === 'sky' || title.color === 'violet'
-                            ? `bg-${title.color}-500/10 dark:bg-${title.color}-500/20 border-${title.color}-200/50 dark:border-${title.color}-500/30 text-${title.color}-600 dark:text-${title.color}-400`
-                            : `bg-${title.color}-50 dark:bg-${title.color}-900/20 border-${title.color}-100 dark:border-${title.color}-900/30 text-${title.color}-600 dark:text-${title.color}-400`
-                        } shadow-xs`}
-                        title={title.label}
-                      >
-                        <span className='material-symbols-rounded text-[12px]'>{title.icon}</span>
-                        <span className='text-[9px] font-black uppercase tracking-tighter whitespace-nowrap'>
-                          {title.label}
+                    {staff.titles.map((title, i) => {
+                      const badgeClassMap: Record<string, string> = {
+                        amber: 'badge-warning',
+                        sky: 'badge-blue',
+                        emerald: 'badge-green',
+                        violet: 'badge-purple',
+                        orange: 'badge-orange',
+                      };
+                      const badgeClass = badgeClassMap[title.color] || 'badge-neutral';
+                      const showIconOnly = staff.titles!.length > 1;
+                      return (
+                        <span
+                          key={i}
+                          className={`gap-1 ${badgeClass} shadow-xs`}
+                          title={title.label}
+                        >
+                          <span className='material-symbols-rounded'>{title.icon}</span>
+                          {!showIconOnly && (
+                            <span className='whitespace-nowrap'>
+                              {title.label}
+                            </span>
+                          )}
                         </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

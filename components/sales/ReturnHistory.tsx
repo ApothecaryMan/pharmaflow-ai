@@ -18,6 +18,61 @@ import { SaleDetailModal } from './SaleDetailModal';
 import { formatCurrency } from '../../utils/currency';
 import { formatExpiryDate } from '../../utils/expiryUtils';
 
+const REASON_STYLES: Record<string, { badgeClass: string; icon: string }> = {
+  // Discarded / Write-off (إهلاك وتلف)
+  damaged: { badgeClass: 'badge-danger', icon: 'delete_forever' },
+  expired: { badgeClass: 'badge-danger', icon: 'delete_forever' },
+  
+  // Restocked (إعادة للمخزون)
+  wrong_item: { badgeClass: 'badge-success', icon: 'settings_backup_restore' },
+  customer_request: { badgeClass: 'badge-success', icon: 'settings_backup_restore' },
+  
+  // Supplier Claim / Action (إجراء مع المورد)
+  defective: { badgeClass: 'badge-warning', icon: 'local_shipping' },
+  overage: { badgeClass: 'badge-info', icon: 'local_shipping' },
+};
+
+const ListWrapper: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
+  <div className={`flex flex-col gap-0.5 ${className}`}>{children}</div>
+);
+
+const ListItem: React.FC<{
+  index: number;
+  total: number;
+  children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+}> = ({ index, total, children, className = '', onClick }) => {
+  const isFirst = index === 0;
+  const isLast = index === total - 1;
+  const rounding = isFirst && isLast ? 'rounded-2xl' : isFirst ? 'rounded-t-2xl rounded-b-md' : isLast ? 'rounded-b-2xl rounded-t-md' : 'rounded-md';
+  return (
+    <div
+      onClick={onClick}
+      className={`flex items-center justify-between py-1.5 px-3 bg-gray-50/50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 transition-all ${rounding} ${className}`}
+    >
+      {children}
+    </div>
+  );
+};
+
+const ReturnQuantityBadge: React.FC<{
+  qty: number;
+  isUnit: boolean;
+  language: string;
+}> = ({ qty, isUnit, language }) => (
+  <div className='relative w-10 h-10 shrink-0'>
+    <div className='flex w-full h-full bg-red-500/5 dark:bg-red-500/10 rounded-xl border border-red-500/10 overflow-hidden'>
+      <div className='flex flex-col items-center justify-center flex-1 leading-none'>
+        <span className='text-[13px] font-black text-red-600 dark:text-red-400 tabular-nums'>{qty}</span>
+        <span className='text-[7px] font-black text-red-600/70 dark:text-red-400/70 uppercase tracking-wider mt-0.5'>
+          {isUnit ? (language === 'AR' ? 'وحدة' : 'UNIT') : (language === 'AR' ? 'علبة' : 'PACK')}
+        </span>
+      </div>
+    </div>
+  </div>
+);
+
 interface ReturnHistoryProps {
   returns: Return[];
   sales: Sale[];
@@ -79,12 +134,12 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
       {
         accessorKey: 'serialId',
         header: t.headers.returnId,
-        meta: { align: 'start' },
+        meta: { width: 202, align: 'start' },
       },
       {
         accessorKey: 'saleId',
         header: t.headers.saleId,
-        meta: { align: 'start' },
+        meta: { width: 202, align: 'start' },
         cell: (info) => {
           const sid = info.getValue() as string;
           return (
@@ -104,7 +159,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
       {
         accessorKey: 'date',
         header: t.headers.date,
-        meta: { align: 'center' },
+        meta: { width: 202, align: 'center' },
       },
       {
         id: 'customerName',
@@ -118,45 +173,71 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
             {info.getValue() as string}
           </span>
         ),
+        meta: { width: 202, align: 'start' },
+      },
+      {
+        id: 'items',
+        accessorFn: (row) => row.items.length,
+        header: t.headers.items || 'Items',
+        cell: ({ getValue }) => (
+          <span className='text-sm text-gray-600 dark:text-gray-400'>
+            {getValue() as number} {language === 'AR' ? 'أصناف' : 'items'}
+          </span>
+        ),
+        meta: { width: 110, align: 'start' },
       },
       {
         accessorKey: 'totalRefund',
         header: t.headers.refundAmount,
-        cell: (info) => (
-          <span className='font-bold text-red-600 dark:text-red-400'>
-            -{formatCurrency(info.getValue() as number)}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const ret = row.original;
+          const isAr = language === 'AR';
+          const itemsText = ret.items?.map(i => `• ${i.quantityReturned} ${i.isUnit ? (isAr ? 'شريط' : 'unit') : (isAr ? 'علبة' : 'pack')} * ${i.name || ''} (${formatCurrency(i.refundAmount)})`).join('\n');
+          const tooltipText = [
+            `--- ${isAr ? 'الأصناف المرتجعة' : 'Returned Items'} ---`,
+            itemsText,
+            '-------------------',
+            `${isAr ? 'إجمالي الاسترداد' : 'Total Refund'}: ${formatCurrency(ret.totalRefund)}`,
+            ret.notes ? `\n${isAr ? 'ملاحظات' : 'Notes'}: ${ret.notes}` : ''
+          ].filter(Boolean).join('\n');
+
+          return (
+            <span 
+              className='font-bold text-red-600 dark:text-red-400 cursor-help'
+              title={tooltipText}
+            >
+              -{formatCurrency(ret.totalRefund)}
+            </span>
+          );
+        },
+        meta: { width: 202, align: 'end' },
       },
       {
         accessorKey: 'reason',
         header: t.headers.reason,
         cell: (info) => {
           const reason = info.getValue() as string;
-          const style =
-            reason === 'damaged'
-              ? { textColor: 'text-red-500', borderColor: 'border-red-500', icon: 'broken_image' }
-              : reason === 'defective'
-                ? { textColor: 'text-red-500', borderColor: 'border-red-500', icon: 'build_circle' }
-                : reason === 'expired'
-                  ? { textColor: 'text-orange-500', borderColor: 'border-orange-500', icon: 'event_busy' }
-                  : reason === 'wrong_item'
-                    ? { textColor: 'text-teal-500', borderColor: 'border-teal-500', icon: 'error' }
-                  : reason === 'customer_request'
-                    ? { textColor: 'text-primary-500', borderColor: 'border-primary-500', icon: 'person' }
-                    : reason === 'overage'
-                      ? { textColor: 'text-emerald-500', borderColor: 'border-emerald-500', icon: 'add_circle' }
-                      : { textColor: 'text-gray-500', borderColor: 'border-gray-500', icon: 'help' };
+          const style = REASON_STYLES[reason] || { badgeClass: 'badge-neutral', icon: 'help' };
+          const notes = info.row.original.notes;
 
           return (
-            <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border bg-transparent ${style.borderColor} ${style.textColor} text-[10px] font-black uppercase tracking-wider`}
-            >
-              <span className='material-symbols-rounded text-sm'>{style.icon}</span>
-              {t.reasons?.[reason] || reason}
-            </span>
+            <div className='flex items-center gap-1.5'>
+              <span className={`inline-flex items-center gap-1.5 ${style.badgeClass}`}>
+                <span className='material-symbols-rounded text-sm'>{style.icon}</span>
+                {t.reasons?.[reason] || reason}
+              </span>
+              {notes && (
+                <span
+                  className='material-symbols-rounded text-sm text-amber-500 cursor-help shrink-0'
+                  title={notes}
+                >
+                  chat_bubble
+                </span>
+              )}
+            </div>
           );
         },
+        meta: { width: 132, align: 'center' },
       },
     ],
     [t, locale, sales, color, textTransform]
@@ -256,121 +337,139 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
           zIndex={50}
           title={t.modal?.title || 'Return Details'}
           icon='receipt_long'
+          className='overscroll-contain'
         >
-          <div className='space-y-4'>
-            {/* Return Information Section */}
-            <div className='grid grid-cols-2 gap-4 text-sm'>
-              <div className='space-y-0.5'>
-                <p className='text-gray-500 text-xs'>{t.headers?.returnId || 'Return ID'}</p>
-                <p className='font-medium text-gray-900 dark:text-gray-100'>
-                  {selectedReturn.serialId || selectedReturn.id || '001'}
-                </p>
-              </div>
-              <div className='space-y-0.5 text-end'>
-                <p className='text-gray-500 text-xs'>{t.headers?.date || 'Date'}</p>
-                <p className='font-medium text-gray-700 dark:text-gray-300'>
-                  {new Date(selectedReturn.date).toLocaleDateString(locale, {
-                    numberingSystem: 'latn',
-                  })}
-                </p>
-              </div>
-
-              <div className='space-y-0.5'>
-                <p className='text-gray-500 text-xs'>{t.headers?.saleId || 'Sale ID'}</p>
-                <p className='font-medium text-gray-900 dark:text-gray-100 uppercase'>
-                  {sales.find(s => s.id === selectedReturn.saleId)?.serialId || selectedReturn.saleId}
-                </p>
-              </div>
-              <div className='space-y-0.5 text-end'>
-                <p className='text-gray-500 text-xs'>{t.headers?.customer || 'Customer'}</p>
-                <p className='font-medium text-gray-900 dark:text-gray-100'>
-                  {sales.find((s) => s.id === selectedReturn.saleId)?.customerName ||
-                    'Walk-in Customer'}
-                </p>
-              </div>
-
-              <div className='space-y-1'>
-                <p className='text-gray-500 text-xs'>{t.headers?.reason || 'Reason'}</p>
-                {(() => {
-                  const reason = selectedReturn.reason;
-                  const style =
-                    reason === 'damaged'
-                      ? { textColor: 'text-red-500', borderColor: 'border-red-500', icon: 'broken_image' }
-                      : reason === 'defective'
-                        ? { textColor: 'text-red-500', borderColor: 'border-red-500', icon: 'build_circle' }
-                      : reason === 'expired'
-                        ? { textColor: 'text-orange-500', borderColor: 'border-orange-500', icon: 'event_busy' }
-                      : reason === 'wrong_item'
-                        ? { textColor: 'text-teal-500', borderColor: 'border-teal-500', icon: 'error' }
-                      : reason === 'customer_request'
-                        ? { textColor: 'text-primary-500', borderColor: 'border-primary-500', icon: 'person' }
-                      : { textColor: 'text-gray-500', borderColor: 'border-gray-500', icon: 'help' };
-                  return (
-                    <span
-                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border bg-transparent ${style.borderColor} ${style.textColor} text-[10px] font-black uppercase tracking-wider`}
-                    >
-                      <span className='material-symbols-rounded text-[14px]'>{style.icon}</span>
-                      {t.reasons?.[reason] || reason}
-                    </span>
-                  );
-                })()}
-              </div>
-              <div className='space-y-0.5 text-end'>
-                <p className='text-gray-500 text-xs'>{t.headers?.totalRefund || 'Total Refund'}</p>
-                <p className='font-bold text-red-500 text-base'>
-                  {formatCurrency(selectedReturn.totalRefund)}
-                </p>
-              </div>
+          <div className='flex flex-col h-full max-h-[80vh]'>
+            {/* 1. Header Info Section (Fixed) */}
+            <div className='shrink-0 mb-4'>
+              <ListWrapper>
+                {[
+                  {
+                    label: t.headers?.date || 'Date',
+                    icon: 'calendar_today',
+                    value: (() => {
+                      const d = new Date(selectedReturn.date);
+                      let timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true, numberingSystem: 'latn' });
+                      if (language === 'AR') timeStr = timeStr.replace('AM', 'ص').replace('PM', 'م');
+                      return (
+                        <div className='flex items-center gap-1.5'>
+                          <span>{d.toLocaleDateString('en-US')}</span>
+                          <span className='opacity-30'>•</span>
+                          <span>{timeStr}</span>
+                        </div>
+                      );
+                    })()
+                  },
+                  {
+                    label: t.headers?.returnId || 'Return ID',
+                    icon: 'tag',
+                    value: <span className='font-mono'>{selectedReturn.serialId || selectedReturn.id}</span>
+                  },
+                  {
+                    label: t.headers?.saleId || 'Invoice Number',
+                    icon: 'receipt',
+                    value: (() => {
+                      const sale = sales.find((s) => s.id === selectedReturn.saleId);
+                      return (
+                        <button
+                          onClick={() => {
+                            if (sale) {
+                              setViewedSale(sale);
+                            }
+                          }}
+                          className='text-primary-600 dark:text-primary-400 hover:underline font-bold text-xs'
+                        >
+                          #{sale?.serialId || selectedReturn.saleId}
+                        </button>
+                      );
+                    })()
+                  },
+                  {
+                    label: t.headers?.customer || 'Customer',
+                    icon: 'person',
+                    value: (
+                      <span className='font-bold'>
+                        {sales.find((s) => s.id === selectedReturn.saleId)?.customerName || 'Walk-in Customer'}
+                      </span>
+                    )
+                  },
+                  {
+                    label: t.headers?.reason || 'Reason',
+                    icon: 'help',
+                    value: (() => {
+                      const reason = selectedReturn.reason;
+                      const style = REASON_STYLES[reason] || { badgeClass: 'badge-neutral', icon: 'help' };
+                      return (
+                        <span className={`inline-flex items-center gap-1.5 ${style.badgeClass}`}>
+                          <span className='material-symbols-rounded text-[14px]'>{style.icon}</span>
+                          {t.reasons?.[reason] || reason}
+                        </span>
+                      );
+                    })()
+                  }
+                ].map((item, i, arr) => (
+                  <ListItem key={i} index={i} total={arr.length}>
+                    <div className='flex items-center gap-2 shrink-0'>
+                      <span className='material-symbols-rounded text-base opacity-40'>{item.icon}</span>
+                      <span className='text-[9px] font-bold uppercase tracking-wider opacity-50'>{item.label}</span>
+                    </div>
+                    <div className='text-[12px] font-bold text-right pl-2'>{item.value}</div>
+                  </ListItem>
+                ))}
+              </ListWrapper>
             </div>
 
-            <div className='border-t border-gray-100 dark:border-gray-800 pt-3'>
-              <p className='text-xs font-bold text-gray-400 uppercase mb-2'>
-                {t.modal?.itemsReturned || 'Returned Items'}
+            {/* 2. Scrollable Middle Section (Returned Items) */}
+            <div className='flex-1 overflow-y-auto min-h-0 custom-scrollbar pr-1'>
+              <p className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2 tracking-widest'>
+                {t.modal?.itemsReturned || 'Items Returned'}
               </p>
-              <div className='flex flex-col gap-1'>
+              <ListWrapper>
                 {selectedReturn.items.map((item, idx) => (
-                  <MaterialTabs
-                    key={idx}
-                    index={idx}
-                    total={selectedReturn.items.length}
-                    color={color}
-                    className='h-auto py-3 bg-red-50/10 dark:bg-red-900/5'
-                  >
-                    <div className='flex justify-between items-center w-full' dir='ltr'>
-                      <div className='text-left'>
-                        <p className='font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1 item-name'>
-                          {getDisplayName({ name: item.name, dosageForm: item.dosageForm }, textTransform)}
-                        </p>
-                        <div className='text-xs text-gray-500 flex flex-row items-center gap-1 mt-0.5' dir='ltr'>
-                          <span className='shrink-0'>{t.modal?.qty}:</span>
-                          <span className='font-bold shrink-0'>{item.quantityReturned}</span>
-                          <span className='text-[8px] border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-1 py-1 leading-none rounded-sm font-bold tracking-tighter uppercase whitespace-nowrap'>
-                            {item.isUnit ? t.modal?.unit : t.modal?.pack}
-                          </span>
+                  <ListItem key={idx} index={idx} total={selectedReturn.items.length}>
+                    <div className='flex justify-between items-center w-full min-w-0' dir='ltr'>
+                      <div className='flex items-center gap-2.5 min-w-0 flex-1'>
+                        <ReturnQuantityBadge qty={item.quantityReturned} isUnit={item.isUnit} language={language} />
+                        <div className='text-left min-w-0 flex-1 py-0.5'>
+                          <p className='font-bold truncate text-[13px]'>
+                            {getDisplayName({ name: item.name, dosageForm: item.dosageForm }, textTransform)}
+                          </p>
                           {item.expiryDate && (
-                            <span className='text-[9px] bg-gray-100 dark:bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded-sm font-medium border border-gray-200 dark:border-gray-700 ml-auto'>
-                              {formatExpiryDate(item.expiryDate)}
-                            </span>
+                            <div className='text-[10px] text-gray-400 flex items-center flex-wrap gap-1.5 mt-0.5'>
+                              <span className='font-mono font-bold text-gray-400'>
+                                {formatExpiryDate(item.expiryDate)}
+                              </span>
+                            </div>
                           )}
                         </div>
                       </div>
-                      <div className='font-bold text-red-600 dark:text-red-400 text-right'>
-                        <span className='tabular-nums'>{formatCurrency(item.refundAmount)}</span>
+                      <div className='text-right flex flex-col items-end shrink-0 pl-1 leading-tight'>
+                        <span className='font-bold text-red-600 dark:text-red-400'>-{formatCurrency(item.refundAmount)}</span>
                       </div>
                     </div>
-                  </MaterialTabs>
+                  </ListItem>
                 ))}
-              </div>
+              </ListWrapper>
             </div>
 
-            {selectedReturn.notes && (
-              <div className='border-t border-gray-100 dark:border-gray-800 pt-3'>
-                <p className='text-xs font-bold text-gray-400 uppercase mb-2'>{t.headers?.notes || 'Notes'}</p>
-                <div className='p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 text-amber-900 dark:text-amber-100 border border-amber-100 dark:border-amber-900/30 text-sm'>
-                  {selectedReturn.notes}
+            {/* 3. Footer Section (Notes & Total Refund) */}
+            <div className='shrink-0 pt-3'>
+              {selectedReturn.notes && (
+                <div className='mb-3'>
+                  <p className='text-[9px] font-bold uppercase tracking-wider opacity-50 mb-1.5'>{t.headers?.notes || 'Notes'}</p>
+                  <div className='p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 text-amber-900 dark:text-amber-100 border border-amber-100 dark:border-amber-900/30 text-sm'>
+                    {selectedReturn.notes}
+                  </div>
                 </div>
+              )}
+              
+              <div className='flex justify-between items-center py-3 px-4 bg-gray-100/50 dark:bg-white/[0.03] rounded-2xl border border-gray-100 dark:border-white/5'>
+                <span className='font-bold text-[14px] text-red-600 dark:text-red-400'>{t.headers?.totalRefund || 'Total Refund'}</span>
+                <span className='text-xl font-black text-red-600 dark:text-red-400 tabular-nums tracking-tight'>
+                  -{formatCurrency(selectedReturn.totalRefund)}
+                </span>
               </div>
-            )}
+            </div>
           </div>
         </Modal>
       )}
