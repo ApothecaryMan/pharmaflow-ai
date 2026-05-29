@@ -125,8 +125,9 @@ export const getCellDirection = (columnId: string, meta: any, cellValue: any, is
   const id = columnId.toLowerCase();
   if (id === 'name') return 'ltr';
   if (meta?.isId || meta?.isAction) return isRtl ? 'rtl' : 'ltr';
-  if (meta?.dir === 'auto') return getSmartDirection(String(cellValue || ''));
-  return meta?.dir || 'auto';
+  // Disabled content-based auto direction check
+  // if (meta?.dir === 'auto') return getSmartDirection(String(cellValue || ''));
+  return meta?.dir && meta.dir !== 'auto' ? meta.dir : (isRtl ? 'rtl' : 'ltr');
 };
 
 export const formatSmartDate = (
