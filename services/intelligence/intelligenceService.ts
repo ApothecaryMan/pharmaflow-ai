@@ -4,153 +4,33 @@
  * Real data functions for Procurement, Risk, Financials, and Audit
  */
 
+import { supabase } from '../../lib/supabase';
 import type { Drug, Sale } from '../../types';
 import type {
   AuditTransaction,
+  CategoryFinancialItem,
   ExpiryRiskItem,
   FinancialKPIs,
+  FinancialReport,
   ProcurementItem,
   ProcurementSummary,
   ProductFinancialItem,
   RiskSummary,
-  CategoryFinancialItem,
 } from '../../types/intelligence';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
+import { money, pricing } from '../../utils/money';
+import { dateRangeService, type FinancialPeriod } from '../financials/dateRangeService';
+import { financialService } from '../financials/financialService';
 import { employeeService } from '../hr/employeeService';
 import { batchService } from '../inventory/batchService';
 import { inventoryService } from '../inventory/inventoryService';
 import { returnService } from '../returns/returnService';
 import { salesService } from '../sales/salesService';
-import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
-import { money, pricing } from '../../utils/money';
-import { supabase } from '../../lib/supabase';
-import type { FinancialReport } from '../../types/intelligence';
 
 // === Period Helpers ===
 
-export type FinancialPeriod = 'this_month' | 'last_month' | 'last_3_months' | 'this_year';
-
-function getDateRangeForPeriod(period: FinancialPeriod): { start: Date; end: Date } {
-  const now = new Date();
-  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-
-  switch (period) {
-    case 'this_month': {
-      const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      return { start, end };
-    }
-    case 'last_month': {
-      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-      return { start, end: endOfLastMonth };
-    }
-    case 'last_3_months': {
-      const start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-      return { start, end };
-    }
-    case 'this_year': {
-      const start = new Date(now.getFullYear(), 0, 1);
-      return { start, end };
-    }
-    default:
-      return { start: new Date(now.getFullYear(), now.getMonth(), 1), end };
-  }
-}
-
-function getPreviousPeriodRange(period: FinancialPeriod): { start: Date; end: Date } {
-  const now = new Date();
-
-  switch (period) {
-    case 'this_month': {
-      // Previous month
-      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-      return { start, end };
-    }
-    case 'last_month': {
-      // Month before last
-      const start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-      const end = new Date(now.getFullYear(), now.getMonth() - 1, 0, 23, 59, 59);
-      return { start, end };
-    }
-    case 'last_3_months': {
-      // Previous 3 months before current 3
-      const start = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-      const end = new Date(now.getFullYear(), now.getMonth() - 2, 0, 23, 59, 59);
-      return { start, end };
-    }
-    case 'this_year': {
-      // Last year
-      const start = new Date(now.getFullYear() - 1, 0, 1);
-      const end = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
-      return { start, end };
-    }
-    default:
-      return getPreviousPeriodRange('this_month');
-  }
-}
-
-function filterSalesByDateRange(sales: Sale[], start: Date, end: Date): Sale[] {
-  return sales.filter((sale) => {
-    const saleDate = new Date(sale.date);
-    return saleDate >= start && saleDate <= end && sale.status === 'completed';
-  });
-}
-
-// === Real Data Calculator Functions ===
-
-interface PeriodMetrics {
-  revenue: number;
-  grossProfit: number;
-  unitsSold: number;
-  cogs: number;
-}
-
-function calculateMetrics(sales: Sale[], drugMap: Map<string, Drug>): PeriodMetrics {
-  let revenue = 0;
-  let grossProfit = 0;
-  let unitsSold = 0;
-  let cogs = 0;
-
-  for (const sale of sales) {
-    revenue = money.add(revenue, sale.total);
-
-    for (const item of sale.items) {
-      const drug = drugMap.get(item.id);
-      const unitsPerPack = drug?.unitsPerPack || 1;
-      
-      // Normalize quantity to units for "unitsSold" metric
-      const normalizedQuantity = item.isUnit ? item.quantity : item.quantity * unitsPerPack;
-      
-      // Defensive: support both new publicPrice and legacy price
-      const itemPrice = item.publicPrice || (item as any).price || 0;
-      const itemRevenue = money.multiply(itemPrice, item.quantity, 0);
-      const itemCost = money.multiply(item.costPrice || 0, item.quantity, 0);
-
-      unitsSold += normalizedQuantity;
-      cogs = money.add(cogs, itemCost);
-      grossProfit = money.add(grossProfit, money.subtract(itemRevenue, itemCost));
-    }
-  }
-
-  return { revenue, grossProfit, unitsSold, cogs };
-}
-
-function calculateChange(
-  current: number,
-  previous: number
-): { percent: number; direction: 'up' | 'down' | 'unchanged' } {
-  if (previous === 0) {
-    return { percent: current > 0 ? 100 : 0, direction: current > 0 ? 'up' : 'unchanged' };
-  }
-
-  // Use high-precision percentage calculation
-  const diff = current - previous;
-  const percent = (diff / previous) * 100;
-  const direction = percent > 0 ? 'up' : percent < 0 ? 'down' : 'unchanged';
-
-  return { percent: Math.abs(Math.round(percent * 10) / 10), direction };
-}
+export type { FinancialPeriod };
 
 /**
  * Calculates Pareto ABC Classification
@@ -158,18 +38,20 @@ function calculateChange(
  * B = Next 15%
  * C = Bottom 5%
  */
-function calculateParetoABC<T extends { revenue: number }>(items: T[]): (T & { abc_class: 'A' | 'B' | 'C' })[] {
+function calculateParetoABC<T extends { revenue: number }>(
+  items: T[]
+): (T & { abc_class: 'A' | 'B' | 'C' })[] {
   if (items.length === 0) return [];
 
   const sorted = [...items].sort((a, b) => b.revenue - a.revenue);
   const totalRevenue = sorted.reduce((sum, item) => sum + item.revenue, 0);
 
   if (totalRevenue === 0) {
-    return sorted.map(item => ({ ...item, abc_class: 'C' as const }));
+    return sorted.map((item) => ({ ...item, abc_class: 'C' as const }));
   }
 
   let cumulativeRevenue = 0;
-  return sorted.map(item => {
+  return sorted.map((item) => {
     cumulativeRevenue += item.revenue;
     const percentile = (cumulativeRevenue / totalRevenue) * 100;
 
@@ -190,10 +72,7 @@ async function _loadCoreData(branchId?: string, options?: { signal?: AbortSignal
   // In a real scenario, we would pass options.signal to these service methods too.
   // For now, we'll focus on the top-level orchestration.
 
-  const [drugs, allBatches] = await Promise.all([
-    fetchDrugs,
-    fetchBatches,
-  ]);
+  const [drugs, allBatches] = await Promise.all([fetchDrugs, fetchBatches]);
 
   const drugMap = new Map(drugs.map((d) => [d.id, d]));
   const stockMap = new Map<string, number>();
@@ -212,7 +91,10 @@ export const intelligenceService = {
   /**
    * Get Procurement Summary from real inventory data
    */
-  getProcurementSummary: async (branchId?: string, options?: { signal?: AbortSignal }): Promise<ProcurementSummary> => {
+  getProcurementSummary: async (
+    branchId?: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<ProcurementSummary> => {
     const items = await intelligenceService.getProcurementItems(branchId, options);
 
     const needingOrder = items.filter((i) => i.suggested_order_qty > 0);
@@ -226,22 +108,32 @@ export const intelligenceService = {
       avg_confidence_score: Math.round(avgConfidence),
       pending_po_count: 0, // Would need PO tracking
       pending_po_value: 0,
-      estimated_lost_sales: outOfStock.reduce((sum, i) => money.add(sum, money.multiply(i.avg_daily_sales, 7 * 5000, 0)), 0), // Use 50.00 EGP (5000 Piastres) as avg price
+      estimated_lost_sales: outOfStock.reduce(
+        (sum, i) => money.add(sum, money.multiply(i.avg_daily_sales, 7 * 5000, 0)),
+        0
+      ), // Use 50.00 EGP (5000 Piastres) as avg price
     };
   },
 
   /**
    * Get Procurement Items from real inventory and sales data
    */
-  getProcurementItems: async (branchId?: string, options?: { signal?: AbortSignal }): Promise<ProcurementItem[]> => {
+  getProcurementItems: async (
+    branchId?: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<ProcurementItem[]> => {
     const { drugs, drugMap, allBatches, stockMap } = await _loadCoreData(branchId, options);
-    
+
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    const recentSales = await salesService.getByDateRange(thirtyDaysAgo.toISOString(), now.toISOString(), branchId);
+    const recentSales = await salesService.getByDateRange(
+      thirtyDaysAgo.toISOString(),
+      now.toISOString(),
+      branchId
+    );
     const completedSales = recentSales.filter((s) => s.status === 'completed');
 
     // Build velocity map per drug (normalized to units)
@@ -310,12 +202,12 @@ export const intelligenceService = {
       const targetStock = REORDER_POINT_DAYS * avgDailySales * 1.5; // 1.5x buffer
       const minStock = drug.minStock ?? 0;
       const unitsPerPack = drug.unitsPerPack || 1;
-      const safetyStockPacks = avgDailySales > 0
-        ? Math.max(0, Math.ceil((targetStock - currentStock) / unitsPerPack))
-        : 0;
-      const minStockReplenishPacks = (currentStock <= minStock * unitsPerPack && minStock > 0)
-        ? Math.max(0, minStock - Math.floor(currentStock / unitsPerPack))
-        : 0;
+      const safetyStockPacks =
+        avgDailySales > 0 ? Math.max(0, Math.ceil((targetStock - currentStock) / unitsPerPack)) : 0;
+      const minStockReplenishPacks =
+        currentStock <= minStock * unitsPerPack && minStock > 0
+          ? Math.max(0, minStock - Math.floor(currentStock / unitsPerPack))
+          : 0;
       const suggestedQty = Math.max(safetyStockPacks, minStockReplenishPacks);
 
       // Confidence score based on data quality
@@ -367,25 +259,29 @@ export const intelligenceService = {
     });
 
     // Final Pareto Classify
-    const itemsWithABC = calculateParetoABC(rawItems.map(i => ({ ...i, revenue: i.avg_daily_sales * 30 })));
-    
-    return rawItems.map(item => {
-      const abc = itemsWithABC.find(i => i.product_id === item.product_id)?.abc_class || 'C';
-      
-      // Determine data quality
-      let dataQuality: 'GOOD' | 'SPARSE' | 'NEW_PRODUCT' | 'IRREGULAR' = 'GOOD';
-      if (item.velocity_breakdown.last_30_days < 5) dataQuality = 'SPARSE';
-      if (item.velocity_breakdown.last_30_days === 0) dataQuality = 'NEW_PRODUCT';
+    const itemsWithABC = calculateParetoABC(
+      rawItems.map((i) => ({ ...i, revenue: i.avg_daily_sales * 30 }))
+    );
 
-      return { 
-        ...item, 
-        abc_class: abc,
-        data_quality_flag: dataQuality
-      } as ProcurementItem;
-    }).sort((a, b) => {
-      const statusOrder = { OUT_OF_STOCK: 0, CRITICAL: 1, LOW: 2, NORMAL: 3, OVERSTOCK: 4 };
-      return statusOrder[a.stock_status] - statusOrder[b.stock_status];
-    });
+    return rawItems
+      .map((item) => {
+        const abc = itemsWithABC.find((i) => i.product_id === item.product_id)?.abc_class || 'C';
+
+        // Determine data quality
+        let dataQuality: 'GOOD' | 'SPARSE' | 'NEW_PRODUCT' | 'IRREGULAR' = 'GOOD';
+        if (item.velocity_breakdown.last_30_days < 5) dataQuality = 'SPARSE';
+        if (item.velocity_breakdown.last_30_days === 0) dataQuality = 'NEW_PRODUCT';
+
+        return {
+          ...item,
+          abc_class: abc,
+          data_quality_flag: dataQuality,
+        } as ProcurementItem;
+      })
+      .sort((a, b) => {
+        const statusOrder = { OUT_OF_STOCK: 0, CRITICAL: 1, LOW: 2, NORMAL: 3, OVERSTOCK: 4 };
+        return statusOrder[a.stock_status] - statusOrder[b.stock_status];
+      });
   },
 
   // === Risk (REAL DATA) ===
@@ -393,7 +289,10 @@ export const intelligenceService = {
   /**
    * Get Risk Summary computed from real batch expiry data
    */
-  getRiskSummary: async (branchId?: string, options?: { signal?: AbortSignal }): Promise<RiskSummary> => {
+  getRiskSummary: async (
+    branchId?: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<RiskSummary> => {
     const riskItems = await intelligenceService.getExpiryRiskItems(branchId, options);
 
     const summary: RiskSummary = {
@@ -409,17 +308,29 @@ export const intelligenceService = {
 
     for (const item of riskItems) {
       summary.total_value_at_risk = money.add(summary.total_value_at_risk, item.value_at_risk);
-      summary.potential_recovery_value = money.add(summary.potential_recovery_value, item.expected_recovery_value || 0);
+      summary.potential_recovery_value = money.add(
+        summary.potential_recovery_value,
+        item.expected_recovery_value || 0
+      );
 
       if (item.risk_category === 'CRITICAL') {
         summary.by_urgency.critical.count++;
-        summary.by_urgency.critical.value = money.add(summary.by_urgency.critical.value, item.value_at_risk);
+        summary.by_urgency.critical.value = money.add(
+          summary.by_urgency.critical.value,
+          item.value_at_risk
+        );
       } else if (item.risk_category === 'HIGH') {
         summary.by_urgency.high.count++;
-        summary.by_urgency.high.value = money.add(summary.by_urgency.high.value, item.value_at_risk);
+        summary.by_urgency.high.value = money.add(
+          summary.by_urgency.high.value,
+          item.value_at_risk
+        );
       } else if (item.risk_category === 'MEDIUM') {
         summary.by_urgency.medium.count++;
-        summary.by_urgency.medium.value = money.add(summary.by_urgency.medium.value, item.value_at_risk);
+        summary.by_urgency.medium.value = money.add(
+          summary.by_urgency.medium.value,
+          item.value_at_risk
+        );
       }
     }
 
@@ -429,7 +340,10 @@ export const intelligenceService = {
   /**
    * Get Expiry Risk Items computed from real batch data
    */
-  getExpiryRiskItems: async (branchId?: string, options?: { signal?: AbortSignal }): Promise<ExpiryRiskItem[]> => {
+  getExpiryRiskItems: async (
+    branchId?: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<ExpiryRiskItem[]> => {
     const { drugs, drugMap, allBatches } = await _loadCoreData(branchId, options);
 
     const now = new Date();
@@ -515,7 +429,7 @@ export const intelligenceService = {
           calculation_explanation: `${daysUntilExpiry} days until expiry, ${batch.quantity} units remaining`,
         },
         clearance_analysis: {
-          current_velocity: 1.0, 
+          current_velocity: 1.0,
           projected_units_sold: batch.quantity,
           projected_remaining: 0,
           will_clear_in_time: daysUntilExpiry > 30,
@@ -541,59 +455,7 @@ export const intelligenceService = {
     branchId?: string,
     options?: { signal?: AbortSignal }
   ): Promise<FinancialKPIs> => {
-    const { drugs, drugMap } = await _loadCoreData(branchId, options);
-
-    // Optimized Fetching: Only fetch for the periods we need
-    const currentRange = getDateRangeForPeriod(period);
-    const prevRange = getPreviousPeriodRange(period);
-    
-    // Determine the earliest start date to fetch everything in one query if possible
-    const earliestStart = currentRange.start < prevRange.start ? currentRange.start : prevRange.start;
-    const latestEnd = currentRange.end > prevRange.end ? currentRange.end : prevRange.end;
-    
-    const relevantSales = await salesService.getByDateRange(earliestStart.toISOString(), latestEnd.toISOString(), branchId);
-
-    // Current period
-    const currentSales = filterSalesByDateRange(relevantSales, currentRange.start, currentRange.end);
-    const currentMetrics = calculateMetrics(currentSales, drugMap);
-
-    // Previous period for comparison
-    const prevSales = filterSalesByDateRange(relevantSales, prevRange.start, prevRange.end);
-    const prevMetrics = calculateMetrics(prevSales, drugMap);
-
-    // Calculate margin percentages
-    const currentMargin =
-      currentMetrics.revenue > 0 ? (currentMetrics.grossProfit / currentMetrics.revenue) * 100 : 0;
-    const prevMargin =
-      prevMetrics.revenue > 0 ? (prevMetrics.grossProfit / prevMetrics.revenue) * 100 : 0;
-
-    const revenueChange = calculateChange(currentMetrics.revenue, prevMetrics.revenue);
-    const profitChange = calculateChange(currentMetrics.grossProfit, prevMetrics.grossProfit);
-    const unitsChange = calculateChange(currentMetrics.unitsSold, prevMetrics.unitsSold);
-    const marginDiff = money.subtract(currentMargin, prevMargin);
-
-    return {
-      revenue: {
-        value: currentMetrics.revenue,
-        change_percent: revenueChange.percent,
-        change_direction: revenueChange.direction,
-      },
-      gross_profit: {
-        value: currentMetrics.grossProfit,
-        change_percent: profitChange.percent,
-        change_direction: profitChange.direction,
-      },
-      margin_percent: {
-        value: currentMargin,
-        change_points: marginDiff,
-        change_direction: marginDiff > 0 ? 'up' : marginDiff < 0 ? 'down' : 'unchanged',
-      },
-      units_sold: {
-        value: currentMetrics.unitsSold,
-        change_percent: unitsChange.percent,
-        change_direction: unitsChange.direction,
-      },
-    };
+    return financialService.getFinancialKPIs(period, branchId);
   },
 
   /**
@@ -604,62 +466,7 @@ export const intelligenceService = {
     branchId?: string,
     options?: { signal?: AbortSignal }
   ): Promise<ProductFinancialItem[]> => {
-    const { drugs, drugMap } = await _loadCoreData(branchId, options);
-
-    const range = getDateRangeForPeriod(period);
-    const periodSales = await salesService.getByDateRange(range.start.toISOString(), range.end.toISOString(), branchId);
-    const completedSales = periodSales.filter(s => s.status === 'completed');
-
-    // Aggregate by product
-    const productAgg = new Map<
-      string,
-      {
-        product_id: string;
-        product_name: string;
-        quantity_sold: number;
-        revenue: number;
-        cogs: number;
-      }
-    >();
-
-    for (const sale of completedSales) {
-      for (const item of sale.items) {
-        const existing = productAgg.get(item.id) || {
-          product_id: item.id,
-          product_name: getDisplayName({ name: item.name, dosageForm: item.dosageForm }),
-          quantity_sold: 0,
-          revenue: 0,
-          cogs: 0,
-        };
-
-        // Defensive: support both new publicPrice and legacy price
-        const itemPrice = item.publicPrice || (item as any).price || 0;
-        const itemRevenue = money.multiply(itemPrice, item.quantity, 0);
-        const itemCost = money.multiply(item.costPrice || 0, item.quantity, 0);
-
-        existing.quantity_sold += item.quantity;
-        existing.revenue = money.add(existing.revenue, itemRevenue);
-        existing.cogs = money.add(existing.cogs, itemCost);
-
-        productAgg.set(item.id, existing);
-      }
-    }
-
-    // Use Pareto Classification
-    const rawResults = Array.from(productAgg.values()).map(p => ({
-      id: p.product_id,
-      product_id: p.product_id,
-      product_name: p.product_name,
-      quantity_sold: p.quantity_sold,
-      revenue: p.revenue,
-      cogs: p.cogs,
-      gross_profit: money.subtract(p.revenue, p.cogs),
-      margin_percent: p.revenue > 0 ? money.multiply(money.divide(money.subtract(p.revenue, p.cogs), p.revenue), 100, 0) : 0,
-    }));
-
-    const resultsWithABC = calculateParetoABC(rawResults);
-
-    return resultsWithABC.sort((a, b) => b.revenue - a.revenue);
+    return financialService.getTopProducts(period, branchId, 1000);
   },
 
   /**
@@ -670,44 +477,29 @@ export const intelligenceService = {
     branchId?: string,
     options?: { signal?: AbortSignal }
   ): Promise<CategoryFinancialItem[]> => {
-    const products = await intelligenceService.getProductFinancials(period, branchId, options);
-    
-    const categoryAgg = new Map<string, CategoryFinancialItem>();
-    
-    for (const p of products) {
-      // For now, we use a placeholder category if missing in ProductFinancialItem
-      // In a real scenario, ProductFinancialItem should include category info
-      const catId = 'GENERAL'; 
-      const catName = 'عام';
-      
-      const existing = categoryAgg.get(catId) || {
-        id: catId,
-        category_id: catId,
-        category_name: catName,
-        products_count: 0,
-        revenue: 0,
-        cogs: 0,
-        gross_profit: 0,
-        margin_percent: 0,
-        abc_distribution: { a: 0, b: 0, c: 0 }
+    const rawCategories = await financialService.getCategoryBreakdown(period, branchId);
+    const topProducts = await financialService.getTopProducts(period, branchId, 1000);
+    return rawCategories.map((c) => {
+      const aCount = topProducts.filter((p) => p.abc_class === 'A').length;
+      const bCount = topProducts.filter((p) => p.abc_class === 'B').length;
+      const cCount = topProducts.filter((p) => p.abc_class === 'C').length;
+
+      return {
+        id: c.category,
+        category_id: c.category,
+        category_name: c.category === 'GENERAL' ? 'عام' : c.category,
+        products_count: Math.round(topProducts.length / (rawCategories.length || 1)),
+        revenue: c.revenue,
+        cogs: c.cogs,
+        gross_profit: c.profit,
+        margin_percent: c.revenue > 0 ? Math.round((c.profit / c.revenue) * 100) : 0,
+        abc_distribution: {
+          a: Math.round(aCount / (rawCategories.length || 1)),
+          b: Math.round(bCount / (rawCategories.length || 1)),
+          c: Math.round(cCount / (rawCategories.length || 1)),
+        },
       };
-      
-      existing.products_count++;
-      existing.revenue = money.add(existing.revenue, p.revenue);
-      existing.cogs = money.add(existing.cogs, p.cogs);
-      existing.gross_profit = money.add(existing.gross_profit, p.gross_profit);
-      
-      if (p.abc_class === 'A') existing.abc_distribution.a++;
-      else if (p.abc_class === 'B') existing.abc_distribution.b++;
-      else existing.abc_distribution.c++;
-      
-      categoryAgg.set(catId, existing);
-    }
-    
-    return Array.from(categoryAgg.values()).map(cat => ({
-      ...cat,
-      margin_percent: cat.revenue > 0 ? money.multiply(money.divide(cat.gross_profit, cat.revenue), 100, 0) : 0
-    }));
+    });
   },
 
   // === Audit (REAL DATA) ===
@@ -802,142 +594,6 @@ export const intelligenceService = {
     branchId?: string,
     options?: { signal?: AbortSignal }
   ): Promise<FinancialReport> => {
-    try {
-      // 1. Fetch all required data for manual calculation
-      const start = new Date(dateFrom);
-      const end = new Date(dateTo);
-      
-      const [sales, returns, { drugMap }] = await Promise.all([
-        salesService.getByDateRange(dateFrom, dateTo, branchId),
-        returnService.getAllSalesReturns(branchId),
-        _loadCoreData(branchId, options)
-      ]);
-
-      const completedSales = sales.filter(s => s.status === 'completed');
-      const filteredReturns = returns.filter(r => {
-        const d = new Date(r.date);
-        return d >= start && d <= end;
-      });
-
-      // 2. Initialize Summary
-      let grossRevenue = 0;
-      let grossCogs = 0;
-      let returnRevenue = 0;
-      let returnCogs = 0;
-
-      // 3. Initialize Daily Breakdown Map
-      const dailyMap = new Map<string, { revenue: number; returns: number }>();
-      const current = new Date(start);
-      // Strip time from current for clean day-by-day iteration
-      current.setHours(0, 0, 0, 0);
-      const endClean = new Date(end);
-      endClean.setHours(23, 59, 59, 999);
-      
-      while (current <= endClean) {
-        const yyyy = current.getFullYear();
-        const mm = String(current.getMonth() + 1).padStart(2, '0');
-        const dd = String(current.getDate()).padStart(2, '0');
-        dailyMap.set(`${yyyy}-${mm}-${dd}`, { revenue: 0, returns: 0 });
-        current.setDate(current.getDate() + 1);
-      }
-
-      // 4. Initialize Category Breakdown Map
-      const categoryMap = new Map<string, { revenue: number; cogs: number }>();
-
-      // 5. Process Sales
-      for (const sale of completedSales) {
-        const saleLocal = new Date(sale.date);
-        const yyyy = saleLocal.getFullYear();
-        const mm = String(saleLocal.getMonth() + 1).padStart(2, '0');
-        const dd = String(saleLocal.getDate()).padStart(2, '0');
-        const day = `${yyyy}-${mm}-${dd}`;
-        
-        grossRevenue = money.add(grossRevenue, sale.total);
-        
-        const dayData = dailyMap.get(day);
-        if (dayData) dayData.revenue = money.add(dayData.revenue, sale.total);
-
-        for (const item of sale.items) {
-          const drug = drugMap.get(item.id);
-          const category = drug?.category || 'عام';
-          
-          // Cost calculation: Priority 1: Item snapshot, Priority 2: Drug current cost
-          const itemCostPrice = item.costPrice || drug?.costPrice || drug?.costPrice || 0;
-          const itemCogs = money.multiply(itemCostPrice, item.quantity, 0);
-          const itemRevenue = money.multiply(item.publicPrice || (item as any).price || 0, item.quantity, 0);
-          
-          grossCogs = money.add(grossCogs, itemCogs);
-
-          const catData = categoryMap.get(category) || { revenue: 0, cogs: 0 };
-          catData.revenue = money.add(catData.revenue, itemRevenue);
-          catData.cogs = money.add(catData.cogs, itemCogs);
-          categoryMap.set(category, catData);
-        }
-      }
-
-      // 6. Process Returns
-      for (const ret of filteredReturns) {
-        const retLocal = new Date(ret.date);
-        const yyyy = retLocal.getFullYear();
-        const mm = String(retLocal.getMonth() + 1).padStart(2, '0');
-        const dd = String(retLocal.getDate()).padStart(2, '0');
-        const day = `${yyyy}-${mm}-${dd}`;
-        
-        returnRevenue = money.add(returnRevenue, ret.totalRefund);
-
-        const dayData = dailyMap.get(day);
-        if (dayData) dayData.returns = money.add(dayData.returns, ret.totalRefund);
-
-        for (const item of ret.items) {
-          const drug = drugMap.get(item.drugId);
-          // Try to get cost from original sale item if available
-          const itemCostPrice = drug?.costPrice || drug?.costPrice || 0;
-          const itemReturnCogs = money.multiply(itemCostPrice, item.quantityReturned, 0);
-          returnCogs = money.add(returnCogs, itemReturnCogs);
-        }
-      }
-
-      // 7. Finalize Result
-      const report: FinancialReport = {
-        summary: {
-          gross_revenue: grossRevenue,
-          return_revenue: returnRevenue,
-          net_revenue: money.subtract(grossRevenue, returnRevenue),
-          gross_cogs: grossCogs,
-          return_cogs: returnCogs,
-          net_cogs: money.subtract(grossCogs, returnCogs),
-          gross_profit: money.subtract(grossRevenue, grossCogs),
-        },
-        daily: Array.from(dailyMap.entries()).map(([day, data]) => ({
-          day,
-          revenue: data.revenue,
-          refund: data.returns,
-          net: money.subtract(data.revenue, data.returns),
-          sale_count: 0,
-          return_count: 0
-        })).sort((a, b) => a.day.localeCompare(b.day)),
-        categories: Array.from(categoryMap.entries()).map(([category, data]) => ({
-          category,
-          revenue: data.revenue,
-          cogs: data.cogs,
-          profit: money.subtract(data.revenue, data.cogs)
-        })).sort((a, b) => b.revenue - a.revenue),
-        generated_at: new Date().toISOString()
-      };
-
-      return report;
-    } catch (error) {
-      console.error('Error calculating financial report (client-side):', error);
-      
-      // Attempt RPC as last-resort fallback (though we know it might have issues)
-      const { data, error: rpcError } = await supabase.rpc('get_financial_report', {
-        p_date_from: dateFrom,
-        p_date_to: dateTo,
-        p_branch_id: branchId || null
-      });
-
-      if (rpcError) throw rpcError;
-      return data as FinancialReport;
-    }
+    return financialService.getFinancialReport(dateFrom, dateTo, branchId);
   },
 };

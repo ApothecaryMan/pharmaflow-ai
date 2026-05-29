@@ -1,15 +1,15 @@
 import { supabase } from '../../lib/supabase';
-import { dateRangeService, type FinancialPeriod } from './dateRangeService';
-import { money } from '../../utils/money';
 import type { Sale } from '../../types';
 import type {
-  FinancialKPIs,
-  DailyFinancialData,
   CategoryFinancialReport,
+  DailyFinancialData,
+  FinancialKPIs,
   FinancialReport,
+  FinancialReportSummary,
   ProductFinancialItem,
-  FinancialReportSummary
 } from '../../types/intelligence';
+import { money } from '../../utils/money';
+import { dateRangeService, type FinancialPeriod } from './dateRangeService';
 
 export interface FinancialSummary extends FinancialReportSummary {
   expenses_total: number;
@@ -48,7 +48,7 @@ export const financialService = {
         const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
         const returnedQty =
           sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
-        
+
         const actualSoldQty = item.quantity - returnedQty;
         const itemPrice = item.publicPrice || 0;
         const itemDiscountPct = item.discount || 0;
@@ -92,23 +92,47 @@ export const financialService = {
   /**
    * Gets Financial Summary for a custom date range.
    */
-  async getFinancialSummaryByDates(start: string, end: string, branchId?: string): Promise<FinancialSummary> {
+  async getFinancialSummaryByDates(
+    start: string,
+    end: string,
+    branchId?: string
+  ): Promise<FinancialSummary> {
     try {
       const { data, error } = await supabase.rpc('compute_financial_summary_with_snapshots', {
         p_branch_id: branchId || null,
         p_date_from: start,
-        p_date_to: end
+        p_date_to: end,
       });
 
       if (error) {
         // Log error and trigger fallback
-        console.warn('RPC compute_financial_summary_with_snapshots failed, running client fallback:', error);
+        console.warn(
+          'RPC compute_financial_summary_with_snapshots failed, running client fallback:',
+          error
+        );
         return this.fallbackFinancialSummary(start, end, branchId);
       }
 
-      return data as FinancialSummary;
+      const s = data as any;
+      return {
+        gross_revenue: Number(s.gross_revenue || 0),
+        return_revenue: Number(s.total_refunds || 0),
+        net_revenue: Number(s.net_revenue || 0),
+        gross_cogs: Number(s.gross_cogs || 0),
+        return_cogs: Number(s.return_cogs || 0),
+        net_cogs: Number(s.net_cogs || 0),
+        gross_profit: Number(s.gross_profit || 0),
+        expenses_total: Number(s.expenses_total || 0),
+        net_profit: Number(s.net_profit || 0),
+        total_transactions: Number(s.total_transactions || 0),
+        total_units_sold: Number(s.total_units_sold || 0),
+        total_returns_count: Number(s.total_returns_count || 0),
+      } as FinancialSummary;
     } catch (err) {
-      console.warn('RPC compute_financial_summary_with_snapshots error, running client fallback:', err);
+      console.warn(
+        'RPC compute_financial_summary_with_snapshots error, running client fallback:',
+        err
+      );
       return this.fallbackFinancialSummary(start, end, branchId);
     }
   },
@@ -122,15 +146,22 @@ export const financialService = {
 
     const [currentSummary, prevSummary] = await Promise.all([
       this.getFinancialSummaryByDates(currentRange.start, currentRange.end, branchId),
-      this.getFinancialSummaryByDates(prevRange.start, prevRange.end, branchId)
+      this.getFinancialSummaryByDates(prevRange.start, prevRange.end, branchId),
     ]);
 
-    const currentMargin = currentSummary.net_revenue > 0 ? (currentSummary.gross_profit / currentSummary.net_revenue) * 100 : 0;
-    const prevMargin = prevSummary.net_revenue > 0 ? (prevSummary.gross_profit / prevSummary.net_revenue) * 100 : 0;
+    const currentMargin =
+      currentSummary.net_revenue > 0
+        ? (currentSummary.gross_profit / currentSummary.net_revenue) * 100
+        : 0;
+    const prevMargin =
+      prevSummary.net_revenue > 0 ? (prevSummary.gross_profit / prevSummary.net_revenue) * 100 : 0;
 
     const revenueChange = calculateChange(currentSummary.net_revenue, prevSummary.net_revenue);
     const profitChange = calculateChange(currentSummary.gross_profit, prevSummary.gross_profit);
-    const unitsChange = calculateChange(currentSummary.total_units_sold, prevSummary.total_units_sold);
+    const unitsChange = calculateChange(
+      currentSummary.total_units_sold,
+      prevSummary.total_units_sold
+    );
     const marginDiff = currentMargin - prevMargin;
 
     return {
@@ -160,12 +191,16 @@ export const financialService = {
   /**
    * Gets Daily breakdown of revenues and refunds.
    */
-  async getDailyBreakdown(dateFrom: string, dateTo: string, branchId?: string): Promise<DailyFinancialData[]> {
+  async getDailyBreakdown(
+    dateFrom: string,
+    dateTo: string,
+    branchId?: string
+  ): Promise<DailyFinancialData[]> {
     try {
       const { data, error } = await supabase.rpc('get_daily_financial_breakdown', {
         p_branch_id: branchId || null,
         p_date_from: dateFrom,
-        p_date_to: dateTo
+        p_date_to: dateTo,
       });
 
       if (error) {
@@ -183,14 +218,18 @@ export const financialService = {
   /**
    * Gets Top Products by revenue and profits.
    */
-  async getTopProducts(period: FinancialPeriod, branchId?: string, limit: number = 10): Promise<ProductFinancialItem[]> {
+  async getTopProducts(
+    period: FinancialPeriod,
+    branchId?: string,
+    limit: number = 10
+  ): Promise<ProductFinancialItem[]> {
     const range = dateRangeService.getDateRange(period);
     try {
       const { data, error } = await supabase.rpc('get_top_products_financial', {
         p_branch_id: branchId || null,
         p_date_from: range.start,
         p_date_to: range.end,
-        p_limit: limit
+        p_limit: limit,
       });
 
       if (error) {
@@ -208,7 +247,10 @@ export const financialService = {
   /**
    * Gets Category breakdown.
    */
-  async getCategoryBreakdown(period: FinancialPeriod, branchId?: string): Promise<CategoryFinancialReport[]> {
+  async getCategoryBreakdown(
+    period: FinancialPeriod,
+    branchId?: string
+  ): Promise<CategoryFinancialReport[]> {
     const range = dateRangeService.getDateRange(period);
     return this.getCategoryBreakdownByDates(range.start, range.end, branchId);
   },
@@ -216,16 +258,23 @@ export const financialService = {
   /**
    * Gets Category breakdown for custom dates.
    */
-  async getCategoryBreakdownByDates(start: string, end: string, branchId?: string): Promise<CategoryFinancialReport[]> {
+  async getCategoryBreakdownByDates(
+    start: string,
+    end: string,
+    branchId?: string
+  ): Promise<CategoryFinancialReport[]> {
     try {
       const { data, error } = await supabase.rpc('get_category_financial_breakdown', {
         p_branch_id: branchId || null,
         p_date_from: start,
-        p_date_to: end
+        p_date_to: end,
       });
 
       if (error) {
-        console.warn('RPC get_category_financial_breakdown failed, running client fallback:', error);
+        console.warn(
+          'RPC get_category_financial_breakdown failed, running client fallback:',
+          error
+        );
         return this.fallbackCategoryBreakdown(start, end, branchId);
       }
 
@@ -239,18 +288,22 @@ export const financialService = {
   /**
    * Generates full Profit and Loss Report.
    */
-  async getFinancialReport(dateFrom: string, dateTo: string, branchId?: string): Promise<FinancialReport> {
+  async getFinancialReport(
+    dateFrom: string,
+    dateTo: string,
+    branchId?: string
+  ): Promise<FinancialReport> {
     const [summary, daily, categories] = await Promise.all([
       this.getFinancialSummaryByDates(dateFrom, dateTo, branchId),
       this.getDailyBreakdown(dateFrom, dateTo, branchId),
-      this.getCategoryBreakdownByDates(dateFrom, dateTo, branchId)
+      this.getCategoryBreakdownByDates(dateFrom, dateTo, branchId),
     ]);
 
     return {
       summary,
       daily,
       categories,
-      generated_at: new Date().toISOString()
+      generated_at: new Date().toISOString(),
     };
   },
 
@@ -258,24 +311,35 @@ export const financialService = {
   //  Client-side Fallbacks (Contingency)
   // ─────────────────────────────────────────────
 
-  async fallbackFinancialSummary(start: string, end: string, branchId?: string): Promise<FinancialSummary> {
+  async fallbackFinancialSummary(
+    start: string,
+    end: string,
+    branchId?: string
+  ): Promise<FinancialSummary> {
     // 1. Fetch sales
-    let salesQuery = supabase.from('sales')
-      .select('id, total, status, date, global_discount, items:sale_items(id, quantity, unit_price, cost_price, is_unit)')
+    let salesQuery = supabase
+      .from('sales')
+      .select(
+        'id, total, status, date, global_discount, items:sale_items(id, quantity, unit_price, cost_price, is_unit)'
+      )
       .eq('status', 'completed')
       .gte('date', start)
       .lte('date', end);
     if (branchId) salesQuery = salesQuery.eq('branch_id', branchId);
-    
+
     // 2. Fetch returns
-    let returnsQuery = supabase.from('returns')
-      .select('id, total_refund, date, items:return_items(drug_id, quantity_returned, refund_amount, sale_item_id)')
+    let returnsQuery = supabase
+      .from('returns')
+      .select(
+        'id, total_refund, date, items:return_items(drug_id, quantity_returned, refund_amount, sale_item_id)'
+      )
       .gte('date', start)
       .lte('date', end);
     if (branchId) returnsQuery = returnsQuery.eq('branch_id', branchId);
 
     // 3. Fetch expenses
-    let expensesQuery = supabase.from('expenses')
+    let expensesQuery = supabase
+      .from('expenses')
       .select('amount')
       .gte('recorded_at', start)
       .lte('recorded_at', end);
@@ -284,7 +348,7 @@ export const financialService = {
     const [salesRes, returnsRes, expensesRes] = await Promise.all([
       salesQuery,
       returnsQuery,
-      expensesQuery
+      expensesQuery,
     ]);
 
     const sales = salesRes.data || [];
@@ -321,7 +385,7 @@ export const financialService = {
     const net_revenue = money.subtract(gross_revenue, total_refunds);
     const net_cogs = money.subtract(gross_cogs, return_cogs);
     const gross_profit = money.subtract(net_revenue, net_cogs);
-    
+
     let expenses_total = 0;
     expenses.forEach((e: any) => {
       expenses_total = money.add(expenses_total, e.amount || 0);
@@ -331,7 +395,7 @@ export const financialService = {
 
     return {
       gross_revenue,
-      total_refunds,
+      return_revenue: total_refunds,
       net_revenue,
       gross_cogs,
       return_cogs,
@@ -341,19 +405,25 @@ export const financialService = {
       net_profit,
       total_transactions: sales.length,
       total_units_sold,
-      total_returns_count: returns.length
+      total_returns_count: returns.length,
     };
   },
 
-  async fallbackDailyBreakdown(dateFrom: string, dateTo: string, branchId?: string): Promise<DailyFinancialData[]> {
-    let salesQuery = supabase.from('sales')
+  async fallbackDailyBreakdown(
+    dateFrom: string,
+    dateTo: string,
+    branchId?: string
+  ): Promise<DailyFinancialData[]> {
+    let salesQuery = supabase
+      .from('sales')
       .select('total, date')
       .eq('status', 'completed')
       .gte('date', dateFrom)
       .lte('date', dateTo);
     if (branchId) salesQuery = salesQuery.eq('branch_id', branchId);
 
-    let returnsQuery = supabase.from('returns')
+    let returnsQuery = supabase
+      .from('returns')
       .select('total_refund, date')
       .gte('date', dateFrom)
       .lte('date', dateTo);
@@ -365,7 +435,14 @@ export const financialService = {
 
     salesRes.data?.forEach((s: any) => {
       const day = s.date.split('T')[0];
-      const existing = dailyMap.get(day) || { day, revenue: 0, refund: 0, net: 0, sale_count: 0, return_count: 0 };
+      const existing = dailyMap.get(day) || {
+        day,
+        revenue: 0,
+        refund: 0,
+        net: 0,
+        sale_count: 0,
+        return_count: 0,
+      };
       existing.revenue = money.add(existing.revenue, s.total || 0);
       existing.sale_count += 1;
       existing.net = money.subtract(existing.revenue, existing.refund);
@@ -374,7 +451,14 @@ export const financialService = {
 
     returnsRes.data?.forEach((r: any) => {
       const day = r.date.split('T')[0];
-      const existing = dailyMap.get(day) || { day, revenue: 0, refund: 0, net: 0, sale_count: 0, return_count: 0 };
+      const existing = dailyMap.get(day) || {
+        day,
+        revenue: 0,
+        refund: 0,
+        net: 0,
+        sale_count: 0,
+        return_count: 0,
+      };
       existing.refund = money.add(existing.refund, r.total_refund || 0);
       existing.return_count += 1;
       existing.net = money.subtract(existing.revenue, existing.refund);
@@ -384,16 +468,27 @@ export const financialService = {
     return Array.from(dailyMap.values()).sort((a, b) => a.day.localeCompare(b.day));
   },
 
-  async fallbackTopProducts(start: string, end: string, branchId?: string, limit: number = 10): Promise<ProductFinancialItem[]> {
-    let salesQuery = supabase.from('sales')
-      .select('id, items:sale_items(drug_id, quantity, unit_price, cost_price), drugs:sale_items(drugs(name, dosage_form))')
+  async fallbackTopProducts(
+    start: string,
+    end: string,
+    branchId?: string,
+    limit: number = 10
+  ): Promise<ProductFinancialItem[]> {
+    let salesQuery = supabase
+      .from('sales')
+      .select(
+        'id, items:sale_items(drug_id, quantity, unit_price, cost_price), drugs:sale_items(drugs(name, dosage_form))'
+      )
       .eq('status', 'completed')
       .gte('date', start)
       .lte('date', end);
     if (branchId) salesQuery = salesQuery.eq('branch_id', branchId);
 
     const { data: sales } = await salesQuery;
-    const prodMap = new Map<string, { id: string; name: string; dosageForm: string; qty: number; rev: number; cost: number }>();
+    const prodMap = new Map<
+      string,
+      { id: string; name: string; dosageForm: string; qty: number; rev: number; cost: number }
+    >();
 
     sales?.forEach((s: any) => {
       s.items?.forEach((item: any) => {
@@ -404,17 +499,23 @@ export const financialService = {
           dosageForm: '',
           qty: 0,
           rev: 0,
-          cost: 0
+          cost: 0,
         };
 
         existing.qty += item.quantity || 0;
-        existing.rev = money.add(existing.rev, money.multiply(item.unit_price || 0, item.quantity || 0, 0));
-        existing.cost = money.add(existing.cost, money.multiply(item.cost_price || 0, item.quantity || 0, 0));
+        existing.rev = money.add(
+          existing.rev,
+          money.multiply(item.unit_price || 0, item.quantity || 0, 0)
+        );
+        existing.cost = money.add(
+          existing.cost,
+          money.multiply(item.cost_price || 0, item.quantity || 0, 0)
+        );
         prodMap.set(drugId, existing);
       });
     });
 
-    const items: ProductFinancialItem[] = Array.from(prodMap.values()).map(p => {
+    const items: ProductFinancialItem[] = Array.from(prodMap.values()).map((p) => {
       const gross_profit = money.subtract(p.rev, p.cost);
       return {
         id: p.id,
@@ -425,7 +526,7 @@ export const financialService = {
         revenue: p.rev,
         cogs: p.cost,
         gross_profit,
-        margin_percent: p.rev > 0 ? Math.round((gross_profit / p.rev) * 100) : 0
+        margin_percent: p.rev > 0 ? Math.round((gross_profit / p.rev) * 100) : 0,
       };
     });
 
@@ -435,10 +536,10 @@ export const financialService = {
     // Apply Pareto ABC
     const totalRev = items.reduce((sum, item) => sum + item.revenue, 0);
     let cumulative = 0;
-    items.forEach(item => {
+    items.forEach((item) => {
       cumulative += item.revenue;
       const ratio = totalRev > 0 ? cumulative / totalRev : 1;
-      if (ratio <= 0.80) (item as any).abc_class = 'A';
+      if (ratio <= 0.8) (item as any).abc_class = 'A';
       else if (ratio <= 0.95) (item as any).abc_class = 'B';
       else (item as any).abc_class = 'C';
     });
@@ -446,19 +547,26 @@ export const financialService = {
     return items.slice(0, limit);
   },
 
-  async fallbackCategoryBreakdown(start: string, end: string, branchId?: string): Promise<CategoryFinancialReport[]> {
+  async fallbackCategoryBreakdown(
+    start: string,
+    end: string,
+    branchId?: string
+  ): Promise<CategoryFinancialReport[]> {
     // Simply fetch top products (up to 200) and group them by a dummy general category or look up drugs.
     const products = await this.fallbackTopProducts(start, end, branchId, 200);
-    const catMap = new Map<string, { category: string; revenue: number; cogs: number; profit: number }>();
+    const catMap = new Map<
+      string,
+      { category: string; revenue: number; cogs: number; profit: number }
+    >();
 
     // For local fallback, put everything in "GENERAL"
     const general = { category: 'GENERAL', revenue: 0, cogs: 0, profit: 0 };
-    products.forEach(p => {
+    products.forEach((p) => {
       general.revenue = money.add(general.revenue, p.revenue);
       general.cogs = money.add(general.cogs, p.cogs);
       general.profit = money.add(general.profit, p.gross_profit);
     });
 
     return [general];
-  }
+  },
 };

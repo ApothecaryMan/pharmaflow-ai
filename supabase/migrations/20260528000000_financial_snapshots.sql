@@ -137,8 +137,9 @@ SECURITY DEFINER
 AS $$
 DECLARE
     v_org_id UUID;
-    v_date_from TIMESTAMPTZ;
-    v_date_to TIMESTAMPTZ;
+    v_date_from_local TIMESTAMP;
+    v_date_from_utc TIMESTAMPTZ;
+    v_date_to_utc TIMESTAMPTZ;
     v_summary JSON;
 BEGIN
     -- Resolve org_id
@@ -147,12 +148,13 @@ BEGIN
         RAISE EXCEPTION 'Branch % not found', p_branch_id;
     END IF;
 
-    -- Calculate start and end date of the month in UTC
-    v_date_from := date_trunc('month', (p_month_key || '-01')::DATE)::TIMESTAMPTZ;
-    v_date_to := (date_trunc('month', v_date_from) + INTERVAL '1 month' - INTERVAL '1 microsecond')::TIMESTAMPTZ;
+    -- Calculate start and end date of the month in Africa/Cairo timezone
+    v_date_from_local := date_trunc('month', (p_month_key || '-01')::DATE);
+    v_date_from_utc := v_date_from_local AT TIME ZONE 'Africa/Cairo';
+    v_date_to_utc := (v_date_from_local + INTERVAL '1 month' - INTERVAL '1 microsecond') AT TIME ZONE 'Africa/Cairo';
 
     -- Calculate metrics using compute_financial_summary
-    v_summary := public.compute_financial_summary(p_branch_id, v_date_from, v_date_to);
+    v_summary := public.compute_financial_summary(p_branch_id, v_date_from_utc, v_date_to_utc);
 
     -- Insert or update
     INSERT INTO public.financial_snapshots (
@@ -261,17 +263,21 @@ BEGIN
         SELECT ARRAY_AGG(id) INTO v_user_branch_ids FROM public.branches WHERE org_id IN (SELECT get_user_org_ids());
     END IF;
 
-    -- Loop through each month in the range
+    -- Loop through each month in the range in Africa/Cairo timezone
     FOR v_month IN 
-        SELECT DISTINCT date_trunc('month', g)::TIMESTAMPTZ as m
-        FROM generate_series(date_trunc('month', p_date_from), date_trunc('month', p_date_to), INTERVAL '1 month') g
+        SELECT DISTINCT date_trunc('month', g)::TIMESTAMP as m
+        FROM generate_series(
+            date_trunc('month', p_date_from AT TIME ZONE 'Africa/Cairo'), 
+            date_trunc('month', p_date_to AT TIME ZONE 'Africa/Cairo'), 
+            INTERVAL '1 month'
+        ) g
     LOOP
-        v_month_start := v_month.m;
-        v_month_end := (v_month_start + INTERVAL '1 month' - INTERVAL '1 microsecond')::TIMESTAMPTZ;
-        v_month_key := to_char(v_month_start, 'YYYY-MM');
+        v_month_start := v_month.m AT TIME ZONE 'Africa/Cairo';
+        v_month_end := (v_month.m + INTERVAL '1 month' - INTERVAL '1 microsecond') AT TIME ZONE 'Africa/Cairo';
+        v_month_key := to_char(v_month.m, 'YYYY-MM');
 
         -- Check if this month is fully within the range and is in the past
-        IF v_month_start >= p_date_from AND v_month_end <= p_date_to AND v_month_end < date_trunc('month', NOW()) THEN
+        IF v_month_start >= p_date_from AND v_month_end <= p_date_to AND v_month_end < (date_trunc('month', NOW() AT TIME ZONE 'Africa/Cairo') AT TIME ZONE 'Africa/Cairo') THEN
             -- Yes! Use snapshots.
             -- First, ensure snapshot exists for all branches we care about
             FOREACH v_branch_id_item IN ARRAY v_user_branch_ids LOOP
@@ -374,7 +380,7 @@ BEGIN
 
     WITH daily_sales AS (
         SELECT 
-            date::date as day, 
+            (date AT TIME ZONE 'Africa/Cairo')::date as day, 
             SUM(total) as revenue, 
             COUNT(*) as sale_count
         FROM public.sales
@@ -390,7 +396,7 @@ BEGIN
     ),
     daily_returns AS (
         SELECT 
-            date::date as day, 
+            (date AT TIME ZONE 'Africa/Cairo')::date as day, 
             SUM(total_refund) as refund,
             COUNT(*) as return_count
         FROM public.returns
@@ -447,7 +453,7 @@ BEGIN
         SELECT 
             si.drug_id,
             SUM(si.quantity) as gross_qty,
-            SUM(si.quantity * si.unit_price) as gross_rev,
+            SUM(si.quantity * si.public_price) as gross_rev,
             SUM(si.quantity * si.cost_price) as gross_cogs
         FROM public.sale_items si
         JOIN public.sales s ON si.sale_id = s.id
@@ -583,7 +589,7 @@ BEGIN
     WITH sales_data AS (
         SELECT 
             COALESCE(d.category, 'GENERAL') as category,
-            SUM(si.quantity * si.unit_price) as gross_revenue,
+            SUM(si.quantity * si.public_price) as gross_revenue,
             SUM(si.quantity * si.cost_price) as gross_cogs
         FROM public.sale_items si
         JOIN public.sales s ON si.sale_id = s.id

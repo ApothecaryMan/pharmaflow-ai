@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useData } from '../../context/DataContext';
-import { expenseService } from '../../services/expenses/expenseService';
-import { expenseRepository } from '../../services/expenses/repositories/expenseRepository';
+import { expenseService } from '../../services/financials/expenseService';
+import { expenseRepository } from '../../services/financials/repositories/expenseRepository';
+
 import type { Expense, ExpenseSummary, ExpenseCategory, ExpensePaymentMethod } from '../../types';
 
 export type ExpenseFilterType = 'today' | 'week' | 'month' | 'custom';

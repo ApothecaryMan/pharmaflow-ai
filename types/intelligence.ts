@@ -132,6 +132,7 @@ export interface ProductFinancialItem {
   id: string; // Map from product_id
   product_id: string;
   product_name: string;
+  dosage_form?: string;
   abc_class: 'A' | 'B' | 'C';
   quantity_sold: number;
   revenue: number;

@@ -1,7 +1,10 @@
-import React, { useMemo } from 'react';
-import type { Drug, Sale, StockBatch } from '../../types';
-import { CalculationBlock, CurrencyValue, DetailMetric } from '../common/InsightTooltip';
+import React, { useCallback, useMemo } from 'react';
+import { useFinancialData } from '../../hooks/financials/useFinancialData';
 import { DashboardService } from '../../services/dashboard/dashboardService';
+import { dateRangeService, type FinancialPeriod } from '../../services/financials/dateRangeService';
+import type { Drug, Sale, StockBatch } from '../../types';
+import { money } from '../../utils/money';
+import { CalculationBlock, CurrencyValue, DetailMetric } from '../common/InsightTooltip';
 
 interface AnalyticsProps {
   sales: Sale[];
@@ -10,6 +13,7 @@ interface AnalyticsProps {
   totalExpenses: number;
   language?: string;
   branchId?: string;
+  timeRange: string; // Added to scope financial queries
 }
 
 const translations = {
@@ -37,11 +41,14 @@ const translations = {
     items: 'أصناف',
     impacts: 'تؤثر على',
     fastMovingItems: 'أصناف سريعة',
-    excellent: 'ممتاز',
     healthy: 'جيد',
     lowMargin: 'هامش منخفض',
     days: 'يوم',
     revenueCalculation: 'النتيجة = مجموع (المبيعات - المرتجعات)',
+    expensesTitle: 'المصروفات التشغيلية',
+    expensesValueLabel: 'إجمالي المصروفات',
+    expensesFormula: 'المصروفات = مجموع المصاريف التشغيلية المسجلة للفرع',
+    expensesDetailLabel: 'المعاملات المسجلة',
   },
   EN: {
     primaryMetric: 'Primary Metric',
@@ -72,6 +79,10 @@ const translations = {
     lowMargin: 'Low Margin',
     days: 'Days',
     revenueCalculation: 'Result = Σ (Sold - Returned)',
+    expensesTitle: 'Operating Expenses',
+    expensesValueLabel: 'Total Expenses',
+    expensesFormula: 'Expenses = Sum of all logged branch expenses',
+    expensesDetailLabel: 'Recorded Transactions',
   },
 };
 
@@ -82,75 +93,114 @@ export const useDashboardAnalytics = ({
   totalExpenses,
   language = 'EN',
   branchId,
+  timeRange,
 }: AnalyticsProps) => {
-  const t = (key: keyof typeof translations.EN) => {
-    const lang = (language?.toUpperCase() === 'AR' ? 'AR' : 'EN') as 'AR' | 'EN';
-    return translations[lang][key];
-  };
-
-  // 1. Core Revenue Calculation
-  const { totalRevenue, totalReturns } = useMemo(
-    () => DashboardService.calculateRevenueAndReturns(sales),
-    [sales]
+  const t = useCallback(
+    (key: keyof typeof translations.EN) => {
+      const lang = (language?.toUpperCase() === 'AR' ? 'AR' : 'EN') as 'AR' | 'EN';
+      return translations[lang][key];
+    },
+    [language]
   );
 
-  // 2. COGS & Inventory Valuation
-  const totalCogs = useMemo(
-    () => DashboardService.calculateCogs(sales, inventory),
-    [sales, inventory]
-  );
+  // Map timeRange string to FinancialPeriod
+  const period = useMemo<FinancialPeriod>(() => {
+    switch (timeRange) {
+      case '7':
+        return 'last_7_days';
+      case '30':
+        return 'last_30_days';
+      case '90':
+        return 'last_3_months';
+      case 'ALL':
+      default:
+        return 'this_year';
+    }
+  }, [timeRange]);
 
+  // Fetch financial data from RPC + snapshots via unified hook
+  const {
+    summary: finSummary,
+    daily: finDaily,
+    topProducts: finTopProducts,
+    loading: finLoading,
+    error: finError,
+  } = useFinancialData(period);
+
+  // Extract metrics from the summary
+  const totalRevenue = finSummary?.net_revenue ?? 0;
+  const totalReturns = finSummary?.return_revenue ?? 0;
+  const totalCogs = finSummary?.net_cogs ?? 0;
+  const grossProfit = finSummary?.gross_profit ?? 0;
+  const netProfit = finSummary?.net_profit ?? 0;
+  const totalTransactions = finSummary?.total_transactions ?? 0;
+  const expensesTotal = finSummary?.expenses_total ?? 0;
+
+  const profitMarginPercent = useMemo(() => {
+    return totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
+  }, [totalRevenue, grossProfit]);
+
+  const averageOrderValue = useMemo(() => {
+    return totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
+  }, [totalRevenue, totalTransactions]);
+
+  const returnRate = useMemo(() => {
+    const grossRevenue = totalRevenue + totalReturns;
+    return grossRevenue > 0 ? (totalReturns / grossRevenue) * 100 : 0;
+  }, [totalReturns, totalRevenue]);
+
+  // Local inventory valuation
   const inventoryValuation = useMemo(
     () => DashboardService.calculateInventoryValuation(batches, branchId),
     [batches, branchId]
   );
 
-  // 3. Efficiency Metrics
+  // Efficiency metrics
   const { turnoverRatio: inventoryTurnoverRatio, daysOfInventory } = useMemo(
     () => DashboardService.calculateEfficiency(totalCogs, inventoryValuation),
     [totalCogs, inventoryValuation]
   );
 
-  // 4. Profitability Metrics
-  const { grossProfit, netProfit, marginPercent: profitMarginPercent } = useMemo(
-    () => DashboardService.calculateProfitability(totalRevenue, totalCogs, totalExpenses),
-    [totalRevenue, totalCogs, totalExpenses]
-  );
-
-  // 5. Customer Behavior
-  const averageOrderValue = useMemo(() => {
-    if (sales.length === 0) return 0;
-    return totalRevenue / sales.length;
-  }, [totalRevenue, sales.length]);
-
-  const returnRate = useMemo(() => {
-    const grossRevenue = totalRevenue + totalReturns;
-    if (grossRevenue === 0) return 0;
-    return (totalReturns / grossRevenue) * 100;
-  }, [totalReturns, totalRevenue]);
-
-  // 6. Movement & Impact Analysis
+  // Local movement analysis (uses filtered sales for local UI highlights)
   const movingItemsAnalysis = useMemo(
     () => DashboardService.analyzeMovement(sales, inventory, batches, branchId),
     [sales, inventory, batches, branchId]
   );
 
-  // 7. Health Grades
+  // Health Grades
   const profitGrade = useMemo(() => {
     if (profitMarginPercent > 35) return { label: t('excellent'), color: 'emerald' as const };
     if (profitMarginPercent > 20) return { label: t('healthy'), color: 'primary' as const };
     return { label: t('lowMargin'), color: 'amber' as const };
-  }, [profitMarginPercent, language]);
+  }, [profitMarginPercent, t]);
 
-  // 8. Advanced Lists (for UI components)
-  const topSelling = useMemo(() => DashboardService.getTopSelling(sales, 20), [sales]);
+  // Top Selling products mapped to UI-friendly structure
+  const topSelling = useMemo(() => {
+    return finTopProducts.map((p) => ({
+      id: p.product_id,
+      name: p.product_name,
+      dosageForm: p.dosage_form,
+      qty: p.quantity_sold,
+      revenue: p.revenue,
+    }));
+  }, [finTopProducts]);
 
+  // Expiring items
   const expiringItems = useMemo(
     () => DashboardService.getExpiringSoon(inventory, batches, branchId || 'all'),
     [inventory, batches, branchId]
   );
 
-  const salesTrends = useMemo(() => DashboardService.getSalesTrends(sales, 7), [sales]);
+  // Daily sales trends for charting
+  const salesTrends = useMemo(() => {
+    if (!finDaily || finDaily.length === 0) return [];
+    return finDaily.map((d) => ({
+      name: new Date(d.day).toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', {
+        weekday: 'short',
+      }),
+      sales: d.net,
+    }));
+  }, [finDaily, language]);
 
   // --- TOOLTIP CONFIGURATIONS ---
 
@@ -185,7 +235,7 @@ export const useDashboardAnalytics = ({
         },
       ],
     }),
-    [totalRevenue, totalReturns, averageOrderValue, returnRate, language]
+    [totalRevenue, totalReturns, averageOrderValue, returnRate, language, t]
   );
 
   const inventoryTooltip = useMemo(
@@ -231,7 +281,7 @@ export const useDashboardAnalytics = ({
         },
       ],
     }),
-    [inventoryValuation, totalCogs, inventoryTurnoverRatio, daysOfInventory, language]
+    [inventoryValuation, totalCogs, inventoryTurnoverRatio, daysOfInventory, language, t]
   );
 
   const profitTooltip = useMemo(
@@ -283,7 +333,35 @@ export const useDashboardAnalytics = ({
         },
       ],
     }),
-    [grossProfit, totalRevenue, totalCogs, profitGrade, profitMarginPercent, netProfit, language]
+    [grossProfit, totalRevenue, totalCogs, profitGrade, profitMarginPercent, netProfit, language, t]
+  );
+
+  const expensesTooltip = useMemo(
+    () => ({
+      title: t('expensesTitle'),
+      value: expensesTotal,
+      valueLabel: t('expensesValueLabel'),
+      icon: 'receipt_long',
+      iconColorClass: 'text-rose-400',
+      calculations: [
+        {
+          label: t('expensesFormula'),
+          math: React.createElement(
+            React.Fragment,
+            null,
+            React.createElement(CurrencyValue, { val: expensesTotal, language })
+          ),
+        },
+      ],
+      details: [
+        {
+          icon: 'payments',
+          label: t('expensesTitle'),
+          value: expensesTotal,
+        },
+      ],
+    }),
+    [expensesTotal, language, t]
   );
 
   const lowStockTooltip = useMemo(
@@ -298,7 +376,11 @@ export const useDashboardAnalytics = ({
           math: React.createElement(
             React.Fragment,
             null,
-            React.createElement('span', null, `${movingItemsAnalysis.critical.length} ${t('items')}`),
+            React.createElement(
+              'span',
+              null,
+              `${movingItemsAnalysis.critical.length} ${t('items')}`
+            ),
             React.createElement('span', { className: 'opacity-50' }, t('impacts')),
             React.createElement(
               'span',
@@ -324,7 +406,7 @@ export const useDashboardAnalytics = ({
         },
       ],
     }),
-    [movingItemsAnalysis, inventory, batches, branchId, language]
+    [movingItemsAnalysis, t]
   );
 
   return {
@@ -343,10 +425,14 @@ export const useDashboardAnalytics = ({
     profitGrade,
     revenueTooltip,
     inventoryTooltip,
+    expensesTooltip,
     profitTooltip,
     lowStockTooltip,
     topSelling,
     expiringItems,
     salesTrends,
+    loading: finLoading,
+    error: finError,
+    expensesTotal,
   };
 };

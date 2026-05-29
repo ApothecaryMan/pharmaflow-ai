@@ -1,0 +1,116 @@
+import { useCallback, useEffect, useState, useRef } from 'react';
+import { useData } from '../../context/DataContext';
+import { permissionsService } from '../../services/auth/permissionsService';
+import { financialService, type FinancialSummary } from '../../services/financials/financialService';
+import { dateRangeService, type FinancialPeriod } from '../../services/financials/dateRangeService';
+import type {
+  FinancialKPIs,
+  DailyFinancialData,
+  CategoryFinancialReport,
+  ProductFinancialItem
+} from '../../types/intelligence';
+
+interface UseFinancialDataResult {
+  summary: FinancialSummary | null;
+  kpis: FinancialKPIs | null;
+  daily: DailyFinancialData[];
+  topProducts: ProductFinancialItem[];
+  categories: CategoryFinancialReport[];
+  loading: boolean;
+  error: string | null;
+  refresh: () => void;
+}
+
+export function useFinancialData(period: FinancialPeriod = 'this_month'): UseFinancialDataResult {
+  const { activeBranchId } = useData();
+  const [summary, setSummary] = useState<FinancialSummary | null>(null);
+  const [kpis, setKpis] = useState<FinancialKPIs | null>(null);
+  const [daily, setDaily] = useState<DailyFinancialData[]>([]);
+  const [topProducts, setTopProducts] = useState<ProductFinancialItem[]>([]);
+  const [categories, setCategories] = useState<CategoryFinancialReport[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const lastFetchKeyRef = useRef<string | undefined>(undefined);
+
+  const fetchData = useCallback(async (isRefresh = false) => {
+    const fetchKey = `${activeBranchId}-${period}`;
+
+    // Prevent duplicate fetches for the same branch and period unless it's a manual refresh
+    if (!isRefresh && lastFetchKeyRef.current === fetchKey && (summary || kpis || topProducts.length > 0)) {
+      return;
+    }
+
+    // Abort previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    lastFetchKeyRef.current = fetchKey;
+
+    setLoading(true);
+    setError(null);
+
+    const range = dateRangeService.getDateRange(period);
+
+    try {
+      const [summaryData, kpisData, dailyData, topProductsData, categoriesData] = await Promise.all([
+        financialService.getFinancialSummary(period, activeBranchId),
+        financialService.getFinancialKPIs(period, activeBranchId),
+        financialService.getDailyBreakdown(range.start, range.end, activeBranchId),
+        financialService.getTopProducts(period, activeBranchId, 10),
+        financialService.getCategoryBreakdown(period, activeBranchId),
+      ]);
+
+      if (!controller.signal.aborted) {
+        setSummary(summaryData);
+        setKpis(kpisData);
+        setDaily(dailyData);
+        setTopProducts(topProductsData);
+        setCategories(categoriesData);
+        setLoading(false);
+      }
+    } catch (err: any) {
+      if (err.name === 'AbortError') return;
+
+      console.error('[useFinancialData] Error fetching data:', err);
+      if (!controller.signal.aborted) {
+        setError(err instanceof Error ? err.message : 'Failed to load financial data');
+        setLoading(false);
+      }
+    }
+  }, [period, activeBranchId, summary, kpis, topProducts.length]);
+
+  useEffect(() => {
+    const canView = permissionsService.can('reports.view_intelligence') || permissionsService.can('reports.view_financial');
+    if (canView) {
+      fetchData();
+    } else {
+      setLoading(false);
+    }
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [fetchData]);
+
+  const refresh = useCallback(() => {
+    fetchData(true);
+  }, [fetchData]);
+
+  return {
+    summary,
+    kpis,
+    daily,
+    topProducts,
+    categories,
+    loading,
+    error,
+    refresh,
+  };
+}

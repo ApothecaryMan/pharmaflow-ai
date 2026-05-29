@@ -4,6 +4,7 @@ import { permissionsService } from '../../services/auth/permissionsService';
 import { useShift } from '../../hooks/sales/useShift';
 import type { CashTransaction, CashTransactionType, Employee, Language, Shift } from '../../types';
 import { useData } from '../../services';
+import { expenseService } from '../../services/financials/expenseService';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
@@ -25,7 +26,7 @@ export const useCashRegister = ({
 }: UseCashRegisterProps) => {
   const { getVerifiedDate } = useStatusBar();
   const { currentShift, isLoading, startShift, endShift, addTransaction } = useShift();
-  const { purchases, purchaseReturns, sales, activeBranchId, branches } = useData();
+  const { purchases, purchaseReturns, sales, activeBranchId, activeOrgId, branches } = useData();
 
   // --- Local UI State ---
   const [modalMode, setModalMode] = useState<'open' | 'close' | 'in' | 'out' | null>(null);
@@ -288,7 +289,7 @@ export const useCashRegister = ({
     }, 500);
   }, [currentShift, amountInput, currentEmployeeId, permissions.canCloseShift, t, language, employees, getVerifiedDate, purchases, purchaseReturns, sales, currentBalance, reasonInput, activeBranchId, endShift, closeModal]);
 
-  const handleCashTransaction = useCallback(() => {
+  const handleCashTransaction = useCallback(async () => {
     if (!currentShift || !modalMode) return;
     const amount = parseFloat(amountInput);
 
@@ -327,24 +328,37 @@ export const useCashRegister = ({
       return;
     }
 
-    const type: CashTransactionType = modalMode === 'in' ? 'in' : 'out';
-    const transaction: CashTransaction = {
-      id: getVerifiedDate().getTime().toString(),
-      branchId: activeBranchId,
-      shiftId: currentShift.id,
-      time: getVerifiedDate().toISOString(),
-      type: type,
-      amount: amount,
-      reason: reasonInput,
-      userId: currentEmployeeId || 'System',
-    };
-
-    addTransaction(currentShift.id, transaction).then(() => {
+    try {
+      if (modalMode === 'out') {
+        // Route through expenseService to maintain single source of truth
+        await expenseService.recordExpense({
+          orgId: activeOrgId,
+          branchId: activeBranchId,
+          employeeId: currentEmployeeId || 'System',
+          amount: amount,
+          category: 'misc', // Cash register withdrawals default to miscellaneous expenses
+          description: reasonInput,
+          paymentMethod: 'cash',
+        });
+      } else {
+        // Keep cash-in transactions going directly to the shift's transactions
+        const transaction: CashTransaction = {
+          id: getVerifiedDate().getTime().toString(),
+          branchId: activeBranchId,
+          shiftId: currentShift.id,
+          time: getVerifiedDate().toISOString(),
+          type: 'in',
+          amount: amount,
+          reason: reasonInput,
+          userId: currentEmployeeId || 'System',
+        };
+        await addTransaction(currentShift.id, transaction);
+      }
       closeModal();
-    }).catch(err => {
-      setValidationError(err.message || 'Failed to add transaction');
-    });
-  }, [currentShift, modalMode, amountInput, permissions.canAddCash, permissions.canRemoveCash, t, language, reasonInput, getVerifiedDate, activeBranchId, employees, currentEmployeeId, addTransaction, closeModal]);
+    } catch (err: any) {
+      setValidationError(err.message || 'Failed to record transaction');
+    }
+  }, [currentShift, modalMode, amountInput, permissions.canAddCash, permissions.canRemoveCash, t, language, reasonInput, getVerifiedDate, activeBranchId, activeOrgId, currentEmployeeId, addTransaction, closeModal]);
 
   return {
     // State

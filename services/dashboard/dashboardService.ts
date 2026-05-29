@@ -36,6 +36,7 @@ export interface TopProduct {
 
 export class DashboardService {
   /**
+   * @deprecated Use financialService.calculateRevenueAndReturns instead.
    * Calculates Total Revenue and Total Returns using precision math.
    * Net Revenue = Sum(Sale.netTotal ?? Sale.total)
    */
@@ -90,6 +91,7 @@ export class DashboardService {
   }
 
   /**
+   * @deprecated Use financialService.getFinancialSummary or custom query instead.
    * Calculates Cost of Goods Sold (COGS) using precision math.
    * COGS = Sum(ActualSoldQty * UnitCost)
    */
@@ -142,6 +144,7 @@ export class DashboardService {
   }
 
   /**
+   * @deprecated Use financialService instead.
    * Calculates Profitability metrics using precision math.
    */
   static calculateProfitability(revenue: number, cogs: number, expenses: number): DashboardProfitability {
@@ -336,6 +339,7 @@ export class DashboardService {
   }
 
   /**
+   * @deprecated Use financialService.getTopProducts instead.
    * Aggregates top selling products.
    */
   static getTopSelling(sales: Sale[], limit: number = 5): TopProduct[] {
@@ -417,6 +421,7 @@ export class DashboardService {
   }
 
   /**
+   * @deprecated Use financialService.getDailyBreakdown instead.
    * Aggregates sales trend data for charts.
    */
   static getSalesTrends(sales: Sale[], days: number = 7): SalesTrendData[] {

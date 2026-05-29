@@ -6,8 +6,10 @@ import { Icons } from '../common/Icons';
 import { TanStackTable } from '../common/TanStackTable';
 import { createColumnHelper } from '@tanstack/react-table';
 import type { FinancialReport, DailyFinancialData, CategoryFinancialReport } from '../../types/intelligence';
-import { intelligenceService } from '../../services/intelligence/intelligenceService';
+import { financialService } from '../../services/financials/financialService';
+import { dateRangeService } from '../../services/financials/dateRangeService';
 import { useSettings } from '../../context';
+import { useData } from '../../context/DataContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DashboardPageSkeleton } from '../intelligence/common/IntelligenceSkeletons';
 import { SmallCard } from '../common/SmallCard';
@@ -31,6 +33,7 @@ const CurrencyDisplay: React.FC<{ value: number }> = ({ value }) => {
 
 export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, language = 'ar' }) => {
   const { theme } = useSettings();
+  const { activeBranchId } = useData();
   const [report, setReport] = useState<FinancialReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<'this_month' | 'last_month' | 'last_3_months' | 'this_year'>('this_month');
@@ -45,8 +48,9 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
 
   useEffect(() => {
     const fetchReport = async () => {
-      // Prevent duplicate fetches for the same period
-      if (lastPeriodRef.current === period && report) return;
+      const fetchKey = `${activeBranchId}-${period}`;
+      // Prevent duplicate fetches for the same period and branch
+      if (lastPeriodRef.current === fetchKey && report) return;
       
       // Abort previous request if it exists
       if (abortControllerRef.current) {
@@ -55,27 +59,15 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
       
       const controller = new AbortController();
       abortControllerRef.current = controller;
-      lastPeriodRef.current = period;
+      lastPeriodRef.current = fetchKey;
 
       setLoading(true);
       try {
-        const now = new Date();
-        let start = new Date(now.getFullYear(), now.getMonth(), 1);
-        const end = new Date();
-
-        if (period === 'last_month') {
-          start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
-          end.setTime(lastMonthEnd.getTime());
-        } else if (period === 'last_3_months') {
-          start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-        } else if (period === 'this_year') {
-          start = new Date(now.getFullYear(), 0, 1);
-        }
-
-        const data = await intelligenceService.getFinancialReport(
-          start.toISOString(),
-          end.toISOString()
+        const range = dateRangeService.getDateRange(period);
+        const data = await financialService.getFinancialReport(
+          range.start,
+          range.end,
+          activeBranchId
         );
         
         if (!controller.signal.aborted) {
@@ -98,7 +90,7 @@ export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, lan
         abortControllerRef.current.abort();
       }
     };
-  }, [period]);
+  }, [period, activeBranchId]);
 
   const categoryColumns = useMemo(() => [
     categoryHelper.accessor('category', {

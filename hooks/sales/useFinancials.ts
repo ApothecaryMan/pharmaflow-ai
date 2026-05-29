@@ -1,16 +1,6 @@
-/**
- * useFinancials - Hook for fetching financial intelligence data
- *
- * Provides KPIs and product financials from real sales data
- */
-
-import { useCallback, useEffect, useState, useRef } from 'react';
-import {
-  type FinancialPeriod,
-  intelligenceService,
-} from '../../services/intelligence/intelligenceService';
-import { useData } from '../../context/DataContext';
-import { permissionsService } from '../../services/auth/permissionsService';
+import { useMemo } from 'react';
+import { useFinancialData } from '../financials/useFinancialData';
+import { type FinancialPeriod } from '../../services/financials/dateRangeService';
 import type { FinancialKPIs, ProductFinancialItem, CategoryFinancialItem } from '../../types/intelligence';
 
 interface UseFinancialsResult {
@@ -23,81 +13,48 @@ interface UseFinancialsResult {
 }
 
 export function useFinancials(period: FinancialPeriod = 'this_month'): UseFinancialsResult {
-  const { activeBranchId } = useData();
-  const [kpis, setKpis] = useState<FinancialKPIs | null>(null);
-  const [products, setProducts] = useState<ProductFinancialItem[]>([]);
-  const [categories, setCategories] = useState<CategoryFinancialItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const lastFetchKeyRef = useRef<string | undefined>(undefined);
-
-  const fetchData = useCallback(async (isRefresh = false) => {
-    const fetchKey = `${activeBranchId}-${period}`;
-
-    // Prevent duplicate fetches for the same branch and period unless it's a manual refresh
-    if (!isRefresh && lastFetchKeyRef.current === fetchKey && (kpis || products.length > 0)) {
-      return;
-    }
-
-    // Abort previous request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-    lastFetchKeyRef.current = fetchKey;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const [kpisData, productsData, categoriesData] = await Promise.all([
-        intelligenceService.getFinancialKPIs(period, activeBranchId, { signal: controller.signal }),
-        intelligenceService.getProductFinancials(period, activeBranchId, { signal: controller.signal }),
-        intelligenceService.getCategoryFinancials(period, activeBranchId, { signal: controller.signal }),
-      ]);
-
-      if (!controller.signal.aborted) {
-        setKpis(kpisData);
-        setProducts(productsData);
-        setCategories(categoriesData);
-        setLoading(false);
-      }
-    } catch (err: any) {
-      if (err.name === 'AbortError') return;
-
-      console.error('[useFinancials] Error fetching data:', err);
-      if (!controller.signal.aborted) {
-        setError(err instanceof Error ? err.message : 'Failed to load financial data');
-        setLoading(false);
-      }
-    }
-  }, [period, activeBranchId, kpis, products.length]);
-
-  useEffect(() => {
-    const canView = permissionsService.can('reports.view_intelligence') || permissionsService.can('reports.view_financial');
-    if (canView) {
-      fetchData();
-    } else {
-      setLoading(false);
-    }
-
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, [fetchData]);
-
-  return {
+  const {
     kpis,
-    products,
+    topProducts,
     categories,
     loading,
     error,
-    refresh: () => fetchData(true),
+    refresh
+  } = useFinancialData(period);
+
+  const mappedCategories = useMemo<CategoryFinancialItem[]>(() => {
+    return categories.map(c => {
+      // Aggregate some estimated products count and distribution
+      // Since category-level products are grouped, we can provide a clean representation.
+      const aCount = topProducts.filter(p => p.abc_class === 'A').length;
+      const bCount = topProducts.filter(p => p.abc_class === 'B').length;
+      const cCount = topProducts.filter(p => p.abc_class === 'C').length;
+
+      return {
+        id: c.category,
+        category_id: c.category,
+        category_name: c.category === 'GENERAL' ? 'عام' : c.category,
+        products_count: Math.round(topProducts.length / (categories.length || 1)),
+        revenue: c.revenue,
+        cogs: c.cogs,
+        gross_profit: c.profit,
+        margin_percent: c.revenue > 0 ? Math.round((c.profit / c.revenue) * 100) : 0,
+        abc_distribution: {
+          a: Math.round(aCount / (categories.length || 1)),
+          b: Math.round(bCount / (categories.length || 1)),
+          c: Math.round(cCount / (categories.length || 1)),
+        }
+      };
+    });
+  }, [categories, topProducts]);
+
+  return {
+    kpis,
+    products: topProducts,
+    categories: mappedCategories,
+    loading,
+    error,
+    refresh
   };
 }
+export default useFinancials;

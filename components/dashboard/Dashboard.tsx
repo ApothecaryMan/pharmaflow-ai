@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -11,27 +11,27 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { type UserRole } from '../../config/permissions';
-import { HasPermission } from '../common/HasPermission';
+import type { UserRole } from '../../config/permissions';
+import { useSettings } from '../../context';
+import { useData } from '../../context/DataContext';
 import { DASHBOARD_HELP } from '../../i18n/helpInstructions';
+import { batchService } from '../../services/inventory/batchService';
 import type { Drug, ExpandedView, Purchase, Sale } from '../../types';
 import { formatCompactCurrency, formatCurrency, getCurrencySymbol } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { formatExpiryDate, parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { ChartWidget } from '../common/ChartWidget';
 import { ExpandedModal } from '../common/ExpandedModal';
+import { HasPermission } from '../common/HasPermission';
 import { HelpButton, HelpModal } from '../common/HelpModal';
 import { CurrencyValue, InsightTooltip } from '../common/InsightTooltip';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
+import { PageHeader } from '../common/PageHeader';
+import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 import { useDashboardAnalytics } from './useDashboardAnalytics';
-import { useSettings } from '../../context';
-import { formatExpiryDate, parseExpiryEndOfMonth } from '../../utils/expiryUtils';
-import { batchService } from '../../services/inventory/batchService';
-import { useData } from '../../context/DataContext';
-import { SegmentedControl } from '../common/SegmentedControl';
-import { PageHeader } from '../common/PageHeader';
 
 interface DashboardProps {
   inventory: Drug[];
@@ -91,62 +91,92 @@ const getRelativeTime = (d: Date, t: any, language: string) => {
 const ExpandButton: React.FC<{ onClick: () => void; title?: string }> = ({ onClick, title }) => (
   <button
     onClick={onClick}
-    className="w-10 h-10 flex items-center justify-center text-(--text-tertiary) hover:text-(--text-primary) transition-all rounded-xl hover:bg-(--bg-menu-hover) active:scale-95 opacity-0 group-hover:opacity-100"
+    className='w-10 h-10 flex items-center justify-center text-(--text-tertiary) hover:text-(--text-primary) transition-all rounded-xl hover:bg-(--bg-menu-hover) active:scale-95 opacity-0 group-hover:opacity-100'
     title={title || 'Expand'}
   >
-    <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-md)' }}>open_in_full</span>
+    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
+      open_in_full
+    </span>
   </button>
 );
 
-const SectionHeader: React.FC<{ icon?: string; title: string; onExpand?: () => void; iconColor?: string }> = ({ title, onExpand }) => (
-  <div className="flex justify-between items-center mb-3">
-    <h3 className="text-base font-semibold text-(--text-primary) flex items-center gap-2">
+const SectionHeader: React.FC<{
+  icon?: string;
+  title: string;
+  onExpand?: () => void;
+  iconColor?: string;
+}> = ({ title, onExpand }) => (
+  <div className='flex justify-between items-center mb-3'>
+    <h3 className='text-base font-semibold text-(--text-primary) flex items-center gap-2'>
       {title}
     </h3>
     {onExpand && <ExpandButton onClick={onExpand} />}
   </div>
 );
 
-const SummaryCard: React.FC<{ title: string; value: number | string; colorClass: string; footer?: string }> = ({ title, value, colorClass, footer }) => (
+const SummaryCard: React.FC<{
+  title: string;
+  value: number | string;
+  colorClass: string;
+  footer?: string;
+}> = ({ title, value, colorClass, footer }) => (
   <div className={`p-6 rounded-2xl border ${colorClass}`}>
-    <p className="text-sm font-bold uppercase mb-1 opacity-80">{title}</p>
-    <p className="text-4xl font-bold">{typeof value === 'number' ? formatCurrency(value) : value}</p>
-    {footer && <p className="text-sm mt-2 opacity-60">{footer}</p>}
+    <p className='text-sm font-bold uppercase mb-1 opacity-80'>{title}</p>
+    <p className='text-4xl font-bold'>
+      {typeof value === 'number' ? formatCurrency(value) : value}
+    </p>
+    {footer && <p className='text-sm mt-2 opacity-60'>{footer}</p>}
   </div>
 );
 
-const MetricsGrid: React.FC<{ items: { label: string; value: string | number }[] }> = ({ items }) => (
+const MetricsGrid: React.FC<{ items: { label: string; value: string | number }[] }> = ({
+  items,
+}) => (
   <div className={`grid grid-cols-1 md:grid-cols-${items.length} gap-4`}>
     {items.map((item, i) => (
-      <div key={i} className="p-4 rounded-xl bg-(--bg-page-surface) border border-(--border-divider)">
-        <p className="text-xs font-bold text-(--text-tertiary) uppercase mb-1">{item.label}</p>
-        <p className="text-2xl font-bold text-(--text-primary)">{item.value}</p>
+      <div
+        key={i}
+        className='p-4 rounded-xl bg-(--bg-page-surface) border border-(--border-divider)'
+      >
+        <p className='text-xs font-bold text-(--text-tertiary) uppercase mb-1'>{item.label}</p>
+        <p className='text-2xl font-bold text-(--text-primary)'>{item.value}</p>
       </div>
     ))}
   </div>
 );
 
-const GenericListItem: React.FC<{ 
-  icon?: string; 
-  title: string; 
-  subtitle: string; 
-  value?: string; 
-  badge?: string; 
+const GenericListItem: React.FC<{
+  icon?: string;
+  title: string;
+  subtitle: string;
+  value?: string;
+  badge?: string;
   badgeColor?: string;
   onClick?: () => void;
   actionLabel?: string;
-}> = ({ icon, title, subtitle, value, badge, badgeColor = 'text-primary-600', onClick, actionLabel }) => (
-  <div className="p-4 rounded-xl bg-(--bg-page-surface) border border-(--border-divider) flex items-center justify-between hover:bg-(--bg-menu-hover) transition-colors">
-    <div className="flex items-center gap-4 min-w-0">
+}> = ({
+  icon,
+  title,
+  subtitle,
+  value,
+  badge,
+  badgeColor = 'text-primary-600',
+  onClick,
+  actionLabel,
+}) => (
+  <div className='p-4 rounded-xl bg-(--bg-page-surface) border border-(--border-divider) flex items-center justify-between hover:bg-(--bg-menu-hover) transition-colors'>
+    <div className='flex items-center gap-4 min-w-0'>
       {icon && (
-        <div className="badge-purple w-10 h-10! rounded-full! border! flex! items-center justify-center shrink-0">
-          <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-md)' }}>{icon}</span>
+        <div className='badge-purple w-10 h-10! rounded-full! border! flex! items-center justify-center shrink-0'>
+          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
+            {icon}
+          </span>
         </div>
       )}
-      <div className="min-w-0">
-        <p className="font-bold text-(--text-primary) truncate">{title}</p>
-        <div className="flex items-center gap-2 mt-0.5">
-          <p className="text-xs text-(--text-tertiary)">{subtitle}</p>
+      <div className='min-w-0'>
+        <p className='font-bold text-(--text-primary) truncate'>{title}</p>
+        <div className='flex items-center gap-2 mt-0.5'>
+          <p className='text-xs text-(--text-tertiary)'>{subtitle}</p>
           {badge && (
             <span
               className={
@@ -161,17 +191,19 @@ const GenericListItem: React.FC<{
         </div>
       </div>
     </div>
-    <div className="flex items-center gap-4">
-      {value && <p className="font-bold text-(--text-primary)">{value}</p>}
+    <div className='flex items-center gap-4'>
+      {value && <p className='font-bold text-(--text-primary)'>{value}</p>}
       {onClick && (
-        <button onClick={onClick} className="px-4 py-2 rounded-full bg-(--bg-menu) text-primary-600 font-medium text-sm hover:bg-primary-50 transition-colors">
+        <button
+          onClick={onClick}
+          className='px-4 py-2 rounded-full bg-(--bg-menu) text-primary-600 font-medium text-sm hover:bg-primary-50 transition-colors'
+        >
           {actionLabel}
         </button>
       )}
     </div>
   </div>
 );
-
 
 export const Dashboard: React.FC<DashboardProps> = ({
   inventory,
@@ -202,8 +234,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     cutoff.setHours(0, 0, 0, 0);
 
     return {
-      sales: sales.filter(s => new Date(s.date) >= cutoff),
-      purchases: purchases.filter(p => new Date(p.date) >= cutoff)
+      sales: sales.filter((s) => new Date(s.date) >= cutoff),
+      purchases: purchases.filter((p) => new Date(p.date) >= cutoff),
     };
   }, [sales, purchases, timeRange]);
 
@@ -248,11 +280,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   }, [subView]);
 
   // --- STATS & ANALYTICS ---
-  const totalExpenses = useMemo(
-    () => filteredData.purchases.reduce((sum, p) => sum + p.totalCost, 0),
-    [filteredData.purchases]
-  );
-
   const {
     totalRevenue,
     totalReturns,
@@ -269,30 +296,46 @@ export const Dashboard: React.FC<DashboardProps> = ({
     profitGrade,
     revenueTooltip: revenueTooltipData,
     inventoryTooltip: inventoryTooltipData,
+    expensesTooltip: expensesTooltipData,
     profitTooltip: profitTooltipData,
     lowStockTooltip: lowStockTooltipData,
     topSelling: topSellingFull,
     expiringItems,
     salesTrends: salesData,
-  } = useDashboardAnalytics({ 
-    sales: filteredData.sales, 
-    inventory, 
-    batches, 
-    totalExpenses, 
-    language, 
-    branchId: activeBranchId 
+    loading: finLoading,
+    expensesTotal,
+  } = useDashboardAnalytics({
+    sales: filteredData.sales,
+    inventory,
+    batches,
+    totalExpenses: 0,
+    language,
+    branchId: activeBranchId,
+    timeRange,
   });
 
   const lowStockItems = useMemo(() => {
     const combined = [...movingItemsAnalysis.critical, ...movingItemsAnalysis.lowStock];
     // Ensure uniqueness by ID
-    return Array.from(new Map(combined.map(item => [item.id, item])).values());
+    return Array.from(new Map(combined.map((item) => [item.id, item])).values());
   }, [movingItemsAnalysis.critical, movingItemsAnalysis.lowStock]);
 
-  const revenueTooltip = useMemo(() => <InsightTooltip {...revenueTooltipData} language={language} />, [revenueTooltipData, language]);
-  const expensesTooltip = useMemo(() => <InsightTooltip {...inventoryTooltipData} language={language} />, [inventoryTooltipData, language]);
-  const profitTooltip = useMemo(() => <InsightTooltip {...profitTooltipData} language={language} />, [profitTooltipData, language]);
-  const lowStockTooltip = useMemo(() => <InsightTooltip {...lowStockTooltipData} language={language} />, [lowStockTooltipData, language]);
+  const revenueTooltip = useMemo(
+    () => <InsightTooltip {...revenueTooltipData} language={language} />,
+    [revenueTooltipData, language]
+  );
+  const expensesTooltip = useMemo(
+    () => <InsightTooltip {...expensesTooltipData} language={language} />,
+    [expensesTooltipData, language]
+  );
+  const profitTooltip = useMemo(
+    () => <InsightTooltip {...profitTooltipData} language={language} />,
+    [profitTooltipData, language]
+  );
+  const lowStockTooltip = useMemo(
+    () => <InsightTooltip {...lowStockTooltipData} language={language} />,
+    [lowStockTooltipData, language]
+  );
 
   const topSelling = useMemo(() => topSellingFull.slice(0, 5), [topSellingFull]);
   const topSelling20 = topSellingFull;
@@ -314,19 +357,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 5)
-      .map(sale => {
+      .map((sale) => {
         let totalReturned = 0;
         sale.items.forEach((item) => {
           const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
-          totalReturned += sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
+          totalReturned +=
+            sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
         });
         const totalItems = sale.items.reduce((sum, item) => sum + item.quantity, 0);
-        return { 
-          ...sale, 
+        return {
+          ...sale,
           // Ensure we have a valid key if ID is missing or numeric
           key: `sale-${sale.id}-${new Date(sale.date).getTime()}`,
           returnStats: { returned: totalReturned, total: totalItems },
-          timeAgo: getRelativeTime(new Date(sale.date), t, language)
+          timeAgo: getRelativeTime(new Date(sale.date), t, language),
         };
       });
   }, [sales, t, language]);
@@ -357,11 +401,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
             sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
         });
         const totalItems = sale.items.reduce((sum, item) => sum + item.quantity, 0);
-        return { 
-          ...sale, 
+        return {
+          ...sale,
           key: `sale-exp-${sale.id}-${new Date(sale.date).getTime()}`,
           returnStats: { returned: totalReturned, total: totalItems },
-          timeAgo: getRelativeTime(new Date(sale.date), t, language)
+          timeAgo: getRelativeTime(new Date(sale.date), t, language),
         };
       });
   }, [sales, t, language]);
@@ -403,7 +447,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return colors[chartStatus] || colors.default;
   }, [chartStatus]);
 
-
   // --- Smart Expanded Views Registry ---
   const dashboardViews = useMemo(() => {
     const exportBtn = (view: string, data: any) => (
@@ -411,30 +454,57 @@ export const Dashboard: React.FC<DashboardProps> = ({
         onClick={() => exportToCSV(data, view)}
         className='px-3 py-1.5 text-sm rounded-lg bg-(--bg-page-surface) hover:bg-(--bg-menu-hover) text-(--text-primary) border border-(--border-divider) transition-colors flex items-center gap-2'
       >
-        <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>download</span>
+        <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
+          download
+        </span>
         {t.expand?.exportCSV || 'Export'}
       </button>
     );
 
     const chartView = (id: string, mainVal: number) => (
       <div className='space-y-6'>
-        <SummaryCard 
-          title={t[id]} 
-          value={mainVal} 
-          colorClass={id === 'expenses' ? 'bg-red-50 dark:bg-red-950/20 border-red-100' : 'bg-primary-50 dark:bg-primary-950/20 border-primary-100'}
+        <SummaryCard
+          title={t[id]}
+          value={mainVal}
+          colorClass={
+            id === 'expenses'
+              ? 'bg-red-50 dark:bg-red-950/20 border-red-100'
+              : 'bg-primary-50 dark:bg-primary-950/20 border-primary-100'
+          }
           footer={id === 'salesChart' ? t.trend : t.expand?.historicalTrend}
         />
-        
-        <MetricsGrid items={
-          id === 'profit' ? [
-            { label: t.revenue, value: formatCurrency(totalRevenue) },
-            { label: t.expenses, value: formatCurrency(totalExpenses) },
-            { label: t.expand?.profitMargin || 'Margin', value: `${totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0'}%` }
-          ] : [
-            { label: t.expand?.metrics || 'Total Count', value: id === 'expenses' ? filteredData.purchases.length : filteredData.sales.length },
-            { label: t.expand?.amount || 'Average', value: formatCurrency((id === 'expenses' ? (filteredData.purchases.length > 0 ? totalExpenses / filteredData.purchases.length : 0) : (filteredData.sales.length > 0 ? totalRevenue / filteredData.sales.length : 0))) }
-          ]
-        } />
+
+        <MetricsGrid
+          items={
+            id === 'profit'
+              ? [
+                  { label: t.revenue, value: formatCurrency(totalRevenue) },
+                  { label: t.expenses, value: formatCurrency(expensesTotal) },
+                  {
+                    label: t.expand?.profitMargin || 'Margin',
+                    value: `${totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0'}%`,
+                  },
+                ]
+              : id === 'expenses'
+              ? [
+                  { label: t.expenses, value: formatCurrency(expensesTotal) },
+                ]
+              : [
+                  {
+                    label: t.expand?.metrics || 'Total Count',
+                    value: filteredData.sales.length,
+                  },
+                  {
+                    label: t.expand?.amount || 'Average',
+                    value: formatCurrency(
+                      filteredData.sales.length > 0
+                        ? totalRevenue / filteredData.sales.length
+                        : 0
+                    ),
+                  },
+                ]
+          }
+        />
 
         <div className='h-80'>
           <ChartWidget
@@ -456,17 +526,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
       revenue: {
         title: t.dashboard?.revenue || t.revenue,
         actions: exportBtn('revenue', [{ metric: 'Total Revenue', value: totalRevenue }]),
-        children: chartView('revenue', totalRevenue)
+        children: chartView('revenue', totalRevenue),
       },
       expenses: {
         title: t.dashboard?.expenses || t.expenses,
-        actions: exportBtn('expenses', [{ metric: 'Total Expenses', value: totalExpenses }]),
-        children: chartView('expenses', totalExpenses)
+        actions: exportBtn('expenses', [{ metric: 'Total Expenses', value: expensesTotal }]),
+        children: chartView('expenses', expensesTotal),
       },
       profit: {
         title: t.dashboard?.netProfit || t.profit,
         actions: exportBtn('profit', [{ metric: 'Profit', value: netProfit }]),
-        children: chartView('profit', netProfit)
+        children: chartView('profit', netProfit),
       },
       lowStock: {
         title: t.dashboard?.lowStockItems || t.lowStock,
@@ -474,18 +544,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
         children: (
           <div className='grid gap-3'>
             {lowStockItems.map((item, idx) => (
-              <GenericListItem 
+              <GenericListItem
                 key={item.id || `low-${idx}`}
                 title={getDisplayName(item, textTransform)}
                 subtitle={item.category || ''}
                 badge={`${item.stock} ${t.expand?.allItems || 'left'}`}
-                badgeColor="badge-orange"
-                onClick={() => { setRestockDrug(item); setExpandedView(null); }}
+                badgeColor='badge-orange'
+                onClick={() => {
+                  setRestockDrug(item);
+                  setExpandedView(null);
+                }}
                 actionLabel={t.restock}
               />
             ))}
           </div>
-        )
+        ),
       },
       topSelling: {
         title: t.dashboard?.topSelling || t.topSelling,
@@ -493,16 +566,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
         children: (
           <div className='space-y-3'>
             {topSelling20.map((item, index) => (
-              <GenericListItem 
+              <GenericListItem
                 key={`${item.id}-${index}`}
-                icon="hotel_class"
+                icon='hotel_class'
                 title={getDisplayName(item, textTransform)}
                 subtitle={`${item.qty} ${t.sold} • ${formatCurrency(item.revenue)} ${t.revenue}`}
                 value={formatCurrency(item.revenue)}
               />
             ))}
           </div>
-        )
+        ),
       },
       expiring: {
         title: t.expiringSoon,
@@ -513,9 +586,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
               const days = getDaysUntilExpiry(item.expiryDate);
               const isExpired = days < 0;
               return (
-                <GenericListItem 
+                <GenericListItem
                   key={item.id || `exp-${idx}`}
-                  icon="event_busy"
+                  icon='event_busy'
                   title={getDisplayName(item, textTransform)}
                   subtitle={`${item.category} • ${item.stock} in stock`}
                   badge={isExpired ? t.expired : `${days} ${t.days}`}
@@ -525,47 +598,77 @@ export const Dashboard: React.FC<DashboardProps> = ({
               );
             })}
           </div>
-        )
+        ),
       },
       recentSales: {
         title: t.recentSales,
         actions: exportBtn('transactions', recentSales20),
         children: (
-          <div className="relative space-y-4 py-1">
-            <div className={`absolute top-4 bottom-4 w-0.5 bg-gray-100 dark:bg-gray-800 z-0 ${language === 'AR' ? 'right-[11px]' : 'left-[11px]'}`} />
+          <div className='relative space-y-4 py-1'>
+            <div
+              className={`absolute top-4 bottom-4 w-0.5 bg-gray-100 dark:bg-gray-800 z-0 ${language === 'AR' ? 'right-[11px]' : 'left-[11px]'}`}
+            />
             {recentSales20.map((sale, index) => (
-              <div key={sale.key || sale.id || `rs20-${index}`} className="relative z-10">
-                <div className={`absolute top-6 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-sm z-10 ${sale.hasReturns ? 'bg-orange-400' : 'bg-primary-500'} ${language === 'AR' ? '-right-[18px]' : '-left-[18px]'}`} />
-                <MaterialTabs index={index} total={recentSales20.length} className='h-auto! py-2 flex-col! items-stretch! gap-1 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors shadow-xs'>
+              <div key={sale.key || sale.id || `rs20-${index}`} className='relative z-10'>
+                <div
+                  className={`absolute top-6 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-sm z-10 ${sale.hasReturns ? 'bg-orange-400' : 'bg-primary-500'} ${language === 'AR' ? '-right-[18px]' : '-left-[18px]'}`}
+                />
+                <MaterialTabs
+                  index={index}
+                  total={recentSales20.length}
+                  className='h-auto! py-2 flex-col! items-stretch! gap-1 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors shadow-xs'
+                >
                   <div className='flex items-center justify-between gap-3'>
                     <div className='flex items-center gap-3'>
                       <div className='badge-purple w-8 h-8! rounded-full! border! flex! items-center justify-center shrink-0'>
                         <span className='material-symbols-rounded text-lg'>shopping_bag</span>
                       </div>
                       <div>
-                        <p className='font-bold text-gray-900 dark:text-gray-100 text-xs'>{sale.customerName || 'Guest'} <span className='text-[10px] font-normal opacity-50'>#{sale.id}</span></p>
+                        <p className='font-bold text-gray-900 dark:text-gray-100 text-xs'>
+                          {sale.customerName || 'Guest'}{' '}
+                          <span className='text-[10px] font-normal opacity-50'>#{sale.id}</span>
+                        </p>
                         <p className='text-[10px] text-gray-500'>{sale.timeAgo}</p>
                       </div>
                     </div>
                     <div className='text-end'>
-                      <p className='font-bold text-sm'>{formatCurrency(sale.netTotal ?? sale.total)}</p>
-                      {sale.hasReturns && <p className='text-[10px] text-orange-500 font-bold uppercase'>{t.returned}</p>}
+                      <p className='font-bold text-sm'>
+                        {formatCurrency(sale.netTotal ?? sale.total)}
+                      </p>
+                      {sale.hasReturns && (
+                        <p className='text-[10px] text-orange-500 font-bold uppercase'>
+                          {t.returned}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </MaterialTabs>
               </div>
             ))}
           </div>
-        )
+        ),
       },
       salesChart: {
         title: t.trend,
         actions: exportBtn('sales_trend', salesData),
-        children: chartView('salesChart', filteredData.sales.length)
-      }
+        children: chartView('salesChart', filteredData.sales.length),
+      },
     };
-  }, [filteredData, totalRevenue, totalExpenses, netProfit, lowStockItems, topSelling20, expiringItems, recentSales20, salesData, chartColors, t, language, textTransform]);
-
+  }, [
+    filteredData,
+    totalRevenue,
+    expensesTotal,
+    netProfit,
+    lowStockItems,
+    topSelling20,
+    expiringItems,
+    recentSales20,
+    salesData,
+    chartColors,
+    t,
+    language,
+    textTransform,
+  ]);
 
   // --- CHART COLOR LOGIC ---
 
@@ -575,17 +678,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
       className='h-full overflow-y-auto px-page space-y-4 animate-fade-in pb-10'
     >
       <PageHeader
-        mb="mb-0"
+        mb='mb-0'
         centerContent={
           <SegmentedControl
             options={[
               { label: language === 'AR' ? 'نظرة عامة' : 'Overview', value: 'dashboard' },
-              { label: language === 'AR' ? 'المراقبة الفورية' : 'Real-time', value: 'real-time-sales' },
+              {
+                label: language === 'AR' ? 'المراقبة الفورية' : 'Real-time',
+                value: 'real-time-sales',
+              },
             ]}
             value='dashboard'
             onChange={(val) => onViewChange?.(String(val))}
-            size="md"
-            shape="pill"
+            size='md'
+            shape='pill'
           />
         }
         rightContent={
@@ -598,7 +704,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             ]}
             value={timeRange}
             onChange={(val) => setTimeRange(String(val))}
-            size="sm"
+            size='sm'
           />
         }
       />
@@ -619,9 +725,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {
             id: 'expenses',
             title: t.expenses,
-            value: totalExpenses,
-            icon: 'shopping_cart_checkout',
-            iconColor: 'red',
+            value: expensesTotal,
+            icon: 'receipt_long',
+            iconColor: 'rose',
             type: 'currency',
             tooltip: expensesTooltip,
             permission: 'reports.view_financial',
@@ -656,7 +762,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               currencyLabel={card.type === 'currency' ? getCurrencySymbol() : undefined}
               fractionDigits={card.type === 'currency' ? 2 : 0}
               iconTooltip={card.tooltip}
-              isLoading={isLoading}
+              isLoading={isLoading || finLoading}
             />
           );
 
@@ -695,19 +801,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
           primaryLabel={t.totalSales || 'Sales'}
           className='h-80'
           chartClassName='h-[90%]'
-          isLoading={isLoading}
+          isLoading={isLoading || finLoading}
         />
 
         {/* Top Selling Products (1 Col) */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-80 flex flex-col group`}>
-          <SectionHeader 
-            icon="hotel_class" 
-            title={t.topSelling} 
-            onExpand={() => setExpandedView('topSelling')} 
-            iconColor="text-yellow-500" 
+          <SectionHeader
+            icon='hotel_class'
+            title={t.topSelling}
+            onExpand={() => setExpandedView('topSelling')}
+            iconColor='text-yellow-500'
           />
           <div className='flex-1 overflow-y-auto space-y-3 pe-1' dir='ltr'>
-            {isLoading ? (
+            {isLoading || finLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className='flex items-center justify-between p-2 animate-pulse'>
                   <div className='flex items-center gap-3 overflow-hidden'>
@@ -762,7 +868,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
               emptyText: t.allGood,
               onExpand: () => setExpandedView('lowStock'),
               renderItem: (item: any) => (
-                <div key={item.id} className='flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'>
+                <div
+                  key={item.id}
+                  className='flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+                >
                   <div className='flex items-center gap-3 overflow-hidden'>
                     <div className='badge-orange w-8 h-8! rounded-full! border! flex! items-center justify-center shrink-0'>
                       <span className='material-symbols-rounded text-base'>warning</span>
@@ -783,7 +892,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     {t.restock}
                   </button>
                 </div>
-              )
+              ),
             },
             {
               id: 'expiring',
@@ -797,16 +906,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 const days = getDaysUntilExpiry(item.expiryDate);
                 const isExpired = days < 0;
                 return (
-                  <div key={item.id} className='flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'>
+                  <div
+                    key={item.id}
+                    className='flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+                  >
                     <div className='flex items-center gap-3 overflow-hidden'>
-                      <div className={`${isExpired ? 'badge-danger' : 'badge-warning'} w-8 h-8! rounded-full! border! flex! items-center justify-center shrink-0`}>
-                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-base)' }}>event_busy</span>
+                      <div
+                        className={`${isExpired ? 'badge-danger' : 'badge-warning'} w-8 h-8! rounded-full! border! flex! items-center justify-center shrink-0`}
+                      >
+                        <span
+                          className='material-symbols-rounded'
+                          style={{ fontSize: 'var(--icon-base)' }}
+                        >
+                          event_busy
+                        </span>
                       </div>
                       <div className='min-w-0'>
                         <p className='font-medium text-sm text-gray-700 dark:text-gray-200 truncate item-name'>
                           {getDisplayName(item, textTransform)}
                         </p>
-                        <p className={`text-[10px] font-bold uppercase ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-500'}`}>
+                        <p
+                          className={`text-[10px] font-bold uppercase ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-500'}`}
+                        >
                           {isExpired ? t.expired : `${days} ${t.days}`}
                         </p>
                       </div>
@@ -816,15 +937,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     </span>
                   </div>
                 );
-              }
-            }
+              },
+            },
           ].map((card) => (
             <div key={card.id} className={`p-5 rounded-3xl ${CARD_BASE} h-64 flex flex-col group`}>
-              <SectionHeader 
-                icon={card.icon} 
-                title={card.title} 
-                onExpand={card.onExpand} 
-                iconColor={card.iconColor} 
+              <SectionHeader
+                icon={card.icon}
+                title={card.title}
+                onExpand={card.onExpand}
+                iconColor={card.iconColor}
               />
               <div className='flex-1 overflow-y-auto space-y-2 pe-1' dir='ltr'>
                 {isLoading ? (
@@ -854,15 +975,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Recent Transactions */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-auto max-h-[530px] flex flex-col group`}>
-          <SectionHeader 
-            icon="receipt_long" 
-            title={t.recentSales} 
-            onExpand={() => setExpandedView('recentSales')} 
+          <SectionHeader
+            icon='receipt_long'
+            title={t.recentSales}
+            onExpand={() => setExpandedView('recentSales')}
           />
           <div className='flex-1 overflow-y-auto space-y-2 pe-1'>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className='flex items-center justify-between p-2 rounded-xl animate-pulse'>
+                <div
+                  key={i}
+                  className='flex items-center justify-between p-2 rounded-xl animate-pulse'
+                >
                   <div className='flex items-center gap-3'>
                     <div className='w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 shrink-0' />
                     <div className='space-y-2'>
@@ -887,10 +1011,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   className='flex items-center justify-between p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
                 >
                   <div className='flex items-center gap-3'>
-                    <div
-                      className="badge-purple w-10 h-10! rounded-xl! border! flex! items-center justify-center"
-                    >
-                      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>shopping_bag</span>
+                    <div className='badge-purple w-10 h-10! rounded-xl! border! flex! items-center justify-center'>
+                      <span
+                        className='material-symbols-rounded'
+                        style={{ fontSize: 'var(--icon-lg)' }}
+                      >
+                        shopping_bag
+                      </span>
                     </div>
                     <div>
                       <p className='text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2'>
@@ -900,27 +1027,38 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             dir='ltr'
                             className='badge-zinc inline-flex items-center gap-1.5! px-1.5! py-0.5! text-[10px]! tracking-wider'
                           >
-                            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>tag</span>
+                            <span
+                              className='material-symbols-rounded'
+                              style={{ fontSize: 'var(--icon-sm)' }}
+                            >
+                              tag
+                            </span>
                             {sale.customerCode}
                           </span>
                         )}
                       </p>
                       <p className='text-xs text-gray-500 flex items-center gap-2'>
-                        <span className="text-(--text-tertiary)">
-                          {sale.timeAgo}
-                        </span>
+                        <span className='text-(--text-tertiary)'>{sale.timeAgo}</span>
                         <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
                         <span className='text-xs'>#{sale.id}</span>
                         <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
                         <span
                           className={`inline-flex items-center ${sale.paymentMethod === 'visa' ? 'text-primary-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}
                         >
-                          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-base)' }}>
+                          <span
+                            className='material-symbols-rounded'
+                            style={{ fontSize: 'var(--icon-base)' }}
+                          >
                             {sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}
                           </span>
                         </span>
                         <span className='badge-zinc inline-flex items-center gap-1! px-1.5! py-0.5! text-[10px]! tracking-wider'>
-                          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>package_2</span>
+                          <span
+                            className='material-symbols-rounded'
+                            style={{ fontSize: 'var(--icon-sm)' }}
+                          >
+                            package_2
+                          </span>
                           {sale.items.length}
                         </span>
                       </p>
@@ -933,7 +1071,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <p className='text-xs text-gray-500 flex items-center justify-end gap-1'>
                       {sale.hasReturns && sale.returnStats && (
                         <span className='text-orange-500 flex items-center gap-0.5'>
-                          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-xs)' }}>
+                          <span
+                            className='material-symbols-rounded'
+                            style={{ fontSize: 'var(--icon-xs)' }}
+                          >
                             keyboard_return
                           </span>
                           <span className='text-[10px]'>
@@ -980,7 +1121,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   onClick={() => setRestockQty(Math.max(1, restockQty - 5))}
                   className='w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'
                 >
-                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>remove</span>
+                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
+                    remove
+                  </span>
                 </button>
                 <input
                   type='number'
@@ -996,7 +1139,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   onClick={() => setRestockQty(restockQty + 5)}
                   className='w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'
                 >
-                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>add</span>
+                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
+                    add
+                  </span>
                 </button>
               </div>
             </div>
@@ -1021,14 +1166,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
       )}
 
       {/* Unified Expanded View */}
-      <ExpandedModal 
-        isOpen={!!expandedView} 
-        activeView={expandedView} 
-        views={dashboardViews as any} 
-        onClose={() => setExpandedView(null)} 
+      <ExpandedModal
+        isOpen={!!expandedView}
+        activeView={expandedView}
+        views={dashboardViews as any}
+        onClose={() => setExpandedView(null)}
         color={color}
       />
-
 
       {/* Help */}
       <HelpButton
