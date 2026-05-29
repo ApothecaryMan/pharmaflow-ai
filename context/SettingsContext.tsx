@@ -21,7 +21,7 @@ import {
 } from 'react';
 import { AVAILABLE_FONTS_AR, AVAILABLE_FONTS_EN } from '../config/fonts';
 import { COLOR_HEX_MAP, THEMES } from '../config/themeColors';
-import type { Language, ThemeColor, SwitchVariant } from '../types';
+import type { Language, ThemeColor, SwitchVariant, BadgeStyle } from '../types';
 import { storage } from '../utils/storage';
 
 // Re-export for convenience
@@ -85,6 +85,7 @@ export interface SettingsState {
   activeBranchId: string;
   branchCode: string;
   switchVariant: SwitchVariant;
+  badgeStyle: BadgeStyle;
 }
 // Context Type
 export interface SettingsContextType extends SettingsState {
@@ -122,6 +123,7 @@ export interface SettingsContextType extends SettingsState {
   setGraphicStyle: (graphic: boolean) => void;
   setGraphicFontVariant: (variant: 'serif' | 'sans') => void;
   setSwitchVariant: (variant: SwitchVariant) => void;
+  setBadgeStyle: (style: BadgeStyle) => void;
   // Helpers
   availableThemes: ThemeColor[];
   availableLanguages: { code: Language; label: string }[];
@@ -170,6 +172,7 @@ const defaultSettings: SettingsState = {
   activeBranchId: '',
   branchCode: '',
   switchVariant: 'default',
+  badgeStyle: 'default',
 };
 
 // Load settings from storage
@@ -237,6 +240,7 @@ const loadSettings = (): SettingsState => {
       branchCode: storage.get('pharma_branchCode', defaultSettings.branchCode),
       numeralSystem: storage.get('pharma_numeralSystem', defaultSettings.numeralSystem) as 'AR' | 'EN',
       switchVariant: storage.get('pharma_switchVariant', defaultSettings.switchVariant) as SwitchVariant,
+      badgeStyle: storage.get('pharma_badgeStyle', defaultSettings.badgeStyle) as BadgeStyle,
     };
   } catch (e) {
     console.warn('Failed to migrate old settings:', e);
@@ -372,6 +376,36 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     document.documentElement.style.setProperty('--radius', radiusValue);
   }, [settings.borderRadius]);
+
+  // Apply badge style
+  useEffect(() => {
+    let radiusValue = '0.5rem'; // default/rounded-lg
+    let borderWidth = '1px';
+    let paddingValue = '0.25rem 0.5rem';
+    let fontSize = '0.75rem'; // text-xs
+    let textTransform = 'none';
+    let letterSpacing = 'normal';
+
+    if (settings.badgeStyle === 'sharp') {
+      radiusValue = '0rem';
+    } else if (settings.badgeStyle === 'pill') {
+      radiusValue = '9999px';
+    } else if (settings.badgeStyle === 'slim') {
+      radiusValue = '0.25rem'; // rounded (4px)
+      borderWidth = '0px';
+      paddingValue = '0.125rem 0.375rem'; // px-1.5 py-0.5
+      fontSize = '0.625rem'; // text-[10px]
+      textTransform = 'uppercase';
+      letterSpacing = '0.05em'; // tracking-wider
+    }
+
+    document.documentElement.style.setProperty('--badge-radius', radiusValue);
+    document.documentElement.style.setProperty('--badge-border-width', borderWidth);
+    document.documentElement.style.setProperty('--badge-padding', paddingValue);
+    document.documentElement.style.setProperty('--badge-font-size', fontSize);
+    document.documentElement.style.setProperty('--badge-text-transform', textTransform);
+    document.documentElement.style.setProperty('--badge-letter-spacing', letterSpacing);
+  }, [settings.badgeStyle]);
 
   // Apply custom CSS
   useEffect(() => {
@@ -540,6 +574,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, switchVariant }));
   }, []);
 
+  const setBadgeStyle = useCallback((badgeStyle: BadgeStyle) => {
+    setSettings((prev) => ({ ...prev, badgeStyle }));
+  }, []);
+
   // --- Centralized Locale Resolution ---
   const numeralLocale = useMemo(() => {
     const isAR = settings.language === 'AR';
@@ -598,6 +636,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setFontFamilyAR,
       setNumeralSystem,
       setSwitchVariant,
+      setBadgeStyle,
       availableThemes: THEMES,
       availableLanguages: LANGUAGES,
       numeralLocale,
@@ -634,6 +673,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setFontFamilyAR,
       setNumeralSystem,
       setSwitchVariant,
+      setBadgeStyle,
       numeralLocale,
       textLocale,
     ]

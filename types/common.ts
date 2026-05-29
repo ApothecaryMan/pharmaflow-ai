@@ -141,3 +141,6 @@ export type SwitchVariant =
   | 'outline' 
   | 'segmented' 
   | 'neon';
+
+/** Global Badge Design Styles */
+export type BadgeStyle = 'default' | 'sharp' | 'pill' | 'slim';

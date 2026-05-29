@@ -148,3 +148,13 @@ html:not(.dark) .card-shadow  { box-shadow: none !important; border: 2px solid v
   justify-content: center !important;
   line-height: 1 !important;
 }
+
+/* Global Dynamic Badge Styling overrides controlled via Settings */
+[class*="badge-"] {
+  border-radius: var(--badge-radius, 0.5rem) !important;
+  border-width: var(--badge-border-width, 1px) !important;
+  padding: var(--badge-padding, 0.25rem 0.5rem) !important;
+  font-size: var(--badge-font-size, 0.75rem) !important;
+  text-transform: var(--badge-text-transform, none) !important;
+  letter-spacing: var(--badge-letter-spacing, normal) !important;
+}

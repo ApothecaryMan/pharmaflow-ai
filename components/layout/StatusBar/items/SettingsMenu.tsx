@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { AVAILABLE_FONTS_AR, AVAILABLE_FONTS_EN } from '../../../../config/fonts';
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import { useSettings } from '../../../../context';
@@ -94,7 +94,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     graphicStyle, setGraphicStyle, graphicFontVariant, setGraphicFontVariant,
     cardBorderLight, setCardBorderLight, enableCustomCardCss, setEnableCustomCardCss,
     customCardCss, setCustomCardCss, numeralSystem, setNumeralSystem,
-    switchVariant, setSwitchVariant,
+    switchVariant, setSwitchVariant, badgeStyle, setBadgeStyle,
   } = settings;
 
   const { activeBranchId, updateBranch, activeBranch } = useData();
@@ -206,6 +206,20 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   </div>
                   <SettingsRow icon="brightness_6" label={t.darkMode}>
                     <SegmentedControl value={darkMode} onChange={v => setDarkMode(v as boolean)}  size="xs"  shape="pill" iconSize="--icon-settings" options={[{ label: '', value: false, icon: 'light_mode' }, { label: '', value: true, icon: 'dark_mode' }]} />
+                  </SettingsRow>
+                  <SettingsRow icon="ad_units" label={t.badgeStyle}>
+                    <SegmentedControl
+                      value={badgeStyle || 'default'}
+                      onChange={v => setBadgeStyle?.(v as any)}
+                      size="xs"
+                      shape="pill"
+                      options={[
+                        { label: t.badgeStyleSharp, value: 'sharp' },
+                        { label: t.badgeStyleDefault, value: 'default' },
+                        { label: t.badgeStylePill, value: 'pill' },
+                        { label: t.badgeStyleSlim, value: 'slim' },
+                      ]}
+                    />
                   </SettingsRow>
                   {developerMode && (
                     <>
