@@ -143,4 +143,4 @@ export type SwitchVariant =
   | 'neon';
 
 /** Global Badge Design Styles */
-export type BadgeStyle = 'default' | 'sharp' | 'pill' | 'slim';
+export type BadgeStyle = 'default' | 'pill' | 'slim';

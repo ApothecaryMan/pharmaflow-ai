@@ -214,7 +214,6 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       size="xs"
                       shape="pill"
                       options={[
-                        { label: t.badgeStyleSharp, value: 'sharp' },
                         { label: t.badgeStyleDefault, value: 'default' },
                         { label: t.badgeStylePill, value: 'pill' },
                         { label: t.badgeStyleSlim, value: 'slim' },

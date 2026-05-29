@@ -386,9 +386,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     let textTransform = 'none';
     let letterSpacing = 'normal';
 
-    if (settings.badgeStyle === 'sharp') {
-      radiusValue = '0rem';
-    } else if (settings.badgeStyle === 'pill') {
+    if (settings.badgeStyle === 'pill') {
       radiusValue = '9999px';
     } else if (settings.badgeStyle === 'slim') {
       radiusValue = '0.25rem'; // rounded (4px)
