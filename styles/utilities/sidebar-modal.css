@@ -69,7 +69,7 @@
   }
 
   /* Ensure children of the scrollable area expand to fill full height in sidebar mode */
-  .sidebar-modal-card .flex-1.overflow-y-auto > div {
+  .sidebar-modal-card .content-shift-layer > div {
     max-height: none !important;
     height: 100% !important;
   }
