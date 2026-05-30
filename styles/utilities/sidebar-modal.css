@@ -1,0 +1,57 @@
+/* 
+  Sidebar Modal Presentation Styles
+*/
+
+/* 1. Slide-in Animation from Right Edge */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* 2. Backdrop blur & override rules */
+.modal-backdrop,
+.sidebar-modal-backdrop {
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+}
+
+@media (min-width: 768px) {
+  .sidebar-modal-backdrop {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+/* 3. Desktop-Only Styles for the Sidebar Modal Card Container */
+@media (min-width: 768px) {
+  /* Main card layout transformation */
+  .sidebar-modal-card {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: auto !important;
+    width: 512px !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    border: 0 !important;
+
+    /* Override standard entry animation with right-to-left slide */
+    animation: slideInFromRight 300ms cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+  }
+
+  /* Shifting transition on the main viewport layout */
+  .main-layout-content {
+    transition: padding-right 300ms cubic-bezier(0.32, 0.72, 0, 1) !important;
+  }
+
+  /* Shifting activation when sidebar modal is visible */
+  .sidebar-modal-active .main-layout-content {
+    padding-right: 512px !important;
+  }
+}

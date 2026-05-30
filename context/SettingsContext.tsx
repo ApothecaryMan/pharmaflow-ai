@@ -86,6 +86,7 @@ export interface SettingsState {
   branchCode: string;
   switchVariant: SwitchVariant;
   badgeStyle: BadgeStyle;
+  modalPresentationMode: 'modal' | 'sidebar';
 }
 // Context Type
 export interface SettingsContextType extends SettingsState {
@@ -124,6 +125,7 @@ export interface SettingsContextType extends SettingsState {
   setGraphicFontVariant: (variant: 'serif' | 'sans') => void;
   setSwitchVariant: (variant: SwitchVariant) => void;
   setBadgeStyle: (style: BadgeStyle) => void;
+  setModalPresentationMode: (mode: 'modal' | 'sidebar') => void;
   // Helpers
   availableThemes: ThemeColor[];
   availableLanguages: { code: Language; label: string }[];
@@ -173,6 +175,7 @@ const defaultSettings: SettingsState = {
   branchCode: '',
   switchVariant: 'default',
   badgeStyle: 'default',
+  modalPresentationMode: 'modal',
 };
 
 // Load settings from storage
@@ -241,6 +244,7 @@ const loadSettings = (): SettingsState => {
       numeralSystem: storage.get('pharma_numeralSystem', defaultSettings.numeralSystem) as 'AR' | 'EN',
       switchVariant: storage.get('pharma_switchVariant', defaultSettings.switchVariant) as SwitchVariant,
       badgeStyle: storage.get('pharma_badgeStyle', defaultSettings.badgeStyle) as BadgeStyle,
+      modalPresentationMode: storage.get('pharma_modalPresentationMode', defaultSettings.modalPresentationMode) as 'modal' | 'sidebar',
     };
   } catch (e) {
     console.warn('Failed to migrate old settings:', e);
@@ -576,6 +580,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, badgeStyle }));
   }, []);
 
+  const setModalPresentationMode = useCallback((modalPresentationMode: 'modal' | 'sidebar') => {
+    setSettings((prev) => ({ ...prev, modalPresentationMode }));
+  }, []);
+
   // --- Centralized Locale Resolution ---
   const numeralLocale = useMemo(() => {
     const isAR = settings.language === 'AR';
@@ -635,6 +643,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setNumeralSystem,
       setSwitchVariant,
       setBadgeStyle,
+      setModalPresentationMode,
       availableThemes: THEMES,
       availableLanguages: LANGUAGES,
       numeralLocale,
@@ -672,6 +681,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setNumeralSystem,
       setSwitchVariant,
       setBadgeStyle,
+      setModalPresentationMode,
       numeralLocale,
       textLocale,
     ]

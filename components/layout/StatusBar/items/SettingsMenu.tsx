@@ -95,6 +95,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     cardBorderLight, setCardBorderLight, enableCustomCardCss, setEnableCustomCardCss,
     customCardCss, setCustomCardCss, numeralSystem, setNumeralSystem,
     switchVariant, setSwitchVariant, badgeStyle, setBadgeStyle,
+    modalPresentationMode, setModalPresentationMode,
   } = settings;
 
   const { activeBranchId, updateBranch, activeBranch } = useData();
@@ -321,6 +322,18 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               </SettingsRow>
               <SettingsRow icon="translate" label={t.language}>
                 <SegmentedControl value={language} onChange={v => settings.setLanguage(v as any)}  size="xs" shape="pill" options={[{ label: 'EN', value: 'EN' }, { label: 'AR', value: 'AR' }]} />
+              </SettingsRow>
+              <SettingsRow icon="dock_to_left" label={t.modalPresentationMode}>
+                <SegmentedControl
+                  value={modalPresentationMode || 'modal'}
+                  onChange={v => setModalPresentationMode?.(v as any)}
+                  size="xs"
+                  shape="pill"
+                  options={[
+                    { label: t.modalPresentationModeModal, value: 'modal' },
+                    { label: t.modalPresentationModeSidebar, value: 'sidebar' },
+                  ]}
+                />
               </SettingsRow>
               <SettingsRow icon="text_fields" label={t.textTransform}>
                 <Switch

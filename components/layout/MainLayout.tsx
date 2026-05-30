@@ -264,7 +264,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             />
 
               {/* Actual Page Surface */}
-              <main className='flex-1 h-full overflow-hidden relative'>
+              <main className='flex-1 h-full overflow-hidden relative main-layout-content'>
                 <div
                   className={getContentContainerClasses(PAGE_REGISTRY[view]?.layout, isStandalone)}
                 >

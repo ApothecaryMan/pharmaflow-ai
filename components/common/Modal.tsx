@@ -114,11 +114,10 @@ interface ModalProps {
 
 import ReactDOM from 'react-dom';
 import { LAYOUT_CONFIG } from '../../config/layoutConfig';
+import { useSettings } from '../../context';
 
 // Global counter to ensure dynamically opened modals stack on top of each other
 let globalModalZIndex = 100;
-
-// ... (imports)
 
 export const Modal: React.FC<ModalProps> = ({
   isOpen,
@@ -143,6 +142,9 @@ export const Modal: React.FC<ModalProps> = ({
   style,
   backdropStyle,
 }) => {
+  const { modalPresentationMode } = useSettings();
+  const isSidebar = modalPresentationMode === 'sidebar';
+
   const [actualZIndex, setActualZIndex] = useState(() => {
     if (isOpen) {
       if (zIndex !== undefined) {
@@ -166,18 +168,35 @@ export const Modal: React.FC<ModalProps> = ({
     if (isOpen) {
       window.addEventListener('keydown', handleEsc);
       document.body.style.overflow = 'hidden';
-      document.body.classList.add('modal-blur-active');
-    } else {
-      document.body.style.overflow = '';
-      document.body.classList.remove('modal-blur-active');
+      
+      if (isSidebar) {
+        document.body.classList.add('sidebar-modal-active');
+      } else {
+        document.body.classList.add('modal-blur-active');
+      }
     }
 
     return () => {
       window.removeEventListener('keydown', handleEsc);
-      document.body.style.overflow = '';
-      document.body.classList.remove('modal-blur-active');
+      
+      if (isSidebar) {
+        const remainingSidebars = document.querySelectorAll('[data-modal-type="sidebar"][data-modal-open="true"]');
+        if (remainingSidebars.length <= 1) {
+          document.body.classList.remove('sidebar-modal-active');
+        }
+      } else {
+        const remainingModals = document.querySelectorAll('[data-modal-type="modal"][data-modal-open="true"]');
+        if (remainingModals.length <= 1) {
+          document.body.classList.remove('modal-blur-active');
+        }
+      }
+
+      const allOpen = document.querySelectorAll('[data-modal-open="true"]');
+      if (allOpen.length <= 1) {
+        document.body.style.overflow = '';
+      }
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, isSidebar]);
 
   // Compute/Update z-index dynamically when the modal state changes or prop updates
   useEffect(() => {
@@ -186,12 +205,8 @@ export const Modal: React.FC<ModalProps> = ({
         setActualZIndex(zIndex);
         globalModalZIndex = Math.max(globalModalZIndex, zIndex);
       } else {
-        // If we haven't assigned a dynamic z-index yet (e.g. opened after mount)
-        // or if we want to refresh it.
-        // But the initializer handles the first mount. 
-        // This handles cases where isOpen transitions from false to true.
         setActualZIndex((prev) => {
-          if (prev <= globalModalZIndex && prev < 110) { // Simple heuristic
+          if (prev <= globalModalZIndex && prev < 110) {
              globalModalZIndex += 10;
              return globalModalZIndex;
           }
@@ -207,24 +222,33 @@ export const Modal: React.FC<ModalProps> = ({
 
   return ReactDOM.createPortal(
     <div
-      className={`fixed inset-0 flex items-center justify-center p-4`}
+      className={
+        isSidebar
+          ? `fixed inset-0 flex md:justify-end justify-center pointer-events-none md:p-0 p-4`
+          : `fixed inset-0 flex items-center justify-center p-4`
+      }
       style={{ zIndex: actualZIndex }}
+      data-modal-type={isSidebar ? 'sidebar' : 'modal'}
+      data-modal-open="true"
     >
       {/* Backdrop with dedicated blur and animation */}
       <div
-        className='absolute inset-0 bg-black/10 dark:bg-black/60 animate-fade-in'
-        style={{ 
-          backdropFilter: 'blur(16px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-          ...backdropStyle
-        }}
+        className={`absolute inset-0 bg-black/10 dark:bg-black/60 animate-fade-in pointer-events-auto ${isSidebar ? 'sidebar-modal-backdrop' : 'modal-backdrop'}`}
+        style={backdropStyle}
         onClick={closeOnBackdropClick ? onClose : undefined}
       />
 
-      {/* Modal Content Wrapper */}
       <div
-        className={`relative w-full ${maxWidthClass} bg-(--bg-card) rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col animate-scale-in max-h-[95vh] border border-zinc-400/40 dark:border-zinc-500/30 ring-1 ring-inset ring-white/20 dark:ring-white/10 select-none ${className}`}
-        style={{ height: height || 'auto', ...style }}
+        className={
+          isSidebar
+            ? `relative w-full bg-(--bg-card) border border-zinc-400/40 dark:border-zinc-500/30 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col sidebar-modal-card animate-scale-in select-none pointer-events-auto ${className}`
+            : `relative w-full ${maxWidthClass} bg-(--bg-card) rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col animate-scale-in max-h-[95vh] border border-zinc-400/40 dark:border-zinc-500/30 ring-1 ring-inset ring-white/20 dark:ring-white/10 select-none ${className}`
+        }
+        style={
+          isSidebar
+            ? style
+            : { height: height || 'auto', ...style }
+        }
         onClick={(e) => e.stopPropagation()}
       >
         {title || tabs || headerActions ? (
