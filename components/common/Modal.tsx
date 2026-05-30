@@ -120,6 +120,8 @@ interface ModalProps {
 import ReactDOM from 'react-dom';
 import { LAYOUT_CONFIG } from '../../config/layoutConfig';
 import { useSettings } from '../../context';
+import { useContextMenu } from './ContextMenu';
+import { TRANSLATIONS } from '../../i18n/translations';
 
 // Global counter to ensure dynamically opened modals stack on top of each other
 let globalModalZIndex = 100;
@@ -148,7 +150,17 @@ export const Modal: React.FC<ModalProps> = ({
   backdropStyle,
   preventSidebar = false,
 }) => {
-  const { modalPresentationMode } = useSettings();
+  const settings = useSettings();
+  const {
+    modalPresentationMode,
+    setModalPresentationMode,
+    sidebarModalWidth,
+    setSidebarModalWidth,
+    language
+  } = settings;
+  const { showMenu } = useContextMenu();
+  const t = TRANSLATIONS[language].settings;
+
   const isSidebar = modalPresentationMode === 'sidebar' && !preventSidebar;
 
   const [actualZIndex, setActualZIndex] = useState(() => {
@@ -184,7 +196,7 @@ export const Modal: React.FC<ModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      
+
       if (isSidebar) {
         document.body.classList.add('sidebar-modal-active');
       } else {
@@ -221,14 +233,58 @@ export const Modal: React.FC<ModalProps> = ({
       } else {
         setActualZIndex((prev) => {
           if (prev <= globalModalZIndex && prev < 110) {
-             globalModalZIndex += 10;
-             return globalModalZIndex;
+            globalModalZIndex += 10;
+            return globalModalZIndex;
           }
           return prev;
         });
       }
     }
   }, [isOpen, zIndex]);
+
+  const handleHeaderContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    showMenu(e.clientX, e.clientY, [
+      {
+        label: t.modalPresentationModeModal,
+        icon: modalPresentationMode === 'modal' ? 'radio_button_checked' : 'radio_button_unchecked',
+        action: () => setModalPresentationMode?.('modal'),
+      },
+      {
+        label: t.modalPresentationModeSidebar,
+        icon: modalPresentationMode === 'sidebar' ? 'radio_button_checked' : 'radio_button_unchecked',
+        action: () => setModalPresentationMode?.('sidebar'),
+        disabled: preventSidebar,
+      },
+      { separator: true },
+      {
+        label: `${t.sidebarModalWidth} (${t.sidebarModalWidthNarrow})`,
+        icon: sidebarModalWidth === 'sm' ? 'check_circle' : 'circle',
+        action: () => setSidebarModalWidth?.('sm'),
+        disabled: !isSidebar,
+      },
+      {
+        label: `${t.sidebarModalWidth} (${t.sidebarModalWidthStandard})`,
+        icon: sidebarModalWidth === 'md' ? 'check_circle' : 'circle',
+        action: () => setSidebarModalWidth?.('md'),
+        disabled: !isSidebar,
+      },
+      {
+        label: `${t.sidebarModalWidth} (${t.sidebarModalWidthWide})`,
+        icon: sidebarModalWidth === 'lg' ? 'check_circle' : 'circle',
+        action: () => setSidebarModalWidth?.('lg'),
+        disabled: !isSidebar,
+      },
+      {
+        label: `${t.sidebarModalWidth} (${t.sidebarModalWidthExtraWide})`,
+        icon: sidebarModalWidth === 'xl' ? 'check_circle' : 'circle',
+        action: () => setSidebarModalWidth?.('xl'),
+        disabled: !isSidebar,
+      },
+    ]);
+  };
 
   if (!isOpen) return null;
 
@@ -268,14 +324,17 @@ export const Modal: React.FC<ModalProps> = ({
         {title || tabs || headerActions ? (
           <div className='h-full flex flex-col overflow-hidden'>
             {/* Header - Windows 10 Style (Compact & Functional) */}
-            <div className='shrink-0 border-b border-(--border-divider)/50 bg-(--bg-card) px-4 h-11 flex items-center relative'>
+            <div
+              className='shrink-0 border-b border-(--border-divider)/50 bg-(--bg-card) px-4 h-11 flex items-center relative select-none'
+              onContextMenu={handleHeaderContextMenu}
+            >
               {/* Title Section: Icon + Title */}
               {title || icon ? (
                 <div className='flex items-center gap-2 min-w-0 pe-12'>
                   {icon ? (
-                    <span 
-                      className='material-symbols-rounded text-(--text-tertiary)' 
-                      style={{ 
+                    <span
+                      className='material-symbols-rounded text-(--text-tertiary)'
+                      style={{
                         fontSize: 'var(--icon-lg)',
                         fontVariationSettings: "'FILL' 0, 'wght' 400"
                       }}
@@ -314,9 +373,9 @@ export const Modal: React.FC<ModalProps> = ({
                     className='w-8 h-8 rounded-full grid place-items-center text-(--text-tertiary) hover:text-(--text-primary) hover:bg-zinc-500/10 dark:hover:bg-zinc-400/15 active:scale-95 transition-all duration-200'
                     aria-label="Close modal"
                   >
-                    <span 
-                      className='material-symbols-rounded leading-none' 
-                      style={{ 
+                    <span
+                      className='material-symbols-rounded leading-none'
+                      style={{
                         fontSize: '22px',
                         fontVariationSettings: "'wght' 600",
                         display: 'block'
