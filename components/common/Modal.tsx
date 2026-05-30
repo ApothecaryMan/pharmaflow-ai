@@ -255,7 +255,7 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         className={
           isSidebar
-            ? `relative w-full bg-(--bg-card) border border-zinc-400/40 dark:border-zinc-500/30 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col sidebar-modal-card animate-scale-in select-none pointer-events-auto ${className}`
+            ? `relative w-full bg-(--bg-card) border border-zinc-400/40 dark:border-zinc-500/30 overflow-hidden flex flex-col sidebar-modal-card animate-scale-in select-none pointer-events-auto ${className}`
             : `relative w-full ${maxWidthClass} bg-(--bg-card) rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col animate-scale-in max-h-[95vh] border border-zinc-400/40 dark:border-zinc-500/30 ring-1 ring-inset ring-white/20 dark:ring-white/10 select-none ${className}`
         }
         style={

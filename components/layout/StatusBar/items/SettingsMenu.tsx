@@ -96,6 +96,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     customCardCss, setCustomCardCss, numeralSystem, setNumeralSystem,
     switchVariant, setSwitchVariant, badgeStyle, setBadgeStyle,
     modalPresentationMode, setModalPresentationMode,
+    sidebarModalWidth, setSidebarModalWidth,
   } = settings;
 
   const { activeBranchId, updateBranch, activeBranch } = useData();
@@ -112,6 +113,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   const quickStatusPos = useSmartPosition({ defaultAlign: 'bottom' });
   const typographyPos = useSmartPosition({ defaultAlign: 'top' });
   const blurPos = useSmartPosition({ defaultAlign: 'top' });
+  const modalSettingsPos = useSmartPosition({ defaultAlign: 'top' });
 
   // Mobile Detection
   const [isMobile, setIsMobile] = useState(false);
@@ -128,7 +130,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     quickStatusPos.resetPosition();
     typographyPos.resetPosition();
     blurPos.resetPosition();
-  }, [themesPos.resetPosition, quickStatusPos.resetPosition, typographyPos.resetPosition, blurPos.resetPosition]);
+    modalSettingsPos.resetPosition();
+  }, [themesPos.resetPosition, quickStatusPos.resetPosition, typographyPos.resetPosition, blurPos.resetPosition, modalSettingsPos.resetPosition]);
 
   useEffect(() => { if (!isOpen) closeAllSubmenus(); }, [isOpen, closeAllSubmenus]);
 
@@ -323,18 +326,54 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               <SettingsRow icon="translate" label={t.language}>
                 <SegmentedControl value={language} onChange={v => settings.setLanguage(v as any)}  size="xs" shape="pill" options={[{ label: 'EN', value: 'EN' }, { label: 'AR', value: 'AR' }]} />
               </SettingsRow>
-              <SettingsRow icon="dock_to_left" label={t.modalPresentationMode}>
-                <SegmentedControl
-                  value={modalPresentationMode || 'modal'}
-                  onChange={v => setModalPresentationMode?.(v as any)}
-                  size="xs"
-                  shape="pill"
-                  options={[
-                    { label: t.modalPresentationModeModal, value: 'modal' },
-                    { label: t.modalPresentationModeSidebar, value: 'sidebar' },
-                  ]}
-                />
-              </SettingsRow>
+              <div className="space-y-1 relative" ref={modalSettingsPos.ref}>
+                <SettingsRow icon="dock_to_left" label={t.modalSettings}>
+                  <button type="button" onClick={() => toggleSubmenu('modalSettings', modalSettingsPos.checkPosition)}>
+                    <span 
+                      className={`material-symbols-rounded transition-transform text-(--text-tertiary) ${expandedSubmenu === 'modalSettings' ? 'rotate-180' : ''}`}
+                      style={{ fontSize: 'var(--icon-settings)' }}
+                    >
+                      {modalSettingsPos.position.side === 'left' ? 'chevron_left' : 'chevron_right'}
+                    </span>
+                  </button>
+                </SettingsRow>
+                <SubmenuWrapper 
+                  isOpen={expandedSubmenu === 'modalSettings'} 
+                  isMobile={isMobile} 
+                  settingsBlur={settingsBlur} 
+                  pos={modalSettingsPos.position}
+                  title={t.modalSettings}
+                >
+                  <SettingsRow icon="dock_to_left" label={t.modalPresentationStyle}>
+                    <SegmentedControl
+                      value={modalPresentationMode || 'modal'}
+                      onChange={v => setModalPresentationMode?.(v as any)}
+                      size="xs"
+                      shape="pill"
+                      options={[
+                        { label: t.modalPresentationModeModal, value: 'modal' },
+                        { label: t.modalPresentationModeSidebar, value: 'sidebar' },
+                      ]}
+                    />
+                  </SettingsRow>
+                  {modalPresentationMode === 'sidebar' && (
+                    <SettingsRow icon="straighten" label={t.sidebarModalWidth}>
+                      <SegmentedControl
+                        value={sidebarModalWidth || 'md'}
+                        onChange={v => setSidebarModalWidth?.(v as any)}
+                        size="xs"
+                        shape="pill"
+                        options={[
+                          { label: t.sidebarModalWidthNarrow, value: 'sm' },
+                          { label: t.sidebarModalWidthStandard, value: 'md' },
+                          { label: t.sidebarModalWidthWide, value: 'lg' },
+                          { label: t.sidebarModalWidthExtraWide, value: 'xl' },
+                        ]}
+                      />
+                    </SettingsRow>
+                  )}
+                </SubmenuWrapper>
+              </div>
               <SettingsRow icon="text_fields" label={t.textTransform}>
                 <Switch
                   checked={textTransform === 'uppercase'}

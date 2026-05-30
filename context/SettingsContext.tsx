@@ -87,6 +87,7 @@ export interface SettingsState {
   switchVariant: SwitchVariant;
   badgeStyle: BadgeStyle;
   modalPresentationMode: 'modal' | 'sidebar';
+  sidebarModalWidth: 'sm' | 'md' | 'lg' | 'xl';
 }
 // Context Type
 export interface SettingsContextType extends SettingsState {
@@ -126,6 +127,7 @@ export interface SettingsContextType extends SettingsState {
   setSwitchVariant: (variant: SwitchVariant) => void;
   setBadgeStyle: (style: BadgeStyle) => void;
   setModalPresentationMode: (mode: 'modal' | 'sidebar') => void;
+  setSidebarModalWidth: (width: 'sm' | 'md' | 'lg' | 'xl') => void;
   // Helpers
   availableThemes: ThemeColor[];
   availableLanguages: { code: Language; label: string }[];
@@ -176,6 +178,7 @@ const defaultSettings: SettingsState = {
   switchVariant: 'default',
   badgeStyle: 'default',
   modalPresentationMode: 'modal',
+  sidebarModalWidth: 'md',
 };
 
 // Load settings from storage
@@ -245,6 +248,7 @@ const loadSettings = (): SettingsState => {
       switchVariant: storage.get('pharma_switchVariant', defaultSettings.switchVariant) as SwitchVariant,
       badgeStyle: storage.get('pharma_badgeStyle', defaultSettings.badgeStyle) as BadgeStyle,
       modalPresentationMode: storage.get('pharma_modalPresentationMode', defaultSettings.modalPresentationMode) as 'modal' | 'sidebar',
+      sidebarModalWidth: storage.get('pharma_sidebarModalWidth', defaultSettings.sidebarModalWidth) as 'sm' | 'md' | 'lg' | 'xl',
     };
   } catch (e) {
     console.warn('Failed to migrate old settings:', e);
@@ -408,6 +412,16 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     document.documentElement.style.setProperty('--badge-text-transform', textTransform);
     document.documentElement.style.setProperty('--badge-letter-spacing', letterSpacing);
   }, [settings.badgeStyle]);
+
+  // Apply sidebar modal width
+  useEffect(() => {
+    let widthVal = '512px';
+    if (settings.sidebarModalWidth === 'sm') widthVal = '384px';
+    else if (settings.sidebarModalWidth === 'lg') widthVal = '640px';
+    else if (settings.sidebarModalWidth === 'xl') widthVal = '768px';
+
+    document.documentElement.style.setProperty('--sidebar-modal-width', widthVal);
+  }, [settings.sidebarModalWidth]);
 
   // Apply custom CSS
   useEffect(() => {
@@ -584,6 +598,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, modalPresentationMode }));
   }, []);
 
+  const setSidebarModalWidth = useCallback((sidebarModalWidth: 'sm' | 'md' | 'lg' | 'xl') => {
+    setSettings((prev) => ({ ...prev, sidebarModalWidth }));
+  }, []);
+
   // --- Centralized Locale Resolution ---
   const numeralLocale = useMemo(() => {
     const isAR = settings.language === 'AR';
@@ -644,6 +662,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setSwitchVariant,
       setBadgeStyle,
       setModalPresentationMode,
+      setSidebarModalWidth,
       availableThemes: THEMES,
       availableLanguages: LANGUAGES,
       numeralLocale,
@@ -682,6 +701,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setSwitchVariant,
       setBadgeStyle,
       setModalPresentationMode,
+      setSidebarModalWidth,
       numeralLocale,
       textLocale,
     ]

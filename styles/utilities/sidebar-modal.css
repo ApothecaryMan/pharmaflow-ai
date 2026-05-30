@@ -47,10 +47,10 @@
     right: 16px !important;
     bottom: calc(var(--statusbar-height) + 16px) !important;
     left: auto !important;
-    width: 512px !important;
+    width: var(--sidebar-modal-width, 512px) !important;
     height: calc(100vh - var(--navbar-height) - var(--statusbar-height) - 32px) !important;
     max-height: calc(100vh - var(--navbar-height) - var(--statusbar-height) - 32px) !important;
-    border-radius: 16px !important;
+    border-radius: var(--radius-2xl, 16px) !important;
     border: 1px solid var(--border-divider) !important;
 
     /* Always slide in from the right edge */
@@ -64,7 +64,7 @@
 
   /* Shifting activation when sidebar modal is visible - physical right padding */
   .sidebar-modal-active .main-layout-content {
-    padding-right: 544px !important; /* 512px width + 16px right gap + 16px left gap */
+    padding-right: calc(var(--sidebar-modal-width, 512px) + 32px) !important;
     padding-left: 0 !important;
   }
 
@@ -72,5 +72,14 @@
   .sidebar-modal-card .content-shift-layer > div {
     max-height: none !important;
     height: 100% !important;
+  }
+
+  /* cardBorderLight overrides for sidebar modal card */
+  .thin-border-mode .sidebar-modal-card {
+    border: 1px solid var(--border-secondary) !important;
+  }
+
+  .none-border-mode .sidebar-modal-card {
+    border-color: transparent !important;
   }
 }
