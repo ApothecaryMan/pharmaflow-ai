@@ -108,14 +108,12 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     textTransform,
     sidebarVisible,
     setSidebarVisible,
-    sidebarBlur,
     hideInactiveModules,
     setHideInactiveModules,
     developerMode,
     setDeveloperMode,
     navStyle,
     setNavStyle,
-    menuBlur,
   } = useSettings();
 
   // --- Data from Context ---

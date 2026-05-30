@@ -117,8 +117,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     setDarkMode,
     sidebarVisible,
     setSidebarVisible,
-    sidebarBlur,
-    menuBlur,
     navStyle,
     hideInactiveModules,
     sidebarStyle,
@@ -141,7 +139,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   };
 
   return (
-    <ContextMenuProvider enableGlassEffect={menuBlur}>
+    <ContextMenuProvider enableGlassEffect={false}>
       <DynamicEventLayer view={view} />
       <GlobalContextMenuWrapper
         t={t}
@@ -161,7 +159,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         >
           {/* TitleBar (Only in Tauri) */}
           {isTauri() && !isStandalone && (
-            <TitleBar 
+            <TitleBar
               onLogout={onLogout}
               onOpenInWindow={onOpenInWindow}
               onModuleChange={handleModuleChange}
@@ -214,7 +212,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               {!isStandalone && currentEmployeeId && (
                 <motion.aside
                   initial={false}
-                  animate={{ 
+                  animate={{
                     width: isActuallyCollapsed ? 80 : 256,
                   }}
                   transition={{
@@ -243,27 +241,27 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 </motion.aside>
               )}
 
-            {/* Mobile Navigation (Drawer & Bottom Bar) */}
-            <MobileNavigation
-              mobileMenuOpen={mobileMenuOpen}
-              setMobileMenuOpen={setMobileMenuOpen}
-              filteredMenuItems={filteredMenuItems}
-              activeModule={activeModule}
-              handleModuleChange={handleModuleChange}
-              view={view}
-              dashboardSubView={dashboardSubView}
-              handleNavigate={handleNavigate}
-              handleViewChange={handleViewChange}
-              theme={theme}
-              t={t}
-              language={language}
-              hideInactiveModules={hideInactiveModules}
-              isStandalone={isStandalone}
-              profileImage={profileImage}
-              currentEmployeeId={currentEmployeeId}
-              onSelectEmployee={setCurrentEmployeeId}
-              employees={employees}
-            />
+              {/* Mobile Navigation (Drawer & Bottom Bar) */}
+              <MobileNavigation
+                mobileMenuOpen={mobileMenuOpen}
+                setMobileMenuOpen={setMobileMenuOpen}
+                filteredMenuItems={filteredMenuItems}
+                activeModule={activeModule}
+                handleModuleChange={handleModuleChange}
+                view={view}
+                dashboardSubView={dashboardSubView}
+                handleNavigate={handleNavigate}
+                handleViewChange={handleViewChange}
+                theme={theme}
+                t={t}
+                language={language}
+                hideInactiveModules={hideInactiveModules}
+                isStandalone={isStandalone}
+                profileImage={profileImage}
+                currentEmployeeId={currentEmployeeId}
+                onSelectEmployee={setCurrentEmployeeId}
+                employees={employees}
+              />
 
               {/* Actual Page Surface */}
               <main className='flex-1 h-full overflow-hidden relative main-layout-content'>

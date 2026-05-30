@@ -76,7 +76,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     theme: currentTheme,
     darkMode,
     navStyle = 1,
-    sidebarBlur,
     hideInactiveModules,
     developerMode,
   } = useSettings();

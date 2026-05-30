@@ -17,11 +17,10 @@
   --statusbar-height: 24px;
 }
 
-/* 2. Backdrop blur & override rules */
+/* 2. Backdrop override rules */
 .modal-backdrop,
 .sidebar-modal-backdrop {
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background-color: rgba(0, 0, 0, 0.4);
 }
 
 @media (min-width: 768px) {

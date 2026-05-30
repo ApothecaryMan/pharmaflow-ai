@@ -54,7 +54,6 @@ export const NavModules: React.FC<NavModulesProps> = ({
     navStyle = 1,
     hideInactiveModules,
     developerMode,
-    sidebarBlur,
   } = useSettings();
 
   const t = TRANSLATIONS[language];
@@ -204,7 +203,7 @@ export const NavModules: React.FC<NavModulesProps> = ({
                   theme={theme}
                   language={language}
                   hideInactiveModules={hideInactiveModules}
-                  blur={sidebarBlur}
+                  blur={false}
                   anchorEl={activeAnchor}
                   onMouseEnter={cancelClose}
                   onMouseLeave={handleMouseLeave}

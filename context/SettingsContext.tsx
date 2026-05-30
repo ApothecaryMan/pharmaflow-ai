@@ -59,11 +59,6 @@ export interface SettingsState {
   numeralSystem: 'AR' | 'EN';
   // UI Preferences
   navStyle: 1 | 2 | 3;
-  dropdownBlur: boolean;
-  sidebarBlur: boolean;
-  menuBlur: boolean;
-  tooltipBlur: boolean;
-  settingsBlur: boolean;
   sidebarVisible: boolean;
   sidebarStyle: 1 | 2 | 3; // 1: Normal, 2: Mini, 3: Auto-Expand
   cardBorderLight: 'default' | 'thin' | 'none';
@@ -102,11 +97,6 @@ export interface SettingsContextType extends SettingsState {
   setNumeralSystem: (system: 'AR' | 'EN') => void;
   // UI Actions
   setNavStyle: (style: 1 | 2 | 3) => void;
-  setDropdownBlur: (blur: boolean) => void;
-  setSidebarBlur: (blur: boolean) => void;
-  setMenuBlur: (blur: boolean) => void;
-  setTooltipBlur: (blur: boolean) => void;
-  setSettingsBlur: (blur: boolean) => void;
   setSidebarVisible: (visible: boolean) => void;
   setSidebarStyle: (style: 1 | 2 | 3) => void;
   setCardBorderLight: (style: 'default' | 'thin' | 'none') => void;
@@ -153,11 +143,6 @@ const defaultSettings: SettingsState = {
   textTransform: 'uppercase',
   numeralSystem: 'EN',
   navStyle: 2,
-  dropdownBlur: false,
-  sidebarBlur: false,
-  menuBlur: false,
-  tooltipBlur: false,
-  settingsBlur: false,
   sidebarVisible: false,
   sidebarStyle: 1,
   cardBorderLight: 'default',
@@ -223,15 +208,10 @@ const loadSettings = (): SettingsState => {
       fontFamilyAR: fontFamilyAR || defaultSettings.fontFamilyAR,
       textTransform: (textTransform as 'normal' | 'uppercase') || defaultSettings.textTransform,
       navStyle: navStyle ? (Number(navStyle) as 1 | 2 | 3) : defaultSettings.navStyle,
-      dropdownBlur: dropdownBlur ?? defaultSettings.dropdownBlur,
-      sidebarBlur: storage.get('pharma_sidebarBlur', defaultSettings.sidebarBlur),
-      menuBlur: storage.get('pharma_menuBlur', defaultSettings.menuBlur),
-      tooltipBlur: storage.get('pharma_tooltipBlur', defaultSettings.tooltipBlur),
-      settingsBlur: storage.get('pharma_settingsBlur', defaultSettings.settingsBlur),
       sidebarVisible: sidebarVisible ?? defaultSettings.sidebarVisible,
-      sidebarStyle: storage.get('pharma_sidebarStyle', 
-        storage.get('pharma_sidebarCollapsed', false) 
-          ? (storage.get('pharma_sidebarHoverExpand', false) ? 3 : 2) 
+      sidebarStyle: storage.get('pharma_sidebarStyle',
+        storage.get('pharma_sidebarCollapsed', false)
+          ? (storage.get('pharma_sidebarHoverExpand', false) ? 3 : 2)
           : 1
       ) as 1 | 2 | 3,
       cardBorderLight: storage.get('pharma_cardBorderLight', defaultSettings.cardBorderLight),
@@ -431,7 +411,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       styleEl.id = 'pharma-custom-card-css';
       document.head.appendChild(styleEl);
     }
-    
+
     if (settings.customCardCss && settings.enableCustomCardCss) {
       // Smart CSS processing: Add !important to each property if missing
       const processedCss = settings.customCardCss
@@ -499,32 +479,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, navStyle }));
   }, []);
 
-  const setDropdownBlur = useCallback((dropdownBlur: boolean) => {
-    setSettings((prev) => ({
-      ...prev,
-      dropdownBlur,
-      sidebarBlur: dropdownBlur,
-      menuBlur: dropdownBlur,
-      tooltipBlur: dropdownBlur,
-      settingsBlur: dropdownBlur,
-    }));
-  }, []);
 
-  const setSidebarBlur = useCallback((sidebarBlur: boolean) => {
-    setSettings((prev) => ({ ...prev, sidebarBlur }));
-  }, []);
-
-  const setMenuBlur = useCallback((menuBlur: boolean) => {
-    setSettings((prev) => ({ ...prev, menuBlur }));
-  }, []);
-
-  const setTooltipBlur = useCallback((tooltipBlur: boolean) => {
-    setSettings((prev) => ({ ...prev, tooltipBlur }));
-  }, []);
-
-  const setSettingsBlur = useCallback((settingsBlur: boolean) => {
-    setSettings((prev) => ({ ...prev, settingsBlur }));
-  }, []);
 
   const setSidebarVisible = useCallback((sidebarVisible: boolean) => {
     setSettings((prev) => ({ ...prev, sidebarVisible }));
@@ -620,7 +575,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (typeof window !== 'undefined') {
       window.__NUMERAL_LOCALE__ = numeralLocale;
       window.__TEXT_LOCALE__ = textLocale;
-      
+
       // Trigger global DOM update for raw numbers
       if ((window as any).__UPDATE_DIGITS__) {
         (window as any).__UPDATE_DIGITS__();
@@ -636,11 +591,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setLanguage,
       setTextTransform,
       setNavStyle,
-      setDropdownBlur,
-      setSidebarBlur,
-      setMenuBlur,
-      setTooltipBlur,
-      setSettingsBlur,
       setSidebarVisible,
       setSidebarStyle,
       setCardBorderLight,
@@ -674,12 +624,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setDarkMode,
       setLanguage,
       setTextTransform,
-      setNavStyle,
-      setDropdownBlur,
-      setSidebarBlur,
-      setMenuBlur,
-      setTooltipBlur,
-      setSettingsBlur,
       setSidebarVisible,
       setSidebarStyle,
       setCardBorderLight,
