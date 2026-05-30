@@ -18,6 +18,7 @@ import {
   type Key,
 } from "react";
 import { createPortal } from "react-dom";
+import { Plus, Minus, X, Loader2, Locate, Maximize } from "lucide-react";
 import Icons from '@/components/common/Icons';
 
 import { cn } from "@/lib/utils";
@@ -35,7 +36,7 @@ if (typeof window !== "undefined") {
 
 const defaultStyles = {
   dark: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
-  light: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+  light: "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json",
 };
 
 type Theme = "light" | "dark" | "system";
@@ -1395,8 +1396,6 @@ type MapClusterLayerProps<
     coordinates: [number, number],
     pointCount: number
   ) => void;
-  /** React key for reconciliation */
-  key?: Key;
 };
 
 function MapClusterLayer<
@@ -1410,7 +1409,6 @@ function MapClusterLayer<
   pointColor = "#3b82f6",
   onPointClick,
   onClusterClick,
-  key,
 }: MapClusterLayerProps<P>) {
   const { map, isLoaded } = useMap();
   const id = useId();
