@@ -144,12 +144,21 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setExpandedSubmenu(prev => prev === name ? null : name);
   };
 
-  const menuContainerClasses = useMemo(() => `
-    absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
-    ${align === 'start' ? 'inset-s-0 origin-top-start' : 'inset-e-0 origin-top-end'}
-    w-64 rounded-xl shadow-2xl border border-(--border-divider) z-110 animate-fade-in
-    bg-(--bg-menu)
-  `, [dropDirection, align]);
+  const menuContainerClasses = useMemo(() => {
+    if (isMobile) {
+      return `
+        fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+        w-[calc(100vw-32px)] max-w-sm max-h-[80vh] overflow-y-auto rounded-2xl shadow-2xl border border-(--border-divider) z-150 animate-scale-in
+        bg-(--bg-menu)
+      `;
+    }
+    return `
+      absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
+      ${align === 'start' ? 'inset-s-0 origin-top-start' : 'inset-e-0 origin-top-end'}
+      w-64 rounded-xl shadow-2xl border border-(--border-divider) z-110 animate-fade-in
+      bg-(--bg-menu)
+    `;
+  }, [dropDirection, align, isMobile]);
 
   return (
     <div className={`relative ${showTrigger && triggerVariant === 'statusBar' ? 'h-full flex items-center' : ''}`} ref={dropdownRef}>
@@ -164,7 +173,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
       )}
 
       {isOpen && (
-        <div className={menuContainerClasses}>
+        <>
+          {isMobile && (
+            <div 
+              className="fixed inset-0 bg-black/40 z-140 animate-fade-in"
+              onClick={() => setIsOpen(false)}
+            />
+          )}
+          <div className={menuContainerClasses}>
           <div className="px-3 py-2 border-b border-(--border-divider) text-center">
             <span className="text-xs font-bold text-(--text-primary)">{t.settings}</span>
           </div>
@@ -475,7 +491,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               )}
             </div>
           </div>
-        )}
+        </>
+      )}
     </div>
   );
 };

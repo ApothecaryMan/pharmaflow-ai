@@ -50,7 +50,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
       filterConfigs = [],
       activeFilters = {},
       onUpdateFilter,
-      
+
       enableAutocomplete = false,
       suggestions = [],
       onSuggestionAccept,
@@ -75,37 +75,37 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 
     // Update currentSuggestion via side-effect to prevent anti-patterns
     useEffect(() => {
-        if (!enableAutocomplete || !value || !suggestions.length) {
-            setCurrentSuggestion('');
-            return;
-        }
-        const match = suggestions.find(s => 
-            s.toLowerCase().startsWith(value.toLowerCase()) && 
-            s.toLowerCase() !== value.toLowerCase()
-        );
-        setCurrentSuggestion(match || '');
+      if (!enableAutocomplete || !value || !suggestions.length) {
+        setCurrentSuggestion('');
+        return;
+      }
+      const match = suggestions.find(s =>
+        s.toLowerCase().startsWith(value.toLowerCase()) &&
+        s.toLowerCase() !== value.toLowerCase()
+      );
+      setCurrentSuggestion(match || '');
     }, [value, suggestions, enableAutocomplete]);
 
     // Calculate suggestion ghost text purely
     const ghostText = useMemo(() => {
-        if (!enableAutocomplete || !value || !currentSuggestion) return '';
-        
-        // Ensure the suggestion still matches the current input
-        if (!currentSuggestion.toLowerCase().startsWith(value.toLowerCase())) return '';
+      if (!enableAutocomplete || !value || !currentSuggestion) return '';
 
-        // Normalize to lowercase so it can follow dynamic casing logic
-        return currentSuggestion.slice(value.length).toLowerCase();
+      // Ensure the suggestion still matches the current input
+      if (!currentSuggestion.toLowerCase().startsWith(value.toLowerCase())) return '';
+
+      // Normalize to lowercase so it can follow dynamic casing logic
+      return currentSuggestion.slice(value.length).toLowerCase();
     }, [value, currentSuggestion, enableAutocomplete]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        setIsCapsLock(e.getModifierState('CapsLock'));
-        if (ghostText && (e.key === 'ArrowRight' || e.key === 'Tab')) {
-            e.preventDefault();
-            const fullTerm = value + ghostText;
-            onSearchChange(fullTerm);
-            onSuggestionAccept?.(fullTerm);
-        }
-        props.onKeyDown?.(e);
+      setIsCapsLock(e.getModifierState('CapsLock'));
+      if (ghostText && (e.key === 'ArrowRight' || e.key === 'Tab')) {
+        e.preventDefault();
+        const fullTerm = value + ghostText;
+        onSearchChange(fullTerm);
+        onSuggestionAccept?.(fullTerm);
+      }
+      props.onKeyDown?.(e);
     };
 
     const activeGroups = Object.keys(activeFilters).filter(
@@ -131,11 +131,11 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     const handleOpenFilterMenu = (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      
+
       if (filterLeaveTimeoutRef.current) clearTimeout(filterLeaveTimeoutRef.current);
 
       const menuContent = (
-        <div 
+        <div
           className='font-sans'
           onMouseEnter={() => {
             if (filterLeaveTimeoutRef.current) clearTimeout(filterLeaveTimeoutRef.current);
@@ -219,9 +219,9 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         `}>
           {/* leading icon removed ps-3 since wrapper has ps-3 */}
           {typeof icon === 'string' ? (
-            <span 
-              className='material-symbols-rounded' 
-              style={{ 
+            <span
+              className='material-symbols-rounded'
+              style={{
                 fontSize: '22px',
                 fontVariationSettings: isFocused ? "'FILL' 0, 'wght' 700, 'GRAD' 0, 'opsz' 24" : "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24"
               }}
@@ -237,32 +237,32 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
              relative flex-1 h-full flex items-center
              ${hasActiveFilters ? 'ms-1' : 'ms-2'}
         `}>
-            <input
-              ref={ref}
-              {...props}
-              type='search'
-              value={value}
-              onChange={(e) => onSearchChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onKeyUp={(e) => setIsCapsLock(e.getModifierState('CapsLock'))}
-              placeholder={hasActiveFilters ? placeholder?.split(',')[0] + '...' : placeholder}
-              spellCheck='false'
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="none"
-              inputMode="search"
-              className={`
+          <input
+            ref={ref}
+            {...props}
+            type='search'
+            value={value}
+            onChange={(e) => onSearchChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onKeyUp={(e) => setIsCapsLock(e.getModifierState('CapsLock'))}
+            placeholder={hasActiveFilters ? placeholder?.split(',')[0] + '...' : placeholder}
+            spellCheck='false'
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="none"
+            inputMode="search"
+            className={`
                 w-full h-full bg-transparent
                 text-base font-medium text-gray-900 dark:text-gray-100 
                 placeholder-gray-400 outline-hidden
-                [&-webkit-search-cancel-button]:appearance-none
+                [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-cancel-button]:hidden
                 ${className}
               `}
-            />
-            {ghostText && (
-                <div className={`absolute inset-y-0 ${dir === 'rtl' ? 'right-0' : 'left-0'} flex items-center pointer-events-none overflow-hidden select-none`}>
-                    <span className="invisible whitespace-pre text-base font-medium">{value}</span>
-                    <span className={`
+          />
+          {ghostText && (
+            <div className={`absolute inset-y-0 ${dir === 'rtl' ? 'right-0' : 'left-0'} flex items-center pointer-events-none overflow-hidden select-none`}>
+              <span className="invisible whitespace-pre text-base font-medium">{value}</span>
+              <span className={`
                         inline-flex items-center px-1.5 py-0.5 ms-1
                         rounded-lg 
                         bg-gray-100 dark:bg-(--bg-surface-neutral) 
@@ -271,11 +271,11 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                         animate-in fade-in duration-100
                         ${isCapsLock ? 'uppercase' : ''}
                     `}>
-                        {isCapsLock ? ghostText.toUpperCase() : ghostText}
-                        <span className="material-symbols-rounded ms-1 opacity-60" style={{ fontSize: 'var(--icon-sm)' }}>keyboard_tab</span>
-                    </span>
-                </div>
-            )}
+                {isCapsLock ? ghostText.toUpperCase() : ghostText}
+                <span className="material-symbols-rounded ms-1 opacity-60" style={{ fontSize: 'var(--icon-sm)' }}>keyboard_tab</span>
+              </span>
+            </div>
+          )}
         </div>
 
         {hasActiveFilters && (
@@ -307,10 +307,9 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             <div className={`
               flex items-center h-8 px-1 ${rounded === 'full' ? 'rounded-full' : 'rounded-2xl'}
               border
-              ${
-                hasActiveFilters
-                  ? 'border-gray-200 dark:border-(--border-divider) bg-white dark:bg-(--bg-surface-neutral) shadow-xs'
-                  : 'border-transparent bg-transparent hover:border-gray-200 dark:hover:border-(--border-divider) hover:bg-gray-50 dark:hover:bg-(--bg-surface-neutral)'
+              ${hasActiveFilters
+                ? 'border-gray-200 dark:border-(--border-divider) bg-white dark:bg-(--bg-surface-neutral) shadow-xs'
+                : 'border-transparent bg-transparent hover:border-gray-200 dark:hover:border-(--border-divider) hover:bg-gray-50 dark:hover:bg-(--bg-surface-neutral)'
               }
             `}>
               {hasActiveFilters && (
@@ -334,8 +333,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                   onClick={handleOpenFilterMenu}
                   className={`
                     flex items-center justify-center w-7 h-7 rounded-full
-                    ${hasActiveFilters 
-                      ? 'text-emerald-600 dark:text-emerald-400 font-bold' 
+                    ${hasActiveFilters
+                      ? 'text-emerald-600 dark:text-emerald-400 font-bold'
                       : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}
                   `}
                 >
