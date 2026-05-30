@@ -27,6 +27,7 @@ import { InteractiveCard } from '../common/InteractiveCard';
 import { PageHeader } from '../common/PageHeader';
 import { useInventoryHeader } from './InventoryHeaderContext';
 import { AddProduct } from './AddProduct';
+import { EditProductModal } from './EditProductModal';
 import { useStatusBar } from '../layout/StatusBar';
 import { useSettings } from '../../context';
 import { SearchEngineInput } from '../common/SearchEngineInput';
@@ -137,31 +138,8 @@ export const Inventory: React.FC<InventoryProps> = ({
   const [printModalDrug, setPrintModalDrug] = useState<Drug | null>(null);
   const [printQuantity, setPrintQuantity] = useState(1);
 
-  // Form State for Add Product
-  const [formData, setFormData] = useState<Partial<Drug>>({
-    name: '',
-    nameAr: '',
-    genericName: [], // Changed to array
-    category: 'General',
-    publicPrice: 0,
-    unitPrice: 0,
-    costPrice: 0,
-    unitCostPrice: 0,
-    stock: 0,
-    expiryDate: '',
-    description: '',
-    barcode: '',
-    internalCode: '',
-    unitsPerPack: 1,
-    maxDiscount: 10,
-    additionalBarcodes: [],
-    dosageForm: '',
-    status: 'active',
-  });
-
-  // Dropdown States
-  const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
-  const [isEditDosageOpen, setIsEditDosageOpen] = useState(false);
+  // Initial Data for Add/Duplicate modal flow
+  const [initialData, setInitialData] = useState<Partial<Drug> | null>(null);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -212,19 +190,7 @@ export const Inventory: React.FC<InventoryProps> = ({
 
   const handleOpenEdit = (drug: Drug) => {
     setEditingDrug(drug);
-    // Load stock as PACKS for editing
-    const stockInPacks = convertToPacks(drug.stock, drug.unitsPerPack);
-    setFormData({
-      ...drug,
-      stock: stockInPacks,
-      status: drug.status || 'active',
-      maxDiscount: drug.maxDiscount ?? 10,
-      genericName: Array.isArray(drug.genericName)
-        ? drug.genericName
-        : drug.genericName
-          ? [drug.genericName]
-          : [],
-    });
+    setInitialData(null);
     setIsModalOpen(true);
     setActiveMenuId(null);
   };
@@ -232,7 +198,7 @@ export const Inventory: React.FC<InventoryProps> = ({
   const handleDuplicate = (drug: Drug) => {
     setEditingDrug(null); // Set as new drug
     const { id, ...rest } = drug;
-    setFormData({
+    setInitialData({
       ...rest,
       name: `${rest.name} (Copy)`,
       genericName: Array.isArray(rest.genericName)
@@ -263,38 +229,7 @@ export const Inventory: React.FC<InventoryProps> = ({
     setActiveMenuId(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
 
-    // Prepare data: Convert stock (Packs) to Total Units
-    const submissionData = {
-      ...formData,
-      stock: validateStock(resolveUnits(formData.stock || 0, false, formData.unitsPerPack)),
-    };
-
-    if (editingDrug) {
-      onUpdateDrug({ ...editingDrug, ...submissionData } as Drug);
-      setIsModalOpen(false);
-    } else if (formData.name && formData.expiryDate) {
-      // New drug (Add or Duplicate)
-      onAddDrug(submissionData as Omit<Drug, 'id' | 'branchId' | 'createdAt' | 'updatedAt'>);
-      setIsModalOpen(false);
-      if (mode === 'add') setMode('list');
-    }
-  };
-
-  const generateInternalCode = () => {
-    // Find highest existing 6-digit numeric code
-    const existingCodes = inventory
-      .map((d) => d.internalCode)
-      .filter((c) => c && /^\d{6}$/.test(c))
-      .map((c) => parseInt(c!, 10));
-
-    const maxCode = existingCodes.length > 0 ? Math.max(...existingCodes) : 0;
-    const nextCode = String(maxCode + 1).padStart(6, '0');
-
-    setFormData({ ...formData, internalCode: nextCode });
-  };
 
   // Categories are now determined dynamically using helper
   const allCategories = getCategories(currentLang);
@@ -1100,400 +1035,22 @@ export const Inventory: React.FC<InventoryProps> = ({
           </div>
         </Modal>
       )}
-
       {/* Add/Edit Modal Overlay */}
-      {isModalOpen && (
-        <Modal
-          isOpen={true}
-          onClose={() => setIsModalOpen(false)}
-          size='4xl'
-          zIndex={50}
-          title={editingDrug ? t.modal.edit : t.modal.add}
-          icon={editingDrug ? 'edit' : 'add_circle'}
-        >
-          <form onSubmit={handleSubmit} className='h-full'>
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-              {/* LEFT COLUMN: Main Info */}
-              <div className='md:col-span-2 space-y-4 flex flex-col'>
-                <div className='grid grid-cols-2 gap-4'>
-                  <div>
-                    <label htmlFor="brand-name" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t.modal.brand} *
-                    </label>
-                    <input
-                      id="brand-name"
-                      required
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="name-arabic" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t.modal.nameArabic || 'Arabic Name'}
-                    </label>
-                    <input
-                      id="name-arabic"
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                      value={formData.nameAr || ''}
-                      onChange={(e) => setFormData({ ...formData, nameAr: e.target.value })}
-                      dir="rtl"
-                    />
-                  </div>
-                  <div className='md:col-span-2 space-y-1'>
-                    <label htmlFor="generic-name" className='block text-xs font-medium text-gray-700 dark:text-gray-300'>
-                      Generic Name
-                    </label>
-                    <input
-                      id="generic-name"
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                      value={Array.isArray(formData.genericName) ? formData.genericName.join(', ') : formData.genericName || ''}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          genericName: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className='grid grid-cols-2 gap-4'>
-                  <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t.modal.category} *
-                    </label>
-                    <FilterDropdown
-                      variant='input'
-                      items={getCategories(currentLang)}
-                      selectedItem={formData.category} // English ID
-                      isOpen={isEditCategoryOpen}
-                      onToggle={() => setIsEditCategoryOpen(!isEditCategoryOpen)}
-                      onSelect={(val) => {
-                        setFormData({ ...formData, category: val, dosageForm: '' });
-                        setIsEditCategoryOpen(false);
-                      }}
-                      keyExtractor={(c) => c}
-                      renderSelected={(c) => getLocalizedCategory(c || 'General', currentLang)}
-                      renderItem={(c) => getLocalizedCategory(c, currentLang)}
-                      className='w-full h-[50px]'
-                      color={color}
-                    />
-                  </div>
-                  <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      Product Type
-                    </label>
-                    <FilterDropdown
-                      variant='input'
-                      items={getProductTypes(formData.category || 'General', currentLang)} // English IDs
-                      selectedItem={formData.dosageForm || ''}
-                      isOpen={isEditDosageOpen}
-                      onToggle={() => setIsEditDosageOpen(!isEditDosageOpen)}
-                      onSelect={(val) => {
-                        setFormData({ ...formData, dosageForm: val });
-                        setIsEditDosageOpen(false);
-                      }}
-                      keyExtractor={(c) => c}
-                      renderSelected={(c) =>
-                        c
-                          ? getLocalizedProductType(c, currentLang)
-                          : t.addProduct?.placeholders?.dosageForm || 'Select Type'
-                      }
-                      renderItem={(c) => getLocalizedProductType(c, currentLang)}
-                      className='w-full h-[50px]'
-                      color={color}
-                    />
-                  </div>
-                </div>
-
-                <div className='space-y-1.5'>
-                  <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t.fields?.status || 'Product Status'}
-                  </label>
-                  <div className='flex bg-gray-50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-200 dark:border-gray-700'>
-                    <button
-                      type='button'
-                      onClick={() => setFormData({ ...formData, status: 'active' })}
-                      className={`flex-1 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all ${formData.status === 'active' || !formData.status ? 'bg-white dark:bg-gray-700 shadow-sm text-green-600 dark:text-green-400' : 'text-gray-400'}`}
-                    >
-                      {t.active || 'Active'}
-                    </button>
-                    <button
-                      type='button'
-                      onClick={() => setFormData({ ...formData, status: 'inactive' })}
-                      className={`flex-1 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all ${formData.status === 'inactive' ? 'bg-white dark:bg-gray-700 shadow-sm text-amber-600 dark:text-amber-400' : 'text-gray-400'}`}
-                    >
-                      {t.inactive || 'Inactive'}
-                    </button>
-                    <button
-                      type='button'
-                      onClick={() => setFormData({ ...formData, status: 'discontinued' })}
-                      className={`flex-1 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all ${formData.status === 'discontinued' ? 'bg-white dark:bg-gray-700 shadow-sm text-red-600 dark:text-red-400' : 'text-gray-400'}`}
-                    >
-                      {t.discontinued || 'Discontinued'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Multi-Barcode Input */}
-                <div>
-                  <label htmlFor="barcode-input" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t.modal.barcode}
-                  </label>
-                  <div className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus-within:ring-2 focus-within:ring-blue-500 transition-all flex flex-wrap gap-2 items-center min-h-[42px]'>
-                    {formData.barcode && (
-                      <span className='badge-info gap-1'>
-                        <span className='material-symbols-rounded text-[14px]'>qr_code_2</span>
-                        {formData.barcode}
-                        <button
-                          type='button'
-                          onClick={() => setFormData({ ...formData, barcode: '' })}
-                          className='hover:text-blue-950 dark:hover:text-blue-100'
-                        >
-                          <span className='material-symbols-rounded text-[14px]'>close</span>
-                        </button>
-                      </span>
-                    )}
-                    {formData.additionalBarcodes?.map((code, idx) => (
-                      <span
-                        key={idx}
-                        className='badge-neutral gap-1'
-                      >
-                        {code}
-                        <button
-                          type='button'
-                          onClick={() => {
-                            const newCodes = [...(formData.additionalBarcodes || [])];
-                            newCodes.splice(idx, 1);
-                            setFormData({ ...formData, additionalBarcodes: newCodes });
-                          }}
-                          className='hover:text-gray-950 dark:hover:text-gray-100'
-                        >
-                          <span className='material-symbols-rounded text-[14px]'>close</span>
-                        </button>
-                      </span>
-                    ))}
-                    <input
-                      className='flex-1 bg-transparent border-none outline-hidden text-sm min-w-[120px]'
-                      placeholder={!formData.barcode ? 'Scan primary barcode' : 'Add more...'}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          const val = e.currentTarget.value.trim();
-                          if (val) {
-                            if (!formData.barcode) setFormData({ ...formData, barcode: val });
-                            else
-                              setFormData({
-                                ...formData,
-                                additionalBarcodes: [...(formData.additionalBarcodes || []), val],
-                              });
-                            e.currentTarget.value = '';
-                          }
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="internal-code" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t.modal.internalCode}
-                  </label>
-                  <div className='relative'>
-                    <input
-                      id="internal-code"
-                      className='w-full pl-3 pr-10 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm font-mono'
-                      placeholder='Auto-generated'
-                      value={formData.internalCode || ''}
-                      onChange={(e) => setFormData({ ...formData, internalCode: e.target.value })}
-                    />
-                    <button
-                      type='button'
-                      onClick={generateInternalCode}
-                      className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-primary-500 transition-colors'
-                      title='Auto-Generate'
-                    >
-                      <span className='material-symbols-rounded text-[20px]'>autorenew</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div className='flex-1 flex flex-col'>
-                  <label htmlFor="description-input" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t.modal.desc}
-                  </label>
-                  <SmartTextarea
-                    id="description-input"
-                    className='w-full flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm resize-none'
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              {/* RIGHT COLUMN: Details */}
-              <div className='space-y-4'>
-                <div className='bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 space-y-4'>
-                  <h4 className='text-xs font-bold text-gray-500 uppercase flex items-center gap-2'>
-                    <span className='material-symbols-rounded text-base'>inventory</span> Inventory
-                  </h4>
-                  <div className='grid grid-cols-2 gap-3'>
-                    <div>
-                      <label htmlFor="stock-input" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        {t.modal.stock}
-                      </label>
-                      <input
-                        id="stock-input"
-                        type='number'
-                        step='0.01'
-                        required
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                        value={formData.stock}
-                        onChange={(e) =>
-                          setFormData({ ...formData, stock: parseFloat(e.target.value) || 0 })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="units-pack" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        {t.modal.unitsPerPack}
-                      </label>
-                      <input
-                        id="units-pack"
-                        type='number'
-                        min='1'
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                        value={formData.unitsPerPack || 1}
-                        onChange={(e) =>
-                          setFormData({ ...formData, unitsPerPack: parseInt(e.target.value) || 1 })
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t.modal.expiry}
-                    </label>
-                    <SmartDateInput
-                      required
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                      value={formData.expiryDate}
-                      onChange={(val) => setFormData({ ...formData, expiryDate: val })}
-                    />
-                  </div>
-                </div>
-
-                <div className='bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 space-y-4'>
-                  <h4 className='text-xs font-bold text-gray-500 uppercase flex items-center gap-2'>
-                    <span className='material-symbols-rounded text-base'>payments</span> Pricing
-                  </h4>
-                  <div className='space-y-4'>
-                    <div>
-                      <label htmlFor="public-price" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        {t.modal.publicPrice}
-                      </label>
-                      <input
-                        id="public-price"
-                        type='number'
-                        step='0.01'
-                        required
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm font-bold text-green-600'
-                        value={formData.publicPrice}
-                        onChange={(e) =>
-                          setFormData({ ...formData, publicPrice: parseFloat(e.target.value) || 0 })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="cost-price" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        {t.modal.cost}
-                      </label>
-                      <input
-                        id="cost-price"
-                        type='number'
-                        step='0.01'
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                        value={formData.costPrice || 0}
-                        onChange={(e) =>
-                          setFormData({ ...formData, costPrice: parseFloat(e.target.value) || 0 })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className='grid grid-cols-2 gap-3'>
-                    <div>
-                      <label htmlFor="unit-price" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        {currentLang === 'ar' ? 'سعر الشريط' : 'Unit Price'}
-                      </label>
-                      <input
-                        id="unit-price"
-                        type='number'
-                        step='0.01'
-                        className='w-full px-3 py-2 rounded-xl border border-amber-200 dark:border-amber-900/30 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-amber-500 outline-hidden transition-all text-sm font-bold text-amber-600'
-                        value={formData.unitPrice || 0}
-                        placeholder={formData.publicPrice && formData.unitsPerPack ? (formData.publicPrice / formData.unitsPerPack).toFixed(2) : ''}
-                        onChange={(e) =>
-                          setFormData({ ...formData, unitPrice: parseFloat(e.target.value) || 0 })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="unit-cost" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        {currentLang === 'ar' ? 'تكلفة الشريط' : 'Unit Cost'}
-                      </label>
-                      <input
-                        id="unit-cost"
-                        type='number'
-                        step='0.01'
-                        className='w-full px-3 py-2 rounded-xl border border-amber-200 dark:border-amber-900/30 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-amber-500 outline-hidden transition-all text-sm text-amber-700'
-                        value={formData.unitCostPrice || 0}
-                        placeholder={formData.costPrice && formData.unitsPerPack ? (formData.costPrice / formData.unitsPerPack).toFixed(2) : ''}
-                        onChange={(e) =>
-                          setFormData({ ...formData, unitCostPrice: parseFloat(e.target.value) || 0 })
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label htmlFor="max-discount" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      Max Discount (%)
-                    </label>
-                    <input
-                      id="max-discount"
-                      type='number'
-                      min='0'
-                      max='100'
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm text-red-500'
-                      value={formData.maxDiscount || ''}
-                      onChange={(e) =>
-                        setFormData({ ...formData, maxDiscount: parseFloat(e.target.value) })
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className='pt-6 flex gap-3 border-t border-gray-100 dark:border-gray-800 mt-6'>
-              <button
-                type='button'
-                onClick={() => setIsModalOpen(false)}
-                className='flex-1 py-3 rounded-xl font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors'
-              >
-                {t.modal.cancel}
-              </button>
-              <button
-                type='submit'
-                className={`flex-1 py-3 rounded-xl font-medium text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all active:scale-95`}
-              >
-                {t.modal.save}
-              </button>
-            </div>
-          </form>
-        </Modal>
-      )}
+      <EditProductModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingDrug(null);
+          setInitialData(null);
+        }}
+        editingDrug={editingDrug}
+        initialData={initialData}
+        inventory={inventory}
+        onAddDrug={onAddDrug}
+        onUpdateDrug={onUpdateDrug}
+        color={color}
+        t={t}
+      />
 
       {/* Print Quantity Modal */}
       {printModalDrug && (
