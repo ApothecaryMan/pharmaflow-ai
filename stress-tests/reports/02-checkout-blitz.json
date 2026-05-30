@@ -1,0 +1,592 @@
+{
+  "state": {
+    "isStdOutTTY": false,
+    "isStdErrTTY": false,
+    "testRunDurationMs": 7993.133543
+  },
+  "metrics": {
+    "iteration_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 3812.590123,
+        "p(90)": 3730.3090757,
+        "p(95)": 3771.44959935,
+        "avg": 3401.1848865,
+        "min": 2989.77965,
+        "med": 3401.1848865
+      }
+    },
+    "http_req_connecting": {
+      "values": {
+        "med": 68.366969,
+        "max": 74.656089,
+        "p(90)": 72.4916558,
+        "p(95)": 73.5738724,
+        "avg": 42.453612799999995,
+        "min": 0
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "checks": {
+      "contains": "default",
+      "values": {
+        "passes": 12,
+        "fails": 0,
+        "rate": 1
+      },
+      "type": "rate"
+    },
+    "group_duration": {
+      "values": {
+        "p(95)": 1849.6233885000001,
+        "avg": 1757.464878,
+        "min": 1655.066533,
+        "med": 1757.464878,
+        "max": 1859.863223,
+        "p(90)": 1839.383554
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "checkout_total_count": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "rate": 0.25021476111224283,
+        "count": 2
+      }
+    },
+    "checkout_rpc_duration": {
+      "contains": "time",
+      "values": {
+        "avg": 253.5,
+        "min": 138,
+        "med": 253.5,
+        "max": 369,
+        "p(90)": 345.9,
+        "p(95)": 357.45
+      },
+      "thresholds": {
+        "p(99)<8000": {
+          "ok": true
+        },
+        "p(95)<3000": {
+          "ok": true
+        }
+      },
+      "type": "trend"
+    },
+    "http_req_waiting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 314.61522080000003,
+        "p(95)": 343.62198639999997,
+        "avg": 224.2407816,
+        "min": 138.333859,
+        "med": 216.388636,
+        "max": 372.628752
+      }
+    },
+    "http_req_receiving": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 4.200845800000001,
+        "min": 0.081518,
+        "med": 0.548771,
+        "max": 10.264731,
+        "p(90)": 10.169539,
+        "p(95)": 10.217134999999999
+      }
+    },
+    "http_req_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 228.6319602,
+        "min": 138.570462,
+        "med": 216.696326,
+        "max": 373.454785,
+        "p(90)": 319.1642274,
+        "p(95)": 346.3095062
+      }
+    },
+    "http_req_blocked": {
+      "values": {
+        "p(95)": 228.8190712,
+        "avg": 109.8228162,
+        "min": 0.00067,
+        "med": 149.079018,
+        "max": 248.02062,
+        "p(90)": 209.6175224
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "data_sent": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "count": 7294,
+        "rate": 912.5332337763496
+      }
+    },
+    "data_received": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "count": 23863,
+        "rate": 2985.4374222107253
+      }
+    },
+    "http_req_sending": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 0.19033280000000002,
+        "min": 0.106716,
+        "med": 0.187369,
+        "max": 0.277262,
+        "p(90)": 0.256826,
+        "p(95)": 0.267044
+      }
+    },
+    "checkout_success_count": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "rate": 0.25021476111224283,
+        "count": 2
+      }
+    },
+    "vus_max": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 1,
+        "min": 1,
+        "max": 1
+      }
+    },
+    "iterations": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 2,
+        "rate": 0.25021476111224283
+      }
+    },
+    "http_req_tls_handshaking": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 87.488558,
+        "p(90)": 85.87445079999999,
+        "p(95)": 86.6815044,
+        "avg": 49.0361834,
+        "min": 0,
+        "med": 74.239069
+      }
+    },
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 5,
+        "rate": 0.625536902780607
+      }
+    },
+    "http_req_duration{expected_response:true}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 319.1642274,
+        "p(95)": 346.3095062,
+        "avg": 228.6319602,
+        "min": 138.570462,
+        "med": 216.696326,
+        "max": 373.454785
+      }
+    },
+    "checkout_fail_rate": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "passes": 0,
+        "fails": 0,
+        "rate": 0
+      },
+      "thresholds": {
+        "rate<0.05": {
+          "ok": true
+        }
+      }
+    },
+    "vus": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 1,
+        "min": 1,
+        "max": 1
+      }
+    },
+    "http_req_failed": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "fails": 5,
+        "rate": 0,
+        "passes": 0
+      },
+      "thresholds": {
+        "rate<0.10": {
+          "ok": true
+        }
+      }
+    }
+  },
+  "setup_data": {
+    "preStock": [
+      {
+        "id": "e936081f-de57-4dab-a860-c998893f4dfd",
+        "name": "12",
+        "stock": 4
+      },
+      {
+        "id": "6cff6435-3ec4-4de2-a7f6-edaa80d87095",
+        "name": "acne free 0.025% 30 gm ()",
+        "stock": 54
+      },
+      {
+        "id": "80ab880f-ef74-42d9-9f5b-f4a2d36d0bc8",
+        "name": "acne free 0.05% 30 gm",
+        "stock": 141
+      },
+      {
+        "id": "226e200e-761d-46f7-9d66-573ae5a22a56",
+        "name": "actozone 30mg 10",
+        "stock": 55
+      },
+      {
+        "stock": 144,
+        "id": "63f1feb5-585e-4618-8133-70046c59529b",
+        "name": "actozone 45mg 10"
+      },
+      {
+        "name": "alkapress 10/160mg 20",
+        "stock": 80,
+        "id": "cac83bd0-4f37-48d6-bc92-839253868c9e"
+      },
+      {
+        "id": "da7d9636-0de5-49ee-8301-9f091c2b424e",
+        "name": "alkapress 10mg 30",
+        "stock": 354
+      },
+      {
+        "id": "691ddbef-980c-4ba8-ae47-7029258ced23",
+        "name": "alkapress 5mg 20",
+        "stock": 263
+      },
+      {
+        "id": "6da2791e-db98-4dfe-a18c-2738c9c8c404",
+        "name": "alkapress trio 10/320/25mg 14",
+        "stock": 84
+      },
+      {
+        "id": "ca4311ca-72f4-4609-9ae7-82d8737f189e",
+        "name": "alkapress trio 5/160/12.5mg 14",
+        "stock": 54
+      },
+      {
+        "id": "a8a2ddb4-356c-40a3-a94f-891ee2e83b8c",
+        "name": "alkapress trio 5/160/25mg 14",
+        "stock": 242
+      },
+      {
+        "id": "1cb4733f-9c57-4a1e-b3ba-0bf4062104fe",
+        "name": "alucal 320mg 20",
+        "stock": 173
+      },
+      {
+        "id": "f51a7192-dec4-497e-ba55-8be9e9428cec",
+        "name": "amikacin 500mg (Amoun)",
+        "stock": 83
+      },
+      {
+        "id": "56cc8d1a-8513-41b2-b2ba-24893bb36100",
+        "name": "amikacin amoun 100mg/2ml",
+        "stock": 79
+      },
+      {
+        "id": "90125c85-2f79-43da-b85b-21431e3774ad",
+        "name": "amocomb 15 gm",
+        "stock": 87
+      },
+      {
+        "id": "47349753-ee38-4fd2-9fb0-dfea858150dd",
+        "name": "amoflam 100mg 10",
+        "stock": 32
+      },
+      {
+        "stock": 348,
+        "id": "5c8896b2-d2bd-411f-ab7f-6dff2eedad82",
+        "name": "amophage 500mg 30"
+      },
+      {
+        "id": "96919c9d-c79e-496b-906a-34dd84be0dd8",
+        "name": "amosar 25mg 20",
+        "stock": 82
+      },
+      {
+        "name": "amostigmine 0.5mg/ml 3",
+        "stock": 223,
+        "id": "32698f30-bfea-4cd8-84de-d9fac2f150c3"
+      },
+      {
+        "id": "e0d821df-cf5e-4b0e-b8dc-8466f2a596e6",
+        "name": "amostigmine 15 mg 20",
+        "stock": 290
+      },
+      {
+        "id": "d761d850-d31a-4b1e-bd73-4dab3e820176",
+        "name": "amotril 0.5mg 30",
+        "stock": 122
+      },
+      {
+        "stock": 115,
+        "id": "201bfd51-5dfe-442d-8383-4712a1b3bae8",
+        "name": "amotril 2mg 30"
+      },
+      {
+        "id": "c8637fa5-b3e5-4fb7-9792-3d7ee209e8c1",
+        "name": "amovit calcium 12",
+        "stock": 64
+      },
+      {
+        "id": "55aefa29-c35f-46cb-b08e-13c748d8ab18",
+        "name": "amovit-c 1 gm 12",
+        "stock": 42
+      },
+      {
+        "id": "d03d302c-9908-4220-90fe-3051d88e308d",
+        "name": "antiflam 1% 20 gm",
+        "stock": 117
+      },
+      {
+        "id": "1b9a616c-baf5-4f03-8565-300a2adb30d1",
+        "name": "antinal 220mg/5ml 60ml",
+        "stock": 54
+      },
+      {
+        "id": "8ed505f2-0472-4c61-9682-ef31d257c980",
+        "name": "antodine 10mg 10",
+        "stock": 123
+      },
+      {
+        "id": "395379e8-0677-459b-9386-f65b41ec0d57",
+        "name": "antodine 20 mg 10",
+        "stock": 102
+      },
+      {
+        "id": "68fcd9b7-1e5d-48b1-a769-0da006037cf9",
+        "name": "antodine 20mg/2ml 3",
+        "stock": 177
+      },
+      {
+        "id": "b96684fe-0d33-4793-8c9e-59ac5c0d4629",
+        "name": "antodine 40mg 30",
+        "stock": 398
+      },
+      {
+        "id": "e2d118a8-5a60-48b3-a1df-dfc3648b6d34",
+        "name": "apidone 125ml",
+        "stock": 79
+      },
+      {
+        "id": "ec9dabcc-8d9d-46ab-8ebe-db6b5b10157a",
+        "name": "apigent 0.1% top. cr. 15 gm",
+        "stock": 133
+      },
+      {
+        "id": "9353413d-c5d4-4e24-80e0-4cb0a889bf71",
+        "name": "apigent 3mg/gm",
+        "stock": 128
+      },
+      {
+        "name": "apigent 3mg/ml 5 ml",
+        "stock": 127,
+        "id": "5522d2e4-5801-4ff1-9254-2f527b8c38bc"
+      },
+      {
+        "id": "0f59ce62-1d1f-47ef-b09d-371d195a3f0b",
+        "name": "apigent-p 5 gm",
+        "stock": 42
+      },
+      {
+        "id": "c1aed44c-a480-4d7e-b654-6156237adb37",
+        "name": "apigent-p 5 ml",
+        "stock": -1
+      },
+      {
+        "id": "9cb1e53a-5e77-4802-9628-ee72e6ab6d42",
+        "name": "argiderm- p 15 gm",
+        "stock": 50
+      },
+      {
+        "name": "argiderm- p 40 gm",
+        "stock": 40,
+        "id": "ea504ae1-9ca1-4630-8ec0-7682ee2b601f"
+      },
+      {
+        "id": "a9c90869-ea8e-45f9-bf79-90a8fc16c6b2",
+        "name": "arythrex 100mg 10",
+        "stock": 83
+      },
+      {
+        "id": "0a6ca996-e4ab-4c45-9d70-06f5e400020d",
+        "name": "astonin-h 0.1mg 30",
+        "stock": 342
+      },
+      {
+        "id": "6904c2b2-7010-48d5-9757-824ec53c4933",
+        "name": "azalide 200mg/5ml 15ml",
+        "stock": 31
+      },
+      {
+        "id": "cfb7b1d7-ada0-4b3c-84b7-bf4bfb3e03d3",
+        "name": "azelast 125/50 mcg 25 ml",
+        "stock": 113
+      },
+      {
+        "name": "b-com forte 30",
+        "stock": 408,
+        "id": "95f22f44-2156-42d4-8aec-5cbc3902158f"
+      },
+      {
+        "name": "b.b.c. 25 ml",
+        "stock": 17,
+        "id": "bd6900c8-1004-45d5-87b6-7a7e5fa38c7a"
+      },
+      {
+        "id": "dec9ccf0-cc77-4f2b-bce9-006ef2b42bc4",
+        "name": "baby care 30 gm",
+        "stock": 39
+      },
+      {
+        "id": "ffe3d85a-8590-4577-ae03-a775ba6544b4",
+        "name": "baritava 4 mg 28",
+        "stock": 424
+      },
+      {
+        "id": "6f84189b-42ba-4d5b-ac4b-a42a3bc8a3aa",
+        "name": "beclo 50mcg/dose 200 doses",
+        "stock": 31
+      },
+      {
+        "id": "2549466d-3f23-415d-a48b-59cd8b7f79cc",
+        "name": "betafos 2ml",
+        "stock": 69
+      },
+      {
+        "id": "bd7b90ce-3967-40f0-a9ba-2dcc7a5208a4",
+        "name": "betasalic lotion 30 ml",
+        "stock": 81
+      },
+      {
+        "name": "beto-12 1mg/ml 2",
+        "stock": 262,
+        "id": "fc59e24c-8e3b-4b56-808e-608e89a2a60d"
+      }
+    ],
+    "token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjBmNzFjNjk5LTE5NDctNGUxZC04ZjgxLWUzMjhhNmE4MmIzMSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3ZoZXdjb3VtYXhpY25mc2p3Y2FpLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIwNGVkZmJiMS1jOWU1LTRmMzEtYjQ1NC04ZjliM2U0OWRlMmUiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzgwMTgzNjI3LCJpYXQiOjE3ODAxODAwMjcsImVtYWlsIjoidGVzdC1zdHJlc3NAemluYy5kZXYiLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoidGVzdC1zdHJlc3NAemluYy5kZXYiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGhvbmVfdmVyaWZpZWQiOmZhbHNlLCJzdWIiOiIwNGVkZmJiMS1jOWU1LTRmMzEtYjQ1NC04ZjliM2U0OWRlMmUifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc4MDE4MDAyN31dLCJzZXNzaW9uX2lkIjoiMGJjZWIxOTYtYzE4Ny00ZDNkLWFkNGMtODJkZGEwZGZmNzQ1IiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.FzcYclKpm_UU1fo4ll4H_5QgiP1zbCDZVozdE7OqzC5CtLrJMgUhQXFQUduybpMV8v6OEAHVVkWJANGVbfTLwQ"
+  },
+  "root_group": {
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e",
+    "groups": [
+      {
+        "id": "5c0f8025f7e0b6654089e5b00e950f1a",
+        "groups": [],
+        "checks": [
+            {
+              "passes": 1,
+              "fails": 0,
+              "name": "auth login status is 200",
+              "path": "::setup::auth login status is 200",
+              "id": "83e50c28eecbcc735b217f4caf98d173"
+            },
+            {
+              "fails": 0,
+              "name": "auth login has access_token",
+              "path": "::setup::auth login has access_token",
+              "id": "139ead8a83809cdbc14a4cff7ebf6f21",
+              "passes": 1
+            }
+          ],
+        "name": "setup",
+        "path": "::setup"
+      },
+      {
+        "path": "::🛒 POS Checkout",
+        "id": "e871c905ba2a4b208fd0211551b736b9",
+        "groups": [],
+        "checks": [
+            {
+              "path": "::🛒 POS Checkout::✅ RPC status 200",
+              "id": "0dbb6608046770c1726381909f6af250",
+              "passes": 2,
+              "fails": 0,
+              "name": "✅ RPC status 200"
+            },
+            {
+              "passes": 2,
+              "fails": 0,
+              "name": "✅ Checkout success",
+              "path": "::🛒 POS Checkout::✅ Checkout success",
+              "id": "89e532404a363ae667fa0755a96629f0"
+            },
+            {
+              "name": "✅ Has sale ID",
+              "path": "::🛒 POS Checkout::✅ Has sale ID",
+              "id": "75ff51c6d7497788e2cdb1b2e8fddde9",
+              "passes": 2,
+              "fails": 0
+            },
+            {
+              "name": "✅ Has serial ID",
+              "path": "::🛒 POS Checkout::✅ Has serial ID",
+              "id": "f0aedb13277def5bd938a14cf163594b",
+              "passes": 2,
+              "fails": 0
+            },
+            {
+              "path": "::🛒 POS Checkout::✅ Under 3s",
+              "id": "c520eff947e20011c990a80e8ecf2809",
+              "passes": 2,
+              "fails": 0,
+              "name": "✅ Under 3s"
+            }
+          ],
+        "name": "🛒 POS Checkout"
+      }
+    ],
+    "checks": []
+  },
+  "options": {
+    "summaryTrendStats": [
+      "avg",
+      "min",
+      "med",
+      "max",
+      "p(90)",
+      "p(95)"
+    ],
+    "summaryTimeUnit": "",
+    "noColor": false
+  }
+}

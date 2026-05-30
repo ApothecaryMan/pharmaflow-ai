@@ -1,0 +1,411 @@
+{
+  "metrics": {
+    "http_req_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 394.703181,
+        "p(90)": 383.1929002,
+        "p(95)": 388.94804059999996,
+        "avg": 276.96070539999994,
+        "min": 119.845042,
+        "med": 357.631902
+      }
+    },
+    "data_sent": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "count": 4008,
+        "rate": 393.45124852070575
+      }
+    },
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 5,
+        "rate": 0.49083239585916383
+      }
+    },
+    "device_error_rate": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 1
+      },
+      "thresholds": {
+        "rate<0.10": {
+          "ok": true
+        }
+      }
+    },
+    "device_search_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "min": 395,
+        "med": 395,
+        "max": 395,
+        "p(90)": 395,
+        "p(95)": 395,
+        "avg": 395
+      },
+      "thresholds": {
+        "p(95)<1000": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_waiting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 380.4607486,
+        "p(95)": 387.4761468,
+        "avg": 273.658551,
+        "min": 119.629715,
+        "med": 356.948459,
+        "max": 394.491545
+      }
+    },
+    "vus_max": {
+      "values": {
+        "value": 1,
+        "min": 1,
+        "max": 1
+      },
+      "type": "gauge",
+      "contains": "default"
+    },
+    "http_req_receiving": {
+      "values": {
+        "avg": 3.092552,
+        "min": 0.084072,
+        "med": 0.223561,
+        "max": 8.808234,
+        "p(90)": 7.789173600000001,
+        "p(95)": 8.2987038
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "device_inventory_load_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "min": 507,
+        "med": 507,
+        "max": 507,
+        "p(90)": 507,
+        "p(95)": 507,
+        "avg": 507
+      },
+      "thresholds": {
+        "p(95)<2000": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_sending": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 0.459882,
+        "p(90)": 0.37686600000000003,
+        "p(95)": 0.41837399999999997,
+        "avg": 0.2096024,
+        "min": 0.079207,
+        "med": 0.129017
+      }
+    },
+    "http_req_failed": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 5
+      },
+      "thresholds": {
+        "rate<0.10": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_connecting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 27.0559908,
+        "min": 0,
+        "med": 0,
+        "max": 69.990639,
+        "p(90)": 68.1101094,
+        "p(95)": 69.05037420000001
+      }
+    },
+    "device_checkout_duration": {
+      "values": {
+        "p(95)": 121,
+        "avg": 121,
+        "min": 121,
+        "med": 121,
+        "max": 121,
+        "p(90)": 121
+      },
+      "thresholds": {
+        "p(95)<3000": {
+          "ok": true
+        }
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "data_received": {
+      "contains": "data",
+      "values": {
+        "count": 49255,
+        "rate": 4835.189931608623
+      },
+      "type": "counter"
+    },
+    "http_req_duration{expected_response:true}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 383.1929002,
+        "p(95)": 388.94804059999996,
+        "avg": 276.96070539999994,
+        "min": 119.845042,
+        "med": 357.631902,
+        "max": 394.703181
+      }
+    },
+    "http_req_blocked": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 77.6346278,
+        "min": 0.000638,
+        "med": 0.000711,
+        "max": 247.977945,
+        "p(90)": 204.864035,
+        "p(95)": 226.42099
+      }
+    },
+    "group_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 293.3360745,
+        "min": 120.629933,
+        "med": 271.08914949999996,
+        "max": 510.536066,
+        "p(90)": 475.92166940000004,
+        "p(95)": 493.22886769999997
+      }
+    },
+    "http_req_tls_handshaking": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(95)": 89.2478984,
+        "avg": 33.4841048,
+        "min": 0,
+        "med": 0,
+        "max": 92.939656,
+        "p(90)": 85.55614080000001
+      }
+    },
+    "device_cycle_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 7077,
+        "min": 7077,
+        "med": 7077,
+        "max": 7077,
+        "p(90)": 7077,
+        "p(95)": 7077
+      },
+      "thresholds": {
+        "p(95)<15000": {
+          "ok": true
+        }
+      }
+    },
+    "vus": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 1,
+        "min": 1,
+        "max": 1
+      }
+    },
+    "iteration_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 9577.486669,
+        "min": 9577.486669,
+        "med": 9577.486669,
+        "max": 9577.486669,
+        "p(90)": 9577.486669,
+        "p(95)": 9577.486669
+      }
+    },
+    "iterations": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 1,
+        "rate": 0.09816647917183277
+      }
+    },
+    "checks": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "fails": 0,
+        "rate": 1,
+        "passes": 8
+      }
+    },
+    "device_completed_cycles": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 1,
+        "rate": 0.09816647917183277
+      }
+    }
+  },
+  "setup_data": {
+    "token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjBmNzFjNjk5LTE5NDctNGUxZC04ZjgxLWUzMjhhNmE4MmIzMSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3ZoZXdjb3VtYXhpY25mc2p3Y2FpLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIwNGVkZmJiMS1jOWU1LTRmMzEtYjQ1NC04ZjliM2U0OWRlMmUiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzgwMTgzNjY3LCJpYXQiOjE3ODAxODAwNjcsImVtYWlsIjoidGVzdC1zdHJlc3NAemluYy5kZXYiLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoidGVzdC1zdHJlc3NAemluYy5kZXYiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGhvbmVfdmVyaWZpZWQiOmZhbHNlLCJzdWIiOiIwNGVkZmJiMS1jOWU1LTRmMzEtYjQ1NC04ZjliM2U0OWRlMmUifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc4MDE4MDA2N31dLCJzZXNzaW9uX2lkIjoiMzFhMzM4NTQtYjIyYS00OGM2LWI1NmItNDlmOGM4ODlmYzRiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.xm2sGWedlTXLaZ5y04TOzQ3by6Y8uS2vOKHR4ZaOxSVpUhYMPYqN-QFjW33PP2ZpeqjeuAVTVbEZo8-n-PrlYA"
+  },
+  "root_group": {
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e",
+    "groups": [
+      {
+        "name": "setup",
+        "path": "::setup",
+        "id": "5c0f8025f7e0b6654089e5b00e950f1a",
+        "groups": [],
+        "checks": [
+            {
+              "name": "auth login status is 200",
+              "path": "::setup::auth login status is 200",
+              "id": "83e50c28eecbcc735b217f4caf98d173",
+              "passes": 1,
+              "fails": 0
+            },
+            {
+              "name": "auth login has access_token",
+              "path": "::setup::auth login has access_token",
+              "id": "139ead8a83809cdbc14a4cff7ebf6f21",
+              "passes": 1,
+              "fails": 0
+            }
+          ]
+      },
+      {
+        "checks": [
+          {
+            "name": "✅ Inventory loaded",
+            "path": "::📱 [POS-1] Load Inventory::✅ Inventory loaded",
+            "id": "aec0d13bd04efa97e071028aea1af74f",
+            "passes": 1,
+            "fails": 0
+          },
+          {
+            "path": "::📱 [POS-1] Load Inventory::✅ Has drug data",
+            "id": "8fe17cc2b1526760b5ba5ff7bbed7c7b",
+            "passes": 1,
+            "fails": 0,
+            "name": "✅ Has drug data"
+          }
+        ],
+        "name": "📱 [POS-1] Load Inventory",
+        "path": "::📱 [POS-1] Load Inventory",
+        "id": "93d33e88960ecd9006fc2ac1bbe9b8e5",
+        "groups": []
+      },
+      {
+        "name": "📱 [POS-1] Search Drug",
+        "path": "::📱 [POS-1] Search Drug",
+        "id": "686d5264d50d72c489d8953aa796f30e",
+        "groups": [],
+        "checks": [
+            {
+              "path": "::📱 [POS-1] Search Drug::✅ Search returned results",
+              "id": "3e9cb0831731cab96a029c72dee7c859",
+              "passes": 1,
+              "fails": 0,
+              "name": "✅ Search returned results"
+            }
+          ]
+      },
+      {
+        "name": "📱 [POS-1] Checkout",
+        "path": "::📱 [POS-1] Checkout",
+        "id": "cc6386f47bb7bebb2a39d670f79ccf49",
+        "groups": [],
+        "checks": [
+            {
+              "name": "✅ Checkout RPC 200",
+              "path": "::📱 [POS-1] Checkout::✅ Checkout RPC 200",
+              "id": "f9cb858448ee6f68c2f77272a80fb815",
+              "passes": 1,
+              "fails": 0
+            },
+            {
+              "name": "✅ Checkout success",
+              "path": "::📱 [POS-1] Checkout::✅ Checkout success",
+              "id": "8f4a8f5b3f5a2e9cd9ebe184f7ead138",
+              "passes": 1,
+              "fails": 0
+            }
+          ]
+      },
+      {
+        "groups": [],
+        "checks": [
+            {
+              "passes": 1,
+              "fails": 0,
+              "name": "✅ Sales loaded",
+              "path": "::📱 [POS-1] Check Sales::✅ Sales loaded",
+              "id": "a7bba0fbb8833870dff4ecc3f58b7505"
+            }
+          ],
+        "name": "📱 [POS-1] Check Sales",
+        "path": "::📱 [POS-1] Check Sales",
+        "id": "7175451520ee86a91139c14404ae0212"
+      }
+    ],
+    "checks": []
+  },
+  "options": {
+    "noColor": false,
+    "summaryTrendStats": [
+      "avg",
+      "min",
+      "med",
+      "max",
+      "p(90)",
+      "p(95)"
+    ],
+    "summaryTimeUnit": ""
+  },
+  "state": {
+    "isStdOutTTY": false,
+    "isStdErrTTY": false,
+    "testRunDurationMs": 10186.776672
+  }
+}
