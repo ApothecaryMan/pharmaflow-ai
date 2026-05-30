@@ -54,4 +54,10 @@
   .sidebar-modal-active .main-layout-content {
     padding-right: 512px !important;
   }
+
+  /* Ensure children of the scrollable area expand to fill full height in sidebar mode */
+  .sidebar-modal-card .flex-1.overflow-y-auto > div {
+    max-height: none !important;
+    height: 100% !important;
+  }
 }

@@ -986,6 +986,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       size='6xl'
       width='max-w-7xl'
       hideCloseButton={true}
+      preventSidebar={true}
       tabs={[
         {
           label: `${t.all || 'الكل'} (${sales.filter((s) => s.saleType === 'delivery' && s.status !== 'completed' && s.status !== 'cancelled' && (!activeBranchId || s.branchId === activeBranchId)).length})`,
@@ -1185,27 +1186,25 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                 <div className='grid grid-cols-2 gap-x-4 gap-y-1'>
                   {(() => {
                     // Group items by ID
-                    const mergedItems = selectedSale.items.reduce(
-                      (acc, item) => {
-                        if (!acc[item.id]) {
-                          acc[item.id] = {
-                            common: item,
-                            packItem: undefined,
-                            unitItem: undefined,
-                          };
-                        }
-                        if (item.isUnit) {
-                          acc[item.id].unitItem = item;
-                        } else {
-                          acc[item.id].packItem = item;
-                        }
-                        return acc;
-                      },
-                      {} as Record<
-                        string,
-                        { common: CartItem; packItem?: CartItem; unitItem?: CartItem }
-                      >
-                    );
+                    const mergedItems: Record<
+                      string,
+                      { common: CartItem; packItem?: CartItem; unitItem?: CartItem }
+                    > = {};
+
+                    selectedSale.items.forEach((item) => {
+                      if (!mergedItems[item.id]) {
+                        mergedItems[item.id] = {
+                          common: item,
+                          packItem: undefined,
+                          unitItem: undefined,
+                        };
+                      }
+                      if (item.isUnit) {
+                        mergedItems[item.id].unitItem = item;
+                      } else {
+                        mergedItems[item.id].packItem = item;
+                      }
+                    });
 
                     const mergedList = Object.values(mergedItems);
 
@@ -1872,6 +1871,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         icon='warning'
         size='sm'
         hideCloseButton={true}
+        preventSidebar={true}
       >
         <div className='p-2'>
           <p className='text-gray-600 dark:text-gray-400 mb-6'>
@@ -1908,6 +1908,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         size='sm'
         bodyClassName='p-1.5'
         hideCloseButton={true}
+        preventSidebar={true}
       >
         <div className='flex flex-col gap-2'>
           <div className='bg-zinc-50 dark:bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800/50'>

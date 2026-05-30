@@ -110,6 +110,11 @@ interface ModalProps {
    * Optional inline style overrides for the modal background backdrop overlay.
    */
   backdropStyle?: React.CSSProperties;
+  /**
+   * If true, prevents this modal from being shown as a sidebar.
+   * Useful for modals that require a wider view.
+   */
+  preventSidebar?: boolean;
 }
 
 import ReactDOM from 'react-dom';
@@ -141,9 +146,10 @@ export const Modal: React.FC<ModalProps> = ({
   bodyClassName = 'p-5',
   style,
   backdropStyle,
+  preventSidebar = false,
 }) => {
   const { modalPresentationMode } = useSettings();
-  const isSidebar = modalPresentationMode === 'sidebar';
+  const isSidebar = modalPresentationMode === 'sidebar' && !preventSidebar;
 
   const [actualZIndex, setActualZIndex] = useState(() => {
     if (isOpen) {
