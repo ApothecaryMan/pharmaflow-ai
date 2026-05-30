@@ -121,6 +121,7 @@ export const transactionService = {
       customerPhone: saleData.customerPhone,
       paymentMethod: saleData.paymentMethod,
       saleType: saleData.saleType || 'walk-in',
+      status: saleData.status || 'completed',
       deliveryFee: saleData.deliveryFee || 0,
       globalDiscount: saleData.globalDiscount || 0,
       total: saleData.total,
