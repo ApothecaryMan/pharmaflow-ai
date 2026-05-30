@@ -241,7 +241,7 @@ export const Modal: React.FC<ModalProps> = ({
           ? `fixed inset-0 flex md:justify-end justify-center pointer-events-none md:p-0 p-4`
           : `fixed inset-0 flex items-center justify-center p-4`
       }
-      style={{ zIndex: actualZIndex }}
+      style={{ zIndex: isSidebar ? 10 : actualZIndex }}
       data-modal-type={isSidebar ? 'sidebar' : 'modal'}
       data-modal-open="true"
     >

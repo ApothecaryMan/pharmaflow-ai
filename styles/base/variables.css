@@ -1,5 +1,5 @@
 /* ── Tailwind v4 Theme Configuration ── */
-@theme  {
+@theme {
   /* Custom font stack */
   --font-sans: var(--font-en), "Inter", var(--font-ar), "Cairo", -apple-system, BlinkMacSystemFont, "Roboto Flex", sans-serif;
   --font-geist: 'Geist Variable', sans-serif;
@@ -56,7 +56,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  
+
   /* Sidebar Semantic Colors */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -91,16 +91,18 @@
 /* Custom Variants */
 @custom-variant dark (&:is(.dark *));
 @variant dark (&:where(.dark, .dark *));
+
 :root {
   /* ── 1. Semantic Color Tokens (Light Mode) ── */
 
   /* ── 1. Unified Semantic UI Tokens (Light Mode) ── */
-  
+
   /* Backgrounds */
-  --bg-primary: transparent; 
+  --bg-primary: transparent;
   --bg-secondary: var(--color-gray-100);
   --bg-tertiary: var(--color-gray-200);
-  --bg-accent: oklch(0.967 0.001 286.375 / 55%); /* gray-100 with opacity */
+  --bg-accent: oklch(0.967 0.001 286.375 / 55%);
+  /* gray-100 with opacity */
   --bg-hover: var(--color-gray-100);
   --bg-navbar: #ffffff;
   --bg-card-base: #ffffff;
@@ -110,9 +112,9 @@
   --bg-surface-neutral: rgba(250, 250, 250, 0.8);
   --bg-statusbar: var(--bg-secondary);
   --bg-menu: #ffffff;
-  --bg-menu-hover: var(--color-gray-100);
+  --bg-menu-hover: var(--color-gray-200);
   --bg-navbar-hover: var(--bg-menu-hover);
-  --button-base-inactive: rgba(228, 228, 231, 0.6); 
+  --button-base-inactive: rgba(228, 228, 231, 0.6);
   --button-base-active: #9a9a9a;
   --bg-internal-card: #ffffff;
   --modal-border-gradient-end: #ffffff;
@@ -177,11 +179,14 @@
   /* ── 2. Typography Tokens (Roboto Flex Axes) ── */
   --font-en: "IBM Plex Sans";
   --font-ar: "IBM Plex Sans Arabic";
-  
+
   /* Core Axes Defaults */
-  --font-weight: 400; /* wght: 100-1000 */
-  --font-width: 100; /* wdth: 50-150 */
-  --font-grade: 0;   /* GRAD: -200 to 150 */
+  --font-weight: 400;
+  /* wght: 100-1000 */
+  --font-width: 100;
+  /* wdth: 50-150 */
+  --font-grade: 0;
+  /* GRAD: -200 to 150 */
   --font-slant: 0;
 
   /* Semantic Weight Tokens */
@@ -221,9 +226,17 @@
   --page-title-sans-font-family: inherit;
 
   /* Standard Icon Sizes */
-  --icon-xs: 12px; --icon-sm: 14px; --icon-base: 16px; --icon-md: 18px; --icon-lg: 24px;
-  --icon-xl: 32px; --icon-2xl: 48px; --icon-3xl: 60px; --icon-4xl: 80px;
-  --icon-5xl: 120px; --icon-6xl: 160px;
+  --icon-xs: 12px;
+  --icon-sm: 14px;
+  --icon-base: 16px;
+  --icon-md: 18px;
+  --icon-lg: 24px;
+  --icon-xl: 32px;
+  --icon-2xl: 48px;
+  --icon-3xl: 60px;
+  --icon-4xl: 80px;
+  --icon-5xl: 120px;
+  --icon-6xl: 160px;
 
   /* Navbar & Settings Icons */
   --icon-navbar-main: 22px;
@@ -238,16 +251,18 @@
   /* ── 4. Scrollbar Tokens ── */
   --scrollbar-width: 8px;
   --scrollbar-track: transparent;
-  --scrollbar-thumb: #d4d4d8; /* gray-300 */
-  --scrollbar-thumb-hover: #a1a1aa; /* gray-400 */
+  --scrollbar-thumb: #d4d4d8;
+  /* gray-300 */
+  --scrollbar-thumb-hover: #a1a1aa;
+  /* gray-400 */
   --scrollbar-radius: 20px;
 }
 
 .dark {
   /* ── 4. Semantic Overrides (Dark Mode) ── */
-  
+
   /* Backgrounds Overrides */
-  --bg-primary: transparent; 
+  --bg-primary: transparent;
   --bg-secondary: #1a1a1a;
   --bg-tertiary: #333333;
   --bg-accent: #3d3d3d;
@@ -313,22 +328,26 @@
 
 
   /* Scrollbar Overrides */
-  --scrollbar-thumb: #52525b; /* gray-600 */
-  --scrollbar-thumb-hover: #71717a; /* gray-500 */
+  --scrollbar-thumb: #52525b;
+  /* gray-600 */
+  --scrollbar-thumb-hover: #71717a;
+  /* gray-500 */
 }
 
 /* ── 5. Graphic Mode Overrides (RTL) ── */
-.graphic-mode[dir='rtl'], .graphic-mode [dir='rtl']  {
+.graphic-mode[dir='rtl'],
+.graphic-mode [dir='rtl'] {
   --page-title-font-family-serif: "HeadingFont", sans-serif;
   --page-title-font-family-sans: "GraphicSansFont", sans-serif;
   --page-title-font-family: var(--page-title-font-family-serif);
 }
 
-.graphic-mode-sans[dir='rtl'], .graphic-mode-sans [dir='rtl']  {
+.graphic-mode-sans[dir='rtl'],
+.graphic-mode-sans [dir='rtl'] {
   --page-title-font-family: var(--page-title-font-family-sans) !important;
 }
 
-.page-title  {
+.page-title {
   font-size: var(--page-title-font-size) !important;
   font-family: var(--page-title-font-family) !important;
 }
