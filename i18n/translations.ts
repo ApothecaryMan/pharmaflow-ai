@@ -539,6 +539,8 @@ export const TRANSLATIONS = {
         unitsPerPack: 'Units Per Pack',
         cancel: 'Cancel',
         save: 'Save Drug',
+        tabGeneral: 'General Info',
+        tabInventoryPricing: 'Inventory & Pricing',
       },
       details: {
         stockLevel: 'Stock Level',
@@ -3822,6 +3824,8 @@ export const TRANSLATIONS = {
         unitsPerPack: 'وحدات لكل عبوة',
         cancel: 'إلغاء',
         save: 'حفظ الدواء',
+        tabGeneral: 'معلومات عامة',
+        tabInventoryPricing: 'المخزون والتسعير',
       },
       details: {
         stockLevel: 'مستوى المخزون',

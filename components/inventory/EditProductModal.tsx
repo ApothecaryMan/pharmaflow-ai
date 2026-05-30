@@ -57,17 +57,18 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
   color,
   t,
 }) => {
-  const { language: currentLang, modalPresentationMode } = useSettings();
-  const isSidebar = modalPresentationMode === 'sidebar';
+  const { language: currentLang } = useSettings();
   const currentLangCode = currentLang.toLowerCase() as 'en' | 'ar';
 
   const [formData, setFormData] = useState<Partial<Drug>>(DEFAULT_FORM_STATE);
   const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
   const [isEditDosageOpen, setIsEditDosageOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'general' | 'inventoryPricing'>('general');
 
   // Initialize form state when modal opens or editing/initial drug changes
   useEffect(() => {
     if (isOpen) {
+      setActiveTab('general');
       if (editingDrug) {
         // Convert stock units to Packs for display
         const packs = editingDrug.stock / (editingDrug.unitsPerPack || 1);
@@ -128,21 +129,9 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
   };
 
   // Responsive layout class definitions based on sidebar vs. standard modal state
-  const mainGridClass = isSidebar
-    ? 'grid grid-cols-1 gap-6'
-    : 'grid grid-cols-1 md:grid-cols-3 gap-6';
+  const innerGridClass = 'grid grid-cols-1 md:grid-cols-2 gap-4';
 
-  const leftColClass = isSidebar
-    ? 'space-y-4 flex flex-col'
-    : 'md:col-span-2 space-y-4 flex flex-col';
-
-  const innerGridClass = isSidebar
-    ? 'grid grid-cols-1 gap-4'
-    : 'grid grid-cols-2 gap-4';
-
-  const pricingGridClass = isSidebar
-    ? 'grid grid-cols-1 gap-3'
-    : 'grid grid-cols-2 gap-3';
+  const pricingGridClass = 'grid grid-cols-1 md:grid-cols-2 gap-3';
 
   if (!isOpen) return null;
 
@@ -154,6 +143,12 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       zIndex={50}
       title={editingDrug ? t.modal.edit : t.modal.add}
       icon={editingDrug ? 'edit' : 'add_circle'}
+      tabs={[
+        { label: t.modal?.tabGeneral || 'General Info', value: 'general', icon: 'info' },
+        { label: t.modal?.tabInventoryPricing || 'Inventory & Pricing', value: 'inventoryPricing', icon: 'payments' },
+      ]}
+      activeTab={activeTab}
+      onTabChange={(val) => setActiveTab(val as 'general' | 'inventoryPricing')}
       footer={
         <div className='flex gap-3 w-full'>
           <button
@@ -174,99 +169,94 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       }
     >
       <form id="edit-drug-form" onSubmit={handleSubmit} className='h-full'>
-        <div className={mainGridClass}>
-          {/* LEFT COLUMN: Main Info */}
-          <div className={leftColClass}>
-            <div className={innerGridClass}>
-              <div>
-                <label htmlFor="brand-name" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                  {t.modal.brand} *
-                </label>
-                <SmartInput
-                  id="brand-name"
-                  required
-                  value={formData.name || ''}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-              <div>
-                <label htmlFor="name-arabic" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                  {t.modal.nameArabic || 'Arabic Name'}
-                </label>
-                <SmartInput
-                  id="name-arabic"
-                  value={formData.nameAr || ''}
-                  onChange={(e) => setFormData({ ...formData, nameAr: e.target.value })}
-                  dir="rtl"
-                />
-              </div>
-              <div className={isSidebar ? '' : 'md:col-span-2 space-y-1'}>
-                <label htmlFor="generic-name" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                  Generic Name
-                </label>
-                <SmartInput
-                  id="generic-name"
-                  value={Array.isArray(formData.genericName) ? formData.genericName.join(', ') : formData.genericName || ''}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      genericName: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
-                    })
-                  }
-                />
-              </div>
+        {activeTab === 'general' ? (
+          <div className={`${innerGridClass} gap-y-4`}>
+            <div>
+              <label htmlFor="brand-name" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                {t.modal.brand} *
+              </label>
+              <SmartInput
+                id="brand-name"
+                required
+                value={formData.name || ''}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <label htmlFor="name-arabic" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                {t.modal.nameArabic || 'Arabic Name'}
+              </label>
+              <SmartInput
+                id="name-arabic"
+                value={formData.nameAr || ''}
+                onChange={(e) => setFormData({ ...formData, nameAr: e.target.value })}
+                dir="rtl"
+              />
+            </div>
+            <div className='md:col-span-2 space-y-1'>
+              <label htmlFor="generic-name" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                Generic Name
+              </label>
+              <SmartInput
+                id="generic-name"
+                value={Array.isArray(formData.genericName) ? formData.genericName.join(', ') : formData.genericName || ''}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    genericName: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                  })
+                }
+              />
             </div>
 
-            <div className={innerGridClass}>
-              <div>
-                <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                  {t.modal.category} *
-                </label>
-                <FilterDropdown
-                  variant='input'
-                  items={getCategories(currentLangCode)}
-                  selectedItem={formData.category} // English ID
-                  isOpen={isEditCategoryOpen}
-                  onToggle={() => setIsEditCategoryOpen(!isEditCategoryOpen)}
-                  onSelect={(val) => {
-                    setFormData({ ...formData, category: val, dosageForm: '' });
-                    setIsEditCategoryOpen(false);
-                  }}
-                  keyExtractor={(c) => c}
-                  renderSelected={(c) => getLocalizedCategory(c || 'General', currentLangCode)}
-                  renderItem={(c) => getLocalizedCategory(c, currentLangCode)}
-                  className='w-full h-[50px]'
-                  color={color}
-                />
-              </div>
-              <div>
-                <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                  Product Type
-                </label>
-                <FilterDropdown
-                  variant='input'
-                  items={getProductTypes(formData.category || 'General', currentLangCode)} // English IDs
-                  selectedItem={formData.dosageForm || ''}
-                  isOpen={isEditDosageOpen}
-                  onToggle={() => setIsEditDosageOpen(!isEditDosageOpen)}
-                  onSelect={(val) => {
-                    setFormData({ ...formData, dosageForm: val });
-                    setIsEditDosageOpen(false);
-                  }}
-                  keyExtractor={(c) => c}
-                  renderSelected={(c) =>
-                    c
-                      ? getLocalizedProductType(c, currentLangCode)
-                      : t.addProduct?.placeholders?.dosageForm || 'Select Type'
-                  }
-                  renderItem={(c) => getLocalizedProductType(c, currentLangCode)}
-                  className='w-full h-[50px]'
-                  color={color}
-                />
-              </div>
+            <div>
+              <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                {t.modal.category} *
+              </label>
+              <FilterDropdown
+                variant='input'
+                items={getCategories(currentLangCode)}
+                selectedItem={formData.category} // English ID
+                isOpen={isEditCategoryOpen}
+                onToggle={() => setIsEditCategoryOpen(!isEditCategoryOpen)}
+                onSelect={(val) => {
+                  setFormData({ ...formData, category: val, dosageForm: '' });
+                  setIsEditCategoryOpen(false);
+                }}
+                keyExtractor={(c) => c}
+                renderSelected={(c) => getLocalizedCategory(c || 'General', currentLangCode)}
+                renderItem={(c) => getLocalizedCategory(c, currentLangCode)}
+                className='w-full h-[50px]'
+                color={color}
+              />
+            </div>
+            <div>
+              <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                Product Type
+              </label>
+              <FilterDropdown
+                variant='input'
+                items={getProductTypes(formData.category || 'General', currentLangCode)} // English IDs
+                selectedItem={formData.dosageForm || ''}
+                isOpen={isEditDosageOpen}
+                onToggle={() => setIsEditDosageOpen(!isEditDosageOpen)}
+                onSelect={(val) => {
+                  setFormData({ ...formData, dosageForm: val });
+                  setIsEditDosageOpen(false);
+                }}
+                keyExtractor={(c) => c}
+                renderSelected={(c) =>
+                  c
+                    ? getLocalizedProductType(c, currentLangCode)
+                    : t.addProduct?.placeholders?.dosageForm || 'Select Type'
+                }
+                renderItem={(c) => getLocalizedProductType(c, currentLangCode)}
+                className='w-full h-[50px]'
+                color={color}
+              />
             </div>
 
-            <div className='space-y-1.5'>
+            <div className='md:col-span-2 space-y-1.5'>
               <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                 {t.fields?.status || 'Product Status'}
               </label>
@@ -296,7 +286,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
             </div>
 
             {/* Multi-Barcode Input */}
-            <div>
+            <div className='md:col-span-2 space-y-1'>
               <label htmlFor="barcode-input" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                 {t.modal.barcode}
               </label>
@@ -355,7 +345,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
               </div>
             </div>
 
-            <div>
+            <div className='md:col-span-2 space-y-1'>
               <label htmlFor="internal-code" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                 {t.modal.internalCode}
               </label>
@@ -378,7 +368,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
               </div>
             </div>
 
-            <div className='flex-1 flex flex-col'>
+            <div className='md:col-span-2 flex flex-col min-h-[100px]'>
               <label htmlFor="description-input" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                 {t.modal.desc}
               </label>
@@ -390,9 +380,8 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
               />
             </div>
           </div>
-
-          {/* RIGHT COLUMN: Details */}
-          <div className='space-y-4'>
+        ) : (
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
             <div className='bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 space-y-4'>
               <h4 className='text-xs font-bold text-gray-500 uppercase flex items-center gap-2'>
                 <span className='material-symbols-rounded text-base'>inventory</span> Inventory
@@ -530,7 +519,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
               </div>
             </div>
           </div>
-        </div>
+        )}
       </form>
     </Modal>
   );
