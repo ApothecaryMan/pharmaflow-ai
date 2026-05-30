@@ -39,13 +39,6 @@ export const InventoryModuleShell: React.FC<InventoryModuleShellProps> = ({
     storage.set('inventory_stats_visible', nextVal);
   };
 
-  // Reset all dynamic slot states on sub-view navigation to prevent leaks
-  useEffect(() => {
-    setLeftContent(null);
-    setRightContent(null);
-    setBottomContent(null);
-    setShowStatsToggle(false);
-  }, [activeView]);
 
   return (
     <InventoryHeaderContext.Provider

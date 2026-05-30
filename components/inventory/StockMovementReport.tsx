@@ -273,6 +273,13 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
         </div>
       ) : null
     );
+
+    return () => {
+      setLeftContent(null);
+      setRightContent(null);
+      setBottomContent(null);
+      setShowStatsToggle(false);
+    };
   }, [
     searchQuery, showSearch, searchResults, highlightedIndex, activeFilters, filterConfigs,
     suggestions, handleSearchChange, handleClearSearch, handleUpdateFilter, handleSelectDrug,

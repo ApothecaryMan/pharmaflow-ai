@@ -764,6 +764,13 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
         />
       </div>
     );
+
+    return () => {
+      setLeftContent(null);
+      setRightContent(null);
+      setBottomContent(null);
+      setShowStatsToggle(false);
+    };
   }, [
     searchTerm, t, filterConfigs, activeFilters, handleUpdateFilter,
     handleExportCSV, stats, loadingProcurement,
