@@ -154,7 +154,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           style={{
             backgroundColor: 'var(--bg-primary)',
             color: 'var(--text-primary)',
-          }}
+            ...(isStandalone ? { '--navbar-height': '0px', '--statusbar-height': '0px' } : {}),
+            ...((isTauri() && !isStandalone) ? { '--navbar-height': '44px' } : {})
+          } as React.CSSProperties}
           dir={language === 'AR' ? 'rtl' : 'ltr'}
         >
           {/* TitleBar (Only in Tauri) */}

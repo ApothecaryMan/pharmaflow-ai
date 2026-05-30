@@ -163,7 +163,7 @@ export const Modal: React.FC<ModalProps> = ({
     return zIndex || 100;
   });
 
-  // Handle ESC key, Body Scroll Lock, and dynamic Z-Index
+  // Handle ESC key listener
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -173,6 +173,16 @@ export const Modal: React.FC<ModalProps> = ({
 
     if (isOpen) {
       window.addEventListener('keydown', handleEsc);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [isOpen, onClose]);
+
+  // Handle Body Scroll Lock and Sidebar Active Classes
+  useEffect(() => {
+    if (isOpen) {
       document.body.style.overflow = 'hidden';
       
       if (isSidebar) {
@@ -183,8 +193,6 @@ export const Modal: React.FC<ModalProps> = ({
     }
 
     return () => {
-      window.removeEventListener('keydown', handleEsc);
-      
       if (isSidebar) {
         const remainingSidebars = document.querySelectorAll('[data-modal-type="sidebar"][data-modal-open="true"]');
         if (remainingSidebars.length <= 1) {
@@ -202,7 +210,7 @@ export const Modal: React.FC<ModalProps> = ({
         document.body.style.overflow = '';
       }
     };
-  }, [isOpen, onClose, isSidebar]);
+  }, [isOpen, isSidebar]);
 
   // Compute/Update z-index dynamically when the modal state changes or prop updates
   useEffect(() => {
