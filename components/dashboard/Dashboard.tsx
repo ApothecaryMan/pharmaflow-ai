@@ -238,6 +238,48 @@ export const Dashboard: React.FC<DashboardProps> = ({
       purchases: purchases.filter((p) => new Date(p.date) >= cutoff),
     };
   }, [sales, purchases, timeRange]);
+  
+  const formatXAxis = useCallback(
+    (val: any) => {
+      const locale = language?.toUpperCase() === 'AR' ? 'ar-EG-u-nu-latn' : 'en-US';
+      if (timeRange === 'ALL') {
+        const date = new Date(val);
+        return date.toLocaleDateString(locale, { month: 'short' });
+      }
+      if (timeRange === '90') {
+        if (!val || typeof val !== 'string') return '';
+        const parts = val.split('-');
+        if (parts.length < 3) return val;
+        const [yyyy, mm, w] = parts;
+        const monthName = new Date(parseInt(yyyy), parseInt(mm) - 1, 1).toLocaleDateString(locale, { month: 'short' });
+        return `${monthName} ${w.replace('W', language?.toUpperCase() === 'AR' ? 'أسبوع ' : 'W')}`;
+      }
+      const date = new Date(val);
+      return date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+    },
+    [language, timeRange]
+  );
+
+  const formatTooltipLabel = useCallback(
+    (val: any) => {
+      const locale = language?.toUpperCase() === 'AR' ? 'ar-EG-u-nu-latn' : 'en-US';
+      if (timeRange === 'ALL') {
+        const date = new Date(val);
+        return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+      }
+      if (timeRange === '90') {
+        if (!val || typeof val !== 'string') return '';
+        const parts = val.split('-');
+        if (parts.length < 3) return val;
+        const [yyyy, mm, w] = parts;
+        const monthName = new Date(parseInt(yyyy), parseInt(mm) - 1, 1).toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+        return `${language?.toUpperCase() === 'AR' ? 'الأسبوع' : 'Week'} ${w.replace('W', '')} - ${monthName}`;
+      }
+      const date = new Date(val);
+      return date.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    },
+    [language, timeRange]
+  );
 
   const helpContent = DASHBOARD_HELP[language as 'EN' | 'AR'] || DASHBOARD_HELP.EN;
 
@@ -517,6 +559,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className='border-0! bg-transparent! p-0! shadow-none!'
             chartClassName='h-[280px]!'
             headerClassName='hidden'
+            xAxisKey="day"
+            xAxisFormatter={formatXAxis}
+            tooltipLabelFormatter={formatTooltipLabel}
           />
         </div>
       </div>
@@ -791,7 +836,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Sales Chart (2 Cols) */}
         <ChartWidget
           title={t.trend}
-          data={salesData.map((d) => ({ date: d.name, sales: d.sales }))}
+          data={salesData}
           dataKeys={{ primary: 'sales' }}
           color={chartColors.main}
           language={language as 'AR' | 'EN'}
@@ -802,6 +847,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
           className='h-80'
           chartClassName='h-[90%]'
           isLoading={isLoading || finLoading}
+          xAxisKey="day"
+          xAxisFormatter={formatXAxis}
+          tooltipLabelFormatter={formatTooltipLabel}
         />
 
         {/* Top Selling Products (1 Col) */}

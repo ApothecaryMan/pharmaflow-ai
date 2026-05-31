@@ -13,7 +13,7 @@ export const dateRangeService = {
   getDateRange(period: FinancialPeriod): { start: string; end: string } {
     const now = timeService.getVerifiedDate();
     let start: Date;
-    let end: Date = new Date(now.getTime());
+    let end: Date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
     switch (period) {
       case 'today':
@@ -122,6 +122,22 @@ export const dateRangeService = {
     }
 
     return closedMonths;
+  },
+
+  getDaysInRange(start: string, end: string): string[] {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const days: string[] = [];
+    const tempDate = new Date(startDate.getTime());
+
+    while (tempDate <= endDate) {
+      const yyyy = tempDate.getFullYear();
+      const mm = String(tempDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(tempDate.getDate()).padStart(2, '0');
+      days.push(`${yyyy}-${mm}-${dd}`);
+      tempDate.setDate(tempDate.getDate() + 1);
+    }
+    return days;
   },
 
   getCurrentMonthStart(): string {
