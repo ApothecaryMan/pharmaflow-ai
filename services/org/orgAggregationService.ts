@@ -3,6 +3,8 @@ import { salesService } from '../sales/salesService';
 import { inventoryService } from '../inventory/inventoryService';
 import { employeeService } from '../hr/employeeService';
 import { orgService } from './orgService';
+import { dateRangeService } from '../financials/dateRangeService';
+import timeService from '../timeService';
 
 export interface OrgMetrics {
   totalSales: number;
@@ -98,7 +100,7 @@ const computeMetrics = (
   let todayRevenue = 0;
   let totalInventoryValue = 0;
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = dateRangeService.getLocalDateString();
 
   // Group data by branchId for O(1) lookups
   const salesByBranch: Record<string, any[]> = {};
@@ -139,7 +141,7 @@ const computeMetrics = (
     totalBranches: branches.length,
     activeStaffCount,
     totalInventoryValue,
-    lastUpdated: new Date().toISOString()
+    lastUpdated: timeService.getVerifiedDate().toISOString()
   };
 };
 

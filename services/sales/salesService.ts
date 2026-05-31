@@ -9,6 +9,8 @@ import type { Sale } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { settingsService } from '../settings/settingsService';
 import { salesRepository } from './repositories/salesRepository';
+import { dateRangeService } from '../financials/dateRangeService';
+import timeService from '../timeService';
 import type { PagedResult, SalesFilters, SalesPageOptions, SalesService, SalesStats } from './types';
 
 class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
@@ -56,7 +58,7 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
   }
 
   async getToday(branchId?: string): Promise<Sale[]> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = dateRangeService.getLocalDateString();
     return this.getByDateRange(`${today}T00:00:00`, `${today}T23:59:59`, branchId);
   }
 
@@ -69,7 +71,7 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
       id: (sale as any).id || idGenerator.uuid(),
       branchId: effectiveBranchId,
       orgId: (sale as any).orgId || settings.orgId,
-      date: sale.date || new Date().toISOString(),
+      date: sale.date || timeService.getVerifiedDate().toISOString(),
       netTotal: sale.netTotal ?? sale.total,
     } as Sale;
 
@@ -87,7 +89,7 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
 
   async getStats(branchId?: string): Promise<SalesStats> {
     const all = await this.getAll(branchId);
-    const today = new Date().toISOString().split('T')[0];
+    const today = dateRangeService.getLocalDateString();
     const todaySales = all.filter((s) => s.date.startsWith(today));
 
     const totalRev = all.reduce((sum, s) => money.add(sum, s.total), 0);

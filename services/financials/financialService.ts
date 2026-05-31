@@ -434,7 +434,7 @@ export const financialService = {
     const dailyMap = new Map<string, DailyFinancialData>();
 
     salesRes.data?.forEach((s: any) => {
-      const day = s.date.split('T')[0];
+      const day = dateRangeService.toLocalDateString(s.date);
       const existing = dailyMap.get(day) || {
         day,
         revenue: 0,
@@ -450,7 +450,7 @@ export const financialService = {
     });
 
     returnsRes.data?.forEach((r: any) => {
-      const day = r.date.split('T')[0];
+      const day = dateRangeService.toLocalDateString(r.date);
       const existing = dailyMap.get(day) || {
         day,
         revenue: 0,

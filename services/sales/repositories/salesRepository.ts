@@ -1,6 +1,7 @@
 import { supabase } from '../../../lib/supabase';
 import type { Sale } from '../../../types';
 import { money } from '../../../utils/money';
+import { dateRangeService } from '../../financials/dateRangeService';
 import type { PagedResult, SalesFilters, SalesPageOptions } from '../types';
 
 const SALE_LIST_COLUMNS = [
@@ -236,7 +237,7 @@ export const salesRepository = {
   },
 
   async getNextDailyOrderNumber(branchId: string): Promise<number> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = dateRangeService.getLocalDateString();
     const { data, error } = await supabase.from(this.tableName)
       .select('daily_order_number')
       .eq('branch_id', branchId)

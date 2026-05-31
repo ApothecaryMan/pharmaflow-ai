@@ -194,8 +194,6 @@ export const useDashboardAnalytics = ({
   // Daily sales trends for charting
   const salesTrends = useMemo(() => {
     if (!finDaily) return [];
-    
-    const daysCount = timeRange === 'ALL' ? 365 : parseInt(timeRange);
     let aggregated: any[] = [];
     
     if (timeRange === '7' || timeRange === '30') {
@@ -204,11 +202,11 @@ export const useDashboardAnalytics = ({
       const days = dateRangeService.getDaysInRange(range.start, range.end);
       const dayMap = new Map<string, number>(days.map((day) => [day, 0]));
       
-      // Populate with actual data
+      // Populate with actual data (convert UTC timestamps to local dates)
       finDaily.forEach((d: any) => {
-        const dayKey = d.day.split('T')[0];
+        const dayKey = dateRangeService.toLocalDateString(d.day);
         if (dayMap.has(dayKey)) {
-          dayMap.set(dayKey, d.net || 0);
+          dayMap.set(dayKey, (dayMap.get(dayKey) || 0) + (d.net || 0));
         }
       });
       

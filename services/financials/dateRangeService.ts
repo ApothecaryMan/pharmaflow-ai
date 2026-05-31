@@ -144,5 +144,33 @@ export const dateRangeService = {
     const now = timeService.getVerifiedDate();
     const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
     return start.toISOString();
-  }
+  },
+
+  /**
+   * Returns today's date as a local YYYY-MM-DD string using verified time.
+   * Use this instead of `new Date().toISOString().split('T')[0]` which shifts
+   * to UTC and can return yesterday's date when local time is UTC+N and it's
+   * before N hours past midnight.
+   */
+  getLocalDateString(): string {
+    const now = timeService.getVerifiedDate();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  },
+
+  /**
+   * Converts a UTC ISO timestamp (e.g. from Supabase) to a local YYYY-MM-DD string.
+   * Supabase stores timestamps in UTC, so `"2026-05-30T23:00:00Z".split('T')[0]`
+   * gives "2026-05-30", but in Cairo (UTC+3) the local date is "2026-05-31".
+   * This method correctly returns the local date.
+   */
+  toLocalDateString(isoTimestamp: string): string {
+    const d = new Date(isoTimestamp);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  },
 };
