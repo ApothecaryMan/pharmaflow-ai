@@ -1,6 +1,5 @@
 import React, { useState, useRef, useLayoutEffect, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { useSettings } from '../../context';
 import { Z_INDEX } from '../../src/styles/z-index';
 
 const R = 6, AW = 14, AH = 6, VG = 4;
@@ -18,10 +17,10 @@ const genPath = (w: number, h: number, s: string, ax: number, ay: number) => {
   return d + `L 0,${isB ? AH+R : R} Q 0,${isB ? AH : 0} ${R},${isB ? AH : 0} Z`;
 };
 
-export const Tooltip: React.FC<{ children: ReactNode; content: ReactNode; position?: 'top' | 'bottom' | 'left' | 'right'; delay?: number; className?: string; triggerClassName?: string; tooltipClassName?: string; }> = ({
-  children, content, position = 'top', delay = 300, className = '', triggerClassName = '', tooltipClassName = ''
+export const Tooltip: React.FC<{ children: ReactNode; content: ReactNode; position?: 'top' | 'bottom' | 'left' | 'right'; delay?: number; className?: string; triggerClassName?: string; tooltipClassName?: string; disabled?: boolean; }> = ({
+  children, content, position = 'top', delay = 300, className = '', triggerClassName = '', tooltipClassName = '', disabled = false
 }) => {
-  const { tooltipBlur } = useSettings(), [show, setShow] = useState(false), [side, setSide] = useState(position);
+  const [show, setShow] = useState(false), [side, setSide] = useState(position);
   const trigRef = useRef<HTMLDivElement>(null), toolRef = useRef<HTMLDivElement>(null), contentRef = useRef<HTMLDivElement>(null), timeout = useRef<any>(null), [path, setPath] = useState('');
 
   useLayoutEffect(() => {
@@ -59,7 +58,11 @@ export const Tooltip: React.FC<{ children: ReactNode; content: ReactNode; positi
     };
   }, [show, content, position]);
 
-  const hE = () => { if (timeout.current) clearTimeout(timeout.current); timeout.current = setTimeout(() => setShow(true), delay); };
+  const hE = () => { 
+    if (disabled || window.matchMedia('(hover: none) and (pointer: coarse)').matches) return;
+    if (timeout.current) clearTimeout(timeout.current); 
+    timeout.current = setTimeout(() => setShow(true), delay); 
+  };
   const hL = () => { if (timeout.current) clearTimeout(timeout.current); timeout.current = setTimeout(() => setShow(false), 150); };
 
   return (
@@ -69,9 +72,9 @@ export const Tooltip: React.FC<{ children: ReactNode; content: ReactNode; positi
         <div ref={toolRef} data-settled="false" onMouseEnter={hE} onMouseLeave={hL}
           className={`fixed pointer-events-auto z-[${Z_INDEX.TOOLTIP}] ${tooltipClassName}`}
           style={{ top: 'var(--ty)', left: 'var(--tx)', zIndex: Z_INDEX.TOOLTIP }}>
-          <div className={`relative group ${tooltipBlur ? 'backdrop-blur-2xl' : ''}`} style={{ WebkitBackdropFilter: tooltipBlur ? 'blur(20px) saturate(200%)' : 'none', borderRadius: R }}>
+          <div className="relative group" style={{ borderRadius: R }}>
             <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible" style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}>
-              <path d={path || ''} className={`${tooltipBlur ? 'fill-(--bg-menu)/80' : 'fill-(--bg-menu)'} stroke-(--border-divider) stroke-[0.8]`} style={{ strokeOpacity: 0.6 }} />
+              <path d={path || ''} className="fill-(--bg-menu) stroke-(--border-divider) stroke-[0.8]" style={{ strokeOpacity: 0.6 }} />
             </svg>
             <div ref={contentRef} className="relative z-10 px-2.5 py-1 text-(--text-primary) text-[11px] font-semibold tracking-tight whitespace-nowrap w-max"
               style={{ paddingTop: side === 'bottom' ? AH + 4 : 4, paddingBottom: side === 'top' ? AH + 4 : 4, paddingLeft: side === 'right' ? AH + 7 : 7, paddingRight: side === 'left' ? AH + 7 : 7 }}>
