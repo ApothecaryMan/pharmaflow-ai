@@ -206,12 +206,9 @@ export const SignUp: React.FC<SignUpProps> = ({ onViewChange, onLoginSuccess, la
                       placeholder={language === 'AR' ? 'اسم المستخدم' : 'Username'}
                       value={state.username}
                       onChange={(e) => setState((prev) => ({ ...prev, username: e.target.value.toLowerCase(), validationErrors: { ...prev.validationErrors, username: '' } }))}
-                      className={`w-full bg-[#111111] border ${state.validationErrors.username ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-zinc-600'} rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-hidden transition-all duration-200 pr-20 text-start placeholder:text-start cursor-text hover:bg-zinc-900`}
+                      className={`w-full bg-[#111111] border ${state.validationErrors.username ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-zinc-600'} rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-hidden transition-all duration-200 text-start placeholder:text-start cursor-text hover:bg-zinc-900`}
                       dir='ltr'
                     />
-                    <span dir="ltr" className='absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm pointer-events-none font-medium'>
-                      @zinc.co
-                    </span>
                   </div>
                   {state.validationErrors.username && <p className='text-xs text-red-500 mt-1 pl-1'>{state.validationErrors.username}</p>}
                 </div>

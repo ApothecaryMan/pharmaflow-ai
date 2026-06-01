@@ -81,12 +81,9 @@ export function IndividualRegistration({ onSuccess, onLoginClick, t, language = 
               placeholder={language === 'AR' ? 'اسم المستخدم' : 'Username'}
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase() })}
-              className="w-full bg-[#111111] border border-zinc-800 focus:border-zinc-600 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-hidden transition-all duration-200 pr-20 text-start placeholder:text-start cursor-text hover:bg-zinc-900"
+              className="w-full bg-[#111111] border border-zinc-800 focus:border-zinc-600 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-hidden transition-all duration-200 text-start placeholder:text-start cursor-text hover:bg-zinc-900"
               dir='ltr'
             />
-            <span dir="ltr" className='absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm pointer-events-none font-medium'>
-              @zinc.co
-            </span>
           </div>
         </div>
 
