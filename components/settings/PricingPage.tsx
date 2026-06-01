@@ -188,9 +188,10 @@ interface PricingPageProps {
   t?: any;
   language?: string;
   onViewChange?: (view: string) => void;
+  hideBackButton?: boolean;
 }
 
-export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange }) => {
+export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange, hideBackButton }) => {
   const [isAnnual, setIsAnnual] = useState(false);
 
   const getPrice = (monthly: number) => {
@@ -236,14 +237,16 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange }) => {
       <style>{styles}</style>
       <div className='zn-root' dir="ltr">
         {/* Simple Back Arrow */}
-        <button 
-          onClick={() => onViewChange?.('org-management')}
-          className="fixed top-10 left-10 z-50 flex items-center justify-center transition-opacity hover:opacity-60"
-        >
-          <span className="material-symbols-rounded text-[var(--zn-text)]" style={{ fontSize: '36px' }}>
-            arrow_back
-          </span>
-        </button>
+        {!hideBackButton && (
+          <button 
+            onClick={() => onViewChange?.('org-management')}
+            className="fixed top-10 left-10 z-50 flex items-center justify-center transition-opacity hover:opacity-60"
+          >
+            <span className="material-symbols-rounded text-[var(--zn-text)]" style={{ fontSize: '36px' }}>
+              arrow_back
+            </span>
+          </button>
+        )}
 
         {/* Header */}
         <div className='zn-header'>

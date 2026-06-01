@@ -6,6 +6,7 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { useSettings } from '../../context';
 import { ROUTES } from '../../config/routes';
 import { WorkspaceSwitcher } from './WorkspaceSwitcher';
+import { PricingPage } from '../settings/PricingPage';
 import { authService } from '../../services/auth/authService';
 import { TRANSLATIONS } from '../../i18n/translations';
 
@@ -82,7 +83,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className='relative min-h-screen bg-black select-none flex text-white' dir={language === 'AR' ? 'rtl' : 'ltr'}>
+    <div className='flex flex-col bg-black text-white h-full overflow-y-auto' dir={language === 'AR' ? 'rtl' : 'ltr'}>
+      <div className='relative min-h-full lg:min-h-screen flex shrink-0'>
       {/* Left Pane (Form Area) */}
       <div className='w-full lg:w-1/2 flex flex-col relative p-6 sm:p-12'>
         <div className='absolute top-8 left-8 rtl:left-auto rtl:right-8 flex items-center gap-2'>
@@ -121,13 +123,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
       {/* Right Pane (Banner) */}
       <div className='hidden lg:flex w-1/2 p-4 sm:p-6 ps-0'>
         <div className='w-full h-full bg-[#111111] rounded-[2rem] border border-white/5 flex items-center justify-center relative overflow-hidden'>
-           <div className='flex items-center gap-3 text-zinc-400'>
-             <img src='/logo_icon_white.svg' className='w-8 h-8 opacity-50 animate-pulse' alt='' />
-             <span className='font-serif text-2xl italic text-zinc-500 tracking-wide'>
-               {language === 'AR' ? 'جاري تجهيز البلانر...' : 'Building plan...'}
-             </span>
+           <div className='flex items-center justify-center text-zinc-400'>
+             <img src='/logo_icon_white.svg' className='w-10 h-10 opacity-30 animate-pulse' alt='Banner Placeholder' />
            </div>
         </div>
+      </div>
+      </div>
+
+      {/* Pricing Section (Below the fold) */}
+      <div className='w-full dark'>
+        <PricingPage hideBackButton={true} />
       </div>
     </div>
   );
