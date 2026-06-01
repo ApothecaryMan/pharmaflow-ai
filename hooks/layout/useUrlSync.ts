@@ -6,7 +6,8 @@ import type { ViewState } from '../../types';
 export function useUrlSync(
   isAuthenticated: boolean,
   view: ViewState,
-  currentEmployeeId: string | null
+  currentEmployeeId: string | null,
+  userId?: string
 ) {
   const { activeOrgId, activeBranchId, branches } = useData();
 
@@ -20,10 +21,16 @@ export function useUrlSync(
       return;
     }
 
-    // Authenticated, but no employee profile selected yet (Landing profile selector screen)
+    // Authenticated, but no employee profile selected yet
     if (!currentEmployeeId) {
       if (activeOrgId) {
         const newHash = `#/${activeOrgId}/landing`;
+        if (window.location.hash !== newHash) {
+          window.history.replaceState(null, '', newHash);
+        }
+      } else {
+        // Zero-affiliation employee portal
+        const newHash = `#/${ROUTES.PORTAL}/${userId || ''}`;
         if (window.location.hash !== newHash) {
           window.history.replaceState(null, '', newHash);
         }
@@ -55,5 +62,5 @@ export function useUrlSync(
         window.history.replaceState(null, '', newHash);
       }
     }
-  }, [isAuthenticated, activeOrgId, activeBranchId, view, branches, currentEmployeeId]);
+  }, [isAuthenticated, activeOrgId, activeBranchId, view, branches, currentEmployeeId, userId]);
 }

@@ -90,13 +90,31 @@ export const authService = {
         };
       } else {
         const current = existingSession || this.getCurrentUserSync();
-        if (!current) return null;
-        session = {
-          ...current,
-          userId: userId,
-          orgRole: orgRole as any,
-          orgId: orgId || current.orgId,
-        };
+        if (current) {
+          session = {
+            ...current,
+            userId: userId,
+            orgRole: orgRole as any,
+            orgId: orgId || current.orgId,
+          };
+        } else {
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('username, full_name')
+            .eq('id', userId)
+            .maybeSingle();
+
+          const { data: { user: sbUser } } = await supabase.auth.getUser();
+          session = {
+            userId,
+            username: profile?.username?.replace(/^@/, '') || sbUser?.email?.split('@')[0] || 'user',
+            branchId: '',
+            orgId: undefined,
+            role: 'unassigned',
+            orgRole: 'member',
+            department: 'unassigned',
+          };
+        }
       }
 
       storage.set(SESSION_KEY, session);

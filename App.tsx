@@ -575,7 +575,8 @@ const App: React.FC = () => {
 
   // --- URL Synchronization ---
   // Synchronize browser hash with authentication state & current view
-  useUrlSync(authState.isAuthenticated, appState.view, appState.currentEmployeeId);
+  const currentUser = authService.getCurrentUserSync();
+  useUrlSync(authState.isAuthenticated, appState.view, appState.currentEmployeeId, currentUser?.userId);
 
 
 
@@ -586,7 +587,6 @@ const App: React.FC = () => {
 
 
 
-  const currentUser = authService.getCurrentUserSync();
   const isZeroAffiliation = authState.isAuthenticated && currentUser && !currentUser.orgId;
 
   const content = authState.isAuthenticated ? (
