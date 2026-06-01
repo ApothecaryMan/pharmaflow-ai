@@ -121,6 +121,9 @@ export const authService = {
       return null;
     }
   },
+  async refreshSession(): Promise<UserSession | null> {
+    return this.getCurrentUser();
+  },
 
   updateSession(updates: Partial<UserSession>): UserSession | null {
     const current = this.getCurrentUserSync();
@@ -260,9 +263,9 @@ export const authService = {
         username: authData.user.email?.split('@')[0] || username,
         branchId: '', 
         orgId,
-        role: 'manager',
+        role: 'unassigned',
         orgRole: orgRole as any,
-        department: 'it',
+        department: 'unassigned',
       };
     }
 

@@ -140,7 +140,6 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     setIsOldPasswordVerified(false);
     setPasswordError('');
     setWantsToChangePassword(false);
-    setWantsToChangePassword(false);
     setIsResetting(false);
     setIsSaving(false);
     setLinkUsername('');

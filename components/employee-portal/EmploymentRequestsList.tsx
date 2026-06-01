@@ -61,9 +61,11 @@ export function EmploymentRequestsList({ requests, userId, username, onRefresh, 
         <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-4">
           <Building2 className="w-8 h-8 text-zinc-500" />
         </div>
-        <h4 className="text-lg font-medium text-white mb-2">{t.login.noPendingRequests}</h4>
+        <h4 className="text-lg font-medium text-white mb-2">{t.login?.noPendingRequests || (language === 'AR' ? 'لا توجد طلبات معلقة' : 'No Pending Requests')}</h4>
         <p className="text-zinc-500 max-w-md">
-          When a pharmacy sends you an employment request, it will appear here. You can then accept it to gain access to their Point of Sale and management systems.
+          {language === 'AR'
+            ? 'عندما ترسل لك أي صيدلية طلب توظيف، سيظهر هنا. يمكنك قبوله للوصول إلى نظام إدارة الصيدلية الخاص بهم.'
+            : 'When a pharmacy sends you an employment request, it will appear here. You can then accept it to gain access to their Point of Sale and management systems.'}
         </p>
       </div>
     );
@@ -87,11 +89,11 @@ export function EmploymentRequestsList({ requests, userId, username, onRefresh, 
               <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-400">
                 <span className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Role: <span className="text-zinc-300 font-medium capitalize">{request.role}</span>
+                  {language === 'AR' ? 'الدور:' : 'Role:'} <span className="text-zinc-300 font-medium capitalize">{request.role}</span>
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  {new Date(request.createdAt).toLocaleDateString()}
+                  {request.createdAt ? new Date(request.createdAt).toLocaleDateString() : '—'}
                 </span>
               </div>
             </div>

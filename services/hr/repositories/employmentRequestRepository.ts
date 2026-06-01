@@ -16,7 +16,7 @@ export const employmentRequestRepository = {
         .eq('org_id', request.orgId)
         .eq('target_username', request.targetUsername)
         .eq('status', 'pending')
-        .single();
+        .maybeSingle();
         
       if (existing) {
         return { success: false, message: 'A pending request already exists for this user.' };
@@ -112,9 +112,21 @@ export const employmentRequestRepository = {
         .eq('id', requestId)
         .single();
         
-      if (reqError || !request) throw new Error('Request not found');
+      if (reqError || !request) throw new Error('Request not found or already processed');
       if (request.status !== 'pending') throw new Error('Request is not pending');
       if (request.target_username !== username) throw new Error('Username mismatch');
+
+      // 1b. Check if employee already exists to prevent duplicates
+      const { data: existingEmployee } = await supabase
+        .from('employees')
+        .select('id')
+        .eq('org_id', request.org_id)
+        .eq('auth_user_id', userId)
+        .maybeSingle();
+
+      if (existingEmployee) {
+        throw new Error('You are already an employee in this organization.');
+      }
 
       // 2. Fetch User Profile for Full Name and Phone
       const profile = await employeeProfileRepository.getById(userId);

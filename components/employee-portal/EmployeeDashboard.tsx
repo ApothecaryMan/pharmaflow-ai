@@ -20,9 +20,17 @@ export function EmployeeDashboard({ t, language }: Props) {
     loadData();
   }, []);
 
-  const loadData = async () => {
+  const loadData = async (refreshSession = false) => {
     setIsLoading(true);
     try {
+      if (refreshSession) {
+        // Force refresh session tokens so the new workspace is available
+        await authService.refreshSession();
+        // Trigger a hard reload to remount the app with the new session state
+        window.location.reload();
+        return;
+      }
+      
       const session = await authService.getCurrentUser();
       if (session?.userId) {
         const userProfile = await employeeProfileRepository.getById(session.userId);
@@ -92,10 +100,16 @@ export function EmployeeDashboard({ t, language }: Props) {
           </div>
           <div className="relative z-10 max-w-2xl">
             <h2 className="text-3xl font-bold text-white mb-3">
-              Welcome, {profile?.fullName?.split(' ')[0]}!
+              {language === 'AR' ? 'مرحباً،' : 'Welcome,'} {profile?.fullName?.split(' ')[0]}!
             </h2>
             <p className="text-zinc-300 text-lg leading-relaxed mb-6">
-              You are currently registered as an independent employee. Share your unique username <strong className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">{profile?.username}</strong> with pharmacy organizations to receive employment invitations.
+              {language === 'AR'
+                ? 'أنت مسجل حالياً كموظف مستقل. شارك اسم المستخدم الفريد الخاص بك'
+                : 'You are currently registered as an independent employee. Share your unique username'}{' '}
+              <strong className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">{profile?.username}</strong>{' '}
+              {language === 'AR'
+                ? 'مع الصيدليات لتلقي دعوات التوظيف.'
+                : 'with pharmacy organizations to receive employment invitations.'}
             </p>
           </div>
         </section>
@@ -116,7 +130,7 @@ export function EmployeeDashboard({ t, language }: Props) {
             requests={requests}
             userId={profile?.id || ''}
             username={profile?.username || ''}
-            onRefresh={loadData}
+            onRefresh={() => loadData(true)}
             t={t}
             language={language}
           />

@@ -81,7 +81,7 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
         orgId,
         targetUsername: profile.username,
         role: role,
-        branchId: branchId === 'UNASSIGNED' ? null : branchId
+        branchId: branchId === 'UNASSIGNED' ? undefined : branchId
       });
 
       if (!res.success) {

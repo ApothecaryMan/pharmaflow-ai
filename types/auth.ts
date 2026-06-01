@@ -36,7 +36,7 @@ export interface UserSession {
   branchId: string;
   
   /** Department classification */
-  department: 'sales' | 'pharmacy' | 'marketing' | 'hr' | 'it' | 'logistics';
+  department: 'sales' | 'pharmacy' | 'marketing' | 'hr' | 'it' | 'logistics' | 'unassigned';
   
   /** Display name of the employee */
   employeeName?: string;
@@ -55,7 +55,8 @@ export interface UserSession {
     | 'delivery'
     | 'delivery_pharmacist'
     | 'officeboy'
-    | 'manager';
+    | 'manager'
+    | 'unassigned';
     
   /** Flag to indicate if the user needs to select a workspace */
   needsWorkspaceSelection?: boolean;
