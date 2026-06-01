@@ -119,10 +119,14 @@ export const employeeRepository = {
 
   async getAllByAuthUserId(userId: string): Promise<Employee[]> {
     const { data, error } = await supabase.from(this.tableName)
-      .select('*')
+      .select('*, organizations(name), branches(name)')
       .eq('auth_user_id', userId);
     if (error) throw error;
-    return (data || []).map(item => this.mapFromDb(item));
+    return (data || []).map(item => ({
+      ...this.mapFromDb(item),
+      orgName: item.organizations?.name,
+      branchName: item.branches?.name,
+    }));
   },
 
   async getByUsername(username: string): Promise<Employee | null> {

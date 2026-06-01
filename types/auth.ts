@@ -1,3 +1,5 @@
+import type { Employee } from './hr';
+
 /** Organization role — determines access scope across all branches */
 export type OrgRole = 'owner' | 'admin' | 'member';
 
@@ -59,7 +61,7 @@ export interface UserSession {
   needsWorkspaceSelection?: boolean;
   
   /** Available workspaces for this user */
-  availableWorkspaces?: any[];
+  availableWorkspaces?: Employee[];
 }
 
 /**

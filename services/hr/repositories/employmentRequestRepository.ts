@@ -120,15 +120,8 @@ export const employmentRequestRepository = {
       const profile = await employeeProfileRepository.getById(userId);
       if (!profile) throw new Error('Profile not found');
 
-      // 3. Update status to accepted
-      const { error: updateError } = await supabase
-        .from('employment_requests')
-        .update({ status: 'accepted' })
-        .eq('id', requestId);
-        
-      if (updateError) throw updateError;
-
-      // 4. Create Employee record using EmployeeService
+      // 3. Create Employee record FIRST (before changing status)
+      // This way, if creation fails, the request stays 'pending' and can be retried.
       await employeeService.create({
         id: '', 
         employeeCode: '', 
@@ -147,6 +140,18 @@ export const employmentRequestRepository = {
         branchId: request.branch_id || undefined,
         orgId: request.org_id,
       } as any, request.branch_id || undefined, request.org_id);
+
+      // 4. Update status to accepted ONLY after employee was created successfully
+      const { error: updateError } = await supabase
+        .from('employment_requests')
+        .update({ status: 'accepted' })
+        .eq('id', requestId);
+        
+      if (updateError) {
+        // Employee was created but status update failed — log but don't fail
+        // The employee record exists, which is the critical part
+        console.error('Employee created but status update failed:', updateError);
+      }
 
       return true;
     } catch (err) {
