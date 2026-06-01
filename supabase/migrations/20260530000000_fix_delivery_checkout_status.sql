@@ -35,9 +35,10 @@ CREATE OR REPLACE FUNCTION public.process_checkout(p_payload jsonb)
      v_global_discount DECIMAL := (p_payload->>'globalDiscount')::DECIMAL;
      v_sale_item_id UUID;
      v_updated_items JSONB := '[]'::JSONB;
-     v_first_expiry DATE;
-     v_cost_price DECIMAL;
- BEGIN
+      v_first_expiry DATE;
+      v_cost_price DECIMAL;
+      v_earned_points INTEGER;
+  BEGIN
      -- 0. Identity Check
      IF NOT EXISTS (SELECT 1 FROM public.employees WHERE id = v_performer_id) THEN
          RETURN jsonb_build_object('success', false, 'error', 'Employee record not found');
@@ -146,7 +147,27 @@ CREATE OR REPLACE FUNCTION public.process_checkout(p_payload jsonb)
      -- Finalize JSONB snapshot in sales table
      UPDATE sales SET items = v_updated_items WHERE id = v_sale_id;
  
-     -- 4. Finalize Cash & Audit
+      -- 4. Update Customer total_purchases, points & last_visit (only when status is 'completed')
+      v_earned_points := COALESCE(ROUND((p_payload->>'earnedPoints')::DECIMAL), 0)::INTEGER;
+      IF COALESCE(p_payload->>'status', 'completed') = 'completed' THEN
+          IF p_payload->>'customerPhone' IS NOT NULL AND p_payload->>'customerPhone' != '' THEN
+              UPDATE customers 
+              SET 
+                  total_purchases = COALESCE(total_purchases, 0) + v_total,
+                  points = COALESCE(points, 0) + v_earned_points,
+                  last_visit = NOW() 
+              WHERE phone = p_payload->>'customerPhone' AND branch_id = v_branch_id;
+          ELSIF p_payload->>'customerCode' IS NOT NULL AND p_payload->>'customerCode' != '' THEN
+              UPDATE customers 
+              SET 
+                  total_purchases = COALESCE(total_purchases, 0) + v_total,
+                  points = COALESCE(points, 0) + v_earned_points,
+                  last_visit = NOW() 
+              WHERE code = p_payload->>'customerCode' AND branch_id = v_branch_id;
+          END IF;
+      END IF;
+
+      -- 5. Finalize Cash & Audit
      IF (p_payload->>'paymentMethod') = 'cash' AND v_shift_id IS NOT NULL AND COALESCE(p_payload->>'status', 'completed') = 'completed' THEN
          INSERT INTO cash_transactions (branch_id, shift_id, type, amount, reason, user_id, related_sale_id, org_id)
          VALUES (v_branch_id, v_shift_id, 'sale', v_total, 'Sale ' || v_serial_id, v_performer_id, v_sale_id, v_org_id);

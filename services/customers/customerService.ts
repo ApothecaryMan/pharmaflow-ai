@@ -56,7 +56,7 @@ class CustomerServiceImpl extends BaseEntityService<Customer> implements Custome
       ...customer,
       id: idGenerator.uuid(),
       serialId: await idGenerator.generate('customers-serial', settings.activeBranchId || '', settings.branchCode),
-      code: customer.code || idGenerator.code('CUST'),
+      code: customer.code || idGenerator.code('CUST', settings.activeBranchId || '', settings.branchCode),
       createdAt: new Date().toISOString(),
       points: customer.points || 0,
       totalPurchases: customer.totalPurchases || 0,

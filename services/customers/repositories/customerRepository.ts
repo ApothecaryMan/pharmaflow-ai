@@ -26,7 +26,7 @@ export const customerRepository = {
       chronicConditions: db.chronic_conditions || [],
       totalPurchases: Number(db.total_purchases) || 0,
       points: Number(db.points) || 0,
-      lastVisit: db.last_visit || new Date().toISOString(),
+      lastVisit: db.last_visit,
       notes: db.notes || undefined,
       status: db.status || 'active',
       vip: db.vip || false,

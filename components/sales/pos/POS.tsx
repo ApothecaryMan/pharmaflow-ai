@@ -814,7 +814,10 @@ export const POS: React.FC<POSProps> = ({
             customerDropdownHook={customerDropdownHook}
             paymentMethod={paymentMethod}
             setPaymentMethod={setPaymentMethod}
-            onShowHistory={() => setIsHistoryModalOpen(true)}
+            onShowHistory={() => {
+              setHistoryCustomer(selectedCustomer);
+              setIsHistoryModalOpen(true);
+            }}
           />
 
           {/* Search & Filter - No Card Container */}

@@ -22,6 +22,7 @@ import { stockMovementRepository } from '../inventory/repositories/stockMovement
 import { returnsRepository } from '../returns/repositories/returnsRepository';
 import { cashRepository } from '../cash/repositories/cashRepository';
 import { batchRepository } from '../inventory/repositories/batchRepository';
+import { calculateSalePoints } from '../customers/loyaltyUtils';
 
 import type { Sale, CartItem, Drug, StockMovement, ActionContext, Purchase, PurchaseReturn, Return } from '../../types';
 
@@ -99,6 +100,8 @@ export const transactionService = {
    * Internal factory to standardize the checkout payload structure.
    */
   _buildCheckoutPayload(saleData: any, context: ActionContext) {
+    const earnedPoints = calculateSalePoints(saleData as Sale).totalEarned;
+
     return {
       branchId: context.branchId,
       orgId: context.orgId,
@@ -119,6 +122,8 @@ export const transactionService = {
       
       customerName: saleData.customerName,
       customerPhone: saleData.customerPhone,
+      customerCode: saleData.customerCode,
+      earnedPoints,
       paymentMethod: saleData.paymentMethod,
       saleType: saleData.saleType || 'walk-in',
       status: saleData.status || 'completed',
