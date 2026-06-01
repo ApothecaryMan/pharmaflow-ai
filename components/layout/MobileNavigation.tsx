@@ -7,6 +7,7 @@ import { type MenuItem, PHARMACY_MENU } from '../../config/menuData';
 import { type UserRole } from '../../config/permissions';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
+import { getIconByName } from '../common/Icons';
 import { MobileDrawer } from './MobileDrawer';
 import { MobileMedicineSearch } from '../mobile/MobileMedicineSearch';
 import { MobileSearchCartDrawer } from '../mobile/MobileSearchCartDrawer';
@@ -204,11 +205,10 @@ const DockButton = React.memo<DockButtonProps>(
         onClick={onClick}
         className={`
         relative flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-full transition-all duration-500
-        ${
-          isActive
+        ${isActive
             ? `text-black dark:text-white z-10`
             : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-        }
+          }
         ${isDynamic ? 'animate-scale-in' : ''}
       `}
         aria-label={ariaLabel || label}
@@ -217,34 +217,22 @@ const DockButton = React.memo<DockButtonProps>(
       >
         {/* Flat & Transparent Floating Bean (Enlarged to fill space) */}
         {isActive && (
-          <div 
+          <div
             className="absolute inset-0 bg-black/[0.1] dark:bg-white/10 rounded-full animate-scale-in pointer-events-none"
           />
         )}
 
         <div className='relative z-10 flex flex-col items-center justify-center min-h-[22px]'>
-          {view === 'pos' ? (
-            <svg
-              className={`relative z-10 w-[20px] h-[20px] transition-transform duration-500 ${isActive ? 'scale-110' : ''}`}
-              viewBox='0 0 24 24'
-              fill={isActive ? 'currentColor' : 'none'}
-              stroke='currentColor'
-              strokeWidth='2.5'
-              strokeLinecap='round'
-              strokeLinejoin='round'
-            >
-              <path d='M4 4h3l1 10h10l1-10H7' />
-              <circle cx='9' cy='19' r='1.5' />
-              <circle cx='17' cy='19' r='1.5' />
-            </svg>
-          ) : (
-            <span
-              className={`relative z-10 material-symbols-rounded text-[22px] transition-all duration-500 ${isActive ? 'font-fill scale-110' : ''}`}
-              aria-hidden='true'
-            >
-              {icon}
-            </span>
-          )}
+          {(() => {
+            const IconComponent = getIconByName(icon);
+            return (
+              <IconComponent
+                size={22}
+                active={isActive}
+                className={`relative z-10 transition-all duration-500 ${isActive ? 'scale-110' : ''}`}
+              />
+            );
+          })()}
         </div>
         <span className={`relative z-10 text-[9px] font-bold ${isActive ? 'opacity-100' : 'opacity-60'}`}>
           {label}
@@ -366,8 +354,8 @@ const MobileDockLogin: React.FC<MobileDockLoginProps> = ({ employees, onSelectEm
         </button>
       ) : (
         <div className='flex items-center w-full max-w-[260px] h-[40px] px-3 rounded-full bg-white/60 dark:bg-black/40 border border-gray-300 dark:border-gray-700 shadow-inner group'>
-          <button 
-            onClick={step === 'password' ? () => setShowPassword(!showPassword) : resetState} 
+          <button
+            onClick={step === 'password' ? () => setShowPassword(!showPassword) : resetState}
             className='mr-2 grid place-items-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors'
             type='button'
           >
@@ -375,7 +363,7 @@ const MobileDockLogin: React.FC<MobileDockLoginProps> = ({ employees, onSelectEm
               {step === 'password' ? (showPassword ? 'visibility_off' : 'visibility') : 'close'}
             </span>
           </button>
-          
+
           <input
             ref={inputRef}
             type={step === 'password' ? (showPassword ? 'text' : 'password') : 'text'}
@@ -477,18 +465,18 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
     setCart(prev => {
       const existing = prev.find(item => item.id === drug.id && item.isUnit === isUnit);
       if (existing) {
-        return prev.map(item => 
-          item.id === drug.id && item.isUnit === isUnit 
-            ? { ...item, quantity: item.quantity + quantity } 
+        return prev.map(item =>
+          item.id === drug.id && item.isUnit === isUnit
+            ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
-      
+
       return [
-        ...prev, 
-        { 
-          ...drug, 
-          quantity, 
+        ...prev,
+        {
+          ...drug,
+          quantity,
           isUnit,
           publicPrice: resolvePrice(drug.publicPrice, isUnit, drug.unitsPerPack, drug.unitPrice)
         }
@@ -520,22 +508,22 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
     setCart(prev => {
       const item = prev.find(i => i.id === id && i.isUnit === currentIsUnit);
       if (!item) return prev;
-      
+
       const otherModeExists = prev.find(i => i.id === id && i.isUnit !== currentIsUnit);
       if (otherModeExists) return prev; // Don't toggle if already exists in other mode (just one per mode)
 
-      return prev.map(i => 
-        i.id === id && i.isUnit === currentIsUnit 
-          ? { ...i, isUnit: !currentIsUnit } 
+      return prev.map(i =>
+        i.id === id && i.isUnit === currentIsUnit
+          ? { ...i, isUnit: !currentIsUnit }
           : i
       );
     });
   }, []);
 
   const updateItemDiscount = React.useCallback((id: string, isUnit: boolean, discount: number) => {
-    setCart(prev => prev.map(item => 
-      item.id === id && item.isUnit === isUnit 
-        ? { ...item, discount } 
+    setCart(prev => prev.map(item =>
+      item.id === id && item.isUnit === isUnit
+        ? { ...item, discount }
         : item
     ));
   }, []);
@@ -545,14 +533,14 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
       // Remove all entries for this drug (name+dosageForm)
       const filtered = prev.filter(i => (i.name !== currentItem.name || i.dosageForm !== currentItem.dosageForm));
       const newItems: CartItem[] = [];
-      
+
       if (packQty > 0) {
         newItems.push({ ...newBatch, quantity: packQty, isUnit: false, discount: currentItem.discount || 0 });
       }
       if (unitQty > 0) {
         newItems.push({ ...newBatch, quantity: unitQty, isUnit: true, discount: currentItem.discount || 0 });
       }
-      
+
       return [...filtered, ...newItems];
     });
   }, []);
@@ -583,8 +571,8 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
       {/* Mobile Search View Content - Overlay when active */}
       {view === 'medicine-search' && (
         <div className="md:hidden fixed inset-0 z-50 bg-gray-50 dark:bg-[#06080F] animate-fade-in">
-          <MobileMedicineSearch 
-            inventory={inventory} 
+          <MobileMedicineSearch
+            inventory={inventory}
             color={theme.primary}
             onScanClick={() => console.log('Scan clicked')}
             cart={cart}
@@ -628,9 +616,9 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
               overflow-hidden
             `}
           >
-            <MobileDockLogin 
-              employees={employees} 
-              onSelectEmployee={onSelectEmployee!} 
+            <MobileDockLogin
+              employees={employees}
+              onSelectEmployee={onSelectEmployee!}
               language={language}
             />
           </div>
@@ -658,8 +646,8 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
                   }}
                   className={`
                     relative w-full h-full flex items-center justify-center rounded-full transition-all duration-500
-                    ${view === 'medicine-search' 
-                      ? 'text-black dark:text-white' 
+                    ${view === 'medicine-search'
+                      ? 'text-black dark:text-white'
                       : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}
                   `}
                   aria-label={language === 'AR' ? 'بحث' : 'Search'}
@@ -718,7 +706,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 <DockButton
                   view='purchases'
                   currentView={view}
-                  icon='shopping_cart'
+                  icon='shopping_cart_checkout'
                   label={t.nav?.purchase || (language === 'AR' ? 'المشتريات' : 'Purchases')}
                   theme={theme}
                   onClick={handlePurchasesClick}
@@ -753,23 +741,23 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
         )}
       </nav>
 
-      <MobileSearchCartDrawer 
-         isOpen={isCartOpen}
-         onClose={() => setIsCartOpen(false)}
-         cart={cart}
-         onUpdateQuantity={updateQuantity}
-         onRemove={removeFromCart}
-         total={cartTotal}
-         grossSubtotal={grossSubtotal}
-         totalItems={cartTotalItems}
-         updateItemDiscount={updateItemDiscount}
-         toggleUnitMode={toggleUnitMode}
-         showMenu={showMenu}
-         batchesMap={batchesMap}
-         switchBatchWithAutoSplit={switchBatchWithAutoSplit}
-         addToCart={addToCart}
-         removeDrugFromCart={removeDrugFromCart}
-         onClearCart={() => setCart([])}
+      <MobileSearchCartDrawer
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        cart={cart}
+        onUpdateQuantity={updateQuantity}
+        onRemove={removeFromCart}
+        total={cartTotal}
+        grossSubtotal={grossSubtotal}
+        totalItems={cartTotalItems}
+        updateItemDiscount={updateItemDiscount}
+        toggleUnitMode={toggleUnitMode}
+        showMenu={showMenu}
+        batchesMap={batchesMap}
+        switchBatchWithAutoSplit={switchBatchWithAutoSplit}
+        addToCart={addToCart}
+        removeDrugFromCart={removeDrugFromCart}
+        onClearCart={() => setCart([])}
       />
     </>
   );

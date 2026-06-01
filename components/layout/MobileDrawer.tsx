@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MenuItem } from '../../config/menuData';
 import { useSettings } from '../../context';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
+import { getIconByName } from '../common/Icons';
 import { SidebarContent } from './SidebarContent';
 import { authService } from '../../services/auth/authService';
 import type { Employee, ViewState } from '../../types';
@@ -235,27 +236,27 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
         <div className='p-6 pb-4 flex items-center justify-between border-b border-gray-200/30 dark:border-gray-800/30'>
           <div className='flex items-center gap-3'>
             <div className='relative'>
-                <div
-                  className="flex items-center justify-center rounded-full"
-                  style={{
-                    backgroundColor: theme.hex,
-                    width: '44px',
-                    height: '44px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                  }}
-                >
-                  {safeProfileImage ? (
-                    <img 
-                      src={safeProfileImage} 
-                      alt="User profile" 
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className='material-symbols-rounded text-white' aria-hidden='true'>
-                      person
-                    </span>
-                  )}
-                </div>
+              <div
+                className="flex items-center justify-center rounded-full"
+                style={{
+                  backgroundColor: theme.hex,
+                  width: '44px',
+                  height: '44px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                }}
+              >
+                {safeProfileImage ? (
+                  <img
+                    src={safeProfileImage}
+                    alt="User profile"
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span className='material-symbols-rounded text-white' aria-hidden='true'>
+                    person
+                  </span>
+                )}
+              </div>
               <div
                 className='absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full'
                 aria-label='Online status'
@@ -263,7 +264,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
             </div>
             <div className='flex flex-col'>
               <span className='text-sm font-black text-gray-900 dark:text-gray-100 leading-tight'>
-                {currentEmployeeId 
+                {currentEmployeeId
                   ? (currentEmployee?.name || authService.getCurrentUserSync()?.username || 'Zinc AI')
                   : 'Zinc AI'
                 }
@@ -287,13 +288,8 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
         </div>
 
         {/* Module Ribbon */}
-        <div className='py-5 border-y border-gray-200 dark:border-gray-800/30 bg-gray-50/50 dark:bg-gray-900/20'>
-          <div className='px-5 mb-4'>
-            <h3 className='text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 dark:text-gray-500'>
-              {t.menu.modules}
-            </h3>
-          </div>
-          <div className='flex gap-3 overflow-x-auto px-5 pb-2 scrollbar-hide mask-fade-edges'>
+        <div className='py-3 border-y border-gray-200 dark:border-gray-800/30 bg-gray-50/50 dark:bg-gray-900/20'>
+          <div className='flex gap-2 overflow-x-auto px-4 scrollbar-hide mask-fade-edges'>
             {filteredMenuItems.map((module) => {
               const isActive = activeModule === module.id;
               return (
@@ -302,45 +298,28 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                   onClick={() => handleModuleChange(module.id)}
                   className={`
                     flex flex-col items-center justify-center p-2 min-w-[68px] rounded-2xl transition-all duration-300
-                    ${
-                      isActive
-                        ? `text-primary-600 dark:text-primary-400`
-                        : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'
+                    ${isActive
+                      ? `text-primary-600 dark:text-primary-400`
+                      : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'
                     }
                   `}
                   aria-label={getMenuTranslation(module.label, language)}
                   aria-current={isActive ? 'page' : undefined}
                   type='button'
                 >
-                  {module.id === 'sales' ? (
-                    <svg
-                      className={`w-[26px] h-[26px] transition-all duration-500 ${isActive ? 'scale-110' : ''}`}
-                      viewBox='0 0 24 24'
-                      fill='none'
-                      stroke='currentColor'
-                      strokeWidth='2'
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                    >
-                      <path d='M4 4h3l1 10h10l1-10H7' />
-                      <circle cx='9' cy='19' r='1.5' />
-                      <circle cx='17' cy='19' r='1.5' />
-                    </svg>
-                  ) : (
-                    <span
-                      className={`
-                        material-symbols-rounded text-[26px] transition-all duration-500
-                        ${isActive ? 'font-fill scale-110' : ''}
-                      `}
-                      aria-hidden='true'
-                    >
-                      {module.icon}
-                    </span>
-                  )}
+                  {(() => {
+                    const IconComponent = getIconByName(module.icon || module.id);
+                    return (
+                      <IconComponent
+                        size={26}
+                        active={isActive}
+                        className={`transition-all duration-500 ${isActive ? 'scale-110' : ''}`}
+                      />
+                    );
+                  })()}
                   <span
-                    className={`text-[10px] mt-1.5 font-bold whitespace-nowrap overflow-hidden text-ellipsis max-w-[60px] ${
-                      isActive ? 'opacity-100' : 'opacity-60'
-                    }`}
+                    className={`text-[10px] mt-1.5 font-bold whitespace-nowrap overflow-hidden text-ellipsis max-w-[60px] ${isActive ? 'opacity-100' : 'opacity-60'
+                      }`}
                   >
                     {getMenuTranslation(module.label, language)}
                   </span>
