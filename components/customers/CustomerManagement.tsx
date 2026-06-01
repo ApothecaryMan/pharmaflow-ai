@@ -149,7 +149,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
    * Centralized in idGenerator.code
    */
   const generateUniqueCode = () => {
-    return idGenerator.code('CUST');
+    return idGenerator.code('CUST', activeBranchId);
   };
 
   /**
@@ -442,8 +442,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         header: t.headers?.points || 'Points',
         meta: { align: 'center', width: 100 },
         cell: (info) => (
-          <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-current text-amber-700 dark:text-amber-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
-            <span className='material-symbols-rounded text-xs'>loyalty</span>
+          <span className='badge-warning gap-1'>
+            <span className='material-symbols-rounded'>loyalty</span>
             {parseFloat(Number(info.row.original.points || 0).toFixed(2))} pts
           </span>
         ),
@@ -460,13 +460,10 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         cell: (info) => {
           const c = info.row.original;
           const isActive = c.status?.toLowerCase() === 'active';
-          const color = isActive ? 'emerald' : 'red';
           const icon = isActive ? 'check_circle' : 'cancel';
           return (
-            <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-primary-700 dark:text-primary-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
-            >
-              <span className='material-symbols-rounded text-sm'>{icon}</span>
+            <span className={isActive ? 'badge-success' : 'badge-red'}>
+              <span className='material-symbols-rounded'>{icon}</span>
               {t.status[c.status?.toLowerCase()] || c.status}
             </span>
           );
@@ -581,13 +578,10 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 </div>
                 {(() => {
                   const isActive = c.status?.toLowerCase() === 'active';
-                  const color = isActive ? 'emerald' : 'red';
                   const icon = isActive ? 'check_circle' : 'cancel';
                   return (
-                    <div
-                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-white/20 backdrop-blur-xs text-white border border-white/20`}
-                    >
-                      <span className='material-symbols-rounded text-sm'>{icon}</span>
+                    <div className={isActive ? 'badge-success' : 'badge-red'}>
+                      <span className='material-symbols-rounded'>{icon}</span>
                       {t.status[c.status?.toLowerCase()] || c.status}
                     </div>
                   );
@@ -652,9 +646,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       <span dir='ltr'>{c.phone}</span>
                       {/* Country Badge */}
                       {getDetectedCountry(c.phone) && (
-                        <span
-                          className={`px-1.5 py-0.5 bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 rounded-sm text-[10px] font-bold ms-auto`}
-                        >
+                        <span className='badge-blue ms-auto'>
                           {language === 'AR'
                             ? getDetectedCountry(c.phone)?.country_ar
                             : getDetectedCountry(c.phone)?.country_en}
@@ -1037,9 +1029,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                         className='w-full px-3 py-2 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       />
                       {getDetectedCountry(formData.phone) && (
-                        <div
-                          className={`absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 rounded-sm text-[10px] font-bold`}
-                        >
+                        <div className='absolute right-2 top-1/2 -translate-y-1/2 badge-blue'>
                           {language === 'AR'
                             ? getDetectedCountry(formData.phone)?.country_ar
                             : getDetectedCountry(formData.phone)?.country_en}
@@ -1300,7 +1290,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                         placeholder={t.modal.placeholders.phone}
                       />
                       {getDetectedCountry(formData.phone) && (
-                        <div className='absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-sm text-[10px] font-bold'>
+                        <div className='absolute right-2 top-1/2 -translate-y-1/2 badge-blue'>
                           {language === 'AR'
                             ? getDetectedCountry(formData.phone)?.country_ar
                             : getDetectedCountry(formData.phone)?.country_en}
@@ -1502,9 +1492,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       placeholder={t.modal.placeholders.phone}
                     />
                     {getDetectedCountry(formData.phone) && (
-                      <div
-                        className={`absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 rounded-sm text-[10px] font-bold`}
-                      >
+                      <div className='absolute right-2 top-1/2 -translate-y-1/2 badge-blue'>
                         {language === 'AR'
                           ? getDetectedCountry(formData.phone)?.country_ar
                           : getDetectedCountry(formData.phone)?.country_en}

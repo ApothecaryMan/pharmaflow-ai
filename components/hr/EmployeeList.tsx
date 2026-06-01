@@ -135,13 +135,13 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
     if (confirm(t.employeeList.deleteConfirm)) {
       await onDeleteEmployee(emp.id);
       playBeep();
-      
+
       // Refresh global list if in global view
       if (showAllBranches) {
         try {
           const all = await employeeService.getAll('ALL');
           setAllEmployeesFetched(all);
-        } catch (err) {}
+        } catch (err) { }
       }
     }
   };
@@ -271,7 +271,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
               }}
               className='p-1 text-gray-400 hover:text-emerald-600 transition-colors'
             >
-              <span 
+              <span
                 className='material-symbols-rounded'
                 style={{ fontSize: 'var(--icon-lg)' }}
               >
@@ -287,7 +287,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                   }}
                   className='p-1 text-gray-400 hover:text-primary-600 transition-colors'
                 >
-                  <span 
+                  <span
                     className='material-symbols-rounded'
                     style={{ fontSize: 'var(--icon-lg)' }}
                   >
@@ -301,7 +301,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                   }}
                   className='p-1 text-gray-400 hover:text-red-600 transition-colors'
                 >
-                  <span 
+                  <span
                     className='material-symbols-rounded'
                     style={{ fontSize: 'var(--icon-lg)' }}
                   >
@@ -341,7 +341,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         try {
           const all = await employeeService.getAll('ALL');
           setAllEmployeesFetched(all);
-        } catch (err) {}
+        } catch (err) { }
       }
 
       if (onUpdateEmployees) onUpdateEmployees(employees);
@@ -392,15 +392,15 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         rightContent={
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-3 px-3 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
-                <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none shrink-0">
-                  {t.employeeList.globalView}
-                </span>
-                <Switch
-                  checked={showAllBranches}
-                  onChange={setShowAllBranches}
-                  activeColor={color}
-                />
-              </label>
+              <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none shrink-0">
+                {t.employeeList.globalView}
+              </span>
+              <Switch
+                checked={showAllBranches}
+                onChange={setShowAllBranches}
+                activeColor={color}
+              />
+            </label>
 
             {permissionsService.can('users.manage') && (
               <>
@@ -409,7 +409,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                   className="flex items-center justify-center gap-2 px-6 h-10 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-xl transition-all active:scale-95 whitespace-nowrap font-bold text-xs uppercase tracking-wider cursor-pointer"
                 >
                   <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>person_add</span>
-                  <span>{language === 'AR' ? 'تعيين عبر الاسم' : 'Hire via Username'}</span>
+                  <span>{language === 'AR' ? 'تعيين عبر الاسم' : 'Hire'}</span>
                 </button>
                 <button
                   onClick={() => {
