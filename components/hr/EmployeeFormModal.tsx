@@ -61,6 +61,11 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
   const [isResetting, setIsResetting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Link Global Account States
+  const [linkUsername, setLinkUsername] = useState('');
+  const [isLinking, setIsLinking] = useState(false);
+  const [linkError, setLinkError] = useState('');
+
   // Initialize form data when employee changes
   useEffect(() => {
     if (employee) {
@@ -135,8 +140,12 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     setIsOldPasswordVerified(false);
     setPasswordError('');
     setWantsToChangePassword(false);
+    setWantsToChangePassword(false);
     setIsResetting(false);
     setIsSaving(false);
+    setLinkUsername('');
+    setLinkError('');
+    setIsLinking(false);
   };
 
   const getInitials = (name: string) => {
@@ -206,6 +215,28 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
       playError();
     } finally {
       setIsSaving(false);
+    }
+  };
+  const handleLinkAccount = async () => {
+    if (!employee?.id || !linkUsername.trim()) return;
+    setIsLinking(true);
+    setLinkError('');
+    try {
+      const { employeeRepository } = await import('../../services/hr/repositories/employeeRepository');
+      const updatedEmployee = await employeeRepository.linkGlobalAccount(employee.id, linkUsername.trim());
+      setFormData((prev) => ({
+        ...prev,
+        userId: updatedEmployee.userId,
+        username: updatedEmployee.username,
+      }));
+      setLinkUsername('');
+      playSuccess();
+    } catch (err: any) {
+      console.error('Failed to link account', err);
+      setLinkError(err.message || (language === 'AR' ? 'فشل الربط. تأكد من صحة الحساب.' : 'Failed to link account. Verify username/ID.'));
+      playError();
+    } finally {
+      setIsLinking(false);
     }
   };
 
@@ -811,6 +842,44 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                     </button>
                   </div>
                 </div>
+
+                {/* Link Global Account Section */}
+                {employee && !formData.userId && (
+                  <div className='mt-6 p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 space-y-3'>
+                    <div className='flex items-center gap-2'>
+                      <span className='material-symbols-rounded text-blue-500'>link</span>
+                      <h4 className='text-sm font-bold text-blue-500'>
+                        {language === 'AR' ? 'ربط بحساب عالمي' : 'Link Global Account'}
+                      </h4>
+                    </div>
+                    <p className='text-xs text-blue-600/80 leading-relaxed font-medium'>
+                      {language === 'AR' 
+                        ? 'هذا الموظف ليس لديه حساب عالمي. أدخل اسم المستخدم (@username) أو المعرف (ID) الخاص به لربط مبيعاته وسجلاته بحسابه الجديد.'
+                        : "This employee doesn't have a global account. Enter their Global @Username or ID to link their legacy records to their new account."}
+                    </p>
+                    <div className='flex items-center gap-2 mt-2'>
+                       <SmartInput
+                         value={linkUsername}
+                         onChange={(e) => setLinkUsername(e.target.value)}
+                         placeholder={language === 'AR' ? '@username أو المعرف' : '@username or ID'}
+                         className="flex-1 !py-2 bg-white dark:bg-zinc-900 border-blue-500/20 focus-within:border-blue-500/50"
+                       />
+                       <button
+                         type="button"
+                         onClick={handleLinkAccount}
+                         disabled={isLinking || !linkUsername.trim()}
+                         className="px-4 py-2 bg-blue-500 text-white rounded-lg text-xs font-bold disabled:opacity-50 transition-colors hover:bg-blue-600 active:scale-95"
+                       >
+                         {isLinking ? (
+                            <span className="animate-spin material-symbols-rounded text-[16px]">sync</span>
+                         ) : (
+                           language === 'AR' ? 'ربط الحساب' : 'Link Account'
+                         )}
+                       </button>
+                    </div>
+                    {linkError && <p className="text-red-500 text-xs font-medium animate-in fade-in">{linkError}</p>}
+                  </div>
+                )}
 
                 {/* Password field for NEW employees or EDITING employees with no password */}
                 {(!employee || !employee.password) && (

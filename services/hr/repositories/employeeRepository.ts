@@ -158,5 +158,46 @@ export const employeeRepository = {
     const dbEmployees = employees.map(e => this.mapToDb(e));
     const { error } = await supabase.from(this.tableName).upsert(dbEmployees);
     if (error) throw error;
+  },
+
+  /**
+   * Links a legacy employee record to a global user profile
+   * @param employeeId The local employee record ID
+   * @param globalIdentifier The global @username or UUID to link to
+   * @returns The updated employee, or throws an error if not found/failed
+   */
+  async linkGlobalAccount(employeeId: string, globalIdentifier: string): Promise<Employee> {
+    // 1. Determine if identifier is UUID or username
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(globalIdentifier);
+    
+    // 2. Query user_profiles
+    const query = supabase
+      .from('user_profiles')
+      .select('id, username')
+      .eq(isUUID ? 'id' : 'username', isUUID ? globalIdentifier : globalIdentifier.replace(/^@/, ''))
+      .single();
+
+    const { data: profile, error: profileError } = await query;
+
+    if (profileError || !profile) {
+      throw new Error('Global account not found. Please verify the ID or Username.');
+    }
+
+    // 3. Update the employee record
+    const { data: updatedEmployee, error: updateError } = await supabase
+      .from(this.tableName)
+      .update({
+        auth_user_id: profile.id,
+        username: profile.username
+      })
+      .eq('id', employeeId)
+      .select()
+      .single();
+
+    if (updateError || !updatedEmployee) {
+      throw new Error('Failed to link account to the employee record.');
+    }
+
+    return this.mapFromDb(updatedEmployee);
   }
 };
