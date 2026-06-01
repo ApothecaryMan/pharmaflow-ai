@@ -54,6 +54,12 @@ export interface UserSession {
     | 'delivery_pharmacist'
     | 'officeboy'
     | 'manager';
+    
+  /** Flag to indicate if the user needs to select a workspace */
+  needsWorkspaceSelection?: boolean;
+  
+  /** Available workspaces for this user */
+  availableWorkspaces?: any[];
 }
 
 /**
@@ -89,4 +95,22 @@ export interface LoginAuditEntry {
 
   /** Display name of the employee at time of action */
   employeeName?: string;
+}
+
+export interface IndividualRegistrationPayload {
+  username: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  password?: string;
+}
+
+export interface OrgRegistrationPayload {
+  orgName: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  password?: string;
+  branchName: string;
+  branchAddress: string;
 }

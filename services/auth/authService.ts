@@ -6,6 +6,7 @@
 import { 
   type UserSession, 
   type LoginAuditEntry,
+  type IndividualRegistrationPayload,
 } from '../../types';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { storage } from '../../utils/storage';
@@ -148,6 +149,41 @@ export const authService = {
     }
   },
 
+  async registerIndividual(payload: IndividualRegistrationPayload): Promise<{ success: boolean; message?: string }> {
+    try {
+      const password = payload.password || this.generateTempPassword();
+      const { data, error } = await supabase.auth.signUp({
+        email: payload.email,
+        password: password,
+        options: {
+          data: { 
+            name: payload.fullName, 
+            username: payload.username 
+          }
+        }
+      });
+      if (error) throw error;
+
+      if (data.user) {
+        // Insert into user_profiles
+        const { error: profileError } = await supabase.from('user_profiles').insert({
+          id: data.user.id,
+          username: payload.username,
+          full_name: payload.fullName,
+          phone: payload.phone
+        });
+        if (profileError) {
+          console.error('Failed to create user profile', profileError);
+          // Don't throw here to avoid failing the whole sign up if the trigger failed
+        }
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Failed to register individual account' };
+    }
+  },
+
   async resetPassword(email: string): Promise<{ success: boolean; message?: string }> {
     try {
       // In Tauri desktop mode, redirect to the production web URL
@@ -181,25 +217,29 @@ export const authService = {
     if (authError) throw authError;
     if (!authData.user) throw new Error('No user data returned');
 
-    let employeeData = await employeeRepository.getByAuthUserId(authData.user.id);
-    const memberData = await orgRepository.getMemberByUserId(authData.user.id);
-    
-    const orgRole = memberData?.role || 'member';
-    const orgId = memberData?.orgId;
+    let employeeDataArray = await employeeRepository.getAllByAuthUserId(authData.user.id);
+    let employeeData = employeeDataArray.length > 0 ? employeeDataArray[0] : null;
 
     if (!employeeData) {
       const fallbackData = await employeeRepository.getByUsername(username);
       if (fallbackData) {
         employeeData = fallbackData;
+        employeeDataArray = [fallbackData];
         if (!employeeData.userId) {
           await employeeRepository.update(employeeData.id, { userId: authData.user.id });
         }
       }
     }
 
+    const memberData = await orgRepository.getMemberByUserId(authData.user.id);
+    const orgRole = memberData?.role || 'member';
+    const orgId = memberData?.orgId;
+
     let session: UserSession;
 
     if (employeeData) {
+      const needsWorkspaceSelection = employeeDataArray.length > 1;
+      
       session = {
         userId: authData.user.id,
         username: employeeData.username || employeeData.name,
@@ -207,10 +247,12 @@ export const authService = {
         employeeCode: employeeData.employeeCode,
         employeeName: employeeData.name,
         branchId: employeeData.branchId || '',
-        orgId: orgId || employeeData.orgId,
+        orgId: employeeData.orgId,
         role: employeeData.role,
         orgRole: orgRole as any,
         department: employeeData.department,
+        needsWorkspaceSelection,
+        availableWorkspaces: employeeDataArray,
       };
     } else {
       session = {

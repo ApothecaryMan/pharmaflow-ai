@@ -5,6 +5,7 @@ import { usePosSounds } from '../../../common/hooks/usePosSounds';
 import { useSmartDirection } from '../../../common/SmartInputs';
 import { StatusBarItem } from '../StatusBarItem';
 import { useAlert } from '../../../../context';
+import { employeeRepository } from '../../../../services/hr/repositories/employeeRepository';
 
 interface QuickLoginProps {
   userName?: string;
@@ -177,7 +178,18 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
     if (step === 'username') {
       const query = inputVal.trim();
       if (!query) return;
-      const found = employees.find(emp => emp.username === query);
+      
+      let found = employees.find(emp => emp.username === query);
+      
+      if (!found) {
+        try {
+          const dbFound = await employeeRepository.getByUsername(query);
+          if (dbFound) found = dbFound;
+        } catch (err) {
+          console.error('Direct username search failed', err);
+        }
+      }
+
       if (found) {
         setTempEmployee(found);
         setStep('password');

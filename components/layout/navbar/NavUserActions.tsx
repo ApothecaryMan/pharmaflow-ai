@@ -191,6 +191,61 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
               </div>
             </div>
 
+            {/* Workspace Management */}
+            {authService.getCurrentUserSync()?.availableWorkspaces && authService.getCurrentUserSync()!.availableWorkspaces!.length > 1 && (
+              <div className='p-2 border-t border-(--border-divider)'>
+                <div className='flex items-center justify-between px-2 mb-2'>
+                  <div className='flex items-center gap-1.5'>
+                    <Icons.Store size={16} className="text-gray-400" />
+                    <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
+                      {language === 'AR' ? 'مساحات العمل' : 'Workspaces'}
+                    </p>
+                  </div>
+                </div>
+                <div className='space-y-1 max-h-[150px] overflow-y-auto scrollbar-hide'>
+                  {authService.getCurrentUserSync()!.availableWorkspaces!.map((workspace: any) => {
+                    const isActive = authService.getCurrentUserSync()?.employeeId === workspace.id;
+                    return (
+                      <button
+                        key={workspace.id}
+                        onClick={() => {
+                          if (isActive) return;
+                          const session = authService.getCurrentUserSync();
+                          if (session) {
+                            authService.updateSession({
+                              ...session,
+                              employeeId: workspace.id,
+                              employeeCode: workspace.employeeCode,
+                              employeeName: workspace.name,
+                              branchId: workspace.branchId || '',
+                              orgId: workspace.orgId,
+                              role: workspace.role,
+                              department: workspace.department,
+                              needsWorkspaceSelection: false,
+                            });
+                            window.location.reload();
+                          }
+                        }}
+                        className={`w-full p-2 text-sm font-medium rounded-lg flex items-center justify-between transition-colors
+                          ${
+                            isActive
+                              ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover)'
+                          }
+                        `}
+                      >
+                        <div className='flex flex-col items-start'>
+                          <span>{workspace.orgName || 'Pharmacy'}</span>
+                          <span className='text-[10px] opacity-70 capitalize'>{workspace.role.replace('_', ' ')}</span>
+                        </div>
+                        {isActive && <Icons.Success size="var(--icon-md)" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Branch Management */}
             {currentEmployeeId && (
               <div className='p-2 border-t border-(--border-divider)'>

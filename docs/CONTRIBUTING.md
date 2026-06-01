@@ -536,6 +536,16 @@ When logging dynamic events (e.g., "Switched from Employee A"), **do not log tra
 
 ---
 
+### 12. Authentication & Dual Login Architecture
+
+**RULE:** The application strictly enforces a Dual-Layer Authentication approach to separate Global Identity from Pharmacy/Local Access.
+
+- **Global Identity (`auth.users`)**: Used only for the unified **Employee Portal**. Users register with Email/Phone and have an account not tied to any specific pharmacy. 
+- **Pharmacy Access (Local `employees` Table)**: Access to the Point of Sale (POS) or any specific Pharmacy organization is strictly isolated. Employees MUST use the `QuickLogin` component, which bypasses Supabase `auth.users` and hashes local credentials using `hashUtils.ts` directly against the local `employees` table.
+- **Workspace Switcher**: If an employee works at multiple pharmacies (multiple `employees` rows linked to one `auth_user_id`), the `WorkspaceSwitcher` intercepts the login flow and prompts them to select their active pharmacy context (`orgId`).
+
+---
+
 ## 🛠️ Workflow: Adding a New Page
 
 1.  **Create Component**: Build your page in `components/[module]/MyPage.tsx`.

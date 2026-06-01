@@ -111,9 +111,18 @@ export const employeeRepository = {
     const { data, error } = await supabase.from(this.tableName)
       .select('*')
       .eq('auth_user_id', userId)
+      .limit(1)
       .maybeSingle();
     if (error) throw error;
     return data ? this.mapFromDb(data) : null;
+  },
+
+  async getAllByAuthUserId(userId: string): Promise<Employee[]> {
+    const { data, error } = await supabase.from(this.tableName)
+      .select('*')
+      .eq('auth_user_id', userId);
+    if (error) throw error;
+    return (data || []).map(item => this.mapFromDb(item));
   },
 
   async getByUsername(username: string): Promise<Employee | null> {

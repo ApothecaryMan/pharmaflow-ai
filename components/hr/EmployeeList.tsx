@@ -18,6 +18,7 @@ import { SearchInput } from '../common/SearchInput';
 import { PageHeader } from '../common/PageHeader';
 import { EmployeeFormModal } from './EmployeeFormModal';
 import { EmployeeDetailsModal } from './EmployeeDetailsModal';
+import { HireEmployeeModal } from './HireEmployeeModal';
 
 interface EmployeeListProps {
   color: string;
@@ -49,6 +50,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
 
   // --- State ---
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isHireModalOpen, setIsHireModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [viewingEmployee, setViewingEmployee] = useState<Employee | null>(null);
 
@@ -170,7 +172,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         .map(([key, label]) => ({
           label: label as string,
           value: key,
-          icon: key === 'active' ? 'check_circle' : key === 'holiday' ? 'beach_access' : 'cancel',
+          icon: key === 'active' ? 'check_circle' : key === 'holiday' ? 'beach_access' : key === 'pending' ? 'pending' : 'cancel',
           color: key === 'active' ? 'emerald' : key === 'holiday' ? 'amber' : 'gray'
         }))
     },
@@ -401,16 +403,25 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
               </label>
 
             {permissionsService.can('users.manage') && (
-              <button
-                onClick={() => {
-                  setEditingEmployee(null);
-                  setIsModalOpen(true);
-                }}
-                className="flex items-center justify-center gap-2 px-6 h-10 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 rounded-xl shadow-sm transition-all active:scale-95 whitespace-nowrap font-bold text-xs uppercase tracking-wider"
-              >
-                <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>add</span>
-                <span>{t.employeeList.addEmployee}</span>
-              </button>
+              <>
+                <button
+                  onClick={() => setIsHireModalOpen(true)}
+                  className="flex items-center justify-center gap-2 px-6 h-10 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-xl transition-all active:scale-95 whitespace-nowrap font-bold text-xs uppercase tracking-wider cursor-pointer"
+                >
+                  <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>person_add</span>
+                  <span>{language === 'AR' ? 'تعيين عبر الاسم' : 'Hire via Username'}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setEditingEmployee(null);
+                    setIsModalOpen(true);
+                  }}
+                  className="flex items-center justify-center gap-2 px-6 h-10 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 rounded-xl shadow-sm transition-all active:scale-95 whitespace-nowrap font-bold text-xs uppercase tracking-wider cursor-pointer"
+                >
+                  <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>add</span>
+                  <span>{t.employeeList.addEmployee}</span>
+                </button>
+              </>
             )}
           </div>
         }
@@ -461,6 +472,13 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         employee={viewingEmployee}
         language={language}
         t={t.employeeList}
+      />
+
+      {/* Hire via Username Modal */}
+      <HireEmployeeModal
+        isOpen={isHireModalOpen}
+        onClose={() => setIsHireModalOpen(false)}
+        language={language}
       />
     </div>
   );

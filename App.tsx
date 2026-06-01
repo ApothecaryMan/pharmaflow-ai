@@ -12,6 +12,7 @@ import { useStatusBar } from './components/layout/StatusBar';
 import { OrgSetupScreen } from './components/onboarding/OrgSetupScreen';
 import { BranchSetupScreen } from './components/onboarding/BranchSetupScreen';
 import { EmployeeSetupScreen } from './components/onboarding/EmployeeSetupScreen';
+import { EmployeeDashboard } from './components/employee-portal/EmployeeDashboard';
 import { PAGE_REGISTRY } from './config/pageRegistry';
 import { UserRole } from './config/permissions';
 import { SecureGate } from './components/common/SecureGate';
@@ -585,8 +586,15 @@ const App: React.FC = () => {
 
 
 
+  const currentUser = authService.getCurrentUserSync();
+  const isZeroAffiliation = authState.isAuthenticated && currentUser && !currentUser.orgId;
+
   const content = authState.isAuthenticated ? (
-    <AuthenticatedContent {...appState} {...authState} />
+    isZeroAffiliation ? (
+      <EmployeeDashboard t={t} language={language} />
+    ) : (
+      <AuthenticatedContent {...appState} {...authState} />
+    )
   ) : (
     <AuthPage
       onLoginSuccess={handleLoginSuccess}
@@ -596,7 +604,7 @@ const App: React.FC = () => {
 
   // Handle Onboarding Steps
   let finalContent = content;
-  if (authState.isAuthenticated && isOnboardingReady) {
+  if (authState.isAuthenticated && isOnboardingReady && !isZeroAffiliation) {
     if (activeStep === 1) finalContent = <OrgSetupScreen language={language} onComplete={() => setActiveStep(2)} />;
     else if (activeStep === 2) finalContent = <BranchSetupScreen language={language} color={theme.primary} onBack={() => setActiveStep(1)} onComplete={() => setActiveStep(3)} />;
     else if (activeStep === 3) finalContent = <EmployeeSetupScreen language={language} color={theme.primary} onBack={() => setActiveStep(2)} onComplete={async () => {

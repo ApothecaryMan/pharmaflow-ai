@@ -362,6 +362,13 @@ export const TRANSLATIONS = {
       passwordsDoNotMatch: 'Passwords do not match',
       resetLinkSent: 'Reset link has been sent to your email',
       tempPasswordSent: 'A temporary password has been sent to your email.',
+      employeePortal: 'Employee Portal',
+      manageEmployment: 'Manage your employment across ZINC organizations',
+      noPendingRequests: 'No pending requests',
+      accept: 'Accept',
+      reject: 'Reject',
+      selectWorkspace: 'Select Workspace',
+      selectWorkspaceDesc: 'You have access to multiple pharmacy organizations. Choose which one you want to enter.',
     },
     statusBar: {
       ready: 'Ready',
@@ -2237,6 +2244,7 @@ export const TRANSLATIONS = {
         active: 'Active',
         inactive: 'Inactive',
         holiday: 'On Holiday',
+        pending: 'Pending',
       },
       modal: {
         save: 'Save Employee',
@@ -2976,6 +2984,7 @@ export const TRANSLATIONS = {
         active: 'نشط',
         inactive: 'غير نشط',
         holiday: 'في إجازة',
+        pending: 'معلق',
       },
       modal: {
         save: 'حفظ الموظف',
@@ -3644,6 +3653,13 @@ export const TRANSLATIONS = {
       backToLogin: 'العودة لتسجيل الدخول',
       passwordsDoNotMatch: 'كلمات المرور غير متطابقة',
       resetLinkSent: 'تم إرسال رابط الاستعادة إلى بريدك الإلكتروني',
+      employeePortal: 'بوابة الموظفين',
+      manageEmployment: 'إدارة توظيفك عبر منظمات ZINC',
+      noPendingRequests: 'لا توجد طلبات معلقة',
+      accept: 'قبول',
+      reject: 'رفض',
+      selectWorkspace: 'اختر مساحة العمل',
+      selectWorkspaceDesc: 'لديك وصول إلى مؤسسات صيدلانية متعددة. اختر أيهما تريد الدخول.',
     },
     statusBar: {
       ready: 'جاهز',

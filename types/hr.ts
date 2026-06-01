@@ -5,8 +5,10 @@ export interface Employee {
   id: string; // Unique UUID
   /** Organization this employee belongs to — required for tenant isolation */
   orgId?: string;
+  orgName?: string; // Optional joined property
   /** Branch this employee belongs to — required for RLS isolation */
   branchId: string;
+  branchName?: string; // Optional joined property
   employeeCode: string; // Auto-generated: EMP-001, EMP-002, etc.
 
   // --- Personal Info ---
@@ -20,7 +22,7 @@ export interface Employee {
   department: 'sales' | 'pharmacy' | 'marketing' | 'hr' | 'it' | 'logistics'; // Department
   role: UserRole; // Unified Functional Role
   startDate: string; // ISO date (YYYY-MM-DD)
-  status: 'active' | 'inactive' | 'holiday'; // Employment status
+  status: 'active' | 'inactive' | 'holiday' | 'pending'; // Employment status
 
   // --- Financial (Optional) ---
   salary?: number; // Monthly salary
@@ -71,4 +73,27 @@ export interface AttendanceEvent {
   employeeName?: string;
   /** Employee unique code (joined from employees table, for display) */
   employeeCode?: string;
+}
+
+export interface UserProfile {
+  id: string; // Matches auth.users.id
+  username: string; // @username
+  fullName: string;
+  phone?: string;
+  licenseNumber?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface EmploymentRequest {
+  id: string;
+  orgId: string;
+  orgName?: string;
+  targetUsername: string;
+  role: UserRole;
+  branchId?: string;
+  branchName?: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt?: string;
+  updatedAt?: string;
 }

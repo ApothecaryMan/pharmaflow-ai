@@ -32,26 +32,13 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
     });
 
   return (
-    <div
-      className='min-h-screen w-full flex items-center justify-center text-white p-4 sm:p-6'
-      style={{ backgroundColor: '#000000' }}
-      dir={language === 'AR' ? 'rtl' : 'ltr'}
-    >
-      <div className='w-full max-w-[400px] space-y-8'>
-        {/* Header Section */}
-        <div className='text-center mb-10'>
-          <div className='flex flex-col items-center mb-8'>
-            <img
-              src='/logo_icon_white.svg'
-              className='w-14 h-14 object-contain mb-4'
-              alt='Logo Icon'
-            />
-            <img src='/logo_word_white.svg' className='h-7 object-contain opacity-90' alt='Zinc' />
-          </div>
-          <p className='text-zinc-400 text-sm'>
-            {t.resetSubtitle || 'Enter your email to receive a reset link.'}
-          </p>
-        </div>
+    <>
+      {/* Header Section */}
+      <div className='text-center mb-10'>
+        <p className='text-zinc-400 text-sm'>
+          {t.resetSubtitle || 'Enter your email to receive a reset link.'}
+        </p>
+      </div>
 
         {success ? (
           <div className='w-full py-20 flex flex-col items-center animate-in fade-in duration-700 space-y-6 text-center'>
@@ -66,7 +53,7 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
               strokeWidth='2'
               strokeLinecap='round'
               strokeLinejoin='round'
-              className='text-green-500'
+              className='text-white'
             >
               <path d='M22 11.08V12a10 10 0 1 1-5.93-9.14'></path>
               <polyline points='22 4 12 14.01 9 11.01'></polyline>
@@ -77,7 +64,7 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
             <button
               type='button'
               onClick={() => onViewChange?.('login')}
-              className='text-green-500 hover:text-green-400 underline decoration-green-500/30 underline-offset-8 transition-all cursor-pointer hover:opacity-70'
+              className='text-white hover:text-zinc-300 underline decoration-white/30 underline-offset-8 transition-all cursor-pointer hover:opacity-70'
             >
               {t.backToLogin || 'Back to Login'}
             </button>
@@ -94,18 +81,15 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
             )}
 
             <fieldset disabled={isLoading} className='space-y-4'>
-              <div className='space-y-2'>
-                <label className='text-sm font-medium text-zinc-300' htmlFor='email'>
-                  {t.email || 'Email Address'}
-                </label>
+              <div className='flex flex-col gap-1.5'>
                 <input
                   id='email'
                   type='email'
                   autoComplete='off'
-                  placeholder={t.emailPlaceholder || 'you@example.com'}
+                  placeholder={language === 'AR' ? 'البريد الإلكتروني' : 'Email Address'}
                   value={email}
                   onChange={(e) => handleEmailChange(e.target.value)}
-                  className={`w-full bg-zinc-900 border ${validationError ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 text-start placeholder:text-start cursor-text focus:bg-zinc-800/50`}
+                  className={`w-full bg-[#111111] border ${validationError ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-zinc-600'} rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-hidden transition-all duration-200 placeholder:text-start cursor-text hover:bg-zinc-900`}
                   dir='ltr'
                 />
                 {validationError && (
@@ -117,11 +101,11 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
             <button
               type='submit'
               disabled={isLoading}
-              className='w-full bg-green-600 hover:bg-green-500 disabled:bg-green-600/50 text-white font-medium py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer'
+              className='w-full bg-white hover:bg-zinc-200 disabled:bg-white/50 text-black font-medium py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer mt-2'
             >
               {isLoading ? (
                 <svg
-                  className='animate-spin w-4 h-4 text-white'
+                  className='animate-spin w-4 h-4 text-black'
                   xmlns='http://www.w3.org/2000/svg'
                   aria-hidden='true'
                   fill='none'
@@ -156,7 +140,6 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
             </div>
           </form>
         )}
-      </div>
-    </div>
+    </>
   );
 };

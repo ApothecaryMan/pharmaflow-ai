@@ -5,8 +5,11 @@ import { ForgotPassword } from './ForgotPassword';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useSettings } from '../../context';
 import { ROUTES } from '../../config/routes';
+import { WorkspaceSwitcher } from './WorkspaceSwitcher';
+import { authService } from '../../services/auth/authService';
+import { TRANSLATIONS } from '../../i18n/translations';
 
-type AuthView = 'login' | 'signup' | 'forgot-password';
+type AuthView = 'login' | 'signup' | 'forgot-password' | 'workspace-switcher';
 
 interface AuthPageProps {
   onLoginSuccess?: () => void;
@@ -27,7 +30,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
     const hashMap: Record<AuthView, string> = {
       login: ROUTES.LOGIN,
       signup: ROUTES.SIGNUP,
-      'forgot-password': ROUTES.FORGOT_PASSWORD
+      'forgot-password': ROUTES.FORGOT_PASSWORD,
+      'workspace-switcher': 'select-workspace'
     };
     window.history.replaceState(null, '', `#/${hashMap[view]}`);
   }, []);
@@ -49,6 +53,18 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
       return <ForgotPassword onViewChange={handleViewChange} language={language} />;
     }
 
+    if (currentView === 'workspace-switcher') {
+      const session = authService.getCurrentUserSync();
+      return (
+        <WorkspaceSwitcher 
+          workspaces={session?.availableWorkspaces || []} 
+          onSelect={() => handleLoginSuccessOrDashboard()} 
+          onCancel={() => handleViewChange('login')}
+          t={TRANSLATIONS[language || 'EN']}
+        />
+      );
+    }
+
     // Default to Login
     return (
       <Login 
@@ -66,25 +82,53 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className='relative min-h-screen bg-black select-none'>
-      {/* Top Right Language Switcher - Always on the right side regardless of direction */}
-      <div className='absolute top-4 right-4 z-50'>
-        <SegmentedControl
-          value={language}
-          onChange={(val) => setLanguage(val as any)}
-          options={[
-            { label: 'EN', value: 'EN' },
-            { label: 'AR', value: 'AR' },
-          ]}
-          size='xs'
-          fullWidth={false}
-          disableAnimation={true}
-          className='min-w-[80px] !bg-white !shadow-none ring-1 ring-white/10 [&>div]:!bg-black [&>div]:!shadow-none [&_button]:!text-black [&_button[data-active=true]]:!text-white [&_button:not([data-active=true])]:!cursor-pointer [&_button[data-active=true]]:!cursor-default'
-          dir='ltr'
-        />
+    <div className='relative min-h-screen bg-black select-none flex text-white' dir={language === 'AR' ? 'rtl' : 'ltr'}>
+      {/* Left Pane (Form Area) */}
+      <div className='w-full lg:w-1/2 flex flex-col relative p-6 sm:p-12'>
+        <div className='absolute top-8 left-8 rtl:left-auto rtl:right-8 flex items-center gap-2'>
+          <img
+            src='/logo_icon_white.svg'
+            className='w-6 h-6 object-contain'
+            alt='Logo Icon'
+          />
+          <img src='/logo_word_white.svg' className='h-4 object-contain opacity-90' alt='Zinc' />
+        </div>
+
+        {/* Top Language Switcher */}
+        <div className='absolute top-8 right-8 rtl:right-auto rtl:left-8 z-50'>
+          <SegmentedControl
+            value={language}
+            onChange={(val) => setLanguage(val as any)}
+            options={[
+              { label: 'EN', value: 'EN' },
+              { label: 'AR', value: 'AR' },
+            ]}
+            size='xs'
+            fullWidth={false}
+            disableAnimation={true}
+            className='!bg-white !shadow-none ring-1 ring-white/10 [&>div]:!bg-black [&>div]:!shadow-none [&_button]:!text-black [&_button[data-active=true]]:!text-white [&_button:not([data-active=true])]:!cursor-pointer [&_button[data-active=true]]:!cursor-default'
+            dir='ltr'
+          />
+        </div>
+
+        <div className='flex-1 flex flex-col justify-center items-center'>
+          <div className='w-full max-w-[360px] space-y-8 mt-12 lg:mt-0'>
+            {renderContent()}
+          </div>
+        </div>
       </div>
 
-      {renderContent()}
+      {/* Right Pane (Banner) */}
+      <div className='hidden lg:flex w-1/2 p-4 sm:p-6 ps-0'>
+        <div className='w-full h-full bg-[#111111] rounded-[2rem] border border-white/5 flex items-center justify-center relative overflow-hidden'>
+           <div className='flex items-center gap-3 text-zinc-400'>
+             <img src='/logo_icon_white.svg' className='w-8 h-8 opacity-50 animate-pulse' alt='' />
+             <span className='font-serif text-2xl italic text-zinc-500 tracking-wide'>
+               {language === 'AR' ? 'جاري تجهيز البلانر...' : 'Building plan...'}
+             </span>
+           </div>
+        </div>
+      </div>
     </div>
   );
 };
