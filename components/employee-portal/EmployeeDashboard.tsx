@@ -1,10 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { Building2, UserCircle, LogOut, CheckCircle2, Clock } from 'lucide-react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { UserCircle, LogOut, Clock } from 'lucide-react';
 import { authService } from '../../services/auth/authService';
-import { employeeProfileRepository } from '../../services/hr/repositories/employeeProfileRepository';
+import { supabase } from '../../lib/supabase';
 import type { UserProfile, EmploymentRequest } from '../../types';
 import { employmentRequestRepository } from '../../services/hr/repositories/employmentRequestRepository';
+import { employeeProfileRepository } from '../../services/hr/repositories/employeeProfileRepository';
 import { EmploymentRequestsList } from './EmploymentRequestsList';
+import { EmployeeMobileDock } from './EmployeeMobileDock';
+import { EmployeePortalProfile } from './EmployeePortalProfile';
+
+type EmployeeView = 'profile' | 'requests';
 
 interface Props {
   t: any;
@@ -12,9 +17,14 @@ interface Props {
 }
 
 export function EmployeeDashboard({ t, language }: Props) {
+  const session = authService.getCurrentUserSync();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [requests, setRequests] = useState<EmploymentRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [view, setView] = useState<EmployeeView>('requests');
+
+  const sessionUsername = session?.username;
+  const sessionName = session?.employeeName || profile?.fullName;
 
   useEffect(() => {
     loadData();
@@ -24,16 +34,23 @@ export function EmployeeDashboard({ t, language }: Props) {
     setIsLoading(true);
     try {
       if (refreshSession) {
-        // Force refresh session tokens so the new workspace is available
         await authService.refreshSession();
-        // Trigger a hard reload to remount the app with the new session state
         window.location.reload();
         return;
       }
       
-      const session = await authService.getCurrentUser();
-      if (session?.userId) {
-        const userProfile = await employeeProfileRepository.getById(session.userId);
+      const s = await authService.getCurrentUser();
+      if (s?.userId) {
+        let userProfile = await employeeProfileRepository.getById(s.userId);
+
+        // Backfill email from auth.users if missing in user_profiles
+        if (userProfile && !userProfile.email) {
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (authUser?.email) {
+            userProfile = { ...userProfile, email: authUser.email };
+          }
+        }
+
         setProfile(userProfile);
         
         if (userProfile?.username) {
@@ -48,41 +65,44 @@ export function EmployeeDashboard({ t, language }: Props) {
     }
   };
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     await authService.logout();
     window.location.href = '/login';
-  };
+  }, []);
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-zinc-950">
-        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const handleViewChange = useCallback((v: EmployeeView) => {
+    setView(v);
+  }, []);
+
+  const handleUpdateProfile = useCallback(async (updates: Partial<UserProfile>) => {
+    const s = await authService.getCurrentUser();
+    if (!s?.userId) throw new Error('No user session');
+    const updated = await employeeProfileRepository.update(s.userId, updates);
+    if (updated) setProfile(updated);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex flex-col">
+    <div className="h-dvh bg-(--bg-page-surface) text-(--text-primary) flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-zinc-900 border-b border-zinc-800 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-            <UserCircle className="w-6 h-6 text-emerald-400" />
+      <header className="bg-(--bg-navbar) border-b border-(--border-divider) px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between shrink-0 z-10">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary-500/10 flex items-center justify-center border border-primary-500/20 shrink-0">
+            <UserCircle className="w-5 h-5 sm:w-6 sm:h-6 text-primary-500" />
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-white">{t.login.employeePortal}</h1>
-            <p className="text-xs text-zinc-400 font-medium">{t.login.manageEmployment}</p>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-(--text-primary) truncate">{t.login.employeePortal}</h1>
+            <p className="text-[11px] sm:text-xs text-(--text-tertiary) font-medium truncate">{t.login.manageEmployment}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium text-white">{profile?.fullName}</p>
-            <p className="text-xs text-emerald-400">{profile?.username}</p>
+            <p className="text-sm font-medium text-(--text-primary)">{sessionName}</p>
+            <p className="text-xs text-primary-500">{sessionUsername}</p>
           </div>
           <button 
             onClick={handleSignOut}
-            className="p-2 rounded-lg bg-zinc-800 hover:bg-red-500/10 text-zinc-400 hover:text-red-400 transition-colors flex items-center gap-2 group"
+            className="p-2 rounded-lg bg-(--bg-secondary) hover:bg-(--color-error)/10 text-(--text-tertiary) hover:text-(--color-error) transition-colors flex items-center gap-2 group"
           >
             <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform rtl:group-hover:translate-x-1" />
             <span className="text-sm font-medium hidden sm:block">{t.profile?.signOut || 'Sign Out'}</span>
@@ -90,52 +110,56 @@ export function EmployeeDashboard({ t, language }: Props) {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 p-6 max-w-7xl mx-auto w-full space-y-8">
-        
-        {/* Welcome Banner */}
-        <section className="p-8 rounded-2xl bg-gradient-to-br from-emerald-900/40 to-zinc-900 border border-emerald-500/20 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-            <Building2 className="w-48 h-48" />
-          </div>
-          <div className="relative z-10 max-w-2xl">
-            <h2 className="text-3xl font-bold text-white mb-3">
-              {language === 'AR' ? 'مرحباً،' : 'Welcome,'} {profile?.fullName?.split(' ')[0]}!
-            </h2>
-            <p className="text-zinc-300 text-lg leading-relaxed mb-6">
-              {language === 'AR'
-                ? 'أنت مسجل حالياً كموظف مستقل. شارك اسم المستخدم الفريد الخاص بك'
-                : 'You are currently registered as an independent employee. Share your unique username'}{' '}
-              <strong className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">{profile?.username}</strong>{' '}
-              {language === 'AR'
-                ? 'مع الصيدليات لتلقي دعوات التوظيف.'
-                : 'with pharmacy organizations to receive employment invitations.'}
-            </p>
-          </div>
-        </section>
+      {/* Scrollable Main Content */}
+      <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto w-full space-y-6 sm:space-y-8 pb-28 md:pb-6">
+          {view === 'profile' && (
+            <EmployeePortalProfile
+              profile={profile}
+              sessionName={sessionName}
+              sessionUsername={sessionUsername}
+              requests={requests}
+              language={language}
+              onUpdateProfile={handleUpdateProfile}
+            />
+          )}
 
-        {/* Requests Section */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-white flex items-center gap-2">
-              <Clock className="w-5 h-5 text-emerald-400" />
-              Pending Employment Requests
-            </h3>
-            <span className="px-3 py-1 bg-zinc-800 rounded-full text-xs font-medium text-zinc-400">
-              {requests.length} pending
-            </span>
-          </div>
+          {view === 'requests' && (
+            <section className="space-y-3 sm:space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg sm:text-xl font-semibold text-(--text-primary) flex items-center gap-2">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary-500" />
+                  <span className="truncate">Pending Employment Requests</span>
+                </h3>
+                {isLoading ? (
+                  <span className="text-xs text-(--text-tertiary)">Loading...</span>
+                ) : (
+                  <span className="px-2.5 sm:px-3 py-1 bg-(--bg-secondary) rounded-full text-[11px] sm:text-xs font-medium text-(--text-tertiary) shrink-0">
+                    {requests.length}
+                  </span>
+                )}
+              </div>
 
-          <EmploymentRequestsList 
-            requests={requests}
-            userId={profile?.id || ''}
-            username={profile?.username || ''}
-            onRefresh={() => loadData(true)}
-            t={t}
-            language={language}
-          />
-        </section>
+              <EmploymentRequestsList 
+                requests={requests}
+                userId={session?.userId || ''}
+                username={profile?.username || sessionUsername || ''}
+                onRefresh={() => loadData(true)}
+                t={t}
+                language={language}
+              />
+            </section>
+          )}
+        </div>
       </main>
+
+      {/* Mobile Dock */}
+      <EmployeeMobileDock
+        activeView={view}
+        onViewChange={handleViewChange}
+        onSignOut={handleSignOut}
+        language={language}
+      />
     </div>
   );
 }

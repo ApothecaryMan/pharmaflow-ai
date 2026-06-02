@@ -7,7 +7,7 @@ export const employmentRequestRepository = {
   /**
    * Send a new employment request from an organization to a specific username
    */
-  async sendRequest(request: Omit<EmploymentRequest, 'id' | 'createdAt' | 'updatedAt' | 'status'>): Promise<{ success: boolean; data?: EmploymentRequest; message?: string }> {
+  async sendRequest(request: Omit<EmploymentRequest, 'id' | 'createdAt' | 'updatedAt' | 'status'> & { sentByName?: string; orgName?: string }): Promise<{ success: boolean; data?: EmploymentRequest; message?: string }> {
     try {
       // Check if a pending request already exists
       const { data: existing } = await supabase
@@ -29,6 +29,8 @@ export const employmentRequestRepository = {
           target_username: request.targetUsername,
           role: request.role,
           branch_id: request.branchId || null,
+          sent_by_name: request.sentByName || null,
+          org_name: request.orgName || null,
           status: 'pending'
         })
         .select()
@@ -180,10 +182,11 @@ export const employmentRequestRepository = {
       role: row.role,
       branchId: row.branch_id,
       status: row.status,
+      sentByName: row.sent_by_name,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-      // Optional populated fields depending on the query
-      orgName: row.organizations?.name
+      // denormalized org_name first, fallback to joined data
+      orgName: row.org_name || row.organizations?.name
     };
   }
 };

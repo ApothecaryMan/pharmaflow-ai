@@ -57,12 +57,12 @@ export function EmploymentRequestsList({ requests, userId, username, onRefresh, 
 
   if (requests.length === 0) {
     return (
-      <div className="p-12 rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 flex flex-col items-center justify-center text-center">
-        <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-4">
-          <Building2 className="w-8 h-8 text-zinc-500" />
+      <div className="p-6 sm:p-12 rounded-2xl border border-dashed border-(--border-color) bg-(--bg-secondary)/30 flex flex-col items-center justify-center text-center">
+        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-(--bg-tertiary) flex items-center justify-center mb-3 sm:mb-4">
+          <Building2 className="w-6 h-6 sm:w-8 sm:h-8 text-(--text-tertiary)" />
         </div>
-        <h4 className="text-lg font-medium text-white mb-2">{t.login?.noPendingRequests || (language === 'AR' ? 'لا توجد طلبات معلقة' : 'No Pending Requests')}</h4>
-        <p className="text-zinc-500 max-w-md">
+        <h4 className="text-base sm:text-lg font-medium text-(--text-primary) mb-1.5 sm:mb-2">{t.login?.noPendingRequests || (language === 'AR' ? 'لا توجد طلبات معلقة' : 'No Pending Requests')}</h4>
+        <p className="text-sm sm:text-base text-(--text-tertiary) max-w-md">
           {language === 'AR'
             ? 'عندما ترسل لك أي صيدلية طلب توظيف، سيظهر هنا. يمكنك قبوله للوصول إلى نظام إدارة الصيدلية الخاص بهم.'
             : 'When a pharmacy sends you an employment request, it will appear here. You can then accept it to gain access to their Point of Sale and management systems.'}
@@ -76,47 +76,52 @@ export function EmploymentRequestsList({ requests, userId, username, onRefresh, 
       {requests.map((request) => (
         <div 
           key={request.id}
-          className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors hover:border-zinc-700"
+          className="bg-(--bg-card) border border-(--border-color) rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 transition-colors hover:border-(--border-primary)"
         >
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0 border border-emerald-500/20">
-              <Building2 className="w-6 h-6 text-emerald-400" />
+          <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary-500/10 flex items-center justify-center shrink-0 border border-primary-500/20">
+              <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-primary-500" />
             </div>
-            <div>
-              <h4 className="text-lg font-bold text-white mb-1">
+            <div className="min-w-0">
+              <h4 className="text-base sm:text-lg font-bold text-(--text-primary) truncate mb-0.5 sm:mb-1">
                 {request.orgName || 'Pharmacy Organization'}
               </h4>
-              <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-400">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-(--text-secondary)">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  {language === 'AR' ? 'الدور:' : 'Role:'} <span className="text-zinc-300 font-medium capitalize">{request.role}</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary-500 shrink-0" />
+                  {language === 'AR' ? 'الدور:' : 'Role:'} <span className="text-(--text-primary) font-medium capitalize truncate">{request.role}</span>
                 </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
+                {request.sentByName && (
+                  <span className="flex items-center gap-1">
+                    {language === 'AR' ? 'أرسل من:' : 'Sent by:'} <span className="text-(--text-primary) font-medium">{request.sentByName}</span>
+                  </span>
+                )}
+                <span className="flex items-center gap-1 whitespace-nowrap">
+                  <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   {request.createdAt ? new Date(request.createdAt).toLocaleDateString() : '—'}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 sm:w-auto w-full">
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <button
               onClick={() => handleReject(request)}
               disabled={processingId === request.id}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-zinc-800 hover:bg-red-500/10 text-zinc-300 hover:text-red-400 font-medium transition-colors disabled:opacity-50"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-(--bg-secondary) hover:bg-(--color-error)/10 text-(--text-secondary) hover:text-(--color-error) text-sm sm:text-base font-medium transition-colors disabled:opacity-50"
             >
-              <XCircle className="w-4 h-4" />
+              <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span>{t.login.reject}</span>
             </button>
             <button
               onClick={() => handleAccept(request)}
               disabled={processingId === request.id}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-bold transition-colors shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm sm:text-base font-bold transition-colors shadow-lg shadow-primary-500/20 disabled:opacity-50"
             >
               {processingId === request.id ? (
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <CheckCircle2 className="w-4 h-4" />
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               )}
               <span>{t.login.accept}</span>
             </button>

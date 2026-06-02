@@ -103,8 +103,10 @@ export interface LoginAuditEntry {
 export interface IndividualRegistrationPayload {
   username: string;
   fullName: string;
+  nameArabic?: string;
   email: string;
   phone: string;
+  licenseNumber?: string;
   password?: string;
 }
 

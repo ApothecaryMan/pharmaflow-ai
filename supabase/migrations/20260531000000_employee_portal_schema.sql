@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS public.employment_requests (
   role TEXT NOT NULL,
   branch_id UUID REFERENCES public.branches(id) ON DELETE SET NULL,
   status TEXT NOT NULL DEFAULT 'pending', -- pending, accepted, rejected
+  sent_by_name TEXT, -- display name of the admin who sent the request
+  org_name TEXT, -- denormalized org name (avoids RLS join issues for invitees)
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );

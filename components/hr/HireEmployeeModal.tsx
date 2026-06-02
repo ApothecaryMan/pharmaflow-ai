@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Modal, BUTTON_CLOSE_BASE } from '../common/Modal';
 import { SmartInput } from '../common/SmartInputs';
 import { BUTTON_BASE } from '../../utils/themeStyles';
+import { supabase } from '../../lib/supabase';
 import { employmentRequestRepository } from '../../services/hr/repositories/employmentRequestRepository';
 import { employeeProfileRepository } from '../../services/hr/repositories/employeeProfileRepository';
 import { orgService } from '../../services/org/orgService';
+import { authService } from '../../services/auth/authService';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { useData } from '../../services';
 import { DEPARTMENT_ROLES } from '../../config/employeeRoles';
@@ -73,15 +75,25 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
         throw new Error(language === 'AR' ? 'المستخدم غير موجود' : 'User not found');
       }
 
-      // 2. Send Employment Request
+      // 2. Get current admin/sender info
+      const currentUser = await authService.getCurrentUser();
+      const senderName = currentUser?.employeeName || profile?.fullName || currentUser?.username || '';
+
+      // 3. Get org name (from admin's context — has RLS access)
       const orgId = orgService.getActiveOrgId();
       if (!orgId) throw new Error('No active organization');
 
+      const { data: org } = await supabase.from('organizations').select('name').eq('id', orgId).single();
+      const orgName = org?.name || '';
+
+      // 4. Send Employment Request
       const res = await employmentRequestRepository.sendRequest({
         orgId,
+        orgName,
         targetUsername: profile.username,
         role: role,
-        branchId: branchId === 'UNASSIGNED' ? undefined : branchId
+        branchId: branchId === 'UNASSIGNED' ? undefined : branchId,
+        sentByName: senderName
       });
 
       if (!res.success) {

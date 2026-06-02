@@ -12,6 +12,7 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 import { employeeRepository } from '../hr/repositories/employeeRepository';
+import { employeeProfileRepository } from '../hr/repositories/employeeProfileRepository';
 import { orgRepository } from '../org/repositories/orgRepository';
 import { orgService } from '../org/orgService';
 import { isTauri } from '../../utils/platform';
@@ -187,15 +188,19 @@ export const authService = {
 
       if (data.user) {
         // Insert into user_profiles
-        const { error: profileError } = await supabase.from('user_profiles').insert({
+        const profileInsert: Record<string, any> = {
           id: data.user.id,
           username: payload.username,
           full_name: payload.fullName,
-          phone: payload.phone
-        });
+          email: payload.email,
+          phone: payload.phone,
+        };
+        if (payload.nameArabic) profileInsert.name_arabic = payload.nameArabic;
+        if (payload.licenseNumber) profileInsert.license_number = payload.licenseNumber;
+
+        const { error: profileError } = await supabase.from('user_profiles').insert(profileInsert);
         if (profileError) {
           console.error('Failed to create user profile', profileError);
-          // Don't throw here to avoid failing the whole sign up if the trigger failed
         }
       }
 
@@ -223,10 +228,22 @@ export const authService = {
     let loginEmail = username;
     if (!username.includes('@')) {
       try {
-        const resolvedEmail = await employeeRepository.getEmailByUsername(username);
-        loginEmail = resolvedEmail || username;
+        const employee = await employeeRepository.getByUsername(username);
+        loginEmail = employee?.email || username;
       } catch (err) {
         loginEmail = username;
+      }
+
+      if (!loginEmail.includes('@')) {
+        try {
+          const profile = await employeeProfileRepository.getByUsername(username)
+                       || await employeeProfileRepository.getByUsername(`@${username}`);
+          if (profile?.email) {
+            loginEmail = profile.email;
+          }
+        } catch {
+          // ignore — fall through with current loginEmail
+        }
       }
     }
 
