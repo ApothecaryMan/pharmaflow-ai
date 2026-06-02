@@ -8,6 +8,7 @@ import { type Language } from '../../../../types';
 import { SegmentedControl } from '../../../common/SegmentedControl';
 import { Switch } from '../../../common/Switch';
 import { StatusBarItem } from '../StatusBarItem';
+import { useSmartPosition } from '../../../../hooks/common/useSmartPosition';
 
 // --- Utility Components & Helpers ---
 
@@ -38,32 +39,66 @@ const SubmenuWrapper: React.FC<{
   isMobile: boolean;
   children: React.ReactNode;
   title?: string;
-}> = ({ isOpen, isMobile, children, title }) => {
+  side?: 'left' | 'right';
+  align?: 'top' | 'bottom';
+  isRTL?: boolean;
+}> = ({ isOpen, isMobile, children, title, side = 'left', align = 'top', isRTL = false }) => {
   if (!isOpen) return null;
 
   const mobileClasses = 'relative w-full mt-2 p-2.5 space-y-2 rounded-xl border-none shadow-none bg-(--bg-page-surface)';
 
-  // Default: top-aligned, grows downward. Ref callback flips if it overflows viewport.
-  const desktopClasses = 'absolute top-0 w-64 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-2.5 space-y-2 bg-(--bg-menu)';
+  const desktopClasses = `absolute ${align === 'top' ? 'top-0' : 'bottom-0'} w-64 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-2.5 space-y-2 bg-(--bg-menu)`;
 
-  const desktopStyle: React.CSSProperties = {
-    insetInlineEnd: 'calc(100% + 12px)',
-  };
-
-  // One-shot viewport check: flip vertical anchor if submenu overflows bottom
-  const adjustRef = (el: HTMLDivElement | null) => {
-    if (!el || isMobile) return;
-    const rect = el.getBoundingClientRect();
-    if (rect.bottom > window.innerHeight - 8) {
-      el.style.top = 'auto';
-      el.style.bottom = '0';
-    }
-  };
+  // In LTR: side 'left' → end (opens left), side 'right' → start (opens right)
+  // In RTL: side 'left' → start (opens left),  side 'right' → end (opens right)
+  const useInlineStart = (side === 'right') !== isRTL;
+  const desktopStyle: React.CSSProperties = useInlineStart
+    ? { insetInlineStart: 'calc(100% + 12px)' }
+    : { insetInlineEnd: 'calc(100% + 12px)' };
 
   return (
-    <div ref={adjustRef} className={isMobile ? mobileClasses : desktopClasses} style={isMobile ? undefined : desktopStyle}>
+    <div className={isMobile ? mobileClasses : desktopClasses} style={isMobile ? undefined : desktopStyle}>
       {title && <label className="text-[10px] font-bold uppercase mb-1 block text-(--text-tertiary) border-b border-(--border-divider)/30 pb-1">{title}</label>}
       {children}
+    </div>
+  );
+};
+
+const SubmenuSection: React.FC<{
+  id: string;
+  icon: string;
+  label: string;
+  expandedSubmenu: string | null;
+  onToggle: (name: string) => void;
+  isMobile: boolean;
+  title?: string;
+  rowExtra?: React.ReactNode;
+  isRTL?: boolean;
+  children: React.ReactNode;
+}> = ({ id, icon, label, expandedSubmenu, onToggle, isMobile, title, rowExtra, isRTL = false, children }) => {
+  const isOpen = expandedSubmenu === id;
+  const { ref, position, checkPosition } = useSmartPosition({ requiredWidth: 256 });
+
+  useEffect(() => {
+    if (isOpen) requestAnimationFrame(checkPosition);
+  }, [isOpen, checkPosition]);
+
+  return (
+    <div className="space-y-1 relative" ref={ref}>
+      <SettingsRow icon={icon} label={label}>
+        {rowExtra}
+        <button type="button" onClick={() => onToggle(id)}>
+          <span
+            className={`material-symbols-rounded transition-transform text-(--text-tertiary) ${isOpen ? 'rotate-180' : ''}`}
+            style={{ fontSize: 'var(--icon-settings)' }}
+          >
+            chevron_left
+          </span>
+        </button>
+      </SettingsRow>
+      <SubmenuWrapper isOpen={isOpen} isMobile={isMobile} title={title} side={position.side} align={position.align} isRTL={isRTL}>
+        {children}
+      </SubmenuWrapper>
     </div>
   );
 };
@@ -99,6 +134,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     switchVariant, setSwitchVariant, badgeStyle, setBadgeStyle,
     modalPresentationMode, setModalPresentationMode,
     sidebarModalWidth, setSidebarModalWidth,
+    navbarMenuLayout, setNavbarMenuLayout,
   } = settings;
 
   const { activeBranchId, updateBranch, activeBranch } = useData();
@@ -107,6 +143,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [expandedSubmenu, setExpandedSubmenu] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const statusSmartPos = useSmartPosition({ requiredWidth: 256 });
   const isAR = language === 'AR';
   const t = TRANSLATIONS[language].settings;
 
@@ -131,6 +168,10 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   useEffect(() => {
     if (!showTicker && expandedSubmenu === 'status') setExpandedSubmenu(null);
   }, [showTicker, expandedSubmenu]);
+
+  useEffect(() => {
+    if (expandedSubmenu === 'status') requestAnimationFrame(statusSmartPos.checkPosition);
+  }, [expandedSubmenu, statusSmartPos.checkPosition]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -187,19 +228,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 
             <div className="p-2 space-y-1.5" style={{ direction: isAR ? 'rtl' : 'ltr' }}>
               {/* --- Appearance Section --- */}
-              <div className="space-y-1 relative">
-                <SettingsRow icon="brightness_6" label={t.themesMenu}>
-                  <button type="button" onClick={() => toggleSubmenu('themes')}>
-                    <span 
-                      className={`material-symbols-rounded transition-transform text-(--text-tertiary) ${expandedSubmenu === 'themes' ? 'rotate-180' : ''}`}
-                      style={{ fontSize: 'var(--icon-settings)' }}
-                    >
-                      chevron_left
-                    </span>
-                  </button>
-                </SettingsRow>
-
-                <SubmenuWrapper isOpen={expandedSubmenu === 'themes'} isMobile={isMobile}>
+              <SubmenuSection isRTL={isAR} id="themes" icon="brightness_6" label={t.themesMenu} expandedSubmenu={expandedSubmenu} onToggle={toggleSubmenu} isMobile={isMobile}>
                   <div className="flex items-center gap-1.5">
                     <span className="material-symbols-rounded text-(--text-secondary)" style={{ fontSize: 'var(--icon-settings)' }}>palette</span>
                     <SegmentedControl
@@ -283,41 +312,45 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       </SettingsRow>
                     </>
                   )}
-                </SubmenuWrapper>
-              </div>
+                </SubmenuSection>
 
 
 
               <div className="border-t border-(--border-divider) my-0.5 opacity-50" />
 
-              {/* --- Navigation & Language --- */}
-              {navStyle === 1 && (
-                <SettingsRow icon="view_sidebar" label={t.sidebarStyle}>
-                  <SegmentedControl value={sidebarStyle} onChange={v => setSidebarStyle(v as any)}  size="xs"  shape="pill" iconSize="--icon-settings" options={[{ label: '', value: 1, icon: 'view_sidebar' }, { label: '', value: 2, icon: 'dock_to_left' }, { label: '', value: 3, icon: 'mouse' }]} />
-                </SettingsRow>
-              )}
-              <SettingsRow icon="dashboard_customize" label={t.designStyle}>
-                <SegmentedControl value={navStyle || 1} onChange={v => setNavStyle(v as any)}  size="xs"  shape="pill" iconSize="--icon-settings" options={[{ label: '', value: 1, icon: 'view_sidebar' }, { label: '', value: 2, icon: 'web_asset' }]} />
-              </SettingsRow>
+              {/* --- Sidebar --- */}
+              <SubmenuSection isRTL={isAR} id="sidebar" icon="view_sidebar" label={t.sidebarSettings} expandedSubmenu={expandedSubmenu} onToggle={toggleSubmenu} isMobile={isMobile} title={t.sidebarSettings}>
+                  <SettingsRow icon="dashboard_customize" label={t.navigationLayout}>
+                    <SegmentedControl value={navStyle || 1} onChange={v => setNavStyle(v as any)}  size="xs"  shape="pill" iconSize="--icon-settings" options={[{ label: '', value: 1, icon: 'view_sidebar' }, { label: '', value: 2, icon: 'web_asset' }]} />
+                  </SettingsRow>
+                  {navStyle === 1 && (
+                    <SettingsRow icon="view_sidebar" label={t.sidebarStyle}>
+                      <SegmentedControl value={sidebarStyle} onChange={v => setSidebarStyle(v as any)}  size="xs"  shape="pill" iconSize="--icon-settings" options={[{ label: '', value: 1, icon: 'view_sidebar' }, { label: '', value: 2, icon: 'dock_to_left' }, { label: '', value: 3, icon: 'mouse' }]} />
+                    </SettingsRow>
+                  )}
+                  {navStyle === 2 && (
+                    <SettingsRow icon="grid_view" label={t.navbarMenuLayout}>
+                      <SegmentedControl
+                        value={navbarMenuLayout || 'single'}
+                        onChange={v => setNavbarMenuLayout(v as 'single' | 'multi')}
+                        size="xs"
+                        shape="pill"
+                        iconSize="--icon-settings"
+                        options={[
+                          { label: '', value: 'single', icon: 'view_list' },
+                          { label: '', value: 'multi', icon: 'grid_view' },
+                        ]}
+                      />
+                    </SettingsRow>
+                  )}
+                  <SettingsRow icon="filter_center_focus" label={t.focusMode}>
+                    <Switch checked={hideInactiveModules || false} onChange={setHideInactiveModules} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
+                  </SettingsRow>
+                </SubmenuSection>
               <SettingsRow icon="translate" label={t.language}>
                 <SegmentedControl value={language} onChange={v => settings.setLanguage(v as any)}  size="xs" shape="pill" options={[{ label: 'EN', value: 'EN' }, { label: 'AR', value: 'AR' }]} />
               </SettingsRow>
-              <div className="space-y-1 relative">
-                <SettingsRow icon="dock_to_left" label={t.modalSettings}>
-                  <button type="button" onClick={() => toggleSubmenu('modalSettings')}>
-                    <span 
-                      className={`material-symbols-rounded transition-transform text-(--text-tertiary) ${expandedSubmenu === 'modalSettings' ? 'rotate-180' : ''}`}
-                      style={{ fontSize: 'var(--icon-settings)' }}
-                    >
-                      chevron_left
-                    </span>
-                  </button>
-                </SettingsRow>
-                <SubmenuWrapper 
-                  isOpen={expandedSubmenu === 'modalSettings'} 
-                  isMobile={isMobile} 
-                  title={t.modalSettings}
-                >
+              <SubmenuSection isRTL={isAR} id="modalSettings" icon="dock_to_left" label={t.modalSettings} expandedSubmenu={expandedSubmenu} onToggle={toggleSubmenu} isMobile={isMobile} title={t.modalSettings}>
                   <SettingsRow icon="dock_to_left" label={t.modalPresentationStyle}>
                     <SegmentedControl
                       value={modalPresentationMode || 'modal'}
@@ -346,8 +379,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       />
                     </SettingsRow>
                   )}
-                </SubmenuWrapper>
-              </div>
+                </SubmenuSection>
               <SettingsRow icon="text_fields" label={t.textTransform}>
                 <Switch
                   checked={textTransform === 'uppercase'}
@@ -360,18 +392,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               <div className="border-t border-(--border-divider) my-0.5 opacity-50" />
 
               {/* --- Typography Section --- */}
-              <div className="space-y-1 relative">
-                <SettingsRow icon="font_download" label={t.typography}>
-                  <button type="button" onClick={() => toggleSubmenu('typography')}>
-                    <span 
-                      className={`material-symbols-rounded transition-transform text-(--text-tertiary) ${expandedSubmenu === 'typography' ? 'rotate-180' : ''}`}
-                      style={{ fontSize: 'var(--icon-settings)' }}
-                    >
-                      chevron_left
-                    </span>
-                  </button>
-                </SettingsRow>
-                <SubmenuWrapper isOpen={expandedSubmenu === 'typography'} isMobile={isMobile}>
+              <SubmenuSection isRTL={isAR} id="typography" icon="font_download" label={t.typography} expandedSubmenu={expandedSubmenu} onToggle={toggleSubmenu} isMobile={isMobile}>
                   <div className="space-y-1">
                     <label className="text-xs font-medium flex items-center gap-1.5 text-(--text-primary)"><span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-settings)' }}>text_fields</span>{t.fontEN}</label>
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
@@ -437,13 +458,11 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       />
                     </SettingsRow>
                   )}
-                </SubmenuWrapper>
-              </div>
+                </SubmenuSection>
 
               <div className="border-t border-(--border-divider) my-0.5 opacity-50" />
 
               {/* --- Workspace & Status Bar --- */}
-              <SettingsRow icon="filter_center_focus" label={t.focusMode}><Switch checked={hideInactiveModules || false} onChange={setHideInactiveModules} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
               {permissionsService.isOrgAdmin() && (
                 <SettingsRow icon="science" label={t.developerMode}><Switch checked={developerMode || false} onChange={setDeveloperMode} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
               )}
@@ -468,7 +487,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               {showTicker !== undefined && (
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase text-(--text-tertiary)">{t.statusBarSettings}</label>
-                  <div className="relative">
+                  <div className="relative" ref={statusSmartPos.ref}>
                     <SettingsRow icon="speed" label={t.quickStatuses}>
                       <Switch checked={showTicker || false} onChange={setShowTicker} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
                       <button type="button" onClick={() => toggleSubmenu('status')}>
@@ -480,7 +499,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         </span>
                       </button>
                     </SettingsRow>
-                    <SubmenuWrapper isOpen={expandedSubmenu === 'status' && showTicker} isMobile={isMobile}>
+                    <SubmenuWrapper isOpen={expandedSubmenu === 'status' && showTicker} isMobile={isMobile} side={statusSmartPos.position.side} align={statusSmartPos.position.align} isRTL={isAR}>
                       <SettingsRow icon="trending_up" label={t.showSales} className="hover:bg-(--bg-menu-hover) px-2 rounded-lg"><Switch checked={showTickerSales} onChange={setShowTickerSales} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
                       <SettingsRow icon="inventory_2" label={t.showInventory} className="hover:bg-(--bg-menu-hover) px-2 rounded-lg"><Switch checked={showTickerInventory} onChange={setShowTickerInventory} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
                       <SettingsRow icon="group" label={t.showCustomers} className="hover:bg-(--bg-menu-hover) px-2 rounded-lg"><Switch checked={showTickerCustomers} onChange={setShowTickerCustomers} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
