@@ -44,47 +44,51 @@
 @layer base {
   /* Firefox specific isolation (only applied to browsers lacking webkit pseudo-elements support) */
   @supports not selector(::-webkit-scrollbar) {
-    *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *) {
-      scrollbar-width: none !important;
-      transition: scrollbar-color 0.25s ease !important;
-    }
-    *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *):hover {
-      scrollbar-width: thin !important;
-      scrollbar-color: rgba(156, 163, 175, 0.3) transparent !important;
+    @media (hover: hover) {
+      *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *) {
+        scrollbar-width: none !important;
+        transition: scrollbar-color 0.25s ease !important;
+      }
+      *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *):hover {
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(156, 163, 175, 0.3) transparent !important;
+      }
     }
   }
 
   /* Chrome / Safari / Edge / Webkit global overrides */
-  *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *) {
-    --global-scrollbar-color: rgba(156, 163, 175, 0) !important;
-    transition: --global-scrollbar-color 0.25s ease-in-out !important;
-  }
+  @media (hover: hover) {
+    *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *) {
+      --global-scrollbar-color: rgba(156, 163, 175, 0) !important;
+      transition: --global-scrollbar-color 0.25s ease-in-out !important;
+    }
 
-  /* Transition to visible state when container is hovered */
-  *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *):hover {
-    --global-scrollbar-color: rgba(156, 163, 175, 0.3) !important;
-  }
+    /* Transition to visible state when container is hovered */
+    *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *):hover {
+      --global-scrollbar-color: rgba(156, 163, 175, 0.3) !important;
+    }
 
-  *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *)::-webkit-scrollbar {
-    width: 3px !important;
-    height: 3px !important;
-  }
+    *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *)::-webkit-scrollbar {
+      width: 3px !important;
+      height: 3px !important;
+    }
 
-  *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *)::-webkit-scrollbar-track {
-    background: transparent !important;
-    border: none !important;
-  }
+    *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *)::-webkit-scrollbar-track {
+      background: transparent !important;
+      border: none !important;
+    }
 
-  *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *)::-webkit-scrollbar-thumb {
-    background: var(--global-scrollbar-color) !important;
-    border-radius: 0px !important;
-    border: none !important;
-    background-clip: border-box !important;
-  }
+    *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *)::-webkit-scrollbar-thumb {
+      background: var(--global-scrollbar-color) !important;
+      border-radius: 0px !important;
+      border: none !important;
+      background-clip: border-box !important;
+    }
 
-  /* Direct hover state on the scrollbar thumb itself - snaps to slightly darker */
-  *:not(.no-scrollbar):not(.scrollbar-hide):not(.sandbox-scroll)::-webkit-scrollbar-thumb:hover {
-    background: rgba(156, 163, 175, 0.6) !important;
+    /* Direct hover state on the scrollbar thumb itself - snaps to slightly darker */
+    *:not(.no-scrollbar):not(.scrollbar-hide):not(.sandbox-scroll)::-webkit-scrollbar-thumb:hover {
+      background: rgba(156, 163, 175, 0.6) !important;
+    }
   }
 }
 
