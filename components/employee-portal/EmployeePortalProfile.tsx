@@ -3,6 +3,7 @@ import { Briefcase, Building2, CheckCircle2, XCircle, Clock, Pencil, Save, X, Ca
 import type { UserProfile, EmploymentRequest } from '../../types';
 import { renderBanner } from '../../utils/banners';
 import { PROFILE_GLASS_CARD_BASE } from '../../utils/themeStyles';
+import { SegmentedControl } from '../common/SegmentedControl';
 
 interface EmployeePortalProfileProps {
   profile: UserProfile | null;
@@ -73,7 +74,9 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
     phone: '',
     licenseNumber: '',
   });
-  const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
+  const [expandedDocs, setExpandedDocs] = useState<Set<string>>(new Set());
+  const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
+  const [deletingDoc, setDeletingDoc] = useState<string | null>(null);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const isRTL = language === 'AR';
@@ -153,17 +156,25 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
 
   const handleDocUpload = useCallback(async (field: keyof Pick<UserProfile, 'nationalIdCard' | 'nationalIdCardBack' | 'mainSyndicateCard' | 'subSyndicateCard'>, file: File) => {
     if (!onUpdateProfile) return;
+    setUploadingDoc(field);
     try {
       const base64 = await readFileAsBase64(file);
       await onUpdateProfile({ [field]: base64 } as Partial<UserProfile>);
     } catch (err) {
       if (err instanceof Error) alert(err.message);
+    } finally {
+      setUploadingDoc(null);
     }
   }, [onUpdateProfile]);
 
   const handleDocRemove = useCallback(async (field: keyof Pick<UserProfile, 'nationalIdCard' | 'nationalIdCardBack' | 'mainSyndicateCard' | 'subSyndicateCard'>) => {
     if (!onUpdateProfile) return;
-    await onUpdateProfile({ [field]: undefined } as Partial<UserProfile>);
+    setDeletingDoc(field);
+    try {
+      await onUpdateProfile({ [field]: null } as unknown as Partial<UserProfile>);
+    } finally {
+      setDeletingDoc(null);
+    }
   }, [onUpdateProfile]);
 
   const safeImage = profile?.image?.startsWith('data:image/') ? profile.image : undefined;
@@ -171,23 +182,14 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
   return (
     <div className="animate-fade-in text-(--text-primary)">
       {/* Tab Bar */}
-      <div className="flex items-center gap-1 p-1 mb-6 rounded-xl bg-(--bg-secondary) border border-(--border-color) w-fit">
-        {tabs.map(tab => (
-          <button
-            key={tab.value}
-            onClick={() => setActiveTab(tab.value)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-              activeTab === tab.value
-                ? 'bg-(--bg-card) text-(--text-primary) shadow-xs border border-(--border-color)'
-                : 'text-(--text-tertiary) hover:text-(--text-primary)'
-            }`}
-            type='button'
-          >
-            <span className="material-symbols-rounded text-[16px]">{tab.icon}</span>
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        options={tabs}
+        value={activeTab}
+        onChange={setActiveTab}
+        size="sm"
+        className="mb-6"
+        iconSize="16px"
+      />
 
       {activeTab === 'profile' && (
         <div className="animate-fade-in">
@@ -415,8 +417,10 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
               image={profile?.nationalIdCard}
               onUpload={onUpdateProfile ? (file) => handleDocUpload('nationalIdCard', file) : undefined}
               onRemove={onUpdateProfile ? () => handleDocRemove('nationalIdCard') : undefined}
-              isExpanded={expandedDoc === 'nationalIdCard'}
-              onToggleExpand={() => setExpandedDoc(expandedDoc === 'nationalIdCard' ? null : 'nationalIdCard')}
+              isExpanded={expandedDocs.has('nationalIdCard')}
+              onToggleExpand={() => setExpandedDocs(prev => { const n = new Set(prev); n.has('nationalIdCard') ? n.delete('nationalIdCard') : n.add('nationalIdCard'); return n; })}
+              loading={uploadingDoc === 'nationalIdCard'}
+              deleting={deletingDoc === 'nationalIdCard'}
             />
 
             {/* National ID - Back */}
@@ -425,8 +429,10 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
               image={profile?.nationalIdCardBack}
               onUpload={onUpdateProfile ? (file) => handleDocUpload('nationalIdCardBack', file) : undefined}
               onRemove={onUpdateProfile ? () => handleDocRemove('nationalIdCardBack') : undefined}
-              isExpanded={expandedDoc === 'nationalIdCardBack'}
-              onToggleExpand={() => setExpandedDoc(expandedDoc === 'nationalIdCardBack' ? null : 'nationalIdCardBack')}
+              isExpanded={expandedDocs.has('nationalIdCardBack')}
+              onToggleExpand={() => setExpandedDocs(prev => { const n = new Set(prev); n.has('nationalIdCardBack') ? n.delete('nationalIdCardBack') : n.add('nationalIdCardBack'); return n; })}
+              loading={uploadingDoc === 'nationalIdCardBack'}
+              deleting={deletingDoc === 'nationalIdCardBack'}
             />
 
             {/* Syndicate Card */}
@@ -435,8 +441,10 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
               image={profile?.mainSyndicateCard}
               onUpload={onUpdateProfile ? (file) => handleDocUpload('mainSyndicateCard', file) : undefined}
               onRemove={onUpdateProfile ? () => handleDocRemove('mainSyndicateCard') : undefined}
-              isExpanded={expandedDoc === 'mainSyndicateCard'}
-              onToggleExpand={() => setExpandedDoc(expandedDoc === 'mainSyndicateCard' ? null : 'mainSyndicateCard')}
+              isExpanded={expandedDocs.has('mainSyndicateCard')}
+              onToggleExpand={() => setExpandedDocs(prev => { const n = new Set(prev); n.has('mainSyndicateCard') ? n.delete('mainSyndicateCard') : n.add('mainSyndicateCard'); return n; })}
+              loading={uploadingDoc === 'mainSyndicateCard'}
+              deleting={deletingDoc === 'mainSyndicateCard'}
             />
 
             {/* Sub Syndicate Card */}
@@ -445,8 +453,10 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
               image={profile?.subSyndicateCard}
               onUpload={onUpdateProfile ? (file) => handleDocUpload('subSyndicateCard', file) : undefined}
               onRemove={onUpdateProfile ? () => handleDocRemove('subSyndicateCard') : undefined}
-              isExpanded={expandedDoc === 'subSyndicateCard'}
-              onToggleExpand={() => setExpandedDoc(expandedDoc === 'subSyndicateCard' ? null : 'subSyndicateCard')}
+              isExpanded={expandedDocs.has('subSyndicateCard')}
+              onToggleExpand={() => setExpandedDocs(prev => { const n = new Set(prev); n.has('subSyndicateCard') ? n.delete('subSyndicateCard') : n.add('subSyndicateCard'); return n; })}
+              loading={uploadingDoc === 'subSyndicateCard'}
+              deleting={deletingDoc === 'subSyndicateCard'}
             />
           </div>
         </div>
@@ -580,9 +590,11 @@ interface DocCardProps {
   onRemove?: () => void;
   isExpanded: boolean;
   onToggleExpand: () => void;
+  loading?: boolean;
+  deleting?: boolean;
 }
 
-const DocCard: React.FC<DocCardProps> = ({ title, image, onUpload, onRemove, isExpanded, onToggleExpand }) => {
+const DocCard: React.FC<DocCardProps> = ({ title, image, onUpload, onRemove, isExpanded, onToggleExpand, loading, deleting }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -598,17 +610,25 @@ const DocCard: React.FC<DocCardProps> = ({ title, image, onUpload, onRemove, isE
               <span className="material-symbols-rounded text-[16px]">{isExpanded ? 'close_fullscreen' : 'open_in_full'}</span>
             </button>
           )}
-          {onUpload && (
+          {!image && onUpload && (
             <>
-              <button onClick={() => inputRef.current?.click()} className="p-1 text-(--text-tertiary) hover:text-primary-500 transition-colors" type='button'>
-                <span className="material-symbols-rounded text-[16px]">upload</span>
+              <button onClick={() => inputRef.current?.click()} className="p-1 text-(--text-tertiary) hover:text-primary-500 transition-colors" type='button' disabled={loading}>
+                {loading ? (
+                  <span className="w-[16px] h-[16px] border-2 border-(--text-tertiary)/30 border-t-(--text-tertiary) rounded-full animate-spin block" />
+                ) : (
+                  <span className="material-symbols-rounded text-[16px]">upload</span>
+                )}
               </button>
               <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) onUpload(f); }} />
             </>
           )}
           {image && onRemove && (
-            <button onClick={onRemove} className="p-1 text-(--text-tertiary) hover:text-red-500 transition-colors" type='button'>
-              <span className="material-symbols-rounded text-[16px]">delete</span>
+            <button onClick={onRemove} className="p-1 text-(--text-tertiary) hover:text-red-500 transition-colors" type='button' disabled={deleting}>
+              {deleting ? (
+                <span className="w-[16px] h-[16px] border-2 border-(--text-tertiary)/30 border-t-(--text-tertiary) rounded-full animate-spin block" />
+              ) : (
+                <span className="material-symbols-rounded text-[16px]">delete</span>
+              )}
             </button>
           )}
           {!image && onUpload && (
@@ -618,7 +638,7 @@ const DocCard: React.FC<DocCardProps> = ({ title, image, onUpload, onRemove, isE
       </div>
       {isExpanded && image && (
         <div className="mt-3 rounded-xl overflow-hidden border border-(--border-color)">
-          <img src={image} alt={title} className="w-full h-auto max-h-80 object-contain bg-(--bg-secondary)" />
+          <img src={image} alt={title} className="w-full object-cover" />
         </div>
       )}
     </div>
