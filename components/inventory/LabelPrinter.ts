@@ -648,6 +648,10 @@ export const printLabels = async (
       JSON.stringify(options.design || (template?.design as LabelDesign) || DEFAULT_LABEL_DESIGN)
     );
 
+    if (!design.selectedPreset || (design.selectedPreset !== 'custom' && !LABEL_PRESETS[design.selectedPreset])) {
+      design.selectedPreset = DEFAULT_LABEL_DESIGN.selectedPreset;
+    }
+
     // Apply dynamic visibility overrides
     if (options.elementVisibility) {
       design.elements.forEach((el: LabelElement) => {
