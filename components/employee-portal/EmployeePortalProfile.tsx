@@ -250,54 +250,51 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
                 </p>
               </div>
 
-              {/* Edit/Save Toggle */}
-              {onUpdateProfile && (
-                <div className="pb-2 shrink-0">
-                  {isEditing ? (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-all active:scale-95 disabled:opacity-50"
-                        type='button'
-                      >
-                        {isSaving ? (
-                          <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        ) : (
-                          <Save className="w-3.5 h-3.5" />
-                        )}
-                        {isRTL ? 'حفظ' : 'Save'}
-                      </button>
-                      <button
-                        onClick={cancelEditing}
-                        disabled={isSaving}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-(--bg-secondary) hover:bg-(--color-error)/10 text-(--text-secondary) hover:text-(--color-error) text-xs font-bold transition-all active:scale-95 disabled:opacity-50"
-                        type='button'
-                      >
-                        <X className="w-3.5 h-3.5" />
-                        {isRTL ? 'إلغاء' : 'Cancel'}
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={startEditing}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-(--bg-secondary) hover:bg-primary-500/10 text-(--text-secondary) hover:text-primary-500 text-xs font-bold transition-all active:scale-95"
-                      type='button'
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                      {isRTL ? 'تعديل' : 'Edit'}
-                    </button>
-                  )}
-                </div>
-              )}
             </div>
 
             {/* Info Grid or Edit Form */}
             <div className="space-y-4">
               <div className="space-y-3 pt-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-primary-500">
-                  {isRTL ? 'المعلومات الشخصية' : 'Personal Information'}
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-primary-500">
+                    {isRTL ? 'المعلومات الشخصية' : 'Personal Information'}
+                  </h4>
+                  {onUpdateProfile && (isEditing ? (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={cancelEditing}
+                        disabled={isSaving}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-(--bg-secondary) hover:bg-(--color-error)/10 text-(--text-tertiary) hover:text-(--color-error) text-[11px] font-bold transition-all active:scale-95 disabled:opacity-50"
+                        type='button'
+                      >
+                        <X className="w-3 h-3" />
+                        {isRTL ? 'إلغاء' : 'Cancel'}
+                      </button>
+                      <button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold transition-all active:scale-95 disabled:opacity-50"
+                        type='button'
+                      >
+                        {isSaving ? (
+                          <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <Save className="w-3 h-3" />
+                        )}
+                        {isRTL ? 'حفظ' : 'Save'}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={startEditing}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-(--bg-secondary) hover:bg-primary-500/10 text-(--text-tertiary) hover:text-primary-500 text-[11px] font-bold transition-all active:scale-95"
+                      type='button'
+                    >
+                      <Pencil className="w-3 h-3" />
+                      {isRTL ? 'تعديل' : 'Edit'}
+                    </button>
+                  ))}
+                </div>
                 {isEditing ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <EditField
