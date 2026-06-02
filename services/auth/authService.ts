@@ -106,9 +106,10 @@ export const authService = {
             .maybeSingle();
 
           const { data: { user: sbUser } } = await supabase.auth.getUser();
+          const meta = sbUser?.user_metadata || {};
           session = {
             userId,
-            username: profile?.username?.replace(/^@/, '') || sbUser?.email?.split('@')[0] || 'user',
+            username: profile?.username?.replace(/^@/, '') || meta?.username?.replace(/^@/, '') || sbUser?.email?.split('@')[0] || 'user',
             branchId: '',
             orgId: undefined,
             role: 'unassigned',
@@ -179,28 +180,35 @@ export const authService = {
         password: password,
         options: {
           data: { 
-            name: payload.fullName, 
-            username: payload.username 
+            name: payload.fullName,
+            nameArabic: payload.nameArabic || '',
+            username: payload.username,
+            phone: payload.phone || '',
+            licenseNumber: payload.licenseNumber || '',
           }
         }
       });
       if (error) throw error;
 
       if (data.user) {
-        // Insert into user_profiles
-        const profileInsert: Record<string, any> = {
-          id: data.user.id,
-          username: payload.username,
-          full_name: payload.fullName,
-          email: payload.email,
-          phone: payload.phone,
-        };
-        if (payload.nameArabic) profileInsert.name_arabic = payload.nameArabic;
-        if (payload.licenseNumber) profileInsert.license_number = payload.licenseNumber;
+        const session = await supabase.auth.getSession();
+        const isAuthenticated = !!session?.data?.session;
 
-        const { error: profileError } = await supabase.from('user_profiles').insert(profileInsert);
-        if (profileError) {
-          console.error('Failed to create user profile', profileError);
+        if (isAuthenticated) {
+          const profileInsert: Record<string, any> = {
+            id: data.user.id,
+            username: payload.username,
+            full_name: payload.fullName,
+            email: payload.email,
+            phone: payload.phone,
+          };
+          if (payload.nameArabic) profileInsert.name_arabic = payload.nameArabic;
+          if (payload.licenseNumber) profileInsert.license_number = payload.licenseNumber;
+
+          const { error: profileError } = await supabase.from('user_profiles').insert(profileInsert);
+          if (profileError) {
+            console.error('Failed to create user profile', profileError);
+          }
         }
       }
 
@@ -226,9 +234,12 @@ export const authService = {
 
   async login(username: string, password: string): Promise<UserSession | null> {
     let loginEmail = username;
-    if (!username.includes('@')) {
+    const isRealEmail = username.includes('@') && !username.startsWith('@');
+
+    if (!isRealEmail) {
+      const cleanUsername = username.replace(/^@/, '');
       try {
-        const employee = await employeeRepository.getByUsername(username);
+        const employee = await employeeRepository.getByUsername(cleanUsername);
         loginEmail = employee?.email || username;
       } catch (err) {
         loginEmail = username;
@@ -236,13 +247,12 @@ export const authService = {
 
       if (!loginEmail.includes('@')) {
         try {
-          const profile = await employeeProfileRepository.getByUsername(username)
-                       || await employeeProfileRepository.getByUsername(`@${username}`);
+          const profile = await employeeProfileRepository.getByUsername(cleanUsername);
           if (profile?.email) {
             loginEmail = profile.email;
           }
         } catch {
-          // ignore — fall through with current loginEmail
+          // ignore
         }
       }
     }
@@ -254,6 +264,32 @@ export const authService = {
 
     if (authError) throw authError;
     if (!authData.user) throw new Error('No user data returned');
+
+    // Lazy-create user_profiles row if missing
+    const { data: existingProfile } = await supabase
+      .from('user_profiles')
+      .select('id')
+      .eq('id', authData.user.id)
+      .maybeSingle();
+
+    if (!existingProfile) {
+      const meta = authData.user.user_metadata || {};
+      const metaUsername = meta?.username;
+      const insertUsername = metaUsername || (username.startsWith('@') ? username : `@${username}`);
+
+      const { error: insertError } = await supabase.from('user_profiles').insert({
+        id: authData.user.id,
+        username: insertUsername,
+        full_name: meta?.name || authData.user.email?.split('@')[0] || 'User',
+        email: authData.user.email,
+        phone: meta?.phone || '',
+        name_arabic: meta?.nameArabic || null,
+        license_number: meta?.licenseNumber || null,
+      });
+      if (insertError) {
+        console.error('Failed to lazy-create user profile:', insertError);
+      }
+    }
 
     let employeeDataArray = await employeeRepository.getAllByAuthUserId(authData.user.id);
     let employeeData = employeeDataArray.length > 0 ? employeeDataArray[0] : null;
@@ -293,9 +329,13 @@ export const authService = {
         availableWorkspaces: employeeDataArray,
       };
     } else {
+      const meta = authData.user.user_metadata || {};
+      const metaName = meta?.name;
+      const metaUsername = meta?.username;
+
       session = {
         userId: authData.user.id,
-        username: authData.user.email?.split('@')[0] || username,
+        username: metaUsername?.replace(/^@/, '') || authData.user.email?.split('@')[0] || username,
         branchId: '', 
         orgId,
         role: 'unassigned',
