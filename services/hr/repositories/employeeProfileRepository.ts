@@ -25,6 +25,25 @@ export const employeeProfileRepository = {
   },
 
   /**
+   * Fetch multiple user profiles by usernames
+   */
+  async getByUsernames(usernames: string[]): Promise<UserProfile[]> {
+    if (usernames.length === 0) return [];
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .in('username', usernames);
+
+      if (error) throw error;
+      return (data || []).map(this.mapToModel);
+    } catch (err) {
+      console.error('Failed to get user profiles by usernames:', err);
+      return [];
+    }
+  },
+
+  /**
    * Fetch a user profile by exact username
    */
   async getByUsername(username: string): Promise<UserProfile | null> {

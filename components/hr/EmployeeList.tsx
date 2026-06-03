@@ -19,6 +19,7 @@ import { PageHeader } from '../common/PageHeader';
 import { EmployeeFormModal } from './EmployeeFormModal';
 import { EmployeeDetailsModal } from './EmployeeDetailsModal';
 import { HireEmployeeModal } from './HireEmployeeModal';
+import { InvitationListModal } from './InvitationListModal';
 
 interface EmployeeListProps {
   color: string;
@@ -51,6 +52,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   // --- State ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHireModalOpen, setIsHireModalOpen] = useState(false);
+  const [isInvitationListOpen, setIsInvitationListOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [viewingEmployee, setViewingEmployee] = useState<Employee | null>(null);
 
@@ -405,6 +407,14 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
             {permissionsService.can('users.manage') && (
               <>
                 <button
+                  type='button'
+                  onClick={() => setIsInvitationListOpen(true)}
+                  className="p-2.5 h-10 w-10 flex items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 hover:border-emerald-500/30 hover:bg-emerald-500/10 transition-all active:scale-95 cursor-pointer"
+                  title={language === 'AR' ? 'عرض الدعوات' : 'View Invitations'}
+                >
+                  <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>how_to_reg</span>
+                </button>
+                <button
                   onClick={() => setIsHireModalOpen(true)}
                   className="flex items-center justify-center gap-2 px-6 h-10 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-xl transition-all active:scale-95 whitespace-nowrap font-bold text-xs uppercase tracking-wider cursor-pointer"
                 >
@@ -472,6 +482,13 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         employee={viewingEmployee}
         language={language}
         t={t.employeeList}
+      />
+
+      {/* Invitation List Modal */}
+      <InvitationListModal
+        isOpen={isInvitationListOpen}
+        onClose={() => setIsInvitationListOpen(false)}
+        language={language}
       />
 
       {/* Hire via Username Modal */}
