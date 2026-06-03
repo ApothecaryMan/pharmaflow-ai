@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { UserCircle, LogOut, Clock } from 'lucide-react';
+import { UserCircle, Clock, Menu } from 'lucide-react';
 import { authService } from '../../services/auth/authService';
 import { supabase } from '../../lib/supabase';
 import type { UserProfile, EmploymentRequest } from '../../types';
@@ -8,6 +8,7 @@ import { employeeProfileRepository } from '../../services/hr/repositories/employ
 import { EmploymentRequestsList } from './EmploymentRequestsList';
 import { EmployeeMobileDock } from './EmployeeMobileDock';
 import { EmployeePortalProfile } from './EmployeePortalProfile';
+import { EmployeeSideDrawer } from './EmployeeSideDrawer';
 
 type EmployeeView = 'profile' | 'requests';
 
@@ -22,6 +23,7 @@ export function EmployeeDashboard({ t, language }: Props) {
   const [requests, setRequests] = useState<EmploymentRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<EmployeeView>('requests');
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const sessionUsername = session?.username;
   const sessionName = session?.employeeName || profile?.fullName;
@@ -38,7 +40,7 @@ export function EmployeeDashboard({ t, language }: Props) {
         window.location.reload();
         return;
       }
-      
+
       const s = await authService.getCurrentUser();
       if (s?.userId) {
         let userProfile = await employeeProfileRepository.getById(s.userId);
@@ -52,7 +54,7 @@ export function EmployeeDashboard({ t, language }: Props) {
         }
 
         setProfile(userProfile);
-        
+
         if (userProfile?.username) {
           const pendingRequests = await employmentRequestRepository.getByUsername(userProfile.username);
           setRequests(pendingRequests);
@@ -82,30 +84,27 @@ export function EmployeeDashboard({ t, language }: Props) {
   }, []);
 
   return (
-    <div className="h-dvh bg-(--bg-page-surface) text-(--text-primary) flex flex-col overflow-hidden">
+    <div className="h-dvh bg-(--bg-page-surface) text-(--text-primary) flex flex-col overflow-hidden select-none">
       {/* Header */}
-      <header className="bg-(--bg-navbar) border-b border-(--border-divider) px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between shrink-0 z-10">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary-500/10 flex items-center justify-center border border-primary-500/20 shrink-0">
-            <UserCircle className="w-5 h-5 sm:w-6 sm:h-6 text-primary-500" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-lg sm:text-xl font-bold text-(--text-primary) truncate">{t.login.employeePortal}</h1>
-            <p className="text-[11px] sm:text-xs text-(--text-tertiary) font-medium truncate">{t.login.manageEmployment}</p>
-          </div>
+      <header
+        className="h-12 flex items-center justify-between w-full px-4 sticky top-0 z-50"
+        style={{ backgroundColor: 'var(--bg-navbar)' }}
+      >
+        <div className="min-w-0">
+          <h1 className="text-sm font-bold text-(--text-primary) truncate leading-tight">{t.login.employeePortal}</h1>
+          <p className="text-[10px] text-(--text-tertiary) font-medium truncate leading-tight">{t.login.manageEmployment}</p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium text-(--text-primary)">{sessionName}</p>
-            <p className="text-xs text-primary-500">{sessionUsername}</p>
+        <div className="flex items-center gap-1">
+          <div className="hidden sm:flex flex-col items-end leading-tight">
+            <p className="text-xs font-semibold text-(--text-primary)">{sessionName}</p>
+            <p className="text-[10px] text-primary-500">{sessionUsername}</p>
           </div>
-          <button 
-            onClick={handleSignOut}
-            className="p-2 rounded-lg bg-(--bg-secondary) hover:bg-(--color-error)/10 text-(--text-tertiary) hover:text-(--color-error) transition-colors flex items-center gap-2 group"
+          <button
+            onClick={() => setDrawerOpen(prev => !prev)}
+            className="flex items-center justify-center w-10 h-10 text-(--text-tertiary) hover:text-(--text-primary) transition-colors"
           >
-            <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform rtl:group-hover:translate-x-1" />
-            <span className="text-sm font-medium hidden sm:block">{t.profile?.signOut || 'Sign Out'}</span>
+            <Menu size="var(--icon-navbar-mobile)" />
           </button>
         </div>
       </header>
@@ -134,13 +133,13 @@ export function EmployeeDashboard({ t, language }: Props) {
                 {isLoading ? (
                   <span className="text-xs text-(--text-tertiary)">Loading...</span>
                 ) : (
-                  <span className="px-2.5 sm:px-3 py-1 bg-(--bg-secondary) rounded-full text-[11px] sm:text-xs font-medium text-(--text-tertiary) shrink-0">
+                  <span className="px-2.5 sm:px-3 py-0.5 bg-(--bg-secondary) rounded-full text-base sm:text-lg font-medium text-(--text-tertiary) shrink-0 leading-none" style={{ fontFamily: "GraphicSansFont, sans-serif" }}>
                     {requests.length}
                   </span>
                 )}
               </div>
 
-              <EmploymentRequestsList 
+              <EmploymentRequestsList
                 requests={requests}
                 userId={session?.userId || ''}
                 username={profile?.username || sessionUsername || ''}
@@ -153,11 +152,24 @@ export function EmployeeDashboard({ t, language }: Props) {
         </div>
       </main>
 
+      {/* Side Drawer */}
+      <EmployeeSideDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        activeView={view}
+        onViewChange={handleViewChange}
+        onSignOut={handleSignOut}
+        sessionName={sessionName}
+        sessionUsername={sessionUsername}
+        language={language}
+        profileImage={profile?.image}
+      />
+
       {/* Mobile Dock */}
       <EmployeeMobileDock
         activeView={view}
         onViewChange={handleViewChange}
-        onSignOut={handleSignOut}
+        onOpenDrawer={() => setDrawerOpen(prev => !prev)}
         language={language}
       />
     </div>

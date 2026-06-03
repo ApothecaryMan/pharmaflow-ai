@@ -1,17 +1,17 @@
 import React from 'react';
-import { User, Clock, LogOut } from 'lucide-react';
+import { User, Clock, Menu } from 'lucide-react';
 
 interface EmployeeMobileDockProps {
   activeView: 'profile' | 'requests';
   onViewChange: (view: 'profile' | 'requests') => void;
-  onSignOut: () => void;
+  onOpenDrawer: () => void;
   language?: string;
 }
 
 export const EmployeeMobileDock: React.FC<EmployeeMobileDockProps> = ({
   activeView,
   onViewChange,
-  onSignOut,
+  onOpenDrawer,
   language,
 }) => {
   const isRTL = language === 'AR';
@@ -44,10 +44,10 @@ export const EmployeeMobileDock: React.FC<EmployeeMobileDockProps> = ({
           onClick={() => onViewChange('requests')}
         />
         <DockButton
-          icon={LogOut}
-          label={isRTL ? 'تسجيل الخروج' : 'Sign Out'}
+          icon={Menu}
+          label={isRTL ? 'القائمة' : 'Menu'}
           isActive={false}
-          onClick={onSignOut}
+          onClick={onOpenDrawer}
         />
       </div>
     </nav>

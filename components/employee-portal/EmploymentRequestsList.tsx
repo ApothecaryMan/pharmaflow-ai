@@ -14,9 +14,11 @@ interface Props {
 
 export function EmploymentRequestsList({ requests, userId, username, onRefresh, t, language }: Props) {
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [processingAction, setProcessingAction] = useState<'accept' | 'reject' | null>(null);
 
   const handleAccept = async (request: EmploymentRequest) => {
     setProcessingId(request.id);
+    setProcessingAction('accept');
     try {
       const success = await employmentRequestRepository.acceptEmploymentRequest(
         request.id,
@@ -25,33 +27,28 @@ export function EmploymentRequestsList({ requests, userId, username, onRefresh, 
       );
       if (success) {
         onRefresh();
-      } else {
-        alert('Failed to accept request. Please try again.');
       }
     } catch (err) {
       console.error('Accept error:', err);
-      alert('An error occurred while accepting the request.');
     } finally {
       setProcessingId(null);
+      setProcessingAction(null);
     }
   };
 
   const handleReject = async (request: EmploymentRequest) => {
-    if (!window.confirm('Are you sure you want to reject this employment request?')) return;
-    
     setProcessingId(request.id);
+    setProcessingAction('reject');
     try {
       const success = await employmentRequestRepository.updateStatus(request.id, 'rejected');
       if (success) {
         onRefresh();
-      } else {
-        alert('Failed to reject request. Please try again.');
       }
     } catch (err) {
       console.error('Reject error:', err);
-      alert('An error occurred while rejecting the request.');
     } finally {
       setProcessingId(null);
+      setProcessingAction(null);
     }
   };
 
@@ -109,20 +106,24 @@ export function EmploymentRequestsList({ requests, userId, username, onRefresh, 
               disabled={processingId === request.id}
               className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-(--bg-secondary) hover:bg-(--color-error)/10 text-(--text-secondary) hover:text-(--color-error) text-sm sm:text-base font-medium transition-colors disabled:opacity-50"
             >
-              <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span>{t.login.reject}</span>
+              {processingId === request.id && processingAction === 'reject' ? (
+                <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-(--text-secondary)/30 border-t-(--text-secondary) rounded-full animate-spin" />
+              ) : (
+                <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              )}
+              <span>{processingId === request.id && processingAction === 'reject' ? (language === 'AR' ? 'جارٍ الرفض...' : 'Rejecting...') : t.login.reject}</span>
             </button>
             <button
               onClick={() => handleAccept(request)}
               disabled={processingId === request.id}
               className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm sm:text-base font-semibold transition-colors disabled:opacity-50"
             >
-              {processingId === request.id ? (
+              {processingId === request.id && processingAction === 'accept' ? (
                 <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               )}
-              <span>{t.login.accept}</span>
+              <span>{processingId === request.id && processingAction === 'accept' ? (language === 'AR' ? 'جارٍ القبول...' : 'Accepting...') : t.login.accept}</span>
             </button>
           </div>
         </div>

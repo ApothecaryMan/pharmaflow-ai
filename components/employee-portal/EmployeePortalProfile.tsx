@@ -80,6 +80,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
   const [expandedDocs, setExpandedDocs] = useState<Set<string>>(new Set());
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const [deletingDoc, setDeletingDoc] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const isRTL = language === 'AR';
@@ -92,10 +93,10 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
   const displayUsername = (profile?.username || sessionUsername || '').replace(/^@/, '');
   const memberSince = profile?.createdAt
     ? new Date(profile.createdAt).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
     : '—';
 
   const acceptedRequests = useMemo(
@@ -220,10 +221,10 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
             {/* Pattern picker overlay */}
             {isEditing && (
               <div className="absolute top-3 end-3 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10 z-20">
-                  {BANNER_STYLES.map((b) => (
-                    <button
-                      key={b.id}
-                      onClick={() => handleCoverChange(b.id)}
+                {BANNER_STYLES.map((b) => (
+                  <button
+                    key={b.id}
+                    onClick={() => handleCoverChange(b.id)}
                     className={`w-4 h-4 rounded-full border-2 transition-all hover:scale-125 ${coverStyle === b.id ? 'border-white scale-110 shadow-sm' : 'border-transparent opacity-60 hover:opacity-100'}`}
                     style={{ backgroundColor: b.accentColor }}
                     title={isRTL ? b.nameAR : b.nameEN}
@@ -283,8 +284,21 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
                   <h3 className="text-xl font-bold text-(--text-primary) flex items-center gap-2 flex-wrap">
                     {displayName}
                     {displayUsername && (
-                      <span className="text-xs font-normal text-(--text-secondary) bg-white/10 dark:bg-black/25 px-2 py-0.5 rounded-md border border-white/10 dark:border-white/5 font-mono select-all" dir="ltr">
-                        @{displayUsername}
+                      <span
+                        onClick={() => {
+                          const el = document.createElement('input');
+                          el.value = `@${displayUsername}`;
+                          document.body.appendChild(el);
+                          el.select();
+                          document.execCommand('copy');
+                          document.body.removeChild(el);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 1500);
+                        }}
+                        className="text-xs font-normal text-(--text-secondary) bg-white/10 dark:bg-black/25 px-2 py-0.5 rounded-md border border-white/10 dark:border-white/5 font-mono select-all cursor-pointer"
+                        dir="ltr"
+                      >
+                        {copied ? (isRTL ? 'تم النسخ ✓' : 'Copied ✓') : `@${displayUsername}`}
                       </span>
                     )}
                   </h3>
