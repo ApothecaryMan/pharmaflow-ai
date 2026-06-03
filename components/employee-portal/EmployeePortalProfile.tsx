@@ -207,9 +207,9 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
         options={tabs}
         value={activeTab}
         onChange={setActiveTab}
-        size="sm"
+        size="xs"
         className="mb-6"
-        iconSize="16px"
+        iconSize="14px"
       />
 
       {activeTab === 'profile' && (
@@ -656,7 +656,13 @@ const DocCard: React.FC<DocCardProps> = ({ title, image, onUpload, onRemove, isE
     <div className={`${PROFILE_GLASS_CARD_BASE} p-3`}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
-          <ImageIcon className="w-4 h-4 text-primary-500 shrink-0" />
+          {image && !isExpanded ? (
+            <div className="min-w-0 max-w-14 shrink-0">
+              <img src={image} alt="" className="w-full h-auto max-h-9 rounded ring-1 ring-(--border-divider) object-contain bg-(--bg-secondary)" />
+            </div>
+          ) : (
+            <ImageIcon className="w-4 h-4 text-primary-500 shrink-0" />
+          )}
           <span className="text-xs font-bold text-(--text-primary) truncate">{title}</span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">

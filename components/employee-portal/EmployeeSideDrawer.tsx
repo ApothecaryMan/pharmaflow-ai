@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { UserCircle, Clock, LogOut, Menu } from 'lucide-react';
+import { UserCircle, Clock, LogOut, Menu, Sun, Moon, Globe } from 'lucide-react';
+import { useSettings } from '../../context';
+import { Switch } from '../common/Switch';
 
 interface EmployeeSideDrawerProps {
   isOpen: boolean;
@@ -56,6 +58,8 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [onClose]);
+
+  const { darkMode, setDarkMode, language: currentLang, setLanguage } = useSettings();
 
   const menuItems = [
     {
@@ -130,8 +134,16 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
             </div>
           </nav>
 
+          {/* Dark Mode & Language Toggles */}
+          <div className="px-3 pb-2 order-3">
+            <div className="bg-(--bg-secondary) rounded-2xl p-1 space-y-0.5">
+              <SettingsToggle icon={Sun} iconOff={Moon} label={isRTL ? 'الوضع الليلي' : 'Dark Mode'} />
+              <LanguageToggle isRTL={isRTL} />
+            </div>
+          </div>
+
           {/* Logout — after nav on mobile, at bottom on desktop */}
-          <div className="px-3 pb-3 order-3 md:order-last">
+          <div className="px-3 pb-3 order-4 md:order-last">
             <button
               onClick={onSignOut}
               className="w-full p-2 text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-500 hover:text-white rounded-lg flex items-center justify-center gap-2 transition-colors"
@@ -141,9 +153,54 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
             </button>
           </div>
 
-          <div className="flex-1 order-4 md:order-3" />
+          <div className="flex-1 order-5 md:order-4" />
         </div>
       </div>
     </>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// SettingsToggle sub-component
+// ---------------------------------------------------------------------------
+
+const SettingsToggle: React.FC<{
+  icon: React.FC<{ className?: string }>;
+  iconOff: React.FC<{ className?: string }>;
+  label: string;
+}> = ({ icon: IconOn, iconOff: IconOff, label }) => {
+  const { darkMode, setDarkMode } = useSettings();
+
+  return (
+    <div className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-(--text-tertiary)">
+      <span className="flex items-center gap-3">
+        {darkMode ? <IconOn className="w-5 h-5" /> : <IconOff className="w-5 h-5" />}
+        {label}
+      </span>
+      <Switch checked={darkMode} onChange={setDarkMode} />
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// LanguageToggle sub-component
+// ---------------------------------------------------------------------------
+
+const LanguageToggle: React.FC<{ isRTL: boolean }> = ({ isRTL }) => {
+  const { language: currentLang, setLanguage } = useSettings();
+
+  return (
+    <button
+      onClick={() => setLanguage(currentLang === 'AR' ? 'EN' : 'AR')}
+      className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-(--text-tertiary) hover:text-(--text-secondary) transition-all"
+    >
+      <span className="flex items-center gap-3">
+        <Globe className="w-5 h-5" />
+        {isRTL ? 'اللغة' : 'Language'}
+      </span>
+      <span className="text-xs font-bold uppercase tracking-wider text-(--text-secondary)">
+        {currentLang}
+      </span>
+    </button>
   );
 };
