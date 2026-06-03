@@ -84,6 +84,7 @@ export interface UserProfile {
   phone?: string;
   licenseNumber?: string;
   image?: string; // Base64 profile image
+  coverStyle?: string; // Banner style id
   nationalIdCard?: string; // Base64 National ID front
   nationalIdCardBack?: string; // Base64 National ID back
   mainSyndicateCard?: string; // Base64 Syndicate card

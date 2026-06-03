@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { Briefcase, Building2, CheckCircle2, XCircle, Clock, Pencil, Save, X, Camera, ImageIcon, FileText } from 'lucide-react';
 import type { UserProfile, EmploymentRequest } from '../../types';
-import { renderBanner } from '../../utils/banners';
+import { renderBanner, BANNER_STYLES } from '../../utils/banners';
 import { PROFILE_GLASS_CARD_BASE } from '../../utils/themeStyles';
 import { SegmentedControl } from '../common/SegmentedControl';
 
@@ -16,7 +16,7 @@ interface EmployeePortalProfileProps {
 
 type ProfileTab = 'profile' | 'history' | 'documents';
 
-const INDEPENDENT_BANNER = 'abstract';
+type BannerId = typeof BANNER_STYLES[number]['id'];
 
 const getInitials = (name: string) => {
   if (!name) return '?';
@@ -74,12 +74,19 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
     phone: '',
     licenseNumber: '',
   });
+  const [coverStyle, setCoverStyle] = useState<BannerId>((profile?.coverStyle as BannerId) || 'pattern');
+  const [preview, setPreview] = useState<string | undefined>(undefined);
+  const [removeImage, setRemoveImage] = useState(false);
   const [expandedDocs, setExpandedDocs] = useState<Set<string>>(new Set());
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const [deletingDoc, setDeletingDoc] = useState<string | null>(null);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const isRTL = language === 'AR';
+
+  React.useEffect(() => {
+    if (profile?.coverStyle) setCoverStyle(profile.coverStyle as BannerId);
+  }, [profile?.coverStyle]);
 
   const displayName = profile?.fullName || sessionName || '...';
   const displayUsername = (profile?.username || sessionUsername || '').replace(/^@/, '');
@@ -117,6 +124,8 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
 
   const cancelEditing = useCallback(() => {
     setIsEditing(false);
+    setPreview(undefined);
+    setRemoveImage(false);
     setEditFields({ fullName: '', nameArabic: '', email: '', phone: '', licenseNumber: '' });
   }, []);
 
@@ -126,32 +135,43 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
     try {
       await onUpdateProfile({
         fullName: editFields.fullName.trim() || undefined,
-        nameArabic: editFields.nameArabic.trim() || undefined,
-        email: editFields.email.trim() || undefined,
-        phone: editFields.phone.trim() || undefined,
-        licenseNumber: editFields.licenseNumber.trim() || undefined,
-      });
+        nameArabic: editFields.nameArabic.trim() || null,
+        phone: editFields.phone.trim() || null,
+        licenseNumber: editFields.licenseNumber.trim() || null,
+        ...(preview && { image: preview }),
+        ...(removeImage && { image: null }),
+      } as Partial<UserProfile>);
+      setPreview(undefined);
+      setRemoveImage(false);
       setIsEditing(false);
     } catch {
       // error handled upstream
     } finally {
       setIsSaving(false);
     }
-  }, [onUpdateProfile, editFields]);
+  }, [onUpdateProfile, editFields, preview]);
 
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !onUpdateProfile) return;
+    if (!file) return;
     try {
-      setIsSaving(true);
       const base64 = await readFileAsBase64(file);
-      await onUpdateProfile({ image: base64 });
+      setPreview(base64);
+      setRemoveImage(false);
     } catch (err) {
       if (err instanceof Error) alert(err.message);
-    } finally {
-      setIsSaving(false);
-      if (imageInputRef.current) imageInputRef.current.value = '';
     }
+    if (imageInputRef.current) imageInputRef.current.value = '';
+  }, []);
+
+  const handleImageRemove = useCallback(() => {
+    setPreview(undefined);
+    setRemoveImage(true);
+  }, []);
+
+  const handleCoverChange = useCallback((id: BannerId) => {
+    setCoverStyle(id);
+    onUpdateProfile?.({ coverStyle: id } as Partial<UserProfile>);
   }, [onUpdateProfile]);
 
   const handleDocUpload = useCallback(async (field: keyof Pick<UserProfile, 'nationalIdCard' | 'nationalIdCardBack' | 'mainSyndicateCard' | 'subSyndicateCard'>, file: File) => {
@@ -177,7 +197,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
     }
   }, [onUpdateProfile]);
 
-  const safeImage = profile?.image?.startsWith('data:image/') ? profile.image : undefined;
+  const avatarSrc = removeImage ? undefined : (preview || (profile?.image?.startsWith('data:image/') ? profile.image : undefined));
 
   return (
     <div className="animate-fade-in text-(--text-primary)">
@@ -194,8 +214,24 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
       {activeTab === 'profile' && (
         <div className="animate-fade-in">
           {/* Banner */}
-          <div className="relative w-full aspect-[9/3] bg-(--bg-secondary) overflow-hidden select-none rounded-2xl">
-            {renderBanner(INDEPENDENT_BANNER, { x: 0, y: 0 }, 1.2)}
+          <div className="relative w-full aspect-[9/3] bg-(--bg-secondary) overflow-hidden select-none rounded-2xl group/cover">
+            {renderBanner(coverStyle, { x: 0, y: 0 }, 1.2)}
+
+            {/* Pattern picker overlay */}
+            {isEditing && (
+              <div className="absolute top-3 end-3 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10 z-20">
+                  {BANNER_STYLES.map((b) => (
+                    <button
+                      key={b.id}
+                      onClick={() => handleCoverChange(b.id)}
+                    className={`w-4 h-4 rounded-full border-2 transition-all hover:scale-125 ${coverStyle === b.id ? 'border-white scale-110 shadow-sm' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                    style={{ backgroundColor: b.accentColor }}
+                    title={isRTL ? b.nameAR : b.nameEN}
+                    type='button'
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Avatar & Header */}
@@ -203,23 +239,31 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
             <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5 mb-4 relative z-10">
               <div className="relative shrink-0">
                 {/* Avatar with image support */}
-                <label className="block cursor-pointer group">
+                <label className={`block ${isEditing ? 'cursor-pointer' : ''} group`}>
                   <div className="w-28 h-28 rounded-full border-4 border-(--bg-page-surface) overflow-hidden bg-(--bg-secondary) shadow-md flex items-center justify-center relative">
-                    {safeImage ? (
-                      <img src={safeImage} alt="" className="w-full h-full object-cover" />
+                    {avatarSrc ? (
+                      <img src={avatarSrc} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-500/20 to-primary-600/30 text-primary-500 text-3xl font-bold">
                         {getInitials(displayName)}
                       </div>
                     )}
-                    {/* Camera overlay on hover (only when editable) */}
-                    {onUpdateProfile && (
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors rounded-full flex items-center justify-center">
-                        <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {onUpdateProfile && isEditing && (
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors rounded-full flex items-center justify-center gap-3">
+                        <Camera className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        {avatarSrc && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleImageRemove(); }}
+                            type='button'
+                            className="text-white opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-300"
+                          >
+                            <span className="material-symbols-rounded text-[22px]">delete</span>
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
-                  {onUpdateProfile && (
+                  {onUpdateProfile && isEditing && (
                     <input
                       ref={imageInputRef}
                       type="file"
@@ -322,9 +366,9 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
                       icon='mail'
                       label={isRTL ? 'البريد الإلكتروني' : 'Email'}
                       value={editFields.email}
-                      onChange={v => setEditFields(prev => ({ ...prev, email: v }))}
                       dir='ltr'
                       type='email'
+                      disabled
                     />
                     <EditField
                       icon='phone'

@@ -59,6 +59,7 @@ export const employeeProfileRepository = {
       if (updates.phone !== undefined) payload.phone = updates.phone;
       if (updates.licenseNumber !== undefined) payload.license_number = updates.licenseNumber;
       if (updates.image !== undefined) payload.image = updates.image;
+      if (updates.coverStyle !== undefined) payload.cover_style = updates.coverStyle;
       if (updates.nationalIdCard !== undefined) payload.national_id_card = updates.nationalIdCard;
       if (updates.nationalIdCardBack !== undefined) payload.national_id_card_back = updates.nationalIdCardBack;
       if (updates.mainSyndicateCard !== undefined) payload.main_syndicate_card = updates.mainSyndicateCard;
@@ -89,6 +90,7 @@ export const employeeProfileRepository = {
       phone: row.phone,
       licenseNumber: row.license_number,
       image: row.image,
+      coverStyle: row.cover_style,
       nationalIdCard: row.national_id_card,
       nationalIdCardBack: row.national_id_card_back,
       mainSyndicateCard: row.main_syndicate_card,
