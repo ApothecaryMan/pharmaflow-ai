@@ -9,7 +9,7 @@ import type { LabelElement } from './types';
 
 interface PropertyInspectorProps {
   color: string;
-  t: any;
+  t: Translations;
   selectedElementId: string | null;
   selectedElement?: LabelElement;
   inventory: Drug[];
@@ -241,11 +241,10 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                   setPrintOffsetY(0);
                 }}
                 disabled={printOffsetX === 0 && printOffsetY === 0}
-                className={`w-full py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
-                  printOffsetX === 0 && printOffsetY === 0
+                className={`w-full py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${printOffsetX === 0 && printOffsetY === 0
                     ? 'bg-gray-100 dark:bg-muted text-gray-400 cursor-not-allowed'
                     : `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-800/40`
-                }`}
+                  }`}
               >
                 <span className='material-symbols-rounded text-sm'>restart_alt</span>
                 {t.printSettings.resetCalibration}

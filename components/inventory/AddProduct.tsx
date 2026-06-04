@@ -26,7 +26,7 @@ interface AddProductProps {
   inventory: Drug[];
   onAddDrug: (drug: Omit<Drug, 'id' | 'branchId' | 'createdAt' | 'updatedAt'>) => void;
   color: string;
-  t: any;
+  t: Translations;
   language?: string;
   onViewChange?: (view: string) => void;
   onCancel?: () => void;

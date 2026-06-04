@@ -15,7 +15,7 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { FilterDropdown } from '../common/FilterDropdown';
 
 interface DesktopSettingsProps {
-  t: any;
+  t: Translations;
   language: 'EN' | 'AR';
   color?: string;
 }

@@ -13,7 +13,7 @@ const formatDrugQty = (units: number, unitsPerPack: number, lang: string) => {
   const isInteger = Number.isInteger(packs);
   const packsStr = isInteger ? packs.toString() : parseFloat(packs.toFixed(2)).toString();
   const packLabel = lang === 'ar' ? 'علبة' : 'Packs';
-  
+
   return `${packsStr} ${packLabel}`;
 };
 
@@ -49,7 +49,7 @@ interface POSDrugOverviewProps {
   drugBatches: Drug[];
   substitutes: Drug[];
   totalStock: number;
-  t: any; // Type-safe but flexible for nested translation keys
+  t: Translations; // Type-safe but flexible for nested translation keys
   setViewingDrug: (drug: Drug | null) => void;
 }
 
@@ -162,24 +162,24 @@ export const POSDrugOverview: React.FC<POSDrugOverviewProps> = ({
                   return acc;
                 }, {})
               )
-              .sort(([dateA], [dateB]) => parseExpiryEndOfMonth(dateA).getTime() - parseExpiryEndOfMonth(dateB).getTime())
-              .map(([expiryDate, rawStock], idx) => {
-                const totalStock = rawStock as number;
-                return (
-                  <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/10 transition-colors">
-                    <td className="px-4 py-2">
-                      <span className={`tabular-nums ${getExpiryColorClass(expiryDate)}`}>
-                        {formatExpiryDate(expiryDate)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2">
-                      <span className={`font-black tabular-nums ${totalStock < (viewingDrug.minStock || 5) * (viewingDrug.unitsPerPack || 1) ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                        {formatDrugQty(totalStock, viewingDrug.unitsPerPack || 1, currentLang)}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+                .sort(([dateA], [dateB]) => parseExpiryEndOfMonth(dateA).getTime() - parseExpiryEndOfMonth(dateB).getTime())
+                .map(([expiryDate, rawStock], idx) => {
+                  const totalStock = rawStock as number;
+                  return (
+                    <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/10 transition-colors">
+                      <td className="px-4 py-2">
+                        <span className={`tabular-nums ${getExpiryColorClass(expiryDate)}`}>
+                          {formatExpiryDate(expiryDate)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2">
+                        <span className={`font-black tabular-nums ${totalStock < (viewingDrug.minStock || 5) * (viewingDrug.unitsPerPack || 1) ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                          {formatDrugQty(totalStock, viewingDrug.unitsPerPack || 1, currentLang)}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
@@ -194,7 +194,7 @@ export const POSDrugOverview: React.FC<POSDrugOverviewProps> = ({
         </h4>
         <div className="flex flex-wrap gap-2">
           {substitutes.length > 0 ? substitutes.map(sub => (
-            <div 
+            <div
               key={sub.id}
               onClick={() => setViewingDrug(sub)}
               className="px-3 py-2 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-400 cursor-pointer transition-all group"

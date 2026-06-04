@@ -7,7 +7,7 @@ interface Props {
   workspaces: Employee[];
   onSelect: (workspace: Employee) => void;
   onCancel?: () => void;
-  t: any;
+  t: Translations;
 }
 
 export function WorkspaceSwitcher({ workspaces, onSelect, onCancel, t }: Props) {

@@ -7,7 +7,7 @@ import { formatExpiryDate } from '../../utils/expiryUtils';
 
 interface StockAdjustmentPrintProps {
   isRTL: boolean;
-  t: any;
+  t: Translations;
   pharmacyName: string;
   activeView: 'adjust' | 'history';
   data: StockMovement[];
@@ -160,11 +160,10 @@ export const StockAdjustmentPrint: React.FC<StockAdjustmentPrintProps> = ({
                     <td className='py-0.5 text-center text-black tabular-nums'>{item.newStock}</td>
                     <td className='py-0.5 text-center' dir='ltr'>
                       <span
-                        className={`inline-block font-bold tabular-nums min-w-[45px] text-center border rounded-md px-1 ${
-                          item.quantity > 0
+                        className={`inline-block font-bold tabular-nums min-w-[45px] text-center border rounded-md px-1 ${item.quantity > 0
                             ? 'text-green-700 border-green-700'
                             : 'text-red-700 border-red-700'
-                        }`}
+                          }`}
                       >
                         {item.quantity >= 0 ? '+' : ''}
                         {item.quantity}
@@ -186,9 +185,9 @@ export const StockAdjustmentPrint: React.FC<StockAdjustmentPrintProps> = ({
                   <td colSpan={8} className='py-8 text-center text-black italic'>
                     {activeView === 'history'
                       ? t.stockAdjustment?.noHistory ||
-                        'No history records found for the selected period.'
+                      'No history records found for the selected period.'
                       : t.stockAdjustment?.noRecent ||
-                        'No recent transaction to print. Perform an adjustment first.'}
+                      'No recent transaction to print. Perform an adjustment first.'}
                   </td>
                 </tr>
               )}

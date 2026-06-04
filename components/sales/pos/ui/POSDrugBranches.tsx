@@ -14,7 +14,7 @@ import { useMemo } from 'react';
 
 interface POSDrugBranchesProps {
   viewingDrug: Drug;
-  t: any;
+  t: Translations;
 }
 
 export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t }) => {
@@ -22,7 +22,7 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
   const [branchNames, setBranchNames] = useState<Record<string, string>>({});
   const [branchCodes, setBranchCodes] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>(() => 
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>(() =>
     storage.get<'table' | 'grid'>(StorageKeys.POS_BRANCHES_VIEW_MODE, 'table')
   );
   const { language } = useSettings();
@@ -34,9 +34,9 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
       try {
         const appSettings = await settingsService.getAll();
         const activeBranchId = appSettings.activeBranchId || '';
-        
+
         const allItems = await inventoryService.getAllBranches();
-        
+
         // Fetch all branches to get names
         const targetOrgId = viewingDrug.orgId || appSettings.orgId;
         const allBranches = await branchService.getAll(targetOrgId);
@@ -50,8 +50,8 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
         setBranchCodes(codesMap);
 
         // Filter for same drug (by barcode) in other branches
-        const matches = allItems.filter(d => 
-          d.barcode === viewingDrug.barcode && 
+        const matches = allItems.filter(d =>
+          d.barcode === viewingDrug.barcode &&
           d.branchId !== activeBranchId &&
           d.branchId !== undefined
         );
@@ -135,15 +135,15 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
           size="xs"
           fullWidth={false}
           options={[
-            { 
-              label: currentLang === 'ar' ? 'جدول' : 'Table', 
-              value: 'table', 
-              icon: 'view_list' 
+            {
+              label: currentLang === 'ar' ? 'جدول' : 'Table',
+              value: 'table',
+              icon: 'view_list'
             },
-            { 
-              label: currentLang === 'ar' ? 'كروت' : 'Cards', 
-              value: 'grid', 
-              icon: 'grid_view' 
+            {
+              label: currentLang === 'ar' ? 'كروت' : 'Cards',
+              value: 'grid',
+              icon: 'grid_view'
             }
           ]}
           value={viewMode}
@@ -157,7 +157,7 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
       {/* Main Content View */}
       {viewMode === 'table' ? (
         <div className="overflow-hidden rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900/50 [&_thead]:bg-white [&_thead]:dark:bg-gray-900/50">
-          <TanStackTable 
+          <TanStackTable
             data={otherBranches}
             columns={columns}
             lite
@@ -193,7 +193,7 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
                   </span>
                 </div>
               </div>
-              
+
               <div className="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-gray-800/50">
                 <div className="flex flex-col">
                   <span className="text-[9px] font-bold text-gray-400 uppercase">{currentLang === 'ar' ? 'الصلاحية' : 'Expiry'}</span>
@@ -228,8 +228,8 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
             {currentLang === 'ar' ? 'تنبيه المزامنة' : 'Stock Synchronization'}
           </h5>
           <p className="text-xs text-gray-600 dark:text-gray-400 font-medium leading-relaxed">
-            {currentLang === 'ar' ? 'الكميات المعروضة هي آخر قراءة مسجلة في النظام. يُرجى التواصل هاتفياً مع الفرع للتأكد من توفر الصنف فعلياً قبل توجيه العميل.' 
-            : 'Inventory levels are approximate based on the last sync. Please verify by phone with the branch manager before directing a customer.'}
+            {currentLang === 'ar' ? 'الكميات المعروضة هي آخر قراءة مسجلة في النظام. يُرجى التواصل هاتفياً مع الفرع للتأكد من توفر الصنف فعلياً قبل توجيه العميل.'
+              : 'Inventory levels are approximate based on the last sync. Please verify by phone with the branch manager before directing a customer.'}
           </p>
         </div>
       </div>

@@ -22,7 +22,7 @@ interface EditProductModalProps {
   onAddDrug: (drug: Omit<Drug, 'id' | 'branchId' | 'createdAt' | 'updatedAt'>) => void;
   onUpdateDrug: (drug: Drug) => void;
   color?: string;
-  t: any;
+  t: Translations;
 }
 
 const DEFAULT_FORM_STATE: Partial<Drug> = {

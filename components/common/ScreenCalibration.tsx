@@ -7,7 +7,7 @@ interface ScreenCalibrationProps {
   onClose: () => void;
   onSave: (mmToPx: number) => void;
   initialValue?: number;
-  t: any; // Translations
+  t: Translations; // Translations
 }
 
 // Standard Credit Card Width: 85.60 mm

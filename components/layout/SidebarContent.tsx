@@ -12,7 +12,7 @@ interface SidebarContentProps {
   onViewChange: (viewId: ViewState) => void;
   isMobile?: boolean;
   theme: any;
-  t: any;
+  t: Translations;
   language: 'EN' | 'AR';
   hideInactiveModules?: boolean;
   sidebarCollapsed?: boolean;

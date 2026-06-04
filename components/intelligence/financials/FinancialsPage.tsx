@@ -17,7 +17,7 @@ import { useSettings } from '../../../context';
 import { getDisplayName } from '../../../utils/drugDisplayName';
 
 interface FinancialsPageProps {
-  t: any;
+  t: Translations;
   language?: string;
   kpis: FinancialKPIs | null;
   products: ProductFinancialItem[];

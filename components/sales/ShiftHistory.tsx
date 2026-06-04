@@ -18,7 +18,7 @@ import { auditService } from '../../services/audit/auditService';
 
 interface ShiftHistoryProps {
   color: string;
-  t: any;
+  t: Translations;
   language: string;
   datePickerTranslations: any;
   employees?: Employee[];

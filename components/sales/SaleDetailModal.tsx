@@ -14,7 +14,7 @@ interface SaleDetailModalProps {
   sale: Sale | null;
   isOpen: boolean;
   onClose: () => void;
-  t: any;
+  t: Translations; slations;
   language: string;
   color: string;
   textTransform: any;
@@ -88,7 +88,7 @@ const StatCapsule: React.FC<{
 const ModificationItem: React.FC<{
   mod: any;
   textTransform: any;
-  t: any;
+  t: Translations; slations;
 }> = ({ mod, textTransform, t }) => {
   const typeColors: Record<string, string> = {
     item_removed: 'text-rose-500',
@@ -180,11 +180,11 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
     <>
       <Modal
         isOpen={isOpen && !returnModalOpen} onClose={onClose} size='lg' title={t.modal.title}
-        icon='receipt_long' className='overscroll-contain' 
+        icon='receipt_long' className='overscroll-contain'
         tabs={sale.customerCode ? [
           { label: t.modal.items || 'Items', value: 'items', icon: 'list' },
           { label: t.modal.modificationHistory || 'History', value: 'history', icon: 'history' },
-        ] : undefined} 
+        ] : undefined}
         activeTab={activeTab} onTabChange={setActiveTab}
       >
         <div className='flex flex-col h-full max-h-[80vh]'>
@@ -192,7 +192,8 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
           <div className='shrink-0 mb-4'>
             <ListWrapper>
               {[
-                { label: t.modal.date, icon: 'calendar_today', value: (() => {
+                {
+                  label: t.modal.date, icon: 'calendar_today', value: (() => {
                     const d = new Date(sale.date);
                     let timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true, numberingSystem: 'latn' });
                     if (language === 'AR') timeStr = timeStr.replace('AM', 'ص').replace('PM', 'م');
@@ -205,13 +206,13 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                     );
                   })()
                 },
-                { label: t.modal.id, icon: 'tag', value: (
+                {
+                  label: t.modal.id, icon: 'tag', value: (
                     <div className='flex items-center gap-2'>
                       {sale.status && (
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-lg border font-bold uppercase tracking-wider ${
-                          sale.status === 'completed' ? 'border-emerald-500/50 text-emerald-500 bg-emerald-500/5' :
-                          'border-primary-500/50 text-primary-500 bg-primary-500/5'
-                        }`}>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-lg border font-bold uppercase tracking-wider ${sale.status === 'completed' ? 'border-emerald-500/50 text-emerald-500 bg-emerald-500/5' :
+                            'border-primary-500/50 text-primary-500 bg-primary-500/5'
+                          }`}>
                           {(language === 'AR' ? { 'completed': 'مكتمل', 'cancelled': 'ملغي', 'returned': 'مرتجع' }[sale.status] : sale.status.toUpperCase()) || sale.status}
                         </span>
                       )}
@@ -219,7 +220,8 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                     </div>
                   )
                 },
-                { label: t.modal.customer, icon: 'person', value: (
+                {
+                  label: t.modal.customer, icon: 'person', value: (
                     <div className='flex items-center gap-1.5 truncate'>
                       <span className='font-bold'>{sale.customerName || 'Guest'}</span>
                       {sale.customerCode && <><span className='opacity-30'>•</span><span className='text-xs'>{sale.customerCode}</span></>}
@@ -248,38 +250,38 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                       const rawId = item.drugId ?? item.drug_id ?? item.id;
                       const drug = inventoryMap.get(rawId);
                       const drugId = item.drugId ?? item.drug_id ?? drug?.id ?? item.id;
-                      
+
                       const dosageForm = item.dosageForm ?? item.dosage_form ?? drug?.dosageForm;
                       const unitsPerPack = item.unitsPerPack ?? item.units_per_pack ?? drug?.unitsPerPack ?? 1;
                       const publicPrice = item.publicPrice ?? item.public_price ?? 0;
                       const itemDiscount = item.discount ?? item.discount_percentage ?? 0;
 
-                      const g: any = groups[drugId] ||= { 
-                        id: drugId, 
-                        name: item.name, 
-                        dosageForm: dosageForm, 
-                        packQty: 0, 
-                        unitQty: 0, 
-                        totalPrice: 0, 
-                        preDiscountTotal: 0, 
-                        returnedQty: 0, 
-                        unitsPerPack: unitsPerPack, 
+                      const g: any = groups[drugId] ||= {
+                        id: drugId,
+                        name: item.name,
+                        dosageForm: dosageForm,
+                        packQty: 0,
+                        unitQty: 0,
+                        totalPrice: 0,
+                        preDiscountTotal: 0,
+                        returnedQty: 0,
+                        unitsPerPack: unitsPerPack,
                         itemBasePrice: publicPrice,
                         itemDiscount: itemDiscount,
                         expiries: new Set<string>()
                       };
-                      
+
                       const isUnit = !!item.isUnit;
                       const lineKey = `${drugId}_${isUnit ? 'unit' : 'pack'}`;
                       const ret = sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[drugId] || 0;
-                      
+
                       if (isUnit) g.unitQty += item.quantity; else g.packQty += item.quantity;
                       const realQty = item.quantity - ret;
                       const price = isUnit ? (publicPrice / (unitsPerPack || 1)) : publicPrice;
-                      
+
                       const lineTotal = money.multiply(price, realQty, 0);
                       const discountedTotal = pricing.afterDiscount(lineTotal, itemDiscount);
-                      
+
                       g.totalPrice = money.add(g.totalPrice, discountedTotal);
                       g.preDiscountTotal = money.add(g.preDiscountTotal, lineTotal);
                       g.returnedQty += ret;
@@ -302,10 +304,10 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                       const expiryList = Array.from(g.expiries as Set<string>);
 
                       return (
-                        <ListItem 
-                          key={g.id} 
-                          index={i} 
-                          total={groupList.length} 
+                        <ListItem
+                          key={g.id}
+                          index={i}
+                          total={groupList.length}
                           className={hasRet ? `!bg-rose-50/50 dark:!bg-rose-950/20 !border-rose-200 dark:!border-rose-900/30` : ''}
                         >
                           <div className='flex justify-between items-center w-full min-w-0' dir='ltr'>
@@ -407,7 +409,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                   const rawId = (it as any).drugId ?? (it as any).drug_id ?? it.id;
                   const drug = inventoryMap.get(rawId);
                   const drugId = (it as any).drugId ?? (it as any).drug_id ?? drug?.id ?? it.id;
-                  
+
                   const lineKey = `${drugId}_${it.isUnit ? 'unit' : 'pack'}`;
                   const returned = sale.itemReturnedQuantities?.[lineKey] || 0;
                   return returned < it.quantity;

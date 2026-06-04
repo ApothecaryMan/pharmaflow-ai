@@ -22,11 +22,11 @@ const REASON_STYLES: Record<string, { badgeClass: string; icon: string }> = {
   // Discarded / Write-off (إهلاك وتلف)
   damaged: { badgeClass: 'badge-danger', icon: 'delete_forever' },
   expired: { badgeClass: 'badge-danger', icon: 'delete_forever' },
-  
+
   // Restocked (إعادة للمخزون)
   wrong_item: { badgeClass: 'badge-success', icon: 'settings_backup_restore' },
   customer_request: { badgeClass: 'badge-success', icon: 'settings_backup_restore' },
-  
+
   // Supplier Claim / Action (إجراء مع المورد)
   defective: { badgeClass: 'badge-warning', icon: 'local_shipping' },
   overage: { badgeClass: 'badge-info', icon: 'local_shipping' },
@@ -77,7 +77,7 @@ interface ReturnHistoryProps {
   returns: Return[];
   sales: Sale[];
   color: string;
-  t: any;
+  t: Translations;
   language: string;
   datePickerTranslations: any;
   navigationParams?: any;
@@ -95,7 +95,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
-  
+
   // Handle Navigation Params (Deep Linking)
   React.useEffect(() => {
     if (navigationParams?.id) {
@@ -202,7 +202,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
           ].filter(Boolean).join('\n');
 
           return (
-            <span 
+            <span
               className='font-bold text-red-600 dark:text-red-400 cursor-help'
               title={tooltipText}
             >
@@ -316,14 +316,14 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
           pageSize='auto'
           enableShowAll={true}
           rightCustomControls={
-              <DateRangePicker
-                startDate={dateRange.from}
-                endDate={dateRange.to}
-                onStartDateChange={(val) => setDateRange((prev) => ({ ...prev, from: val }))}
-                onEndDateChange={(val) => setDateRange((prev) => ({ ...prev, to: val }))}
-                color='gray'
-                locale={locale}
-              />
+            <DateRangePicker
+              startDate={dateRange.from}
+              endDate={dateRange.to}
+              onStartDateChange={(val) => setDateRange((prev) => ({ ...prev, from: val }))}
+              onEndDateChange={(val) => setDateRange((prev) => ({ ...prev, to: val }))}
+              color='gray'
+              locale={locale}
+            />
           }
         />
       </div>
@@ -462,7 +462,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
                   </div>
                 </div>
               )}
-              
+
               <div className='flex justify-between items-center py-3 px-4 bg-gray-100/50 dark:bg-white/[0.03] rounded-2xl border border-gray-100 dark:border-white/5'>
                 <span className='font-bold text-[14px] text-red-600 dark:text-red-400'>{t.headers?.totalRefund || 'Total Refund'}</span>
                 <span className='text-xl font-black text-red-600 dark:text-red-400 tabular-nums tracking-tight'>

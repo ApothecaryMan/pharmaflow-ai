@@ -8,7 +8,7 @@ interface PendingBranchAssignmentProps {
   switchBranch: (branchId: string, skipClearEmployee?: boolean) => Promise<void>;
   onSelectEmployee?: (id: string | null) => void;
   onLogout?: () => Promise<void>;
-  t: any;
+  t: Translations;
 }
 
 export const PendingBranchAssignment: React.FC<PendingBranchAssignmentProps> = ({
@@ -70,19 +70,19 @@ export const PendingBranchAssignment: React.FC<PendingBranchAssignmentProps> = (
   const isRtl = language === 'AR';
 
   return (
-    <div 
-      className="h-full w-full flex flex-col items-center justify-center p-8 select-none relative overflow-hidden bg-(--bg-page-surface)" 
+    <div
+      className="h-full w-full flex flex-col items-center justify-center p-8 select-none relative overflow-hidden bg-(--bg-page-surface)"
       style={{ fontFamily: "'GraphicSansFont', sans-serif" }}
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       {/* High-Visibility Grid Pattern */}
-      <div 
-        className="absolute inset-0 text-zinc-900/30 dark:text-zinc-100/20 pointer-events-none" 
-        style={{ 
-          backgroundImage: 'radial-gradient(circle, currentColor 1.5px, transparent 1.5px)', 
-          backgroundSize: '32px 32px', 
-          maskImage: 'radial-gradient(circle, black, transparent 80%)' 
-        }} 
+      <div
+        className="absolute inset-0 text-zinc-900/30 dark:text-zinc-100/20 pointer-events-none"
+        style={{
+          backgroundImage: 'radial-gradient(circle, currentColor 1.5px, transparent 1.5px)',
+          backgroundSize: '32px 32px',
+          maskImage: 'radial-gradient(circle, black, transparent 80%)'
+        }}
       />
 
       <div className="flex flex-col items-center text-center max-w-md w-full relative z-10 animate-fade-in">
@@ -171,7 +171,7 @@ export const PendingBranchAssignment: React.FC<PendingBranchAssignmentProps> = (
             <span className="material-symbols-rounded text-base">switch_account</span>
             {translations.switchProfile}
           </button>
-          
+
           <button
             onClick={handleSignOut}
             className="flex-1 min-w-[140px] h-10 px-5 rounded-xl border border-transparent bg-red-500/10 hover:bg-red-500/20 text-xs font-bold text-red-600 dark:text-red-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"

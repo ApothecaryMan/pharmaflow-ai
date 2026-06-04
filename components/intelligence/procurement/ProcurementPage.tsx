@@ -11,7 +11,7 @@ import { useSettings } from '../../../context';
 import { getDisplayName } from '../../../utils/drugDisplayName';
 
 interface ProcurementPageProps {
-  t: any;
+  t: Translations;
   language?: string;
   summary: ProcurementSummary | null;
   filteredItems: ProcurementItem[];

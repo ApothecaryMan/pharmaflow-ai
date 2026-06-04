@@ -30,7 +30,7 @@ interface SuppliersListProps {
   onUpdateSupplier: (supplier: Supplier) => Promise<void>;
   onDeleteSupplier: (id: string) => Promise<void>;
   color: string;
-  t: any;
+  t: Translations;
   language: 'EN' | 'AR';
 }
 
@@ -154,7 +154,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
       alert(t.errors?.nameRequired || 'Name is required');
       return;
     }
-    
+
     setIsSaving(true);
     try {
       await onUpdateSupplier(editForm);
@@ -180,7 +180,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
 
   const handleAddNew = () => {
     if (!permissionsService.can('supplier.add')) return;
-    
+
     setMode('add');
     setEditForm({
       id: '', // Service will handle ID generation
@@ -203,7 +203,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
       alert(t.errors?.invalidEmail || 'Invalid email address');
       return;
     }
-    
+
     setIsSaving(true);
     try {
       // Remove empty ID so service can generate a real one
@@ -332,13 +332,13 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
           const s = row.original;
           const city = CITIES.find(c => c.id === s.city);
           const area = AREAS.find(a => a.id === s.area);
-          
+
           const cityName = city ? (language === 'AR' ? city.name_ar : city.name_en) : '';
           const areaName = area ? (language === 'AR' ? area.name_ar : area.name_en) : '';
 
           const locationLine = [cityName, areaName].filter(Boolean).join(', ');
           const align = column.columnDef.meta?.align || 'start';
-          
+
           return (
             <div className={`flex flex-col py-0.5 overflow-hidden items-${align}`}>
               <span className='truncate block'>
@@ -457,22 +457,22 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                     />
                   </div>
                   <div className='col-span-2'>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                    {t.form?.location || 'Location'}
-                  </label>
-                  <LocationSelector
-                    language={language}
-                    selectedGovernorate={editForm.governorate}
-                    selectedCity={editForm.city}
-                    selectedArea={editForm.area}
-                    onGovernorateChange={(val) => setEditForm(prev => ({ ...prev, governorate: val }))}
-                    onCityChange={(val) => setEditForm(prev => ({ ...prev, city: val }))}
-                    onAreaChange={(val) => setEditForm(prev => ({ ...prev, area: val }))}
-                    t={t}
-                    color={color}
-                    showLabels={false}
-                  />
-                </div>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      {t.form?.location || 'Location'}
+                    </label>
+                    <LocationSelector
+                      language={language}
+                      selectedGovernorate={editForm.governorate}
+                      selectedCity={editForm.city}
+                      selectedArea={editForm.area}
+                      onGovernorateChange={(val) => setEditForm(prev => ({ ...prev, governorate: val }))}
+                      onCityChange={(val) => setEditForm(prev => ({ ...prev, city: val }))}
+                      onAreaChange={(val) => setEditForm(prev => ({ ...prev, area: val }))}
+                      t={t}
+                      color={color}
+                      showLabels={false}
+                    />
+                  </div>
                   <div className="col-span-2">
                     <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                       {t.form?.address || 'Street Address'}
@@ -842,7 +842,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                     <ListItem key={i} index={i} total={arr.length}>
                       <div className='flex items-center gap-2 shrink-0'>
                         {/* Rule 9: Precise Icon Styling */}
-                        <span 
+                        <span
                           className='material-symbols-rounded opacity-40'
                           style={{ fontSize: 'var(--icon-base)', lineHeight: 1 }}
                         >

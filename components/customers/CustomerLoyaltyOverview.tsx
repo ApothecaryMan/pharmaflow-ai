@@ -23,7 +23,7 @@ interface CustomerLoyaltyOverviewProps {
   customers: Customer[];
   sales: Sale[];
   color: string;
-  t: any;
+  t: Translations;
   language: 'EN' | 'AR';
   onViewChange?: (view: string) => void;
 }
@@ -125,13 +125,13 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
       name:
         days === 1
           ? new Date(d.date).toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })
+            hour: '2-digit',
+            minute: '2-digit',
+          })
           : new Date(d.date).toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', {
-              month: 'short',
-              day: 'numeric',
-            }),
+            month: 'short',
+            day: 'numeric',
+          }),
       points: parseFloat(d.points.toFixed(1)),
     }));
   }, [sales, language, timeRange]);

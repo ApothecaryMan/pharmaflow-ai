@@ -23,7 +23,7 @@ interface UsePOSCheckoutProps {
   customerCode: string;
   selectedCustomer: Customer | null;
   language: string;
-  t: any;
+  t: Translations;
   cartTotal: number;
   subtotal: number;
   globalDiscount: number;
@@ -73,12 +73,12 @@ export const usePOSCheckout = ({
       // Find the last delivery sale for this specific customer
       const lastDeliverySale = [...sales]
         .reverse() // Start from newest
-        .find(s => 
-          s.customerCode === selectedCustomer.code && 
-          s.saleType === 'delivery' && 
+        .find(s =>
+          s.customerCode === selectedCustomer.code &&
+          s.saleType === 'delivery' &&
           (s.deliveryFee || 0) > 0
         );
-      
+
       if (lastDeliverySale) {
         // Must be at least the global delivery fee
         setDeliveryFee(Math.max(globalDeliveryFee, lastDeliverySale.deliveryFee || globalDeliveryFee));
@@ -106,106 +106,106 @@ export const usePOSCheckout = ({
       setIsProcessing(true);
       try {
 
-      const isDelivery = saleType === 'delivery';
-      let currentDeliveryFee = 0;
-      if (isDelivery) {
-        currentDeliveryFee = deliveryFee;
-      }
+        const isDelivery = saleType === 'delivery';
+        let currentDeliveryFee = 0;
+        if (isDelivery) {
+          currentDeliveryFee = deliveryFee;
+        }
 
-      if (isDelivery && !deliveryEmployeeId && !isPending) {
-        alert(t.selectDriver || 'Please select a delivery man');
-        return;
-      }
+        if (isDelivery && !deliveryEmployeeId && !isPending) {
+          alert(t.selectDriver || 'Please select a delivery man');
+          return;
+        }
 
-      const startTime = activeTab?.firstItemAt || activeTab?.createdAt;
-      let processingTimeMinutes: number | undefined;
-      if (startTime) {
-        const rawMinutes = Math.round(((Date.now() - startTime) / 60000) * 10) / 10;
-        processingTimeMinutes = Math.max(0.1, Math.min(rawMinutes, 60));
-      }
+        const startTime = activeTab?.firstItemAt || activeTab?.createdAt;
+        let processingTimeMinutes: number | undefined;
+        if (startTime) {
+          const rawMinutes = Math.round(((Date.now() - startTime) / 60000) * 10) / 10;
+          processingTimeMinutes = Math.max(0.1, Math.min(rawMinutes, 60));
+        }
 
-      const saleParams = {
-        items: cart.filter((item) => item.quantity > 0),
-        customer: selectedCustomer,
-        customerName: customerName || undefined,
-        customerCode: customerCode || undefined,
-        paymentMethod,
-        saleType,
-        deliveryFee: currentDeliveryFee,
-        globalDiscount,
-        subtotal,
-        total: money.add(cartTotal, currentDeliveryFee),
-        language: (language as 'EN' | 'AR') || 'EN',
-        deliveryEmployeeId: isDelivery ? (deliveryEmployeeId || undefined) : undefined,
-        status: (isPending ? 'pending' : isDelivery ? (deliveryEmployeeId ? 'with_delivery' : 'pending') : 'completed') as Sale['status'],
-        processingTimeMinutes,
-        date: getVerifiedDate(),
-        branchId: activeBranchId,
-      };
+        const saleParams = {
+          items: cart.filter((item) => item.quantity > 0),
+          customer: selectedCustomer,
+          customerName: customerName || undefined,
+          customerCode: customerCode || undefined,
+          paymentMethod,
+          saleType,
+          deliveryFee: currentDeliveryFee,
+          globalDiscount,
+          subtotal,
+          total: money.add(cartTotal, currentDeliveryFee),
+          language: (language as 'EN' | 'AR') || 'EN',
+          deliveryEmployeeId: isDelivery ? (deliveryEmployeeId || undefined) : undefined,
+          status: (isPending ? 'pending' : isDelivery ? (deliveryEmployeeId ? 'with_delivery' : 'pending') : 'completed') as Sale['status'],
+          processingTimeMinutes,
+          date: getVerifiedDate(),
+          branchId: activeBranchId,
+        };
 
-      const salePayload = buildSalePayload(saleParams);
+        const salePayload = buildSalePayload(saleParams);
 
-      const success = await onCompleteSale(salePayload);
+        const success = await onCompleteSale(salePayload);
 
-      if (success === false) {
-        console.warn('[POS] Checkout failed. Cart preserved.');
-        // onCompleteSale already throws or triggers error handling in context
-        return;
-      }
+        if (success === false) {
+          console.warn('[POS] Checkout failed. Cart preserved.');
+          // onCompleteSale already throws or triggers error handling in context
+          return;
+        }
 
-      // Refresh shifts immediately to update balance and transaction list
-      if (refreshShifts) {
-        refreshShifts().catch(e => console.error('Failed to refresh shifts after checkout:', e));
-      }
+        // Refresh shifts immediately to update balance and transaction list
+        if (refreshShifts) {
+          refreshShifts().catch(e => console.error('Failed to refresh shifts after checkout:', e));
+        }
 
-      setIsCheckoutMode(false);
-      setIsDeliveryMode(false);
-      setAmountPaid('');
-      playSuccess();
+        setIsCheckoutMode(false);
+        setIsDeliveryMode(false);
+        setAmountPaid('');
+        playSuccess();
 
-      addNotification({
-        messageKey: 'saleComplete',
-        messageParams: { total: formatCurrency(money.add(cartTotal, currentDeliveryFee)) },
-        type: 'success',
-      });
+        addNotification({
+          messageKey: 'saleComplete',
+          messageParams: { total: formatCurrency(money.add(cartTotal, currentDeliveryFee)) },
+          type: 'success',
+        });
 
-      // Immediate UI transition: remove tab as soon as sale is recorded
-      removeTab(activeTabId);
+        // Immediate UI transition: remove tab as soon as sale is recorded
+        removeTab(activeTabId);
 
-      try {
-        const opts = getActiveReceiptSettings(activeBranchId);
-        const shouldPrint = (isDelivery && opts.autoPrintOnDelivery) || opts.autoPrintOnComplete;
+        try {
+          const opts = getActiveReceiptSettings(activeBranchId);
+          const shouldPrint = (isDelivery && opts.autoPrintOnDelivery) || opts.autoPrintOnComplete;
 
-        if (shouldPrint) {
-          const html = generateInvoiceHTML(salePayload, opts);
-          const printerSettings = getPrinterSettings();
-          const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
+          if (shouldPrint) {
+            const html = generateInvoiceHTML(salePayload, opts);
+            const printerSettings = getPrinterSettings();
+            const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
 
-          if (shouldTrySilent) {
-            (async () => {
-              try {
-                const silentPrinted = await printReceiptSilently(html);
-                if (silentPrinted) return;
-              } catch (silentErr) {
-                if (printerSettings.silentMode !== 'fallback') return;
-              }
+            if (shouldTrySilent) {
+              (async () => {
+                try {
+                  const silentPrinted = await printReceiptSilently(html);
+                  if (silentPrinted) return;
+                } catch (silentErr) {
+                  if (printerSettings.silentMode !== 'fallback') return;
+                }
+                const printWindow = window.open('', '_blank', 'width=400,height=600');
+                if (printWindow) {
+                  printWindow.document.write(html);
+                  printWindow.document.close();
+                }
+              })();
+            } else {
               const printWindow = window.open('', '_blank', 'width=400,height=600');
               if (printWindow) {
                 printWindow.document.write(html);
                 printWindow.document.close();
               }
-            })();
-          } else {
-            const printWindow = window.open('', '_blank', 'width=400,height=600');
-            if (printWindow) {
-              printWindow.document.write(html);
-              printWindow.document.close();
             }
           }
+        } catch (e) {
+          console.error('Auto-print failed:', e);
         }
-      } catch (e) {
-        console.error('Auto-print failed:', e);
-      }
 
       } finally {
         setIsProcessing(false);

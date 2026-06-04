@@ -4,7 +4,7 @@ import { analyzeDrugInteraction } from '../../services/geminiService';
 
 interface AIAssistantProps {
   color: string;
-  t: any;
+  t: Translations;
 }
 
 export const AIAssistant: React.FC<AIAssistantProps> = ({ color, t }) => {

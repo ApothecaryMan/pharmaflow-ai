@@ -26,7 +26,7 @@ interface CustomerOverviewProps {
   customers: Customer[];
   sales: Sale[];
   color: string;
-  t: any;
+  t: Translations;
   language: 'EN' | 'AR';
   isLoading?: boolean;
   onViewChange?: (view: string) => void;

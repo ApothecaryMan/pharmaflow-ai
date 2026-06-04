@@ -8,7 +8,7 @@ import { storage } from '../../utils/storage';
 interface InventoryModuleShellProps {
   activeView: string;
   onViewChange: (view: any) => void;
-  t: any;
+  t: Translations;
   children: React.ReactNode;
 }
 

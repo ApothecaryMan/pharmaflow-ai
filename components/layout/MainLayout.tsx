@@ -17,7 +17,7 @@ interface MainLayoutProps {
   children: React.ReactNode;
   view: ViewState;
   activeModule: string;
-  t: any;
+  t: Translations;
   // Handlers
   onLogout: () => void;
   // UI State
@@ -46,7 +46,7 @@ import { useContextMenu } from '../common/ContextMenu';
 // --- Global Context Menu Wrapper ---
 const GlobalContextMenuWrapper: React.FC<{
   children: React.ReactNode;
-  t: any;
+  t: Translations;
   darkMode: boolean;
   setDarkMode: (dark: boolean) => void;
   toggleFullscreen: () => void;

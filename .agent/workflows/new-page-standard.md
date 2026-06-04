@@ -13,7 +13,7 @@ Pages are injected via `PageRouter`. They **MUST** support the following props:
 ```tsx
 interface MyPageProps {
   color: any; // Theme primary
-  t: any; // Translations
+t: Translations; // Translations
   language: 'EN' | 'AR';
   isLoading?: boolean; // Managed by PageRouter
   onViewChange?: (view: string) => void; // For switching views in a Hub
@@ -67,15 +67,18 @@ export const MyPage: React.FC<MyPageProps> = ({
 ```
 
 ## 3. Progressive Loading Rules
+
 - **NEVER** hide the entire page with a loading spinner.
 - Use **Centralized Skeletons** from `components/skeletons/`.
 - Ensure the `PageHeader` is visible even while data is loading.
 
 ## 4. Registration
+
 1. Add to `config/pageRegistry.ts` with correct `requiredProps`.
 2. Add to `config/menuData.ts` if it's a top-level menu item.
 
 ## 5. Verification Checklist
+
 - [x] Does the header show up immediately?
 - [x] Does it use `PageHeader` with slots (left/center/right)?
 - [x] Are skeletons used for content areas?

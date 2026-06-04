@@ -4,7 +4,7 @@ import { authService } from '../../services/auth/authService';
 interface Props {
   onSuccess?: () => void;
   onLoginClick?: () => void;
-  t: any;
+  t: Translations;
   language?: string;
 }
 

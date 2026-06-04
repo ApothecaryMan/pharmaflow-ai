@@ -61,7 +61,7 @@ interface InventoryProps {
   onUpdateDrug: (drug: Drug) => void;
   onDeleteDrug: (id: string) => void;
   color: string;
-  t: any;
+  t: Translations;
   isLoading?: boolean;
   onViewChange?: (view: string) => void;
 }

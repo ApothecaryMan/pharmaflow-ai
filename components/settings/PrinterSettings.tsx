@@ -20,7 +20,7 @@ interface PrinterSettingsProps {
   isOpen: boolean;
   onClose: () => void;
   color?: string;
-  t: any;
+  t: Translations;
   language: 'EN' | 'AR';
 }
 

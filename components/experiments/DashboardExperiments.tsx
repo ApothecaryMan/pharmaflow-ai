@@ -32,7 +32,7 @@ import { PerformanceGoalsCard } from './PerformanceGoalsCard';
 
 interface DashboardExperimentsProps {
   color: string;
-  t: any;
+  t: Translations; slations;
   language: string;
 }
 

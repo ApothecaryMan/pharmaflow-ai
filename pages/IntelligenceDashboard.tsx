@@ -23,7 +23,7 @@ import type { FilterConfig } from '../components/common/FilterPill';
 import { permissionsService } from '../services/auth/permissionsService';
 
 interface IntelligenceDashboardProps {
-  t: any;
+  t: Translations;
   language: string;
 }
 

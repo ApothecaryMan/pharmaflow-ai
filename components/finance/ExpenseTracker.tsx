@@ -11,7 +11,7 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import type { Expense, ExpenseCategory, Employee } from '../../types';
 
 interface ExpenseTrackerProps {
-  t: any;
+  t: Translations;
   language: 'EN' | 'AR';
   employees: Employee[];
   currentEmployeeId: string;
@@ -98,7 +98,7 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
   const largestCategory = useMemo(() => {
     let largestCat: ExpenseCategory = 'misc';
     let maxAmount = 0;
-    
+
     (Object.entries(summary.byCategory) as [ExpenseCategory, number][]).forEach(([cat, amount]) => {
       if (amount > maxAmount) {
         maxAmount = amount;
@@ -159,14 +159,14 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
           method === 'cash'
             ? t.expenses.modal.cash
             : method === 'bank_transfer'
-            ? t.expenses.modal.bank_transfer
-            : t.expenses.modal.card;
+              ? t.expenses.modal.bank_transfer
+              : t.expenses.modal.card;
         const badgeClass =
           method === 'cash'
             ? 'badge-green'
             : method === 'bank_transfer'
-            ? 'badge-blue'
-            : 'badge-purple';
+              ? 'badge-blue'
+              : 'badge-purple';
 
         return (
           <span className={badgeClass}>
@@ -199,7 +199,7 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
         // Allow deleting own unapproved expenses
         const canDelete = row.employeeId === currentEmployeeId || currentShift?.openedBy === currentEmployeeId;
         if (!canDelete) return null;
-        
+
         return (
           <button
             onClick={() => {
@@ -344,7 +344,7 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
               <h3 className="text-sm font-bold text-(--text-primary) uppercase tracking-wide mb-4">
                 {t.expenses.summary.largestCategory}
               </h3>
-              
+
               {summary.total === 0 ? (
                 <div className="text-center py-6 text-xs text-(--text-tertiary)">
                   {t.expenses.empty}
@@ -357,7 +357,7 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                       <div key={item.category} className="space-y-1">
                         <div className="flex justify-between items-center text-xs">
                           <div className="flex items-center gap-2">
-                             <span className={`w-2 h-2 rounded-full ${item.style.color}`} />
+                            <span className={`w-2 h-2 rounded-full ${item.style.color}`} />
                             <span className="font-semibold text-(--text-primary)">{item.label}</span>
                           </div>
                           <span className="font-bold text-(--text-secondary) tabular-nums">

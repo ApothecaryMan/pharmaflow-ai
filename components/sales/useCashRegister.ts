@@ -12,7 +12,7 @@ import { getPrinterSettings, printReceiptSilently } from '../../utils/qzPrinter'
 import { idGenerator } from '../../utils/idGenerator';
 
 interface UseCashRegisterProps {
-  t: any;
+  t: Translations;
   language: Language;
   employees?: Employee[];
   currentEmployeeId?: string;
@@ -376,13 +376,13 @@ export const useCashRegister = ({
     setValidationError,
     filterType,
     setFilterType,
-    
+
     // Derived
     currentBalance,
     permissions,
     filteredTransactions,
     counts,
-    
+
     // Actions
     handleOpenShift,
     handleCloseShift,

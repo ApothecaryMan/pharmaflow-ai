@@ -23,7 +23,7 @@ interface SupplierDirectoryModalProps {
   selectedSupplierId: string;
   onSelectSupplier: (supplier: Supplier) => void;
   language: 'EN' | 'AR';
-  t: any;
+  t: Translations;
   color?: string;
 }
 
@@ -98,15 +98,14 @@ export const SupplierDirectoryModal: React.FC<SupplierDirectoryModalProps> = ({
                       onSelectSupplier(supplier);
                       try {
                         playBeep();
-                      } catch (_e) {}
+                      } catch (_e) { }
                       onClose();
                       setSearch('');
                     }}
-                    className={`p-3.5 flex items-center justify-between cursor-pointer ${
-                      isSelected
+                    className={`p-3.5 flex items-center justify-between cursor-pointer ${isSelected
                         ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white'
                         : 'bg-white dark:bg-neutral-900 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'
-                    }`}
+                      }`}
                   >
                     <div className='flex items-center gap-3 min-w-0 flex-1'>
                       {/* Circle badge with code */}

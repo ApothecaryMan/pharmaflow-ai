@@ -13,8 +13,8 @@ import { useStatusBar } from '../layout/StatusBar';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
 import { useData } from '../../context/DataContext';
-import { 
-  type PrintLabelItem, 
+import {
+  type PrintLabelItem,
   printLabels,
   DEFAULT_LABEL_DESIGN,
   generateLabelHTML,
@@ -30,7 +30,7 @@ import type { LabelDesign, LabelElement } from './studio/types';
 interface BarcodePrinterProps {
   inventory: Drug[];
   color: string;
-  t: any;
+  t: Translations;
   language: string;
   textTransform: 'normal' | 'uppercase';
 }
@@ -95,7 +95,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
         if (d.barcode === trimmed || d.internalCode === trimmed) return true;
 
         if (mode === 'ingredient' || mode === 'generic') {
-          return Array.isArray(d.genericName) 
+          return Array.isArray(d.genericName)
             ? d.genericName.some((gn) => regex.test(gn))
             : (d.genericName as any) && regex.test(d.genericName as any);
         }
@@ -210,8 +210,8 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
     // Play sound callback
     playBeep();
 
-      // Format expiry date to MM/YY
-      const formattedExpiry = drug.expiryDate ? formatExpiryDate(drug.expiryDate) : '';
+    // Format expiry date to MM/YY
+    const formattedExpiry = drug.expiryDate ? formatExpiryDate(drug.expiryDate) : '';
 
     setQueue((prev) => {
       // Check if item already exists with same drug ID and expiry
@@ -320,7 +320,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
     try {
       // Load current design from storage (matches BarcodeStudio's autosave key)
       const storedDesign = storage.get<any>(StorageKeys.LABEL_DESIGN, null);
-      
+
       // Deep clone to prevent mutation when applying overrides
       const design: LabelDesign = JSON.parse(
         JSON.stringify(storedDesign || DEFAULT_LABEL_DESIGN)
@@ -373,7 +373,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
     const dims = design.selectedPreset === 'custom'
       ? design.customDims || { w: 38, h: 25 }
       : LABEL_PRESETS[design.selectedPreset] || { w: 38, h: 25 };
-    
+
     const isDouble = design.selectedPreset === '38x25';
     const h = isDouble ? 12 : dims.h;
 
@@ -520,11 +520,10 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                   {queue.map((item) => (
                     <div
                       key={item.id}
-                      className={`group flex items-center gap-2.5 p-2 px-3 rounded-xl border transition-all duration-200 cursor-pointer ${
-                        selectedDrug?.id === item.drug.id || lastAddedId === item.id
+                      className={`group flex items-center gap-2.5 p-2 px-3 rounded-xl border transition-all duration-200 cursor-pointer ${selectedDrug?.id === item.drug.id || lastAddedId === item.id
                           ? 'bg-primary-500/10 border-primary-500/40'
                           : 'bg-bg-card border-border/40 hover:border-border/80'
-                      }`}
+                        }`}
                       dir='ltr'
                       onClick={() => setSelectedDrug(item.drug)}
                     >
@@ -633,7 +632,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
         <div className='lg:w-80 flex flex-col gap-6'>
           {/* Label Preview Card */}
           <div className={`${CARD_BASE} rounded-2xl overflow-hidden flex flex-col items-center justify-center bg-bg-secondary/20 relative`}>
-            <div 
+            <div
               ref={previewContainerRef}
               className="w-full flex items-center justify-center overflow-hidden transition-[height] duration-300"
               style={{
@@ -642,10 +641,10 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
               }}
             >
               {queue.length > 0 && selectedDrug ? (
-                <div 
+                <div
                   className="bg-white overflow-hidden origin-center shrink-0"
-                  style={{ 
-                    width: `${previewDims.labelW}mm`, 
+                  style={{
+                    width: `${previewDims.labelW}mm`,
                     height: `${previewDims.labelH}mm`,
                     transform: `scale(${previewScale})`,
                   }}
@@ -675,7 +674,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                 {t.barcodePrinter?.summary || 'Print Summary'}
               </span>
             </div>
-            
+
             <div className='flex flex-col gap-2 p-5'>
               <div className='flex justify-between items-center py-2'>
                 <span className='text-sm text-text-secondary'>{t.barcodePrinter?.totalItems || 'Total Items'}</span>
@@ -712,16 +711,14 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                 <div
                   key={setting.key}
                   onClick={() => setPrintConfig(p => ({ ...p, [setting.key]: !p[setting.key as keyof typeof p] }))}
-                  className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-150 select-none group/row ${
-                    printConfig[setting.key as keyof typeof printConfig]
+                  className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-150 select-none group/row ${printConfig[setting.key as keyof typeof printConfig]
                       ? 'text-text-primary'
                       : 'text-text-tertiary opacity-60 hover:opacity-100'
-                  } hover:bg-bg-card/50`}
+                    } hover:bg-bg-card/50`}
                 >
                   <div className='flex items-center gap-3 pointer-events-none'>
-                    <span className={`material-symbols-rounded text-lg transition-colors ${
-                      printConfig[setting.key as keyof typeof printConfig] ? 'text-primary-600 dark:text-white' : 'opacity-40'
-                    }`}>{setting.icon}</span>
+                    <span className={`material-symbols-rounded text-lg transition-colors ${printConfig[setting.key as keyof typeof printConfig] ? 'text-primary-600 dark:text-white' : 'opacity-40'
+                      }`}>{setting.icon}</span>
                     <span className='text-sm font-medium'>{setting.label}</span>
                   </div>
                   {/* Wrap Switch in a div that prevents double-toggling if the parent also has an onClick */}

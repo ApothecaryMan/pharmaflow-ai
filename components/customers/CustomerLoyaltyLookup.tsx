@@ -16,7 +16,7 @@ interface CustomerLoyaltyLookupProps {
   customers: Customer[];
   sales: Sale[];
   color: string;
-  t: any;
+  t: Translations;
   language: 'EN' | 'AR';
   onViewChange?: (view: string) => void;
 }
@@ -349,11 +349,10 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
                       {selectedCustomer.code}
                     </span>
                     <span
-                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-current text-[10px] font-bold uppercase tracking-wider bg-transparent ${
-                        selectedCustomer.status === 'active'
+                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-current text-[10px] font-bold uppercase tracking-wider bg-transparent ${selectedCustomer.status === 'active'
                           ? 'text-emerald-700 dark:text-emerald-400'
                           : 'text-gray-500 dark:text-gray-400'
-                      }`}
+                        }`}
                     >
                       <span className='material-symbols-rounded text-sm'>
                         {selectedCustomer.status === 'active' ? 'check_circle' : 'pause_circle'}

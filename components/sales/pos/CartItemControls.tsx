@@ -11,7 +11,7 @@ export interface CartItemExpiryBadgeProps {
   allBatches: Drug[];
   packItem?: CartItem;
   unitItem?: CartItem;
-  t: any;
+  t: Translations; slations;
   showMenu: (x: number, y: number, items: any[]) => void;
   onSelectBatch: (currentItem: CartItem, newBatch: Drug, packQty: number, unitQty: number) => void;
 }
@@ -106,12 +106,12 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
 
   return (
     <div
-      title={permissionsService.can('reports.view_financial') 
+      title={permissionsService.can('reports.view_financial')
         ? `Max Discount: ${effectiveMax}%\nProfit Margin: ${margin.toFixed(1)}%`
         : `Max Discount: ${effectiveMax}%`}
       className={`flex items-center rounded-lg h-6 overflow-hidden transition-all w-14 shrink-0 border
-        ${hasDiscount 
-          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' 
+        ${hasDiscount
+          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
           : 'bg-black/[0.03] dark:bg-white/[0.05] text-gray-400 border-gray-100/50 dark:border-white/5'}`}
     >
       <button
@@ -123,9 +123,8 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
           if (newVal > 0) setGlobalDiscount(0);
         }}
         onPointerDown={(e) => e.stopPropagation()}
-        className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${
-          hasDiscount ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
-        }`}
+        className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${hasDiscount ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
+          }`}
       >
         <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
           percent
@@ -148,11 +147,10 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
           if (unitItem) updateItemDiscount(unitItem.id, true, finalVal);
           if (finalVal > 0) setGlobalDiscount(0);
         }}
-        className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none leading-none ${
-          hasDiscount
+        className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none leading-none ${hasDiscount
             ? 'text-emerald-700 dark:text-emerald-300 placeholder-emerald-300'
             : 'text-gray-900 dark:text-gray-100 placeholder-gray-400'
-        }`}
+          }`}
       />
     </div>
   );
@@ -167,7 +165,7 @@ export interface CartItemQuantityControlProps {
   addToCart: (drug: Drug, isUnitMode?: boolean, quantity?: number) => void;
   allBatches?: Drug[];
   isMobile?: boolean; // New prop for UI separation
-  t: any;
+  t: Translations; slations;
   currentLang: string;
   cart: CartItem[];
 }
@@ -207,24 +205,24 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
     setLocal(valStr);
     if (valStr === '') return;
     const val = isUnit ? parseInt(valStr) : parseFloat(valStr);
-    
+
     if (!isNaN(val) && val !== (target?.quantity ?? -1)) {
       // Calculate units consumed by OTHER items of the same drug in the cart
-      const otherDrugItems = cart.filter(i => 
-        i.name === item.name && 
-        (i.dosageForm || '') === (item.dosageForm || '') && 
+      const otherDrugItems = cart.filter(i =>
+        i.name === item.name &&
+        (i.dosageForm || '') === (item.dosageForm || '') &&
         !(i.id === item.id && !!i.isUnit === isUnit)
       );
-      
+
       const unitsConsumedByOthers = otherDrugItems.reduce((sum, i) => {
         return sum + (i.isUnit ? i.quantity : i.quantity * (i.unitsPerPack || unitsPerPack));
       }, 0);
 
       const availableUnits = Math.max(0, totalStockUnits - unitsConsumedByOthers);
       const max = isUnit ? availableUnits : Math.floor(availableUnits / unitsPerPack);
-      
+
       const clamped = Math.max(0, Math.min(val, max));
-      
+
       if (target) {
         updateQuantity(target.id, isUnit, clamped - target.quantity);
       } else if (clamped > 0) {
@@ -256,9 +254,9 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
       </div>
       {hasDualMode && (
         <><div className="w-px h-full bg-gray-100/50 dark:bg-white/5 shrink-0" />
-        <div className="flex-1 h-full flex items-center min-w-0">
-          <input type="number" value={localUnit} placeholder="U" title={`1 Pack = ${unitsPerPack} Units`} onChange={e => handleQtyChange(e.target.value, true)} onBlur={() => localUnit === '' && setLocalUnit(unitItem?.quantity.toString() || '')} className={inputClass} />
-        </div></>
+          <div className="flex-1 h-full flex items-center min-w-0">
+            <input type="number" value={localUnit} placeholder="U" title={`1 Pack = ${unitsPerPack} Units`} onChange={e => handleQtyChange(e.target.value, true)} onBlur={() => localUnit === '' && setLocalUnit(unitItem?.quantity.toString() || '')} className={inputClass} />
+          </div></>
       )}
     </div>
   );

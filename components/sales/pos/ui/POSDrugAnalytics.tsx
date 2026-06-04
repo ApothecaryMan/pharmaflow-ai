@@ -10,7 +10,7 @@ import { formatStockAmount } from '../../../../utils/inventory';
 
 interface POSDrugAnalyticsProps {
   viewingDrug: Drug;
-  t: any;
+  t: Translations;
 }
 
 interface DrugStats {
@@ -24,7 +24,7 @@ interface DrugStats {
   daysOfCover: number | '∞';
   expiryStatus: 'safe' | 'near' | 'critical' | 'expired';
   daysToExpiry: number;
-  expectedWaste: number; 
+  expectedWaste: number;
   profitPerUnit: number;
   stockValue: number; // New: Total monetary value of current stock
   avgQtyPerSale: number; // New: Average units sold per transaction
@@ -44,7 +44,7 @@ const formatDrugQty = (units: number, unitsPerPack: number, lang: string) => {
   const isInteger = Number.isInteger(packs);
   const packsStr = isInteger ? packs.toString() : parseFloat(packs.toFixed(2)).toString();
   const packLabel = lang === 'ar' ? 'علبة' : 'Packs';
-  
+
   return `${packsStr} ${packLabel}`;
 };
 
@@ -110,7 +110,7 @@ export const POSDrugAnalytics: React.FC<POSDrugAnalyticsProps> = ({ viewingDrug,
       setLoading(true);
       try {
         const sales = await salesService.getAll();
-        const drugSales = sales.filter(s => 
+        const drugSales = sales.filter(s =>
           s.items.some(item => item.id === viewingDrug.id || item.barcode === viewingDrug.barcode)
         );
 
@@ -124,24 +124,24 @@ export const POSDrugAnalytics: React.FC<POSDrugAnalyticsProps> = ({ viewingDrug,
         drugSales.forEach(sale => {
           const saleDate = new Date(sale.date);
           const item = sale.items.find(i => i.id === viewingDrug.id || i.barcode === viewingDrug.barcode);
-          
+
           if (item) {
             const unitsPerPack = viewingDrug.unitsPerPack || 1;
             // Use the standard utility to resolve quantity into units
             const normalizedQty = resolveUnits(item.quantity, !!item.isUnit, unitsPerPack);
-            
+
             totalQty += normalizedQty;
-            
+
             // Revenue: item.publicPrice is already the correct price for the selection (unit or pack)
             totalRev = money.add(totalRev, money.multiply(item.publicPrice, item.quantity, 0));
-            
+
             // Cost: Calculate based on unit cost for precision
             const packCost = item.costPrice || viewingDrug.costPrice || 0;
             const unitCost = viewingDrug.unitCostPrice || (packCost / unitsPerPack);
             const actualCost = item.isUnit ? unitCost : packCost;
-            
+
             totalCost = money.add(totalCost, money.multiply(actualCost, item.quantity, 0));
-            
+
             if (saleDate < firstSaleDate) firstSaleDate = saleDate;
             if (!lastDate || saleDate > new Date(lastDate)) lastDate = sale.date;
           }
@@ -149,8 +149,8 @@ export const POSDrugAnalytics: React.FC<POSDrugAnalyticsProps> = ({ viewingDrug,
 
         const effectiveDays = Math.max(1, Math.ceil((now.getTime() - firstSaleDate.getTime()) / (1000 * 60 * 60 * 24)));
         const dailyVelocity = totalQty / effectiveDays;
-        
-        const daysToExpiry = viewingDrug.expiryDate 
+
+        const daysToExpiry = viewingDrug.expiryDate
           ? Math.ceil((new Date(viewingDrug.expiryDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
           : 999;
 
@@ -170,7 +170,7 @@ export const POSDrugAnalytics: React.FC<POSDrugAnalyticsProps> = ({ viewingDrug,
           daysOfCover: dailyVelocity > 0 ? Math.floor(viewingDrug.stock / dailyVelocity) : '∞',
           expiryStatus,
           daysToExpiry,
-          expectedWaste: dailyVelocity > 0 && daysToExpiry > 0 
+          expectedWaste: dailyVelocity > 0 && daysToExpiry > 0
             ? Math.max(0, Math.floor(viewingDrug.stock - (dailyVelocity * daysToExpiry)))
             : (daysToExpiry <= 0 ? viewingDrug.stock : 0),
           profitPerUnit: money.subtract(viewingDrug.publicPrice, viewingDrug.costPrice || 0),
@@ -260,42 +260,42 @@ export const POSDrugAnalytics: React.FC<POSDrugAnalyticsProps> = ({ viewingDrug,
           </div>
 
           <div className="flex flex-col gap-1">
-            <InfoRow 
+            <InfoRow
               label={currentLang === 'ar' ? 'مدة كفاية المخزون' : 'Stock Coverage'}
               value={`${stats?.daysOfCover} ${currentLang === 'ar' ? 'يوم' : 'Days'}`}
-              valueClass={stats?.daysOfCover !== '∞' && Number(stats?.daysOfCover) < 7 
-                ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' 
+              valueClass={stats?.daysOfCover !== '∞' && Number(stats?.daysOfCover) < 7
+                ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
                 : 'bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}
-              tooltip={currentLang === 'ar' 
-                ? `${formatDrugQty(viewingDrug.stock, viewingDrug.unitsPerPack || 1, 'ar')} ÷ ${((stats?.dailyVelocity || 0) / (viewingDrug.unitsPerPack || 1)).toFixed(2)} علبة/يوم = ${stats?.daysOfCover} يوم` 
+              tooltip={currentLang === 'ar'
+                ? `${formatDrugQty(viewingDrug.stock, viewingDrug.unitsPerPack || 1, 'ar')} ÷ ${((stats?.dailyVelocity || 0) / (viewingDrug.unitsPerPack || 1)).toFixed(2)} علبة/يوم = ${stats?.daysOfCover} يوم`
                 : `${formatDrugQty(viewingDrug.stock, viewingDrug.unitsPerPack || 1, 'en')} ÷ ${((stats?.dailyVelocity || 0) / (viewingDrug.unitsPerPack || 1)).toFixed(2)} packs/day = ${stats?.daysOfCover} days`}
             />
-            <InfoRow 
+            <InfoRow
               label={currentLang === 'ar' ? 'حالة الصلاحية' : 'Expiry Status'}
               value={stats?.expiryStatus === 'expired' ? (currentLang === 'ar' ? 'منتهي' : 'Expired') :
-                     stats?.expiryStatus === 'critical' ? (currentLang === 'ar' ? 'حرجة (<90 يوم)' : 'Critical (<90d)') :
-                     stats?.expiryStatus === 'near' ? (currentLang === 'ar' ? 'قريبة (<6 شهور)' : 'Near (<6m)') :
-                     (currentLang === 'ar' ? 'آمنة' : 'Safe')}
+                stats?.expiryStatus === 'critical' ? (currentLang === 'ar' ? 'حرجة (<90 يوم)' : 'Critical (<90d)') :
+                  stats?.expiryStatus === 'near' ? (currentLang === 'ar' ? 'قريبة (<6 شهور)' : 'Near (<6m)') :
+                    (currentLang === 'ar' ? 'آمنة' : 'Safe')}
               valueClass={stats?.expiryStatus === 'critical' ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400' :
-                          stats?.expiryStatus === 'expired' ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' :
-                          'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'}
-              tooltip={currentLang === 'ar' 
-                ? `متبقي ${stats?.daysToExpiry} يوم على الانتهاء` 
+                stats?.expiryStatus === 'expired' ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' :
+                  'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'}
+              tooltip={currentLang === 'ar'
+                ? `متبقي ${stats?.daysToExpiry} يوم على الانتهاء`
                 : `${stats?.daysToExpiry} days remaining until expiration`}
             />
-            <InfoRow 
+            <InfoRow
               label={currentLang === 'ar' ? 'توقعات الهالك' : 'Expiry Waste Forecast'}
               hint={currentLang === 'ar' ? 'بناءً على معدل البيع الحالي' : 'Based on current velocity'}
               value={formatDrugQty(stats?.expectedWaste || 0, viewingDrug.unitsPerPack || 1, currentLang)}
               valueClass={(stats?.expectedWaste || 0) > 0 ? 'bg-red-50 text-red-600 animate-pulse dark:bg-red-900/20 dark:text-red-400' : 'bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500'}
-              tooltip={currentLang === 'ar' 
-                ? `${formatDrugQty(viewingDrug.stock, viewingDrug.unitsPerPack || 1, 'ar')} مخزون - (${((stats?.dailyVelocity || 0) / (viewingDrug.unitsPerPack || 1)).toFixed(2)} علبة/يوم × ${stats?.daysToExpiry} يوم) = ${formatDrugQty(stats?.expectedWaste || 0, viewingDrug.unitsPerPack || 1, 'ar')}` 
+              tooltip={currentLang === 'ar'
+                ? `${formatDrugQty(viewingDrug.stock, viewingDrug.unitsPerPack || 1, 'ar')} مخزون - (${((stats?.dailyVelocity || 0) / (viewingDrug.unitsPerPack || 1)).toFixed(2)} علبة/يوم × ${stats?.daysToExpiry} يوم) = ${formatDrugQty(stats?.expectedWaste || 0, viewingDrug.unitsPerPack || 1, 'ar')}`
                 : `${formatDrugQty(viewingDrug.stock, viewingDrug.unitsPerPack || 1, 'en')} stock - (${((stats?.dailyVelocity || 0) / (viewingDrug.unitsPerPack || 1)).toFixed(2)} packs/day × ${stats?.daysToExpiry} days) = ${formatDrugQty(stats?.expectedWaste || 0, viewingDrug.unitsPerPack || 1, 'en')}`}
             />
-            <InfoRow 
+            <InfoRow
               label={currentLang === 'ar' ? 'حالة الطلب' : 'Restock Recommendation'}
               value={viewingDrug.stock <= (viewingDrug.minStock || 0) * (viewingDrug.unitsPerPack || 1)
-                ? (currentLang === 'ar' ? 'يجب الطلب فوراً' : 'Order Now') 
+                ? (currentLang === 'ar' ? 'يجب الطلب فوراً' : 'Order Now')
                 : (currentLang === 'ar' ? 'المخزون كافٍ' : 'Stock Sufficient')}
               valueClass={viewingDrug.stock <= (viewingDrug.minStock || 0) * (viewingDrug.unitsPerPack || 1) ? 'text-red-500' : 'text-emerald-500'}
               isLast

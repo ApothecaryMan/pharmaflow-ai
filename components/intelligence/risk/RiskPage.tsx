@@ -6,7 +6,7 @@ import { CreateDiscountModal } from './CreateDiscountModal';
 import { ExpiryRiskGrid } from './ExpiryRiskGrid';
 
 interface RiskPageProps {
-  t: any;
+  t: Translations;
   language?: string;
   summary: RiskSummary | null;
   items: ExpiryRiskItem[];

@@ -19,7 +19,7 @@ interface SalesHistoryProps {
   returns: Return[];
   onProcessReturn: (returnData: Return) => void;
   color: string;
-  t: any;
+  t: Translations;
   language: string;
   datePickerTranslations: any;
   currentEmployeeId?: string;
@@ -222,7 +222,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             sale.globalDiscount && `${isAr ? 'الخصم' : 'Discount'}: ${sale.globalDiscount}% (-${formatCurrency(discountVal)})`,
             sale.tax && `${isAr ? 'الضريبة' : 'Tax'}: ${formatCurrency(sale.tax)}`,
             sale.deliveryFee && `${t.headers.delivery || (isAr ? 'التوصيل' : 'Delivery')}: ${formatCurrency(sale.deliveryFee)}`,
-            isReturned 
+            isReturned
               ? `${isAr ? 'المرتجع' : 'Returned'}: -${formatCurrency(returnedAmount)}\n${isAr ? 'صافي الإجمالي' : 'Net Total'}: ${formatCurrency(sale.netTotal || 0)}`
               : `${t.headers.total || (isAr ? 'الإجمالي' : 'Total')}: ${formatCurrency(sale.total)}`,
             '-------------------',
@@ -346,7 +346,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         header: t.headers.soldBy,
         cell: ({ getValue }) => {
           const empId = getValue() as string;
-          
+
           // Show a pulsing skeleton loader for the seller cell if employee data is still loading
           if (employees.length === 0) {
             return (

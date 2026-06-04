@@ -81,7 +81,7 @@ interface PurchasesProps {
   purchaseReturns: PurchaseReturn[];
   onPurchaseComplete: (purchase: Purchase) => Promise<boolean>;
   color: string;
-  t: any;
+  t: Translations;
   onApprovePurchase?: (id: string) => Promise<void>;
   onMarkAsReceived?: (id: string) => Promise<void>;
   onRejectPurchase?: (purchase: Purchase) => void;
@@ -100,7 +100,7 @@ interface SortableCartItemProps {
   removeItem: (id: string) => void;
   updateItem: (id: string, field: keyof PurchaseItem, value: any) => void;
   showMenu: any;
-  t: any;
+  t: Translations;
   isLoading: boolean;
   textTransform: 'uppercase' | 'normal';
   language: string;
@@ -157,11 +157,10 @@ const SortableCartItem = React.memo(
         style={style}
         dir='ltr'
         onClick={() => setSelectedCartIndex(index)}
-        className={`p-3 rounded-2xl relative group pr-2 type-functional cursor-pointer border border-transparent ${
-          selectedCartIndex === index
+        className={`p-3 rounded-2xl relative group pr-2 type-functional cursor-pointer border border-transparent ${selectedCartIndex === index
             ? `bg-primary-50 dark:bg-(--bg-navbar) border-primary-100 dark:border-primary-900/30`
             : 'bg-gray-50 dark:bg-(--bg-navbar) hover:bg-gray-100 dark:hover:bg-(--bg-surface-neutral)'
-        } ${isDragging ? 'z-50 bg-white dark:bg-gray-800 border-primary-500/50' : ''}`}
+          } ${isDragging ? 'z-50 bg-white dark:bg-gray-800 border-primary-500/50' : ''}`}
         onContextMenu={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -293,7 +292,7 @@ const SortableCartItem = React.memo(
                 if (status === 'incomplete') {
                   alert(
                     t.alerts?.incompleteExpiry ||
-                      'Please enter a complete expiry date (4 digits: MMYY)'
+                    'Please enter a complete expiry date (4 digits: MMYY)'
                   );
                 }
               }}
@@ -344,11 +343,11 @@ const SortableCartItem = React.memo(
               placeholder={
                 item.costPrice && item.unitsPerPack
                   ? money
-                      .divide(item.costPrice, item.unitsPerPack)
-                      .toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })
+                    .divide(item.costPrice, item.unitsPerPack)
+                    .toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
                   : ''
               }
               labelBgClassName={
@@ -430,11 +429,11 @@ const SortableCartItem = React.memo(
               placeholder={
                 item.publicPrice && item.unitsPerPack
                   ? money
-                      .divide(item.publicPrice, item.unitsPerPack)
-                      .toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })
+                    .divide(item.publicPrice, item.unitsPerPack)
+                    .toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
                   : ''
               }
               labelBgClassName={
@@ -1089,7 +1088,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     if (isDuplicate) {
       alert(
         t.alerts?.duplicateInvoice ||
-          'This Invoice ID already exists. Please enter a unique Invoice ID.'
+        'This Invoice ID already exists. Please enter a unique Invoice ID.'
       );
       inputRefs.current['externalInvoiceId']?.focus();
       return;
@@ -1213,7 +1212,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     if (isDuplicate) {
       alert(
         t.alerts?.duplicateInvoice ||
-          'This Invoice ID already exists. Please enter a unique Invoice ID.'
+        'This Invoice ID already exists. Please enter a unique Invoice ID.'
       );
       inputRefs.current['externalInvoiceId']?.focus();
       return;
@@ -1601,7 +1600,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
               onTabRename={renameTab}
               onTogglePin={togglePin}
               onTabReorder={(newOrder) => reorderTabs(newOrder as any)}
-              onOpenClosedHistory={() => {}}
+              onOpenClosedHistory={() => { }}
               maxTabs={maxTabs}
               color={color}
               t={t}
@@ -1710,11 +1709,10 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 </label>
                 <div className='relative h-10 flex items-center'>
                   <div
-                    className={`text-xl font-mono font-bold px-2 py-0.5 select-none transition-all duration-500 ease-out ${
-                      isOrderIdAnimating
+                    className={`text-xl font-mono font-bold px-2 py-0.5 select-none transition-all duration-500 ease-out ${isOrderIdAnimating
                         ? 'text-green-500 dark:text-green-400'
                         : 'text-gray-600 dark:text-gray-300'
-                    }`}
+                      }`}
                     style={{
                       animation: isOrderIdAnimating ? 'rollUp 0.5s ease-out' : 'none',
                     }}

@@ -31,7 +31,7 @@ const CurrencyDisplay: React.FC<{ amount: number; className?: string }> = ({ amo
 
 interface PendingApprovalProps {
   color: string;
-  t: any;
+  t: Translations;
   purchases: Purchase[];
   onApprovePurchase: (id: string) => void;
   onMarkAsReceived?: (id: string) => void;
@@ -246,9 +246,8 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
             {filteredPendingPurchases.map((purchase) => (
               <div
                 key={purchase.id}
-                className={`bg-white dark:bg-(--bg-card) rounded-3xl p-5 border border-gray-100 dark:border-(--border-divider) shadow-sm flex flex-col relative overflow-hidden group cursor-pointer hover:border-gray-200 dark:hover:border-primary-500/50 transition-colors ${
-                  isLoading ? 'animate-pulse pointer-events-none opacity-80' : ''
-                }`}
+                className={`bg-white dark:bg-(--bg-card) rounded-3xl p-5 border border-gray-100 dark:border-(--border-divider) shadow-sm flex flex-col relative overflow-hidden group cursor-pointer hover:border-gray-200 dark:hover:border-primary-500/50 transition-colors ${isLoading ? 'animate-pulse pointer-events-none opacity-80' : ''
+                  }`}
                 onClick={() => setSelectedPurchase(purchase)}
               >
                 {/* Header */}
@@ -283,7 +282,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                   <div className='flex justify-between items-center'>
                     <span className='text-gray-500 dark:text-gray-400 text-xs font-medium'>{t.date || 'Date'}</span>
                     <span className='font-medium text-gray-700 dark:text-gray-300 text-xs flex items-center gap-1'>
-                      {new Date(purchase.date).toLocaleDateString()} 
+                      {new Date(purchase.date).toLocaleDateString()}
                       <span className='text-[10px] opacity-50 font-mono'>({formatTime(new Date(purchase.date))})</span>
                     </span>
                   </div>
@@ -346,7 +345,8 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
             <div className='flex-1 overflow-y-auto space-y-3 pr-1'>
               <div className='grid grid-cols-1 sm:grid-cols-2 bg-gray-50/50 dark:bg-white/[0.03] rounded-2xl border border-gray-100 dark:border-white/5 overflow-hidden divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-white/5'>
                 {[
-                  { label: t.modal?.date || 'Date', icon: 'calendar_today', value: (
+                  {
+                    label: t.modal?.date || 'Date', icon: 'calendar_today', value: (
                       <span className='flex items-center gap-1.5'>
                         {new Date(selectedPurchase.date).toLocaleDateString()}
                         <span className='opacity-30 mx-0.5'>•</span>
@@ -356,15 +356,15 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                   },
                   { label: t.modal?.id || 'ID', icon: 'tag', value: selectedPurchase.invoiceId || selectedPurchase.id.slice(0, 8) },
                   { label: t.supplier || 'Supplier', icon: 'store', value: selectedPurchase.supplierName },
-                  { 
-                    label: language === 'AR' ? 'بواسطة:' : 'Created By:', 
-                    icon: 'person_add', 
-                    value: selectedPurchase.createdByName || t.unknown || 'Unknown' 
+                  {
+                    label: language === 'AR' ? 'بواسطة:' : 'Created By:',
+                    icon: 'person_add',
+                    value: selectedPurchase.createdByName || t.unknown || 'Unknown'
                   },
-                  selectedPurchase.approvedBy && { 
-                    label: t.approvedBy || 'Approved By:', 
-                    icon: 'verified_user', 
-                    value: selectedPurchase.approvedBy 
+                  selectedPurchase.approvedBy && {
+                    label: t.approvedBy || 'Approved By:',
+                    icon: 'verified_user',
+                    value: selectedPurchase.approvedBy
                   }
                 ].filter(Boolean).map((item: any, i) => (
                   <div key={i} className={`flex items-center justify-between py-2 px-4 bg-transparent transition-all border-b sm:border-b last:border-b-0 border-gray-100 dark:border-white/10`}>
@@ -441,7 +441,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
 
             <div className='pt-4 border-t border-gray-100 dark:border-white/5 flex gap-3 mt-4 overflow-visible'>
               {selectedPurchase.paymentMethod === 'cash' && !currentShift ? (
-                 <div className='flex-1 py-3 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 flex items-center justify-center gap-2'>
+                <div className='flex-1 py-3 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 flex items-center justify-center gap-2'>
                   <span className='material-symbols-rounded text-base animate-pulse'>warning</span>
                   <span className='font-bold text-xs uppercase'>{t.noOpenShift || 'Open Shift First'}</span>
                 </div>

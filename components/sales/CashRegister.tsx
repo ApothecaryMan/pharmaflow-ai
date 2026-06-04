@@ -17,7 +17,7 @@ import { useCashRegister } from './useCashRegister';
 
 interface CashRegisterProps {
   color: string;
-  t: any;
+  t: Translations;
   language?: Language;
   employees?: Employee[];
   currentEmployeeId?: string;

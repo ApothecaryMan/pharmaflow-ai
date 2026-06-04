@@ -20,7 +20,7 @@ interface ReturnModalProps {
   onClose: () => void;
   onConfirm: (returnData: Return) => void;
   color: string;
-  t: any;
+  t: Translations;
   language?: string;
   currentDailyRefunds?: number;
   currentShift: Shift | null;
@@ -74,7 +74,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         const rawId = item.drugId ?? item.drug_id ?? item.id;
         const drug = inventoryMap.get(rawId);
         const drugId = item.drugId ?? item.drug_id ?? drug?.id ?? item.id;
-        
+
         // Normalize essential fields
         const isUnit = item.isUnit ?? item.is_unit ?? false;
         const publicPrice = item.publicPrice ?? item.public_price ?? 0;
@@ -245,16 +245,16 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         // Calculate total cash available in drawer
         const cashBalance = money.subtract(
           money.add(
-            money.add(openShift.openingBalance || 0, openShift.cashSales || 0), 
+            money.add(openShift.openingBalance || 0, openShift.cashSales || 0),
             openShift.cashIn || 0
           ),
           money.add(openShift.returns || 0, openShift.cashOut || 0)
         );
-        
+
         if (money.isGt(calculateRefund, cashBalance)) {
           setValidationError(
             t.returns.validation?.insufficientBalance ||
-              'Cash refund amount exceeds available cash balance in the current shift'
+            'Cash refund amount exceeds available cash balance in the current shift'
           );
           setIsProcessing(false);
           return;
@@ -265,7 +265,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         // However, we follow the existing logic but fix it to include opening balance.
         const totalBalance = money.subtract(
           money.add(
-            money.add(money.add(openShift.openingBalance || 0, openShift.cashSales || 0), openShift.cardSales || 0), 
+            money.add(money.add(openShift.openingBalance || 0, openShift.cashSales || 0), openShift.cardSales || 0),
             openShift.cashIn || 0
           ),
           money.add(openShift.returns || 0, openShift.cashOut || 0)
@@ -273,7 +273,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         if (money.isGt(calculateRefund, totalBalance)) {
           setValidationError(
             t.returns.validation?.insufficientBalance ||
-              'Return amount exceeds available sales balance'
+            'Return amount exceeds available sales balance'
           );
           setIsProcessing(false);
           return;
@@ -288,11 +288,11 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
       const rawId = item.drugId ?? item.drug_id ?? item.id;
       const drug = inventoryMap.get(rawId);
       const drugId = item.drugId ?? item.drug_id ?? drug?.id ?? item.id;
-      
+
       const lineKey = item.isUnit ? `${drugId}_unit` : `${drugId}_pack`;
       if (selectedItems.has(lineKey)) {
         const quantity = selectedItems.get(lineKey) || 0;
-        
+
         returnItems.push({
           drugId: drugId,
           saleItemId: (item as any).saleItemId || null,
@@ -302,7 +302,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           reason: returnReason,
           condition: 'sellable',
           // Financials are now calculated server-side, passing 0 as placeholder
-          publicPrice: 0, 
+          publicPrice: 0,
           refundAmount: 0,
         });
       }
@@ -353,31 +353,28 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           <div key={s} className='flex items-center'>
             <div className='flex flex-col items-center'>
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                  s === step
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${s === step
                     ? `bg-primary-600 text-white shadow-lg shadow-primary-200 dark:shadow-none`
                     : s < step
                       ? `bg-primary-100 dark:bg-primary-900/50 text-primary-600`
                       : 'bg-gray-200 dark:bg-gray-800 text-gray-400'
-                }`}
+                  }`}
               >
                 <span className='material-symbols-rounded text-xl'>
                   {s < step ? 'check' : stepIcons[s - 1]}
                 </span>
               </div>
               <span
-                className={`text-[10px] mt-1 font-medium ${
-                  s === step ? `text-primary-600` : 'text-gray-400'
-                }`}
+                className={`text-[10px] mt-1 font-medium ${s === step ? `text-primary-600` : 'text-gray-400'
+                  }`}
               >
                 {stepLabels[s - 1]}
               </span>
             </div>
             {s < 3 && (
               <div
-                className={`w-12 h-0.5 mx-2 transition-colors ${
-                  s < step ? `bg-primary-600` : 'bg-gray-200 dark:bg-gray-800'
-                }`}
+                className={`w-12 h-0.5 mx-2 transition-colors ${s < step ? `bg-primary-600` : 'bg-gray-200 dark:bg-gray-800'
+                  }`}
               />
             )}
           </div>
@@ -398,11 +395,10 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
               </p>
               <button
                 onClick={isAllSelected ? deselectAll : selectAll}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  isAllSelected
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${isAllSelected
                     ? 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
                     : `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/50`
-                }`}
+                  }`}
               >
                 {isAllSelected
                   ? t.returns.deselectAll || 'Deselect All'
@@ -546,11 +542,10 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                             </div>
                           ) : (
                             <div
-                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all border-2 ${
-                                isSelected
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all border-2 ${isSelected
                                   ? `bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-500/20`
                                   : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-transparent'
-                              }`}
+                                }`}
                             >
                               <span
                                 className={`material-symbols-rounded text-lg ${isSelected ? 'opacity-100' : 'opacity-0'}`}

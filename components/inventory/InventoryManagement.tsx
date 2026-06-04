@@ -6,7 +6,7 @@ import { TanStackTable } from '../common/TanStackTable';
 interface InventoryManagementProps {
   inventory: Drug[];
   color: string;
-  t: any;
+  t: Translations;
   language: string;
   darkMode?: boolean;
   isLoading?: boolean;

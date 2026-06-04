@@ -31,7 +31,7 @@ const CurrencyDisplay: React.FC<{ value: number }> = ({ value }) => {
   );
 };
 
-export const ProfitLossPage: React.FC<{ t: any; language?: string }> = ({ t, language = 'ar' }) => {
+export const ProfitLossPage: React.FC<{ t: Translations; language?: string }> = ({ t, language = 'ar' }) => {
   const { theme } = useSettings();
   const { activeBranchId } = useData();
   const [report, setReport] = useState<FinancialReport | null>(null);

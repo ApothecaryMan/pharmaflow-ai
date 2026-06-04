@@ -31,7 +31,7 @@ import { formatCurrency } from '../../utils/currency';
 interface StockAdjustmentProps {
   onUpdateInventory: (drugs: Drug[]) => void;
   color?: string;
-  t: any;
+  t: Translations;
   inventory: Drug[];
   batches: StockBatch[];
 }
@@ -836,8 +836,8 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         cell: (info) => (
           <span
             className={`font-mono font-bold text-xs tabular-nums px-1.5 py-0.5 rounded-lg border ${(info.getValue() as number) > 0
-                ? 'bg-transparent border-green-200 text-green-700 dark:border-green-900/50 dark:text-green-400'
-                : 'bg-transparent border-red-200 text-red-700 dark:border-red-900/50 dark:text-red-400'
+              ? 'bg-transparent border-green-200 text-green-700 dark:border-green-900/50 dark:text-green-400'
+              : 'bg-transparent border-red-200 text-red-700 dark:border-red-900/50 dark:text-red-400'
               }`}
           >
             {(info.getValue() as number) > 0 ? '+' : ''}
@@ -893,10 +893,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
               {/* Status Badge */}
               <span
                 className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-transparent border ${isPending
-                    ? 'text-amber-700 border-amber-200 dark:text-amber-400 dark:border-amber-900/50'
-                    : status === 'rejected'
-                      ? 'text-red-700 border-red-200 dark:text-red-400 dark:border-red-900/50'
-                      : 'text-emerald-700 border-emerald-200 dark:text-emerald-400 dark:border-emerald-900/50'
+                  ? 'text-amber-700 border-amber-200 dark:text-amber-400 dark:border-amber-900/50'
+                  : status === 'rejected'
+                    ? 'text-red-700 border-red-200 dark:text-red-400 dark:border-red-900/50'
+                    : 'text-emerald-700 border-emerald-200 dark:text-emerald-400 dark:border-emerald-900/50'
                   }`}
               >
                 <span className='material-symbols-rounded text-sm'>

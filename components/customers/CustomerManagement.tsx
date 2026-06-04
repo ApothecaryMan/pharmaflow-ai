@@ -33,7 +33,7 @@ interface CustomerManagementProps {
   onUpdateCustomer: (customer: Customer) => void;
   onDeleteCustomer: (id: string) => void;
   color: string;
-  t: any;
+  t: Translations;
   language: 'EN' | 'AR';
   darkMode?: boolean;
   isLoading?: boolean;

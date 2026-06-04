@@ -7,7 +7,7 @@ import { getLocationName } from '../../../../data/locations';
 import type { Customer, Language } from '../../../../types';
 
 export interface POSCustomerPanelProps {
-  t: any;
+  t: Translations;
   color: string;
   language: Language | string;
   selectedCustomer: Customer | null;

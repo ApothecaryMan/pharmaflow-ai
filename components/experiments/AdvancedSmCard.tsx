@@ -16,7 +16,7 @@ import { ExpandedProgressModal } from './ExpandedProgressModal'; // Import the n
 
 interface AdvancedSmCardProps {
   color: string;
-  t: any;
+  t: Translations; slations;
   language: string;
 }
 

@@ -26,7 +26,7 @@ interface UsePOSCartProps {
   addNotification: (notification: any) => void;
   playBeep: () => void;
   playError: () => void;
-  t: any;
+  t: Translations;
 }
 
 export const usePOSCart = ({
@@ -159,11 +159,11 @@ export const usePOSCart = ({
         {
           ...drug,
           // Unit-First baseline: ensure these exist for accurate math
-          unitPrice: drug.unitPrice || (drug.unitsPerPack && drug.unitsPerPack > 1 
-            ? money.divide(drug.publicPrice, drug.unitsPerPack) 
+          unitPrice: drug.unitPrice || (drug.unitsPerPack && drug.unitsPerPack > 1
+            ? money.divide(drug.publicPrice, drug.unitsPerPack)
             : drug.publicPrice),
-          unitCostPrice: drug.unitCostPrice || (drug.unitsPerPack && drug.unitsPerPack > 1 
-            ? money.divide(drug.costPrice || 0, drug.unitsPerPack) 
+          unitCostPrice: drug.unitCostPrice || (drug.unitsPerPack && drug.unitsPerPack > 1
+            ? money.divide(drug.costPrice || 0, drug.unitsPerPack)
             : (drug.costPrice || 0)),
           publicPrice: resolvePrice(drug.publicPrice, isUnitMode, drug.unitsPerPack, drug.unitPrice),
           quantity: initialQuantity,
@@ -281,8 +281,8 @@ export const usePOSCart = ({
       if (!targetItem) return prev;
 
       // 1. Calculate Total Available Stock for this Drug (All Batches)
-      const drugDefinition = inventory.find((d) => 
-        d.id === id || 
+      const drugDefinition = inventory.find((d) =>
+        d.id === id ||
         (d.name === targetItem.name && d.dosageForm === targetItem.dosageForm)
       );
       if (!drugDefinition) return prev;
@@ -297,12 +297,12 @@ export const usePOSCart = ({
       // 2. Validate using refined logic (Cross-Mode/Cross-Batch)
       const unitsPerPack = drugDefinition.unitsPerPack || 1;
       if (!isStockConstraintMet(
-        targetItem.name, 
-        targetItem.dosageForm || '', 
-        totalStockUnits, 
-        unitsPerPack, 
-        prev, 
-        delta, 
+        targetItem.name,
+        targetItem.dosageForm || '',
+        totalStockUnits,
+        unitsPerPack,
+        prev,
+        delta,
         isUnit
       )) {
         playError();
@@ -333,12 +333,12 @@ export const usePOSCart = ({
 
       const drug = inventory.find((d) => d.id === id);
       const newIsUnit = !currentIsUnit;
-      const convertedQty = currentIsUnit 
+      const convertedQty = currentIsUnit
         ? Math.floor(item.quantity / unitsPerPack) || 1
         : item.quantity * unitsPerPack;
 
       const existingIndex = prev.findIndex((i) => i.id === id && !!i.isUnit === newIsUnit);
-      
+
       let updated = [...prev];
       if (existingIndex >= 0) {
         // Merge with existing item of that type
@@ -350,19 +350,19 @@ export const usePOSCart = ({
         updated = updated.filter((i) => !(i.id === id && !!i.isUnit === currentIsUnit));
       } else {
         // Just change the type of the current item
-        updated = prev.map((i) => 
-          (i.id === id && !!i.isUnit === currentIsUnit) 
-            ? { 
-                ...i, 
-                isUnit: newIsUnit, 
-                quantity: convertedQty,
-                publicPrice: resolvePrice(
-                  i.basePackPrice || drug?.publicPrice || i.publicPrice,
-                  newIsUnit,
-                  unitsPerPack,
-                  drug?.unitPrice
-                )
-              } 
+        updated = prev.map((i) =>
+          (i.id === id && !!i.isUnit === currentIsUnit)
+            ? {
+              ...i,
+              isUnit: newIsUnit,
+              quantity: convertedQty,
+              publicPrice: resolvePrice(
+                i.basePackPrice || drug?.publicPrice || i.publicPrice,
+                newIsUnit,
+                unitsPerPack,
+                drug?.unitPrice
+              )
+            }
             : i
         );
       }

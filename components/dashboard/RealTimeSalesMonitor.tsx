@@ -87,7 +87,7 @@ interface RealTimeSalesMonitorProps {
   customers: Customer[];
   products: Drug[];
   color: ThemeColor;
-  t: any;
+  t: Translations;
   language: 'AR' | 'EN';
   onViewChange?: (view: string) => void;
 }
@@ -135,12 +135,12 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
     hourlyAnalysis, customerAnalysis, paymentAnalysis, highValueAnalysis, itemsAnalysis,
     orderTypeAnalysis, topProducts, activeCountersStats,
     revenueTooltip: revT, transactionsTooltip: transT, itemsSoldTooltip: itemsT, activeCountersTooltip: countersT
-  } = useRealTimeSalesAnalytics({ 
-    sales: filteredByBranchSales, 
-    customers, 
-    products, 
+  } = useRealTimeSalesAnalytics({
+    sales: filteredByBranchSales,
+    customers,
+    products,
     shifts,
-    language 
+    language
   });
 
 
@@ -181,7 +181,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         // Capture initial baseline without animations
         todaysSales.forEach(s => processedSalesRef.current.add(s.id));
         setDisplayedSales(todaysSales.slice(0, 20).map(s => ({ ...s, isNew: false })));
-        
+
         // Only mark first run as complete if we actually got the data or loading finished
         if (!isLoading) {
           isFirstRun.current = false;
@@ -193,7 +193,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       if (newSales.length > 0) {
         if (newSales.some(s => highValueAnalysis.highValueIds.has(s.id) || isVIP(s))) playHighValue();
         newSales.forEach(s => processedSalesRef.current.add(s.id));
-        
+
         // For new sales arriving after initial load, mark them as NEW to trigger animation
         setDisplayedSales(prev => [...newSales.map(s => ({ ...s, isNew: true })), ...prev].slice(0, 20));
       }
@@ -270,7 +270,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         children: (
           <div className='grid gap-3'>
             {topProducts.map((p, idx) => (
-              <GenericListItem 
+              <GenericListItem
                 key={idx} rank={idx + 1}
                 title={getDisplayName(p, textTransform)}
                 subtitle={`${p.qty} units sold`}
@@ -319,7 +319,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         const product = products.find(p => p.id === item.id);
         const cat = (product?.category || item.category || 'General').toLowerCase();
         const itemTotal = money.multiply(item.publicPrice || 0, item.quantity || 0, 0);
-        
+
         if (cat.match(/tablet|capsule|syrup|injection|medicine|drug/)) groups.medicine = money.add(groups.medicine, itemTotal);
         else if (cat.match(/cream|lotion|skin|hair|cosmetic|beauty|shampoo/)) groups.cosmetic = money.add(groups.cosmetic, itemTotal);
         else groups.general = money.add(groups.general, itemTotal);
@@ -396,27 +396,27 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       <div className='grid grid-cols-1 lg:grid-cols-5 gap-4'>
         <div className='lg:col-span-3 flex flex-col gap-4'>
           <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col h-[437px] overflow-hidden`}>
-              <div className='flex items-center justify-between mb-4 gap-4'>
-                <h3 className='text-lg font-bold flex items-center gap-2 shrink-0'>
-                  <span className='material-symbols-rounded text-gray-400'>history</span>
-                  {t.realTimeSales?.recentTransactions}
-                </h3>
-                
-                <div className='flex items-center gap-2'>
-                  <SegmentedControl
-                    value={activeFilter}
-                    onChange={(val: any) => setActiveFilter(val)}
-                    size='xs'
-                    fullWidth={false}
-                    className='w-auto hidden sm:flex'
-                    options={[
-                      { label: t.realTimeSales?.filterAll || 'All', value: 'ALL' },
-                      { label: 'VIP', value: 'VIP' },
-                      { label: t.realTimeSales?.filterHighValue || 'High Value', value: 'HIGH_VALUE' }
-                    ]}
-                  />
-                </div>
+            <div className='flex items-center justify-between mb-4 gap-4'>
+              <h3 className='text-lg font-bold flex items-center gap-2 shrink-0'>
+                <span className='material-symbols-rounded text-gray-400'>history</span>
+                {t.realTimeSales?.recentTransactions}
+              </h3>
+
+              <div className='flex items-center gap-2'>
+                <SegmentedControl
+                  value={activeFilter}
+                  onChange={(val: any) => setActiveFilter(val)}
+                  size='xs'
+                  fullWidth={false}
+                  className='w-auto hidden sm:flex'
+                  options={[
+                    { label: t.realTimeSales?.filterAll || 'All', value: 'ALL' },
+                    { label: 'VIP', value: 'VIP' },
+                    { label: t.realTimeSales?.filterHighValue || 'High Value', value: 'HIGH_VALUE' }
+                  ]}
+                />
               </div>
+            </div>
             <div className='flex-1 overflow-y-auto custom-scrollbar'>
               <table className='w-full text-left rtl:text-right border-collapse'>
                 <thead className='sticky top-0 bg-(--bg-card) z-10'>
@@ -445,10 +445,10 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                     const vip = isVIP(sale);
                     const high = highValueAnalysis.highValueIds.has(sale.id);
                     const isSpecial = vip || high;
-                    
+
                     return (
-                      <tr 
-                        key={sale.id} 
+                      <tr
+                        key={sale.id}
                         className={`
                           group transition-all duration-300
                           ${sale.isNew ? 'new-transaction' : ''} 
@@ -530,23 +530,23 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
               </div>
             </div>
             <div className='md:col-span-3'>
-              <FlexDataCard 
-                category={t.realTimeSales?.orders} 
+              <FlexDataCard
+                category={t.realTimeSales?.orders}
                 isLoading={isLoading}
                 items={[
-                  { label: t.realTimeSales?.walkIn, value: `${orderTypeAnalysis.walkInRate.toFixed(0)}%`, percentage: orderTypeAnalysis.walkInRate, color: 'indigo' }, 
+                  { label: t.realTimeSales?.walkIn, value: `${orderTypeAnalysis.walkInRate.toFixed(0)}%`, percentage: orderTypeAnalysis.walkInRate, color: 'indigo' },
                   { label: t.realTimeSales?.delivery, value: `${orderTypeAnalysis.deliveryRate.toFixed(0)}%`, percentage: orderTypeAnalysis.deliveryRate, color: 'orange' }
-                ]} 
+                ]}
               />
             </div>
             <div className='md:col-span-3'>
-              <FlexDataCard 
-                category={t.realTimeSales?.customers} 
+              <FlexDataCard
+                category={t.realTimeSales?.customers}
                 isLoading={isLoading}
                 items={[
-                  { label: t.realTimeSales?.reg, value: `${customerAnalysis.registeredRate.toFixed(0)}%`, percentage: customerAnalysis.registeredRate, color: 'primary' }, 
+                  { label: t.realTimeSales?.reg, value: `${customerAnalysis.registeredRate.toFixed(0)}%`, percentage: customerAnalysis.registeredRate, color: 'primary' },
                   { label: t.realTimeSales?.anon, value: `${customerAnalysis.anonymousRate.toFixed(0)}%`, percentage: customerAnalysis.anonymousRate, color: 'gray' }
-                ]} 
+                ]}
               />
             </div>
           </div>

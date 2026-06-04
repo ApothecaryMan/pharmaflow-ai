@@ -8,7 +8,7 @@ import { useStatusBar } from '../layout/StatusBar';
 
 interface DrugApprovalQueueProps {
   color: string;
-  t: any;
+  t: Translations;
   language: 'en' | 'ar';
   onViewChange?: (view: string) => void;
 }
@@ -480,14 +480,14 @@ export const DrugApprovalQueue: React.FC<DrugApprovalQueueProps> = ({
         title={
           confirmModal.type === 'approve'
             ? t.drugApproval?.confirmApproveTitle?.replace(
-                '{{count}}',
-                String(confirmModal.targetIds.length)
-              ) || 'Approve Drug(s)?'
+              '{{count}}',
+              String(confirmModal.targetIds.length)
+            ) || 'Approve Drug(s)?'
             : confirmModal.type === 'suspend'
               ? t.drugApproval?.confirmSuspendTitle?.replace(
-                  '{{count}}',
-                  String(confirmModal.targetIds.length)
-                ) || 'Suspend Drug(s)?'
+                '{{count}}',
+                String(confirmModal.targetIds.length)
+              ) || 'Suspend Drug(s)?'
               : t.drugApproval?.confirmReactivateTitle || 'Reactivate Drug(s)?'
         }
         color={color}
@@ -496,10 +496,10 @@ export const DrugApprovalQueue: React.FC<DrugApprovalQueueProps> = ({
           <p className='text-xs text-gray-600 dark:text-gray-400'>
             {confirmModal.type === 'approve'
               ? t.drugApproval?.confirmApproveDesc ||
-                'This will instantly add the selected drug(s) to all branches in your pharmacy network.'
+              'This will instantly add the selected drug(s) to all branches in your pharmacy network.'
               : confirmModal.type === 'suspend'
                 ? t.drugApproval?.confirmSuspendDesc ||
-                  'This will mark the selected drug(s) as suspended. You can reactivate them later.'
+                'This will mark the selected drug(s) as suspended. You can reactivate them later.'
                 : isRTL
                   ? 'هل أنت متأكد من إعادة تنشيط الأدوية المحددة؟ ستعود إلى حالة قيد المراجعة للقرار.'
                   : 'Are you sure you want to reactivate the selected drug(s)? They will return to pending review.'}
@@ -517,22 +517,21 @@ export const DrugApprovalQueue: React.FC<DrugApprovalQueueProps> = ({
             <button
               type='button'
               onClick={handleExecuteAction}
-              className={`px-4 h-9 text-xs font-bold rounded-xl text-white transition-colors ${
-                confirmModal.type === 'approve'
+              className={`px-4 h-9 text-xs font-bold rounded-xl text-white transition-colors ${confirmModal.type === 'approve'
                   ? 'bg-green-600 hover:bg-green-700 active:bg-green-800'
                   : confirmModal.type === 'suspend'
                     ? 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800'
                     : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'
-              }`}
+                }`}
             >
               {confirmModal.type === 'approve'
                 ? t.drugApproval?.approveSelected?.replace(' Selected', '') ||
-                  t.pendingApproval?.approve ||
-                  'Approve'
+                t.pendingApproval?.approve ||
+                'Approve'
                 : confirmModal.type === 'suspend'
                   ? t.drugApproval?.suspendSelected?.replace(' Selected', '') ||
-                    t.pendingApproval?.reject ||
-                    'Suspend'
+                  t.pendingApproval?.reject ||
+                  'Suspend'
                   : isRTL
                     ? 'إعادة تنشيط'
                     : 'Reactivate'}

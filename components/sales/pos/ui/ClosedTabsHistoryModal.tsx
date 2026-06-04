@@ -21,7 +21,7 @@ interface ClosedTabRowProps {
   index: number;
   total: number;
   onRestore: (id: string) => void;
-  t: any;
+  t: Translations;
   isRTL: boolean;
 }
 

@@ -23,7 +23,7 @@ import { InvitationListModal } from './InvitationListModal';
 
 interface EmployeeListProps {
   color: string;
-  t: any;
+  t: Translations;
   language: string;
   onUpdateEmployees?: (employees: Employee[]) => void;
   employees: Employee[];

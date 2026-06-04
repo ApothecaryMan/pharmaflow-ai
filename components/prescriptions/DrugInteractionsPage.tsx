@@ -7,7 +7,7 @@ import { inventorySearchEngine } from '../../services/search/drugSearchService';
 import type { Drug } from '../../types';
 
 interface DrugInteractionsPageProps {
-  t: any;
+  t: Translations;
   language?: string;
   inventory?: Drug[];
   color?: string;

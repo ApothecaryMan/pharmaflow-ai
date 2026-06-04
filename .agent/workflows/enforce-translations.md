@@ -14,7 +14,7 @@ This workflow ensures all UI text is translated and strictly typed to prevent ru
 
 ```typescript
 interface Props {
-  t: any; // ❌ Bad
+t: Translations; // ❌ Bad
 }
 ```
 

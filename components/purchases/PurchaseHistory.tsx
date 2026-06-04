@@ -29,7 +29,7 @@ interface PurchaseHistoryProps {
   inventory: Drug[];
   suppliers: Supplier[];
   color: string;
-  t: any;
+  t: Translations;
   language: 'EN' | 'AR';
   navigationParams?: any;
   onViewChange?: (view: string, params?: any) => void;

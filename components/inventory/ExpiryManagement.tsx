@@ -25,7 +25,7 @@ interface ExpiryManagementProps {
   inventory: Drug[];
   batches?: StockBatch[];
   color: string;
-  t: any;
+  t: Translations;
   language?: string;
   onUpdateInventory?: (drug: Drug, batch?: StockBatch, action?: string) => void;
   onBatchesChanged?: () => void;

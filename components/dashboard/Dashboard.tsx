@@ -27,7 +27,7 @@ interface DashboardProps {
   sales: Sale[];
   purchases: Purchase[];
   color: string;
-  t: any;
+  t: Translations;
   onRestock: (id: string, qty: number, isUnit?: boolean) => void;
   onViewChange?: (view: string) => void;
   subView?: string;

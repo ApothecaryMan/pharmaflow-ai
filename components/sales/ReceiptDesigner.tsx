@@ -15,7 +15,7 @@ import { useData } from '../../context/DataContext';
 
 interface ReceiptDesignerProps {
   color: string;
-  t: any;
+  t: Translations;
   language: 'EN' | 'AR';
 }
 
@@ -43,22 +43,22 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
     options: InvoiceTemplateOptions;
   }
 
-    // Define default options based on language and active branch
-    const defaultOptions: InvoiceTemplateOptions = {
-        storeName: activeBranch?.name || 'ZINC',
-        storeSubtitle: 'Premium Care Center',
-        headerAddress: activeBranch?.address || (language === 'AR' ? '١٢٣ ابوحمص' : '123 Abu Hommos'),
-        headerArea: activeBranch?.area || (language === 'AR' ? 'مدينة نصر' : 'Nasr City'),
-        headerHotline: activeBranch?.phone || '19099',
-        footerMessage: 'Thank you for your visit!',
-        footerInquiry: 'For questions, call 19099',
-        showAddressBox: false,
-        termsCondition:
-        language === 'AR'
-            ? 'ادوية التلاجة ومستحضرات التجميل وشرايط الدواء لا ترجع<br>استرجاع الادوية والاجهزة السليمة خلال 14 يوم'
-            : 'Refrigerated medicines & cosmetics are non-refundable<br>Returns within 14 days',
-        language: language,
-    };
+  // Define default options based on language and active branch
+  const defaultOptions: InvoiceTemplateOptions = {
+    storeName: activeBranch?.name || 'ZINC',
+    storeSubtitle: 'Premium Care Center',
+    headerAddress: activeBranch?.address || (language === 'AR' ? '١٢٣ ابوحمص' : '123 Abu Hommos'),
+    headerArea: activeBranch?.area || (language === 'AR' ? 'مدينة نصر' : 'Nasr City'),
+    headerHotline: activeBranch?.phone || '19099',
+    footerMessage: 'Thank you for your visit!',
+    footerInquiry: 'For questions, call 19099',
+    showAddressBox: false,
+    termsCondition:
+      language === 'AR'
+        ? 'ادوية التلاجة ومستحضرات التجميل وشرايط الدواء لا ترجع<br>استرجاع الادوية والاجهزة السليمة خلال 14 يوم'
+        : 'Refrigerated medicines & cosmetics are non-refundable<br>Returns within 14 days',
+    language: language,
+  };
 
   // Branch-scoped storage keys
   const getTemplateKey = (key: string) => `receipt_designer_${activeBranchId}_${key}`;
@@ -100,7 +100,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
 
       setTemplates(templatesToSet);
       setActiveTemplateId(activeId);
-      
+
       const activeTemplate = templatesToSet.find(t => t.id === activeId);
       if (activeTemplate) {
         setOptions(activeTemplate.options);
@@ -346,15 +346,15 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       total: showDeliveryPreview ? 111.0 : 101.0,
       returns: showReturnsPreview
         ? [
-            {
-              id: 'RET-1',
-              date: getVerifiedDate().toISOString(),
-              totalRefund: 15.5,
-              items: [],
-              originalSaleId: DUMMY_SALE.id,
-              userId: 'admin',
-            },
-          ]
+          {
+            id: 'RET-1',
+            date: getVerifiedDate().toISOString(),
+            totalRefund: 15.5,
+            items: [],
+            originalSaleId: DUMMY_SALE.id,
+            userId: 'admin',
+          },
+        ]
         : undefined,
     } as Sale;
 
@@ -823,7 +823,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 <label className='text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between'>
                   <span>{t.receiptDesigner.options.address}</span>
                   {activeBranch?.address && options.headerAddress !== activeBranch.address && (
-                    <button 
+                    <button
                       onClick={() => setOptions({ ...options, headerAddress: activeBranch.address })}
                       className="text-[10px] text-primary-500 hover:underline"
                     >
@@ -842,7 +842,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 <label className='text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between'>
                   <span>{t.receiptDesigner.options.area}</span>
                   {activeBranch?.area && options.headerArea !== activeBranch.area && (
-                    <button 
+                    <button
                       onClick={() => setOptions({ ...options, headerArea: activeBranch.area })}
                       className="text-[10px] text-primary-500 hover:underline"
                     >
@@ -973,7 +973,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
 
         {/* Top-Right Action Button */}
         <div className='absolute top-4 right-4 z-20 flex gap-2'>
-          <button 
+          <button
             type="button"
             className={`h-7 px-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-md rounded-xl border shadow-xs text-[10px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer pointer-events-auto ${previewMode === 'shift' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-gray-200/50 dark:border-gray-700/50 text-gray-700 dark:text-gray-300'}`}
             onClick={() => setPreviewMode(previewMode === 'sale' ? 'shift' : 'sale')}
@@ -983,7 +983,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
           </button>
 
           {previewMode === 'shift' && (
-            <button 
+            <button
               type="button"
               className={`h-7 px-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-md rounded-xl border shadow-xs text-[10px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer pointer-events-auto ${showDuplicatePreview ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-gray-200/50 dark:border-gray-700/50 text-gray-700 dark:text-gray-300'}`}
               onClick={() => setShowDuplicatePreview(!showDuplicatePreview)}
@@ -996,29 +996,29 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
 
         {/* Scrollable Content Area */}
         <div className='flex-1 overflow-y-auto custom-scrollbar p-8 flex justify-center'>
-        <div
-          className='bg-white shadow-2xl shadow-gray-300 dark:shadow-black shrink-0 transition-all duration-200 ease-in-out rounded-lg overflow-hidden'
-          style={{ width: '79mm', height: 'fit-content', minHeight: '300px' }}
-        >
-          <iframe
-            srcDoc={previewHtml}
-            className='w-full border-none pointer-events-none block'
-            style={{ height: '0px', minHeight: '100%', overflow: 'hidden' }}
-            title='Receipt Preview'
-            scrolling='no'
-            onLoad={(e) => {
-              const iframe = e.target as HTMLIFrameElement;
-              if (iframe.contentWindow) {
-                // Determine height from content
-                const height = iframe.contentWindow.document.body.scrollHeight;
-                // Add a small buffer just in case
-                iframe.style.height = `${height + 20}px`;
-                // Also ensure parent gets updated if needed
-                iframe.parentElement!.style.height = `${height + 20}px`;
-              }
-            }}
-          />
-        </div>
+          <div
+            className='bg-white shadow-2xl shadow-gray-300 dark:shadow-black shrink-0 transition-all duration-200 ease-in-out rounded-lg overflow-hidden'
+            style={{ width: '79mm', height: 'fit-content', minHeight: '300px' }}
+          >
+            <iframe
+              srcDoc={previewHtml}
+              className='w-full border-none pointer-events-none block'
+              style={{ height: '0px', minHeight: '100%', overflow: 'hidden' }}
+              title='Receipt Preview'
+              scrolling='no'
+              onLoad={(e) => {
+                const iframe = e.target as HTMLIFrameElement;
+                if (iframe.contentWindow) {
+                  // Determine height from content
+                  const height = iframe.contentWindow.document.body.scrollHeight;
+                  // Add a small buffer just in case
+                  iframe.style.height = `${height + 20}px`;
+                  // Also ensure parent gets updated if needed
+                  iframe.parentElement!.style.height = `${height + 20}px`;
+                }
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>

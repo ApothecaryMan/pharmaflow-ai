@@ -12,7 +12,7 @@ interface PageRouterProps {
   view: ViewState;
   currentEmployeeId: string | null;
   isLoading: boolean;
-  t: any;
+  t: Translations;
   // Navigation
   setView: (view: ViewState) => void;
   handleNavigate: (view: ViewState) => void;
@@ -92,11 +92,11 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     return (
       <div className='flex flex-col items-center justify-center h-full p-8 animate-fade-in select-none text-center'>
         <div className='mb-12'>
-          <div 
+          <div
             style={{ width: '180px', height: '180px' }}
             className='rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center mx-auto border border-zinc-200 dark:border-zinc-700/50 shadow-sm'
           >
-            <span 
+            <span
               style={{ fontSize: '96px' }}
               className='material-symbols-rounded text-zinc-400 dark:text-zinc-500'
             >
@@ -108,7 +108,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
         <h2 className='text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 mb-3'>
           {language === 'AR' ? 'وصول مقيد' : 'Access Restricted'}
         </h2>
-        
+
         <p className='text-base text-zinc-500 dark:text-zinc-400 mb-0 max-w-sm leading-relaxed font-medium'>
           {language === 'AR'
             ? 'عذراً، ليس لديك الصلاحيات اللازمة للوصول إلى هذه الصفحة. يرجى التواصل مع المسؤول.'

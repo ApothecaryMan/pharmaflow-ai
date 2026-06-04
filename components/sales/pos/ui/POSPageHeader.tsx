@@ -3,7 +3,7 @@ import { TabBar } from '../../../layout/TabBar';
 import type { SaleTab } from '../../../../types';
 
 interface POSPageHeaderProps {
-  t: any;
+  t: Translations;
   color: string;
   tabs: SaleTab[];
   activeTabId: string;

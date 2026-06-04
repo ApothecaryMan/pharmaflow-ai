@@ -31,7 +31,7 @@ interface PurchaseReturnsProps {
   drugs: Drug[];
   setDrugs: (drugs: Drug[]) => void;
   color: string;
-  t: any;
+  t: Translations;
   language: 'EN' | 'AR';
   onCreatePurchaseReturn?: (ret: PurchaseReturn) => Promise<void>;
 }
@@ -431,8 +431,8 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                 onClick={(e) => handleSubmitReturn(e as any)}
                 disabled={calculatedTotalRefund === 0}
                 className={`px-8 py-3 rounded-xl shadow-lg transition-all font-bold flex items-center gap-2 ${calculatedTotalRefund === 0
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : `bg-primary-600 hover:bg-primary-700 text-white`
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : `bg-primary-600 hover:bg-primary-700 text-white`
                   }`}
               >
                 <span className='material-symbols-rounded'>check_circle</span>
@@ -550,8 +550,8 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                             <tr
                               key={item.drugId}
                               className={`transition-colors duration-150 ${qty > 0
-                                  ? 'bg-primary-50/10 dark:bg-primary-500/5 hover:bg-primary-50/20 dark:hover:bg-primary-500/10'
-                                  : 'hover:bg-gray-50/50 dark:hover:bg-zinc-900/30'
+                                ? 'bg-primary-50/10 dark:bg-primary-500/5 hover:bg-primary-50/20 dark:hover:bg-primary-500/10'
+                                : 'hover:bg-gray-50/50 dark:hover:bg-zinc-900/30'
                                 }`}
                             >
                               <td className='p-3 font-medium text-gray-800 dark:text-gray-100'>
@@ -579,8 +579,8 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                                     }
                                     disabled={qty === 0}
                                     className={`w-6 h-6 rounded-md flex items-center justify-center border transition-all text-xs font-bold cursor-pointer ${qty === 0
-                                        ? 'border-gray-100 text-gray-300 dark:border-gray-800 dark:text-gray-600 cursor-not-allowed'
-                                        : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 active:scale-95'
+                                      ? 'border-gray-100 text-gray-300 dark:border-gray-800 dark:text-gray-600 cursor-not-allowed'
+                                      : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 active:scale-95'
                                       }`}
                                   >
                                     —
@@ -613,8 +613,8 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                                     }
                                     disabled={qty >= maxQty}
                                     className={`w-6 h-6 rounded-md flex items-center justify-center border transition-all text-xs font-bold cursor-pointer ${qty >= maxQty
-                                        ? 'border-gray-100 text-gray-300 dark:border-gray-800 dark:text-gray-600 cursor-not-allowed'
-                                        : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 active:scale-95'
+                                      ? 'border-gray-100 text-gray-300 dark:border-gray-800 dark:text-gray-600 cursor-not-allowed'
+                                      : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 active:scale-95'
                                       }`}
                                   >
                                     +

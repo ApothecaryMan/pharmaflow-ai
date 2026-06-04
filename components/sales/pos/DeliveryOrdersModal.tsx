@@ -31,7 +31,7 @@ import * as stockOps from '../../../utils/stockOperations';
 import { idGenerator } from '../../../utils/idGenerator';
 import { useShift } from '../../../hooks/sales/useShift';
 
-const ShiftWarning = ({ t, compact = false }: { t: any; compact?: boolean }) => (
+const ShiftWarning = ({ t, compact = false }: { t: Translations; compact?: boolean }) => (
   <div className={`flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 ${compact ? 'h-7 px-2 w-full' : 'h-[42px] px-4'}`}>
     <div className='flex items-center gap-1.5 text-red-700 dark:text-red-300'>
       <span className='material-symbols-rounded' style={{ fontSize: compact ? '16px' : '18px' }}>
@@ -54,7 +54,7 @@ const DriverSelect = ({
   driverId?: string;
   drivers: Employee[];
   onSelect: (d: Employee) => void;
-  t: any;
+  t: Translations; slations;
   disabled?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -99,7 +99,7 @@ export interface DeliveryOrdersModalProps {
   inventory: Drug[];
   onUpdateSale: (saleId: string, updates: Partial<Sale>) => void;
   language?: Language;
-  t: any;
+  t: Translations; slations;
   color?: string;
   currentEmployeeId?: string;
   customers?: Customer[];
@@ -212,8 +212,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
   // Calculate Pending Value Insights
   const pendingStats = useMemo(() => {
-    const pendingSales = sales.filter((s) => 
-      s.status === 'pending' && 
+    const pendingSales = sales.filter((s) =>
+      s.status === 'pending' &&
       s.saleType === 'delivery' &&
       (!activeBranchId || s.branchId === activeBranchId)
     );
@@ -351,15 +351,15 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // 3. Calculate Limits (Total Units)
       // drug.stock is typically stored as Total Units in the system (based on POS analysis)
       // Available Limit = Actual Stock in Inventory + What we already own in this Order
-      const totalOriginalUnitsOwned = resolveUnits(originalPackQty, false, unitsPerPack) + 
-                                     resolveUnits(originalUnitQty, true, unitsPerPack);
+      const totalOriginalUnitsOwned = resolveUnits(originalPackQty, false, unitsPerPack) +
+        resolveUnits(originalUnitQty, true, unitsPerPack);
       const maxUnitsAvailable = drug.stock + totalOriginalUnitsOwned;
 
       // 4. Calculate Proposed Total Usage
       const proposedPackQty = isUnit ? currentPendingPackQty : proposedQty;
       const proposedUnitQty = isUnit ? proposedQty : currentPendingUnitQty;
-      const proposedTotalUnits = resolveUnits(proposedPackQty, false, unitsPerPack) + 
-                                resolveUnits(proposedUnitQty, true, unitsPerPack);
+      const proposedTotalUnits = resolveUnits(proposedPackQty, false, unitsPerPack) +
+        resolveUnits(proposedUnitQty, true, unitsPerPack);
 
       // 5. Validation & Clamping
       let finalQty = proposedQty;
@@ -571,7 +571,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
       // Step 1: Calculate totals using unified pricing service
       const totals = pricingService.calculateOrderTotals(updatedItems, selectedSale.globalDiscount || 0);
-      
+
       const subtotal = totals.netSubtotal;
       const finalTotal = money.add(totals.finalTotal, selectedSale.deliveryFee || 0);
 
@@ -663,7 +663,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
     return sales
       .filter((s) => {
         if (s.saleType !== 'delivery') return false;
-        
+
         // Branch Filter (Multi-tenant isolation)
         if (activeBranchId && s.branchId !== activeBranchId) return false;
 
@@ -727,18 +727,17 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           const isClickable = !!customer && !!onViewCustomerHistory;
 
           return (
-            <span 
+            <span
               onClick={(e) => {
                 if (isClickable) {
                   e.stopPropagation();
                   onViewCustomerHistory(customer);
                 }
               }}
-              className={`font-mono font-bold text-sm select-none ${
-                isClickable 
-                  ? 'text-primary-600 dark:text-primary-400 cursor-pointer hover:underline decoration-primary-300 dark:decoration-primary-700 underline-offset-2 transition-all active:scale-95' 
+              className={`font-mono font-bold text-sm select-none ${isClickable
+                  ? 'text-primary-600 dark:text-primary-400 cursor-pointer hover:underline decoration-primary-300 dark:decoration-primary-700 underline-offset-2 transition-all active:scale-95'
                   : 'text-gray-700 dark:text-gray-300'
-              }`}
+                }`}
               title={isClickable ? t.viewCustomerHistory || 'View Customer History' : undefined}
             >
               {code || '-'}
@@ -759,7 +758,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           // Support both English and Arabic identifiers for Guest Customer
           const isGuestName = name === 'Guest Customer' || name === 'عميل غير مسجل' || name === t.guestCustomer;
           const displayName = isGuestName ? t.guestCustomer || name : name;
-          
+
           return (
             <div className='flex items-center gap-1 group'>
               <span className='font-bold text-gray-900 dark:text-gray-100' dir='auto'>
@@ -781,7 +780,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   title={t.editGuestInfo || 'Edit Guest Info'}
                   disabled={!hasOpenShift}
                 >
-                  <span 
+                  <span
                     className='material-symbols-rounded'
                     style={{ fontSize: 'var(--icon-md)' }}
                   >
@@ -801,7 +800,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           const manualAddress = info.row.original.customerStreetAddress;
           const standardAddress = info.getValue();
           const displayAddress = manualAddress || standardAddress;
-          
+
           return (
             <div className='text-[11px] leading-tight whitespace-normal line-clamp-1' title={displayAddress}>
               {manualAddress ? (
@@ -825,7 +824,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         cell: (info) => {
           const method = info.row.original.paymentMethod;
           const isCard = method === 'visa' || method === 'credit';
-          
+
           return (
             <div className='flex flex-col items-start leading-tight'>
               <span className={`font-bold ${isCard ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-gray-100'}`}>
@@ -888,17 +887,17 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                 {(s.status === 'pending' ||
                   s.status === 'with_delivery' ||
                   s.status === 'on_way') && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOrderToCancelId(s.id);
-                    }}
-                    className='p-1 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20'
-                    title={t.cancel || 'Cancel'}
-                  >
-                    <span className='material-symbols-rounded text-[20px]'>block</span>
-                  </button>
-                )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOrderToCancelId(s.id);
+                      }}
+                      className='p-1 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20'
+                      title={t.cancel || 'Cancel'}
+                    >
+                      <span className='material-symbols-rounded text-[20px]'>block</span>
+                    </button>
+                  )}
               </div>
 
               {/* Slot 2: Main Action Button (Fixed Width) */}
@@ -978,594 +977,589 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
   return (
     <>
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={t.deliveryOrders || 'Delivery Orders'}
-      icon='local_shipping'
-      size='6xl'
-      width='max-w-7xl'
-      hideCloseButton={true}
-      preventSidebar={true}
-      tabs={[
-        {
-          label: `${t.all || 'الكل'} (${sales.filter((s) => s.saleType === 'delivery' && s.status !== 'completed' && s.status !== 'cancelled' && (!activeBranchId || s.branchId === activeBranchId)).length})`,
-          value: 'all',
-          icon: 'list',
-        },
-        {
-          label: `${t.pending || 'قيد الانتظار'} (${sales.filter((s) => s.status === 'pending' && s.saleType === 'delivery' && (!activeBranchId || s.branchId === activeBranchId)).length})`,
-          value: 'pending',
-          icon: 'pending',
-        },
-        {
-          label: `${t.active || 'النشطة'} (${sales.filter((s) => (s.status === 'with_delivery' || s.status === 'on_way') && s.saleType === 'delivery' && (!activeBranchId || s.branchId === activeBranchId)).length})`,
-          value: 'active',
-          icon: 'local_shipping',
-        },
-        { label: t.history || 'السجل', value: 'completed', icon: 'history' },
-      ]}
-      activeTab={activeTab}
-      onTabChange={(val) => {
-        setActiveTab(val as DeliveryTab);
-        setSelectedSaleId(null);
-      }}
-      headerActions={
-        <div className='flex items-center pe-2'>
-          <div className='w-[300px] flex items-center'>
-            <SearchInput
-              value={searchQuery}
-              onSearchChange={setSearchQuery}
-              onClear={() => setSearchQuery('')}
-              placeholder={t.searchOrder || 'Search orders...'}
-              autoFocus={true}
-              wrapperClassName='w-full h-8 !py-0'
-              className='!py-1 text-[13px]'
-            />
-          </div>
-        </div>
-      }
-    >
-      <div className='flex flex-col h-[70vh]'>
-        {selectedSaleId && selectedSale ? (
-          <div className='flex-1 flex flex-col overflow-hidden'>
-            {/* Inner Header - High-Density Integrated Row */}
-            <div className='flex items-center justify-between h-11 mb-4 border border-zinc-200 dark:border-white/10 shrink-0 bg-white dark:bg-zinc-900/50 rounded-2xl px-1.5 shadow-sm'>
-              <div className='flex items-center h-full gap-0 min-w-0'>
-                {/* 1. Back Action */}
-                <button
-                  onClick={() => setSelectedSaleId(null)}
-                  className='h-8 w-8 flex items-center justify-center rounded-lg hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors group shrink-0'
-                  title={t.back || 'Back'}
-                >
-                  <span className='material-symbols-rounded text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors text-[20px]'>
-                    arrow_back
-                  </span>
-                </button>
-
-                <div className='h-4 w-px bg-zinc-200 dark:bg-white/10 mx-2.5' />
-
-                {/* 2. Order Identity */}
-                <div className='flex items-center shrink-0'>
-                  <span className='text-[16px] font-black font-mono text-zinc-900 dark:text-white leading-none tracking-tight'>
-                    #{selectedSale.serialId || selectedSale.id.slice(0, 8)}
-                  </span>
-                </div>
-
-                <div className='h-4 w-px bg-zinc-200 dark:bg-white/10 mx-2.5' />
-
-                {/* 3. Status Badge (Compact) */}
-                <div
-                  className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full font-black uppercase tracking-widest border shrink-0 ${
-                    selectedSale.status === 'completed'
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
-                      : selectedSale.status === 'cancelled'
-                        ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'
-                        : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20'
-                  }`}
-                >
-                  <span className='material-symbols-rounded text-sm' style={{ fontVariationSettings: "'FILL' 1" }}>
-                    {selectedSale.status === 'completed' ? 'verified' : selectedSale.status === 'cancelled' ? 'cancel' : 'pending'}
-                  </span>
-                  <span>{t[selectedSale.status] || selectedSale.status}</span>
-                </div>
-
-                <div className='h-4 w-px bg-zinc-200 dark:bg-white/10 mx-2.5' />
-
-                {/* 4. Customer/Guest Identity */}
-                <div className='flex items-center gap-2.5 min-w-0'>
-                  <div className='w-6 h-6 rounded-full bg-zinc-200 dark:bg-white/10 flex items-center justify-center shrink-0'>
-                    <span className='material-symbols-rounded text-base text-zinc-500'>person</span>
-                  </div>
-                  <div className='flex items-center gap-2 truncate'>
-                    <span className='text-[13px] font-bold text-zinc-800 dark:text-zinc-200 truncate'>
-                      {selectedSale.customerName}
-                    </span>
-                    {selectedSale.customerPhone && (
-                      <span className='text-[11px] text-zinc-400 font-mono opacity-80' dir='ltr'>
-                        {selectedSale.customerPhone}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* 5. Navigation & Global Actions */}
-              <div className='flex items-center gap-4 h-full'>
-                {(() => {
-                  const tabOptions = [
-                    {
-                      label: t.orderItems || 'Items',
-                      value: 'items',
-                      icon: 'shopping_cart',
-                      count: selectedSale.items.length,
-                    },
-                  ];
-
-                  if (selectedSale.modificationHistory?.length) {
-                    tabOptions.push({
-                      label: t.history || 'History',
-                      value: 'history',
-                      icon: 'history',
-                      count: selectedSale.modificationHistory.length,
-                      activeColor: 'orange',
-                    } as any);
-                  }
-
-                  return (
-                    <div className='flex items-center gap-3'>
-                      {/* Unified Edit Control Group */}
-                      {isEditMode && (
-                        <div className='flex items-center gap-1'>
-                          {/* Multi-step Undo */}
-                          <button
-                            onClick={undo}
-                            disabled={editHistory.index <= 0}
-                            className='h-8 w-8 flex items-center justify-center rounded-lg hover:bg-zinc-200 dark:hover:bg-white/10 text-zinc-500 disabled:opacity-30 transition-colors'
-                            title={t.undo || 'Undo'}
-                          >
-                            <span className='material-symbols-rounded text-[20px]'>undo</span>
-                          </button>
-
-                          {/* Multi-step Redo */}
-                          <button
-                            onClick={redo}
-                            disabled={editHistory.index >= editHistory.stack.length - 1}
-                            className='h-8 w-8 flex items-center justify-center rounded-lg hover:bg-zinc-200 dark:hover:bg-white/10 text-zinc-500 disabled:opacity-30 transition-colors'
-                            title={t.redo || 'Redo'}
-                          >
-                            <span className='material-symbols-rounded text-[20px]'>redo</span>
-                          </button>
-
-                          <div className='h-4 w-px bg-zinc-200 dark:bg-white/10 mx-1' />
-
-                          {/* Commit Change */}
-                          <button
-                            onClick={handleSaveChanges}
-                            disabled={!hasChanges}
-                            className='h-8 px-4 text-[11px] font-black uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors disabled:opacity-30 flex items-center gap-1.5 shadow-sm shadow-emerald-500/20'
-                          >
-                            <span className='material-symbols-rounded text-sm' style={{ fontVariationSettings: "'FILL' 1" }}>done_all</span>
-                            {t.saveChanges || 'Save'}
-                          </button>
-                        </div>
-                      )}
-
-                      <SegmentedControl
-                        options={tabOptions}
-                        value={activeSubTab}
-                        onChange={(val) => setActiveSubTab(val as 'items' | 'history')}
-                        size='xs'
-                        fullWidth={false}
-                      />
-                    </div>
-                  );
-                })()}
-
-                {!hasOpenShift &&
-                  selectedSale?.status !== 'completed' &&
-                  selectedSale?.status !== 'cancelled' && (
-                    <ShiftWarning t={t} compact={true} />
-                  )}
-
-                {!currentEmployeeId &&
-                  hasOpenShift &&
-                  selectedSale?.status !== 'completed' &&
-                  selectedSale?.status !== 'cancelled' && (
-                    <div className='flex items-center gap-1.5 text-[10px] text-rose-500 font-black uppercase tracking-tighter bg-rose-50 dark:bg-rose-500/10 px-2 py-1 rounded-lg border border-rose-100 dark:border-rose-500/20 animate-pulse'>
-                      <span className='material-symbols-rounded text-sm'>lock</span>
-                      {t.loginToEdit}
-                    </div>
-                  )}
-              </div>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={t.deliveryOrders || 'Delivery Orders'}
+        icon='local_shipping'
+        size='6xl'
+        width='max-w-7xl'
+        hideCloseButton={true}
+        preventSidebar={true}
+        tabs={[
+          {
+            label: `${t.all || 'الكل'} (${sales.filter((s) => s.saleType === 'delivery' && s.status !== 'completed' && s.status !== 'cancelled' && (!activeBranchId || s.branchId === activeBranchId)).length})`,
+            value: 'all',
+            icon: 'list',
+          },
+          {
+            label: `${t.pending || 'قيد الانتظار'} (${sales.filter((s) => s.status === 'pending' && s.saleType === 'delivery' && (!activeBranchId || s.branchId === activeBranchId)).length})`,
+            value: 'pending',
+            icon: 'pending',
+          },
+          {
+            label: `${t.active || 'النشطة'} (${sales.filter((s) => (s.status === 'with_delivery' || s.status === 'on_way') && s.saleType === 'delivery' && (!activeBranchId || s.branchId === activeBranchId)).length})`,
+            value: 'active',
+            icon: 'local_shipping',
+          },
+          { label: t.history || 'السجل', value: 'completed', icon: 'history' },
+        ]}
+        activeTab={activeTab}
+        onTabChange={(val) => {
+          setActiveTab(val as DeliveryTab);
+          setSelectedSaleId(null);
+        }}
+        headerActions={
+          <div className='flex items-center pe-2'>
+            <div className='w-[300px] flex items-center'>
+              <SearchInput
+                value={searchQuery}
+                onSearchChange={setSearchQuery}
+                onClear={() => setSearchQuery('')}
+                placeholder={t.searchOrder || 'Search orders...'}
+                autoFocus={true}
+                wrapperClassName='w-full h-8 !py-0'
+                className='!py-1 text-[13px]'
+              />
             </div>
+          </div>
+        }
+      >
+        <div className='flex flex-col h-[70vh]'>
+          {selectedSaleId && selectedSale ? (
+            <div className='flex-1 flex flex-col overflow-hidden'>
+              {/* Inner Header - High-Density Integrated Row */}
+              <div className='flex items-center justify-between h-11 mb-4 border border-zinc-200 dark:border-white/10 shrink-0 bg-white dark:bg-zinc-900/50 rounded-2xl px-1.5 shadow-sm'>
+                <div className='flex items-center h-full gap-0 min-w-0'>
+                  {/* 1. Back Action */}
+                  <button
+                    onClick={() => setSelectedSaleId(null)}
+                    className='h-8 w-8 flex items-center justify-center rounded-lg hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors group shrink-0'
+                    title={t.back || 'Back'}
+                  >
+                    <span className='material-symbols-rounded text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors text-[20px]'>
+                      arrow_back
+                    </span>
+                  </button>
 
-            {/* Content Area */}
-            <div className='flex-1 overflow-y-auto pr-2 custom-scrollbar' dir='ltr'>
-              {activeSubTab === 'items' ? (
-                <div className='grid grid-cols-2 gap-x-4 gap-y-1'>
+                  <div className='h-4 w-px bg-zinc-200 dark:bg-white/10 mx-2.5' />
+
+                  {/* 2. Order Identity */}
+                  <div className='flex items-center shrink-0'>
+                    <span className='text-[16px] font-black font-mono text-zinc-900 dark:text-white leading-none tracking-tight'>
+                      #{selectedSale.serialId || selectedSale.id.slice(0, 8)}
+                    </span>
+                  </div>
+
+                  <div className='h-4 w-px bg-zinc-200 dark:bg-white/10 mx-2.5' />
+
+                  {/* 3. Status Badge (Compact) */}
+                  <div
+                    className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full font-black uppercase tracking-widest border shrink-0 ${selectedSale.status === 'completed'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
+                        : selectedSale.status === 'cancelled'
+                          ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'
+                          : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20'
+                      }`}
+                  >
+                    <span className='material-symbols-rounded text-sm' style={{ fontVariationSettings: "'FILL' 1" }}>
+                      {selectedSale.status === 'completed' ? 'verified' : selectedSale.status === 'cancelled' ? 'cancel' : 'pending'}
+                    </span>
+                    <span>{t[selectedSale.status] || selectedSale.status}</span>
+                  </div>
+
+                  <div className='h-4 w-px bg-zinc-200 dark:bg-white/10 mx-2.5' />
+
+                  {/* 4. Customer/Guest Identity */}
+                  <div className='flex items-center gap-2.5 min-w-0'>
+                    <div className='w-6 h-6 rounded-full bg-zinc-200 dark:bg-white/10 flex items-center justify-center shrink-0'>
+                      <span className='material-symbols-rounded text-base text-zinc-500'>person</span>
+                    </div>
+                    <div className='flex items-center gap-2 truncate'>
+                      <span className='text-[13px] font-bold text-zinc-800 dark:text-zinc-200 truncate'>
+                        {selectedSale.customerName}
+                      </span>
+                      {selectedSale.customerPhone && (
+                        <span className='text-[11px] text-zinc-400 font-mono opacity-80' dir='ltr'>
+                          {selectedSale.customerPhone}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5. Navigation & Global Actions */}
+                <div className='flex items-center gap-4 h-full'>
                   {(() => {
-                    // Group items by ID
-                    const mergedItems: Record<
-                      string,
-                      { common: CartItem; packItem?: CartItem; unitItem?: CartItem }
-                    > = {};
+                    const tabOptions = [
+                      {
+                        label: t.orderItems || 'Items',
+                        value: 'items',
+                        icon: 'shopping_cart',
+                        count: selectedSale.items.length,
+                      },
+                    ];
 
-                    selectedSale.items.forEach((item) => {
-                      if (!mergedItems[item.id]) {
-                        mergedItems[item.id] = {
-                          common: item,
-                          packItem: undefined,
-                          unitItem: undefined,
-                        };
-                      }
-                      if (item.isUnit) {
-                        mergedItems[item.id].unitItem = item;
-                      } else {
-                        mergedItems[item.id].packItem = item;
-                      }
-                    });
+                    if (selectedSale.modificationHistory?.length) {
+                      tabOptions.push({
+                        label: t.history || 'History',
+                        value: 'history',
+                        icon: 'history',
+                        count: selectedSale.modificationHistory.length,
+                        activeColor: 'orange',
+                      } as any);
+                    }
 
-                    const mergedList = Object.values(mergedItems);
+                    return (
+                      <div className='flex items-center gap-3'>
+                        {/* Unified Edit Control Group */}
+                        {isEditMode && (
+                          <div className='flex items-center gap-1'>
+                            {/* Multi-step Undo */}
+                            <button
+                              onClick={undo}
+                              disabled={editHistory.index <= 0}
+                              className='h-8 w-8 flex items-center justify-center rounded-lg hover:bg-zinc-200 dark:hover:bg-white/10 text-zinc-500 disabled:opacity-30 transition-colors'
+                              title={t.undo || 'Undo'}
+                            >
+                              <span className='material-symbols-rounded text-[20px]'>undo</span>
+                            </button>
 
-                    return mergedList.map((merged, idx) => {
-                      const { common, packItem, unitItem } = merged;
-                      const rowIdx = Math.floor(idx / 2);
-                      const rowCount = Math.ceil(mergedList.length / 2);
+                            {/* Multi-step Redo */}
+                            <button
+                              onClick={redo}
+                              disabled={editHistory.index >= editHistory.stack.length - 1}
+                              className='h-8 w-8 flex items-center justify-center rounded-lg hover:bg-zinc-200 dark:hover:bg-white/10 text-zinc-500 disabled:opacity-30 transition-colors'
+                              title={t.redo || 'Redo'}
+                            >
+                              <span className='material-symbols-rounded text-[20px]'>redo</span>
+                            </button>
 
-                      // Calculate Display Quantities (including pending changes)
-                      // Use common.id to ensure we get state even if one component (pack/unitItem) is undefined initially
-                      const packQty = getItemQuantity(common.id, false, packItem?.quantity || 0);
-                      const unitQty = getItemQuantity(common.id, true, unitItem?.quantity || 0);
+                            <div className='h-4 w-px bg-zinc-200 dark:bg-white/10 mx-1' />
 
-                      // Check if item is logically deleted (both parts deleted or zero)
-                      // Note: If original item didn't exist (e.g. no packItem), we consider its qty 0.
-                      // We need to check if we have PENDING deletions for existing items.
-                      const packDeleted = packItem
-                        ? pendingChanges.get(`${packItem.id}-pack`)?.deleted
-                        : false;
-                      const unitDeleted = unitItem
-                        ? pendingChanges.get(`${unitItem.id}-unit`)?.deleted
-                        : false;
+                            {/* Commit Change */}
+                            <button
+                              onClick={handleSaveChanges}
+                              disabled={!hasChanges}
+                              className='h-8 px-4 text-[11px] font-black uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors disabled:opacity-30 flex items-center gap-1.5 shadow-sm shadow-emerald-500/20'
+                            >
+                              <span className='material-symbols-rounded text-sm' style={{ fontVariationSettings: "'FILL' 1" }}>done_all</span>
+                              {t.saveChanges || 'Save'}
+                            </button>
+                          </div>
+                        )}
 
-                      // Check for changes to highlight (Moved up to fix scoping error)
-                      const hasPackChange = packQty !== (packItem?.quantity || 0);
-                      const hasUnitChange = unitQty !== (unitItem?.quantity || 0);
-                      const hasChange = hasPackChange || hasUnitChange;
+                        <SegmentedControl
+                          options={tabOptions}
+                          value={activeSubTab}
+                          onChange={(val) => setActiveSubTab(val as 'items' | 'history')}
+                          size='xs'
+                          fullWidth={false}
+                        />
+                      </div>
+                    );
+                  })()}
 
-                      // Item is considered fully deleted if all its existing components are marked deleted
-                      // OR if the resulting quantities are both zero (which happens if deleted via handleQuantityChange 0)
-                      const isDeleted =
-                        ((packItem ? packDeleted : true) && (unitItem ? unitDeleted : true)) ||
-                        (packQty === 0 && unitQty === 0 && !hasPackChange && !hasUnitChange);
-                      // Added !hasChanges check to ensure we don't treat a newly added 0 as deleted (though 0 usually means deleted)
-                      // Actually if packQty=0 and unitQty=0, it IS effectively deleted.
+                  {!hasOpenShift &&
+                    selectedSale?.status !== 'completed' &&
+                    selectedSale?.status !== 'cancelled' && (
+                      <ShiftWarning t={t} compact={true} />
+                    )}
 
-                      // Display Price Calculation
-                      const unitsPerPack = common.unitsPerPack || 1;
-                      const packPrice = common.publicPrice;
-                      const unitPrice = common.publicPrice / unitsPerPack;
-                      const totalPrice = money.add(
-                        money.multiply(packPrice, packQty, 0),
-                        money.multiply(unitPrice, unitQty, 0)
-                      );
+                  {!currentEmployeeId &&
+                    hasOpenShift &&
+                    selectedSale?.status !== 'completed' &&
+                    selectedSale?.status !== 'cancelled' && (
+                      <div className='flex items-center gap-1.5 text-[10px] text-rose-500 font-black uppercase tracking-tighter bg-rose-50 dark:bg-rose-500/10 px-2 py-1 rounded-lg border border-rose-100 dark:border-rose-500/20 animate-pulse'>
+                        <span className='material-symbols-rounded text-sm'>lock</span>
+                        {t.loginToEdit}
+                      </div>
+                    )}
+                </div>
+              </div>
 
-                      const hasDualMode = unitsPerPack > 1;
+              {/* Content Area */}
+              <div className='flex-1 overflow-y-auto pr-2 custom-scrollbar' dir='ltr'>
+                {activeSubTab === 'items' ? (
+                  <div className='grid grid-cols-2 gap-x-4 gap-y-1'>
+                    {(() => {
+                      // Group items by ID
+                      const mergedItems: Record<
+                        string,
+                        { common: CartItem; packItem?: CartItem; unitItem?: CartItem }
+                      > = {};
 
-                      return (
-                        <MaterialTabs
-                          key={`${common.id}-${idx}`}
-                          index={rowIdx}
-                          total={rowCount}
-                          color={isDeleted ? 'red' : hasChange ? 'orange' : 'blue'}
-                          isSelected={false}
-                          className={`h-auto! py-3 ${isDeleted ? 'opacity-50' : ''}`}
-                        >
-                          <div className='flex items-center justify-between w-full' dir='ltr'>
-                            <div className='flex items-center gap-4'>
-                              <div className='flex flex-col text-left'>
-                                <span
-                                  className={`font-bold text-sm ${isDeleted ? 'line-through text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}
-                                >
-                                  {getDisplayName(common, textTransform)}
-                                </span>
+                      selectedSale.items.forEach((item) => {
+                        if (!mergedItems[item.id]) {
+                          mergedItems[item.id] = {
+                            common: item,
+                            packItem: undefined,
+                            unitItem: undefined,
+                          };
+                        }
+                        if (item.isUnit) {
+                          mergedItems[item.id].unitItem = item;
+                        } else {
+                          mergedItems[item.id].packItem = item;
+                        }
+                      });
+
+                      const mergedList = Object.values(mergedItems);
+
+                      return mergedList.map((merged, idx) => {
+                        const { common, packItem, unitItem } = merged;
+                        const rowIdx = Math.floor(idx / 2);
+                        const rowCount = Math.ceil(mergedList.length / 2);
+
+                        // Calculate Display Quantities (including pending changes)
+                        // Use common.id to ensure we get state even if one component (pack/unitItem) is undefined initially
+                        const packQty = getItemQuantity(common.id, false, packItem?.quantity || 0);
+                        const unitQty = getItemQuantity(common.id, true, unitItem?.quantity || 0);
+
+                        // Check if item is logically deleted (both parts deleted or zero)
+                        // Note: If original item didn't exist (e.g. no packItem), we consider its qty 0.
+                        // We need to check if we have PENDING deletions for existing items.
+                        const packDeleted = packItem
+                          ? pendingChanges.get(`${packItem.id}-pack`)?.deleted
+                          : false;
+                        const unitDeleted = unitItem
+                          ? pendingChanges.get(`${unitItem.id}-unit`)?.deleted
+                          : false;
+
+                        // Check for changes to highlight (Moved up to fix scoping error)
+                        const hasPackChange = packQty !== (packItem?.quantity || 0);
+                        const hasUnitChange = unitQty !== (unitItem?.quantity || 0);
+                        const hasChange = hasPackChange || hasUnitChange;
+
+                        // Item is considered fully deleted if all its existing components are marked deleted
+                        // OR if the resulting quantities are both zero (which happens if deleted via handleQuantityChange 0)
+                        const isDeleted =
+                          ((packItem ? packDeleted : true) && (unitItem ? unitDeleted : true)) ||
+                          (packQty === 0 && unitQty === 0 && !hasPackChange && !hasUnitChange);
+                        // Added !hasChanges check to ensure we don't treat a newly added 0 as deleted (though 0 usually means deleted)
+                        // Actually if packQty=0 and unitQty=0, it IS effectively deleted.
+
+                        // Display Price Calculation
+                        const unitsPerPack = common.unitsPerPack || 1;
+                        const packPrice = common.publicPrice;
+                        const unitPrice = common.publicPrice / unitsPerPack;
+                        const totalPrice = money.add(
+                          money.multiply(packPrice, packQty, 0),
+                          money.multiply(unitPrice, unitQty, 0)
+                        );
+
+                        const hasDualMode = unitsPerPack > 1;
+
+                        return (
+                          <MaterialTabs
+                            key={`${common.id}-${idx}`}
+                            index={rowIdx}
+                            total={rowCount}
+                            color={isDeleted ? 'red' : hasChange ? 'orange' : 'blue'}
+                            isSelected={false}
+                            className={`h-auto! py-3 ${isDeleted ? 'opacity-50' : ''}`}
+                          >
+                            <div className='flex items-center justify-between w-full' dir='ltr'>
+                              <div className='flex items-center gap-4'>
+                                <div className='flex flex-col text-left'>
+                                  <span
+                                    className={`font-bold text-sm ${isDeleted ? 'line-through text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}
+                                  >
+                                    {getDisplayName(common, textTransform)}
+                                  </span>
+                                </div>
                               </div>
-                            </div>
 
-                            <div className='flex items-center gap-6'>
-                              {/* Quantity Controls / Display - "Split Pill" Design (Cloned from SortableCartItem) */}
-                              {isEditMode && !isDeleted ? (
-                                /* EXACT STYLE FROM SortableCartItem.tsx */
-                                <div className='flex items-center bg-white dark:bg-gray-900 rounded-lg border shadow-xs h-6 overflow-hidden transition-colors w-18 border-gray-200 dark:border-gray-700'>
-                                  {/* Pack Input */}
-                                  <input
-                                    type='number'
-                                    min='0'
-                                    placeholder={hasDualMode ? 'P' : '1'}
-                                    value={packQty === 0 ? '' : packQty}
-                                    onChange={(e) => {
-                                      const val =
-                                        e.target.value === '' ? 0 : parseFloat(e.target.value);
-                                      if (isNaN(val)) return;
-                                      // Use common as target if packItem missing (e.g. adding pack to unit-only)
-                                      const targetItem = packItem || common;
-                                      // Delta MUST be calculated against CURRENT DISPLAYED QTY (packQty), not original
-                                      if (targetItem)
-                                        handleQuantityChange(targetItem, false, val - packQty);
-                                    }}
-                                    className={`h-full text-center bg-transparent focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 font-bold text-[10px] text-gray-900 dark:text-gray-100 shrink-0 min-w-0 ${hasDualMode ? 'w-1/2' : 'w-full'}`}
-                                  />
-
-                                  {/* Separator */}
-                                  {hasDualMode && (
-                                    <div className='w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0'></div>
-                                  )}
-
-                                  {/* Unit Input - Only if Dual Mode */}
-                                  {hasDualMode && (
+                              <div className='flex items-center gap-6'>
+                                {/* Quantity Controls / Display - "Split Pill" Design (Cloned from SortableCartItem) */}
+                                {isEditMode && !isDeleted ? (
+                                  /* EXACT STYLE FROM SortableCartItem.tsx */
+                                  <div className='flex items-center bg-white dark:bg-gray-900 rounded-lg border shadow-xs h-6 overflow-hidden transition-colors w-18 border-gray-200 dark:border-gray-700'>
+                                    {/* Pack Input */}
                                     <input
                                       type='number'
                                       min='0'
-                                      placeholder='U'
-                                      value={unitQty === 0 ? '' : unitQty}
+                                      placeholder={hasDualMode ? 'P' : '1'}
+                                      value={packQty === 0 ? '' : packQty}
                                       onChange={(e) => {
                                         const val =
-                                          e.target.value === '' ? 0 : parseInt(e.target.value);
+                                          e.target.value === '' ? 0 : parseFloat(e.target.value);
                                         if (isNaN(val)) return;
-                                        const targetItem = unitItem || common;
-                                        // Delta MUST be calculated against CURRENT DISPLAYED QTY (unitQty)
+                                        // Use common as target if packItem missing (e.g. adding pack to unit-only)
+                                        const targetItem = packItem || common;
+                                        // Delta MUST be calculated against CURRENT DISPLAYED QTY (packQty), not original
                                         if (targetItem)
-                                          handleQuantityChange(targetItem, true, val - unitQty);
+                                          handleQuantityChange(targetItem, false, val - packQty);
                                       }}
-                                      className='h-full w-1/2 text-center bg-transparent focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-blue-200 font-bold text-[10px] text-primary-600 dark:text-blue-400 shrink-0 min-w-0'
+                                      className={`h-full text-center bg-transparent focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 font-bold text-[10px] text-gray-900 dark:text-gray-100 shrink-0 min-w-0 ${hasDualMode ? 'w-1/2' : 'w-full'}`}
                                     />
-                                  )}
-                                </div>
-                              ) : (
-                                /* View Mode - Static Split Pill (Matching exact dimensions) */
-                                <div className='flex items-center justify-center bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 h-6 overflow-hidden shadow-xs w-18'>
-                                  {hasDualMode ? (
-                                    <div className='flex items-center gap-0 w-full'>
-                                      <span
-                                        className={`flex-1 text-center font-bold text-[10px] ${packQty > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-300 dark:text-gray-600'}`}
-                                      >
-                                        {packQty}
-                                      </span>
+
+                                    {/* Separator */}
+                                    {hasDualMode && (
                                       <div className='w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0'></div>
-                                      <span
-                                        className={`flex-1 text-center font-bold text-[10px] ${unitQty > 0 ? 'text-primary-600 dark:text-blue-400' : 'text-blue-200 dark:text-blue-900/40'}`}
-                                      >
-                                        {unitQty === 0 && unitQty !== undefined ? 'U' : unitQty}
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <span className='font-bold text-[10px] text-gray-900 dark:text-gray-100'>
-                                      {packQty}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
+                                    )}
 
-                              {/* Discount Control - Edit Mode Only */}
-                              {isEditMode &&
-                                !isDeleted &&
-                                (() => {
-                                  const drug = inventory.find((d) => d.id === common.id);
-                                  const cost = drug?.costPrice || 0;
-                                  const price = common.publicPrice || 0;
-                                  const margin = pricing.actualMargin(cost, price);
-                                  let calculatedMax = 10;
-                                  if (margin < 20) calculatedMax = Math.floor(margin / 2);
-                                  const effectiveMax =
-                                    drug?.maxDiscount && drug.maxDiscount > 0
-                                      ? drug.maxDiscount
-                                      : calculatedMax;
-                                  const currentDiscount = getItemDiscount(
-                                    common.id,
-                                    common.discount || 0
-                                  );
-
-                                  return (
-                                    <div
-                                      title={`Max: ${effectiveMax}%`}
-                                      className={`flex items-center rounded-lg border shadow-xs h-6 overflow-hidden transition-colors w-14 shrink-0 ${
-                                        currentDiscount > 0
-                                          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                                          : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'
-                                      }`}
-                                    >
-                                      <button
-                                        onClick={() => {
-                                          const newVal = currentDiscount === 0 ? effectiveMax : 0;
-                                          handleDiscountChange(common.id, newVal);
-                                        }}
-                                        className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${
-                                          currentDiscount > 0
-                                            ? 'text-green-600 dark:text-green-400'
-                                            : 'text-gray-400'
-                                        }`}
-                                      >
-                                        <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
-                                          percent
-                                        </span>
-                                      </button>
+                                    {/* Unit Input - Only if Dual Mode */}
+                                    {hasDualMode && (
                                       <input
                                         type='number'
-                                        value={currentDiscount || ''}
-                                        placeholder='0'
-                                        onClick={(e) => e.stopPropagation()}
+                                        min='0'
+                                        placeholder='U'
+                                        value={unitQty === 0 ? '' : unitQty}
                                         onChange={(e) => {
-                                          const val = parseFloat(e.target.value);
-                                          let finalVal = !isNaN(val) && val >= 0 ? val : 0;
-                                          if (finalVal > effectiveMax) finalVal = effectiveMax;
-                                          handleDiscountChange(common.id, finalVal);
+                                          const val =
+                                            e.target.value === '' ? 0 : parseInt(e.target.value);
+                                          if (isNaN(val)) return;
+                                          const targetItem = unitItem || common;
+                                          // Delta MUST be calculated against CURRENT DISPLAYED QTY (unitQty)
+                                          if (targetItem)
+                                            handleQuantityChange(targetItem, true, val - unitQty);
                                         }}
-                                        className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                                          currentDiscount > 0
-                                            ? 'text-green-700 dark:text-green-300 placeholder-green-300'
-                                            : 'text-gray-900 dark:text-gray-100 placeholder-gray-400'
-                                        }`}
+                                        className='h-full w-1/2 text-center bg-transparent focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-blue-200 font-bold text-[10px] text-primary-600 dark:text-blue-400 shrink-0 min-w-0'
                                       />
-                                    </div>
-                                  );
-                                })()}
-
-                              {/* Price Display */}
-                              <div className='flex flex-col items-end min-w-[70px]'>
-                                <span className='text-xs text-gray-400 uppercase tracking-wider text-[10px]'>
-                                  {t.publicPrice || 'Price'}
-                                </span>
-                                <span className='font-bold text-gray-900 dark:text-gray-100 text-sm'>
-                                  {formatCurrency(
-                                    pricing.afterDiscount(
-                                      totalPrice,
-                                      getItemDiscount(common.id, common.discount || 0)
-                                    )
-                                  )}
-                                </span>
-                              </div>
-
-                              {/* Delete/Restore Button */}
-                              {isEditMode &&
-                                (isDeleted ? (
-                                  <button
-                                    onClick={() => handleRestoreFullItem(common.id)}
-                                    className='w-8 h-8 flex items-center justify-center rounded-lg text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors'
-                                    title={t.restore || 'Restore'}
-                                  >
-                                    <span className='material-symbols-rounded'>undo</span>
-                                  </button>
+                                    )}
+                                  </div>
                                 ) : (
-                                  <button
-                                    onClick={() =>
-                                      handleDeleteFullItem(common.id, packItem, unitItem)
-                                    }
-                                    className='w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors'
-                                    title={t.delete || 'Delete'}
-                                  >
-                                    <span className='material-symbols-rounded text-xl'>delete</span>
-                                  </button>
-                                ))}
+                                  /* View Mode - Static Split Pill (Matching exact dimensions) */
+                                  <div className='flex items-center justify-center bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 h-6 overflow-hidden shadow-xs w-18'>
+                                    {hasDualMode ? (
+                                      <div className='flex items-center gap-0 w-full'>
+                                        <span
+                                          className={`flex-1 text-center font-bold text-[10px] ${packQty > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-300 dark:text-gray-600'}`}
+                                        >
+                                          {packQty}
+                                        </span>
+                                        <div className='w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0'></div>
+                                        <span
+                                          className={`flex-1 text-center font-bold text-[10px] ${unitQty > 0 ? 'text-primary-600 dark:text-blue-400' : 'text-blue-200 dark:text-blue-900/40'}`}
+                                        >
+                                          {unitQty === 0 && unitQty !== undefined ? 'U' : unitQty}
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <span className='font-bold text-[10px] text-gray-900 dark:text-gray-100'>
+                                        {packQty}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Discount Control - Edit Mode Only */}
+                                {isEditMode &&
+                                  !isDeleted &&
+                                  (() => {
+                                    const drug = inventory.find((d) => d.id === common.id);
+                                    const cost = drug?.costPrice || 0;
+                                    const price = common.publicPrice || 0;
+                                    const margin = pricing.actualMargin(cost, price);
+                                    let calculatedMax = 10;
+                                    if (margin < 20) calculatedMax = Math.floor(margin / 2);
+                                    const effectiveMax =
+                                      drug?.maxDiscount && drug.maxDiscount > 0
+                                        ? drug.maxDiscount
+                                        : calculatedMax;
+                                    const currentDiscount = getItemDiscount(
+                                      common.id,
+                                      common.discount || 0
+                                    );
+
+                                    return (
+                                      <div
+                                        title={`Max: ${effectiveMax}%`}
+                                        className={`flex items-center rounded-lg border shadow-xs h-6 overflow-hidden transition-colors w-14 shrink-0 ${currentDiscount > 0
+                                            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                                            : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'
+                                          }`}
+                                      >
+                                        <button
+                                          onClick={() => {
+                                            const newVal = currentDiscount === 0 ? effectiveMax : 0;
+                                            handleDiscountChange(common.id, newVal);
+                                          }}
+                                          className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${currentDiscount > 0
+                                              ? 'text-green-600 dark:text-green-400'
+                                              : 'text-gray-400'
+                                            }`}
+                                        >
+                                          <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
+                                            percent
+                                          </span>
+                                        </button>
+                                        <input
+                                          type='number'
+                                          value={currentDiscount || ''}
+                                          placeholder='0'
+                                          onClick={(e) => e.stopPropagation()}
+                                          onChange={(e) => {
+                                            const val = parseFloat(e.target.value);
+                                            let finalVal = !isNaN(val) && val >= 0 ? val : 0;
+                                            if (finalVal > effectiveMax) finalVal = effectiveMax;
+                                            handleDiscountChange(common.id, finalVal);
+                                          }}
+                                          className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${currentDiscount > 0
+                                              ? 'text-green-700 dark:text-green-300 placeholder-green-300'
+                                              : 'text-gray-900 dark:text-gray-100 placeholder-gray-400'
+                                            }`}
+                                        />
+                                      </div>
+                                    );
+                                  })()}
+
+                                {/* Price Display */}
+                                <div className='flex flex-col items-end min-w-[70px]'>
+                                  <span className='text-xs text-gray-400 uppercase tracking-wider text-[10px]'>
+                                    {t.publicPrice || 'Price'}
+                                  </span>
+                                  <span className='font-bold text-gray-900 dark:text-gray-100 text-sm'>
+                                    {formatCurrency(
+                                      pricing.afterDiscount(
+                                        totalPrice,
+                                        getItemDiscount(common.id, common.discount || 0)
+                                      )
+                                    )}
+                                  </span>
+                                </div>
+
+                                {/* Delete/Restore Button */}
+                                {isEditMode &&
+                                  (isDeleted ? (
+                                    <button
+                                      onClick={() => handleRestoreFullItem(common.id)}
+                                      className='w-8 h-8 flex items-center justify-center rounded-lg text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors'
+                                      title={t.restore || 'Restore'}
+                                    >
+                                      <span className='material-symbols-rounded'>undo</span>
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() =>
+                                        handleDeleteFullItem(common.id, packItem, unitItem)
+                                      }
+                                      className='w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors'
+                                      title={t.delete || 'Delete'}
+                                    >
+                                      <span className='material-symbols-rounded text-xl'>delete</span>
+                                    </button>
+                                  ))}
+                              </div>
                             </div>
-                          </div>
-                        </MaterialTabs>
-                      );
-                    });
-                  })()}
-                </div>
-              ) : (
-                /* Modification History View */
-                <div className='relative pl-6 space-y-2 py-2' dir='ltr'>
-                  {/* Vertical Timeline Rail */}
-                  <div className='absolute left-[11px] top-4 bottom-4 w-0.5 bg-gray-200 dark:bg-gray-800 z-0'></div>
-
-                  {selectedSale.modificationHistory
-                    ?.slice()
-                    .reverse()
-                    .map((record, idx) => {
-                      const isExpanded = expandedHistoryRecordId === record.id;
-                      const date = new Date(record.timestamp);
-                      const timeStr = date.toLocaleString(currentLanguage === 'AR' ? 'ar-EG-u-nu-latn' : 'en-US', {
-                        hour: 'numeric',
-                        minute: 'numeric',
-                        hour12: true,
+                          </MaterialTabs>
+                        );
                       });
+                    })()}
+                  </div>
+                ) : (
+                  /* Modification History View */
+                  <div className='relative pl-6 space-y-2 py-2' dir='ltr'>
+                    {/* Vertical Timeline Rail */}
+                    <div className='absolute left-[11px] top-4 bottom-4 w-0.5 bg-gray-200 dark:bg-gray-800 z-0'></div>
 
-                      // Calculate relative time
-                      const getRelativeTime = (d: Date) => {
-                        const now = new Date();
-                        const diff = now.getTime() - d.getTime();
-                        const mins = Math.floor(diff / 60000);
-                        const hours = Math.floor(mins / 60);
-                        const days = Math.floor(hours / 24);
-
-                        if (mins < 1) return t.justNow || 'Just now';
-                        if (mins < 60)
-                          return currentLanguage === 'AR'
-                            ? `${t.ago || 'منذ'} ${mins} د`
-                            : `${mins}m ${t.ago || 'ago'}`;
-                        if (hours < 24)
-                          return currentLanguage === 'AR'
-                            ? `${t.ago || 'منذ'} ${hours} س`
-                            : `${hours}h ${t.ago || 'ago'}`;
-                        return date.toLocaleDateString(currentLanguage === 'AR' ? 'ar-EG-u-nu-latn' : 'en-US', {
-                          day: 'numeric',
-                          month: 'short',
+                    {selectedSale.modificationHistory
+                      ?.slice()
+                      .reverse()
+                      .map((record, idx) => {
+                        const isExpanded = expandedHistoryRecordId === record.id;
+                        const date = new Date(record.timestamp);
+                        const timeStr = date.toLocaleString(currentLanguage === 'AR' ? 'ar-EG-u-nu-latn' : 'en-US', {
+                          hour: 'numeric',
+                          minute: 'numeric',
+                          hour12: true,
                         });
-                      };
 
-                      const hasDeletions = record.modifications.some(
-                        (m) => m.type === 'item_removed'
-                      );
-                      const nodeColor = hasDeletions ? 'red' : 'orange';
+                        // Calculate relative time
+                        const getRelativeTime = (d: Date) => {
+                          const now = new Date();
+                          const diff = now.getTime() - d.getTime();
+                          const mins = Math.floor(diff / 60000);
+                          const hours = Math.floor(mins / 60);
+                          const days = Math.floor(hours / 24);
 
-                      return (
-                        <div key={record.id} className='relative z-10'>
-                          {/* Timeline Node */}
-                          <div
-                            className={`absolute -left-[18px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-xs transition-all duration-300 ${
-                              isExpanded
-                                ? hasDeletions
-                                  ? 'bg-red-500 scale-110'
-                                  : 'bg-orange-500 scale-125'
-                                : hasDeletions
-                                  ? 'bg-red-300'
-                                  : 'bg-orange-300'
-                            }`}
-                          ></div>
+                          if (mins < 1) return t.justNow || 'Just now';
+                          if (mins < 60)
+                            return currentLanguage === 'AR'
+                              ? `${t.ago || 'منذ'} ${mins} د`
+                              : `${mins}m ${t.ago || 'ago'}`;
+                          if (hours < 24)
+                            return currentLanguage === 'AR'
+                              ? `${t.ago || 'منذ'} ${hours} س`
+                              : `${hours}h ${t.ago || 'ago'}`;
+                          return date.toLocaleDateString(currentLanguage === 'AR' ? 'ar-EG-u-nu-latn' : 'en-US', {
+                            day: 'numeric',
+                            month: 'short',
+                          });
+                        };
 
-                          <MaterialTabs
-                            index={idx}
-                            total={selectedSale.modificationHistory?.length || 0}
-                            className={`h-auto! py-3 transition-all duration-300 ${isExpanded ? 'bg-gray-100 hover:bg-gray-200/50 dark:bg-gray-900/40 dark:hover:bg-white/10 dark:ring-1 dark:ring-gray-800 shadow-xs' : 'hover:bg-gray-100/50 dark:hover:bg-white/10'}`}
-                            onClick={() =>
-                              setExpandedHistoryRecordId(isExpanded ? null : record.id)
-                            }
-                          >
-                            <div className='flex flex-col w-full'>
-                              {/* Collapsed Timeline Summary */}
-                              <div
-                                className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${!isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
-                              >
-                                <div className='overflow-hidden min-h-0'>
-                                  <div className='flex items-center justify-between w-full gap-4'>
-                                    <div className='flex flex-col gap-0.5 min-w-0'>
-                                      <div className='flex items-center gap-2'>
-                                        <span className='text-xs font-bold text-gray-500 dark:text-gray-400 whitespace-nowrap'>
-                                          {getRelativeTime(date)}
-                                        </span>
-                                        <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
-                                        <span className='text-sm font-bold text-gray-900 dark:text-gray-100 truncate' dir='rtl'>
-                                          {record.modifications.length}{' '}
-                                          {record.modifications.length === 1
-                                            ? t.modification || 'Change'
-                                            : t.modifications || 'Changes'}
-                                        </span>
+                        const hasDeletions = record.modifications.some(
+                          (m) => m.type === 'item_removed'
+                        );
+                        const nodeColor = hasDeletions ? 'red' : 'orange';
+
+                        return (
+                          <div key={record.id} className='relative z-10'>
+                            {/* Timeline Node */}
+                            <div
+                              className={`absolute -left-[18px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-xs transition-all duration-300 ${isExpanded
+                                  ? hasDeletions
+                                    ? 'bg-red-500 scale-110'
+                                    : 'bg-orange-500 scale-125'
+                                  : hasDeletions
+                                    ? 'bg-red-300'
+                                    : 'bg-orange-300'
+                                }`}
+                            ></div>
+
+                            <MaterialTabs
+                              index={idx}
+                              total={selectedSale.modificationHistory?.length || 0}
+                              className={`h-auto! py-3 transition-all duration-300 ${isExpanded ? 'bg-gray-100 hover:bg-gray-200/50 dark:bg-gray-900/40 dark:hover:bg-white/10 dark:ring-1 dark:ring-gray-800 shadow-xs' : 'hover:bg-gray-100/50 dark:hover:bg-white/10'}`}
+                              onClick={() =>
+                                setExpandedHistoryRecordId(isExpanded ? null : record.id)
+                              }
+                            >
+                              <div className='flex flex-col w-full'>
+                                {/* Collapsed Timeline Summary */}
+                                <div
+                                  className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${!isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+                                >
+                                  <div className='overflow-hidden min-h-0'>
+                                    <div className='flex items-center justify-between w-full gap-4'>
+                                      <div className='flex flex-col gap-0.5 min-w-0'>
+                                        <div className='flex items-center gap-2'>
+                                          <span className='text-xs font-bold text-gray-500 dark:text-gray-400 whitespace-nowrap'>
+                                            {getRelativeTime(date)}
+                                          </span>
+                                          <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
+                                          <span className='text-sm font-bold text-gray-900 dark:text-gray-100 truncate' dir='rtl'>
+                                            {record.modifications.length}{' '}
+                                            {record.modifications.length === 1
+                                              ? t.modification || 'Change'
+                                              : t.modifications || 'Changes'}
+                                          </span>
+                                        </div>
+                                        <div className='flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500 flex-wrap'>
+                                          {record.modifications.map((m, mIdx) => {
+                                            const drug = inventory.find((d) => d.id === m.itemId);
+                                            const displayName = getDisplayName(
+                                              {
+                                                name: m.itemName,
+                                                dosageForm: m.dosageForm || drug?.dosageForm,
+                                              },
+                                              textTransform
+                                            );
+                                            return (
+                                              <span
+                                                key={mIdx}
+                                                className='whitespace-nowrap flex items-center'
+                                              >
+                                                {displayName}
+                                                {mIdx < record.modifications.length - 1 && (
+                                                  <span className='mx-1 opacity-50'>|</span>
+                                                )}
+                                              </span>
+                                            );
+                                          })}
+                                        </div>
                                       </div>
-                                      <div className='flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500 flex-wrap'>
-                                        {record.modifications.map((m, mIdx) => {
-                                          const drug = inventory.find((d) => d.id === m.itemId);
-                                          const displayName = getDisplayName(
-                                            {
-                                              name: m.itemName,
-                                              dosageForm: m.dosageForm || drug?.dosageForm,
-                                            },
-                                            textTransform
-                                          );
-                                          return (
-                                            <span
-                                              key={mIdx}
-                                              className='whitespace-nowrap flex items-center'
-                                            >
-                                              {displayName}
-                                              {mIdx < record.modifications.length - 1 && (
-                                                <span className='mx-1 opacity-50'>|</span>
-                                              )}
-                                            </span>
-                                          );
-                                        })}
-                                      </div>
-                                    </div>
 
                                       <div className='flex items-center gap-2 shrink-0'>
                                         {record.modifications.some((m) => m.type === 'item_removed') && (
@@ -1600,368 +1594,366 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                             add_circle
                                           </span>
                                         )}
-                                      {record.modifiedBy && (
-                                        <div className='flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hidden sm:flex'>
-                                          <span>{record.modifiedBy}</span>
-                                          <span className='material-symbols-rounded text-base'>
-                                            account_circle
-                                          </span>
-                                        </div>
-                                      )}
-                                      <span className='material-symbols-rounded text-gray-300 group-hover:text-primary-500 transition-transform duration-300 rotate-0'>
-                                        expand_more
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Expanded Timeline Detail */}
-                              <div
-                                className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
-                              >
-                                <div className='overflow-hidden min-h-0'>
-                                  <div className='space-y-4 pt-1'>
-                                    <div className='flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-800'>
-                                      <div className='flex flex-col'>
-                                        <span className='text-xs font-bold text-primary-600 dark:text-blue-400'>
-                                          {timeStr}
-                                        </span>
-                                        <span className='text-[10px] text-gray-500 uppercase tracking-widest'>
-                                          {date.toLocaleDateString(
-                                            currentLanguage === 'AR' ? 'ar-EG-u-nu-latn' : 'en-US',
-                                            { weekday: 'long', day: 'numeric', month: 'long' }
-                                          )}
-                                        </span>
-                                      </div>
-                                      <div className='flex items-center gap-3'>
                                         {record.modifiedBy && (
-                                          <div className='flex items-center gap-1.5 text-xs font-bold text-gray-600 dark:text-gray-400'>
-                                            {record.modifiedBy}
+                                          <div className='flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hidden sm:flex'>
+                                            <span>{record.modifiedBy}</span>
                                             <span className='material-symbols-rounded text-base'>
                                               account_circle
                                             </span>
                                           </div>
                                         )}
-                                        <span className='material-symbols-rounded text-gray-400 transition-transform duration-300 rotate-180'>
+                                        <span className='material-symbols-rounded text-gray-300 group-hover:text-primary-500 transition-transform duration-300 rotate-0'>
                                           expand_more
                                         </span>
                                       </div>
                                     </div>
+                                  </div>
+                                </div>
 
-                                    <div className='space-y-1'>
-                                      {record.modifications.map((mod, modIdx) => {
-                                        const isIncrease = (mod.newQuantity || 0) > (mod.previousQuantity || 0);
-                                        const isDeletion = mod.type === 'item_removed';
-                                        const isDiscount = mod.type === 'discount_update';
+                                {/* Expanded Timeline Detail */}
+                                <div
+                                  className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+                                >
+                                  <div className='overflow-hidden min-h-0'>
+                                    <div className='space-y-4 pt-1'>
+                                      <div className='flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-800'>
+                                        <div className='flex flex-col'>
+                                          <span className='text-xs font-bold text-primary-600 dark:text-blue-400'>
+                                            {timeStr}
+                                          </span>
+                                          <span className='text-[10px] text-gray-500 uppercase tracking-widest'>
+                                            {date.toLocaleDateString(
+                                              currentLanguage === 'AR' ? 'ar-EG-u-nu-latn' : 'en-US',
+                                              { weekday: 'long', day: 'numeric', month: 'long' }
+                                            )}
+                                          </span>
+                                        </div>
+                                        <div className='flex items-center gap-3'>
+                                          {record.modifiedBy && (
+                                            <div className='flex items-center gap-1.5 text-xs font-bold text-gray-600 dark:text-gray-400'>
+                                              {record.modifiedBy}
+                                              <span className='material-symbols-rounded text-base'>
+                                                account_circle
+                                              </span>
+                                            </div>
+                                          )}
+                                          <span className='material-symbols-rounded text-gray-400 transition-transform duration-300 rotate-180'>
+                                            expand_more
+                                          </span>
+                                        </div>
+                                      </div>
 
-                                        return (
-                                          <div
-                                            key={modIdx}
-                                            className='flex items-center gap-3 py-1'
-                                          >
-                                            <span
-                                              className={`shrink-0 ${
-                                                isDeletion
-                                                  ? 'text-red-600 dark:text-red-400'
-                                                  : isDiscount
-                                                    ? 'text-blue-600 dark:text-blue-400'
-                                                    : isIncrease
-                                                      ? 'text-green-600 dark:text-green-400'
-                                                      : 'text-orange-600 dark:text-orange-400'
-                                              }`}
+                                      <div className='space-y-1'>
+                                        {record.modifications.map((mod, modIdx) => {
+                                          const isIncrease = (mod.newQuantity || 0) > (mod.previousQuantity || 0);
+                                          const isDeletion = mod.type === 'item_removed';
+                                          const isDiscount = mod.type === 'discount_update';
+
+                                          return (
+                                            <div
+                                              key={modIdx}
+                                              className='flex items-center gap-3 py-1'
                                             >
-                                              <span className='material-symbols-rounded text-lg'>
-                                                {isDeletion ? 'delete' : 'edit_square'}
-                                              </span>
-                                            </span>
-
-                                            <div className='flex items-center justify-between flex-1 min-w-0 gap-4'>
-                                              <span className='font-bold text-gray-900 dark:text-gray-100 text-sm truncate'>
-                                                {(() => {
-                                                  const drug = inventory.find(
-                                                    (d) => d.id === mod.itemId
-                                                  );
-                                                  return getDisplayName(
-                                                    {
-                                                      name: mod.itemName,
-                                                      dosageForm: mod.dosageForm || drug?.dosageForm,
-                                                    },
-                                                    textTransform
-                                                  );
-                                                })()}
-                                              </span>
-                                              <div className='flex items-center gap-2 ml-8 shrink-0'>
-                                                <div
-                                                  className={`flex items-center gap-1.5 font-bold text-xs ${
-                                                    isDeletion
-                                                      ? 'text-red-600 dark:text-red-400'
-                                                      : isDiscount
-                                                        ? 'text-blue-600 dark:text-blue-400'
-                                                        : isIncrease
-                                                          ? 'text-green-600 dark:text-green-400'
-                                                          : 'text-orange-600 dark:text-orange-400'
+                                              <span
+                                                className={`shrink-0 ${isDeletion
+                                                    ? 'text-red-600 dark:text-red-400'
+                                                    : isDiscount
+                                                      ? 'text-blue-600 dark:text-blue-400'
+                                                      : isIncrease
+                                                        ? 'text-green-600 dark:text-green-400'
+                                                        : 'text-orange-600 dark:text-orange-400'
                                                   }`}
-                                                >
-                                                  {isDiscount ? (
-                                                    <>
-                                                      <span>{mod.previousDiscount}%</span>
-                                                      <span className='material-symbols-rounded text-sm opacity-50'>
-                                                        arrow_forward
+                                              >
+                                                <span className='material-symbols-rounded text-lg'>
+                                                  {isDeletion ? 'delete' : 'edit_square'}
+                                                </span>
+                                              </span>
+
+                                              <div className='flex items-center justify-between flex-1 min-w-0 gap-4'>
+                                                <span className='font-bold text-gray-900 dark:text-gray-100 text-sm truncate'>
+                                                  {(() => {
+                                                    const drug = inventory.find(
+                                                      (d) => d.id === mod.itemId
+                                                    );
+                                                    return getDisplayName(
+                                                      {
+                                                        name: mod.itemName,
+                                                        dosageForm: mod.dosageForm || drug?.dosageForm,
+                                                      },
+                                                      textTransform
+                                                    );
+                                                  })()}
+                                                </span>
+                                                <div className='flex items-center gap-2 ml-8 shrink-0'>
+                                                  <div
+                                                    className={`flex items-center gap-1.5 font-bold text-xs ${isDeletion
+                                                        ? 'text-red-600 dark:text-red-400'
+                                                        : isDiscount
+                                                          ? 'text-blue-600 dark:text-blue-400'
+                                                          : isIncrease
+                                                            ? 'text-green-600 dark:text-green-400'
+                                                            : 'text-orange-600 dark:text-orange-400'
+                                                      }`}
+                                                  >
+                                                    {isDiscount ? (
+                                                      <>
+                                                        <span>{mod.previousDiscount}%</span>
+                                                        <span className='material-symbols-rounded text-sm opacity-50'>
+                                                          arrow_forward
+                                                        </span>
+                                                        <span>{mod.newDiscount}%</span>
+                                                      </>
+                                                    ) : isDeletion ? (
+                                                      <span className='text-red-500 font-bold text-xs'>
+                                                        {t.deleted || 'Deleted'}{' '}
+                                                        {mod.previousQuantity}
                                                       </span>
-                                                      <span>{mod.newDiscount}%</span>
-                                                    </>
-                                                  ) : isDeletion ? (
-                                                    <span className='text-red-500 font-bold text-xs'>
-                                                      {t.deleted || 'Deleted'}{' '}
-                                                      {mod.previousQuantity}
-                                                    </span>
-                                                  ) : (
-                                                    <>
-                                                      <span>{mod.previousQuantity}</span>
-                                                      <span className='material-symbols-rounded text-sm opacity-50'>
-                                                        arrow_forward
-                                                      </span>
-                                                      <span>{mod.newQuantity}</span>
-                                                    </>
-                                                  )}
+                                                    ) : (
+                                                      <>
+                                                        <span>{mod.previousQuantity}</span>
+                                                        <span className='material-symbols-rounded text-sm opacity-50'>
+                                                          arrow_forward
+                                                        </span>
+                                                        <span>{mod.newQuantity}</span>
+                                                      </>
+                                                    )}
+                                                  </div>
                                                 </div>
                                               </div>
                                             </div>
-                                          </div>
-                                        );
-                                      })}
+                                          );
+                                        })}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          </MaterialTabs>
-                        </div>
-                      );
-                    })}
-                </div>
-              )}
+                            </MaterialTabs>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+
             </div>
+          ) : (
+            /* Table View */
+            <div className='flex-1 overflow-auto custom-scrollbar'>
+              <TanStackTable
+                data={filteredSales}
+                columns={columns}
+                enableSearch={false}
+                enableTopToolbar={false}
+                globalFilter={searchQuery}
+                searchPlaceholder={t.searchOrder || 'Search orders...'}
+                emptyMessage={t.noOrders || 'No delivery orders found'}
+                onRowClick={(row) => setSelectedSaleId(row.id)}
+                onRowContextMenu={handleRowContextMenu}
+                lite={true}
+                dense={true}
+                enablePagination={false}
+              />
+            </div>
+          )}
 
-          </div>
-        ) : (
-          /* Table View */
-          <div className='flex-1 overflow-auto custom-scrollbar'>
-            <TanStackTable
-              data={filteredSales}
-              columns={columns}
-              enableSearch={false}
-              enableTopToolbar={false}
-              globalFilter={searchQuery}
-              searchPlaceholder={t.searchOrder || 'Search orders...'}
-              emptyMessage={t.noOrders || 'No delivery orders found'}
-              onRowClick={(row) => setSelectedSaleId(row.id)}
-              onRowContextMenu={handleRowContextMenu}
-              lite={true}
-              dense={true}
-              enablePagination={false}
-            />
-          </div>
-        )}
-
-        {/* Footer Summary */}
-        <div className='mt-4 flex justify-between items-center text-sm border-t border-gray-100 dark:border-gray-800 pt-4'>
-          <div className='flex items-center gap-3'>
-            <div className='flex flex-col'>
-              <span className='text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest leading-none mb-1'>
-                {t.totalPending || 'Total Pending Value'}
-              </span>
-              <div className='flex items-center gap-2'>
-                <span className='text-xl font-black text-blue-600 dark:text-blue-400 tracking-tight'>
-                  {formatCurrency(pendingStats.total)}
+          {/* Footer Summary */}
+          <div className='mt-4 flex justify-between items-center text-sm border-t border-gray-100 dark:border-gray-800 pt-4'>
+            <div className='flex items-center gap-3'>
+              <div className='flex flex-col'>
+                <span className='text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest leading-none mb-1'>
+                  {t.totalPending || 'Total Pending Value'}
                 </span>
-                
-                <Tooltip
-                  content={
-                    <InsightTooltip
-                      title={t.pendingValueDetails}
-                      value={pendingStats.total}
-                      icon='analytics'
-                      iconColorClass='text-blue-500'
-                      language={currentLanguage}
-                      calculations={[
-                        {
-                          label: t.timeDistribution,
-                          math: (
-                            <div className='flex flex-col gap-1 w-full'>
-                              <div className='flex justify-between items-center text-[11px]'>
-                                <span className='opacity-60'>{t.today}:</span>
-                                <span>{formatCurrency(pendingStats.today.value, 'EGP', currentLanguage === 'AR' ? 'ar-EG' : 'en-US')}</span>
-                              </div>
-                              <div className='flex justify-between items-center text-[11px]'>
-                                <span className='opacity-60'>{t.last24Hours}:</span>
-                                <span>{formatCurrency(pendingStats.last24h.value, 'EGP', currentLanguage === 'AR' ? 'ar-EG' : 'en-US')}</span>
-                              </div>
-                              <div className='flex justify-between items-center text-[11px] border-t border-white/10 pt-1 mt-1'>
-                                <span className='opacity-60'>{t.older}:</span>
-                                <span>{formatCurrency(pendingStats.older.value, 'EGP', currentLanguage === 'AR' ? 'ar-EG' : 'en-US')}</span>
-                              </div>
-                            </div>
-                          ),
-                          isCurrency: false
-                        }
-                      ]}
-                      details={[
-                        {
-                          icon: 'today',
-                          label: t.todaysOrders,
-                          value: `${pendingStats.today.count} ${pendingStats.today.count === 1 ? t.orderSingular : t.orderPlural}`,
-                          isCurrency: false,
-                          colorClass: 'text-emerald-500'
-                        },
-                        {
-                          icon: 'history_toggle_off',
-                          label: t.last24Hours,
-                          value: `${pendingStats.last24h.count} ${pendingStats.last24h.count === 1 ? t.orderSingular : t.orderPlural}`,
-                          isCurrency: false,
-                          colorClass: 'text-blue-500'
-                        },
-                        {
-                          icon: 'event_busy',
-                          label: t.olderOrders,
-                          value: `${pendingStats.older.count} ${pendingStats.older.count === 1 ? t.orderSingular : t.orderPlural}`,
-                          isCurrency: false,
-                          colorClass: 'text-orange-500'
-                        }
-                      ]}
-                      footer={t.pendingValueInsightFooter}
-                    />
-                  }
-                >
-                  <span className='material-symbols-rounded text-gray-400 hover:text-blue-500 transition-colors cursor-help text-[20px]'>
-                    info
+                <div className='flex items-center gap-2'>
+                  <span className='text-xl font-black text-blue-600 dark:text-blue-400 tracking-tight'>
+                    {formatCurrency(pendingStats.total)}
                   </span>
-                </Tooltip>
+
+                  <Tooltip
+                    content={
+                      <InsightTooltip
+                        title={t.pendingValueDetails}
+                        value={pendingStats.total}
+                        icon='analytics'
+                        iconColorClass='text-blue-500'
+                        language={currentLanguage}
+                        calculations={[
+                          {
+                            label: t.timeDistribution,
+                            math: (
+                              <div className='flex flex-col gap-1 w-full'>
+                                <div className='flex justify-between items-center text-[11px]'>
+                                  <span className='opacity-60'>{t.today}:</span>
+                                  <span>{formatCurrency(pendingStats.today.value, 'EGP', currentLanguage === 'AR' ? 'ar-EG' : 'en-US')}</span>
+                                </div>
+                                <div className='flex justify-between items-center text-[11px]'>
+                                  <span className='opacity-60'>{t.last24Hours}:</span>
+                                  <span>{formatCurrency(pendingStats.last24h.value, 'EGP', currentLanguage === 'AR' ? 'ar-EG' : 'en-US')}</span>
+                                </div>
+                                <div className='flex justify-between items-center text-[11px] border-t border-white/10 pt-1 mt-1'>
+                                  <span className='opacity-60'>{t.older}:</span>
+                                  <span>{formatCurrency(pendingStats.older.value, 'EGP', currentLanguage === 'AR' ? 'ar-EG' : 'en-US')}</span>
+                                </div>
+                              </div>
+                            ),
+                            isCurrency: false
+                          }
+                        ]}
+                        details={[
+                          {
+                            icon: 'today',
+                            label: t.todaysOrders,
+                            value: `${pendingStats.today.count} ${pendingStats.today.count === 1 ? t.orderSingular : t.orderPlural}`,
+                            isCurrency: false,
+                            colorClass: 'text-emerald-500'
+                          },
+                          {
+                            icon: 'history_toggle_off',
+                            label: t.last24Hours,
+                            value: `${pendingStats.last24h.count} ${pendingStats.last24h.count === 1 ? t.orderSingular : t.orderPlural}`,
+                            isCurrency: false,
+                            colorClass: 'text-blue-500'
+                          },
+                          {
+                            icon: 'event_busy',
+                            label: t.olderOrders,
+                            value: `${pendingStats.older.count} ${pendingStats.older.count === 1 ? t.orderSingular : t.orderPlural}`,
+                            isCurrency: false,
+                            colorClass: 'text-orange-500'
+                          }
+                        ]}
+                        footer={t.pendingValueInsightFooter}
+                      />
+                    }
+                  >
+                    <span className='material-symbols-rounded text-gray-400 hover:text-blue-500 transition-colors cursor-help text-[20px]'>
+                      info
+                    </span>
+                  </Tooltip>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className='flex items-center gap-3'>
-            {canEdit && !isEditMode && selectedSaleId && selectedSale && (
+            <div className='flex items-center gap-3'>
+              {canEdit && !isEditMode && selectedSaleId && selectedSale && (
+                <button
+                  onClick={() => setIsEditMode(true)}
+                  className='px-6 py-2 bg-primary-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors'
+                >
+                  {t.editOrder || 'Edit Order'}
+                </button>
+              )}
               <button
-                onClick={() => setIsEditMode(true)}
-                className='px-6 py-2 bg-primary-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors'
+                onClick={onClose}
+                className='px-6 py-2 bg-transparent border border-transparent hover:border-gray-200 dark:hover:border-gray-700 text-gray-500 dark:text-gray-400 font-bold rounded-xl transition-all cursor-pointer'
               >
-                {t.editOrder || 'Edit Order'}
+                {t.close || 'Close'}
               </button>
-            )}
-            <button
-              onClick={onClose}
-              className='px-6 py-2 bg-transparent border border-transparent hover:border-gray-200 dark:hover:border-gray-700 text-gray-500 dark:text-gray-400 font-bold rounded-xl transition-all cursor-pointer'
-            >
-              {t.close || 'Close'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Modal>
-
-    {/* Cancel Confirmation Modal */}
-    {orderToCancelId && (
-      <Modal
-        isOpen={!!orderToCancelId}
-        onClose={() => setOrderToCancelId(null)}
-        title={t.cancel || 'Cancel Order'}
-        icon='warning'
-        size='sm'
-        hideCloseButton={true}
-        preventSidebar={true}
-      >
-        <div className='p-2'>
-          <p className='text-gray-600 dark:text-gray-400 mb-6'>
-            {t.cancelOrderConfirm}
-          </p>
-          <div className='flex justify-end gap-3'>
-            <button
-              onClick={() => setOrderToCancelId(null)}
-              className='px-4 py-2 font-bold text-zinc-500 dark:text-zinc-400 bg-transparent border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 rounded-lg transition-all cursor-pointer'
-            >
-              {t.keepOrder}
-            </button>
-            <button
-              onClick={() => {
-                onUpdateSale(orderToCancelId, { status: 'cancelled' });
-                setOrderToCancelId(null);
-              }}
-              className='px-4 py-2 font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2'
-            >
-              <span className='material-symbols-rounded text-sm'>block</span>
-              {t.cancel || 'Yes, Cancel'}
-            </button>
+            </div>
           </div>
         </div>
       </Modal>
-    )}
-    {/* Edit Guest Info Modal */}
-    {orderToEditGuestId && (
-      <Modal
-        isOpen={!!orderToEditGuestId}
-        onClose={() => setOrderToEditGuestId(null)}
-        title={t.editGuestInfo || 'Edit Guest Info'}
-        icon='person_add'
-        size='sm'
-        bodyClassName='p-1.5'
-        hideCloseButton={true}
-        preventSidebar={true}
-      >
-        <div className='flex flex-col gap-2'>
-          <div className='bg-zinc-50 dark:bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800/50'>
-            <div className='flex flex-col gap-1'>
-              <label className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
-                {t.tempCustomerName || 'Temporary Name'}
-              </label>
-              <SmartInput
-                type='text'
-                value={tempGuestName}
-                onChange={(e) => setTempGuestName(e.target.value)}
-                placeholder={t.guestCustomer || 'Guest Customer'}
-                className='!py-1.5'
-                autoFocus
-              />
+
+      {/* Cancel Confirmation Modal */}
+      {orderToCancelId && (
+        <Modal
+          isOpen={!!orderToCancelId}
+          onClose={() => setOrderToCancelId(null)}
+          title={t.cancel || 'Cancel Order'}
+          icon='warning'
+          size='sm'
+          hideCloseButton={true}
+          preventSidebar={true}
+        >
+          <div className='p-2'>
+            <p className='text-gray-600 dark:text-gray-400 mb-6'>
+              {t.cancelOrderConfirm}
+            </p>
+            <div className='flex justify-end gap-3'>
+              <button
+                onClick={() => setOrderToCancelId(null)}
+                className='px-4 py-2 font-bold text-zinc-500 dark:text-zinc-400 bg-transparent border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 rounded-lg transition-all cursor-pointer'
+              >
+                {t.keepOrder}
+              </button>
+              <button
+                onClick={() => {
+                  onUpdateSale(orderToCancelId, { status: 'cancelled' });
+                  setOrderToCancelId(null);
+                }}
+                className='px-4 py-2 font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2'
+              >
+                <span className='material-symbols-rounded text-sm'>block</span>
+                {t.cancel || 'Yes, Cancel'}
+              </button>
             </div>
           </div>
+        </Modal>
+      )}
+      {/* Edit Guest Info Modal */}
+      {orderToEditGuestId && (
+        <Modal
+          isOpen={!!orderToEditGuestId}
+          onClose={() => setOrderToEditGuestId(null)}
+          title={t.editGuestInfo || 'Edit Guest Info'}
+          icon='person_add'
+          size='sm'
+          bodyClassName='p-1.5'
+          hideCloseButton={true}
+          preventSidebar={true}
+        >
+          <div className='flex flex-col gap-2'>
+            <div className='bg-zinc-50 dark:bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800/50'>
+              <div className='flex flex-col gap-1'>
+                <label className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
+                  {t.tempCustomerName || 'Temporary Name'}
+                </label>
+                <SmartInput
+                  type='text'
+                  value={tempGuestName}
+                  onChange={(e) => setTempGuestName(e.target.value)}
+                  placeholder={t.guestCustomer || 'Guest Customer'}
+                  className='!py-1.5'
+                  autoFocus
+                />
+              </div>
+            </div>
 
-          <div className='bg-zinc-50 dark:bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800/50'>
-            <div className='flex flex-col gap-1'>
-              <label className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
-                {t.tempCustomerAddress || 'Temporary Address'}
-              </label>
-              <SmartTextarea
-                value={tempGuestAddress}
-                onChange={(e) => setTempGuestAddress(e.target.value)}
-                placeholder={t.addressPlaceholder || 'Enter full delivery address...'}
-                className='min-h-[60px] resize-none !py-1.5'
-              />
+            <div className='bg-zinc-50 dark:bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800/50'>
+              <div className='flex flex-col gap-1'>
+                <label className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
+                  {t.tempCustomerAddress || 'Temporary Address'}
+                </label>
+                <SmartTextarea
+                  value={tempGuestAddress}
+                  onChange={(e) => setTempGuestAddress(e.target.value)}
+                  placeholder={t.addressPlaceholder || 'Enter full delivery address...'}
+                  className='min-h-[60px] resize-none !py-1.5'
+                />
+              </div>
+            </div>
+
+            <div className='flex gap-1.5'>
+              <button
+                onClick={handleSaveGuestInfo}
+                disabled={
+                  !originalGuestInfo ||
+                  (tempGuestName === originalGuestInfo.name && tempGuestAddress === originalGuestInfo.address)
+                }
+                className='flex-1 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-black rounded-lg transition-all uppercase tracking-widest hover:opacity-90 active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed cursor-pointer'
+              >
+                {t.saveChanges || 'Save'}
+              </button>
+              <button
+                onClick={() => setOrderToEditGuestId(null)}
+                className='px-4 py-1.5 bg-transparent text-zinc-500 dark:text-zinc-400 text-xs font-black rounded-lg transition-all uppercase tracking-widest border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 cursor-pointer'
+              >
+                {t.cancel || 'Cancel'}
+              </button>
             </div>
           </div>
-
-          <div className='flex gap-1.5'>
-            <button
-              onClick={handleSaveGuestInfo}
-              disabled={
-                !originalGuestInfo ||
-                (tempGuestName === originalGuestInfo.name && tempGuestAddress === originalGuestInfo.address)
-              }
-              className='flex-1 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-black rounded-lg transition-all uppercase tracking-widest hover:opacity-90 active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed cursor-pointer'
-            >
-              {t.saveChanges || 'Save'}
-            </button>
-            <button
-              onClick={() => setOrderToEditGuestId(null)}
-              className='px-4 py-1.5 bg-transparent text-zinc-500 dark:text-zinc-400 text-xs font-black rounded-lg transition-all uppercase tracking-widest border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 cursor-pointer'
-            >
-              {t.cancel || 'Cancel'}
-            </button>
-          </div>
-        </div>
-      </Modal>
-    )}
+        </Modal>
+      )}
     </>
   );
 };

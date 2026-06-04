@@ -98,7 +98,7 @@ export interface POSCartSidebarProps {
   setMobileTab: (tab: 'products' | 'cart') => void;
   cart: CartItem[];
   totalItems: number;
-  t: any;
+  t: Translations;
   cartTotal: number;
   sidebarWidth: number;
   startResizing: (e: any) => void;
@@ -207,9 +207,9 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
 
   const { triggerProps } = useContextMenuTrigger({
     content: (
-      <DeliveryCalculatorContent 
-        globalDeliveryFee={globalDeliveryFee} 
-        setDeliveryFee={setDeliveryFee} 
+      <DeliveryCalculatorContent
+        globalDeliveryFee={globalDeliveryFee}
+        setDeliveryFee={setDeliveryFee}
         hideMenu={hideMenu}
         t={t}
       />
@@ -235,13 +235,13 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
   // Uses Unit-First logic for both revenue and cost to ensure zero discrepancy.
   const totalProfit = useMemo(() => {
     if (!permissionsService.can('reports.view_financial')) return 0;
-    
+
     const totalCost = cart.reduce((acc, item) => {
       const totalUnits = (item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1));
-      const unitCost = item.unitCostPrice || (item.unitsPerPack && item.unitsPerPack > 1 
-        ? money.divide(item.costPrice || 0, item.unitsPerPack) 
+      const unitCost = item.unitCostPrice || (item.unitsPerPack && item.unitsPerPack > 1
+        ? money.divide(item.costPrice || 0, item.unitsPerPack)
         : (item.costPrice || 0));
-        
+
       return money.add(acc, money.multiply(unitCost, totalUnits, 0));
     }, 0);
 
@@ -254,9 +254,8 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
     <>
       {/* Mobile Floating Cart Summary (Only in Products View) */}
       <div
-        className={`lg:hidden fixed bottom-20 left-4 right-4 z-20 ${
-          mobileTab === 'products' && cart.length > 0 ? 'block' : 'hidden'
-        }`}
+        className={`lg:hidden fixed bottom-20 left-4 right-4 z-20 ${mobileTab === 'products' && cart.length > 0 ? 'block' : 'hidden'
+          }`}
       >
         <button
           onClick={() => setMobileTab('cart')}
@@ -287,9 +286,8 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
       <div
         ref={sidebarRef}
         style={{ '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}
-        className={`w-full lg:w-(--sidebar-width) ${CARD_MD} border border-gray-200 dark:border-(--border-divider) flex flex-col overflow-hidden isolate relative h-full ${
-          mobileTab === 'products' ? 'hidden lg:flex' : 'flex'
-        }`}
+        className={`w-full lg:w-(--sidebar-width) ${CARD_MD} border border-gray-200 dark:border-(--border-divider) flex flex-col overflow-hidden isolate relative h-full ${mobileTab === 'products' ? 'hidden lg:flex' : 'flex'
+          }`}
       >
         <div className="px-4 py-3.5 border-b border-gray-200/60 dark:border-(--border-divider) bg-white/95 dark:bg-(--bg-card) backdrop-blur-xl shrink-0 flex items-center justify-between sticky top-0 z-10 rounded-t-2xl">
           <div className="flex items-center gap-3">
@@ -297,7 +295,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
             <h2 className="text-[15px] font-black text-gray-800 dark:text-gray-100 uppercase tracking-tight leading-none">
               {t.cartTitle}
             </h2>
-            
+
             {/* Status & Counts in one row */}
             <div className="flex items-center gap-2 text-[11px] font-bold text-gray-500 tracking-wider">
               {cart.length > 0 ? (
@@ -363,7 +361,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                           <div className="flex justify-between gap-4 text-xs">
                             <span className="opacity-70">{t.expMargin}</span>
                             <span className="font-bold tabular-nums text-emerald-400">
-                               {totalProfit >= 0 ? '+' : ''}{formatCurrency(totalProfit, 'EGP', undefined, 2, true)}
+                              {totalProfit >= 0 ? '+' : ''}{formatCurrency(totalProfit, 'EGP', undefined, 2, true)}
                             </span>
                           </div>
                           <p className="text-[9px] text-gray-400 font-medium leading-tight mt-1 border-t border-gray-100/10 pt-1">
@@ -414,18 +412,18 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                   commonItem={{} as any}
                   color={color}
                   t={t}
-                  showMenu={() => {}}
-                  removeFromCart={() => {}}
-                  toggleUnitMode={() => {}}
-                  updateItemDiscount={() => {}}
-                  setGlobalDiscount={() => {}}
-                  updateQuantity={() => {}}
-                  addToCart={() => {}}
-                  removeDrugFromCart={() => {}}
+                  showMenu={() => { }}
+                  removeFromCart={() => { }}
+                  toggleUnitMode={() => { }}
+                  updateItemDiscount={() => { }}
+                  setGlobalDiscount={() => { }}
+                  updateQuantity={() => { }}
+                  addToCart={() => { }}
+                  removeDrugFromCart={() => { }}
                   allBatches={[]}
-                  onSelectBatch={() => {}}
+                  onSelectBatch={() => { }}
                   currentLang={currentLang as any}
-                  onSearchInTable={() => {}}
+                  onSearchInTable={() => { }}
                   cart={[]}
                 />
               ))}
@@ -590,11 +588,10 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
             <div className='flex h-[42px] overflow-hidden'>
               {/* Standard Mode - Shrinks to 0 width when checkout or delivery active */}
               <div
-                className={`flex gap-2 transition-[width,opacity] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
-                  isCheckoutMode || isDeliveryMode
+                className={`flex gap-2 transition-[width,opacity] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isCheckoutMode || isDeliveryMode
                     ? 'w-0 opacity-0 overflow-hidden'
                     : 'w-full opacity-100'
-                }`}
+                  }`}
               >
                 <button
                   onClick={() => {
@@ -605,13 +602,12 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                   disabled={
                     !isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout') || isProcessing
                   }
-                  className={`flex-1 py-2.5 rounded-xl ${
-                    !isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout') || isProcessing
+                  className={`flex-1 py-2.5 rounded-xl ${!isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout') || isProcessing
                       ? BUTTON_INACTIVE
-                      : paymentMethod === 'visa' 
-                        ? 'bg-primary-600 hover:bg-blue-700 text-white cursor-pointer' 
+                      : paymentMethod === 'visa'
+                        ? 'bg-primary-600 hover:bg-blue-700 text-white cursor-pointer'
                         : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
-                  } font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}>
+                    } font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}>
                   {!isMobile && (
                     <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
                       {paymentMethod === 'visa' ? 'credit_card' : 'payments'}
@@ -628,11 +624,10 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                     disabled={
                       !isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout') || isProcessing
                     }
-                    className={`w-12 py-2.5 rounded-xl ${
-                      !isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout') || isProcessing
+                    className={`w-12 py-2.5 rounded-xl ${!isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout') || isProcessing
                         ? BUTTON_INACTIVE
                         : 'bg-emerald-100 dark:bg-[#3c3c3c] border border-(--border-divider) text-emerald-700 dark:text-gray-300 cursor-pointer'
-                    } transition-colors flex justify-center items-center shrink-0`}
+                      } transition-colors flex justify-center items-center shrink-0`}
                     title={t.deliveryOrder}>
                     <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
                       local_shipping
@@ -643,9 +638,8 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
 
               {/* Checkout Mode - Expands from 0 to full width */}
               <div
-                className={`flex gap-2 items-stretch transition-[width,opacity] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
-                  isCheckoutMode ? 'w-full opacity-100' : 'w-0 opacity-0 overflow-hidden'
-                }`}>
+                className={`flex gap-2 items-stretch transition-[width,opacity] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isCheckoutMode ? 'w-full opacity-100' : 'w-0 opacity-0 overflow-hidden'
+                  }`}>
                 {/* Amount Input */}
                 <div
                   className={`flex-1 bg-white dark:bg-gray-900 border border-primary-500 dark:border-primary-400 rounded-xl flex items-center px-3 gap-1 overflow-hidden whitespace-nowrap`}>
@@ -674,38 +668,36 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
 
                 {/* Change Display */}
                 <div
-                  className={`flex flex-col justify-center px-2 rounded-xl border min-w-[70px] transition-colors overflow-hidden whitespace-nowrap ${
-                    money.toSmallestUnit(parseFloat(amountPaid) || 0) >= money.toSmallestUnit(finalTotal)
+                  className={`flex flex-col justify-center px-2 rounded-xl border min-w-[70px] transition-colors overflow-hidden whitespace-nowrap ${money.toSmallestUnit(parseFloat(amountPaid) || 0) >= money.toSmallestUnit(finalTotal)
                       ? `bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700`
                       : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-                  }`}>
+                    }`}>
                   <span className='text-[8px] text-gray-500 uppercase font-bold text-center'>
                     {t.remainder || 'Change'}
                   </span>
                   <span
-                    className={`text-sm font-bold text-center tabular-nums ${
-                      money.isGte(parseFloat(amountPaid) || 0, finalTotal)
+                    className={`text-sm font-bold text-center tabular-nums ${money.isGte(parseFloat(amountPaid) || 0, finalTotal)
                         ? `text-primary-600 dark:text-primary-400`
                         : 'text-gray-400'
-                    }`}>
+                      }`}>
                     {formatCurrency(Math.max(0, money.subtract(parseFloat(amountPaid) || 0, finalTotal)), 'EGP', undefined, 2, true)}
                   </span>
                 </div>
 
                 {/* Confirm Button */}
-                  <button
-                    onClick={() => {
-                      if (isProcessing) return;
-                      handleCheckout('walk-in');
-                    }}
-                    disabled={isProcessing}
-                    className={`w-11 rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors shrink-0 ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                    {isProcessing ? (
-                      <span className='material-symbols-rounded animate-spin text-sm'>sync</span>
-                    ) : (
-                      <span className='material-symbols-rounded'>check</span>
-                    )}
-                  </button>
+                <button
+                  onClick={() => {
+                    if (isProcessing) return;
+                    handleCheckout('walk-in');
+                  }}
+                  disabled={isProcessing}
+                  className={`w-11 rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors shrink-0 ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                  {isProcessing ? (
+                    <span className='material-symbols-rounded animate-spin text-sm'>sync</span>
+                  ) : (
+                    <span className='material-symbols-rounded'>check</span>
+                  )}
+                </button>
 
                 {/* Cancel Button */}
                 <button
@@ -722,9 +714,8 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
 
               {/* Delivery Driver Mode - Expands from 0 to full width */}
               <div
-                className={`flex gap-2 items-stretch transition-[width,opacity] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
-                  isDeliveryMode ? 'w-full opacity-100' : 'w-0 opacity-0 overflow-hidden'
-                }`}>
+                className={`flex gap-2 items-stretch transition-[width,opacity] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isDeliveryMode ? 'w-full opacity-100' : 'w-0 opacity-0 overflow-hidden'
+                  }`}>
                 {/* Driver Select */}
                 <div className='flex-1 overflow-hidden relative'>
                   <select
@@ -773,19 +764,19 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                 </div>
 
                 {/* Confirm Button */}
-                  <button
-                    onClick={() => {
-                      if (isProcessing) return;
-                      handleCheckout('delivery', true);
-                    }}
-                    disabled={isProcessing}
-                    className={`w-11 rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors shrink-0 ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                    {isProcessing ? (
-                      <span className='material-symbols-rounded animate-spin text-sm'>sync</span>
-                    ) : (
-                      <span className='material-symbols-rounded'>check</span>
-                    )}
-                  </button>
+                <button
+                  onClick={() => {
+                    if (isProcessing) return;
+                    handleCheckout('delivery', true);
+                  }}
+                  disabled={isProcessing}
+                  className={`w-11 rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors shrink-0 ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                  {isProcessing ? (
+                    <span className='material-symbols-rounded animate-spin text-sm'>sync</span>
+                  ) : (
+                    <span className='material-symbols-rounded'>check</span>
+                  )}
+                </button>
 
                 {/* Cancel Button */}
                 <button

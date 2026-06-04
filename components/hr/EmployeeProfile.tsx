@@ -318,7 +318,7 @@ interface EmployeeProfileProps {
   sales: Sale[];
   employees?: Employee[];
   color: ThemeColor;
-  t: any;
+  t: Translations;
   language: 'EN' | 'AR';
   currentEmployeeId: string | null;
   isLoading?: boolean;
