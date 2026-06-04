@@ -26,6 +26,7 @@ const ANIMATION_DELAY = 50; // ms
 interface Translations {
   profile: {
     role: string;
+    signOut?: string;
   };
   menu: {
     modules: string;
@@ -46,6 +47,7 @@ interface MobileDrawerProps {
   profileImage: string | null;
   currentEmployeeId?: string | null;
   employees?: Employee[];
+  onLogout?: () => void;
 }
 
 // ============================================================================
@@ -87,6 +89,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
   profileImage,
   currentEmployeeId,
   employees = [],
+  onLogout,
 }) => {
   const { theme, language, hideInactiveModules, darkMode } = useSettings();
   const currentEmployee = employees.find(e => e.id === currentEmployeeId);
@@ -221,10 +224,9 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
       <aside
         ref={drawerRef}
         className={`
-          fixed top-0 bottom-0 w-[90vw] max-w-[360px] flex flex-col
-          bg-white/95 dark:bg-gray-900/95 backdrop-blur-3xl
-          ${isRTL ? 'right-0 border-l' : 'left-0 border-r'}
-          border-gray-200/50 dark:border-gray-800/50
+          fixed top-0 bottom-0 z-50 w-[85vw] max-w-[320px] flex flex-col
+          bg-(--bg-page-surface) shadow-xl
+          ${isRTL ? 'right-0 border-l border-(--border-divider)' : 'left-0 border-r border-(--border-divider)'}
           transition-transform duration-${ANIMATION_DURATION} cubic-bezier(0.32, 0.72, 0, 1)
           ${isAnimating ? 'translate-x-0' : isRTL ? 'translate-x-full' : '-translate-x-full'}
         `}
@@ -233,62 +235,50 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
         aria-label='Navigation menu'
       >
         {/* Header */}
-        <div className='p-6 pb-4 flex items-center justify-between border-b border-gray-200/30 dark:border-gray-800/30'>
-          <div className='flex items-center gap-3'>
-            <div className='relative'>
-              <div
-                className="flex items-center justify-center rounded-full"
-                style={{
-                  backgroundColor: theme.hex,
-                  width: '44px',
-                  height: '44px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                }}
-              >
-                {safeProfileImage ? (
-                  <img
-                    src={safeProfileImage}
-                    alt="User profile"
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                ) : (
-                  <span className='material-symbols-rounded text-white' aria-hidden='true'>
-                    person
-                  </span>
-                )}
-              </div>
-              <div
-                className='absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full'
-                aria-label='Online status'
-              />
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-(--border-divider)">
+          <div className="relative">
+            <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-(--bg-secondary) flex items-center justify-center ring-2 ring-(--border-divider)">
+              {safeProfileImage ? (
+                <img src={safeProfileImage} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className='material-symbols-rounded text-(--text-tertiary)'>person</span>
+              )}
             </div>
-            <div className='flex flex-col'>
-              <span className='text-sm font-black text-gray-900 dark:text-gray-100 leading-tight'>
-                {currentEmployeeId
-                  ? (currentEmployee?.name || authService.getCurrentUserSync()?.username || 'Zinc AI')
-                  : 'Zinc AI'
-                }
-              </span>
-              <span className='text-[11px] font-medium text-gray-500 dark:text-gray-400'>
-                {currentEmployeeId ? t.profile.role : 'System'}
-              </span>
-            </div>
+            <div className='absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-(--bg-page-surface) rounded-full' aria-label='Online status' />
           </div>
-
+          <div className="min-w-0 flex-1 flex flex-col">
+            <span className="text-sm font-bold text-(--text-primary) truncate">
+              {currentEmployeeId ? (currentEmployee?.name || authService.getCurrentUserSync()?.username || 'Zinc AI') : 'Zinc AI'}
+            </span>
+            <span className="text-xs text-primary-500 truncate">
+              {currentEmployeeId ? t.profile.role : 'System'}
+            </span>
+          </div>
+          {currentEmployeeId && onLogout && (
+            <button
+              onClick={() => {
+                onLogout();
+                onClose();
+              }}
+              className="flex items-center justify-center px-3 py-1.5 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-colors shrink-0"
+              aria-label={t.profile.signOut || 'Logout'}
+              type='button'
+            >
+              {t.profile.signOut || 'Logout'}
+            </button>
+          )}
           <button
             onClick={onClose}
-            className='w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-full transition-all'
+            className="flex items-center justify-center w-10 h-10 text-(--text-tertiary) hover:text-(--text-primary) transition-colors shrink-0"
             aria-label='Close menu'
             type='button'
           >
-            <span className='material-symbols-rounded text-[22px]' aria-hidden='true'>
-              close
-            </span>
+            <span className='material-symbols-rounded text-[22px]' aria-hidden='true'>menu_open</span>
           </button>
         </div>
 
         {/* Module Ribbon */}
-        <div className='py-3 border-y border-gray-200 dark:border-gray-800/30 bg-gray-50/50 dark:bg-gray-900/20'>
+        <div className='py-3 border-b border-(--border-divider) bg-(--bg-secondary)/50'>
           <div className='flex gap-2 overflow-x-auto px-4 scrollbar-hide mask-fade-edges'>
             {filteredMenuItems.map((module) => {
               const isActive = activeModule === module.id;
@@ -297,10 +287,10 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                   key={module.id}
                   onClick={() => handleModuleChange(module.id)}
                   className={`
-                    flex flex-col items-center justify-center p-2 min-w-[68px] rounded-2xl transition-all duration-300
+                    flex flex-col items-center justify-center p-2 min-w-[68px] rounded-xl transition-all duration-300
                     ${isActive
-                      ? `text-primary-600 dark:text-primary-400`
-                      : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'
+                      ? 'bg-(--bg-card) text-(--text-primary) shadow-xs ring-1 ring-(--border-divider)'
+                      : 'text-(--text-tertiary) hover:text-(--text-secondary) hover:bg-(--bg-secondary)'
                     }
                   `}
                   aria-label={getMenuTranslation(module.label, language)}
@@ -311,15 +301,14 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                     const IconComponent = getIconByName(module.icon || module.id);
                     return (
                       <IconComponent
-                        size={26}
+                        size={24}
                         active={isActive}
-                        className={`transition-all duration-500 ${isActive ? 'scale-110' : ''}`}
+                        className={`transition-all duration-500 ${isActive ? 'scale-110 text-primary-500' : ''}`}
                       />
                     );
                   })()}
                   <span
-                    className={`text-[10px] mt-1.5 font-bold whitespace-nowrap overflow-hidden text-ellipsis max-w-[60px] ${isActive ? 'opacity-100' : 'opacity-60'
-                      }`}
+                    className={`text-[10px] mt-1.5 font-bold whitespace-nowrap overflow-hidden text-ellipsis max-w-[60px] ${isActive ? 'opacity-100' : 'opacity-60'}`}
                   >
                     {getMenuTranslation(module.label, language)}
                   </span>
@@ -347,7 +336,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
         </div>
 
         {/* Footer */}
-        <div className='p-6 mt-auto border-t border-gray-200 dark:border-gray-800/30 bg-gray-50/80 dark:bg-gray-950/40'>
+        <div className='p-6 mt-auto border-t border-(--border-divider) bg-(--bg-secondary)/30'>
           <div className='flex justify-center opacity-40 grayscale hover:grayscale-0 transition-all cursor-default'>
             <img
               src={darkMode ? '/logo_word_white.svg' : '/logo_word_black.svg'}

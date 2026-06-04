@@ -196,33 +196,35 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
           }}
         >
           {/* Search Bar - Optimized to not unmount for better performance */}
-          <motion.div
-            initial={false}
-            animate={{ 
-              height: sidebarCollapsed ? 0 : 'auto',
-              opacity: sidebarCollapsed ? 0 : 1,
-              pointerEvents: sidebarCollapsed ? 'none' : 'auto',
-            }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-            className='px-3 overflow-hidden sticky top-0 z-10'
-            style={{ backgroundColor: 'var(--bg-navbar)' }}
-          >
-            <div className='py-3'>
-              <div className='relative'>
-                <SearchInput
-                  value={searchQuery}
-                  onSearchChange={setSearchQuery}
-                  onClear={() => setSearchQuery('')}
-                  placeholder={`${language === 'AR' ? 'بحث في' : 'Search in'} ${getMenuTranslation(activeModuleData?.label || '', language)}...`}
-                  color={theme}
-                  wrapperClassName='!bg-(--bg-card)'
-                  style={{
-                    color: 'var(--text-primary)',
-                  }}
-                />
+          {!hideSearch && (
+            <motion.div
+              initial={false}
+              animate={{ 
+                height: sidebarCollapsed ? 0 : 'auto',
+                opacity: sidebarCollapsed ? 0 : 1,
+                pointerEvents: sidebarCollapsed ? 'none' : 'auto',
+              }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className='px-3 overflow-hidden sticky top-0 z-10'
+              style={{ backgroundColor: 'var(--bg-navbar)' }}
+            >
+              <div className='py-3'>
+                <div className='relative'>
+                  <SearchInput
+                    value={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    onClear={() => setSearchQuery('')}
+                    placeholder={`${language === 'AR' ? 'بحث في' : 'Search in'} ${getMenuTranslation(activeModuleData?.label || '', language)}...`}
+                    color={theme}
+                    wrapperClassName='!bg-(--bg-card)'
+                    style={{
+                      color: 'var(--text-primary)',
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          )}
 
           {/* Submenus - Simplified Flat List */}
           <motion.nav
