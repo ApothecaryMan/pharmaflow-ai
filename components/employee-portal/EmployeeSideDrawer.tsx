@@ -13,6 +13,7 @@ interface EmployeeSideDrawerProps {
   sessionUsername?: string;
   language?: string;
   profileImage?: string | null;
+  t: any;
 }
 
 export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
@@ -25,7 +26,9 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
   sessionUsername,
   language,
   profileImage,
+  t,
 }) => {
+  const { theme, setTheme, setLanguage } = useSettings();
   const isRTL = language === 'AR';
   const overlayRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = React.useState(false);
@@ -59,18 +62,18 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
     return () => window.removeEventListener('keydown', handleEsc);
   }, [onClose]);
 
-  const { darkMode, setDarkMode, language: currentLang, setLanguage } = useSettings();
+
 
   const menuItems = [
     {
       id: 'requests' as const,
       icon: Clock,
-      label: isRTL ? 'الطلبات المعلقة' : 'Pending Requests',
+      label: t.employeeProfile.pendingRequests,
     },
     {
       id: 'profile' as const,
       icon: UserCircle,
-      label: isRTL ? 'الملف الشخصي' : 'Profile',
+      label: t.employeeProfile.profile,
     },
   ];
 
@@ -85,9 +88,8 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
       />
 
       <div
-        className={`fixed top-0 bottom-0 z-50 w-72 bg-(--bg-page-surface) border-s border-(--border-divider) shadow-xl transition-transform duration-300 ease-out ${
-          isRTL ? 'left-0' : 'right-0'
-        } ${visible ? 'translate-x-0' : isRTL ? '-translate-x-full' : 'translate-x-full'}`}
+        className={`fixed top-0 bottom-0 z-50 w-72 bg-(--bg-page-surface) border-s border-(--border-divider) shadow-xl transition-transform duration-300 ease-out ${isRTL ? 'left-0' : 'right-0'
+          } ${visible ? 'translate-x-0' : isRTL ? '-translate-x-full' : 'translate-x-full'}`}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
@@ -121,11 +123,10 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
                     onViewChange(item.id);
                     onClose();
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                    activeView === item.id
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeView === item.id
                       ? 'bg-(--bg-card) text-(--text-primary) shadow-xs'
                       : 'text-(--text-tertiary) hover:text-(--text-secondary)'
-                  }`}
+                    }`}
                 >
                   <item.icon className="w-5 h-5" />
                   {item.label}
@@ -137,8 +138,8 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
           {/* Dark Mode & Language Toggles */}
           <div className="px-3 pb-2 order-3">
             <div className="bg-(--bg-secondary) rounded-2xl p-1 space-y-0.5">
-              <SettingsToggle icon={Sun} iconOff={Moon} label={isRTL ? 'الوضع الليلي' : 'Dark Mode'} />
-              <LanguageToggle isRTL={isRTL} />
+              <SettingsToggle icon={Sun} iconOff={Moon} label={t.employeeProfile.darkMode} />
+              <LanguageToggle isRTL={isRTL} t={t} />
             </div>
           </div>
 
@@ -149,7 +150,7 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
               className="w-full p-2 text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-500 hover:text-white rounded-lg flex items-center justify-center gap-2 transition-colors"
             >
               <LogOut className="w-4 h-4" />
-              {isRTL ? 'تسجيل الخروج' : 'Sign Out'}
+              {t.employeeProfile.signOut}
             </button>
           </div>
 
@@ -186,7 +187,7 @@ const SettingsToggle: React.FC<{
 // LanguageToggle sub-component
 // ---------------------------------------------------------------------------
 
-const LanguageToggle: React.FC<{ isRTL: boolean }> = ({ isRTL }) => {
+const LanguageToggle: React.FC<{ isRTL: boolean; t: any }> = ({ isRTL, t }) => {
   const { language: currentLang, setLanguage } = useSettings();
 
   return (
@@ -196,7 +197,7 @@ const LanguageToggle: React.FC<{ isRTL: boolean }> = ({ isRTL }) => {
     >
       <span className="flex items-center gap-3">
         <Globe className="w-5 h-5" />
-        {isRTL ? 'اللغة' : 'Language'}
+        {t.employeeProfile.language}
       </span>
       <span className="text-xs font-bold uppercase tracking-wider text-(--text-secondary)">
         {currentLang}

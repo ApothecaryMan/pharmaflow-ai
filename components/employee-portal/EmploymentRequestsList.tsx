@@ -15,10 +15,12 @@ interface Props {
 export function EmploymentRequestsList({ requests, userId, username, onRefresh, t, language }: Props) {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [processingAction, setProcessingAction] = useState<'accept' | 'reject' | null>(null);
+  const [error, setError] = useState<{ id: string; message: string } | null>(null);
 
   const handleAccept = async (request: EmploymentRequest) => {
     setProcessingId(request.id);
     setProcessingAction('accept');
+    setError(null);
     try {
       const success = await employmentRequestRepository.acceptEmploymentRequest(
         request.id,
@@ -30,6 +32,7 @@ export function EmploymentRequestsList({ requests, userId, username, onRefresh, 
       }
     } catch (err) {
       console.error('Accept error:', err);
+      setError({ id: request.id, message: t.employeeProfile.operationFailed });
     } finally {
       setProcessingId(null);
       setProcessingAction(null);
@@ -39,6 +42,7 @@ export function EmploymentRequestsList({ requests, userId, username, onRefresh, 
   const handleReject = async (request: EmploymentRequest) => {
     setProcessingId(request.id);
     setProcessingAction('reject');
+    setError(null);
     try {
       const success = await employmentRequestRepository.updateStatus(request.id, 'rejected');
       if (success) {
@@ -46,6 +50,7 @@ export function EmploymentRequestsList({ requests, userId, username, onRefresh, 
       }
     } catch (err) {
       console.error('Reject error:', err);
+      setError({ id: request.id, message: t.employeeProfile.operationFailed });
     } finally {
       setProcessingId(null);
       setProcessingAction(null);
@@ -58,11 +63,9 @@ export function EmploymentRequestsList({ requests, userId, username, onRefresh, 
         <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-(--bg-tertiary) flex items-center justify-center mb-3 sm:mb-4">
           <Building2 className="w-6 h-6 sm:w-8 sm:h-8 text-(--text-tertiary)" />
         </div>
-        <h4 className="text-base sm:text-lg font-medium text-(--text-primary) mb-1.5 sm:mb-2">{t.login?.noPendingRequests || (language === 'AR' ? 'لا توجد طلبات معلقة' : 'No Pending Requests')}</h4>
+        <h4 className="text-base sm:text-lg font-medium text-(--text-primary) mb-1.5 sm:mb-2">{t.login?.noPendingRequests}</h4>
         <p className="text-sm sm:text-base text-(--text-tertiary) max-w-md">
-          {language === 'AR'
-            ? 'عندما ترسل لك أي صيدلية طلب توظيف، سيظهر هنا. يمكنك قبوله للوصول إلى نظام إدارة الصيدلية الخاص بهم.'
-            : 'When a pharmacy sends you an employment request, it will appear here. You can then accept it to gain access to their Point of Sale and management systems.'}
+          {t.employeeProfile.noPendingRequestsDesc}
         </p>
       </div>
     );
@@ -89,7 +92,7 @@ export function EmploymentRequestsList({ requests, userId, username, onRefresh, 
                 </span>
                 {request.sentByName && (
                   <span className="flex items-center gap-1">
-                    {language === 'AR' ? 'أرسل من:' : 'Sent by:'} <span className="text-(--text-primary) font-medium">{request.sentByName}</span>
+                    {t.employeeProfile.sentBy} <span className="text-(--text-primary) font-medium">{request.sentByName}</span>
                   </span>
                 )}
                 <span className="flex items-center gap-1 whitespace-nowrap text-(--text-tertiary)">
@@ -100,31 +103,38 @@ export function EmploymentRequestsList({ requests, userId, username, onRefresh, 
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-            <button
-              onClick={() => handleReject(request)}
-              disabled={processingId === request.id}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-(--bg-secondary) hover:bg-(--color-error)/10 text-(--text-secondary) hover:text-(--color-error) text-sm sm:text-base font-medium transition-colors disabled:opacity-50"
-            >
-              {processingId === request.id && processingAction === 'reject' ? (
-                <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-(--text-secondary)/30 border-t-(--text-secondary) rounded-full animate-spin" />
-              ) : (
-                <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              )}
-              <span>{processingId === request.id && processingAction === 'reject' ? (language === 'AR' ? 'جارٍ الرفض...' : 'Rejecting...') : t.login.reject}</span>
-            </button>
-            <button
-              onClick={() => handleAccept(request)}
-              disabled={processingId === request.id}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm sm:text-base font-semibold transition-colors disabled:opacity-50"
-            >
-              {processingId === request.id && processingAction === 'accept' ? (
-                <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              )}
-              <span>{processingId === request.id && processingAction === 'accept' ? (language === 'AR' ? 'جارٍ القبول...' : 'Accepting...') : t.login.accept}</span>
-            </button>
+          <div className="flex flex-col items-end gap-3 w-full sm:w-auto">
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+              <button
+                onClick={() => handleReject(request)}
+                disabled={processingId === request.id}
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-(--bg-secondary) hover:bg-(--color-error)/10 text-(--text-secondary) hover:text-(--color-error) text-sm sm:text-base font-medium transition-colors disabled:opacity-50"
+              >
+                {processingId === request.id && processingAction === 'reject' ? (
+                  <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-(--text-secondary)/30 border-t-(--text-secondary) rounded-full animate-spin" />
+                ) : (
+                  <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                )}
+                <span>{processingId === request.id && processingAction === 'reject' ? t.employeeProfile.rejecting : t.login.reject}</span>
+              </button>
+              <button
+                onClick={() => handleAccept(request)}
+                disabled={processingId === request.id}
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm sm:text-base font-semibold transition-colors disabled:opacity-50"
+              >
+                {processingId === request.id && processingAction === 'accept' ? (
+                  <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                )}
+                <span>{processingId === request.id && processingAction === 'accept' ? t.employeeProfile.accepting : t.login.accept}</span>
+              </button>
+            </div>
+            {error?.id === request.id && (
+              <div className="w-full text-center sm:text-end text-xs font-semibold text-(--color-error) bg-(--color-error)/10 px-3 py-1.5 rounded-lg animate-fade-in">
+                {error.message}
+              </div>
+            )}
           </div>
         </div>
       ))}

@@ -11,6 +11,7 @@ interface EmployeePortalProfileProps {
   sessionUsername: string | undefined;
   requests: EmploymentRequest[];
   language?: string;
+  t: any;
   onUpdateProfile?: (updates: Partial<UserProfile>) => Promise<void>;
 }
 
@@ -61,7 +62,8 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
   sessionName,
   sessionUsername,
   requests,
-  language,
+  language = 'EN',
+  t,
   onUpdateProfile,
 }) => {
   const [activeTab, setActiveTab] = useState<ProfileTab>('profile');
@@ -106,11 +108,11 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
 
   const hasDocuments = !!(profile?.nationalIdCard || profile?.nationalIdCardBack || profile?.mainSyndicateCard || profile?.subSyndicateCard);
 
-  const tabs = [
-    { value: 'profile' as const, label: isRTL ? 'الملف الشخصي' : 'Profile', icon: 'person' },
-    { value: 'history' as const, label: isRTL ? 'السجل الوظيفي' : 'Work History', icon: 'work_history' },
-    ...(hasDocuments || isEditing ? [{ value: 'documents' as const, label: isRTL ? 'المستندات' : 'Documents', icon: 'description' }] : []),
-  ];
+  const tabs = useMemo(() => [
+    { value: 'profile' as const, label: t.employeeProfile.profile, icon: 'person' },
+    { value: 'history' as const, label: t.employeeProfile.workHistory, icon: 'work_history' },
+    ...(hasDocuments || isEditing ? [{ value: 'documents' as const, label: t.employeeProfile.documents, icon: 'description' }] : []),
+  ], [hasDocuments, isEditing, t]);
 
   const startEditing = useCallback(() => {
     setEditFields({
@@ -297,13 +299,13 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
                         className="text-xs font-normal text-(--text-secondary) bg-white/10 dark:bg-black/25 px-2 py-0.5 rounded-md border border-white/10 dark:border-white/5 font-mono select-all cursor-pointer"
                         dir="ltr"
                       >
-                        {copied ? (isRTL ? 'تم النسخ ✓' : 'Copied ✓') : `@${displayUsername}`}
+                        {copied ? t.employeeProfile.copied : `@${displayUsername}`}
                       </span>
                     )}
                   </h3>
                 </div>
                 <p className="text-xs font-semibold text-primary-600 dark:text-primary-400 mt-1">
-                  {isRTL ? 'موظف مستقل' : 'Independent Employee'}
+                  {t.employeeProfile.independentEmployee}
                 </p>
               </div>
 
@@ -314,7 +316,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-primary-500">
-                    {isRTL ? 'المعلومات الشخصية' : 'Personal Information'}
+                    {t.employeeProfile.personalInformation}
                   </h4>
                   {onUpdateProfile && (isEditing ? (
                     <div className="flex items-center gap-1.5">
@@ -325,7 +327,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
                         type='button'
                       >
                         <X className="w-3 h-3" />
-                        {isRTL ? 'إلغاء' : 'Cancel'}
+                        {t.employeeProfile.cancel}
                       </button>
                       <button
                         onClick={handleSave}
@@ -338,7 +340,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
                         ) : (
                           <Save className="w-3 h-3" />
                         )}
-                        {isRTL ? 'حفظ' : 'Save'}
+                        {t.employeeProfile.save}
                       </button>
                     </div>
                   ) : (
@@ -348,7 +350,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
                       type='button'
                     >
                       <Pencil className="w-3 h-3" />
-                      {isRTL ? 'تعديل' : 'Edit'}
+                      {t.employeeProfile.edit}
                     </button>
                   ))}
                 </div>
@@ -356,28 +358,28 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <EditField
                       icon='badge'
-                      label={isRTL ? 'الاسم الكامل' : 'Full Name'}
+                      label={t.employeeProfile.fullName}
                       value={editFields.fullName}
                       onChange={v => setEditFields(prev => ({ ...prev, fullName: v }))}
                       dir={isRTL ? 'rtl' : 'ltr'}
                     />
                     <EditField
                       icon='translate'
-                      label={isRTL ? 'الاسم بالعربية' : 'Name (Arabic)'}
+                      label={t.employeeProfile.nameArabic}
                       value={editFields.nameArabic}
                       onChange={v => setEditFields(prev => ({ ...prev, nameArabic: v }))}
                       dir='rtl'
                     />
                     <EditField
                       icon='alternate_email'
-                      label={isRTL ? 'اسم المستخدم' : 'Username'}
+                      label={t.employeeProfile.username}
                       value={`@${displayUsername}`}
                       dir='ltr'
                       disabled
                     />
                     <EditField
                       icon='mail'
-                      label={isRTL ? 'البريد الإلكتروني' : 'Email'}
+                      label={t.employeeProfile.email}
                       value={editFields.email}
                       dir='ltr'
                       type='email'
@@ -385,7 +387,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
                     />
                     <EditField
                       icon='phone'
-                      label={isRTL ? 'الهاتف' : 'Phone'}
+                      label={t.employeeProfile.phone}
                       value={editFields.phone}
                       onChange={v => setEditFields(prev => ({ ...prev, phone: v }))}
                       dir='ltr'
@@ -393,7 +395,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
                     />
                     <EditField
                       icon='health_and_safety'
-                      label={isRTL ? 'رقم الترخيص' : 'License No.'}
+                      label={t.employeeProfile.licenseNo}
                       value={editFields.licenseNumber}
                       onChange={v => setEditFields(prev => ({ ...prev, licenseNumber: v }))}
                       dir={isRTL ? 'rtl' : 'ltr'}
@@ -401,7 +403,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
                     <div className={`${PROFILE_GLASS_CARD_BASE} flex items-center gap-2.5`}>
                       <span className="material-symbols-rounded text-[18px] text-primary-500">calendar_month</span>
                       <div className="min-w-0">
-                        <p className="text-[10px] text-(--text-tertiary) font-bold truncate">{isRTL ? 'عضو منذ' : 'Member Since'}</p>
+                        <p className="text-[10px] text-(--text-tertiary) font-bold truncate">{t.employeeProfile.memberSince}</p>
                         <p className="text-xs font-semibold text-(--text-primary) truncate">{memberSince}</p>
                       </div>
                     </div>
@@ -409,13 +411,13 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { icon: 'badge', label: isRTL ? 'الاسم الكامل' : 'Full Name', value: displayName },
-                      ...(profile?.nameArabic ? [{ icon: 'translate', label: isRTL ? 'الاسم بالعربية' : 'Name (Arabic)', value: profile.nameArabic }] : []),
-                      { icon: 'alternate_email', label: isRTL ? 'اسم المستخدم' : 'Username', value: `@${displayUsername}` },
-                      ...(profile?.email ? [{ icon: 'mail', label: isRTL ? 'البريد الإلكتروني' : 'Email', value: profile.email }] : []),
-                      ...(profile?.phone ? [{ icon: 'phone', label: isRTL ? 'الهاتف' : 'Phone', value: profile.phone }] : []),
-                      ...(profile?.licenseNumber ? [{ icon: 'health_and_safety', label: isRTL ? 'رقم الترخيص' : 'License No.', value: profile.licenseNumber }] : []),
-                      { icon: 'calendar_month', label: isRTL ? 'عضو منذ' : 'Member Since', value: memberSince },
+                      { icon: 'badge', label: t.employeeProfile.fullName, value: displayName },
+                      ...(profile?.nameArabic ? [{ icon: 'translate', label: t.employeeProfile.nameArabic, value: profile.nameArabic }] : []),
+                      { icon: 'alternate_email', label: t.employeeProfile.username, value: `@${displayUsername}` },
+                      ...(profile?.email ? [{ icon: 'mail', label: t.employeeProfile.email, value: profile.email }] : []),
+                      ...(profile?.phone ? [{ icon: 'phone', label: t.employeeProfile.phone, value: profile.phone }] : []),
+                      ...(profile?.licenseNumber ? [{ icon: 'health_and_safety', label: t.employeeProfile.licenseNo, value: profile.licenseNumber }] : []),
+                      { icon: 'calendar_month', label: t.employeeProfile.memberSince, value: memberSince },
                     ].map(item => (
                       <div key={item.label} className={`${PROFILE_GLASS_CARD_BASE} flex items-center gap-2.5`}>
                         <span className="material-symbols-rounded text-[18px] text-primary-500">{item.icon}</span>
@@ -432,23 +434,23 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
               {/* Quick Stats */}
               <div className="space-y-3 pt-2">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-primary-500">
-                  {isRTL ? 'نظرة عامة' : 'Overview'}
+                  {t.employeeProfile.overview}
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <div className={`${PROFILE_GLASS_CARD_BASE} flex flex-col items-center justify-center py-3`}>
                     <span className="material-symbols-rounded text-[22px] text-emerald-500">how_to_reg</span>
                     <p className="text-lg font-bold text-(--text-primary) mt-1">{acceptedRequests.length}</p>
-                    <p className="text-[10px] text-(--text-tertiary) font-bold uppercase tracking-wider">{isRTL ? 'جهات العمل' : 'Employers'}</p>
+                    <p className="text-[10px] text-(--text-tertiary) font-bold uppercase tracking-wider">{t.employeeProfile.employers}</p>
                   </div>
                   <div className={`${PROFILE_GLASS_CARD_BASE} flex flex-col items-center justify-center py-3`}>
                     <span className="material-symbols-rounded text-[22px] text-amber-500">pending_actions</span>
                     <p className="text-lg font-bold text-(--text-primary) mt-1">{requests.filter(r => r.status === 'pending').length}</p>
-                    <p className="text-[10px] text-(--text-tertiary) font-bold uppercase tracking-wider">{isRTL ? 'معلق' : 'Pending'}</p>
+                    <p className="text-[10px] text-(--text-tertiary) font-bold uppercase tracking-wider">{t.employeeProfile.pending}</p>
                   </div>
                   <div className={`${PROFILE_GLASS_CARD_BASE} flex flex-col items-center justify-center py-3 col-span-2 sm:col-span-1`}>
                     <span className="material-symbols-rounded text-[22px] text-primary-500">work_history</span>
                     <p className="text-lg font-bold text-(--text-primary) mt-1">{requests.length}</p>
-                    <p className="text-[10px] text-(--text-tertiary) font-bold uppercase tracking-wider">{isRTL ? 'إجمالي الطلبات' : 'Total Requests'}</p>
+                    <p className="text-[10px] text-(--text-tertiary) font-bold uppercase tracking-wider">{t.employeeProfile.totalRequests}</p>
                   </div>
                 </div>
               </div>
@@ -462,12 +464,12 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-primary-500 flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5" />
-              {isRTL ? 'المستندات الرسمية' : 'Official Documents'}
+              {t.employeeProfile.officialDocuments}
             </h4>
 
             {/* National ID - Front */}
             <DocCard
-              title={isRTL ? 'البطاقة الشخصية (الوجه الأمامي)' : 'National ID (Front)'}
+              title={t.employeeProfile.nationalIdFront}
               image={profile?.nationalIdCard}
               onUpload={onUpdateProfile ? (file) => handleDocUpload('nationalIdCard', file) : undefined}
               onRemove={onUpdateProfile ? () => handleDocRemove('nationalIdCard') : undefined}
@@ -475,11 +477,12 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
               onToggleExpand={() => setExpandedDocs(prev => { const n = new Set(prev); n.has('nationalIdCard') ? n.delete('nationalIdCard') : n.add('nationalIdCard'); return n; })}
               loading={uploadingDoc === 'nationalIdCard'}
               deleting={deletingDoc === 'nationalIdCard'}
+              t={t}
             />
 
             {/* National ID - Back */}
             <DocCard
-              title={isRTL ? 'البطاقة الشخصية (الوجه الخلفي)' : 'National ID (Back)'}
+              title={t.employeeProfile.nationalIdBack}
               image={profile?.nationalIdCardBack}
               onUpload={onUpdateProfile ? (file) => handleDocUpload('nationalIdCardBack', file) : undefined}
               onRemove={onUpdateProfile ? () => handleDocRemove('nationalIdCardBack') : undefined}
@@ -487,11 +490,12 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
               onToggleExpand={() => setExpandedDocs(prev => { const n = new Set(prev); n.has('nationalIdCardBack') ? n.delete('nationalIdCardBack') : n.add('nationalIdCardBack'); return n; })}
               loading={uploadingDoc === 'nationalIdCardBack'}
               deleting={deletingDoc === 'nationalIdCardBack'}
+              t={t}
             />
 
             {/* Syndicate Card */}
             <DocCard
-              title={isRTL ? 'كارنيه النقابة' : 'Syndicate Card'}
+              title={t.employeeProfile.syndicateCard}
               image={profile?.mainSyndicateCard}
               onUpload={onUpdateProfile ? (file) => handleDocUpload('mainSyndicateCard', file) : undefined}
               onRemove={onUpdateProfile ? () => handleDocRemove('mainSyndicateCard') : undefined}
@@ -499,11 +503,12 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
               onToggleExpand={() => setExpandedDocs(prev => { const n = new Set(prev); n.has('mainSyndicateCard') ? n.delete('mainSyndicateCard') : n.add('mainSyndicateCard'); return n; })}
               loading={uploadingDoc === 'mainSyndicateCard'}
               deleting={deletingDoc === 'mainSyndicateCard'}
+              t={t}
             />
 
             {/* Sub Syndicate Card */}
             <DocCard
-              title={isRTL ? 'كارنيه النقابة الفرعية' : 'Sub Syndicate Card'}
+              title={t.employeeProfile.subSyndicateCard}
               image={profile?.subSyndicateCard}
               onUpload={onUpdateProfile ? (file) => handleDocUpload('subSyndicateCard', file) : undefined}
               onRemove={onUpdateProfile ? () => handleDocRemove('subSyndicateCard') : undefined}
@@ -511,6 +516,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
               onToggleExpand={() => setExpandedDocs(prev => { const n = new Set(prev); n.has('subSyndicateCard') ? n.delete('subSyndicateCard') : n.add('subSyndicateCard'); return n; })}
               loading={uploadingDoc === 'subSyndicateCard'}
               deleting={deletingDoc === 'subSyndicateCard'}
+              t={t}
             />
           </div>
         </div>
@@ -524,7 +530,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
                 <Briefcase className="w-7 h-7 text-(--text-tertiary)" />
               </div>
               <h4 className="text-base font-medium text-(--text-primary) mb-1">
-                {isRTL ? 'لا يوجد سجل وظيفي بعد' : 'No Work History Yet'}
+                {t.employeeProfile.noWorkHistory}
               </h4>
               <p className="text-sm text-(--text-tertiary) max-w-sm">
                 {isRTL
@@ -568,7 +574,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
             <div className="space-y-3 pt-2">
               <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" />
-                {isRTL ? 'الطلبات المعلقة' : 'Pending Requests'}
+                {t.employeeProfile.pendingRequests}
               </h4>
               <div className="space-y-2">
                 {requests.filter(r => r.status === 'pending').map((req) => (
@@ -646,9 +652,10 @@ interface DocCardProps {
   onToggleExpand: () => void;
   loading?: boolean;
   deleting?: boolean;
+  t: any;
 }
 
-const DocCard: React.FC<DocCardProps> = ({ title, image, onUpload, onRemove, isExpanded, onToggleExpand, loading, deleting }) => {
+const DocCard: React.FC<DocCardProps> = ({ title, image, onUpload, onRemove, isExpanded, onToggleExpand, loading, deleting, t }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -692,7 +699,7 @@ const DocCard: React.FC<DocCardProps> = ({ title, image, onUpload, onRemove, isE
             </button>
           )}
           {!image && onUpload && (
-            <span className="text-[10px] text-(--text-tertiary) font-medium">{'No file'}</span>
+            <span className="text-[10px] text-(--text-tertiary) font-medium">{t.employeeProfile.noFile}</span>
           )}
         </div>
       </div>

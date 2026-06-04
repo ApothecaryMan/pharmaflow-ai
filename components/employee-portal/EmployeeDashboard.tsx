@@ -28,11 +28,7 @@ export function EmployeeDashboard({ t, language }: Props) {
   const sessionUsername = session?.username;
   const sessionName = session?.employeeName || profile?.fullName;
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async (refreshSession = false) => {
+  const loadData = useCallback(async (refreshSession = false) => {
     setIsLoading(true);
     try {
       if (refreshSession) {
@@ -65,7 +61,11 @@ export function EmployeeDashboard({ t, language }: Props) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleSignOut = useCallback(async () => {
     await authService.logout();
@@ -119,6 +119,7 @@ export function EmployeeDashboard({ t, language }: Props) {
               sessionUsername={sessionUsername}
               requests={requests}
               language={language}
+              t={t}
               onUpdateProfile={handleUpdateProfile}
             />
           )}
@@ -131,7 +132,7 @@ export function EmployeeDashboard({ t, language }: Props) {
                   <span className="truncate">{t.login?.pendingRequests || 'Pending Employment Requests'}</span>
                 </h3>
                 {isLoading ? (
-                  <span className="text-xs text-(--text-tertiary)">Loading...</span>
+                  <span className="text-xs text-(--text-tertiary)">{t.common.loading}</span>
                 ) : (
                   <span className="px-2.5 sm:px-3 py-0.5 bg-(--bg-secondary) rounded-full text-base sm:text-lg font-medium text-(--text-tertiary) shrink-0 leading-none" style={{ fontFamily: "GraphicSansFont, sans-serif" }}>
                     {requests.length}
@@ -163,6 +164,7 @@ export function EmployeeDashboard({ t, language }: Props) {
         sessionUsername={sessionUsername}
         language={language}
         profileImage={profile?.image}
+        t={t}
       />
 
       {/* Mobile Dock */}
@@ -171,6 +173,7 @@ export function EmployeeDashboard({ t, language }: Props) {
         onViewChange={handleViewChange}
         onOpenDrawer={() => setDrawerOpen(prev => !prev)}
         language={language}
+        t={t}
       />
     </div>
   );

@@ -6,6 +6,7 @@ interface EmployeeMobileDockProps {
   onViewChange: (view: 'profile' | 'requests') => void;
   onOpenDrawer: () => void;
   language?: string;
+  t: any;
 }
 
 export const EmployeeMobileDock: React.FC<EmployeeMobileDockProps> = ({
@@ -13,6 +14,7 @@ export const EmployeeMobileDock: React.FC<EmployeeMobileDockProps> = ({
   onViewChange,
   onOpenDrawer,
   language,
+  t,
 }) => {
   const isRTL = language === 'AR';
 
@@ -33,19 +35,19 @@ export const EmployeeMobileDock: React.FC<EmployeeMobileDockProps> = ({
       >
         <DockButton
           icon={User}
-          label={isRTL ? 'الملف الشخصي' : 'Profile'}
+          label={t.employeeProfile.profile}
           isActive={activeView === 'profile'}
           onClick={() => onViewChange('profile')}
         />
         <DockButton
           icon={Clock}
-          label={isRTL ? 'الطلبات' : 'Requests'}
+          label={t.employeeProfile.pendingRequests}
           isActive={activeView === 'requests'}
           onClick={() => onViewChange('requests')}
         />
         <DockButton
           icon={Menu}
-          label={isRTL ? 'القائمة' : 'Menu'}
+          label={t.employeeProfile.menu}
           isActive={false}
           onClick={onOpenDrawer}
         />
