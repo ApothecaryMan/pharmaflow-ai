@@ -11,7 +11,7 @@ export interface CartItemExpiryBadgeProps {
   allBatches: Drug[];
   packItem?: CartItem;
   unitItem?: CartItem;
-  t: Translations; slations;
+  t: Translations;
   showMenu: (x: number, y: number, items: any[]) => void;
   onSelectBatch: (currentItem: CartItem, newBatch: Drug, packQty: number, unitQty: number) => void;
 }
@@ -165,7 +165,7 @@ export interface CartItemQuantityControlProps {
   addToCart: (drug: Drug, isUnitMode?: boolean, quantity?: number) => void;
   allBatches?: Drug[];
   isMobile?: boolean; // New prop for UI separation
-  t: Translations; slations;
+  t: Translations;
   currentLang: string;
   cart: CartItem[];
 }

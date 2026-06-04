@@ -174,7 +174,23 @@ const loadSettings = (): SettingsState => {
   if (typeof window === 'undefined') return defaultSettings;
 
   // Try loading unified settings object first
-  const saved = storage.get<SettingsState | null>(STORAGE_KEY, null);
+  let saved = storage.get<SettingsState | null>(STORAGE_KEY, null);
+  
+  // Migration: If global settings not found, try to recover from the user-scoped key before it was global
+  if (!saved) {
+    const userId = storage.getUserId();
+    if (userId) {
+      const userScopedItem = localStorage.getItem(`${STORAGE_KEY}_${userId}`);
+      if (userScopedItem) {
+        try {
+          saved = JSON.parse(userScopedItem);
+        } catch (e) {
+          console.warn('Failed to parse user-scoped settings:', e);
+        }
+      }
+    }
+  }
+
   if (saved) {
     const combined = { ...defaultSettings, ...saved };
     // Defensive check: Ensure theme is a valid object with a name

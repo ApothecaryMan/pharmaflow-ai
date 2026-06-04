@@ -14,7 +14,10 @@ const GLOBAL_KEYS = new Set<string>([
   StorageKeys.TIME_OFFSET,
   StorageKeys.LAST_SYNC,
   StorageKeys.NAV_STYLE,
-  StorageKeys.HEADER_STATS_VISIBLE
+  StorageKeys.HEADER_STATS_VISIBLE,
+  StorageKeys.SETTINGS,
+  StorageKeys.PRINTER_SETTINGS,
+  StorageKeys.SCREEN_CALIBRATION_RATIO
 ]);
 
 // Performance optimizations:
