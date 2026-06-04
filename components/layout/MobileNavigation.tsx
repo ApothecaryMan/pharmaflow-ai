@@ -286,6 +286,54 @@ const MobileDockLogin: React.FC<MobileDockLoginProps> = ({ employees, onSelectEm
     setIsError(false);
   };
 
+  const handleBiometricLogin = async () => {
+    if (!tempEmployee?.biometricCredentialId) return;
+    
+    try {
+      const { startAuthentication } = await import('@simplewebauthn/browser');
+      const { generateChallenge, bufferToBase64, isWebAuthnSupported } = await import('../../utils/webAuthnUtils');
+      const { authService } = await import('../../services/auth/authService');
+
+      if (!(await isWebAuthnSupported())) {
+        setIsError(true);
+        playError();
+        return;
+      }
+
+      const challengeBase64 = bufferToBase64(generateChallenge());
+      const asseResp = await startAuthentication({
+        optionsJSON: {
+          challenge: challengeBase64,
+          rpId: window.location.hostname,
+          allowCredentials: [{
+            id: tempEmployee.biometricCredentialId,
+            type: 'public-key',
+            transports: ['internal'],
+          }],
+          userVerification: 'required',
+          timeout: 60000,
+        } as any,
+        mediation: 'optional',
+      } as any);
+
+      if (asseResp) {
+        const result = await authService.loginWithBiometric(asseResp.id, employees);
+        if (result) {
+          playSuccess();
+          onSelectEmployee(result.id);
+          resetState();
+        } else {
+          setIsError(true);
+          playError();
+        }
+      }
+    } catch (err: any) {
+      if (err.name === 'AbortError') return;
+      setIsError(true);
+      playError();
+    }
+  };
+
   const checkAuth = async () => {
     if (step === 'username') {
       const query = inputVal.trim().toLowerCase();
@@ -354,16 +402,39 @@ const MobileDockLogin: React.FC<MobileDockLoginProps> = ({ employees, onSelectEm
         </button>
       ) : (
         <div className='flex items-center w-full h-full px-4 rounded-full group transition-all duration-300'>
-          <button
-            onClick={step === 'password' ? () => setShowPassword(!showPassword) : resetState}
-            className='grid place-items-center transition-colors me-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100'
-            type='button'
-          >
-            <span className='material-symbols-rounded text-[22px]'>
-              {step === 'password' ? (showPassword ? 'visibility_off' : 'visibility') : 'close'}
-            </span>
-          </button>
+          {/* Leading Actions (Right in RTL, Left in LTR) */}
+          <div className="flex items-center gap-1 me-2 min-w-[28px]">
+            <button
+              onClick={step === 'password' ? () => {
+                setStep('username');
+                setInputVal(tempEmployee?.username || tempEmployee?.employeeCode || '');
+                setIsError(false);
+                setShowPassword(false);
+              } : resetState}
+              className='grid place-items-center w-7 h-7 rounded-full transition-colors text-gray-500 hover:text-gray-800 hover:bg-gray-200 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800'
+              type='button'
+              title={step === 'password' ? (isRTL ? 'الرجوع' : 'Back') : (isRTL ? 'إلغاء' : 'Cancel')}
+            >
+              <span className='material-symbols-rounded text-[20px]'>
+                {step === 'password' ? (isRTL ? 'arrow_forward' : 'arrow_back') : 'close'}
+              </span>
+            </button>
 
+            {step === 'password' && (
+              <button
+                onClick={() => setShowPassword(!showPassword)}
+                className='grid place-items-center w-7 h-7 rounded-full transition-colors text-gray-500 hover:text-gray-800 hover:bg-gray-200 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800'
+                type='button'
+                title={isRTL ? 'إظهار كلمة المرور' : 'Toggle Password'}
+              >
+                <span className='material-symbols-rounded text-[20px]'>
+                  {showPassword ? 'visibility_off' : 'visibility'}
+                </span>
+              </button>
+            )}
+          </div>
+
+          {/* Input Field */}
           <input
             ref={inputRef}
             type={step === 'password' ? (showPassword ? 'text' : 'password') : 'text'}
@@ -383,14 +454,31 @@ const MobileDockLogin: React.FC<MobileDockLoginProps> = ({ employees, onSelectEm
             autoComplete='off'
           />
 
-          <button
-            onClick={checkAuth}
-            className={`grid place-items-center transition-all ms-2 ${isError ? 'text-red-500' : 'text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300'} ${inputVal ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'} duration-200`}
-          >
-            <span className='material-symbols-rounded text-[24px]'>
-              {step === 'username' ? (isRTL ? 'arrow_back' : 'arrow_forward') : 'login'}
-            </span>
-          </button>
+          {/* Trailing Actions (Left in RTL, Right in LTR) */}
+          <div className="flex items-center gap-1 ms-2 min-w-[28px] justify-end">
+            {step === 'password' && tempEmployee?.biometricCredentialId && (
+              <button
+                onClick={handleBiometricLogin}
+                className="grid place-items-center w-7 h-7 rounded-full transition-colors text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30"
+                type="button"
+                title={isRTL ? 'الدخول بالبصمة' : 'Login with Fingerprint'}
+              >
+                <span className="material-symbols-rounded text-[22px]">
+                  fingerprint
+                </span>
+              </button>
+            )}
+
+            <button
+              onClick={checkAuth}
+              className={`grid place-items-center w-7 h-7 rounded-full transition-all ${isError ? 'text-red-500' : 'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30'} ${inputVal ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'} duration-200`}
+              type="button"
+            >
+              <span className='material-symbols-rounded text-[22px]'>
+                {step === 'username' ? (isRTL ? 'arrow_back' : 'arrow_forward') : 'login'}
+              </span>
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -598,6 +686,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
         profileImage={profileImage}
         currentEmployeeId={currentEmployeeId}
         employees={employees}
+        onLogout={() => onSelectEmployee?.(null)}
       />
 
       {/* Mobile Liquid Glass Navigation Bar */}
