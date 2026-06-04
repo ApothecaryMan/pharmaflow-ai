@@ -342,24 +342,24 @@ const MobileDockLogin: React.FC<MobileDockLoginProps> = ({ employees, onSelectEm
   const isRTL = language === 'AR';
 
   return (
-    <div className='flex items-center justify-center w-full h-[54px] px-2'>
+    <div className='flex items-center justify-center w-full h-[54px]'>
       {step === 'idle' ? (
         <button
           onClick={handleStartLogin}
           type='button'
-          className='w-full max-w-[200px] flex items-center justify-center gap-2 py-2.5 rounded-full bg-black/10 dark:bg-white/10 text-gray-800 dark:text-gray-100 font-bold text-sm transition-all duration-300 hover:bg-black/20 dark:hover:bg-white/20 active:scale-95'
+          className='w-full h-full flex items-center justify-center gap-2 rounded-full text-gray-800 dark:text-gray-100 font-bold text-[15px] transition-all duration-300 hover:bg-black/5 dark:hover:bg-white/5 active:scale-[0.98]'
         >
-          <span className='material-symbols-rounded text-lg'>login</span>
+          <span className='material-symbols-rounded text-[22px]'>login</span>
           <span>{isRTL ? 'تسجيل الدخول' : 'Login'}</span>
         </button>
       ) : (
-        <div className='flex items-center w-full max-w-[260px] h-[40px] px-3 rounded-full bg-white/60 dark:bg-black/40 border border-gray-300 dark:border-gray-700 shadow-inner group'>
+        <div className='flex items-center w-full h-full px-4 rounded-full group transition-all duration-300'>
           <button
             onClick={step === 'password' ? () => setShowPassword(!showPassword) : resetState}
-            className='mr-2 grid place-items-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors'
+            className='grid place-items-center transition-colors me-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100'
             type='button'
           >
-            <span className='material-symbols-rounded text-[18px]'>
+            <span className='material-symbols-rounded text-[22px]'>
               {step === 'password' ? (showPassword ? 'visibility_off' : 'visibility') : 'close'}
             </span>
           </button>
@@ -379,16 +379,16 @@ const MobileDockLogin: React.FC<MobileDockLoginProps> = ({ employees, onSelectEm
                 ? isRTL ? 'اسم المستخدم...' : 'Username...'
                 : isRTL ? 'كلمة المرور...' : 'Password...'
             }
-            className={`flex-1 bg-transparent border-none outline-hidden text-[13px] font-bold text-gray-800 dark:text-white placeholder-gray-500 min-w-0 focus:ring-0 ${isError ? 'text-red-500 dark:text-red-400' : ''}`}
+            className={`flex-1 bg-transparent border-none outline-hidden text-center text-[15px] font-bold text-gray-800 dark:text-white placeholder-gray-500/70 min-w-0 focus:ring-0 ${isError ? 'text-red-500 dark:text-red-400' : ''}`}
             autoComplete='off'
           />
 
           <button
             onClick={checkAuth}
-            className={`hidden group-focus-within:grid place-items-center ml-2 transition-colors ${isError ? 'text-red-500' : 'text-primary-500 dark:text-blue-400 hover:text-blue-700'}`}
+            className={`grid place-items-center transition-all ms-2 ${isError ? 'text-red-500' : 'text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300'} ${inputVal ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'} duration-200`}
           >
-            <span className='material-symbols-rounded text-[20px]'>
-              {step === 'username' ? 'arrow_forward' : 'login'}
+            <span className='material-symbols-rounded text-[24px]'>
+              {step === 'username' ? (isRTL ? 'arrow_back' : 'arrow_forward') : 'login'}
             </span>
           </button>
         </div>
