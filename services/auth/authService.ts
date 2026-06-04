@@ -237,23 +237,13 @@ export const authService = {
     const isRealEmail = username.includes('@') && !username.startsWith('@');
 
     if (!isRealEmail) {
-      const cleanUsername = username.replace(/^@/, '');
       try {
-        const employee = await employeeRepository.getByUsername(cleanUsername);
-        loginEmail = employee?.email || username;
-      } catch (err) {
-        loginEmail = username;
-      }
-
-      if (!loginEmail.includes('@')) {
-        try {
-          const profile = await employeeProfileRepository.getByUsername(cleanUsername);
-          if (profile?.email) {
-            loginEmail = profile.email;
-          }
-        } catch {
-          // ignore
+        const resolvedEmail = await employeeRepository.getEmailByUsername(username);
+        if (resolvedEmail) {
+          loginEmail = resolvedEmail;
         }
+      } catch (err) {
+        // Fallback to what they typed if resolution fails
       }
     }
 
