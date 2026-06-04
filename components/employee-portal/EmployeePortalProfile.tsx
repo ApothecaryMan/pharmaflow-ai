@@ -150,7 +150,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
     } finally {
       setIsSaving(false);
     }
-  }, [onUpdateProfile, editFields, preview]);
+  }, [onUpdateProfile, editFields, preview, removeImage]);
 
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -285,15 +285,14 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
                     {displayName}
                     {displayUsername && (
                       <span
-                        onClick={() => {
-                          const el = document.createElement('input');
-                          el.value = `@${displayUsername}`;
-                          document.body.appendChild(el);
-                          el.select();
-                          document.execCommand('copy');
-                          document.body.removeChild(el);
-                          setCopied(true);
-                          setTimeout(() => setCopied(false), 1500);
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(`@${displayUsername}`);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 1500);
+                          } catch {
+                            // Fallback if needed
+                          }
                         }}
                         className="text-xs font-normal text-(--text-secondary) bg-white/10 dark:bg-black/25 px-2 py-0.5 rounded-md border border-white/10 dark:border-white/5 font-mono select-all cursor-pointer"
                         dir="ltr"

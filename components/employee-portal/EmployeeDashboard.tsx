@@ -128,7 +128,7 @@ export function EmployeeDashboard({ t, language }: Props) {
               <div className="flex items-center justify-between">
                 <h3 className="text-lg sm:text-xl font-semibold text-(--text-primary) flex items-center gap-2">
                   <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary-500" />
-                  <span className="truncate">Pending Employment Requests</span>
+                  <span className="truncate">{t.login?.pendingRequests || 'Pending Employment Requests'}</span>
                 </h3>
                 {isLoading ? (
                   <span className="text-xs text-(--text-tertiary)">Loading...</span>
@@ -143,7 +143,7 @@ export function EmployeeDashboard({ t, language }: Props) {
                 requests={requests}
                 userId={session?.userId || ''}
                 username={profile?.username || sessionUsername || ''}
-                onRefresh={() => loadData(true)}
+                onRefresh={() => loadData()}
                 t={t}
                 language={language}
               />
