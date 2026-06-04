@@ -81,6 +81,32 @@ export function EmployeeDashboard({ t, language }: Props) {
     loadData();
   }, [loadData]);
 
+  // Realtime subscription for incoming employment requests
+  useEffect(() => {
+    if (!profile?.username) return;
+
+    const channel = supabase
+      .channel('public:employment_requests')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'employment_requests',
+          filter: `target_username=eq.${profile.username}`,
+        },
+        () => {
+          // Re-fetch requests when a change happens
+          loadData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.username, loadData]);
+
   const handleSignOut = useCallback(async () => {
     await authService.logout();
     window.location.href = '/login';
