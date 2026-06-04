@@ -45,8 +45,8 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
     const newEmployee: Employee = {
       ...employee,
       id: employee.id || idGenerator.uuid(),
-      branchId: effectiveBranchId,
-      orgId: effectiveOrgId,
+      branchId: effectiveBranchId || undefined,
+      orgId: effectiveOrgId || undefined,
     } as Employee;
 
     if (!newEmployee.employeeCode) {
