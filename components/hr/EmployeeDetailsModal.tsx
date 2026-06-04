@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { Modal } from '../common/Modal';
-import { permissionsService } from '../../services/auth/permissionsService';
 import { getRoleLabel } from '../../config/employeeRoles';
-import type { Employee } from '../../types';
-import { TRANSLATIONS } from '../../i18n/translations';
-import { renderBanner, BANNER_STYLES } from '../../utils/banners';
-import { PROFILE_GLASS_CARD_BASE } from '../../utils/themeStyles';
 import { useData } from '../../context/DataContext';
-import { getEmployeeSalesStats, EmployeeSalesStats } from '../../utils/employeeStats';
 import { useEmployeeAllTimeAttendance } from '../../hooks/hr/useEmployeeAllTimeAttendance';
+import type { TRANSLATIONS } from '../../i18n/translations';
+import { permissionsService } from '../../services/auth/permissionsService';
+import type { Employee } from '../../types';
+import { BANNER_STYLES, renderBanner } from '../../utils/banners';
 import { formatCurrencyParts } from '../../utils/currency';
+import { type EmployeeSalesStats, getEmployeeSalesStats } from '../../utils/employeeStats';
+import { PROFILE_GLASS_CARD_BASE } from '../../utils/themeStyles';
+import { Modal } from '../common/Modal';
 
 export interface WorkExperience {
   id: string;
@@ -38,7 +38,18 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<string>('page1');
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
-  const { sales, branches, activeOrg } = useData();
+  const { sales, branches, activeOrg, employees } = useData();
+
+  const relatedEmployees = React.useMemo(() => {
+    if (!employee || !employees) return employee ? [employee] : [];
+    const related = employees.filter(
+      (e) =>
+        (employee.userId && e.userId === employee.userId) ||
+        (employee.username && e.username === employee.username)
+    );
+    if (related.length === 0) return [employee];
+    return Array.from(new Map(related.map((e) => [e.id, e])).values());
+  }, [employee, employees]);
 
   // Get all-time attendance data across all branches and organizations
   const attendanceStats = useEmployeeAllTimeAttendance(employee?.id, language as 'EN' | 'AR');
@@ -50,24 +61,36 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 
   const employeeSales = (sales || []).filter((s) => s.soldByEmployeeId === employee.id);
   const returnRate = stats.grossSales > 0 ? (stats.returns / stats.grossSales) * 100 : 0;
-  const dispensingAccuracy = stats.salesCount > 0 ? Math.max(95, 100 - returnRate).toFixed(1) : '100';
+  const _dispensingAccuracy =
+    stats.salesCount > 0 ? Math.max(95, 100 - returnRate).toFixed(1) : '100';
 
   const chronicSales = employeeSales.filter(
-    (s) => s.customerName && s.customerName.toLowerCase() !== 'walk-in' && s.customerName.trim() !== ''
+    (s) =>
+      s.customerName && s.customerName.toLowerCase() !== 'walk-in' && s.customerName.trim() !== ''
   ).length;
-  const chronicCareRate = stats.salesCount > 0 ? Math.min(100, Math.round((chronicSales / stats.salesCount) * 100)) : 0;
-  const finalChronicCareRate = chronicCareRate > 0 ? chronicCareRate : 94;
+  const chronicCareRate =
+    stats.salesCount > 0 ? Math.min(100, Math.round((chronicSales / stats.salesCount) * 100)) : 0;
+  const _finalChronicCareRate = chronicCareRate > 0 ? chronicCareRate : 94;
 
-  const salesWithTime = employeeSales.filter((s) => s.processingTimeMinutes !== undefined && s.processingTimeMinutes > 0);
-  const avgTime = salesWithTime.length > 0
-    ? (salesWithTime.reduce((sum, s) => sum + (s.processingTimeMinutes || 0), 0) / salesWithTime.length).toFixed(1)
-    : '1.5';
+  const salesWithTime = employeeSales.filter(
+    (s) => s.processingTimeMinutes !== undefined && s.processingTimeMinutes > 0
+  );
+  const _avgTime =
+    salesWithTime.length > 0
+      ? (
+          salesWithTime.reduce((sum, s) => sum + (s.processingTimeMinutes || 0), 0) /
+          salesWithTime.length
+        ).toFixed(1)
+      : '1.5';
 
   const renderPrice = (val: number, sizeClass = 'text-[0.75em]') => {
     const { amount, symbol } = formatCurrencyParts(val, 'EGP', language);
     return (
-      <span className="tabular-nums">
-        {amount} <span className={`${sizeClass} text-gray-400 dark:text-zinc-500 font-normal ms-0.5`}>{symbol}</span>
+      <span className='tabular-nums'>
+        {amount}{' '}
+        <span className={`${sizeClass} text-gray-400 dark:text-zinc-500 font-normal ms-0.5`}>
+          {symbol}
+        </span>
       </span>
     );
   };
@@ -75,13 +98,20 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
   // Map department to a dynamic CSS banner style
   const getBannerStyleByDepartment = (dept: string) => {
     switch (dept) {
-      case 'pharmacy': return 'pharma';
-      case 'it': return 'cyberhex';
-      case 'hr': return 'abstract';
-      case 'sales': return 'synthwave';
-      case 'logistics': return 'chaos';
-      case 'marketing': return 'floral';
-      default: return 'pattern';
+      case 'pharmacy':
+        return 'pharma';
+      case 'it':
+        return 'cyberhex';
+      case 'hr':
+        return 'abstract';
+      case 'sales':
+        return 'synthwave';
+      case 'logistics':
+        return 'chaos';
+      case 'marketing':
+        return 'floral';
+      default:
+        return 'pattern';
     }
   };
 
@@ -137,14 +167,14 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
       pharmacyName: currentBranchLabel,
       role: getRoleLabel(employee.role, t.roles),
       startDate: employee.startDate,
-    }
+    },
   ];
 
   // RBAC checks for financial metrics
-  const canViewFinancial = permissionsService.can('reports.view_financial') || permissionsService.can('users.manage');
+  const canViewFinancial =
+    permissionsService.can('reports.view_financial') || permissionsService.can('users.manage');
 
   // Filter available tabs based on role and documents availability
-  const hasDocuments = !!(employee.nationalIdCard || employee.nationalIdCardBack || employee.mainSyndicateCard || employee.subSyndicateCard);
 
   // Build Modal Tabs matching ProfileCardModal
   const modalTabs = [
@@ -158,18 +188,20 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
       value: 'page2',
       icon: 'contact_page',
     },
-    ...(stats ? [
-      {
-        label: t.tabs.achievements,
-        value: 'page4',
-        icon: 'emoji_events',
-      }
-    ] : []),
+    ...(stats
+      ? [
+          {
+            label: t.tabs.achievements,
+            value: 'page4',
+            icon: 'emoji_events',
+          },
+        ]
+      : []),
     {
       label: t.tabs.documents,
       value: 'page6',
       icon: 'description',
-    }
+    },
   ];
 
   const handleClose = () => {
@@ -181,7 +213,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      size="lg"
+      size='lg'
       style={
         {
           '--bg-card': `color-mix(in srgb, ${bannerAccent} 12%, var(--bg-card-base))`,
@@ -197,32 +229,32 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
       activeTab={activeTab}
       onTabChange={(val) => setActiveTab(val as string)}
       closeOnBackdropClick={true}
-      bodyClassName="p-0 bg-(--bg-card)"
+      bodyClassName='p-0 bg-(--bg-card)'
     >
-      <div className="animate-fade-in min-h-[360px] text-(--text-primary)">
+      <div className='animate-fade-in min-h-[360px] text-(--text-primary)'>
         {activeTab === 'page1' && (
           /* ── Page 1: Overview ── */
-          <div className="animate-fade-in">
+          <div className='animate-fade-in'>
             {/* Banner Graphics */}
-            <div className="relative w-full aspect-[9/3] bg-(--bg-secondary) overflow-hidden select-none">
+            <div className='relative w-full aspect-[9/3] bg-(--bg-secondary) overflow-hidden select-none'>
               {renderBanner(bannerStyle, { x: 0, y: 0 }, 1.2)}
             </div>
 
             {/* Profile Avatar & Header Info Row */}
-            <div className="relative px-6 pb-6 pt-6">
+            <div className='relative px-6 pb-6 pt-6'>
               {/* Flex Container for Avatar + Details */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5 -mt-24 mb-4 relative z-10">
+              <div className='flex flex-col sm:flex-row items-start sm:items-end gap-5 -mt-24 mb-4 relative z-10'>
                 {/* Avatar */}
-                <div className="relative shrink-0">
-                  <div className="w-32 h-32 rounded-full border-4 border-(--bg-card) overflow-hidden bg-(--bg-secondary) shadow-md flex items-center justify-center">
+                <div className='relative shrink-0'>
+                  <div className='w-32 h-32 rounded-full border-4 border-(--bg-card) overflow-hidden bg-(--bg-secondary) shadow-md flex items-center justify-center'>
                     {employee.image ? (
                       <img
                         src={employee.image}
                         alt={employee.name}
-                        className="w-full h-full object-cover"
+                        className='w-full h-full object-cover'
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-zinc-900/50 text-gray-500 dark:text-gray-400 text-4xl font-bold">
+                      <div className='w-full h-full flex items-center justify-center bg-gray-200 dark:bg-zinc-900/50 text-gray-500 dark:text-gray-400 text-4xl font-bold'>
                         {getInitials(employee.nameArabic || employee.name)}
                       </div>
                     )}
@@ -230,27 +262,39 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 
                   {/* Status Indicator */}
                   <span
-                    className={`absolute bottom-1 end-1 w-8 h-8 rounded-full border-4 border-(--bg-card) flex items-center justify-center transition-colors duration-300 ${employee.status === 'active'
-                      ? 'bg-emerald-500'
-                      : employee.status === 'holiday'
-                        ? 'bg-amber-500'
-                        : 'bg-gray-400 dark:bg-gray-500'
-                      }`}
+                    className={`absolute bottom-1 end-1 w-8 h-8 rounded-full border-4 border-(--bg-card) flex items-center justify-center transition-colors duration-300 ${
+                      employee.status === 'active'
+                        ? 'bg-emerald-500'
+                        : employee.status === 'holiday'
+                          ? 'bg-amber-500'
+                          : 'bg-gray-400 dark:bg-gray-500'
+                    }`}
                     title={employee.status}
                   >
-                    <span className="material-symbols-rounded text-white text-[12px] font-bold select-none">
-                      {employee.status === 'active' ? 'check' : employee.status === 'holiday' ? 'beach_access' : 'close'}
+                    <span className='material-symbols-rounded text-white text-[12px] font-bold select-none'>
+                      {employee.status === 'active'
+                        ? 'check'
+                        : employee.status === 'holiday'
+                          ? 'beach_access'
+                          : 'close'}
                     </span>
                   </span>
                 </div>
 
                 {/* Header Text details next to Avatar */}
-                <div className="flex-1 min-w-0 pb-2">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h3 className="text-xl font-bold text-(--text-primary) flex items-center gap-2 flex-wrap">
-                      <span>{language === 'AR' && employee.nameArabic ? employee.nameArabic : employee.name}</span>
+                <div className='flex-1 min-w-0 pb-2'>
+                  <div className='flex items-center gap-3 flex-wrap'>
+                    <h3 className='text-xl font-bold text-(--text-primary) flex items-center gap-2 flex-wrap'>
+                      <span>
+                        {language === 'AR' && employee.nameArabic
+                          ? employee.nameArabic
+                          : employee.name}
+                      </span>
                       {employee.username && (
-                        <span className="text-xs font-normal text-(--text-secondary) bg-white/10 dark:bg-black/25 px-2 py-0.5 rounded-md border border-white/10 dark:border-white/5 font-mono select-all" dir="ltr">
+                        <span
+                          className='text-xs font-normal text-(--text-secondary) bg-white/10 dark:bg-black/25 px-2 py-0.5 rounded-md border border-white/10 dark:border-white/5 font-mono select-all'
+                          dir='ltr'
+                        >
                           @{employee.username}
                         </span>
                       )}
@@ -258,7 +302,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 
                     {employee.biometricCredentialId && (
                       <span
-                        className="material-symbols-rounded text-emerald-500"
+                        className='material-symbols-rounded text-emerald-500'
                         style={{ fontSize: '18px' }}
                         title={t.fingerprintEnabled}
                       >
@@ -266,34 +310,34 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                       </span>
                     )}
                   </div>
-                  <p className="text-xs font-semibold text-primary-600 dark:text-primary-400 mt-1">
-                    {getRoleLabel(employee.role, t.roles)} &bull; {t.departments[employee.department] || employee.department}
+                  <p className='text-xs font-semibold text-primary-600 dark:text-primary-400 mt-1'>
+                    {getRoleLabel(employee.role, t.roles)} &bull;{' '}
+                    {t.departments[employee.department] || employee.department}
                   </p>
                 </div>
               </div>
 
               {/* Custom Bio Status Badge next to Avatar styled as a Thinking Bubble */}
-              <div className="absolute -top-10 start-40 bg-white/15 dark:bg-black/40 backdrop-blur-md rounded-3xl rounded-es-lg border border-white/20 dark:border-white/10 text-xs text-(--text-primary) px-4 py-2 shadow-md max-w-[calc(100%-11.5rem)] z-10">
-                <span className="truncate block max-w-[180px] font-medium italic">
-                  {employee.position && employee.position.trim() ? employee.position : t.emptyBio}
+              <div className='absolute -top-10 start-40 bg-white/15 dark:bg-black/40 backdrop-blur-md rounded-3xl rounded-es-lg border border-white/20 dark:border-white/10 text-xs text-(--text-primary) px-4 py-2 shadow-md max-w-[calc(100%-11.5rem)] z-10'>
+                <span className='truncate block max-w-[180px] font-medium italic'>
+                  {employee.position?.trim() ? employee.position : t.emptyBio}
                 </span>
               </div>
               {/* Thinking Bubble Dots leading to Avatar */}
-              <div className="absolute -top-2 start-36 w-2.5 h-2.5 rounded-full bg-white/15 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 z-10" />
-              <div className="absolute top-0.5 start-32 w-1.5 h-1.5 rounded-full bg-white/15 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 z-10" />
+              <div className='absolute -top-2 start-36 w-2.5 h-2.5 rounded-full bg-white/15 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 z-10' />
+              <div className='absolute top-0.5 start-32 w-1.5 h-1.5 rounded-full bg-white/15 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 z-10' />
 
               {/* Info Details Section */}
-              <div className="space-y-4">
-
+              <div className='space-y-4'>
                 {/* Profile Grid */}
-                <div className="space-y-3 pt-2">
+                <div className='space-y-3 pt-2'>
                   <h4
-                    className="text-xs font-bold uppercase tracking-wider"
+                    className='text-xs font-bold uppercase tracking-wider'
                     style={{ color: bannerAccent }}
                   >
                     {t.generalInfo}
                   </h4>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className='grid grid-cols-2 gap-2'>
                     {[
                       {
                         icon: 'badge',
@@ -310,29 +354,40 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                         label: t.shift,
                         value: language === 'AR' ? 'الوردية الافتراضية' : 'Default Shift',
                       },
-                      ...(employee.license ? [{
-                        icon: 'health_and_safety',
-                        label: t.license,
-                        value: employee.license,
-                      }] : []),
-                      ...(canViewFinancial && employee.salary !== undefined ? [{
-                        icon: 'payments',
-                        label: t.salary,
-                        value: renderPrice(employee.salary),
-                      }] : [])
+                      ...(employee.license
+                        ? [
+                            {
+                              icon: 'health_and_safety',
+                              label: t.license,
+                              value: employee.license,
+                            },
+                          ]
+                        : []),
+                      ...(canViewFinancial && employee.salary !== undefined
+                        ? [
+                            {
+                              icon: 'payments',
+                              label: t.salary,
+                              value: renderPrice(employee.salary),
+                            },
+                          ]
+                        : []),
                     ].map((item) => (
-                      <div key={item.label} className={`${PROFILE_GLASS_CARD_BASE} flex items-center gap-2.5`}>
+                      <div
+                        key={item.label}
+                        className={`${PROFILE_GLASS_CARD_BASE} flex items-center gap-2.5`}
+                      >
                         <span
-                          className="material-symbols-rounded text-[18px]"
+                          className='material-symbols-rounded text-[18px]'
                           style={{ color: bannerAccent }}
                         >
                           {item.icon}
                         </span>
-                        <div className="min-w-0">
-                          <p className="text-[10px] text-(--text-tertiary) font-bold truncate">
+                        <div className='min-w-0'>
+                          <p className='text-[10px] text-(--text-tertiary) font-bold truncate'>
                             {item.label}
                           </p>
-                          <p className="text-xs font-semibold text-(--text-primary) truncate">
+                          <p className='text-xs font-semibold text-(--text-primary) truncate'>
                             {item.value}
                           </p>
                         </div>
@@ -341,17 +396,81 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                   </div>
                 </div>
 
+                {/* Login & Fingerprint Credentials (Workspaces) */}
+                <div className='space-y-3 pt-2'>
+                  <h4
+                    className='text-xs font-bold uppercase tracking-wider'
+                    style={{ color: bannerAccent }}
+                  >
+                    {t.employeeProfile.loginAndFingerprint}
+                  </h4>
+                  <div className='grid grid-cols-1 gap-2'>
+                    {relatedEmployees.map((emp) => {
+                      const branch = branches?.find((b) => b.id === emp.branchId);
+                      const branchName = branch?.name || t.employeeProfile.unknownBranch;
+
+                      return (
+                        <div key={emp.id} className={`${PROFILE_GLASS_CARD_BASE} p-3 space-y-2`}>
+                          <div className='flex items-center justify-between border-b border-white/10 dark:border-white/5 pb-2 mb-2'>
+                            <span className='text-xs font-bold text-(--text-primary)'>
+                              {branchName}
+                            </span>
+                            {emp.biometricCredentialId ? (
+                              <div className='flex items-center gap-1 text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-md'>
+                                <span className='material-symbols-rounded text-[14px]'>
+                                  fingerprint
+                                </span>
+                                <span className='text-[10px] font-bold'>
+                                  {t.employeeProfile.fingerprintEnabled}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className='flex items-center gap-1 text-(--text-tertiary) bg-white/5 px-2 py-0.5 rounded-md'>
+                                <span className='material-symbols-rounded text-[14px]'>
+                                  fingerprint
+                                </span>
+                                <span className='text-[10px] font-bold'>
+                                  {t.employeeProfile.noFingerprint}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className='grid grid-cols-2 gap-2'>
+                            <div>
+                              <span className='text-[10px] font-bold text-(--text-tertiary) uppercase'>
+                                {t.login.username}
+                              </span>
+                              <div className='text-xs font-mono mt-0.5 text-(--text-primary)'>
+                                {emp.username || '—'}
+                              </div>
+                            </div>
+                            <div>
+                              <span className='text-[10px] font-bold text-(--text-tertiary) uppercase'>
+                                {t.login.password}
+                              </span>
+                              <div className='text-xs font-mono mt-0.5 text-(--text-primary)'>
+                                {emp.password || '—'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* Notes */}
                 {employee.notes && (
-                  <div className="space-y-2 pt-2">
+                  <div className='space-y-2 pt-2'>
                     <h4
-                      className="text-xs font-bold uppercase tracking-wider"
+                      className='text-xs font-bold uppercase tracking-wider'
                       style={{ color: bannerAccent }}
                     >
                       {t.notes}
                     </h4>
                     <div className={PROFILE_GLASS_CARD_BASE}>
-                      <p className="text-xs text-(--text-secondary) whitespace-pre-wrap leading-relaxed">
+                      <p className='text-xs text-(--text-secondary) whitespace-pre-wrap leading-relaxed'>
                         {employee.notes}
                       </p>
                     </div>
@@ -364,30 +483,48 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 
         {activeTab === 'page2' && (
           /* ── Page 2: CV (Contact & Experience) ── */
-          <div className="animate-fade-in p-6 space-y-6">
+          <div className='animate-fade-in p-6 space-y-6'>
             {/* Contact Details Section */}
-            <div className="space-y-3">
+            <div className='space-y-3'>
               <h4
-                className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
+                className='text-xs font-bold uppercase tracking-wider flex items-center gap-1.5'
                 style={{ color: bannerAccent }}
               >
-                <span className="material-symbols-rounded text-[18px]">contact_page</span>
+                <span className='material-symbols-rounded text-[18px]'>contact_page</span>
                 {t.contactInfo}
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                 <div className={`${PROFILE_GLASS_CARD_BASE} flex items-center gap-3`}>
-                  <span className="material-symbols-rounded text-primary-500" style={{ fontSize: '18px' }}>phone</span>
+                  <span
+                    className='material-symbols-rounded text-primary-500'
+                    style={{ fontSize: '18px' }}
+                  >
+                    phone
+                  </span>
                   <div>
-                    <div className="text-[10px] font-bold text-(--text-tertiary) uppercase tracking-wider">{t.phone}</div>
-                    <div className="text-xs font-semibold text-(--text-primary) mt-0.5" dir="ltr">{employee.phone}</div>
+                    <div className='text-[10px] font-bold text-(--text-tertiary) uppercase tracking-wider'>
+                      {t.phone}
+                    </div>
+                    <div className='text-xs font-semibold text-(--text-primary) mt-0.5' dir='ltr'>
+                      {employee.phone}
+                    </div>
                   </div>
                 </div>
                 {employee.email && (
                   <div className={`${PROFILE_GLASS_CARD_BASE} flex items-center gap-3`}>
-                    <span className="material-symbols-rounded text-primary-500" style={{ fontSize: '18px' }}>mail</span>
+                    <span
+                      className='material-symbols-rounded text-primary-500'
+                      style={{ fontSize: '18px' }}
+                    >
+                      mail
+                    </span>
                     <div>
-                      <div className="text-[10px] font-bold text-(--text-tertiary) uppercase tracking-wider">{t.email}</div>
-                      <div className="text-xs font-semibold text-(--text-primary) mt-0.5">{employee.email}</div>
+                      <div className='text-[10px] font-bold text-(--text-tertiary) uppercase tracking-wider'>
+                        {t.email}
+                      </div>
+                      <div className='text-xs font-semibold text-(--text-primary) mt-0.5'>
+                        {employee.email}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -395,26 +532,31 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
             </div>
 
             {/* Work History Timeline Section */}
-            <div className="space-y-4 pt-2">
+            <div className='space-y-4 pt-2'>
               <h4
-                className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
+                className='text-xs font-bold uppercase tracking-wider flex items-center gap-1.5'
                 style={{ color: bannerAccent }}
               >
-                <span className="material-symbols-rounded text-[18px]">work_history</span>
+                <span className='material-symbols-rounded text-[18px]'>work_history</span>
                 {t.tabs.experience}
               </h4>
-              <div className="relative before:absolute before:top-2 before:bottom-2 before:start-3.5 before:w-0.5 before:bg-(--border-divider) space-y-4">
+              <div className='relative before:absolute before:top-2 before:bottom-2 before:start-3.5 before:w-0.5 before:bg-(--border-divider) space-y-4'>
                 {historyTimeline.map((exp) => (
-                  <div key={exp.id} className="relative ps-8 flex items-start gap-3">
-                    <div className="absolute start-1.5 top-2 w-4 h-4 rounded-full border-4 border-(--bg-card) bg-primary-500 shadow-sm" />
+                  <div key={exp.id} className='relative ps-8 flex items-start gap-3'>
+                    <div className='absolute start-1.5 top-2 w-4 h-4 rounded-full border-4 border-(--bg-card) bg-primary-500 shadow-sm' />
                     <div className={`${PROFILE_GLASS_CARD_BASE} flex-1`}>
-                      <div className="flex justify-between items-start flex-wrap gap-2">
-                        <h5 className="text-xs font-bold text-(--text-primary)">{exp.pharmacyName}</h5>
-                        <span className="badge-neutral">
-                          {exp.startDate} - {exp.endDate || (language === 'AR' ? 'حتى الآن' : 'Present')}
+                      <div className='flex justify-between items-start flex-wrap gap-2'>
+                        <h5 className='text-xs font-bold text-(--text-primary)'>
+                          {exp.pharmacyName}
+                        </h5>
+                        <span className='badge-neutral'>
+                          {exp.startDate} -{' '}
+                          {exp.endDate || (language === 'AR' ? 'حتى الآن' : 'Present')}
                         </span>
                       </div>
-                      <p className="text-[11px] text-(--text-secondary) mt-1 font-semibold">{exp.role}</p>
+                      <p className='text-[11px] text-(--text-secondary) mt-1 font-semibold'>
+                        {exp.role}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -425,56 +567,76 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 
         {activeTab === 'page4' && stats && (
           /* ── Page 4: Achievements ── */
-          <div className="animate-fade-in p-6 space-y-4">
-            <div className="flex items-center justify-between">
+          <div className='animate-fade-in p-6 space-y-4'>
+            <div className='flex items-center justify-between'>
               <h4
-                className="text-xs font-bold uppercase tracking-wider"
+                className='text-xs font-bold uppercase tracking-wider'
                 style={{ color: bannerAccent }}
               >
                 {t.tabs.achievements}
               </h4>
               {expandedCard && (
                 <button
+                  type='button'
                   onClick={() => setExpandedCard(null)}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-(--text-secondary) hover:text-(--text-primary) transition-colors bg-white/10 dark:bg-black/20 px-2.5 py-1 rounded-lg border border-white/10 dark:border-white/5 shadow-xs"
+                  className='flex items-center gap-1.5 text-xs font-semibold text-(--text-secondary) hover:text-(--text-primary) transition-colors bg-white/10 dark:bg-black/20 px-2.5 py-1 rounded-lg border border-white/10 dark:border-white/5 shadow-xs'
                 >
-                  <span className="material-symbols-rounded text-[16px]">arrow_back</span>
+                  <span className='material-symbols-rounded text-[16px]'>arrow_back</span>
                   <span>{language === 'AR' ? 'العودة' : 'Back'}</span>
                 </button>
               )}
             </div>
-            <div className="space-y-4">
+            <div className='space-y-4'>
               {expandedCard ? (
                 // Expanded Card View
-                <div className="space-y-4">
-
+                <div className='space-y-4'>
                   {expandedCard === 'transactions' && (
                     <div className={`${PROFILE_GLASS_CARD_BASE} p-6 space-y-4`}>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center text-emerald-500">
-                          <span className="material-symbols-rounded text-[28px]">point_of_sale</span>
+                      <div className='flex items-center gap-3 mb-4'>
+                        <div className='w-12 h-12 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center text-emerald-500'>
+                          <span className='material-symbols-rounded text-[28px]'>
+                            point_of_sale
+                          </span>
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-(--text-primary)">{t.stats.transactions}</p>
-                          <p className="text-xs text-(--text-tertiary)">{language === 'AR' ? 'تفاصيل المبيعات' : 'Sales Details'}</p>
+                          <p className='text-sm font-bold text-(--text-primary)'>
+                            {t.stats.transactions}
+                          </p>
+                          <p className='text-xs text-(--text-tertiary)'>
+                            {language === 'AR' ? 'تفاصيل المبيعات' : 'Sales Details'}
+                          </p>
                         </div>
                       </div>
-                      <div className="space-y-3">
-                        <div className="flex justify-between">
-                          <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'عدد المعاملات' : 'Transaction Count'}</span>
-                          <p className="text-lg font-bold text-emerald-500">{stats.salesCount}</p>
+                      <div className='space-y-3'>
+                        <div className='flex justify-between'>
+                          <span className='text-sm text-(--text-tertiary)'>
+                            {language === 'AR' ? 'عدد المعاملات' : 'Transaction Count'}
+                          </span>
+                          <p className='text-lg font-bold text-emerald-500'>{stats.salesCount}</p>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'إجمالي المبيعات' : 'Total Sales'}</span>
-                          <p className="text-lg font-bold text-(--text-primary)">{renderPrice(stats.netSales)}</p>
+                        <div className='flex justify-between'>
+                          <span className='text-sm text-(--text-tertiary)'>
+                            {language === 'AR' ? 'إجمالي المبيعات' : 'Total Sales'}
+                          </span>
+                          <p className='text-lg font-bold text-(--text-primary)'>
+                            {renderPrice(stats.netSales)}
+                          </p>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'الربح الصافي' : 'Net Profit'}</span>
-                          <p className="text-lg font-bold text-(--text-primary)">{renderPrice(stats.totalProfit)}</p>
+                        <div className='flex justify-between'>
+                          <span className='text-sm text-(--text-tertiary)'>
+                            {language === 'AR' ? 'الربح الصافي' : 'Net Profit'}
+                          </span>
+                          <p className='text-lg font-bold text-(--text-primary)'>
+                            {renderPrice(stats.totalProfit)}
+                          </p>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'هامش الربح' : 'Profit Margin'}</span>
-                          <p className="text-lg font-bold text-(--text-primary)">{stats.profitMargin}%</p>
+                        <div className='flex justify-between'>
+                          <span className='text-sm text-(--text-tertiary)'>
+                            {language === 'AR' ? 'هامش الربح' : 'Profit Margin'}
+                          </span>
+                          <p className='text-lg font-bold text-(--text-primary)'>
+                            {stats.profitMargin}%
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -482,27 +644,41 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 
                   {expandedCard === 'items' && (
                     <div className={`${PROFILE_GLASS_CARD_BASE} p-6 space-y-4`}>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center text-blue-500">
-                          <span className="material-symbols-rounded text-[28px]">package_2</span>
+                      <div className='flex items-center gap-3 mb-4'>
+                        <div className='w-12 h-12 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center text-blue-500'>
+                          <span className='material-symbols-rounded text-[28px]'>package_2</span>
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-(--text-primary)">{t.stats.itemsSold}</p>
-                          <p className="text-xs text-(--text-tertiary)">{language === 'AR' ? 'تفاصيل المنتجات' : 'Products Details'}</p>
+                          <p className='text-sm font-bold text-(--text-primary)'>
+                            {t.stats.itemsSold}
+                          </p>
+                          <p className='text-xs text-(--text-tertiary)'>
+                            {language === 'AR' ? 'تفاصيل المنتجات' : 'Products Details'}
+                          </p>
                         </div>
                       </div>
-                      <div className="space-y-3">
-                        <div className="flex justify-between">
-                          <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'إجمالي المنتجات' : 'Total Items'}</span>
-                          <p className="text-lg font-bold text-blue-500">{stats.totalItemsSold}</p>
+                      <div className='space-y-3'>
+                        <div className='flex justify-between'>
+                          <span className='text-sm text-(--text-tertiary)'>
+                            {language === 'AR' ? 'إجمالي المنتجات' : 'Total Items'}
+                          </span>
+                          <p className='text-lg font-bold text-blue-500'>{stats.totalItemsSold}</p>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'عدد المعاملات' : 'Transactions'}</span>
-                          <p className="text-lg font-bold text-(--text-primary)">{stats.salesCount}</p>
+                        <div className='flex justify-between'>
+                          <span className='text-sm text-(--text-tertiary)'>
+                            {language === 'AR' ? 'عدد المعاملات' : 'Transactions'}
+                          </span>
+                          <p className='text-lg font-bold text-(--text-primary)'>
+                            {stats.salesCount}
+                          </p>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'متوسط المنتجات' : 'Avg per Transaction'}</span>
-                          <p className="text-lg font-bold text-(--text-primary)">{(stats.totalItemsSold / stats.salesCount).toFixed(1)}</p>
+                        <div className='flex justify-between'>
+                          <span className='text-sm text-(--text-tertiary)'>
+                            {language === 'AR' ? 'متوسط المنتجات' : 'Avg per Transaction'}
+                          </span>
+                          <p className='text-lg font-bold text-(--text-primary)'>
+                            {(stats.totalItemsSold / stats.salesCount).toFixed(1)}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -510,41 +686,63 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 
                   {expandedCard === 'attendance' && (
                     <div className={`${PROFILE_GLASS_CARD_BASE} p-6 space-y-4`}>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 rounded-lg bg-blue-400/10 dark:bg-blue-400/20 flex items-center justify-center text-blue-400">
-                          <span className="material-symbols-rounded text-[28px]">schedule</span>
+                      <div className='flex items-center gap-3 mb-4'>
+                        <div className='w-12 h-12 rounded-lg bg-blue-400/10 dark:bg-blue-400/20 flex items-center justify-center text-blue-400'>
+                          <span className='material-symbols-rounded text-[28px]'>schedule</span>
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-(--text-primary)">{language === 'AR' ? 'أيام العمل' : 'Working Days'}</p>
-                          <p className="text-xs text-(--text-tertiary)">{language === 'AR' ? 'إحصائيات الحضور الشاملة' : 'Comprehensive Attendance'}</p>
+                          <p className='text-sm font-bold text-(--text-primary)'>
+                            {language === 'AR' ? 'أيام العمل' : 'Working Days'}
+                          </p>
+                          <p className='text-xs text-(--text-tertiary)'>
+                            {language === 'AR'
+                              ? 'إحصائيات الحضور الشاملة'
+                              : 'Comprehensive Attendance'}
+                          </p>
                         </div>
                       </div>
                       {attendanceStats.isLoading ? (
-                        <p className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'جاري التحميل...' : 'Loading...'}</p>
+                        <p className='text-sm text-(--text-tertiary)'>
+                          {language === 'AR' ? 'جاري التحميل...' : 'Loading...'}
+                        </p>
                       ) : attendanceStats.error ? (
-                        <p className="text-sm text-red-500">{attendanceStats.error}</p>
+                        <p className='text-sm text-red-500'>{attendanceStats.error}</p>
                       ) : (
-                        <div className="space-y-3">
-                          <div className="flex justify-between">
-                            <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'إجمالي الساعات' : 'Total Hours'}</span>
-                            <p className="text-lg font-bold text-cyan-500">
+                        <div className='space-y-3'>
+                          <div className='flex justify-between'>
+                            <span className='text-sm text-(--text-tertiary)'>
+                              {language === 'AR' ? 'إجمالي الساعات' : 'Total Hours'}
+                            </span>
+                            <p className='text-lg font-bold text-cyan-500'>
                               {attendanceStats.totalMinutes >= 60
                                 ? `${Math.floor(attendanceStats.totalMinutes / 60)}h ${attendanceStats.totalMinutes % 60}m`
                                 : `${attendanceStats.totalMinutes}m`}
                             </p>
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'أيام العمل' : 'Work Days'}</span>
-                            <p className="text-lg font-bold text-indigo-500">{attendanceStats.totalDays}</p>
+                          <div className='flex justify-between'>
+                            <span className='text-sm text-(--text-tertiary)'>
+                              {language === 'AR' ? 'أيام العمل' : 'Work Days'}
+                            </span>
+                            <p className='text-lg font-bold text-indigo-500'>
+                              {attendanceStats.totalDays}
+                            </p>
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'متوسط يومي' : 'Average/Day'}</span>
-                            <p className="text-lg font-bold text-violet-500">{attendanceStats.averageHoursPerDay.toFixed(1)}h</p>
+                          <div className='flex justify-between'>
+                            <span className='text-sm text-(--text-tertiary)'>
+                              {language === 'AR' ? 'متوسط يومي' : 'Average/Day'}
+                            </span>
+                            <p className='text-lg font-bold text-violet-500'>
+                              {attendanceStats.averageHoursPerDay.toFixed(1)}h
+                            </p>
                           </div>
                           {attendanceStats.lastActiveDate && (
-                            <div className="flex justify-between pt-2 border-t border-(--border-divider)">
-                              <span className="text-sm text-(--text-tertiary)">{language === 'AR' ? 'آخر حضور' : 'Last Active'}</span>
-                              <p className="text-sm font-semibold text-(--text-primary)">{attendanceStats.lastActiveDate}</p>
+                            <div className='flex justify-between pt-2 border-t border-(--border-divider)'>
+                              <span className='text-sm text-(--text-tertiary)'>
+                                {language === 'AR' ? 'آخر حضور' : 'Last Active'}
+                              </span>
+                              <p className='text-sm font-semibold text-(--text-primary)'>
+                                {attendanceStats.lastActiveDate}
+                              </p>
                             </div>
                           )}
                         </div>
@@ -554,37 +752,54 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 </div>
               ) : (
                 // Grid View with Interactive Cards
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className='grid grid-cols-2 sm:grid-cols-3 gap-3'>
                   <button
+                    type='button'
                     onClick={() => setExpandedCard('transactions')}
                     className={`${PROFILE_GLASS_CARD_BASE} text-center flex flex-col justify-between min-h-[90px] cursor-pointer`}
                   >
-                    <span className="material-symbols-rounded text-[20px] text-emerald-500 mb-1">point_of_sale</span>
+                    <span className='material-symbols-rounded text-[20px] text-emerald-500 mb-1'>
+                      point_of_sale
+                    </span>
                     <div>
-                      <p className="text-base font-bold text-(--text-primary)">{stats.salesCount}</p>
-                      <p className="text-[10px] font-bold text-(--text-tertiary) uppercase">{t.stats.transactions}</p>
+                      <p className='text-base font-bold text-(--text-primary)'>
+                        {stats.salesCount}
+                      </p>
+                      <p className='text-[10px] font-bold text-(--text-tertiary) uppercase'>
+                        {t.stats.transactions}
+                      </p>
                     </div>
                   </button>
                   <button
+                    type='button'
                     onClick={() => setExpandedCard('items')}
                     className={`${PROFILE_GLASS_CARD_BASE} text-center flex flex-col justify-between min-h-[90px] cursor-pointer`}
                   >
-                    <span className="material-symbols-rounded text-[20px] text-blue-500 mb-1">package_2</span>
+                    <span className='material-symbols-rounded text-[20px] text-blue-500 mb-1'>
+                      package_2
+                    </span>
                     <div>
-                      <p className="text-base font-bold text-(--text-primary)">{stats.totalItemsSold}</p>
-                      <p className="text-[10px] font-bold text-(--text-tertiary) uppercase">{t.stats.itemsSold}</p>
+                      <p className='text-base font-bold text-(--text-primary)'>
+                        {stats.totalItemsSold}
+                      </p>
+                      <p className='text-[10px] font-bold text-(--text-tertiary) uppercase'>
+                        {t.stats.itemsSold}
+                      </p>
                     </div>
                   </button>
                   <button
+                    type='button'
                     onClick={() => setExpandedCard('attendance')}
                     className={`${PROFILE_GLASS_CARD_BASE} text-center flex flex-col justify-between min-h-[90px] cursor-pointer`}
                   >
-                    <span className="material-symbols-rounded text-[20px] text-blue-400 mb-1">schedule</span>
+                    <span className='material-symbols-rounded text-[20px] text-blue-400 mb-1'>
+                      schedule
+                    </span>
                     <div>
-                      <p className="text-base font-bold text-(--text-primary)">
+                      <p className='text-base font-bold text-(--text-primary)'>
                         {attendanceStats.isLoading ? '...' : `${attendanceStats.totalDays}`}
                       </p>
-                      <p className="text-[10px] font-bold text-(--text-tertiary) uppercase">
+                      <p className='text-[10px] font-bold text-(--text-tertiary) uppercase'>
                         {language === 'AR' ? 'أيام العمل' : 'Working Days'}
                       </p>
                     </div>
@@ -592,88 +807,106 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 </div>
               )}
             </div>
-
-
           </div>
         )}
 
         {activeTab === 'page6' && (
           /* ── Page 6: Documents ── */
-          <div className="animate-fade-in p-6 space-y-6">
+          <div className='animate-fade-in p-6 space-y-6'>
             {/* National ID Section */}
-            <div className="space-y-2">
+            <div className='space-y-2'>
               <div
-                className="text-xs font-semibold uppercase px-1 flex items-center gap-2"
+                className='text-xs font-semibold uppercase px-1 flex items-center gap-2'
                 style={{ color: bannerAccent }}
               >
-                <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-md)' }}>
+                <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
                   badge
                 </span>
                 {t.nationalIdCard}
               </div>
               {employee.nationalIdCard || employee.nationalIdCardBack ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-white/5 dark:bg-black/10 border border-(--border-divider) rounded-xl">
+                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-white/5 dark:bg-black/10 border border-(--border-divider) rounded-xl'>
                   {employee.nationalIdCard && (
-                    <div className="space-y-1">
-                      <span className="text-[9px] font-bold text-(--text-tertiary) uppercase">{t.frontFace}</span>
-                      <div className="w-full aspect-[8/5] border border-(--border-divider) rounded-lg overflow-hidden bg-(--bg-secondary)/30">
-                        <img src={employee.nationalIdCard} alt="ID Front" className="w-full h-full object-cover" />
+                    <div className='space-y-1'>
+                      <span className='text-[9px] font-bold text-(--text-tertiary) uppercase'>
+                        {t.frontFace}
+                      </span>
+                      <div className='w-full aspect-[8/5] border border-(--border-divider) rounded-lg overflow-hidden bg-(--bg-secondary)/30'>
+                        <img
+                          src={employee.nationalIdCard}
+                          alt='ID Front'
+                          className='w-full h-full object-cover'
+                        />
                       </div>
                     </div>
                   )}
                   {employee.nationalIdCardBack && (
-                    <div className="space-y-1">
-                      <span className="text-[9px] font-bold text-(--text-tertiary) uppercase">{t.backFace}</span>
-                      <div className="w-full aspect-[8/5] border border-(--border-divider) rounded-lg overflow-hidden bg-(--bg-secondary)/30">
-                        <img src={employee.nationalIdCardBack} alt="ID Back" className="w-full h-full object-cover" />
+                    <div className='space-y-1'>
+                      <span className='text-[9px] font-bold text-(--text-tertiary) uppercase'>
+                        {t.backFace}
+                      </span>
+                      <div className='w-full aspect-[8/5] border border-(--border-divider) rounded-lg overflow-hidden bg-(--bg-secondary)/30'>
+                        <img
+                          src={employee.nationalIdCardBack}
+                          alt='ID Back'
+                          className='w-full h-full object-cover'
+                        />
                       </div>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="text-center py-8 bg-white/5 dark:bg-black/10 border border-(--border-divider) border-dashed rounded-xl">
-                  <p className="text-xs text-(--text-tertiary)">
-                    {t.noIdCardImages}
-                  </p>
+                <div className='text-center py-8 bg-white/5 dark:bg-black/10 border border-(--border-divider) border-dashed rounded-xl'>
+                  <p className='text-xs text-(--text-tertiary)'>{t.noIdCardImages}</p>
                 </div>
               )}
             </div>
 
             {/* Syndicate Cards Section */}
-            <div className="space-y-2">
+            <div className='space-y-2'>
               <div
-                className="text-xs font-semibold uppercase px-1 flex items-center gap-2"
+                className='text-xs font-semibold uppercase px-1 flex items-center gap-2'
                 style={{ color: bannerAccent }}
               >
-                <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-md)' }}>
+                <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
                   card_membership
                 </span>
                 {t.syndicateCards}
               </div>
               {employee.mainSyndicateCard || employee.subSyndicateCard ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-white/5 dark:bg-black/10 border border-(--border-divider) rounded-xl">
+                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-white/5 dark:bg-black/10 border border-(--border-divider) rounded-xl'>
                   {employee.mainSyndicateCard && (
-                    <div className="space-y-1">
-                      <span className="text-[9px] font-bold text-(--text-tertiary) uppercase">{t.mainSyndicateCard}</span>
-                      <div className="w-full aspect-[8/5] border border-(--border-divider) rounded-lg overflow-hidden bg-(--bg-secondary)/30">
-                        <img src={employee.mainSyndicateCard} alt="Main Syndicate" className="w-full h-full object-cover" />
+                    <div className='space-y-1'>
+                      <span className='text-[9px] font-bold text-(--text-tertiary) uppercase'>
+                        {t.mainSyndicateCard}
+                      </span>
+                      <div className='w-full aspect-[8/5] border border-(--border-divider) rounded-lg overflow-hidden bg-(--bg-secondary)/30'>
+                        <img
+                          src={employee.mainSyndicateCard}
+                          alt='Main Syndicate'
+                          className='w-full h-full object-cover'
+                        />
                       </div>
                     </div>
                   )}
                   {employee.subSyndicateCard && (
-                    <div className="space-y-1">
-                      <span className="text-[9px] font-bold text-(--text-tertiary) uppercase">{t.sub}</span>
-                      <div className="w-full aspect-[8/5] border border-(--border-divider) rounded-lg overflow-hidden bg-(--bg-secondary)/30">
-                        <img src={employee.subSyndicateCard} alt="Sub Syndicate" className="w-full h-full object-cover" />
+                    <div className='space-y-1'>
+                      <span className='text-[9px] font-bold text-(--text-tertiary) uppercase'>
+                        {t.sub}
+                      </span>
+                      <div className='w-full aspect-[8/5] border border-(--border-divider) rounded-lg overflow-hidden bg-(--bg-secondary)/30'>
+                        <img
+                          src={employee.subSyndicateCard}
+                          alt='Sub Syndicate'
+                          className='w-full h-full object-cover'
+                        />
                       </div>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="text-center py-8 bg-white/5 dark:bg-black/10 border border-(--border-divider) border-dashed rounded-xl">
-                  <p className="text-xs text-(--text-tertiary)">
-                    {t.noSyndicateImages}
-                  </p>
+                <div className='text-center py-8 bg-white/5 dark:bg-black/10 border border-(--border-divider) border-dashed rounded-xl'>
+                  <p className='text-xs text-(--text-tertiary)'>{t.noSyndicateImages}</p>
                 </div>
               )}
             </div>

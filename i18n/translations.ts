@@ -146,9 +146,11 @@ export const TRANSLATIONS = {
       importWarning: 'Warning: Importing a backup will overwrite all current data. Proceed?',
       storageQuota: {
         warningTitle: 'Storage Space Warning',
-        warningMessage: 'Local storage usage is high ({{percentage}}% of {{limit}}MB used). Please clear older branches or browser cache to avoid losing data.',
+        warningMessage:
+          'Local storage usage is high ({{percentage}}% of {{limit}}MB used). Please clear older branches or browser cache to avoid losing data.',
         criticalTitle: 'Storage Full',
-        criticalMessage: 'Failed to save data. Local storage limit exceeded. Please free up space immediately.',
+        criticalMessage:
+          'Failed to save data. Local storage limit exceeded. Please free up space immediately.',
       },
       branchManagement: 'Branch Management',
       addBranch: 'Add New Branch',
@@ -374,7 +376,8 @@ export const TRANSLATIONS = {
       accept: 'Accept',
       reject: 'Reject',
       selectWorkspace: 'Select Workspace',
-      selectWorkspaceDesc: 'You have access to multiple pharmacy organizations. Choose which one you want to enter.',
+      selectWorkspaceDesc:
+        'You have access to multiple pharmacy organizations. Choose which one you want to enter.',
     },
     statusBar: {
       ready: 'Ready',
@@ -458,11 +461,13 @@ export const TRANSLATIONS = {
     pendingBranch: {
       title: 'Branch Assignment Pending',
       subtitle: 'Your profile is active, but you are not assigned to a branch yet.',
-      employeeMessage: 'Please ask your system administrator or organization owner to assign your profile to a branch in the HR/Staff settings.',
+      employeeMessage:
+        'Please ask your system administrator or organization owner to assign your profile to a branch in the HR/Staff settings.',
       switchProfile: 'Switch Profile',
       signOut: 'Sign Out',
       adminTitle: 'Activate a Branch',
-      adminSubtitle: 'As an administrator, you can choose a branch to manage or create one if none exist.',
+      adminSubtitle:
+        'As an administrator, you can choose a branch to manage or create one if none exist.',
       selectBranch: 'Select Branch',
       selectBranchPlaceholder: 'Choose a branch to activate...',
       noBranches: 'No branches have been created yet.',
@@ -2285,7 +2290,8 @@ export const TRANSLATIONS = {
       confirmPasswordPrompt: 'Please enter password to confirm:',
       incorrectPassword: 'Incorrect password',
       deletePasskeyConfirm: 'Delete current passkey for this employee?',
-      passkeyUnsupported: 'Browser does not support Passkeys. Ensure you are on HTTPS or Localhost.',
+      passkeyUnsupported:
+        'Browser does not support Passkeys. Ensure you are on HTTPS or Localhost.',
       passkeySet: 'Passkey Set',
       setupPasskey: 'Setup Passkey',
       changePassword: 'Change Password',
@@ -2314,7 +2320,8 @@ export const TRANSLATIONS = {
       noSyndicateImages: 'No syndicate cards uploaded',
       fingerprintEnabled: 'Fingerprint Enabled',
       registeredCredentials: 'Registered Login Credentials',
-      usernameTaken: 'This username is already taken by another employee. Please choose a different one.',
+      usernameTaken:
+        'This username is already taken by another employee. Please choose a different one.',
       searchPlaceholder: 'Search employees...',
       emptyMessage: 'No employees found',
       generalInfo: 'General Info',
@@ -2774,7 +2781,8 @@ export const TRANSLATIONS = {
       statusPredictiveShortage: 'Predictive Shortage',
       statusOutOfStockDefault: 'Inactive',
       statusNormal: 'Normal',
-      abcDescription: 'ABC Analysis ranks products by sales velocity: A = Top 80% contribution, B = Mid 15%, C = Low 5%',
+      abcDescription:
+        'ABC Analysis ranks products by sales velocity: A = Top 80% contribution, B = Mid 15%, C = Low 5%',
       predictedRunoutText: 'Predicted runout in {days} days',
       suggestedOrderTooltip: 'Calculated as: 14 Days Velocity × 1.5 Safety Margin - Current Stock',
       noShortagesFound: 'No shortages or alerts found for this branch. Stock levels are healthy!',
@@ -2786,7 +2794,8 @@ export const TRANSLATIONS = {
       warningNoItemsSelectedDesc: 'Please select the drugs you want to reorder first.',
       navigatingToPurchases: 'Navigating to Purchases...',
       navigationError: 'Navigation error',
-      navigationErrorDesc: 'Sorry, we could not resolve the navigation controller for purchases page.',
+      navigationErrorDesc:
+        'Sorry, we could not resolve the navigation controller for purchases page.',
       preparedOrderDesc: 'Prepared purchase order draft containing {count} items.',
       exportButtonLabel: 'Export Shortages',
       exportSelectedButtonLabel: 'Export Selected',
@@ -2806,7 +2815,8 @@ export const TRANSLATIONS = {
     newTests: {
       title: 'Scrollbar Lab',
       subtitle: 'Premium testing ground for custom scrollbars and UI patterns',
-      description: 'An interactive playground built for developers to test and copy advanced custom scrollbar styles.',
+      description:
+        'An interactive playground built for developers to test and copy advanced custom scrollbar styles.',
       welcome: 'Welcome to the Scrollbar Lab',
       getStarted: 'Ready to write your next feature?',
       designAesthetic: 'Premium Design Language Active',
@@ -2814,7 +2824,8 @@ export const TRANSLATIONS = {
     a5InvoiceDesigner: {
       title: 'A5 Purchase Invoice Designer',
       subtitle: 'Design, preview, and test print high-fidelity A5 pharmaceutical invoices',
-      description: 'An interactive design lab to customize A5 templates for major Egyptian drug suppliers and print them with perfect page scaling.',
+      description:
+        'An interactive design lab to customize A5 templates for major Egyptian drug suppliers and print them with perfect page scaling.',
     },
     expenses: {
       title: 'Expense Tracker',
@@ -2853,7 +2864,8 @@ export const TRANSLATIONS = {
         confirm: 'Record Expense',
         cancel: 'Cancel',
         shiftBalance: 'Current Shift Cash',
-        noShiftWarning: 'No active shift found. Expense will be logged but won\'t affect the cash register.',
+        noShiftWarning:
+          "No active shift found. Expense will be logged but won't affect the cash register.",
       },
       validation: {
         amountRequired: 'Amount is required',
@@ -2909,6 +2921,10 @@ export const TRANSLATIONS = {
       edit: 'Edit',
       fullName: 'Full Name',
       nameArabic: 'Name (Arabic)',
+      loginAndFingerprint: 'Login & Fingerprint Credentials',
+      unknownBranch: 'Unknown Branch',
+      noFingerprint: 'No Fingerprint',
+      fingerprintEnabled: 'Fingerprint Enabled',
       username: 'Username',
       email: 'Email',
       phone: 'Phone',
@@ -2935,9 +2951,11 @@ export const TRANSLATIONS = {
       language: 'Language',
       menu: 'Menu',
       copied: 'Copied ✓',
-      noPendingRequestsDesc: 'When a pharmacy sends you an employment request, it will appear here. Accept it to gain access to their management system.',
-      noWorkHistoryDesc: 'When you accept an employment request from a pharmacy, it will appear here in your work history.',
-      fileTooLarge: 'File too large (max {{size}}KB)'
+      noPendingRequestsDesc:
+        'When a pharmacy sends you an employment request, it will appear here. Accept it to gain access to their management system.',
+      noWorkHistoryDesc:
+        'When you accept an employment request from a pharmacy, it will appear here in your work history.',
+      fileTooLarge: 'File too large (max {{size}}KB)',
     },
   },
   AR: {
@@ -3066,7 +3084,8 @@ export const TRANSLATIONS = {
       confirmPasswordPrompt: 'يرجى إدخال كلمة المرور للتأكيد:',
       incorrectPassword: 'كلمة المرور غير صحيحة',
       deletePasskeyConfirm: 'هل تريد حذف مفتاح المرور الحالي لهذا الموظف؟',
-      passkeyUnsupported: 'هذا المتصفح لا يدعم مفاتيح المرور (Passkeys). تأكد من استخدام HTTPS أو Localhost.',
+      passkeyUnsupported:
+        'هذا المتصفح لا يدعم مفاتيح المرور (Passkeys). تأكد من استخدام HTTPS أو Localhost.',
       passkeySet: 'تم ضبط المفتاح',
       setupPasskey: 'إعداد مفتاح المرور',
       changePassword: 'تغيير كلمة المرور',
@@ -3474,9 +3493,11 @@ export const TRANSLATIONS = {
         'تحذير: استيراد نسخة احتياطية سيؤدي إلى مسح جميع البيانات الحالية. هل تريد الاستمرار؟',
       storageQuota: {
         warningTitle: 'تحذير من مساحة التخزين',
-        warningMessage: 'مساحة التخزين للمتصفح المستخدمة مرتفعة (تم استخدام {{percentage}}% من أصل {{limit}} ميجابايت). يرجى مسح الفروع القديمة أو كاش المتصفح لتجنب فقدان البيانات.',
+        warningMessage:
+          'مساحة التخزين للمتصفح المستخدمة مرتفعة (تم استخدام {{percentage}}% من أصل {{limit}} ميجابايت). يرجى مسح الفروع القديمة أو كاش المتصفح لتجنب فقدان البيانات.',
         criticalTitle: 'مساحة التخزين ممتلئة',
-        criticalMessage: 'فشل في حفظ البيانات. تم تجاوز الحد الأقصى للتخزين المحلي. يرجى توفير مساحة فوراً.',
+        criticalMessage:
+          'فشل في حفظ البيانات. تم تجاوز الحد الأقصى للتخزين المحلي. يرجى توفير مساحة فوراً.',
       },
       branchManagement: 'إدارة الفروع',
       addBranch: 'إضافة فرع جديد',
@@ -3797,11 +3818,13 @@ export const TRANSLATIONS = {
     pendingBranch: {
       title: 'في انتظار التعيين لفرع',
       subtitle: 'الملف الشخصي نشط، ولكن لم يتم تعيينك لأي فرع بعد.',
-      employeeMessage: 'يرجى التواصل مع مسؤول النظام أو مالك المؤسسة لتعيين ملفك الشخصي لفرع في إعدادات الموظفين (HR/Staff).',
+      employeeMessage:
+        'يرجى التواصل مع مسؤول النظام أو مالك المؤسسة لتعيين ملفك الشخصي لفرع في إعدادات الموظفين (HR/Staff).',
       switchProfile: 'تبديل الحساب',
       signOut: 'تسجيل الخروج',
       adminTitle: 'تفعيل أحد الفروع',
-      adminSubtitle: 'بصفتك مسؤولاً، يمكنك اختيار أحد الفروع لإدارتها أو إنشاء فرع جديد إذا لم تكن هناك فروع.',
+      adminSubtitle:
+        'بصفتك مسؤولاً، يمكنك اختيار أحد الفروع لإدارتها أو إنشاء فرع جديد إذا لم تكن هناك فروع.',
       selectBranch: 'اختر الفرع',
       selectBranchPlaceholder: 'اختر فرعاً لتفعيله...',
       noBranches: 'لم يتم إنشاء أي فروع بعد.',
@@ -5723,10 +5746,13 @@ export const TRANSLATIONS = {
       statusPredictiveShortage: 'نفاد متوقع',
       statusOutOfStockDefault: 'غير نشط',
       statusNormal: 'طبيعي',
-      abcDescription: 'يصنف تحليل ABC المنتجات حسب سرعة المبيعات: A = أعلى 80% من المساهمة، B = المتوسط 15%، C = منخفض 5%',
+      abcDescription:
+        'يصنف تحليل ABC المنتجات حسب سرعة المبيعات: A = أعلى 80% من المساهمة، B = المتوسط 15%، C = منخفض 5%',
       predictedRunoutText: 'النفاد المتوقع خلال {days} يوم',
-      suggestedOrderTooltip: 'يتم احتسابه كالتالي: معدل بيع 14 يوم × 1.5 هامش أمان - المخزون الحالي',
-      noShortagesFound: 'لم يتم العثور على أي نواقص أو إنذارات في هذا الفرع. مستويات المخزون سليمة!',
+      suggestedOrderTooltip:
+        'يتم احتسابه كالتالي: معدل بيع 14 يوم × 1.5 هامش أمان - المخزون الحالي',
+      noShortagesFound:
+        'لم يتم العثور على أي نواقص أو إنذارات في هذا الفرع. مستويات المخزون سليمة!',
       warningNoDataToExportTitle: 'لا توجد بيانات لتصديرها!',
       warningNoDataToExportDesc: 'يرجى تحديد أدوية أو التأكد من وجود نواقص.',
       exportSuccess: 'تم تصدير النواقص بنجاح!',
@@ -5755,7 +5781,8 @@ export const TRANSLATIONS = {
     newTests: {
       title: 'مختبر شريط التمرير',
       subtitle: 'بيئة اختبار متميزة لأشرطة التمرير المخصصة وأنماط الواجهة',
-      description: 'بيئة تفاعلية مصممة للمطورين لاختبار ونسخ تصميمات أشرطة التمرير المخصصة والمتقدمة.',
+      description:
+        'بيئة تفاعلية مصممة للمطورين لاختبار ونسخ تصميمات أشرطة التمرير المخصصة والمتقدمة.',
       welcome: 'مرحباً بك في مختبر شريط التمرير',
       getStarted: 'هل أنت جاهز لكتابة ميزتك التالية؟',
       designAesthetic: 'لغة التصميم المتميزة نشطة',
@@ -5763,7 +5790,8 @@ export const TRANSLATIONS = {
     a5InvoiceDesigner: {
       title: 'مصمم فواتير المشتريات A5',
       subtitle: 'تصميم ومعاينة واختبار طباعة فواتير شركات ومخازن الأدوية المصرية بدقة فائقة',
-      description: 'مختبر تفاعلي لتخصيص فواتير A5 لأشهر موزعي الأدوية في مصر وطباعتها بمقاسات وهوامش مثالية.',
+      description:
+        'مختبر تفاعلي لتخصيص فواتير A5 لأشهر موزعي الأدوية في مصر وطباعتها بمقاسات وهوامش مثالية.',
     },
     expenses: {
       title: 'متتبع المصروفات',
@@ -5858,6 +5886,10 @@ export const TRANSLATIONS = {
       edit: 'تعديل',
       fullName: 'الاسم الكامل',
       nameArabic: 'الاسم بالعربية',
+      loginAndFingerprint: 'بيانات الدخول والبصمة',
+      unknownBranch: 'فرع غير معروف',
+      noFingerprint: 'لا توجد بصمة',
+      fingerprintEnabled: 'البصمة مفعلة',
       username: 'اسم المستخدم',
       email: 'البريد الإلكتروني',
       phone: 'الهاتف',
@@ -5884,9 +5916,10 @@ export const TRANSLATIONS = {
       language: 'اللغة',
       menu: 'القائمة',
       copied: 'تم النسخ ✓',
-      noPendingRequestsDesc: 'عندما ترسل لك أي صيدلية طلب توظيف، سيظهر هنا. يمكنك قبوله للوصول إلى نظام إدارة الصيدلية الخاص بهم.',
+      noPendingRequestsDesc:
+        'عندما ترسل لك أي صيدلية طلب توظيف، سيظهر هنا. يمكنك قبوله للوصول إلى نظام إدارة الصيدلية الخاص بهم.',
       noWorkHistoryDesc: 'عندما تقبل طلب توظيف من إحدى الصيدليات، سيظهر هنا في سجل عملك.',
-      fileTooLarge: 'حجم الملف كبير جداً (الحد الأقصى {{size}} كيلوبايت)'
+      fileTooLarge: 'حجم الملف كبير جداً (الحد الأقصى {{size}} كيلوبايت)',
     },
   },
 };
