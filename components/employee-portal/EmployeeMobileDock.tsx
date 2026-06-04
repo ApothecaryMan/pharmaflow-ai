@@ -6,7 +6,7 @@ interface EmployeeMobileDockProps {
   onViewChange: (view: 'profile' | 'requests') => void;
   onOpenDrawer: () => void;
   language?: string;
-  t: any;
+  t: Translations;
 }
 
 export const EmployeeMobileDock: React.FC<EmployeeMobileDockProps> = ({

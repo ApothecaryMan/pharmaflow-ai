@@ -83,12 +83,12 @@ export interface UserProfile {
   email?: string;
   phone?: string;
   licenseNumber?: string;
-  image?: string; // Base64 profile image
+  image?: string | null; // Base64 profile image
   coverStyle?: string; // Banner style id
-  nationalIdCard?: string; // Base64 National ID front
-  nationalIdCardBack?: string; // Base64 National ID back
-  mainSyndicateCard?: string; // Base64 Syndicate card
-  subSyndicateCard?: string; // Base64 Sub syndicate card
+  nationalIdCard?: string | null; // Base64 National ID front
+  nationalIdCardBack?: string | null; // Base64 National ID back
+  mainSyndicateCard?: string | null; // Base64 Syndicate card
+  subSyndicateCard?: string | null; // Base64 Sub syndicate card
   createdAt?: string;
   updatedAt?: string;
 }

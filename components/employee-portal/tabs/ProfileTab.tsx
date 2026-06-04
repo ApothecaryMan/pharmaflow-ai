@@ -3,6 +3,7 @@ import { Camera, Pencil, Save, X } from 'lucide-react';
 import type { UserProfile, EmploymentRequest } from '../../../types';
 import { renderBanner, BANNER_STYLES } from '../../../utils/banners';
 import { PROFILE_GLASS_CARD_BASE } from '../../../utils/themeStyles';
+import { MAX_UPLOAD_SIZE_KB } from '../../../config';
 
 type BannerId = typeof BANNER_STYLES[number]['id'];
 
@@ -15,10 +16,10 @@ const getInitials = (name: string) => {
   return name.slice(0, 2).toUpperCase();
 };
 
-const readFileAsBase64 = (file: File): Promise<string> => {
+const readFileAsBase64 = (file: File, t: Translations): Promise<string> => {
   return new Promise((resolve, reject) => {
-    if (file.size > 500 * 1024) {
-      reject(new Error('File too large (max 500KB)'));
+    if (file.size > MAX_UPLOAD_SIZE_KB * 1024) {
+      reject(new Error(t.employeeProfile.fileTooLarge.replace('{{size}}', MAX_UPLOAD_SIZE_KB.toString())));
       return;
     }
     const reader = new FileReader();
@@ -65,7 +66,7 @@ interface ProfileTabProps {
   sessionUsername: string | undefined;
   requests: EmploymentRequest[];
   isRTL: boolean;
-  t: any;
+  t: Translations;
   onUpdateProfile?: (updates: Partial<UserProfile>) => Promise<void>;
   isEditing: boolean;
   setIsEditing: (val: boolean) => void;
@@ -160,14 +161,14 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const base64 = await readFileAsBase64(file);
+      const base64 = await readFileAsBase64(file, t);
       setPreview(base64);
       setRemoveImage(false);
     } catch (err) {
       if (err instanceof Error) alert(err.message);
     }
     if (imageInputRef.current) imageInputRef.current.value = '';
-  }, []);
+  }, [t]);
 
   const handleImageRemove = useCallback(() => {
     setPreview(undefined);
@@ -209,7 +210,10 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
         <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5 mb-4 relative z-10">
           <div className="relative shrink-0">
             {/* Avatar with image support */}
-            <label className={`block ${isEditing ? 'cursor-pointer' : ''} group`}>
+            <label
+              className={`block ${isEditing ? 'cursor-pointer' : ''} group`}
+              title={isEditing ? t.employeeProfile.fileTooLarge.replace('{{size}}', MAX_UPLOAD_SIZE_KB.toString()) : undefined}
+            >
               <div className="w-28 h-28 rounded-full border-4 border-(--bg-page-surface) overflow-hidden bg-(--bg-secondary) shadow-md flex items-center justify-center relative">
                 {avatarSrc ? (
                   <img src={avatarSrc} alt="" className="w-full h-full object-cover" />

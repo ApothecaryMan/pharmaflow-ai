@@ -13,7 +13,7 @@ import { EmployeeSideDrawer } from './EmployeeSideDrawer';
 type EmployeeView = 'profile' | 'requests';
 
 interface Props {
-  t: any;
+  t: Translations;
   language?: string;
 }
 

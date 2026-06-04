@@ -10,3 +10,6 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+type Translations = typeof import('../i18n/translations').translations;
+

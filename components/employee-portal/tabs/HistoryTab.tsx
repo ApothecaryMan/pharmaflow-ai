@@ -22,7 +22,7 @@ const statusColor = (status: string) => {
 interface HistoryTabProps {
   requests: EmploymentRequest[];
   isRTL: boolean;
-  t: any;
+  t: Translations;
 }
 
 export const HistoryTab: React.FC<HistoryTabProps> = ({ requests, isRTL, t }) => {
@@ -53,7 +53,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ requests, isRTL, t }) =>
               <div className={`${PROFILE_GLASS_CARD_BASE} flex-1`}>
                 <div className="flex justify-between items-start flex-wrap gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <Building2 className="w-4 h-4 text-primary-500 shrink-0" />
+                     <Building2 className="w-4 h-4 text-primary-500 shrink-0" />
                     <h5 className="text-xs font-bold text-(--text-primary) truncate">{req.orgName}</h5>
                   </div>
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${statusColor(req.status)}`}>
@@ -65,7 +65,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ requests, isRTL, t }) =>
                   <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 capitalize">{req.role}</span>
                   {req.createdAt && (
                     <span className="text-[10px] text-(--text-tertiary)">
-                      <Clock className="w-3 h-3 inline mr-1" />
+                      <Clock className="w-3 h-3 inline me-1" />
                       {new Date(req.createdAt).toLocaleDateString()}
                     </span>
                   )}

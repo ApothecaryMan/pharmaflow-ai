@@ -2,11 +2,12 @@ import React, { useState, useRef, useCallback } from 'react';
 import { FileText, ImageIcon } from 'lucide-react';
 import type { UserProfile } from '../../../types';
 import { PROFILE_GLASS_CARD_BASE } from '../../../utils/themeStyles';
+import { MAX_UPLOAD_SIZE_KB } from '../../../config';
 
-const readFileAsBase64 = (file: File): Promise<string> => {
+const readFileAsBase64 = (file: File, t: Translations): Promise<string> => {
   return new Promise((resolve, reject) => {
-    if (file.size > 500 * 1024) {
-      reject(new Error('File too large (max 500KB)'));
+    if (file.size > MAX_UPLOAD_SIZE_KB * 1024) {
+      reject(new Error(t.employeeProfile.fileTooLarge.replace('{{size}}', MAX_UPLOAD_SIZE_KB.toString())));
       return;
     }
     const reader = new FileReader();
@@ -25,7 +26,7 @@ interface DocCardProps {
   onToggleExpand: () => void;
   loading?: boolean;
   deleting?: boolean;
-  t: any;
+  t: Translations;
 }
 
 const DocCard: React.FC<DocCardProps> = ({ title, image, onUpload, onRemove, isExpanded, onToggleExpand, loading, deleting, t }) => {
@@ -52,7 +53,13 @@ const DocCard: React.FC<DocCardProps> = ({ title, image, onUpload, onRemove, isE
           )}
           {!image && onUpload && (
             <>
-              <button onClick={() => inputRef.current?.click()} className="p-1 text-(--text-tertiary) hover:text-primary-500 transition-colors" type='button' disabled={loading}>
+              <button
+                onClick={() => inputRef.current?.click()}
+                className="p-1 text-(--text-tertiary) hover:text-primary-500 transition-colors"
+                type='button'
+                disabled={loading}
+                title={`${t.employeeProfile.fileTooLarge.replace('{{size}}', MAX_UPLOAD_SIZE_KB.toString())}`}
+              >
                 {loading ? (
                   <span className="w-[16px] h-[16px] border-2 border-(--text-tertiary)/30 border-t-(--text-tertiary) rounded-full animate-spin block" />
                 ) : (
@@ -87,7 +94,7 @@ const DocCard: React.FC<DocCardProps> = ({ title, image, onUpload, onRemove, isE
 
 interface DocumentsTabProps {
   profile: UserProfile | null;
-  t: any;
+  t: Translations;
   onUpdateProfile?: (updates: Partial<UserProfile>) => Promise<void>;
 }
 
@@ -117,20 +124,20 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ profile, t, onUpdate
     if (!onUpdateProfile) return;
     setUploadingDoc(field);
     try {
-      const base64 = await readFileAsBase64(file);
+      const base64 = await readFileAsBase64(file, t);
       await onUpdateProfile({ [field]: base64 } as Partial<UserProfile>);
     } catch (err) {
       if (err instanceof Error) alert(err.message);
     } finally {
       setUploadingDoc(null);
     }
-  }, [onUpdateProfile]);
+  }, [onUpdateProfile, t]);
 
   const handleDocRemove = useCallback(async (field: DocField) => {
     if (!onUpdateProfile) return;
     setDeletingDoc(field);
     try {
-      await onUpdateProfile({ [field]: null } as unknown as Partial<UserProfile>);
+      await onUpdateProfile({ [field]: null } as Partial<UserProfile>);
     } finally {
       setDeletingDoc(null);
     }

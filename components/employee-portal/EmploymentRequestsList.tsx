@@ -8,7 +8,7 @@ interface Props {
   userId: string;
   username: string;
   onRefresh: () => void;
-  t: any;
+  t: Translations;
   language?: string;
 }
 

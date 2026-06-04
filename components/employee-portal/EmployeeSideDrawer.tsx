@@ -13,7 +13,7 @@ interface EmployeeSideDrawerProps {
   sessionUsername?: string;
   language?: string;
   profileImage?: string | null;
-  t: any;
+  t: Translations;
 }
 
 export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
@@ -187,7 +187,7 @@ const SettingsToggle: React.FC<{
 // LanguageToggle sub-component
 // ---------------------------------------------------------------------------
 
-const LanguageToggle: React.FC<{ isRTL: boolean; t: any }> = ({ isRTL, t }) => {
+const LanguageToggle: React.FC<{ isRTL: boolean; t: Translations }> = ({ isRTL, t }) => {
   const { language: currentLang, setLanguage } = useSettings();
 
   return (

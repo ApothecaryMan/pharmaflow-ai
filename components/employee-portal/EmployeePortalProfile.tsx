@@ -11,7 +11,7 @@ interface EmployeePortalProfileProps {
   sessionUsername: string | undefined;
   requests: EmploymentRequest[];
   language?: string;
-  t: any;
+  t: Translations;
   onUpdateProfile?: (updates: Partial<UserProfile>) => Promise<void>;
 }
 
