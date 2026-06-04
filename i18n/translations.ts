@@ -2935,7 +2935,8 @@ export const TRANSLATIONS = {
       language: 'Language',
       menu: 'Menu',
       copied: 'Copied ✓',
-      noPendingRequestsDesc: 'When a pharmacy sends you an employment request, it will appear here. Accept it to gain access to their management system.'
+      noPendingRequestsDesc: 'When a pharmacy sends you an employment request, it will appear here. Accept it to gain access to their management system.',
+      noWorkHistoryDesc: 'When you accept an employment request from a pharmacy, it will appear here in your work history.'
     },
   },
   AR: {
@@ -5882,7 +5883,8 @@ export const TRANSLATIONS = {
       language: 'اللغة',
       menu: 'القائمة',
       copied: 'تم النسخ ✓',
-      noPendingRequestsDesc: 'عندما ترسل لك أي صيدلية طلب توظيف، سيظهر هنا. يمكنك قبوله للوصول إلى نظام إدارة الصيدلية الخاص بهم.'
+      noPendingRequestsDesc: 'عندما ترسل لك أي صيدلية طلب توظيف، سيظهر هنا. يمكنك قبوله للوصول إلى نظام إدارة الصيدلية الخاص بهم.',
+      noWorkHistoryDesc: 'عندما تقبل طلب توظيف من إحدى الصيدليات، سيظهر هنا في سجل عملك.'
     },
   },
 };
