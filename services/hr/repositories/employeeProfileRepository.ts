@@ -17,7 +17,22 @@ export const employeeProfileRepository = {
         if (error.code === 'PGRST116') return null; // not found
         throw error;
       }
-      return this.mapToModel(data);
+      let profile = this.mapToModel(data);
+
+      // Email backfill
+      if (profile && !profile.email) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.email) {
+            const updated = await this.update(id, { email: user.email });
+            if (updated) profile = updated;
+          }
+        } catch (authErr) {
+          console.error('Failed to backfill email:', authErr);
+        }
+      }
+
+      return profile;
     } catch (err) {
       console.error('Failed to get user profile by ID:', err);
       return null;
@@ -44,21 +59,28 @@ export const employeeProfileRepository = {
   },
 
   /**
-   * Fetch a user profile by exact username
+   * Fetch a user profile by username.
+   * Normalizes the @ prefix internally — callers can pass
+   * "ahmed", "@ahmed", or any variant and it will match.
    */
   async getByUsername(username: string): Promise<UserProfile | null> {
+    // Canonical format in user_profiles is @username
+    const bare = username.replace(/^@/, '');
+    const prefixed = `@${bare}`;
+
     try {
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('username', username)
-        .single();
+        .or(`username.eq.${prefixed},username.eq.${bare}`)
+        .limit(1)
+        .maybeSingle();
         
       if (error) {
         if (error.code === 'PGRST116') return null;
         throw error;
       }
-      return this.mapToModel(data);
+      return data ? this.mapToModel(data) : null;
     } catch (err) {
       console.error('Failed to get user profile by username:', err);
       return null;
