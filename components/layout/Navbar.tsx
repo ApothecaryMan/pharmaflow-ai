@@ -361,10 +361,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     <div
                       className={`flex flex-col gap-0.5 p-0.5 min-w-[180px] max-w-[250px] ${language === 'AR' ? 'text-right' : 'text-left'}`}
                     >
-                      <div className='font-bold text-primary-600 dark:text-primary-400 text-[11px]'>
+                      <div className='font-bold text-primary-400 dark:text-primary-600 text-[11px]'>
                         {acronym.title}
                       </div>
-                      <div className='text-[10px] text-gray-600 dark:text-gray-300 leading-relaxed whitespace-normal'>
+                      <div className='text-[10px] text-white/70 dark:text-black/70 leading-relaxed whitespace-normal'>
                         {acronym.desc}
                       </div>
                     </div>

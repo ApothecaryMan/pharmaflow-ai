@@ -74,9 +74,9 @@ export const Tooltip: React.FC<{ children: ReactNode; content: ReactNode; positi
           style={{ top: 'var(--ty)', left: 'var(--tx)', zIndex: Z_INDEX.TOOLTIP }}>
           <div className="relative group" style={{ borderRadius: R }}>
             <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible" style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}>
-              <path d={path || ''} className="fill-(--bg-menu) stroke-(--border-divider) stroke-[0.8]" style={{ strokeOpacity: 0.6 }} />
+              <path d={path || ''} className="fill-black dark:fill-white" />
             </svg>
-            <div ref={contentRef} className="relative z-10 px-2.5 py-1 text-(--text-primary) text-[11px] font-semibold tracking-tight whitespace-nowrap w-max"
+            <div ref={contentRef} className="relative z-10 px-2.5 py-1 text-white dark:text-black text-[11px] font-semibold tracking-tight whitespace-nowrap w-max"
               style={{ paddingTop: side === 'bottom' ? AH + 4 : 4, paddingBottom: side === 'top' ? AH + 4 : 4, paddingLeft: side === 'right' ? AH + 7 : 7, paddingRight: side === 'left' ? AH + 7 : 7 }}>
               {content}
             </div>

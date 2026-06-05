@@ -4,6 +4,7 @@ import { MAX_UPLOAD_SIZE_KB } from '../../../config';
 import type { EmploymentRequest, UserProfile, Employee } from '../../../types';
 import { BANNER_STYLES, renderBanner } from '../../../utils/banners';
 import { PROFILE_GLASS_CARD_BASE } from '../../../utils/themeStyles';
+import { Tooltip } from '../../common/Tooltip';
 
 type BannerId = (typeof BANNER_STYLES)[number]['id'];
 
@@ -588,7 +589,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
               <h4 className='text-xs font-bold uppercase tracking-wider text-primary-500'>
                 {t.employeeProfile.workspacesAndCredentials}
               </h4>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+              <div className='flex flex-col gap-4'>
                 {isLoading ? (
                   <>
                     <div className={`${PROFILE_GLASS_CARD_BASE} p-4 space-y-3 animate-pulse`}>
@@ -596,7 +597,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                         <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
                         <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-16"></div>
                       </div>
-                      <div className='grid grid-cols-2 gap-y-3 gap-x-2 border-b border-black/10 dark:border-white/5 pb-3'>
+                      <div className='grid grid-cols-2 sm:grid-cols-5 gap-y-3 gap-x-4 border-b border-black/10 dark:border-white/5 pb-3'>
                         {[...Array(5)].map((_, i) => (
                           <div key={i}>
                             <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-16 mb-2"></div>
@@ -629,29 +630,26 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                     </div>
                   </>
                 ) : workspaces.map((ws) => (
-                  <div key={ws.id} className={`${PROFILE_GLASS_CARD_BASE} p-4 space-y-3`}>
-                    <div className='flex items-center justify-between border-b border-black/10 dark:border-white/5 pb-3'>
-                      <span className='text-sm font-bold text-(--text-primary) flex items-center gap-1.5'>
+                  <div key={ws.id} className={`${PROFILE_GLASS_CARD_BASE} p-5 space-y-4`}>
+                    <div className='flex items-center justify-between border-b border-black/10 dark:border-white/5 pb-4'>
+                      <span className='text-sm font-bold text-(--text-primary) flex items-center gap-2'>
                         {ws.orgName ? (
-                          <>
-                            <span>{ws.orgName}</span>
-                            <span className='text-(--text-tertiary) text-[10px] font-normal px-1.5 py-0.5 bg-black/5 dark:bg-white/10 rounded'>
-                              {ws.branchName || t.employeeProfile.unknownBranch}
-                            </span>
-                          </>
+                          <span className='text-base'>
+                            {ws.orgName} - {ws.branchName || t.employeeProfile.unknownBranch}
+                          </span>
                         ) : (
-                          ws.branchName || t.employeeProfile.unknownBranch
+                          <span className='text-base'>{ws.branchName || t.employeeProfile.unknownBranch}</span>
                         )}
                       </span>
-                      <div className={`px-2 py-0.5 rounded-md text-[10px] font-bold flex items-center gap-1 ${getStatusStyle(ws.status).container}`}>
-                        <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
+                      <div className={`px-2 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 ${getStatusStyle(ws.status).container}`}>
+                        <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
                           {getStatusStyle(ws.status).icon}
                         </span>
                         {(t.employeeList.statusOptions as any)[ws.status] || ws.status}
                       </div>
                     </div>
 
-                    <div className='grid grid-cols-2 gap-y-3 gap-x-2 border-b border-black/10 dark:border-white/5 pb-3'>
+                    <div className='grid grid-cols-2 sm:grid-cols-5 gap-y-4 gap-x-4 border-b border-black/10 dark:border-white/5 pb-4'>
                       <div>
                         <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
                           <span className='material-symbols-rounded text-[14px]'>domain</span>
@@ -700,12 +698,60 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                     </div>
 
                     <div className='border-b border-black/10 dark:border-white/5 pb-3'>
-                      <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                      <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1 mb-2'>
                         <span className='material-symbols-rounded text-[14px]'>military_tech</span>
-                        {t.employeeProfile.achievementsAndNotes}
+                        {t.employeeList.tabs.achievements || (isRTL ? 'الإنجازات' : 'Achievements')}
                       </span>
-                      <div className='text-xs mt-1 text-(--text-primary) break-words whitespace-pre-wrap'>
-                        {ws.notes ? ws.notes : '—'}
+
+                      <div className='flex flex-wrap items-center gap-x-4 gap-y-2 text-xs mt-2'>
+                        {/* Transactions Stat */}
+                        <Tooltip position="top" content={
+                          <div className='flex items-center gap-2'>
+                            <span>{isRTL ? 'مبيعات:' : 'Sales:'} <span className='font-bold ml-0.5'>0</span></span>
+                            <span className='w-px h-2.5 bg-white/30 dark:bg-black/30'></span>
+                            <span>{isRTL ? 'مرتجعات:' : 'Returns:'} <span className='font-bold ml-0.5'>0</span></span>
+                          </div>
+                        }>
+                          <div tabIndex={0} className='group relative flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none'>
+                            <span className='material-symbols-rounded text-[16px] text-emerald-500'>point_of_sale</span>
+                            <span className='font-bold text-(--text-primary)'>0</span>
+                            <span className='text-(--text-tertiary)'>{isRTL ? 'معاملة' : 'Transactions'}</span>
+                          </div>
+                        </Tooltip>
+
+                        <div className='hidden sm:block w-px h-3 bg-black/10 dark:bg-white/10'></div>
+
+                        {/* Items Stat */}
+                        <Tooltip position="top" content={
+                          <div className='flex items-center gap-2'>
+                            <span>{isRTL ? 'أدوية:' : 'Medicine:'} <span className='font-bold ml-0.5'>0</span></span>
+                            <span className='w-px h-2.5 bg-white/30 dark:bg-black/30'></span>
+                            <span>{isRTL ? 'تجميل:' : 'Cosmetics:'} <span className='font-bold ml-0.5'>0</span></span>
+                          </div>
+                        }>
+                          <div tabIndex={0} className='group relative flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none'>
+                            <span className='material-symbols-rounded text-[16px] text-blue-500'>package_2</span>
+                            <span className='font-bold text-(--text-primary)'>0</span>
+                            <span className='text-(--text-tertiary)'>{isRTL ? 'منتج' : 'Items'}</span>
+                          </div>
+                        </Tooltip>
+
+                        <div className='hidden sm:block w-px h-3 bg-black/10 dark:bg-white/10'></div>
+
+                        {/* Days Stat */}
+                        <Tooltip position="top" content={
+                          <div className='flex items-center gap-2'>
+                            <span>{isRTL ? 'حضور:' : 'Present:'} <span className='font-bold ml-0.5'>0</span></span>
+                            <span className='w-px h-2.5 bg-white/30 dark:bg-black/30'></span>
+                            <span>{isRTL ? 'غياب/إجازة:' : 'Absent:'} <span className='font-bold ml-0.5'>0</span></span>
+                          </div>
+                        }>
+                          <div tabIndex={0} className='group relative flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none'>
+                            <span className='material-symbols-rounded text-[16px] text-blue-400'>schedule</span>
+                            <span className='font-bold text-(--text-primary)'>0</span>
+                            <span className='text-(--text-tertiary)'>{isRTL ? 'يوم عمل' : 'Days'}</span>
+                          </div>
+                        </Tooltip>
                       </div>
                     </div>
 
@@ -741,8 +787,8 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                             className='flex items-center justify-center gap-1 bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 px-2 py-1.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold transition-colors w-full sm:w-auto'
                           >
                             <span className='material-symbols-rounded text-[14px]'>password</span>
-                            {ws.password 
-                              ? (t.employeeProfile.changePassword || 'Change Password') 
+                            {ws.password
+                              ? (t.employeeProfile.changePassword || 'Change Password')
                               : (isRTL ? 'إنشاء كلمة مرور' : 'Create Password')}
                           </button>
 
@@ -758,8 +804,8 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                               }
                             }}
                             className={`flex items-center justify-center gap-1 px-2 py-1.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold transition-colors disabled:opacity-50 w-full sm:w-auto ${ws.biometricCredentialId
-                                ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
-                                : 'bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 text-(--text-tertiary)'
+                              ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                              : 'bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 text-(--text-tertiary)'
                               }`}
                           >
                             {isRegisteringFingerprint === ws.id ? (
@@ -825,45 +871,45 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 ))}
               </div>
             ) : (
-            <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
-              <div
-                className={`${PROFILE_GLASS_CARD_BASE} flex flex-col items-center justify-center py-3`}
-              >
-                <span className='material-symbols-rounded text-[22px] text-emerald-500'>
-                  how_to_reg
-                </span>
-                <p className='text-lg font-bold text-(--text-primary) mt-1'>
-                  {acceptedRequests.length}
-                </p>
-                <p className='text-[10px] text-(--text-tertiary) font-bold uppercase tracking-wider'>
-                  {t.employeeProfile.employers}
-                </p>
+              <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
+                <div
+                  className={`${PROFILE_GLASS_CARD_BASE} flex flex-col items-center justify-center py-3`}
+                >
+                  <span className='material-symbols-rounded text-[22px] text-emerald-500'>
+                    how_to_reg
+                  </span>
+                  <p className='text-lg font-bold text-(--text-primary) mt-1'>
+                    {acceptedRequests.length}
+                  </p>
+                  <p className='text-[10px] text-(--text-tertiary) font-bold uppercase tracking-wider'>
+                    {t.employeeProfile.employers}
+                  </p>
+                </div>
+                <div
+                  className={`${PROFILE_GLASS_CARD_BASE} flex flex-col items-center justify-center py-3`}
+                >
+                  <span className='material-symbols-rounded text-[22px] text-amber-500'>
+                    pending_actions
+                  </span>
+                  <p className='text-lg font-bold text-(--text-primary) mt-1'>
+                    {requests.filter((r) => r.status === 'pending').length}
+                  </p>
+                  <p className='text-[10px] text-(--text-tertiary) font-bold uppercase tracking-wider'>
+                    {t.employeeProfile.pending}
+                  </p>
+                </div>
+                <div
+                  className={`${PROFILE_GLASS_CARD_BASE} flex flex-col items-center justify-center py-3 col-span-2 sm:col-span-1`}
+                >
+                  <span className='material-symbols-rounded text-[22px] text-primary-500'>
+                    work_history
+                  </span>
+                  <p className='text-lg font-bold text-(--text-primary) mt-1'>{requests.length}</p>
+                  <p className='text-[10px] text-(--text-tertiary) font-bold uppercase tracking-wider'>
+                    {t.employeeProfile.totalRequests}
+                  </p>
+                </div>
               </div>
-              <div
-                className={`${PROFILE_GLASS_CARD_BASE} flex flex-col items-center justify-center py-3`}
-              >
-                <span className='material-symbols-rounded text-[22px] text-amber-500'>
-                  pending_actions
-                </span>
-                <p className='text-lg font-bold text-(--text-primary) mt-1'>
-                  {requests.filter((r) => r.status === 'pending').length}
-                </p>
-                <p className='text-[10px] text-(--text-tertiary) font-bold uppercase tracking-wider'>
-                  {t.employeeProfile.pending}
-                </p>
-              </div>
-              <div
-                className={`${PROFILE_GLASS_CARD_BASE} flex flex-col items-center justify-center py-3 col-span-2 sm:col-span-1`}
-              >
-                <span className='material-symbols-rounded text-[22px] text-primary-500'>
-                  work_history
-                </span>
-                <p className='text-lg font-bold text-(--text-primary) mt-1'>{requests.length}</p>
-                <p className='text-[10px] text-(--text-tertiary) font-bold uppercase tracking-wider'>
-                  {t.employeeProfile.totalRequests}
-                </p>
-              </div>
-            </div>
             )}
           </div>
         </div>

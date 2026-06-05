@@ -24,6 +24,10 @@ export const employmentRequestRepository = {
 
       // Check if the user is already an employee in this organization
       const targetProfile = await employeeProfileRepository.getByUsername(request.targetUsername);
+      if (!targetProfile) {
+        return { success: false, message: 'User profile not found. The user must be registered before sending an invitation.' };
+      }
+
       if (targetProfile) {
         const { data: existingEmployee } = await supabase
           .from('employees')
@@ -42,6 +46,7 @@ export const employmentRequestRepository = {
         .insert({
           org_id: request.orgId,
           target_username: request.targetUsername,
+          target_user_id: targetProfile.id,
           role: request.role,
           branch_id: request.branchId || null,
           sent_by_name: request.sentByName || null,
@@ -80,14 +85,14 @@ export const employmentRequestRepository = {
   },
 
   /**
-   * Fetch all requests targeted at a specific username
+   * Fetch all requests targeted at a specific User ID (O(1) fast fetch)
    */
-  async getByUsername(username: string): Promise<EmploymentRequest[]> {
+  async getByUserId(userId: string): Promise<EmploymentRequest[]> {
     try {
       const { data, error } = await supabase
         .from('employment_requests')
         .select('*, organizations(name)')
-        .eq('target_username', username)
+        .eq('target_user_id', userId)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
@@ -195,6 +200,7 @@ export const employmentRequestRepository = {
       id: row.id,
       orgId: row.org_id,
       targetUsername: row.target_username,
+      targetUserId: row.target_user_id,
       role: row.role,
       branchId: row.branch_id,
       status: row.status,

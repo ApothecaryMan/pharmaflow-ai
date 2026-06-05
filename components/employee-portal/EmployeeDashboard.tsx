@@ -56,9 +56,9 @@ export function EmployeeDashboard({ t, language }: Props) {
 
         setProfile(userProfile);
 
-        if (userProfile?.username) {
-          const pendingRequests = await employmentRequestRepository.getByUsername(
-            userProfile.username
+        if (userProfile?.id) {
+          const pendingRequests = await employmentRequestRepository.getByUserId(
+            userProfile.id
           );
           setRequests(pendingRequests);
         }
@@ -91,7 +91,7 @@ export function EmployeeDashboard({ t, language }: Props) {
 
   // Realtime subscription for incoming employment requests
   useEffect(() => {
-    if (!profile?.username) return;
+    if (!profile?.id) return;
 
     const channel = supabase
       .channel('public:employment_requests')
@@ -101,7 +101,7 @@ export function EmployeeDashboard({ t, language }: Props) {
           event: '*',
           schema: 'public',
           table: 'employment_requests',
-          filter: `target_username=eq.${profile.username}`,
+          filter: `target_user_id=eq.${profile.id}`,
         },
         () => {
           // Re-fetch requests when a change happens

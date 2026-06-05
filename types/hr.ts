@@ -98,6 +98,7 @@ export interface EmploymentRequest {
   orgId: string;
   orgName?: string;
   targetUsername: string;
+  targetUserId?: string;
   role: UserRole;
   branchId?: string;
   branchName?: string;
@@ -105,4 +106,13 @@ export interface EmploymentRequest {
   sentByName?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface EmployeeProfileStats {
+  sales_count: number;
+  returns_count: number;
+  medicine_count: number;
+  cosmetic_count: number;
+  present_days_count: number;
+  absent_days_count: number;
 }
