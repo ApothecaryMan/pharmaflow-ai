@@ -11,137 +11,80 @@ import { EmployeeMobileDock } from './EmployeeMobileDock';
 import { EmployeePortalProfile } from './EmployeePortalProfile';
 import { EmployeeSideDrawer } from './EmployeeSideDrawer';
 import { EmploymentRequestsList } from './EmploymentRequestsList';
+import { useEmployeeDashboardData } from './hooks/useEmployeeDashboardData';
 
 type EmployeeView = 'profile' | 'requests';
 
 interface Props {
   t: Translations;
   language?: string;
+  view?: EmployeeView;
+  onViewChange?: (view: EmployeeView) => void;
+  onLogout?: () => void;
 }
 
-export function EmployeeDashboard({ t, language }: Props) {
+export function EmployeeDashboard({ t, language, view = 'requests', onViewChange, onLogout }: Props) {
   const session = authService.getCurrentUserSync();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [requests, setRequests] = useState<EmploymentRequest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [view, setView] = useState<EmployeeView>('requests');
+  const {
+    profile,
+    requests,
+    workspaces,
+    isLoading,
+    loadData,
+    updateProfile,
+    actionRequest
+  } = useEmployeeDashboardData();
+  
+  // Clean fallback for view if it's not profile/requests (e.g. from appState 'landing')
+  const activeView = (view === 'profile' || view === 'requests') ? view : 'requests';
+
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [workspaces, setWorkspaces] = useState<(Employee & { branches?: { name: string }; organizations?: { name: string } })[]>([]);
 
   const sessionUsername = session?.username;
   const sessionName = session?.employeeName || profile?.fullName;
 
-  const loadData = useCallback(async (refreshSession = false) => {
-    setIsLoading(true);
-    try {
-      if (refreshSession) {
-        await authService.refreshSession();
-        window.location.reload();
-        return;
-      }
-
-      const s = await authService.getCurrentUser();
-      if (s?.userId) {
-        let userProfile = await employeeProfileRepository.getById(s.userId);
-
-        // Backfill email from auth.users if missing in user_profiles
-        if (userProfile && !userProfile.email) {
-          const {
-            data: { user: authUser },
-          } = await supabase.auth.getUser();
-          if (authUser?.email) {
-            userProfile = { ...userProfile, email: authUser.email };
-          }
-        }
-
-        setProfile(userProfile);
-
-        if (userProfile?.id) {
-          const pendingRequests = await employmentRequestRepository.getByUserId(
-            userProfile.id
-          );
-          setRequests(pendingRequests);
-        }
-
-        // Fetch workspaces via RPC (bypasses RLS circular dependency)
-        const { data: empData, error: empError } = await supabase.rpc('get_my_workspaces');
-        if (empError) {
-          console.error('get_my_workspaces RPC error:', empError);
-        }
-        if (empData) {
-          // RPC returns flat rows with org_name/branch_name already joined
-          const mappedWorkspaces = empData.map((row: any) => ({
-            ...employeeRepository.mapFromDb(row),
-            orgName: row.org_name,
-            branchName: row.branch_name,
-          }));
-          setWorkspaces(mappedWorkspaces);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to load employee dashboard data:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  // Realtime subscription for incoming employment requests
-  useEffect(() => {
-    if (!profile?.id) return;
-
-    const channel = supabase
-      .channel('public:employment_requests')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'employment_requests',
-          filter: `target_user_id=eq.${profile.id}`,
-        },
-        () => {
-          // Re-fetch requests when a change happens
-          loadData();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [profile?.username, loadData]);
-
   const handleSignOut = useCallback(async () => {
-    await authService.logout();
-    window.location.href = '/login';
-  }, []);
+    if (onLogout) {
+      onLogout();
+    } else {
+      await authService.logout();
+      window.location.hash = '#/login';
+      window.location.pathname = '/';
+    }
+  }, [onLogout]);
 
   const handleViewChange = useCallback((v: EmployeeView) => {
-    setView(v);
-  }, []);
+    if (onViewChange) {
+      onViewChange(v as any);
+    }
+  }, [onViewChange]);
 
   const handleUpdateProfile = useCallback(async (updates: Partial<UserProfile>) => {
-    const s = await authService.getCurrentUser();
-    if (!s?.userId) throw new Error('No user session');
-    const updated = await employeeProfileRepository.update(s.userId, updates);
-    if (updated) setProfile(updated);
-  }, []);
+    try {
+      await updateProfile(updates);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [updateProfile]);
+
+  const handleActionRequest = useCallback(async (id: string, action: 'accepted' | 'rejected') => {
+    try {
+      await actionRequest(id, action);
+    } catch (error) {
+      console.error('Failed to action request:', error);
+      throw error;
+    }
+  }, [actionRequest]);
 
   const handleUpdateWorkspacePassword = useCallback(async (employeeId: string, newPassword: string) => {
     try {
       await employeeRepository.update(employeeId, { password: newPassword });
-      setWorkspaces((prev) =>
-        prev.map((ws) => (ws.id === employeeId ? { ...ws, password: newPassword } : ws))
-      );
+      loadData(true);
     } catch (err) {
       console.error('Failed to update workspace password', err);
       throw err;
     }
-  }, []);
+  }, [loadData]);
 
   const handleRegisterWorkspaceFingerprint = useCallback(async (employeeId: string, username: string) => {
     try {
@@ -189,13 +132,7 @@ export function EmployeeDashboard({ t, language }: Props) {
           biometricCredentialId: attResp.id,
           biometricPublicKey: 'MOCKED_PASSKEY_PILOT',
         });
-        setWorkspaces((prev) =>
-          prev.map((ws) =>
-            ws.id === employeeId
-              ? { ...ws, biometricCredentialId: attResp.id, biometricPublicKey: 'MOCKED_PASSKEY_PILOT' }
-              : ws
-          )
-        );
+        loadData(true);
         
         // Success feedback
         if (typeof window !== 'undefined') {
@@ -208,7 +145,7 @@ export function EmployeeDashboard({ t, language }: Props) {
       const { parseWebAuthnError } = await import('../../utils/webAuthnUtils');
       alert(parseWebAuthnError(err, language as any));
     }
-  }, [language]);
+  }, [language, loadData]);
 
   return (
     <div className='h-dvh bg-(--bg-page-surface) text-(--text-primary) flex flex-col overflow-hidden select-none'>
@@ -244,7 +181,7 @@ export function EmployeeDashboard({ t, language }: Props) {
       {/* Scrollable Main Content */}
       <main className='flex-1 min-h-0 overflow-y-auto overscroll-contain'>
         <div className='p-4 sm:p-6 max-w-7xl mx-auto w-full space-y-6 sm:space-y-8 pb-28 md:pb-6'>
-          {view === 'profile' && (
+          {activeView === 'profile' && (
             <EmployeePortalProfile
               profile={profile}
               sessionName={sessionName}
@@ -260,7 +197,7 @@ export function EmployeeDashboard({ t, language }: Props) {
             />
           )}
 
-          {view === 'requests' && (
+          {activeView === 'requests' && (
             <section className='space-y-3 sm:space-y-4'>
               <div className='flex items-center justify-between'>
                 <h3 className='text-lg sm:text-xl font-semibold text-(--text-primary) flex items-center gap-2'>
@@ -299,7 +236,7 @@ export function EmployeeDashboard({ t, language }: Props) {
       <EmployeeSideDrawer
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        activeView={view}
+        activeView={activeView}
         onViewChange={handleViewChange}
         onSignOut={handleSignOut}
         sessionName={sessionName}
@@ -311,7 +248,7 @@ export function EmployeeDashboard({ t, language }: Props) {
 
       {/* Mobile Dock */}
       <EmployeeMobileDock
-        activeView={view}
+        activeView={activeView}
         onViewChange={handleViewChange}
         onOpenDrawer={() => setDrawerOpen((prev) => !prev)}
         language={language}

@@ -7,33 +7,39 @@ export function useUrlSync(
   isAuthenticated: boolean,
   view: ViewState,
   currentEmployeeId: string | null,
-  userId?: string
+  userId?: string,
+  isEmployeePortalUser?: boolean
 ) {
   const { activeOrgId, activeBranchId, branches } = useData();
 
   useEffect(() => {
+    // Helper to enforce pure HashRouter behavior (removes legacy pathnames like /login)
+    const replaceUrl = (hash: string) => {
+      const cleanUrl = `/${hash}`;
+      if (window.location.hash !== hash || window.location.pathname !== '/') {
+        window.history.replaceState(null, '', cleanUrl);
+      }
+    };
+
     if (!isAuthenticated) {
       const currentHash = window.location.hash;
       const allowedAuthHashes = [`#/${ROUTES.LOGIN}`, `#/${ROUTES.SIGNUP}`, `#/${ROUTES.FORGOT_PASSWORD}`];
-      if (!allowedAuthHashes.includes(currentHash)) {
-        window.history.replaceState(null, '', `#/${ROUTES.LOGIN}`);
+      if (!allowedAuthHashes.includes(currentHash) || window.location.pathname !== '/') {
+        replaceUrl(`#/${ROUTES.LOGIN}`);
       }
       return;
     }
 
     // Authenticated, but no employee profile selected yet
     if (!currentEmployeeId) {
-      if (activeOrgId) {
+      if (isEmployeePortalUser) {
+        // Employee portal user
+        const portalView = (view === 'landing' || !view) ? 'requests' : view;
+        const newHash = `#/${ROUTES.PORTAL}/${userId || ''}/${portalView}`;
+        replaceUrl(newHash);
+      } else if (activeOrgId) {
         const newHash = `#/${activeOrgId}/landing`;
-        if (window.location.hash !== newHash) {
-          window.history.replaceState(null, '', newHash);
-        }
-      } else {
-        // Zero-affiliation employee portal
-        const newHash = `#/${ROUTES.PORTAL}/${userId || ''}`;
-        if (window.location.hash !== newHash) {
-          window.history.replaceState(null, '', newHash);
-        }
+        replaceUrl(newHash);
       }
       return;
     }
@@ -42,9 +48,7 @@ export function useUrlSync(
     if (!activeBranchId) {
       if (activeOrgId) {
         const newHash = `#/${activeOrgId}/pending`;
-        if (window.location.hash !== newHash) {
-          window.history.replaceState(null, '', newHash);
-        }
+        replaceUrl(newHash);
       }
       return;
     }
@@ -53,14 +57,10 @@ export function useUrlSync(
     const activeBranch = branches.find(b => b.id === activeBranchId);
     if (activeBranch) {
       const newHash = `#/${activeOrgId}/${activeBranch.code}/${view}`;
-      if (window.location.hash !== newHash) {
-        window.history.replaceState(null, '', newHash);
-      }
+      replaceUrl(newHash);
     } else if (activeOrgId) {
       const newHash = `#/${activeOrgId}/${view}`;
-      if (window.location.hash !== newHash) {
-        window.history.replaceState(null, '', newHash);
-      }
+      replaceUrl(newHash);
     }
   }, [isAuthenticated, activeOrgId, activeBranchId, view, branches, currentEmployeeId, userId]);
 }

@@ -165,7 +165,26 @@ const App: React.FC = () => {
   // --- URL Synchronization ---
   // Synchronize browser hash with authentication state & current view
   const currentUser = authService.getCurrentUserSync();
-  useUrlSync(authState.isAuthenticated, appState.view, appState.currentEmployeeId, currentUser?.userId);
+
+  // Determine if this user should see the Employee Portal (personal dashboard)
+  // vs. the full Pharmacy interface (AuthenticatedContent).
+  // Employee Portal is shown for:
+  //   1. Users with no org affiliation at all (zero affiliation)
+  //   2. Regular employees (non-admin, non-owner) who joined via employment requests
+  // Full Pharmacy interface is ONLY for org owners/admins.
+  const isEmployeePortalUser = authState.isAuthenticated && !!currentUser && (
+    !currentUser.orgId || 
+    (currentUser.orgRole !== 'owner' && currentUser.orgRole !== 'admin' && 
+     currentUser.role !== 'pharmacist_owner' && currentUser.role !== 'admin')
+  );
+
+  useUrlSync(
+    authState.isAuthenticated, 
+    appState.view, 
+    appState.currentEmployeeId, 
+    currentUser?.userId, 
+    isEmployeePortalUser
+  );
 
 
 
@@ -176,22 +195,18 @@ const App: React.FC = () => {
 
 
 
-  // Determine if this user should see the Employee Portal (personal dashboard)
-  // vs. the full Pharmacy interface (AuthenticatedContent).
-  // Employee Portal is shown for:
-  //   1. Users with no org affiliation at all (zero affiliation)
-  //   2. Regular employees (non-admin, non-owner) who joined via employment requests
-  // Full Pharmacy interface is ONLY for org owners/admins.
-  const isEmployeePortalUser = authState.isAuthenticated && currentUser && (
-    !currentUser.orgId || 
-    (currentUser.orgRole !== 'owner' && currentUser.orgRole !== 'admin' && 
-     currentUser.role !== 'pharmacist_owner' && currentUser.role !== 'admin')
-  );
+  // (Moved isEmployeePortalUser logic above to useUrlSync)
 
   const content = authState.isAuthenticated ? (
     <Suspense fallback={null}>
       {isEmployeePortalUser ? (
-        <EmployeeDashboard t={t} language={language} />
+        <EmployeeDashboard 
+          t={t} 
+          language={language} 
+          view={appState.view as 'profile' | 'requests'}
+          onViewChange={appState.setView}
+          onLogout={authState.handleLogout}
+        />
       ) : (
         <AuthenticatedContent {...appState} {...authState} />
       )}
