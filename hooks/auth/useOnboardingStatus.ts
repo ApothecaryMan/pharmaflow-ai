@@ -79,8 +79,10 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
     if ((isAuthenticated === true || isAuthenticated === undefined) && !error && !hasChecked) {
       checkStatus();
     } else if (isAuthenticated === false) {
-      // Not authenticated, no need to check onboarding
-      setHasChecked(true);
+      // Reset state on logout so next login triggers fresh onboarding check
+      setHasChecked(false);
+      setActiveStep(0);
+      setError(null);
     }
   }, [isAuthenticated, error, hasChecked]);
 

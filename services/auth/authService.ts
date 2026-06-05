@@ -375,11 +375,20 @@ export const authService = {
       
       const userId = storage.getUserId();
       
+      // Clear session and org-specific keys
       storage.remove(SESSION_KEY);
       storage.remove('pharma_active_org_id');
       storage.remove('pharma_active_branch_id');
       storage.remove('area_unlocked');
       
+      // Clear settings that contain org/branch data to prevent leaking into next session
+      storage.remove('pharma_settings');
+      
+      // Clear navigation state to prevent stale view on next login
+      storage.remove('pharma_view');
+      storage.remove('pharma_activeModule');
+      
+      // Clear user-scoped keys (data keyed by userId suffix)
       if (userId) {
         const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
@@ -390,6 +399,9 @@ export const authService = {
         }
         keysToRemove.forEach(key => localStorage.removeItem(key));
       }
+
+      // Flush in-memory caches to prevent stale data in next session
+      storage.resetCaches();
 
     } catch (err) {
       console.error('Logout error:', err);

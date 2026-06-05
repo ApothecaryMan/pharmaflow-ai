@@ -5,10 +5,15 @@ export const employeeRepository = {
   tableName: 'employees',
 
   mapFromDb(db: any): Employee {
+    const branchName = db.branches ? (Array.isArray(db.branches) ? db.branches[0]?.name : db.branches.name) : undefined;
+    const orgName = db.organizations ? (Array.isArray(db.organizations) ? db.organizations[0]?.name : db.organizations.name) : undefined;
+    
     return {
       id: db.id,
       orgId: db.org_id,
+      orgName,
       branchId: db.branch_id,
+      branchName,
       employeeCode: db.employee_code,
       name: db.name,
       nameArabic: db.name_arabic || undefined,
@@ -64,8 +69,10 @@ export const employeeRepository = {
     return db;
   },
 
+  BASE_COLUMNS: 'id, org_id, branch_id, employee_code, name, name_arabic, phone, email, position, department, role, start_date, status, salary, notes, username, auth_user_id, password, biometric_credential_id, biometric_public_key, photo',
+
   async getAll(orgId: string, branchId?: string): Promise<Employee[]> {
-    let query = supabase.from(this.tableName).select('*').eq('org_id', orgId);
+    let query = supabase.from(this.tableName).select(this.BASE_COLUMNS).eq('org_id', orgId);
     
     if (branchId) {
       const ADMIN_ROLES = ['admin', 'pharmacist_owner', 'manager'];
@@ -84,6 +91,29 @@ export const employeeRepository = {
       .maybeSingle();
     if (error) throw error;
     return data ? this.mapFromDb(data) : null;
+  },
+
+  async getDocuments(id: string): Promise<Partial<Employee> | null> {
+    const { data, error } = await supabase.from(this.tableName)
+      .select('national_id_card, national_id_card_back, main_syndicate_card, sub_syndicate_card')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? {
+      nationalIdCard: data.national_id_card || undefined,
+      nationalIdCardBack: data.national_id_card_back || undefined,
+      mainSyndicateCard: data.main_syndicate_card || undefined,
+      subSyndicateCard: data.sub_syndicate_card || undefined,
+    } : null;
+  },
+
+  async getDocument(id: string, column: string): Promise<string | null> {
+    const { data, error } = await supabase.from(this.tableName)
+      .select(column)
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? data[column] : null;
   },
 
   async insert(employee: Employee): Promise<void> {
@@ -118,14 +148,13 @@ export const employeeRepository = {
   },
 
   async getAllByAuthUserId(userId: string): Promise<Employee[]> {
-    const { data, error } = await supabase.from(this.tableName)
-      .select('*, organizations(name), branches(name)')
-      .eq('auth_user_id', userId);
+    // Use RPC to bypass RLS circular dependency on organizations/branches
+    const { data, error } = await supabase.rpc('get_my_workspaces');
     if (error) throw error;
-    return (data || []).map(item => ({
+    return (data || []).map((item: any) => ({
       ...this.mapFromDb(item),
-      orgName: item.organizations?.name,
-      branchName: item.branches?.name,
+      orgName: item.org_name,
+      branchName: item.branch_name,
     }));
   },
 

@@ -11,11 +11,21 @@ interface EmployeePortalProfileProps {
   sessionName: string | undefined;
   sessionUsername: string | undefined;
   requests: EmploymentRequest[];
-  workspaces?: (Employee & { branches?: { name: string } })[];
+  workspaces?: (Employee & { branches?: { name: string }; organizations?: { name: string } })[];
   language?: string;
   t: Translations;
   onUpdateProfile?: (updates: Partial<UserProfile>) => Promise<void>;
+  onUpdateWorkspacePassword?: (employeeId: string, newPassword: string) => Promise<void>;
+  onRegisterWorkspaceFingerprint?: (employeeId: string, username: string) => Promise<void>;
+  isLoading?: boolean;
 }
+
+export type CachedDocs = {
+  nationalIdCard?: string | null;
+  nationalIdCardBack?: string | null;
+  mainSyndicateCard?: string | null;
+  subSyndicateCard?: string | null;
+};
 
 type ProfileTabType = 'profile' | 'history' | 'documents';
 
@@ -27,28 +37,25 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
   workspaces = [],
   language = 'EN',
   t,
+  isLoading,
   onUpdateProfile,
+  onUpdateWorkspacePassword,
+  onRegisterWorkspaceFingerprint,
 }) => {
   const [activeTab, setActiveTab] = useState<ProfileTabType>('profile');
   const [isEditing, setIsEditing] = useState(false);
+  const [cachedDocs, setCachedDocs] = useState<CachedDocs | null>(null);
   const isRTL = language === 'AR';
 
-  const hasDocuments = !!(
-    profile?.nationalIdCard ||
-    profile?.nationalIdCardBack ||
-    profile?.mainSyndicateCard ||
-    profile?.subSyndicateCard
-  );
+
 
   const tabs = useMemo(
     () => [
       { value: 'profile' as const, label: t.employeeProfile.profile, icon: 'person' },
       { value: 'history' as const, label: t.employeeProfile.workHistory, icon: 'work_history' },
-      ...(hasDocuments || isEditing
-        ? [{ value: 'documents' as const, label: t.employeeProfile.documents, icon: 'description' }]
-        : []),
+      { value: 'documents' as const, label: t.employeeProfile.documents, icon: 'description' }
     ],
-    [hasDocuments, isEditing, t]
+    [t]
   );
 
   return (
@@ -73,16 +80,25 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
           isRTL={isRTL}
           t={t}
           onUpdateProfile={onUpdateProfile}
+          onUpdateWorkspacePassword={onUpdateWorkspacePassword}
+          onRegisterWorkspaceFingerprint={onRegisterWorkspaceFingerprint}
+          isLoading={isLoading}
           isEditing={isEditing}
           setIsEditing={setIsEditing}
         />
       )}
 
       {activeTab === 'documents' && (
-        <DocumentsTab profile={profile} t={t} onUpdateProfile={onUpdateProfile} />
+        <DocumentsTab 
+          profile={profile} 
+          t={t} 
+          onUpdateProfile={onUpdateProfile} 
+          cachedDocs={cachedDocs}
+          setCachedDocs={setCachedDocs}
+        />
       )}
 
-      {activeTab === 'history' && <HistoryTab requests={requests} isRTL={isRTL} t={t} />}
+      {activeTab === 'history' && <HistoryTab requests={requests} workspaces={workspaces} isLoading={isLoading} isRTL={isRTL} t={t} />}
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { CURRENT_APP_VERSION, StorageKeys } from '../config/storageKeys';
 const SESSION_KEY = StorageKeys.SESSION;
 
 // Keys that should be shared across all users on the same device (UI preferences)
+// NOTE: SETTINGS is NOT global — it contains per-user org/branch data (orgId, activeBranchId)
 const GLOBAL_KEYS = new Set<string>([
   StorageKeys.STORAGE_VERSION,
   StorageKeys.DARK_MODE,
@@ -15,7 +16,6 @@ const GLOBAL_KEYS = new Set<string>([
   StorageKeys.LAST_SYNC,
   StorageKeys.NAV_STYLE,
   StorageKeys.HEADER_STATS_VISIBLE,
-  StorageKeys.SETTINGS,
   StorageKeys.PRINTER_SETTINGS,
   StorageKeys.SCREEN_CALIBRATION_RATIO
 ]);
@@ -346,6 +346,17 @@ export const storage = {
     hasLoadedUserId = false;
     cachedUsageBytes = 0;
     isVersionStamped = false;
+  },
+
+  /**
+   * Reset in-memory caches without touching localStorage.
+   * Call this on logout to prevent stale data leaking into the next session.
+   */
+  resetCaches: (): void => {
+    memoryCache.clear();
+    cachedUserId = null;
+    hasLoadedUserId = false;
+    cachedUsageBytes = null;
   },
 
   /**

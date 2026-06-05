@@ -17,9 +17,24 @@ export const employmentRequestRepository = {
         .eq('target_username', request.targetUsername)
         .eq('status', 'pending')
         .maybeSingle();
-        
+
       if (existing) {
         return { success: false, message: 'A pending request already exists for this user.' };
+      }
+
+      // Check if the user is already an employee in this organization
+      const targetProfile = await employeeProfileRepository.getByUsername(request.targetUsername);
+      if (targetProfile) {
+        const { data: existingEmployee } = await supabase
+          .from('employees')
+          .select('id')
+          .eq('org_id', request.orgId)
+          .eq('auth_user_id', targetProfile.id)
+          .maybeSingle();
+
+        if (existingEmployee) {
+          return { success: false, message: 'This user is already registered as an employee in your organization.' };
+        }
       }
 
       const { data, error } = await supabase
@@ -35,9 +50,9 @@ export const employmentRequestRepository = {
         })
         .select()
         .single();
-        
+
       if (error) throw error;
-      
+
       return { success: true, data: this.mapToModel(data) };
     } catch (err: any) {
       console.error('Failed to send employment request:', err);
@@ -55,7 +70,7 @@ export const employmentRequestRepository = {
         .select('*')
         .eq('org_id', orgId)
         .order('created_at', { ascending: false });
-        
+
       if (error) throw error;
       return (data || []).map(this.mapToModel);
     } catch (err) {
@@ -75,7 +90,7 @@ export const employmentRequestRepository = {
         .eq('target_username', username)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
-        
+
       if (error) throw error;
       return (data || []).map(this.mapToModel);
     } catch (err) {
@@ -93,7 +108,7 @@ export const employmentRequestRepository = {
         .from('employment_requests')
         .update({ status })
         .eq('id', id);
-        
+
       if (error) throw error;
       return true;
     } catch (err) {
@@ -113,7 +128,7 @@ export const employmentRequestRepository = {
         .select('*')
         .eq('id', requestId)
         .single();
-        
+
       if (reqError || !request) throw new Error('Request not found or already processed');
       if (request.status !== 'pending') throw new Error('Request is not pending');
       if (request.target_username !== username) throw new Error('Username mismatch');
@@ -137,19 +152,20 @@ export const employmentRequestRepository = {
       // 3. Create Employee record FIRST (before changing status)
       // This way, if creation fails, the request stays 'pending' and can be retried.
       await employeeService.create({
-        id: undefined, 
-        employeeCode: undefined, 
+        id: undefined,
+        employeeCode: undefined, // Let employeeService auto-generate this
         userId: userId,
-        username: username,
+        username: profile.username, // Use actual username
         name: profile.fullName,
-        nameArabic: undefined,
+        nameArabic: profile.nameArabic || undefined,
+        image: profile.image || undefined,
         position: request.role,
         department: 'pharmacy',
         role: request.role as any,
-        status: 'pending',
+        status: 'active',
         startDate: new Date().toISOString().split('T')[0],
         phone: profile.phone || undefined,
-        email: undefined,
+        email: profile.email || undefined,
         salary: 0,
         branchId: request.branch_id || undefined,
         orgId: request.org_id,
@@ -160,7 +176,7 @@ export const employmentRequestRepository = {
         .from('employment_requests')
         .update({ status: 'accepted' })
         .eq('id', requestId);
-        
+
       if (updateError) {
         // Employee was created but status update failed — log but don't fail
         // The employee record exists, which is the critical part

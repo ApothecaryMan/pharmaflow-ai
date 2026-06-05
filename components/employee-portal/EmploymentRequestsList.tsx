@@ -10,9 +10,10 @@ interface Props {
   onRefresh: () => void;
   t: Translations;
   language?: string;
+  isLoading?: boolean;
 }
 
-export function EmploymentRequestsList({ requests, userId, username, onRefresh, t, language }: Props) {
+export function EmploymentRequestsList({ requests, userId, username, onRefresh, t, language, isLoading }: Props) {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [processingAction, setProcessingAction] = useState<'accept' | 'reject' | null>(null);
   const [error, setError] = useState<{ id: string; message: string } | null>(null);
@@ -56,6 +57,24 @@ export function EmploymentRequestsList({ requests, userId, username, onRefresh, 
       setProcessingAction(null);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 animate-pulse">
+        {[...Array(2)].map((_, i) => (
+          <div key={i} className="bg-(--bg-card) border border-(--border-color) rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 h-[104px] sm:h-[88px]">
+            <div className="flex items-start gap-4 w-full">
+               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-black/10 dark:bg-white/10 shrink-0"></div>
+               <div className="space-y-2.5 flex-1">
+                 <div className="h-5 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
+                 <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-2/3"></div>
+               </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   if (requests.length === 0) {
     return (

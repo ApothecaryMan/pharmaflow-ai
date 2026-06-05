@@ -79,12 +79,15 @@ interface ProfileTabProps {
   sessionName: string | undefined;
   sessionUsername: string | undefined;
   requests: EmploymentRequest[];
-  workspaces?: (Employee & { branches?: { name: string } })[];
+  workspaces?: (Employee & { branches?: { name: string }; organizations?: { name: string } })[];
   isRTL: boolean;
   t: Translations;
   onUpdateProfile?: (updates: Partial<UserProfile>) => Promise<void>;
+  onUpdateWorkspacePassword?: (employeeId: string, newPassword: string) => Promise<void>;
+  onRegisterWorkspaceFingerprint?: (employeeId: string, username: string) => Promise<void>;
   isEditing: boolean;
   setIsEditing: (val: boolean) => void;
+  isLoading?: boolean;
 }
 
 export const ProfileTab: React.FC<ProfileTabProps> = ({
@@ -96,9 +99,73 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   isRTL,
   t,
   onUpdateProfile,
+  onUpdateWorkspacePassword,
+  onRegisterWorkspaceFingerprint,
   isEditing,
   setIsEditing,
+  isLoading,
 }) => {
+  const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isRegisteringFingerprint, setIsRegisteringFingerprint] = useState<string | null>(null);
+
+  const calculateDuration = (startDateStr: string | undefined) => {
+    if (!startDateStr) return '—';
+    const start = new Date(startDateStr);
+    const now = new Date();
+    if (isNaN(start.getTime())) return '—';
+
+    let years = now.getFullYear() - start.getFullYear();
+    let months = now.getMonth() - start.getMonth();
+    let days = now.getDate() - start.getDate();
+
+    if (days < 0) {
+      months--;
+      const lastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+      days += lastMonth.getDate();
+    }
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+
+    const parts = [];
+    if (years > 0) parts.push(`${years} ${t.employeeProfile.years}`);
+    if (months > 0) parts.push(`${months} ${t.employeeProfile.months}`);
+    if (days > 0 && years === 0) parts.push(`${days} ${t.employeeProfile.days}`);
+
+    if (parts.length === 0) return `0 ${t.employeeProfile.days}`;
+
+    return parts.join(` ${t.employeeProfile.and} `);
+  };
+
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case 'active':
+        return {
+          container: 'bg-emerald-500/10 text-emerald-500',
+          icon: 'check_circle'
+        };
+      case 'holiday':
+        return {
+          container: 'bg-amber-500/10 text-amber-500',
+          icon: 'beach_access'
+        };
+      case 'pending':
+        return {
+          container: 'bg-blue-500/10 text-blue-500',
+          icon: 'pending'
+        };
+      case 'inactive':
+      default:
+        return {
+          container: 'bg-red-500/10 text-red-500',
+          icon: 'cancel'
+        };
+    }
+  };
+
   const [isSaving, setIsSaving] = useState(false);
   const [editFields, setEditFields] = useState({
     fullName: '',
@@ -124,10 +191,10 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const displayUsername = (profile?.username || sessionUsername || '').replace(/^@/, '');
   const memberSince = profile?.createdAt
     ? new Date(profile.createdAt).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
     : '—';
 
   const acceptedRequests = useMemo(
@@ -216,7 +283,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
         {/* Pattern picker overlay */}
         {isEditing && (
-          <div className='absolute top-3 end-3 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10 z-20'>
+          <div className='absolute top-3 end-3 flex items-center gap-1 bg-white/80 dark:bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-white/10 z-20'>
             {BANNER_STYLES.map((b) => (
               <button
                 key={b.id}
@@ -242,9 +309,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
               title={
                 isEditing
                   ? t.employeeProfile.fileTooLarge.replace(
-                      '{{size}}',
-                      MAX_UPLOAD_SIZE_KB.toString()
-                    )
+                    '{{size}}',
+                    MAX_UPLOAD_SIZE_KB.toString()
+                  )
                   : undefined
               }
             >
@@ -325,7 +392,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                         console.error('Failed to copy text: ', err);
                       }
                     }}
-                    className='text-xs font-normal text-(--text-secondary) bg-white/10 dark:bg-black/25 px-2 py-0.5 rounded-md border border-white/10 dark:border-white/5 font-mono select-all cursor-pointer'
+                    className='text-xs font-normal text-(--text-secondary) bg-black/5 dark:bg-black/25 px-2 py-0.5 rounded-md border border-black/10 dark:border-white/5 font-mono select-all cursor-pointer'
                     dir='ltr'
                   >
                     {copied ? t.employeeProfile.copied : `@${displayUsername}`}
@@ -375,7 +442,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 ) : (
                   <button
                     onClick={startEditing}
-                    className='flex items-center gap-1 px-3 py-1.5 rounded-lg bg-(--bg-secondary) hover:bg-primary-500/10 text-(--text-tertiary) hover:text-primary-500 text-[11px] font-bold transition-all active:scale-95'
+                    className='flex items-center gap-1 px-3 py-1.5 rounded-lg bg-(--bg-secondary) hover:bg-primary-500/10 text-(--text-secondary) hover:text-primary-500 text-[11px] font-bold transition-all active:scale-95 shadow-xs'
                     type='button'
                   >
                     <Pencil className='w-3 h-3' />
@@ -443,18 +510,30 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   </div>
                 </div>
               </div>
+            ) : isLoading ? (
+              <div className='grid grid-cols-2 gap-2 animate-pulse'>
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className={`${PROFILE_GLASS_CARD_BASE} flex items-center gap-2.5 h-12`}>
+                    <div className="w-4 h-4 rounded bg-black/10 dark:bg-white/10 shrink-0"></div>
+                    <div className="flex-1 space-y-1.5 min-w-0">
+                      <div className="h-2 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
+                      <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-2/3"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className='grid grid-cols-2 gap-2'>
                 {[
                   { icon: 'badge', label: t.employeeProfile.fullName, value: displayName },
                   ...(profile?.nameArabic
                     ? [
-                        {
-                          icon: 'translate',
-                          label: t.employeeProfile.nameArabic,
-                          value: profile.nameArabic,
-                        },
-                      ]
+                      {
+                        icon: 'translate',
+                        label: t.employeeProfile.nameArabic,
+                        value: profile.nameArabic,
+                      },
+                    ]
                     : []),
                   {
                     icon: 'alternate_email',
@@ -469,12 +548,12 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                     : []),
                   ...(profile?.licenseNumber
                     ? [
-                        {
-                          icon: 'health_and_safety',
-                          label: t.employeeProfile.licenseNo,
-                          value: profile.licenseNumber,
-                        },
-                      ]
+                      {
+                        icon: 'health_and_safety',
+                        label: t.employeeProfile.licenseNo,
+                        value: profile.licenseNumber,
+                      },
+                    ]
                     : []),
                   {
                     icon: 'calendar_month',
@@ -504,52 +583,225 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
           </div>
 
           {/* Login & Fingerprint Credentials (Workspaces) */}
-          {workspaces.length > 0 && (
+          {(workspaces.length > 0 || isLoading) && (
             <div className='space-y-3 pt-2'>
               <h4 className='text-xs font-bold uppercase tracking-wider text-primary-500'>
-                {t.employeeProfile.loginAndFingerprint}
+                {t.employeeProfile.workspacesAndCredentials}
               </h4>
               <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-                {workspaces.map((ws) => (
-                  <div key={ws.id} className={`${PROFILE_GLASS_CARD_BASE} p-3 space-y-2`}>
-                    <div className='flex items-center justify-between border-b border-white/10 dark:border-white/5 pb-2 mb-2'>
-                      <span className='text-xs font-bold text-(--text-primary)'>
-                        {ws.branches?.name || t.employeeProfile.unknownBranch}
+                {isLoading ? (
+                  <>
+                    <div className={`${PROFILE_GLASS_CARD_BASE} p-4 space-y-3 animate-pulse`}>
+                      <div className='flex items-center justify-between border-b border-black/10 dark:border-white/5 pb-3'>
+                        <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
+                        <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-16"></div>
+                      </div>
+                      <div className='grid grid-cols-2 gap-y-3 gap-x-2 border-b border-black/10 dark:border-white/5 pb-3'>
+                        {[...Array(5)].map((_, i) => (
+                          <div key={i}>
+                            <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-16 mb-2"></div>
+                            <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-24"></div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className='border-b border-black/10 dark:border-white/5 pb-3'>
+                        <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-20 mb-2"></div>
+                        <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-full"></div>
+                      </div>
+                      <div className='flex flex-col gap-2 pt-3'>
+                        <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
+                          <div className='flex gap-4'>
+                            <div>
+                              <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-16 mb-2"></div>
+                              <div className="h-5 bg-black/10 dark:bg-white/10 rounded w-20"></div>
+                            </div>
+                            <div>
+                              <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-16 mb-2"></div>
+                              <div className="h-5 bg-black/10 dark:bg-white/10 rounded w-20"></div>
+                            </div>
+                          </div>
+                          <div className='grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto'>
+                            <div className="h-7 bg-black/10 dark:bg-white/10 rounded w-full sm:w-28"></div>
+                            <div className="h-7 bg-black/10 dark:bg-white/10 rounded w-full sm:w-28"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : workspaces.map((ws) => (
+                  <div key={ws.id} className={`${PROFILE_GLASS_CARD_BASE} p-4 space-y-3`}>
+                    <div className='flex items-center justify-between border-b border-black/10 dark:border-white/5 pb-3'>
+                      <span className='text-sm font-bold text-(--text-primary) flex items-center gap-1.5'>
+                        {ws.orgName ? (
+                          <>
+                            <span>{ws.orgName}</span>
+                            <span className='text-(--text-tertiary) text-[10px] font-normal px-1.5 py-0.5 bg-black/5 dark:bg-white/10 rounded'>
+                              {ws.branchName || t.employeeProfile.unknownBranch}
+                            </span>
+                          </>
+                        ) : (
+                          ws.branchName || t.employeeProfile.unknownBranch
+                        )}
                       </span>
-                      {ws.biometricCredentialId ? (
-                        <div className='flex items-center gap-1 text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-md'>
-                          <span className='material-symbols-rounded text-[14px]'>fingerprint</span>
-                          <span className='text-[10px] font-bold'>
-                            {t.employeeProfile.fingerprintEnabled}
-                          </span>
-                        </div>
-                      ) : (
-                        <div className='flex items-center gap-1 text-(--text-tertiary) bg-white/5 px-2 py-0.5 rounded-md'>
-                          <span className='material-symbols-rounded text-[14px]'>fingerprint</span>
-                          <span className='text-[10px] font-bold'>
-                            {t.employeeProfile.noFingerprint}
-                          </span>
-                        </div>
-                      )}
+                      <div className={`px-2 py-0.5 rounded-md text-[10px] font-bold flex items-center gap-1 ${getStatusStyle(ws.status).container}`}>
+                        <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
+                          {getStatusStyle(ws.status).icon}
+                        </span>
+                        {(t.employeeList.statusOptions as any)[ws.status] || ws.status}
+                      </div>
                     </div>
 
-                    <div className='grid grid-cols-2 gap-2'>
+                    <div className='grid grid-cols-2 gap-y-3 gap-x-2 border-b border-black/10 dark:border-white/5 pb-3'>
                       <div>
-                        <span className='text-[10px] font-bold text-(--text-tertiary) uppercase'>
-                          {t.login.username}
+                        <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                          <span className='material-symbols-rounded text-[14px]'>domain</span>
+                          {t.employeeList.department}
                         </span>
-                        <div className='text-xs font-mono mt-0.5 text-(--text-primary)'>
-                          {ws.username || '—'}
+                        <div className='text-xs font-semibold mt-1 text-(--text-primary) truncate'>
+                          {ws.department ? (t.employeeList.departments as any)[ws.department] || ws.department : '—'}
                         </div>
                       </div>
                       <div>
-                        <span className='text-[10px] font-bold text-(--text-tertiary) uppercase'>
-                          {t.login.password}
+                        <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                          <span className='material-symbols-rounded text-[14px]'>admin_panel_settings</span>
+                          {t.employeeList.role}
                         </span>
-                        <div className='text-xs font-mono mt-0.5 text-(--text-primary)'>
-                          {ws.password || '—'}
+                        <div className='text-xs font-semibold mt-1 text-(--text-primary) truncate'>
+                          {ws.role ? (t.employeeList.roles as any)[ws.role] || ws.role : '—'}
                         </div>
                       </div>
+                      <div>
+                        <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                          <span className='material-symbols-rounded text-[14px]'>work</span>
+                          {t.employeeList.position}
+                        </span>
+                        <div className='text-xs font-semibold mt-1 text-(--text-primary) truncate'>
+                          {ws.position || '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                          <span className='material-symbols-rounded text-[14px]'>payments</span>
+                          {t.employeeList.salary}
+                        </span>
+                        <div className='text-xs font-semibold mt-1 text-(--text-primary) truncate'>
+                          {ws.salary ? `${ws.salary} ${t.global.currency}` : '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                          <span className='material-symbols-rounded text-[14px]'>history_toggle_off</span>
+                          {t.employeeProfile.duration}
+                        </span>
+                        <div className='text-xs font-semibold mt-1 text-(--text-primary) truncate'>
+                          {calculateDuration(ws.startDate)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className='border-b border-black/10 dark:border-white/5 pb-3'>
+                      <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                        <span className='material-symbols-rounded text-[14px]'>military_tech</span>
+                        {t.employeeProfile.achievementsAndNotes}
+                      </span>
+                      <div className='text-xs mt-1 text-(--text-primary) break-words whitespace-pre-wrap'>
+                        {ws.notes ? ws.notes : '—'}
+                      </div>
+                    </div>
+
+                    <div className='flex flex-col gap-2 pt-3'>
+                      <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
+                        <div className='flex gap-4'>
+                          <div>
+                            <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                              <span className='material-symbols-rounded text-[14px]'>account_circle</span>
+                              {t.login.username}
+                            </span>
+                            <div className='text-xs font-mono mt-1 text-(--text-primary) bg-black/5 dark:bg-black/20 px-2 py-1 rounded w-fit'>
+                              {ws.username || '—'}
+                            </div>
+                          </div>
+                          <div>
+                            <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                              <span className='material-symbols-rounded text-[14px]'>key</span>
+                              {t.login.password || 'Password'}
+                            </span>
+                            <div className={`text-xs font-mono mt-1 px-2 py-1 rounded w-fit ${ws.password ? 'text-(--text-primary) bg-black/5 dark:bg-black/20' : 'text-red-500 bg-red-500/10'}`}>
+                              {ws.password || (isRTL ? 'لم يتم تعيينه' : 'Not Set')}
+                            </div>
+                          </div>
+                        </div>
+                        <div className='grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto'>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingPasswordId(editingPasswordId === ws.id ? null : ws.id);
+                              setNewPassword('');
+                            }}
+                            className='flex items-center justify-center gap-1 bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 px-2 py-1.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold transition-colors w-full sm:w-auto'
+                          >
+                            <span className='material-symbols-rounded text-[14px]'>password</span>
+                            {ws.password 
+                              ? (t.employeeProfile.changePassword || 'Change Password') 
+                              : (isRTL ? 'إنشاء كلمة مرور' : 'Create Password')}
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={isRegisteringFingerprint === ws.id || !onRegisterWorkspaceFingerprint}
+                            onClick={async () => {
+                              try {
+                                setIsRegisteringFingerprint(ws.id);
+                                await onRegisterWorkspaceFingerprint?.(ws.id, ws.username || '');
+                              } finally {
+                                setIsRegisteringFingerprint(null);
+                              }
+                            }}
+                            className={`flex items-center justify-center gap-1 px-2 py-1.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold transition-colors disabled:opacity-50 w-full sm:w-auto ${ws.biometricCredentialId
+                                ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                                : 'bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 text-(--text-tertiary)'
+                              }`}
+                          >
+                            {isRegisteringFingerprint === ws.id ? (
+                              <span className="w-3.5 h-3.5 border-2 rounded-full animate-spin border-t-transparent"></span>
+                            ) : (
+                              <span className='material-symbols-rounded text-[14px]'>fingerprint</span>
+                            )}
+                            {ws.biometricCredentialId
+                              ? (t.employeeProfile.fingerprintEnabled || 'Fingerprint Enabled')
+                              : (t.employeeProfile.setupPasskey || 'Setup Passkey')}
+                          </button>
+                        </div>
+                      </div>
+
+                      {editingPasswordId === ws.id && (
+                        <div className='flex items-center gap-2 mt-2 bg-black/10 p-2 rounded'>
+                          <input
+                            type="password"
+                            placeholder={t.employeeProfile.newPassword || 'New Password'}
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className='flex-1 bg-transparent text-xs border-b border-black/20 dark:border-white/20 px-1 py-1 focus:outline-none focus:border-primary-500'
+                          />
+                          <button
+                            type="button"
+                            disabled={!newPassword || isUpdatingPassword || !onUpdateWorkspacePassword}
+                            onClick={async () => {
+                              try {
+                                setIsUpdatingPassword(true);
+                                await onUpdateWorkspacePassword?.(ws.id, newPassword);
+                                setEditingPasswordId(null);
+                                setNewPassword('');
+                              } finally {
+                                setIsUpdatingPassword(false);
+                              }
+                            }}
+                            className='px-3 py-1 bg-primary-500 text-white rounded text-[10px] font-bold disabled:opacity-50'
+                          >
+                            {isUpdatingPassword ? '...' : (t.employeeProfile.save || 'Save')}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -562,6 +814,17 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
             <h4 className='text-xs font-bold uppercase tracking-wider text-primary-500'>
               {t.employeeProfile.overview}
             </h4>
+            {isLoading ? (
+              <div className='grid grid-cols-2 sm:grid-cols-3 gap-2 animate-pulse'>
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className={`${PROFILE_GLASS_CARD_BASE} flex flex-col items-center justify-center py-3 ${i === 2 ? 'col-span-2 sm:col-span-1' : ''}`}>
+                    <div className="w-6 h-6 bg-black/10 dark:bg-white/10 rounded-full mb-2"></div>
+                    <div className="h-5 bg-black/10 dark:bg-white/10 rounded w-8 mb-1"></div>
+                    <div className="h-2 bg-black/10 dark:bg-white/10 rounded w-16"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
             <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
               <div
                 className={`${PROFILE_GLASS_CARD_BASE} flex flex-col items-center justify-center py-3`}
@@ -601,6 +864,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 </p>
               </div>
             </div>
+            )}
           </div>
         </div>
       </div>

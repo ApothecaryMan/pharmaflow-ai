@@ -3,7 +3,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { authService } from '../../services/auth/authService';
 import { employeeProfileRepository } from '../../services/hr/repositories/employeeProfileRepository';
+import { employeeRepository } from '../../services/hr/repositories/employeeRepository';
 import { employmentRequestRepository } from '../../services/hr/repositories/employmentRequestRepository';
+import { startRegistration } from '@simplewebauthn/browser';
 import type { Employee, EmploymentRequest, UserProfile } from '../../types';
 import { EmployeeMobileDock } from './EmployeeMobileDock';
 import { EmployeePortalProfile } from './EmployeePortalProfile';
@@ -24,7 +26,7 @@ export function EmployeeDashboard({ t, language }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<EmployeeView>('requests');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [workspaces, setWorkspaces] = useState<(Employee & { branches?: { name: string } })[]>([]);
+  const [workspaces, setWorkspaces] = useState<(Employee & { branches?: { name: string }; organizations?: { name: string } })[]>([]);
 
   const sessionUsername = session?.username;
   const sessionName = session?.employeeName || profile?.fullName;
@@ -61,13 +63,19 @@ export function EmployeeDashboard({ t, language }: Props) {
           setRequests(pendingRequests);
         }
 
-        // Fetch workspaces (Employee records for the user across all branches)
-        const { data: empData } = await supabase
-          .from('employees')
-          .select(`*, branches:branch_id(name)`)
-          .eq('user_id', s.userId);
+        // Fetch workspaces via RPC (bypasses RLS circular dependency)
+        const { data: empData, error: empError } = await supabase.rpc('get_my_workspaces');
+        if (empError) {
+          console.error('get_my_workspaces RPC error:', empError);
+        }
         if (empData) {
-          setWorkspaces(empData);
+          // RPC returns flat rows with org_name/branch_name already joined
+          const mappedWorkspaces = empData.map((row: any) => ({
+            ...employeeRepository.mapFromDb(row),
+            orgName: row.org_name,
+            branchName: row.branch_name,
+          }));
+          setWorkspaces(mappedWorkspaces);
         }
       }
     } catch (err) {
@@ -123,6 +131,85 @@ export function EmployeeDashboard({ t, language }: Props) {
     if (updated) setProfile(updated);
   }, []);
 
+  const handleUpdateWorkspacePassword = useCallback(async (employeeId: string, newPassword: string) => {
+    try {
+      await employeeRepository.update(employeeId, { password: newPassword });
+      setWorkspaces((prev) =>
+        prev.map((ws) => (ws.id === employeeId ? { ...ws, password: newPassword } : ws))
+      );
+    } catch (err) {
+      console.error('Failed to update workspace password', err);
+      throw err;
+    }
+  }, []);
+
+  const handleRegisterWorkspaceFingerprint = useCallback(async (employeeId: string, username: string) => {
+    try {
+      if (!window.isSecureContext) {
+        alert(language === 'AR' ? 'لأسباب أمنية، لا يمكن تسجيل البصمة إلا في بيئة آمنة (HTTPS أو Localhost).' : 'For security reasons, fingerprints can only be registered in a secure context (HTTPS or Localhost).');
+        return;
+      }
+
+      if (!window.PublicKeyCredential) {
+        alert(language === 'AR' ? 'جهازك أو متصفحك لا يدعم المصادقة البيومترية.' : 'Your device or browser does not support biometric authentication.');
+        return;
+      }
+
+      const challengeStr = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      const challengeBase64 = btoa(challengeStr)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+
+      const attResp = await startRegistration({
+        optionsJSON: {
+          challenge: challengeBase64,
+          rp: { name: 'ZINC', id: window.location.hostname },
+          user: {
+            id: employeeId,
+            name: username || 'user',
+            displayName: username || 'User',
+          },
+          pubKeyCredParams: [
+            { alg: -7, type: 'public-key' },
+            { alg: -257, type: 'public-key' },
+          ],
+          authenticatorSelection: {
+            authenticatorAttachment: 'platform',
+            userVerification: 'required',
+            residentKey: 'preferred',
+          },
+          timeout: 60000,
+          attestation: 'none',
+        } as any,
+      });
+
+      if (attResp) {
+        await employeeRepository.update(employeeId, {
+          biometricCredentialId: attResp.id,
+          biometricPublicKey: 'MOCKED_PASSKEY_PILOT',
+        });
+        setWorkspaces((prev) =>
+          prev.map((ws) =>
+            ws.id === employeeId
+              ? { ...ws, biometricCredentialId: attResp.id, biometricPublicKey: 'MOCKED_PASSKEY_PILOT' }
+              : ws
+          )
+        );
+        
+        // Success feedback
+        if (typeof window !== 'undefined') {
+           const audio = new Audio('/sounds/success.mp3');
+           audio.play().catch(() => {});
+        }
+      }
+    } catch (err: any) {
+      console.error('Failed to register fingerprint', err);
+      const { parseWebAuthnError } = await import('../../utils/webAuthnUtils');
+      alert(parseWebAuthnError(err, language as any));
+    }
+  }, [language]);
+
   return (
     <div className='h-dvh bg-(--bg-page-surface) text-(--text-primary) flex flex-col overflow-hidden select-none'>
       {/* Header */}
@@ -166,7 +253,10 @@ export function EmployeeDashboard({ t, language }: Props) {
               workspaces={workspaces}
               language={language}
               t={t}
+              isLoading={isLoading}
               onUpdateProfile={handleUpdateProfile}
+              onUpdateWorkspacePassword={handleUpdateWorkspacePassword}
+              onRegisterWorkspaceFingerprint={handleRegisterWorkspaceFingerprint}
             />
           )}
 
@@ -198,6 +288,7 @@ export function EmployeeDashboard({ t, language }: Props) {
                 onRefresh={() => loadData()}
                 t={t}
                 language={language}
+                isLoading={isLoading}
               />
             </section>
           )}

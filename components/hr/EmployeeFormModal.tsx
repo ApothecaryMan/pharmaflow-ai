@@ -125,9 +125,10 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
       },
     ].filter(
       (opt) =>
-        opt.value !== 'credentials' || (formData.role || 'pharmacist') !== 'officeboy'
+        (opt.value !== 'credentials' || (formData.role || 'pharmacist') !== 'officeboy') &&
+        (opt.value !== 'documents' || !formData.userId)
     );
-  }, [t.tabs, formData.role]);
+  }, [t.tabs, formData.role, formData.userId]);
 
   const handleClose = () => {
     onClose();
@@ -255,6 +256,8 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
   const activeBanner = BANNER_STYLES.find((b) => b.id === bannerStyle);
   const bannerAccent = activeBanner?.accentColor || 'var(--primary-500)';
 
+  const isInvited = !!formData.userId;
+
   return (
     <Modal
       isOpen={isOpen}
@@ -367,40 +370,42 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                   )}
 
                   {/* Upload Image Overlay */}
-                  <label
-                    className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 cursor-pointer backdrop-blur-[2px] border border-white/10"
-                    title={t.changePhoto}
-                  >
-                    <span className="material-symbols-rounded text-white text-xl">photo_camera</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          if (file.size > 500 * 1024) {
-                            playError();
-                            alert(
-                              language === 'AR'
-                                ? 'حجم الصورة كبير جداً (الحد الأقصى 500KB)'
-                                : 'Image too large (max 500KB)'
-                            );
-                            return;
+                  {!isInvited && (
+                    <label
+                      className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 cursor-pointer backdrop-blur-[2px] border border-white/10"
+                      title={t.changePhoto}
+                    >
+                      <span className="material-symbols-rounded text-white text-xl">photo_camera</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            if (file.size > 500 * 1024) {
+                              playError();
+                              alert(
+                                language === 'AR'
+                                  ? 'حجم الصورة كبير جداً (الحد الأقصى 500KB)'
+                                  : 'Image too large (max 500KB)'
+                              );
+                              return;
+                            }
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setFormData((prev) => ({ ...prev, image: reader.result as string }));
+                            };
+                            reader.readAsDataURL(file);
                           }
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setFormData((prev) => ({ ...prev, image: reader.result as string }));
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                  </label>
+                        }}
+                      />
+                    </label>
+                  )}
                 </div>
 
                 {/* Remove Image Button */}
-                {formData.image && (
+                {!isInvited && formData.image && (
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, image: undefined }))}
@@ -436,6 +441,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                       autoFocus
                       className={INPUT_BASE}
                       required
+                      disabled={isInvited}
                     />
                   </div>
                   <div className='col-span-6 space-y-1.5'>
@@ -448,6 +454,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                       placeholder={t.nameArabicPlaceholder}
                       className={INPUT_BASE}
                       dir='rtl'
+                      disabled={isInvited}
                     />
                   </div>
 
@@ -611,6 +618,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                       onChange={(val) => setFormData({ ...formData, phone: val })}
                       placeholder={t.phone}
                       className={INPUT_BASE}
+                      disabled={isInvited}
                     />
                   </div>
                   <div className='col-span-4 space-y-1.5'>
@@ -622,6 +630,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                       onChange={(val) => setFormData({ ...formData, email: val })}
                       placeholder={t.email}
                       className={INPUT_BASE}
+                      disabled={isInvited}
                     />
                   </div>
 
@@ -687,6 +696,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                       onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                       placeholder={t.usernamePlaceholder}
                       className={INPUT_BASE}
+                      disabled={isInvited}
                     />
                   </div>
                   {/* Biometric Setup Section */}

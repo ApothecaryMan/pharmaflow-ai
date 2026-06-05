@@ -99,8 +99,8 @@
 
   /* Backgrounds */
   --bg-primary: transparent;
-  --bg-secondary: var(--color-gray-100);
-  --bg-tertiary: var(--color-gray-200);
+  --bg-secondary: var(--color-gray-200);
+  --bg-tertiary: var(--color-gray-300);
   --bg-accent: oklch(0.967 0.001 286.375 / 55%);
   /* gray-100 with opacity */
   --bg-hover: var(--color-gray-100);

@@ -292,10 +292,10 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                       </span>
                       {employee.username && (
                         <span
-                          className='text-xs font-normal text-(--text-secondary) bg-white/10 dark:bg-black/25 px-2 py-0.5 rounded-md border border-white/10 dark:border-white/5 font-mono select-all'
+                          className='text-xs font-normal text-(--text-secondary) bg-white/10 dark:bg-black/25 px-2 py-0.5 rounded-md border border-white/10 dark:border-white/5 select-all'
                           dir='ltr'
                         >
-                          @{employee.username}
+                          @{employee.username.replace(/^@/, '')}
                         </span>
                       )}
                     </h3>
@@ -436,23 +436,13 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                             )}
                           </div>
 
-                          <div className='grid grid-cols-2 gap-2'>
-                            <div>
-                              <span className='text-[10px] font-bold text-(--text-tertiary) uppercase'>
-                                {t.login.username}
-                              </span>
-                              <div className='text-xs font-mono mt-0.5 text-(--text-primary)'>
-                                {emp.username || '—'}
-                              </div>
-                            </div>
-                            <div>
-                              <span className='text-[10px] font-bold text-(--text-tertiary) uppercase'>
-                                {t.login.password}
-                              </span>
-                              <div className='text-xs font-mono mt-0.5 text-(--text-primary)'>
-                                {emp.password || '—'}
-                              </div>
-                            </div>
+                          <div className='flex items-center gap-2'>
+                            <span className='text-[10px] font-bold text-(--text-tertiary) uppercase'>
+                              {t.username}
+                            </span>
+                            <span className='text-xs font-semibold text-(--text-primary)'>
+                              {emp.employeeCode ? parseInt(emp.employeeCode.replace('EMP-', ''), 10).toString() : '—'}
+                            </span>
                           </div>
                         </div>
                       );
@@ -824,42 +814,10 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 </span>
                 {t.nationalIdCard}
               </div>
-              {employee.nationalIdCard || employee.nationalIdCardBack ? (
-                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-white/5 dark:bg-black/10 border border-(--border-divider) rounded-xl'>
-                  {employee.nationalIdCard && (
-                    <div className='space-y-1'>
-                      <span className='text-[9px] font-bold text-(--text-tertiary) uppercase'>
-                        {t.frontFace}
-                      </span>
-                      <div className='w-full aspect-[8/5] border border-(--border-divider) rounded-lg overflow-hidden bg-(--bg-secondary)/30'>
-                        <img
-                          src={employee.nationalIdCard}
-                          alt='ID Front'
-                          className='w-full h-full object-cover'
-                        />
-                      </div>
-                    </div>
-                  )}
-                  {employee.nationalIdCardBack && (
-                    <div className='space-y-1'>
-                      <span className='text-[9px] font-bold text-(--text-tertiary) uppercase'>
-                        {t.backFace}
-                      </span>
-                      <div className='w-full aspect-[8/5] border border-(--border-divider) rounded-lg overflow-hidden bg-(--bg-secondary)/30'>
-                        <img
-                          src={employee.nationalIdCardBack}
-                          alt='ID Back'
-                          className='w-full h-full object-cover'
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className='text-center py-8 bg-white/5 dark:bg-black/10 border border-(--border-divider) border-dashed rounded-xl'>
-                  <p className='text-xs text-(--text-tertiary)'>{t.noIdCardImages}</p>
-                </div>
-              )}
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-white/5 dark:bg-black/10 border border-(--border-divider) rounded-xl'>
+                <DocumentImage employeeId={employee.id!} column='national_id_card' label={t.frontFace} language={language} />
+                <DocumentImage employeeId={employee.id!} column='national_id_card_back' label={t.backFace} language={language} />
+              </div>
             </div>
 
             {/* Syndicate Cards Section */}
@@ -873,46 +831,78 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 </span>
                 {t.syndicateCards}
               </div>
-              {employee.mainSyndicateCard || employee.subSyndicateCard ? (
-                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-white/5 dark:bg-black/10 border border-(--border-divider) rounded-xl'>
-                  {employee.mainSyndicateCard && (
-                    <div className='space-y-1'>
-                      <span className='text-[9px] font-bold text-(--text-tertiary) uppercase'>
-                        {t.mainSyndicateCard}
-                      </span>
-                      <div className='w-full aspect-[8/5] border border-(--border-divider) rounded-lg overflow-hidden bg-(--bg-secondary)/30'>
-                        <img
-                          src={employee.mainSyndicateCard}
-                          alt='Main Syndicate'
-                          className='w-full h-full object-cover'
-                        />
-                      </div>
-                    </div>
-                  )}
-                  {employee.subSyndicateCard && (
-                    <div className='space-y-1'>
-                      <span className='text-[9px] font-bold text-(--text-tertiary) uppercase'>
-                        {t.sub}
-                      </span>
-                      <div className='w-full aspect-[8/5] border border-(--border-divider) rounded-lg overflow-hidden bg-(--bg-secondary)/30'>
-                        <img
-                          src={employee.subSyndicateCard}
-                          alt='Sub Syndicate'
-                          className='w-full h-full object-cover'
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className='text-center py-8 bg-white/5 dark:bg-black/10 border border-(--border-divider) border-dashed rounded-xl'>
-                  <p className='text-xs text-(--text-tertiary)'>{t.noSyndicateImages}</p>
-                </div>
-              )}
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-white/5 dark:bg-black/10 border border-(--border-divider) rounded-xl'>
+                <DocumentImage employeeId={employee.id!} column='main_syndicate_card' label={t.mainSyndicateCard} language={language} />
+                <DocumentImage employeeId={employee.id!} column='sub_syndicate_card' label={t.sub} language={language} />
+              </div>
             </div>
           </div>
         )}
       </div>
     </Modal>
+  );
+};
+
+// --- Reusable Component for independent image loading ---
+const DocumentImage = ({
+  employeeId,
+  column,
+  label,
+  language
+}: {
+  employeeId: string;
+  column: string;
+  label: string;
+  language: string;
+}) => {
+  const [image, setImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    import('../../services/hr/employeeService').then(({ employeeService }) => {
+      employeeService.getDocument(employeeId, column).then((data) => {
+        if (isMounted) {
+          setImage(data);
+          setLoading(false);
+        }
+      }).catch(() => {
+        if (isMounted) setLoading(false);
+      });
+    });
+    return () => { isMounted = false; };
+  }, [employeeId, column]);
+
+  if (loading) {
+    return (
+      <div className='space-y-1'>
+        <span className='text-[9px] font-bold text-(--text-tertiary) uppercase'>{label}</span>
+        <div className='w-full aspect-[8/5] border border-(--border-divider) rounded-lg overflow-hidden bg-white/5 dark:bg-black/20 flex flex-col items-center justify-center'>
+          <div className='w-6 h-6 border-2 border-(--text-secondary) border-t-transparent rounded-full animate-spin opacity-50'></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!image) {
+    return (
+      <div className='space-y-1'>
+        <span className='text-[9px] font-bold text-(--text-tertiary) uppercase'>{label}</span>
+        <div className='w-full aspect-[8/5] border border-(--border-divider) rounded-lg overflow-hidden bg-white/5 dark:bg-black/20 flex flex-col items-center justify-center text-(--text-tertiary) border-dashed'>
+          <span className='material-symbols-rounded mb-1 opacity-50'>image_not_supported</span>
+          <span className='text-[10px]'>{language === 'AR' ? 'غير متوفر' : 'Not Available'}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className='space-y-1'>
+      <span className='text-[9px] font-bold text-(--text-tertiary) uppercase'>{label}</span>
+      <div className='w-full aspect-[8/5] border border-(--border-divider) rounded-lg overflow-hidden bg-black flex items-center justify-center'>
+        <img src={image} alt={label} className='w-full h-full object-contain' />
+      </div>
+    </div>
   );
 };

@@ -9,6 +9,7 @@ import { idGenerator } from '../../utils/idGenerator';
 import { settingsService } from '../settings/settingsService';
 import { orgService } from '../org/orgService';
 import { employeeRepository } from './repositories/employeeRepository';
+import { supabase } from '../../lib/supabase';
 
 class EmployeeServiceImpl extends BaseDomainService<Employee> {
   protected tableName = 'employees';
@@ -37,6 +38,14 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
     return employeeRepository.getById(id);
   }
 
+  async getDocuments(id: string): Promise<Partial<Employee> | null> {
+    return employeeRepository.getDocuments(id);
+  }
+
+  async getDocument(id: string, column: string): Promise<string | null> {
+    return employeeRepository.getDocument(id, column);
+  }
+
   async create(employee: Employee, branchId?: string, orgId?: string): Promise<Employee> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || employee.branchId || settings.activeBranchId || settings.branchCode;
@@ -50,16 +59,41 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
     } as Employee;
 
     if (!newEmployee.employeeCode) {
-      const all = await this.getAll('all', effectiveOrgId);
-      const maxSerial = all.reduce((max, emp) => {
-        const num = parseInt((emp.employeeCode || '').replace('EMP-', '') || '0');
-        return Math.max(max, isNaN(num) ? 0 : num);
-      }, 0);
-      newEmployee.employeeCode = `EMP-${String(maxSerial + 1).padStart(3, '0')}`;
-    }
+      let inserted = false;
+      let lastErr = null;
+      let loopCount = 0;
+      
+      // Loop until we find a free sequence number (self-healing sequences)
+      while (!inserted && loopCount < 50) {
+        loopCount++;
+        // Use increment_sequence RPC which runs with elevated privileges (bypassing RLS)
+        const { data: seqValue, error: seqError } = await supabase.rpc('increment_sequence', {
+          p_branch_id: effectiveOrgId,
+          p_entity_type: 'employees'
+        });
+        
+        if (seqError) throw seqError;
+        
+        newEmployee.employeeCode = `EMP-${String(seqValue).padStart(3, '0')}`;
 
-    await employeeRepository.insert(newEmployee);
-    return newEmployee;
+        try {
+          await employeeRepository.insert(newEmployee);
+          inserted = true;
+        } catch (err: any) {
+          // 23505 is PostgreSQL unique constraint violation
+          if (err.code === '23505' && (err.message?.includes('employee_code') || err.message?.includes('username'))) {
+            lastErr = err;
+            continue; // ID taken, loop and increment again
+          }
+          throw err;
+        }
+      }
+      if (!inserted) throw lastErr;
+      return newEmployee;
+    } else {
+      await employeeRepository.insert(newEmployee);
+      return newEmployee;
+    }
   }
 
   async update(id: string, updates: Partial<Employee>): Promise<Employee> {

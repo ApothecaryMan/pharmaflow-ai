@@ -587,10 +587,20 @@ const App: React.FC = () => {
 
 
 
-  const isZeroAffiliation = authState.isAuthenticated && currentUser && !currentUser.orgId;
+  // Determine if this user should see the Employee Portal (personal dashboard)
+  // vs. the full Pharmacy interface (AuthenticatedContent).
+  // Employee Portal is shown for:
+  //   1. Users with no org affiliation at all (zero affiliation)
+  //   2. Regular employees (non-admin, non-owner) who joined via employment requests
+  // Full Pharmacy interface is ONLY for org owners/admins.
+  const isEmployeePortalUser = authState.isAuthenticated && currentUser && (
+    !currentUser.orgId || 
+    (currentUser.orgRole !== 'owner' && currentUser.orgRole !== 'admin' && 
+     currentUser.role !== 'pharmacist_owner' && currentUser.role !== 'admin')
+  );
 
   const content = authState.isAuthenticated ? (
-    isZeroAffiliation ? (
+    isEmployeePortalUser ? (
       <EmployeeDashboard t={t} language={language} />
     ) : (
       <AuthenticatedContent {...appState} {...authState} />
@@ -604,7 +614,7 @@ const App: React.FC = () => {
 
   // Handle Onboarding Steps
   let finalContent = content;
-  if (authState.isAuthenticated && isOnboardingReady && !isZeroAffiliation) {
+  if (authState.isAuthenticated && isOnboardingReady && !isEmployeePortalUser) {
     if (activeStep === 1) finalContent = <OrgSetupScreen language={language} onComplete={() => setActiveStep(2)} />;
     else if (activeStep === 2) finalContent = <BranchSetupScreen language={language} color={theme.primary} onBack={() => setActiveStep(1)} onComplete={() => setActiveStep(3)} />;
     else if (activeStep === 3) finalContent = <EmployeeSetupScreen language={language} color={theme.primary} onBack={() => setActiveStep(2)} onComplete={async () => {

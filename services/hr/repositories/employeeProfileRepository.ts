@@ -2,6 +2,8 @@ import { supabase } from '../../../lib/supabase';
 import type { UserProfile } from '../../../types';
 
 export const employeeProfileRepository = {
+  BASE_PROFILE_COLUMNS: 'id, username, full_name, name_arabic, email, phone, license_number, image, cover_style, created_at, updated_at',
+
   /**
    * Fetch a user profile by ID
    */
@@ -9,7 +11,7 @@ export const employeeProfileRepository = {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('*')
+        .select(this.BASE_PROFILE_COLUMNS)
         .eq('id', id)
         .single();
         
@@ -47,7 +49,7 @@ export const employeeProfileRepository = {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('*')
+        .select(this.BASE_PROFILE_COLUMNS)
         .in('username', usernames);
 
       if (error) throw error;
@@ -71,7 +73,7 @@ export const employeeProfileRepository = {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('*')
+        .select(this.BASE_PROFILE_COLUMNS)
         .or(`username.eq.${prefixed},username.eq.${bare}`)
         .limit(1)
         .maybeSingle();
@@ -118,6 +120,30 @@ export const employeeProfileRepository = {
     } catch (err) {
       console.error('Failed to update user profile:', err);
       return null;
+    }
+  },
+
+  /**
+   * Fetch only the heavy base64 document strings for a user
+   */
+  async getDocuments(id: string): Promise<Partial<UserProfile>> {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('national_id_card, national_id_card_back, main_syndicate_card, sub_syndicate_card')
+        .eq('id', id)
+        .single();
+        
+      if (error) throw error;
+      return {
+        nationalIdCard: data.national_id_card,
+        nationalIdCardBack: data.national_id_card_back,
+        mainSyndicateCard: data.main_syndicate_card,
+        subSyndicateCard: data.sub_syndicate_card,
+      };
+    } catch (err) {
+      console.error('Failed to get user documents:', err);
+      return {};
     }
   },
 
