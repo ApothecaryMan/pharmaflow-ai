@@ -176,7 +176,30 @@ const styles = `
 .zn-footer{text-align:center;margin-top:2rem;font-family:'Space Mono',monospace;font-size:10px;color:var(--zn-muted);letter-spacing:.1em}
 
 @media (max-width: 768px) {
-  .zn-grid{grid-template-columns:1fr;max-width:400px}
+  .zn-grid{
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    max-width: 100%;
+    margin: 0;
+    background: transparent;
+    border: none;
+    gap: 1rem;
+    padding: 1.5rem 1.5rem 1.5rem 1.5rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+  }
+  .zn-grid::-webkit-scrollbar {
+    display: none; /* Chrome/Safari/Opera */
+  }
+  .zn-card{
+    flex: 0 0 85vw;
+    max-width: 340px;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    border: 1px solid var(--zn-grid-bg);
+    border-radius: 1rem;
+  }
   .zn-title{font-size:1.5rem}
 }
 `;
@@ -238,7 +261,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange, hideBack
       <div className='zn-root' dir="ltr">
         {/* Simple Back Arrow */}
         {!hideBackButton && (
-          <button 
+          <button
             onClick={() => onViewChange?.('org-management')}
             className="fixed top-10 left-10 z-50 flex items-center justify-center transition-opacity hover:opacity-60"
           >
@@ -310,10 +333,6 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange, hideBack
             </div>
           ))}
         </div>
-
-        <p className='zn-footer'>
-          // All plans include Arabic &amp; English UI — RTL support included
-        </p>
       </div>
     </>
   );

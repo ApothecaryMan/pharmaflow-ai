@@ -87,31 +87,33 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
       <div className='relative min-h-full lg:min-h-screen flex shrink-0'>
       {/* Left Pane (Form Area) */}
       <div className='w-full lg:w-1/2 flex flex-col relative p-6 sm:p-12'>
-        <div className='absolute top-8 left-8 rtl:left-auto rtl:right-8 flex items-center gap-2'>
-          <img
-            src='/logo_icon_white.svg'
-            className='w-6 h-6 object-contain'
-            alt='Logo Icon'
-          />
-          <img src='/logo_word_white.svg' className='h-4 object-contain opacity-90' alt='Zinc' />
-        </div>
+        <nav>
+          <div className='absolute top-8 left-8 rtl:left-auto rtl:right-8 flex items-center gap-2'>
+            <img
+              src='/logo_icon_white.svg'
+              className='w-6 h-6 object-contain'
+              alt='Logo Icon'
+            />
+            <img src='/logo_word_white.svg' className='h-4 object-contain opacity-90' alt='Zinc' />
+          </div>
 
-        {/* Top Language Switcher */}
-        <div className='absolute top-8 right-8 rtl:right-auto rtl:left-8 z-50'>
-          <SegmentedControl
-            value={language}
-            onChange={(val) => setLanguage(val as any)}
-            options={[
-              { label: 'EN', value: 'EN' },
-              { label: 'AR', value: 'AR' },
-            ]}
-            size='xs'
-            fullWidth={false}
-            disableAnimation={true}
-            className='!bg-white !shadow-none ring-1 ring-white/10 [&>div]:!bg-black [&>div]:!shadow-none [&_button]:!text-black [&_button[data-active=true]]:!text-white [&_button:not([data-active=true])]:!cursor-pointer [&_button[data-active=true]]:!cursor-default'
-            dir='ltr'
-          />
-        </div>
+          {/* Top Language Switcher */}
+          <div className='absolute top-8 right-8 rtl:right-auto rtl:left-8 z-50'>
+            <SegmentedControl
+              value={language}
+              onChange={(val) => setLanguage(val as any)}
+              options={[
+                { label: 'EN', value: 'EN' },
+                { label: 'AR', value: 'AR' },
+              ]}
+              size='xs'
+              fullWidth={false}
+              disableAnimation={true}
+              className='!bg-white !shadow-none ring-1 ring-white/10 [&>div]:!bg-black [&>div]:!shadow-none [&_button]:!text-black [&_button[data-active=true]]:!text-white [&_button:not([data-active=true])]:!cursor-pointer [&_button[data-active=true]]:!cursor-default'
+              dir='ltr'
+            />
+          </div>
+        </nav>
 
         <div className='flex-1 flex flex-col justify-center items-center'>
           <div className='w-full max-w-[360px] space-y-8 mt-12 lg:mt-0'>
