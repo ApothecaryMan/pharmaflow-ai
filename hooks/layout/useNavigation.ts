@@ -73,8 +73,8 @@ function filterMenuItems(
 }
 
 export interface NavigationHandlers {
-  handleViewChange: (viewId: string, params?: Record<string, any>) => void;
-  handleNavigate: (viewId: string, params?: Record<string, any>) => void;
+  handleViewChange: (viewId: string, params?: Record<string, unknown>) => void;
+  handleNavigate: (viewId: string, params?: Record<string, unknown>) => void;
   handleModuleChange: (moduleId: string) => void;
   filteredMenuItems: MenuItem[];
 }
@@ -90,8 +90,8 @@ interface UseNavigationParams {
   setMobileMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   hideInactiveModules: boolean;
   developerMode: boolean;
-  setNavigationParams: React.Dispatch<React.SetStateAction<Record<string, any> | null>>;
-  onProtectedNavigation?: (viewId: string, params?: Record<string, any>) => void;
+  setNavigationParams: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
+  onProtectedNavigation?: (viewId: string, params?: Record<string, unknown>) => void;
   currentEmployeeId?: string | null;
   activeBranchId?: string | null;
   activeOrgId?: string | null;
@@ -122,7 +122,7 @@ export function useNavigation({
 
   // Handle view change with dashboard sub-view logic
   const handleViewChange = useCallback(
-    (viewId: string, params?: Record<string, any>) => {
+    (viewId: string, params?: Record<string, unknown>) => {
       const pageConfig = PAGE_REGISTRY[viewId];
       
       // Check for Protection
@@ -165,7 +165,7 @@ export function useNavigation({
 
   // Handle direct navigation
   const handleNavigate = useCallback(
-    (viewId: string, params?: Record<string, any>) => {
+    (viewId: string, params?: Record<string, unknown>) => {
       const pageConfig = PAGE_REGISTRY[viewId];
       
       // Check for Protection

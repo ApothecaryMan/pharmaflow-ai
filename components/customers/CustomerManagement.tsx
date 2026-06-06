@@ -37,9 +37,9 @@ interface CustomerManagementProps {
   language: 'EN' | 'AR';
   darkMode?: boolean;
   isLoading?: boolean;
-  onViewChange?: (view: string, params?: Record<string, any>) => void;
+  onViewChange?: (view: string, params?: Record<string, unknown>) => void;
   currentEmployeeId?: string;
-  navigationParams?: Record<string, any> | null;
+  navigationParams?: Record<string, unknown> | null;
 }
 
 export const CustomerManagement: React.FC<CustomerManagementProps> = ({
@@ -58,7 +58,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const canViewStats = permissionsService.can('reports.view_intelligence');
-  
+
   useEffect(() => {
     if (navigationParams?.mode === 'add') {
       setMode('add');
@@ -82,7 +82,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const currentUser = authService.getCurrentUserSync();
   const [mode, setMode] = useState<'list' | 'add'>('list');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
+  const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isKioskMode, setIsKioskMode] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -128,7 +128,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     { id: 'sms', label: t.contactOptions.sms, icon: 'sms' },
     { id: 'email', label: t.contactOptions.email, icon: 'mail' },
   ];
- 
+
   const statusFilterConfig = useMemo<FilterConfig>(() => ({
     id: 'status',
     label: t.headers?.status || 'Status',
@@ -225,7 +225,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       handleCloseModal();
     } else {
       // Logic for ID, serialId, and code is centralized in the service layer.
-      onAddCustomer(formData as any);
+      onAddCustomer(formData as Omit<Customer, 'id' | 'serialId' | 'code' | 'createdAt' | 'updatedAt'>);
 
       if (isKioskMode) {
         handleCloseModal();
@@ -319,7 +319,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     const now = getVerifiedDate();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    
+
     // Activity thresholds
     const thirtyDaysAgo = now.getTime() - (30 * 24 * 60 * 60 * 1000);
     const oneYearAgo = now.getTime() - (365 * 24 * 60 * 60 * 1000);
@@ -510,7 +510,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
   const tableColumns = useMemo(() => {
     if (showAllBranches) return columns;
-    return columns.filter(col => (col as any).accessorKey !== 'branchId');
+    return columns.filter(col => !('accessorKey' in col) || col.accessorKey !== 'branchId');
   }, [columns, showAllBranches]);
 
   // Address Form Section Component
@@ -535,22 +535,22 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mt-4'>
 
-      {/* Street Address */}
-      <div>
-        <label className='block text-xs font-medium text-gray-500 mb-1'>
-          {t.modal.streetAddress}
-        </label>
-        <SmartTextarea
-          value={formData.streetAddress || ''}
-          onChange={(e) => setFormData({ ...formData, streetAddress: e.target.value })}
-          rows={2}
-          className='resize-none'
-          placeholder={t.modal.placeholders.streetAddress}
-        />
+        {/* Street Address */}
+        <div>
+          <label className='block text-xs font-medium text-gray-500 mb-1'>
+            {t.modal.streetAddress}
+          </label>
+          <SmartTextarea
+            value={formData.streetAddress || ''}
+            onChange={(e) => setFormData({ ...formData, streetAddress: e.target.value })}
+            rows={2}
+            className='resize-none'
+            placeholder={t.modal.placeholders.streetAddress}
+          />
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 
   const renderProfileModal = () => {
     if (!viewingCustomer) return null;
@@ -778,15 +778,15 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   <span className='hidden md:inline'>{t.modal.kioskMode}</span>
                 </button>
               )}
-                <label className='flex items-center gap-2 px-3 py-2 rounded-full bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors'>
-                  <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none'>
-                    {t.globalView}
-                  </span>
-                  <Switch
-                    checked={showAllBranches}
-                    onChange={setShowAllBranches}
-                  />
-                </label>
+              <label className='flex items-center gap-2 px-3 py-2 rounded-full bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors'>
+                <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none'>
+                  {t.globalView}
+                </span>
+                <Switch
+                  checked={showAllBranches}
+                  onChange={setShowAllBranches}
+                />
+              </label>
             </div>
           ) : null
         }
@@ -922,296 +922,295 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
       <div className="flex-1 min-h-0 flex flex-col space-y-6 animate-fade-in">
 
-      {/* Success Message */}
-      {showSuccess && mode === 'add' && (
-        <div
-          className={`p-4 rounded-2xl bg-primary-50 dark:bg-primary-950/30 border border-primary-200 dark:border-primary-800 flex items-center gap-3 animate-fade-in`}
-        >
-          <span className={`material-symbols-rounded text-primary-600 dark:text-primary-400`}>
-            check_circle
-          </span>
-          <span className={`text-sm font-medium text-primary-700 dark:text-primary-300`}>
-            {t.customerAddedSuccess}
-          </span>
-        </div>
-      )}
-
-      {mode === 'list' ? (
-        <>
-          {/* Table Card */}
-          <div className="flex-1 min-h-0">
-            <TanStackTable
-              data={filteredCustomers}
-              columns={tableColumns}
-              onRowContextMenu={handleContextMenu}
-              onRowLongPress={handleLongPress}
-              tableId='customers_table'
-              searchPlaceholder={t.searchPlaceholder}
-              defaultHiddenColumns={['serialId']}
-              color={color}
-              isLoading={isLoading && filteredCustomers.length === 0}
-              globalFilter={searchQuery}
-              onSearchChange={setSearchQuery}
-              enablePagination={true}
-              enableVirtualization={false}
-              pageSize='auto'
-              enableShowAll={true}
-              enableSearch={false}
-              enableTopToolbar={false}
-              filterableColumns={[statusFilterConfig]}
-              initialFilters={activeFilters}
-              onFilterChange={setActiveFilters}
-              manualFiltering={false}
-            />
+        {/* Success Message */}
+        {showSuccess && mode === 'add' && (
+          <div
+            className={`p-4 rounded-2xl bg-primary-50 dark:bg-primary-950/30 border border-primary-200 dark:border-primary-800 flex items-center gap-3 animate-fade-in`}
+          >
+            <span className={`material-symbols-rounded text-primary-600 dark:text-primary-400`}>
+              check_circle
+            </span>
+            <span className={`text-sm font-medium text-primary-700 dark:text-primary-300`}>
+              {t.customerAddedSuccess}
+            </span>
           </div>
-        </>
-      ) : (
-        /* ADD CUSTOMER FORM VIEW - INLINE */
-        <div className='flex-1 overflow-y-auto'>
-          <form onSubmit={handleSubmit} className='grid grid-cols-1 xl:grid-cols-3 gap-6 pb-20'>
-            {/* LEFT COLUMN: Main Info */}
-            <div className='xl:col-span-2 space-y-6'>
-              {/* Basic Details Card */}
-              <div className='bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-xs card-shadow'>
-                <h3 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4'>
-                  <span className='material-symbols-rounded text-primary-500'>person</span>
-                  {t.basicInfo || 'Basic Information'}
-                </h3>
+        )}
 
-                <div className='grid grid-cols-3 gap-4'>
-                  <div className='col-span-1'>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t.modal.code} *
-                    </label>
-                    <div className='relative'>
+        {mode === 'list' ? (
+          <>
+            {/* Table Card */}
+            <div className="flex-1 min-h-0">
+              <TanStackTable
+                data={filteredCustomers}
+                columns={tableColumns}
+                onRowContextMenu={handleContextMenu}
+                onRowLongPress={handleLongPress}
+                tableId='customers_table'
+                searchPlaceholder={t.searchPlaceholder}
+                defaultHiddenColumns={['serialId']}
+                color={color}
+                isLoading={isLoading && filteredCustomers.length === 0}
+                globalFilter={searchQuery}
+                onSearchChange={setSearchQuery}
+                enablePagination={true}
+                enableVirtualization={false}
+                pageSize='auto'
+                enableShowAll={true}
+                enableSearch={false}
+                enableTopToolbar={false}
+                filterableColumns={[statusFilterConfig]}
+                initialFilters={activeFilters}
+                onFilterChange={setActiveFilters}
+                manualFiltering={false}
+              />
+            </div>
+          </>
+        ) : (
+          /* ADD CUSTOMER FORM VIEW - INLINE */
+          <div className='flex-1 overflow-y-auto'>
+            <form onSubmit={handleSubmit} className='grid grid-cols-1 xl:grid-cols-3 gap-6 pb-20'>
+              {/* LEFT COLUMN: Main Info */}
+              <div className='xl:col-span-2 space-y-6'>
+                {/* Basic Details Card */}
+                <div className='bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-xs card-shadow'>
+                  <h3 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4'>
+                    <span className='material-symbols-rounded text-primary-500'>person</span>
+                    {t.basicInfo || 'Basic Information'}
+                  </h3>
+
+                  <div className='grid grid-cols-3 gap-4'>
+                    <div className='col-span-1'>
+                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                        {t.modal.code} *
+                      </label>
+                      <div className='relative'>
+                        <SmartInput
+                          type='text'
+                          required
+                          value={formData.code || ''}
+                          onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                          placeholder={t.modal.placeholders.code}
+                        />
+                        <button
+                          type='button'
+                          onClick={() => setFormData({ ...formData, code: generateUniqueCode() })}
+                          className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-primary-500 transition-colors'
+                          title={t.modal.generateCode}
+                        >
+                          <span className='material-symbols-rounded text-[18px]'>autorenew</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div className='col-span-2'>
+                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                        {t.modal.name} *
+                      </label>
                       <SmartInput
                         type='text'
                         required
-                        value={formData.code || ''}
-                        onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                        placeholder={t.modal.placeholders.code}
+                        value={formData.name || ''}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder={t.modal.placeholders.johnDoe}
                       />
+                    </div>
+                  </div>
+
+                  <div className='grid grid-cols-2 gap-4 mt-4'>
+                    <div>
+                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                        {t.modal.phone} *
+                      </label>
+                      <div className='relative'>
+                        <SmartPhoneInput
+                          required
+                          value={formData.phone || ''}
+                          onChange={(val) => setFormData({ ...formData, phone: val })}
+                          placeholder={t.modal.placeholders.phone}
+                          className='w-full px-3 py-2 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
+                        />
+                        {getDetectedCountry(formData.phone) && (
+                          <div className='absolute right-2 top-1/2 -translate-y-1/2 badge-blue'>
+                            {language === 'AR'
+                              ? getDetectedCountry(formData.phone)?.country_ar
+                              : getDetectedCountry(formData.phone)?.country_en}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                        {t.modal.email}
+                      </label>
+                      <SmartEmailInput
+                        value={formData.email || ''}
+                        onChange={(val) => setFormData({ ...formData, email: val })}
+                        placeholder={t.modal.placeholders.email}
+                      />
+                    </div>
+                  </div>
+
+                  <div className='mt-4'>{renderAddressForm()}</div>
+                </div>
+
+                {/* Medical Info Card */}
+                <div className='bg-white dark:bg-gray-900 rounded-3xl p-6 card-shadow'>
+                  <h3 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4'>
+                    <span className='material-symbols-rounded text-primary-500'>medical_services</span>
+                    {t.modal.conditions}
+                  </h3>
+
+                  <div className='flex flex-wrap gap-2'>
+                    {[
+                      'diabetes',
+                      'hypertension',
+                      'asthma',
+                      'allergies',
+                      'heartDisease',
+                      'arthritis',
+                    ].map((condition) => (
                       <button
+                        key={condition}
                         type='button'
-                        onClick={() => setFormData({ ...formData, code: generateUniqueCode() })}
-                        className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-primary-500 transition-colors'
-                        title={t.modal.generateCode}
+                        onClick={() => toggleCondition(condition)}
+                        className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${(formData.chronicConditions || []).includes(condition)
+                            ? `border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 bg-transparent ring-1 ring-primary-200 dark:ring-primary-900/10 shadow-xs`
+                            : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
+                          }`}
                       >
-                        <span className='material-symbols-rounded text-[18px]'>autorenew</span>
+                        {(formData.chronicConditions || []).includes(condition) && (
+                          <span className='material-symbols-rounded text-xs'>check_circle</span>
+                        )}
+                        {t.conditions[condition]}
                       </button>
-                    </div>
+                    ))}
                   </div>
-                  <div className='col-span-2'>
+
+                  <div className='mt-4'>
                     <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t.modal.name} *
+                      {t.modal.notes}
                     </label>
-                    <SmartInput
-                      type='text'
-                      required
-                      value={formData.name || ''}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder={t.modal.placeholders.johnDoe}
+                    <SmartTextarea
+                      value={formData.notes || ''}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      rows={2}
+                      className='resize-none'
+                      placeholder={t.modal.placeholders.notes}
                     />
                   </div>
                 </div>
+              </div>
 
-                <div className='grid grid-cols-2 gap-4 mt-4'>
-                  <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t.modal.phone} *
-                    </label>
-                    <div className='relative'>
-                      <SmartPhoneInput
-                        required
-                        value={formData.phone || ''}
-                        onChange={(val) => setFormData({ ...formData, phone: val })}
-                        placeholder={t.modal.placeholders.phone}
-                        className='w-full px-3 py-2 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
+              {/* RIGHT COLUMN: Additional Info */}
+              <div className='xl:col-span-1 space-y-6'>
+                <div className='bg-white dark:bg-gray-900 rounded-3xl p-6 card-shadow h-full'>
+                  <h3 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4'>
+                    <span className='material-symbols-rounded text-primary-500'>settings</span>
+                    {t.modal.preferences}
+                  </h3>
+
+                  <div className='space-y-4'>
+                    <div>
+                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                        {t.modal.contact}
+                      </label>
+                      <FilterDropdown
+                        variant='input'
+                        items={CONTACT_OPTIONS}
+                        selectedItem={CONTACT_OPTIONS.find(
+                          (o) => o.id === (formData.preferredContact || 'phone')
+                        )}
+                        isOpen={isContactOpen}
+                        onToggle={() => setIsContactOpen(!isContactOpen)}
+                        onSelect={(option) => {
+                          setFormData({ ...formData, preferredContact: option.id as Customer['preferredContact'] });
+                          setIsContactOpen(false);
+                        }}
+                        keyExtractor={(item) => item.id}
+                        renderSelected={(item) => (
+                          <div className='flex items-center gap-2'>
+                            <span className='material-symbols-rounded text-[18px] text-gray-500'>
+                              {item?.icon}
+                            </span>
+                            <span>{item?.label}</span>
+                          </div>
+                        )}
+                        renderItem={(item) => (
+                          <div className='flex items-center gap-2'>
+                            <span className='material-symbols-rounded text-[18px] text-gray-500'>
+                              {item.icon}
+                            </span>
+                            <span>{item.label}</span>
+                          </div>
+                        )}
+                        className='w-full h-[42px]'
                       />
-                      {getDetectedCountry(formData.phone) && (
-                        <div className='absolute right-2 top-1/2 -translate-y-1/2 badge-blue'>
-                          {language === 'AR'
-                            ? getDetectedCountry(formData.phone)?.country_ar
-                            : getDetectedCountry(formData.phone)?.country_en}
-                        </div>
-                      )}
+                    </div>
+                    <div>
+                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                        {t.modal.location}
+                      </label>
+                      <SmartInput
+                        type='text'
+                        value={formData.preferredLocation || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, preferredLocation: e.target.value })
+                        }
+                        placeholder={t.modal.placeholders.downtownBranch}
+                      />
+                    </div>
+
+                    <div className='border-t border-gray-100 dark:border-gray-800 my-4'></div>
+
+                    <h4 className='text-xs font-bold text-gray-500 uppercase mb-2'>
+                      {t.modal.insurance}
+                    </h4>
+                    <div>
+                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                        {t.modal.insurance}
+                      </label>
+                      <SmartInput
+                        type='text'
+                        value={formData.insuranceProvider || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, insuranceProvider: e.target.value })
+                        }
+                        placeholder={t.modal.placeholders.insurance}
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                        {t.modal.policy}
+                      </label>
+                      <SmartInput
+                        type='text'
+                        value={formData.policyNumber || ''}
+                        onChange={(e) => setFormData({ ...formData, policyNumber: e.target.value })}
+                        placeholder={t.modal.placeholders.policy}
+                      />
                     </div>
                   </div>
-                  <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t.modal.email}
-                    </label>
-                    <SmartEmailInput
-                      value={formData.email || ''}
-                      onChange={(val) => setFormData({ ...formData, email: val })}
-                      placeholder={t.modal.placeholders.email}
-                    />
-                  </div>
-                </div>
 
-                <div className='mt-4'>{renderAddressForm()}</div>
-              </div>
-
-              {/* Medical Info Card */}
-              <div className='bg-white dark:bg-gray-900 rounded-3xl p-6 card-shadow'>
-                <h3 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4'>
-                  <span className='material-symbols-rounded text-primary-500'>medical_services</span>
-                  {t.modal.conditions}
-                </h3>
-
-                <div className='flex flex-wrap gap-2'>
-                  {[
-                    'diabetes',
-                    'hypertension',
-                    'asthma',
-                    'allergies',
-                    'heartDisease',
-                    'arthritis',
-                  ].map((condition) => (
+                  <div className='mt-8'>
                     <button
-                      key={condition}
-                      type='button'
-                      onClick={() => toggleCondition(condition)}
-                      className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
-                        (formData.chronicConditions || []).includes(condition)
-                          ? `border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 bg-transparent ring-1 ring-primary-200 dark:ring-primary-900/10 shadow-xs`
-                          : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
-                      }`}
+                      type='submit'
+                      className={`w-full py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all font-bold`}
                     >
-                      {(formData.chronicConditions || []).includes(condition) && (
-                        <span className='material-symbols-rounded text-xs'>check_circle</span>
-                      )}
-                      {t.conditions[condition]}
+                      {t.modal.save}
                     </button>
-                  ))}
-                </div>
-
-                <div className='mt-4'>
-                  <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t.modal.notes}
-                  </label>
-                  <SmartTextarea
-                    value={formData.notes || ''}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    rows={2}
-                    className='resize-none'
-                    placeholder={t.modal.placeholders.notes}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT COLUMN: Additional Info */}
-            <div className='xl:col-span-1 space-y-6'>
-              <div className='bg-white dark:bg-gray-900 rounded-3xl p-6 card-shadow h-full'>
-                <h3 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4'>
-                  <span className='material-symbols-rounded text-primary-500'>settings</span>
-                  {t.modal.preferences}
-                </h3>
-
-                <div className='space-y-4'>
-                  <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t.modal.contact}
-                    </label>
-                    <FilterDropdown
-                      variant='input'
-                      items={CONTACT_OPTIONS}
-                      selectedItem={CONTACT_OPTIONS.find(
-                        (o) => o.id === (formData.preferredContact || 'phone')
-                      )}
-                      isOpen={isContactOpen}
-                      onToggle={() => setIsContactOpen(!isContactOpen)}
-                      onSelect={(option) => {
-                        setFormData({ ...formData, preferredContact: option.id as any });
-                        setIsContactOpen(false);
-                      }}
-                      keyExtractor={(item) => item.id}
-                      renderSelected={(item) => (
-                        <div className='flex items-center gap-2'>
-                          <span className='material-symbols-rounded text-[18px] text-gray-500'>
-                            {item?.icon}
-                          </span>
-                          <span>{item?.label}</span>
-                        </div>
-                      )}
-                      renderItem={(item) => (
-                        <div className='flex items-center gap-2'>
-                          <span className='material-symbols-rounded text-[18px] text-gray-500'>
-                            {item.icon}
-                          </span>
-                          <span>{item.label}</span>
-                        </div>
-                      )}
-                      className='w-full h-[42px]'
-                    />
-                  </div>
-                  <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t.modal.location}
-                    </label>
-                    <SmartInput
-                      type='text'
-                      value={formData.preferredLocation || ''}
-                      onChange={(e) =>
-                        setFormData({ ...formData, preferredLocation: e.target.value })
-                      }
-                      placeholder={t.modal.placeholders.downtownBranch}
-                    />
-                  </div>
-
-                  <div className='border-t border-gray-100 dark:border-gray-800 my-4'></div>
-
-                  <h4 className='text-xs font-bold text-gray-500 uppercase mb-2'>
-                    {t.modal.insurance}
-                  </h4>
-                  <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t.modal.insurance}
-                    </label>
-                    <SmartInput
-                      type='text'
-                      value={formData.insuranceProvider || ''}
-                      onChange={(e) =>
-                        setFormData({ ...formData, insuranceProvider: e.target.value })
-                      }
-                      placeholder={t.modal.placeholders.insurance}
-                    />
-                  </div>
-                  <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t.modal.policy}
-                    </label>
-                    <SmartInput
-                      type='text'
-                      value={formData.policyNumber || ''}
-                      onChange={(e) => setFormData({ ...formData, policyNumber: e.target.value })}
-                      placeholder={t.modal.placeholders.policy}
-                    />
-                  </div>
-                </div>
-
-                <div className='mt-8'>
-                  <button
-                    type='submit'
-                    className={`w-full py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all font-bold`}
-                  >
-                    {t.modal.save}
-                  </button>
-                  <button
-                    type='button'
-                    onClick={() => setMode('list')}
-                    className='w-full py-3 mt-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors text-sm font-medium'
-                  >
-                    {t.modal.cancel}
-                  </button>
+                    <button
+                      type='button'
+                      onClick={() => setMode('list')}
+                      className='w-full py-3 mt-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors text-sm font-medium'
+                    >
+                      {t.modal.cancel}
+                    </button>
                   </div>
                 </div>
               </div>
             </form>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
 
       {/* Admin Modal - ONLY FOR EDITING NOW */}
       <Modal
@@ -1330,7 +1329,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       isOpen={isModalContactOpen}
                       onToggle={() => setIsModalContactOpen(!isModalContactOpen)}
                       onSelect={(option) => {
-                        setFormData({ ...formData, preferredContact: option.id as any });
+                        setFormData({ ...formData, preferredContact: option.id as Customer['preferredContact'] });
                         setIsModalContactOpen(false);
                       }}
                       keyExtractor={(item) => item.id}
@@ -1416,11 +1415,10 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                         key={condition}
                         type='button'
                         onClick={() => toggleCondition(condition)}
-                        className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
-                          (formData.chronicConditions || []).includes(condition)
+                        className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${(formData.chronicConditions || []).includes(condition)
                             ? `border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 bg-transparent ring-1 ring-primary-200 dark:ring-primary-900/10 shadow-xs`
                             : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
-                        }`}
+                          }`}
                       >
                         {(formData.chronicConditions || []).includes(condition) && (
                           <span className='material-symbols-rounded text-xs'>check_circle</span>
@@ -1539,11 +1537,10 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                           key={condition}
                           type='button'
                           onClick={() => toggleCondition(condition)}
-                          className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
-                            (formData.chronicConditions || []).includes(condition)
+                          className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${(formData.chronicConditions || []).includes(condition)
                               ? `border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 bg-transparent ring-1 ring-primary-200 dark:ring-primary-900/10 shadow-xs`
                               : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
-                          }`}
+                            }`}
                         >
                           {(formData.chronicConditions || []).includes(condition) && (
                             <span className='material-symbols-rounded text-sm'>check_circle</span>

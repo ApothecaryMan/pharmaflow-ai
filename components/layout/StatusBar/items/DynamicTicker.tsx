@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import { Tooltip } from '../../../common/Tooltip';
 import { StatusBarItem } from '../StatusBarItem';
+import { TRANSLATIONS } from '@/i18n';
 
 // --- Types ---
 
@@ -17,11 +18,20 @@ export interface TickerSlide {
   variant?: 'default' | 'success' | 'warning' | 'error' | 'info';
 }
 
+export interface TickerData {
+  todaySales?: string | number;
+  completedInvoices?: number;
+  pendingInvoices?: number;
+  lowStockCount?: number;
+  shortagesCount?: number;
+  newCustomersToday?: number;
+  topSeller?: { name: string; count: number };
+}
+
 export interface DynamicTickerProps {
   language?: 'EN' | 'AR';
   interval?: number;
-  t?: Record<string, string>;
-  data?: any;
+  data?: TickerData;
   showSales?: boolean;
   showInventory?: boolean;
   showCustomers?: boolean;
@@ -52,8 +62,7 @@ const TickerItem: React.FC<{ label?: string; value?: any }> = ({ label, value })
 export const DynamicTicker: React.FC<DynamicTickerProps> = ({
   language = 'EN',
   interval = 5000,
-  t = {},
-  data = {},
+  data = {} as TickerData,
   showSales = true,
   showInventory = true,
   showCustomers = true,
@@ -65,21 +74,23 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
   const [priorityMessage, setPriorityMessage] = useState<TickerSlide | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const t = TRANSLATIONS[language].statusBar.ticker;
+
   const slides = useMemo(() => {
     const raw: TickerSlide[] = [
       {
-        id: 'sales', icon: 'payments', label: t.todaySales, value: data.todaySales,
-        secondaryLabel: t.completed, secondaryValue: data.completedInvoices,
-        tertiaryLabel: t.pending, tertiaryValue: data.pendingInvoices, variant: 'success',
+        id: 'sales', icon: 'payments', label: t.todaySales, value: data.todaySales || 0,
+        secondaryLabel: t.completed, secondaryValue: data.completedInvoices || 0,
+        tertiaryLabel: t.pending, tertiaryValue: data.pendingInvoices || 0, variant: 'success',
       },
       {
-        id: 'inventory', icon: 'inventory_2', label: t.lowStock, value: data.lowStockCount,
-        secondaryLabel: t.shortages, secondaryValue: data.shortagesCount,
-        variant: data.lowStockCount > 5 ? 'warning' : 'default',
+        id: 'inventory', icon: 'inventory_2', label: t.lowStock, value: data.lowStockCount || 0,
+        secondaryLabel: t.shortages, secondaryValue: data.shortagesCount || 0,
+        variant: (data.lowStockCount || 0) > 5 ? 'warning' : 'default',
       },
       {
-        id: 'customers', icon: 'group_add', label: t.newCustomers, value: data.newCustomersToday,
-        variant: data.newCustomersToday > 0 ? 'info' : 'default',
+        id: 'customers', icon: 'group_add', label: t.newCustomers, value: data.newCustomersToday || 0,
+        variant: (data.newCustomersToday || 0) > 0 ? 'info' : 'default',
       },
       {
         id: 'topSeller', icon: 'emoji_events', label: t.topSeller, value: data.topSeller?.name || '—',
@@ -91,11 +102,11 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
     return raw.filter(s => {
       const show = s.id === 'sales' ? showSales : s.id === 'inventory' ? showInventory : s.id === 'customers' ? showCustomers : showTopSeller;
       if (!show || !permissionsService.getEffectiveRole()) return false;
-      
+
       const perms: Record<string, string> = { sales: 'sale.view_history', inventory: 'reports.view_inventory', customers: 'customer.view', topSeller: 'reports.view_financial' };
       return permissionsService.can(perms[s.id] as any);
     });
-  }, [data, t, showSales, showInventory, showCustomers, showTopSeller]);
+  }, [data, language, showSales, showInventory, showCustomers, showTopSeller]);
 
   const rotate = useCallback(() => {
     if (isPaused || priorityMessage || !slides.length) return;
@@ -139,9 +150,9 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
       className={`transition-all duration-150 ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
       onClick={() => setCurrentIndex(p => (p + 1) % slides.length)}
     >
-      <div 
+      <div
         className="flex items-center gap-1.5 h-full"
-        onMouseEnter={() => setIsPaused(true)} 
+        onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         dir={language === 'AR' ? 'rtl' : 'ltr'}
       >

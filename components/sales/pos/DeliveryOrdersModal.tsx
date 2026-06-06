@@ -54,7 +54,7 @@ const DriverSelect = ({
   driverId?: string;
   drivers: Employee[];
   onSelect: (d: Employee) => void;
-  t: Translations; slations;
+  t: Translations;
   disabled?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);

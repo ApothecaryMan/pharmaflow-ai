@@ -1,3 +1,4 @@
+import React from 'react';
 import { useInventoryHandlers } from './inventory/useInventoryHandlers';
 import { useSalesHandlers } from './sales/useSalesHandlers';
 import { usePurchaseHandlers } from './purchases/usePurchaseHandlers';

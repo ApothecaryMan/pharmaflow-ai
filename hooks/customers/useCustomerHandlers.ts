@@ -1,3 +1,4 @@
+import React from 'react';
 import { useCallback, useMemo } from 'react';
 import { useAlert } from '../../context';
 import { permissionsService } from '../../services/auth/permissionsService';

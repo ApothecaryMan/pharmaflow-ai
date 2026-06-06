@@ -8,6 +8,13 @@ import { transactionService } from '../../services/transactions/transactionServi
 import { validateSaleData } from '../../utils/validation';
 import { formatCurrency } from '../../utils/currency';
 import { measurePerformance } from '../../utils/monitoring';
+
+declare global {
+  interface Window {
+    __PHARMA_FLOW_ORG_ID__?: string;
+  }
+}
+
 import type { 
   ActionContext, 
   CartItem, 
@@ -54,8 +61,8 @@ export interface UseSalesHandlersParams {
   getVerifiedDate: () => Date;
   validateTransactionTime: (date: Date) => { valid: boolean; message?: string };
   updateLastTransactionTime: (time: number) => void;
-  completeSale: (saleData: any, context: ActionContext) => Promise<Sale>;
-  processSalesReturn: (returnData: any, sale: Sale, context: ActionContext) => Promise<void>;
+  completeSale: (saleData: SaleData, context: ActionContext) => Promise<Sale>;
+  processSalesReturn: (returnData: Return, sale: Sale, context: ActionContext) => Promise<void>;
 }
 
 const SENIOR_CASHIER_CANCEL_LIMIT = 500; // 500.00 EGP
@@ -122,9 +129,9 @@ export function useSalesHandlers({
         updateLastTransactionTime(saleDate.getTime());
         success(`Order #${newSale.serialId} completed!`);
         return true;
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('[handleCompleteSale] Fatal error:', err);
-        error(err?.message || 'An unexpected error occurred during checkout.');
+        error((err instanceof Error ? err.message : String(err)) || 'An unexpected error occurred during checkout.');
         return false;
       }
     },
@@ -165,7 +172,7 @@ export function useSalesHandlers({
         performerId: currentEmployeeId,
         performerName: employee?.name || 'System',
         timestamp: new Date().toISOString(),
-        orgId: (window as any).__PHARMA_FLOW_ORG_ID__ || 'default',
+        orgId: window.__PHARMA_FLOW_ORG_ID__ || 'default',
         shiftId: currentShift?.id,
       };
 
@@ -216,8 +223,6 @@ export function useSalesHandlers({
           return;
         }
 
-        updates.modificationHistory = result.modificationHistory;
-
         const [updatedBatches] = await Promise.all([batchService.getAllBatches(activeBranchId)]);
         setBatches(updatedBatches);
         const freshInventory = await inventoryService.getAll(activeBranchId);
@@ -228,7 +233,7 @@ export function useSalesHandlers({
 
       if (updates.status === 'completed' && sale.status !== 'completed' && sale.saleType === 'delivery' && currentShift && !sale.shiftTransactionRecorded) {
         const isCash = sale.paymentMethod === 'cash';
-        const txAmount = (updates as any).total ?? sale.total;
+        const txAmount = ("total" in updates ? (updates.total as number) : undefined) ?? sale.total;
         
         await transactionService.addTransaction(currentShift.id, {
           branchId: activeBranchId,
@@ -333,7 +338,7 @@ export function useSalesHandlers({
         updateLastTransactionTime(returnDate.getTime());
         success(`Return processed successfully. Refund: ${formatCurrency(returnData.totalRefund)}`);
         return true;
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('[handleProcessReturn] Fatal error:', err);
         error('An unexpected error occurred during return processing.');
         return false;

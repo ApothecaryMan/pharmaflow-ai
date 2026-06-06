@@ -46,19 +46,93 @@ import { FilterDropdownTest } from '../components/test/FilterDropdownTest';
 import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
 import type { PermissionAction } from './permissions';
 import { PERMISSIONS_MAPPING } from './permissionsMapping';
+import type {
+  Sale,
+  Customer,
+  Drug,
+  Supplier,
+  Purchase,
+  PurchaseReturn,
+  Return,
+  Employee,
+  StockBatch,
+  ViewState,
+  Shift
+} from '../types';
+
+export interface InjectedPageProps {
+  color?: string;
+  t?: Translations;
+  language?: 'AR' | 'EN';
+  textTransform?: string;
+  currentEmployeeId?: string | null;
+  darkMode?: boolean;
+  employees?: Employee[];
+  isLoading?: boolean;
+  activeBranchId?: string;
+  activeOrgId?: string;
+  sales?: Sale[];
+  inventory?: Drug[];
+  customers?: Customer[];
+  products?: Drug[];
+  suppliers?: Supplier[];
+  purchases?: Purchase[];
+  purchaseReturns?: PurchaseReturn[];
+  returns?: Return[];
+  drugs?: Drug[];
+  batches?: StockBatch[];
+  currentShift?: Shift | null;
+  navigationParams?: Record<string, string | number | boolean | null | undefined>;
+  setInventory?: (inventory: Drug[]) => void;
+  setDrugs?: (drugs: Drug[]) => void;
+  setPurchases?: (purchases: Purchase[]) => void;
+  setPurchaseReturns?: (returns: PurchaseReturn[]) => void;
+  onAddDrug?: (drug: Drug) => void;
+  onUpdateDrug?: (id: string, drug: Partial<Drug>) => void;
+  onDeleteDrug?: (id: string) => void;
+  onUpdateInventory?: (inventory: Drug[]) => void;
+  onBatchesChanged?: () => void;
+  onCompleteSale?: (sale: Sale) => void;
+  onUpdateSale?: (id: string, sale: Partial<Sale>) => void;
+  onProcessReturn?: (returnTx: Return) => void;
+  onAddCustomer?: (customer: Customer) => void;
+  onUpdateCustomer?: (id: string, customer: Partial<Customer>) => void;
+  onDeleteCustomer?: (id: string) => void;
+  setSuppliers?: (suppliers: Supplier[]) => void;
+  onAddSupplier?: (supplier: Supplier) => void;
+  onUpdateSupplier?: (id: string, supplier: Partial<Supplier>) => void;
+  onDeleteSupplier?: (id: string) => void;
+  onPurchaseComplete?: (purchase: Purchase) => void;
+  onApprovePurchase?: (id: string) => void;
+  onMarkAsReceived?: (id: string) => void;
+  onRejectPurchase?: (id: string) => void;
+  onAddProduct?: () => void;
+  onRestock?: () => void;
+  onAddEmployee?: (employee: Employee) => void;
+  onUpdateEmployee?: (id: string, employee: Partial<Employee>) => void;
+  onDeleteEmployee?: (id: string) => void;
+  onCreatePurchaseReturn?: (returnTx: PurchaseReturn) => void;
+  onViewChange?: (view: ViewState) => void;
+  onLoginSuccess?: () => void;
+  getVerifiedDate?: () => Date;
+  datePickerTranslations?: Record<string, string>;
+  initialMode?: string;
+}
+
+
 
 export interface PageConfig {
   id: string;
-  component: ComponentType<any>;
+  component: ComponentType<InjectedPageProps>;
   menuLabel: string;
   menuLabelAr: string;
   requiredProps?: string[]; // Props that need to be passed to the component
   icon?: string;
   category?: string;
   permission?: PermissionAction;
-  skeleton?: ComponentType<any>;
+  skeleton?: ComponentType<InjectedPageProps>;
   layout?: 'standard' | 'full-bleed' | 'dashboard' | 'split' | 'auth' | 'full-screen';
-  skeletonProps?: Record<string, any>;
+  skeletonProps?: Partial<InjectedPageProps>;
   isProtected?: boolean;
   storageKey?: string;
 }
@@ -611,7 +685,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   landing: {
     id: 'landing',
-    component: LandingPage as any,
+    component: LandingPage,
     menuLabel: 'Welcome',
     menuLabelAr: 'ترحيب',
     icon: 'home',
@@ -663,7 +737,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'customer-density-map': {
     id: 'customer-density-map',
-    component: React.lazy(() => import('../components/customers/CustomerDensityMap')) as any,
+    component: React.lazy(() => import('../components/customers/CustomerDensityMap')),
     menuLabel: 'Customer Density Map',
     menuLabelAr: 'خريطة كثافة العملاء',
     icon: 'map',
@@ -678,7 +752,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       import('../components/org/OrganizationManagementPage').then((m) => ({
         default: m.OrganizationManagementPage,
       }))
-    ) as any,
+    ),
     menuLabel: 'Org Management',
     menuLabelAr: 'إدارة المنظمة',
     icon: 'corporate_fare',

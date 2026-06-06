@@ -17,7 +17,8 @@ const GLOBAL_KEYS = new Set<string>([
   StorageKeys.NAV_STYLE,
   StorageKeys.HEADER_STATS_VISIBLE,
   StorageKeys.PRINTER_SETTINGS,
-  StorageKeys.SCREEN_CALIBRATION_RATIO
+  StorageKeys.SCREEN_CALIBRATION_RATIO,
+  StorageKeys.SETTINGS
 ]);
 
 // Performance optimizations:
@@ -28,10 +29,10 @@ let cachedUserId: string | null = null;
 let hasLoadedUserId = false;
 let cachedUsageBytes: number | null = null;
 let isVersionStamped = false;
-const memoryCache = new Map<string, any>();
+const memoryCache = new Map<string, unknown>();
 
 // Helper to write directly using a raw (already scoped) key
-const setRawKey = (key: string, value: any): void => {
+const setRawKey = (key: string, value: unknown): void => {
   if (typeof localStorage === 'undefined') return;
   const stringValue = JSON.stringify(value);
   localStorage.setItem(key, stringValue);
@@ -145,15 +146,14 @@ export const storage = {
 
     const scopedKey = storage.getScopedKey(key);
     
+    const isTTL = (obj: unknown): obj is { __pharma_ttl_value: unknown; expiresAt: number } => 
+      typeof obj === 'object' && obj !== null && '__pharma_ttl_value' in obj && 'expiresAt' in obj && typeof (obj as Record<string, unknown>).expiresAt === 'number';
+    
     // Check memory cache first to bypass IPC/disk read and JSON parsing overhead
     if (memoryCache.has(scopedKey)) {
       const cached = memoryCache.get(scopedKey);
-      if (
-        cached &&
-        typeof cached === 'object' &&
-        '__pharma_ttl_value' in cached &&
-        typeof cached.expiresAt === 'number'
-      ) {
+
+      if (isTTL(cached)) {
         if (Date.now() > cached.expiresAt) {
           storage.remove(key);
           return defaultValue;
@@ -171,12 +171,7 @@ export const storage = {
       memoryCache.set(scopedKey, parsed);
 
       // TTL Validation
-      if (
-        parsed &&
-        typeof parsed === 'object' &&
-        '__pharma_ttl_value' in parsed &&
-        typeof parsed.expiresAt === 'number'
-      ) {
+      if (isTTL(parsed)) {
         if (Date.now() > parsed.expiresAt) {
           storage.remove(key);
           return defaultValue;
@@ -210,7 +205,7 @@ export const storage = {
 
     if (key === SESSION_KEY) {
       try {
-        cachedUserId = value ? (value as any).userId : null;
+        cachedUserId = value && typeof value === 'object' && 'userId' in value ? (value as { userId: string }).userId : null;
         hasLoadedUserId = true;
       } catch {
         hasLoadedUserId = false;
@@ -259,17 +254,18 @@ export const storage = {
           newValue: stringValue,
           storageArea: localStorage,
         });
-        (event as any).isSimulated = true;
+        Object.defineProperty(event, 'isSimulated', { value: true, writable: true, configurable: true });
         window.dispatchEvent(event);
       }
-    } catch (error: any) {
-      console.error(`Error writing storage key "${key}":`, error);
+    } catch (err: unknown) {
+      console.error(`Error writing storage key "${key}":`, err);
       
+      const error = err as Record<string, unknown>;
       const isQuotaError = 
-        error.name === 'QuotaExceededError' || 
-        error.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
-        error.code === 22 ||
-        error.number === 0x8007000E;
+        error?.name === 'QuotaExceededError' || 
+        error?.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+        error?.code === 22 ||
+        error?.number === 0x8007000E;
         
       if (isQuotaError && typeof window !== 'undefined') {
         const event = new CustomEvent('pharma_storage_quota_exceeded', {
@@ -312,7 +308,7 @@ export const storage = {
         newValue: null,
         storageArea: localStorage,
       });
-      (event as any).isSimulated = true;
+      Object.defineProperty(event, 'isSimulated', { value: true, writable: true, configurable: true });
       window.dispatchEvent(event);
     }
   },
@@ -395,7 +391,7 @@ export const storage = {
             if (rawVal) {
               const closedTabs = JSON.parse(rawVal);
               if (Array.isArray(closedTabs)) {
-                const activeClosed = closedTabs.filter((tab: any) => {
+                const activeClosed = closedTabs.filter((tab: { closedAt?: number } | null) => {
                   return tab && (typeof tab.closedAt !== 'number' || now - tab.closedAt <= SEVEN_DAYS_MS);
                 });
                 if (activeClosed.length !== closedTabs.length) {
@@ -451,7 +447,7 @@ if (typeof window !== 'undefined') {
     if (e.key === SESSION_KEY) {
       hasLoadedUserId = false;
     }
-    if (!(e as any).isSimulated) {
+    if (!('isSimulated' in e && e.isSimulated)) {
       cachedUsageBytes = null;
       if (e.key) {
         memoryCache.delete(e.key);

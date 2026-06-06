@@ -387,8 +387,8 @@ export const authService = {
       storage.remove('pharma_active_branch_id');
       storage.remove('area_unlocked');
 
-      // Clear settings that contain org/branch data to prevent leaking into next session
-      storage.remove('pharma_settings');
+      // Note: pharma_settings is now global, so it is NOT cleared on logout
+      // to maintain device/browser-level UI preferences.
 
       // Clear navigation state to prevent stale view on next login
       storage.remove('pharma_view');

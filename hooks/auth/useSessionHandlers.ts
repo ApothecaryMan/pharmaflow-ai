@@ -5,19 +5,27 @@ import { PHARMACY_MENU, MODULE_VIEW_MAPPING } from '../../config/menuData';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
-import type { ViewState } from '../../types';
+import type { ViewState, Employee, Branch, UserSession } from '../../types';
+
+
+interface ExtendedSession extends UserSession {
+  _originalRole?: UserSession['role'];
+  _originalDepartment?: UserSession['department'];
+  _originalOrgRole?: UserSession['orgRole'];
+  _originalUsername?: UserSession['username'];
+}
 
 interface SessionHandlersProps {
-  employees: any[];
+  employees: Employee[];
   currentEmployeeId: string | null;
   setCurrentEmployeeId: (id: string | null) => void;
   setProfileImage: (img: string | null) => void;
-  setView: (view: any) => void;
+  setView: (view: ViewState) => void;
   setActiveModule: (module: string) => void;
-  setNavigationParams: (params: any) => void;
+  setNavigationParams: (params: Record<string, unknown> | null) => void;
   handleLogout: () => Promise<void>;
   switchBranch: (branchId: string, skipClearEmployee?: boolean) => Promise<void>;
-  branches: any[];
+  branches: Branch[];
 }
 
 /**
@@ -57,7 +65,7 @@ export const useSessionHandlers = ({
           });
 
           // --- Restore the original system role on employee logout ---
-          const storedSession = storage.get<any>(StorageKeys.SESSION, null);
+          const storedSession = storage.get<ExtendedSession>(StorageKeys.SESSION, null);
           if (storedSession) {
             if (storedSession._originalRole) {
               storedSession.role = storedSession._originalRole;
@@ -76,7 +84,7 @@ export const useSessionHandlers = ({
           const selectedEmployee = employees.find((e) => e.id === id);
           if (selectedEmployee) {
             // --- Sync employee role to session for permissionsService ---
-            const storedSession = storage.get<any>(StorageKeys.SESSION, null);
+            const storedSession = storage.get<ExtendedSession>(StorageKeys.SESSION, null);
             if (storedSession) {
               // Save original credentials & sync employee's role
               if (!storedSession._originalRole) {

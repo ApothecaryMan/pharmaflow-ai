@@ -1,8 +1,49 @@
 import { supabase } from '../../../lib/supabase';
-import type { Organization, OrgMember, Subscription } from '../../../types';
+import type { Organization, OrgMember, Subscription, OrgRole, SubscriptionPlan, SubscriptionStatus } from '../../../types'; 
+
+interface OrganizationDbRow {
+  id: string;
+  name: string;
+  slug: string;
+  owner_id: string;
+  logo_url?: string;
+  status: 'active' | 'suspended' | 'deleted';
+  created_at: string;
+  updated_at: string;
+}
+
+interface OrgMemberDbRow {
+  id: string;
+  org_id: string;
+  user_id: string;
+  role: OrgRole;
+  joined_at: string;
+}
+
+interface SubscriptionDbRow {
+  id: string;
+  org_id: string;
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  max_branches: number;
+  max_employees: number;
+  max_drugs: number;
+  trial_ends_at?: string;
+  current_period_start: string;
+  current_period_end: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface SetupInitialOrgResponse {
+  org: OrganizationDbRow;
+  membership: OrgMemberDbRow;
+  subscription: SubscriptionDbRow;
+}
+
 
 export const orgRepository = {
-  mapOrg(row: any): Organization {
+  mapOrg(row: OrganizationDbRow): Organization {
     return {
       id: row.id,
       name: row.name,
@@ -15,7 +56,7 @@ export const orgRepository = {
     };
   },
 
-  mapMember(row: any): OrgMember {
+  mapMember(row: OrgMemberDbRow): OrgMember {
     return {
       id: row.id,
       orgId: row.org_id,
@@ -25,7 +66,7 @@ export const orgRepository = {
     };
   },
 
-  mapSubscription(row: any): Subscription {
+  mapSubscription(row: SubscriptionDbRow): Subscription {
     return {
       id: row.id,
       orgId: row.org_id,
@@ -56,7 +97,7 @@ export const orgRepository = {
 
     if (memError || !memberships || memberships.length === 0) return [];
 
-    const orgIds = memberships.map((m: any) => m.org_id);
+    const orgIds = memberships.map((m: { org_id: string }) => m.org_id);
     const { data: orgs, error: orgError } = await supabase
       .from('organizations')
       .select('*')
@@ -67,7 +108,7 @@ export const orgRepository = {
     return (orgs || []).map(row => this.mapOrg(row));
   },
 
-  async update(orgId: string, updates: any): Promise<Organization> {
+  async update(orgId: string, updates: Partial<OrganizationDbRow>): Promise<Organization> {
     const { data, error } = await supabase
       .from('organizations')
       .update(updates)
@@ -85,7 +126,7 @@ export const orgRepository = {
     return (data || []).map(row => this.mapMember(row));
   },
 
-  async getMemberRole(orgId: string, userId: string): Promise<any> {
+  async getMemberRole(orgId: string, userId: string): Promise<OrgRole | null> {
     const { data, error } = await supabase
       .from('org_members')
       .select('role')
@@ -144,7 +185,7 @@ export const orgRepository = {
     return this.mapSubscription(data);
   },
 
-  async setupInitialOrg(name: string, slug: string, ownerId: string, plan: string): Promise<any> {
+  async setupInitialOrg(name: string, slug: string, ownerId: string, plan: string): Promise<SetupInitialOrgResponse> {
     const { data, error } = await supabase.rpc('setup_initial_organization', {
       p_name: name,
       p_slug: slug,

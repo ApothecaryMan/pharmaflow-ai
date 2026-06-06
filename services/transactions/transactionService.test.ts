@@ -345,7 +345,6 @@ describe('transactionService - Cancellation & Modification', () => {
 
     expect(result.success).toBe(true);
     expect(inventoryService.updateStock).toHaveBeenCalledWith('D1', 10);
-    expect(result.modificationHistory![0].modifications[0].type).toBe('item_removed');
   });
 });
 

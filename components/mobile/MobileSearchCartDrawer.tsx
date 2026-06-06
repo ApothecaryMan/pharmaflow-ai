@@ -3,11 +3,12 @@ import { POSCartSidebar, type POSCartSidebarProps } from '../sales/pos/ui/POSCar
 import { useData } from '../../context/DataContext';
 import { useSettings } from '../../context/SettingsContext';
 import { pricingService } from '../../services/sales/pricingService';
+import type { CartItem, Drug } from '../../types';
 
 interface MobileSearchCartDrawerProps extends Partial<POSCartSidebarProps> {
   isOpen: boolean;
   onClose: () => void;
-  cart: any[];
+  cart: CartItem[];
   onUpdateQuantity: (id: string, isUnit: boolean, delta: number) => void;
   onRemove: (id: string, isUnit: boolean) => void;
   /** الإجمالي بعد خصومات الأصناف */
@@ -17,10 +18,10 @@ interface MobileSearchCartDrawerProps extends Partial<POSCartSidebarProps> {
   totalItems: number;
   updateItemDiscount: (id: string, isUnit: boolean, discount: number) => void;
   toggleUnitMode: (id: string, currentIsUnit: boolean) => void;
-  showMenu: any;
-  batchesMap: Map<string, any[]>;
-  switchBatchWithAutoSplit: (currentItem: any, newBatch: any, packQty: number, unitQty: number) => void;
-  addToCart: (drug: any, isUnit?: boolean, quantity?: number) => void;
+  showMenu: (clientX: number, clientY: number, items: unknown[]) => void;
+  batchesMap: Map<string, Drug[]>;
+  switchBatchWithAutoSplit: (currentItem: CartItem, newBatch: Drug, packQty: number, unitQty: number) => void;
+  addToCart: (drug: Drug, isUnit?: boolean, quantity?: number) => void;
   removeDrugFromCart: (id: string) => void;
   /** مسح العربة بالكامل بعد إتمام البيع */
   onClearCart?: () => void;
@@ -43,6 +44,7 @@ export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
   addToCart,
   removeDrugFromCart,
   onClearCart,
+  t,
 }) => {
   const { employees } = useData();
   const { language } = useSettings();
@@ -52,7 +54,7 @@ export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
   const [isDeliveryMode, setIsDeliveryMode] = useState(false);
   const [amountPaid, setAmountPaid] = useState('');
 
-  if (!isOpen) return null;
+  if (!isOpen || !t) return null;
 
   // الإجمالي قبل الخصم (ممرر من الوالد أو محسوب هنا)
   const orderTotals = pricingService.calculateOrderTotals(cart, 0);
@@ -83,41 +85,31 @@ export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
     onClose();
   };
 
-  // Mocking required props for POSCartSidebar while keeping it simple
-  const sidebarProps: any = {
+  // Mapping required props for POSCartSidebar correctly to avoid type assertions
+  const sidebarProps: POSCartSidebarProps = {
     mobileTab: 'cart',
-    setMobileTab: (tab: string) => tab === 'products' && onClose(),
+    setMobileTab: (tab: 'products' | 'cart') => {
+      if (tab === 'products') onClose();
+    },
     cart: cart,
     totalItems: totalItems,
-    t: { 
-      cartTitle: language === 'AR' ? 'عربة البحث' : 'Search Cart',
-      items: language === 'AR' ? 'أصناف' : 'items',
-      quantity: language === 'AR' ? 'قطعة' : 'qty',
-      emptyCart: language === 'AR' ? 'العربة فارغة' : 'Empty Cart',
-      viewCart: language === 'AR' ? 'عرض العربة' : 'View Cart',
-      total: language === 'AR' ? 'الإجمالي' : 'Total',
-      subtotal: language === 'AR' ? 'المجموع الفرعي' : 'Subtotal',
-      orderDiscount: language === 'AR' ? 'خصم إضافي' : 'Order Discount',
-      completeOrder: language === 'AR' ? 'إتمام' : 'Done',
-      remainder: language === 'AR' ? 'الباقي' : 'Change',
-      noOpenShift: language === 'AR' ? 'لا يوجد وردية مفتوحة' : 'No open shift',
-    },
+    t: t,
     // cartTotal = الإجمالي بعد خصومات الأصناف (الصحيح للعرض)
     cartTotal: total,
     sidebarWidth: typeof window !== 'undefined' ? window.innerWidth : 400,
-    startResizing: () => {},
+    startResizing: () => { },
     sidebarRef: { current: null },
     cartSensors: [],
-    handleCartDragEnd: () => {},
+    handleCartDragEnd: () => { },
     mergedCartItems,
-    highlightedIndex: -1,
-    setHighlightedIndex: () => {},
+    highlightedItemId: null,
+    setHighlightedItemId: () => { },
     color: 'var(--primary-600)',
     showMenu,
     removeFromCart: onRemove,
     toggleUnitMode,
     updateItemDiscount,
-    setGlobalDiscount: () => {},
+    setGlobalDiscount: () => { },
     updateQuantity: onUpdateQuantity,
     addToCart,
     removeDrugFromCart,
@@ -125,7 +117,7 @@ export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
     switchBatchWithAutoSplit,
     currentLang: language.toLowerCase(),
     globalDiscount: 0,
-    setSearch: () => {},
+    setSearch: () => { },
     searchInputRef: { current: null },
     // grossSubtotal = الإجمالي قبل الخصم - يظهر السطر الفرعي فقط إذا اختلف عن cartTotal
     grossSubtotal: rawSubtotal,
@@ -146,18 +138,23 @@ export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
     isValidOrder: cart.length > 0,
     handleCheckout,
     deliveryEmployeeId: '',
-    setDeliveryEmployeeId: () => {},
+    setDeliveryEmployeeId: () => { },
     employees: employees || [],
     isRTL: language === 'AR',
     paymentMethod: 'cash',
     isMobile: true,
+    isProcessing: false,
+    taxAmount: 0,
+    isLoading: false,
+    deliveryFee: 0,
+    setDeliveryFee: () => { },
   };
 
   return (
     <div className="fixed inset-0 z-[250] flex flex-col bg-black/60 backdrop-blur-sm animate-fade-in">
-        <div className="mt-auto bg-white dark:bg-[#06080F] rounded-t-3xl h-[85vh] overflow-hidden flex flex-col animate-slide-up">
-            <POSCartSidebar {...sidebarProps} />
-        </div>
+      <div className="mt-auto bg-white dark:bg-[#06080F] rounded-t-3xl h-[85vh] overflow-hidden flex flex-col animate-slide-up">
+        <POSCartSidebar {...sidebarProps} />
+      </div>
     </div>
   );
 };

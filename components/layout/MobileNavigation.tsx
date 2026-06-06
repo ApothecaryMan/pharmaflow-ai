@@ -847,6 +847,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
         addToCart={addToCart}
         removeDrugFromCart={removeDrugFromCart}
         onClearCart={() => setCart([])}
+        t={t.pos}
       />
     </>
   );

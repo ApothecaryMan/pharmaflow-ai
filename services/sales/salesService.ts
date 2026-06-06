@@ -16,11 +16,11 @@ import type { PagedResult, SalesFilters, SalesPageOptions, SalesService, SalesSt
 class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
   protected tableName = 'sales';
 
-  public mapFromDb(db: any): Sale {
+  public mapFromDb(db: Record<string, unknown>): Sale {
     return salesRepository.mapFromDb(db);
   }
 
-  public mapToDb(s: Partial<Sale>): any {
+  public mapToDb(s: Partial<Sale>): Record<string, unknown> {
     return salesRepository.mapToDb(s);
   }
 
@@ -64,13 +64,13 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
 
   async create(sale: Omit<Sale, 'id'>, branchId?: string): Promise<Sale> {
     const settings = await settingsService.getAll();
-    const effectiveBranchId = branchId || (sale as any).branchId || settings.activeBranchId || settings.branchCode;
+    const effectiveBranchId = branchId || sale.branchId || settings.activeBranchId || settings.branchCode;
     
     const newSale: Sale = {
       ...sale,
-      id: (sale as any).id || idGenerator.uuid(),
+      id: ("id" in sale ? (sale as Sale).id : undefined) || idGenerator.uuid(),
       branchId: effectiveBranchId,
-      orgId: (sale as any).orgId || settings.orgId,
+      orgId: sale.orgId || settings.orgId,
       date: sale.date || timeService.getVerifiedDate().toISOString(),
       netTotal: sale.netTotal ?? sale.total,
     } as Sale;
@@ -81,7 +81,7 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
 
   async update(id: string, updates: Partial<Sale>, skipFetch: boolean = false): Promise<Sale> {
     await salesRepository.update(id, updates);
-    if (skipFetch) return { id, ...updates } as any;
+    if (skipFetch) return { id, ...updates } as unknown as Sale;
     const updated = await this.getById(id);
     if (!updated) throw new Error('Sale not found after update');
     return updated;

@@ -194,7 +194,9 @@ export const useDashboardAnalytics = ({
   // Daily sales trends for charting
   const salesTrends = useMemo(() => {
     if (!finDaily) return [];
-    let aggregated: any[] = [];
+
+    type DailyData = { day: string; net?: number; sales?: number };
+    let aggregated: { day: string; sales: number }[] = [];
     
     if (timeRange === '7' || timeRange === '30') {
       // Get the range from dateRangeService to maintain consistency with app-wide verified time
@@ -203,10 +205,11 @@ export const useDashboardAnalytics = ({
       const dayMap = new Map<string, number>(days.map((day) => [day, 0]));
       
       // Populate with actual data (convert UTC timestamps to local dates)
-      finDaily.forEach((d: any) => {
-        const dayKey = dateRangeService.toLocalDateString(d.day);
+      finDaily.forEach((d: unknown) => {
+        const data = d as DailyData;
+        const dayKey = dateRangeService.toLocalDateString(data.day);
         if (dayMap.has(dayKey)) {
-          dayMap.set(dayKey, (dayMap.get(dayKey) || 0) + (d.net || 0));
+          dayMap.set(dayKey, (dayMap.get(dayKey) || 0) + (data.net || 0));
         }
       });
       
@@ -215,35 +218,37 @@ export const useDashboardAnalytics = ({
         sales,
       }));
     } else {
-      let rawAggregated = finDaily;
+      let rawAggregated: DailyData[] = finDaily as DailyData[];
       if (period === 'this_year') {
-        const monthlyMap = new Map<string, any>();
-        finDaily.forEach((d: any) => {
-          const monthKey = d.day.substring(0, 7); // YYYY-MM
+        const monthlyMap = new Map<string, { day: string; sales: number }>();
+        finDaily.forEach((d: unknown) => {
+          const data = d as DailyData;
+          const monthKey = data.day.substring(0, 7); // YYYY-MM
           const existing = monthlyMap.get(monthKey) || { day: `${monthKey}-01`, sales: 0 };
-          existing.sales += d.net || 0;
+          existing.sales += data.net || 0;
           monthlyMap.set(monthKey, existing);
         });
         rawAggregated = Array.from(monthlyMap.values());
       } else if (period === 'last_3_months') {
-        const weeklyMap = new Map<string, any>();
-        finDaily.forEach((d: any) => {
-          const dateObj = new Date(d.day);
+        const weeklyMap = new Map<string, { day: string; sales: number }>();
+        finDaily.forEach((d: unknown) => {
+          const data = d as DailyData;
+          const dateObj = new Date(data.day);
           const day = dateObj.getDate();
           const weekNum = Math.ceil(day / 7);
-          const monthKey = d.day.substring(0, 7); // YYYY-MM
+          const monthKey = data.day.substring(0, 7); // YYYY-MM
           const weekKey = `${monthKey}-W${weekNum}`;
           
           const existing = weeklyMap.get(weekKey) || { day: weekKey, sales: 0 };
-          existing.sales += d.net || 0;
+          existing.sales += data.net || 0;
           weeklyMap.set(weekKey, existing);
         });
         rawAggregated = Array.from(weeklyMap.values());
       }
       
-      aggregated = (rawAggregated as any[]).map((d) => ({
+      aggregated = rawAggregated.map((d) => ({
         day: d.day,
-        sales: d.sales !== undefined ? d.sales : d.net,
+        sales: d.sales !== undefined ? d.sales : (d.net || 0),
       }));
     }
 

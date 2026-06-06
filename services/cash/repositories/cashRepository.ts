@@ -1,9 +1,48 @@
 import { supabase } from '../../../lib/supabase';
 import type { CashTransaction, Shift } from '../../../types';
 
+import type { CashTransactionType } from '../../../types/cash';
+
+interface ShiftDbRow {
+  id?: string;
+  branch_id?: string;
+  org_id?: string;
+  branch_name?: string;
+  status?: 'open' | 'closed';
+  open_time?: string;
+  close_time?: string;
+  opened_by?: string;
+  closed_by?: string;
+  opening_balance?: number | string;
+  closing_balance?: number | string | null;
+  expected_balance?: number | string | null;
+  cash_in?: number | string | null;
+  cash_out?: number | string | null;
+  cash_sales?: number | string | null;
+  card_sales?: number | string | null;
+  returns?: number | string | null;
+  cash_purchases?: number | string | null;
+  cash_purchase_returns?: number | string | null;
+  notes?: string;
+}
+
+interface CashTransactionDbRow {
+  id?: string;
+  branch_id?: string;
+  org_id?: string;
+  shift_id?: string;
+  time?: string;
+  type?: CashTransactionType;
+  amount?: number | string;
+  reason?: string;
+  user_id?: string;
+  related_sale_id?: string;
+}
+
+
 export const cashRepository = {
   // --- Shifts ---
-  mapShiftFromDb(db: any): Shift {
+  mapShiftFromDb(db: ShiftDbRow): Shift {
     return {
       id: db.id,
       branchId: db.branch_id,
@@ -29,8 +68,8 @@ export const cashRepository = {
     };
   },
 
-  mapShiftToDb(s: Partial<Shift>): any {
-    const db: any = {};
+  mapShiftToDb(s: Partial<Shift>): ShiftDbRow {
+    const db: ShiftDbRow = {};
     if (s.id !== undefined) db.id = s.id;
     if (s.branchId !== undefined) db.branch_id = s.branchId;
     if (s.orgId !== undefined) db.org_id = s.orgId;
@@ -105,7 +144,7 @@ export const cashRepository = {
   },
 
   // --- Transactions ---
-  mapTransactionFromDb(db: any): CashTransaction {
+  mapTransactionFromDb(db: CashTransactionDbRow): CashTransaction {
     return {
       id: db.id,
       branchId: db.branch_id,
@@ -120,8 +159,8 @@ export const cashRepository = {
     };
   },
 
-  mapTransactionToDb(t: Partial<CashTransaction>): any {
-    const db: any = {};
+  mapTransactionToDb(t: Partial<CashTransaction>): CashTransactionDbRow {
+    const db: CashTransactionDbRow = {};
     if (t.id !== undefined) db.id = t.id;
     if (t.branchId !== undefined) db.branch_id = t.branchId;
     if (t.orgId !== undefined) db.org_id = t.orgId;

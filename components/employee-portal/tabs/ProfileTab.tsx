@@ -1,4 +1,4 @@
-import { Camera, Pencil, Save, X } from 'lucide-react';
+import { Camera, Pencil, Save, X, ChevronDown, ChevronUp } from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { MAX_UPLOAD_SIZE_KB } from '../../../config';
 import type { EmploymentRequest, UserProfile, Employee } from '../../../types';
@@ -110,6 +110,16 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const [newPassword, setNewPassword] = useState('');
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [isRegisteringFingerprint, setIsRegisteringFingerprint] = useState<string | null>(null);
+  const [collapsedWorkspaces, setCollapsedWorkspaces] = useState<Set<string>>(new Set());
+
+  const toggleWorkspace = (id: string) => {
+    setCollapsedWorkspaces(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const calculateDuration = (startDateStr: string | undefined) => {
     if (!startDateStr) return '—';
@@ -630,8 +640,11 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                     </div>
                   </>
                 ) : workspaces.map((ws) => (
-                  <div key={ws.id} className={`${PROFILE_GLASS_CARD_BASE} p-5 space-y-4`}>
-                    <div className='flex items-center justify-between border-b border-black/10 dark:border-white/5 pb-4'>
+                  <div key={ws.id} className={`${PROFILE_GLASS_CARD_BASE} p-5 ${collapsedWorkspaces.has(ws.id) ? '' : 'space-y-4'}`}>
+                    <div 
+                      className={`flex items-center justify-between cursor-pointer select-none group transition-colors ${collapsedWorkspaces.has(ws.id) ? '' : 'border-b border-black/10 dark:border-white/5 pb-4'}`}
+                      onClick={() => toggleWorkspace(ws.id)}
+                    >
                       <span className='text-sm font-bold text-(--text-primary) flex items-center gap-2'>
                         {ws.orgName ? (
                           <span className='text-base'>
@@ -641,15 +654,22 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                           <span className='text-base'>{ws.branchName || t.employeeProfile.unknownBranch}</span>
                         )}
                       </span>
-                      <div className={`px-2 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 ${getStatusStyle(ws.status).container}`}>
-                        <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
-                          {getStatusStyle(ws.status).icon}
-                        </span>
-                        {(t.employeeList.statusOptions as any)[ws.status] || ws.status}
+                      <div className='flex items-center gap-3'>
+                        <div className={`px-2 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 ${getStatusStyle(ws.status).container}`}>
+                          <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
+                            {getStatusStyle(ws.status).icon}
+                          </span>
+                          {(t.employeeList.statusOptions as any)[ws.status] || ws.status}
+                        </div>
+                        <div className="w-8 h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 text-(--text-tertiary) group-hover:bg-black/10 dark:group-hover:bg-white/10 group-hover:text-(--text-primary) transition-all">
+                          {collapsedWorkspaces.has(ws.id) ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+                        </div>
                       </div>
                     </div>
 
-                    <div className='grid grid-cols-2 sm:grid-cols-5 gap-y-4 gap-x-4 border-b border-black/10 dark:border-white/5 pb-4'>
+                    {!collapsedWorkspaces.has(ws.id) && (
+                      <div className='space-y-4 animate-fade-in'>
+                        <div className='grid grid-cols-2 sm:grid-cols-5 gap-y-4 gap-x-4 border-b border-black/10 dark:border-white/5 pb-4'>
                       <div>
                         <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
                           <span className='material-symbols-rounded text-[14px]'>domain</span>
@@ -849,6 +869,8 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                         </div>
                       )}
                     </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

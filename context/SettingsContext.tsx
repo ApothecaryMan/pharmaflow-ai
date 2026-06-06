@@ -275,6 +275,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
   // Synchronize settings from storage updates (cross-tab and same-tab)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
+      // Regular settings update synchronization
       if (e.key === storage.getScopedKey(STORAGE_KEY) && e.newValue) {
         try {
           const parsed = JSON.parse(e.newValue);
