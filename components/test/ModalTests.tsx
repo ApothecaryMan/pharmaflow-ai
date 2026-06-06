@@ -1,5 +1,6 @@
 import type React from 'react';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Modal } from '../common/Modal';
 import { ProfileCardModal } from './ProfileCardModal';
 import { ProfileEditModal } from './ProfileEditModal';
@@ -402,6 +403,187 @@ interface ModalConfig {
   testType?: 'standard' | 'multipage' | 'profile-card' | 'edit-profile';
 }
 
+const LogoAsterisk = ({ color = 'currentColor', scale = 1.4 }: { color?: string, scale?: number }) => (
+  <g transform={`translate(70 70) scale(${scale})`} fill={color}>
+    <rect x="-4" y="-35" width="8" height="70" rx=".5" transform="rotate(45)"/>
+    <rect x="-4" y="-35" width="8" height="20" rx=".5"/>
+    <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(-45)"/>
+    <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(90)"/>
+    <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(135)"/>
+    <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(180)"/>
+    <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(270)"/>
+  </g>
+);
+
+const LogoSpinnersPlayground = ({ language }: { language: 'EN' | 'AR' }) => {
+  return (
+    <div className='bg-(--bg-card) rounded-2xl p-6 shadow-xs border border-(--border-divider)'>
+      <h3 className='text-lg font-semibold text-(--text-primary) flex items-center gap-2 mb-4'>
+        <span className='material-symbols-rounded text-[24px]' style={{ color: 'var(--color-primary-500, #3b82f6)' }}>
+          progress_activity
+        </span>
+        {language === 'AR' ? 'مختبر سبينر التحميل' : 'Logo Loading Spinners Lab'}
+      </h3>
+      <div className='grid grid-cols-2 md:grid-cols-4 gap-6'>
+        
+        {/* V1: Smooth Spin (No Box) */}
+        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
+          <svg viewBox="0 0 140 140" className="w-16 h-16 text-primary-500 animate-spin" style={{ animationDuration: '2s' }}>
+            <LogoAsterisk />
+          </svg>
+          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Smooth Asterisk</span>
+        </div>
+
+        {/* V2: Stepped Spin (Clockwise Ticks) */}
+        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
+          <svg viewBox="0 0 140 140" className="w-16 h-16 text-primary-500 animate-spin" style={{ animationDuration: '1.5s', animationTimingFunction: 'steps(8)' }}>
+            <LogoAsterisk />
+          </svg>
+          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Stepped Asterisk</span>
+        </div>
+
+        {/* V3a: Orbiting Dots */}
+        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
+          <svg viewBox="0 0 140 140" className="w-16 h-16">
+            <g className="animate-spin" style={{ transformOrigin: '70px 70px', animationDuration: '3s' }}>
+              <circle cx="70" cy="16" r="5" fill="var(--color-primary-500, #3b82f6)" />
+              <circle cx="124" cy="70" r="5" fill="var(--color-primary-500, #3b82f6)" />
+              <circle cx="70" cy="124" r="5" fill="var(--color-primary-500, #3b82f6)" />
+              <circle cx="16" cy="70" r="5" fill="var(--color-primary-500, #3b82f6)" />
+            </g>
+            <LogoAsterisk scale={0.7} />
+          </svg>
+          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Orbiting Dots</span>
+        </div>
+
+        {/* V3b: Pulse Ring */}
+        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
+          <svg viewBox="0 0 140 140" className="w-16 h-16">
+            <motion.circle
+              cx="70" cy="70" r="30"
+              fill="none" stroke="var(--color-primary-500, #3b82f6)" strokeWidth="2"
+              animate={{ r: [28, 56, 28], opacity: [0.7, 0, 0.7] }}
+              transition={{ repeat: Infinity, duration: 2, ease: 'easeOut' }}
+            />
+            <motion.circle
+              cx="70" cy="70" r="30"
+              fill="none" stroke="var(--color-primary-500, #3b82f6)" strokeWidth="2"
+              animate={{ r: [28, 56, 28], opacity: [0.7, 0, 0.7] }}
+              transition={{ repeat: Infinity, duration: 2, ease: 'easeOut', delay: 0.6 }}
+            />
+            <motion.circle
+              cx="70" cy="70" r="30"
+              fill="none" stroke="var(--color-primary-500, #3b82f6)" strokeWidth="2"
+              animate={{ r: [28, 56, 28], opacity: [0.7, 0, 0.7] }}
+              transition={{ repeat: Infinity, duration: 2, ease: 'easeOut', delay: 1.2 }}
+            />
+            <LogoAsterisk scale={0.7} />
+          </svg>
+          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Pulse Ring</span>
+        </div>
+
+        {/* V3c: Radar Sweep */}
+        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
+          <svg viewBox="0 0 140 140" className="w-16 h-16">
+            <circle cx="70" cy="70" r="56" fill="none" stroke="var(--color-primary-500, #3b82f6)" strokeWidth="1" opacity="0.25" />
+            <g className="animate-spin" style={{ transformOrigin: '70px 70px', animationDuration: '2s' }}>
+              <path d="M70 70 L70 14 A56 56 0 0 1 126 70 Z" fill="var(--color-primary-500, #3b82f6)" opacity="0.15" />
+            </g>
+            <LogoAsterisk scale={0.7} />
+          </svg>
+          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Radar Sweep</span>
+        </div>
+
+        {/* V3d: Morph Scale */}
+        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
+          <motion.svg
+            viewBox="0 0 140 140"
+            className="w-16 h-16 text-primary-500"
+            animate={{ scale: [0.5, 1.25, 0.5] }}
+            transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+            style={{ transformOrigin: 'center' }}
+          >
+            <LogoAsterisk />
+          </motion.svg>
+          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Morph Scale</span>
+        </div>
+
+        {/* V3e: Bounce */}
+        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
+          <motion.svg
+            viewBox="0 0 140 140"
+            className="w-16 h-16 text-primary-500"
+            animate={{ y: [0, -12, 0] }}
+            transition={{ repeat: Infinity, duration: 0.7, ease: 'easeInOut' }}
+          >
+            <LogoAsterisk />
+          </motion.svg>
+          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Bounce</span>
+        </div>
+
+        {/* V3f: Spinning Ring */}
+        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
+          <svg viewBox="0 0 140 140" className="w-16 h-16">
+            <circle cx="70" cy="70" r="50" fill="none" stroke="var(--color-primary-500, #3b82f6)"
+              strokeWidth="3" strokeLinecap="round" strokeDasharray="70 240"
+              className="animate-spin" style={{ transformOrigin: '70px 70px', animationDuration: '1.5s' }}
+            />
+            <LogoAsterisk scale={0.7} />
+          </svg>
+          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Spinning Ring</span>
+        </div>
+
+        {/* V3g: Advanced Multi-Ring Pro */}
+        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
+          <svg viewBox="0 0 140 140" className="w-16 h-16">
+            <defs>
+              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="var(--color-primary-400, #60a5fa)" />
+                <stop offset="100%" stopColor="var(--color-primary-700, #1d4ed8)" />
+              </linearGradient>
+            </defs>
+            {/* Outer ring - slow reverse */}
+            <circle cx="70" cy="70" r="50" fill="none" stroke="url(#ringGrad)"
+              strokeWidth="2.5" strokeLinecap="round" strokeDasharray="40 275"
+              className="animate-spin" style={{ transformOrigin: '70px 70px', animationDuration: '4s', animationDirection: 'reverse' }}
+              opacity="0.7"
+            />
+            {/* Middle ring - medium */}
+            <circle cx="70" cy="70" r="40" fill="none" stroke="var(--color-primary-400, #60a5fa)"
+              strokeWidth="2" strokeLinecap="round" strokeDasharray="55 195"
+              className="animate-spin" style={{ transformOrigin: '70px 70px', animationDuration: '2.5s' }}
+            />
+            {/* Inner ring - fast reverse */}
+            <circle cx="70" cy="70" r="30" fill="none" stroke="var(--color-primary-300, #93c5fd)"
+              strokeWidth="1.5" strokeLinecap="round" strokeDasharray="25 160"
+              className="animate-spin" style={{ transformOrigin: '70px 70px', animationDuration: '1.2s', animationDirection: 'reverse' }}
+            />
+            {/* Slow-spinning asterisk */}
+            <g className="animate-spin" style={{ transformOrigin: '70px 70px', animationDuration: '8s' }}>
+              <LogoAsterisk scale={0.5} color="var(--color-primary-500, #3b82f6)" />
+            </g>
+          </svg>
+          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Multi-Ring Pro</span>
+        </div>
+
+        {/* V4: Elastic Spin */}
+        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
+          <motion.svg 
+            viewBox="0 0 140 140" 
+            className="w-16 h-16 text-primary-500"
+            animate={{ rotate: [0, 180, 360] }}
+            transition={{ repeat: Infinity, ease: "easeInOut", duration: 1.5 }}
+          >
+            <LogoAsterisk />
+          </motion.svg>
+          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Elastic Asterisk</span>
+        </div>
+        
+      </div>
+    </div>
+  );
+};
+
 export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState<ModalConfig>({});
@@ -521,6 +703,8 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
           </p>
         </div>
       </div>
+
+      <LogoSpinnersPlayground language={language} />
 
       {/* Size Tests */}
       <SectionCard title={language === 'AR' ? 'اختبار الأحجام' : 'Size Tests'} icon='aspect_ratio'>

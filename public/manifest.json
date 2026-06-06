@@ -69,7 +69,7 @@
       "purpose": "maskable"
     },
     {
-      "src": "/logo_icon_black.svg",
+      "src": "/pwa_monochrome_icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "monochrome"
