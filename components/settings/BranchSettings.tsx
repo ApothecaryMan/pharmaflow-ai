@@ -91,11 +91,10 @@ const BranchCard: React.FC<BranchCardProps> = ({ branch, employees, language, on
           {isLoading ? (
             <div className="h-4 w-12 bg-zinc-50 dark:bg-zinc-800/50 rounded-full" />
           ) : (
-            <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-tight shrink-0 ${
-              branch?.status === 'active' 
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' 
+            <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-tight shrink-0 ${branch?.status === 'active'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
                 : 'bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-500/10 dark:text-zinc-400 dark:border-zinc-500/20'
-            }`}>
+              }`}>
               <span className={`w-1 h-1 rounded-full ${branch?.status === 'active' ? 'bg-emerald-500' : 'bg-zinc-400'}`} />
               {branch?.status === 'active' ? t.settings.active : t.settings.inactive}
             </div>
@@ -121,14 +120,14 @@ const BranchCard: React.FC<BranchCardProps> = ({ branch, employees, language, on
                     </div>
                   }
                 >
-                  <div 
+                  <div
                     className="w-8 h-8 rounded-full border-2 border-white dark:border-zinc-900 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-600 dark:text-zinc-400 shadow-sm transition-transform hover:-translate-y-0.5 cursor-pointer relative overflow-hidden"
                     style={{ zIndex: 10 - idx }}
                   >
                     {emp.image ? (
-                      <img 
-                        src={emp.image} 
-                        alt={emp.name} 
+                      <img
+                        src={emp.image}
+                        alt={emp.name}
                         className="w-full h-full rounded-full object-cover"
                       />
                     ) : (
@@ -138,7 +137,7 @@ const BranchCard: React.FC<BranchCardProps> = ({ branch, employees, language, on
                 </Tooltip>
               ))}
               {remainingCount > 0 && (
-                <div 
+                <div
                   className="w-8 h-8 rounded-full border-2 border-white dark:border-zinc-900 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-400 dark:text-zinc-500 shadow-sm"
                   style={{ zIndex: 0 }}
                 >
@@ -147,7 +146,7 @@ const BranchCard: React.FC<BranchCardProps> = ({ branch, employees, language, on
               )}
               {employees.length === 0 && (
                 <div className="w-8 h-8 rounded-full border-2 border-dashed border-zinc-200 dark:border-zinc-800 flex items-center justify-center font-bold text-zinc-300 dark:text-zinc-700">
-                   <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>group</span>
+                  <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>group</span>
                 </div>
               )}
             </>
@@ -177,7 +176,7 @@ const BranchCard: React.FC<BranchCardProps> = ({ branch, employees, language, on
                   </span>
                 </div>
               </div>
-              
+
               {branch?.phone && (
                 <div className="flex items-start gap-2">
                   <span className="material-symbols-rounded text-zinc-400 shrink-0" style={{ fontSize: '16px' }}>call</span>
@@ -221,15 +220,15 @@ const BranchCard: React.FC<BranchCardProps> = ({ branch, employees, language, on
   );
 };
 
-export const BranchSettings: React.FC<BranchSettingsProps> = ({ 
-  language, 
+export const BranchSettings: React.FC<BranchSettingsProps> = ({
+  language,
   color = 'primary',
   onViewChange
 }) => {
   const t = TRANSLATIONS[language];
   const { refreshAll } = useData();
   const { activeBranchId } = useSettings();
-  
+
   const [branches, setBranches] = useState<Branch[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -278,9 +277,9 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
       setSelectedEmployees(branchEmployees);
     } else {
       const newCode = await branchService.generateCode();
-      setEditingBranch({ 
-        name: '', 
-        code: newCode, 
+      setEditingBranch({
+        name: '',
+        code: newCode,
         status: 'active',
         governorate: '',
         city: '',
@@ -313,7 +312,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
       } else {
         const activeOrgId = orgService.getActiveOrgId();
         if (!activeOrgId) throw new Error("No active organization found");
-        
+
         savedBranch = await branchService.create({
           ...editingBranch,
           orgId: activeOrgId
@@ -322,7 +321,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
 
       // Move employee assignment logic to service
       await branchService.assignEmployees(savedBranch.id, selectedEmployees);
-      
+
       success(t.settings.saveSuccess);
       setIsModalOpen(false);
       await loadData();
@@ -336,7 +335,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
     }
   };
 
-// Deleted duplicate getInitials
+  // Deleted duplicate getInitials
 
   const handleDelete = async (id: string, name: string) => {
     if (id === activeBranchId) {
@@ -372,7 +371,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
           placeholder={t.settings.branchName}
         />
       </FormField>
-      
+
       <FormField label={t.settings.branchCode} id="branch-code">
         <SmartInput
           id="branch-code"
@@ -385,7 +384,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
           className={!!editingBranch?.id ? "opacity-60 cursor-not-allowed" : ""}
         />
       </FormField>
-      
+
       <FormField label={t.settings.branchStatus}>
         <FilterDropdown<'active' | 'inactive'>
           variant="input"
@@ -421,7 +420,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
           onChange={(e) => setEditingBranch(prev => ({ ...prev!, address: e.target.value }))}
         />
       </FormField>
-      
+
       <FormField label={t.settings.branchPhone} className="col-span-2" id="branch-phone">
         <SmartPhoneInput
           id="branch-phone"
@@ -438,9 +437,9 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
       .filter(emp => employeeView === 'all' || selectedEmployees.includes(emp.id))
       .filter(emp => {
         const search = employeeSearchTerm.toLowerCase();
-        return emp.name.toLowerCase().includes(search) || 
-               emp.employeeCode.toLowerCase().includes(search) ||
-               (emp.nameArabic && emp.nameArabic.includes(search));
+        return emp.name.toLowerCase().includes(search) ||
+          emp.employeeCode.toLowerCase().includes(search) ||
+          (emp.nameArabic && emp.nameArabic.includes(search));
       });
 
     return (
@@ -454,7 +453,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
             value={employeeView}
             onChange={(val) => setEmployeeView(val as 'all' | 'selected')}
             options={[
-              { label: t.settings.all, value: 'all', count: employees.filter(e => (e.role as any) !== 'god' && e.employeeCode !== 'EMP-000').length },
+              { label: t.settings.all, value: 'all', count: employees.length },
               { label: t.settings.selected, value: 'selected', count: selectedEmployees.length }
             ]}
             className="w-44"
@@ -479,7 +478,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
                 {employeeView === 'selected' ? 'bookmark_outline' : 'person_search'}
               </span>
               <p className="text-xs text-zinc-500 mt-2 font-medium">
-                {employeeView === 'selected' 
+                {employeeView === 'selected'
                   ? t.settings.noSelectedEmployees
                   : t.settings.noResults}
               </p>
@@ -489,7 +488,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
               const isSelected = selectedEmployees.includes(emp.id);
               const currentBranch = branches.find(b => b.id === emp.branchId);
               return (
-                <MaterialTabs 
+                <MaterialTabs
                   key={emp.id} index={idx} total={filteredList.length} isSelected={isSelected}
                   onClick={() => isSelected ? setSelectedEmployees(selectedEmployees.filter(id => id !== emp.id)) : setSelectedEmployees([...selectedEmployees, emp.id])}
                   className="!h-[54px] !px-3 border border-transparent"
@@ -511,7 +510,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
                       </div>
                     </div>
                     <div className={isSelected ? 'opacity-100' : 'opacity-20'}>
-                       <span className="material-symbols-rounded text-zinc-400" style={{ fontSize: '20px' }}>{isSelected ? 'task_alt' : 'circle'}</span>
+                      <span className="material-symbols-rounded text-zinc-400" style={{ fontSize: '20px' }}>{isSelected ? 'task_alt' : 'circle'}</span>
                     </div>
                   </div>
                 </MaterialTabs>
@@ -582,29 +581,29 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4">
-             <input
-               type="time"
-               value={editingBranch?.shiftStartTime || '09:00'}
-               onChange={(e) => setEditingBranch(prev => ({ ...prev!, shiftStartTime: e.target.value }))}
-               className="flex-1 px-4 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-bold focus:ring-2 focus:ring-(--color-primary) transition-all outline-none"
-             />
-             <div className="flex flex-col">
-               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">
-                 {t.settings.current}
-               </span>
-               <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">{editingBranch?.shiftStartTime || '09:00'}</span>
-             </div>
-             {editingBranch?.id && (
-               <button
-                 onClick={handleSave}
-                 disabled={isSubmitting}
-                 className="px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-bold rounded-lg uppercase tracking-wider hover:opacity-90 disabled:opacity-50 transition-all"
-               >
-                 {isSubmitting ? '...' : t.attendance.saveTime}
-               </button>
-             )}
+            <input
+              type="time"
+              value={editingBranch?.shiftStartTime || '09:00'}
+              onChange={(e) => setEditingBranch(prev => ({ ...prev!, shiftStartTime: e.target.value }))}
+              className="flex-1 px-4 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-bold focus:ring-2 focus:ring-(--color-primary) transition-all outline-none"
+            />
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">
+                {t.settings.current}
+              </span>
+              <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">{editingBranch?.shiftStartTime || '09:00'}</span>
+            </div>
+            {editingBranch?.id && (
+              <button
+                onClick={handleSave}
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-bold rounded-lg uppercase tracking-wider hover:opacity-90 disabled:opacity-50 transition-all"
+              >
+                {isSubmitting ? '...' : t.attendance.saveTime}
+              </button>
+            )}
           </div>
         </div>
 
@@ -684,7 +683,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
               {t.attendance.generateToken}
             </button>
             <p className="text-[10px] text-zinc-400 mt-3 text-center max-w-xs">
-                {t.attendance.generateTokenHint}
+              {t.attendance.generateTokenHint}
             </p>
           </div>
         )}
@@ -694,14 +693,14 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
 
   // Permission-based Tab Configuration
   const availableTabs = [
-    { 
-      value: 'org-management', 
+    {
+      value: 'org-management',
       label: language === 'AR' ? 'إدارة المنظمة' : 'Organization',
       icon: 'corporate_fare',
       permission: PERMISSIONS_MAPPING['org-management']
     },
-    { 
-      value: 'branch-management', 
+    {
+      value: 'branch-management',
       label: language === 'AR' ? 'إدارة الفروع' : 'Branches',
       icon: 'domain',
       permission: PERMISSIONS_MAPPING['branch-management']
@@ -748,22 +747,22 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {isLoading ? (
             <>
-              {[1, 2, 3, 4, 5].map(i => <BranchCard key={i} employees={[]} language={language} onEdit={() => {}} onDelete={() => {}} isSubmitting={false} isLoading={true} />)}
+              {[1, 2, 3, 4, 5].map(i => <BranchCard key={i} employees={[]} language={language} onEdit={() => { }} onDelete={() => { }} isSubmitting={false} isLoading={true} />)}
             </>
           ) : branches.length === 0 ? (
-             <div className="col-span-full py-20 flex flex-col items-center justify-center text-center opacity-40">
-               <span className="material-symbols-rounded text-zinc-400" style={{ fontSize: '64px' }}>domain_disabled</span>
-               <h3 className="text-lg font-bold mt-4">{t.settings.noBranchesYet}</h3>
-               <p className="text-sm mt-1">{t.settings.startAddingFirst}</p>
-             </div>
+            <div className="col-span-full py-20 flex flex-col items-center justify-center text-center opacity-40">
+              <span className="material-symbols-rounded text-zinc-400" style={{ fontSize: '64px' }}>domain_disabled</span>
+              <h3 className="text-lg font-bold mt-4">{t.settings.noBranchesYet}</h3>
+              <p className="text-sm mt-1">{t.settings.startAddingFirst}</p>
+            </div>
           ) : (
             branches.map((branch) => (
               <BranchCard
-                key={branch.id} 
-                branch={branch} 
+                key={branch.id}
+                branch={branch}
                 employees={employees.filter(e => e.branchId === branch.id)}
                 language={language}
-                onEdit={handleOpenModal} 
+                onEdit={handleOpenModal}
                 onDelete={handleDelete}
                 isSubmitting={isSubmitting}
               />
@@ -782,7 +781,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
       >
         <div className="space-y-6 min-h-[400px] py-2">
           {modalView === 'general' ? renderGeneralView() : modalView === 'employees' ? renderEmployeesView() : renderAttendanceView()}
-          
+
           {error && (
             <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-2 mt-4 animate-shake">
               <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>error</span>

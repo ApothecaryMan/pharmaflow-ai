@@ -15,7 +15,6 @@ interface OrgSetupScreenProps {
 export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComplete }) => {
   const { availableThemes, darkMode, setDarkMode } = useSettings();
   const [orgName, setOrgName] = useState('');
-  const [ownerName, setOwnerName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   // Default theme
@@ -32,7 +31,7 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orgName.trim() || !ownerName.trim()) return;
+    if (!orgName.trim()) return;
 
     setIsLoading(true);
     try {
@@ -46,13 +45,22 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
       // Set as active org
       orgService.setActiveOrgId(result.org.id);
 
+      // Overwrite the auto-generated 'Pharmacy Admin' name with the Org Name
+      if (orgName.trim()) {
+        const { supabase } = await import('../../lib/supabase');
+        await supabase
+          .from('employee_profiles')
+          .update({ full_name: `إدارة: ${orgName.trim()}` })
+          .eq('id', ownerId);
+      }
+
       // Persist UI preferences (Theme & Light/Dark)
       await settingsService.setMultiple({
         theme: selectedTheme,
         darkMode,
         orgId: result.org.id
       });
-      
+
       onComplete(result.org.id);
     } catch (error) {
       console.error("Failed to setup organization:", error);
@@ -62,7 +70,8 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
 
   return (
     <div className={`min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-black p-4 pb-20 ${isRTL ? 'font-arabic' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes subtle-float {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
           50% { transform: translateY(-8px) rotate(1deg); }
@@ -82,11 +91,11 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
       `}} />
 
       <div className="max-w-md w-full bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
-        <div 
+        <div
           className="p-6 relative overflow-hidden"
-          style={{ 
+          style={{
             backgroundColor: selectedTheme.hex,
-            backgroundImage: `linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1))` 
+            backgroundImage: `linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1))`
           }}
         >
           <div className="absolute top-0 left-0 w-full h-full opacity-30 pointer-events-none bg-[radial-gradient(circle_at_50%_-20%,#ffffff,transparent)]"></div>
@@ -104,10 +113,10 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
               <OnboardingStepper currentStep={1} language={language} />
             </div>
           </div>
-          
+
           <p className="text-white/80 relative z-10 text-xs font-medium bg-black/10 p-2.5 rounded-xl border border-white/10">
-            {isRTL 
-              ? 'الخطوة ١: ابدأ بتعريف اسم صيدليتك أو مؤسستك لتخصيص بيئة العمل.' 
+            {isRTL
+              ? 'الخطوة ١: ابدأ بتعريف اسم صيدليتك أو مؤسستك لتخصيص بيئة العمل.'
               : 'Step 1: Define your pharmacy name to customize your workspace.'}
           </p>
         </div>
@@ -115,7 +124,7 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-              {isRTL ? 'اسم المنظمة / الصيدلية' : 'Organization / Pharmacy Name'}
+              {isRTL ? 'اسم المنظمة' : 'Organization Name'}
               <span className="text-red-500 ml-1">*</span>
             </label>
             <SmartInput
@@ -123,20 +132,6 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
               placeholder={isRTL ? 'مثال: مجموعة صيدليات الأمل' : 'e.g. Hope Pharmacy Group'}
-              style={{ '--tw-ring-color': selectedTheme.hex } as React.CSSProperties}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-              {isRTL ? 'اسم المالك' : 'Owner Name'}
-              <span className="text-red-500 ml-1">*</span>
-            </label>
-            <SmartInput
-              required
-              value={ownerName}
-              onChange={(e) => setOwnerName(e.target.value)}
-              placeholder={isRTL ? 'مثال: د. أحمد محمد' : 'e.g. Dr. Ahmed Ali'}
               style={{ '--tw-ring-color': selectedTheme.hex } as React.CSSProperties}
             />
           </div>
@@ -151,26 +146,24 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
                   key={plan.id}
                   type="button"
                   onClick={() => setSelectedPlan(plan.id as any)}
-                  className={`plan-card w-full p-4 rounded-2xl border flex items-center text-right ${
-                    selectedPlan === plan.id 
-                      ? 'border-zinc-800 dark:border-white bg-zinc-50 dark:bg-zinc-800/50' 
-                      : 'border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700'
-                  }`}
-                  style={{ 
+                  className={`plan-card w-full p-4 rounded-2xl border flex items-center text-right ${selectedPlan === plan.id
+                    ? 'border-zinc-800 dark:border-white bg-zinc-50 dark:bg-zinc-800/50'
+                    : 'border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700'
+                    }`}
+                  style={{
                     '--theme-color': selectedTheme.hex,
                     '--theme-color-glow': `${selectedTheme.hex}33`,
                     '--theme-bg-soft': `${selectedTheme.hex}08`
                   } as React.CSSProperties}
                 >
-                  <div 
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center ml-4 shrink-0 ${
-                      selectedPlan === plan.id ? 'text-white' : 'text-zinc-400 dark:text-zinc-500 bg-zinc-50 dark:bg-zinc-900'
-                    }`}
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center ml-4 shrink-0 ${selectedPlan === plan.id ? 'text-white' : 'text-zinc-400 dark:text-zinc-500 bg-zinc-50 dark:bg-zinc-900'
+                      }`}
                     style={{ backgroundColor: selectedPlan === plan.id ? selectedTheme.hex : undefined }}
                   >
                     <span className="material-symbols-rounded text-xl">{plan.icon}</span>
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-zinc-900 dark:text-zinc-100">{plan.name}</span>
@@ -184,7 +177,7 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
                   </div>
 
                   {selectedPlan === plan.id && (
-                    <div 
+                    <div
                       className="w-6 h-6 rounded-full flex items-center justify-center text-white shrink-0 mr-2"
                       style={{ backgroundColor: selectedTheme.hex }}
                     >
@@ -207,11 +200,10 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
                     key={t.name}
                     type="button"
                     onClick={() => setSelectedTheme(t)}
-                    className={`w-7 h-7 rounded-full border-2 transition-all duration-300 ${
-                      selectedTheme.name === t.name 
-                        ? 'border-zinc-800 dark:border-white scale-110 shadow-lg' 
-                        : 'border-transparent opacity-60 hover:opacity-100 hover:scale-105'
-                    }`}
+                    className={`w-7 h-7 rounded-full border-2 transition-all duration-300 ${selectedTheme.name === t.name
+                      ? 'border-zinc-800 dark:border-white scale-110 shadow-lg'
+                      : 'border-transparent opacity-60 hover:opacity-100 hover:scale-105'
+                      }`}
                     style={{ backgroundColor: t.hex }}
                     title={t.name}
                   />
@@ -222,7 +214,6 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
                 <SegmentedControl
                   value={darkMode}
                   onChange={(val) => setDarkMode(val as boolean)}
-                  color={selectedTheme.primary.toLowerCase()}
                   size="xs"
                   iconSize="--icon-lg"
                   fullWidth={false}
@@ -238,9 +229,9 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
 
           <button
             type="submit"
-            disabled={isLoading || !orgName.trim() || !ownerName.trim()}
+            disabled={isLoading || !orgName.trim()}
             className="w-full py-4 px-4 rounded-2xl flex items-center justify-center font-bold text-white shadow-xl transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
-            style={{ 
+            style={{
               backgroundColor: selectedTheme.hex,
               boxShadow: `0 8px 24px -6px ${selectedTheme.hex}66`
             }}

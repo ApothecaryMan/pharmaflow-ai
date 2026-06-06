@@ -74,7 +74,12 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
         
         if (seqError) throw seqError;
         
-        newEmployee.employeeCode = `EMP-${String(seqValue).padStart(3, '0')}`;
+        const employeeCodeValue = `EMP-${seqValue}`;
+        newEmployee.employeeCode = employeeCodeValue;
+        // Also ensure the Local POS Username is exactly the same as the employee code
+        if (!newEmployee.username) {
+          (newEmployee as any).username = employeeCodeValue;
+        }
 
         try {
           await employeeRepository.insert(newEmployee);

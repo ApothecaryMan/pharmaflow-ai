@@ -102,7 +102,7 @@ const App: React.FC = () => {
           const message = t.settings.storageQuota.warningMessage
             .replace('{{percentage}}', info.percentage.toString())
             .replace('{{limit}}', limitMb);
-          
+
           alert.warning(message, t.settings.storageQuota.warningTitle);
           hasShownWarningRef.current = true;
         }
@@ -169,20 +169,21 @@ const App: React.FC = () => {
   // Determine if this user should see the Employee Portal (personal dashboard)
   // vs. the full Pharmacy interface (AuthenticatedContent).
   // Employee Portal is shown for:
-  //   1. Users with no org affiliation at all (zero affiliation)
+  //   1. Users with no org affiliation at all (zero affiliation), UNLESS they explicitly signed up as an org owner
   //   2. Regular employees (non-admin, non-owner) who joined via employment requests
   // Full Pharmacy interface is ONLY for org owners/admins.
+  const intendedType = storage.get('pharma_intended_account_type', null);
   const isEmployeePortalUser = authState.isAuthenticated && !!currentUser && (
-    !currentUser.orgId || 
-    (currentUser.orgRole !== 'owner' && currentUser.orgRole !== 'admin' && 
-     currentUser.role !== 'pharmacist_owner' && currentUser.role !== 'admin')
+    (!currentUser.orgId && intendedType !== 'org') ||
+    (currentUser.orgId && currentUser.orgRole !== 'owner' && currentUser.orgRole !== 'admin' &&
+      currentUser.role !== 'pharmacist_owner' && currentUser.role !== 'admin')
   );
 
   useUrlSync(
-    authState.isAuthenticated, 
-    appState.view, 
-    appState.currentEmployeeId, 
-    currentUser?.userId, 
+    authState.isAuthenticated,
+    appState.view,
+    appState.currentEmployeeId,
+    currentUser?.userId,
     isEmployeePortalUser
   );
 
@@ -200,9 +201,9 @@ const App: React.FC = () => {
   const content = authState.isAuthenticated ? (
     <Suspense fallback={null}>
       {isEmployeePortalUser ? (
-        <EmployeeDashboard 
-          t={t} 
-          language={language} 
+        <EmployeeDashboard
+          t={t}
+          language={language}
           view={appState.view as 'profile' | 'requests'}
           onViewChange={appState.setView}
           onLogout={authState.handleLogout}
@@ -218,16 +219,38 @@ const App: React.FC = () => {
     />
   );
 
-  // Handle Onboarding Steps
-  let finalContent = content;
-  if (authState.isAuthenticated && isOnboardingReady && !isEmployeePortalUser) {
-    if (activeStep === 1) finalContent = <OrgSetupScreen language={language} onComplete={() => setActiveStep(2)} />;
-    else if (activeStep === 2) finalContent = <BranchSetupScreen language={language} color={theme.primary} onBack={() => setActiveStep(1)} onComplete={() => setActiveStep(3)} />;
-    else if (activeStep === 3) finalContent = <EmployeeSetupScreen language={language} color={theme.primary} onBack={() => setActiveStep(2)} onComplete={async () => {
-      await reinitialize();
-      setActiveStep(0);
-      setView('landing' as ViewState);
-    }} />;
+  // Handle Onboarding Steps and Loading State
+  let finalContent;
+
+  if (authState.isAuthenticated && !isOnboardingReady) {
+    // Show a clean loading state while checking database for onboarding status
+    finalContent = (
+      <div className="h-screen w-screen flex items-center justify-center bg-zinc-50 dark:bg-black">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-zinc-200 dark:border-zinc-800 border-t-zinc-900 dark:border-t-white rounded-full animate-spin" />
+          <p className="text-zinc-500 dark:text-zinc-400 font-medium">
+            Loading...
+          </p>
+        </div>
+      </div>
+    );
+  } else {
+    // Once onboarding is ready, render the appropriate content
+    finalContent = content;
+
+    if (authState.isAuthenticated && isOnboardingReady && !isEmployeePortalUser) {
+      if (activeStep === 1) {
+        finalContent = <OrgSetupScreen language={language} onComplete={() => setActiveStep(2)} />;
+      } else if (activeStep === 2) {
+        finalContent = <BranchSetupScreen language={language} color={theme.primary} onBack={() => setActiveStep(1)} onComplete={() => setActiveStep(3)} />;
+      } else if (activeStep === 3) {
+        finalContent = <EmployeeSetupScreen language={language} color={theme.primary} onBack={() => setActiveStep(2)} onComplete={async () => {
+          await reinitialize();
+          setActiveStep(0);
+          setView('landing' as ViewState);
+        }} />;
+      }
+    }
   }
 
   return (

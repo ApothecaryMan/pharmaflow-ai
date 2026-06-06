@@ -441,7 +441,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                               {t.username}
                             </span>
                             <span className='text-xs font-semibold text-(--text-primary)'>
-                              {emp.employeeCode ? parseInt(emp.employeeCode.replace('EMP-', ''), 10).toString() : '—'}
+                              {emp.employeeCode ? emp.employeeCode.replace('EMP-', '') : '—'}
                             </span>
                           </div>
                         </div>

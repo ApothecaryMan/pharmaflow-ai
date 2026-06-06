@@ -32,17 +32,6 @@ export const SignUp: React.FC<SignUpProps> = ({ onViewChange, onLoginSuccess, la
     const errors: Record<string, string> = {};
     let isValid = true;
 
-    if (!state.name.trim()) {
-      errors.name = t.validationNameRequired || 'Full name is required';
-      isValid = false;
-    }
-    if (!state.username.trim()) {
-      errors.username = t.validationUsernameRequired || 'Username is required';
-      isValid = false;
-    } else if (state.username.includes(' ') || state.username.includes('@')) {
-      errors.username = language === 'AR' ? 'اسم المستخدم يجب أن يكون كلمة واحدة بدون رموز' : 'Username must be a single word without symbols';
-      isValid = false;
-    }
     if (!state.email.trim() || !state.email.includes('@')) {
       errors.email = t.errorInvalidCredentials || 'Invalid email';
       isValid = false;
@@ -66,9 +55,16 @@ export const SignUp: React.FC<SignUpProps> = ({ onViewChange, onLoginSuccess, la
 
     setState((prev) => ({ ...prev, isLoading: true, error: null, success: false }));
 
-    const { success, message } = await authService.signUp(state.name, state.username, state.email, state.password);
+    // Auto-generate generic profile info for the organization account
+    const generatedName = 'Pharmacy Admin';
+    const generatedUsername = `device_${Date.now()}`;
+
+    const { success, message } = await authService.signUp(generatedName, generatedUsername, state.email, state.password);
 
     if (success) {
+      import('../../utils/storage').then(({ storage }) => {
+        storage.set('pharma_intended_account_type', registrationType);
+      });
       setState((prev) => ({ ...prev, isLoading: false, success: true }));
       // Optional auto-login can be done here, or redirect to login. We will auto-redirect to login
       setTimeout(() => {
@@ -182,36 +178,6 @@ export const SignUp: React.FC<SignUpProps> = ({ onViewChange, onLoginSuccess, la
               )}
 
               <fieldset disabled={state.isLoading} className='space-y-4'>
-                {/* Full Name Field */}
-                <div className='flex flex-col gap-1.5'>
-                  <input
-                    id='name'
-                    type='text'
-                    autoComplete='off'
-                    placeholder={language === 'AR' ? 'الاسم الكامل' : 'Full Name'}
-                    value={state.name}
-                    onChange={(e) => setState((prev) => ({ ...prev, name: e.target.value, validationErrors: { ...prev.validationErrors, name: '' } }))}
-                    className={`w-full bg-[#111111] border ${state.validationErrors.name ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-zinc-600'} rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-hidden transition-all duration-200 placeholder:text-start cursor-text hover:bg-zinc-900`}
-                  />
-                  {state.validationErrors.name && <p className='text-xs text-red-500 mt-1 pl-1'>{state.validationErrors.name}</p>}
-                </div>
-
-                {/* Username Field */}
-                <div className='flex flex-col gap-1.5'>
-                  <div className='relative'>
-                    <input
-                      id='username'
-                      type='text'
-                      autoComplete='off'
-                      placeholder={language === 'AR' ? 'اسم المستخدم' : 'Username'}
-                      value={state.username}
-                      onChange={(e) => setState((prev) => ({ ...prev, username: e.target.value.toLowerCase(), validationErrors: { ...prev.validationErrors, username: '' } }))}
-                      className={`w-full bg-[#111111] border ${state.validationErrors.username ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-zinc-600'} rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-hidden transition-all duration-200 text-start placeholder:text-start cursor-text hover:bg-zinc-900`}
-                      dir='ltr'
-                    />
-                  </div>
-                  {state.validationErrors.username && <p className='text-xs text-red-500 mt-1 pl-1'>{state.validationErrors.username}</p>}
-                </div>
 
                 <div className='flex flex-col gap-1.5'>
                   <input

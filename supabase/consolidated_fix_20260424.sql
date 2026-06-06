@@ -148,30 +148,13 @@ BEGIN
   )
   RETURNING * INTO v_sub;
 
-  -- 4. Auto-create Main Branch
-  INSERT INTO public.branches (org_id, name, code, status)
-  VALUES (v_org.id, 'الفرع الرئيسي', 'MAIN-01', 'active')
-  RETURNING * INTO v_branch;
-
-  -- 5. Auto-create Employee for Owner
-  INSERT INTO public.employees (
-    org_id, branch_id, auth_user_id, employee_code, name, position, role, username, status, department
-  )
-  VALUES (
-    v_org.id, v_branch.id, p_owner_id, 'OWNER-001', 'د. ' || p_name, 'المدير العام', 'admin', 'admin', 'active', 'pharmacy'
-  )
-  ON CONFLICT (auth_user_id) DO UPDATE SET 
-    org_id = EXCLUDED.org_id,
-    branch_id = EXCLUDED.branch_id,
-    status = 'active'
-  RETURNING * INTO v_emp;
+  -- 4. Auto-create Main Branch (REMOVED: No dummy data)
+  -- User must create their own branch in Step 2.
 
   RETURN jsonb_build_object(
     'org', to_jsonb(v_org),
-    'branch', to_jsonb(v_branch),
     'membership', to_jsonb(v_member),
-    'subscription', to_jsonb(v_sub),
-    'employee', to_jsonb(v_emp)
+    'subscription', to_jsonb(v_sub)
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

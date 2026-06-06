@@ -3,6 +3,7 @@ import { orgService } from '../../services/org/orgService';
 import { branchService } from '../../services/org/branchService';
 import { authService } from '../../services/auth/authService';
 import { permissionsService } from '../../services/auth/permissionsService';
+import { storage } from '../../utils/storage';
 
 export type OnboardingStep = 1 | 2 | 3 | 0;
 
@@ -18,19 +19,23 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
       setIsChecking(true);
       setError(null);
 
-      // 0. Regular employees / non-admins bypass onboarding entirely
-      if (!permissionsService.isOrgAdmin()) {
+      // 0. Force sync with DB to get the absolute latest orgRole and orgId
+      const user = await authService.getCurrentUser(true);
+      const devOwnerId = import.meta.env.VITE_DEV_OWNER_ID as string;
+      const ownerId = user?.userId || devOwnerId;
+      const isDevPlaceholder = ownerId === devOwnerId;
+
+      // 0.1 Check bypass logic using fresh user data
+      const isOwnerOrAdmin = user?.orgRole === 'owner' || user?.orgRole === 'admin';
+      const intendedType = storage.get('pharma_intended_account_type', null);
+      
+      // Bypass entirely if they are not an admin/owner AND they didn't intend to be an org owner
+      if (!isOwnerOrAdmin && intendedType !== 'org') {
         setActiveStep(0);
         return;
       }
 
       // 1. Check Organizations
-      const user = authService.getCurrentUserSync();
-      const devOwnerId = import.meta.env.VITE_DEV_OWNER_ID as string;
-      const ownerId = user?.userId || devOwnerId;
-      
-      // Only check orgs if we have a real ID or if we're in local mode.
-      const isDevPlaceholder = ownerId === devOwnerId;
       const orgs = isDevPlaceholder ? [] : await orgService.getUserOrgs(ownerId);
       let activeOrgId = orgService.getActiveOrgId();
 
@@ -47,7 +52,9 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
 
       // 2. Check Branches
       const branches = await branchService.getAll(activeOrgId || undefined);
-      if (branches.length === 0) {
+      const isDummyBranchOnly = branches.length === 1 && branches[0].code === 'MAIN-01' && branches[0].name === 'الفرع الرئيسي';
+      
+      if (branches.length === 0 || isDummyBranchOnly) {
         setActiveStep(2);
         return;
       }
@@ -55,9 +62,7 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
       // 3. Check Employees
       const { employeeService } = await import('../../services/hr/employeeService');
       const all = await employeeService.getAll('ALL', activeOrgId || undefined);
-      const hasRealEmployees = !!user?.employeeId || all.some(
-        (e) => e.employeeCode !== 'EMP-000'
-      );
+      const hasRealEmployees = all.some((e) => e.userId !== user?.userId);
 
       if (!hasRealEmployees) {
         setActiveStep(3);

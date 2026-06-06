@@ -18,7 +18,8 @@ const GLOBAL_KEYS = new Set<string>([
   StorageKeys.HEADER_STATS_VISIBLE,
   StorageKeys.PRINTER_SETTINGS,
   StorageKeys.SCREEN_CALIBRATION_RATIO,
-  StorageKeys.SETTINGS
+  StorageKeys.SETTINGS,
+  'pharma_intended_account_type'
 ]);
 
 // Performance optimizations:
