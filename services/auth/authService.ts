@@ -3,16 +3,16 @@
  * Refactored to use Repositories for data access.
  */
 
-import { 
-  type UserSession, 
+import {
+  type UserSession,
   type LoginAuditEntry,
   type IndividualRegistrationPayload,
+  type OrgRole,
 } from '../../types';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 import { employeeRepository } from '../hr/repositories/employeeRepository';
-import { employeeProfileRepository } from '../hr/repositories/employeeProfileRepository';
 import { orgRepository } from '../org/repositories/orgRepository';
 import { orgService } from '../org/orgService';
 import { isTauri } from '../../utils/platform';
@@ -35,7 +35,7 @@ export const authService = {
 
     try {
       const { data: { user: sbUser }, error } = await supabase.auth.getUser();
-      
+
       if (error || !sbUser) {
         storage.remove(SESSION_KEY);
         cachedSession = null;
@@ -66,14 +66,14 @@ export const authService = {
 
       let session: UserSession;
 
-      const hasActiveManualEmployee = existingSession?.employeeId && 
-                                    existingSession.userId === userId && 
-                                    existingSession.orgId === orgId;
+      const hasActiveManualEmployee = existingSession?.employeeId &&
+        existingSession.userId === userId &&
+        existingSession.orgId === orgId;
 
       if (hasActiveManualEmployee) {
         session = {
           ...existingSession!,
-          orgRole: orgRole as any,
+          orgRole: orgRole as OrgRole,
           orgId: orgId || existingSession!.orgId,
         };
       } else if (employeeData) {
@@ -86,7 +86,7 @@ export const authService = {
           branchId: employeeData.branchId || '',
           orgId: orgId || employeeData.orgId,
           role: employeeData.role,
-          orgRole: orgRole as any,
+          orgRole: orgRole as OrgRole,
           department: employeeData.department,
         };
       } else {
@@ -95,7 +95,7 @@ export const authService = {
           session = {
             ...current,
             userId: userId,
-            orgRole: orgRole as any,
+            orgRole: orgRole as OrgRole,
             orgId: orgId || current.orgId,
           };
         } else {
@@ -179,7 +179,7 @@ export const authService = {
         email: payload.email,
         password: password,
         options: {
-          data: { 
+          data: {
             name: payload.fullName,
             nameArabic: payload.nameArabic || '',
             username: payload.username,
@@ -247,9 +247,9 @@ export const authService = {
       }
     }
 
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ 
-      email: loginEmail, 
-      password 
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: loginEmail,
+      password
     });
 
     if (authError) throw authError;
@@ -303,7 +303,13 @@ export const authService = {
 
     if (employeeData) {
       const needsWorkspaceSelection = employeeDataArray.length > 1;
-      
+
+      // Strip out heavy base64 image blobs to prevent localStorage from blowing up
+      const strippedWorkspaces = employeeDataArray.map(emp => {
+        const { image, nationalIdCard, nationalIdCardBack, mainSyndicateCard, subSyndicateCard, ...rest } = emp;
+        return rest as any;
+      });
+
       session = {
         userId: authData.user.id,
         username: employeeData.username || employeeData.name,
@@ -313,10 +319,10 @@ export const authService = {
         branchId: employeeData.branchId || '',
         orgId: employeeData.orgId,
         role: employeeData.role,
-        orgRole: orgRole as any,
+        orgRole: orgRole as OrgRole,
         department: employeeData.department,
         needsWorkspaceSelection,
-        availableWorkspaces: employeeDataArray,
+        availableWorkspaces: strippedWorkspaces,
       };
     } else {
       const meta = authData.user.user_metadata || {};
@@ -326,17 +332,17 @@ export const authService = {
       session = {
         userId: authData.user.id,
         username: metaUsername?.replace(/^@/, '') || authData.user.email?.split('@')[0] || username,
-        branchId: '', 
+        branchId: '',
         orgId,
         role: 'unassigned',
-        orgRole: orgRole as any,
+        orgRole: orgRole as OrgRole,
         department: 'unassigned',
       };
     }
 
     storage.set(SESSION_KEY, session);
     if (session.orgId) orgService.setActiveOrgId(session.orgId);
-    
+
     // Log System Login
     this.logAuditEvent({
       username: session.username,
@@ -372,22 +378,22 @@ export const authService = {
       cachedSession = null;
       await supabase.auth.signOut();
       this.clearEmployeeSession();
-      
+
       const userId = storage.getUserId();
-      
+
       // Clear session and org-specific keys
       storage.remove(SESSION_KEY);
       storage.remove('pharma_active_org_id');
       storage.remove('pharma_active_branch_id');
       storage.remove('area_unlocked');
-      
+
       // Clear settings that contain org/branch data to prevent leaking into next session
       storage.remove('pharma_settings');
-      
+
       // Clear navigation state to prevent stale view on next login
       storage.remove('pharma_view');
       storage.remove('pharma_activeModule');
-      
+
       // Clear user-scoped keys (data keyed by userId suffix)
       if (userId) {
         const keysToRemove = [];
@@ -526,7 +532,7 @@ export const authService = {
 
     return { session, id: employee.id };
   },
-  
+
   generateTempPassword(length: number = 8): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
     let password = '';
@@ -556,18 +562,18 @@ export const authService = {
       if (data.user) {
         const userId = data.user.id;
         const email = data.user.email;
-        
+
         let empData = await employeeRepository.getByAuthUserId(userId);
 
-      if (!empData && email) {
-        empData = await employeeRepository.getByEmail(email);
-      }
-      
-      if (empData) {
-        const { hashPassword } = await import('./hashUtils');
-        const hashed = await hashPassword(newPassword);
-        await employeeRepository.update(empData.id, { password: hashed });
-      }
+        if (!empData && email) {
+          empData = await employeeRepository.getByEmail(email);
+        }
+
+        if (empData) {
+          const { hashPassword } = await import('./hashUtils');
+          const hashed = await hashPassword(newPassword);
+          await employeeRepository.update(empData.id, { password: hashed });
+        }
       }
 
       return { success: true };
