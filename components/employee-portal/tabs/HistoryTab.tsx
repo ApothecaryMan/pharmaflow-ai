@@ -83,6 +83,9 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ requests, workspaces = [
                     <span className="text-[10px] text-(--text-tertiary)">
                       <Clock className="w-3 h-3 inline me-1" />
                       {new Date(ws.startDate).toLocaleDateString()}
+                      {ws.status === 'inactive'
+                        ? ` — ${ws.endDate ? new Date(ws.endDate).toLocaleDateString() : (isRTL ? 'منتهي' : 'Ended')}`
+                        : ` — ${isRTL ? 'حتى الآن' : 'Present'}`}
                     </span>
                   )}
                 </div>

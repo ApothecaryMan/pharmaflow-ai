@@ -131,19 +131,20 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     });
   };
 
-  const calculateDuration = (startDateStr: string | undefined) => {
+  const calculateDuration = (startDateStr: string | undefined, endDateStr?: string) => {
     if (!startDateStr) return '—';
     const start = new Date(startDateStr);
-    const now = new Date();
+    const end = endDateStr ? new Date(endDateStr) : new Date();
     if (isNaN(start.getTime())) return '—';
+    if (isNaN(end.getTime())) return '—';
 
-    let years = now.getFullYear() - start.getFullYear();
-    let months = now.getMonth() - start.getMonth();
-    let days = now.getDate() - start.getDate();
+    let years = end.getFullYear() - start.getFullYear();
+    let months = end.getMonth() - start.getMonth();
+    let days = end.getDate() - start.getDate();
 
     if (days < 0) {
       months--;
-      const lastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+      const lastMonth = new Date(end.getFullYear(), end.getMonth(), 0);
       days += lastMonth.getDate();
     }
     if (months < 0) {
@@ -814,15 +815,17 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                           {ws.salary ? `${ws.salary} ${t.global.currency}` : '—'}
                         </div>
                       </div>
+                      {(ws.status !== 'inactive' || ws.endDate) && (
                       <div>
                         <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
                           <span className='material-symbols-rounded text-[14px]'>history_toggle_off</span>
                           {t.employeeProfile.duration}
                         </span>
                         <div className='text-xs font-semibold mt-1 text-(--text-primary) truncate'>
-                          {calculateDuration(ws.startDate)}
+                          {calculateDuration(ws.startDate, ws.status === 'inactive' ? ws.endDate : undefined)}
                         </div>
                       </div>
+                      )}
                     </div>
 
                     <div className='border-b border-black/10 dark:border-white/5 pb-3'>

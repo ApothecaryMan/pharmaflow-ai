@@ -23,6 +23,7 @@ export interface Employee {
   role: UserRole; // Unified Functional Role
   startDate: string; // ISO date (YYYY-MM-DD)
   status: 'active' | 'inactive' | 'holiday' | 'pending'; // Employment status
+  endDate?: string; // ISO date (YYYY-MM-DD), set when employment ends
 
   // --- Financial (Optional) ---
   salary?: number; // Monthly salary

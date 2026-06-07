@@ -178,6 +178,13 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
       }
     }
 
+    // Validate endDate is not before startDate
+    if (formData.endDate && formData.startDate && new Date(formData.endDate) < new Date(formData.startDate)) {
+      playError();
+      alert(language === 'AR' ? 'تاريخ الانتهاء لا يمكن أن يكون قبل تاريخ البداية' : 'End date cannot be before start date');
+      return;
+    }
+
     // Secure Password Hashing
     let hashedPassword = employee?.password; // Default: keep existing password
 
@@ -583,7 +590,15 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                           setIsRoleOpen(false);
                         }}
                         onSelect={(item) => {
-                          setFormData({ ...formData, status: item.key as any });
+                          const newStatus = item.key as Employee['status'];
+                          const updates: Partial<Employee> = { status: newStatus };
+                          if (newStatus === 'inactive' && formData.status !== 'inactive') {
+                            updates.endDate = new Date().toISOString().split('T')[0];
+                          }
+                          if (formData.status === 'inactive' && newStatus !== 'inactive') {
+                            updates.endDate = undefined;
+                          }
+                          setFormData({ ...formData, ...updates });
                           setIsStatusOpen(false);
                         }}
                         renderItem={(item) => <span className='text-sm'>{item.label}</span>}
@@ -597,7 +612,26 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Row 3: Position + Phone + Email */}
+                  {/* Row 3: End Date (shown when status is inactive) */}
+                  {formData.status === 'inactive' && (
+                    <div className='col-span-12'>
+                      <div className='grid grid-cols-6 gap-x-4'>
+                        <div className='col-span-2 space-y-1.5'>
+                          <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
+                            {t.endDate || (language === 'AR' ? 'تاريخ الانتهاء' : 'End Date')}
+                          </label>
+                          <SmartInput
+                            type='date'
+                            value={formData.endDate || ''}
+                            onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                            className={INPUT_BASE}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Row 4: Position + Phone + Email */}
                   <div className='col-span-4 space-y-1.5'>
                     <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
                       {t.position}

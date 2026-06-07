@@ -24,6 +24,7 @@ export const employeeRepository = {
       role: db.role,
       startDate: db.start_date,
       status: db.status,
+      endDate: db.end_date || undefined,
       salary: db.salary || undefined,
       notes: db.notes || undefined,
       username: db.username || undefined,
@@ -54,6 +55,7 @@ export const employeeRepository = {
     if (e.role !== undefined) db.role = e.role;
     if (e.startDate !== undefined) db.start_date = e.startDate;
     if (e.status !== undefined) db.status = e.status;
+    if (e.endDate !== undefined) db.end_date = e.endDate;
     if (e.salary !== undefined) db.salary = e.salary;
     if (e.notes !== undefined) db.notes = e.notes;
     if (e.username !== undefined) db.username = e.username;
@@ -69,7 +71,7 @@ export const employeeRepository = {
     return db;
   },
 
-  BASE_COLUMNS: 'id, org_id, branch_id, employee_code, name, name_arabic, phone, email, position, department, role, start_date, status, salary, notes, username, auth_user_id, password, biometric_credential_id, biometric_public_key, photo',
+  BASE_COLUMNS: 'id, org_id, branch_id, employee_code, name, name_arabic, phone, email, position, department, role, start_date, status, end_date, salary, notes, username, auth_user_id, password, biometric_credential_id, biometric_public_key, photo',
 
   async getAll(orgId: string, branchId?: string): Promise<Employee[]> {
     let query = supabase.from(this.tableName).select(this.BASE_COLUMNS).eq('org_id', orgId);
