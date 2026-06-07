@@ -154,13 +154,25 @@ export function EmployeeDashboard({ t, language, view = 'requests', onViewChange
         className='h-12 flex items-center justify-between w-full px-4 sticky top-0 z-50'
         style={{ backgroundColor: 'var(--bg-navbar)' }}
       >
-        <div className='min-w-0'>
-          <h1 className='text-sm font-bold text-(--text-primary) truncate leading-tight'>
-            {t.login.employeePortal}
-          </h1>
-          <p className='text-[10px] text-(--text-tertiary) font-medium truncate leading-tight'>
-            {t.login.manageEmployment}
-          </p>
+        <div className='flex items-center gap-2.5 min-w-0'>
+          <img
+            src='/app_icon_black.svg'
+            className='block dark:hidden w-8 h-8 object-contain shrink-0'
+            alt='Zinc'
+          />
+          <img
+            src='/app_icon.svg'
+            className='hidden dark:block w-8 h-8 object-contain shrink-0'
+            alt='Zinc'
+          />
+          <div>
+            <h1 className='text-sm font-bold text-(--text-primary) truncate leading-tight'>
+              {t.login.employeePortal}
+            </h1>
+            <p className='text-[10px] text-(--text-tertiary) font-medium truncate leading-tight'>
+              {t.login.manageEmployment}
+            </p>
+          </div>
         </div>
 
         <div className='flex items-center gap-1'>

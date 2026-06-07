@@ -111,9 +111,19 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [isRegisteringFingerprint, setIsRegisteringFingerprint] = useState<string | null>(null);
   const [collapsedWorkspaces, setCollapsedWorkspaces] = useState<Set<string>>(new Set());
+  const [visibleCredentials, setVisibleCredentials] = useState<Set<string>>(new Set());
 
   const toggleWorkspace = (id: string) => {
     setCollapsedWorkspaces(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleCredentials = (id: string) => {
+    setVisibleCredentials(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -311,7 +321,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
       {/* Avatar & Header */}
       <div className='relative px-6 pb-6 -mt-12'>
-        <div className='flex flex-col sm:flex-row items-start sm:items-end gap-5 mb-4 relative z-10'>
+        <div className='flex flex-row items-end gap-5 mb-4 relative z-10'>
           <div className='relative shrink-0'>
             {/* Avatar with image support */}
             <label
@@ -411,8 +421,15 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 )}
               </h3>
             </div>
-            <p className='text-xs font-semibold text-primary-600 dark:text-primary-400 mt-1'>
-              {t.employeeProfile.independentEmployee}
+            <p className='text-xs font-semibold mt-1'>
+              {workspaces.length > 0
+                ? <span className='text-emerald-600 dark:text-emerald-400'>{
+                    workspaces.length === 1
+                      ? [workspaces[0].orgName, workspaces[0].branchName].filter(Boolean).join(' - ')
+                      : workspaces.map(w => w.orgName).filter(Boolean).join(', ')
+                    || (isRTL ? 'موظف' : 'Employed')}</span>
+                : <span className='text-primary-600 dark:text-primary-400'>{isRTL ? 'غير موظف' : 'Unemployed'}</span>
+              }
             </p>
           </div>
         </div>
@@ -478,13 +495,6 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   dir='rtl'
                 />
                 <EditField
-                  icon='alternate_email'
-                  label={t.employeeProfile.username}
-                  value={`@${displayUsername}`}
-                  dir='ltr'
-                  disabled
-                />
-                <EditField
                   icon='mail'
                   label={t.employeeProfile.email}
                   value={editFields.email}
@@ -546,11 +556,6 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                       },
                     ]
                     : []),
-                  {
-                    icon: 'alternate_email',
-                    label: t.employeeProfile.username,
-                    value: `@${displayUsername}`,
-                  },
                   ...(profile?.email
                     ? [{ icon: 'mail', label: t.employeeProfile.email, value: profile.email }]
                     : []),
@@ -775,97 +780,112 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                       </div>
                     </div>
 
-                    <div className='flex flex-col gap-2 pt-3'>
-                      <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
-                        <div className='flex gap-4'>
-                          <div>
-                            <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
-                              <span className='material-symbols-rounded text-[14px]'>account_circle</span>
-                              {t.login.username}
-                            </span>
-                            <div className='text-xs font-mono mt-1 text-(--text-primary) bg-black/5 dark:bg-black/20 px-2 py-1 rounded w-fit'>
-                              {ws.username || '—'}
+                    <div className='mt-4'>
+                      <button
+                        type="button"
+                        onClick={() => toggleCredentials(ws.id)}
+                        className='flex items-center gap-1.5 text-[10px] font-bold text-(--text-tertiary) uppercase hover:text-(--text-primary) transition-colors'
+                      >
+                        <span className='material-symbols-rounded text-[14px]'>
+                          {visibleCredentials.has(ws.id) ? 'visibility' : 'visibility_off'}
+                        </span>
+                        {isRTL ? 'بيانات الدخول' : 'Credentials'}
+                      </button>
+
+                      {visibleCredentials.has(ws.id) && (
+                        <div className='mt-4 space-y-3'>
+                          <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
+                            <div className='flex gap-4'>
+                              <div>
+                                <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                                  <span className='material-symbols-rounded text-[14px]'>account_circle</span>
+                                  {t.login.username}
+                                </span>
+                                <div className='text-xs font-mono mt-1 text-(--text-primary) bg-black/5 dark:bg-black/20 px-2 py-1 rounded w-fit' dir='ltr'>
+                                  {ws.username || '—'}
+                                </div>
+                              </div>
+                              <div>
+                                <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                                  <span className='material-symbols-rounded text-[14px]'>key</span>
+                                  {t.login.password || 'Password'}
+                                </span>
+                                <div className={`text-xs font-mono mt-1 px-2 py-1 rounded w-fit max-w-[130px] truncate ${ws.password ? 'text-(--text-primary) bg-black/5 dark:bg-black/20' : 'text-red-500 bg-red-500/10'}`} dir='ltr'>
+                                  {ws.password || (isRTL ? 'لم يتم تعيينه' : 'Not Set')}
+                                </div>
+                              </div>
+                            </div>
+                            <div className='grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto'>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingPasswordId(editingPasswordId === ws.id ? null : ws.id);
+                                  setNewPassword('');
+                                }}
+                                className='flex items-center justify-center gap-1 bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 px-2 py-1.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold transition-colors w-full sm:w-auto'
+                              >
+                                <span className='material-symbols-rounded text-[14px]'>password</span>
+                                {ws.password
+                                  ? (t.employeeProfile.changePassword || 'Change Password')
+                                  : (isRTL ? 'إنشاء كلمة مرور' : 'Create Password')}
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={isRegisteringFingerprint === ws.id || !onRegisterWorkspaceFingerprint}
+                                onClick={async () => {
+                                  try {
+                                    setIsRegisteringFingerprint(ws.id);
+                                    await onRegisterWorkspaceFingerprint?.(ws.id, ws.username || '');
+                                  } finally {
+                                    setIsRegisteringFingerprint(null);
+                                  }
+                                }}
+                                className={`flex items-center justify-center gap-1 px-2 py-1.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold transition-colors disabled:opacity-50 w-full sm:w-auto ${ws.biometricCredentialId
+                                  ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                                  : 'bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 text-(--text-tertiary)'
+                                  }`}
+                              >
+                                {isRegisteringFingerprint === ws.id ? (
+                                  <span className="w-3.5 h-3.5 border-2 rounded-full animate-spin border-t-transparent"></span>
+                                ) : (
+                                  <span className='material-symbols-rounded text-[14px]'>fingerprint</span>
+                                )}
+                                {ws.biometricCredentialId
+                                  ? (t.employeeProfile.fingerprintEnabled || 'Fingerprint Enabled')
+                                  : (t.employeeProfile.setupPasskey || 'Setup Passkey')}
+                              </button>
                             </div>
                           </div>
-                          <div>
-                            <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
-                              <span className='material-symbols-rounded text-[14px]'>key</span>
-                              {t.login.password || 'Password'}
-                            </span>
-                            <div className={`text-xs font-mono mt-1 px-2 py-1 rounded w-fit ${ws.password ? 'text-(--text-primary) bg-black/5 dark:bg-black/20' : 'text-red-500 bg-red-500/10'}`}>
-                              {ws.password || (isRTL ? 'لم يتم تعيينه' : 'Not Set')}
+
+                          {editingPasswordId === ws.id && (
+                            <div className='flex items-center gap-2 bg-black/10 p-2 rounded'>
+                              <input
+                                type="password"
+                                placeholder={t.employeeProfile.newPassword || 'New Password'}
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                className='flex-1 bg-transparent text-xs border-b border-black/20 dark:border-white/20 px-1 py-1 focus:outline-none focus:border-primary-500'
+                              />
+                              <button
+                                type="button"
+                                disabled={!newPassword || isUpdatingPassword || !onUpdateWorkspacePassword}
+                                onClick={async () => {
+                                  try {
+                                    setIsUpdatingPassword(true);
+                                    await onUpdateWorkspacePassword?.(ws.id, newPassword);
+                                    setEditingPasswordId(null);
+                                    setNewPassword('');
+                                  } finally {
+                                    setIsUpdatingPassword(false);
+                                  }
+                                }}
+                                className='px-3 py-1 bg-primary-500 text-white rounded text-[10px] font-bold disabled:opacity-50'
+                              >
+                                {isUpdatingPassword ? '...' : (t.employeeProfile.save || 'Save')}
+                              </button>
                             </div>
-                          </div>
-                        </div>
-                        <div className='grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto'>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingPasswordId(editingPasswordId === ws.id ? null : ws.id);
-                              setNewPassword('');
-                            }}
-                            className='flex items-center justify-center gap-1 bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 px-2 py-1.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold transition-colors w-full sm:w-auto'
-                          >
-                            <span className='material-symbols-rounded text-[14px]'>password</span>
-                            {ws.password
-                              ? (t.employeeProfile.changePassword || 'Change Password')
-                              : (isRTL ? 'إنشاء كلمة مرور' : 'Create Password')}
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={isRegisteringFingerprint === ws.id || !onRegisterWorkspaceFingerprint}
-                            onClick={async () => {
-                              try {
-                                setIsRegisteringFingerprint(ws.id);
-                                await onRegisterWorkspaceFingerprint?.(ws.id, ws.username || '');
-                              } finally {
-                                setIsRegisteringFingerprint(null);
-                              }
-                            }}
-                            className={`flex items-center justify-center gap-1 px-2 py-1.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold transition-colors disabled:opacity-50 w-full sm:w-auto ${ws.biometricCredentialId
-                              ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
-                              : 'bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 text-(--text-tertiary)'
-                              }`}
-                          >
-                            {isRegisteringFingerprint === ws.id ? (
-                              <span className="w-3.5 h-3.5 border-2 rounded-full animate-spin border-t-transparent"></span>
-                            ) : (
-                              <span className='material-symbols-rounded text-[14px]'>fingerprint</span>
-                            )}
-                            {ws.biometricCredentialId
-                              ? (t.employeeProfile.fingerprintEnabled || 'Fingerprint Enabled')
-                              : (t.employeeProfile.setupPasskey || 'Setup Passkey')}
-                          </button>
-                        </div>
-                      </div>
-
-                      {editingPasswordId === ws.id && (
-                        <div className='flex items-center gap-2 mt-2 bg-black/10 p-2 rounded'>
-                          <input
-                            type="password"
-                            placeholder={t.employeeProfile.newPassword || 'New Password'}
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            className='flex-1 bg-transparent text-xs border-b border-black/20 dark:border-white/20 px-1 py-1 focus:outline-none focus:border-primary-500'
-                          />
-                          <button
-                            type="button"
-                            disabled={!newPassword || isUpdatingPassword || !onUpdateWorkspacePassword}
-                            onClick={async () => {
-                              try {
-                                setIsUpdatingPassword(true);
-                                await onUpdateWorkspacePassword?.(ws.id, newPassword);
-                                setEditingPasswordId(null);
-                                setNewPassword('');
-                              } finally {
-                                setIsUpdatingPassword(false);
-                              }
-                            }}
-                            className='px-3 py-1 bg-primary-500 text-white rounded text-[10px] font-bold disabled:opacity-50'
-                          >
-                            {isUpdatingPassword ? '...' : (t.employeeProfile.save || 'Save')}
-                          </button>
+                          )}
                         </div>
                       )}
                     </div>

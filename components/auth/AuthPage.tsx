@@ -96,18 +96,18 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
       <div className='relative min-h-full lg:min-h-screen flex shrink-0'>
         {/* Left Pane (Form Area) */}
         <div className='w-full lg:w-1/2 flex flex-col relative p-6 sm:p-12'>
-          <nav>
-            <div className='absolute top-8 left-8 rtl:left-auto rtl:right-8 flex items-center gap-2'>
+          <nav className='flex items-center justify-between'>
+            <div className='flex items-center gap-3'>
               <img
                 src='/logo_icon_white.svg'
-                className='w-6 h-6 object-contain'
+                className='w-10 h-10 object-contain'
                 alt='Logo Icon'
               />
-              <img src='/logo_word_white.svg' className='h-4 object-contain opacity-90' alt='Zinc' />
+              <img src='/logo_word_white.svg' className='h-7 object-contain opacity-90' alt='Zinc' />
             </div>
 
             {/* Top Language Switcher */}
-            <div className='absolute top-8 right-8 rtl:right-auto rtl:left-8 z-50'>
+            <div className='z-50'>
               <SegmentedControl
                 value={language}
                 onChange={(val) => setLanguage(val as any)}
