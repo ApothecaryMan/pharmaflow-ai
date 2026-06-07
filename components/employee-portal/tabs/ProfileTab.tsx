@@ -5,7 +5,7 @@ import type { EmploymentRequest, UserProfile, Employee } from '../../../types';
 import { BANNER_STYLES, renderBanner } from '../../../utils/banners';
 import { PROFILE_GLASS_CARD_BASE } from '../../../utils/themeStyles';
 import { Tooltip } from '../../common/Tooltip';
-import { AVATAR_DECORATIONS, getDecoration } from '../avatar-decorations';
+import { AVATAR_DECORATIONS, DECORATION_KEYFRAMES, getDecoration } from '../avatar-decorations';
 import { FRAME_COLORS, ColorPicker } from '../avatar-color-settings';
 import AvatarRing, { RING_STYLES } from '../avatar-ring';
 import type { RingStyle } from '../avatar-ring';
@@ -115,7 +115,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const [newPassword, setNewPassword] = useState('');
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [isRegisteringFingerprint, setIsRegisteringFingerprint] = useState<string | null>(null);
-  const [collapsedWorkspaces, setCollapsedWorkspaces] = useState<Set<string>>(new Set());
+  const [collapsedWorkspaces, setCollapsedWorkspaces] = useState<Set<string>>(
+    () => new Set(workspaces.map(w => w.id))
+  );
   const [visibleCredentials, setVisibleCredentials] = useState<Set<string>>(new Set());
 
   const toggleWorkspace = (id: string) => {
@@ -261,6 +263,20 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       return () => clearTimeout(timer);
     }
   }, [isEditing]);
+
+  useEffect(() => {
+    const id = 'decoration-keyframes';
+    if (!document.getElementById(id)) {
+      const style = document.createElement('style');
+      style.id = id;
+      style.textContent = DECORATION_KEYFRAMES;
+      document.head.appendChild(style);
+    }
+    return () => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    };
+  }, []);
 
   React.useEffect(() => {
     if (profile?.coverStyle) setCoverStyle(profile.coverStyle as BannerId);
@@ -573,13 +589,13 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
             <p className='text-[10px] font-bold uppercase tracking-wider text-(--text-tertiary) mb-2'>
               {isRTL ? 'إطار الصورة' : 'Avatar Frame'}
             </p>
-            <div className='flex items-center gap-3 flex-wrap'>
+            <div className='decoration-carousel flex items-center gap-3 overflow-x-auto flex-nowrap scrollbar-none py-4 px-3 -mx-6'>
               {AVATAR_DECORATIONS.map((dec) => (
                 <button
                   key={dec.id}
                   type='button'
                   onClick={() => setAvatarDecoration(dec.id)}
-                  className='w-12 h-12 flex items-center justify-center relative overflow-visible transition-transform duration-150 hover:scale-110 active:scale-95'
+                  className='w-12 h-12 flex items-center justify-center relative overflow-visible transition-transform duration-150 hover:scale-110 active:scale-95 snap-start shrink-0'
                   title={isRTL ? dec.nameAr : dec.name}
                 >
                   {/* Mini avatar circle */}
