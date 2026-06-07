@@ -5,6 +5,7 @@ import type { EmploymentRequest, UserProfile, Employee } from '../../../types';
 import { BANNER_STYLES, renderBanner } from '../../../utils/banners';
 import { PROFILE_GLASS_CARD_BASE } from '../../../utils/themeStyles';
 import { Tooltip } from '../../common/Tooltip';
+import { AVATAR_DECORATIONS, getDecoration } from '../avatar-decorations';
 
 type BannerId = (typeof BANNER_STYLES)[number]['id'];
 
@@ -206,6 +207,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const [preview, setPreview] = useState<string | undefined>(undefined);
   const [removeImage, setRemoveImage] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [avatarDecoration, setAvatarDecoration] = useState<string>('none');
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
@@ -440,16 +442,24 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   : undefined
               }
             >
-              <div className='w-28 h-28 rounded-full border-4 border-(--bg-page-surface) overflow-hidden bg-(--bg-secondary) shadow-md flex items-center justify-center relative'>
-                {avatarSrc ? (
-                  <img src={avatarSrc} alt='' className='w-full h-full object-cover' />
-                ) : (
-                  <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-500/20 to-primary-600/30 text-primary-500 text-3xl font-bold'>
-                    {getInitials(displayName)}
+              <div className='w-28 h-28 rounded-full border-4 border-(--bg-page-surface) overflow-visible bg-(--bg-secondary) shadow-md flex items-center justify-center relative'>
+                {/* Inner clipped container keeps image/initials inside the circle */}
+                <div className='absolute inset-0 rounded-full overflow-hidden'>
+                  {avatarSrc ? (
+                    <img src={avatarSrc} alt='' className='w-full h-full object-cover' />
+                  ) : (
+                    <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-500/20 to-primary-600/30 text-primary-500 text-3xl font-bold'>
+                      {getInitials(displayName)}
+                    </div>
+                  )}
+                </div>
+                {avatarDecoration !== 'none' && (
+                  <div className='absolute -inset-2 pointer-events-none z-[1]'>
+                    {getDecoration(avatarDecoration)}
                   </div>
                 )}
                 {onUpdateProfile && isEditing && (
-                  <div className='absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors rounded-full flex items-center justify-center gap-3'>
+                  <div className='absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors rounded-full flex items-center justify-center gap-3 z-[2]'>
                     <Camera className='w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity' />
                     {avatarSrc && (
                       <button
@@ -477,7 +487,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 />
               )}
             </label>
-            <span className='absolute bottom-1 end-1 w-7 h-7 rounded-full border-4 border-(--bg-page-surface) bg-emerald-500 flex items-center justify-center'>
+            <span className='absolute bottom-1 end-1 w-7 h-7 rounded-full border-4 border-(--bg-page-surface) bg-emerald-500 flex items-center justify-center z-[3]'>
               <span className='material-symbols-rounded text-white text-[10px] font-bold select-none'>
                 check
               </span>
@@ -537,6 +547,45 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
             </p>
           </div>
         </div>
+
+        {/* Decoration picker in edit mode */}
+        {isEditing && (
+          <div className='mb-4'>
+            <p className='text-[10px] font-bold uppercase tracking-wider text-(--text-tertiary) mb-2'>
+              {isRTL ? 'إطار الصورة' : 'Avatar Frame'}
+            </p>
+            <div className='flex items-center gap-3 flex-wrap'>
+              {AVATAR_DECORATIONS.map((dec) => (
+                <button
+                  key={dec.id}
+                  type='button'
+                  onClick={() => setAvatarDecoration(dec.id)}
+                  className='w-12 h-12 flex items-center justify-center relative overflow-visible transition-transform duration-150 hover:scale-110 active:scale-95'
+                  title={isRTL ? dec.nameAr : dec.name}
+                >
+                  {/* Mini avatar circle */}
+                  <div className={`absolute inset-1 rounded-full overflow-hidden bg-(--bg-secondary) flex items-center justify-center transition-shadow duration-150 ${
+                    avatarDecoration === dec.id
+                      ? 'ring-2 ring-primary-500 shadow-md'
+                      : 'ring-1 ring-(--border-secondary) shadow-sm'
+                  }`}>
+                    <div className='w-full h-full bg-gradient-to-br from-primary-500/10 to-primary-600/20' />
+                  </div>
+                  {/* Decoration overlay matching real avatar layout */}
+                  {dec.svg ? (
+                    <div className='absolute inset-0 pointer-events-none z-[1]'>
+                      {dec.svg}
+                    </div>
+                  ) : (
+                    <span className='material-symbols-rounded text-[14px] text-(--text-tertiary) z-[1]'>
+                      close
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Info Grid or Edit Form */}
         <div className='space-y-4'>
