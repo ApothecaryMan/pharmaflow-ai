@@ -166,18 +166,13 @@ const App: React.FC = () => {
   // Synchronize browser hash with authentication state & current view
   const currentUser = authService.getCurrentUserSync();
 
-  // Determine if this user should see the Employee Portal (personal dashboard)
-  // vs. the full Pharmacy interface (AuthenticatedContent).
-  // Employee Portal is shown for:
-  //   1. Users with no org affiliation at all (zero affiliation), UNLESS they explicitly signed up as an org owner
-  //   2. Regular employees (non-admin, non-owner) who joined via employment requests
-  // Full Pharmacy interface is ONLY for org owners/admins.
-  const intendedType = storage.get('pharma_intended_account_type', null);
-  const isEmployeePortalUser = authState.isAuthenticated && !!currentUser && (
-    (!currentUser.orgId && intendedType !== 'org') ||
-    (currentUser.orgId && currentUser.orgRole !== 'owner' && currentUser.orgRole !== 'admin' &&
-      currentUser.role !== 'pharmacist_owner' && currentUser.role !== 'admin')
-  );
+  // Global routing is based on account type, not the local employee role.
+  // A staff member can be pharmacist_owner/admin inside a pharmacy and still
+  // belongs in the Employee Portal after normal auth login.
+  const isEmployeePortalUser =
+    authState.isAuthenticated &&
+    !!currentUser &&
+    authService.getAccountDestination(currentUser) === 'employee_portal';
 
   useUrlSync(
     authState.isAuthenticated,

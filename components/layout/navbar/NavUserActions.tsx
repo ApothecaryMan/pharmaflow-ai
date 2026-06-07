@@ -192,7 +192,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
             </div>
 
             {/* Workspace Management */}
-            {authService.getCurrentUserSync()?.availableWorkspaces && authService.getCurrentUserSync()!.availableWorkspaces!.length > 1 && (
+            {authService.getCurrentUserSync()?.accountType === 'employee' && authService.getCurrentUserSync()?.destination === 'pharmacy' && (
               <div className='p-2 border-t border-(--border-divider)'>
                 <div className='flex items-center justify-between px-2 mb-2'>
                   <div className='flex items-center gap-1.5'>
@@ -208,24 +208,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                     return (
                       <button
                         key={workspace.id}
-                        onClick={() => {
-                          if (isActive) return;
-                          const session = authService.getCurrentUserSync();
-                          if (session) {
-                            authService.updateSession({
-                              ...session,
-                              employeeId: workspace.id,
-                              employeeCode: workspace.employeeCode,
-                              employeeName: workspace.name,
-                              branchId: workspace.branchId || '',
-                              orgId: workspace.orgId,
-                              role: workspace.role,
-                              department: workspace.department,
-                              needsWorkspaceSelection: false,
-                            });
-                            window.location.reload();
-                          }
-                        }}
+                        onClick={() => {}}
                         className={`w-full p-2 text-sm font-medium rounded-lg flex items-center justify-between transition-colors
                           ${
                             isActive

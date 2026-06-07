@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import { orgService } from '../../services/org/orgService';
 import { branchService } from '../../services/org/branchService';
 import { authService } from '../../services/auth/authService';
-import { permissionsService } from '../../services/auth/permissionsService';
-import { storage } from '../../utils/storage';
 
 export type OnboardingStep = 1 | 2 | 3 | 0;
 
@@ -27,10 +25,9 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
 
       // 0.1 Check bypass logic using fresh user data
       const isOwnerOrAdmin = user?.orgRole === 'owner' || user?.orgRole === 'admin';
-      const intendedType = storage.get('pharma_intended_account_type', null);
       
-      // Bypass entirely if they are not an admin/owner AND they didn't intend to be an org owner
-      if (!isOwnerOrAdmin && intendedType !== 'org') {
+      // Bypass entirely for global employee accounts.
+      if (user?.accountType !== 'pharmacy' && !isOwnerOrAdmin) {
         setActiveStep(0);
         return;
       }

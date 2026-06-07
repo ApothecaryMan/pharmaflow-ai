@@ -3,6 +3,10 @@ import type { Employee } from './hr';
 /** Organization role — determines access scope across all branches */
 export type OrgRole = 'owner' | 'admin' | 'member';
 
+export type AccountType = 'employee' | 'pharmacy';
+
+export type AccountDestination = 'employee_portal' | 'pharmacy';
+
 /** Subscription plan tiers */
 export type SubscriptionPlan = 'free' | 'starter' | 'pro' | 'enterprise';
 
@@ -16,6 +20,12 @@ export type SubscriptionStatus = 'active' | 'trial' | 'past_due' | 'cancelled';
 export interface UserSession {
   /** Auth user ID (UUID) */
   userId?: string;
+
+  /** Global account type. This must not be inferred from the local employee role. */
+  accountType?: AccountType;
+
+  /** Top-level app destination selected from the global account context. */
+  destination?: AccountDestination;
   
   /** Organization ID the user belongs to */
   orgId?: string;
@@ -63,6 +73,9 @@ export interface UserSession {
   
   /** Available workspaces for this user */
   availableWorkspaces?: Employee[];
+
+  /** Employee workspaces shown in the employee portal only */
+  availableEmployeeWorkspaces?: Employee[];
 }
 
 /**

@@ -8,6 +8,7 @@ import {
   type LoginAuditEntry,
   type IndividualRegistrationPayload,
   type OrgRole,
+  type AccountType,
 } from '../../types';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { storage } from '../../utils/storage';
@@ -21,6 +22,68 @@ const SESSION_KEY = StorageKeys.SESSION;
 const AUDIT_KEY = StorageKeys.LOGIN_AUDIT;
 
 let cachedSession: UserSession | null = null;
+
+type SupabaseAuthUser = {
+  id: string;
+  email?: string | null;
+  user_metadata?: Record<string, any>;
+};
+
+const normalizeAccountType = (value: unknown): AccountType | null => {
+  if (value === 'employee') return 'employee';
+  if (value === 'org' || value === 'pharmacy') return 'pharmacy';
+  return null;
+};
+
+const stripWorkspacePayload = (emp: any) => {
+  const {
+    image,
+    nationalIdCard,
+    nationalIdCardBack,
+    mainSyndicateCard,
+    subSyndicateCard,
+    password,
+    biometricPublicKey,
+    ...rest
+  } = emp;
+  return rest;
+};
+
+const getDisplayUsername = (user: SupabaseAuthUser, fallback: string): string => {
+  const meta = user.user_metadata || {};
+  return (
+    meta?.username?.replace(/^@/, '') ||
+    fallback?.replace(/^@/, '') ||
+    user.email?.split('@')[0] ||
+    'user'
+  );
+};
+
+const determineAccountType = (
+  user: SupabaseAuthUser,
+  orgRole?: OrgRole,
+  employeeWorkspaceCount = 0
+): AccountType => {
+  const meta = user.user_metadata || {};
+  const explicitType = normalizeAccountType(meta.accountType || meta.account_type);
+  if (explicitType) return explicitType;
+
+  const metaUsername = String(meta.username || '').replace(/^@/, '');
+  const isGeneratedPharmacyProfile =
+    metaUsername.startsWith('device_') || meta.name === 'Pharmacy Admin';
+
+  if (employeeWorkspaceCount > 0 && !isGeneratedPharmacyProfile) {
+    return 'employee';
+  }
+
+  const intendedType = normalizeAccountType(storage.get('pharma_intended_account_type', null));
+  if (intendedType === 'employee') return 'employee';
+  if (intendedType === 'pharmacy' && isGeneratedPharmacyProfile) return 'pharmacy';
+
+  if (orgRole === 'owner' || orgRole === 'admin') return 'pharmacy';
+
+  return 'employee';
+};
 
 export const authService = {
   /**
@@ -54,72 +117,54 @@ export const authService = {
    */
   async syncSessionWithDatabase(userId: string): Promise<UserSession | null> {
     try {
-      const existingSession = storage.get<UserSession | null>(SESSION_KEY, null);
-
-      const [employeeData, memberData] = await Promise.all([
-        employeeRepository.getByAuthUserId(userId),
-        orgRepository.getMemberByUserId(userId)
+      const [memberData, employeeWorkspaces, authResult] = await Promise.all([
+        orgRepository.getMemberByUserId(userId),
+        employeeRepository.getAllByAuthUserId(userId).catch(() => []),
+        supabase.auth.getUser(),
       ]);
 
-      const orgRole = memberData?.role || 'member';
-      const orgId = memberData?.orgId;
+      const sbUser = authResult.data.user;
+      if (!sbUser) return null;
 
-      let session: UserSession;
+      const accountType = determineAccountType(
+        sbUser,
+        memberData?.role as OrgRole | undefined,
+        employeeWorkspaces.length
+      );
+      const strippedWorkspaces = employeeWorkspaces.map(stripWorkspacePayload);
 
-      const hasActiveManualEmployee = existingSession?.employeeId &&
-        existingSession.userId === userId &&
-        existingSession.orgId === orgId;
+      const existingSession = storage.get<UserSession | null>(SESSION_KEY, null);
+      const hasLocalEmployeeContext =
+        existingSession?.userId === userId &&
+        existingSession.accountType === 'pharmacy' &&
+        !!existingSession.employeeId;
 
-      if (hasActiveManualEmployee) {
-        session = {
-          ...existingSession!,
-          orgRole: orgRole as OrgRole,
-          orgId: orgId || existingSession!.orgId,
-        };
-      } else if (employeeData) {
-        session = {
-          userId: userId,
-          username: employeeData.username || employeeData.name,
-          employeeId: employeeData.id,
-          employeeCode: employeeData.employeeCode,
-          employeeName: employeeData.name,
-          branchId: employeeData.branchId || '',
-          orgId: orgId || employeeData.orgId,
-          role: employeeData.role,
-          orgRole: orgRole as OrgRole,
-          department: employeeData.department,
-        };
-      } else {
-        const current = existingSession || this.getCurrentUserSync();
-        if (current) {
-          session = {
-            ...current,
-            userId: userId,
-            orgRole: orgRole as OrgRole,
-            orgId: orgId || current.orgId,
-          };
-        } else {
-          const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('username, full_name')
-            .eq('id', userId)
-            .maybeSingle();
-
-          const { data: { user: sbUser } } = await supabase.auth.getUser();
-          const meta = sbUser?.user_metadata || {};
-          session = {
+      const session: UserSession = hasLocalEmployeeContext
+        ? {
+            ...existingSession!,
+            accountType,
+            destination: accountType === 'pharmacy' ? 'pharmacy' : 'employee_portal',
+            orgRole: (memberData?.role || existingSession!.orgRole || 'member') as OrgRole,
+            orgId: memberData?.orgId || existingSession!.orgId,
+          }
+        : {
             userId,
-            username: profile?.username?.replace(/^@/, '') || meta?.username?.replace(/^@/, '') || sbUser?.email?.split('@')[0] || 'user',
+            username: getDisplayUsername(sbUser, existingSession?.username || ''),
+            accountType,
+            destination: accountType === 'pharmacy' ? 'pharmacy' : 'employee_portal',
             branchId: '',
-            orgId: undefined,
+            orgId: accountType === 'pharmacy' ? memberData?.orgId : undefined,
             role: 'unassigned',
-            orgRole: 'member',
+            orgRole: (memberData?.role || 'member') as OrgRole,
             department: 'unassigned',
+            availableWorkspaces: strippedWorkspaces,
+            availableEmployeeWorkspaces: strippedWorkspaces,
           };
-        }
-      }
 
       storage.set(SESSION_KEY, session);
+      if (session.accountType === 'pharmacy' && session.orgId) {
+        orgService.setActiveOrgId(session.orgId);
+      }
       cachedSession = session;
       return session;
     } catch (err) {
@@ -156,13 +201,24 @@ export const authService = {
     return null;
   },
 
-  async signUp(name: string, username: string, email: string, password: string): Promise<{ success: boolean; message?: string }> {
+  getAccountDestination(session: UserSession | null): 'employee_portal' | 'pharmacy' {
+    if (session?.destination) return session.destination;
+    return session?.accountType === 'pharmacy' ? 'pharmacy' : 'employee_portal';
+  },
+
+  async signUp(
+    name: string,
+    username: string,
+    email: string,
+    password: string,
+    accountType: AccountType = 'employee'
+  ): Promise<{ success: boolean; message?: string }> {
     try {
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { name, username }
+          data: { name, username, accountType }
         }
       });
       if (error) throw error;
@@ -183,6 +239,7 @@ export const authService = {
             name: payload.fullName,
             nameArabic: payload.nameArabic || '',
             username: payload.username,
+            accountType: 'employee',
             phone: payload.phone || '',
             licenseNumber: payload.licenseNumber || '',
           }
@@ -255,6 +312,8 @@ export const authService = {
     if (authError) throw authError;
     if (!authData.user) throw new Error('No user data returned');
 
+    const profileUsername = getDisplayUsername(authData.user, username);
+
     // Lazy-create user_profiles row if missing
     const { data: existingProfile } = await supabase
       .from('user_profiles')
@@ -265,7 +324,7 @@ export const authService = {
     if (!existingProfile) {
       const meta = authData.user.user_metadata || {};
       const metaUsername = meta?.username;
-      const insertUsername = metaUsername || (username.startsWith('@') ? username : `@${username}`);
+      const insertUsername = metaUsername || (profileUsername.startsWith('@') ? profileUsername : `@${profileUsername}`);
 
       const { error: insertError } = await supabase.from('user_profiles').insert({
         id: authData.user.id,
@@ -281,67 +340,33 @@ export const authService = {
       }
     }
 
-    let employeeDataArray = await employeeRepository.getAllByAuthUserId(authData.user.id);
-    let employeeData = employeeDataArray.length > 0 ? employeeDataArray[0] : null;
+    const [employeeWorkspaces, memberData] = await Promise.all([
+      employeeRepository.getAllByAuthUserId(authData.user.id).catch(() => []),
+      orgRepository.getMemberByUserId(authData.user.id),
+    ]);
 
-    if (!employeeData) {
-      const fallbackData = await employeeRepository.getByUsername(username);
-      if (fallbackData) {
-        employeeData = fallbackData;
-        employeeDataArray = [fallbackData];
-        if (!employeeData.userId) {
-          await employeeRepository.update(employeeData.id, { userId: authData.user.id });
-        }
-      }
-    }
+    const orgRole = (memberData?.role || 'member') as OrgRole;
+    const accountType = determineAccountType(authData.user, orgRole, employeeWorkspaces.length);
+    const destination = accountType === 'pharmacy' ? 'pharmacy' : 'employee_portal';
+    const strippedWorkspaces = employeeWorkspaces.map(stripWorkspacePayload);
 
-    const memberData = await orgRepository.getMemberByUserId(authData.user.id);
-    const orgRole = memberData?.role || 'member';
-    const orgId = memberData?.orgId;
-
-    let session: UserSession;
-
-    if (employeeData) {
-      const needsWorkspaceSelection = employeeDataArray.length > 1;
-
-      // Strip out heavy base64 image blobs to prevent localStorage from blowing up
-      const strippedWorkspaces = employeeDataArray.map(emp => {
-        const { image, nationalIdCard, nationalIdCardBack, mainSyndicateCard, subSyndicateCard, ...rest } = emp;
-        return rest as any;
-      });
-
-      session = {
-        userId: authData.user.id,
-        username: employeeData.username || employeeData.name,
-        employeeId: employeeData.id,
-        employeeCode: employeeData.employeeCode,
-        employeeName: employeeData.name,
-        branchId: employeeData.branchId || '',
-        orgId: employeeData.orgId,
-        role: employeeData.role,
-        orgRole: orgRole as OrgRole,
-        department: employeeData.department,
-        needsWorkspaceSelection,
-        availableWorkspaces: strippedWorkspaces,
-      };
-    } else {
-      const meta = authData.user.user_metadata || {};
-      const metaName = meta?.name;
-      const metaUsername = meta?.username;
-
-      session = {
-        userId: authData.user.id,
-        username: metaUsername?.replace(/^@/, '') || authData.user.email?.split('@')[0] || username,
-        branchId: '',
-        orgId,
-        role: 'unassigned',
-        orgRole: orgRole as OrgRole,
-        department: 'unassigned',
-      };
-    }
+    const session: UserSession = {
+      userId: authData.user.id,
+      username: profileUsername,
+      accountType,
+      destination,
+      branchId: '',
+      orgId: accountType === 'pharmacy' ? memberData?.orgId : undefined,
+      role: 'unassigned',
+      orgRole,
+      department: 'unassigned',
+      availableWorkspaces: strippedWorkspaces,
+      availableEmployeeWorkspaces: strippedWorkspaces,
+    };
 
     storage.set(SESSION_KEY, session);
-    if (session.orgId) orgService.setActiveOrgId(session.orgId);
+    cachedSession = session;
+    if (session.accountType === 'pharmacy' && session.orgId) orgService.setActiveOrgId(session.orgId);
 
     // Log System Login
     this.logAuditEvent({
@@ -430,6 +455,8 @@ export const authService = {
           delete session._originalUsername;
         }
         delete session.employeeId;
+        delete session.employeeCode;
+        delete session.employeeName;
         storage.set(SESSION_KEY, session);
       } catch (e) {
         console.error('Failed to restore session:', e);
@@ -503,7 +530,12 @@ export const authService = {
     const employee = employees.find((emp) => emp.biometricCredentialId === credentialId);
     if (!employee) return null;
 
+    const current = this.getCurrentUserSync();
     const session: UserSession = {
+      ...(current || {}),
+      userId: current?.userId,
+      accountType: current?.accountType || 'pharmacy',
+      destination: current?.destination || 'pharmacy',
       username: employee.username || employee.name,
       employeeId: employee.id,
       employeeCode: employee.employeeCode,

@@ -78,6 +78,8 @@ export const useSessionHandlers = ({
               delete storedSession._originalUsername;
             }
             delete storedSession.employeeId;
+            delete storedSession.employeeCode;
+            delete storedSession.employeeName;
             storage.set(StorageKeys.SESSION, storedSession);
           }
         } else {
@@ -98,6 +100,10 @@ export const useSessionHandlers = ({
               storedSession.orgRole = selectedEmployee.orgRole || 'member';
               storedSession.username = selectedEmployee.username || selectedEmployee.name;
               storedSession.employeeId = selectedEmployee.id;
+              storedSession.employeeCode = selectedEmployee.employeeCode;
+              storedSession.employeeName = selectedEmployee.name;
+              storedSession.accountType = 'pharmacy';
+              storedSession.destination = 'pharmacy';
               storage.set(StorageKeys.SESSION, storedSession);
             }
 

@@ -186,16 +186,6 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
       // Update employee with password
       await employeeService.update(acceptedEmployee.id, { password: passwordHash });
 
-      const activeOrgId = orgService.getActiveOrgId();
-      // Claim the organization
-      try {
-        if (activeOrgId) {
-          await orgService.claimOrganization(activeOrgId, acceptedEmployee.id);
-        }
-      } catch (claimErr) {
-        console.warn('Organization claim failed, but employee created:', claimErr);
-      }
-
       // Finalize and trigger soft transition
       if (onComplete) {
         onComplete();

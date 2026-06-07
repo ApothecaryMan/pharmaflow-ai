@@ -62,5 +62,5 @@ export function useUrlSync(
       const newHash = `#/${activeOrgId}/${view}`;
       replaceUrl(newHash);
     }
-  }, [isAuthenticated, activeOrgId, activeBranchId, view, branches, currentEmployeeId, userId]);
+  }, [isAuthenticated, activeOrgId, activeBranchId, view, branches, currentEmployeeId, userId, isEmployeePortalUser]);
 }

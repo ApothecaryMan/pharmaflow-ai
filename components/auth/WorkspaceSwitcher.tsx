@@ -1,7 +1,6 @@
 import React from 'react';
 import { Building2, ArrowRight } from 'lucide-react';
 import type { Employee } from '../../types';
-import { authService } from '../../services/auth/authService';
 
 interface Props {
   workspaces: Employee[];
@@ -13,23 +12,6 @@ interface Props {
 export function WorkspaceSwitcher({ workspaces, onSelect, onCancel, t }: Props) {
 
   const handleSelect = (workspace: Employee) => {
-    // Update the session directly with the new workspace contexts
-    const session = authService.getCurrentUserSync();
-    if (session) {
-      const updatedSession = {
-        ...session,
-        employeeId: workspace.id,
-        employeeCode: workspace.employeeCode,
-        employeeName: workspace.name,
-        branchId: workspace.branchId || '',
-        orgId: workspace.orgId,
-        role: workspace.role,
-        department: workspace.department,
-        needsWorkspaceSelection: false,
-      };
-      authService.updateSession(updatedSession);
-    }
-    
     onSelect(workspace);
   };
 

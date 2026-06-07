@@ -59,7 +59,13 @@ export const SignUp: React.FC<SignUpProps> = ({ onViewChange, onLoginSuccess, la
     const generatedName = 'Pharmacy Admin';
     const generatedUsername = `device_${Date.now()}`;
 
-    const { success, message } = await authService.signUp(generatedName, generatedUsername, state.email, state.password);
+    const { success, message } = await authService.signUp(
+      generatedName,
+      generatedUsername,
+      state.email,
+      state.password,
+      registrationType === 'org' ? 'pharmacy' : 'employee'
+    );
 
     if (success) {
       import('../../utils/storage').then(({ storage }) => {
