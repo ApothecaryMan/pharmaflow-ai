@@ -1,5 +1,5 @@
 import { Camera, Pencil, Save, X, ChevronDown, ChevronUp } from 'lucide-react';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MAX_UPLOAD_SIZE_KB } from '../../../config';
 import type { EmploymentRequest, UserProfile, Employee } from '../../../types';
 import { BANNER_STYLES, renderBanner } from '../../../utils/banners';
@@ -198,11 +198,58 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const [coverStyle, setCoverStyle] = useState<BannerId>(
     (profile?.coverStyle as BannerId) || 'pattern'
   );
+  const [bannerZoom, setBannerZoom] = useState(1.2);
+  const [bannerOffset, setBannerOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   const [preview, setPreview] = useState<string | undefined>(undefined);
   const [removeImage, setRemoveImage] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const bannerRef = useRef<HTMLDivElement>(null);
+  const dragStart = useRef({ x: 0, y: 0 });
+  const offsetStart = useRef({ x: 0, y: 0 });
+  const lastPinchDist = useRef(0);
+
+  const MIN_ZOOM = 1;
+  const MAX_ZOOM = 3;
+
+  const handleBannerPointerDown = useCallback((e: React.PointerEvent) => {
+    setIsDragging(true);
+    dragStart.current = { x: e.clientX, y: e.clientY };
+    offsetStart.current = { ...bannerOffset };
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }, [bannerOffset]);
+
+  const handleBannerPointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isDragging) return;
+    const dx = (e.clientX - dragStart.current.x) / bannerZoom;
+    const dy = (e.clientY - dragStart.current.y) / bannerZoom;
+    setBannerOffset({
+      x: offsetStart.current.x + dx,
+      y: offsetStart.current.y + dy,
+    });
+  }, [isDragging, bannerZoom]);
+
+  const handleBannerPointerUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    if (!isEditing) return;
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    setBannerZoom(prev => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev + delta)));
+  }, [isEditing]);
+
+  useEffect(() => {
+    if (isEditing) {
+      setShowHint(true);
+      const timer = setTimeout(() => setShowHint(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isEditing]);
 
   React.useEffect(() => {
     if (profile?.coverStyle) setCoverStyle(profile.coverStyle as BannerId);
@@ -299,22 +346,78 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   return (
     <div className='animate-fade-in'>
       {/* Banner */}
-      <div className='relative w-full aspect-[9/3] bg-(--bg-secondary) overflow-hidden select-none rounded-2xl group/cover'>
-        {renderBanner(coverStyle, { x: 0, y: 0 }, 1.2)}
+      <div
+        ref={bannerRef}
+        className={`relative w-full aspect-[9/3] sm:aspect-[9/2] bg-(--bg-secondary) overflow-hidden select-none rounded-2xl ${isEditing ? 'cursor-grab touch-none' : ''} ${isDragging ? 'cursor-grabbing' : ''} group/cover`}
+        onPointerDown={isEditing ? handleBannerPointerDown : undefined}
+        onPointerMove={isEditing ? handleBannerPointerMove : undefined}
+        onPointerUp={isEditing ? handleBannerPointerUp : undefined}
+        onPointerCancel={isEditing ? handleBannerPointerUp : undefined}
+        onWheel={handleWheel}
+      >
+        {renderBanner(coverStyle, bannerOffset, bannerZoom)}
 
-        {/* Pattern picker overlay */}
+        {/* Edit controls overlay */}
         {isEditing && (
-          <div className='absolute top-3 end-3 flex items-center gap-1 bg-white/80 dark:bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-white/10 z-20'>
-            {BANNER_STYLES.map((b) => (
-              <button
-                key={b.id}
-                onClick={() => handleCoverChange(b.id)}
-                className={`w-4 h-4 rounded-full border-2 transition-all hover:scale-125 ${coverStyle === b.id ? 'border-white scale-110 shadow-sm' : 'border-transparent opacity-60 hover:opacity-100'}`}
-                style={{ backgroundColor: b.accentColor }}
-                title={isRTL ? b.nameAR : b.nameEN}
-                type='button'
-              />
-            ))}
+          <div className='absolute inset-0 z-10 flex flex-col justify-between pointer-events-none'>
+            {/* Top controls: dot picker + zoom */}
+            <div className='flex items-start justify-between gap-2 p-3'>
+              {/* Pattern picker */}
+              <div className='flex items-center gap-1 bg-white/80 dark:bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-white/10 pointer-events-auto'>
+                {BANNER_STYLES.map((b) => (
+                  <button
+                    key={b.id}
+                    onClick={() => handleCoverChange(b.id)}
+                    className={`w-4 h-4 rounded-full border-2 transition-all hover:scale-125 ${coverStyle === b.id ? 'border-white scale-110 shadow-sm' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                    style={{ backgroundColor: b.accentColor }}
+                    title={isRTL ? b.nameAR : b.nameEN}
+                    type='button'
+                  />
+                ))}
+              </div>
+
+              {/* Zoom controls */}
+              <div className='flex items-center gap-1 bg-white/80 dark:bg-black/40 backdrop-blur-md px-2 py-1 rounded-xl border border-black/10 dark:border-white/10 pointer-events-auto'>
+                <button
+                  type='button'
+                  onClick={() => setBannerZoom(prev => Math.max(MIN_ZOOM, +(prev - 0.1).toFixed(1)))}
+                  disabled={bannerZoom <= MIN_ZOOM}
+                  className='w-6 h-6 flex items-center justify-center rounded text-[14px] font-bold text-(--text-primary) hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-30 transition-colors'
+                >
+                  −
+                </button>
+                <span className='w-8 text-center text-[11px] font-semibold text-(--text-primary) tabular-nums'>
+                  {bannerZoom.toFixed(1)}x
+                </span>
+                <button
+                  type='button'
+                  onClick={() => setBannerZoom(prev => Math.min(MAX_ZOOM, +(prev + 0.1).toFixed(1)))}
+                  disabled={bannerZoom >= MAX_ZOOM}
+                  className='w-6 h-6 flex items-center justify-center rounded text-[14px] font-bold text-(--text-primary) hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-30 transition-colors'
+                >
+                  +
+                </button>
+                <div className='w-px h-4 bg-black/20 dark:bg-white/20 mx-0.5' />
+                <button
+                  type='button'
+                  onClick={() => {
+                    setBannerZoom(1.2);
+                    setBannerOffset({ x: 0, y: 0 });
+                  }}
+                  className='w-6 h-6 flex items-center justify-center rounded text-[18px] font-bold text-(--text-primary) hover:bg-black/10 dark:hover:bg-white/10 transition-colors leading-none'
+                  title={isRTL ? 'إعادة تعيين' : 'Reset'}
+                >
+                  ⟲
+                </button>
+              </div>
+            </div>
+
+            {/* Bottom hint */}
+            <div className='flex justify-center pb-2'>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full bg-black/40 text-white/70 backdrop-blur-sm transition-opacity duration-500 ${showHint ? 'opacity-100' : 'opacity-0'}`}>
+                {isRTL ? 'اسحب للتحريك · قرص للتكبير' : 'Drag to pan · Scroll to zoom'}
+              </span>
+            </div>
           </div>
         )}
       </div>
