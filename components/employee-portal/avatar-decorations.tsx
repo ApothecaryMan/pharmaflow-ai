@@ -21,12 +21,12 @@ export const AVATAR_DECORATIONS: DecorationDef[] = [
     svg: (
       <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
         <g transform='translate(0, -30)'>
-          <g transform='rotate(-24, 34, 48)'>
-            <path d='M20,48 Q34,4 48,48 Q34,46 20,48Z' fill='#D4A574' stroke='#B8864E' strokeWidth='1.5' />
+          <g transform='rotate(-35, 34, 48)'>
+            <path d='M20,48 Q34,4 48,48 Q34,46 20,48Z' fill='var(--svg-color, #D4A574)' stroke='var(--svg-color, #B8864E)' strokeWidth='1.5' opacity='0.85' />
             <path d='M26,46 Q34,18 42,46 Q34,44 26,46Z' fill='#FFB6C1' />
           </g>
-          <g transform='rotate(24, 94, 48)'>
-            <path d='M80,48 Q94,4 108,48 Q94,46 80,48Z' fill='#D4A574' stroke='#B8864E' strokeWidth='1.5' />
+          <g transform='rotate(35, 94, 48)'>
+            <path d='M80,48 Q94,4 108,48 Q94,46 80,48Z' fill='var(--svg-color, #D4A574)' stroke='var(--svg-color, #B8864E)' strokeWidth='1.5' opacity='0.85' />
             <path d='M86,46 Q94,18 102,46 Q94,44 86,46Z' fill='#FFB6C1' />
           </g>
         </g>
@@ -42,11 +42,12 @@ export const AVATAR_DECORATIONS: DecorationDef[] = [
         <g transform='translate(0, -26)'>
           <path
             d='M12,52 L20,20 L34,36 L48,12 L62,36 L76,20 L90,36 L104,12 L116,52 Z'
-            fill='#F5D742'
-            stroke='#D4A017'
+            fill='var(--svg-color, #F5D742)'
+            stroke='var(--svg-color, #D4A017)'
             strokeWidth='1.5'
+            opacity='0.85'
           />
-          <rect x='12' y='44' width='104' height='10' rx='2' fill='#F5D742' stroke='#D4A017' strokeWidth='1' />
+          <rect x='12' y='44' width='104' height='10' rx='2' fill='var(--svg-color, #F5D742)' stroke='var(--svg-color, #D4A017)' strokeWidth='1' opacity='0.85' />
           <circle cx='34' cy='16' r='3' fill='#E85D5D' />
           <circle cx='64' cy='12' r='4' fill='#5DA8E8' />
           <circle cx='94' cy='16' r='3' fill='#5DE87A' />
@@ -139,8 +140,8 @@ export const AVATAR_DECORATIONS: DecorationDef[] = [
               <polygon
                 key={i}
                 points={points.join(' ')}
-                fill='#FFD700'
-                stroke='#DAA520'
+                fill='var(--svg-color, #FFD700)'
+                stroke='var(--svg-color, #DAA520)'
                 strokeWidth='0.8'
                 opacity={0.85}
               />
@@ -159,8 +160,8 @@ export const AVATAR_DECORATIONS: DecorationDef[] = [
         <g transform='translate(90, 16)'>
           <path
             d='M0,16 C-14,-4 -10,-20 0,-28 C10,-20 14,-4 0,16Z'
-            fill='#C084FC'
-            stroke='#9333EA'
+            fill='var(--svg-color, #C084FC)'
+            stroke='var(--svg-color, #9333EA)'
             strokeWidth='1'
             opacity='0.85'
           />
@@ -176,7 +177,7 @@ export const AVATAR_DECORATIONS: DecorationDef[] = [
             fill='#F3E8FF'
             opacity='0.6'
           />
-          <line x1='0' y1='28' x2='0' y2='-28' stroke='#7C3AED' strokeWidth='0.5' opacity='0.4' />
+          <line x1='0' y1='28' x2='0' y2='-28' stroke='var(--svg-color, #7C3AED)' strokeWidth='0.5' opacity='0.4' />
         </g>
       </svg>
     ),
@@ -190,15 +191,17 @@ export const AVATAR_DECORATIONS: DecorationDef[] = [
         <g transform='translate(0, -14)'>
           <path
             d='M22,48 Q14,24 26,8 Q30,2 36,6 Q38,10 36,18 Q34,26 30,36 Q28,42 26,48Z'
-            fill='#DC2626'
-            stroke='#991B1B'
+            fill='var(--svg-color, #DC2626)'
+            stroke='var(--svg-color, #991B1B)'
             strokeWidth='1.5'
+            opacity='0.85'
           />
           <path
             d='M106,48 Q114,24 102,8 Q98,2 92,6 Q90,10 92,18 Q94,26 98,36 Q100,42 102,48Z'
-            fill='#DC2626'
-            stroke='#991B1B'
+            fill='var(--svg-color, #DC2626)'
+            stroke='var(--svg-color, #991B1B)'
             strokeWidth='1.5'
+            opacity='0.85'
           />
         </g>
       </svg>
@@ -227,8 +230,8 @@ export const AVATAR_DECORATIONS: DecorationDef[] = [
                  C${x + s * 0.8},${y - s * 0.7}
                  ${x + s * 0.6},${y - s * 0.2}
                  ${x},${y + s * 0.3}Z`}
-              fill='#FF4D6D'
-              stroke='#E82555'
+              fill='var(--svg-color, #FF4D6D)'
+              stroke='var(--svg-color, #E82555)'
               strokeWidth='0.8'
               opacity={0.8}
             />
@@ -243,7 +246,7 @@ export const AVATAR_DECORATIONS: DecorationDef[] = [
     nameAr: 'ندفة الثلج',
     svg: (
       <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
-        <g stroke='#60A5FA' strokeWidth='1.5' strokeLinecap='round' opacity='0.8'>
+        <g stroke='var(--svg-color, #60A5FA)' strokeWidth='1.5' strokeLinecap='round' opacity='0.8'>
           {[0, 60, 120, 180, 240, 300].map((angle, i) => {
             const rad = (angle * Math.PI) / 180;
             const cos = Math.cos(rad);
@@ -277,11 +280,11 @@ export const AVATAR_DECORATIONS: DecorationDef[] = [
             );
           })}
         </g>
-        <circle cx='64' cy='64' r='3' fill='#93C5FD' stroke='none' />
-        <circle cx='64' cy='8' r='3.5' fill='#93C5FD' stroke='none' opacity='0.7' />
-        <circle cx='64' cy='120' r='3.5' fill='#93C5FD' stroke='none' opacity='0.7' />
-        <circle cx='8' cy='64' r='3.5' fill='#93C5FD' stroke='none' opacity='0.7' />
-        <circle cx='120' cy='64' r='3.5' fill='#93C5FD' stroke='none' opacity='0.7' />
+        <circle cx='64' cy='64' r='3' fill='var(--svg-color, #93C5FD)' stroke='none' />
+        <circle cx='64' cy='8' r='3.5' fill='var(--svg-color, #93C5FD)' stroke='none' opacity='0.7' />
+        <circle cx='64' cy='120' r='3.5' fill='var(--svg-color, #93C5FD)' stroke='none' opacity='0.7' />
+        <circle cx='8' cy='64' r='3.5' fill='var(--svg-color, #93C5FD)' stroke='none' opacity='0.7' />
+        <circle cx='120' cy='64' r='3.5' fill='var(--svg-color, #93C5FD)' stroke='none' opacity='0.7' />
       </svg>
     ),
   },

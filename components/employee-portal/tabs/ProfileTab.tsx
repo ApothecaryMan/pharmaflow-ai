@@ -6,6 +6,10 @@ import { BANNER_STYLES, renderBanner } from '../../../utils/banners';
 import { PROFILE_GLASS_CARD_BASE } from '../../../utils/themeStyles';
 import { Tooltip } from '../../common/Tooltip';
 import { AVATAR_DECORATIONS, getDecoration } from '../avatar-decorations';
+import { FRAME_COLORS, ColorPicker } from '../avatar-color-settings';
+import AvatarRing, { RING_STYLES } from '../avatar-ring';
+import type { RingStyle } from '../avatar-ring';
+import { AnimationToggle } from '../avatar-ring';
 
 type BannerId = (typeof BANNER_STYLES)[number]['id'];
 
@@ -208,6 +212,10 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const [removeImage, setRemoveImage] = useState(false);
   const [copied, setCopied] = useState(false);
   const [avatarDecoration, setAvatarDecoration] = useState<string>('none');
+  const [frameColor, setFrameColor] = useState<string | null>(null);
+  const [ringStyle, setRingStyle] = useState<RingStyle>('solid');
+  const [ringThickness, setRingThickness] = useState(4);
+  const [ringAnimated, setRingAnimated] = useState(false);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
@@ -427,7 +435,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
       {/* Avatar & Header */}
       <div className='relative px-6 pb-6 -mt-12'>
-        <div className='flex flex-row items-end gap-5 mb-4 relative z-10'>
+        <div className='flex flex-row items-end gap-5 mb-4 relative z-10' dir='ltr'>
           <div className='relative shrink-0'>
             {/* Avatar with image support */}
             <label
@@ -442,7 +450,8 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   : undefined
               }
             >
-              <div className='w-28 h-28 rounded-full border-4 border-(--bg-page-surface) overflow-visible bg-(--bg-secondary) shadow-md flex items-center justify-center relative'>
+              <div className='w-28 h-28 rounded-full border-4 overflow-visible bg-(--bg-secondary) shadow-md flex items-center justify-center relative'
+                style={{ borderColor: frameColor ? 'transparent' : 'var(--bg-page-surface)' }}>
                 {/* Inner clipped container keeps image/initials inside the circle */}
                 <div className='absolute inset-0 rounded-full overflow-hidden'>
                   {avatarSrc ? (
@@ -456,6 +465,16 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 {avatarDecoration !== 'none' && (
                   <div className='absolute -inset-2 pointer-events-none z-[1]'>
                     {getDecoration(avatarDecoration)}
+                  </div>
+                )}
+                {frameColor && (
+                  <div className='absolute -inset-2 pointer-events-none z-0'>
+                    <AvatarRing
+                      color={frameColor}
+                      style={ringStyle}
+                      thickness={ringThickness}
+                      animated={ringAnimated}
+                    />
                   </div>
                 )}
                 {onUpdateProfile && isEditing && (
@@ -584,9 +603,69 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 </button>
               ))}
             </div>
-          </div>
-        )}
+             <div className='pt-1.5 space-y-3'>
+              <ColorPicker
+                label={isRTL ? 'لون الإطار' : 'Frame Color'}
+                colors={FRAME_COLORS}
+                selected={frameColor}
+                onChange={(c) => {
+                  setFrameColor(c);
+                  if (!c) setRingAnimated(false);
+                }}
+                isRTL={isRTL}
+              />
+              {frameColor && (
+                <>
+                  <div className='space-y-1.5'>
+                    <p className='text-[10px] font-bold uppercase tracking-wider text-(--text-tertiary)'>{isRTL ? 'نمط الإطار' : 'Ring Style'}</p>
+                    <div className='flex items-center gap-1.5 flex-wrap'>
+                      {RING_STYLES.filter((s) => s.id !== 'animated').map((s) => (
+                        <button
+                          key={s.id}
+                          type='button'
+                          onClick={() => setRingStyle(s.id)}
+                          className={`px-2.5 py-1 text-[11px] rounded-md font-semibold transition-all duration-150 border ${
+                            ringStyle === s.id
+                              ? 'bg-primary-500 text-white border-primary-500'
+                              : 'bg-(--bg-secondary) text-(--text-secondary) border-(--border-secondary) hover:border-primary-300 dark:hover:border-primary-600'
+                          }`}
+                        >
+                          {isRTL ? s.nameAr : s.name}
+                        </button>
+                      ))}
+                      <AnimationToggle
+                        animating={ringAnimated}
+                        onToggle={() => setRingAnimated(!ringAnimated)}
+                        isRTL={isRTL}
+                      />
+                    </div>
+                  </div>
 
+                  <div className='flex items-end gap-3'>
+                    <div className='flex-1 space-y-1.5'>
+                      <div className='flex items-center justify-between'>
+                        <p className='text-[10px] font-bold uppercase tracking-wider text-(--text-tertiary)'>{isRTL ? 'سماكة الإطار' : 'Ring Thickness'}</p>
+                        <span className='text-[11px] text-(--text-tertiary)'>{ringThickness}</span>
+                      </div>
+                      <input
+                        type='range'
+                        min='2'
+                        max='10'
+                        value={ringThickness}
+                        onChange={(e) => setRingThickness(Number(e.target.value))}
+                        className='w-full h-1.5 rounded-full appearance-none cursor-pointer bg-(--border-secondary) accent-primary-500'
+                        style={{ accentColor: 'var(--primary-500, #8b5cf6)' }}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+          </div>
+          </div>
+
+         
+        )}
+ 
         {/* Info Grid or Edit Form */}
         <div className='space-y-4'>
           <div className='space-y-3 pt-2'>
