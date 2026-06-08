@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 import { inventoryService } from '../../services/inventory';
@@ -62,6 +62,10 @@ export const useDataActions = ({
   setBranches,
   lastLoadedBranchId
 }: DataActionsProps) => {
+
+  // Ref to avoid recreating completeSale/processSalesReturn on every inventory change (memory-leak-audit #15)
+  const rawInventoryRef = useRef(rawInventory);
+  rawInventoryRef.current = rawInventory;
 
   const refreshAll = useCallback(async (targetBranchId?: string, targetOrgId?: string) => {
     const branchId = targetBranchId !== undefined ? targetBranchId : activeBranchId;
@@ -239,11 +243,12 @@ export const useDataActions = ({
     return newSale;
   }, [activeBranchId, setSalesState]);
 
+  // Uses rawInventoryRef to avoid recreation on every inventory change (memory-leak-audit #15)
   const completeSale = useCallback(async (saleData: any, context: ActionContext) => {
-    const result = await transactionService.processCheckout(saleData, rawInventory, context);
+    const result = await transactionService.processCheckout(saleData, rawInventoryRef.current, context);
     if (!result.success || !result.sale) throw new Error(result.error);
     return result.sale;
-  }, [rawInventory]);
+  }, []);
 
   const addSupplier = useCallback(async (supplier: any) => {
     const newSupplier = await supplierService.create(supplier, activeBranchId);
@@ -284,11 +289,12 @@ export const useDataActions = ({
     setPurchasesState((prev: any) => prev.map((p: any) => (p.id === id ? { ...p, status: 'rejected' } as any : p)));
   }, [setPurchasesState]);
 
+  // Uses rawInventoryRef to avoid recreation on every inventory change (memory-leak-audit #15)
   const processSalesReturn = useCallback(async (returnData: any, sale: Sale, context: ActionContext) => {
-    const result = await transactionService.processReturn(returnData, rawInventory, sale, context);
+    const result = await transactionService.processReturn(returnData, rawInventoryRef.current, sale, context);
     if (!result.success) throw new Error(result.error);
     await refreshAll();
-  }, [rawInventory, refreshAll]);
+  }, [refreshAll]);
 
   const createPurchaseReturn = useCallback(async (ret: any, context: ActionContext) => {
     const result = await transactionService.processPurchaseReturnTransaction(ret, context);

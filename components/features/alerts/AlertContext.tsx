@@ -1,5 +1,5 @@
 import type React from 'react';
-import { createContext, type ReactNode, useCallback, useContext, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
 
 export type AlertType = 'success' | 'error' | 'info' | 'warning';
 
@@ -43,7 +43,8 @@ export const AlertProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setAlerts((prev) => prev.filter((a) => a.id !== id));
   }, []);
 
-  const helpers = {
+  // Memoize context value to prevent unnecessary consumer re-renders (memory-leak-audit #6)
+  const helpers = useMemo(() => ({
     success: (message: string, title?: string, duration?: number) =>
       addAlert({ type: 'success', message, title, duration: duration || 5000 }),
     error: (message: string, title?: string, duration?: number) =>
@@ -55,7 +56,7 @@ export const AlertProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     removeAlert,
     alerts,
     currentAlert: alerts[alerts.length - 1] || null,
-  };
+  }), [addAlert, removeAlert, alerts]);
 
   return <AlertContext.Provider value={helpers}>{children}</AlertContext.Provider>;
 };

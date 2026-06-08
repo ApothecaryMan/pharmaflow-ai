@@ -229,7 +229,8 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return shifts.filter((s) => s.branchId === activeBranchId);
   }, [shifts, activeBranchId]);
 
-  const value: ShiftContextType = {
+  // Memoize context value to prevent unnecessary consumer re-renders (memory-leak-audit #7)
+  const value = useMemo<ShiftContextType>(() => ({
     shifts: branchShifts,
     currentShift,
     isLoading,
@@ -237,7 +238,7 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     endShift,
     addTransaction,
     refreshShifts,
-  };
+  }), [branchShifts, currentShift, isLoading, startShift, endShift, addTransaction, refreshShifts]);
 
   return <ShiftContext.Provider value={value}>{children}</ShiftContext.Provider>;
 };

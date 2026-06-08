@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useEffect, useCallback, type ReactNode } from 'react';
+import React, { createContext, useContext, useMemo, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import type { Drug, Supplier, DataContextType } from './types';
 import { useDataState } from './useDataState';
 import { useDataActions } from './useDataActions';
@@ -37,6 +37,10 @@ interface DataProviderProps {
 export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInventory, initialSuppliers }) => {
   const state = useDataState(initialInventory, initialSuppliers);
   const hasInitialized = React.useRef(false);
+
+  // Ref to avoid re-registering storage listener on every employee list change (memory-leak-audit #11)
+  const employeesRef = useRef(state.employees);
+  employeesRef.current = state.employees;
   
   const {
     activeBranchId, activeOrgId, rawInventory, currentEmployee, setIsLoading,
@@ -186,7 +190,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
           
           if (newEmployeeId !== currentEmployeeId) {
             if (newEmployeeId) {
-              const matchedEmployee = employees.find(emp => emp.id === newEmployeeId);
+              const matchedEmployee = employeesRef.current.find(emp => emp.id === newEmployeeId);
               if (matchedEmployee) {
                 setCurrentEmployee(matchedEmployee);
               }
@@ -202,7 +206,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children, initialInv
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, [activeBranchId, currentEmployee, employees, actions.switchBranch, setCurrentEmployee]);
+  }, [activeBranchId, currentEmployee, actions.switchBranch, setCurrentEmployee]);
 
   // Callable re-initialization (for post-login)
   const reinitialize = useCallback(async () => {
