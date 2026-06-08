@@ -37,7 +37,6 @@ import { IceQueen } from './ice-queen';
 import { ChronoMatrixInfinity } from './chrono-matrix-infinity';
 import { EtherealHeavenVortex } from './ethereal-heaven-vortex';
 import { UltimateChronogearNexus } from './ultimate-chronogear-nexus';
-import { PerfectCelestialSeraphim } from './perfect-celestial-seraphim';
 
 export { NoneDecoration };
 export { CatEars };
@@ -76,7 +75,7 @@ export { IceQueen };
 export { ChronoMatrixInfinity };
 export { EtherealHeavenVortex };
 export { UltimateChronogearNexus };
-export { PerfectCelestialSeraphim };
+
 
 export interface DecorationDef {
   id: string;
@@ -123,7 +122,6 @@ export const AVATAR_DECORATIONS: DecorationDef[] = [
   { id: 'chrono_matrix_infinity', name: 'Chrono Matrix', nameAr: 'مصفوفة التحكم بالزمن', svg: <ChronoMatrixInfinity /> },
   { id: 'ethereal_heaven_vortex', name: 'Ethereal Heaven', nameAr: 'الفردوس الأثيري المضيء', svg: <EtherealHeavenVortex /> },
   { id: 'ultimate_chronogear_nexus', name: 'Chronogear Nexus', nameAr: 'آلة الزمن السحرية', svg: <UltimateChronogearNexus /> },
-  { id: 'perfect_celestial_seraphim', name: 'Celestial Seraphim', nameAr: 'أجنحة السيرافيم المقدسة', svg: <PerfectCelestialSeraphim /> },
 ];
 
 export const DECORATION_KEYFRAMES = `
@@ -287,35 +285,6 @@ export const DECORATION_KEYFRAMES = `
 .time-sweep { animation: spin-cw 3s linear infinite; }
 .time-tick { animation: spin-cw 12s steps(12, end) infinite; }
 .power-glow { animation: glow-pulse 2s ease-in-out infinite; }
-.pulse-aura { animation: divine-pulse 4s ease-in-out infinite; }
-@keyframes divine-pulse {
-  0%, 100% { opacity: 0.7; transform: scale(0.98); filter: drop-shadow(0 0 2px #FDE047); }
-  50% { opacity: 1; transform: scale(1.05); filter: drop-shadow(0 0 6px #FBBF24); }
-}
-@keyframes wing-flap-l {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(-8deg); }
-}
-@keyframes wing-flap-r {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(8deg); }
-}
-@keyframes feather-float {
-  0% { transform: translateY(0px) rotate(0deg); opacity: 0; }
-  20% { opacity: 0.9; }
-  80% { opacity: 0.8; }
-  100% { transform: translateY(-30px) rotate(20deg); opacity: 0; }
-}
-@keyframes holy-twinkle {
-  0%, 100% { opacity: 0.4; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1.2); }
-}
-.star-twinkle { animation: holy-twinkle 3s ease-in-out infinite; }
-.flap-l { animation: wing-flap-l 5s ease-in-out infinite; }
-.flap-r { animation: wing-flap-r 5s ease-in-out infinite; }
-.feather-1 { animation: feather-float 6s ease-in infinite; }
-.feather-2 { animation: feather-float 8s ease-in infinite 2s; }
-.feather-3 { animation: feather-float 7s ease-in infinite 4s; }
 `;
 
 export const DECORATION_MAP = new Map(AVATAR_DECORATIONS.map((d) => [d.id, d]));
