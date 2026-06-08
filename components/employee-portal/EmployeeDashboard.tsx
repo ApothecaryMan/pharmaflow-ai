@@ -1,4 +1,4 @@
-import { Clock, Menu } from 'lucide-react';
+import { Clock, Download, Menu } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { authService } from '../../services/auth/authService';
@@ -12,6 +12,7 @@ import { EmployeePortalProfile } from './EmployeePortalProfile';
 import { EmployeeSideDrawer } from './EmployeeSideDrawer';
 import { EmploymentRequestsList } from './EmploymentRequestsList';
 import { useEmployeeDashboardData } from './hooks/useEmployeeDashboardData';
+import { useUpdateCheck } from '../../hooks/infrastructure/useUpdateCheck';
 
 type EmployeeView = 'profile' | 'requests';
 
@@ -34,6 +35,7 @@ export function EmployeeDashboard({ t, language, view = 'requests', onViewChange
     updateProfile,
     actionRequest
   } = useEmployeeDashboardData();
+  const { hasUpdate, updateInfo, performUpdate } = useUpdateCheck();
   
   // Clean fallback for view if it's not profile/requests (e.g. from appState 'landing')
   const activeView = (view === 'profile' || view === 'requests') ? view : 'requests';
@@ -180,6 +182,16 @@ export function EmployeeDashboard({ t, language, view = 'requests', onViewChange
             <p className='text-xs font-semibold text-(--text-primary)'>{sessionName}</p>
             <p className='text-[10px] text-primary-500'>{sessionUsername}</p>
           </div>
+          {hasUpdate && (
+            <button
+              type='button'
+              onClick={performUpdate}
+              className='flex items-center justify-center w-10 h-10 text-primary-500 hover:text-primary-400 animate-pulse transition-colors'
+              title={updateInfo?.version ? `Update to v${updateInfo.version}` : 'Update available'}
+            >
+              <Download size='var(--icon-navbar-mobile)' />
+            </button>
+          )}
           <button
             type='button'
             onClick={() => setDrawerOpen((prev) => !prev)}
