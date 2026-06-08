@@ -179,8 +179,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               onModuleChange={handleModuleChange}
               appTitle={t.appTitle}
               onMobileMenuToggle={() => setMobileMenuOpen(true)}
-              profileImage={profileImage}
-              setProfileImage={setProfileImage}
               onLogoClick={() => setSidebarVisible(!sidebarVisible)}
               currentView={
                 (activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view) as ViewState
@@ -190,6 +188,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 id: e.id,
                 name: e.name,
                 employeeCode: e.employeeCode,
+                image: e.image,
               }))}
               currentEmployeeId={currentEmployeeId}
               setCurrentEmployeeId={setCurrentEmployeeId}

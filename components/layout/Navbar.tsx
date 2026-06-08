@@ -35,12 +35,10 @@ interface NavbarProps {
   appTitle: string;
   onMobileMenuToggle: () => void;
   isMobile?: boolean;
-  profileImage: string | null;
-  setProfileImage: (image: string | null) => void;
   onLogoClick?: () => void;
   currentView?: ViewState;
   onNavigate?: (view: ViewState) => void;
-  employees?: Array<{ id: string; name: string; employeeCode: string }>;
+  employees?: Array<{ id: string; name: string; employeeCode: string; image?: string }>;
   currentEmployeeId?: string | null;
   setCurrentEmployeeId?: (id: string | null) => void;
   onLogout?: () => void;
@@ -60,8 +58,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   appTitle,
   onMobileMenuToggle,
   isMobile = false,
-  profileImage,
-  setProfileImage,
   onLogoClick,
   currentView,
   onNavigate,
@@ -137,57 +133,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
   const activeBranch = branches.find((b) => b.id === activeBranchId);
   const profileRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
   const t = TRANSLATIONS[language];
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // 1. Check file size first (limit to 5MB initially to avoid browser crash on memory)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File is too large. Please select an image under 5MB.');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          // 2. Resize Logic
-          const MAX_WIDTH = 300;
-          const MAX_HEIGHT = 300;
-          let width = img.width;
-          let height = img.height;
-
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height = MAX_HEIGHT;
-            }
-          }
-
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, width, height);
-            // 3. Compress to JPEG with 0.7 quality
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-            setProfileImage(dataUrl);
-          }
-        };
-        img.src = e.target?.result as string;
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -451,12 +398,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({
         <NavUserActions
           language={language}
           theme={currentTheme}
-          profileImage={profileImage}
-          setProfileImage={setProfileImage}
+          profileImage={currentEmployee?.image ?? null}
           showProfileMenu={showProfileMenu}
           setShowProfileMenu={setShowProfileMenu}
           profileRef={profileRef}
-          fileInputRef={fileInputRef}
           currentEmployeeId={currentEmployeeId}
           currentEmployee={currentEmployee}
           activeOrg={activeOrg}
@@ -467,7 +412,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({
           onNavigate={onNavigate}
           onLogout={onLogout}
           isDataLoading={isDataLoading}
-          handleFileChange={handleFileChange}
           isLoggingOut={isLoggingOut}
           setIsLoggingOut={setIsLoggingOut}
           setShowPrinterSettings={setShowPrinterSettings}

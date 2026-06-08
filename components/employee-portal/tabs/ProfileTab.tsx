@@ -22,7 +22,7 @@ const getInitials = (name: string) => {
   return name.slice(0, 2).toUpperCase();
 };
 
-const readFileAsBase64 = (file: File, t: Translations): Promise<string> => {
+const readFileAsBase64 = (file: File, t: Translations, readerRef?: React.MutableRefObject<FileReader | null>): Promise<string> => {
   return new Promise((resolve, reject) => {
     if (file.size > MAX_UPLOAD_SIZE_KB * 1024) {
       reject(
@@ -30,9 +30,25 @@ const readFileAsBase64 = (file: File, t: Translations): Promise<string> => {
       );
       return;
     }
+    if (readerRef?.current) {
+      readerRef.current.abort();
+      readerRef.current.onloadend = null;
+      readerRef.current.onerror = null;
+    }
     const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
+    if (readerRef) readerRef.current = reader;
+    reader.onloadend = () => {
+      reader.onloadend = null;
+      reader.onerror = null;
+      if (readerRef) readerRef.current = null;
+      resolve(reader.result as string);
+    };
+    reader.onerror = () => {
+      reader.onloadend = null;
+      reader.onerror = null;
+      if (readerRef) readerRef.current = null;
+      reject(new Error('Failed to read file'));
+    };
     reader.readAsDataURL(file);
   });
 };
@@ -247,6 +263,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const dragStart = useRef({ x: 0, y: 0 });
   const offsetStart = useRef({ x: 0, y: 0 });
   const lastPinchDist = useRef(0);
+  const readerRef = useRef<FileReader | null>(null);
 
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 3;
@@ -298,6 +315,18 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     return () => {
       const el = document.getElementById(id);
       if (el) el.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (readerRef.current) {
+        readerRef.current.abort();
+        readerRef.current.onloadend = null;
+        readerRef.current.onerror = null;
+        readerRef.current = null;
+      }
+      setPreview(undefined);
     };
   }, []);
 
@@ -392,7 +421,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       const file = e.target.files?.[0];
       if (!file) return;
       try {
-        const base64 = await readFileAsBase64(file, t);
+        const base64 = await readFileAsBase64(file, t, readerRef);
         setPreview(base64);
         setRemoveImage(false);
       } catch (err) {

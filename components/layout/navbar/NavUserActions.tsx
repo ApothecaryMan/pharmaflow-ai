@@ -11,11 +11,9 @@ interface NavUserActionsProps {
   language: Language;
   theme: { hex: string; primary: string };
   profileImage: string | null;
-  setProfileImage: (img: string | null) => void;
   showProfileMenu: boolean;
   setShowProfileMenu: (show: boolean) => void;
   profileRef: React.RefObject<HTMLDivElement>;
-  fileInputRef: React.RefObject<HTMLInputElement>;
   currentEmployeeId: string | null;
   currentEmployee: any;
   activeOrg: Organization | null;
@@ -26,7 +24,6 @@ interface NavUserActionsProps {
   onNavigate?: (view: ViewState) => void;
   onLogout?: () => void;
   isDataLoading: boolean;
-  handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   isLoggingOut: boolean;
   setIsLoggingOut: (val: boolean) => void;
   setShowPrinterSettings: (val: boolean) => void;
@@ -37,11 +34,9 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
   language,
   theme,
   profileImage,
-  setProfileImage,
   showProfileMenu,
   setShowProfileMenu,
   profileRef,
-  fileInputRef,
   currentEmployeeId,
   currentEmployee,
   activeOrg,
@@ -52,7 +47,6 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
   onNavigate,
   onLogout,
   isDataLoading,
-  handleFileChange,
   isLoggingOut,
   setIsLoggingOut,
   setShowPrinterSettings,
@@ -136,21 +130,6 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                       <Icons.Store size="var(--icon-lg)" stroke={2} color="white" />
                     </div>
                   )}
-                  {currentEmployeeId && (
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      style={{
-                        WebkitAppearance: 'none',
-                        appearance: 'none',
-                        width: '20px',
-                        height: '20px',
-                      }}
-                      className='absolute bottom-0 right-0 w-5 h-5 bg-black/30 backdrop-blur-xs text-white rounded-full flex items-center justify-center hover:bg-black/50 shadow-xs'
-                      title='Change Photo'
-                    >
-                      <Icons.Edit size="var(--icon-xs)" />
-                    </button>
-                  )}
                 </div>
                 <div>
                   <h3 className='font-bold text-gray-900 dark:text-white'>
@@ -181,13 +160,6 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                     )}
                   </div>
                 </div>
-                <input
-                  type='file'
-                  ref={fileInputRef}
-                  className='hidden'
-                  accept='image/*'
-                  onChange={handleFileChange}
-                />
               </div>
             </div>
 
