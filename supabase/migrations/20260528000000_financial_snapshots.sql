@@ -417,7 +417,7 @@ BEGIN
             'net', COALESCE(s.revenue, 0) - COALESCE(r.refund, 0),
             'sale_count', COALESCE(s.sale_count, 0),
             'return_count', COALESCE(r.return_count, 0)
-        ) ORDER BY day ASC
+        ) ORDER BY COALESCE(s.day, r.day) ASC
     ) INTO v_result
     FROM daily_sales s
     FULL OUTER JOIN daily_returns r ON s.day = r.day;

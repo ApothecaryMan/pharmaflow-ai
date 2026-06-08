@@ -29,16 +29,17 @@ if (isSupabaseConfigured && typeof document !== 'undefined') {
   document.head.appendChild(dnsPrefetch);
 }
 
-// Diagnostic logging for production debugging
-if (import.meta.env.DEV) {
-  console.log('Supabase Configuration Status:', {
-    configured: isSupabaseConfigured,
-    urlSet: !!supabaseUrl,
-    keySet: !!supabaseAnonKey,
-    isPlaceholder: isPlaceholder,
-    urlStart: supabaseUrl ? supabaseUrl.substring(0, 12) + '...' : 'none'
-  });
-}
+// Diagnostic logging — only when explicitly debugging Supabase issues
+// To re-enable: uncomment the block below
+// if (import.meta.env.DEV) {
+//   console.log('Supabase Configuration Status:', {
+//     configured: isSupabaseConfigured,
+//     urlSet: !!supabaseUrl,
+//     keySet: !!supabaseAnonKey,
+//     isPlaceholder: isPlaceholder,
+//     urlStart: supabaseUrl ? supabaseUrl.substring(0, 12) + '...' : 'none'
+//   });
+// }
 
 /**
  * Creates a guarded Supabase client.

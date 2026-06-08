@@ -19,7 +19,7 @@ import { PAGE_REGISTRY } from './config/pageRegistry';
 import { UserRole } from './config/permissions';
 import { SecureGate } from './components/common/SecureGate';
 import { ROUTES } from './config/routes';
-import { LANGUAGES, THEMES, useSettings, useAlert } from './context';
+import { LANGUAGES, THEMES, useSettings, useAlert, CatalogProvider } from './context';
 // App State Hooks
 import { type AppState, useAppState } from './hooks/layout/useAppState';
 import { type AuthState, useAuth } from './hooks/auth/useAuth';
@@ -257,7 +257,11 @@ const App: React.FC = () => {
       {!authState.isAuthenticated && <TitleBar />}
       <div className="flex-1 overflow-hidden relative">
         <NotificationOverlay />
-        {finalContent}
+        {authState.isAuthenticated ? (
+          <CatalogProvider>
+            {finalContent}
+          </CatalogProvider>
+        ) : finalContent}
       </div>
     </div>
   );
