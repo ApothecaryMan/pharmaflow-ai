@@ -160,7 +160,7 @@ export const employmentRequestRepository = {
         id: undefined,
         employeeCode: undefined, // Let employeeService auto-generate this
         userId: userId,
-        username: profile.username, // Use actual username
+        username: undefined, // Let employeeService generate sequential local username
         name: profile.fullName,
         nameArabic: profile.nameArabic || undefined,
         image: profile.image || undefined,

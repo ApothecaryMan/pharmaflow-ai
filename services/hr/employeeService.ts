@@ -76,9 +76,9 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
         
         const employeeCodeValue = `EMP-${seqValue}`;
         newEmployee.employeeCode = employeeCodeValue;
-        // Also ensure the Local POS Username is exactly the same as the employee code
+        // Also ensure the Local POS Username is the sequential number (e.g., "1")
         if (!newEmployee.username) {
-          (newEmployee as any).username = employeeCodeValue;
+          (newEmployee as any).username = String(seqValue);
         }
 
         try {

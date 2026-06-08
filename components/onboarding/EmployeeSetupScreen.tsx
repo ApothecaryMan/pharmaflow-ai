@@ -372,7 +372,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
                   <span className="absolute top-1/2 -translate-y-1/2 left-3 material-symbols-rounded text-zinc-400">badge</span>
                   <input
                     readOnly
-                    value={acceptedEmployee.employee_code || acceptedEmployee.username}
+                    value={acceptedEmployee.username || acceptedEmployee.employee_code}
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-bold tracking-wider cursor-not-allowed opacity-70"
                   />
                 </div>
