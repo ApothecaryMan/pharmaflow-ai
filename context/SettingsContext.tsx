@@ -326,6 +326,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     document.documentElement.style.setProperty('--font-en', settings.fontFamilyEN);
     document.documentElement.style.setProperty('--font-ar', settings.fontFamilyAR);
 
+    const createdIds: string[] = [];
+
     // 2. Load English Font
     const enFont = AVAILABLE_FONTS_EN.find((f) => f.value === settings.fontFamilyEN);
     if (enFont && enFont.url) {
@@ -336,6 +338,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         link.href = enFont.url;
         link.rel = 'stylesheet';
         document.head.appendChild(link);
+        createdIds.push(linkId);
       }
     }
 
@@ -349,8 +352,13 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         link.href = arFont.url;
         link.rel = 'stylesheet';
         document.head.appendChild(link);
+        createdIds.push(linkId);
       }
     }
+
+    return () => {
+      createdIds.forEach((id) => document.getElementById(id)?.remove());
+    };
   }, [settings.fontFamilyEN, settings.fontFamilyAR]);
 
   // Apply text transform
@@ -425,7 +433,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   // Apply custom CSS
   useEffect(() => {
-    let styleEl = document.getElementById('pharma-custom-card-css');
+    let styleEl = document.getElementById('pharma-custom-card-css') as HTMLStyleElement | null;
     if (!styleEl) {
       styleEl = document.createElement('style');
       styleEl.id = 'pharma-custom-card-css';
@@ -455,6 +463,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     } else {
       styleEl.textContent = '';
     }
+
+    return () => {
+      document.getElementById('pharma-custom-card-css')?.remove();
+    };
   }, [settings.customCardCss, settings.enableCustomCardCss]);
 
   // Synchronize document language and direction

@@ -130,20 +130,32 @@ export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean 
     const titleBarColor = isLoginView ? '#000000' : (computedNavbarColor || (darkMode ? '#1f1f1f' : '#ffffff'));
 
     // Update all theme-color meta tags to match the current mode
-    const metaTags = document.querySelectorAll('meta[name="theme-color"]');
-    if (metaTags.length > 0) {
-      metaTags.forEach((tag) => tag.setAttribute('content', titleBarColor));
+    const metaId = '__pharma_theme_color';
+    let meta = document.querySelector(`meta#${metaId}`) as HTMLMetaElement | null;
+    if (!meta) {
+      const existing = document.querySelector('meta[name="theme-color"]');
+      if (existing) {
+        existing.setAttribute('content', titleBarColor);
+      } else {
+        meta = document.createElement('meta');
+        meta.name = 'theme-color';
+        meta.content = titleBarColor;
+        meta.id = metaId;
+        document.head.appendChild(meta);
+      }
     } else {
-      const meta = document.createElement('meta');
-      meta.name = 'theme-color';
-      meta.content = titleBarColor;
-      document.head.appendChild(meta);
+      meta.setAttribute('content', titleBarColor);
     }
 
-    // Update browser favicon dynamically
+    return () => {
+      document.getElementById(metaId)?.remove();
+    };
+  }, [color, darkMode, isLoginView]);
+
+  // Favicon — separate effect so meta-tag cleanup doesn't affect it
+  useEffect(() => {
     const favicon = document.querySelector('link[rel="icon"]');
     if (favicon) {
-      // Force white icon for login as well
       favicon.setAttribute(
         'href',
         darkMode || isLoginView ? '/logo_icon_white.svg' : '/app_icon.svg'
