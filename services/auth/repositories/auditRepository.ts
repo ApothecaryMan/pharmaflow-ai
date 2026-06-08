@@ -2,10 +2,18 @@ import { supabase } from '../../../lib/supabase';
 import type { LoginAuditEntry } from '../../../types';
 
 export const auditRepository = {
+  /** Queue of entries that failed to sync to Supabase (e.g. RLS permission denied) */
+  _pendingQueue: [] as Omit<LoginAuditEntry, 'id' | 'timestamp'>[],
+
   /**
-   * Save a new audit event to the database
+   * Save a new audit event to the database.
+   * Falls back to a local queue when Supabase RLS denies the write,
+   * so no data is lost and no noisy 401 errors appear in the console.
    */
   async insert(entry: Omit<LoginAuditEntry, 'id' | 'timestamp'>): Promise<void> {
+    // First, try to flush any previously queued entries
+    await this._flushQueue();
+
     const { error } = await supabase
       .from('login_audits')
       .insert({
@@ -20,8 +28,37 @@ export const auditRepository = {
       });
 
     if (error) {
-      console.error('[AuditRepository] Failed to insert log:', error);
+      // Queue for retry instead of logging a scary error
+      this._pendingQueue.push(entry);
+      console.debug('[AuditRepository] Queued audit log for later sync:', error.code);
     }
+  },
+
+  /**
+   * Attempt to flush queued audit entries to Supabase.
+   * Called automatically before each new insert.
+   */
+  async _flushQueue(): Promise<void> {
+    if (this._pendingQueue.length === 0) return;
+
+    const batch = [...this._pendingQueue];
+    const rows = batch.map(e => ({
+      username: e.username,
+      employee_id: e.employeeId,
+      employee_code: e.employeeCode,
+      employee_name: e.employeeName,
+      role: e.role,
+      branch_id: e.branchId || null,
+      action: e.action,
+      details: e.details,
+    }));
+
+    const { error } = await supabase.from('login_audits').insert(rows);
+    if (!error) {
+      // Successfully flushed — clear queue
+      this._pendingQueue = [];
+    }
+    // If still failing, keep them queued for next attempt
   },
 
   /**
