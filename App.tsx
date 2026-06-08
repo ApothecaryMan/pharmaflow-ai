@@ -159,8 +159,12 @@ const App: React.FC = () => {
 
   const handleLoginSuccess = useCallback(() => {
     setIsAuthenticated(true);
+    // Clear stale employee session from previous login — currentEmployeeId is persisted
+    // in localStorage via usePersistedState, so it survives logout→login cycles
+    // and causes a ghost employee to appear in the StatusBar.
+    appState.setCurrentEmployeeId(null);
     reinitialize();
-  }, [setIsAuthenticated, reinitialize]);
+  }, [setIsAuthenticated, reinitialize, appState]);
 
   // --- URL Synchronization ---
   // Synchronize browser hash with authentication state & current view
