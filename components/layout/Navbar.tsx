@@ -323,6 +323,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({
       className='h-12 flex items-center justify-between w-full px-4 sticky top-0 z-50'
       style={{
         backgroundColor: 'var(--bg-navbar)',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        height: 'calc(48px + env(safe-area-inset-top, 0px))',
       }}
     >
       {/* Logo & Title */}

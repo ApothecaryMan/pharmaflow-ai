@@ -129,27 +129,17 @@ export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean 
     const computedNavbarColor = getComputedStyle(root).getPropertyValue('--bg-navbar').trim();
     const titleBarColor = isLoginView ? '#000000' : (computedNavbarColor || (darkMode ? '#1f1f1f' : '#ffffff'));
 
-    // Update all theme-color meta tags to match the current mode
-    const metaId = '__pharma_theme_color';
-    let meta = document.querySelector(`meta#${metaId}`) as HTMLMetaElement | null;
-    if (!meta) {
-      const existing = document.querySelector('meta[name="theme-color"]');
-      if (existing) {
-        existing.setAttribute('content', titleBarColor);
-      } else {
-        meta = document.createElement('meta');
-        meta.name = 'theme-color';
-        meta.content = titleBarColor;
-        meta.id = metaId;
-        document.head.appendChild(meta);
-      }
+    // Update ALL theme-color meta tags to match the current mode
+    const metaTags = document.querySelectorAll('meta[name="theme-color"]');
+    if (metaTags.length > 0) {
+      metaTags.forEach(tag => tag.setAttribute('content', titleBarColor));
     } else {
-      meta.setAttribute('content', titleBarColor);
+      const meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      meta.content = titleBarColor;
+      meta.id = '__pharma_theme_color';
+      document.head.appendChild(meta);
     }
-
-    return () => {
-      document.getElementById(metaId)?.remove();
-    };
   }, [color, darkMode, isLoginView]);
 
   // Favicon — separate effect so meta-tag cleanup doesn't affect it

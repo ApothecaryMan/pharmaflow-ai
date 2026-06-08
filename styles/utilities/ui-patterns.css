@@ -50,7 +50,8 @@ input[type="number"] {
 @supports (padding: env(safe-area-inset-top))  { body  {
 
 /* Handle notch/home indicator safe areas */
-padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); } }
+/* Top padding removed — handled by Navbar to keep seamless color */
+padding-bottom: env(safe-area-inset-bottom); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); } }
 
 /* Prevent iOS rubber-band scrolling on the body */
 html, body  { overscroll-behavior: none; -webkit-overflow-scrolling: touch; scrollbar-gutter: auto;
