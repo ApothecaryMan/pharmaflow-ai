@@ -4,7 +4,6 @@ RETURNS TRIGGER AS $$
 BEGIN
   UPDATE employees
   SET photo = NEW.image,
-      username = NEW.username,
       name = NEW.full_name,
       name_arabic = NEW.name_arabic,
       email = NEW.email,

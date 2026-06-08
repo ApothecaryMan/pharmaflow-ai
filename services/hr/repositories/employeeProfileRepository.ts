@@ -2,7 +2,7 @@ import { supabase } from '../../../lib/supabase';
 import type { UserProfile } from '../../../types';
 
 export const employeeProfileRepository = {
-  BASE_PROFILE_COLUMNS: 'id, username, full_name, name_arabic, email, phone, license_number, image, cover_style, created_at, updated_at',
+  BASE_PROFILE_COLUMNS: 'id, username, full_name, name_arabic, email, phone, license_number, image, cover_style, design_settings, created_at, updated_at',
 
   /**
    * Fetch a user profile by ID
@@ -107,6 +107,7 @@ export const employeeProfileRepository = {
       if (updates.nationalIdCardBack !== undefined) payload.national_id_card_back = updates.nationalIdCardBack;
       if (updates.mainSyndicateCard !== undefined) payload.main_syndicate_card = updates.mainSyndicateCard;
       if (updates.subSyndicateCard !== undefined) payload.sub_syndicate_card = updates.subSyndicateCard;
+      if (updates.designSettings !== undefined) payload.design_settings = updates.designSettings;
 
       const { data, error } = await supabase
         .from('user_profiles')
@@ -162,6 +163,7 @@ export const employeeProfileRepository = {
       nationalIdCardBack: row.national_id_card_back,
       mainSyndicateCard: row.main_syndicate_card,
       subSyndicateCard: row.sub_syndicate_card,
+      designSettings: row.design_settings,
       createdAt: row.created_at,
       updatedAt: row.updated_at
     };

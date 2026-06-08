@@ -77,6 +77,7 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
         const employeeCodeValue = `EMP-${seqValue}`;
         newEmployee.employeeCode = employeeCodeValue;
         // Also ensure the Local POS Username is the sequential number (e.g., "1")
+        // This is decoupled from the employeeCode ("EMP-1") for faster quick-POS typing.
         if (!newEmployee.username) {
           (newEmployee as any).username = String(seqValue);
         }

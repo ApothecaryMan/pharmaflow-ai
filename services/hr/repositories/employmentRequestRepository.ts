@@ -160,7 +160,9 @@ export const employmentRequestRepository = {
         id: undefined,
         employeeCode: undefined, // Let employeeService auto-generate this
         userId: userId,
-        username: undefined, // Let employeeService generate sequential local username
+        // CRITICAL: Keep username undefined here. This forces employeeService.create() to generate
+        // the local sequential branch code (e.g. "1") instead of overriding it with the global '@username'.
+        username: undefined, 
         name: profile.fullName,
         nameArabic: profile.nameArabic || undefined,
         image: profile.image || undefined,

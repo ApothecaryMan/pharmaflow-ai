@@ -206,18 +206,41 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const [coverStyle, setCoverStyle] = useState<BannerId>(
     (profile?.coverStyle as BannerId) || 'pattern'
   );
-  const [bannerZoom, setBannerZoom] = useState(1.2);
-  const [bannerOffset, setBannerOffset] = useState({ x: 0, y: 0 });
+  const [bannerZoom, setBannerZoom] = useState(() => profile?.designSettings?.banner?.zoom ?? 1.2);
+  const [bannerOffset, setBannerOffset] = useState(() => ({
+    x: profile?.designSettings?.banner?.offsetX ?? 0,
+    y: profile?.designSettings?.banner?.offsetY ?? 0,
+  }));
   const [isDragging, setIsDragging] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [preview, setPreview] = useState<string | undefined>(undefined);
   const [removeImage, setRemoveImage] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [avatarDecoration, setAvatarDecoration] = useState<string>('none');
-  const [frameColor, setFrameColor] = useState<string | null>(null);
-  const [ringStyle, setRingStyle] = useState<RingStyle>('solid');
-  const [ringThickness, setRingThickness] = useState(4);
-  const [ringAnimated, setRingAnimated] = useState(false);
+  const [avatarDecoration, setAvatarDecoration] = useState(() => profile?.designSettings?.avatar?.decorationId ?? 'none');
+  const [frameColor, setFrameColor] = useState<string | null>(() => profile?.designSettings?.avatar?.frameColor ?? null);
+  const [ringStyle, setRingStyle] = useState<RingStyle>(() => (profile?.designSettings?.avatar?.ringStyle as RingStyle) ?? 'solid');
+  const [ringThickness, setRingThickness] = useState(() => profile?.designSettings?.avatar?.ringThickness ?? 4);
+  const [ringAnimated, setRingAnimated] = useState(() => profile?.designSettings?.avatar?.ringAnimated ?? false);
+
+  useEffect(() => {
+    if (profile?.designSettings) {
+      const ds = profile.designSettings;
+      if (ds.banner) {
+        if (ds.banner.zoom !== undefined) setBannerZoom(ds.banner.zoom);
+        setBannerOffset({
+          x: ds.banner.offsetX ?? 0,
+          y: ds.banner.offsetY ?? 0,
+        });
+      }
+      if (ds.avatar) {
+        if (ds.avatar.decorationId !== undefined) setAvatarDecoration(ds.avatar.decorationId);
+        if (ds.avatar.frameColor !== undefined) setFrameColor(ds.avatar.frameColor);
+        if (ds.avatar.ringStyle !== undefined) setRingStyle(ds.avatar.ringStyle as RingStyle);
+        if (ds.avatar.ringThickness !== undefined) setRingThickness(ds.avatar.ringThickness);
+        if (ds.avatar.ringAnimated !== undefined) setRingAnimated(ds.avatar.ringAnimated);
+      }
+    }
+  }, [profile]);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
@@ -326,6 +349,20 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
         licenseNumber: editFields.licenseNumber.trim() || null,
         ...(preview && { image: preview }),
         ...(removeImage && { image: null }),
+        designSettings: {
+          avatar: {
+            decorationId: avatarDecoration,
+            frameColor,
+            ringStyle,
+            ringThickness,
+            ringAnimated,
+          },
+          banner: {
+            zoom: bannerZoom,
+            offsetX: bannerOffset.x,
+            offsetY: bannerOffset.y,
+          }
+        }
       } as Partial<UserProfile>);
       setPreview(undefined);
       setRemoveImage(false);
@@ -335,7 +372,20 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     } finally {
       setIsSaving(false);
     }
-  }, [onUpdateProfile, editFields, preview, removeImage, setIsEditing]);
+  }, [
+    onUpdateProfile,
+    editFields,
+    preview,
+    removeImage,
+    setIsEditing,
+    avatarDecoration,
+    frameColor,
+    ringStyle,
+    ringThickness,
+    ringAnimated,
+    bannerZoom,
+    bannerOffset,
+  ]);
 
   const handleImageUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {

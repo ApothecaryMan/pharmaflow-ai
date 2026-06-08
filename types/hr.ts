@@ -48,6 +48,20 @@ export interface Employee {
   nationalIdCardBack?: string; // Base64 encoded National ID Card Back Side
   mainSyndicateCard?: string; // Base64 encoded Main Syndicate Card (كارنيه النقابة الرئيسية)
   subSyndicateCard?: string; // Base64 encoded Sub Syndicate Card (كارنيه النقابة الفرعية)
+  designSettings?: {
+    avatar?: {
+      decorationId?: string;
+      frameColor?: string | null;
+      ringStyle?: string;
+      ringThickness?: number;
+      ringAnimated?: boolean;
+    };
+    banner?: {
+      zoom?: number;
+      offsetX?: number;
+      offsetY?: number;
+    };
+  };
 }
 
 /**
@@ -90,6 +104,20 @@ export interface UserProfile {
   nationalIdCardBack?: string | null; // Base64 National ID back
   mainSyndicateCard?: string | null; // Base64 Syndicate card
   subSyndicateCard?: string | null; // Base64 Sub syndicate card
+  designSettings?: {
+    avatar?: {
+      decorationId?: string;
+      frameColor?: string | null;
+      ringStyle?: string;
+      ringThickness?: number;
+      ringAnimated?: boolean;
+    };
+    banner?: {
+      zoom?: number;
+      offsetX?: number;
+      offsetY?: number;
+    };
+  };
   createdAt?: string;
   updatedAt?: string;
 }
