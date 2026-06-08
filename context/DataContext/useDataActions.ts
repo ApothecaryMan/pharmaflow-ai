@@ -101,7 +101,28 @@ export const useDataActions = ({
         return;
       }
 
-      const [inv, sal, sup, pur, pRet, ret, cust, emp, bat, allBranches, activeOrgData] = await Promise.all([
+      // ── Stage 1: Core data (immediate) ──
+      // Load employees, branches, and org first so the UI shell renders immediately.
+      const [emp, allBranches, activeOrgData] = await Promise.all([
+        employeeService.getAll(branchId),
+        branchService.getAll(orgId),
+        orgService.getById(orgId),
+      ]);
+
+      const currentSession = authService.getCurrentUserSync();
+      const loggedInEmployee = emp.find(e => e.id === currentSession?.employeeId) || null;
+
+      setEmployeesState(emp);
+      setCurrentEmployee(loggedInEmployee);
+      setBranches(allBranches);
+      setActiveOrg(activeOrgData);
+
+      // Release loading state after core data so the UI shell renders immediately
+      setIsLoading(false);
+
+      // ── Stage 2: Domain data (background) ──
+      // Load inventory, sales, purchases, etc. without blocking the UI.
+      const [inv, sal, sup, pur, pRet, ret, cust, bat] = await Promise.all([
         inventoryService.getAll(branchId),
         salesService.getRecent(branchId, 100),
         supplierService.getAll(branchId),
@@ -109,14 +130,8 @@ export const useDataActions = ({
         returnService.getAllPurchaseReturns(branchId),
         returnService.getAllSalesReturns(branchId),
         customerService.getAll(branchId),
-        employeeService.getAll(branchId),
         batchService.getAllBatches(branchId),
-        branchService.getAll(orgId),
-        orgService.getById(orgId),
       ]);
-
-      const currentSession = authService.getCurrentUserSync();
-      const loggedInEmployee = emp.find(e => e.id === currentSession?.employeeId) || null;
 
       setRawInventory(inv);
       inventorySearchEngine.indexData(inv as any);
@@ -126,15 +141,11 @@ export const useDataActions = ({
       setPurchaseReturnsState(pRet);
       setReturnsState(ret);
       setCustomersState(cust);
-      setEmployeesState(emp);
-      setCurrentEmployee(loggedInEmployee);
       setBatchesState(bat);
-      setBranches(allBranches);
-      setActiveOrg(activeOrgData);
     } catch (error) {
       console.error('Error refreshing data:', error);
     }
-  }, [activeBranchId, activeOrgId, setRawInventory, setSalesState, setSuppliersState, setPurchasesState, setPurchaseReturnsState, setReturnsState, setCustomersState, setEmployeesState, setCurrentEmployee, setBatchesState, setBranches, setActiveOrg]);
+  }, [activeBranchId, activeOrgId, setIsLoading, setRawInventory, setSalesState, setSuppliersState, setPurchasesState, setPurchaseReturnsState, setReturnsState, setCustomersState, setEmployeesState, setCurrentEmployee, setBatchesState, setBranches, setActiveOrg]);
 
   const switchBranch = useCallback(async (branchId: string, skipClearEmployee?: boolean) => {
     setIsLoading(true);
