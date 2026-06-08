@@ -27,6 +27,23 @@ export default defineConfig(({ mode }) => {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
+    build: {
+      chunkSizeWarningLimit: 1200,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules/recharts')) return 'vendor-recharts';
+            if (id.includes('node_modules/framer-motion')) return 'vendor-motion';
+            if (id.includes('node_modules/motion')) return 'vendor-motion';
+            if (id.includes('node_modules/@tanstack/react-table')) return 'vendor-table';
+            if (id.includes('node_modules/@dnd-kit')) return 'vendor-dnd-kit';
+            if (id.includes('node_modules/lucide-react')) return 'vendor-lucide';
+            if (id.includes('node_modules/@tanstack/react-virtual')) return 'vendor-virtual';
+            if (id.includes('node_modules/radix-ui')) return 'vendor-radix';
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
