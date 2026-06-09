@@ -1,6 +1,18 @@
 {
   "version": 1,
   "skills": {
+    "clean-code-guard": {
+      "source": "amElnagdy/guard-skills",
+      "sourceType": "github",
+      "skillPath": "skills/clean-code-guard/SKILL.md",
+      "computedHash": "dbc49cbc3735474569b1a6789f9493b7b7de37a9ba136e26d033713d1c683119"
+    },
+    "docs-guard": {
+      "source": "amElnagdy/guard-skills",
+      "sourceType": "github",
+      "skillPath": "skills/docs-guard/SKILL.md",
+      "computedHash": "7f288285488af47e10f6a1eef9a9e58e318f0ef863aa20baf596acb4cbf38616"
+    },
     "frontend-design": {
       "source": "anthropics/skills",
       "sourceType": "github",
@@ -10,6 +22,12 @@
       "source": "millionco/react-doctor",
       "sourceType": "github",
       "computedHash": "efa8db174b3c60e27b34d76842e3a9a7c0e5e602fd4d66eec897372d0ce3f30b"
+    },
+    "test-guard": {
+      "source": "amElnagdy/guard-skills",
+      "sourceType": "github",
+      "skillPath": "skills/test-guard/SKILL.md",
+      "computedHash": "9c5a639c9405cd5833958e5705ddb1762424356072ad157f9542efb8a6392ec8"
     },
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",
