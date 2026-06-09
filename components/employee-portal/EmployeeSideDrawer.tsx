@@ -1,13 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import { UserCircle, Clock, LogOut, Menu, Sun, Moon, Globe } from 'lucide-react';
+import { UserCircle, Clock, LogOut, Menu, Sun, Moon, Globe, Search } from 'lucide-react';
 import { useSettings } from '../../context';
 import { Switch } from '../common/Switch';
 
 interface EmployeeSideDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  activeView: 'profile' | 'requests';
-  onViewChange: (view: 'profile' | 'requests') => void;
+  activeView: 'profile' | 'requests' | 'pricing';
+  onViewChange: (view: 'profile' | 'requests' | 'pricing') => void;
   onSignOut: () => void;
   sessionName?: string;
   sessionUsername?: string;
@@ -65,6 +65,11 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
 
 
   const menuItems = [
+    {
+      id: 'pricing' as const,
+      icon: Search,
+      label: t.employeeProfile.prescriptionPricing,
+    },
     {
       id: 'requests' as const,
       icon: Clock,

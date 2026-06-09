@@ -41,6 +41,9 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
   const initScanner = async () => {
     try {
       setError(null);
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error(language === 'AR' ? 'الكاميرا غير متوفرة' : 'Camera not available');
+      }
       if (!detectorRef.current) {
         detectorRef.current = new BarcodeDetector({
           formats: [

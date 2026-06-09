@@ -7,14 +7,16 @@ import { employeeRepository } from '../../services/hr/repositories/employeeRepos
 import { employmentRequestRepository } from '../../services/hr/repositories/employmentRequestRepository';
 import { startRegistration } from '@simplewebauthn/browser';
 import type { Employee, EmploymentRequest, UserProfile } from '../../types';
+import { ContextMenuProvider } from '../common/ContextMenu';
 import { EmployeeMobileDock } from './EmployeeMobileDock';
 import { EmployeePortalProfile } from './EmployeePortalProfile';
 import { EmployeeSideDrawer } from './EmployeeSideDrawer';
 import { EmploymentRequestsList } from './EmploymentRequestsList';
+import PrescriptionPricing from './PrescriptionPricing';
 import { useEmployeeDashboardData } from './hooks/useEmployeeDashboardData';
 import { useUpdateCheck } from '../../hooks/infrastructure/useUpdateCheck';
 
-type EmployeeView = 'profile' | 'requests';
+type EmployeeView = 'profile' | 'requests' | 'pricing';
 
 interface Props {
   t: Translations;
@@ -38,7 +40,7 @@ export function EmployeeDashboard({ t, language, view = 'requests', onViewChange
   const { hasUpdate, updateInfo, performUpdate } = useUpdateCheck();
   
   // Clean fallback for view if it's not profile/requests (e.g. from appState 'landing')
-  const activeView = (view === 'profile' || view === 'requests') ? view : 'requests';
+  const activeView = (view === 'profile' || view === 'requests' || view === 'pricing') ? view : 'requests';
 
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -150,10 +152,11 @@ export function EmployeeDashboard({ t, language, view = 'requests', onViewChange
   }, [language, loadData]);
 
   return (
+    <ContextMenuProvider enableGlassEffect={false}>
     <div className='h-dvh bg-(--bg-page-surface) text-(--text-primary) flex flex-col overflow-hidden select-none'>
       {/* Header */}
       <header
-        className='h-12 flex items-center justify-between w-full px-4 sticky top-0 z-50'
+        className={`h-12 flex items-center justify-between w-full px-4 sticky top-0 z-50 ${activeView === 'pricing' ? 'max-lg:hidden' : ''}`}
         style={{ backgroundColor: 'var(--bg-navbar)' }}
       >
         <div className='flex items-center gap-2.5 min-w-0'>
@@ -205,6 +208,10 @@ export function EmployeeDashboard({ t, language, view = 'requests', onViewChange
       {/* Scrollable Main Content */}
       <main className='flex-1 min-h-0 overflow-y-auto overscroll-contain'>
         <div className='p-4 sm:p-6 max-w-7xl mx-auto w-full space-y-6 sm:space-y-8 pb-28 md:pb-6'>
+          {activeView === 'pricing' && (
+            <PrescriptionPricing />
+          )}
+
           {activeView === 'profile' && (
             <EmployeePortalProfile
               profile={profile}
@@ -279,5 +286,6 @@ export function EmployeeDashboard({ t, language, view = 'requests', onViewChange
         t={t}
       />
     </div>
+    </ContextMenuProvider>
   );
 }

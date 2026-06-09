@@ -34,7 +34,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
         console.log(`[CatalogContext] Syncing with Supabase (last sync: ${lastTime || 'never'})...`);
       }
       
-      const columns = 'id, name_en, name_ar, barcode, public_price, category, active_substance, updated_at';
+      const columns = 'id, name_en, name_ar, barcode, public_price, category, active_substance, dosage_form, updated_at';
       let query = supabase.from('global_drugs').select(columns);
       
       // Delta Sync Logic
@@ -61,6 +61,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
           category: item.category || '',
           activeSubstance: item.active_substance || '',
           genericName: item.active_substance ? item.active_substance.split(',').map(s => s.trim()) : [],
+          dosageForm: item.dosage_form || '',
           updatedAt: item.updated_at
         }));
 

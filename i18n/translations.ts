@@ -2960,6 +2960,7 @@ export const TRANSLATIONS = {
       signOut: 'Sign Out',
       language: 'Language',
       menu: 'Menu',
+      prescriptionPricing: 'Prescription Pricing',
       copied: 'Copied ✓',
       noPendingRequestsDesc:
         'When a pharmacy sends you an employment request, it will appear here. Accept it to gain access to their management system.',
@@ -5935,6 +5936,7 @@ export const TRANSLATIONS = {
       signOut: 'تسجيل الخروج',
       language: 'اللغة',
       menu: 'القائمة',
+      prescriptionPricing: 'تسعير الوصفات الطبية',
       copied: 'تم النسخ ✓',
       noPendingRequestsDesc:
         'عندما ترسل لك أي صيدلية طلب توظيف، سيظهر هنا. يمكنك قبوله للوصول إلى نظام إدارة الصيدلية الخاص بهم.',

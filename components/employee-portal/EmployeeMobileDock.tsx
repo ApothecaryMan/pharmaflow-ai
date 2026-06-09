@@ -1,9 +1,9 @@
 import React from 'react';
-import { User, Clock, Menu } from 'lucide-react';
+import { User, Clock, Menu, Search } from 'lucide-react';
 
 interface EmployeeMobileDockProps {
-  activeView: 'profile' | 'requests';
-  onViewChange: (view: 'profile' | 'requests') => void;
+  activeView: 'profile' | 'requests' | 'pricing';
+  onViewChange: (view: 'profile' | 'requests' | 'pricing') => void;
   onOpenDrawer: () => void;
   language?: string;
   t: Translations;
@@ -33,6 +33,12 @@ export const EmployeeMobileDock: React.FC<EmployeeMobileDockProps> = ({
           overflow-hidden
         `}
       >
+        <DockButton
+          icon={Search}
+          label={t.employeeProfile.prescriptionPricing}
+          isActive={activeView === 'pricing'}
+          onClick={() => onViewChange('pricing')}
+        />
         <DockButton
           icon={User}
           label={t.employeeProfile.profile}

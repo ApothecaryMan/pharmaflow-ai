@@ -10,9 +10,10 @@ export interface DrugCatalogItem {
   publicPrice: number;
   manufacturer?: string;
   genericName?: string[];
+  dosageForm?: string;
   updatedAt?: string;
-  stock?: number; // Added to support local inventory enrichment
-  batches?: any[]; // Added to support batch grouping enrichment
+  stock?: number;
+  batches?: any[];
 }
 
 interface CatalogDB extends DBSchema {
@@ -33,18 +34,20 @@ interface CatalogDB extends DBSchema {
 }
 
 const DB_NAME = 'pharmaflow_catalog';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export async function openCatalogDB(): Promise<IDBPDatabase<CatalogDB>> {
   return openDB<CatalogDB>(DB_NAME, DB_VERSION, {
-    upgrade(db) {
-      const store = db.createObjectStore('drugs', { keyPath: 'id' });
-      store.createIndex('by_barcode', 'barcode', { unique: false });
-      store.createIndex('by_active_substance', 'activeSubstance', { unique: false });
-      store.createIndex('by_price', 'publicPrice', { unique: false });
-      store.createIndex('by_updated_at', 'updatedAt', { unique: false });
+    upgrade(db, oldVersion) {
+      if (oldVersion < 1) {
+        const store = db.createObjectStore('drugs', { keyPath: 'id' });
+        store.createIndex('by_barcode', 'barcode', { unique: false });
+        store.createIndex('by_active_substance', 'activeSubstance', { unique: false });
+        store.createIndex('by_price', 'publicPrice', { unique: false });
+        store.createIndex('by_updated_at', 'updatedAt', { unique: false });
 
-      db.createObjectStore('meta', { keyPath: 'key' });
+        db.createObjectStore('meta', { keyPath: 'key' });
+      }
     }
   });
 }
