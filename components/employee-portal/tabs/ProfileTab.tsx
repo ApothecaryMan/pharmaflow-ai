@@ -5,7 +5,7 @@ import type { EmploymentRequest, UserProfile, Employee } from '../../../types';
 import { BANNER_STYLES, renderBanner } from '../../../utils/banners';
 import { PROFILE_GLASS_CARD_BASE } from '../../../utils/themeStyles';
 import { Tooltip } from '../../common/Tooltip';
-import { AVATAR_DECORATIONS, DECORATION_KEYFRAMES, getDecoration } from '../avatar-decorations';
+import { AVATAR_DECORATIONS, /* DECORATION_KEYFRAMES, */ getDecoration } from '../avatar-decorations';
 import { FRAME_COLORS, ColorPicker } from '../avatar-color-settings';
 import AvatarRing, { RING_STYLES } from '../avatar-ring';
 import type { RingStyle } from '../avatar-ring';
@@ -304,19 +304,19 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     }
   }, [isEditing]);
 
-  useEffect(() => {
-    const id = 'decoration-keyframes';
-    if (!document.getElementById(id)) {
-      const style = document.createElement('style');
-      style.id = id;
-      style.textContent = DECORATION_KEYFRAMES;
-      document.head.appendChild(style);
-    }
-    return () => {
-      const el = document.getElementById(id);
-      if (el) el.remove();
-    };
-  }, []);
+  // useEffect(() => {
+  //   const id = 'decoration-keyframes';
+  //   if (!document.getElementById(id)) {
+  //     const style = document.createElement('style');
+  //     style.id = id;
+  //     style.textContent = DECORATION_KEYFRAMES;
+  //     document.head.appendChild(style);
+  //   }
+  //   return () => {
+  //     const el = document.getElementById(id);
+  //     if (el) el.remove();
+  //   };
+  // }, []);
 
   useEffect(() => {
     return () => {
