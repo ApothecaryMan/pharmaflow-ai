@@ -437,33 +437,37 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
               <div className={`${PROFILE_GLASS_CARD_BASE} p-5 space-y-5`}>
                 <div className='grid grid-cols-12 gap-x-4 gap-y-5'>
                   {/* Row 1: Names (EN + AR) */}
-                  <div className='col-span-6 space-y-1.5'>
-                    <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
-                      {t.name}
-                    </label>
-                    <SmartInput
-                      value={formData.name || ''}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder={t.name}
-                      autoFocus
-                      className={INPUT_BASE}
-                      required
-                      disabled={isInvited}
-                    />
-                  </div>
-                  <div className='col-span-6 space-y-1.5'>
-                    <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
-                      {t.nameArabicLabel}
-                    </label>
-                    <SmartInput
-                      value={formData.nameArabic || ''}
-                      onChange={(e) => setFormData({ ...formData, nameArabic: e.target.value })}
-                      placeholder={t.nameArabicPlaceholder}
-                      className={INPUT_BASE}
-                      dir='rtl'
-                      disabled={isInvited}
-                    />
-                  </div>
+                  {!isInvited && (
+                    <div className='col-span-6 space-y-1.5'>
+                      <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
+                        {t.name}
+                      </label>
+                      <SmartInput
+                        value={formData.name || ''}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder={t.name}
+                        autoFocus
+                        className={INPUT_BASE}
+                        required
+                        disabled={isInvited}
+                      />
+                    </div>
+                  )}
+                  {!isInvited && (
+                    <div className='col-span-6 space-y-1.5'>
+                      <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
+                        {t.nameArabicLabel}
+                      </label>
+                      <SmartInput
+                        value={formData.nameArabic || ''}
+                        onChange={(e) => setFormData({ ...formData, nameArabic: e.target.value })}
+                        placeholder={t.nameArabicPlaceholder}
+                        className={INPUT_BASE}
+                        dir='rtl'
+                        disabled={isInvited}
+                      />
+                    </div>
+                  )}
 
                   {/* Row 2: Branch + Dept + Role + Status */}
                   <div className='col-span-3 space-y-1.5'>
@@ -643,30 +647,34 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                       className={INPUT_BASE}
                     />
                   </div>
-                  <div className='col-span-4 space-y-1.5'>
-                    <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
-                      {t.phone}
-                    </label>
-                    <SmartPhoneInput
-                      value={formData.phone || ''}
-                      onChange={(val) => setFormData({ ...formData, phone: val })}
-                      placeholder={t.phone}
-                      className={INPUT_BASE}
-                      disabled={isInvited}
-                    />
-                  </div>
-                  <div className='col-span-4 space-y-1.5'>
-                    <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
-                      {t.email}
-                    </label>
-                    <SmartEmailInput
-                      value={formData.email || ''}
-                      onChange={(val) => setFormData({ ...formData, email: val })}
-                      placeholder={t.email}
-                      className={INPUT_BASE}
-                      disabled={isInvited}
-                    />
-                  </div>
+                  {!isInvited && (
+                    <div className='col-span-4 space-y-1.5'>
+                      <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
+                        {t.phone}
+                      </label>
+                      <SmartPhoneInput
+                        value={formData.phone || ''}
+                        onChange={(val) => setFormData({ ...formData, phone: val })}
+                        placeholder={t.phone}
+                        className={INPUT_BASE}
+                        disabled={isInvited}
+                      />
+                    </div>
+                  )}
+                  {!isInvited && (
+                    <div className='col-span-4 space-y-1.5'>
+                      <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
+                        {t.email}
+                      </label>
+                      <SmartEmailInput
+                        value={formData.email || ''}
+                        onChange={(val) => setFormData({ ...formData, email: val })}
+                        placeholder={t.email}
+                        className={INPUT_BASE}
+                        disabled={isInvited}
+                      />
+                    </div>
+                  )}
 
                   {/* Row 4: Salary + Notes */}
                   {(permissionsService.can('reports.view_financial') || permissionsService.can('users.manage')) && (
