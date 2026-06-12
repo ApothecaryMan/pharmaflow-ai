@@ -124,168 +124,168 @@ export const AVATAR_DECORATIONS: DecorationDef[] = [
   { id: 'ultimate_chronogear_nexus', name: 'Chronogear Nexus', nameAr: 'آلة الزمن السحرية', svg: <UltimateChronogearNexus /> },
 ];
 
-// export const DECORATION_KEYFRAMES = `
-// .decoration-carousel svg * {
-//   animation-play-state: paused !important;
-// }
+export const DECORATION_KEYFRAMES = `
+.decoration-carousel svg * {
+  animation-play-state: paused !important;
+}
 
-// @keyframes vortex-spin-cw {
-//   0% { transform: rotate(0deg); }
-//   100% { transform: rotate(360deg); }
-// }
-// @keyframes vortex-spin-ccw {
-//   0% { transform: rotate(0deg); }
-//   100% { transform: rotate(-360deg); }
-// }
-// @keyframes particle-pulse {
-//   0%, 100% { opacity: 0.5; transform: scale(0.8); }
-//   50% { opacity: 1; transform: scale(1.2); }
-// }
-// .vortex-origin { transform-box: fill-box; transform-origin: 50% 50%; }
-// .spin-fast { animation: vortex-spin-cw 4s linear infinite; }
-// .spin-med-rev { animation: vortex-spin-ccw 6s linear infinite; }
-// .spin-slow { animation: vortex-spin-cw 9s linear infinite; }
-// .spin-slower-rev { animation: vortex-spin-ccw 12s linear infinite; }
-// .pulse-glow { animation: particle-pulse 3s ease-in-out infinite; }
+@keyframes vortex-spin-cw {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes vortex-spin-ccw {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}
+@keyframes particle-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+.vortex-origin { transform-box: fill-box; transform-origin: 50% 50%; }
+.spin-fast { animation: vortex-spin-cw 4s linear infinite; }
+.spin-med-rev { animation: vortex-spin-ccw 6s linear infinite; }
+.spin-slow { animation: vortex-spin-cw 9s linear infinite; }
+.spin-slower-rev { animation: vortex-spin-ccw 12s linear infinite; }
+.pulse-glow { animation: particle-pulse 3s ease-in-out infinite; }
 
-// @keyframes astral-spin {
-//   0% { transform: rotate(0deg); }
-//   100% { transform: rotate(360deg); }
-// }
-// @keyframes star-twinkle {
-//   0%, 100% { opacity: 0.6; transform: scale(0.85); }
-//   50% { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 4px rgba(253,230,138,0.8)); }
-// }
-// @keyframes slow-pulse {
-//   0%, 100% { opacity: 0.3; }
-//   50% { opacity: 0.8; }
-// }
-// .astral-origin { transform-box: fill-box; transform-origin: 50% 50%; }
-// .spin-ring { animation: astral-spin 30s linear infinite; }
-// .twinkle-fast { animation: star-twinkle 2s ease-in-out infinite; }
-// .twinkle-slow { animation: star-twinkle 3.5s ease-in-out infinite; }
-// .pulsing-line { animation: slow-pulse 4s ease-in-out infinite; }
+@keyframes astral-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.6; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 4px rgba(253,230,138,0.8)); }
+}
+@keyframes slow-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+.astral-origin { transform-box: fill-box; transform-origin: 50% 50%; }
+.spin-ring { animation: astral-spin 30s linear infinite; }
+.twinkle-fast { animation: star-twinkle 2s ease-in-out infinite; }
+.twinkle-slow { animation: star-twinkle 3.5s ease-in-out infinite; }
+.pulsing-line { animation: slow-pulse 4s ease-in-out infinite; }
 
-// @keyframes cat-twitch-left {
-//   0%, 90%, 94%, 98%, 100% { transform: rotate(0deg); }
-//   92%, 96% { transform: rotate(-5deg) scaleY(0.96); }
-// }
-// @keyframes cat-twitch-right {
-//   0%, 86%, 90%, 94%, 100% { transform: rotate(0deg); }
-//   88%, 92% { transform: rotate(5deg) scaleY(0.96); }
-// }
-// .cat-ear-left {
-//   transform-origin: 35px 35px;
-//   animation: cat-twitch-left 4.5s ease-in-out infinite;
-// }
-// .cat-ear-right {
-//   transform-origin: 93px 35px;
-//   animation: cat-twitch-right 4.5s ease-in-out infinite;
-// }
-// @keyframes crown-float {
-//   0%, 100% { transform: translateY(-25px) rotate(0deg); }
-//   50% { transform: translateY(-10px) rotate(0.5deg); }
-// }
-// @keyframes gem-shimmer {
-//   0%, 100% { opacity: 0.8; filter: drop-shadow(0 0 2px rgba(255,255,255,0.5)); }
-//   50% { opacity: 1; filter: drop-shadow(0 0 6px rgba(255,255,255,0.9)); }
-// }
-// .main-crown-group {
-//   transform-origin: 64px 35px;
-//   animation: crown-float 3.5s ease-in-out infinite;
-// }
-// .shimmering-gem {
-//   animation: gem-shimmer 2s ease-in-out infinite;
-// }
-// @keyframes angel-flap-left {
-//   0%, 100% { transform: scaleX(1) rotate(0deg); }
-//   50% { transform: scaleX(0.88) rotate(3deg); }
-// }
-// @keyframes angel-flap-right {
-//   0%, 100% { transform: scaleX(1) rotate(0deg); }
-//   50% { transform: scaleX(0.88) rotate(-3deg); }
-// }
-// .angel-wing-left {
-//   transform-origin: 26px 76px;
-//   animation: angel-flap-left 4.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
-// }
-// .angel-wing-right {
-//   transform-origin: 102px 76px;
-//   animation: angel-flap-right 4.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
-// }
-// @keyframes dragon-flap-left {
-//   0%, 100% { transform: scaleX(1) rotate(0deg); }
-//   50% { transform: scaleX(0.72) rotate(6deg); }
-// }
-// @keyframes dragon-flap-right {
-//   0%, 100% { transform: scaleX(1) rotate(0deg); }
-//   50% { transform: scaleX(0.72) rotate(-6deg); }
-// }
-// .wing-group-left {
-//   transform-origin: 24px 82px;
-//   animation: dragon-flap-left 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
-// }
-// .wing-group-right {
-//   transform-origin: 104px 82px;
-//   animation: dragon-flap-right 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
-// }
-// @keyframes ice-float {
-//   0%, 100% { transform: translateY(0px) rotate(0deg); }
-//   50% { transform: translateY(-3.5px) rotate(0.8deg); }
-// }
-// @keyframes frost-shimmer {
-//   0%, 100% { opacity: 0.5; filter: drop-shadow(0 0 2px #60A5FA); }
-//   50% { opacity: 1; filter: drop-shadow(0 0 8px #FFFFFF); }
-// }
-// @keyframes crystal-pulse {
-//   0%, 100% { transform: scale(1); opacity: 0.8; }
-//   50% { transform: scale(1.1); opacity: 1; }
-// }
-// .ice-tiara-group {
-//   transform-box: view-box;
-//   transform-origin: 64px 30px;
-//   animation: ice-float 4s ease-in-out infinite;
-// }
-// .shimmering-frost {
-//   animation: frost-shimmer 2.5s ease-in-out infinite;
-// }
-// .pulsing-shard {
-//   transform-origin: center;
-//   animation: crystal-pulse 3s ease-in-out infinite;
-// }
-// @keyframes cloud-spin-slow {
-//   0% { transform: rotate(0deg); }
-//   100% { transform: rotate(360deg); }
-// }
-// @keyframes cloud-spin-rev {
-//   0% { transform: rotate(0deg); }
-//   100% { transform: rotate(-360deg); }
-// }
-// @keyframes star-twinkle {
-//   0%, 100% { opacity: 0.4; transform: scale(0.8); }
-//   50% { opacity: 1; transform: scale(1.2); filter: drop-shadow(0 0 3px rgba(255,255,255,0.8)); }
-// }
-// .heaven-origin { transform-box: view-box; transform-origin: 64px 64px; }
-// .spin-clouds { animation: cloud-spin-slow 25s linear infinite; }
-// .spin-clouds-rev { animation: cloud-spin-rev 15s linear infinite; }
-// .twinkle { animation: star-twinkle 2.5s ease-in-out infinite; }
-// @keyframes spin-cw { 100% { transform: rotate(360deg); } }
-// @keyframes spin-ccw { 100% { transform: rotate(-360deg); } }
-// @keyframes local-spin-cw { 100% { transform: rotate(360deg); } }
-// @keyframes local-spin-ccw { 100% { transform: rotate(-360deg); } }
-// @keyframes glow-pulse {
-//   0%, 100% { opacity: 0.5; filter: drop-shadow(0 0 2px #06B6D4); transform: scale(0.99); }
-//   50% { opacity: 1; filter: drop-shadow(0 0 6px #22D3EE); transform: scale(1.01); }
-// }
-// .center-org { transform-box: view-box; transform-origin: 64px 64px; }
-// .gear-slow { animation: spin-cw 20s linear infinite; }
-// .gear-rev { animation: spin-ccw 16s linear infinite; }
-// .cog-cw { animation: local-spin-cw 6s linear infinite; }
-// .cog-ccw { animation: local-spin-ccw 6s linear infinite; }
-// .time-sweep { animation: spin-cw 3s linear infinite; }
-// .time-tick { animation: spin-cw 12s steps(12, end) infinite; }
-// .power-glow { animation: glow-pulse 2s ease-in-out infinite; }
-// `;
+@keyframes cat-twitch-left {
+  0%, 90%, 94%, 98%, 100% { transform: rotate(0deg); }
+  92%, 96% { transform: rotate(-5deg) scaleY(0.96); }
+}
+@keyframes cat-twitch-right {
+  0%, 86%, 90%, 94%, 100% { transform: rotate(0deg); }
+  88%, 92% { transform: rotate(5deg) scaleY(0.96); }
+}
+.cat-ear-left {
+  transform-origin: 35px 35px;
+  animation: cat-twitch-left 4.5s ease-in-out infinite;
+}
+.cat-ear-right {
+  transform-origin: 93px 35px;
+  animation: cat-twitch-right 4.5s ease-in-out infinite;
+}
+@keyframes crown-float {
+  0%, 100% { transform: translateY(-25px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(0.5deg); }
+}
+@keyframes gem-shimmer {
+  0%, 100% { opacity: 0.8; filter: drop-shadow(0 0 2px rgba(255,255,255,0.5)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 6px rgba(255,255,255,0.9)); }
+}
+.main-crown-group {
+  transform-origin: 64px 35px;
+  animation: crown-float 3.5s ease-in-out infinite;
+}
+.shimmering-gem {
+  animation: gem-shimmer 2s ease-in-out infinite;
+}
+@keyframes angel-flap-left {
+  0%, 100% { transform: scaleX(1) rotate(0deg); }
+  50% { transform: scaleX(0.88) rotate(3deg); }
+}
+@keyframes angel-flap-right {
+  0%, 100% { transform: scaleX(1) rotate(0deg); }
+  50% { transform: scaleX(0.88) rotate(-3deg); }
+}
+.angel-wing-left {
+  transform-origin: 26px 76px;
+  animation: angel-flap-left 4.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+.angel-wing-right {
+  transform-origin: 102px 76px;
+  animation: angel-flap-right 4.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+@keyframes dragon-flap-left {
+  0%, 100% { transform: scaleX(1) rotate(0deg); }
+  50% { transform: scaleX(0.72) rotate(6deg); }
+}
+@keyframes dragon-flap-right {
+  0%, 100% { transform: scaleX(1) rotate(0deg); }
+  50% { transform: scaleX(0.72) rotate(-6deg); }
+}
+.wing-group-left {
+  transform-origin: 24px 82px;
+  animation: dragon-flap-left 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+.wing-group-right {
+  transform-origin: 104px 82px;
+  animation: dragon-flap-right 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+@keyframes ice-float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-3.5px) rotate(0.8deg); }
+}
+@keyframes frost-shimmer {
+  0%, 100% { opacity: 0.5; filter: drop-shadow(0 0 2px #60A5FA); }
+  50% { opacity: 1; filter: drop-shadow(0 0 8px #FFFFFF); }
+}
+@keyframes crystal-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+.ice-tiara-group {
+  transform-box: view-box;
+  transform-origin: 64px 30px;
+  animation: ice-float 4s ease-in-out infinite;
+}
+.shimmering-frost {
+  animation: frost-shimmer 2.5s ease-in-out infinite;
+}
+.pulsing-shard {
+  transform-origin: center;
+  animation: crystal-pulse 3s ease-in-out infinite;
+}
+@keyframes cloud-spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes cloud-spin-rev {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); filter: drop-shadow(0 0 3px rgba(255,255,255,0.8)); }
+}
+.heaven-origin { transform-box: view-box; transform-origin: 64px 64px; }
+.spin-clouds { animation: cloud-spin-slow 25s linear infinite; }
+.spin-clouds-rev { animation: cloud-spin-rev 15s linear infinite; }
+.twinkle { animation: star-twinkle 2.5s ease-in-out infinite; }
+@keyframes spin-cw { 100% { transform: rotate(360deg); } }
+@keyframes spin-ccw { 100% { transform: rotate(-360deg); } }
+@keyframes local-spin-cw { 100% { transform: rotate(360deg); } }
+@keyframes local-spin-ccw { 100% { transform: rotate(-360deg); } }
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.5; filter: drop-shadow(0 0 2px #06B6D4); transform: scale(0.99); }
+  50% { opacity: 1; filter: drop-shadow(0 0 6px #22D3EE); transform: scale(1.01); }
+}
+.center-org { transform-box: view-box; transform-origin: 64px 64px; }
+.gear-slow { animation: spin-cw 20s linear infinite; }
+.gear-rev { animation: spin-ccw 16s linear infinite; }
+.cog-cw { animation: local-spin-cw 6s linear infinite; }
+.cog-ccw { animation: local-spin-ccw 6s linear infinite; }
+.time-sweep { animation: spin-cw 3s linear infinite; }
+.time-tick { animation: spin-cw 12s steps(12, end) infinite; }
+.power-glow { animation: glow-pulse 2s ease-in-out infinite; }
+`;
 
 export const DECORATION_MAP = new Map(AVATAR_DECORATIONS.map((d) => [d.id, d]));
 
