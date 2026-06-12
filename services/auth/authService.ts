@@ -476,8 +476,13 @@ export const authService = {
 
   logAuditEvent(entry: Omit<LoginAuditEntry, 'id' | 'timestamp'>): void {
     const finalEntry: any = { ...entry };
+    const session = this.getCurrentUserSync();
+    
+    if (!finalEntry.orgId && session?.orgId) {
+      finalEntry.orgId = session.orgId;
+    }
+
     if (!finalEntry.employeeName) {
-      const session = this.getCurrentUserSync();
       if (session && session.employeeId === finalEntry.employeeId) {
         finalEntry.employeeName = session.employeeName;
       }
@@ -501,7 +506,7 @@ export const authService = {
   /**
    * Fetch logs from Server (Supabase)
    */
-  async getLoginHistory(branchId?: string): Promise<LoginAuditEntry[]> {
+  async getLoginHistory(branchId?: string | string[]): Promise<LoginAuditEntry[]> {
     const { auditRepository } = await import('./repositories/auditRepository');
     return auditRepository.getAll(branchId);
   },

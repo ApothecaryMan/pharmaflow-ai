@@ -5,10 +5,8 @@ import { useData } from '../../services';
 import { useSettings } from '../../context';
 import { authService } from '../../services/auth/authService';
 import type { LoginAuditEntry } from '../../types';
-import { branchService } from '../../services/org/branchService';
 import { TanStackTable } from '../common/TanStackTable';
 import { Switch } from '../common/Switch';
-import { permissionsService } from '../../services/auth/permissionsService';
 
 /**
  * LoginAuditList Component
@@ -30,7 +28,8 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
     const fetchHistory = async () => {
       setIsLoading(true);
       try {
-        const data = await authService.getLoginHistory(showAllBranches ? undefined : activeBranchId);
+        const branchIds = branches.map(b => b.id);
+        const data = await authService.getLoginHistory(showAllBranches ? branchIds : activeBranchId);
         setHistory(data);
       } finally {
         setIsLoading(false);

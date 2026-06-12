@@ -97,6 +97,9 @@ export interface LoginAuditEntry {
   /** Branch ID context */
   branchId: string;
   
+  /** Organization ID context */
+  orgId?: string;
+  
   /** Type of auth event */
   action: 'login' | 'logout' | 'switch_user' | 'system_login' | 'system_logout' | 'switch_branch';
   

@@ -23,6 +23,7 @@ export const auditRepository = {
         employee_name: entry.employeeName,
         role: entry.role,
         branch_id: entry.branchId || null,
+        org_id: entry.orgId || null,
         action: entry.action,
         details: entry.details,
       });
@@ -49,6 +50,7 @@ export const auditRepository = {
       employee_name: e.employeeName,
       role: e.role,
       branch_id: e.branchId || null,
+      org_id: e.orgId || null,
       action: e.action,
       details: e.details,
     }));
@@ -64,14 +66,21 @@ export const auditRepository = {
   /**
    * Fetch audit logs with filtering
    */
-  async getAll(branchId?: string, limit = 500): Promise<LoginAuditEntry[]> {
+  async getAll(branchId?: string | string[], limit = 500): Promise<LoginAuditEntry[]> {
     let query = supabase
       .from('login_audits')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (branchId) {
+    if (Array.isArray(branchId)) {
+      if (branchId.length > 0) {
+        query = query.in('branch_id', branchId);
+      } else {
+        // If empty array passed, return nothing to avoid fetching entire DB
+        return [];
+      }
+    } else if (branchId) {
       query = query.eq('branch_id', branchId);
     }
 
@@ -91,6 +100,7 @@ export const auditRepository = {
       employeeName: row.employee_name,
       role: row.role,
       branchId: row.branch_id,
+      orgId: row.org_id,
       action: row.action as any,
       details: row.details
     }));
