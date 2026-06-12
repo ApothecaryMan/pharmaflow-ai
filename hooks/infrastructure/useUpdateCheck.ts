@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import packageJson from '../../package.json';
 
 export interface UpdateInfo {
@@ -11,27 +11,35 @@ export interface UpdateInfo {
   forceUpdate: boolean;
 }
 
+// Minimum time between checks (5 minutes) to prevent spam
+const CHECK_COOLDOWN_MS = 5 * 60 * 1000;
+
 export const useUpdateCheck = () => {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [hasUpdate, setHasUpdate] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
 
+  const isCheckingRef = useRef(false);
+  const lastCheckRef = useRef(0);
   const currentVersion = packageJson.version;
 
-  const checkForUpdates = useCallback(async () => {
-    if (isChecking) return;
+  const checkForUpdates = useCallback(async (force = false) => {
+    // Cooldown: skip if checked recently (unless forced)
+    const now = Date.now();
+    if (!force && now - lastCheckRef.current < CHECK_COOLDOWN_MS) return;
+    if (isCheckingRef.current) return;
+
+    isCheckingRef.current = true;
+    lastCheckRef.current = now;
     setIsChecking(true);
     try {
-      // Fetch the version.json from public folder (works in both dev and prod)
-      const response = await fetch('/version.json?t=' + Date.now(), {
+      const response = await fetch('/version.json?t=' + now, {
         cache: 'no-store'
       });
       if (!response.ok) throw new Error('Failed to fetch version info');
       
       const data: UpdateInfo = await response.json();
       
-      // Basic semantic version comparison (assuming standard 2.012 format)
-      // For more complex versions, a library like 'semver' would be better
       if (data.version !== currentVersion) {
         setUpdateInfo(data);
         setHasUpdate(true);
@@ -41,17 +49,30 @@ export const useUpdateCheck = () => {
     } catch (error) {
       console.error('[UpdateCheck] Error checking for updates:', error);
     } finally {
+      isCheckingRef.current = false;
       setIsChecking(false);
     }
-  }, [currentVersion, isChecking]);
+  }, [currentVersion]);
 
   useEffect(() => {
-    // Initial check
-    checkForUpdates();
-    
-    // Check every 10 minutes
-    const interval = setInterval(checkForUpdates, 10 * 60 * 1000);
-    return () => clearInterval(interval);
+    // 1. Check once on mount
+    checkForUpdates(true);
+
+    // 2. Check when user returns to tab (visibility change)
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') checkForUpdates();
+    };
+
+    // 3. Check when device comes back online
+    const onOnline = () => checkForUpdates();
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('online', onOnline);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('online', onOnline);
+    };
   }, [checkForUpdates]);
 
   const performUpdate = useCallback(async () => {
