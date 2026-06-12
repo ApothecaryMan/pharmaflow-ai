@@ -65,7 +65,19 @@ const STANDALONE_VIEWS = [ROUTES.LOGIN];
 
 // AuthenticatedContent was moved to src/components/layout/AuthenticatedContent.tsx
 
-
+const LogoAsterisk = ({ color = 'currentColor', scale = 1.4 }: { color?: string, scale?: number }) => (
+  <svg viewBox="0 0 140 140" className="w-12 h-12 text-zinc-900 dark:text-white animate-spin" style={{ animationDuration: '2s' }}>
+    <g transform={`translate(70 70) scale(${scale})`} fill={color}>
+      <rect x="-4" y="-35" width="8" height="70" rx=".5" transform="rotate(45)"/>
+      <rect x="-4" y="-35" width="8" height="20" rx=".5"/>
+      <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(-45)"/>
+      <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(90)"/>
+      <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(135)"/>
+      <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(180)"/>
+      <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(270)"/>
+    </g>
+  </svg>
+);
 const App: React.FC = () => {
   // 0. Storage Version Validation
   React.useEffect(() => {
@@ -226,9 +238,9 @@ const App: React.FC = () => {
     finalContent = (
       <div className="h-screen w-screen flex items-center justify-center bg-zinc-50 dark:bg-black">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-zinc-200 dark:border-zinc-800 border-t-zinc-900 dark:border-t-white rounded-full animate-spin" />
-          <p className="text-zinc-500 dark:text-zinc-400 font-medium">
-            Loading...
+          <LogoAsterisk />
+          <p className="text-zinc-500 dark:text-zinc-400">
+            {t.global?.loading}
           </p>
         </div>
       </div>
