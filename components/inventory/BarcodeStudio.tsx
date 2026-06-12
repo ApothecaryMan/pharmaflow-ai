@@ -5,7 +5,6 @@ import { StorageKeys } from '../../config/storageKeys';
 import { useDebounce } from '../../hooks/common/useDebounce';
 import type { TRANSLATIONS } from '../../i18n/translations';
 import type { Drug } from '../../types';
-import { encodeCode128 } from '../../utils/barcodeEncoders';
 import { storage } from '../../utils/storage';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { useContextMenu } from '../common/ContextMenu';
@@ -28,7 +27,9 @@ import {
   printLabels,
 } from './LabelPrinter';
 import { PropertyInspector } from './studio/PropertyInspector';
+import { TemplateGalleryModal } from './studio/TemplateGalleryModal';
 import { useData } from '../../context/DataContext';
+import { useSettings } from '../../context';
 
 interface BarcodeStudioProps {
   inventory: Drug[];
@@ -46,6 +47,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const { showMenu } = useContextMenu();
   const { playError } = usePosSounds();
   const { branches, activeBranchId } = useData();
+  const { developerMode } = useSettings();
   const activeBranch = useMemo(() => branches?.find((b: any) => b.id === activeBranchId), [branches, activeBranchId]);
   const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -74,6 +76,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
   // Template Dropdown
   const [isTemplateDropdownOpen, setIsTemplateDropdownOpen] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const printButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -490,6 +493,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       id: newId,
       name: newTemplateName,
       design: design,
+      author: 'ZINC Designer',
+      createdAt: Date.now()
     };
 
     const updatedTemplates = [...templates, newTemplate];
@@ -980,6 +985,14 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
           </div>
 
           <div className='flex items-center gap-1.5'>
+            <button
+              onClick={() => setIsGalleryOpen(true)}
+              className='h-8 px-2 flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-muted/50 hover:bg-gray-50 dark:hover:bg-muted text-gray-600 dark:text-gray-300 transition-all shadow-sm group'
+              title='معرض القوالب'
+            >
+              <span className='material-symbols-rounded text-sm group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors'>view_carousel</span>
+              <span className='text-[10px] font-bold uppercase tracking-wider hidden md:block'>Gallery</span>
+            </button>
             {/* Compact Template Selector */}
             <div className='relative w-36 h-8'>
               <FilterDropdown
@@ -1247,8 +1260,9 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                 />
 
                 {/* Floating Live Dimensions Blueprint */}
-                <div className="absolute bottom-4 left-4 z-20 flex flex-col items-start gap-2">
-                  {showBlueprint ? (
+                {developerMode && (
+                  <div className="absolute bottom-4 left-4 z-20 flex flex-col items-start gap-2">
+                    {showBlueprint ? (
                     <div className="bg-white/95 dark:bg-muted/95 backdrop-blur-md p-4 rounded-2xl border border-gray-200 dark:border-border shadow-xl w-80 max-h-72 overflow-y-auto animate-fade-in flex flex-col gap-2">
                       <div className="flex items-center justify-between border-b border-gray-100 dark:border-border pb-2">
                         <div className="flex items-center gap-1.5 text-primary-600 dark:text-primary-400">
@@ -1289,6 +1303,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                     </button>
                   )}
                 </div>
+              )}
               </>
             )}
           </div>
@@ -1387,6 +1402,18 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
         }}
         initialValue={mmToPx}
         t={t}
+      />
+
+      <TemplateGalleryModal
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        templates={templates}
+        onSelectTemplate={loadTemplate}
+        onDeleteTemplate={deleteTemplate}
+        selectedDrug={selectedDrug}
+        receiptSettings={{ storeName, hotline }}
+        t={t}
+        color={color}
       />
     </div>
   );

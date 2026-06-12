@@ -44,4 +44,6 @@ export interface SavedTemplate {
   id: string;
   name: string;
   design: any; // Using any for now to avoid migration issues, but really LabelDesign
+  author?: string;
+  createdAt?: number;
 }
