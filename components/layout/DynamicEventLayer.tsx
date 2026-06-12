@@ -56,7 +56,7 @@ export const DynamicEventLayer: React.FC<{ view?: string }> = ({ view }) => {
     document.addEventListener('mouseenter', handleMouseEnter);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mousemove', handleMouseMove, { passive: true } as EventListenerOptions);
       document.removeEventListener('mouseleave', handleMouseLeave);
       document.removeEventListener('mouseenter', handleMouseEnter);
     };

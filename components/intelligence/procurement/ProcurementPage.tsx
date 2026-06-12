@@ -41,7 +41,10 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
     (window as any).dispatchGlobalEvent = (name: string, data: any) => {
         window.dispatchEvent(new CustomEvent(name, { detail: { ids: data } }));
     };
-    return () => window.removeEventListener('OPEN_PO_MODAL' as any, handleGlobalPO);
+    return () => {
+      window.removeEventListener('OPEN_PO_MODAL' as any, handleGlobalPO);
+      delete (window as any).dispatchGlobalEvent;
+    };
   }, []);
 
   const handleGeneratePO = (ids: string[]) => {

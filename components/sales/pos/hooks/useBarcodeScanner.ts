@@ -27,6 +27,15 @@ export const useBarcodeScanner = ({
   const fastKeyCountRef = useRef<number>(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Keep latest references for callbacks and data to avoid effect re-runs
+  const inventoryRef = useRef(inventory);
+  const callbacksRef = useRef({ addToCart, playSuccess, playError });
+
+  useEffect(() => {
+    inventoryRef.current = inventory;
+    callbacksRef.current = { addToCart, playSuccess, playError };
+  }, [inventory, addToCart, playSuccess, playError]);
+
   useEffect(() => {
     if (!enabled) return;
 
@@ -65,16 +74,16 @@ export const useBarcodeScanner = ({
           e.preventDefault();
           e.stopPropagation();
 
-          const drug = inventory.find(
+          const drug = inventoryRef.current.find(
             (d) => d.barcode === barcode || d.internalCode === barcode
           );
 
           if (drug) {
-            addToCart(drug);
-            playSuccess();
+            callbacksRef.current.addToCart(drug);
+            callbacksRef.current.playSuccess();
           } else {
             console.warn(`[Scanner] Barcode not found: ${barcode}`);
-            playError();
+            callbacksRef.current.playError();
           }
 
           // Reset
@@ -138,5 +147,5 @@ export const useBarcodeScanner = ({
       window.removeEventListener('keydown', handleKeyDown, true);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [inventory, addToCart, playSuccess, playError, enabled]);
+  }, [enabled]);
 };

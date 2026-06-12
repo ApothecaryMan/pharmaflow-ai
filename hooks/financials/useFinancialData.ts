@@ -38,7 +38,7 @@ export function useFinancialData(period: FinancialPeriod = 'this_month'): UseFin
     const fetchKey = `${activeBranchId}-${period}`;
 
     // Prevent duplicate fetches for the same branch and period unless it's a manual refresh
-    if (!isRefresh && lastFetchKeyRef.current === fetchKey && (summary || kpis || topProducts.length > 0)) {
+    if (!isRefresh && lastFetchKeyRef.current === fetchKey) {
       return;
     }
 
@@ -82,7 +82,7 @@ export function useFinancialData(period: FinancialPeriod = 'this_month'): UseFin
         setLoading(false);
       }
     }
-  }, [period, activeBranchId, summary, kpis, topProducts.length]);
+  }, [period, activeBranchId]);
 
   useEffect(() => {
     const canView = permissionsService.can('reports.view_intelligence') || permissionsService.can('reports.view_financial');

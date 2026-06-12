@@ -26,7 +26,7 @@ export const usePreventZoom = () => {
     window.addEventListener('gestureend', handleGesture);
 
     return () => {
-      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('wheel', handleWheel, { passive: false } as EventListenerOptions);
       window.removeEventListener('gesturestart', handleGesture);
       window.removeEventListener('gesturechange', handleGesture);
       window.removeEventListener('gestureend', handleGesture);

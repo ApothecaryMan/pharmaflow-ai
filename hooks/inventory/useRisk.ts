@@ -30,7 +30,7 @@ export function useRisk(): UseRiskResult {
 
   const fetchData = useCallback(async (isRefresh = false) => {
     // Prevent duplicate fetches for the same branch unless it's a manual refresh
-    if (!isRefresh && lastBranchIdRef.current === activeBranchId && (summary || items.length > 0)) {
+    if (!isRefresh && lastBranchIdRef.current === activeBranchId) {
       return;
     }
 
@@ -66,7 +66,7 @@ export function useRisk(): UseRiskResult {
         setLoading(false);
       }
     }
-  }, [activeBranchId, summary, items.length]);
+  }, [activeBranchId]);
 
   useEffect(() => {
     const canView = permissionsService.can('reports.view_intelligence') || permissionsService.can('reports.view_inventory');

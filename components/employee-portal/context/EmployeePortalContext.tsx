@@ -21,8 +21,10 @@ export const EmployeePortalProvider: React.FC<{
   children: React.ReactNode;
   services?: Partial<EmployeePortalServices>;
 }> = ({ children, services }) => {
+  const contextValue = React.useMemo(() => ({ ...defaultServices, ...services }), [services]);
+
   return (
-    <EmployeePortalContext.Provider value={{ ...defaultServices, ...services }}>
+    <EmployeePortalContext.Provider value={contextValue}>
       {children}
     </EmployeePortalContext.Provider>
   );

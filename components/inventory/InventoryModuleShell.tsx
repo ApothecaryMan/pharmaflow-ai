@@ -40,17 +40,17 @@ export const InventoryModuleShell: React.FC<InventoryModuleShellProps> = ({
   };
 
 
+  const contextValue = React.useMemo(() => ({
+    setLeftContent,
+    setRightContent,
+    setBottomContent,
+    setShowStatsToggle,
+    setShowStats,
+    showStats,
+  }), [showStats]);
+
   return (
-    <InventoryHeaderContext.Provider
-      value={{
-        setLeftContent,
-        setRightContent,
-        setBottomContent,
-        setShowStatsToggle,
-        setShowStats,
-        showStats,
-      }}
-    >
+    <InventoryHeaderContext.Provider value={contextValue}>
       <div className="h-full flex flex-col bg-(--bg-page-surface)" dir={isRTL ? 'rtl' : 'ltr'}>
         <PageHeader
           mb="mb-0"

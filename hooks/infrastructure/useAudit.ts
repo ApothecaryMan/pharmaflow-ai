@@ -30,7 +30,7 @@ export function useAudit(limit: number = 100): UseAuditResult {
     const fetchKey = `${activeBranchId}-${limit}`;
 
     // Prevent duplicate fetches for the same branch and limit unless it's a manual refresh
-    if (!isRefresh && lastFetchKeyRef.current === fetchKey && transactions.length > 0) {
+    if (!isRefresh && lastFetchKeyRef.current === fetchKey) {
       return;
     }
 
@@ -62,7 +62,7 @@ export function useAudit(limit: number = 100): UseAuditResult {
         setLoading(false);
       }
     }
-  }, [limit, activeBranchId, transactions.length]);
+  }, [limit, activeBranchId]);
 
   useEffect(() => {
     const canView = permissionsService.can('reports.view_intelligence') || permissionsService.can('reports.view_financial');

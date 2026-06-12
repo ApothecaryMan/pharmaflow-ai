@@ -154,6 +154,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
+    let interval: NodeJS.Timeout | undefined;
+
     if (isTauri()) {
       const checkUpdates = async () => {
         try {
@@ -164,13 +166,13 @@ export const TitleBar: React.FC<TitleBarProps> = ({
         }
       };
       checkUpdates();
-      const interval = setInterval(checkUpdates, 1000 * 60 * 60); // Check every hour
-      return () => clearInterval(interval);
+      interval = setInterval(checkUpdates, 1000 * 60 * 60); // Check every hour
     }
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      if (interval) clearInterval(interval);
     };
   }, []);
 
