@@ -80,6 +80,7 @@ export function useRisk(): UseRiskResult {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
+      lastBranchIdRef.current = undefined;
     };
   }, [fetchData]);
 

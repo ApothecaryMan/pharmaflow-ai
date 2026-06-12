@@ -76,6 +76,7 @@ export function useAudit(limit: number = 100): UseAuditResult {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
+      lastFetchKeyRef.current = undefined;
     };
   }, [fetchData]);
 

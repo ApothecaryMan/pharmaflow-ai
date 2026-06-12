@@ -90,6 +90,7 @@ export function useProcurement(filters: UseProcurementFilters = {}): UseProcurem
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
+      lastBranchIdRef.current = undefined;
     };
   }, [fetchData]);
 
