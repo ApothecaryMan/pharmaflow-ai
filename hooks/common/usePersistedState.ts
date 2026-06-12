@@ -1,4 +1,4 @@
-import { type Dispatch, type SetStateAction, useEffect, useState } from 'react';
+import { type Dispatch, type SetStateAction, useEffect, useState, useRef } from 'react';
 import type { StorageKeys } from '../../config/storageKeys';
 import { storage } from '../../utils/storage';
 
@@ -14,6 +14,12 @@ export function usePersistedState<T>(
   initialValue: T,
   sync = true
 ): [T, Dispatch<SetStateAction<T>>] {
+  // Store initialValue in a ref to avoid stale closures in the event listener
+  const initialValueRef = useRef(initialValue);
+  useEffect(() => {
+    initialValueRef.current = initialValue;
+  }, [initialValue]);
+
   // Initialize state from storage
   const [state, setState] = useState<T>(() => {
     return storage.get(key, initialValue);
@@ -29,17 +35,27 @@ export function usePersistedState<T>(
     if (!sync) return;
 
     const handleStorageChange = (e: StorageEvent) => {
-      // If the key matches and there is a new value
-      if (e.key === storage.getScopedKey(key) && e.newValue) {
-        try {
-          const newValue = JSON.parse(e.newValue);
-          // Use functional update to compare with latest state without dependency
-          setState((prev) => {
-            if (JSON.stringify(prev) === e.newValue) return prev;
-            return newValue;
-          });
-        } catch (err) {
-          console.error('Failed to parse storage update for', key);
+      // If the key matches
+      if (e.key === storage.getScopedKey(key)) {
+        if (!e.newValue) {
+          // Key was removed! Reset to initial value.
+          setState(initialValueRef.current);
+        } else {
+          try {
+            const newValue = JSON.parse(e.newValue);
+            // Use functional update to compare with latest state without dependency
+            setState((prev) => {
+              if (JSON.stringify(prev) === e.newValue) return prev;
+              return newValue;
+            });
+          } catch (err) {
+            // Handle string fallback if JSON.parse fails
+            if (typeof initialValueRef.current === 'string') {
+              setState(e.newValue as unknown as T);
+            } else {
+              console.error('Failed to parse storage update for', key);
+            }
+          }
         }
       }
     };

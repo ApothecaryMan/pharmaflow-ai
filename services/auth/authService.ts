@@ -406,18 +406,14 @@ export const authService = {
 
       const userId = storage.getUserId();
 
-      // Clear session and org-specific keys
-      storage.remove(SESSION_KEY);
-      storage.remove('pharma_active_org_id');
-      storage.remove('pharma_active_branch_id');
-      storage.remove('area_unlocked');
-
-      // Note: pharma_settings is now global, so it is NOT cleared on logout
-      // to maintain device/browser-level UI preferences.
-
       // Clear navigation state to prevent stale view on next login
       storage.remove('pharma_view');
       storage.remove('pharma_activeModule');
+      
+      // Clear org-specific keys
+      storage.remove('pharma_active_org_id');
+      storage.remove('pharma_active_branch_id');
+      storage.remove('area_unlocked');
 
       // Clear user-scoped keys (data keyed by userId suffix)
       if (userId) {
@@ -430,6 +426,9 @@ export const authService = {
         }
         keysToRemove.forEach(key => localStorage.removeItem(key));
       }
+
+      // Clear session key last so getScopedKey() works correctly during cleanup
+      storage.remove(SESSION_KEY);
 
       // Flush in-memory caches to prevent stale data in next session
       storage.resetCaches();
