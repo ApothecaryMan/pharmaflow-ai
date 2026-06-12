@@ -477,7 +477,7 @@ export const financialService = {
     let salesQuery = supabase
       .from('sales')
       .select(
-        'id, items:sale_items(drug_id, quantity, unit_price, cost_price), drugs:sale_items(drugs(name, dosage_form))'
+        'id, items:sale_items(drug_id, quantity, unit_price, cost_price, drugs(name, dosage_form))'
       )
       .eq('status', 'completed')
       .gte('date', start)

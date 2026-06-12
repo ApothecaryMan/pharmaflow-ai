@@ -211,9 +211,16 @@ export class DashboardService {
       }
     });
 
-    // 3. Categorize drugs
-    const critical = inventory.filter((d) => (stockMap[d.id] || 0) <= 3);
+    // 3. Categorize drugs (Only include relevant drugs that have been stocked or sold)
+    const critical = inventory.filter((d) => {
+      const isRelevant = netSalesByDrug[d.id] !== undefined || stockMap[d.id] !== undefined;
+      if (!isRelevant) return false;
+      return (stockMap[d.id] || 0) <= 3;
+    });
+    
     const lowStock = inventory.filter((d) => {
+      const isRelevant = netSalesByDrug[d.id] !== undefined || stockMap[d.id] !== undefined;
+      if (!isRelevant) return false;
       const stock = stockMap[d.id] || 0;
       return stock > 3 && stock <= 10;
     });

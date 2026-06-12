@@ -96,6 +96,7 @@ export function useFinancialData(period: FinancialPeriod = 'this_month'): UseFin
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
+      lastFetchKeyRef.current = undefined;
     };
   }, [fetchData]);
 
