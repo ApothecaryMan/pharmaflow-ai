@@ -82,7 +82,9 @@ export function EmployeeDashboard({ t, language, view = 'requests', onViewChange
 
   const handleUpdateWorkspacePassword = useCallback(async (employeeId: string, newPassword: string) => {
     try {
-      await employeeRepository.update(employeeId, { password: newPassword });
+      const { hashPassword } = await import('../../services/auth/hashUtils');
+      const passwordHash = await hashPassword(newPassword);
+      await employeeRepository.update(employeeId, { password: passwordHash });
       loadData(true);
     } catch (err) {
       console.error('Failed to update workspace password', err);

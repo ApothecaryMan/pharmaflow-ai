@@ -11,9 +11,38 @@ import { employmentRequestRepository } from '../../services/hr/repositories/empl
 import { RoleIcon } from '../hr/RoleIcon';
 import { OnboardingStepper } from './OnboardingStepper';
 import { supabase } from '../../lib/supabase';
+import { usePersistedState } from '../../hooks/common/usePersistedState';
 
 import { SYSTEM_ROLES, getRoleLabel } from '../../config/employeeRoles';
 import { TRANSLATIONS } from '../../i18n/translations';
+
+const CountdownTimer = ({ expiresAt, language }: { expiresAt: string, language: 'EN' | 'AR' }) => {
+  const [timeLeft, setTimeLeft] = useState<string>('');
+  const t = TRANSLATIONS[language].employeeSetup;
+
+  useEffect(() => {
+    const updateTimer = () => {
+      const diff = new Date(expiresAt).getTime() - Date.now();
+      if (diff <= 0) {
+        setTimeLeft(t.expired);
+        return;
+      }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setTimeLeft(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
+    };
+    updateTimer();
+    const int = setInterval(updateTimer, 1000);
+    return () => clearInterval(int);
+  }, [expiresAt, language, t.expired]);
+
+  return (
+    <div dir="ltr" className="text-sm font-bold font-mono text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-800/50 px-3 py-1.5 rounded-lg inline-block border border-zinc-200 dark:border-zinc-700/50">
+      {timeLeft}
+    </div>
+  );
+};
 
 // Roles allowed during initial setup
 const ONBOARDING_ROLES = SYSTEM_ROLES.filter(r =>
@@ -33,20 +62,23 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
   const { theme } = useSettings();
   const activeColor = theme.hex || color;
   const isRTL = language === 'AR';
+  const t = TRANSLATIONS[language].employeeSetup;
 
   const [activeBranchId, setActiveBranchId] = useState<string>('');
-  const [phase, setPhase] = useState<SetupPhase>('invite');
+  const [phase, setPhase] = usePersistedState<SetupPhase>('employee_setup_phase', 'invite');
 
   // Phase 1 State
-  const [targetUser, setTargetUser] = useState('');
+  const [targetUser, setTargetUser] = usePersistedState('employee_setup_target', '');
   const [role, setRole] = useState<'admin' | 'pharmacist_manager' | 'pharmacist_owner'>('pharmacist_owner');
   const selectedRole = ONBOARDING_ROLES.find(r => r.id === role) || ONBOARDING_ROLES[0];
+  const [expiresIn, setExpiresIn] = useState<number | null>(null); // null = unlimited, 1 = 1 hour, 24 = 1 day
 
   // Phase 2 State
-  const [requestId, setRequestId] = useState<string | null>(null);
+  const [requestId, setRequestId] = usePersistedState<string | null>('employee_setup_request_id', null);
+  const [requestExpiresAt, setRequestExpiresAt] = usePersistedState<string | null>('employee_setup_expires_at', null);
 
   // Phase 3 State
-  const [acceptedEmployee, setAcceptedEmployee] = useState<any | null>(null);
+  const [acceptedEmployee, setAcceptedEmployee] = usePersistedState<any | null>('employee_setup_accepted_employee', null);
   const [localPassword, setLocalPassword] = useState('');
   const [confirmLocalPassword, setConfirmLocalPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -55,9 +87,10 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Fetch active branch on mount
+  // Initialize: fetch branch + validate persisted waiting state against DB
   useEffect(() => {
-    const fetchBranch = async () => {
+    const initialize = async () => {
+      // Fetch active branch
       let branch = await branchService.getActive();
       if (!branch) {
         const all = await branchService.getAll();
@@ -66,48 +99,91 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
       if (branch) {
         setActiveBranchId(branch.id);
       }
-    };
-    fetchBranch();
-  }, []);
 
-  // Polling for Phase 2
-  useEffect(() => {
-    if (phase !== 'waiting' || !requestId) return;
-    let failCount = 0;
+      // Validate persisted waiting state:
+      // If localStorage says we're waiting, verify the request still exists and is pending
+      if (phase === 'waiting' && requestId) {
+        const { data } = await supabase
+          .from('employment_requests')
+          .select('status, expires_at')
+          .eq('id', requestId)
+          .maybeSingle();
 
-    const checkStatus = async () => {
-      try {
-        const { data } = await supabase.from('employment_requests').select('*').eq('id', requestId).maybeSingle();
-        if (data && data.status === 'accepted') {
-          const activeOrgId = orgService.getActiveOrgId();
-          if (!activeOrgId) return;
-          
-          const { data: empData } = await supabase.from('employees').select('*').eq('org_id', activeOrgId).eq('auth_user_id', data.target_user_id).maybeSingle();
-          if (empData) {
-            setAcceptedEmployee(empData);
-            setPhase('setup');
-          }
-        }
-        failCount = 0;
-      } catch (err) {
-        failCount++;
-        console.error(`Failed to poll request status (attempt ${failCount})`, err);
-        if (failCount >= 20) {
-          setError(isRTL ? 'حدث خطأ في الاتصال. يرجى تحديث الصفحة.' : 'Connection error. Please refresh the page.');
+        if (!data || data.status !== 'pending') {
+          // Request was deleted, accepted, or rejected while we were away
+          setRequestId(null);
+          setTargetUser('');
+          setRequestExpiresAt(null);
+          setPhase('invite');
+        } else {
+          setRequestExpiresAt(data.expires_at);
         }
       }
     };
+    initialize();
+  }, []);
 
-    const interval = setInterval(checkStatus, 3000);
-    return () => clearInterval(interval);
-  }, [phase, requestId]);
+  // Realtime Subscription + Fallback Polling for Phase 2
+  useEffect(() => {
+    if (phase !== 'waiting' || !requestId) return;
+
+    const handleAccepted = async (targetUserId: string) => {
+      const activeOrgId = orgService.getActiveOrgId();
+      if (!activeOrgId) return;
+      const { data: empData } = await supabase.from('employees').select('*').eq('org_id', activeOrgId).eq('auth_user_id', targetUserId).maybeSingle();
+      if (empData) {
+        setAcceptedEmployee(empData);
+        setPhase('setup');
+        // Clear persisted waiting state on success
+        setRequestId(null);
+        setTargetUser('');
+        setRequestExpiresAt(null);
+      }
+    };
+
+    const handleRejected = () => {
+      setRequestId(null);
+      setTargetUser('');
+      setRequestExpiresAt(null);
+      setPhase('invite');
+      setError(t.invitationRejected);
+    };
+
+    // Realtime channel (primary, instant)
+    const channel = supabase
+      .channel(`employment_request_${requestId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'employment_requests', filter: `id=eq.${requestId}` },
+        (payload) => {
+          const newStatus = payload.new.status;
+          if (newStatus === 'accepted') handleAccepted(payload.new.target_user_id);
+          else if (newStatus === 'rejected') handleRejected();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'employment_requests', filter: `id=eq.${requestId}` },
+        () => {
+          setRequestId(null);
+          setTargetUser('');
+          setRequestExpiresAt(null);
+          setPhase('invite');
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [phase, requestId, isRTL]);
 
   const handleSendInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (!targetUser.trim()) {
-      setError(isRTL ? 'يرجى إدخال البريد الإلكتروني أو اسم المستخدم' : 'Please enter Email or Username');
+      setError(t.pleaseEnterUsername);
       return;
     }
 
@@ -121,7 +197,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
       }
 
       if (!profile) {
-        setError(isRTL ? 'المستخدم غير موجود. يجب عليه إنشاء حساب أولاً.' : 'User not found. They must create an account first.');
+        setError(t.userNotFound);
         setIsLoading(false);
         return;
       }
@@ -130,10 +206,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
 
       // FORBID inviting the current user (Organization Owner)
       if (profile.id === currentUser?.userId) {
-        setError(isRTL
-          ? 'لا يمكنك دعوة حساب الإدارة. يرجى إرسال الدعوة إلى حساب موظف منفصل.'
-          : 'Cannot invite the admin account. Please invite a separate employee account.'
-        );
+        setError(t.cannotInviteSelf);
         setIsLoading(false);
         return;
       }
@@ -141,12 +214,21 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
       const activeOrgId = orgService.getActiveOrgId();
       if (!activeOrgId) throw new Error('Active organization not found');
 
-      // 2. Send request
+      // 2. Get sender and org info
+      const sessionUser = await authService.getCurrentUser();
+      const senderName = sessionUser?.employeeName || '';
+      const { data: org } = await supabase.from('organizations').select('name').eq('id', activeOrgId).single();
+      const orgName = org?.name || '';
+
+      // 3. Send request
       const res = await employmentRequestRepository.sendRequest({
         orgId: activeOrgId,
+        orgName,
+        sentByName: senderName,
         branchId: activeBranchId,
         targetUsername: profile.username,
-        role: role
+        role: role,
+        expiresInHours: expiresIn || undefined
       });
 
       if (!res.success) {
@@ -159,9 +241,30 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
 
       // 3. Go to waiting phase
       setRequestId(newRequestId || null);
+      setRequestExpiresAt(res.data?.expiresAt || null);
       setPhase('waiting');
     } catch (err: any) {
-      setError(err.message || (isRTL ? 'حدث خطأ' : 'An error occurred'));
+      setError(err.message || t.errorOccurred);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelInvite = async () => {
+    if (!requestId) return;
+    setIsLoading(true);
+    try {
+      const success = await employmentRequestRepository.cancelRequest(requestId);
+      if (success) {
+        setRequestId(null);
+        setTargetUser(''); // Reset the form
+        setRequestExpiresAt(null);
+        setPhase('invite');
+      } else {
+        setError(t.failedToCancel);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error cancelling request');
     } finally {
       setIsLoading(false);
     }
@@ -172,17 +275,17 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
     setError('');
 
     if (!localPassword || !confirmLocalPassword) {
-      setError(isRTL ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
+      setError(t.fillRequiredFields);
       return;
     }
 
     if (localPassword !== confirmLocalPassword) {
-      setError(isRTL ? 'كلمات المرور غير متطابقة' : 'Passwords do not match');
+      setError(t.passwordsDoNotMatch);
       return;
     }
 
     if (localPassword.length < 4) {
-      setError(isRTL ? 'يجب أن تتكون كلمة المرور من 4 أحرف على الأقل' : 'Password must be at least 4 characters');
+      setError(t.passwordLength);
       return;
     }
 
@@ -194,6 +297,12 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
       // Update employee with password
       await employeeService.update(acceptedEmployee.id, { password: passwordHash });
 
+      // Clear setup state
+      setPhase('invite');
+      setAcceptedEmployee(null);
+      setLocalPassword('');
+      setConfirmLocalPassword('');
+
       // Finalize and trigger soft transition
       if (onComplete) {
         onComplete();
@@ -202,7 +311,8 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
       }
     } catch (err: any) {
       console.error('Failed to setup local credentials:', err);
-      setError(err.message || (isRTL ? 'حدث خطأ' : 'An error occurred'));
+      setError(err.message || t.errorOccurred);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -215,7 +325,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
           type="button"
           onClick={onBack}
           className={`absolute top-4 ${isRTL ? 'right-4' : 'left-4'} z-50 w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-all active:scale-95 shadow-lg backdrop-blur-md border border-white/20`}
-          title={isRTL ? 'الرجوع' : 'Go Back'}
+          title={t.goBack}
         >
           <span className="material-symbols-rounded text-2xl">
             {isRTL ? 'arrow_forward' : 'arrow_back'}
@@ -236,9 +346,9 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
               <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
                 <span className="material-symbols-rounded text-2xl">manage_accounts</span>
               </div>
-              <h1 className="text-xl font-bold text-white">
-                {isRTL ? 'إعداد الحساب' : 'Account Setup'}
-              </h1>
+              <h2 className="text-white text-xl font-bold font-display mb-1 flex items-center gap-2">
+                {t.accountSetup}
+              </h2>
             </div>
             <div className={`scale-90 ${isRTL ? 'origin-left' : 'origin-right'}`}>
               <OnboardingStepper currentStep={3} language={language} />
@@ -246,9 +356,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
           </div>
 
           <p className="text-white/80 relative z-10 text-xs font-medium bg-black/10 p-2.5 rounded-xl border border-white/10">
-            {isRTL
-              ? 'الخطوة ٣: قم بدعوة مدير الفرع للبدء في استخدام النظام.'
-              : 'Step 3: Invite the first admin for this branch to start using the system.'}
+            {t.inviteAdminInstructions}
           </p>
         </div>
 
@@ -264,24 +372,24 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
             <form onSubmit={handleSendInvite} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                  {isRTL ? 'البريد الإلكتروني أو اسم المستخدم العالمي' : 'Global Email or Username'}
+                  {t.globalEmailOrUsername}
                   <span className="text-red-500 ml-1">*</span>
                 </label>
                 <SmartInput
                   required
                   value={targetUser}
                   onChange={(e) => setTargetUser(e.target.value)}
-                  placeholder={isRTL ? 'مثال: ahmed@email.com' : 'e.g. ahmed@email.com'}
+                  placeholder={t.emailExample}
                   style={{ '--tw-ring-color': activeColor } as React.CSSProperties}
                 />
                 <p className="text-[10px] text-zinc-500 mt-1">
-                  {isRTL ? 'إذا قمت بإدخال بريدك الحالي، سيتم قبول الدعوة تلقائياً.' : 'If you enter your current email, the invite will auto-accept.'}
+                  {t.autoAcceptNote}
                 </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                  {isRTL ? 'الصلاحية' : 'Role'}
+                  {t.role}
                 </label>
                 <FilterDropdown
                   className="w-full"
@@ -315,6 +423,35 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                  {t.expirationTime}
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setExpiresIn(1)}
+                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${expiresIn === 1 ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-zinc-50 border border-zinc-200 text-zinc-600 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700'}`}
+                  >
+                    {t.oneHour}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExpiresIn(24)}
+                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${expiresIn === 24 ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-zinc-50 border border-zinc-200 text-zinc-600 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700'}`}
+                  >
+                    {t.oneDay}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExpiresIn(null)}
+                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${expiresIn === null ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-zinc-50 border border-zinc-200 text-zinc-600 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700'}`}
+                  >
+                    {t.noLimit}
+                  </button>
+                </div>
+              </div>
+
               <div className="pt-2">
                 <button
                   type="submit"
@@ -329,7 +466,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
                     </svg>
                   ) : (
                     <>
-                      <span className="ml-2 mr-2">{isRTL ? 'إرسال الدعوة' : 'Send Invitation'}</span>
+                      <span className="ml-2 mr-2">{t.sendInvitation}</span>
                       <span className={`material-symbols-rounded text-lg ${isRTL ? 'rotate-180' : ''}`}>
                         send
                       </span>
@@ -341,19 +478,51 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
           )}
 
           {phase === 'waiting' && (
-            <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
-              <div className="relative">
-                <div className="w-16 h-16 rounded-full border-4 border-zinc-100 dark:border-zinc-800" />
-                <span className="material-symbols-rounded absolute inset-0 flex items-center justify-center text-2xl text-zinc-400">mail</span>
+            <div className="pt-2 pb-0 animate-fade-in flex flex-col items-center justify-center text-center">
+              <div className="relative mb-6 mt-4 flex items-center justify-center">
+                <span className="material-symbols-rounded animate-pulse" style={{ color: activeColor, fontSize: '120px' }}>schedule_send</span>
               </div>
-              <div>
-                <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100">
-                  {isRTL ? 'في انتظار القبول...' : 'Waiting for acceptance...'}
-                </h3>
-                <p className="text-sm text-zinc-500 mt-1 max-w-[250px] mx-auto">
-                  {isRTL ? 'تم إرسال الدعوة. يرجى الانتظار حتى يقوم المستخدم بقبولها من حسابه.' : 'Invitation sent. Please wait until the user accepts it from their account.'}
-                </p>
+
+              {/* Linear Loading Bar */}
+              <style>{`
+                @keyframes loadingBar {
+                  0% { left: -35%; width: 35%; }
+                  100% { left: 100%; width: 35%; }
+                }
+              `}</style>
+              <div className="w-48 h-1.5 rounded-full overflow-hidden bg-zinc-200 dark:bg-zinc-800 mb-4 relative">
+                <div 
+                  className="absolute top-0 h-full rounded-full" 
+                  style={{ 
+                    backgroundColor: activeColor,
+                    animation: 'loadingBar 1.5s infinite ease-in-out' 
+                  }}
+                ></div>
               </div>
+
+              <h3 className="font-medium text-sm text-zinc-600 dark:text-zinc-400 flex items-center justify-center gap-2 flex-wrap mb-4">
+                <span>{t.waitingForAcceptance} <span dir="ltr" className="inline-block mx-1 text-zinc-700 dark:text-zinc-300">{targetUser}</span></span>
+              </h3>
+
+              {requestExpiresAt && (
+                <div className="mb-8 flex flex-row items-center justify-center gap-2">
+                  <span className="text-sm font-medium text-zinc-500">{t.invitationExpiresIn}</span>
+                  <CountdownTimer expiresAt={requestExpiresAt} language={language} />
+                </div>
+              )}
+              {!requestExpiresAt && <div className="mb-8" />}
+
+              <button
+                type="button"
+                onClick={handleCancelInvite}
+                disabled={isLoading}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-red-500 hover:bg-red-500 hover:text-white transition-all disabled:opacity-50 group"
+              >
+                {isLoading && (
+                  <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                )}
+                {t.cancelInvitation}
+              </button>
             </div>
           )}
 
@@ -368,13 +537,13 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
                   <p className="text-xs text-zinc-500 font-medium mt-0.5 uppercase tracking-wider">{getRoleLabel(acceptedEmployee.role, TRANSLATIONS[language].employeeList.roles)}</p>
                 </div>
                 <div className="ml-auto mr-auto px-3 py-1 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase tracking-wider">
-                  {isRTL ? 'تم القبول' : 'Accepted'}
+                  {t.accepted}
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                  {isRTL ? 'اسم المستخدم المحلي (تلقائي)' : 'Local Username (Auto)'}
+                  {t.localUsernameAuto}
                 </label>
                 <div className="relative">
                   <span className="absolute top-1/2 -translate-y-1/2 left-3 material-symbols-rounded text-zinc-400">badge</span>
@@ -383,16 +552,17 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
                     value={acceptedEmployee.username || acceptedEmployee.employee_code}
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-bold tracking-wider cursor-not-allowed opacity-70"
                   />
+                  <p className="mt-2 text-xs text-zinc-500 flex items-start gap-1">
+                    <span className="material-symbols-rounded text-[14px]">info</span>
+                    {t.quickLoginNote}
+                  </p>
                 </div>
-                <p className="text-[10px] text-zinc-500 mt-1.5 font-medium">
-                  {isRTL ? 'هذا هو الرمز الموحد للدخول السريع الخاص بالفرع. لا يمكن تغييره.' : 'This is the unified quick login code for the branch. It cannot be changed.'}
-                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                    {isRTL ? 'كلمة المرور المحلية' : 'Local Password'}
+                    {t.localPassword}
                     <span className="text-red-500 ml-1">*</span>
                   </label>
                   <div className="relative">
@@ -417,7 +587,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5 text-ellipsis overflow-hidden whitespace-nowrap">
-                    {isRTL ? 'تأكيد المرور' : 'Confirm'}
+                    {t.confirmPassword}
                     <span className="text-red-500 ml-1">*</span>
                   </label>
                   <div className="relative">
@@ -456,9 +626,9 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
                     </svg>
                   ) : (
                     <>
-                      <span className="ml-2 mr-2">{isRTL ? 'إنهاء وحفظ' : 'Finish & Save'}</span>
+                      <span className="ml-2 mr-2">{t.finishAndSave}</span>
                       <span className={`material-symbols-rounded text-lg ${isRTL ? 'rotate-180' : ''}`}>
-                        check_circle
+                        arrow_forward
                       </span>
                     </>
                   )}

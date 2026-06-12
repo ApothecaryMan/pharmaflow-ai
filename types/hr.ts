@@ -135,6 +135,7 @@ export interface EmploymentRequest {
   sentByName?: string;
   createdAt?: string;
   updatedAt?: string;
+  expiresAt?: string;
 }
 
 export interface EmployeeProfileStats {

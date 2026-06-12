@@ -7,7 +7,7 @@ export const employmentRequestRepository = {
   /**
    * Send a new employment request from an organization to a specific username
    */
-  async sendRequest(request: Omit<EmploymentRequest, 'id' | 'createdAt' | 'updatedAt' | 'status'> & { sentByName?: string; orgName?: string }): Promise<{ success: boolean; data?: EmploymentRequest; message?: string }> {
+  async sendRequest(request: Omit<EmploymentRequest, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'expiresAt'> & { sentByName?: string; orgName?: string; expiresInHours?: number }): Promise<{ success: boolean; data?: EmploymentRequest; message?: string }> {
     try {
       // Check if a pending request already exists
       const { data: existing } = await supabase
@@ -41,6 +41,10 @@ export const employmentRequestRepository = {
         }
       }
 
+      const expiresAt = request.expiresInHours 
+        ? new Date(Date.now() + request.expiresInHours * 3600000).toISOString()
+        : null;
+
       const { data, error } = await supabase
         .from('employment_requests')
         .insert({
@@ -51,7 +55,8 @@ export const employmentRequestRepository = {
           branch_id: request.branchId || null,
           sent_by_name: request.sentByName || null,
           org_name: request.orgName || null,
-          status: 'pending'
+          status: 'pending',
+          expires_at: expiresAt
         })
         .select()
         .single();
@@ -89,15 +94,17 @@ export const employmentRequestRepository = {
    */
   async getByUserId(userId: string): Promise<EmploymentRequest[]> {
     try {
+      const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('employment_requests')
-        .select('*, organizations(name)')
+        .select('*, organizations(name), branches(name)')
         .eq('target_user_id', userId)
         .eq('status', 'pending')
+        .or(`expires_at.is.null,expires_at.gt.${now}`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return (data || []).map(this.mapToModel);
+      return (data || []).map((row) => this.mapToModel(row));
     } catch (err) {
       console.error('Failed to get user requests:', err);
       return [];
@@ -144,6 +151,25 @@ export const employmentRequestRepository = {
     }
   },
 
+  /**
+   * Cancel a pending employment request
+   */
+  async cancelRequest(id: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('employment_requests')
+        .delete()
+        .eq('id', id)
+        .eq('status', 'pending');
+
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.error('Failed to cancel employment request:', err);
+      return false;
+    }
+  },
+
   mapToModel(row: any): EmploymentRequest {
     return {
       id: row.id,
@@ -156,8 +182,10 @@ export const employmentRequestRepository = {
       sentByName: row.sent_by_name,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      expiresAt: row.expires_at,
       // denormalized org_name first, fallback to joined data
-      orgName: row.org_name || row.organizations?.name
+      orgName: row.org_name || row.organizations?.name,
+      branchName: row.branches?.name
     };
   }
 };

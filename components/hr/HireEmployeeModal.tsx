@@ -77,7 +77,7 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
 
       // 2. Get current admin/sender info
       const currentUser = await authService.getCurrentUser();
-      const senderName = currentUser?.employeeName || profile?.fullName || currentUser?.username || '';
+      const senderName = currentUser?.employeeName || '';
 
       // 3. Get org name (from admin's context — has RLS access)
       const orgId = orgService.getActiveOrgId();

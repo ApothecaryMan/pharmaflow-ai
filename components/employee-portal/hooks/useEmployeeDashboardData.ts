@@ -30,7 +30,14 @@ export function useEmployeeDashboardData() {
 
       const session = await authService.getCurrentUser();
       if (session?.userId) {
-        let userProfile = await employeeProfileRepository.getById(session.userId);
+        // Run independent queries in parallel to avoid waterfall
+        const [initialProfile, pendingRequests, workspacesRes] = await Promise.all([
+          employeeProfileRepository.getById(session.userId),
+          employmentRequestRepository.getByUserId(session.userId),
+          supabase.rpc('get_my_workspaces')
+        ]);
+
+        let userProfile = initialProfile;
 
         // Backfill email from auth.users if missing in user_profiles
         if (userProfile && !userProfile.email) {
@@ -41,20 +48,14 @@ export function useEmployeeDashboardData() {
         }
 
         setProfile(userProfile);
+        setRequests(pendingRequests || []);
 
-        if (userProfile?.id) {
-          const pendingRequests = await employmentRequestRepository.getByUserId(userProfile.id);
-          setRequests(pendingRequests);
+        if (workspacesRes.error) {
+          console.error('get_my_workspaces RPC error:', workspacesRes.error);
         }
-
-        // Fetch workspaces via RPC (bypasses RLS circular dependency)
-        const { data: empData, error: empError } = await supabase.rpc('get_my_workspaces');
-        if (empError) {
-          console.error('get_my_workspaces RPC error:', empError);
-        }
-        if (empData) {
+        if (workspacesRes.data) {
           // RPC returns flat rows with org_name/branch_name already joined
-          const mappedWorkspaces = empData.map((row: any) => ({
+          const mappedWorkspaces = workspacesRes.data.map((row: any) => ({
             ...employeeRepository.mapFromDb(row),
             orgName: row.org_name,
             branchName: row.branch_name,
@@ -79,17 +80,42 @@ export function useEmployeeDashboardData() {
 
     const channel = supabase
       .channel('public:employment_requests')
+      // Listen for INSERT and UPDATE (requires filter to be efficient)
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'employment_requests',
           filter: `target_user_id=eq.${profile.id}`,
         },
-        () => {
-          // Re-fetch requests when a change happens
-          loadData();
+        () => loadData()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'employment_requests',
+          filter: `target_user_id=eq.${profile.id}`,
+        },
+        () => loadData()
+      )
+      // Listen for DELETE globally because REPLICA IDENTITY doesn't send target_user_id
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'employment_requests',
+        },
+        (payload) => {
+          setRequests(prev => {
+            if (prev.some(r => r.id === payload.old.id)) {
+              return prev.filter(r => r.id !== payload.old.id);
+            }
+            return prev;
+          });
         }
       )
       .subscribe();
