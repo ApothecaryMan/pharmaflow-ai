@@ -127,69 +127,16 @@ export const employmentRequestRepository = {
    */
   async acceptEmploymentRequest(requestId: string, userId: string, username: string): Promise<boolean> {
     try {
-      // 1. Fetch request details
-      const { data: request, error: reqError } = await supabase
-        .from('employment_requests')
-        .select('*')
-        .eq('id', requestId)
-        .single();
+      const { data, error } = await supabase.rpc('accept_employment_request', {
+        p_request_id: requestId,
+        p_user_id: userId,
+        p_username: username
+      });
 
-      if (reqError || !request) throw new Error('Request not found or already processed');
-      if (request.status !== 'pending') throw new Error('Request is not pending');
-      if (request.target_username !== username) throw new Error('Username mismatch');
-
-      // 1b. Check if employee already exists to prevent duplicates
-      const { data: existingEmployee } = await supabase
-        .from('employees')
-        .select('id')
-        .eq('org_id', request.org_id)
-        .eq('auth_user_id', userId)
-        .maybeSingle();
-
-      if (existingEmployee) {
-        throw new Error('You are already an employee in this organization.');
+      if (error) {
+        console.error('RPC Error accepting employment request:', error);
+        throw error;
       }
-
-      // 2. Fetch User Profile for Full Name and Phone
-      const profile = await employeeProfileRepository.getById(userId);
-      if (!profile) throw new Error('Profile not found');
-
-      // 3. Create Employee record FIRST (before changing status)
-      // This way, if creation fails, the request stays 'pending' and can be retried.
-      await employeeService.create({
-        id: undefined,
-        employeeCode: undefined, // Let employeeService auto-generate this
-        userId: userId,
-        // CRITICAL: Keep username undefined here. This forces employeeService.create() to generate
-        // the local sequential branch code (e.g. "1") instead of overriding it with the global '@username'.
-        username: undefined, 
-        name: profile.fullName,
-        nameArabic: profile.nameArabic || undefined,
-        image: profile.image || undefined,
-        position: request.role,
-        department: 'pharmacy',
-        role: request.role as any,
-        status: 'active',
-        startDate: new Date().toISOString().split('T')[0],
-        phone: profile.phone || undefined,
-        email: profile.email || undefined,
-        salary: 0,
-        branchId: request.branch_id || undefined,
-        orgId: request.org_id,
-      } as any, request.branch_id || undefined, request.org_id);
-
-      // 4. Update status to accepted ONLY after employee was created successfully
-      const { error: updateError } = await supabase
-        .from('employment_requests')
-        .update({ status: 'accepted' })
-        .eq('id', requestId);
-
-      if (updateError) {
-        // Employee was created but status update failed — log but don't fail
-        // The employee record exists, which is the critical part
-        console.error('Employee created but status update failed:', updateError);
-      }
-
       return true;
     } catch (err) {
       console.error('Failed to accept employment request:', err);

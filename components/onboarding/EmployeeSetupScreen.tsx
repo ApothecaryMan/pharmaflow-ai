@@ -73,20 +73,28 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
   // Polling for Phase 2
   useEffect(() => {
     if (phase !== 'waiting' || !requestId) return;
+    let failCount = 0;
 
     const checkStatus = async () => {
       try {
-        const { data } = await supabase.from('employment_requests').select('*').eq('id', requestId).single();
+        const { data } = await supabase.from('employment_requests').select('*').eq('id', requestId).maybeSingle();
         if (data && data.status === 'accepted') {
           const activeOrgId = orgService.getActiveOrgId();
-          const { data: empData } = await supabase.from('employees').select('*').eq('org_id', activeOrgId).eq('auth_user_id', data.target_user_id).single();
+          if (!activeOrgId) return;
+          
+          const { data: empData } = await supabase.from('employees').select('*').eq('org_id', activeOrgId).eq('auth_user_id', data.target_user_id).maybeSingle();
           if (empData) {
             setAcceptedEmployee(empData);
             setPhase('setup');
           }
         }
+        failCount = 0;
       } catch (err) {
-        console.error('Failed to poll request status', err);
+        failCount++;
+        console.error(`Failed to poll request status (attempt ${failCount})`, err);
+        if (failCount >= 20) {
+          setError(isRTL ? 'حدث خطأ في الاتصال. يرجى تحديث الصفحة.' : 'Connection error. Please refresh the page.');
+        }
       }
     };
 
