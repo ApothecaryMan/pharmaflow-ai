@@ -1018,8 +1018,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                 onClear={() => setSearchQuery('')}
                 placeholder={t.searchOrder || 'Search orders...'}
                 autoFocus={true}
-                wrapperClassName='w-full h-8 !py-0'
-                className='!py-1 text-[13px]'
+                wrapperClassName='w-full !h-8 !py-0 min-h-[32px]'
+                className='!py-0 text-[14px]'
               />
             </div>
           </div>
@@ -1758,18 +1758,16 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           )}
 
           {/* Footer Summary */}
-          <div className='mt-4 flex justify-between items-center text-sm border-t border-gray-100 dark:border-gray-800 pt-4'>
-            <div className='flex items-center gap-3'>
-              <div className='flex flex-col'>
-                <span className='text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest leading-none mb-1'>
-                  {t.totalPending || 'Total Pending Value'}
-                </span>
-                <div className='flex items-center gap-2'>
-                  <span className='text-xl font-black text-blue-600 dark:text-blue-400 tracking-tight'>
-                    {formatCurrency(pendingStats.total)}
-                  </span>
+          <div className='mt-3 flex justify-between items-center text-sm border-t border-(--border-divider) pt-3'>
+            <div className='flex items-center gap-2'>
+              <span className='text-[11px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-widest'>
+                {t.totalPending || 'Total Pending Value'}:
+              </span>
+              <span className='text-base font-black text-gray-900 dark:text-white tracking-tight'>
+                {formatCurrency(pendingStats.total)}
+              </span>
 
-                  <Tooltip
+              <Tooltip
                     content={
                       <InsightTooltip
                         title={t.pendingValueDetails}
@@ -1830,8 +1828,6 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                       info
                     </span>
                   </Tooltip>
-                </div>
-              </div>
             </div>
 
             <div className='flex items-center gap-3'>
