@@ -13,6 +13,7 @@ import { formatExpiryDate } from '../../utils/expiryUtils';
 import { getPrinterSettings, printLabelSilently } from '../../utils/qzPrinter';
 import { storage } from '../../utils/storage';
 import type { LabelDesign, LabelElement, SavedTemplate } from './studio/types';
+import { getBarcodeFontsCSS } from './barcodeFonts';
 
 export type { LabelElement, LabelDesign, SavedTemplate };
 
@@ -391,7 +392,7 @@ export const generateLabelHTML = (
       return `<img src="${qrDataUrl}" ${classAttr} ${styleAttr} />`;
     }
     if (el.type === 'image') {
-      const src = el.id === 'logo' ? logoDataUrl : el.content;
+      const src = (el.id === 'logo' && logoDataUrl) ? logoDataUrl : el.content;
       if (src) return `<img src="${src}" ${classAttr} ${styleAttr} />`;
     }
     return '';
@@ -426,7 +427,7 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
       type: 'text',
       label: 'Store Name',
       x: 19,
-      y: 1.5,
+      y: 1.1,
       fontSize: 6,
       fontWeight: 'bold',
       align: 'center',
@@ -442,7 +443,7 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
       type: 'text',
       label: 'Drug Name',
       x: 19,
-      y: 3.0,
+      y: 3.1,
       fontSize: 7,
       fontWeight: 'bold',
       align: 'center',
@@ -458,7 +459,7 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
       type: 'barcode',
       label: 'Barcode',
       x: 19,
-      y: 4.6,
+      y: 4.9,
       fontSize: 32,
       align: 'center',
       isVisible: true,
@@ -554,7 +555,9 @@ export const generatePageHTML = (
   pageHeight: number,
   offsets: { x: number; y: number } = { x: 0, y: 0 }
 ): string => {
+  const fontCSS = getBarcodeFontsCSS();
   const fullCSS = `
+            ${fontCSS}
             ${css}
             @page { size: ${dims.w}mm ${pageHeight}mm; margin: 0; }
             * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -592,7 +595,6 @@ export const generatePageHTML = (
 
   return `<!DOCTYPE html>
             <html><head><title>Print Labels</title>
-            <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
             <style>${fullCSS}</style></head><body>
             <div class="print-container">${contentHTML}</div>
             <script>
@@ -700,22 +702,45 @@ export const printLabels = async (
     const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
 
     const labelFragments: string[] = [];
-    for (const item of validItems) {
-      const singleLabel = generateLabelHTML(
-        item.drug,
-        design,
-        renderDims, // Use 12mm for individual label content
-        receiptSettings,
-        item.expiryDateOverride,
-        undefined,
-        undefined,
-        classNameMap
-      );
+    
+    // Process HTML generation asynchronously to avoid freezing UI for large volumes
+    let currentItemIdx = 0;
+    let currentQtyIdx = 0;
 
-      for (let i = 0; i < item.quantity; i++) {
-        labelFragments.push(singleLabel);
-      }
-    }
+    await new Promise<void>((resolve) => {
+      const processChunk = () => {
+        const chunkStartTime = performance.now();
+        
+        while (currentItemIdx < validItems.length) {
+          const item = validItems[currentItemIdx];
+          const singleLabel = generateLabelHTML(
+            item.drug,
+            design,
+            renderDims,
+            receiptSettings,
+            item.expiryDateOverride,
+            undefined, // qrDataUrl
+            undefined, // logoDataUrl
+            classNameMap
+          );
+          
+          while (currentQtyIdx < item.quantity) {
+            labelFragments.push(singleLabel);
+            currentQtyIdx++;
+            
+            // Yield every 30ms to keep UI responsive
+            if (performance.now() - chunkStartTime > 30) {
+              requestAnimationFrame(processChunk);
+              return;
+            }
+          }
+          currentQtyIdx = 0;
+          currentItemIdx++;
+        }
+        resolve();
+      };
+      processChunk();
+    });
 
     const innerGapDivider = innerGap > 0 ? `<div style="height: ${innerGap}mm;"></div>` : '';
     const pages: string[] = [];
@@ -725,11 +750,7 @@ export const printLabels = async (
       const isLastPage = i + labelsPerPage >= labelFragments.length;
       const isPartialPage = pageLabels.length < labelsPerPage;
 
-      // Join labels with the internal gap (1mm)
       const labelsContent = pageLabels.join(innerGapDivider);
-
-      // For partial pages (e.g. odd label count on double-roll), shrink height
-      // to only fit the actual labels, preventing the printer from feeding blank stock
       const actualContentHeight = isPartialPage
         ? pageLabels.length * labelHeight + Math.max(0, pageLabels.length - 1) * innerGap
         : printablePageHeight;
@@ -740,37 +761,50 @@ export const printLabels = async (
       pages.push(pageHTML);
     }
 
-    const allPagesHTML = pages.join('');
-
-    // Pass printablePageHeight (e.g. 25mm) instead of the total pageHeight (28mm).
-    // This aligns the HTML document bounds with the physical label height so the hardware sensor can control the gap.
-    const htmlContent = generatePageHTML(allPagesHTML, templateCSS, dims, printablePageHeight, {
-      x: printOffsetX,
-      y: printOffsetY,
-    });
-
-    // Try silent printing via QZ Tray first
+    // Try silent printing via QZ Tray first, sending chunks if large
     if (shouldTrySilent) {
       try {
-        const silentPrinted = await printLabelSilently(htmlContent, {
-          width: dims.w,
-          height: dims.h,
-        });
-        if (silentPrinted) {
-          console.log('Labels printed silently via QZ Tray');
+        const QZ_CHUNK_SIZE = 100; // Pages per chunk to prevent JavaFX/Spooler memory overflow
+        let silentSuccess = true;
+        
+        for (let c = 0; c < pages.length; c += QZ_CHUNK_SIZE) {
+          const chunkPages = pages.slice(c, c + QZ_CHUNK_SIZE);
+          const chunkHTML = generatePageHTML(chunkPages.join(''), templateCSS, dims, printablePageHeight, {
+            x: printOffsetX,
+            y: printOffsetY,
+          });
+          
+          const silentPrinted = await printLabelSilently(chunkHTML, {
+            width: dims.w,
+            height: dims.h,
+          });
+          
+          if (!silentPrinted) {
+            silentSuccess = false;
+            break; // Fall back to browser print if a chunk fails
+          }
+        }
+        
+        if (silentSuccess) {
+          console.log('Labels printed silently via QZ Tray (chunked if large)');
           return; // Success - no need for browser popup
         }
       } catch (silentErr: any) {
         console.warn('QZ Tray silent print failed:', silentErr);
 
-        // If the user explicitly requested silent printing (no fallback), we must inform them of the failure.
         if (printerSettings.silentMode === 'on') {
           alert(`Silent printing failed: ${silentErr?.message || 'Check QZ Tray connection'}.`);
           return;
         }
-        // Otherwise (fallback mode), we proceed to browser print below.
       }
     }
+
+    // Prepare full HTML for browser print fallback
+    const allPagesHTML = pages.join('');
+    const htmlContent = generatePageHTML(allPagesHTML, templateCSS, dims, printablePageHeight, {
+      x: printOffsetX,
+      y: printOffsetY,
+    });
 
     // Browser print fallback
     printWindow = window.open('', '', PRINT_WINDOW_CONFIG.features);

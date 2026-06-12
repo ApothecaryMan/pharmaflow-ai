@@ -25,6 +25,7 @@ import {
   getLabelElementContent,
   getReceiptSettings,
   LABEL_PRESETS,
+  printLabels,
 } from './LabelPrinter';
 import { PropertyInspector } from './studio/PropertyInspector';
 import { useData } from '../../context/DataContext';
@@ -931,12 +932,31 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     hotline,
   ]);
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (!selectedDrug) return;
-    const printWindow = window.open('', '', 'width=800,height=1000');
-    if (!printWindow) return;
-    printWindow.document.write(generatePrintHTML(true, false));
-    printWindow.document.close();
+    
+    const design: LabelDesign = {
+      elements,
+      selectedPreset,
+      customDims,
+      barcodeSource,
+      showPrintBorders,
+      printOffsetX,
+      printOffsetY,
+      labelGap,
+    };
+    
+    const isDouble = selectedPreset === '38x25';
+    
+    await printLabels(
+      [{ drug: selectedDrug, quantity: isDouble ? 2 : 1 }], 
+      { 
+        design,
+        activeBranchId,
+        activeBranchName: storeName,
+        activeBranchPhone: hotline,
+      }
+    );
   };
 
   return (
