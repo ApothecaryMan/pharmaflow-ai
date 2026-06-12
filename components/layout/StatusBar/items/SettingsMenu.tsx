@@ -9,6 +9,7 @@ import { SegmentedControl } from '../../../common/SegmentedControl';
 import { Switch } from '../../../common/Switch';
 import { StatusBarItem } from '../StatusBarItem';
 import { useSmartPosition } from '../../../../hooks/common/useSmartPosition';
+import { Tooltip } from '../../../common/Tooltip';
 
 // --- Utility Components & Helpers ---
 
@@ -19,18 +20,28 @@ const SettingsRow: React.FC<{
   label: string;
   children: React.ReactNode;
   className?: string;
-}> = ({ icon, label, children, className = '' }) => (
-  <div className={`flex items-center justify-between py-0.5 ${className}`}>
+  onClick?: () => void;
+}> = ({ icon, label, children, className = '', onClick }) => (
+  <div 
+    className={`flex items-center justify-between transition-colors px-2 ${
+      onClick 
+        ? 'py-1.5 cursor-pointer hover:bg-(--bg-menu-hover) rounded-lg group' 
+        : 'py-1'
+    } ${className}`}
+    onClick={onClick}
+  >
     <div className="flex items-center gap-2">
       <span 
-        className="material-symbols-rounded text-(--text-secondary)"
+        className={`material-symbols-rounded text-(--text-secondary) transition-colors ${onClick ? 'group-hover:text-(--text-primary)' : ''}`}
         style={{ fontSize: 'var(--icon-settings)' }}
       >
         {icon}
       </span>
       <span className="text-xs font-medium text-(--text-primary)">{label}</span>
     </div>
-    <div className="flex items-center gap-2">{children}</div>
+    <div className="flex items-center gap-2" onClick={(e) => { if(onClick) e.stopPropagation(); }}>
+      {children}
+    </div>
   </div>
 );
 
@@ -85,16 +96,14 @@ const SubmenuSection: React.FC<{
 
   return (
     <div className="space-y-1 relative" ref={ref}>
-      <SettingsRow icon={icon} label={label}>
+      <SettingsRow icon={icon} label={label} onClick={() => onToggle(id)}>
         {rowExtra}
-        <button type="button" onClick={() => onToggle(id)}>
-          <span
-            className={`material-symbols-rounded transition-transform text-(--text-tertiary) ${isOpen ? 'rotate-180' : ''}`}
-            style={{ fontSize: 'var(--icon-settings)' }}
-          >
-            chevron_left
-          </span>
-        </button>
+        <span
+          className={`material-symbols-rounded transition-transform text-(--text-tertiary) group-hover:text-(--text-secondary) ${isOpen ? 'rotate-180' : ''}`}
+          style={{ fontSize: 'var(--icon-settings)' }}
+        >
+          chevron_left
+        </span>
       </SettingsRow>
       <SubmenuWrapper isOpen={isOpen} isMobile={isMobile} title={title} side={position.side} align={position.align} isRTL={isRTL}>
         {children}
@@ -464,12 +473,37 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 
               {/* --- Workspace & Status Bar --- */}
               {permissionsService.isOrgAdmin() && (
-                <SettingsRow icon="science" label={t.developerMode}><Switch checked={developerMode || false} onChange={setDeveloperMode} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
+                <>
+                  <div className="py-1">
+                    <SettingsRow icon="science" label={t.developerMode}>
+                  <Tooltip 
+                    content={
+                      <div className="flex flex-col gap-1 text-xs">
+                        <span className="font-bold mb-1">{isAR ? 'يفتح خيارات متقدمة:' : 'Unlocks advanced options:'}</span>
+                        <ul className="list-disc list-inside opacity-90 space-y-0.5">
+                          <li>{isAR ? 'مخطط الأبعاد (Blueprint)' : 'Blueprint mode in Label Studio'}</li>
+                          <li>{isAR ? 'أنماط حواف وزوايا البطاقات' : 'Card border & corner styles'}</li>
+                          <li>{isAR ? 'تخصيص CSS للبطاقات' : 'Custom Card CSS'}</li>
+                          <li>{isAR ? 'أشكال أزرار السويتش' : 'Switch button variants'}</li>
+                          <li>{isAR ? 'الوصول للموديلات التجريبية (Test Lab)' : 'Access to Experimental Modules'}</li>
+                          <li>{isAR ? 'إظهار الصفحات قيد التطوير' : 'Show Unimplemented Pages'}</li>
+                          <li>{isAR ? 'تخطي الصلاحيات لصفحات الـ Debug' : 'Bypass permissions for Debug pages'}</li>
+                        </ul>
+                      </div>
+                    }
+                    position="top"
+                  >
+                    <span className="material-symbols-rounded text-[16px] text-gray-400 dark:text-gray-500 hover:text-primary-500 mr-2 rtl:ml-2 rtl:mr-0">info</span>
+                  </Tooltip>
+                  <Switch checked={developerMode || false} onChange={setDeveloperMode} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
+                  </SettingsRow>
+                  </div>
+                  <div className="border-t border-(--border-divider) my-0.5 opacity-50" />
+                </>
               )}
 
               {/* --- POS Settings --- */}
-              {/* --- POS Settings --- */}
-              <div className="pt-2 mt-2 border-t border-(--border-divider) space-y-1.5">
+              <div className="pt-1 space-y-1.5">
                 <label className="text-[10px] font-bold uppercase text-(--text-tertiary)">{t.posSettings}</label>
                 <SettingsRow icon="moped" label={t.defaultDeliveryFee}>
                   <div className="flex items-center gap-2">
@@ -488,16 +522,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase text-(--text-tertiary)">{t.statusBarSettings}</label>
                   <div className="relative" ref={statusSmartPos.ref}>
-                    <SettingsRow icon="speed" label={t.quickStatuses}>
+                    <SettingsRow icon="speed" label={t.quickStatuses} onClick={() => toggleSubmenu('status')}>
                       <Switch checked={showTicker || false} onChange={setShowTicker} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
-                      <button type="button" onClick={() => toggleSubmenu('status')}>
-                        <span 
-                          className={`material-symbols-rounded transition-transform text-(--text-tertiary) ${expandedSubmenu === 'status' ? 'rotate-180' : ''}`}
-                          style={{ fontSize: 'var(--icon-settings)' }}
-                        >
-                          chevron_left
-                        </span>
-                      </button>
+                      <span 
+                        className={`material-symbols-rounded transition-transform text-(--text-tertiary) group-hover:text-(--text-secondary) ${expandedSubmenu === 'status' ? 'rotate-180' : ''}`}
+                        style={{ fontSize: 'var(--icon-settings)' }}
+                      >
+                        chevron_left
+                      </span>
                     </SettingsRow>
                     <SubmenuWrapper isOpen={expandedSubmenu === 'status' && showTicker} isMobile={isMobile} side={statusSmartPos.position.side} align={statusSmartPos.position.align} isRTL={isAR}>
                       <SettingsRow icon="trending_up" label={t.showSales} className="hover:bg-(--bg-menu-hover) px-2 rounded-lg"><Switch checked={showTickerSales} onChange={setShowTickerSales} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
