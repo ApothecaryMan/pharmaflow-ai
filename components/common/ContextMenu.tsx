@@ -17,6 +17,7 @@
  * 2. Use `useContextMenu()` or `<ContextMenuTrigger>` to invoke the menu.
  */
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { useLongPress } from '../../hooks/common/useLongPress';
 
 // --- Types ---
@@ -329,48 +330,51 @@ export const ContextMenuProvider: React.FC<{
     <ContextMenuContext.Provider value={value}>
       {children}
 
-      {menu.isVisible && (
-        <div
-          ref={menuRef}
-          onMouseEnter={() => setIsMouseOverMenu(true)}
-          onMouseLeave={() => setIsMouseOverMenu(false)}
-          className={`fixed z-[999999] min-w-[180px] rounded-2xl shadow-xl border border-(--border-divider) py-1 px-1 origin-top-left overflow-hidden
+      {menu.isVisible && typeof document !== 'undefined'
+        ? ReactDOM.createPortal(
+            <div
+              ref={menuRef}
+              onMouseEnter={() => setIsMouseOverMenu(true)}
+              onMouseLeave={() => setIsMouseOverMenu(false)}
+              className={`fixed z-[999999] min-w-[180px] rounded-2xl shadow-xl border border-(--border-divider) py-1 px-1 origin-top-left overflow-hidden
                 ${enableGlassEffect ? 'glass-surface' : 'bg-(--bg-menu)'}
             `}
-          style={{
-            top: adjustedPos.top || menu.y,
-            left: adjustedPos.left || menu.x,
-            visibility: adjustedPos.top === 0 && adjustedPos.left === 0 ? 'hidden' : 'visible', // Hide until position calculated
-          }}
-          onContextMenu={(e) => e.preventDefault()}
-        >
-          {menu.content ? (
-            menu.content
-          ) : menu.actions.length > 0 ? (
-            menu.actions.map((action, index) =>
-              action.separator ? (
-                <ContextMenuSeparator key={index} />
+              style={{
+                top: adjustedPos.top || menu.y,
+                left: adjustedPos.left || menu.x,
+                visibility: adjustedPos.top === 0 && adjustedPos.left === 0 ? 'hidden' : 'visible', // Hide until position calculated
+              }}
+              onContextMenu={(e) => e.preventDefault()}
+            >
+              {menu.content ? (
+                menu.content
+              ) : menu.actions.length > 0 ? (
+                menu.actions.map((action, index) =>
+                  action.separator ? (
+                    <ContextMenuSeparator key={index} />
+                  ) : (
+                    <ContextMenuItem
+                      key={index}
+                      label={action.label}
+                      icon={action.icon}
+                      danger={action.danger}
+                      disabled={action.disabled}
+                      onClick={() => {
+                        if (action.action) {
+                          action.action();
+                          hideMenu();
+                        }
+                      }}
+                    />
+                  )
+                )
               ) : (
-                <ContextMenuItem
-                  key={index}
-                  label={action.label}
-                  icon={action.icon}
-                  danger={action.danger}
-                  disabled={action.disabled}
-                  onClick={() => {
-                    if (action.action) {
-                      action.action();
-                      hideMenu();
-                    }
-                  }}
-                />
-              )
-            )
-          ) : (
-            <div className='px-3 py-2 text-xs text-gray-400 italic text-center'>No actions</div>
-          )}
-        </div>
-      )}
+                <div className='px-3 py-2 text-xs text-gray-400 italic text-center'>No actions</div>
+              )}
+            </div>,
+            document.body
+          )
+        : null}
     </ContextMenuContext.Provider>
   );
 };
