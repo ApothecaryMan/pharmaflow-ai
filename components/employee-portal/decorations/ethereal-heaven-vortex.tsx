@@ -2,6 +2,15 @@ export function EtherealHeavenVortex() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
 
+      <style>{`
+        @keyframes cloud-spin-slow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes cloud-spin-rev { 0% { transform: rotate(0deg); } 100% { transform: rotate(-360deg); } }
+        @keyframes star-twinkle { 0%, 100% { opacity: 0.4; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); filter: drop-shadow(0 0 3px rgba(255,255,255,0.8)); } }
+        .heaven-origin { transform-box: view-box; transform-origin: 64px 64px; }
+        .spin-clouds { animation: cloud-spin-slow 25s linear infinite; }
+        .spin-clouds-rev { animation: cloud-spin-rev 15s linear infinite; }
+        .twinkle { animation: star-twinkle 2.5s ease-in-out infinite; }
+      `}</style>
       <g opacity='0.98'>
         <defs>
           <path id='holy-cloud' d='M0,0 C-3,-6 -9,-6 -12,-3 C-16,-6 -22,-3 -22,2 C-26,4 -24,10 -20,12 C-20,16 -14,18 -10,16 C-6,18 0,16 0,12 C4,10 4,4 0,0 Z' fill='#FFFFFF' stroke='#E9D5FF' strokeWidth='0.6' />

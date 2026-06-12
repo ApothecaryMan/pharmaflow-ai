@@ -1,6 +1,17 @@
 export function NeonCosmicVortex() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <style>{`
+        @keyframes vortex-spin-cw { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes vortex-spin-ccw { 0% { transform: rotate(0deg); } 100% { transform: rotate(-360deg); } }
+        @keyframes particle-pulse { 0%, 100% { opacity: 0.5; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
+        .vortex-origin { transform-box: fill-box; transform-origin: 50% 50%; }
+        .spin-fast { animation: vortex-spin-cw 4s linear infinite; }
+        .spin-med-rev { animation: vortex-spin-ccw 6s linear infinite; }
+        .spin-slow { animation: vortex-spin-cw 9s linear infinite; }
+        .spin-slower-rev { animation: vortex-spin-ccw 12s linear infinite; }
+        .pulse-glow { animation: particle-pulse 3s ease-in-out infinite; }
+      `}</style>
       <g opacity='0.95'>
         <circle cx='64' cy='64' r='56' stroke='#5B21B6' strokeWidth='12' opacity='0.25' />
         <circle cx='64' cy='64' r='54' stroke='#D946EF' strokeWidth='8' opacity='0.2' />

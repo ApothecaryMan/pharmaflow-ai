@@ -233,6 +233,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const [removeImage, setRemoveImage] = useState(false);
   const [copied, setCopied] = useState(false);
   const [avatarDecoration, setAvatarDecoration] = useState(() => profile?.designSettings?.avatar?.decorationId ?? 'none');
+  const [decorationAnimated, setDecorationAnimated] = useState(() => profile?.designSettings?.avatar?.decorationAnimated ?? true);
   const [frameColor, setFrameColor] = useState<string | null>(() => profile?.designSettings?.avatar?.frameColor ?? null);
   const [ringStyle, setRingStyle] = useState<RingStyle>(() => (profile?.designSettings?.avatar?.ringStyle as RingStyle) ?? 'solid');
   const [ringThickness, setRingThickness] = useState(() => profile?.designSettings?.avatar?.ringThickness ?? 4);
@@ -250,6 +251,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       }
       if (ds.avatar) {
         if (ds.avatar.decorationId !== undefined) setAvatarDecoration(ds.avatar.decorationId);
+        if (ds.avatar.decorationAnimated !== undefined) setDecorationAnimated(ds.avatar.decorationAnimated);
         if (ds.avatar.frameColor !== undefined) setFrameColor(ds.avatar.frameColor);
         if (ds.avatar.ringStyle !== undefined) setRingStyle(ds.avatar.ringStyle as RingStyle);
         if (ds.avatar.ringThickness !== undefined) setRingThickness(ds.avatar.ringThickness);
@@ -381,6 +383,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
         designSettings: {
           avatar: {
             decorationId: avatarDecoration,
+            decorationAnimated,
             frameColor,
             ringStyle,
             ringThickness,
@@ -408,6 +411,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     removeImage,
     setIsEditing,
     avatarDecoration,
+    decorationAnimated,
     frameColor,
     ringStyle,
     ringThickness,
@@ -465,7 +469,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
         {/* Edit controls overlay */}
         {isEditing && (
-          <div className='absolute inset-0 z-10 flex flex-col justify-between pointer-events-none'>
+          <div className='absolute inset-0 z-30 flex flex-col justify-between pointer-events-none'>
             {/* Top controls: dot picker + zoom */}
             <div className='flex items-start justify-between gap-2 p-3'>
               {/* Pattern picker */}
@@ -558,7 +562,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   )}
                 </div>
                 {avatarDecoration !== 'none' && (
-                  <div className='absolute -inset-2 pointer-events-none z-[1]'>
+                  <div className={`absolute -inset-2 pointer-events-none z-[1] ${!decorationAnimated ? 'pause-animations' : ''}`}>
                     {getDecoration(avatarDecoration)}
                   </div>
                 )}
@@ -665,10 +669,17 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
         {/* Decoration picker in edit mode */}
         {isEditing && (
           <div className='mb-4'>
-            <p className='text-[10px] font-bold uppercase tracking-wider text-(--text-tertiary) mb-2'>
-              {isRTL ? 'إطار الصورة' : 'Avatar Frame'}
-            </p>
-            <div className='decoration-carousel flex items-center gap-3 overflow-x-auto flex-nowrap scrollbar-none py-4 px-3 -mx-6'>
+            <div className='flex items-center justify-between mb-2'>
+              <p className='text-[10px] font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                {isRTL ? 'إطار الصورة' : 'Avatar Frame'}
+              </p>
+              <AnimationToggle
+                animating={decorationAnimated}
+                onToggle={() => setDecorationAnimated(!decorationAnimated)}
+                isRTL={isRTL}
+              />
+            </div>
+            <div className={`decoration-carousel flex items-center gap-3 overflow-x-auto flex-nowrap scrollbar-none pt-8 pb-4 px-3 -mx-6 ${!decorationAnimated ? 'pause-animations' : ''}`}>
               {AVATAR_DECORATIONS.map((dec) => (
                 <button
                   key={dec.id}
@@ -694,6 +705,20 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                     <span className='material-symbols-rounded text-[14px] text-(--text-tertiary) z-[1]'>
                       close
                     </span>
+                  )}
+                  {dec.isAnimated && (
+                    <div className='absolute inset-0 z-10 flex items-center justify-center pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'>
+                      <svg width='24' height='24' viewBox='0 0 24 24' fill='currentColor' className='text-white'>
+                        {decorationAnimated ? (
+                          <>
+                            <rect x='6' y='4' width='4' height='16' rx='1' />
+                            <rect x='14' y='4' width='4' height='16' rx='1' />
+                          </>
+                        ) : (
+                          <polygon points='5,3 19,12 5,21' />
+                        )}
+                      </svg>
+                    </div>
                   )}
                 </button>
               ))}

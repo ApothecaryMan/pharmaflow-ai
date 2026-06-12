@@ -1,7 +1,13 @@
 export function AngelWings() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
-      <g opacity='0.95'>
+      <style>{`
+        @keyframes angel-flap-left { 0%, 100% { transform: scaleX(1) rotate(0deg); } 50% { transform: scaleX(0.88) rotate(3deg); } }
+        @keyframes angel-flap-right { 0%, 100% { transform: scaleX(1) rotate(0deg); } 50% { transform: scaleX(0.88) rotate(-3deg); } }
+        .angel-wing-left { transform-origin: 26px 76px; animation: angel-flap-left 4.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
+        .angel-wing-right { transform-origin: 102px 76px; animation: angel-flap-right 4.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
+      `}</style>
+      <g opacity='0.9'>
         <g transform='translate(-13, 0)'>
           <g className='angel-wing-left'>
             <path

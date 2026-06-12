@@ -1,7 +1,13 @@
 export function DragonWings() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
-      <g opacity='0.85'>
+      <style>{`
+        @keyframes dragon-flap-left { 0%, 100% { transform: scaleX(1) rotate(0deg); } 50% { transform: scaleX(0.72) rotate(6deg); } }
+        @keyframes dragon-flap-right { 0%, 100% { transform: scaleX(1) rotate(0deg); } 50% { transform: scaleX(0.72) rotate(-6deg); } }
+        .wing-group-left { transform-origin: 24px 82px; animation: dragon-flap-left 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
+        .wing-group-right { transform-origin: 104px 82px; animation: dragon-flap-right 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
+      `}</style>
+      <g opacity='0.95'>
         <g className='wing-group-left'>
           <path
             d='M24,90 C18,74 16,50 22,26 C16,12 8,6 12,18 C8,34 2,46 0,56 C4,70 8,82 2,90 C8,98 16,98 24,90Z'

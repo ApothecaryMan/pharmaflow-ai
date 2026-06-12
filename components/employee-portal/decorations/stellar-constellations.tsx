@@ -1,7 +1,17 @@
 export function StellarConstellations() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
-      <g opacity='0.98'>
+      <style>{`
+        @keyframes astral-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes star-twinkle { 0%, 100% { opacity: 0.6; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 4px rgba(253,230,138,0.8)); } }
+        @keyframes slow-pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
+        .astral-origin { transform-box: fill-box; transform-origin: 50% 50%; }
+        .spin-ring { animation: astral-spin 30s linear infinite; }
+        .twinkle-fast { animation: star-twinkle 2s ease-in-out infinite; }
+        .twinkle-slow { animation: star-twinkle 3.5s ease-in-out infinite; }
+        .pulsing-line { animation: slow-pulse 4s ease-in-out infinite; }
+      `}</style>
+      <g opacity='0.95'>
         <g className='astral-origin spin-ring'>
           <circle cx='64' cy='64' r='54' stroke='var(--svg-color, #FBBF24)' strokeWidth='0.6' strokeDasharray='2 4' opacity='0.5' />
           <circle cx='64' cy='64' r='58' stroke='#FDE68A' strokeWidth='1.2' strokeDasharray='40 10 10 10' opacity='0.3' />

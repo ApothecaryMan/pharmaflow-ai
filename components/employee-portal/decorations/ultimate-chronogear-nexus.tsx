@@ -1,6 +1,21 @@
 export function UltimateChronogearNexus() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <style>{`
+        @keyframes spin-cw { 100% { transform: rotate(360deg); } }
+        @keyframes spin-ccw { 100% { transform: rotate(-360deg); } }
+        @keyframes local-spin-cw { 100% { transform: rotate(360deg); } }
+        @keyframes local-spin-ccw { 100% { transform: rotate(-360deg); } }
+        @keyframes glow-pulse { 0%, 100% { opacity: 0.5; filter: drop-shadow(0 0 2px #06B6D4); transform: scale(0.99); } 50% { opacity: 1; filter: drop-shadow(0 0 6px #22D3EE); transform: scale(1.01); } }
+        .center-org { transform-box: view-box; transform-origin: 64px 64px; }
+        .gear-slow { animation: spin-cw 20s linear infinite; }
+        .gear-rev { animation: spin-ccw 16s linear infinite; }
+        .cog-cw { animation: local-spin-cw 6s linear infinite; }
+        .cog-ccw { animation: local-spin-ccw 6s linear infinite; }
+        .time-sweep { animation: spin-cw 3s linear infinite; }
+        .time-tick { animation: spin-cw 12s steps(12, end) infinite; }
+        .power-glow { animation: glow-pulse 2s ease-in-out infinite; }
+      `}</style>
 
       <defs>
         <g id='magic-cog'>
@@ -26,16 +41,16 @@ export function UltimateChronogearNexus() {
           <circle cx='64' cy='64' r='51' stroke='#7C3AED' strokeWidth='1' strokeDasharray='2 4' opacity='0.8' />
         </g>
 
-        <g transform='translate(14, 14)'>
+        <g transform='translate(23, 23)'>
           <g className='cog-cw' style={{ transformOrigin: '0px 0px' }}><use href='#magic-cog' /></g>
         </g>
-        <g transform='translate(114, 14)'>
+        <g transform='translate(105, 23)'>
           <g className='cog-ccw' style={{ transformOrigin: '0px 0px' }}><use href='#magic-cog' /></g>
         </g>
-        <g transform='translate(14, 114)'>
+        <g transform='translate(23, 105)'>
           <g className='cog-ccw' style={{ transformOrigin: '0px 0px' }}><use href='#magic-cog' /></g>
         </g>
-        <g transform='translate(114, 114)'>
+        <g transform='translate(105, 105)'>
           <g className='cog-cw' style={{ transformOrigin: '0px 0px' }}><use href='#magic-cog' /></g>
         </g>
 

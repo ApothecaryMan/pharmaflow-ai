@@ -1,6 +1,14 @@
 export function IceQueen() {
   return (
     <svg viewBox='0 16 128 128' fill='none' overflow='visible' className='w-full h-full'>
+      <style>{`
+        @keyframes ice-float { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-3.5px) rotate(0.8deg); } }
+        @keyframes frost-shimmer { 0%, 100% { opacity: 0.5; filter: drop-shadow(0 0 2px #60A5FA); } 50% { opacity: 1; filter: drop-shadow(0 0 8px #FFFFFF); } }
+        @keyframes crystal-pulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
+        .ice-tiara-group { transform-box: view-box; transform-origin: 64px 30px; animation: ice-float 4s ease-in-out infinite; }
+        .shimmering-frost { animation: frost-shimmer 2.5s ease-in-out infinite; }
+        .pulsing-shard { transform-origin: center; animation: crystal-pulse 3s ease-in-out infinite; }
+      `}</style>
 
       <g className='ice-tiara-group' opacity='0.3' filter='blur(2px)'>
         <path d='M 18,38 Q 64,24 110,38 L 116,20 L 88,14 L 64,2 L 40,14 L 12,20 Z' fill='var(--svg-color, #38BDF8)' />
@@ -39,7 +47,7 @@ export function IceQueen() {
           <polygon points='112,22 114,33 108,35' fill='var(--svg-color, #38BDF8)' opacity='0.6' />
         </g>
 
-        <path d='M14,22 Q26,24 40,12 Q52,22 64,2 Q76,22 88,12 Q102,24 114,22' stroke='#E0F2FE' strokeWidth='0.8' opacity='0.5' fill='none' />
+        <path d='M14,22 Q26,24 40,12 Q52,22 64,2 Q76,22 88,12 Q102,24 114,22' stroke='#E0F2FE' strokeWidth='0.8' opacity='0.95' fill='none' />
         <path d='M18,37 Q41,33 64,32 Q87,33 110,37' stroke='#FFFFFF' strokeWidth='0.6' opacity='0.8' fill='none' />
 
         <polygon points='64,31 66,33 64,35 62,33' fill='#FFFFFF' className='shimmering-frost' />

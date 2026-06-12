@@ -2,7 +2,7 @@ export function OverlordChaosHorns() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
       <g opacity='0.98'>
-        <g>
+        <g transform='translate(10, -24)'>
           <ellipse cx='26' cy='42' rx='10' ry='4' fill='none' stroke='#FCA5A5' strokeWidth='1.5' opacity='0.8' transform='rotate(-15, 26, 42)' />
           <ellipse cx='26' cy='42' rx='8' ry='3' fill='none' stroke='var(--svg-color, #DC2626)' strokeWidth='2' transform='rotate(-15, 26, 42)' />
           <path
@@ -34,8 +34,10 @@ export function OverlordChaosHorns() {
             strokeLinecap='round'
             opacity='0.5'
           />
+          <circle cx='8' cy='4' r='1.5' fill='#FBBF24' />
+          <polygon points='14,-14 16,-10 12,-10' fill='#FFF' />
         </g>
-        <g>
+        <g transform='translate(-10, -24)'>
           <ellipse cx='102' cy='42' rx='10' ry='4' fill='none' stroke='#FCA5A5' strokeWidth='1.5' opacity='0.8' transform='rotate(15, 102, 42)' />
           <ellipse cx='102' cy='42' rx='8' ry='3' fill='none' stroke='var(--svg-color, #DC2626)' strokeWidth='2' transform='rotate(15, 102, 42)' />
           <path
@@ -67,11 +69,9 @@ export function OverlordChaosHorns() {
             strokeLinecap='round'
             opacity='0.5'
           />
+          <circle cx='120' cy='4' r='1.5' fill='#FBBF24' />
+          <polygon points='114,-14 116,-10 112,-10' fill='#FFF' />
         </g>
-        <circle cx='8' cy='4' r='1.5' fill='#FBBF24' />
-        <circle cx='120' cy='4' r='1.5' fill='#FBBF24' />
-        <polygon points='14,-14 16,-10 12,-10' fill='#FFF' />
-        <polygon points='114,-14 116,-10 112,-10' fill='#FFF' />
       </g>
     </svg>
   );
