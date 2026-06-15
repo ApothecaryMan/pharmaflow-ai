@@ -36,7 +36,7 @@ class OpenFdaService {
     const cacheKey = genericName.toLowerCase().trim();
     const cached = this.cache.get(cacheKey);
 
-    if (cached && (Date.now() - cached.timestamp < this.CACHE_TTL)) {
+    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
       return cached.data;
     }
 
@@ -48,9 +48,11 @@ class OpenFdaService {
   /**
    * Fetches interactions for multiple ingredients (useful for combination drugs).
    */
-  public async fetchInteractionsForIngredients(genericNames: string[]): Promise<Map<string, FdaDrugLabel | null>> {
+  public async fetchInteractionsForIngredients(
+    genericNames: string[]
+  ): Promise<Map<string, FdaDrugLabel | null>> {
     const results = new Map<string, FdaDrugLabel | null>();
-    
+
     await Promise.all(
       genericNames.map(async (name) => {
         const data = await this.fetchDrugLabel(name);
@@ -67,7 +69,7 @@ class OpenFdaService {
     for (let i = 0; i <= retries; i++) {
       try {
         const response = await fetch(url);
-        
+
         if (response.status === 404) {
           return null; // Not found in FDA
         }
@@ -80,11 +82,14 @@ class OpenFdaService {
         return data.results?.[0] || null;
       } catch (err) {
         if (i === retries) {
-          console.error(`Failed to fetch FDA data for ${genericName} after ${retries} retries:`, err);
+          console.error(
+            `Failed to fetch FDA data for ${genericName} after ${retries} retries:`,
+            err
+          );
           return null;
         }
         // Exponential backoff
-        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 500));
+        await new Promise((resolve) => setTimeout(resolve, 2 ** i * 500));
       }
     }
     return null;

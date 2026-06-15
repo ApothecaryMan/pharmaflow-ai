@@ -21,15 +21,16 @@
  *   />
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import type React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { TRANSLATIONS } from '../../i18n/translations';
 import {
+  type DataColumn,
   exportToCSV,
   exportToExcel,
   exportToPDF,
-  importFile,
-  type DataColumn,
   type ImportResult,
+  importFile,
   type PDFOptions,
 } from '../../utils/exportUtils';
 
@@ -153,25 +154,28 @@ export function DataPortButton<T extends Record<string, any>>({
   }, [data, columns, filename, isAR, pdfOptions]);
 
   // ─── Import Handler ───
-  const handleImport = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImport = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-    try {
-      const result = await importFile(file);
-      onImport?.(result);
-      setFeedback({
-        type: 'success',
-        msg: `${result.rowCount} ${t.global.actions.rowsImported} ✓`,
-      });
-    } catch (err: any) {
-      setFeedback({ type: 'error', msg: t.global.actions.importError });
-    }
+      try {
+        const result = await importFile(file);
+        onImport?.(result);
+        setFeedback({
+          type: 'success',
+          msg: `${result.rowCount} ${t.global.actions.rowsImported} ✓`,
+        });
+      } catch (err: any) {
+        setFeedback({ type: 'error', msg: t.global.actions.importError });
+      }
 
-    // Reset input so same file can be re-selected
-    e.target.value = '';
-    setIsOpen(false);
-  }, [onImport, t]);
+      // Reset input so same file can be re-selected
+      e.target.value = '';
+      setIsOpen(false);
+    },
+    [onImport, t]
+  );
 
   // ─── UI ───
   const isSm = size === 'sm';
@@ -181,10 +185,10 @@ export function DataPortButton<T extends Record<string, any>>({
       {/* Hidden file input for import */}
       <input
         ref={fileInputRef}
-        type="file"
-        accept=".csv,.xlsx,.xls"
+        type='file'
+        accept='.csv,.xlsx,.xls'
         onChange={handleImport}
-        className="hidden"
+        className='hidden'
       />
 
       {/* Trigger Button */}
@@ -192,19 +196,13 @@ export function DataPortButton<T extends Record<string, any>>({
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled}
         className={`inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-gray-50 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 transition-colors disabled:opacity-40 ${
-          iconOnly 
-            ? 'p-2.5' 
-            : isSm ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-sm'
+          iconOnly ? 'p-2.5' : isSm ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-sm'
         }`}
       >
         <span className={`material-symbols-rounded ${isSm ? 'text-sm' : 'text-base'}`}>
           {isExporting ? 'progress_activity' : 'swap_vert'}
         </span>
-        {!iconOnly && (
-          <span className="font-semibold">
-            {isAR ? 'بيانات' : 'Data'}
-          </span>
-        )}
+        {!iconOnly && <span className='font-semibold'>{isAR ? 'بيانات' : 'Data'}</span>}
         <span className={`material-symbols-rounded ${isSm ? 'text-xs' : 'text-sm'} opacity-50`}>
           expand_more
         </span>
@@ -229,7 +227,7 @@ export function DataPortButton<T extends Record<string, any>>({
           className={`absolute top-full mt-2 ${isAR ? 'left-0' : 'right-0'} min-w-[200px] rounded-2xl bg-white dark:bg-(--bg-menu) border border-gray-200 dark:border-white/10 shadow-2xl shadow-black/10 dark:shadow-black/40 py-2 z-50 animate-in fade-in zoom-in-95 duration-200`}
         >
           {/* Export Section Header */}
-          <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+          <div className='px-3 py-1.5 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider'>
             {t.global.actions.exportData}
           </div>
 
@@ -238,12 +236,12 @@ export function DataPortButton<T extends Record<string, any>>({
             <button
               onClick={handleCSV}
               disabled={data.length === 0}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/10 transition-all disabled:opacity-30 group"
+              className='w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/10 transition-all disabled:opacity-30 group'
             >
-              <span className="material-symbols-rounded text-base text-emerald-500">csv</span>
+              <span className='material-symbols-rounded text-base text-emerald-500'>csv</span>
               <span>{t.global.actions.exportCSV}</span>
-              <span className="flex-1" />
-              <span className="text-[10px] text-gray-400 tabular-nums">.csv</span>
+              <span className='flex-1' />
+              <span className='text-[10px] text-gray-400 tabular-nums'>.csv</span>
             </button>
           )}
 
@@ -252,12 +250,12 @@ export function DataPortButton<T extends Record<string, any>>({
             <button
               onClick={handleExcel}
               disabled={data.length === 0}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/10 transition-all disabled:opacity-30 group"
+              className='w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/10 transition-all disabled:opacity-30 group'
             >
-              <span className="material-symbols-rounded text-base text-green-600">table_chart</span>
+              <span className='material-symbols-rounded text-base text-green-600'>table_chart</span>
               <span>{t.global.actions.exportExcel}</span>
-              <span className="flex-1" />
-              <span className="text-[10px] text-gray-400 tabular-nums">.xlsx</span>
+              <span className='flex-1' />
+              <span className='text-[10px] text-gray-400 tabular-nums'>.xlsx</span>
             </button>
           )}
 
@@ -266,37 +264,41 @@ export function DataPortButton<T extends Record<string, any>>({
             <button
               onClick={handlePDF}
               disabled={data.length === 0}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/10 transition-all disabled:opacity-30 group"
+              className='w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/10 transition-all disabled:opacity-30 group'
             >
-              <span className="material-symbols-rounded text-base text-rose-500">picture_as_pdf</span>
+              <span className='material-symbols-rounded text-base text-rose-500'>
+                picture_as_pdf
+              </span>
               <span>{t.global.actions.exportPDF}</span>
-              <span className="flex-1" />
-              <span className="text-[10px] text-gray-400 tabular-nums">.pdf</span>
+              <span className='flex-1' />
+              <span className='text-[10px] text-gray-400 tabular-nums'>.pdf</span>
             </button>
           )}
 
           {/* Divider + Import */}
           {formats.import !== false && onImport && (
             <>
-              <div className="h-px bg-gray-100 dark:bg-white/5 my-1.5" />
-              <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+              <div className='h-px bg-gray-100 dark:bg-white/5 my-1.5' />
+              <div className='px-3 py-1.5 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider'>
                 {t.global.actions.importData}
               </div>
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/10 transition-all group"
+                className='w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/10 transition-all group'
               >
-                <span className="material-symbols-rounded text-base text-blue-500">upload_file</span>
+                <span className='material-symbols-rounded text-base text-blue-500'>
+                  upload_file
+                </span>
                 <span>{t.global.actions.importCSV}</span>
-                <span className="flex-1" />
-                <span className="text-[10px] text-gray-400">.csv .xlsx</span>
+                <span className='flex-1' />
+                <span className='text-[10px] text-gray-400'>.csv .xlsx</span>
               </button>
             </>
           )}
 
           {/* Data count footer */}
-          <div className="h-px bg-gray-100 dark:bg-white/5 mt-1.5" />
-          <div className="px-3 py-1.5 text-[10px] text-gray-400 dark:text-gray-500 tabular-nums text-center">
+          <div className='h-px bg-gray-100 dark:bg-white/5 mt-1.5' />
+          <div className='px-3 py-1.5 text-[10px] text-gray-400 dark:text-gray-500 tabular-nums text-center'>
             {data.length} {isAR ? 'صف' : 'rows'}
           </div>
         </div>

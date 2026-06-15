@@ -1,7 +1,7 @@
 import { batchService } from '../services/inventory/batchService';
 import { type CartItem, type Drug, Sale } from '../types';
-import { resolveUnits } from './stockUtils';
 import * as stockOps from './stockOperations';
+import { resolveUnits } from './stockUtils';
 
 export interface ValidationResult {
   success: boolean;
@@ -25,7 +25,8 @@ export const validateStockAvailability = (
     }
 
     // Determine the actual batch inside the group if the cart item was a batch
-    const targetBatch = drug.id === item.id ? drug : drug.batches?.find(b => b.id === item.id) || drug;
+    const targetBatch =
+      drug.id === item.id ? drug : drug.batches?.find((b) => b.id === item.id) || drug;
 
     const requestedQty = resolveUnits(item.quantity, !!item.isUnit, targetBatch.unitsPerPack);
 
@@ -54,10 +55,16 @@ export const validateSaleData = (saleData: SaleData): ValidationResult => {
   // Validate individual item quantities
   for (const item of saleData.items) {
     if (!item.quantity || item.quantity <= 0) {
-      return { success: false, message: `Invalid quantity for ${item.name || 'item'}: must be positive` };
+      return {
+        success: false,
+        message: `Invalid quantity for ${item.name || 'item'}: must be positive`,
+      };
     }
     if (!Number.isInteger(item.quantity)) {
-      return { success: false, message: `Quantity for ${item.name || 'item'} must be a whole number` };
+      return {
+        success: false,
+        message: `Quantity for ${item.name || 'item'} must be a whole number`,
+      };
     }
   }
 

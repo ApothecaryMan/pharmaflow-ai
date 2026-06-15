@@ -22,12 +22,12 @@ function bumpVersion() {
     }
     const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
     const oldVersion = pkg.version;
-    
+
     // Increment version logic: supports '2.016' style or '1.0.0' style
     const versionParts = oldVersion.split('.');
     const lastPartIndex = versionParts.length - 1;
     const lastPart = versionParts[lastPartIndex];
-    
+
     if (isNaN(Number(lastPart))) {
       console.error(`❌ Error: Last part of version "${lastPart}" is not a number.`);
       process.exit(1);
@@ -60,17 +60,17 @@ function bumpVersion() {
       const versionJson = JSON.parse(fs.readFileSync(versionJsonPath, 'utf8'));
       const oldReleaseDate = versionJson.releaseDate;
       const newReleaseDate = new Date().toISOString().split('T')[0];
-      
+
       versionJson.version = newVersion;
       versionJson.releaseDate = newReleaseDate;
-      
+
       // Keep old notes as a template if it was a manual bump without notes
       // Or set default ones
       versionJson.notes = {
-        AR: "تحسينات عامة وتحديثات في استقرار النظام.",
-        EN: "General improvements and system stability updates."
+        AR: 'تحسينات عامة وتحديثات في استقرار النظام.',
+        EN: 'General improvements and system stability updates.',
       };
-      
+
       fs.writeFileSync(versionJsonPath, JSON.stringify(versionJson, null, 2) + '\n');
       console.log(`✅ Updated public/version.json (Date: ${newReleaseDate})`);
     }

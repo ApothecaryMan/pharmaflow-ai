@@ -11,8 +11,8 @@ if (!rootElement) {
 
 import { StatusBarProvider } from './components/layout/StatusBar';
 import { AlertProvider, SettingsProvider } from './context';
-import { ShiftProvider } from './hooks/sales/useShift';
 import { DataProvider } from './context/DataContext';
+import { ShiftProvider } from './hooks/sales/useShift';
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(

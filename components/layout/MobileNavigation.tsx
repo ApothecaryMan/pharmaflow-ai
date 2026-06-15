@@ -4,27 +4,33 @@
 
 import React, { useCallback, useMemo } from 'react';
 import { type MenuItem, PHARMACY_MENU } from '../../config/menuData';
-import { type UserRole } from '../../config/permissions';
-import { permissionsService } from '../../services/auth/permissionsService';
+import type { UserRole } from '../../config/permissions';
+import { useData } from '../../context/DataContext';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
+import { permissionsService } from '../../services/auth/permissionsService';
+import type { CartItem, Drug, Employee, ViewState } from '../../types';
+import { formatCurrencyParts } from '../../utils/currency';
+import * as stockOps from '../../utils/stockOperations';
+import { resolvePrice } from '../../utils/stockUtils';
+import { useContextMenu } from '../common/ContextMenu';
+import { usePosSounds } from '../common/hooks/usePosSounds';
 import { getIconByName } from '../common/Icons';
-import { MobileDrawer } from './MobileDrawer';
+import { useSmartDirection } from '../common/SmartInputs';
 import { MobileMedicineSearch } from '../mobile/MobileMedicineSearch';
 import { MobileSearchCartDrawer } from '../mobile/MobileSearchCartDrawer';
-import { useData } from '../../context/DataContext';
-import { usePosSounds } from '../common/hooks/usePosSounds';
-import { useContextMenu } from '../common/ContextMenu';
-import { useSmartDirection } from '../common/SmartInputs';
-import { formatCurrencyParts } from '../../utils/currency';
-import { resolvePrice } from '../../utils/stockUtils';
-import * as stockOps from '../../utils/stockOperations';
-import type { Employee, CartItem, Drug, ViewState } from '../../types';
+import { MobileDrawer } from './MobileDrawer';
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-const STATIC_DOCK_VIEWS = ['dashboard', 'medicine-search', 'pos', 'inventory', 'purchases'] as const;
+const STATIC_DOCK_VIEWS = [
+  'dashboard',
+  'medicine-search',
+  'pos',
+  'inventory',
+  'purchases',
+] as const;
 type StaticDockView = (typeof STATIC_DOCK_VIEWS)[number];
 
 const DEFAULT_ICON = 'circle';
@@ -204,10 +210,11 @@ const DockButton = React.memo<DockButtonProps>(
         onClick={onClick}
         className={`
         relative flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-full transition-all duration-500
-        ${isActive
+        ${
+          isActive
             ? `text-black dark:text-white z-10`
             : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-          }
+        }
         ${isDynamic ? 'animate-scale-in' : ''}
       `}
         aria-label={ariaLabel || label}
@@ -216,9 +223,7 @@ const DockButton = React.memo<DockButtonProps>(
       >
         {/* Flat & Transparent Floating Bean (Enlarged to fill space) */}
         {isActive && (
-          <div
-            className="absolute inset-0 bg-black/[0.1] dark:bg-white/10 rounded-full animate-scale-in pointer-events-none"
-          />
+          <div className='absolute inset-0 bg-black/[0.1] dark:bg-white/10 rounded-full animate-scale-in pointer-events-none' />
         )}
 
         <div className='relative z-10 flex flex-col items-center justify-center min-h-[22px]'>
@@ -233,7 +238,9 @@ const DockButton = React.memo<DockButtonProps>(
             );
           })()}
         </div>
-        <span className={`relative z-10 text-[9px] font-bold ${isActive ? 'opacity-100' : 'opacity-60'}`}>
+        <span
+          className={`relative z-10 text-[9px] font-bold ${isActive ? 'opacity-100' : 'opacity-60'}`}
+        >
           {label}
         </span>
       </button>
@@ -253,7 +260,11 @@ interface MobileDockLoginProps {
   language: 'EN' | 'AR';
 }
 
-const MobileDockLogin: React.FC<MobileDockLoginProps> = ({ employees, onSelectEmployee, language }) => {
+const MobileDockLogin: React.FC<MobileDockLoginProps> = ({
+  employees,
+  onSelectEmployee,
+  language,
+}) => {
   const [step, setStep] = React.useState<'idle' | 'username' | 'password'>('idle');
   const [inputVal, setInputVal] = React.useState('');
   const [tempEmployee, setTempEmployee] = React.useState<Employee | null>(null);
@@ -287,10 +298,12 @@ const MobileDockLogin: React.FC<MobileDockLoginProps> = ({ employees, onSelectEm
 
   const handleBiometricLogin = async () => {
     if (!tempEmployee?.biometricCredentialId) return;
-    
+
     try {
       const { startAuthentication } = await import('@simplewebauthn/browser');
-      const { generateChallenge, bufferToBase64, isWebAuthnSupported } = await import('../../utils/webAuthnUtils');
+      const { generateChallenge, bufferToBase64, isWebAuthnSupported } = await import(
+        '../../utils/webAuthnUtils'
+      );
       const { authService } = await import('../../services/auth/authService');
 
       if (!(await isWebAuthnSupported())) {
@@ -304,11 +317,13 @@ const MobileDockLogin: React.FC<MobileDockLoginProps> = ({ employees, onSelectEm
         optionsJSON: {
           challenge: challengeBase64,
           rpId: window.location.hostname,
-          allowCredentials: [{
-            id: tempEmployee.biometricCredentialId,
-            type: 'public-key',
-            transports: ['internal'],
-          }],
+          allowCredentials: [
+            {
+              id: tempEmployee.biometricCredentialId,
+              type: 'public-key',
+              transports: ['internal'],
+            },
+          ],
           userVerification: 'required',
           timeout: 60000,
         } as any,
@@ -402,17 +417,21 @@ const MobileDockLogin: React.FC<MobileDockLoginProps> = ({ employees, onSelectEm
       ) : (
         <div className='flex items-center w-full h-full px-4 rounded-full group transition-all duration-300'>
           {/* Leading Actions (Right in RTL, Left in LTR) */}
-          <div className="flex items-center gap-1 me-2 min-w-[28px]">
+          <div className='flex items-center gap-1 me-2 min-w-[28px]'>
             <button
-              onClick={step === 'password' ? () => {
-                setStep('username');
-                setInputVal(tempEmployee?.username || tempEmployee?.employeeCode || '');
-                setIsError(false);
-                setShowPassword(false);
-              } : resetState}
+              onClick={
+                step === 'password'
+                  ? () => {
+                      setStep('username');
+                      setInputVal(tempEmployee?.username || tempEmployee?.employeeCode || '');
+                      setIsError(false);
+                      setShowPassword(false);
+                    }
+                  : resetState
+              }
               className='grid place-items-center w-7 h-7 rounded-full transition-colors text-gray-500 hover:text-gray-800 hover:bg-gray-200 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800'
               type='button'
-              title={step === 'password' ? (isRTL ? 'الرجوع' : 'Back') : (isRTL ? 'إلغاء' : 'Cancel')}
+              title={step === 'password' ? (isRTL ? 'الرجوع' : 'Back') : isRTL ? 'إلغاء' : 'Cancel'}
             >
               <span className='material-symbols-rounded text-[20px]'>
                 {step === 'password' ? (isRTL ? 'arrow_forward' : 'arrow_back') : 'close'}
@@ -446,32 +465,34 @@ const MobileDockLogin: React.FC<MobileDockLoginProps> = ({ employees, onSelectEm
             onKeyDown={handleKeyDown}
             placeholder={
               step === 'username'
-                ? isRTL ? 'اسم المستخدم...' : 'Username...'
-                : isRTL ? 'كلمة المرور...' : 'Password...'
+                ? isRTL
+                  ? 'اسم المستخدم...'
+                  : 'Username...'
+                : isRTL
+                  ? 'كلمة المرور...'
+                  : 'Password...'
             }
             className={`flex-1 bg-transparent border-none outline-hidden text-center text-[15px] font-bold text-gray-800 dark:text-white placeholder-gray-500/70 min-w-0 focus:ring-0 ${isError ? 'text-red-500 dark:text-red-400' : ''}`}
             autoComplete='off'
           />
 
           {/* Trailing Actions (Left in RTL, Right in LTR) */}
-          <div className="flex items-center gap-1 ms-2 min-w-[28px] justify-end">
+          <div className='flex items-center gap-1 ms-2 min-w-[28px] justify-end'>
             {step === 'password' && tempEmployee?.biometricCredentialId && (
               <button
                 onClick={handleBiometricLogin}
-                className="grid place-items-center w-7 h-7 rounded-full transition-colors text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30"
-                type="button"
+                className='grid place-items-center w-7 h-7 rounded-full transition-colors text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30'
+                type='button'
                 title={isRTL ? 'الدخول بالبصمة' : 'Login with Fingerprint'}
               >
-                <span className="material-symbols-rounded text-[22px]">
-                  fingerprint
-                </span>
+                <span className='material-symbols-rounded text-[22px]'>fingerprint</span>
               </button>
             )}
 
             <button
               onClick={checkAuth}
               className={`grid place-items-center w-7 h-7 rounded-full transition-all ${isError ? 'text-red-500' : 'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30'} ${inputVal ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'} duration-200`}
-              type="button"
+              type='button'
             >
               <span className='material-symbols-rounded text-[22px]'>
                 {step === 'username' ? (isRTL ? 'arrow_back' : 'arrow_forward') : 'login'}
@@ -545,95 +566,112 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
   const [cart, setCart] = React.useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = React.useState(false);
 
-
   // --- CART LOGIC ---
-  const addToCart = React.useCallback((drug: Drug, isUnit: boolean = false, quantity: number = 1) => {
-    setCart(prev => {
-      const existing = prev.find(item => item.id === drug.id && item.isUnit === isUnit);
-      if (existing) {
-        return prev.map(item =>
-          item.id === drug.id && item.isUnit === isUnit
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      }
-
-      return [
-        ...prev,
-        {
-          ...drug,
-          quantity,
-          isUnit,
-          publicPrice: resolvePrice(drug.publicPrice, isUnit, drug.unitsPerPack, drug.unitPrice)
+  const addToCart = React.useCallback(
+    (drug: Drug, isUnit: boolean = false, quantity: number = 1) => {
+      setCart((prev) => {
+        const existing = prev.find((item) => item.id === drug.id && item.isUnit === isUnit);
+        if (existing) {
+          return prev.map((item) =>
+            item.id === drug.id && item.isUnit === isUnit
+              ? { ...item, quantity: item.quantity + quantity }
+              : item
+          );
         }
-      ];
-    });
-    if (window.navigator.vibrate) window.navigator.vibrate(10);
-    playSuccess();
-  }, [playSuccess]);
+
+        return [
+          ...prev,
+          {
+            ...drug,
+            quantity,
+            isUnit,
+            publicPrice: resolvePrice(drug.publicPrice, isUnit, drug.unitsPerPack, drug.unitPrice),
+          },
+        ];
+      });
+      if (window.navigator.vibrate) window.navigator.vibrate(10);
+      playSuccess();
+    },
+    [playSuccess]
+  );
 
   const removeFromCart = React.useCallback((id: string, isUnit: boolean) => {
-    setCart(prev => prev.filter(item => !(item.id === id && item.isUnit === isUnit)));
+    setCart((prev) => prev.filter((item) => !(item.id === id && item.isUnit === isUnit)));
   }, []);
 
   const removeDrugFromCart = React.useCallback((id: string) => {
-    setCart(prev => prev.filter(item => item.id !== id));
+    setCart((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
   const updateQuantity = React.useCallback((id: string, isUnit: boolean, delta: number) => {
-    setCart(prev => prev.map(item => {
-      if (item.id === id && item.isUnit === isUnit) {
-        const newQty = Math.max(0, item.quantity + delta);
-        return { ...item, quantity: newQty };
-      }
-      return item;
-    }).filter(item => item.quantity > 0));
+    setCart((prev) =>
+      prev
+        .map((item) => {
+          if (item.id === id && item.isUnit === isUnit) {
+            const newQty = Math.max(0, item.quantity + delta);
+            return { ...item, quantity: newQty };
+          }
+          return item;
+        })
+        .filter((item) => item.quantity > 0)
+    );
   }, []);
 
   const toggleUnitMode = React.useCallback((id: string, currentIsUnit: boolean) => {
-    setCart(prev => {
-      const item = prev.find(i => i.id === id && i.isUnit === currentIsUnit);
+    setCart((prev) => {
+      const item = prev.find((i) => i.id === id && i.isUnit === currentIsUnit);
       if (!item) return prev;
 
-      const otherModeExists = prev.find(i => i.id === id && i.isUnit !== currentIsUnit);
+      const otherModeExists = prev.find((i) => i.id === id && i.isUnit !== currentIsUnit);
       if (otherModeExists) return prev; // Don't toggle if already exists in other mode (just one per mode)
 
-      return prev.map(i =>
-        i.id === id && i.isUnit === currentIsUnit
-          ? { ...i, isUnit: !currentIsUnit }
-          : i
+      return prev.map((i) =>
+        i.id === id && i.isUnit === currentIsUnit ? { ...i, isUnit: !currentIsUnit } : i
       );
     });
   }, []);
 
   const updateItemDiscount = React.useCallback((id: string, isUnit: boolean, discount: number) => {
-    setCart(prev => prev.map(item =>
-      item.id === id && item.isUnit === isUnit
-        ? { ...item, discount }
-        : item
-    ));
+    setCart((prev) =>
+      prev.map((item) => (item.id === id && item.isUnit === isUnit ? { ...item, discount } : item))
+    );
   }, []);
 
-  const switchBatchWithAutoSplit = React.useCallback((currentItem: CartItem, newBatch: any, packQty: number, unitQty: number) => {
-    setCart(prev => {
-      // Remove all entries for this drug (name+dosageForm)
-      const filtered = prev.filter(i => (i.name !== currentItem.name || i.dosageForm !== currentItem.dosageForm));
-      const newItems: CartItem[] = [];
+  const switchBatchWithAutoSplit = React.useCallback(
+    (currentItem: CartItem, newBatch: any, packQty: number, unitQty: number) => {
+      setCart((prev) => {
+        // Remove all entries for this drug (name+dosageForm)
+        const filtered = prev.filter(
+          (i) => i.name !== currentItem.name || i.dosageForm !== currentItem.dosageForm
+        );
+        const newItems: CartItem[] = [];
 
-      if (packQty > 0) {
-        newItems.push({ ...newBatch, quantity: packQty, isUnit: false, discount: currentItem.discount || 0 });
-      }
-      if (unitQty > 0) {
-        newItems.push({ ...newBatch, quantity: unitQty, isUnit: true, discount: currentItem.discount || 0 });
-      }
+        if (packQty > 0) {
+          newItems.push({
+            ...newBatch,
+            quantity: packQty,
+            isUnit: false,
+            discount: currentItem.discount || 0,
+          });
+        }
+        if (unitQty > 0) {
+          newItems.push({
+            ...newBatch,
+            quantity: unitQty,
+            isUnit: true,
+            discount: currentItem.discount || 0,
+          });
+        }
 
-      return [...filtered, ...newItems];
-    });
-  }, []);
+        return [...filtered, ...newItems];
+      });
+    },
+    []
+  );
 
   const batchesMap = React.useMemo(() => {
     const map = new Map<string, any[]>();
-    inventory.forEach(drug => {
+    inventory.forEach((drug) => {
       const key = `${drug.name}|${drug.dosageForm}`;
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(drug);
@@ -641,12 +679,19 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
     return map;
   }, [inventory]);
 
-  const grossSubtotal = React.useMemo(() => cart.reduce((acc, item) => acc + (item.publicPrice * item.quantity), 0), [cart]);
-  const cartTotal = React.useMemo(() => cart.reduce((acc, item) => {
-    const linePrice = item.publicPrice * item.quantity;
-    const discountAmount = ((item.discount || 0) / 100) * linePrice;
-    return acc + linePrice - discountAmount;
-  }, 0), [cart]);
+  const grossSubtotal = React.useMemo(
+    () => cart.reduce((acc, item) => acc + item.publicPrice * item.quantity, 0),
+    [cart]
+  );
+  const cartTotal = React.useMemo(
+    () =>
+      cart.reduce((acc, item) => {
+        const linePrice = item.publicPrice * item.quantity;
+        const discountAmount = ((item.discount || 0) / 100) * linePrice;
+        return acc + linePrice - discountAmount;
+      }, 0),
+    [cart]
+  );
   const cartTotalItems = React.useMemo(() => cart.length, [cart]);
 
   // --- RENDERING ---
@@ -656,7 +701,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
     <>
       {/* Mobile Search View Content - Overlay when active */}
       {view === 'medicine-search' && (
-        <div className="md:hidden fixed inset-0 z-50 bg-gray-50 dark:bg-[#06080F] animate-fade-in">
+        <div className='md:hidden fixed inset-0 z-50 bg-gray-50 dark:bg-[#06080F] animate-fade-in'>
           <MobileMedicineSearch
             inventory={inventory}
             color={theme.primary}
@@ -732,21 +777,25 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
                   }}
                   className={`
                     relative w-full h-full flex items-center justify-center rounded-full transition-all duration-500
-                    ${view === 'medicine-search'
-                      ? 'text-black dark:text-white'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}
+                    ${
+                      view === 'medicine-search'
+                        ? 'text-black dark:text-white'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                    }
                   `}
                   aria-label={language === 'AR' ? 'بحث' : 'Search'}
                   type='button'
                 >
                   {view === 'medicine-search' && (
-                    <div className="absolute inset-0 bg-black/[0.1] dark:bg-white/10 rounded-full animate-scale-in" />
+                    <div className='absolute inset-0 bg-black/[0.1] dark:bg-white/10 rounded-full animate-scale-in' />
                   )}
-                  <span className={`relative z-10 material-symbols-rounded text-[26px] transition-all duration-500 ${view === 'medicine-search' ? 'font-fill scale-110' : ''}`}>
+                  <span
+                    className={`relative z-10 material-symbols-rounded text-[26px] transition-all duration-500 ${view === 'medicine-search' ? 'font-fill scale-110' : ''}`}
+                  >
                     {cart.length > 0 && view === 'medicine-search' ? 'shopping_bag' : 'search'}
                   </span>
                   {cart.length > 0 && (
-                    <div className="absolute -top-1 -right-1 z-20 w-5 h-5 bg-primary-600 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg animate-scale-in border-2 border-white dark:border-[#06080F]">
+                    <div className='absolute -top-1 -right-1 z-20 w-5 h-5 bg-primary-600 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg animate-scale-in border-2 border-white dark:border-[#06080F]'>
                       {cart.length}
                     </div>
                   )}

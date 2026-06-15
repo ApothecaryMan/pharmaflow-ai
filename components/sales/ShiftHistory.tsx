@@ -2,19 +2,19 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { useShift } from '../../hooks/sales/useShift';
+import { auditService } from '../../services/audit/auditService';
 import type { Employee, Shift } from '../../types';
+import { getPrinterSettings, printReceiptSilently } from '../../utils/qzPrinter';
 import { createSearchRegex } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { DatePicker, DateRangePicker } from '../common/DatePicker';
-import { Modal } from '../common/Modal';
-import { SearchInput } from '../common/SearchInput';
-import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
 import { InteractiveCard } from '../common/InteractiveCard';
+import { Modal } from '../common/Modal';
 import { PageHeader } from '../common/PageHeader';
+import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
+import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
 import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
-import { getPrinterSettings, printReceiptSilently } from '../../utils/qzPrinter';
-import { auditService } from '../../services/audit/auditService';
 
 interface ShiftHistoryProps {
   color: string;
@@ -47,8 +47,8 @@ const getTxBadgeClass = (type: string): string => {
 };
 
 const renderPendingBadge = (t: any) => (
-  <span className="badge-neutral gap-1.5">
-    <span className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-zinc-500" />
+  <span className='badge-neutral gap-1.5'>
+    <span className='w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-zinc-500' />
     {t.salesHistory?.pending || 'Pending'}
   </span>
 );
@@ -83,10 +83,10 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
       details: {
         shiftId: shift.id,
         receiptNumber: shift.handoverReceiptNumber,
-        originalPrintCount: shift.printCount || 1
+        originalPrintCount: shift.printCount || 1,
       },
       entityId: shift.id,
-      entityType: 'shift'
+      entityType: 'shift',
     });
 
     // 3. Update local selection for receipt generation
@@ -187,18 +187,20 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         } else if (val === 2) {
           label = isHour ? labels?.hourDual : labels?.minuteDual;
         } else {
-          label = isHour ? (labels?.hourPlural || labels?.hours3to10) : (labels?.minutePlural || labels?.minutes3to10);
+          label = isHour
+            ? labels?.hourPlural || labels?.hours3to10
+            : labels?.minutePlural || labels?.minutes3to10;
         }
       }
 
       if (!showNumber) {
-        return <span className="font-bold text-sm">{label}</span>;
+        return <span className='font-bold text-sm'>{label}</span>;
       }
 
       return (
-        <span className="inline-flex items-baseline gap-1">
-          <span className="font-bold text-sm">{val}</span>
-          <span className="text-xs text-gray-500 font-light dark:text-gray-400">{label}</span>
+        <span className='inline-flex items-baseline gap-1'>
+          <span className='font-bold text-sm'>{val}</span>
+          <span className='text-xs text-gray-500 font-light dark:text-gray-400'>{label}</span>
         </span>
       );
     };
@@ -212,9 +214,9 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
 
     if (hasHours && hasMinutes) {
       return (
-        <span className="inline-flex items-baseline gap-1">
+        <span className='inline-flex items-baseline gap-1'>
           {renderUnit(hours, true)}
-          <span className="text-xs text-gray-500 font-light dark:text-gray-400">{labels?.and}</span>
+          <span className='text-xs text-gray-500 font-light dark:text-gray-400'>{labels?.and}</span>
           {renderUnit(minutes, false)}
         </span>
       );
@@ -238,17 +240,13 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
           const shiftId = getValue() as string;
           if (row.original.status === 'open') {
             return (
-              <span className="badge-success gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400 animate-pulse" />
+              <span className='badge-success gap-1'>
+                <span className='w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400 animate-pulse' />
                 {shiftId}
               </span>
             );
           }
-          return (
-            <span className="font-medium text-gray-900 dark:text-gray-100">
-              {shiftId}
-            </span>
-          );
+          return <span className='font-medium text-gray-900 dark:text-gray-100'>{shiftId}</span>;
         },
         meta: { align: 'start' },
       },
@@ -261,11 +259,13 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         id: 'openedBy',
         header: t.shiftHistory?.headers?.openedBy || 'Opened By',
         accessorFn: (row) => {
-          const emp = employees?.find(e => e.id === row.openedBy);
+          const emp = employees?.find((e) => e.id === row.openedBy);
           return emp?.name || row.openedBy;
         },
         cell: ({ getValue }) => (
-          <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{getValue() as string}</span>
+          <span className='text-sm text-gray-700 dark:text-gray-300 truncate'>
+            {getValue() as string}
+          </span>
         ),
         meta: { align: 'center' },
       },
@@ -275,8 +275,8 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         cell: ({ getValue, row }) => {
           if (row.original.status === 'open' || !getValue()) {
             return (
-              <span className="badge-success gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400 animate-pulse" />
+              <span className='badge-success gap-1.5'>
+                <span className='w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400 animate-pulse' />
                 {t.shiftHistory?.activeNow || 'Active Now'}
               </span>
             );
@@ -290,7 +290,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         header: t.shiftHistory?.headers?.closedBy || 'Closed By',
         accessorFn: (row) => {
           if (row.status === 'open' || !row.closedBy) return '';
-          const emp = employees?.find(e => e.id === row.closedBy);
+          const emp = employees?.find((e) => e.id === row.closedBy);
           return emp?.name || row.closedBy;
         },
         cell: ({ getValue, row }) => {
@@ -298,7 +298,9 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
             return renderPendingBadge(t);
           }
           return (
-            <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{getValue() as string}</span>
+            <span className='text-sm text-gray-700 dark:text-gray-300 truncate'>
+              {getValue() as string}
+            </span>
           );
         },
         meta: { align: 'center' },
@@ -317,7 +319,9 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
             row.original.status === 'open' ? new Date().toISOString() : row.original.closeTime
           );
           return (
-            <span className={`text-sm ${row.original.status === 'open' ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-gray-600 dark:text-gray-400'}`}>
+            <span
+              className={`text-sm ${row.original.status === 'open' ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-gray-600 dark:text-gray-400'}`}
+            >
               {durationElement}
             </span>
           );
@@ -347,13 +351,14 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         accessorFn: (row) => {
           if (row.status === 'open') return null;
           // BUG-SH-04: Variance must account for returns and purchases
-          const expected = row.openingBalance
-            + row.cashSales
-            + row.cashIn
-            + (row.cashPurchaseReturns || 0)
-            - row.cashOut
-            - (row.returns || 0)
-            - (row.cashPurchases || 0);
+          const expected =
+            row.openingBalance +
+            row.cashSales +
+            row.cashIn +
+            (row.cashPurchaseReturns || 0) -
+            row.cashOut -
+            (row.returns || 0) -
+            (row.cashPurchases || 0);
           return (row.closingBalance || 0) - expected;
         },
         cell: ({ getValue }) => {
@@ -378,7 +383,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   const filteredShifts = useMemo(() => {
     const searchRegex = createSearchRegex(searchTerm);
     return shifts.filter((shift) => {
-      const openerName = employees?.find(e => e.id === shift.openedBy)?.name || shift.openedBy;
+      const openerName = employees?.find((e) => e.id === shift.openedBy)?.name || shift.openedBy;
       const matchesTerm = searchRegex.test(shift.id) || searchRegex.test(openerName);
 
       if (!matchesTerm) return false;
@@ -424,20 +429,24 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
     const rows = filteredShifts.map((shift) => {
       const duration = shift.closeTime
         ? (new Date(shift.closeTime).getTime() - new Date(shift.openTime).getTime()) /
-        (1000 * 60 * 60)
+          (1000 * 60 * 60)
         : 0;
       // BUG-SH-05: Sync CSV export math with table logic
-      const expected = shift.openingBalance
-        + shift.cashSales
-        + shift.cashIn
-        + (shift.cashPurchaseReturns || 0)
-        - shift.cashOut
-        - (shift.returns || 0)
-        - (shift.cashPurchases || 0);
-      const variance = shift.status === 'open' ? 'N/A' : ((shift.closingBalance || 0) - expected).toFixed(2);
+      const expected =
+        shift.openingBalance +
+        shift.cashSales +
+        shift.cashIn +
+        (shift.cashPurchaseReturns || 0) -
+        shift.cashOut -
+        (shift.returns || 0) -
+        (shift.cashPurchases || 0);
+      const variance =
+        shift.status === 'open' ? 'N/A' : ((shift.closingBalance || 0) - expected).toFixed(2);
 
-      const openedByName = employees?.find(e => e.id === shift.openedBy)?.name || shift.openedBy;
-      const closedByName = shift.closedBy ? (employees?.find(e => e.id === shift.closedBy)?.name || shift.closedBy) : 'N/A';
+      const openedByName = employees?.find((e) => e.id === shift.openedBy)?.name || shift.openedBy;
+      const closedByName = shift.closedBy
+        ? employees?.find((e) => e.id === shift.closedBy)?.name || shift.closedBy
+        : 'N/A';
 
       return [
         shift.id,
@@ -474,20 +483,23 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
 
   return (
     <div className='h-full flex flex-col space-y-4 animate-fade-in'>
-
       {/* Page Header */}
       <PageHeader
         centerContent={
           <SegmentedControl
-            size="md"
-            shape="pill"
-            iconSize="--icon-lg"
+            size='md'
+            shape='pill'
+            iconSize='--icon-lg'
             useGraphicFont={true}
             options={[
-              { label: t.cashRegister?.title || 'Register', value: 'cash-register', icon: 'point_of_sale' },
+              {
+                label: t.cashRegister?.title || 'Register',
+                value: 'cash-register',
+                icon: 'point_of_sale',
+              },
               { label: t.shiftHistory?.title || 'Shifts', value: 'shift-history', icon: 'history' },
             ]}
-            value="shift-history"
+            value='shift-history'
             onChange={(val) => onViewChange?.(val as string)}
           />
         }
@@ -497,11 +509,11 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
             onSearchChange={setSearchTerm}
             placeholder={t.shiftHistory?.searchPlaceholder || 'Search...'}
             color={color}
-            width="320px"
+            width='320px'
           />
         }
         rightContent={
-          <div className="flex items-center gap-3">
+          <div className='flex items-center gap-3'>
             <DateRangePicker
               startDate={startDate}
               endDate={endDate}
@@ -527,16 +539,16 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
           <div className='flex items-center justify-end'>
             <InteractiveCard
               isLoading={isLoading}
-              className="flex flex-col items-end min-w-[200px] px-6 py-3 rounded-2xl"
+              className='flex flex-col items-end min-w-[200px] px-6 py-3 rounded-2xl'
               pages={[
                 {
                   theme: 'bg-primary-50 dark:bg-primary-900/20',
                   content: (
-                    <div className="flex flex-col items-end w-full">
-                      <span className="text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400">
+                    <div className='flex flex-col items-end w-full'>
+                      <span className='text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400'>
                         {t.shiftHistory?.summary?.totalShifts || 'Total Shifts'}
                       </span>
-                      <span className="text-2xl font-bold text-primary-900 dark:text-primary-100">
+                      <span className='text-2xl font-bold text-primary-900 dark:text-primary-100'>
                         {filteredShifts.length}
                       </span>
                     </div>
@@ -545,16 +557,16 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                 {
                   theme: 'bg-green-50 dark:bg-green-900/20',
                   content: (
-                    <div className="flex flex-col items-end w-full">
-                      <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400">
+                    <div className='flex flex-col items-end w-full'>
+                      <span className='text-[10px] font-bold uppercase text-green-600 dark:text-green-400'>
                         {t.shiftHistory?.summary?.totalRevenue || 'Total Revenue'}
                       </span>
-                      <span className="text-2xl font-bold text-green-900 dark:text-green-100">
+                      <span className='text-2xl font-bold text-green-900 dark:text-green-100'>
                         <PriceDisplay value={totalRevenue} compact={totalRevenue >= 1000} />
                       </span>
                     </div>
                   ),
-                }
+                },
               ]}
             />
           </div>
@@ -612,7 +624,8 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                   {t.shiftHistory?.details?.openedBy || 'Opened By'}
                 </p>
                 <p className='text-sm font-medium truncate'>
-                  {employees?.find(e => e.id === selectedShift.openedBy)?.name || selectedShift.openedBy}
+                  {employees?.find((e) => e.id === selectedShift.openedBy)?.name ||
+                    selectedShift.openedBy}
                 </p>
               </div>
               <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
@@ -706,9 +719,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                       className='flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-transparent hover:border-gray-100 dark:hover:border-gray-700 transition-colors'
                     >
                       <div className='flex items-center gap-3'>
-                        <span
-                          className={getTxBadgeClass(tx.type)}
-                        >
+                        <span className={getTxBadgeClass(tx.type)}>
                           {t.cashRegister?.types?.[tx.type] || tx.type}
                         </span>
                         <div>
@@ -735,7 +746,9 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                       <div
                         className={`text-sm font-bold tabular-nums ${['in', 'opening', 'sale', 'card_sale', 'purchase_return'].includes(tx.type) ? 'text-green-600' : 'text-red-600'}`}
                       >
-                        {['in', 'opening', 'sale', 'card_sale', 'purchase_return'].includes(tx.type) ? '+' : '-'}
+                        {['in', 'opening', 'sale', 'card_sale', 'purchase_return'].includes(tx.type)
+                          ? '+'
+                          : '-'}
                         <PriceDisplay value={tx.amount} />
                       </div>
                     </div>

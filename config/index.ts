@@ -8,4 +8,3 @@ export {
 } from './pageRegistry';
 
 export const MAX_UPLOAD_SIZE_KB = 500;
-

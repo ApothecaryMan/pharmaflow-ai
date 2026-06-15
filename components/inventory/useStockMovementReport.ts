@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useData } from '../../services';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSettings } from '../../context';
+import { TRANSLATIONS } from '../../i18n/translations';
+import { useData } from '../../services';
 import { stockMovementService } from '../../services/inventory/stockMovement/stockMovementService';
 import { DrugSearchEngine } from '../../services/search/drugSearchService';
-import { StockMovement, StockMovementSummary, Drug, StockMovementFilters } from '../../types';
+import type { Drug, StockMovement, StockMovementFilters, StockMovementSummary } from '../../types';
 import { getDisplayName, getFullDisplayName } from '../../utils/drugDisplayName';
 import { useSearchKeyboardNavigation } from '../common/SearchDropdown';
-import { TRANSLATIONS } from '../../i18n/translations';
 
 interface UseStockMovementReportProps {
   onViewChange: (view: string, params?: any) => void;
@@ -30,7 +31,7 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
     start.setHours(0, 0, 0, 0);
     return {
       start: start.toISOString(),
-      end: now.toISOString()
+      end: now.toISOString(),
     };
   });
   const [history, setHistory] = useState<StockMovement[]>([]);
@@ -68,7 +69,7 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
 
   // --- Data Filtering & Processing ---
   const filteredHistory = useMemo(() => {
-    return history.filter(m => {
+    return history.filter((m) => {
       if (!m.timestamp || typeof m.timestamp !== 'string' || m.timestamp === 'DATE') return false;
       const date = new Date(m.timestamp);
       return !isNaN(date.getTime()) && (m.type as string) !== 'TYPE';
@@ -83,26 +84,29 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
   }, [searchQuery, inventory]);
 
   const suggestions = useMemo(() => {
-    return inventory.map(d => getFullDisplayName(d, textTransform));
+    return inventory.map((d) => getFullDisplayName(d, textTransform));
   }, [inventory, textTransform]);
 
-  const handleSelectDrug = useCallback((drug: Drug) => {
-    setSelectedDrug(drug);
-    setSearchQuery(getFullDisplayName(drug, textTransform));
-    setShowSearch(false);
-  }, [textTransform]);
+  const handleSelectDrug = useCallback(
+    (drug: Drug) => {
+      setSelectedDrug(drug);
+      setSearchQuery(getFullDisplayName(drug, textTransform));
+      setShowSearch(false);
+    },
+    [textTransform]
+  );
 
   const { highlightedIndex, onKeyDown } = useSearchKeyboardNavigation({
     results: searchResults,
     onSelect: handleSelectDrug,
-    isOpen: showSearch
+    isOpen: showSearch,
   });
 
   // --- Data Fetching ---
   const fetchData = useCallback(async () => {
     // If neither drug is selected nor showAll is active, we don't fetch
     if (!selectedDrug && !showAll) return;
-    
+
     setIsLoading(true);
     try {
       const filters: StockMovementFilters = {
@@ -117,15 +121,15 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
       if (!showAll && selectedDrug) {
         filters.drugId = selectedDrug.id;
       }
-      
-      const moveHistory = await stockMovementService.getHistory(filters) as StockMovement[];
-      
+
+      const moveHistory = (await stockMovementService.getHistory(filters)) as StockMovement[];
+
       // Only fetch summary if a specific drug is selected
       let moveSummary = null;
       if (selectedDrug) {
         moveSummary = await stockMovementService.getSummaryByDrug(selectedDrug.id, filters);
       }
-      
+
       setHistory(moveHistory);
       setSummary(moveSummary);
     } catch (error) {
@@ -151,23 +155,26 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
 
   const exportCSV = useCallback(() => {
     if (history.length === 0 || !selectedDrug) return;
-    const headers = ["Date", "Type", "Quantity", "Previous", "New", "Reason", "Performed By"];
-    const rows = history.map(m => [
+    const headers = ['Date', 'Type', 'Quantity', 'Previous', 'New', 'Reason', 'Performed By'];
+    const rows = history.map((m) => [
       new Date(m.timestamp).toLocaleString(),
       m.type,
       m.quantity,
       m.previousStock,
       m.newStock,
-      m.reason || "",
-      m.performedByName || m.performedBy
+      m.reason || '',
+      m.performedByName || m.performedBy,
     ]);
-    
-    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+
+    const csvContent = [headers, ...rows].map((e) => e.join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `stock_movement_${getFullDisplayName(selectedDrug, textTransform) || 'report'}.csv`);
+    link.setAttribute('href', url);
+    link.setAttribute(
+      'download',
+      `stock_movement_${getFullDisplayName(selectedDrug, textTransform) || 'report'}.csv`
+    );
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -175,7 +182,7 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
   }, [history, selectedDrug, textTransform]);
 
   const handleUpdateFilter = useCallback((id: string, vals: any[]) => {
-    setActiveFilters(prev => ({ ...prev, [id]: vals }));
+    setActiveFilters((prev) => ({ ...prev, [id]: vals }));
   }, []);
 
   const handleSearchChange = useCallback((val: string) => {
@@ -190,14 +197,17 @@ export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportP
 
   // Toggle between showing all history or date-filtered history
   const toggleShowAll = useCallback(() => {
-    setShowAll(prev => !prev);
+    setShowAll((prev) => !prev);
   }, []);
 
   // When date range changes manually, exit showAll mode
-  const handleSetDateRange = useCallback((updater: React.SetStateAction<{ start: string; end: string }>) => {
-    setShowAll(false);
-    setDateRange(updater);
-  }, []);
+  const handleSetDateRange = useCallback(
+    (updater: React.SetStateAction<{ start: string; end: string }>) => {
+      setShowAll(false);
+      setDateRange(updater);
+    },
+    []
+  );
 
   return {
     // State

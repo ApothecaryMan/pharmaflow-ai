@@ -84,7 +84,9 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
         className={`px-4 py-3 border-b border-gray-100 dark:border-border bg-gray-50/50 dark:bg-muted/30`}
       >
         <div className='flex items-center gap-2'>
-          <span className={`material-symbols-rounded text-sm text-primary-500 dark:text-muted-foreground`}>
+          <span
+            className={`material-symbols-rounded text-sm text-primary-500 dark:text-muted-foreground`}
+          >
             {selectedElementId ? 'edit_note' : 'dashboard_customize'}
           </span>
           <h3
@@ -241,10 +243,11 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                   setPrintOffsetY(0);
                 }}
                 disabled={printOffsetX === 0 && printOffsetY === 0}
-                className={`w-full py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${printOffsetX === 0 && printOffsetY === 0
+                className={`w-full py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+                  printOffsetX === 0 && printOffsetY === 0
                     ? 'bg-gray-100 dark:bg-muted text-gray-400 cursor-not-allowed'
                     : `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-800/40`
-                  }`}
+                }`}
               >
                 <span className='material-symbols-rounded text-sm'>restart_alt</span>
                 {t.printSettings.resetCalibration}
@@ -353,8 +356,12 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                     Barcode Style
                   </label>
                   <div className='p-2.5 rounded-xl bg-gray-50/50 dark:bg-muted/30 border border-gray-100 dark:border-border flex items-center gap-2'>
-                    <span className='material-symbols-rounded text-base text-primary-500 dark:text-muted-foreground'>barcode</span>
-                    <span className='text-xs font-bold text-gray-700 dark:text-gray-300'>Code 128</span>
+                    <span className='material-symbols-rounded text-base text-primary-500 dark:text-muted-foreground'>
+                      barcode
+                    </span>
+                    <span className='text-xs font-bold text-gray-700 dark:text-gray-300'>
+                      Code 128
+                    </span>
                   </div>
                 </div>
               )}

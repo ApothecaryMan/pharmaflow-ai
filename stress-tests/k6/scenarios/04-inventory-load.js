@@ -2,32 +2,31 @@
  * ═══════════════════════════════════════════════════════════
  * 📦 SCENARIO 04: INVENTORY LOAD TEST
  * ═══════════════════════════════════════════════════════════
- * 
+ *
  * Tests: Database read/write performance on inventory tables.
  * Focuses on the drugs + stock_batches tables which are the
  * most queried tables in the system.
- * 
+ *
  * Scenarios:
  * - Heavy reads (full inventory load with 1400+ drugs)
  * - Filtered queries (category, search, low stock)
  * - Concurrent stock checks
  * - Batch data reads
- * 
+ *
  * Run: k6 run stress-tests/k6/scenarios/04-inventory-load.js
  */
 
+import { check, group, sleep } from 'k6';
 import http from 'k6/http';
-import { check, sleep, group } from 'k6';
 import { Counter, Rate, Trend } from 'k6/metrics';
-import { SUPABASE_REST_URL, getHeaders, TEST_DATA, TEST_EMAIL, TEST_PASSWORD } from '../config.js';
-import { randomInt } from '../helpers/data-generators.js';
+import { getHeaders, SUPABASE_REST_URL, TEST_DATA, TEST_EMAIL, TEST_PASSWORD } from '../config.js';
 import { loginAndGetToken } from '../helpers/auth.js';
+import { randomInt } from '../helpers/data-generators.js';
 
 export function setup() {
   const token = loginAndGetToken(TEST_EMAIL, TEST_PASSWORD);
   return { token };
 }
-
 
 // --- Custom Metrics ---
 const fullLoadDuration = new Trend('inv_full_load_duration', true);
@@ -46,19 +45,19 @@ export const options = {
       startVUs: 0,
       stages: [
         { duration: '20s', target: 10 },
-        { duration: '1m',  target: 30 },    // 30 concurrent readers
-        { duration: '30s', target: 40 },    // Push higher
+        { duration: '1m', target: 30 }, // 30 concurrent readers
+        { duration: '30s', target: 40 }, // Push higher
         { duration: '20s', target: 0 },
       ],
     },
   },
   thresholds: {
-    'inv_full_load_duration': ['p(95)<2000'],
-    'inv_search_duration': ['p(95)<1000'],
-    'inv_filter_duration': ['p(95)<1500'],
-    'inv_batch_load_duration': ['p(95)<1500'],
-    'inv_query_error_rate': ['rate<0.05'],
-    'http_req_failed': ['rate<0.05'],
+    inv_full_load_duration: ['p(95)<2000'],
+    inv_search_duration: ['p(95)<1000'],
+    inv_filter_duration: ['p(95)<1500'],
+    inv_batch_load_duration: ['p(95)<1500'],
+    inv_query_error_rate: ['rate<0.05'],
+    http_req_failed: ['rate<0.05'],
   },
 };
 
@@ -84,15 +83,17 @@ export default function (data) {
       const ok = check(res, {
         '✅ Full load 200': (r) => r.status === 200,
         '✅ Has data': (r) => {
-          try { return JSON.parse(r.body).length > 100; }
-          catch { return false; }
+          try {
+            return JSON.parse(r.body).length > 100;
+          } catch {
+            return false;
+          }
         },
-        '✅ Under 2s': () => (Date.now() - start) < 2000,
+        '✅ Under 2s': () => Date.now() - start < 2000,
       });
 
       queryErrors.add(!ok);
     });
-
   } else if (queryType <= 5) {
     // 20% - Search by name (ilike query)
     group('🔍 Name Search', () => {
@@ -113,12 +114,11 @@ export default function (data) {
 
       const ok = check(res, {
         '✅ Search 200': (r) => r.status === 200,
-        '✅ Under 1s': () => (Date.now() - start) < 1000,
+        '✅ Under 1s': () => Date.now() - start < 1000,
       });
 
       queryErrors.add(!ok);
     });
-
   } else if (queryType <= 7) {
     // 20% - Filtered queries (low stock, category)
     group('🏷️ Filtered Query', () => {
@@ -141,12 +141,11 @@ export default function (data) {
         '✅ Filter 200': (r) => r.status === 200,
       });
     });
-
   } else if (queryType <= 9) {
     // 20% - Stock batches query
     group('📊 Batch Data Load', () => {
       const drug = TEST_DATA.drugs[randomInt(0, TEST_DATA.drugs.length - 1)];
-      
+
       const start = Date.now();
       const res = http.get(
         `${SUPABASE_REST_URL}/stock_batches?drug_id=eq.${drug.id}&select=id,quantity,expiry_date,batch_number&quantity=gt.0&order=expiry_date.asc`,
@@ -163,7 +162,6 @@ export default function (data) {
         '✅ Batches loaded': (r) => r.status === 200,
       });
     });
-
   } else {
     // 10% - Low stock alert query
     group('⚠️ Low Stock Check', () => {

@@ -15,9 +15,9 @@ import { calculateSalePoints } from '../../services/customers/loyaltyUtils';
 import type { Customer, Sale } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { CARD_BASE } from '../../utils/themeStyles';
-import { SmallCard } from '../common/SmallCard';
 import { PageHeader } from '../common/PageHeader';
 import { SegmentedControl } from '../common/SegmentedControl';
+import { SmallCard } from '../common/SmallCard';
 
 interface CustomerLoyaltyOverviewProps {
   customers: Customer[];
@@ -125,13 +125,13 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
       name:
         days === 1
           ? new Date(d.date).toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-          })
+              hour: '2-digit',
+              minute: '2-digit',
+            })
           : new Date(d.date).toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', {
-            month: 'short',
-            day: 'numeric',
-          }),
+              month: 'short',
+              day: 'numeric',
+            }),
       points: parseFloat(d.points.toFixed(1)),
     }));
   }, [sales, language, timeRange]);
@@ -181,20 +181,32 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
   };
 
   return (
-    <div className='h-full overflow-y-auto px-page space-y-4 animate-fade-in pb-10' dir={isRTL ? 'rtl' : 'ltr'}>
+    <div
+      className='h-full overflow-y-auto px-page space-y-4 animate-fade-in pb-10'
+      dir={isRTL ? 'rtl' : 'ltr'}
+    >
       <PageHeader
-        mb="mb-0"
+        mb='mb-0'
         centerContent={
           <SegmentedControl
             options={[
-              { label: language === 'AR' ? 'نظرة عامة على العملاء' : 'Customer Overview', value: 'customer-overview' },
-              { label: language === 'AR' ? 'نظرة عامة على الولاء' : 'Loyalty Overview', value: 'loyalty-overview' },
-              { label: language === 'AR' ? 'ولاء العملاء' : 'Customer Loyalty', value: 'loyalty-lookup' },
+              {
+                label: language === 'AR' ? 'نظرة عامة على العملاء' : 'Customer Overview',
+                value: 'customer-overview',
+              },
+              {
+                label: language === 'AR' ? 'نظرة عامة على الولاء' : 'Loyalty Overview',
+                value: 'loyalty-overview',
+              },
+              {
+                label: language === 'AR' ? 'ولاء العملاء' : 'Customer Loyalty',
+                value: 'loyalty-lookup',
+              },
             ]}
             value='loyalty-overview'
             onChange={(val) => onViewChange?.(String(val))}
-            size="md"
-            shape="pill"
+            size='md'
+            shape='pill'
           />
         }
         rightContent={
@@ -259,7 +271,11 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
               data={loyaltyStats.distribution}
               margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
             >
-              <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='var(--border-divider)' />
+              <CartesianGrid
+                strokeDasharray='3 3'
+                vertical={false}
+                stroke='var(--border-divider)'
+              />
               <XAxis
                 dataKey='range'
                 axisLine={false}
@@ -281,7 +297,23 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
         {/* Points Trend */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-80`}>
           <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 mb-3'>
-            {t.loyalty?.trend || 'Points Issued'} ({timeRange === '1' ? (language === 'AR' ? 'اليوم' : 'Today') : timeRange === '7' ? (language === 'AR' ? '٧ أيام' : '7 Days') : timeRange === '30' ? (language === 'AR' ? '٣٠ يوم' : '30 Days') : (language === 'AR' ? '٩٠ يوم' : '90 Days')})
+            {t.loyalty?.trend || 'Points Issued'} (
+            {timeRange === '1'
+              ? language === 'AR'
+                ? 'اليوم'
+                : 'Today'
+              : timeRange === '7'
+                ? language === 'AR'
+                  ? '٧ أيام'
+                  : '7 Days'
+                : timeRange === '30'
+                  ? language === 'AR'
+                    ? '٣٠ يوم'
+                    : '30 Days'
+                  : language === 'AR'
+                    ? '٩٠ يوم'
+                    : '90 Days'}
+            )
           </h3>
           <ResponsiveContainer width='100%' height='90%'>
             <AreaChart data={pointsTrend} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
@@ -291,7 +323,11 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
                   <stop offset='95%' stopColor='var(--primary-500)' stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='var(--border-divider)' />
+              <CartesianGrid
+                strokeDasharray='3 3'
+                vertical={false}
+                stroke='var(--border-divider)'
+              />
               <XAxis
                 dataKey='name'
                 axisLine={false}
@@ -346,7 +382,10 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
                         </span>
                       </p>
                       <p className='text-xs text-gray-500'>
-                        {new Date(sale.date).toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US')} • #{sale.serialId}
+                        {new Date(sale.date).toLocaleDateString(
+                          language === 'AR' ? 'ar-EG' : 'en-US'
+                        )}{' '}
+                        • #{sale.serialId}
                       </p>
                     </div>
                     <span className='px-2 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'>
@@ -354,7 +393,8 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
                     </span>
                   </div>
                   <p className='text-xs text-gray-600 dark:text-gray-400'>
-                    {t.loyalty?.order || 'Order'}: {formatCurrency(sale.total, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US')}
+                    {t.loyalty?.order || 'Order'}:{' '}
+                    {formatCurrency(sale.total, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US')}
                   </p>
                 </div>
               ))
@@ -397,7 +437,12 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
                           </span>
                         </p>
                         <p className='text-xs text-gray-500'>
-                          {formatCurrency(customer.totalPurchases, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US')} {t.loyalty?.totalSuffix || 'total'}
+                          {formatCurrency(
+                            customer.totalPurchases,
+                            'EGP',
+                            language === 'AR' ? 'ar-EG' : 'en-US'
+                          )}{' '}
+                          {t.loyalty?.totalSuffix || 'total'}
                         </p>
                       </div>
                     </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 
 export type RingStyle = 'solid' | 'dashes' | 'dots' | 'double' | 'rainbow' | 'animated';
 
@@ -45,13 +45,17 @@ export const AnimationToggle: React.FC<AnimationToggleProps> = ({ animating, onT
         <polygon points='5,3 19,12 5,21' />
       )}
     </svg>
-    {animating
-      ? (isRTL ? 'متحرك' : 'Animate')
-      : (isRTL ? 'تشغيل' : 'Play')}
+    {animating ? (isRTL ? 'متحرك' : 'Animate') : isRTL ? 'تشغيل' : 'Play'}
   </button>
 );
 
-const AvatarRing: React.FC<AvatarRingProps> = ({ color, style, thickness, animated, className }) => {
+const AvatarRing: React.FC<AvatarRingProps> = ({
+  color,
+  style,
+  thickness,
+  animated,
+  className,
+}) => {
   const cx = 64;
   const cy = 64;
   const r = 56 - thickness / 2;

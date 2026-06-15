@@ -1,7 +1,11 @@
-import React from 'react';
-import { StockMovementType } from '../../../types';
+import type React from 'react';
+import type { StockMovementType } from '../../../types';
 import { formatCurrency } from '../../../utils/currency';
-import { formatExpiryDate, checkExpiryStatus, getExpiryStatusConfig } from '../../../utils/expiryUtils';
+import {
+  checkExpiryStatus,
+  formatExpiryDate,
+  getExpiryStatusConfig,
+} from '../../../utils/expiryUtils';
 import { formatStockAmount } from '../../../utils/inventory';
 
 interface TimelineItemProps {
@@ -21,7 +25,7 @@ interface TimelineItemProps {
   drugName?: string;
 }
 
-const typeConfig: Record<StockMovementType, { color: string, label: string, arLabel: string }> = {
+const typeConfig: Record<StockMovementType, { color: string; label: string; arLabel: string }> = {
   sale: { color: 'rose', label: 'Sale', arLabel: 'بيع' },
   purchase: { color: 'emerald', label: 'Purchase', arLabel: 'شراء' },
   return_customer: { color: 'sky', label: 'Customer Return', arLabel: 'مرتجع عميل' },
@@ -48,16 +52,16 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
   expiryDate,
   value,
   unitsPerPack = 1,
-  drugName
+  drugName,
 }) => {
   const config = typeConfig[type] || typeConfig.adjustment;
   const dateObj = new Date(date);
-  
+
   const dateStr = dateObj.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', {
     month: 'short',
     day: 'numeric',
   });
-  
+
   const timeStr = dateObj.toLocaleTimeString(isRTL ? 'ar-EG-u-nu-latn' : 'en-US', {
     hour: '2-digit',
     minute: '2-digit',
@@ -92,8 +96,12 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
     <div className='flex gap-6 group'>
       {/* Date Column */}
       <div className='w-20 pt-[19px] flex flex-col shrink-0 items-end pe-2'>
-        <span className='text-sm font-bold text-gray-700 dark:text-gray-300 leading-tight'>{dateStr}</span>
-        <span className='text-[11px] text-gray-400 font-medium font-mono leading-tight'>{timeStr}</span>
+        <span className='text-sm font-bold text-gray-700 dark:text-gray-300 leading-tight'>
+          {dateStr}
+        </span>
+        <span className='text-[11px] text-gray-400 font-medium font-mono leading-tight'>
+          {timeStr}
+        </span>
       </div>
 
       {/* Axis Column */}
@@ -115,7 +123,10 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
           <div className='flex items-center gap-2 text-sm leading-normal'>
             {drugName && (
               <>
-                <span className='font-black text-gray-900 dark:text-gray-100 truncate max-w-[200px]' title={drugName}>
+                <span
+                  className='font-black text-gray-900 dark:text-gray-100 truncate max-w-[200px]'
+                  title={drugName}
+                >
                   {drugName}
                 </span>
                 <span className='text-gray-300 dark:text-gray-700 text-[10px]'>•</span>
@@ -126,7 +137,12 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
             </span>
             <span className='text-gray-300 dark:text-gray-700 text-[10px]'>•</span>
             <span className='text-[11px] text-(--text-secondary) font-bold flex items-center gap-1 uppercase tracking-wider max-w-[150px]'>
-              <span className='material-symbols-rounded shrink-0' style={{ fontSize: 'var(--icon-sm)' }}>person</span>
+              <span
+                className='material-symbols-rounded shrink-0'
+                style={{ fontSize: 'var(--icon-sm)' }}
+              >
+                person
+              </span>
               <span className='truncate'>{performedBy}</span>
             </span>
           </div>
@@ -170,7 +186,10 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
               </span>
               <div className='flex items-center gap-2 text-xs font-bold text-(--text-secondary) leading-none'>
                 <span className='tabular-nums opacity-60'>{prevFormatted.trim()}</span>
-                <span className='material-symbols-rounded text-(--text-tertiary)' style={{ fontSize: 'var(--icon-sm)' }}>
+                <span
+                  className='material-symbols-rounded text-(--text-tertiary)'
+                  style={{ fontSize: 'var(--icon-sm)' }}
+                >
                   {isRTL ? 'arrow_back' : 'arrow_forward'}
                 </span>
                 <span className='text-(--text-primary) font-black tabular-nums'>
@@ -185,7 +204,12 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
             <div className='flex flex-wrap items-center gap-x-2 gap-y-1 mt-1'>
               {batchId && (
                 <div className='flex items-center gap-1 text-[11px] font-medium text-(--text-tertiary) uppercase tracking-wider'>
-                  <span className='material-symbols-rounded opacity-70' style={{ fontSize: 'var(--icon-sm)' }}>tag</span>
+                  <span
+                    className='material-symbols-rounded opacity-70'
+                    style={{ fontSize: 'var(--icon-sm)' }}
+                  >
+                    tag
+                  </span>
                   <span>{batchId}</span>
                 </div>
               )}
@@ -194,18 +218,24 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
                 <span className='text-gray-300 dark:text-gray-700 text-[10px]'>•</span>
               )}
 
-              {expiryDate && (() => {
-                const status = checkExpiryStatus(expiryDate);
-                const config = getExpiryStatusConfig(status);
-                return (
-                  <div className={`flex items-center gap-1 text-[11px] font-bold text-${config.color}-600 dark:text-${config.color}-400/80`}>
-                    <span className='material-symbols-rounded opacity-80' style={{ fontSize: 'var(--icon-sm)' }}>
-                      {status === 'invalid' ? 'event_busy' : 'event_available'}
-                    </span>
-                    <span>{formatExpiryDate(expiryDate)}</span>
-                  </div>
-                );
-              })()}
+              {expiryDate &&
+                (() => {
+                  const status = checkExpiryStatus(expiryDate);
+                  const config = getExpiryStatusConfig(status);
+                  return (
+                    <div
+                      className={`flex items-center gap-1 text-[11px] font-bold text-${config.color}-600 dark:text-${config.color}-400/80`}
+                    >
+                      <span
+                        className='material-symbols-rounded opacity-80'
+                        style={{ fontSize: 'var(--icon-sm)' }}
+                      >
+                        {status === 'invalid' ? 'event_busy' : 'event_available'}
+                      </span>
+                      <span>{formatExpiryDate(expiryDate)}</span>
+                    </div>
+                  );
+                })()}
 
               {expiryDate && reason && (
                 <span className='text-gray-300 dark:text-gray-700 text-[10px]'>•</span>
@@ -213,7 +243,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
 
               {reason && (
                 <span className='text-xs text-(--text-secondary) italic font-medium px-1 flex items-center gap-1'>
-                   {reason}
+                  {reason}
                 </span>
               )}
             </div>

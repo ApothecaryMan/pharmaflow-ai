@@ -4,7 +4,9 @@ export class StockVersionConflictError extends Error {
     public drugId: string,
     message?: string
   ) {
-    super(message || `Optimistic locking failure: Batch ${batchId} was modified by another transaction.`);
+    super(
+      message || `Optimistic locking failure: Batch ${batchId} was modified by another transaction.`
+    );
     this.name = 'StockVersionConflictError';
   }
 }

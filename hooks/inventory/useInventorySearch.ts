@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import type { Drug } from '../../types';
 import { DrugSearchEngine, inventorySearchEngine } from '../../services/search/drugSearchService';
+import type { Drug } from '../../types';
 
 interface UseInventorySearchProps {
   inventory: Drug[];
@@ -21,7 +21,6 @@ export const useInventorySearch = ({
   stockFilter = 'all',
   activeBranchId,
 }: UseInventorySearchProps) => {
-  
   // 1. Sync inventory to engine (only when inventory changes)
   useMemo(() => {
     inventorySearchEngine.indexData(inventory);
@@ -36,7 +35,7 @@ export const useInventorySearch = ({
     const filters = {
       branchId: activeBranchId,
       category: category === 'All' ? ['all'] : [category],
-      stock_status: stockFilter === 'all' ? ['all'] : [stockFilter]
+      stock_status: stockFilter === 'all' ? ['all'] : [stockFilter],
     };
 
     const results = inventorySearchEngine.search(search, filters) as Drug[];
@@ -46,10 +45,10 @@ export const useInventorySearch = ({
     for (const d of results) {
       uniqueGroups.add(`${d.name}|${d.dosageForm || ''}`);
     }
-    
-    return { 
-      filteredDrugs: results, 
-      totalResults: uniqueGroups.size 
+
+    return {
+      filteredDrugs: results,
+      totalResults: uniqueGroups.size,
     };
   }, [search, category, stockFilter, activeBranchId, inventory]);
 

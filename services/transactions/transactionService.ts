@@ -3,28 +3,36 @@
  * Online-Only implementation
  */
 
-import { purchaseService } from '../purchases/purchaseService';
-import { cashService } from '../cash/cashService';
+import { supabase } from '../../lib/supabase';
+import type {
+  ActionContext,
+  CartItem,
+  Drug,
+  Purchase,
+  PurchaseReturn,
+  Return,
+  Sale,
+  StockMovement,
+} from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
+import { money } from '../../utils/money';
+import * as stockOps from '../../utils/stockOperations';
+import { resolveUnits } from '../../utils/stockUtils';
+import { auditService } from '../audit/auditService';
+import { cashService } from '../cash/cashService';
+import { cashRepository } from '../cash/repositories/cashRepository';
+import { calculateSalePoints } from '../customers/loyaltyUtils';
 import { batchService } from '../inventory/batchService';
 import { inventoryService } from '../inventory/inventoryService';
-import { salesService } from '../sales/salesService';
-import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
-import { auditService } from '../audit/auditService';
-import { money } from '../../utils/money';
-import { returnService } from '../returns/returnService';
-import { settingsService } from '../settings/settingsService';
-import { resolveUnits } from '../../utils/stockUtils';
-import * as stockOps from '../../utils/stockOperations';
-import { supabase } from '../../lib/supabase';
-import { salesRepository } from '../sales/repositories/salesRepository';
-import { stockMovementRepository } from '../inventory/repositories/stockMovementRepository';
-import { returnsRepository } from '../returns/repositories/returnsRepository';
-import { cashRepository } from '../cash/repositories/cashRepository';
 import { batchRepository } from '../inventory/repositories/batchRepository';
-import { calculateSalePoints } from '../customers/loyaltyUtils';
-
-import type { Sale, CartItem, Drug, StockMovement, ActionContext, Purchase, PurchaseReturn, Return } from '../../types';
+import { stockMovementRepository } from '../inventory/repositories/stockMovementRepository';
+import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
+import { purchaseService } from '../purchases/purchaseService';
+import { returnsRepository } from '../returns/repositories/returnsRepository';
+import { returnService } from '../returns/returnService';
+import { salesRepository } from '../sales/repositories/salesRepository';
+import { salesService } from '../sales/salesService';
+import { settingsService } from '../settings/settingsService';
 
 export interface TransactionResult<T = any> {
   success: boolean;
@@ -68,7 +76,7 @@ export const transactionService = {
 
       // 2. Invoke the Atomic RPC
       const { data, error } = await supabase.rpc('process_checkout', {
-        p_payload: payload
+        p_payload: payload,
       });
 
       console.timeEnd(perfLabel);
@@ -84,11 +92,10 @@ export const transactionService = {
       }
 
       // 3. Return the result
-      return { 
-        success: true, 
-        sale: data as unknown as Sale 
+      return {
+        success: true,
+        sale: data as unknown as Sale,
       };
-
     } catch (err: any) {
       console.timeEnd(perfLabel);
       console.error('[TransactionService] Fatal error:', err);
@@ -109,7 +116,7 @@ export const transactionService = {
       timestamp: context.timestamp,
       performerId: context.performerId,
       performerName: context.performerName,
-      
+
       items: saleData.items.map((item: CartItem) => ({
         id: item.id,
         name: item.name,
@@ -119,7 +126,7 @@ export const transactionService = {
         publicPrice: item.publicPrice,
         discount: item.discount || 0,
       })),
-      
+
       customerName: saleData.customerName,
       customerPhone: saleData.customerPhone,
       customerCode: saleData.customerCode,
@@ -130,10 +137,9 @@ export const transactionService = {
       deliveryFee: saleData.deliveryFee || 0,
       globalDiscount: saleData.globalDiscount || 0,
       total: saleData.total,
-      subtotal: saleData.subtotal
+      subtotal: saleData.subtotal,
     };
   },
-
 
   /**
    * Orchestrates the cancellation of a sale, ensuring stock is returned
@@ -151,8 +157,8 @@ export const transactionService = {
           branchId: context.branchId,
           orgId: context.orgId,
           performerId: context.performerId,
-          performerName: context.performerName
-        }
+          performerName: context.performerName,
+        },
       });
 
       if (error) {
@@ -165,7 +171,6 @@ export const transactionService = {
       }
 
       return { success: true };
-
     } catch (err: any) {
       console.error('[TransactionService] Cancellation failed:', err);
       return { success: false, error: err.message || 'Cancellation failed' };
@@ -193,16 +198,16 @@ export const transactionService = {
           total: updates.total ?? sale.total,
           subtotal: updates.subtotal ?? sale.subtotal,
           globalDiscount: updates.globalDiscount ?? sale.globalDiscount,
-          items: (updates.items || sale.items).map(item => ({
+          items: (updates.items || sale.items).map((item) => ({
             id: item.id,
             name: (item as any).name,
             dosageForm: (item as any).dosageForm,
             quantity: item.quantity,
             isUnit: !!item.isUnit,
             publicPrice: item.publicPrice,
-            discount: item.discount || 0
-          }))
-        }
+            discount: item.discount || 0,
+          })),
+        },
       });
 
       if (error || !data?.success) {
@@ -232,17 +237,17 @@ export const transactionService = {
         returnType: returnData.returnType,
         reason: returnData.reason,
         notes: returnData.notes,
-        items: returnData.items.map(item => ({
+        items: returnData.items.map((item) => ({
           drugId: item.drugId,
           saleItemId: item.saleItemId,
           quantity: item.quantityReturned,
           isUnit: !!item.isUnit,
-          condition: item.condition
-        }))
+          condition: item.condition,
+        })),
       };
 
       const { data, error } = await supabase.rpc('process_return', {
-        p_payload: payload
+        p_payload: payload,
       });
 
       if (error) {
@@ -255,7 +260,6 @@ export const transactionService = {
       }
 
       return { success: true };
-
     } catch (err: any) {
       console.error('[TransactionService] Return failed:', err);
       return { success: false, error: err.message || 'Return failed' };
@@ -272,8 +276,12 @@ export const transactionService = {
       if (purchase.status === 'completed') return { success: true, data: purchase };
 
       // Approve Purchase
-      const completedPurchase = await purchaseService.approve(purchaseId, context.performerId, context.performerName);
-      
+      const completedPurchase = await purchaseService.approve(
+        purchaseId,
+        context.performerId,
+        context.performerName
+      );
+
       // Record Shift Transaction if Cash
       if (purchase.paymentMethod === 'cash' && context.shiftId) {
         await cashService.addTransaction(context.shiftId, {
@@ -283,7 +291,7 @@ export const transactionService = {
           type: 'purchase',
           amount: -purchase.totalCost,
           reason: `Purchase #${purchase.id}`,
-          userId: context.performerId
+          userId: context.performerId,
         });
       }
 
@@ -308,21 +316,23 @@ export const transactionService = {
     const undoManager = new UndoManager();
     try {
       // 1. Create the purchase record with "Purchaser" info
-      const newPurchase = await purchaseService.create({ 
-        ...purchase, 
-        branchId: context.branchId,
-        orgId: context.orgId,
-        status: 'pending',
-        createdBy: context.performerId,
-        createdByName: context.performerName
-      }, context.branchId);
+      const newPurchase = await purchaseService.create(
+        {
+          ...purchase,
+          branchId: context.branchId,
+          orgId: context.orgId,
+          status: 'pending',
+          createdBy: context.performerId,
+          createdByName: context.performerName,
+        },
+        context.branchId
+      );
 
       undoManager.push(async () => {
         await stockMovementRepository.deleteByReferenceId(newPurchase.id);
         await batchRepository.deleteByPurchaseId(newPurchase.id);
         await supabase.from('purchases').delete().eq('id', newPurchase.id);
       });
-
 
       // 2. For direct purchases, we handle cash/audit directly without "Manager Approval" label
       if (purchase.paymentMethod === 'cash' && context.shiftId) {
@@ -346,8 +356,12 @@ export const transactionService = {
       });
 
       // 3. Immediately mark as received to update inventory
-      const receivedPurchase = await purchaseService.markAsReceived(newPurchase.id, context.performerId, context.performerName);
-      
+      const receivedPurchase = await purchaseService.markAsReceived(
+        newPurchase.id,
+        context.performerId,
+        context.performerName
+      );
+
       return { success: true, data: receivedPurchase };
     } catch (err: any) {
       console.error('[TransactionService] Direct purchase failed:', err);
@@ -365,7 +379,7 @@ export const transactionService = {
       if (!originalPurchase) throw new Error('Original purchase order not found');
 
       const savedReturn = await returnService.createPurchaseReturn(returnInput, context.branchId);
-      
+
       if (originalPurchase.paymentMethod === 'cash' && context.shiftId) {
         await cashService.addTransaction(context.shiftId, {
           branchId: context.branchId,
@@ -394,5 +408,5 @@ export const transactionService = {
   },
   async addTransaction(shiftId: string, tx: any): Promise<any> {
     return cashService.addTransaction(shiftId, tx);
-  }
+  },
 };

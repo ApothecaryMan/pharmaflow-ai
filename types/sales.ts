@@ -1,11 +1,17 @@
-import { Drug, BatchAllocation } from './inventory';
+import type { BatchAllocation, Drug } from './inventory';
 
 /**
  * OrderModification - tracks a single change made to an order.
  * Used in delivery order editing to maintain audit trail.
  */
 export interface OrderModification {
-  type: 'status_change' | 'item_added' | 'item_removed' | 'quantity_update' | 'price_update' | 'discount_update';
+  type:
+    | 'status_change'
+    | 'item_added'
+    | 'item_removed'
+    | 'quantity_update'
+    | 'price_update'
+    | 'discount_update';
   itemId?: string;
   itemName?: string;
   dosageForm?: string;

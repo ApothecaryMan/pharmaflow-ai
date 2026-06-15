@@ -10,6 +10,7 @@ import { Dashboard } from '../components/dashboard/Dashboard';
 import { RealTimeSalesMonitor } from '../components/dashboard/RealTimeSalesMonitor';
 import { AdvancedSmCard } from '../components/experiments/AdvancedSmCard';
 import { DashboardExperiments } from '../components/experiments/DashboardExperiments';
+import { ExpenseTracker } from '../components/finance/ExpenseTracker';
 import { EmployeeList } from '../components/hr/EmployeeList';
 import { EmployeeProfile } from '../components/hr/EmployeeProfile';
 import { StaffOverview } from '../components/hr/StaffOverview';
@@ -29,7 +30,6 @@ import { SuppliersList } from '../components/purchases/SuppliersList';
 import { LoginAuditList } from '../components/reports/LoginAuditList';
 import { ProfitLossPage } from '../components/reports/ProfitLossPage';
 import { CashRegister } from '../components/sales/CashRegister';
-import { ExpenseTracker } from '../components/finance/ExpenseTracker';
 import { POS } from '../components/sales/pos/POS';
 import { ReceiptDesigner } from '../components/sales/ReceiptDesigner';
 import { ReturnHistory } from '../components/sales/ReturnHistory';
@@ -38,27 +38,26 @@ import { ShiftHistory } from '../components/sales/ShiftHistory';
 import { BranchSettings } from '../components/settings/BranchSettings';
 import { DesktopSettings } from '../components/settings/DesktopSettings';
 import { PricingPage } from '../components/settings/PricingPage';
-
-import { ModalTests } from '../components/test/ModalTests';
-import { ScrollbarLab } from '../components/test/ScrollbarLab';
 import { A5InvoiceDesigner } from '../components/test/A5InvoiceDesigner';
 import { FilterDropdownTest } from '../components/test/FilterDropdownTest';
+import { ModalTests } from '../components/test/ModalTests';
+import { ScrollbarLab } from '../components/test/ScrollbarLab';
 import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
-import type { PermissionAction } from './permissions';
-import { PERMISSIONS_MAPPING } from './permissionsMapping';
 import type {
-  Sale,
   Customer,
   Drug,
-  Supplier,
+  Employee,
   Purchase,
   PurchaseReturn,
   Return,
-  Employee,
+  Sale,
+  Shift,
   StockBatch,
+  Supplier,
   ViewState,
-  Shift
 } from '../types';
+import type { PermissionAction } from './permissions';
+import { PERMISSIONS_MAPPING } from './permissionsMapping';
 
 export interface InjectedPageProps {
   color?: string;
@@ -118,8 +117,6 @@ export interface InjectedPageProps {
   datePickerTranslations?: Record<string, string>;
   initialMode?: string;
 }
-
-
 
 export interface PageConfig {
   id: string;

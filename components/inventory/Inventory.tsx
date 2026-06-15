@@ -1,8 +1,8 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { type UserRole } from '../../config/permissions';
-import { permissionsService } from '../../services/auth/permissionsService';
+import type { UserRole } from '../../config/permissions';
+import { useSettings } from '../../context';
 import {
   getCategories,
   getLocalizedCategory,
@@ -10,32 +10,35 @@ import {
   getProductTypes,
   isMedicineCategory,
 } from '../../data/productCategories';
+import { permissionsService } from '../../services/auth/permissionsService';
+import { batchService } from '../../services/inventory/batchService';
+import { DrugSearchEngine } from '../../services/search/drugSearchService';
 import type { Drug, GroupedDrug, GroupingKey } from '../../types';
-import { formatCurrency, formatCurrencyParts, formatCompactCurrency } from '../../utils/currency';
-import { money } from '../../utils/money';
+import { formatCompactCurrency, formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import {
+  formatExpiryDate,
+  getExpiryColorClass,
+  parseExpiryEndOfMonth,
+} from '../../utils/expiryUtils';
 import { formatStock, formatStockParts, validateStock } from '../../utils/inventory';
-import { formatExpiryDate, getExpiryColorClass, parseExpiryEndOfMonth } from '../../utils/expiryUtils';
+import { money } from '../../utils/money';
+import * as stockOps from '../../utils/stockOperations';
+import { convertToPacks, resolveUnits } from '../../utils/stockUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { FilterDropdown, SegmentedControl } from '../common';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import type { FilterConfig } from '../common/FilterPill';
-import { Modal } from '../common/Modal';
-import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs';
-import { TanStackTable, PriceDisplay } from '../common/TanStackTable';
 import { InteractiveCard } from '../common/InteractiveCard';
+import { Modal } from '../common/Modal';
 import { PageHeader } from '../common/PageHeader';
-import { useInventoryHeader } from './InventoryHeaderContext';
+import { SearchEngineInput } from '../common/SearchEngineInput';
+import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs';
+import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
+import { useStatusBar } from '../layout/StatusBar';
 import { AddProduct } from './AddProduct';
 import { EditProductModal } from './EditProductModal';
-import { useStatusBar } from '../layout/StatusBar';
-import { useSettings } from '../../context';
-import { SearchEngineInput } from '../common/SearchEngineInput';
-import { DrugSearchEngine } from '../../services/search/drugSearchService';
-
-import { resolveUnits, convertToPacks } from '../../utils/stockUtils';
-import * as stockOps from '../../utils/stockOperations';
-import { batchService } from '../../services/inventory/batchService';
+import { useInventoryHeader } from './InventoryHeaderContext';
 
 /**
  * Maps a product category to a premium static status badge style,
@@ -218,7 +221,10 @@ export const Inventory: React.FC<InventoryProps> = ({
       const val = parseFloat(newStock);
       if (!isNaN(val)) {
         // Save as Total Units
-        onUpdateDrug({ ...drug, stock: validateStock(resolveUnits(val, false, drug.unitsPerPack)) });
+        onUpdateDrug({
+          ...drug,
+          stock: validateStock(resolveUnits(val, false, drug.unitsPerPack)),
+        });
       }
     }
     setActiveMenuId(null);
@@ -229,8 +235,6 @@ export const Inventory: React.FC<InventoryProps> = ({
     setActiveMenuId(null);
   };
 
-
-
   // Categories are now determined dynamically using helper
   const allCategories = getCategories(currentLang);
 
@@ -239,9 +243,10 @@ export const Inventory: React.FC<InventoryProps> = ({
     let result = [...inventory];
 
     // Apply Stock Status Filter
-    const stockVals = (activeFilters['stock_status'] && activeFilters['stock_status'].length > 0)
-      ? activeFilters['stock_status']
-      : ['in_stock'];
+    const stockVals =
+      activeFilters['stock_status'] && activeFilters['stock_status'].length > 0
+        ? activeFilters['stock_status']
+        : ['in_stock'];
 
     if (!stockVals.includes('all')) {
       result = result.filter((d) => {
@@ -266,7 +271,8 @@ export const Inventory: React.FC<InventoryProps> = ({
         result = result.filter((d) => {
           const expiry = parseExpiryEndOfMonth(d.expiryDate);
           if (vals.includes('expired')) return expiry < currentMonthStart;
-          if (vals.includes('near_expiry')) return expiry >= currentMonthStart && expiry <= nearExpiredLimit;
+          if (vals.includes('near_expiry'))
+            return expiry >= currentMonthStart && expiry <= nearExpiredLimit;
           if (vals.includes('valid')) return expiry > nearExpiredLimit;
           return true;
         });
@@ -297,7 +303,6 @@ export const Inventory: React.FC<InventoryProps> = ({
     return baseFilteredInventory;
   }, [baseFilteredInventory, searchEngine, debouncedSearchTerm, activeFilters]);
 
-
   const groupedInventory = useMemo(() => {
     const groups = batchService.groupInventory(filteredInventory);
     return groups.map((group) => {
@@ -318,10 +323,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         acc.totalItems += 1;
         const packs = convertToPacks(drug.totalStock || 0, drug.unitsPerPack || 1);
 
-        acc.totalCost = money.add(
-          acc.totalCost,
-          money.multiply(drug.costPrice || 0, packs, 0)
-        );
+        acc.totalCost = money.add(acc.totalCost, money.multiply(drug.costPrice || 0, packs, 0));
 
         acc.totalSaleValue = money.add(
           acc.totalSaleValue,
@@ -331,7 +333,8 @@ export const Inventory: React.FC<InventoryProps> = ({
         const status = (drug as any).status || 'active';
         if (status === 'active') {
           if (drug.totalStock === 0) acc.criticalRestock += 1;
-          else if (drug.totalStock <= (drug.minStock || 5) * (drug.unitsPerPack || 1)) acc.nearReorder += 1;
+          else if (drug.totalStock <= (drug.minStock || 5) * (drug.unitsPerPack || 1))
+            acc.nearReorder += 1;
         } else if (status === 'discontinued') {
           acc.discontinuedCount += 1;
         }
@@ -406,222 +409,212 @@ export const Inventory: React.FC<InventoryProps> = ({
 
   const canViewFinancials = permissionsService.can('reports.view_financial');
 
-  const tableColumns = useMemo<ColumnDef<Drug>[]>(
-    () => {
-      const cols: ColumnDef<Drug>[] = [
-        {
-          id: 'code',
-          header: t.headers.codes,
-          cell: ({ row }) => {
-            const drug = row.original;
-            return (
-              <div className='flex flex-col gap-0.5'>
-                {drug.barcode && (
-                  <div className='text-gray-900 dark:text-gray-100 text-xs'>{drug.barcode}</div>
-                )}
-                {drug.internalCode && (
-                  <div className='text-gray-900 dark:text-gray-100 text-xs'>{drug.internalCode}</div>
-                )}
-                {!drug.barcode && !drug.internalCode && <span className='text-gray-400'>-</span>}
+  const tableColumns = useMemo<ColumnDef<Drug>[]>(() => {
+    const cols: ColumnDef<Drug>[] = [
+      {
+        id: 'code',
+        header: t.headers.codes,
+        cell: ({ row }) => {
+          const drug = row.original;
+          return (
+            <div className='flex flex-col gap-0.5'>
+              {drug.barcode && (
+                <div className='text-gray-900 dark:text-gray-100 text-xs'>{drug.barcode}</div>
+              )}
+              {drug.internalCode && (
+                <div className='text-gray-900 dark:text-gray-100 text-xs'>{drug.internalCode}</div>
+              )}
+              {!drug.barcode && !drug.internalCode && <span className='text-gray-400'>-</span>}
+            </div>
+          );
+        },
+        size: 136,
+      },
+      {
+        accessorKey: 'name',
+        header: t.headers.name,
+        meta: {
+          headerAlign: isRTL ? 'end' : 'start',
+          disableAlignment: true,
+        },
+        cell: ({ row }) => {
+          const drug = row.original;
+          const displayName = getDisplayName(drug, textTransform);
+          return (
+            <div className='flex flex-col whitespace-normal items-start text-start w-full'>
+              <div className='font-medium text-gray-900 dark:text-gray-100 text-xs drug-name'>
+                {displayName}
               </div>
-            );
-          },
-          size: 136,
+              <span className='text-gray-500 dark:text-gray-400'>
+                {Array.isArray(drug.genericName)
+                  ? drug.genericName.join(' + ')
+                  : (drug.genericName as any)}
+              </span>
+            </div>
+          );
         },
-        {
-          accessorKey: 'name',
-          header: t.headers.name,
-          meta: {
-            headerAlign: isRTL ? 'end' : 'start',
-            disableAlignment: true,
-          },
-          cell: ({ row }) => {
-            const drug = row.original;
-            const displayName = getDisplayName(drug, textTransform);
-            return (
-              <div className='flex flex-col whitespace-normal items-start text-start w-full'>
-                <div className='font-medium text-gray-900 dark:text-gray-100 text-xs drug-name'>
-                  {displayName}
-                </div>
-                <span className='text-gray-500 dark:text-gray-400'>
-                  {Array.isArray(drug.genericName)
-                    ? drug.genericName.join(' + ')
-                    : (drug.genericName as any)}
-                </span>
-              </div>
-            );
-          },
-          size: 700,
-        },
-        {
-          accessorKey: 'category',
-          header: t.headers.category,
-          meta: { align: 'center' },
-          cell: ({ row }) => (
-            <span className={getCategoryBadgeClass(row.original.category)}>
-              {getLocalizedCategory(row.original.category || 'General', currentLang)}
-            </span>
-          ),
-          size: 76,
-        },
-        {
-          accessorKey: 'status',
-          header: t.headers.status || 'Status',
-          cell: ({ row }) => {
-            const status = row.original.status || 'active';
-            const badgeClass = {
+        size: 700,
+      },
+      {
+        accessorKey: 'category',
+        header: t.headers.category,
+        meta: { align: 'center' },
+        cell: ({ row }) => (
+          <span className={getCategoryBadgeClass(row.original.category)}>
+            {getLocalizedCategory(row.original.category || 'General', currentLang)}
+          </span>
+        ),
+        size: 76,
+      },
+      {
+        accessorKey: 'status',
+        header: t.headers.status || 'Status',
+        cell: ({ row }) => {
+          const status = row.original.status || 'active';
+          const badgeClass =
+            {
               active: 'badge-success',
               inactive: 'badge-warning',
               discontinued: 'badge-danger',
             }[status as 'active' | 'inactive' | 'discontinued'] || 'badge-neutral';
 
-            return (
-              <span className={badgeClass}>
-                {t[status] || status}
-              </span>
-            );
-          },
-          size: 79,
+          return <span className={badgeClass}>{t[status] || status}</span>;
         },
-        {
-          accessorKey: 'stock',
-          header: t.headers.stock,
-          meta: { align: 'start' },
-          cell: ({ row }) => {
-            if (row.original.stock <= 0) {
-              return (
-                <span className='badge-danger'>
-                  {t.outOfStockShort || 'OUT'}
-                </span>
-              );
-            }
+        size: 79,
+      },
+      {
+        accessorKey: 'stock',
+        header: t.headers.stock,
+        meta: { align: 'start' },
+        cell: ({ row }) => {
+          if (row.original.stock <= 0) {
+            return <span className='badge-danger'>{t.outOfStockShort || 'OUT'}</span>;
+          }
 
-            const parts = formatStockParts(row.original.stock, row.original.unitsPerPack, {
-              packs: t.details?.packs || 'Packs',
-              outOfStock: t.outOfStock || 'Out of Stock',
-            });
+          const parts = formatStockParts(row.original.stock, row.original.unitsPerPack, {
+            packs: t.details?.packs || 'Packs',
+            outOfStock: t.outOfStock || 'Out of Stock',
+          });
 
-            return (
-              <div
-                className={`font-medium text-xs ${row.original.stock < (row.original.unitsPerPack || 1) ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}
-              >
-                {parts.value}{' '}
-                {parts.label && (
-                  <span className='text-[10px] text-gray-400 font-normal'>{parts.label}</span>
-                )}
-              </div>
-            );
-          },
-          size: 90,
+          return (
+            <div
+              className={`font-medium text-xs ${row.original.stock < (row.original.unitsPerPack || 1) ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}
+            >
+              {parts.value}{' '}
+              {parts.label && (
+                <span className='text-[10px] text-gray-400 font-normal'>{parts.label}</span>
+              )}
+            </div>
+          );
         },
-        {
-          accessorKey: 'publicPrice',
-          header: t.headers.publicPrice,
-          meta: { align: 'start' },
-          cell: ({ row }) => {
-            const parts = formatCurrencyParts(row.original.publicPrice);
-            return (
-              <span className='text-gray-700 dark:text-gray-300 text-xs font-bold'>
-                {parts.amount}{' '}
-                <span className='text-[10px] text-gray-400 font-normal'>{parts.symbol}</span>
-              </span>
-            );
-          },
-          size: 89,
+        size: 90,
+      },
+      {
+        accessorKey: 'publicPrice',
+        header: t.headers.publicPrice,
+        meta: { align: 'start' },
+        cell: ({ row }) => {
+          const parts = formatCurrencyParts(row.original.publicPrice);
+          return (
+            <span className='text-gray-700 dark:text-gray-300 text-xs font-bold'>
+              {parts.amount}{' '}
+              <span className='text-[10px] text-gray-400 font-normal'>{parts.symbol}</span>
+            </span>
+          );
         },
-      ];
+        size: 89,
+      },
+    ];
 
-      // Insert cost column only if authorized
-      if (canViewFinancials) {
-        cols.push({
-          accessorKey: 'costPrice',
-          header: t.headers.cost,
-          meta: { align: 'start' },
-          cell: ({ row }) => {
-            const groupData = row.original as GroupedDrug & { selectedBatch?: Drug };
-            const drug = groupData.selectedBatch || groupData;
-
-            if (!drug.costPrice) return <span className='text-gray-500 text-xs'>-</span>;
-            const parts = formatCurrencyParts(drug.costPrice);
-            return (
-              <span className='text-gray-900 dark:text-gray-100 text-xs font-medium'>
-                {parts.amount}{' '}
-                <span className='text-[10px] text-gray-400 font-normal'>{parts.symbol}</span>
-              </span>
-            );
-          },
-          size: 90,
-        });
-      }
-
-      // Add Expiry column
+    // Insert cost column only if authorized
+    if (canViewFinancials) {
       cols.push({
-        accessorKey: 'expiryDate',
-        header: t.headers.expiry,
+        accessorKey: 'costPrice',
+        header: t.headers.cost,
+        meta: { align: 'start' },
         cell: ({ row }) => {
           const groupData = row.original as GroupedDrug & { selectedBatch?: Drug };
-          const batches = groupData.batches || [groupData];
           const drug = groupData.selectedBatch || groupData;
 
-          const renderDateWrapper = (val: string, isDropdownTrigger = false) => {
-            if (!val) return <span className='text-gray-400'>-</span>;
-            const colorClass = getExpiryColorClass(val);
-
-            return (
-              <div
-                className={`flex items-center justify-center w-full gap-1 tabular-nums text-xs ${colorClass} ${isDropdownTrigger ? 'cursor-pointer hover:opacity-70' : ''}`}
-              >
-                {formatExpiryDate(val)}
-              </div>
-            );
-          };
-
-          if (batches.length > 1) {
-            return (
-              <div className='flex justify-center'>
-                <FilterDropdown
-                  variant='input'
-                  items={batches}
-                  selectedItem={drug}
-                  onSelect={(b: any) => {
-                    setSelectedBatches((prev) => ({ ...prev, [groupData.groupId]: b.id }));
-                  }}
-                  keyExtractor={(b: any) => b.id}
-                  renderSelected={(b: any) => (
-                    <div className='flex justify-center items-center w-full px-2 gap-1.5'>
-                      <span>{renderDateWrapper(b.expiryDate, true)}</span>
-                      <span className='text-[10px] text-gray-400 font-normal'>
-                        ({formatStock(b.stock, b.unitsPerPack).replace(/ Packs?/g, '')})
-                      </span>
-                    </div>
-                  )}
-                  renderItem={(b: any) => (
-                    <div className='flex justify-center items-center w-full px-2 gap-2'>
-                      <span>{renderDateWrapper(b.expiryDate)}</span>
-                      <span className='text-[10px] text-gray-400 font-normal'>
-                        ({formatStock(b.stock, b.unitsPerPack).replace(/ Packs?/g, '')})
-                      </span>
-                    </div>
-                  )}
-                  className='h-8 w-[110px] mx-auto'
-                  color={color}
-                  floating
-                  hideArrow={true}
-                  minHeight={32}
-                />
-              </div>
-            );
-          }
-          return <div className='flex justify-center'>{renderDateWrapper(drug.expiryDate)}</div>;
+          if (!drug.costPrice) return <span className='text-gray-500 text-xs'>-</span>;
+          const parts = formatCurrencyParts(drug.costPrice);
+          return (
+            <span className='text-gray-900 dark:text-gray-100 text-xs font-medium'>
+              {parts.amount}{' '}
+              <span className='text-[10px] text-gray-400 font-normal'>{parts.symbol}</span>
+            </span>
+          );
         },
-        meta: { align: 'center', smartDate: false },
-        size: 143,
+        size: 90,
       });
+    }
 
-      return cols;
-    },
-    [color, currentLang, t, textTransform, canViewFinancials]
-  );
+    // Add Expiry column
+    cols.push({
+      accessorKey: 'expiryDate',
+      header: t.headers.expiry,
+      cell: ({ row }) => {
+        const groupData = row.original as GroupedDrug & { selectedBatch?: Drug };
+        const batches = groupData.batches || [groupData];
+        const drug = groupData.selectedBatch || groupData;
+
+        const renderDateWrapper = (val: string, isDropdownTrigger = false) => {
+          if (!val) return <span className='text-gray-400'>-</span>;
+          const colorClass = getExpiryColorClass(val);
+
+          return (
+            <div
+              className={`flex items-center justify-center w-full gap-1 tabular-nums text-xs ${colorClass} ${isDropdownTrigger ? 'cursor-pointer hover:opacity-70' : ''}`}
+            >
+              {formatExpiryDate(val)}
+            </div>
+          );
+        };
+
+        if (batches.length > 1) {
+          return (
+            <div className='flex justify-center'>
+              <FilterDropdown
+                variant='input'
+                items={batches}
+                selectedItem={drug}
+                onSelect={(b: any) => {
+                  setSelectedBatches((prev) => ({ ...prev, [groupData.groupId]: b.id }));
+                }}
+                keyExtractor={(b: any) => b.id}
+                renderSelected={(b: any) => (
+                  <div className='flex justify-center items-center w-full px-2 gap-1.5'>
+                    <span>{renderDateWrapper(b.expiryDate, true)}</span>
+                    <span className='text-[10px] text-gray-400 font-normal'>
+                      ({formatStock(b.stock, b.unitsPerPack).replace(/ Packs?/g, '')})
+                    </span>
+                  </div>
+                )}
+                renderItem={(b: any) => (
+                  <div className='flex justify-center items-center w-full px-2 gap-2'>
+                    <span>{renderDateWrapper(b.expiryDate)}</span>
+                    <span className='text-[10px] text-gray-400 font-normal'>
+                      ({formatStock(b.stock, b.unitsPerPack).replace(/ Packs?/g, '')})
+                    </span>
+                  </div>
+                )}
+                className='h-8 w-[110px] mx-auto'
+                color={color}
+                floating
+                hideArrow={true}
+                minHeight={32}
+              />
+            </div>
+          );
+        }
+        return <div className='flex justify-center'>{renderDateWrapper(drug.expiryDate)}</div>;
+      },
+      meta: { align: 'center', smartDate: false },
+      size: 143,
+    });
+
+    return cols;
+  }, [color, currentLang, t, textTransform, canViewFinancials]);
 
   // Define Filter Config
   const filterConfigs = useMemo<FilterConfig[]>(
@@ -707,13 +700,13 @@ export const Inventory: React.FC<InventoryProps> = ({
   const leftContentElement = useMemo(() => {
     if (mode !== 'list') return null;
     return (
-      <div className="relative flex-1 max-w-xl">
+      <div className='relative flex-1 max-w-xl'>
         <SearchEngineInput
           value={searchTerm}
           onSearchChange={setSearchTerm}
           activeFilters={activeFilters}
           filterConfigs={filterConfigs}
-          onUpdateFilter={(id, vals) => setActiveFilters(prev => ({ ...prev, [id]: vals }))}
+          onUpdateFilter={(id, vals) => setActiveFilters((prev) => ({ ...prev, [id]: vals }))}
           onClear={() => setSearchTerm('')}
           placeholder={t.searchPlaceholder}
           color={color}
@@ -726,7 +719,7 @@ export const Inventory: React.FC<InventoryProps> = ({
   const bottomContentElement = useMemo(() => {
     if (mode !== 'list') return null;
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in'>
         <InteractiveCard
           isLoading={isLoading || !isDataSettled}
           className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
@@ -735,17 +728,21 @@ export const Inventory: React.FC<InventoryProps> = ({
               theme: 'bg-primary-50 dark:bg-primary-900/20',
               content: (
                 <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                  <span className="text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400">
+                  <span className='text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400'>
                     {t.summary?.totalItems || 'Total Items'}
                   </span>
-                  <span className="text-xl font-bold text-primary-900 dark:text-primary-100">
+                  <span className='text-xl font-bold text-primary-900 dark:text-primary-100'>
                     {summaryStats.totalItems >= 1000
-                      ? new Intl.NumberFormat('en-US', { notation: 'compact', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(summaryStats.totalItems)
+                      ? new Intl.NumberFormat('en-US', {
+                          notation: 'compact',
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }).format(summaryStats.totalItems)
                       : summaryStats.totalItems}
                   </span>
                 </div>
               ),
-            }
+            },
           ]}
         />
         {canViewFinancials && (
@@ -757,11 +754,14 @@ export const Inventory: React.FC<InventoryProps> = ({
                 theme: 'bg-green-50 dark:bg-green-900/20',
                 content: (
                   <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                    <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400">
+                    <span className='text-[10px] font-bold uppercase text-green-600 dark:text-green-400'>
                       {t.summary?.totalCost || 'Inventory Cost'}
                     </span>
-                    <span className="text-xl font-bold text-green-900 dark:text-primary-100 tabular-nums">
-                      <PriceDisplay value={summaryStats.totalCost} compact={summaryStats.totalCost >= 1000} />
+                    <span className='text-xl font-bold text-green-900 dark:text-primary-100 tabular-nums'>
+                      <PriceDisplay
+                        value={summaryStats.totalCost}
+                        compact={summaryStats.totalCost >= 1000}
+                      />
                     </span>
                   </div>
                 ),
@@ -770,15 +770,18 @@ export const Inventory: React.FC<InventoryProps> = ({
                 theme: 'bg-indigo-50 dark:bg-indigo-900/20',
                 content: (
                   <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                    <span className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">
+                    <span className='text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400'>
                       {t.summary?.totalSaleValue || 'Sale Value'}
                     </span>
-                    <span className="text-xl font-bold text-indigo-900 dark:text-primary-100 tabular-nums">
-                      <PriceDisplay value={summaryStats.totalSaleValue} compact={summaryStats.totalSaleValue >= 1000} />
+                    <span className='text-xl font-bold text-indigo-900 dark:text-primary-100 tabular-nums'>
+                      <PriceDisplay
+                        value={summaryStats.totalSaleValue}
+                        compact={summaryStats.totalSaleValue >= 1000}
+                      />
                     </span>
                   </div>
                 ),
-              }
+              },
             ]}
           />
         )}
@@ -790,10 +793,10 @@ export const Inventory: React.FC<InventoryProps> = ({
               theme: 'bg-red-50 dark:bg-red-900/20',
               content: (
                 <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                  <span className="text-[10px] font-bold uppercase text-red-600 dark:text-red-400">
+                  <span className='text-[10px] font-bold uppercase text-red-600 dark:text-red-400'>
                     {t.summary?.restock || 'Critical Restock'}
                   </span>
-                  <span className="text-xl font-bold text-red-900 dark:text-primary-100">
+                  <span className='text-xl font-bold text-red-900 dark:text-primary-100'>
                     {summaryStats.criticalRestock}
                   </span>
                 </div>
@@ -803,10 +806,10 @@ export const Inventory: React.FC<InventoryProps> = ({
               theme: 'bg-amber-50 dark:bg-amber-900/20',
               content: (
                 <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                  <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">
+                  <span className='text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400'>
                     {t.summary?.nearReorder || 'Near Reorder'}
                   </span>
-                  <span className="text-xl font-bold text-amber-900 dark:text-primary-100">
+                  <span className='text-xl font-bold text-amber-900 dark:text-primary-100'>
                     {summaryStats.nearReorder}
                   </span>
                 </div>
@@ -816,15 +819,15 @@ export const Inventory: React.FC<InventoryProps> = ({
               theme: 'bg-gray-100 dark:bg-gray-800',
               content: (
                 <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                  <span className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400">
+                  <span className='text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400'>
                     {t.summary?.discontinued || 'Discontinued'}
                   </span>
-                  <span className="text-xl font-bold text-gray-700 dark:text-gray-300">
+                  <span className='text-xl font-bold text-gray-700 dark:text-gray-300'>
                     {summaryStats.discontinuedCount}
                   </span>
                 </div>
               ),
-            }
+            },
           ]}
         />
       </div>

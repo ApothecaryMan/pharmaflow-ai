@@ -7,11 +7,7 @@ export function RoyalFedoraHat() {
           <path d='M0,22 Q-4,10 2,2 Q4,12 0,22 Z' fill='#FFFFFF' opacity='0.9' />
           <path d='M0,22 L0,4' stroke='var(--svg-color, #3B82F6)' strokeWidth='0.5' />
         </g>
-        <path
-          d='M38,36 C38,18 46,14 64,14 C82,14 90,18 90,36 Z'
-          fill='#111827'
-          opacity='0.3'
-        />
+        <path d='M38,36 C38,18 46,14 64,14 C82,14 90,18 90,36 Z' fill='#111827' opacity='0.3' />
         <path
           d='M38,36 C36,24 48,16 64,20 C80,16 92,24 90,36 C90,44 38,44 38,36 Z'
           fill='var(--svg-color, #1E293B)'
@@ -23,13 +19,17 @@ export function RoyalFedoraHat() {
           d='M37.5,36 C37.5,39 42,42 64,42 C86,42 90.5,39 90.5,36 C90.5,39 86,44 64,44 C42,44 37.5,39 37.5,36 Z'
           fill='#334155'
         />
-        <path
-          d='M37.5,37 Q64,42 90.5,37'
-          stroke='#64748B'
-          strokeWidth='0.8'
-          fill='none'
+        <path d='M37.5,37 Q64,42 90.5,37' stroke='#64748B' strokeWidth='0.8' fill='none' />
+        <rect
+          x='42'
+          y='36'
+          width='4'
+          height='6'
+          rx='1'
+          fill='#FBBF24'
+          stroke='#D97706'
+          strokeWidth='0.5'
         />
-        <rect x='42' y='36' width='4' height='6' rx='1' fill='#FBBF24' stroke='#D97706' strokeWidth='0.5' />
         <path
           d='M14,42 Q64,54 114,42 C124,42 120,46 108,49 Q64,58 20,49 C8,46 4,42 14,42 Z'
           fill='var(--svg-color-dark, #0F172A)'

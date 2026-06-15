@@ -23,7 +23,11 @@ export function useUrlSync(
 
     if (!isAuthenticated) {
       const currentHash = window.location.hash;
-      const allowedAuthHashes = [`#/${ROUTES.LOGIN}`, `#/${ROUTES.SIGNUP}`, `#/${ROUTES.FORGOT_PASSWORD}`];
+      const allowedAuthHashes = [
+        `#/${ROUTES.LOGIN}`,
+        `#/${ROUTES.SIGNUP}`,
+        `#/${ROUTES.FORGOT_PASSWORD}`,
+      ];
       if (!allowedAuthHashes.includes(currentHash) || window.location.pathname !== '/') {
         replaceUrl(`#/${ROUTES.LOGIN}`);
       }
@@ -34,7 +38,7 @@ export function useUrlSync(
     if (!currentEmployeeId) {
       if (isEmployeePortalUser) {
         // Employee portal user
-        const portalView = (view === 'landing' || !view) ? 'requests' : view;
+        const portalView = view === 'landing' || !view ? 'requests' : view;
         const newHash = `#/${ROUTES.PORTAL}/${userId || ''}/${portalView}`;
         replaceUrl(newHash);
       } else if (activeOrgId) {
@@ -54,7 +58,7 @@ export function useUrlSync(
     }
 
     // Authenticated, profile selected, and branch assigned (Standard dashboard/module routes)
-    const activeBranch = branches.find(b => b.id === activeBranchId);
+    const activeBranch = branches.find((b) => b.id === activeBranchId);
     if (activeBranch) {
       const newHash = `#/${activeOrgId}/${activeBranch.code}/${view}`;
       replaceUrl(newHash);
@@ -62,5 +66,14 @@ export function useUrlSync(
       const newHash = `#/${activeOrgId}/${view}`;
       replaceUrl(newHash);
     }
-  }, [isAuthenticated, activeOrgId, activeBranchId, view, branches, currentEmployeeId, userId, isEmployeePortalUser]);
+  }, [
+    isAuthenticated,
+    activeOrgId,
+    activeBranchId,
+    view,
+    branches,
+    currentEmployeeId,
+    userId,
+    isEmployeePortalUser,
+  ]);
 }

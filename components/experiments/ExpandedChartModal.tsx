@@ -109,9 +109,9 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { formatCurrencyParts } from '../../utils/currency';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
-import { formatCurrencyParts } from '../../utils/currency';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES & INTERFACES - واجهات الأنواع
@@ -396,7 +396,9 @@ const CustomTooltipContent = memo(({ active, payload, label, color, unit }: any)
     return (
       <div className='backdrop-blur-md bg-white/80 dark:bg-gray-900/80 saturate-150 p-2.5 px-3.5 rounded-xl shadow-xl border border-white/20 dark:border-gray-700/50 flex flex-col gap-1'>
         <div className='flex items-center justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-1 mb-0.5'>
-          <span className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider'>{label}</span>
+          <span className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider'>
+            {label}
+          </span>
           <span className='text-[10px] font-medium text-gray-400 dark:text-gray-500'>Details</span>
         </div>
         <div className='flex items-baseline gap-1.5'>
@@ -404,13 +406,12 @@ const CustomTooltipContent = memo(({ active, payload, label, color, unit }: any)
             const parts = formatCurrencyParts(payload[0].value);
             return (
               <>
-                <span 
-                  className='text-xl font-black tabular-nums tracking-tight'
-                  style={{ color }}
-                >
+                <span className='text-xl font-black tabular-nums tracking-tight' style={{ color }}>
                   {parts.amount}
                 </span>
-                <span className='text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase'>{parts.symbol}</span>
+                <span className='text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase'>
+                  {parts.symbol}
+                </span>
               </>
             );
           })()}

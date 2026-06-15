@@ -815,8 +815,18 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 {t.nationalIdCard}
               </div>
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-white/5 dark:bg-black/10 border border-(--border-divider) rounded-xl'>
-                <DocumentImage employeeId={employee.id!} column='national_id_card' label={t.frontFace} language={language} />
-                <DocumentImage employeeId={employee.id!} column='national_id_card_back' label={t.backFace} language={language} />
+                <DocumentImage
+                  employeeId={employee.id!}
+                  column='national_id_card'
+                  label={t.frontFace}
+                  language={language}
+                />
+                <DocumentImage
+                  employeeId={employee.id!}
+                  column='national_id_card_back'
+                  label={t.backFace}
+                  language={language}
+                />
               </div>
             </div>
 
@@ -832,8 +842,18 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 {t.syndicateCards}
               </div>
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-white/5 dark:bg-black/10 border border-(--border-divider) rounded-xl'>
-                <DocumentImage employeeId={employee.id!} column='main_syndicate_card' label={t.mainSyndicateCard} language={language} />
-                <DocumentImage employeeId={employee.id!} column='sub_syndicate_card' label={t.sub} language={language} />
+                <DocumentImage
+                  employeeId={employee.id!}
+                  column='main_syndicate_card'
+                  label={t.mainSyndicateCard}
+                  language={language}
+                />
+                <DocumentImage
+                  employeeId={employee.id!}
+                  column='sub_syndicate_card'
+                  label={t.sub}
+                  language={language}
+                />
               </div>
             </div>
           </div>
@@ -848,7 +868,7 @@ const DocumentImage = ({
   employeeId,
   column,
   label,
-  language
+  language,
 }: {
   employeeId: string;
   column: string;
@@ -862,16 +882,21 @@ const DocumentImage = ({
     let isMounted = true;
     setLoading(true);
     import('../../services/hr/employeeService').then(({ employeeService }) => {
-      employeeService.getDocument(employeeId, column).then((data) => {
-        if (isMounted) {
-          setImage(data);
-          setLoading(false);
-        }
-      }).catch(() => {
-        if (isMounted) setLoading(false);
-      });
+      employeeService
+        .getDocument(employeeId, column)
+        .then((data) => {
+          if (isMounted) {
+            setImage(data);
+            setLoading(false);
+          }
+        })
+        .catch(() => {
+          if (isMounted) setLoading(false);
+        });
     });
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [employeeId, column]);
 
   if (loading) {

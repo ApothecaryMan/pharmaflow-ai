@@ -513,21 +513,21 @@
         "id": "5c0f8025f7e0b6654089e5b00e950f1a",
         "groups": [],
         "checks": [
-            {
-              "passes": 1,
-              "fails": 0,
-              "name": "auth login status is 200",
-              "path": "::setup::auth login status is 200",
-              "id": "83e50c28eecbcc735b217f4caf98d173"
-            },
-            {
-              "fails": 0,
-              "name": "auth login has access_token",
-              "path": "::setup::auth login has access_token",
-              "id": "139ead8a83809cdbc14a4cff7ebf6f21",
-              "passes": 1
-            }
-          ],
+          {
+            "passes": 1,
+            "fails": 0,
+            "name": "auth login status is 200",
+            "path": "::setup::auth login status is 200",
+            "id": "83e50c28eecbcc735b217f4caf98d173"
+          },
+          {
+            "fails": 0,
+            "name": "auth login has access_token",
+            "path": "::setup::auth login has access_token",
+            "id": "139ead8a83809cdbc14a4cff7ebf6f21",
+            "passes": 1
+          }
+        ],
         "name": "setup",
         "path": "::setup"
       },
@@ -536,56 +536,49 @@
         "id": "e871c905ba2a4b208fd0211551b736b9",
         "groups": [],
         "checks": [
-            {
-              "path": "::🛒 POS Checkout::✅ RPC status 200",
-              "id": "0dbb6608046770c1726381909f6af250",
-              "passes": 2,
-              "fails": 0,
-              "name": "✅ RPC status 200"
-            },
-            {
-              "passes": 2,
-              "fails": 0,
-              "name": "✅ Checkout success",
-              "path": "::🛒 POS Checkout::✅ Checkout success",
-              "id": "89e532404a363ae667fa0755a96629f0"
-            },
-            {
-              "name": "✅ Has sale ID",
-              "path": "::🛒 POS Checkout::✅ Has sale ID",
-              "id": "75ff51c6d7497788e2cdb1b2e8fddde9",
-              "passes": 2,
-              "fails": 0
-            },
-            {
-              "name": "✅ Has serial ID",
-              "path": "::🛒 POS Checkout::✅ Has serial ID",
-              "id": "f0aedb13277def5bd938a14cf163594b",
-              "passes": 2,
-              "fails": 0
-            },
-            {
-              "path": "::🛒 POS Checkout::✅ Under 3s",
-              "id": "c520eff947e20011c990a80e8ecf2809",
-              "passes": 2,
-              "fails": 0,
-              "name": "✅ Under 3s"
-            }
-          ],
+          {
+            "path": "::🛒 POS Checkout::✅ RPC status 200",
+            "id": "0dbb6608046770c1726381909f6af250",
+            "passes": 2,
+            "fails": 0,
+            "name": "✅ RPC status 200"
+          },
+          {
+            "passes": 2,
+            "fails": 0,
+            "name": "✅ Checkout success",
+            "path": "::🛒 POS Checkout::✅ Checkout success",
+            "id": "89e532404a363ae667fa0755a96629f0"
+          },
+          {
+            "name": "✅ Has sale ID",
+            "path": "::🛒 POS Checkout::✅ Has sale ID",
+            "id": "75ff51c6d7497788e2cdb1b2e8fddde9",
+            "passes": 2,
+            "fails": 0
+          },
+          {
+            "name": "✅ Has serial ID",
+            "path": "::🛒 POS Checkout::✅ Has serial ID",
+            "id": "f0aedb13277def5bd938a14cf163594b",
+            "passes": 2,
+            "fails": 0
+          },
+          {
+            "path": "::🛒 POS Checkout::✅ Under 3s",
+            "id": "c520eff947e20011c990a80e8ecf2809",
+            "passes": 2,
+            "fails": 0,
+            "name": "✅ Under 3s"
+          }
+        ],
         "name": "🛒 POS Checkout"
       }
     ],
     "checks": []
   },
   "options": {
-    "summaryTrendStats": [
-      "avg",
-      "min",
-      "med",
-      "max",
-      "p(90)",
-      "p(95)"
-    ],
+    "summaryTrendStats": ["avg", "min", "med", "max", "p(90)", "p(95)"],
     "summaryTimeUnit": "",
     "noColor": false
   }

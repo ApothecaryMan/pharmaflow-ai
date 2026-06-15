@@ -1,4 +1,4 @@
-import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
+import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
 
 export interface DrugCatalogItem {
   id: string;
@@ -48,7 +48,7 @@ export async function openCatalogDB(): Promise<IDBPDatabase<CatalogDB>> {
 
         db.createObjectStore('meta', { keyPath: 'key' });
       }
-    }
+    },
   });
 }
 
@@ -64,32 +64,28 @@ export async function saveCatalogToDB(
   const metaStore = tx.objectStore('meta');
 
   await Promise.all([
-    ...drugs.map(d => store.put(d)),
+    ...drugs.map((d) => store.put(d)),
     metaStore.put({
       key: 'catalog_meta',
       last_sync: new Date().toISOString(),
-      total_count: drugs.length // Note: This might need adjustment if doing delta updates
-    })
+      total_count: drugs.length, // Note: This might need adjustment if doing delta updates
+    }),
   ]);
-  
+
   await tx.done;
 }
 
 /**
  * Load full catalog from IndexedDB
  */
-export async function loadCatalogFromDB(
-  db: IDBPDatabase<CatalogDB>
-): Promise<DrugCatalogItem[]> {
+export async function loadCatalogFromDB(db: IDBPDatabase<CatalogDB>): Promise<DrugCatalogItem[]> {
   return db.getAll('drugs');
 }
 
 /**
  * Get Last Sync Time for Delta Updates
  */
-export async function getLastSyncTime(
-  db: IDBPDatabase<CatalogDB>
-): Promise<string | null> {
+export async function getLastSyncTime(db: IDBPDatabase<CatalogDB>): Promise<string | null> {
   const meta = await db.get('meta', 'catalog_meta');
   return meta?.last_sync ?? null;
 }

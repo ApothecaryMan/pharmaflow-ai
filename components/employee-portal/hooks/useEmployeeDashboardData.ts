@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { authService } from '../../../services/auth/authService';
 import { employeeProfileRepository } from '../../../services/hr/repositories/employeeProfileRepository';
@@ -34,14 +34,16 @@ export function useEmployeeDashboardData() {
         const [initialProfile, pendingRequests, workspacesRes] = await Promise.all([
           employeeProfileRepository.getById(session.userId),
           employmentRequestRepository.getByUserId(session.userId),
-          supabase.rpc('get_my_workspaces')
+          supabase.rpc('get_my_workspaces'),
         ]);
 
         let userProfile = initialProfile;
 
         // Backfill email from auth.users if missing in user_profiles
         if (userProfile && !userProfile.email) {
-          const { data: { user: authUser } } = await supabase.auth.getUser();
+          const {
+            data: { user: authUser },
+          } = await supabase.auth.getUser();
           if (authUser?.email) {
             userProfile = { ...userProfile, email: authUser.email };
           }
@@ -110,9 +112,9 @@ export function useEmployeeDashboardData() {
           table: 'employment_requests',
         },
         (payload) => {
-          setRequests(prev => {
-            if (prev.some(r => r.id === payload.old.id)) {
-              return prev.filter(r => r.id !== payload.old.id);
+          setRequests((prev) => {
+            if (prev.some((r) => r.id === payload.old.id)) {
+              return prev.filter((r) => r.id !== payload.old.id);
             }
             return prev;
           });
@@ -132,18 +134,21 @@ export function useEmployeeDashboardData() {
     if (updated) setProfile(updated);
   }, []);
 
-  const actionRequest = useCallback(async (id: string, action: 'accepted' | 'rejected') => {
-    if (!profile?.id) throw new Error('Profile not found');
-    
-    if (action === 'accepted') {
-      if (!profile.username) throw new Error('Profile username missing');
-      await employmentRequestRepository.acceptEmploymentRequest(id, profile.id, profile.username);
-    } else {
-      await employmentRequestRepository.updateStatus(id, 'rejected');
-    }
-    // Refresh to update UI and fetch workspaces if needed
-    await loadData(true);
-  }, [profile, loadData]);
+  const actionRequest = useCallback(
+    async (id: string, action: 'accepted' | 'rejected') => {
+      if (!profile?.id) throw new Error('Profile not found');
+
+      if (action === 'accepted') {
+        if (!profile.username) throw new Error('Profile username missing');
+        await employmentRequestRepository.acceptEmploymentRequest(id, profile.id, profile.username);
+      } else {
+        await employmentRequestRepository.updateStatus(id, 'rejected');
+      }
+      // Refresh to update UI and fetch workspaces if needed
+      await loadData(true);
+    },
+    [profile, loadData]
+  );
 
   return {
     profile,
@@ -152,6 +157,6 @@ export function useEmployeeDashboardData() {
     isLoading,
     loadData,
     updateProfile,
-    actionRequest
+    actionRequest,
   };
 }

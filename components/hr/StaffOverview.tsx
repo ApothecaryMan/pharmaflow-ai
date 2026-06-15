@@ -1,12 +1,12 @@
 import type React from 'react';
 import { useCallback, useMemo } from 'react';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { PageHeader } from '../common/PageHeader';
+import { SegmentedControl } from '../common/SegmentedControl';
 import { TanStackTable } from '../common/TanStackTable';
 import { useStaffAnalytics } from './hooks/useStaffAnalytics';
 import { StaffSpotlightTicker } from './StaffSpotlightTicker';
 import type { StaffOverviewProps } from './types/staffOverview.types';
-import { PageHeader } from '../common/PageHeader';
-import { SegmentedControl } from '../common/SegmentedControl';
 
 /**
  * Staff Overview - Dedicated dashboard for employee performance analytics
@@ -21,7 +21,7 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
   language,
   getVerifiedDate,
   isLoading = false,
-  onViewChange
+  onViewChange,
 }) => {
   const isRTL = language === 'AR';
 
@@ -70,18 +70,33 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
         centerContent={
           <SegmentedControl
             options={[
-              { value: 'staff-overview', label: language === 'AR' ? 'نظرة عامة' : 'Overview', icon: 'supervisor_account', permission: 'reports.view_intelligence' },
-              { value: 'employee-list', label: language === 'AR' ? 'قائمة الموظفين' : 'Employees', icon: 'badge', permission: 'users.view' },
-              { value: 'employee-profile', label: language === 'AR' ? 'ملف الموظف' : 'Profile', icon: 'person', permission: 'users.view' }
+              {
+                value: 'staff-overview',
+                label: language === 'AR' ? 'نظرة عامة' : 'Overview',
+                icon: 'supervisor_account',
+                permission: 'reports.view_intelligence',
+              },
+              {
+                value: 'employee-list',
+                label: language === 'AR' ? 'قائمة الموظفين' : 'Employees',
+                icon: 'badge',
+                permission: 'users.view',
+              },
+              {
+                value: 'employee-profile',
+                label: language === 'AR' ? 'ملف الموظف' : 'Profile',
+                icon: 'person',
+                permission: 'users.view',
+              },
             ]}
-            value="staff-overview"
+            value='staff-overview'
             onChange={(val) => onViewChange?.(val as any)}
             color={color.name}
-            size="md"
-            iconSize="--icon-lg"
-            variant="onPage"
-            shape="pill"
-            className="w-full sm:w-[480px]"
+            size='md'
+            iconSize='--icon-lg'
+            variant='onPage'
+            shape='pill'
+            className='w-full sm:w-[480px]'
             useGraphicFont={true}
           />
         }

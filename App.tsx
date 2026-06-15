@@ -1,48 +1,68 @@
-import React, { useCallback, useState, lazy, Suspense } from 'react';
-import { storage } from './utils/storage';
-import { StorageKeys } from './config/storageKeys';
-import { branchService } from './services/org/branchService';
+import { AnimatePresence, motion } from 'framer-motion';
+import React, { lazy, Suspense, useCallback, useState } from 'react';
 import { AuthPage } from './components/auth/AuthPage';
 import { Modal } from './components/common/Modal';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MainLayout } from './components/layout/MainLayout';
 import { LogoutOverlay } from './components/layout/LogoutOverlay';
+import { MainLayout } from './components/layout/MainLayout';
 import { PageRouter } from './components/layout/PageRouter';
 import { useStatusBar } from './components/layout/StatusBar';
-import { OrgSetupScreen } from './components/onboarding/OrgSetupScreen';
 import { BranchSetupScreen } from './components/onboarding/BranchSetupScreen';
 import { EmployeeSetupScreen } from './components/onboarding/EmployeeSetupScreen';
+import { OrgSetupScreen } from './components/onboarding/OrgSetupScreen';
+import { StorageKeys } from './config/storageKeys';
+import { branchService } from './services/org/branchService';
+import { storage } from './utils/storage';
+
 // EmployeeDashboard loaded lazily
-const EmployeeDashboard = lazy(() => import('./components/employee-portal/EmployeeDashboard').then(m => ({ default: m.EmployeeDashboard })));
-const AuthenticatedContent = lazy(() => import('./components/layout/AuthenticatedContent').then(m => ({ default: m.AuthenticatedContent })));
+const EmployeeDashboard = lazy(() =>
+  import('./components/employee-portal/EmployeeDashboard').then((m) => ({
+    default: m.EmployeeDashboard,
+  }))
+);
+const AuthenticatedContent = lazy(() =>
+  import('./components/layout/AuthenticatedContent').then((m) => ({
+    default: m.AuthenticatedContent,
+  }))
+);
+
+import { SecureGate } from './components/common/SecureGate';
+import { NotificationOverlay } from './components/features/alerts/NotificationOverlay';
+import { TitleBar } from './components/layout/TitleBar';
 import { PAGE_REGISTRY } from './config/pageRegistry';
 import { UserRole } from './config/permissions';
-import { SecureGate } from './components/common/SecureGate';
 import { ROUTES } from './config/routes';
-import { LANGUAGES, THEMES, useSettings, useAlert, CatalogProvider } from './context';
-// App State Hooks
-import { type AppState, useAppState } from './hooks/layout/useAppState';
+import { CatalogProvider, LANGUAGES, THEMES, useAlert, useSettings } from './context';
+import { DataProvider, useData } from './context/DataContext';
 import { type AuthState, useAuth } from './hooks/auth/useAuth';
 import { useAuthenticatedData } from './hooks/auth/useAuthenticatedData';
 import { useOnboardingStatus } from './hooks/auth/useOnboardingStatus';
-import { useEntityHandlers } from './hooks/useEntityHandlers';
+import { useSessionHandlers } from './hooks/auth/useSessionHandlers';
 import { useGlobalEventHandlers } from './hooks/infrastructure/useGlobalEventHandlers';
 import { usePreventZoom } from './hooks/infrastructure/usePreventZoom';
+// App State Hooks
+import { type AppState, useAppState } from './hooks/layout/useAppState';
 import { useNavigation } from './hooks/layout/useNavigation';
-import { useSessionHandlers } from './hooks/auth/useSessionHandlers';
-import { ShiftProvider, useShift } from './hooks/sales/useShift';
 import { useTheme } from './hooks/layout/useTheme';
 import { useUrlSync } from './hooks/layout/useUrlSync';
+import { ShiftProvider, useShift } from './hooks/sales/useShift';
+import { useEntityHandlers } from './hooks/useEntityHandlers';
 import { TRANSLATIONS } from './i18n/translations';
-import { DataProvider, useData } from './context/DataContext';
 import { authService } from './services/auth/authService';
-import { type Supplier, ViewState } from './types';
-import { TitleBar } from './components/layout/TitleBar';
+import type { Supplier, ViewState } from './types';
 import { isTauri } from './utils/platform';
-import { NotificationOverlay } from './components/features/alerts/NotificationOverlay';
 
 const INITIAL_SUPPLIERS: Supplier[] = [
-  { id: '1', orgId: '', branchId: '1', name: 'B2B', contactPerson: 'B2B', phone: '', email: '', address: '', status: 'active' },
+  {
+    id: '1',
+    orgId: '',
+    branchId: '1',
+    name: 'B2B',
+    contactPerson: 'B2B',
+    phone: '',
+    email: '',
+    address: '',
+    status: 'active',
+  },
 ];
 
 // --- ARCHITECTURAL NOTE: THE ORCHESTRATOR PATTERN ---
@@ -65,16 +85,26 @@ const STANDALONE_VIEWS = [ROUTES.LOGIN];
 
 // AuthenticatedContent was moved to src/components/layout/AuthenticatedContent.tsx
 
-const LogoAsterisk = ({ color = 'currentColor', scale = 1.4 }: { color?: string, scale?: number }) => (
-  <svg viewBox="0 0 140 140" className="w-12 h-12 text-zinc-900 dark:text-white animate-spin" style={{ animationDuration: '2s' }}>
+const LogoAsterisk = ({
+  color = 'currentColor',
+  scale = 1.4,
+}: {
+  color?: string;
+  scale?: number;
+}) => (
+  <svg
+    viewBox='0 0 140 140'
+    className='w-12 h-12 text-zinc-900 dark:text-white animate-spin'
+    style={{ animationDuration: '2s' }}
+  >
     <g transform={`translate(70 70) scale(${scale})`} fill={color}>
-      <rect x="-4" y="-35" width="8" height="70" rx=".5" transform="rotate(45)"/>
-      <rect x="-4" y="-35" width="8" height="20" rx=".5"/>
-      <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(-45)"/>
-      <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(90)"/>
-      <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(135)"/>
-      <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(180)"/>
-      <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(270)"/>
+      <rect x='-4' y='-35' width='8' height='70' rx='.5' transform='rotate(45)' />
+      <rect x='-4' y='-35' width='8' height='20' rx='.5' />
+      <rect x='-4' y='-35' width='8' height='20' rx='.5' transform='rotate(-45)' />
+      <rect x='-4' y='-35' width='8' height='20' rx='.5' transform='rotate(90)' />
+      <rect x='-4' y='-35' width='8' height='20' rx='.5' transform='rotate(135)' />
+      <rect x='-4' y='-35' width='8' height='20' rx='.5' transform='rotate(180)' />
+      <rect x='-4' y='-35' width='8' height='20' rx='.5' transform='rotate(270)' />
     </g>
   </svg>
 );
@@ -143,10 +173,7 @@ const App: React.FC = () => {
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     const handleQuotaExceeded = (e: Event) => {
-      alert.error(
-        t.settings.storageQuota.criticalMessage,
-        t.settings.storageQuota.criticalTitle
-      );
+      alert.error(t.settings.storageQuota.criticalMessage, t.settings.storageQuota.criticalTitle);
     };
     window.addEventListener('pharma_storage_quota_exceeded', handleQuotaExceeded);
 
@@ -158,7 +185,12 @@ const App: React.FC = () => {
   }, [checkQuota, t, alert]);
 
   // 4. Onboarding Status Hook (Architectural Abstraction)
-  const { activeStep, setActiveStep, isChecking: isCheckingOnboarding, error: onboardingError } = useOnboardingStatus(authState.isAuthenticated);
+  const {
+    activeStep,
+    setActiveStep,
+    isChecking: isCheckingOnboarding,
+    error: onboardingError,
+  } = useOnboardingStatus(authState.isAuthenticated);
 
   // 5. Dynamic Theme Hook - Handles PWA Title Bar & Global Dark Mode
   // When not authenticated, we force isLoginView=true for the black theme color override
@@ -198,14 +230,8 @@ const App: React.FC = () => {
     isEmployeePortalUser
   );
 
-
-
-
-
   // 10. Authenticated & Setup Done -> Show Secure Content wrapped in Providers
   const isOnboardingReady = !isCheckingOnboarding;
-
-
 
   // (Moved isEmployeePortalUser logic above to useUrlSync)
 
@@ -224,10 +250,7 @@ const App: React.FC = () => {
       )}
     </Suspense>
   ) : (
-    <AuthPage
-      onLoginSuccess={handleLoginSuccess}
-      language={language}
-    />
+    <AuthPage onLoginSuccess={handleLoginSuccess} language={language} />
   );
 
   // Handle Onboarding Steps and Loading State
@@ -236,12 +259,10 @@ const App: React.FC = () => {
   if (authState.isAuthenticated && !isOnboardingReady) {
     // Show a clean loading state while checking database for onboarding status
     finalContent = (
-      <div className="h-screen w-screen flex items-center justify-center bg-zinc-50 dark:bg-black">
-        <div className="flex flex-col items-center gap-4">
+      <div className='h-screen w-screen flex items-center justify-center bg-zinc-50 dark:bg-black'>
+        <div className='flex flex-col items-center gap-4'>
           <LogoAsterisk />
-          <p className="text-zinc-500 dark:text-zinc-400">
-            {t.global?.loading}
-          </p>
+          <p className='text-zinc-500 dark:text-zinc-400'>{t.global?.loading}</p>
         </div>
       </div>
     );
@@ -253,27 +274,41 @@ const App: React.FC = () => {
       if (activeStep === 1) {
         finalContent = <OrgSetupScreen language={language} onComplete={() => setActiveStep(2)} />;
       } else if (activeStep === 2) {
-        finalContent = <BranchSetupScreen language={language} color={theme.primary} onBack={() => setActiveStep(1)} onComplete={() => setActiveStep(3)} />;
+        finalContent = (
+          <BranchSetupScreen
+            language={language}
+            color={theme.primary}
+            onBack={() => setActiveStep(1)}
+            onComplete={() => setActiveStep(3)}
+          />
+        );
       } else if (activeStep === 3) {
-        finalContent = <EmployeeSetupScreen language={language} color={theme.primary} onBack={() => setActiveStep(2)} onComplete={async () => {
-          await reinitialize();
-          setActiveStep(0);
-          setView('landing' as ViewState);
-        }} />;
+        finalContent = (
+          <EmployeeSetupScreen
+            language={language}
+            color={theme.primary}
+            onBack={() => setActiveStep(2)}
+            onComplete={async () => {
+              await reinitialize();
+              setActiveStep(0);
+              setView('landing' as ViewState);
+            }}
+          />
+        );
       }
     }
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-[var(--bg-page-surface)]">
+    <div className='h-screen flex flex-col overflow-hidden bg-[var(--bg-page-surface)]'>
       {!authState.isAuthenticated && <TitleBar />}
-      <div className="flex-1 overflow-hidden relative">
+      <div className='flex-1 overflow-hidden relative'>
         <NotificationOverlay />
         {authState.isAuthenticated ? (
-          <CatalogProvider>
-            {finalContent}
-          </CatalogProvider>
-        ) : finalContent}
+          <CatalogProvider>{finalContent}</CatalogProvider>
+        ) : (
+          finalContent
+        )}
       </div>
     </div>
   );

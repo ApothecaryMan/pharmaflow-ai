@@ -43,7 +43,11 @@ export const FloatingInput: React.FC<FloatingInputProps> = ({
     return (
       <div className={`relative ${className} animate-pulse`}>
         <div className='h-8 w-full bg-zinc-100 dark:bg-zinc-800 rounded-lg' />
-        <div className={`absolute text-[9px] -top-1.5 left-2 ${labelBgClassName} px-1 text-zinc-400 font-bold uppercase`}>{label}</div>
+        <div
+          className={`absolute text-[9px] -top-1.5 left-2 ${labelBgClassName} px-1 text-zinc-400 font-bold uppercase`}
+        >
+          {label}
+        </div>
       </div>
     );
   }

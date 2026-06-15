@@ -1,9 +1,10 @@
-import React, { useCallback, useMemo } from 'react';
-import { type MenuItem, PHARMACY_MENU, MODULE_VIEW_MAPPING } from '../../config/menuData';
+import type React from 'react';
+import { useCallback, useMemo } from 'react';
+import { type MenuItem, MODULE_VIEW_MAPPING, PHARMACY_MENU } from '../../config/menuData';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
-import { type UserRole } from '../../config/permissions';
-import { permissionsService } from '../../services/auth/permissionsService';
+import type { UserRole } from '../../config/permissions';
 import { useAlert } from '../../context';
+import { permissionsService } from '../../services/auth/permissionsService';
 import type { ViewState } from '../../types';
 
 /**
@@ -57,10 +58,7 @@ function filterMenuItems(
           ...submenu,
           items: submenu.items.filter((item) => {
             // Filter items by permission
-            if (
-              typeof item === 'object' &&
-              item.permission
-            ) {
+            if (typeof item === 'object' && item.permission) {
               const isDebugOverride = item.permission === 'system.debug' && developerMode;
               if (!isDebugOverride && !permissionsService.can(item.permission)) {
                 return false;
@@ -124,10 +122,11 @@ export function useNavigation({
   const handleViewChange = useCallback(
     (viewId: string, params?: Record<string, unknown>) => {
       const pageConfig = PAGE_REGISTRY[viewId];
-      
+
       // Check for Protection
       if (pageConfig?.isProtected && onProtectedNavigation) {
-        const isAlreadyUnlocked = sessionStorage.getItem(pageConfig.storageKey || 'area_unlocked') === 'true';
+        const isAlreadyUnlocked =
+          sessionStorage.getItem(pageConfig.storageKey || 'area_unlocked') === 'true';
         if (!isAlreadyUnlocked) {
           onProtectedNavigation(viewId, params);
           return;
@@ -160,17 +159,27 @@ export function useNavigation({
       }
       setMobileMenuOpen(false);
     },
-    [activeModule, resolveView, setView, setDashboardSubView, setMobileMenuOpen, setNavigationParams, error, onProtectedNavigation]
+    [
+      activeModule,
+      resolveView,
+      setView,
+      setDashboardSubView,
+      setMobileMenuOpen,
+      setNavigationParams,
+      error,
+      onProtectedNavigation,
+    ]
   );
 
   // Handle direct navigation
   const handleNavigate = useCallback(
     (viewId: string, params?: Record<string, unknown>) => {
       const pageConfig = PAGE_REGISTRY[viewId];
-      
+
       // Check for Protection
       if (pageConfig?.isProtected && onProtectedNavigation) {
-        const isAlreadyUnlocked = sessionStorage.getItem(pageConfig.storageKey || 'area_unlocked') === 'true';
+        const isAlreadyUnlocked =
+          sessionStorage.getItem(pageConfig.storageKey || 'area_unlocked') === 'true';
         if (!isAlreadyUnlocked) {
           onProtectedNavigation(viewId, params);
           return;
@@ -203,13 +212,10 @@ export function useNavigation({
   );
 
   // Filter menu items based on permissions and settings
-  const filteredMenuItems = useMemo(
-    () => {
-      if (!activeBranchId) return [];
-      return filterMenuItems(PHARMACY_MENU, hideInactiveModules, developerMode, currentEmployeeId);
-    },
-    [hideInactiveModules, developerMode, currentEmployeeId, activeBranchId]
-  );
+  const filteredMenuItems = useMemo(() => {
+    if (!activeBranchId) return [];
+    return filterMenuItems(PHARMACY_MENU, hideInactiveModules, developerMode, currentEmployeeId);
+  }, [hideInactiveModules, developerMode, currentEmployeeId, activeBranchId]);
 
   return {
     handleViewChange,

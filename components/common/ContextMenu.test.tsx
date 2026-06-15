@@ -1,19 +1,19 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React, { useRef } from 'react';
-import { ContextMenuProvider, useContextMenu, ContextMenuTrigger } from './ContextMenu';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ContextMenuProvider, ContextMenuTrigger, useContextMenu } from './ContextMenu';
 
 // Helper component to test hook
 const TestComponent = () => {
   const { showMenu } = useContextMenu();
   return (
-    <div 
-      data-testid="trigger-area" 
+    <div
+      data-testid='trigger-area'
       onContextMenu={(e) => {
         e.preventDefault();
         showMenu(e.clientX, e.clientY, [
-            { label: 'Action 1', action: vi.fn() },
-            { label: 'Dangerous', danger: true, action: vi.fn() }
+          { label: 'Action 1', action: vi.fn() },
+          { label: 'Dangerous', danger: true, action: vi.fn() },
         ]);
       }}
     >
@@ -24,14 +24,14 @@ const TestComponent = () => {
 
 // Helper using ContextMenuTrigger
 const TriggerComponent = () => {
-    return (
-        <ContextMenuTrigger 
-            actions={[{ label: 'Trigger Action', action: vi.fn() }]}
-            data-testid="cm-trigger"
-        >
-            Trigger Item
-        </ContextMenuTrigger>
-    );
+  return (
+    <ContextMenuTrigger
+      actions={[{ label: 'Trigger Action', action: vi.fn() }]}
+      data-testid='cm-trigger'
+    >
+      Trigger Item
+    </ContextMenuTrigger>
+  );
 };
 
 describe('ContextMenu', () => {
@@ -64,7 +64,7 @@ describe('ContextMenu', () => {
     render(
       <ContextMenuProvider>
         <TestComponent />
-        <div data-testid="outside">Outside</div>
+        <div data-testid='outside'>Outside</div>
       </ContextMenuProvider>
     );
 
@@ -74,20 +74,20 @@ describe('ContextMenu', () => {
 
     // Click outside
     fireEvent.mouseDown(screen.getByTestId('outside'));
-    
+
     await waitFor(() => {
-        expect(screen.queryByText('Action 1')).not.toBeInTheDocument();
+      expect(screen.queryByText('Action 1')).not.toBeInTheDocument();
     });
   });
 
   it('ContextMenuTrigger works', async () => {
-      render(
-          <ContextMenuProvider>
-              <TriggerComponent />
-          </ContextMenuProvider>
-      );
+    render(
+      <ContextMenuProvider>
+        <TriggerComponent />
+      </ContextMenuProvider>
+    );
 
-      fireEvent.contextMenu(screen.getByTestId('cm-trigger'), { clientX: 50, clientY: 50 });
-      expect(await screen.findByText('Trigger Action')).toBeInTheDocument();
+    fireEvent.contextMenu(screen.getByTestId('cm-trigger'), { clientX: 50, clientY: 50 });
+    expect(await screen.findByText('Trigger Action')).toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { EmploymentRequest } from '../../../types';
 import { useEmployeePortalServices } from '../context/EmployeePortalContext';
 
@@ -27,23 +27,29 @@ export const useEmploymentRequests = (userId: string | undefined) => {
     }
   }, [userId]);
 
-  const acceptRequest = useCallback(async (id: string, updatedBy: string) => {
-    try {
-      await employmentRequestRepository.acceptRequest(id, updatedBy);
-      await fetchRequests();
-    } catch (err) {
-      throw err;
-    }
-  }, [fetchRequests]);
+  const acceptRequest = useCallback(
+    async (id: string, updatedBy: string) => {
+      try {
+        await employmentRequestRepository.acceptRequest(id, updatedBy);
+        await fetchRequests();
+      } catch (err) {
+        throw err;
+      }
+    },
+    [fetchRequests]
+  );
 
-  const rejectRequest = useCallback(async (id: string, updatedBy: string) => {
-    try {
-      await employmentRequestRepository.rejectRequest(id, updatedBy);
-      await fetchRequests();
-    } catch (err) {
-      throw err;
-    }
-  }, [fetchRequests]);
+  const rejectRequest = useCallback(
+    async (id: string, updatedBy: string) => {
+      try {
+        await employmentRequestRepository.rejectRequest(id, updatedBy);
+        await fetchRequests();
+      } catch (err) {
+        throw err;
+      }
+    },
+    [fetchRequests]
+  );
 
   useEffect(() => {
     fetchRequests();

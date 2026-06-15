@@ -1,8 +1,16 @@
-import React, { createContext, type ReactNode, useCallback, useContext, useReducer, useMemo, useEffect } from 'react';
-import { timeService } from '../../../services/timeService';
-import { storage } from '../../../utils/storage';
-import { idGenerator } from '../../../utils/idGenerator';
+import React, {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+} from 'react';
 import { StorageKeys } from '../../../config/storageKeys';
+import { timeService } from '../../../services/timeService';
+import { idGenerator } from '../../../utils/idGenerator';
+import { storage } from '../../../utils/storage';
 
 // --- Types & Constants ---
 
@@ -62,9 +70,9 @@ const NOTIFICATIONS_KEY = StorageKeys.NOTIFICATIONS;
 const loadInitialState = (): StatusBarState => {
   const lastTransaction = storage.get<number>(LAST_TRANSACTION_KEY, 0);
   const storedNotifications = storage.get<any[]>(NOTIFICATIONS_KEY, []);
-  
+
   return {
-    notifications: storedNotifications.map(n => ({ ...n, timestamp: new Date(n.timestamp) })),
+    notifications: storedNotifications.map((n) => ({ ...n, timestamp: new Date(n.timestamp) })),
     announcement: null,
     isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
     customItems: new Map(),
@@ -79,11 +87,16 @@ const statusBarReducer = (state: StatusBarState, action: StatusBarAction): Statu
     case 'ADD_NOTIFICATION':
       return { ...state, notifications: [action.payload, ...state.notifications].slice(0, 50) };
     case 'REMOVE_NOTIFICATION':
-      return { ...state, notifications: state.notifications.filter(n => n.id !== action.id) };
+      return { ...state, notifications: state.notifications.filter((n) => n.id !== action.id) };
     case 'CLEAR_NOTIFICATIONS':
       return { ...state, notifications: [] };
     case 'MARK_AS_READ':
-      return { ...state, notifications: state.notifications.map(n => n.id === action.id ? { ...n, read: true } : n) };
+      return {
+        ...state,
+        notifications: state.notifications.map((n) =>
+          n.id === action.id ? { ...n, read: true } : n
+        ),
+      };
     case 'SET_ANNOUNCEMENT':
       return { ...state, announcement: action.payload };
     case 'SET_ONLINE_STATUS':
@@ -113,8 +126,12 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [state, dispatch] = useReducer(statusBarReducer, null, loadInitialState);
 
   // --- Persistence Side Effects ---
-  useEffect(() => { storage.set(NOTIFICATIONS_KEY, state.notifications); }, [state.notifications]);
-  useEffect(() => { storage.set(LAST_TRANSACTION_KEY, state.lastTransactionTime); }, [state.lastTransactionTime]);
+  useEffect(() => {
+    storage.set(NOTIFICATIONS_KEY, state.notifications);
+  }, [state.notifications]);
+  useEffect(() => {
+    storage.set(LAST_TRANSACTION_KEY, state.lastTransactionTime);
+  }, [state.lastTransactionTime]);
 
   // --- Connection Side Effects ---
   useEffect(() => {
@@ -131,10 +148,10 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
   // --- Time Sync Side Effects ---
   const syncTime = useCallback(async () => {
     const success = await timeService.syncTime();
-    dispatch({ 
-      type: 'SET_TIME_SYNC', 
-      synced: success, 
-      lastSync: timeService.getLastSyncTime()?.getTime() || null 
+    dispatch({
+      type: 'SET_TIME_SYNC',
+      synced: success,
+      lastSync: timeService.getLastSyncTime()?.getTime() || null,
     });
     return success;
   }, []);
@@ -142,10 +159,10 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
   useEffect(() => {
     // If TimeService is already synced but our state says it's not, sync them
     if (timeService.isSynced() && !state.timeSynced) {
-      dispatch({ 
-        type: 'SET_TIME_SYNC', 
-        synced: true, 
-        lastSync: timeService.getLastSyncTime()?.getTime() || null 
+      dispatch({
+        type: 'SET_TIME_SYNC',
+        synced: true,
+        lastSync: timeService.getLastSyncTime()?.getTime() || null,
       });
     } else if (state.isOnline && !timeService.isSynced()) {
       syncTime();
@@ -153,31 +170,41 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, [state.isOnline, state.timeSynced, syncTime]);
 
   // --- Actions ---
-  const actions = useMemo(() => ({
-    addNotification: (notification: Omit<Notification, 'id' | 'timestamp'>) => dispatch({
-      type: 'ADD_NOTIFICATION',
-      payload: { ...notification, id: idGenerator.generateSync('notification'), timestamp: timeService.getVerifiedDate() }
+  const actions = useMemo(
+    () => ({
+      addNotification: (notification: Omit<Notification, 'id' | 'timestamp'>) =>
+        dispatch({
+          type: 'ADD_NOTIFICATION',
+          payload: {
+            ...notification,
+            id: idGenerator.generateSync('notification'),
+            timestamp: timeService.getVerifiedDate(),
+          },
+        }),
+      removeNotification: (id: string) => dispatch({ type: 'REMOVE_NOTIFICATION', id }),
+      clearNotifications: () => dispatch({ type: 'CLEAR_NOTIFICATIONS' }),
+      markAsRead: (id: string) => dispatch({ type: 'MARK_AS_READ', id }),
+      setAnnouncement: (payload: string | null) => dispatch({ type: 'SET_ANNOUNCEMENT', payload }),
+      setOnlineStatus: (payload: boolean) => dispatch({ type: 'SET_ONLINE_STATUS', payload }),
+      registerItem: (key: string, component: React.ReactNode) =>
+        dispatch({ type: 'REGISTER_ITEM', key, component }),
+      unregisterItem: (key: string) => dispatch({ type: 'UNREGISTER_ITEM', key }),
+      getVerifiedDate: () => timeService.getVerifiedDate(),
+      updateLastTransactionTime: (timestamp: number) =>
+        dispatch({ type: 'SET_LAST_TRANSACTION', timestamp }),
+      validateTransactionTime: (proposedTime: Date) => {
+        const proposedTimestamp = proposedTime.getTime();
+        const lastTimestamp = state.lastTransactionTime;
+        const tolerance = 5000;
+        if (lastTimestamp > 0 && proposedTimestamp < lastTimestamp - tolerance) {
+          return { valid: false, message: `Possible date tampering detected.` };
+        }
+        return { valid: true };
+      },
+      syncTime,
     }),
-    removeNotification: (id: string) => dispatch({ type: 'REMOVE_NOTIFICATION', id }),
-    clearNotifications: () => dispatch({ type: 'CLEAR_NOTIFICATIONS' }),
-    markAsRead: (id: string) => dispatch({ type: 'MARK_AS_READ', id }),
-    setAnnouncement: (payload: string | null) => dispatch({ type: 'SET_ANNOUNCEMENT', payload }),
-    setOnlineStatus: (payload: boolean) => dispatch({ type: 'SET_ONLINE_STATUS', payload }),
-    registerItem: (key: string, component: React.ReactNode) => dispatch({ type: 'REGISTER_ITEM', key, component }),
-    unregisterItem: (key: string) => dispatch({ type: 'UNREGISTER_ITEM', key }),
-    getVerifiedDate: () => timeService.getVerifiedDate(),
-    updateLastTransactionTime: (timestamp: number) => dispatch({ type: 'SET_LAST_TRANSACTION', timestamp }),
-    validateTransactionTime: (proposedTime: Date) => {
-      const proposedTimestamp = proposedTime.getTime();
-      const lastTimestamp = state.lastTransactionTime;
-      const tolerance = 5000;
-      if (lastTimestamp > 0 && proposedTimestamp < lastTimestamp - tolerance) {
-        return { valid: false, message: `Possible date tampering detected.` };
-      }
-      return { valid: true };
-    },
-    syncTime,
-  }), [state.lastTransactionTime, syncTime]);
+    [state.lastTransactionTime, syncTime]
+  );
 
   const value = useMemo(() => ({ state, ...actions }), [state, actions]);
 

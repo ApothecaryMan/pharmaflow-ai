@@ -1,30 +1,35 @@
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Drug, StockBatch } from '../../types';
 import { StorageKeys } from '../../config/storageKeys';
+import { useData } from '../../context/DataContext';
+import type { Drug, StockBatch } from '../../types';
+import {
+  checkExpiryStatus,
+  formatExpiryDate,
+  getExpiryStatusConfig,
+  parseExpiryEndOfMonth,
+} from '../../utils/expiryUtils';
+import { idGenerator } from '../../utils/idGenerator';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
-import { formatExpiryDate, checkExpiryStatus, getExpiryStatusConfig, parseExpiryEndOfMonth } from '../../utils/expiryUtils';
+import { storage } from '../../utils/storage';
+import { CARD_BASE } from '../../utils/themeStyles';
 import { useContextMenu } from '../common/ContextMenu';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
 import { useSmartDirection } from '../common/SmartInputs';
+import { Switch } from '../common/Switch';
 import { useStatusBar } from '../layout/StatusBar';
-import { idGenerator } from '../../utils/idGenerator';
-import { storage } from '../../utils/storage';
-import { useData } from '../../context/DataContext';
 import {
-  type PrintLabelItem,
-  printLabels,
   DEFAULT_LABEL_DESIGN,
   generateLabelHTML,
   generatePageHTML,
   generateTemplateCSS,
   getReceiptSettings,
-  LABEL_PRESETS
+  LABEL_PRESETS,
+  type PrintLabelItem,
+  printLabels,
 } from './LabelPrinter';
-import { Switch } from '../common/Switch';
-import { CARD_BASE } from '../../utils/themeStyles';
 import type { LabelDesign, LabelElement } from './studio/types';
 
 interface BarcodePrinterProps {
@@ -50,7 +55,10 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
   const { showMenu } = useContextMenu();
   const { playBeep, playError } = usePosSounds();
   const { branches, activeBranchId } = useData();
-  const activeBranch = useMemo(() => branches?.find((b: any) => b.id === activeBranchId), [branches, activeBranchId]);
+  const activeBranch = useMemo(
+    () => branches?.find((b: any) => b.id === activeBranchId),
+    [branches, activeBranchId]
+  );
   const [search, setSearch] = useState('');
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [isPrinting, setIsPrinting] = useState(false);
@@ -323,9 +331,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
       const storedDesign = activeBranch?.printSettings?.[StorageKeys.LABEL_DESIGN] || null;
 
       // Deep clone to prevent mutation when applying overrides
-      const design: LabelDesign = JSON.parse(
-        JSON.stringify(storedDesign || DEFAULT_LABEL_DESIGN)
-      );
+      const design: LabelDesign = JSON.parse(JSON.stringify(storedDesign || DEFAULT_LABEL_DESIGN));
 
       // Apply dynamic visibility overrides from printConfig state
       if (printConfig) {
@@ -338,16 +344,22 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
         });
       }
 
-      const dims = design.selectedPreset === 'custom'
-        ? design.customDims || { w: 38, h: 25 }
-        : LABEL_PRESETS[design.selectedPreset] || { w: 38, h: 25 };
+      const dims =
+        design.selectedPreset === 'custom'
+          ? design.customDims || { w: 38, h: 25 }
+          : LABEL_PRESETS[design.selectedPreset] || { w: 38, h: 25 };
 
       const isDouble = design.selectedPreset === '38x25';
       const labelHeight = isDouble ? 12 : dims.h;
       const renderDims = { w: dims.w, h: labelHeight };
 
       const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
-      const receiptSettings = getReceiptSettings(activeBranchId, activeBranch?.name, activeBranch?.phone, activeBranch?.printSettings);
+      const receiptSettings = getReceiptSettings(
+        activeBranchId,
+        activeBranch?.name,
+        activeBranch?.phone,
+        activeBranch?.printSettings
+      );
 
       const labelHTML = generateLabelHTML(
         selectedDrug,
@@ -371,9 +383,10 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
   const previewDims = useMemo(() => {
     const storedDesign = activeBranch?.printSettings?.[StorageKeys.LABEL_DESIGN] || null;
     const design = storedDesign || DEFAULT_LABEL_DESIGN;
-    const dims = design.selectedPreset === 'custom'
-      ? design.customDims || { w: 38, h: 25 }
-      : LABEL_PRESETS[design.selectedPreset] || { w: 38, h: 25 };
+    const dims =
+      design.selectedPreset === 'custom'
+        ? design.customDims || { w: 38, h: 25 }
+        : LABEL_PRESETS[design.selectedPreset] || { w: 38, h: 25 };
 
     const isDouble = design.selectedPreset === '38x25';
     const h = isDouble ? 12 : dims.h;
@@ -382,7 +395,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
       w: dims.w * 3.78,
       h: h * 3.78,
       labelW: dims.w,
-      labelH: h
+      labelH: h,
     };
   }, []);
 
@@ -456,7 +469,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
               autoComplete='off'
               onFocus={() => setShowSuggestions(true)}
               wrapperClassName={`${CARD_BASE} rounded-xl shadow-none border-border/80`}
-              className="bg-transparent"
+              className='bg-transparent'
             />
 
             <SearchDropdown
@@ -521,10 +534,11 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                   {queue.map((item) => (
                     <div
                       key={item.id}
-                      className={`group flex items-center gap-2.5 p-2 px-3 rounded-xl border transition-all duration-200 cursor-pointer ${selectedDrug?.id === item.drug.id || lastAddedId === item.id
+                      className={`group flex items-center gap-2.5 p-2 px-3 rounded-xl border transition-all duration-200 cursor-pointer ${
+                        selectedDrug?.id === item.drug.id || lastAddedId === item.id
                           ? 'bg-primary-500/10 border-primary-500/40'
                           : 'bg-bg-card border-border/40 hover:border-border/80'
-                        }`}
+                      }`}
                       dir='ltr'
                       onClick={() => setSelectedDrug(item.drug)}
                     >
@@ -536,7 +550,10 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                         <h4
                           className={`font-bold text-sm text-text-primary leading-tight truncate ${textTransform === 'uppercase' ? 'uppercase' : ''}`}
                         >
-                          {item.drug.name} <span className='text-xs font-normal opacity-60 ml-1'>{item.drug.dosageForm}</span>
+                          {item.drug.name}{' '}
+                          <span className='text-xs font-normal opacity-60 ml-1'>
+                            {item.drug.dosageForm}
+                          </span>
                         </h4>
                         <p className='text-[11px] font-mono text-text-tertiary tracking-wider mt-0.5 uppercase'>
                           {item.drug.internalCode || item.drug.barcode}
@@ -553,17 +570,27 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                           })()}
                           onClick={(e) => {
                             e.stopPropagation();
-                            const normalize = (s: string | undefined) => (s || '').toLowerCase().trim();
+                            const normalize = (s: string | undefined) =>
+                              (s || '').toLowerCase().trim();
 
                             const batchMenuItems = inventory
                               .filter((d) => {
-                                if (d.barcode && item.drug.barcode && d.barcode === item.drug.barcode) return true;
+                                if (
+                                  d.barcode &&
+                                  item.drug.barcode &&
+                                  d.barcode === item.drug.barcode
+                                )
+                                  return true;
                                 return (
                                   normalize(d.name) === normalize(item.drug.name) &&
                                   normalize(d.dosageForm) === normalize(item.drug.dosageForm)
                                 );
                               })
-                              .sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime())
+                              .sort(
+                                (a, b) =>
+                                  parseExpiryEndOfMonth(a.expiryDate).getTime() -
+                                  parseExpiryEndOfMonth(b.expiryDate).getTime()
+                              )
                               .map((d) => ({
                                 label: `${formatExpiryDate(d.expiryDate)} • ${d.stock} ${t.menu?.pack || 'Pack'}`,
                                 icon: d.id === item.drug.id ? 'check_circle' : undefined,
@@ -621,7 +648,8 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                     {t.barcodePrinter?.alerts?.queueEmpty || 'Ready to Scan or Search'}
                   </h4>
                   <p className='text-sm mt-2 text-center max-w-xs opacity-70'>
-                    {t.barcodePrinter?.subtitle || 'Add items from products to build your print queue.'}
+                    {t.barcodePrinter?.subtitle ||
+                      'Add items from products to build your print queue.'}
                   </p>
                 </div>
               )}
@@ -632,18 +660,20 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
         {/* Sidebar: Settings & Summary - Standardized with CARD_BASE */}
         <div className='lg:w-80 flex flex-col gap-6'>
           {/* Label Preview Card */}
-          <div className={`${CARD_BASE} rounded-2xl overflow-hidden flex flex-col items-center justify-center bg-bg-secondary/20 relative`}>
+          <div
+            className={`${CARD_BASE} rounded-2xl overflow-hidden flex flex-col items-center justify-center bg-bg-secondary/20 relative`}
+          >
             <div
               ref={previewContainerRef}
-              className="w-full flex items-center justify-center overflow-hidden transition-[height] duration-300"
+              className='w-full flex items-center justify-center overflow-hidden transition-[height] duration-300'
               style={{
                 height: `${previewDims.labelH * 3.78 * previewScale}px`,
-                minHeight: '80px' // Minimum height for the placeholder
+                minHeight: '80px', // Minimum height for the placeholder
               }}
             >
               {queue.length > 0 && selectedDrug ? (
                 <div
-                  className="bg-white overflow-hidden origin-center shrink-0"
+                  className='bg-white overflow-hidden origin-center shrink-0'
                   style={{
                     width: `${previewDims.labelW}mm`,
                     height: `${previewDims.labelH}mm`,
@@ -652,14 +682,14 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                 >
                   <iframe
                     srcDoc={previewHtml}
-                    scrolling="no"
-                    className="w-full h-full border-none pointer-events-none"
-                    title="Label Preview"
+                    scrolling='no'
+                    className='w-full h-full border-none pointer-events-none'
+                    title='Label Preview'
                   />
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center text-text-tertiary">
-                  <span className="text-sm font-bold uppercase tracking-widest opacity-40">
+                <div className='flex flex-col items-center justify-center text-text-tertiary'>
+                  <span className='text-sm font-bold uppercase tracking-widest opacity-40'>
                     {t.barcodePrinter?.preview || 'Label Preview'}
                   </span>
                 </div>
@@ -678,11 +708,15 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
 
             <div className='flex flex-col gap-2 p-5'>
               <div className='flex justify-between items-center py-2'>
-                <span className='text-sm text-text-secondary'>{t.barcodePrinter?.totalItems || 'Total Items'}</span>
+                <span className='text-sm text-text-secondary'>
+                  {t.barcodePrinter?.totalItems || 'Total Items'}
+                </span>
                 <span className='font-bold text-text-primary'>{queue.length}</span>
               </div>
               <div className='flex justify-between items-center py-2'>
-                <span className='text-sm text-text-secondary'>{t.barcodePrinter?.totalLabels || 'Total Labels'}</span>
+                <span className='text-sm text-text-secondary'>
+                  {t.barcodePrinter?.totalLabels || 'Total Labels'}
+                </span>
                 <span className='font-bold text-text-primary tabular-nums'>
                   {queue.reduce((acc, item) => acc + item.quantity, 0)}
                 </span>
@@ -702,33 +736,75 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
             <div className='flex flex-col p-2'>
               {/* Settings Rows as Clean List Items (Flat Design, No Internal Boxes) */}
               {[
-                { key: 'store', label: t.barcodePrinter?.settings?.store || 'Pharmacy Name', icon: 'storefront' },
-                { key: 'name', label: t.barcodePrinter?.settings?.name || 'Drug Name', icon: 'label' },
-                { key: 'publicPrice', label: t.barcodePrinter?.settings?.publicPrice || 'Price', icon: 'payments' },
-                { key: 'expiry', label: t.barcodePrinter?.settings?.expiry || 'Expiry Date', icon: 'event' },
-                { key: 'barcode', label: t.barcodePrinter?.settings?.barcode || 'Barcode', icon: 'barcode' },
-                { key: 'hotline', label: t.barcodePrinter?.settings?.hotline || 'Hotline', icon: 'phone' },
+                {
+                  key: 'store',
+                  label: t.barcodePrinter?.settings?.store || 'Pharmacy Name',
+                  icon: 'storefront',
+                },
+                {
+                  key: 'name',
+                  label: t.barcodePrinter?.settings?.name || 'Drug Name',
+                  icon: 'label',
+                },
+                {
+                  key: 'publicPrice',
+                  label: t.barcodePrinter?.settings?.publicPrice || 'Price',
+                  icon: 'payments',
+                },
+                {
+                  key: 'expiry',
+                  label: t.barcodePrinter?.settings?.expiry || 'Expiry Date',
+                  icon: 'event',
+                },
+                {
+                  key: 'barcode',
+                  label: t.barcodePrinter?.settings?.barcode || 'Barcode',
+                  icon: 'barcode',
+                },
+                {
+                  key: 'hotline',
+                  label: t.barcodePrinter?.settings?.hotline || 'Hotline',
+                  icon: 'phone',
+                },
               ].map((setting) => (
                 <div
                   key={setting.key}
-                  onClick={() => setPrintConfig(p => ({ ...p, [setting.key]: !p[setting.key as keyof typeof p] }))}
-                  className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-150 select-none group/row ${printConfig[setting.key as keyof typeof printConfig]
+                  onClick={() =>
+                    setPrintConfig((p) => ({
+                      ...p,
+                      [setting.key]: !p[setting.key as keyof typeof p],
+                    }))
+                  }
+                  className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-150 select-none group/row ${
+                    printConfig[setting.key as keyof typeof printConfig]
                       ? 'text-text-primary'
                       : 'text-text-tertiary opacity-60 hover:opacity-100'
-                    } hover:bg-bg-card/50`}
+                  } hover:bg-bg-card/50`}
                 >
                   <div className='flex items-center gap-3 pointer-events-none'>
-                    <span className={`material-symbols-rounded text-lg transition-colors ${printConfig[setting.key as keyof typeof printConfig] ? 'text-primary-600 dark:text-white' : 'opacity-40'
-                      }`}>{setting.icon}</span>
+                    <span
+                      className={`material-symbols-rounded text-lg transition-colors ${
+                        printConfig[setting.key as keyof typeof printConfig]
+                          ? 'text-primary-600 dark:text-white'
+                          : 'opacity-40'
+                      }`}
+                    >
+                      {setting.icon}
+                    </span>
                     <span className='text-sm font-medium'>{setting.label}</span>
                   </div>
                   {/* Wrap Switch in a div that prevents double-toggling if the parent also has an onClick */}
                   <div onClick={(e) => e.stopPropagation()}>
                     <Switch
                       checked={printConfig[setting.key as keyof typeof printConfig]}
-                      onChange={() => setPrintConfig(p => ({ ...p, [setting.key]: !p[setting.key as keyof typeof p] }))}
-                      theme="primary"
-                      activeColor="var(--primary-600)"
+                      onChange={() =>
+                        setPrintConfig((p) => ({
+                          ...p,
+                          [setting.key]: !p[setting.key as keyof typeof p],
+                        }))
+                      }
+                      theme='primary'
+                      activeColor='var(--primary-600)'
                     />
                   </div>
                 </div>

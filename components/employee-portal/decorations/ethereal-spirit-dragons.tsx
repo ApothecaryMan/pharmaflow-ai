@@ -9,7 +9,7 @@ export function EtherealSpiritDragons() {
         .esd-container { transform-origin: 64px 64px; animation: esd-spin 5s linear infinite; }
         .esd-glow { filter: drop-shadow(0 0 6px currentColor); }
       `}</style>
-      
+
       <g className='esd-container'>
         {/* Dragon 1 (Blue) */}
         <g stroke='#2dd4bf' fill='none' strokeLinecap='round'>
@@ -19,7 +19,7 @@ export function EtherealSpiritDragons() {
           {/* Head */}
           <polygon points='64,0 72,4 64,8' fill='#2dd4bf' className='esd-glow' />
         </g>
-        
+
         {/* Dragon 2 (Gold) */}
         <g stroke='#fbbf24' fill='none' strokeLinecap='round'>
           <path d='M64,124 A60,60 0 0,1 4,64' strokeWidth='4' className='esd-glow' opacity='0.9' />

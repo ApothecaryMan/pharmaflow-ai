@@ -187,11 +187,21 @@ export function FilterDropdown<T>({
               ? `justify-between ${onBackground ? (dense ? 'px-2 py-1' : 'px-3 py-[9px]') : itemPaddingClasses}`
               : `justify-center items-center ${itemPaddingClasses}`
           }`}
-          style={isInput ? { minHeight: minHeight || (onBackground ? (dense ? '34px' : '42px') : (dense ? '32px' : '40px')) } : {}}
+          style={
+            isInput
+              ? {
+                  minHeight:
+                    minHeight ||
+                    (onBackground ? (dense ? '34px' : '42px') : dense ? '32px' : '40px'),
+                }
+              : {}
+          }
         >
           {isInput ? (
             <>
-               <div className={`flex-1 truncate ${dense ? 'text-xs' : 'text-sm'} font-medium text-gray-700 dark:text-gray-200 transition-colors group-hover:text-primary-600 dark:group-hover:text-primary-400`}>
+              <div
+                className={`flex-1 truncate ${dense ? 'text-xs' : 'text-sm'} font-medium text-gray-700 dark:text-gray-200 transition-colors group-hover:text-primary-600 dark:group-hover:text-primary-400`}
+              >
                 {renderSelected(selectedItem)}
               </div>
               {!(

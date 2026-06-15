@@ -298,21 +298,21 @@
         "id": "5c0f8025f7e0b6654089e5b00e950f1a",
         "groups": [],
         "checks": [
-            {
-              "name": "auth login status is 200",
-              "path": "::setup::auth login status is 200",
-              "id": "83e50c28eecbcc735b217f4caf98d173",
-              "passes": 1,
-              "fails": 0
-            },
-            {
-              "name": "auth login has access_token",
-              "path": "::setup::auth login has access_token",
-              "id": "139ead8a83809cdbc14a4cff7ebf6f21",
-              "passes": 1,
-              "fails": 0
-            }
-          ]
+          {
+            "name": "auth login status is 200",
+            "path": "::setup::auth login status is 200",
+            "id": "83e50c28eecbcc735b217f4caf98d173",
+            "passes": 1,
+            "fails": 0
+          },
+          {
+            "name": "auth login has access_token",
+            "path": "::setup::auth login has access_token",
+            "id": "139ead8a83809cdbc14a4cff7ebf6f21",
+            "passes": 1,
+            "fails": 0
+          }
+        ]
       },
       {
         "checks": [
@@ -342,14 +342,14 @@
         "id": "686d5264d50d72c489d8953aa796f30e",
         "groups": [],
         "checks": [
-            {
-              "path": "::📱 [POS-1] Search Drug::✅ Search returned results",
-              "id": "3e9cb0831731cab96a029c72dee7c859",
-              "passes": 1,
-              "fails": 0,
-              "name": "✅ Search returned results"
-            }
-          ]
+          {
+            "path": "::📱 [POS-1] Search Drug::✅ Search returned results",
+            "id": "3e9cb0831731cab96a029c72dee7c859",
+            "passes": 1,
+            "fails": 0,
+            "name": "✅ Search returned results"
+          }
+        ]
       },
       {
         "name": "📱 [POS-1] Checkout",
@@ -357,33 +357,33 @@
         "id": "cc6386f47bb7bebb2a39d670f79ccf49",
         "groups": [],
         "checks": [
-            {
-              "name": "✅ Checkout RPC 200",
-              "path": "::📱 [POS-1] Checkout::✅ Checkout RPC 200",
-              "id": "f9cb858448ee6f68c2f77272a80fb815",
-              "passes": 1,
-              "fails": 0
-            },
-            {
-              "name": "✅ Checkout success",
-              "path": "::📱 [POS-1] Checkout::✅ Checkout success",
-              "id": "8f4a8f5b3f5a2e9cd9ebe184f7ead138",
-              "passes": 1,
-              "fails": 0
-            }
-          ]
+          {
+            "name": "✅ Checkout RPC 200",
+            "path": "::📱 [POS-1] Checkout::✅ Checkout RPC 200",
+            "id": "f9cb858448ee6f68c2f77272a80fb815",
+            "passes": 1,
+            "fails": 0
+          },
+          {
+            "name": "✅ Checkout success",
+            "path": "::📱 [POS-1] Checkout::✅ Checkout success",
+            "id": "8f4a8f5b3f5a2e9cd9ebe184f7ead138",
+            "passes": 1,
+            "fails": 0
+          }
+        ]
       },
       {
         "groups": [],
         "checks": [
-            {
-              "passes": 1,
-              "fails": 0,
-              "name": "✅ Sales loaded",
-              "path": "::📱 [POS-1] Check Sales::✅ Sales loaded",
-              "id": "a7bba0fbb8833870dff4ecc3f58b7505"
-            }
-          ],
+          {
+            "passes": 1,
+            "fails": 0,
+            "name": "✅ Sales loaded",
+            "path": "::📱 [POS-1] Check Sales::✅ Sales loaded",
+            "id": "a7bba0fbb8833870dff4ecc3f58b7505"
+          }
+        ],
         "name": "📱 [POS-1] Check Sales",
         "path": "::📱 [POS-1] Check Sales",
         "id": "7175451520ee86a91139c14404ae0212"
@@ -393,14 +393,7 @@
   },
   "options": {
     "noColor": false,
-    "summaryTrendStats": [
-      "avg",
-      "min",
-      "med",
-      "max",
-      "p(90)",
-      "p(95)"
-    ],
+    "summaryTrendStats": ["avg", "min", "med", "max", "p(90)", "p(95)"],
     "summaryTimeUnit": ""
   },
   "state": {

@@ -1,14 +1,14 @@
 /**
  * Egyptian Location Data Library
- * 
+ *
  * Census Summary (as of March 2024 Audit):
  * - Governorates: 27
  * - Centers/Districts: 349
  * - Support: Dual language (AR/EN), RTL, Unique Mapping IDs
  */
 
+import type { Area, City, Location } from '../types/locationTypes';
 import { AREAS as SPECIFIC_AREAS } from './areas';
-import type { Location, City, Area } from '../types/locationTypes';
 
 export type { Location, City, Area };
 
@@ -334,13 +334,23 @@ export const CITIES: City[] = [
   { id: '2009', governorate_id: '20', name_ar: 'ههيا', name_en: 'Hehia' },
   { id: '2010', governorate_id: '20', name_ar: 'أبو كبير', name_en: 'Abu Kabir' },
   { id: '2011', governorate_id: '20', name_ar: 'فاقوس', name_en: 'Faccus' },
-  { id: '2012', governorate_id: '20', name_ar: 'الصالحية الجديدة', name_en: 'El Salihia El Gedida' },
+  {
+    id: '2012',
+    governorate_id: '20',
+    name_ar: 'الصالحية الجديدة',
+    name_en: 'El Salihia El Gedida',
+  },
   { id: '2013', governorate_id: '20', name_ar: 'الإبراهيمية', name_en: 'Al Ibrahimiyah' },
   { id: '2014', governorate_id: '20', name_ar: 'ديرب نجم', name_en: 'Deirb Negm' },
   { id: '2015', governorate_id: '20', name_ar: 'كفر صقر', name_en: 'Kafr Saqr' },
   { id: '2016', governorate_id: '20', name_ar: 'أولاد صقر', name_en: 'Awlad Saqr' },
   { id: '2017', governorate_id: '20', name_ar: 'الحسينية', name_en: 'Husseiniya' },
-  { id: '2018', governorate_id: '20', name_ar: 'صان الحجر القبلية', name_en: 'San El Hagar El Qabliya' },
+  {
+    id: '2018',
+    governorate_id: '20',
+    name_ar: 'صان الحجر القبلية',
+    name_en: 'San El Hagar El Qabliya',
+  },
   { id: '2019', governorate_id: '20', name_ar: 'منشأة أبو عمر', name_en: 'Manshayat Abu Omar' },
   { id: '2020', governorate_id: '20', name_ar: 'كفر صقر', name_en: 'Kafr Saqr' },
   { id: '2021', governorate_id: '20', name_ar: 'القرين', name_en: 'El Qurein' },
@@ -440,9 +450,24 @@ const generateGenericAreas = (): Area[] => {
     if (!specificCityIds.has(city.id)) {
       genericAreas.push(
         { id: `${city.id}01`, city_id: city.id, name_ar: 'وسط البلد', name_en: 'City Center' },
-        { id: `${city.id}02`, city_id: city.id, name_ar: 'الحي البحري', name_en: 'Northern District' },
-        { id: `${city.id}03`, city_id: city.id, name_ar: 'الحي القبلي', name_en: 'Southern District' },
-        { id: `${city.id}04`, city_id: city.id, name_ar: 'المنطقة الصناعية', name_en: 'Industrial Zone' },
+        {
+          id: `${city.id}02`,
+          city_id: city.id,
+          name_ar: 'الحي البحري',
+          name_en: 'Northern District',
+        },
+        {
+          id: `${city.id}03`,
+          city_id: city.id,
+          name_ar: 'الحي القبلي',
+          name_en: 'Southern District',
+        },
+        {
+          id: `${city.id}04`,
+          city_id: city.id,
+          name_ar: 'المنطقة الصناعية',
+          name_en: 'Industrial Zone',
+        },
         { id: `${city.id}05`, city_id: city.id, name_ar: 'الزهراء', name_en: 'Al Zahraa' }
       );
     }

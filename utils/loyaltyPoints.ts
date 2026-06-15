@@ -1,6 +1,6 @@
 import type { CartItem } from '../types';
-import { resolvePrice } from './stockUtils';
 import * as stockOps from './stockOperations';
+import { resolvePrice } from './stockUtils';
 
 /**
  * Loyalty point rate tiers for total purchase amount

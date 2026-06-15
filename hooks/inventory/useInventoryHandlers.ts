@@ -1,13 +1,13 @@
-import React from 'react';
+import type React from 'react';
 import { useCallback } from 'react';
 import { useAlert } from '../../context';
-import { permissionsService } from '../../services/auth/permissionsService';
 import { auditService } from '../../services/audit/auditService';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { batchService } from '../../services/inventory/batchService';
 import { inventoryService } from '../../services/inventory/inventoryService';
 import { stockMovementService } from '../../services/inventory/stockMovement/stockMovementService';
-import * as stockOps from '../../utils/stockOperations';
 import type { Drug, Employee, StockBatch } from '../../types';
+import * as stockOps from '../../utils/stockOperations';
 
 export interface UseInventoryHandlersParams {
   inventory: Drug[];
@@ -44,7 +44,7 @@ export function useInventoryHandlers({
       try {
         const result = await inventoryService.create(drug, activeBranchId);
         setInventory((prev) => [...prev, result]);
-        
+
         if (result.stock > 0) {
           stockOps.logInitialStock(result, {
             branchId: activeBranchId,
@@ -87,7 +87,7 @@ export function useInventoryHandlers({
         const oldDrug = inventory.find((d) => d.id === drug.id);
         const result = await inventoryService.update(drug.id, drug);
         setInventory((prev) => prev.map((d) => (d.id === drug.id ? result : d)));
-        
+
         if (oldDrug && oldDrug.stock !== result.stock) {
           await stockOps.adjustStock(
             oldDrug,
@@ -154,11 +154,11 @@ export function useInventoryHandlers({
 
         await batchService.deleteBatchesByDrugId(id);
         await inventoryService.delete(id);
-        
+
         setInventory((prev) => prev.filter((d) => d.id !== id));
         const updatedBatches = await batchService.getAllBatches(activeBranchId);
         setBatches(updatedBatches);
-        
+
         auditService.log('inventory.delete', {
           userId: currentEmployeeId,
           details: `Deleted drug ID: ${id}`,
@@ -171,7 +171,16 @@ export function useInventoryHandlers({
         error(`Failed to delete product: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
-    [setInventory, setBatches, inventory, currentEmployeeId, employees, activeBranchId, error, success]
+    [
+      setInventory,
+      setBatches,
+      inventory,
+      currentEmployeeId,
+      employees,
+      activeBranchId,
+      error,
+      success,
+    ]
   );
 
   const handleRestock = useCallback(
@@ -207,7 +216,9 @@ export function useInventoryHandlers({
           'MANUAL_RESTOCK'
         );
         if (mutation) {
-          setInventory((prev) => prev.map((d) => (d.id === id ? { ...d, stock: mutation.newStock } : d)));
+          setInventory((prev) =>
+            prev.map((d) => (d.id === id ? { ...d, stock: mutation.newStock } : d))
+          );
           const updatedBatches = await batchService.getAllBatches(activeBranchId);
           setBatches(updatedBatches);
         }
@@ -224,7 +235,16 @@ export function useInventoryHandlers({
         error(`Failed to restock product: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
-    [setInventory, setBatches, inventory, currentEmployeeId, employees, activeBranchId, error, success]
+    [
+      setInventory,
+      setBatches,
+      inventory,
+      currentEmployeeId,
+      employees,
+      activeBranchId,
+      error,
+      success,
+    ]
   );
 
   return {

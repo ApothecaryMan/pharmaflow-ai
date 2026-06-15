@@ -31,9 +31,9 @@ export function GalacticBlackHole() {
       </defs>
       <circle cx='64' cy='64' r='64' fill='url(#bh-grad-1)' className='bh-disk bh-glow' />
       <circle cx='64' cy='64' r='58' fill='url(#bh-grad-2)' className='bh-disk-reverse' />
-      
+
       {/* Outer rings only, keeping center empty */}
-      
+
       {/* Particles Removed */}
     </svg>
   );

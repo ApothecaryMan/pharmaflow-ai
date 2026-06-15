@@ -1,6 +1,6 @@
-import { type DrugCatalogItem } from './catalogCacheService';
-import type { Drug } from '../../types';
 import { getLocalizedProductType } from '../../data/productCategories';
+import type { Drug } from '../../types';
+import type { DrugCatalogItem } from './catalogCacheService';
 
 type SearchableDrug = DrugCatalogItem | Drug;
 
@@ -16,11 +16,11 @@ export class DrugSearchEngine {
   // High-speed HashMaps for exact lookups
   private idMap = new Map<string, SearchableDrug>();
   private barcodeMap = new Map<string, string>(); // Barcode -> ID
-  
+
   private cachedArray: SearchableDrug[] = [];
   private nameSearchKeys = new Map<string, string>(); // ID -> name-only search string
   private ingredientSearchKeys = new Map<string, string>(); // ID -> generic-only search string
-  
+
   // Batching / Throttling system
   private pendingUpdates = new Map<string, SearchableDrug>();
   private batchTimeout: NodeJS.Timeout | null = null;
@@ -42,7 +42,7 @@ export class DrugSearchEngine {
     for (const drug of data) {
       this.addOrUpdateToMap(drug);
     }
-    
+
     this.refreshCache();
   }
 
@@ -52,7 +52,7 @@ export class DrugSearchEngine {
    */
   public queueUpdate(item: SearchableDrug) {
     this.pendingUpdates.set(item.id, item);
-    
+
     if (!this.batchTimeout) {
       this.batchTimeout = setTimeout(() => this.flushPending(), 300);
     }
@@ -73,7 +73,7 @@ export class DrugSearchEngine {
     for (const item of this.pendingUpdates.values()) {
       this.addOrUpdateToMap(item);
     }
-    
+
     this.pendingUpdates.clear();
     this.refreshCache();
   }
@@ -99,19 +99,19 @@ export class DrugSearchEngine {
 
   private refreshCache() {
     this.cachedArray = Array.from(this.idMap.values());
-    
+
     // Pre-compute search keys separately for Trade Name and Ingredients
     for (const drug of this.cachedArray) {
       const nameEn = (drug.name || '').toLowerCase();
       const nameAr = ((drug as any).nameArabic || drug.nameAr || '').toLowerCase();
       const dosageEn = (drug as any).dosageForm || '';
       const dosageAr = getLocalizedProductType(dosageEn, 'ar');
-      
+
       const substance = (drug as DrugCatalogItem).activeSubstance || '';
-      const generic = Array.isArray((drug as Drug).genericName) 
-        ? (drug as Drug).genericName.join(' ').toLowerCase() 
+      const generic = Array.isArray((drug as Drug).genericName)
+        ? (drug as Drug).genericName.join(' ').toLowerCase()
         : String(substance).toLowerCase();
-        
+
       // Trade Name Key: includes Name + Dosage (EN/AR) + Arabic Name
       const searchKey = `${nameEn} ${dosageEn.toLowerCase()} ${nameAr} ${dosageAr}`;
       this.nameSearchKeys.set(drug.id, searchKey);
@@ -127,7 +127,7 @@ export class DrugSearchEngine {
     }
 
     this.idMap.set(drug.id, drug);
-    
+
     if (drug.barcode) {
       this.barcodeMap.set(drug.barcode, drug.id);
     }
@@ -173,7 +173,7 @@ export class DrugSearchEngine {
     const term = barcode.trim().toLowerCase();
     const id = this.barcodeMap.get(term);
     if (!id) return null;
-    
+
     const match = this.idMap.get(id);
     if (match && this.matchesFilters(match, filters)) {
       return this.transformResult(match, filters);
@@ -185,14 +185,16 @@ export class DrugSearchEngine {
    * Specialized Scientific/Ingredient Search
    */
   public searchByScientificName(genericName: string | string[], filters?: any): SearchableDrug[] {
-    const q = Array.isArray(genericName) ? genericName.join(' ').toLowerCase() : genericName.toLowerCase();
+    const q = Array.isArray(genericName)
+      ? genericName.join(' ').toLowerCase()
+      : genericName.toLowerCase();
     return this.searchByIngredient(q, filters);
   }
 
   private searchByName(query: string, filters?: any): SearchableDrug[] {
     return this.internalSearchByName(query, filters)
       .slice(0, 50)
-      .map(d => this.transformResult(d, filters));
+      .map((d) => this.transformResult(d, filters));
   }
 
   private searchByIngredient(query: string, filters?: any): SearchableDrug[] {
@@ -200,12 +202,12 @@ export class DrugSearchEngine {
     const q = query.toLowerCase();
 
     return this.cachedArray
-      .filter(d => {
+      .filter((d) => {
         const key = this.ingredientSearchKeys.get(d.id) || '';
         return key.includes(q) && this.matchesFilters(d, filters);
       })
       .slice(0, 50)
-      .map(d => this.transformResult(d, filters));
+      .map((d) => this.transformResult(d, filters));
   }
 
   private searchWithPriceRange(query: string, filters?: any): SearchableDrug[] {
@@ -224,13 +226,16 @@ export class DrugSearchEngine {
     }
 
     const initialMatches = term ? this.internalSearchByName(term, filters) : this.cachedArray;
-    
+
     return initialMatches
-      .filter(d => 
-        d.publicPrice >= min && d.publicPrice <= max && (term ? true : this.matchesFilters(d, filters))
+      .filter(
+        (d) =>
+          d.publicPrice >= min &&
+          d.publicPrice <= max &&
+          (term ? true : this.matchesFilters(d, filters))
       )
       .slice(0, 50)
-      .map(d => this.transformResult(d, filters));
+      .map((d) => this.transformResult(d, filters));
   }
 
   /**
@@ -239,48 +244,51 @@ export class DrugSearchEngine {
   private internalSearchByName(query: string, filters?: any): SearchableDrug[] {
     const rawTerm = query.toLowerCase();
     const startsWithSpace = rawTerm.startsWith(' ');
-    const words = rawTerm.trim().split(/\s+/).filter(w => w.length > 0);
+    const words = rawTerm
+      .trim()
+      .split(/\s+/)
+      .filter((w) => w.length > 0);
     if (words.length === 0) return [];
     const [first, ...rest] = words;
 
-    let matches = this.cachedArray.filter(drug => {
+    let matches = this.cachedArray.filter((drug) => {
       const searchKey = this.nameSearchKeys.get(drug.id) || '';
       const nameEn = (drug.name || '').toLowerCase();
       const nameAr = ((drug as any).nameArabic || drug.nameAr || '').toLowerCase();
-      
-      const matchesFirst = startsWithSpace 
-        ? (nameEn.includes(first) || nameAr.includes(first))
-        : (nameEn.startsWith(first) || nameAr.startsWith(first));
+
+      const matchesFirst = startsWithSpace
+        ? nameEn.includes(first) || nameAr.includes(first)
+        : nameEn.startsWith(first) || nameAr.startsWith(first);
 
       if (!matchesFirst) return false;
 
       // Sequential Match Logic:
       // We start looking for the rest of the words AFTER the first word's position
-      let firstWordIndex = nameEn.startsWith(first) ? 0 : searchKey.indexOf(first);
+      const firstWordIndex = nameEn.startsWith(first) ? 0 : searchKey.indexOf(first);
       if (firstWordIndex === -1) return false;
 
       let lastIndex = firstWordIndex + first.length;
-      
+
       for (const word of rest) {
         const index = searchKey.indexOf(word, lastIndex);
         if (index === -1) return false;
         lastIndex = index + word.length;
       }
-      
+
       return true;
     });
 
     if (filters) {
-      matches = matches.filter(d => this.matchesFilters(d, filters));
+      matches = matches.filter((d) => this.matchesFilters(d, filters));
     }
 
     return matches.sort((a, b) => {
       const nameArA = ((a as any).nameArabic || a.nameAr || '').toLowerCase();
       const nameArB = ((b as any).nameArabic || b.nameAr || '').toLowerCase();
-      
+
       const aStarts = a.name.toLowerCase().startsWith(first) || nameArA.startsWith(first);
       const bStarts = b.name.toLowerCase().startsWith(first) || nameArB.startsWith(first);
-      
+
       if (aStarts && !bStarts) return -1;
       if (!aStarts && bStarts) return 1;
       return a.name.length - b.name.length;
@@ -339,7 +347,7 @@ export class DrugSearchEngine {
     const showInStock = filters.stock_status.includes('in_stock');
     const showOut = filters.stock_status.includes('out_of_stock');
 
-    const filteredBatches = drug.batches.filter(b => {
+    const filteredBatches = drug.batches.filter((b) => {
       const qty = (b as Drug).stock ?? (b as any).quantity ?? 0;
       if (showInStock && showOut) return true;
       if (showInStock) return qty > 0;

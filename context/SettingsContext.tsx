@@ -21,7 +21,7 @@ import {
 } from 'react';
 import { AVAILABLE_FONTS_AR, AVAILABLE_FONTS_EN } from '../config/fonts';
 import { COLOR_HEX_MAP, THEMES } from '../config/themeColors';
-import type { Language, ThemeColor, SwitchVariant, BadgeStyle } from '../types';
+import type { BadgeStyle, Language, SwitchVariant, ThemeColor } from '../types';
 import { storage } from '../utils/storage';
 
 // Re-export for convenience
@@ -123,14 +123,14 @@ export interface SettingsContextType extends SettingsState {
   // Helpers
   availableThemes: ThemeColor[];
   availableLanguages: { code: Language; label: string }[];
-  /** 
-   * The locale to use for numbers/digits. 
-   * Respects numeralSystem setting (e.g., 'ar-u-nu-latn' for English digits in Arabic). 
+  /**
+   * The locale to use for numbers/digits.
+   * Respects numeralSystem setting (e.g., 'ar-u-nu-latn' for English digits in Arabic).
    */
   numeralLocale: string;
-  /** 
-   * The locale to use for text/names (e.g., Months, Days). 
-   * Based strictly on the application language. 
+  /**
+   * The locale to use for text/names (e.g., Months, Days).
+   * Based strictly on the application language.
    */
   textLocale: string;
 }
@@ -175,7 +175,7 @@ const loadSettings = (): SettingsState => {
 
   // Try loading unified settings object first
   let saved = storage.get<SettingsState | null>(STORAGE_KEY, null);
-  
+
   // Migration: If global settings not found, try to recover from the user-scoped key before it was global
   if (!saved) {
     const userId = storage.getUserId();
@@ -228,26 +228,46 @@ const loadSettings = (): SettingsState => {
       textTransform: (textTransform as 'normal' | 'uppercase') || defaultSettings.textTransform,
       navStyle: navStyle ? (Number(navStyle) as 1 | 2 | 3) : defaultSettings.navStyle,
       sidebarVisible: sidebarVisible ?? defaultSettings.sidebarVisible,
-      sidebarStyle: storage.get('pharma_sidebarStyle',
+      sidebarStyle: storage.get(
+        'pharma_sidebarStyle',
         storage.get('pharma_sidebarCollapsed', false)
-          ? (storage.get('pharma_sidebarHoverExpand', false) ? 3 : 2)
+          ? storage.get('pharma_sidebarHoverExpand', false)
+            ? 3
+            : 2
           : 1
       ) as 1 | 2 | 3,
       cardBorderLight: storage.get('pharma_cardBorderLight', defaultSettings.cardBorderLight),
       borderRadius: storage.get('pharma_borderRadius', defaultSettings.borderRadius),
       customCardCss: storage.get('pharma_customCardCss', defaultSettings.customCardCss || ''),
-      enableCustomCardCss: storage.get('pharma_enableCustomCardCss', defaultSettings.enableCustomCardCss),
+      enableCustomCardCss: storage.get(
+        'pharma_enableCustomCardCss',
+        defaultSettings.enableCustomCardCss
+      ),
       hideInactiveModules: hideInactiveModules ?? defaultSettings.hideInactiveModules,
       developerMode: developerMode ?? defaultSettings.developerMode,
       graphicStyle: storage.get('pharma_graphicStyle', defaultSettings.graphicStyle),
-      graphicFontVariant: storage.get('pharma_graphicFontVariant', defaultSettings.graphicFontVariant) as 'serif' | 'sans',
+      graphicFontVariant: storage.get(
+        'pharma_graphicFontVariant',
+        defaultSettings.graphicFontVariant
+      ) as 'serif' | 'sans',
       activeBranchId: storage.get('pharma_activeBranchId', defaultSettings.activeBranchId),
       branchCode: storage.get('pharma_branchCode', defaultSettings.branchCode),
-      numeralSystem: storage.get('pharma_numeralSystem', defaultSettings.numeralSystem) as 'AR' | 'EN',
-      switchVariant: storage.get('pharma_switchVariant', defaultSettings.switchVariant) as SwitchVariant,
+      numeralSystem: storage.get('pharma_numeralSystem', defaultSettings.numeralSystem) as
+        | 'AR'
+        | 'EN',
+      switchVariant: storage.get(
+        'pharma_switchVariant',
+        defaultSettings.switchVariant
+      ) as SwitchVariant,
       badgeStyle: storage.get('pharma_badgeStyle', defaultSettings.badgeStyle) as BadgeStyle,
-      modalPresentationMode: storage.get('pharma_modalPresentationMode', defaultSettings.modalPresentationMode) as 'modal' | 'sidebar',
-      sidebarModalWidth: storage.get('pharma_sidebarModalWidth', defaultSettings.sidebarModalWidth) as 'sm' | 'md' | 'lg' | 'xl',
+      modalPresentationMode: storage.get(
+        'pharma_modalPresentationMode',
+        defaultSettings.modalPresentationMode
+      ) as 'modal' | 'sidebar',
+      sidebarModalWidth: storage.get(
+        'pharma_sidebarModalWidth',
+        defaultSettings.sidebarModalWidth
+      ) as 'sm' | 'md' | 'lg' | 'xl',
     };
   } catch (e) {
     console.warn('Failed to migrate old settings:', e);
@@ -387,7 +407,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
   // Apply border radius
   useEffect(() => {
     let radiusValue = '0.625rem'; // default (10px)
-    if (settings.borderRadius === 'sharp') radiusValue = '0rem'; // 0px
+    if (settings.borderRadius === 'sharp')
+      radiusValue = '0rem'; // 0px
     else if (settings.borderRadius === 'full') radiusValue = '0.375rem'; // 6px (smaller than default)
 
     document.documentElement.style.setProperty('--radius', radiusValue);
@@ -448,7 +469,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
           const trimmed = part.trim();
           if (!trimmed || !trimmed.includes(':')) return trimmed;
           // Check if already has !important (case insensitive)
-          if (/\!important/i.test(trimmed)) return trimmed;
+          if (/!important/i.test(trimmed)) return trimmed;
           return `${trimmed} !important`;
         })
         .join('; ');

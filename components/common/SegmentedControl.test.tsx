@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { SegmentedControl } from './SegmentedControl';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
+import { describe, expect, it, vi } from 'vitest';
+import { SegmentedControl } from './SegmentedControl';
 
 describe('SegmentedControl', () => {
   const options = [
@@ -10,28 +10,16 @@ describe('SegmentedControl', () => {
   ];
 
   it('renders all options', () => {
-    render(
-      <SegmentedControl 
-        options={options} 
-        value="opt1" 
-        onChange={() => {}} 
-      />
-    );
-    
+    render(<SegmentedControl options={options} value='opt1' onChange={() => {}} />);
+
     expect(screen.getByText('Option 1')).toBeInTheDocument();
     expect(screen.getByText('Option 2')).toBeInTheDocument();
   });
 
   it('calls onChange when option clicked', () => {
     const handleChange = vi.fn();
-    render(
-      <SegmentedControl 
-        options={options} 
-        value="opt1" 
-        onChange={handleChange} 
-      />
-    );
-    
+    render(<SegmentedControl options={options} value='opt1' onChange={handleChange} />);
+
     fireEvent.click(screen.getByText('Option 2'));
     expect(handleChange).toHaveBeenCalledWith('opt2');
   });

@@ -1,20 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { TRANSLATIONS } from '../../i18n/translations';
-import { orgAggregationService, type OrgData } from '../../services/org/orgAggregationService';
-import { orgService } from '../../services/org/orgService';
-import { OrgPulseGrid } from './OrgPulseGrid';
-import { BranchMasterMonitor } from './BranchMasterMonitor';
-import { QuotaMonitor } from './QuotaMonitor';
-import { MemberPermissionMatrix } from './MemberPermissionMatrix';
-import { employeeService } from '../../services/hr/employeeService';
-import { useData } from '../../context/DataContext';
-import { SegmentedControl } from '../common/SegmentedControl';
-import { HelpButton, HelpModal } from '../common/HelpModal';
-import { ORG_MANAGEMENT_HELP } from '../../i18n/helpInstructions';
-import { useSettings } from '../../context';
-import { PageHeader } from '../common/PageHeader';
-import { permissionsService } from '../../services/auth/permissionsService';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import { PERMISSIONS_MAPPING } from '../../config/permissionsMapping';
+import { useSettings } from '../../context';
+import { useData } from '../../context/DataContext';
+import { ORG_MANAGEMENT_HELP } from '../../i18n/helpInstructions';
+import { TRANSLATIONS } from '../../i18n/translations';
+import { permissionsService } from '../../services/auth/permissionsService';
+import { employeeService } from '../../services/hr/employeeService';
+import { type OrgData, orgAggregationService } from '../../services/org/orgAggregationService';
+import { orgService } from '../../services/org/orgService';
+import { HelpButton, HelpModal } from '../common/HelpModal';
+import { PageHeader } from '../common/PageHeader';
+import { SegmentedControl } from '../common/SegmentedControl';
+import { BranchMasterMonitor } from './BranchMasterMonitor';
+import { MemberPermissionMatrix } from './MemberPermissionMatrix';
+import { OrgPulseGrid } from './OrgPulseGrid';
+import { QuotaMonitor } from './QuotaMonitor';
 import { UpgradeTunnelTransition } from './UpgradeTunnelTransition';
 
 interface OrganizationManagementPageProps {
@@ -28,7 +29,7 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
   activeOrgId,
   language,
   color = 'primary',
-  onViewChange
+  onViewChange,
 }) => {
   const { darkMode } = useSettings();
   const [data, setData] = useState<OrgData | null>(null);
@@ -37,7 +38,7 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
   const { currentEmployee } = useData();
   const [showHelp, setShowHelp] = useState(false);
   const [activeMatrixTab, setActiveMatrixTab] = useState<'managers' | 'staff'>('managers');
-  
+
   // Upgrade Transition State
   const [showUpgradeTransition, setShowUpgradeTransition] = useState(false);
   const [upgradeTriggerRect, setUpgradeTriggerRect] = useState<DOMRect | null>(null);
@@ -66,8 +67,8 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
 
   const handleUpdateEmployee = async (employeeId: string, updates: any) => {
     try {
-      const employee = data?.employees.find(e => e.id === employeeId);
-      
+      const employee = data?.employees.find((e) => e.id === employeeId);
+
       // If updating orgRole, use orgService
       if (updates.orgRole && employee?.userId) {
         await orgService.updateMemberRole(activeOrgId, employee.userId, updates.orgRole);
@@ -88,65 +89,63 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
 
   // Permission-based Tab Configuration (Defined early to show during loading)
   const availableTabs = [
-    { 
-      value: 'org-management', 
+    {
+      value: 'org-management',
       label: t.organization,
       icon: 'corporate_fare',
-      permission: PERMISSIONS_MAPPING['org-management']
+      permission: PERMISSIONS_MAPPING['org-management'],
     },
-    { 
-      value: 'branch-management', 
+    {
+      value: 'branch-management',
       label: t.branches,
       icon: 'domain',
-      permission: PERMISSIONS_MAPPING['branch-management']
-    }
+      permission: PERMISSIONS_MAPPING['branch-management'],
+    },
   ];
 
-
-
   return (
-    <div className="h-full flex flex-col overflow-hidden animate-fade-in">
+    <div className='h-full flex flex-col overflow-hidden animate-fade-in'>
       <PageHeader
         centerContent={
           <SegmentedControl
             options={availableTabs}
-            value="org-management"
+            value='org-management'
             onChange={(val) => onViewChange?.(val as any)}
-            size="md"
-            iconSize="--icon-lg"
-            shape="pill"
-            className="w-full sm:w-[480px]"
+            size='md'
+            iconSize='--icon-lg'
+            shape='pill'
+            className='w-full sm:w-[480px]'
             useGraphicFont={true}
           />
         }
         rightContent={
-          <button 
+          <button
             onClick={() => setShowHelp(true)}
-            className="w-10 h-10 rounded-xl bg-white/50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-primary-600 transition-colors"
+            className='w-10 h-10 rounded-xl bg-white/50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-primary-600 transition-colors'
           >
-            <span className="material-symbols-rounded">help</span>
+            <span className='material-symbols-rounded'>help</span>
           </button>
         }
         dir={language === 'AR' ? 'rtl' : 'ltr'}
-        mb="mb-0"
+        mb='mb-0'
       />
 
-      <div className="flex-1 overflow-y-auto p-page space-y-6 pb-10">
+      <div className='flex-1 overflow-y-auto p-page space-y-6 pb-10'>
         {/* Primary Metrics Grid */}
-        <OrgPulseGrid 
-          metrics={data?.metrics} 
-          language={normalizedLang} 
+        <OrgPulseGrid
+          metrics={data?.metrics}
+          language={normalizedLang}
           color={color}
           isLoading={isLoading}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch'>
           {/* Branch Monitoring Section - Constrained by the height of QuotaMonitor */}
-          <div className="relative min-h-[300px] lg:min-h-0">
-            <div className="lg:absolute lg:inset-0">
-              <BranchMasterMonitor 
-                branches={data?.branches || []} 
-                language={normalizedLang} 
+          <div className='relative min-h-[300px] lg:min-h-0'>
+            <div className='lg:absolute lg:inset-0'>
+              <BranchMasterMonitor
+                branches={data?.branches || []}
+                language={normalizedLang}
                 color={color}
                 isLoading={isLoading}
               />
@@ -154,9 +153,9 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
           </div>
 
           {/* Quota & Subscription Section - This defines the row height */}
-          <QuotaMonitor 
-            metrics={data?.metrics} 
-            language={normalizedLang} 
+          <QuotaMonitor
+            metrics={data?.metrics}
+            language={normalizedLang}
             color={color}
             isLoading={isLoading}
             onUpgrade={(rect) => {
@@ -167,39 +166,39 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
         </div>
 
         {/* Global Member & Permissions Matrix */}
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
-                <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-lg)' }}>
+        <div className='space-y-4'>
+          <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2'>
+            <div className='flex items-center gap-3'>
+              <div className='w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500'>
+                <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>
                   {activeMatrixTab === 'managers' ? 'admin_panel_settings' : 'badge'}
                 </span>
               </div>
               <div>
-                <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                <h3 className='text-lg font-bold text-zinc-900 dark:text-zinc-100'>
                   {activeMatrixTab === 'managers' ? t.permissionsTitle : t.allStaff}
                 </h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className='text-xs text-zinc-500 dark:text-zinc-400'>
                   {activeMatrixTab === 'managers' ? t.permissionsSubtitle : t.allStaffSubtitle}
                 </p>
               </div>
             </div>
-            
-            <div className="w-full sm:w-[280px]">
+
+            <div className='w-full sm:w-[280px]'>
               <SegmentedControl
                 options={[
                   { value: 'managers', label: t.managers, icon: 'admin_panel_settings' },
-                  { value: 'staff', label: t.staff, icon: 'group' }
+                  { value: 'staff', label: t.staff, icon: 'group' },
                 ]}
                 value={activeMatrixTab}
                 onChange={(val) => setActiveMatrixTab(val as any)}
-                iconSize="--icon-sm"
+                iconSize='--icon-sm'
               />
             </div>
           </div>
 
-          <MemberPermissionMatrix 
-            employees={activeMatrixTab === 'managers' ? (data?.managers || []) : (data?.staff || [])}
+          <MemberPermissionMatrix
+            employees={activeMatrixTab === 'managers' ? data?.managers || [] : data?.staff || []}
             branches={data?.branches || []}
             language={language}
             currentEmployeeId={currentEmployee?.id}
@@ -210,14 +209,14 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
           />
         </div>
 
-        <HelpButton 
+        <HelpButton
           onClick={() => setShowHelp(true)}
           title={ORG_MANAGEMENT_HELP[language].title}
           color={color}
           isRTL={language === 'AR'}
         />
 
-        <HelpModal 
+        <HelpModal
           show={showHelp}
           onClose={() => setShowHelp(false)}
           helpContent={ORG_MANAGEMENT_HELP[language] as any}
@@ -225,7 +224,7 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
           language={language}
         />
 
-        <UpgradeTunnelTransition 
+        <UpgradeTunnelTransition
           isOpen={showUpgradeTransition}
           triggerRect={upgradeTriggerRect}
           language={normalizedLang}

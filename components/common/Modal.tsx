@@ -120,8 +120,8 @@ interface ModalProps {
 import ReactDOM from 'react-dom';
 import { LAYOUT_CONFIG } from '../../config/layoutConfig';
 import { useSettings } from '../../context';
-import { useContextMenu } from './ContextMenu';
 import { TRANSLATIONS } from '../../i18n/translations';
+import { useContextMenu } from './ContextMenu';
 
 // Global counter to ensure dynamically opened modals stack on top of each other
 let globalModalZIndex = 100;
@@ -156,7 +156,7 @@ export const Modal: React.FC<ModalProps> = ({
     setModalPresentationMode,
     sidebarModalWidth,
     setSidebarModalWidth,
-    language
+    language,
   } = settings;
   const { showMenu } = useContextMenu();
   const t = TRANSLATIONS[language].settings;
@@ -206,12 +206,16 @@ export const Modal: React.FC<ModalProps> = ({
 
     return () => {
       if (isSidebar) {
-        const remainingSidebars = document.querySelectorAll('[data-modal-type="sidebar"][data-modal-open="true"]');
+        const remainingSidebars = document.querySelectorAll(
+          '[data-modal-type="sidebar"][data-modal-open="true"]'
+        );
         if (remainingSidebars.length <= 1) {
           document.body.classList.remove('sidebar-modal-active');
         }
       } else {
-        const remainingModals = document.querySelectorAll('[data-modal-type="modal"][data-modal-open="true"]');
+        const remainingModals = document.querySelectorAll(
+          '[data-modal-type="modal"][data-modal-open="true"]'
+        );
         if (remainingModals.length <= 1) {
           document.body.classList.remove('modal-blur-active');
         }
@@ -254,7 +258,8 @@ export const Modal: React.FC<ModalProps> = ({
       },
       {
         label: t.modalPresentationModeSidebar,
-        icon: modalPresentationMode === 'sidebar' ? 'radio_button_checked' : 'radio_button_unchecked',
+        icon:
+          modalPresentationMode === 'sidebar' ? 'radio_button_checked' : 'radio_button_unchecked',
         action: () => setModalPresentationMode?.('sidebar'),
         disabled: preventSidebar,
       },
@@ -299,7 +304,7 @@ export const Modal: React.FC<ModalProps> = ({
       }
       style={{ zIndex: isSidebar ? 10 : actualZIndex }}
       data-modal-type={isSidebar ? 'sidebar' : 'modal'}
-      data-modal-open="true"
+      data-modal-open='true'
     >
       {/* Backdrop with dedicated blur and animation */}
       <div
@@ -314,11 +319,7 @@ export const Modal: React.FC<ModalProps> = ({
             ? `relative w-full bg-(--bg-card) border border-zinc-400/40 dark:border-zinc-500/30 overflow-hidden flex flex-col sidebar-modal-card animate-scale-in select-none pointer-events-auto ${className}`
             : `relative w-full ${maxWidthClass} bg-(--bg-card) rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col animate-scale-in max-h-[95vh] border border-zinc-400/40 dark:border-zinc-500/30 ring-1 ring-inset ring-white/20 dark:ring-white/10 select-none ${className}`
         }
-        style={
-          isSidebar
-            ? style
-            : { height: height || 'auto', ...style }
-        }
+        style={isSidebar ? style : { height: height || 'auto', ...style }}
         onClick={(e) => e.stopPropagation()}
       >
         {title || tabs || headerActions ? (
@@ -336,7 +337,7 @@ export const Modal: React.FC<ModalProps> = ({
                       className='material-symbols-rounded text-(--text-tertiary)'
                       style={{
                         fontSize: 'var(--icon-lg)',
-                        fontVariationSettings: "'FILL' 0, 'wght' 400"
+                        fontVariationSettings: "'FILL' 0, 'wght' 400",
                       }}
                     >
                       {icon}
@@ -371,14 +372,14 @@ export const Modal: React.FC<ModalProps> = ({
                   <button
                     onClick={onClose}
                     className='w-8 h-8 rounded-full grid place-items-center text-(--text-tertiary) hover:text-(--text-primary) hover:bg-zinc-500/10 dark:hover:bg-zinc-400/15 active:scale-95 transition-all duration-200'
-                    aria-label="Close modal"
+                    aria-label='Close modal'
                   >
                     <span
                       className='material-symbols-rounded leading-none'
                       style={{
                         fontSize: '22px',
                         fontVariationSettings: "'wght' 600",
-                        display: 'block'
+                        display: 'block',
                       }}
                     >
                       close
@@ -389,7 +390,9 @@ export const Modal: React.FC<ModalProps> = ({
             </div>
 
             {/* Content - with internal padding and independent scrolling */}
-            <div className={`flex-1 overflow-y-auto custom-scrollbar ${bodyClassName} content-shift-layer`}>
+            <div
+              className={`flex-1 overflow-y-auto custom-scrollbar ${bodyClassName} content-shift-layer`}
+            >
               {children}
             </div>
 

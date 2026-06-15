@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSettings } from '../../context';
+import { storage } from '../../utils/storage';
 import { PageHeader } from '../common/PageHeader';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { InventoryHeaderContext } from './InventoryHeaderContext';
-import { useSettings } from '../../context';
-import { storage } from '../../utils/storage';
 
 interface InventoryModuleShellProps {
   activeView: string;
@@ -39,34 +39,49 @@ export const InventoryModuleShell: React.FC<InventoryModuleShellProps> = ({
     storage.set('inventory_stats_visible', nextVal);
   };
 
-
-  const contextValue = React.useMemo(() => ({
-    setLeftContent,
-    setRightContent,
-    setBottomContent,
-    setShowStatsToggle,
-    setShowStats,
-    showStats,
-  }), [showStats]);
+  const contextValue = React.useMemo(
+    () => ({
+      setLeftContent,
+      setRightContent,
+      setBottomContent,
+      setShowStatsToggle,
+      setShowStats,
+      showStats,
+    }),
+    [showStats]
+  );
 
   return (
     <InventoryHeaderContext.Provider value={contextValue}>
-      <div className="h-full flex flex-col bg-(--bg-page-surface)" dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className='h-full flex flex-col bg-(--bg-page-surface)' dir={isRTL ? 'rtl' : 'ltr'}>
         <PageHeader
-          mb="mb-0"
+          mb='mb-0'
           leftContent={leftContent}
           centerContent={
             <SegmentedControl
               options={[
-                { label: t.inventory?.tabs?.inventory || (isRTL ? 'المخزون' : 'Inventory'), value: 'inventory' },
-                { label: t.inventory?.tabs?.addProduct || (isRTL ? 'إضافة منتج' : 'Add Product'), value: 'add-product' },
-                { label: t.inventory?.tabs?.stockMovement || (isRTL ? 'حركة المخزون' : 'Stock Movement'), value: 'stock-movement' },
-                { label: t.inventory?.tabs?.shortages || (isRTL ? 'النواقص' : 'Shortages'), value: 'shortages' },
+                {
+                  label: t.inventory?.tabs?.inventory || (isRTL ? 'المخزون' : 'Inventory'),
+                  value: 'inventory',
+                },
+                {
+                  label: t.inventory?.tabs?.addProduct || (isRTL ? 'إضافة منتج' : 'Add Product'),
+                  value: 'add-product',
+                },
+                {
+                  label:
+                    t.inventory?.tabs?.stockMovement || (isRTL ? 'حركة المخزون' : 'Stock Movement'),
+                  value: 'stock-movement',
+                },
+                {
+                  label: t.inventory?.tabs?.shortages || (isRTL ? 'النواقص' : 'Shortages'),
+                  value: 'shortages',
+                },
               ]}
               value={activeView}
               onChange={(val) => onViewChange(val)}
-              size="md"
-              shape="pill"
+              size='md'
+              shape='pill'
             />
           }
           rightContent={rightContent}
@@ -75,9 +90,7 @@ export const InventoryModuleShell: React.FC<InventoryModuleShellProps> = ({
           showBottom={showStats}
           onToggleBottom={handleToggleStats}
         />
-        <div className="flex-1 overflow-hidden">
-          {children}
-        </div>
+        <div className='flex-1 overflow-hidden'>{children}</div>
       </div>
     </InventoryHeaderContext.Provider>
   );

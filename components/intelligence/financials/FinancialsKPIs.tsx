@@ -41,7 +41,11 @@ export const FinancialsKPIs: React.FC<FinancialsKPIsProps> = ({ kpis, t, isLoadi
         icon='percent'
         iconColor='amber'
         trend={kpis?.margin_percent?.change_direction}
-        trendValue={kpis?.margin_percent ? `${Math.abs(kpis.margin_percent.change_points)} ${t?.intelligence?.financials?.kpis?.points}` : ''}
+        trendValue={
+          kpis?.margin_percent
+            ? `${Math.abs(kpis.margin_percent.change_points)} ${t?.intelligence?.financials?.kpis?.points}`
+            : ''
+        }
         trendLabel={t?.intelligence?.financials?.kpis?.compare}
         isLoading={isLoading}
       />

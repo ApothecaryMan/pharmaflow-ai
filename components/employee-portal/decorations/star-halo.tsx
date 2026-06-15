@@ -25,26 +25,46 @@ export function StarHalo() {
         <circle cx='88' cy='16' r='2' fill='var(--svg-color, #FFD700)' opacity='0.8' />
         <circle cx='96' cy='22' r='1' fill='#FFE4E1' opacity='0.6' />
         <g transform='translate(64, 10)'>
-          <path d='M0,-14 Q0,0 -14,0 Q0,0 0,14 Q0,0 14,0 Q0,0 0,-14 Z' fill='var(--svg-color, #FFD700)' opacity='0.3' />
+          <path
+            d='M0,-14 Q0,0 -14,0 Q0,0 0,14 Q0,0 14,0 Q0,0 0,-14 Z'
+            fill='var(--svg-color, #FFD700)'
+            opacity='0.3'
+          />
           <path d='M0,-12 Q0,0 -12,0 Q0,0 0,12 Q0,0 12,0 Q0,0 0,-12 Z' fill='#FFF' />
-          <path d='M0,-8 Q0,0 -8,0 Q0,0 0,8 Q0,0 8,0 Q0,0 0,-8 Z' fill='var(--svg-color, #FFD700)' transform='rotate(45)' />
+          <path
+            d='M0,-8 Q0,0 -8,0 Q0,0 0,8 Q0,0 8,0 Q0,0 0,-8 Z'
+            fill='var(--svg-color, #FFD700)'
+            transform='rotate(45)'
+          />
           <circle cx='0' cy='0' r='1.5' fill='#FFF' />
         </g>
         <g transform='translate(40, 19)'>
-          <path d='M0,-9 Q0,0 -9,0 Q0,0 0,9 Q0,0 9,0 Q0,0 0,-9 Z' fill='var(--svg-color, #FFD700)' />
+          <path
+            d='M0,-9 Q0,0 -9,0 Q0,0 0,9 Q0,0 9,0 Q0,0 0,-9 Z'
+            fill='var(--svg-color, #FFD700)'
+          />
           <path d='M0,-7 Q0,0 -7,0 Q0,0 0,7 Q0,0 7,0 Q0,0 0,-7 Z' fill='#FFF' />
         </g>
         <g transform='translate(88, 19)'>
-          <path d='M0,-9 Q0,0 -9,0 Q0,0 0,9 Q0,0 9,0 Q0,0 0,-9 Z' fill='var(--svg-color, #FFD700)' />
+          <path
+            d='M0,-9 Q0,0 -9,0 Q0,0 0,9 Q0,0 9,0 Q0,0 0,-9 Z'
+            fill='var(--svg-color, #FFD700)'
+          />
           <path d='M0,-7 Q0,0 -7,0 Q0,0 0,7 Q0,0 7,0 Q0,0 0,-7 Z' fill='#FFF' />
         </g>
         <g transform='translate(18, 38)'>
-          <path d='M0,-8 Q0,0 -8,0 Q0,0 0,8 Q0,0 8,0 Q0,0 0,-8 Z' fill='var(--svg-color, #FFD700)' />
+          <path
+            d='M0,-8 Q0,0 -8,0 Q0,0 0,8 Q0,0 8,0 Q0,0 0,-8 Z'
+            fill='var(--svg-color, #FFD700)'
+          />
           <path d='M0,-5 Q0,0 -5,0 Q0,0 0,5 Q0,0 5,0 Q0,0 0,-5 Z' fill='#FFF' />
           <circle cx='-4' cy='4' r='0.6' fill='#FFF' />
         </g>
         <g transform='translate(110, 38)'>
-          <path d='M0,-8 Q0,0 -8,0 Q0,0 0,8 Q0,0 8,0 Q0,0 0,-8 Z' fill='var(--svg-color, #FFD700)' />
+          <path
+            d='M0,-8 Q0,0 -8,0 Q0,0 0,8 Q0,0 8,0 Q0,0 0,-8 Z'
+            fill='var(--svg-color, #FFD700)'
+          />
           <path d='M0,-5 Q0,0 -5,0 Q0,0 0,5 Q0,0 5,0 Q0,0 0,-5 Z' fill='#FFF' />
           <circle cx='4' cy='4' r='0.6' fill='#FFF' />
         </g>

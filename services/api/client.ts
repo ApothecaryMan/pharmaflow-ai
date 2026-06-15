@@ -160,6 +160,6 @@ export const isApiConfigured = (): boolean => {
   return typeof API_BASE_URL === 'string' && API_BASE_URL.trim().length > 0;
 };
 
-export const apiClient = isApiConfigured() 
-  ? createRealApiClient({ baseUrl: API_BASE_URL }) 
+export const apiClient = isApiConfigured()
+  ? createRealApiClient({ baseUrl: API_BASE_URL })
   : createMockApiClient();

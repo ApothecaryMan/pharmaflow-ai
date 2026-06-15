@@ -1,17 +1,18 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import type React from 'react';
+import { useState } from 'react';
 import { getContentContainerClasses, LAYOUT_CONFIG } from '../../config/layoutConfig';
-import { type UserRole } from '../../config/permissions';
-import { ROUTES } from '../../config/routes';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
-import { type ViewState } from '../../types';
+import type { UserRole } from '../../config/permissions';
+import { ROUTES } from '../../config/routes';
 import { THEMES, useSettings } from '../../context';
+import type { ViewState } from '../../types';
 import { ContextMenuProvider } from '../common/ContextMenu';
+import { DynamicEventLayer } from './DynamicEventLayer';
 import { MobileNavigation } from './MobileNavigation';
 import { Navbar } from './Navbar';
 import { SidebarContent } from './SidebarContent';
 import { StatusBar } from './StatusBar';
-import { DynamicEventLayer } from './DynamicEventLayer';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -83,8 +84,8 @@ const GlobalContextMenuWrapper: React.FC<{
   );
 };
 
-import { TitleBar } from './TitleBar';
 import { isTauri } from '../../utils/platform';
+import { TitleBar } from './TitleBar';
 
 export const MainLayout: React.FC<MainLayoutProps> = ({
   children,
@@ -145,12 +146,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       >
         <div
           className='h-full flex flex-col transition-colors duration-200 select-none overflow-hidden'
-          style={{
-            backgroundColor: 'var(--bg-primary)',
-            color: 'var(--text-primary)',
-            ...(isStandalone ? { '--navbar-height': '0px', '--statusbar-height': '0px' } : {}),
-            ...((isTauri() && !isStandalone) ? { '--navbar-height': '44px' } : {})
-          } as React.CSSProperties}
+          style={
+            {
+              backgroundColor: 'var(--bg-primary)',
+              color: 'var(--text-primary)',
+              ...(isStandalone ? { '--navbar-height': '0px', '--statusbar-height': '0px' } : {}),
+              ...(isTauri() && !isStandalone ? { '--navbar-height': '44px' } : {}),
+            } as React.CSSProperties
+          }
           dir={language === 'AR' ? 'rtl' : 'ltr'}
         >
           {/* TitleBar (Only in Tauri) */}
@@ -177,7 +180,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               onMobileMenuToggle={() => setMobileMenuOpen(true)}
               onLogoClick={() => setSidebarVisible(!sidebarVisible)}
               currentView={
-                (activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view) as ViewState
+                (activeModule === 'dashboard' && view === 'dashboard'
+                  ? dashboardSubView
+                  : view) as ViewState
               }
               onNavigate={handleNavigate}
               employees={employees.map((e) => ({
@@ -214,7 +219,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     type: 'spring',
                     stiffness: 260,
                     damping: 28,
-                    mass: 0.8
+                    mass: 0.8,
                   }}
                   className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col overflow-hidden`}
                   onMouseEnter={() => setIsSidebarHovered(true)}

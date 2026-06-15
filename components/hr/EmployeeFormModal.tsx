@@ -1,18 +1,19 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Modal, BUTTON_CLOSE_BASE } from '../common/Modal';
-import { FilterDropdown } from '../common/FilterDropdown';
-import { SegmentedControl } from '../common/SegmentedControl';
-import { Switch } from '../common/Switch';
-import { SmartEmailInput, SmartInput, SmartPhoneInput } from '../common/SmartInputs';
-import { usePosSounds } from '../common/hooks/usePosSounds';
-import { permissionsService } from '../../services/auth/permissionsService';
-import { authService } from '../../services/auth/authService';
-import { idGenerator } from '../../utils/idGenerator';
+import type React from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DEPARTMENT_ROLES } from '../../config/employeeRoles';
-import { BUTTON_BASE, INPUT_BASE, PROFILE_GLASS_CARD_BASE } from '../../utils/themeStyles';
+import type { TRANSLATIONS } from '../../i18n/translations';
+import { authService } from '../../services/auth/authService';
+import { permissionsService } from '../../services/auth/permissionsService';
 import type { Branch, Employee } from '../../types';
-import { TRANSLATIONS } from '../../i18n/translations';
-import { renderBanner, BANNER_STYLES } from '../../utils/banners';
+import { BANNER_STYLES, renderBanner } from '../../utils/banners';
+import { idGenerator } from '../../utils/idGenerator';
+import { BUTTON_BASE, INPUT_BASE, PROFILE_GLASS_CARD_BASE } from '../../utils/themeStyles';
+import { FilterDropdown } from '../common/FilterDropdown';
+import { usePosSounds } from '../common/hooks/usePosSounds';
+import { BUTTON_CLOSE_BASE, Modal } from '../common/Modal';
+import { SegmentedControl } from '../common/SegmentedControl';
+import { SmartEmailInput, SmartInput, SmartPhoneInput } from '../common/SmartInputs';
+import { Switch } from '../common/Switch';
 
 interface EmployeeFormModalProps {
   isOpen: boolean;
@@ -167,8 +168,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     if (formData.username && formData.username.trim().length > 0) {
       const username = formData.username.trim().toLowerCase();
       const isDuplicate = employeesListToCheck.some(
-        (emp) =>
-          emp.id !== employee?.id && emp.username && emp.username.toLowerCase() === username
+        (emp) => emp.id !== employee?.id && emp.username && emp.username.toLowerCase() === username
       );
 
       if (isDuplicate) {
@@ -179,9 +179,17 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     }
 
     // Validate endDate is not before startDate
-    if (formData.endDate && formData.startDate && new Date(formData.endDate) < new Date(formData.startDate)) {
+    if (
+      formData.endDate &&
+      formData.startDate &&
+      new Date(formData.endDate) < new Date(formData.startDate)
+    ) {
       playError();
-      alert(language === 'AR' ? 'تاريخ الانتهاء لا يمكن أن يكون قبل تاريخ البداية' : 'End date cannot be before start date');
+      alert(
+        language === 'AR'
+          ? 'تاريخ الانتهاء لا يمكن أن يكون قبل تاريخ البداية'
+          : 'End date cannot be before start date'
+      );
       return;
     }
 
@@ -201,7 +209,11 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
       }
 
       hashedPassword = await hashPassword(formData.password);
-    } else if ((!employee || hasNoPassword) && formData.password && formData.password.trim().length > 0) {
+    } else if (
+      (!employee || hasNoPassword) &&
+      formData.password &&
+      formData.password.trim().length > 0
+    ) {
       // New employee or existing employee with no password: hash the password directly
       const { hashPassword } = await import('../../services/auth/hashUtils');
       hashedPassword = await hashPassword(formData.password);
@@ -229,8 +241,13 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     setIsLinking(true);
     setLinkError('');
     try {
-      const { employeeRepository } = await import('../../services/hr/repositories/employeeRepository');
-      const updatedEmployee = await employeeRepository.linkGlobalAccount(employee.id, linkUsername.trim());
+      const { employeeRepository } = await import(
+        '../../services/hr/repositories/employeeRepository'
+      );
+      const updatedEmployee = await employeeRepository.linkGlobalAccount(
+        employee.id,
+        linkUsername.trim()
+      );
       setFormData((prev) => ({
         ...prev,
         userId: updatedEmployee.userId,
@@ -240,7 +257,12 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
       playSuccess();
     } catch (err: any) {
       console.error('Failed to link account', err);
-      setLinkError(err.message || (language === 'AR' ? 'فشل الربط. تأكد من صحة الحساب.' : 'Failed to link account. Verify username/ID.'));
+      setLinkError(
+        err.message ||
+          (language === 'AR'
+            ? 'فشل الربط. تأكد من صحة الحساب.'
+            : 'Failed to link account. Verify username/ID.')
+      );
       playError();
     } finally {
       setIsLinking(false);
@@ -249,13 +271,20 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
 
   const getBannerStyleByDepartment = (dept: string) => {
     switch (dept) {
-      case 'pharmacy': return 'pharma';
-      case 'it': return 'cyberhex';
-      case 'hr': return 'abstract';
-      case 'sales': return 'synthwave';
-      case 'logistics': return 'chaos';
-      case 'marketing': return 'floral';
-      default: return 'pattern';
+      case 'pharmacy':
+        return 'pharma';
+      case 'it':
+        return 'cyberhex';
+      case 'hr':
+        return 'abstract';
+      case 'sales':
+        return 'synthwave';
+      case 'logistics':
+        return 'chaos';
+      case 'marketing':
+        return 'floral';
+      default:
+        return 'pattern';
     }
   };
 
@@ -277,7 +306,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
       size='2xl'
       height='80vh'
       hideCloseButton={true}
-      bodyClassName="p-0 bg-(--bg-card)"
+      bodyClassName='p-0 bg-(--bg-card)'
       style={
         {
           '--bg-card': `color-mix(in srgb, ${bannerAccent} 12%, var(--bg-card-base))`,
@@ -307,7 +336,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
           >
             {isSaving ? (
               <>
-                <span className="animate-spin rounded-full h-4 w-4 border-2 border-(--text-primary) border-t-transparent" />
+                <span className='animate-spin rounded-full h-4 w-4 border-2 border-(--text-primary) border-t-transparent' />
                 {language === 'AR' ? 'جاري الحفظ...' : 'Saving...'}
               </>
             ) : (
@@ -318,35 +347,56 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
       }
     >
       <>
-        <div className="animate-fade-in text-(--text-primary)">
+        <div className='animate-fade-in text-(--text-primary)'>
           {/* Banner Graphic with Selectable Cover styles */}
-          <div className="relative w-full aspect-[9/3] bg-(--bg-secondary) overflow-hidden select-none group/cover">
+          <div className='relative w-full aspect-[9/3] bg-(--bg-secondary) overflow-hidden select-none group/cover'>
             {renderBanner(bannerStyle, { x: 0, y: 0 }, 1.2)}
 
             {/* Dynamic Cover Customizer Buttons */}
-            <div className="absolute top-3 end-3 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10 opacity-0 group-hover/cover:opacity-100 transition-opacity duration-300 z-20">
-              <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider select-none pe-1">
+            <div className='absolute top-3 end-3 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10 opacity-0 group-hover/cover:opacity-100 transition-opacity duration-300 z-20'>
+              <span className='text-[10px] font-bold text-white/80 uppercase tracking-wider select-none pe-1'>
                 {language === 'AR' ? 'نمط الغلاف:' : 'Cover Style:'}
               </span>
               {[
-                { dept: 'pharmacy', color: '#0d9488', label: language === 'AR' ? 'صيدلي' : 'Pharma' },
-                { dept: 'sales', color: '#ec4899', label: language === 'AR' ? 'نيون' : 'Synthwave' },
+                {
+                  dept: 'pharmacy',
+                  color: '#0d9488',
+                  label: language === 'AR' ? 'صيدلي' : 'Pharma',
+                },
+                {
+                  dept: 'sales',
+                  color: '#ec4899',
+                  label: language === 'AR' ? 'نيون' : 'Synthwave',
+                },
                 { dept: 'hr', color: '#8b5cf6', label: language === 'AR' ? 'تجريدي' : 'Abstract' },
-                { dept: 'it', color: '#10b981', label: language === 'AR' ? 'سيبر شبكي' : 'Cyberhex' },
-                { dept: 'logistics', color: '#f97316', label: language === 'AR' ? 'تموجات' : 'Chaos' },
-                { dept: 'marketing', color: '#f43f5e', label: language === 'AR' ? 'ورود' : 'Floral' },
+                {
+                  dept: 'it',
+                  color: '#10b981',
+                  label: language === 'AR' ? 'سيبر شبكي' : 'Cyberhex',
+                },
+                {
+                  dept: 'logistics',
+                  color: '#f97316',
+                  label: language === 'AR' ? 'تموجات' : 'Chaos',
+                },
+                {
+                  dept: 'marketing',
+                  color: '#f43f5e',
+                  label: language === 'AR' ? 'ورود' : 'Floral',
+                },
               ].map((opt) => (
                 <button
                   key={opt.dept}
-                  type="button"
+                  type='button'
                   onClick={() => {
                     setFormData((prev) => ({ ...prev, department: opt.dept as any }));
                     playBeep();
                   }}
-                  className={`w-4 h-4 rounded-full border-2 transition-all hover:scale-125 ${formData.department === opt.dept
+                  className={`w-4 h-4 rounded-full border-2 transition-all hover:scale-125 ${
+                    formData.department === opt.dept
                       ? 'border-white scale-110 shadow-sm'
                       : 'border-transparent opacity-60 hover:opacity-100'
-                    }`}
+                  }`}
                   style={{ backgroundColor: opt.color }}
                   title={opt.label}
                 />
@@ -355,21 +405,21 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
           </div>
 
           {/* Content Section below banner */}
-          <div className="relative px-6 pb-6 pt-20">
+          <div className='relative px-6 pb-6 pt-20'>
             {/* Overlapping Avatar */}
-            <div className="absolute -top-16 start-6 z-10">
-              <div className="relative group/avatar">
-                <div className="w-32 h-32 rounded-full border-4 border-(--bg-card) overflow-hidden bg-(--bg-secondary) shadow-md flex items-center justify-center relative">
+            <div className='absolute -top-16 start-6 z-10'>
+              <div className='relative group/avatar'>
+                <div className='w-32 h-32 rounded-full border-4 border-(--bg-card) overflow-hidden bg-(--bg-secondary) shadow-md flex items-center justify-center relative'>
                   {formData.image ? (
                     <img
                       src={formData.image}
                       alt={formData.name || ''}
-                      className="w-full h-full object-cover"
+                      className='w-full h-full object-cover'
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-zinc-900/50 text-gray-500 dark:bg-zinc-900/50 text-4xl font-bold">
+                    <div className='w-full h-full flex items-center justify-center bg-gray-200 dark:bg-zinc-900/50 text-gray-500 dark:bg-zinc-900/50 text-4xl font-bold'>
                       {getInitials(formData.name || '') === '?' || !formData.name?.trim() ? (
-                        <span className="material-symbols-rounded text-3xl">photo_camera</span>
+                        <span className='material-symbols-rounded text-3xl'>photo_camera</span>
                       ) : (
                         getInitials(formData.name)
                       )}
@@ -379,14 +429,16 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                   {/* Upload Image Overlay */}
                   {!isInvited && (
                     <label
-                      className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 cursor-pointer backdrop-blur-[2px] border border-white/10"
+                      className='absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 cursor-pointer backdrop-blur-[2px] border border-white/10'
                       title={t.changePhoto}
                     >
-                      <span className="material-symbols-rounded text-white text-xl">photo_camera</span>
+                      <span className='material-symbols-rounded text-white text-xl'>
+                        photo_camera
+                      </span>
                       <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
+                        type='file'
+                        accept='image/*'
+                        className='hidden'
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
@@ -414,12 +466,12 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                 {/* Remove Image Button */}
                 {!isInvited && formData.image && (
                   <button
-                    type="button"
+                    type='button'
                     onClick={() => setFormData((prev) => ({ ...prev, image: undefined }))}
                     className={`absolute -top-1 -end-1 w-6 h-6 bg-white dark:bg-zinc-800 rounded-full border border-zinc-200 dark:border-zinc-700 text-gray-400 hover:text-red-500 shadow-md flex items-center justify-center z-20`}
                     title={t.removePhoto}
                   >
-                    <span className="material-symbols-rounded text-[14px] font-bold">close</span>
+                    <span className='material-symbols-rounded text-[14px] font-bold'>close</span>
                   </button>
                 )}
               </div>
@@ -430,7 +482,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
         </div>
 
         {/* Main Form Area */}
-        <div className="px-6 pb-6 space-y-6">
+        <div className='px-6 pb-6 space-y-6'>
           {activeTab === 'general' ? (
             <div className='animate-in fade-in slide-in-from-bottom-2 duration-300'>
               {/* General Info Card */}
@@ -478,8 +530,15 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                       <FilterDropdown
                         className='absolute top-0 left-0 w-full z-30'
                         minHeight='42px'
-                        items={branches.map(b => ({ key: b.id, label: b.name }))}
-                        selectedItem={branches.map(b => ({ key: b.id, label: b.name })).find(b => b.key === formData.branchId) || { key: 'UNASSIGNED', label: t.unassigned }}
+                        items={branches.map((b) => ({ key: b.id, label: b.name }))}
+                        selectedItem={
+                          branches
+                            .map((b) => ({ key: b.id, label: b.name }))
+                            .find((b) => b.key === formData.branchId) || {
+                            key: 'UNASSIGNED',
+                            label: t.unassigned,
+                          }
+                        }
                         isOpen={isBranchOpen}
                         onToggle={() => {
                           setIsBranchOpen(!isBranchOpen);
@@ -493,9 +552,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                         }}
                         renderItem={(item) => <span className='text-sm'>{item.label}</span>}
                         renderSelected={(item) => (
-                          <span className='text-sm'>
-                            {item?.label || t.branch}
-                          </span>
+                          <span className='text-sm'>{item?.label || t.branch}</span>
                         )}
                         keyExtractor={(item) => item.key}
                         variant='input'
@@ -528,9 +585,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                         }}
                         renderItem={(item) => <span className='text-sm'>{item.label}</span>}
                         renderSelected={(item) => (
-                          <span className='text-sm'>
-                            {item?.label || t.department}
-                          </span>
+                          <span className='text-sm'>{item?.label || t.department}</span>
                         )}
                         keyExtractor={(item) => item.key}
                         variant='input'
@@ -677,7 +732,8 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                   )}
 
                   {/* Row 4: Salary + Notes */}
-                  {(permissionsService.can('reports.view_financial') || permissionsService.can('users.manage')) && (
+                  {(permissionsService.can('reports.view_financial') ||
+                    permissionsService.can('users.manage')) && (
                     <div className='col-span-4 space-y-1.5'>
                       <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
                         {t.salary}
@@ -698,7 +754,14 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                       </div>
                     </div>
                   )}
-                  <div className={(permissionsService.can('reports.view_financial') || permissionsService.can('users.manage')) ? 'col-span-8 space-y-1.5' : 'col-span-12 space-y-1.5'}>
+                  <div
+                    className={
+                      permissionsService.can('reports.view_financial') ||
+                      permissionsService.can('users.manage')
+                        ? 'col-span-8 space-y-1.5'
+                        : 'col-span-12 space-y-1.5'
+                    }
+                  >
                     <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
                       {t.notes}
                     </label>
@@ -756,25 +819,33 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
 
                             // 1. Try Biometric Verification first
                             try {
-                              const { startAuthentication } = await import('@simplewebauthn/browser');
-                              const { generateChallenge, bufferToBase64 } = await import('../../utils/webAuthnUtils');
+                              const { startAuthentication } = await import(
+                                '@simplewebauthn/browser'
+                              );
+                              const { generateChallenge, bufferToBase64 } = await import(
+                                '../../utils/webAuthnUtils'
+                              );
                               const challengeBase64 = bufferToBase64(generateChallenge());
 
                               const asseResp = await startAuthentication({
                                 optionsJSON: {
                                   challenge: challengeBase64,
                                   rpId: window.location.hostname,
-                                  allowCredentials: [{
-                                    id: formData.biometricCredentialId,
-                                    type: 'public-key',
-                                    transports: ['internal'],
-                                  }],
+                                  allowCredentials: [
+                                    {
+                                      id: formData.biometricCredentialId,
+                                      type: 'public-key',
+                                      transports: ['internal'],
+                                    },
+                                  ],
                                   userVerification: 'required',
                                 } as any,
                               });
                               if (asseResp) isVerified = true;
                             } catch (authErr) {
-                              console.log('Biometric verification skipped or failed, falling back to password');
+                              console.log(
+                                'Biometric verification skipped or failed, falling back to password'
+                              );
                             }
 
                             // 2. Fallback to Password
@@ -782,7 +853,9 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                               const pass = prompt(t.confirmPasswordPrompt);
                               if (!pass) return;
 
-                              const { verifyPassword } = await import('../../services/auth/hashUtils');
+                              const { verifyPassword } = await import(
+                                '../../services/auth/hashUtils'
+                              );
                               const currentHashedPassword = employee?.password || formData.password;
 
                               if (currentHashedPassword) {
@@ -803,7 +876,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                                 setFormData({
                                   ...formData,
                                   biometricCredentialId: undefined,
-                                  biometricPublicKey: undefined
+                                  biometricPublicKey: undefined,
                                 });
                                 playSuccess();
                                 return;
@@ -814,11 +887,8 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
 
                           // WebAuthn Setup for NEW registration
                           const { startRegistration } = await import('@simplewebauthn/browser');
-                          const {
-                            generateChallenge,
-                            bufferToBase64,
-                            isWebAuthnSupported,
-                          } = await import('../../utils/webAuthnUtils');
+                          const { generateChallenge, bufferToBase64, isWebAuthnSupported } =
+                            await import('../../utils/webAuthnUtils');
 
                           if (!(await isWebAuthnSupported())) {
                             alert(t.passkeyUnsupported);
@@ -878,10 +948,11 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                           alert(parseWebAuthnError(err, language as any));
                         }
                       }}
-                      className={`flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl border-2 transition-all font-medium ${formData.biometricCredentialId
+                      className={`flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl border-2 transition-all font-medium ${
+                        formData.biometricCredentialId
                           ? 'bg-green-50 border-green-200 text-green-700 dark:bg-green-900/10 dark:border-green-800/30 dark:text-green-400'
                           : 'border-(--border-divider) text-(--text-tertiary) hover:text-(--text-primary) hover:bg-(--bg-surface-neutral)'
-                        }`}
+                      }`}
                     >
                       <span
                         className={`material-symbols-rounded ${formData.biometricCredentialId ? 'text-green-500' : ''}`}
@@ -904,31 +975,39 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                       </h4>
                     </div>
                     <p className='text-xs text-blue-600/80 leading-relaxed font-medium'>
-                      {language === 'AR' 
+                      {language === 'AR'
                         ? 'هذا الموظف ليس لديه حساب عالمي. أدخل اسم المستخدم (@username) أو المعرف (ID) الخاص به لربط مبيعاته وسجلاته بحسابه الجديد.'
                         : "This employee doesn't have a global account. Enter their Global @Username or ID to link their legacy records to their new account."}
                     </p>
                     <div className='flex items-center gap-2 mt-2'>
-                       <SmartInput
-                         value={linkUsername}
-                         onChange={(e) => setLinkUsername(e.target.value)}
-                         placeholder={language === 'AR' ? '@username أو المعرف' : '@username or ID'}
-                         className="flex-1 !py-2 bg-white dark:bg-zinc-900 border-blue-500/20 focus-within:border-blue-500/50"
-                       />
-                       <button
-                         type="button"
-                         onClick={handleLinkAccount}
-                         disabled={isLinking || !linkUsername.trim()}
-                         className="px-4 py-2 bg-blue-500 text-white rounded-lg text-xs font-bold disabled:opacity-50 transition-colors hover:bg-blue-600 active:scale-95"
-                       >
-                         {isLinking ? (
-                            <span className="animate-spin material-symbols-rounded text-[16px]">sync</span>
-                         ) : (
-                           language === 'AR' ? 'ربط الحساب' : 'Link Account'
-                         )}
-                       </button>
+                      <SmartInput
+                        value={linkUsername}
+                        onChange={(e) => setLinkUsername(e.target.value)}
+                        placeholder={language === 'AR' ? '@username أو المعرف' : '@username or ID'}
+                        className='flex-1 !py-2 bg-white dark:bg-zinc-900 border-blue-500/20 focus-within:border-blue-500/50'
+                      />
+                      <button
+                        type='button'
+                        onClick={handleLinkAccount}
+                        disabled={isLinking || !linkUsername.trim()}
+                        className='px-4 py-2 bg-blue-500 text-white rounded-lg text-xs font-bold disabled:opacity-50 transition-colors hover:bg-blue-600 active:scale-95'
+                      >
+                        {isLinking ? (
+                          <span className='animate-spin material-symbols-rounded text-[16px]'>
+                            sync
+                          </span>
+                        ) : language === 'AR' ? (
+                          'ربط الحساب'
+                        ) : (
+                          'Link Account'
+                        )}
+                      </button>
                     </div>
-                    {linkError && <p className="text-red-500 text-xs font-medium animate-in fade-in">{linkError}</p>}
+                    {linkError && (
+                      <p className='text-red-500 text-xs font-medium animate-in fade-in'>
+                        {linkError}
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -1042,7 +1121,11 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                                   }}
                                   placeholder={t.enterCurrentPassword}
                                   type='password'
-                                  className={passwordError ? `${INPUT_BASE} border-red-400 dark:border-red-500` : INPUT_BASE}
+                                  className={
+                                    passwordError
+                                      ? `${INPUT_BASE} border-red-400 dark:border-red-500`
+                                      : INPUT_BASE
+                                  }
                                 />
                               </div>
                               <div className='flex items-end'>
@@ -1110,7 +1193,9 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
 
                                     setIsResetting(true);
                                     try {
-                                      const res = await authService.handleForgotPassword(employee.email);
+                                      const res = await authService.handleForgotPassword(
+                                        employee.email
+                                      );
                                       if (res.success) {
                                         alert(t.modal.resetLinkSent);
                                       } else {
@@ -1122,7 +1207,12 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                                   }}
                                   className='text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center gap-1 disabled:opacity-50 transition-colors'
                                 >
-                                  <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>mark_email_read</span>
+                                  <span
+                                    className='material-symbols-rounded'
+                                    style={{ fontSize: '16px' }}
+                                  >
+                                    mark_email_read
+                                  </span>
                                   {t.resetViaEmail}
                                 </button>
                               </div>
@@ -1217,16 +1307,14 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                           />
                           <button
                             type='button'
-                            onClick={() =>
-                              setFormData({ ...formData, nationalIdCard: undefined })
-                            }
+                            onClick={() => setFormData({ ...formData, nationalIdCard: undefined })}
                             className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
                           >
                             <span
                               className='material-symbols-rounded'
                               style={{
                                 fontSize: 'var(--icon-md)',
-                                fontVariationSettings: "'wght' 700"
+                                fontVariationSettings: "'wght' 700",
                               }}
                             >
                               close
@@ -1297,7 +1385,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                                   className='material-symbols-rounded'
                                   style={{
                                     fontSize: 'var(--icon-md)',
-                                    fontVariationSettings: "'wght' 700"
+                                    fontVariationSettings: "'wght' 700",
                                   }}
                                 >
                                   close
@@ -1305,9 +1393,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                               </button>
                             </div>
                           ) : (
-                            <label
-                              className='flex items-center justify-center w-24 h-24 border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50'
-                            >
+                            <label className='flex items-center justify-center w-24 h-24 border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50'>
                               <span
                                 className='material-symbols-rounded text-primary-500'
                                 style={{ fontSize: 'var(--icon-lg)' }}
@@ -1349,7 +1435,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                   </div>
 
                   {/* Syndicate Cards - Side by Side - Only for Pharmacists */}
-                  {((formData.role || 'pharmacist').includes('pharmacist')) && (
+                  {(formData.role || 'pharmacist').includes('pharmacist') && (
                     <div className='space-y-2'>
                       <label className='text-xs font-semibold text-gray-500 uppercase px-1 flex items-center gap-2'>
                         <span
@@ -1380,7 +1466,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                                 className='material-symbols-rounded'
                                 style={{
                                   fontSize: 'var(--icon-md)',
-                                  fontVariationSettings: "'wght' 700"
+                                  fontVariationSettings: "'wght' 700",
                                 }}
                               >
                                 close
@@ -1451,7 +1537,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                                     className='material-symbols-rounded'
                                     style={{
                                       fontSize: 'var(--icon-md)',
-                                      fontVariationSettings: "'wght' 700"
+                                      fontVariationSettings: "'wght' 700",
                                     }}
                                   >
                                     close
@@ -1459,9 +1545,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
                                 </button>
                               </div>
                             ) : (
-                              <label
-                                className='flex flex-col items-center justify-center w-32 h-24 border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50 gap-1'
-                              >
+                              <label className='flex flex-col items-center justify-center w-32 h-24 border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50 gap-1'>
                                 <span
                                   className='material-symbols-rounded text-primary-500'
                                   style={{ fontSize: 'var(--icon-base)' }}

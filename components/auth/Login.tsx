@@ -114,7 +114,13 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
           setState((prev) => ({ ...prev, isLoading: false, error: null }));
           onViewChange?.('workspace-switcher');
         } else {
-          setState((prev) => ({ ...prev, isLoading: false, error: null, success: true, user: user }));
+          setState((prev) => ({
+            ...prev,
+            isLoading: false,
+            error: null,
+            success: true,
+            user: user,
+          }));
           // Trigger login success immediately — Loading Guard handles the transition
           onLoginSuccess?.();
         }
@@ -133,9 +139,10 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
       if (errorMessage.toLowerCase().includes('invalid login credentials')) {
         errorMessage = t.errorInvalidCredentials || errorMessage;
       } else if (errorMessage.toLowerCase().includes('email not confirmed')) {
-        errorMessage = language === 'AR'
-          ? 'البريد الإلكتروني غير مؤكد - يرجى تفعيل الحساب من الرابط المرسل لبريدك الإلكتروني أولاً.'
-          : 'Email not confirmed - Please verify your account via the link sent to your email first.';
+        errorMessage =
+          language === 'AR'
+            ? 'البريد الإلكتروني غير مؤكد - يرجى تفعيل الحساب من الرابط المرسل لبريدك الإلكتروني أولاً.'
+            : 'Email not confirmed - Please verify your account via the link sent to your email first.';
       }
 
       setState((prev) => ({
@@ -161,7 +168,9 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
               {language === 'AR' ? 'ارتقِ بصيدليتك' : 'Elevate your pharmacy'}
             </h1>
             <p className='text-zinc-400 text-sm'>
-              {language === 'AR' ? 'مخزون ذكي، مبيعات أسهل، وتحكم شامل في مكان واحد' : 'Smart inventory, effortless sales, and complete control in one place'}
+              {language === 'AR'
+                ? 'مخزون ذكي، مبيعات أسهل، وتحكم شامل في مكان واحد'
+                : 'Smart inventory, effortless sales, and complete control in one place'}
             </p>
           </>
         )}
@@ -213,28 +222,38 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
               <span>{state.error}</span>
               {state.error.includes(language === 'AR' ? 'تفعيل' : 'verify') && (
                 <button
-                  type="button"
+                  type='button'
                   onClick={async () => {
                     const emailInput = state.username.includes('@') ? state.username : '';
                     if (!emailInput) {
-                      setState(prev => ({ ...prev, error: language === 'AR' ? 'يرجى إدخال البريد الإلكتروني أولاً لإعادة الإرسال.' : 'Please enter your email first to resend link.' }));
+                      setState((prev) => ({
+                        ...prev,
+                        error:
+                          language === 'AR'
+                            ? 'يرجى إدخال البريد الإلكتروني أولاً لإعادة الإرسال.'
+                            : 'Please enter your email first to resend link.',
+                      }));
                       return;
                     }
-                    setState(prev => ({ ...prev, isLoading: true }));
+                    setState((prev) => ({ ...prev, isLoading: true }));
                     const res = await authService.resendConfirmation(emailInput);
-                    setState(prev => ({
+                    setState((prev) => ({
                       ...prev,
                       isLoading: false,
                       error: null,
-                      success: false // ensuring we stay on login
+                      success: false, // ensuring we stay on login
                     }));
                     if (res.success) {
-                      alert(language === 'AR' ? 'تم إعادة إرسال الرابط بنجاح!' : 'Confirmation link resent!');
+                      alert(
+                        language === 'AR'
+                          ? 'تم إعادة إرسال الرابط بنجاح!'
+                          : 'Confirmation link resent!'
+                      );
                     } else {
-                      setState(prev => ({ ...prev, error: res.message || 'Error' }));
+                      setState((prev) => ({ ...prev, error: res.message || 'Error' }));
                     }
                   }}
-                  className="ms-auto text-xs underline hover:text-white"
+                  className='ms-auto text-xs underline hover:text-white'
                 >
                   {language === 'AR' ? 'إعادة إرسال الرابط' : 'Resend Link'}
                 </button>
@@ -248,7 +267,9 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
               <input
                 id='username'
                 type='text'
-                placeholder={language === 'AR' ? 'اسم المستخدم أو البريد الإلكتروني' : 'Username or Email'}
+                placeholder={
+                  language === 'AR' ? 'اسم المستخدم أو البريد الإلكتروني' : 'Username or Email'
+                }
                 autoComplete='off'
                 value={state.username}
                 onChange={(e) => {
@@ -262,9 +283,7 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                 dir='ltr'
               />
               {state.validationErrors.username && (
-                <p className='text-xs text-red-500 mt-1 ps-1'>
-                  {state.validationErrors.username}
-                </p>
+                <p className='text-xs text-red-500 mt-1 ps-1'>{state.validationErrors.username}</p>
               )}
             </div>
 
@@ -293,15 +312,13 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                   aria-label={state.showPassword ? 'Hide password' : 'Show password'}
                   className={`absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors focus:outline-hidden focus:text-white cursor-pointer`}
                 >
-                  <span className="material-symbols-rounded text-[20px]">
+                  <span className='material-symbols-rounded text-[20px]'>
                     {state.showPassword ? 'visibility_off' : 'visibility'}
                   </span>
                 </button>
               </div>
               {state.validationErrors.password && (
-                <p className='text-xs text-red-500 mt-1 ps-1'>
-                  {state.validationErrors.password}
-                </p>
+                <p className='text-xs text-red-500 mt-1 ps-1'>{state.validationErrors.password}</p>
               )}
             </div>
           </fieldset>
@@ -368,14 +385,16 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                 <span>{t.signingIn}</span>
               </>
             ) : (
-              <span className="font-semibold">{t.submit}</span>
+              <span className='font-semibold'>{t.submit}</span>
             )}
           </button>
 
           <p className='text-center text-[11px] text-zinc-600 pt-2'>{t.authorizedUserNotice}</p>
 
           <div className='flex items-center justify-center gap-1 text-sm pt-2'>
-            <span className='text-zinc-500'>{(t as any).dontHaveAccount || "Don't have an account?"}</span>
+            <span className='text-zinc-500'>
+              {(t as any).dontHaveAccount || "Don't have an account?"}
+            </span>
             <button
               type='button'
               onClick={() => onViewChange?.('signup')}

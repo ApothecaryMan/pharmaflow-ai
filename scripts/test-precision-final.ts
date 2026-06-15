@@ -1,6 +1,5 @@
-
-import { money, tax, pricing } from '../utils/money.ts';
 import { pricingService } from '../services/sales/pricingService.ts';
+import { money, pricing, tax } from '../utils/money.ts';
 
 const runTests = () => {
   console.log('🚀 Starting Precision Financial Math Final Validation...');
@@ -25,11 +24,9 @@ const runTests = () => {
     total: 30,
     netTotal: 27, // 10% global discount
     globalDiscount: 10,
-    items: [
-      { id: '1', name: 'Item A', price: 10, quantity: 3, isUnit: false }
-    ]
+    items: [{ id: '1', name: 'Item A', price: 10, quantity: 3, isUnit: false }],
   };
-  
+
   // Selected 1 item for return
   const selected1 = new Map([['1_pack', 1]]);
   const refund1 = pricingService.calculateRefundAmount(sale as any, selected1);
@@ -63,13 +60,13 @@ const runTests = () => {
       { id: 'A', name: 'A', price: 33.33, quantity: 1, isUnit: false },
       { id: 'B', name: 'B', price: 33.33, quantity: 1, isUnit: false },
       { id: 'C', name: 'C', price: 33.34, quantity: 1, isUnit: false },
-    ]
+    ],
   };
-  
+
   const refundA = pricingService.calculateRefundAmount(saleMulti as any, new Map([['A_pack', 1]]));
   const refundB = pricingService.calculateRefundAmount(saleMulti as any, new Map([['B_pack', 1]]));
   const refundC = pricingService.calculateRefundAmount(saleMulti as any, new Map([['C_pack', 1]]));
-  
+
   assert('Refund for item A', refundA, 30);
   assert('Refund for item B', refundB, 30);
   assert('Refund for item C', refundC, 30);

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import { ROUTES } from '../../config/routes';
 import { StorageKeys } from '../../config/storageKeys';
 import { authService } from '../../services/auth/authService';
@@ -42,10 +43,10 @@ export function useAppState(): AppState {
   const hash = window.location.hash.replace(/^#\/?/, '');
   const hashParts = hash ? hash.split('/') : [];
   const urlView = hashParts[2] as ViewState;
-  
+
   const [view, setView] = usePersistedState<ViewState>(
-    StorageKeys.VIEW, 
-    urlView || (authService.hasSession() ? 'landing' as ViewState : ROUTES.LOGIN), 
+    StorageKeys.VIEW,
+    urlView || (authService.hasSession() ? ('landing' as ViewState) : ROUTES.LOGIN),
     false
   );
   const [activeModule, setActiveModule] = usePersistedState<string>(

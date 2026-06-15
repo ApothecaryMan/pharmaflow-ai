@@ -30,8 +30,18 @@ export function AngelWings() {
               strokeWidth='0.8'
               opacity='0.8'
             />
-            <path d='M24,50 C12,36 0,26 6,14' stroke='#E2E8F0' strokeWidth='0.6' strokeLinecap='round' />
-            <path d='M25,65 C16,52 6,42 10,32' stroke='#E2E8F0' strokeWidth='0.5' strokeLinecap='round' />
+            <path
+              d='M24,50 C12,36 0,26 6,14'
+              stroke='#E2E8F0'
+              strokeWidth='0.6'
+              strokeLinecap='round'
+            />
+            <path
+              d='M25,65 C16,52 6,42 10,32'
+              stroke='#E2E8F0'
+              strokeWidth='0.5'
+              strokeLinecap='round'
+            />
           </g>
         </g>
         <g transform='translate(13, 0)'>
@@ -56,8 +66,18 @@ export function AngelWings() {
               strokeWidth='0.8'
               opacity='0.8'
             />
-            <path d='M104,50 C116,36 128,26 122,14' stroke='#E2E8F0' strokeWidth='0.6' strokeLinecap='round' />
-            <path d='M103,65 C112,52 122,42 118,32' stroke='#E2E8F0' strokeWidth='0.5' strokeLinecap='round' />
+            <path
+              d='M104,50 C116,36 128,26 122,14'
+              stroke='#E2E8F0'
+              strokeWidth='0.6'
+              strokeLinecap='round'
+            />
+            <path
+              d='M103,65 C112,52 122,42 118,32'
+              stroke='#E2E8F0'
+              strokeWidth='0.5'
+              strokeLinecap='round'
+            />
           </g>
         </g>
       </g>

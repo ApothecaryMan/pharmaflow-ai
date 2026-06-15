@@ -1,17 +1,17 @@
 import type {
   ActionContext,
+  Branch,
   CartItem,
   Customer,
   Drug,
   Employee,
+  Organization,
   Purchase,
   PurchaseReturn,
   Return,
   Sale,
   StockBatch,
   Supplier,
-  Branch,
-  Organization
 } from '../../types';
 
 export type {
@@ -90,7 +90,12 @@ export interface DataActions {
     returnData: {
       id: string;
       saleId: string;
-      items: { drugId: string; quantityReturned: number; isUnit?: boolean; refundAmount?: number }[];
+      items: {
+        drugId: string;
+        quantityReturned: number;
+        isUnit?: boolean;
+        refundAmount?: number;
+      }[];
       totalRefund: number;
       date: string;
     },
@@ -132,7 +137,7 @@ export interface DataActions {
 
   // Switch to a different organization
   switchOrg: (orgId: string) => Promise<void>;
-  
+
   updateBranch: (id: string, updates: Partial<Branch>) => Promise<void>;
 
   // Get current active branch ID

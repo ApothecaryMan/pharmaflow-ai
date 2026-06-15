@@ -664,9 +664,7 @@ export const useStaffAnalytics = ({
                         >
                           <span className='material-symbols-rounded'>{title.icon}</span>
                           {!showIconOnly && (
-                            <span className='whitespace-nowrap'>
-                              {title.label}
-                            </span>
+                            <span className='whitespace-nowrap'>{title.label}</span>
                           )}
                         </span>
                       );

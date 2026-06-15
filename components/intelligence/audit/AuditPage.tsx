@@ -2,13 +2,13 @@ import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { TanStackTable } from '../../../components/common/TanStackTable';
+import { useSettings } from '../../../context';
+import type { TRANSLATIONS } from '../../../i18n/translations';
 import type { AuditTransaction } from '../../../types/intelligence';
 import { formatCurrency } from '../../../utils/currency';
-import { TransactionDetailModal } from './TransactionDetailModal';
-import { useSettings } from '../../../context';
 import { getDisplayName } from '../../../utils/drugDisplayName';
 import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
-import { TRANSLATIONS } from '../../../i18n/translations';
+import { TransactionDetailModal } from './TransactionDetailModal';
 
 interface AuditPageProps {
   t: typeof TRANSLATIONS.EN;
@@ -97,7 +97,9 @@ export const AuditPage: React.FC<AuditPageProps> = ({
       columnHelper.accessor('cashier_name', {
         header: t?.intelligence?.audit?.grid?.columns?.user || 'User',
         meta: { width: 157, align: 'end' },
-        cell: (info) => <span className='text-sm text-gray-600 dark:text-gray-400'>{info.getValue()}</span>,
+        cell: (info) => (
+          <span className='text-sm text-gray-600 dark:text-gray-400'>{info.getValue()}</span>
+        ),
       }),
     ],
     [columnHelper, t, language, textTransform]

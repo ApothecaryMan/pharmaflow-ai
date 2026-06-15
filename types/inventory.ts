@@ -223,4 +223,3 @@ export interface DrugApproval {
   updatedAt: string;
   globalDrug?: GlobalDrug;
 }
-

@@ -22,24 +22,28 @@ export const TABLE_HEADER_BASE =
   'px-4 py-3 text-xs font-bold text-(--text-tertiary) uppercase tracking-wider bg-(--bg-input)';
 export const TABLE_ROW_BASE =
   'hover:bg-(--bg-input) transition-colors border-b border-(--border-divider) last:border-0';
-export const BUTTON_BASE = 'px-4 py-2 rounded-xl bg-gray-300 dark:bg-zinc-900/80 border border-transparent dark:border-(--border-divider) font-medium transition-all hover:opacity-80 cursor-pointer ';
-export const BUTTON_INACTIVE = 'bg-(--button-base-inactive) border border-(--border-divider) text-(--text-tertiary) cursor-not-allowed';
+export const BUTTON_BASE =
+  'px-4 py-2 rounded-xl bg-gray-300 dark:bg-zinc-900/80 border border-transparent dark:border-(--border-divider) font-medium transition-all hover:opacity-80 cursor-pointer ';
+export const BUTTON_INACTIVE =
+  'bg-(--button-base-inactive) border border-(--border-divider) text-(--text-tertiary) cursor-not-allowed';
 export const INPUT_BASE =
   'w-full px-3 py-2.5 rounded-xl bg-(--bg-input) border border-(--border-divider) outline-hidden focus:border-gray-400 dark:focus:border-gray-500 focus:shadow-sm text-sm transition-colors duration-0 text-(--text-primary) placeholder-(--text-tertiary)';
 
 export const THEME_COLORS = ['zinc', 'purple', 'green', 'orange', 'red', 'pink', 'teal'];
 
 // Flat icon button (square/rounded-xl) with border and high-contrast active state
-export const ICON_BUTTON_BASE = 'flex items-center justify-center w-10 h-10 rounded-xl border transition-all';
+export const ICON_BUTTON_BASE =
+  'flex items-center justify-center w-10 h-10 rounded-xl border transition-all';
 export const ICON_BUTTON_FLAT = `${ICON_BUTTON_BASE} bg-white dark:bg-(--bg-surface-neutral) border-gray-200 dark:border-(--border-divider) text-gray-500 dark:text-gray-400`;
 export const ICON_BUTTON_FLAT_ACTIVE = `${ICON_BUTTON_BASE} bg-gray-900 border-gray-900 text-white dark:bg-white dark:border-white dark:text-gray-900`;
 
 // Shorthand for easier usage: ICON_BTN(showAll)
-export const ICON_BTN = (active?: boolean) => active ? ICON_BUTTON_FLAT_ACTIVE : ICON_BUTTON_FLAT;
+export const ICON_BTN = (active?: boolean) => (active ? ICON_BUTTON_FLAT_ACTIVE : ICON_BUTTON_FLAT);
 
 // Semi-interactive card for onPage only
-export const GLASS_CARD_BASE = 'p-2.5 rounded-xl bg-(--bg-secondary)/40 border border-(--border-divider)/50 hover:bg-(--bg-hover)';
+export const GLASS_CARD_BASE =
+  'p-2.5 rounded-xl bg-(--bg-secondary)/40 border border-(--border-divider)/50 hover:bg-(--bg-hover)';
 
 // High-contrast card base for profile details to stand out clearly on tinted backgrounds
-export const PROFILE_GLASS_CARD_BASE = 'p-2.5 rounded-xl bg-white/80 dark:bg-black/20 border border-black/10 dark:border-white/10 hover:bg-white/95 dark:hover:bg-black/30 shadow-xs transition-all duration-200';
-
+export const PROFILE_GLASS_CARD_BASE =
+  'p-2.5 rounded-xl bg-white/80 dark:bg-black/20 border border-black/10 dark:border-white/10 hover:bg-white/95 dark:hover:bg-black/30 shadow-xs transition-all duration-200';

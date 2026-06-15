@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { purchaseService } from './purchaseService';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Purchase } from '../../types';
 import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
-import { Purchase } from '../../types';
+import { purchaseService } from './purchaseService';
 
 // Mocks
 vi.mock('../../utils/storage', () => ({
@@ -29,7 +29,7 @@ describe('PurchaseService', () => {
       status: 'pending',
       totalCost: 1000,
       paymentMethod: 'cash',
-      branchId: 'MAIN'
+      branchId: 'MAIN',
     },
     {
       id: 'P2',
@@ -40,8 +40,8 @@ describe('PurchaseService', () => {
       status: 'completed',
       totalCost: 500,
       paymentMethod: 'cash',
-      branchId: 'MAIN'
-    }
+      branchId: 'MAIN',
+    },
   ];
 
   beforeEach(() => {
@@ -60,11 +60,11 @@ describe('PurchaseService', () => {
       supplierId: 'SUP2',
       supplierName: 'Test Supplier 2',
       items: [],
-      totalCost: 200
+      totalCost: 200,
     };
-    
+
     const created = await purchaseService.create(newPurchase);
-    
+
     expect(created.status).toBe('pending');
     expect(created.branchId).toBe('MAIN');
     expect(storage.set).toHaveBeenCalled();
@@ -72,7 +72,7 @@ describe('PurchaseService', () => {
 
   it('should approve purchase', async () => {
     const approved = await purchaseService.approve('P1', 'EMP1', 'Admin');
-    
+
     expect(approved.status).toBe('approved');
     expect(approved.approvedBy).toBe('Admin');
     expect(storage.set).toHaveBeenCalled();
@@ -80,14 +80,14 @@ describe('PurchaseService', () => {
 
   it('should reject purchase', async () => {
     const rejected = await purchaseService.reject('P1', 'Too expensive');
-    
+
     expect(rejected.status).toBe('rejected');
     expect(storage.set).toHaveBeenCalled();
   });
 
   it('should get correct stats', async () => {
     const stats = await purchaseService.getStats();
-    
+
     expect(stats.totalOrders).toBe(2);
     expect(stats.pendingOrders).toBe(1); // P1 is pending
     expect(stats.totalValue).toBe(1500); // 1000 + 500

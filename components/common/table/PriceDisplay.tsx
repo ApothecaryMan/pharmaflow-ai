@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { useSettings } from '../../../context/SettingsContext';
 import { formatCompactCurrencyParts, formatCurrencyParts } from '../../../utils/currency';
 
@@ -43,4 +43,3 @@ export const PriceDisplay: React.FC<{
     </span>
   );
 };
-

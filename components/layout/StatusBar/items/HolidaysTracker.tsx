@@ -1,7 +1,7 @@
-import { type React, useState, useMemo, useEffect, Fragment } from 'react';
+import { Fragment, type React, useEffect, useMemo, useState } from 'react';
 import { useSettings } from '../../../../context';
 import { TRANSLATIONS } from '../../../../i18n/translations';
-import { holidaysService, type Holiday } from '../../../../services';
+import { type Holiday, holidaysService } from '../../../../services';
 
 const getDayNameAR = (dayIndex: number): string => {
   const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];

@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { useSettings } from '../../context';
-import { SmartInput } from '../common/SmartInputs';
-import { SegmentedControl } from '../common/SegmentedControl';
-import { LocationSelector } from '../common/LocationSelector';
-import { storage } from '../../utils/storage';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
-import type { AppSettings } from '../../services/settings/types';
-
-import { OnboardingStepper } from './OnboardingStepper';
+import { useSettings } from '../../context';
 import { branchService } from '../../services/org/branchService';
 import { orgService } from '../../services/org/orgService';
 import { settingsService } from '../../services/settings/settingsService';
+import type { AppSettings } from '../../services/settings/types';
+import { storage } from '../../utils/storage';
+import { LocationSelector } from '../common/LocationSelector';
+import { SegmentedControl } from '../common/SegmentedControl';
+import { SmartInput } from '../common/SmartInputs';
+import { OnboardingStepper } from './OnboardingStepper';
 
 interface BranchSetupScreenProps {
   language: 'EN' | 'AR';

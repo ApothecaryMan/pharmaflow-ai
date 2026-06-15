@@ -129,17 +129,17 @@ export interface AuditLog {
 }
 
 /** Professional Switch Design Variants */
-export type SwitchVariant = 
-  | 'default' 
+export type SwitchVariant =
+  | 'default'
   | 'v1'
-  | 'ios' 
-  | 'minimal' 
-  | 'icon' 
-  | 'vertical' 
-  | 'squircle' 
-  | 'slim' 
-  | 'outline' 
-  | 'segmented' 
+  | 'ios'
+  | 'minimal'
+  | 'icon'
+  | 'vertical'
+  | 'squircle'
+  | 'slim'
+  | 'outline'
+  | 'segmented'
   | 'neon';
 
 /** Global Badge Design Styles */

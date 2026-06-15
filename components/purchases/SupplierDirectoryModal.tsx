@@ -1,8 +1,8 @@
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import type { Supplier } from '../../types';
-import { usePosSounds } from '../common/hooks/usePosSounds';
 import { Modal, SearchInput } from '../common';
+import { usePosSounds } from '../common/hooks/usePosSounds';
 
 // ==========================================
 // Localized Translation Dictionaries (EN/AR)
@@ -98,14 +98,15 @@ export const SupplierDirectoryModal: React.FC<SupplierDirectoryModalProps> = ({
                       onSelectSupplier(supplier);
                       try {
                         playBeep();
-                      } catch (_e) { }
+                      } catch (_e) {}
                       onClose();
                       setSearch('');
                     }}
-                    className={`p-3.5 flex items-center justify-between cursor-pointer ${isSelected
+                    className={`p-3.5 flex items-center justify-between cursor-pointer ${
+                      isSelected
                         ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white'
                         : 'bg-white dark:bg-neutral-900 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'
-                      }`}
+                    }`}
                   >
                     <div className='flex items-center gap-3 min-w-0 flex-1'>
                       {/* Circle badge with code */}

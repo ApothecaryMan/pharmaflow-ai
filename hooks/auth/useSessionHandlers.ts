@@ -1,12 +1,11 @@
 import { useCallback, useState } from 'react';
+import { MODULE_VIEW_MAPPING, PHARMACY_MENU } from '../../config/menuData';
 import { ROUTES } from '../../config/routes';
-import { authService } from '../../services/auth/authService';
-import { PHARMACY_MENU, MODULE_VIEW_MAPPING } from '../../config/menuData';
-import { permissionsService } from '../../services/auth/permissionsService';
-import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
-import type { ViewState, Employee, Branch, UserSession } from '../../types';
-
+import { authService } from '../../services/auth/authService';
+import { permissionsService } from '../../services/auth/permissionsService';
+import type { Branch, Employee, UserSession, ViewState } from '../../types';
+import { storage } from '../../utils/storage';
 
 interface ExtendedSession extends UserSession {
   _originalRole?: UserSession['role'];
@@ -125,13 +124,14 @@ export const useSessionHandlers = ({
             let targetBranchId = selectedEmployee.branchId;
 
             // Check if user is manager or admin to use "last visited" logic
-            const isManagerOrAdmin = permissionsService.isManager() || permissionsService.isOrgAdmin();
-            
+            const isManagerOrAdmin =
+              permissionsService.isManager() || permissionsService.isOrgAdmin();
+
             if (isManagerOrAdmin) {
               const lastBranchKey = `pharma_last_branch_${session.userId}_${selectedEmployee.id}`;
               const lastBranchId = storage.get<string | null>(lastBranchKey, null);
-              
-              if (lastBranchId && branches.some(b => b.id === lastBranchId)) {
+
+              if (lastBranchId && branches.some((b) => b.id === lastBranchId)) {
                 targetBranchId = lastBranchId;
               }
             }
@@ -160,9 +160,9 @@ export const useSessionHandlers = ({
               });
             });
 
-            const targetView = (firstAllowedModule
-              ? MODULE_VIEW_MAPPING[firstAllowedModule.id]
-              : 'dashboard') as ViewState;
+            const targetView = (
+              firstAllowedModule ? MODULE_VIEW_MAPPING[firstAllowedModule.id] : 'dashboard'
+            ) as ViewState;
             const targetModule = firstAllowedModule?.id || 'dashboard';
 
             setNavigationParams(null); // Ensure no residual data from previous user
@@ -173,7 +173,16 @@ export const useSessionHandlers = ({
       }
       setCurrentEmployeeId(id);
     },
-    [employees, currentEmployeeId, setCurrentEmployeeId, setNavigationParams, setView, setActiveModule, switchBranch, branches]
+    [
+      employees,
+      currentEmployeeId,
+      setCurrentEmployeeId,
+      setNavigationParams,
+      setView,
+      setActiveModule,
+      switchBranch,
+      branches,
+    ]
   );
 
   // --- Optimized Logout Handler ---

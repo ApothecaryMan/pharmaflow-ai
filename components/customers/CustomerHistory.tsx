@@ -2,11 +2,11 @@ import type { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo, useState } from 'react';
 import type { TRANSLATIONS } from '../../i18n/translations';
 import type { Customer, Return, Sale } from '../../types';
+import { DateRangePicker } from '../common/DatePicker';
+import { PageHeader } from '../common/PageHeader';
 import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { TanStackTable } from '../common/TanStackTable';
-import { PageHeader } from '../common/PageHeader';
-import { DateRangePicker } from '../common/DatePicker';
 
 interface CustomerHistoryProps {
   color: string;
@@ -164,7 +164,9 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
         meta: { align: 'center', width: 150 },
         cell: (info) => {
           const status = info.row.original.status || 'pending';
-          const statusLabel = t.customerHistory?.statuses?.[status as keyof typeof t.customerHistory.statuses] || status;
+          const statusLabel =
+            t.customerHistory?.statuses?.[status as keyof typeof t.customerHistory.statuses] ||
+            status;
 
           let badgeClass = 'badge-neutral';
           let icon = 'help';
@@ -261,18 +263,22 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
             options={[
               { value: 'customers', label: t.allCustomers || 'List', icon: 'group' },
               { value: 'add-customer', label: t.addCustomer || 'Add', icon: 'person_add' },
-              { value: 'customer-history', label: t.customerHistory?.title || 'History', icon: 'history' },
+              {
+                value: 'customer-history',
+                label: t.customerHistory?.title || 'History',
+                icon: 'history',
+              },
             ]}
-            value="customer-history"
+            value='customer-history'
             onChange={(val) => {
               if (val === 'add-customer') onViewChange?.('customers', { mode: 'add' });
               else onViewChange?.(val);
             }}
-            shape="pill"
-            size="md"
-            iconSize="--icon-lg"
+            shape='pill'
+            size='md'
+            iconSize='--icon-lg'
             useGraphicFont={true}
-            className="w-full sm:w-[480px]"
+            className='w-full sm:w-[480px]'
           />
         }
         rightContent={

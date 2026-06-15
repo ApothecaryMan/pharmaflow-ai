@@ -64,8 +64,9 @@ export const customerRepository = {
 
   async getAll(effectiveBranchId: string, orgId?: string): Promise<Customer[]> {
     let query = supabase.from(this.tableName).select('*');
-    const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
-    
+    const isAll =
+      typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+
     if (effectiveBranchId && !isAll) {
       query = query.eq('branch_id', effectiveBranchId);
     } else if (isAll && orgId) {
@@ -73,11 +74,12 @@ export const customerRepository = {
     }
     const { data, error } = await query.order('name', { ascending: true });
     if (error) throw error;
-    return (data || []).map(item => this.mapFromDb(item));
+    return (data || []).map((item) => this.mapFromDb(item));
   },
 
   async getById(id: string): Promise<Customer | null> {
-    const { data, error } = await supabase.from(this.tableName)
+    const { data, error } = await supabase
+      .from(this.tableName)
       .select('*')
       .eq('id', id)
       .maybeSingle();
@@ -85,10 +87,15 @@ export const customerRepository = {
     return data ? this.mapFromDb(data) : null;
   },
 
-  async getByPhone(phone: string, effectiveBranchId: string, orgId?: string): Promise<Customer | null> {
+  async getByPhone(
+    phone: string,
+    effectiveBranchId: string,
+    orgId?: string
+  ): Promise<Customer | null> {
     let query = supabase.from(this.tableName).select('*').eq('phone', phone);
-    const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
-    
+    const isAll =
+      typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+
     if (effectiveBranchId && !isAll) {
       query = query.eq('branch_id', effectiveBranchId);
     } else if (isAll && orgId) {
@@ -102,7 +109,7 @@ export const customerRepository = {
   async getByCode(code: string, orgId?: string): Promise<Customer | null> {
     let query = supabase.from(this.tableName).select('*').eq('code', code);
     if (orgId) query = query.eq('org_id', orgId);
-    
+
     const { data, error } = await query.maybeSingle();
     if (error) throw error;
     return data ? this.mapFromDb(data) : null;
@@ -113,22 +120,27 @@ export const customerRepository = {
     return !!customer;
   },
 
-  async findByFilters(filters: CustomerFilters, effectiveBranchId: string, orgId?: string): Promise<Customer[]> {
+  async findByFilters(
+    filters: CustomerFilters,
+    effectiveBranchId: string,
+    orgId?: string
+  ): Promise<Customer[]> {
     let query = supabase.from(this.tableName).select('*');
-    const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
-    
+    const isAll =
+      typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+
     if (effectiveBranchId && !isAll) {
       query = query.eq('branch_id', effectiveBranchId);
     } else if (isAll && orgId) {
       query = query.eq('org_id', orgId);
     }
-    
+
     if (filters.isVip !== undefined) query = query.eq('vip', filters.isVip);
     if (filters.status) query = query.eq('status', filters.status);
-    
+
     const { data, error } = await query.order('name', { ascending: true });
     if (error) throw error;
-    return (data || []).map(item => this.mapFromDb(item));
+    return (data || []).map((item) => this.mapFromDb(item));
   },
 
   async insert(customer: Customer): Promise<void> {
@@ -137,7 +149,8 @@ export const customerRepository = {
   },
 
   async update(id: string, updates: Partial<Customer>): Promise<Customer> {
-    const { data, error } = await supabase.from(this.tableName)
+    const { data, error } = await supabase
+      .from(this.tableName)
       .update(this.mapToDb(updates))
       .eq('id', id)
       .select()
@@ -154,8 +167,8 @@ export const customerRepository = {
 
   async upsert(customers: Customer[]): Promise<void> {
     if (customers.length === 0) return;
-    const dbCustomers = customers.map(c => this.mapToDb(c));
+    const dbCustomers = customers.map((c) => this.mapToDb(c));
     const { error } = await supabase.from(this.tableName).upsert(dbCustomers);
     if (error) throw error;
-  }
+  },
 };

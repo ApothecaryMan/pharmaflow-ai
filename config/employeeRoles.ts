@@ -2,70 +2,70 @@
  * Core Role Definitions (The Single Source of Truth)
  */
 const ROLE_DEFINITIONS = {
-  pharmacist_owner: { 
+  pharmacist_owner: {
     translationKey: 'pharmacist_owner',
     defaultLabelEN: 'Pharmacy Owner',
-    defaultLabelAR: 'مالك الصيدلية'
+    defaultLabelAR: 'مالك الصيدلية',
   },
-  admin: { 
+  admin: {
     translationKey: 'admin',
     defaultLabelEN: 'System Admin',
-    defaultLabelAR: 'System Admin'
+    defaultLabelAR: 'System Admin',
   },
-  pharmacist_manager: { 
+  pharmacist_manager: {
     translationKey: 'pharmacist_manager',
     defaultLabelEN: 'Pharmacist Manager',
-    defaultLabelAR: 'صيدلي مدير'
+    defaultLabelAR: 'صيدلي مدير',
   },
-  pharmacist: { 
+  pharmacist: {
     translationKey: 'pharmacist',
     defaultLabelEN: 'Pharmacist',
-    defaultLabelAR: 'صيدلي' 
+    defaultLabelAR: 'صيدلي',
   },
-  inventory_officer: { 
+  inventory_officer: {
     translationKey: 'inventory_officer',
     defaultLabelEN: 'Inventory Officer',
-    defaultLabelAR: 'مسؤول مخزن'
+    defaultLabelAR: 'مسؤول مخزن',
   },
-  assistant: { 
+  assistant: {
     translationKey: 'assistant',
     defaultLabelEN: 'Assistant',
-    defaultLabelAR: 'مساعد صيدلي'
+    defaultLabelAR: 'مساعد صيدلي',
   },
-  hr_manager: { 
+  hr_manager: {
     translationKey: 'hr_manager',
     defaultLabelEN: 'HR Manager',
-    defaultLabelAR: 'مدير موارد بشرية'
+    defaultLabelAR: 'مدير موارد بشرية',
   },
-  cashier: { 
+  cashier: {
     translationKey: 'cashier',
     defaultLabelEN: 'Cashier',
-    defaultLabelAR: 'كاشير'
+    defaultLabelAR: 'كاشير',
   },
-  senior_cashier: { 
+  senior_cashier: {
     translationKey: 'senior_cashier',
     defaultLabelEN: 'Senior Cashier',
-    defaultLabelAR: 'كاشير رئيسي'
+    defaultLabelAR: 'كاشير رئيسي',
   },
-  delivery: { 
+  delivery: {
     translationKey: 'delivery',
     defaultLabelEN: 'Delivery',
-    defaultLabelAR: 'طيار'
+    defaultLabelAR: 'طيار',
   },
-  delivery_pharmacist: { 
+  delivery_pharmacist: {
     translationKey: 'delivery_pharmacist',
     defaultLabelEN: 'Home-Care Pharmacist',
-    defaultLabelAR: 'صيدلي رعاية منزلية'
+    defaultLabelAR: 'صيدلي رعاية منزلية',
   },
-  officeboy: { 
+  officeboy: {
     translationKey: 'officeboy',
     defaultLabelEN: 'Office Boy',
-    defaultLabelAR: 'عامل بوفيه'
+    defaultLabelAR: 'عامل بوفيه',
   },
-  manager: { 
+  manager: {
     translationKey: 'manager',
     defaultLabelEN: 'General Manager',
-    defaultLabelAR: 'مدير عام'
+    defaultLabelAR: 'مدير عام',
   },
 } as const;
 
@@ -87,7 +87,7 @@ export interface SystemRoleConfig {
 export const SYSTEM_ROLES: SystemRoleConfig[] = Object.entries(ROLE_DEFINITIONS).map(
   ([id, config]) => ({
     id: id as UserRole,
-    ...config
+    ...config,
   })
 );
 
@@ -116,7 +116,7 @@ export const DEPARTMENT_ROLES: Record<string, UserRole[]> = {
  */
 export const getRoleLabel = (roleId: string, tRoles: any): string => {
   if (roleId in tRoles) return tRoles[roleId as keyof typeof tRoles];
-  
+
   // Fallback to config labels if i18n key missing
   const config = ROLE_DEFINITIONS[roleId as UserRole];
   return config ? config.defaultLabelEN : roleId;
@@ -127,5 +127,5 @@ export const getRoleLabel = (roleId: string, tRoles: any): string => {
  */
 export const getRolesForDepartment = (departmentId: string): SystemRoleConfig[] => {
   const validRoleIds = DEPARTMENT_ROLES[departmentId] || [];
-  return SYSTEM_ROLES.filter(r => validRoleIds.includes(r.id));
+  return SYSTEM_ROLES.filter((r) => validRoleIds.includes(r.id));
 };

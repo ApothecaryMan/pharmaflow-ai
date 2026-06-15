@@ -1,6 +1,11 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { isAfter, isToday, parseISO, subHours } from 'date-fns';
 import React, { useCallback, useMemo, useState } from 'react';
+import { useAlert, useSettings } from '../../../context';
+import { useData } from '../../../context/DataContext';
+import { useShift } from '../../../hooks/sales/useShift';
 import { batchService } from '../../../services/inventory/batchService';
+import { pricingService } from '../../../services/sales/pricingService';
 import {
   type CartItem,
   type Customer,
@@ -10,30 +15,27 @@ import {
   OrderModificationRecord,
   type Sale,
 } from '../../../types';
-import { useAlert, useSettings } from '../../../context';
 import { formatCurrency, money, pricing } from '../../../utils/currency';
 import { getDisplayName } from '../../../utils/drugDisplayName';
+import { idGenerator } from '../../../utils/idGenerator';
+import * as stockOps from '../../../utils/stockOperations';
+import { resolvePrice, resolveUnits } from '../../../utils/stockUtils';
+import { useContextMenu } from '../../common/ContextMenu';
 import { FilterDropdown } from '../../common/FilterDropdown';
-import { SmartInput, SmartTextarea } from '../../common/SmartInputs';
+import { InsightTooltip } from '../../common/InsightTooltip';
 import { MaterialTabs } from '../../common/MaterialTabs';
 import { Modal } from '../../common/Modal';
 import { SearchInput } from '../../common/SearchInput';
 import { SegmentedControl } from '../../common/SegmentedControl';
+import { SmartInput, SmartTextarea } from '../../common/SmartInputs';
 import { TanStackTable } from '../../common/TanStackTable';
-import { useContextMenu } from '../../common/ContextMenu';
-import { getActiveReceiptSettings, printInvoice } from '../InvoiceTemplate';
-import { InsightTooltip } from '../../common/InsightTooltip';
 import { Tooltip } from '../../common/Tooltip';
-import { isToday, isAfter, subHours, parseISO } from 'date-fns';
-import { pricingService } from '../../../services/sales/pricingService';
-import { resolveUnits, resolvePrice } from '../../../utils/stockUtils';
-import * as stockOps from '../../../utils/stockOperations';
-import { idGenerator } from '../../../utils/idGenerator';
-import { useShift } from '../../../hooks/sales/useShift';
-import { useData } from '../../../context/DataContext';
+import { getActiveReceiptSettings, printInvoice } from '../InvoiceTemplate';
 
 const ShiftWarning = ({ t, compact = false }: { t: Translations; compact?: boolean }) => (
-  <div className={`flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 ${compact ? 'h-7 px-2 w-full' : 'h-[42px] px-4'}`}>
+  <div
+    className={`flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 ${compact ? 'h-7 px-2 w-full' : 'h-[42px] px-4'}`}
+  >
     <div className='flex items-center gap-1.5 text-red-700 dark:text-red-300'>
       <span className='material-symbols-rounded' style={{ fontSize: compact ? '16px' : '18px' }}>
         warning
@@ -100,7 +102,8 @@ export interface DeliveryOrdersModalProps {
   inventory: Drug[];
   onUpdateSale: (saleId: string, updates: Partial<Sale>) => void;
   language?: Language;
-  t: Translations; slations;
+  t: Translations;
+  slations;
   color?: string;
   currentEmployeeId?: string;
   customers?: Customer[];
@@ -164,13 +167,15 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
     editHistory.stack[editHistory.index];
 
   const pushState = useCallback(
-    (modifier: (current: {
-      changes: Map<string, PendingItemChange>;
-      discounts: Map<string, PendingDiscountChange>;
-    }) => {
-      changes: Map<string, PendingItemChange>;
-      discounts: Map<string, PendingDiscountChange>;
-    }) => {
+    (
+      modifier: (current: {
+        changes: Map<string, PendingItemChange>;
+        discounts: Map<string, PendingDiscountChange>;
+      }) => {
+        changes: Map<string, PendingItemChange>;
+        discounts: Map<string, PendingDiscountChange>;
+      }
+    ) => {
       setEditHistory((prev) => {
         const current = prev.stack[prev.index];
         const next = modifier(current);
@@ -206,7 +211,10 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   const [orderToEditGuestId, setOrderToEditGuestId] = useState<string | null>(null);
   const [tempGuestName, setTempGuestName] = useState('');
   const [tempGuestAddress, setTempGuestAddress] = useState('');
-  const [originalGuestInfo, setOriginalGuestInfo] = useState<{ name: string; address: string } | null>(null);
+  const [originalGuestInfo, setOriginalGuestInfo] = useState<{
+    name: string;
+    address: string;
+  } | null>(null);
 
   const selectedSale = useMemo(() => {
     return sales.find((s) => s.id === selectedSaleId);
@@ -214,10 +222,11 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
   // Calculate Pending Value Insights
   const pendingStats = useMemo(() => {
-    const pendingSales = sales.filter((s) =>
-      s.status === 'pending' &&
-      s.saleType === 'delivery' &&
-      (!activeBranchId || s.branchId === activeBranchId)
+    const pendingSales = sales.filter(
+      (s) =>
+        s.status === 'pending' &&
+        s.saleType === 'delivery' &&
+        (!activeBranchId || s.branchId === activeBranchId)
     );
     const now = new Date();
     const twentyFourHoursAgo = subHours(now, 24);
@@ -289,29 +298,32 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
   const { showMenu } = useContextMenu();
 
-  const handleRowContextMenu = useCallback((e: React.MouseEvent, sale: Sale) => {
-    e.preventDefault();
-    showMenu(e.clientX, e.clientY, [
-      {
-        label: t.printReceipt || 'Print Receipt',
-        icon: 'print',
-        action: () => {
-          const activeBranch = branches?.find((b: any) => b.id === activeBranchId);
-          const opts = getActiveReceiptSettings(activeBranch?.printSettings);
-          printInvoice(sale, opts);
+  const handleRowContextMenu = useCallback(
+    (e: React.MouseEvent, sale: Sale) => {
+      e.preventDefault();
+      showMenu(e.clientX, e.clientY, [
+        {
+          label: t.printReceipt || 'Print Receipt',
+          icon: 'print',
+          action: () => {
+            const activeBranch = branches?.find((b: any) => b.id === activeBranchId);
+            const opts = getActiveReceiptSettings(activeBranch?.printSettings);
+            printInvoice(sale, opts);
+          },
         },
-      },
-      {
-        label: t.editOrder || 'Edit Order',
-        icon: 'edit',
-        action: () => {
-          setSelectedSaleId(sale.id);
-          setIsEditMode(true);
+        {
+          label: t.editOrder || 'Edit Order',
+          icon: 'edit',
+          action: () => {
+            setSelectedSaleId(sale.id);
+            setIsEditMode(true);
+          },
+          disabled: sale.status === 'completed' || sale.status === 'cancelled' || !hasOpenShift,
         },
-        disabled: sale.status === 'completed' || sale.status === 'cancelled' || !hasOpenShift,
-      },
-    ]);
-  }, [showMenu, t.printReceipt, t.editOrder, setSelectedSaleId, setIsEditMode]);
+      ]);
+    },
+    [showMenu, t.printReceipt, t.editOrder, setSelectedSaleId, setIsEditMode]
+  );
 
   // Get current quantity for an item (considering pending changes)
   const getItemQuantity = useCallback(
@@ -354,14 +366,16 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // 3. Calculate Limits (Total Units)
       // drug.stock is typically stored as Total Units in the system (based on POS analysis)
       // Available Limit = Actual Stock in Inventory + What we already own in this Order
-      const totalOriginalUnitsOwned = resolveUnits(originalPackQty, false, unitsPerPack) +
+      const totalOriginalUnitsOwned =
+        resolveUnits(originalPackQty, false, unitsPerPack) +
         resolveUnits(originalUnitQty, true, unitsPerPack);
       const maxUnitsAvailable = drug.stock + totalOriginalUnitsOwned;
 
       // 4. Calculate Proposed Total Usage
       const proposedPackQty = isUnit ? currentPendingPackQty : proposedQty;
       const proposedUnitQty = isUnit ? proposedQty : currentPendingUnitQty;
-      const proposedTotalUnits = resolveUnits(proposedPackQty, false, unitsPerPack) +
+      const proposedTotalUnits =
+        resolveUnits(proposedPackQty, false, unitsPerPack) +
         resolveUnits(proposedUnitQty, true, unitsPerPack);
 
       // 5. Validation & Clamping
@@ -573,7 +587,10 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       }
 
       // Step 1: Calculate totals using unified pricing service
-      const totals = pricingService.calculateOrderTotals(updatedItems, selectedSale.globalDiscount || 0);
+      const totals = pricingService.calculateOrderTotals(
+        updatedItems,
+        selectedSale.globalDiscount || 0
+      );
 
       const subtotal = totals.netSubtotal;
       const finalTotal = money.add(totals.finalTotal, selectedSale.deliveryFee || 0);
@@ -726,7 +743,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         cell: (info) => {
           const code = info.getValue() as string;
           // Robust lookup: check both custom code and system serial ID
-          const customer = customers.find(c => c.code === code || c.serialId === code);
+          const customer = customers.find((c) => c.code === code || c.serialId === code);
           const isClickable = !!customer && !!onViewCustomerHistory;
 
           return (
@@ -737,10 +754,11 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   onViewCustomerHistory(customer);
                 }
               }}
-              className={`font-mono font-bold text-sm select-none ${isClickable
+              className={`font-mono font-bold text-sm select-none ${
+                isClickable
                   ? 'text-primary-600 dark:text-primary-400 cursor-pointer hover:underline decoration-primary-300 dark:decoration-primary-700 underline-offset-2 transition-all active:scale-95'
                   : 'text-gray-700 dark:text-gray-300'
-                }`}
+              }`}
               title={isClickable ? t.viewCustomerHistory || 'View Customer History' : undefined}
             >
               {code || '-'}
@@ -759,7 +777,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           const isGuest = !s.customerCode || s.customerCode === '-';
           const hasTempInfo = (s as any).isTemporaryInfo;
           // Support both English and Arabic identifiers for Guest Customer
-          const isGuestName = name === 'Guest Customer' || name === 'عميل غير مسجل' || name === t.guestCustomer;
+          const isGuestName =
+            name === 'Guest Customer' || name === 'عميل غير مسجل' || name === t.guestCustomer;
           const displayName = isGuestName ? t.guestCustomer || name : name;
 
           return (
@@ -772,7 +791,10 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   onClick={(e) => {
                     e.stopPropagation();
                     setOrderToEditGuestId(s.id);
-                    const isGenericGuest = s.customerName === 'Guest Customer' || s.customerName === 'عميل غير مسجل' || s.customerName === t.guestCustomer;
+                    const isGenericGuest =
+                      s.customerName === 'Guest Customer' ||
+                      s.customerName === 'عميل غير مسجل' ||
+                      s.customerName === t.guestCustomer;
                     const name = isGenericGuest ? '' : s.customerName;
                     const address = s.customerStreetAddress || '';
                     setTempGuestName(name);
@@ -783,10 +805,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   title={t.editGuestInfo || 'Edit Guest Info'}
                   disabled={!hasOpenShift}
                 >
-                  <span
-                    className='material-symbols-rounded'
-                    style={{ fontSize: 'var(--icon-md)' }}
-                  >
+                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
                     edit_note
                   </span>
                 </button>
@@ -805,15 +824,14 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           const displayAddress = manualAddress || standardAddress;
 
           return (
-            <div className='text-[11px] leading-tight whitespace-normal line-clamp-1' title={displayAddress}>
+            <div
+              className='text-[11px] leading-tight whitespace-normal line-clamp-1'
+              title={displayAddress}
+            >
               {manualAddress ? (
-                <span className='font-bold text-gray-900 dark:text-gray-100'>
-                  {manualAddress}
-                </span>
+                <span className='font-bold text-gray-900 dark:text-gray-100'>{manualAddress}</span>
               ) : (
-                <span className='text-gray-400 dark:text-gray-500'>
-                  {standardAddress || '-'}
-                </span>
+                <span className='text-gray-400 dark:text-gray-500'>{standardAddress || '-'}</span>
               )}
             </div>
           );
@@ -830,7 +848,9 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
           return (
             <div className='flex flex-col items-start leading-tight'>
-              <span className={`font-bold ${isCard ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-gray-100'}`}>
+              <span
+                className={`font-bold ${isCard ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-gray-100'}`}
+              >
                 {formatCurrency(info.getValue())}
               </span>
               {(info.row.original.globalDiscount || 0) > 0 && (
@@ -877,30 +897,36 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
           if (!hasOpenShift && s.status !== 'completed' && s.status !== 'cancelled') {
             return (
-              <div className='flex items-center justify-end h-full' onClick={(e) => e.stopPropagation()}>
+              <div
+                className='flex items-center justify-end h-full'
+                onClick={(e) => e.stopPropagation()}
+              >
                 <ShiftWarning t={t} compact={true} />
               </div>
             );
           }
 
           return (
-            <div className='flex items-center justify-end gap-1.5' onClick={(e) => e.stopPropagation()}>
+            <div
+              className='flex items-center justify-end gap-1.5'
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* Slot 1: Cancel Button (Fixed Width) */}
               <div className='w-8 flex justify-center shrink-0'>
                 {(s.status === 'pending' ||
                   s.status === 'with_delivery' ||
                   s.status === 'on_way') && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOrderToCancelId(s.id);
-                      }}
-                      className='p-1 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20'
-                      title={t.cancel || 'Cancel'}
-                    >
-                      <span className='material-symbols-rounded text-[20px]'>block</span>
-                    </button>
-                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOrderToCancelId(s.id);
+                    }}
+                    className='p-1 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20'
+                    title={t.cancel || 'Cancel'}
+                  >
+                    <span className='material-symbols-rounded text-[20px]'>block</span>
+                  </button>
+                )}
               </div>
 
               {/* Slot 2: Main Action Button (Fixed Width) */}
@@ -939,13 +965,21 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   </button>
                 )}
                 {s.status === 'completed' && (
-                  <div className='flex items-center gap-1 text-green-600' title={t.completed || 'تم التوصيل'}>
+                  <div
+                    className='flex items-center gap-1 text-green-600'
+                    title={t.completed || 'تم التوصيل'}
+                  >
                     <span className='material-symbols-rounded text-lg'>task_alt</span>
-                    <span className='text-[10px] font-bold uppercase'>{t.completed || 'مكتمل'}</span>
+                    <span className='text-[10px] font-bold uppercase'>
+                      {t.completed || 'مكتمل'}
+                    </span>
                   </div>
                 )}
                 {s.status === 'cancelled' && (
-                  <div className='flex items-center gap-1 text-red-600' title={t.cancelled || 'ملغى'}>
+                  <div
+                    className='flex items-center gap-1 text-red-600'
+                    title={t.cancelled || 'ملغى'}
+                  >
                     <span className='material-symbols-rounded text-lg'>cancel</span>
                     <span className='text-[10px] font-bold uppercase'>{t.cancelled || 'ملغى'}</span>
                   </div>
@@ -954,7 +988,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
               {/* Slot 3: Undo Button (Fixed Width) */}
               <div className='w-8 flex justify-center shrink-0'>
-                {(s.status === 'on_way' || s.status === 'with_delivery') ? (
+                {s.status === 'on_way' || s.status === 'with_delivery' ? (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1058,15 +1092,23 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
                   {/* 3. Status Badge (Compact) */}
                   <div
-                    className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full font-black uppercase tracking-widest border shrink-0 ${selectedSale.status === 'completed'
+                    className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full font-black uppercase tracking-widest border shrink-0 ${
+                      selectedSale.status === 'completed'
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
                         : selectedSale.status === 'cancelled'
                           ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'
                           : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20'
-                      }`}
+                    }`}
                   >
-                    <span className='material-symbols-rounded text-sm' style={{ fontVariationSettings: "'FILL' 1" }}>
-                      {selectedSale.status === 'completed' ? 'verified' : selectedSale.status === 'cancelled' ? 'cancel' : 'pending'}
+                    <span
+                      className='material-symbols-rounded text-sm'
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                      {selectedSale.status === 'completed'
+                        ? 'verified'
+                        : selectedSale.status === 'cancelled'
+                          ? 'cancel'
+                          : 'pending'}
                     </span>
                     <span>{t[selectedSale.status] || selectedSale.status}</span>
                   </div>
@@ -1076,7 +1118,9 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   {/* 4. Customer/Guest Identity */}
                   <div className='flex items-center gap-2.5 min-w-0'>
                     <div className='w-6 h-6 rounded-full bg-zinc-200 dark:bg-white/10 flex items-center justify-center shrink-0'>
-                      <span className='material-symbols-rounded text-base text-zinc-500'>person</span>
+                      <span className='material-symbols-rounded text-base text-zinc-500'>
+                        person
+                      </span>
                     </div>
                     <div className='flex items-center gap-2 truncate'>
                       <span className='text-[13px] font-bold text-zinc-800 dark:text-zinc-200 truncate'>
@@ -1146,7 +1190,12 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                               disabled={!hasChanges}
                               className='h-8 px-4 text-[11px] font-black uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors disabled:opacity-30 flex items-center gap-1.5 shadow-sm shadow-emerald-500/20'
                             >
-                              <span className='material-symbols-rounded text-sm' style={{ fontVariationSettings: "'FILL' 1" }}>done_all</span>
+                              <span
+                                className='material-symbols-rounded text-sm'
+                                style={{ fontVariationSettings: "'FILL' 1" }}
+                              >
+                                done_all
+                              </span>
                               {t.saveChanges || 'Save'}
                             </button>
                           </div>
@@ -1165,9 +1214,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
                   {!hasOpenShift &&
                     selectedSale?.status !== 'completed' &&
-                    selectedSale?.status !== 'cancelled' && (
-                      <ShiftWarning t={t} compact={true} />
-                    )}
+                    selectedSale?.status !== 'cancelled' && <ShiftWarning t={t} compact={true} />}
 
                   {!currentEmployeeId &&
                     hasOpenShift &&
@@ -1369,22 +1416,27 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                     return (
                                       <div
                                         title={`Max: ${effectiveMax}%`}
-                                        className={`flex items-center rounded-lg border shadow-xs h-6 overflow-hidden transition-colors w-14 shrink-0 ${currentDiscount > 0
+                                        className={`flex items-center rounded-lg border shadow-xs h-6 overflow-hidden transition-colors w-14 shrink-0 ${
+                                          currentDiscount > 0
                                             ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
                                             : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'
-                                          }`}
+                                        }`}
                                       >
                                         <button
                                           onClick={() => {
                                             const newVal = currentDiscount === 0 ? effectiveMax : 0;
                                             handleDiscountChange(common.id, newVal);
                                           }}
-                                          className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${currentDiscount > 0
+                                          className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${
+                                            currentDiscount > 0
                                               ? 'text-green-600 dark:text-green-400'
                                               : 'text-gray-400'
-                                            }`}
+                                          }`}
                                         >
-                                          <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
+                                          <span
+                                            className='material-symbols-rounded'
+                                            style={{ fontSize: '16px' }}
+                                          >
                                             percent
                                           </span>
                                         </button>
@@ -1399,10 +1451,11 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                             if (finalVal > effectiveMax) finalVal = effectiveMax;
                                             handleDiscountChange(common.id, finalVal);
                                           }}
-                                          className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${currentDiscount > 0
+                                          className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                                            currentDiscount > 0
                                               ? 'text-green-700 dark:text-green-300 placeholder-green-300'
                                               : 'text-gray-900 dark:text-gray-100 placeholder-gray-400'
-                                            }`}
+                                          }`}
                                         />
                                       </div>
                                     );
@@ -1441,7 +1494,9 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                       className='w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors'
                                       title={t.delete || 'Delete'}
                                     >
-                                      <span className='material-symbols-rounded text-xl'>delete</span>
+                                      <span className='material-symbols-rounded text-xl'>
+                                        delete
+                                      </span>
                                     </button>
                                   ))}
                               </div>
@@ -1463,11 +1518,14 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                       .map((record, idx) => {
                         const isExpanded = expandedHistoryRecordId === record.id;
                         const date = new Date(record.timestamp);
-                        const timeStr = date.toLocaleString(currentLanguage === 'AR' ? 'ar-EG-u-nu-latn' : 'en-US', {
-                          hour: 'numeric',
-                          minute: 'numeric',
-                          hour12: true,
-                        });
+                        const timeStr = date.toLocaleString(
+                          currentLanguage === 'AR' ? 'ar-EG-u-nu-latn' : 'en-US',
+                          {
+                            hour: 'numeric',
+                            minute: 'numeric',
+                            hour12: true,
+                          }
+                        );
 
                         // Calculate relative time
                         const getRelativeTime = (d: Date) => {
@@ -1486,10 +1544,13 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                             return currentLanguage === 'AR'
                               ? `${t.ago || 'منذ'} ${hours} س`
                               : `${hours}h ${t.ago || 'ago'}`;
-                          return date.toLocaleDateString(currentLanguage === 'AR' ? 'ar-EG-u-nu-latn' : 'en-US', {
-                            day: 'numeric',
-                            month: 'short',
-                          });
+                          return date.toLocaleDateString(
+                            currentLanguage === 'AR' ? 'ar-EG-u-nu-latn' : 'en-US',
+                            {
+                              day: 'numeric',
+                              month: 'short',
+                            }
+                          );
                         };
 
                         const hasDeletions = record.modifications.some(
@@ -1501,14 +1562,15 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                           <div key={record.id} className='relative z-10'>
                             {/* Timeline Node */}
                             <div
-                              className={`absolute -left-[18px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-xs transition-all duration-300 ${isExpanded
+                              className={`absolute -left-[18px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-xs transition-all duration-300 ${
+                                isExpanded
                                   ? hasDeletions
                                     ? 'bg-red-500 scale-110'
                                     : 'bg-orange-500 scale-125'
                                   : hasDeletions
                                     ? 'bg-red-300'
                                     : 'bg-orange-300'
-                                }`}
+                              }`}
                             ></div>
 
                             <MaterialTabs
@@ -1532,7 +1594,10 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                             {getRelativeTime(date)}
                                           </span>
                                           <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
-                                          <span className='text-sm font-bold text-gray-900 dark:text-gray-100 truncate' dir='rtl'>
+                                          <span
+                                            className='text-sm font-bold text-gray-900 dark:text-gray-100 truncate'
+                                            dir='rtl'
+                                          >
                                             {record.modifications.length}{' '}
                                             {record.modifications.length === 1
                                               ? t.modification || 'Change'
@@ -1565,7 +1630,9 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                       </div>
 
                                       <div className='flex items-center gap-2 shrink-0'>
-                                        {record.modifications.some((m) => m.type === 'item_removed') && (
+                                        {record.modifications.some(
+                                          (m) => m.type === 'item_removed'
+                                        ) && (
                                           <span
                                             className='material-symbols-rounded text-xl text-red-600 dark:text-red-400'
                                             title={t.deleted || 'Deleted'}
@@ -1573,7 +1640,9 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                             delete
                                           </span>
                                         )}
-                                        {record.modifications.some((m) => m.type === 'quantity_update') && (
+                                        {record.modifications.some(
+                                          (m) => m.type === 'quantity_update'
+                                        ) && (
                                           <span
                                             className='material-symbols-rounded text-xl text-orange-600 dark:text-orange-400'
                                             title={t.quantityUpdated || 'Quantity Updated'}
@@ -1581,7 +1650,9 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                             edit_square
                                           </span>
                                         )}
-                                        {record.modifications.some((m) => m.type === 'discount_update') && (
+                                        {record.modifications.some(
+                                          (m) => m.type === 'discount_update'
+                                        ) && (
                                           <span
                                             className='material-symbols-rounded text-xl text-blue-600 dark:text-blue-400'
                                             title={t.discountUpdated || 'Discount Updated'}
@@ -1589,7 +1660,9 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                             percent
                                           </span>
                                         )}
-                                        {record.modifications.some((m) => m.type === 'item_added') && (
+                                        {record.modifications.some(
+                                          (m) => m.type === 'item_added'
+                                        ) && (
                                           <span
                                             className='material-symbols-rounded text-xl text-green-600 dark:text-green-400'
                                             title={t.itemAdded || 'Item Added'}
@@ -1626,7 +1699,9 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                           </span>
                                           <span className='text-[10px] text-gray-500 uppercase tracking-widest'>
                                             {date.toLocaleDateString(
-                                              currentLanguage === 'AR' ? 'ar-EG-u-nu-latn' : 'en-US',
+                                              currentLanguage === 'AR'
+                                                ? 'ar-EG-u-nu-latn'
+                                                : 'en-US',
                                               { weekday: 'long', day: 'numeric', month: 'long' }
                                             )}
                                           </span>
@@ -1648,7 +1723,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
                                       <div className='space-y-1'>
                                         {record.modifications.map((mod, modIdx) => {
-                                          const isIncrease = (mod.newQuantity || 0) > (mod.previousQuantity || 0);
+                                          const isIncrease =
+                                            (mod.newQuantity || 0) > (mod.previousQuantity || 0);
                                           const isDeletion = mod.type === 'item_removed';
                                           const isDiscount = mod.type === 'discount_update';
 
@@ -1658,14 +1734,15 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                               className='flex items-center gap-3 py-1'
                                             >
                                               <span
-                                                className={`shrink-0 ${isDeletion
+                                                className={`shrink-0 ${
+                                                  isDeletion
                                                     ? 'text-red-600 dark:text-red-400'
                                                     : isDiscount
                                                       ? 'text-blue-600 dark:text-blue-400'
                                                       : isIncrease
                                                         ? 'text-green-600 dark:text-green-400'
                                                         : 'text-orange-600 dark:text-orange-400'
-                                                  }`}
+                                                }`}
                                               >
                                                 <span className='material-symbols-rounded text-lg'>
                                                   {isDeletion ? 'delete' : 'edit_square'}
@@ -1681,7 +1758,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                                     return getDisplayName(
                                                       {
                                                         name: mod.itemName,
-                                                        dosageForm: mod.dosageForm || drug?.dosageForm,
+                                                        dosageForm:
+                                                          mod.dosageForm || drug?.dosageForm,
                                                       },
                                                       textTransform
                                                     );
@@ -1689,14 +1767,15 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                                 </span>
                                                 <div className='flex items-center gap-2 ml-8 shrink-0'>
                                                   <div
-                                                    className={`flex items-center gap-1.5 font-bold text-xs ${isDeletion
+                                                    className={`flex items-center gap-1.5 font-bold text-xs ${
+                                                      isDeletion
                                                         ? 'text-red-600 dark:text-red-400'
                                                         : isDiscount
                                                           ? 'text-blue-600 dark:text-blue-400'
                                                           : isIncrease
                                                             ? 'text-green-600 dark:text-green-400'
                                                             : 'text-orange-600 dark:text-orange-400'
-                                                      }`}
+                                                    }`}
                                                   >
                                                     {isDiscount ? (
                                                       <>
@@ -1738,7 +1817,6 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   </div>
                 )}
               </div>
-
             </div>
           ) : (
             /* Table View */
@@ -1771,66 +1849,84 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
               </span>
 
               <Tooltip
-                    content={
-                      <InsightTooltip
-                        title={t.pendingValueDetails}
-                        value={pendingStats.total}
-                        icon='analytics'
-                        iconColorClass='text-blue-500'
-                        language={currentLanguage}
-                        calculations={[
-                          {
-                            label: t.timeDistribution,
-                            math: (
-                              <div className='flex flex-col gap-1 w-full'>
-                                <div className='flex justify-between items-center text-[11px]'>
-                                  <span className='opacity-60'>{t.today}:</span>
-                                  <span>{formatCurrency(pendingStats.today.value, 'EGP', currentLanguage === 'AR' ? 'ar-EG' : 'en-US')}</span>
-                                </div>
-                                <div className='flex justify-between items-center text-[11px]'>
-                                  <span className='opacity-60'>{t.last24Hours}:</span>
-                                  <span>{formatCurrency(pendingStats.last24h.value, 'EGP', currentLanguage === 'AR' ? 'ar-EG' : 'en-US')}</span>
-                                </div>
-                                <div className='flex justify-between items-center text-[11px] border-t border-white/10 pt-1 mt-1'>
-                                  <span className='opacity-60'>{t.older}:</span>
-                                  <span>{formatCurrency(pendingStats.older.value, 'EGP', currentLanguage === 'AR' ? 'ar-EG' : 'en-US')}</span>
-                                </div>
-                              </div>
-                            ),
-                            isCurrency: false
-                          }
-                        ]}
-                        details={[
-                          {
-                            icon: 'today',
-                            label: t.todaysOrders,
-                            value: `${pendingStats.today.count} ${pendingStats.today.count === 1 ? t.orderSingular : t.orderPlural}`,
-                            isCurrency: false,
-                            colorClass: 'text-emerald-500'
-                          },
-                          {
-                            icon: 'history_toggle_off',
-                            label: t.last24Hours,
-                            value: `${pendingStats.last24h.count} ${pendingStats.last24h.count === 1 ? t.orderSingular : t.orderPlural}`,
-                            isCurrency: false,
-                            colorClass: 'text-blue-500'
-                          },
-                          {
-                            icon: 'event_busy',
-                            label: t.olderOrders,
-                            value: `${pendingStats.older.count} ${pendingStats.older.count === 1 ? t.orderSingular : t.orderPlural}`,
-                            isCurrency: false,
-                            colorClass: 'text-orange-500'
-                          }
-                        ]}
-                        footer={t.pendingValueInsightFooter}
-                      />
-                    }
-                  >
-                    <span className='material-symbols-rounded text-gray-400 hover:text-blue-500 transition-colors cursor-help text-[20px]'>
-                      info
-                    </span>
-                  </Tooltip>
+                content={
+                  <InsightTooltip
+                    title={t.pendingValueDetails}
+                    value={pendingStats.total}
+                    icon='analytics'
+                    iconColorClass='text-blue-500'
+                    language={currentLanguage}
+                    calculations={[
+                      {
+                        label: t.timeDistribution,
+                        math: (
+                          <div className='flex flex-col gap-1 w-full'>
+                            <div className='flex justify-between items-center text-[11px]'>
+                              <span className='opacity-60'>{t.today}:</span>
+                              <span>
+                                {formatCurrency(
+                                  pendingStats.today.value,
+                                  'EGP',
+                                  currentLanguage === 'AR' ? 'ar-EG' : 'en-US'
+                                )}
+                              </span>
+                            </div>
+                            <div className='flex justify-between items-center text-[11px]'>
+                              <span className='opacity-60'>{t.last24Hours}:</span>
+                              <span>
+                                {formatCurrency(
+                                  pendingStats.last24h.value,
+                                  'EGP',
+                                  currentLanguage === 'AR' ? 'ar-EG' : 'en-US'
+                                )}
+                              </span>
+                            </div>
+                            <div className='flex justify-between items-center text-[11px] border-t border-white/10 pt-1 mt-1'>
+                              <span className='opacity-60'>{t.older}:</span>
+                              <span>
+                                {formatCurrency(
+                                  pendingStats.older.value,
+                                  'EGP',
+                                  currentLanguage === 'AR' ? 'ar-EG' : 'en-US'
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        ),
+                        isCurrency: false,
+                      },
+                    ]}
+                    details={[
+                      {
+                        icon: 'today',
+                        label: t.todaysOrders,
+                        value: `${pendingStats.today.count} ${pendingStats.today.count === 1 ? t.orderSingular : t.orderPlural}`,
+                        isCurrency: false,
+                        colorClass: 'text-emerald-500',
+                      },
+                      {
+                        icon: 'history_toggle_off',
+                        label: t.last24Hours,
+                        value: `${pendingStats.last24h.count} ${pendingStats.last24h.count === 1 ? t.orderSingular : t.orderPlural}`,
+                        isCurrency: false,
+                        colorClass: 'text-blue-500',
+                      },
+                      {
+                        icon: 'event_busy',
+                        label: t.olderOrders,
+                        value: `${pendingStats.older.count} ${pendingStats.older.count === 1 ? t.orderSingular : t.orderPlural}`,
+                        isCurrency: false,
+                        colorClass: 'text-orange-500',
+                      },
+                    ]}
+                    footer={t.pendingValueInsightFooter}
+                  />
+                }
+              >
+                <span className='material-symbols-rounded text-gray-400 hover:text-blue-500 transition-colors cursor-help text-[20px]'>
+                  info
+                </span>
+              </Tooltip>
             </div>
 
             <div className='flex items-center gap-3'>
@@ -1865,9 +1961,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           preventSidebar={true}
         >
           <div className='p-2'>
-            <p className='text-gray-600 dark:text-gray-400 mb-6'>
-              {t.cancelOrderConfirm}
-            </p>
+            <p className='text-gray-600 dark:text-gray-400 mb-6'>{t.cancelOrderConfirm}</p>
             <div className='flex justify-end gap-3'>
               <button
                 onClick={() => setOrderToCancelId(null)}
@@ -1937,7 +2031,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                 onClick={handleSaveGuestInfo}
                 disabled={
                   !originalGuestInfo ||
-                  (tempGuestName === originalGuestInfo.name && tempGuestAddress === originalGuestInfo.address)
+                  (tempGuestName === originalGuestInfo.name &&
+                    tempGuestAddress === originalGuestInfo.address)
                 }
                 className='flex-1 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-black rounded-lg transition-all uppercase tracking-widest hover:opacity-90 active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed cursor-pointer'
               >

@@ -1,5 +1,5 @@
+import { Clock, Menu, Search, User } from 'lucide-react';
 import React from 'react';
-import { User, Clock, Menu, Search } from 'lucide-react';
 
 interface EmployeeMobileDockProps {
   activeView: 'profile' | 'requests' | 'pricing';
@@ -80,9 +80,10 @@ const DockButton = React.memo<DockButtonProps>(({ icon: Icon, label, isActive, o
     onClick={onClick}
     className={`
       relative flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-full transition-all duration-500
-      ${isActive
-        ? 'text-black dark:text-white z-10'
-        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+      ${
+        isActive
+          ? 'text-black dark:text-white z-10'
+          : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
       }
     `}
     aria-label={label}
@@ -90,12 +91,16 @@ const DockButton = React.memo<DockButtonProps>(({ icon: Icon, label, isActive, o
     type='button'
   >
     {isActive && (
-      <div className="absolute inset-0 bg-black/[0.1] dark:bg-white/10 rounded-full animate-scale-in pointer-events-none" />
+      <div className='absolute inset-0 bg-black/[0.1] dark:bg-white/10 rounded-full animate-scale-in pointer-events-none' />
     )}
     <div className='relative z-10 flex flex-col items-center justify-center min-h-[22px]'>
-      <Icon className={`w-[22px] h-[22px] relative z-10 transition-all duration-500 ${isActive ? 'scale-110' : ''}`} />
+      <Icon
+        className={`w-[22px] h-[22px] relative z-10 transition-all duration-500 ${isActive ? 'scale-110' : ''}`}
+      />
     </div>
-    <span className={`relative z-10 text-[9px] font-bold ${isActive ? 'opacity-100' : 'opacity-60'}`}>
+    <span
+      className={`relative z-10 text-[9px] font-bold ${isActive ? 'opacity-100' : 'opacity-60'}`}
+    >
       {label}
     </span>
   </button>

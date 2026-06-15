@@ -117,7 +117,7 @@ export async function exportToExcel<T extends Record<string, any>>(
     const rowData: Record<string, any> = {};
     columns.forEach((col) => {
       const raw = row[col.key];
-      rowData[col.key] = col.format ? col.format(raw, row) : raw ?? '';
+      rowData[col.key] = col.format ? col.format(raw, row) : (raw ?? '');
     });
     worksheet.addRow(rowData);
   });
@@ -134,7 +134,7 @@ export async function exportToExcel<T extends Record<string, any>>(
   worksheet.columns.forEach((column) => {
     let maxColumnLength = 0;
     if (column.header) maxColumnLength = column.header.length;
-    
+
     column.eachCell?.({ includeEmpty: true }, (cell) => {
       const columnLength = cell.value ? String(cell.value).length : 0;
       if (columnLength > maxColumnLength) {
@@ -146,7 +146,9 @@ export async function exportToExcel<T extends Record<string, any>>(
 
   // Generate buffer and trigger download
   const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
   triggerDownload(blob, `${filename}.xlsx`);
 }
 
@@ -172,7 +174,10 @@ export function exportToPDF<T extends Record<string, any>>(
 
   // Build HTML table
   const headerCells = columns
-    .map((c) => `<th style="padding:6px 10px;border:1px solid #ddd;background:#f5f5f5;font-size:11px;white-space:nowrap">${c.header}</th>`)
+    .map(
+      (c) =>
+        `<th style="padding:6px 10px;border:1px solid #ddd;background:#f5f5f5;font-size:11px;white-space:nowrap">${c.header}</th>`
+    )
     .join('');
 
   const bodyRows = rows
@@ -181,7 +186,7 @@ export function exportToPDF<T extends Record<string, any>>(
         `<tr style="background:${i % 2 === 0 ? '#fff' : '#fafafa'}">${columns
           .map((col) => {
             const raw = row[col.key];
-            const val = col.format ? col.format(raw, row) : raw ?? '';
+            const val = col.format ? col.format(raw, row) : (raw ?? '');
             return `<td style="padding:5px 10px;border:1px solid #eee;font-size:10px">${val}</td>`;
           })
           .join('')}</tr>`
@@ -243,9 +248,7 @@ export function exportToPDF<T extends Record<string, any>>(
  * Import a CSV or Excel file and return parsed data.
  * Auto-detects format from file extension.
  */
-export async function importFile<T = Record<string, any>>(
-  file: File
-): Promise<ImportResult<T>> {
+export async function importFile<T = Record<string, any>>(file: File): Promise<ImportResult<T>> {
   const ext = file.name.split('.').pop()?.toLowerCase();
 
   if (ext === 'csv') {

@@ -2,12 +2,12 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo } from 'react';
+import { useSettings } from '../../../context';
 import type { ExpiryRiskItem } from '../../../types/intelligence';
 import { formatCurrency } from '../../../utils/currency';
+import { getDisplayName } from '../../../utils/drugDisplayName';
 import { TanStackTable } from '../../common/TanStackTable';
 import { StatusBadge } from '../common/StatusBadge';
-import { useSettings } from '../../../context';
-import { getDisplayName } from '../../../utils/drugDisplayName';
 
 // --- Local Components ---
 // StatusBadge moved to shared components
@@ -19,7 +19,12 @@ interface ExpiryRiskGridProps {
   isLoading?: boolean;
 }
 
-export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t, leftCustomControls, isLoading = false }) => {
+export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({
+  data,
+  t,
+  leftCustomControls,
+  isLoading = false,
+}) => {
   // Infer language from T object or default (hacky but works if T structure is consistent)
   const language = t?.metadata?.language || 'EN'; // Placeholder if needed, or just pass 'EN' if not critical.
   // Actually usually T comes from useTranslation which doesn't expose language directly often?
@@ -124,4 +129,3 @@ export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t, leftCus
     </div>
   );
 };
-

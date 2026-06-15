@@ -1,8 +1,8 @@
 /**
  * Egyptian Areas and Neighborhoods Data
- * 
+ *
  * Census Summary (as of March 2024 Audit):
- * - Total Specific Areas: 240+ 
+ * - Total Specific Areas: 240+
  * - Total Coverage: 500+ (Specific + Auto-generated for all 349 centers)
  * - Mapping: City-specific districts with unique IDs
  */

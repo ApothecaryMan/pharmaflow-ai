@@ -2,7 +2,7 @@ import type { Sale } from '../../types';
 
 /**
  * Calculates loyalty points for a single sale based on tiered business rules.
- * 
+ *
  * Rules:
  * 1. Order Points: Percentage of total sale based on tiers (1% to 5%).
  * 2. Item Points: Percentage of individual item prices based on tiers (2% to 15%).

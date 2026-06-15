@@ -1,13 +1,19 @@
 import { supabase } from '../../../lib/supabase';
 import type { EmploymentRequest } from '../../../types';
-import { employeeProfileRepository } from './employeeProfileRepository';
 import { employeeService } from '../employeeService';
+import { employeeProfileRepository } from './employeeProfileRepository';
 
 export const employmentRequestRepository = {
   /**
    * Send a new employment request from an organization to a specific username
    */
-  async sendRequest(request: Omit<EmploymentRequest, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'expiresAt'> & { sentByName?: string; orgName?: string; expiresInHours?: number }): Promise<{ success: boolean; data?: EmploymentRequest; message?: string }> {
+  async sendRequest(
+    request: Omit<EmploymentRequest, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'expiresAt'> & {
+      sentByName?: string;
+      orgName?: string;
+      expiresInHours?: number;
+    }
+  ): Promise<{ success: boolean; data?: EmploymentRequest; message?: string }> {
     try {
       // Check if a pending request already exists
       const { data: existing } = await supabase
@@ -25,7 +31,11 @@ export const employmentRequestRepository = {
       // Check if the user is already an employee in this organization
       const targetProfile = await employeeProfileRepository.getByUsername(request.targetUsername);
       if (!targetProfile) {
-        return { success: false, message: 'User profile not found. The user must be registered before sending an invitation.' };
+        return {
+          success: false,
+          message:
+            'User profile not found. The user must be registered before sending an invitation.',
+        };
       }
 
       if (targetProfile) {
@@ -37,11 +47,14 @@ export const employmentRequestRepository = {
           .maybeSingle();
 
         if (existingEmployee) {
-          return { success: false, message: 'This user is already registered as an employee in your organization.' };
+          return {
+            success: false,
+            message: 'This user is already registered as an employee in your organization.',
+          };
         }
       }
 
-      const expiresAt = request.expiresInHours 
+      const expiresAt = request.expiresInHours
         ? new Date(Date.now() + request.expiresInHours * 3600000).toISOString()
         : null;
 
@@ -56,7 +69,7 @@ export const employmentRequestRepository = {
           sent_by_name: request.sentByName || null,
           org_name: request.orgName || null,
           status: 'pending',
-          expires_at: expiresAt
+          expires_at: expiresAt,
         })
         .select()
         .single();
@@ -116,10 +129,7 @@ export const employmentRequestRepository = {
    */
   async updateStatus(id: string, status: 'accepted' | 'rejected'): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from('employment_requests')
-        .update({ status })
-        .eq('id', id);
+      const { error } = await supabase.from('employment_requests').update({ status }).eq('id', id);
 
       if (error) throw error;
       return true;
@@ -132,12 +142,16 @@ export const employmentRequestRepository = {
   /**
    * Accept an employment request and create the employee record
    */
-  async acceptEmploymentRequest(requestId: string, userId: string, username: string): Promise<boolean> {
+  async acceptEmploymentRequest(
+    requestId: string,
+    userId: string,
+    username: string
+  ): Promise<boolean> {
     try {
       const { data, error } = await supabase.rpc('accept_employment_request', {
         p_request_id: requestId,
         p_user_id: userId,
-        p_username: username
+        p_username: username,
       });
 
       if (error) {
@@ -185,7 +199,7 @@ export const employmentRequestRepository = {
       expiresAt: row.expires_at,
       // denormalized org_name first, fallback to joined data
       orgName: row.org_name || row.organizations?.name,
-      branchName: row.branches?.name
+      branchName: row.branches?.name,
     };
-  }
+  },
 };

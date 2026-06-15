@@ -82,7 +82,7 @@ export function getEmployeeSalesStats(
   }
 
   // 3. Calculate Gross Sales
-    const grossSales = employeeSales.reduce((sum, s) => money.add(sum, s.total), 0);
+  const grossSales = employeeSales.reduce((sum, s) => money.add(sum, s.total), 0);
 
   // 4. Calculate Returns (difference between total and netTotal)
   const returns = employeeSales.reduce((sum, s) => {
@@ -172,9 +172,10 @@ export function getEmployeeSalesStats(
   // 9. Calculate Averages and Margins
   const salesCount = employeeSales.length;
   const avgProfitPerSale = salesCount > 0 ? money.divide(totalProfit, salesCount) : 0;
-  
+
   // Profit Margin = (Profit / NetSales) * 100
-  const profitMargin = netSales > 0 ? money.multiply(money.divide(totalProfit, netSales), 100, 0) : 0;
+  const profitMargin =
+    netSales > 0 ? money.multiply(money.divide(totalProfit, netSales), 100, 0) : 0;
 
   return {
     salesCount,

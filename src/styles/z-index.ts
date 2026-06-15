@@ -14,5 +14,5 @@ export const Z_INDEX = {
   POPOVER: 1500,
   DRAWER: 1600,
   TOOLTIP: 9999,
-  MAX: 2147483647
+  MAX: 2147483647,
 } as const;

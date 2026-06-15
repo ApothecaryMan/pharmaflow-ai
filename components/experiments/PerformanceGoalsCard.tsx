@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useState } from 'react';
-import { CARD_BASE } from '../../utils/themeStyles';
 import { useSettings } from '../../context/SettingsContext';
+import { CARD_BASE } from '../../utils/themeStyles';
 
 export interface PerformanceGoalItem {
   name: string; // The display name (pre-translated)
@@ -104,9 +104,7 @@ export const PerformanceGoalsCard: React.FC<PerformanceGoalsCardProps> = ({ titl
     <div className={`p-5 rounded-3xl ${CARD_BASE} h-72 flex flex-col`}>
       <h3 className='text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center justify-between'>
         <div className='flex items-center gap-2'>
-          <span className='material-symbols-rounded text-indigo-500'>
-            track_changes
-          </span>
+          <span className='material-symbols-rounded text-indigo-500'>track_changes</span>
           {title}
         </div>
         {/* Horizontal / Vertical layout selector */}
@@ -137,16 +135,14 @@ export const PerformanceGoalsCard: React.FC<PerformanceGoalsCardProps> = ({ titl
       <div className='flex-1 flex items-center justify-center w-full min-h-0'>
         {legendLayout === 'horizontal' ? (
           <div className='flex flex-col items-center justify-center w-full h-full'>
-            <div className='w-64 h-36 relative mt-0 shrink-0'>
-              {renderRadialChart()}
-            </div>
+            <div className='w-64 h-36 relative mt-0 shrink-0'>{renderRadialChart()}</div>
             <div className='w-full grid grid-cols-3 gap-2 px-1 mt-6 shrink-0'>
               {data.map((item) => (
                 <div
                   key={item.name}
                   className='flex items-center gap-2 p-1 rounded-2xl min-w-0 h-12'
                   style={{
-                    background: `linear-gradient(${isRTL ? 'to left' : 'to right'}, ${isDark ? item.fill : item.bgLight} ${item.value}%, ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'} ${item.value}%)`
+                    background: `linear-gradient(${isRTL ? 'to left' : 'to right'}, ${isDark ? item.fill : item.bgLight} ${item.value}%, ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'} ${item.value}%)`,
                   }}
                 >
                   <div
@@ -191,7 +187,7 @@ export const PerformanceGoalsCard: React.FC<PerformanceGoalsCardProps> = ({ titl
                   key={item.name}
                   className='flex items-center gap-2 p-1 rounded-2xl min-w-0 h-12'
                   style={{
-                    background: `linear-gradient(${isRTL ? 'to left' : 'to right'}, ${isDark ? item.fill : item.bgLight} ${item.value}%, ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'} ${item.value}%)`
+                    background: `linear-gradient(${isRTL ? 'to left' : 'to right'}, ${isDark ? item.fill : item.bgLight} ${item.value}%, ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'} ${item.value}%)`,
                   }}
                 >
                   {/* Icon inside a rectangle */}

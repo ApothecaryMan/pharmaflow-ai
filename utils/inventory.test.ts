@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { validateStock, formatStock, getStockStatusColor } from './inventory';
+import { describe, expect, it } from 'vitest';
+import { formatStock, getStockStatusColor, validateStock } from './inventory';
 
 describe('Inventory Utils', () => {
   describe('validateStock', () => {
@@ -14,7 +14,7 @@ describe('Inventory Utils', () => {
       expect(validateStock(10.4)).toBe(10);
     });
     it('returns valid integers as is', () => {
-       expect(validateStock(50)).toBe(50); 
+      expect(validateStock(50)).toBe(50);
     });
   });
 
@@ -31,10 +31,10 @@ describe('Inventory Utils', () => {
     it('formats fractional packs', () => {
       // 50 units, 10 per pack -> 5 packs
       expect(formatStock(50, 10)).toBe('5 Packs');
-      
+
       // 55 units, 10 per pack -> 5.5 packs
       expect(formatStock(55, 10)).toBe('5.5 Packs');
-      
+
       // 55 units, 100 per pack -> 0.55 packs
       expect(formatStock(55, 100)).toBe('0.55 Packs');
     });

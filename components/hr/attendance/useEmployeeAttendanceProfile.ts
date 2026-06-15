@@ -1,16 +1,16 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useSettings } from '../../../context/SettingsContext';
+import { useEffect, useMemo, useState } from 'react';
 import { useData } from '../../../context/DataContext';
-import { 
-  attendanceReportService, 
-  MonthlyEmployeeReport 
-} from '../../../services/hr/attendanceReportService';
+import { useSettings } from '../../../context/SettingsContext';
 import { TRANSLATIONS } from '../../../i18n/translations';
+import {
+  attendanceReportService,
+  type MonthlyEmployeeReport,
+} from '../../../services/hr/attendanceReportService';
 import { formatDuration } from '../../../utils/attendanceUtils';
 
 /**
  * Hook to manage the state and data for an employee's monthly attendance profile.
- * 
+ *
  * @param employeeId The ID of the employee to fetch the report for.
  */
 export const useEmployeeAttendanceProfile = (employeeId?: string) => {
@@ -59,15 +59,18 @@ export const useEmployeeAttendanceProfile = (employeeId?: string) => {
   };
 
   // --- Table Columns ---
-  const columns = useMemo(() => [
-    { id: 'date',     label: t.attendance.date,     key: 'date',         width: '20%' },
-    { id: 'day',      label: t.attendance.day,       key: 'dayOfWeek',    width: '10%' },
-    { id: 'firstIn',  label: t.attendance.firstIn,   key: 'firstIn',      width: '15%' },
-    { id: 'lastOut',  label: t.attendance.lastOut,    key: 'lastOut',      width: '15%' },
-    { id: 'duration', label: t.attendance.totalHours, key: 'totalMinutes', width: '15%' },
-    { id: 'status',   label: t.attendance.lateStatus, key: 'isLate',       width: '15%' },
-    { id: 'late',     label: t.attendance.late,       key: 'lateMinutes',  width: '10%' },
-  ], [t]);
+  const columns = useMemo(
+    () => [
+      { id: 'date', label: t.attendance.date, key: 'date', width: '20%' },
+      { id: 'day', label: t.attendance.day, key: 'dayOfWeek', width: '10%' },
+      { id: 'firstIn', label: t.attendance.firstIn, key: 'firstIn', width: '15%' },
+      { id: 'lastOut', label: t.attendance.lastOut, key: 'lastOut', width: '15%' },
+      { id: 'duration', label: t.attendance.totalHours, key: 'totalMinutes', width: '15%' },
+      { id: 'status', label: t.attendance.lateStatus, key: 'isLate', width: '15%' },
+      { id: 'late', label: t.attendance.late, key: 'lateMinutes', width: '10%' },
+    ],
+    [t]
+  );
 
   return {
     report,

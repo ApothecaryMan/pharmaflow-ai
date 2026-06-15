@@ -1,6 +1,6 @@
-import React from 'react';
-import { UserRole } from '../../config/employeeRoles';
-import { OrgRole } from '../../types';
+import type React from 'react';
+import type { UserRole } from '../../config/employeeRoles';
+import type { OrgRole } from '../../types';
 
 interface RoleIconProps {
   role: UserRole | OrgRole | string;
@@ -28,26 +28,23 @@ const ROLE_ICON_MAP: Record<string, string> = {
   delivery_pharmacist: 'home_health',
   officeboy: 'coffee',
   manager: 'supervisor_account',
-  
+
   // Organization Roles
   owner: 'stars',
   // admin: 'shield_person', // Shared with employee role
   member: 'person',
 };
 
-export const RoleIcon: React.FC<RoleIconProps> = ({ 
-  role, 
+export const RoleIcon: React.FC<RoleIconProps> = ({
+  role,
   className = 'material-symbols-rounded',
   classNameOverride,
-  style 
+  style,
 }) => {
   const iconName = ROLE_ICON_MAP[role] || 'person';
-  
+
   return (
-    <span 
-      className={classNameOverride || className} 
-      style={style}
-    >
+    <span className={classNameOverride || className} style={style}>
       {iconName}
     </span>
   );

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { formatCurrency } from './currency';
 
 describe('CurrencyUtils', () => {
@@ -12,7 +12,7 @@ describe('CurrencyUtils', () => {
     // EGP with specific locale
     const egp = formatCurrency(50.5, 'EGP', 'en-US');
     expect(egp).toContain('L.E');
-    expect(egp).toContain('50.50'); 
+    expect(egp).toContain('50.50');
   });
 
   it('should handle zero', () => {

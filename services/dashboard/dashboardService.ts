@@ -1,5 +1,5 @@
+import type { CartItem, Customer, Drug, Sale, StockBatch } from '../../types';
 import { money } from '../../utils/money';
-import type { Customer, Drug, Sale, StockBatch, CartItem } from '../../types';
 
 export interface DashboardProfitability {
   grossProfit: number;
@@ -51,7 +51,7 @@ export class DashboardService {
         const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
         const returnedQty =
           sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
-        
+
         const actualSoldQty = item.quantity - returnedQty;
         const itemPrice = item.publicPrice || 0;
         const itemDiscountPct = item.discount || 0; // Item-level discount %
@@ -115,7 +115,7 @@ export class DashboardService {
           } else {
             effectiveCost = costPrice;
           }
-          
+
           const lineCost = money.multiply(effectiveCost, actualSoldQty, 0);
           cogsCents += money.toSmallestUnit(lineCost);
         }
@@ -131,9 +131,7 @@ export class DashboardService {
   static calculateInventoryValuation(batches: StockBatch[], branchId?: string): number {
     let valuationCents = 0;
 
-    const targetBatches = branchId 
-      ? batches.filter(b => b.branchId === branchId) 
-      : batches;
+    const targetBatches = branchId ? batches.filter((b) => b.branchId === branchId) : batches;
 
     targetBatches.forEach((batch) => {
       const batchValue = money.multiply(batch.costPrice || 0, batch.quantity || 0, 0);
@@ -147,10 +145,14 @@ export class DashboardService {
    * @deprecated Use financialService instead.
    * Calculates Profitability metrics using precision math.
    */
-  static calculateProfitability(revenue: number, cogs: number, expenses: number): DashboardProfitability {
+  static calculateProfitability(
+    revenue: number,
+    cogs: number,
+    expenses: number
+  ): DashboardProfitability {
     const grossProfit = money.subtract(revenue, cogs);
     const netProfit = money.subtract(grossProfit, expenses);
-    
+
     let marginPercent = 0;
     if (revenue > 0) {
       // (Profit / Revenue) * 100
@@ -182,9 +184,9 @@ export class DashboardService {
    * Analyzes movement and identifies critical/fast/slow items.
    */
   static analyzeMovement(
-    sales: Sale[], 
-    inventory: Drug[], 
-    batches: StockBatch[], 
+    sales: Sale[],
+    inventory: Drug[],
+    batches: StockBatch[],
     branchId?: string
   ): DashboardMovement {
     const netSalesByDrug: Record<string, number> = {};
@@ -196,7 +198,7 @@ export class DashboardService {
         const returnedQty =
           sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
         const actualQty = item.quantity - returnedQty;
-        
+
         if (actualQty !== 0) {
           netSalesByDrug[item.id] = (netSalesByDrug[item.id] || 0) + actualQty;
         }
@@ -205,7 +207,7 @@ export class DashboardService {
 
     // 2. Pre-calculate stock levels (Optimized O(B))
     const stockMap: Record<string, number> = {};
-    batches.forEach(b => {
+    batches.forEach((b) => {
       if (!branchId || b.branchId === branchId) {
         stockMap[b.drugId] = (stockMap[b.drugId] || 0) + (b.quantity || 0);
       }
@@ -217,7 +219,7 @@ export class DashboardService {
       if (!isRelevant) return false;
       return (stockMap[d.id] || 0) <= 3;
     });
-    
+
     const lowStock = inventory.filter((d) => {
       const isRelevant = netSalesByDrug[d.id] !== undefined || stockMap[d.id] !== undefined;
       if (!isRelevant) return false;
@@ -248,12 +250,13 @@ export class DashboardService {
    * Calculates averages and rates with precision.
    */
   static calculateAverages(sales: Sale[]): { avgOrderValue: number; returnRate: number } {
-    const { totalRevenue, totalReturns } = this.calculateRevenueAndReturns(sales);
-    
+    const { totalRevenue, totalReturns } = DashboardService.calculateRevenueAndReturns(sales);
+
     const avgOrderValue = sales.length > 0 ? money.divide(totalRevenue, sales.length) : 0;
-    
+
     const grossRevenue = money.add(totalRevenue, totalReturns);
-    const returnRate = grossRevenue > 0 ? money.multiply(money.divide(totalReturns, grossRevenue), 100, 0) : 0;
+    const returnRate =
+      grossRevenue > 0 ? money.multiply(money.divide(totalReturns, grossRevenue), 100, 0) : 0;
 
     return { avgOrderValue, returnRate };
   }
@@ -264,7 +267,7 @@ export class DashboardService {
   static getSalesDynamics(sales: Sale[], customers: Customer[]) {
     const hourlyRevenue: Record<number, number> = {};
     const hourlyTransactions: Record<number, number> = {};
-    
+
     let cashRevenue = 0;
     let cardRevenue = 0;
     let cashCount = 0;
@@ -277,7 +280,7 @@ export class DashboardService {
     let walkInCount = 0;
 
     sales.forEach((sale) => {
-      const { totalRevenue } = this.calculateRevenueAndReturns([sale]);
+      const { totalRevenue } = DashboardService.calculateRevenueAndReturns([sale]);
       const hour = new Date(sale.date).getHours();
 
       // Hourly
@@ -301,7 +304,9 @@ export class DashboardService {
       }
 
       // Customers
-      const customer = customers.find(c => c.code === sale.customerCode || c.name === sale.customerName);
+      const customer = customers.find(
+        (c) => c.code === sale.customerCode || c.name === sale.customerName
+      );
       if (customer) {
         registeredTransactions++;
         if ((customer.totalPurchases || 0) >= 1000) {
@@ -331,17 +336,21 @@ export class DashboardService {
       customers: {
         vipTransactions,
         registeredTransactions,
-        newCustomersToday: sales.filter(s => s.customerName && !customers.find(c => c.name === s.customerName)).length,
+        newCustomersToday: sales.filter(
+          (s) => s.customerName && !customers.find((c) => c.name === s.customerName)
+        ).length,
         vipRate: totalTransactions > 0 ? (vipTransactions / totalTransactions) * 100 : 0,
-        registeredRate: totalTransactions > 0 ? (registeredTransactions / totalTransactions) * 100 : 0,
-        anonymousRate: totalTransactions > 0 ? (1 - registeredTransactions / totalTransactions) * 100 : 0,
+        registeredRate:
+          totalTransactions > 0 ? (registeredTransactions / totalTransactions) * 100 : 0,
+        anonymousRate:
+          totalTransactions > 0 ? (1 - registeredTransactions / totalTransactions) * 100 : 0,
       },
       orderTypes: {
         deliveryCount,
         walkInCount,
         deliveryRate: totalTransactions > 0 ? (deliveryCount / totalTransactions) * 100 : 0,
         walkInRate: totalTransactions > 0 ? (1 - deliveryCount / totalTransactions) * 100 : 0,
-      }
+      },
     };
   }
 
@@ -362,7 +371,7 @@ export class DashboardService {
         if (actualQty > 0) {
           const itemPrice = item.publicPrice || 0;
           const itemDiscountPct = item.discount || 0;
-          
+
           // Effective revenue after item discount
           const factorInt = 100 - itemDiscountPct;
           const netItemPrice = money.multiply(itemPrice, factorInt, 2);
@@ -394,35 +403,35 @@ export class DashboardService {
    * Filters and sorts items expiring soon.
    */
   static getExpiringSoon(
-    inventory: Drug[], 
-    batches: StockBatch[], 
-    branchId: string, 
+    inventory: Drug[],
+    batches: StockBatch[],
+    branchId: string,
     months: number = 3
   ): any[] {
     const today = new Date();
     const futureDate = new Date();
     futureDate.setMonth(today.getMonth() + months);
 
-    const branchBatches = batches.filter(b => b.branchId === branchId && b.quantity > 0);
-    
+    const branchBatches = batches.filter((b) => b.branchId === branchId && b.quantity > 0);
+
     return inventory
       .filter((d) => {
-        const drugBatches = branchBatches.filter(b => b.drugId === d.id);
-        return drugBatches.some(b => {
+        const drugBatches = branchBatches.filter((b) => b.drugId === d.id);
+        return drugBatches.some((b) => {
           const expDate = new Date(b.expiryDate);
           return expDate >= today && expDate <= futureDate;
         });
       })
-      .map(d => {
-         const drugBatches = branchBatches.filter(b => b.drugId === d.id);
-         const earliestBatch = drugBatches.sort((a, b) => 
-           new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
-         )[0];
-         
-         return {
-           ...d,
-           expiryDate: earliestBatch?.expiryDate || d.expiryDate
-         };
+      .map((d) => {
+        const drugBatches = branchBatches.filter((b) => b.drugId === d.id);
+        const earliestBatch = drugBatches.sort(
+          (a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
+        )[0];
+
+        return {
+          ...d,
+          expiryDate: earliestBatch?.expiryDate || d.expiryDate,
+        };
       })
       .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
   }
@@ -433,10 +442,12 @@ export class DashboardService {
    */
   static getSalesTrends(sales: Sale[], days: number = 7): SalesTrendData[] {
     const trendMap: Record<string, number> = {};
-    
+
     // Sort sales by date ascending for processing
-    const sortedSales = [...sales].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    
+    const sortedSales = [...sales].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
     sortedSales.forEach((sale) => {
       const date = new Date(sale.date).toLocaleDateString('en-US', { weekday: 'short' });
       const saleVal = sale.netTotal ?? sale.total;

@@ -88,7 +88,9 @@ export const useDynamicTickerData = (): TickerData => {
         }
       : null;
 
-    const canViewFinancials = permissionsService.can('reports.view_financial') || permissionsService.can('reports.view_intelligence');
+    const canViewFinancials =
+      permissionsService.can('reports.view_financial') ||
+      permissionsService.can('reports.view_intelligence');
 
     return {
       todaySales: canViewFinancials ? todaySalesTotal : 0,

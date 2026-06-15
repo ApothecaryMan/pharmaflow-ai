@@ -7,10 +7,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MenuItem } from '../../config/menuData';
 import { useSettings } from '../../context';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
-import { getIconByName } from '../common/Icons';
-import { SidebarContent } from './SidebarContent';
 import { authService } from '../../services/auth/authService';
 import type { Employee, ViewState } from '../../types';
+import { getIconByName } from '../common/Icons';
+import { SidebarContent } from './SidebarContent';
 
 // ============================================================================
 // CONSTANTS
@@ -90,7 +90,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
   onLogout,
 }) => {
   const { theme, language, hideInactiveModules, darkMode } = useSettings();
-  const currentEmployee = employees.find(e => e.id === currentEmployeeId);
+  const currentEmployee = employees.find((e) => e.id === currentEmployeeId);
   const drawerRef = useRef<HTMLDivElement>(null);
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -233,22 +233,27 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
         aria-label='Navigation menu'
       >
         {/* Header */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-(--border-divider)">
-          <div className="relative">
-            <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-(--bg-secondary) flex items-center justify-center ring-2 ring-(--border-divider)">
+        <div className='flex items-center gap-3 px-5 py-4 border-b border-(--border-divider)'>
+          <div className='relative'>
+            <div className='w-10 h-10 rounded-full overflow-hidden shrink-0 bg-(--bg-secondary) flex items-center justify-center ring-2 ring-(--border-divider)'>
               {safeProfileImage ? (
-                <img src={safeProfileImage} alt="" className="w-full h-full object-cover" />
+                <img src={safeProfileImage} alt='' className='w-full h-full object-cover' />
               ) : (
                 <span className='material-symbols-rounded text-(--text-tertiary)'>person</span>
               )}
             </div>
-            <div className='absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-(--bg-page-surface) rounded-full' aria-label='Online status' />
+            <div
+              className='absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-(--bg-page-surface) rounded-full'
+              aria-label='Online status'
+            />
           </div>
-          <div className="min-w-0 flex-1 flex flex-col">
-            <span className="text-sm font-bold text-(--text-primary) truncate">
-              {currentEmployeeId ? (currentEmployee?.name || authService.getCurrentUserSync()?.username || 'Zinc AI') : 'Zinc AI'}
+          <div className='min-w-0 flex-1 flex flex-col'>
+            <span className='text-sm font-bold text-(--text-primary) truncate'>
+              {currentEmployeeId
+                ? currentEmployee?.name || authService.getCurrentUserSync()?.username || 'Zinc AI'
+                : 'Zinc AI'}
             </span>
-            <span className="text-xs text-primary-500 truncate">
+            <span className='text-xs text-primary-500 truncate'>
               {currentEmployeeId ? t.profile.role : 'System'}
             </span>
           </div>
@@ -258,7 +263,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                 onLogout();
                 onClose();
               }}
-              className="flex items-center justify-center px-3 py-1.5 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-colors shrink-0"
+              className='flex items-center justify-center px-3 py-1.5 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-colors shrink-0'
               aria-label={t.profile.signOut || 'Logout'}
               type='button'
             >
@@ -267,11 +272,13 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
           )}
           <button
             onClick={onClose}
-            className="flex items-center justify-center w-10 h-10 text-(--text-tertiary) hover:text-(--text-primary) transition-colors shrink-0"
+            className='flex items-center justify-center w-10 h-10 text-(--text-tertiary) hover:text-(--text-primary) transition-colors shrink-0'
             aria-label='Close menu'
             type='button'
           >
-            <span className='material-symbols-rounded text-[22px]' aria-hidden='true'>menu_open</span>
+            <span className='material-symbols-rounded text-[22px]' aria-hidden='true'>
+              menu_open
+            </span>
           </button>
         </div>
 
@@ -286,9 +293,10 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                   onClick={() => handleModuleChange(module.id)}
                   className={`
                     flex flex-col items-center justify-center p-2 min-w-[68px] rounded-xl transition-all duration-300
-                    ${isActive
-                      ? 'bg-(--bg-card) text-(--text-primary) shadow-xs ring-1 ring-(--border-divider)'
-                      : 'text-(--text-tertiary) hover:text-(--text-secondary) hover:bg-(--bg-secondary)'
+                    ${
+                      isActive
+                        ? 'bg-(--bg-card) text-(--text-primary) shadow-xs ring-1 ring-(--border-divider)'
+                        : 'text-(--text-tertiary) hover:text-(--text-secondary) hover:bg-(--bg-secondary)'
                     }
                   `}
                   aria-label={getMenuTranslation(module.label, language)}

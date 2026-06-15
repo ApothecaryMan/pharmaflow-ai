@@ -1,4 +1,4 @@
-import { UserRole } from '../config/permissions';
+import type { UserRole } from '../config/permissions';
 
 export interface Employee {
   // --- Identification ---

@@ -9,11 +9,15 @@ export {
 export { DatePicker, DateRangePicker } from './DatePicker';
 export { ExpandedModal } from './ExpandedModal';
 export { FilterDropdown, type FilterDropdownProps } from './FilterDropdown';
+export { type FilterConfig, FilterPill } from './FilterPill';
+export { FloatingInput } from './FloatingInput';
 export { HelpButton, HelpModal } from './HelpModal';
 export { MaterialTabs } from './MaterialTabs';
+export { Modal } from './Modal';
+export { PageHeader } from './PageHeader';
+export { SearchDropdown, useSearchKeyboardNavigation } from './SearchDropdown';
 export { SearchInput } from './SearchInput';
 export { SegmentedControl } from './SegmentedControl';
-export { PageHeader } from './PageHeader';
 export {
   cleanPhone,
   isValidEmail,
@@ -23,9 +27,5 @@ export {
   SmartTextarea,
   useSmartDirection,
 } from './SmartInputs';
-export { Modal } from './Modal';
 export { Switch } from './Switch';
-export { TanStackTable, PriceDisplay } from './TanStackTable';
-export { FilterPill, type FilterConfig } from './FilterPill';
-export { FloatingInput } from './FloatingInput';
-export { SearchDropdown, useSearchKeyboardNavigation } from './SearchDropdown';
+export { PriceDisplay, TanStackTable } from './TanStackTable';

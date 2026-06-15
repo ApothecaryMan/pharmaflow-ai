@@ -19,7 +19,7 @@ const GLOBAL_KEYS = new Set<string>([
   StorageKeys.PRINTER_SETTINGS,
   StorageKeys.SCREEN_CALIBRATION_RATIO,
   StorageKeys.SETTINGS,
-  'pharma_intended_account_type'
+  'pharma_intended_account_type',
 ]);
 
 // Performance optimizations:
@@ -68,8 +68,9 @@ export const storage = {
    * Internal helper to scope keys by user ID to prevent data leakage
    */
   getScopedKey: (key: string): string => {
-    if (typeof localStorage === 'undefined' || key === SESSION_KEY || GLOBAL_KEYS.has(key)) return key;
-    
+    if (typeof localStorage === 'undefined' || key === SESSION_KEY || GLOBAL_KEYS.has(key))
+      return key;
+
     const userId = storage.getUserId();
     return userId ? `${key}_${userId}` : key;
   },
@@ -79,27 +80,29 @@ export const storage = {
    */
   validateVersion: (): void => {
     if (typeof localStorage === 'undefined') return;
-    
+
     const storedVersion = localStorage.getItem(StorageKeys.STORAGE_VERSION);
     if (storedVersion !== CURRENT_APP_VERSION) {
       if (storedVersion) {
-        console.warn(`[Storage] Version transition from ${storedVersion} to ${CURRENT_APP_VERSION}.`);
-        
+        console.warn(
+          `[Storage] Version transition from ${storedVersion} to ${CURRENT_APP_VERSION}.`
+        );
+
         // We only clear known volatile caches. Everything else is preserved.
         const VOLATILE_PREFIXES = [
           StorageKeys.INVENTORY,
           StorageKeys.EMPLOYEES,
           StorageKeys.LAST_SYNC,
-          'pharma_shifts'
+          'pharma_shifts',
         ];
-        
-        Object.keys(localStorage).forEach(k => {
-          if (VOLATILE_PREFIXES.some(p => k.startsWith(p))) {
+
+        Object.keys(localStorage).forEach((k) => {
+          if (VOLATILE_PREFIXES.some((p) => k.startsWith(p))) {
             removeRawKey(k);
           }
         });
       }
-      
+
       localStorage.setItem(StorageKeys.STORAGE_VERSION, CURRENT_APP_VERSION);
       cachedUsageBytes = null;
     }
@@ -112,7 +115,7 @@ export const storage = {
   getUsageBytes: (): number => {
     if (typeof localStorage === 'undefined') return 0;
     if (cachedUsageBytes !== null) return cachedUsageBytes;
-    
+
     try {
       cachedUsageBytes = Object.keys(localStorage).reduce((acc, key) => {
         const val = localStorage.getItem(key) || '';
@@ -146,10 +149,14 @@ export const storage = {
     if (typeof localStorage === 'undefined') return defaultValue;
 
     const scopedKey = storage.getScopedKey(key);
-    
-    const isTTL = (obj: unknown): obj is { __pharma_ttl_value: unknown; expiresAt: number } => 
-      typeof obj === 'object' && obj !== null && '__pharma_ttl_value' in obj && 'expiresAt' in obj && typeof (obj as Record<string, unknown>).expiresAt === 'number';
-    
+
+    const isTTL = (obj: unknown): obj is { __pharma_ttl_value: unknown; expiresAt: number } =>
+      typeof obj === 'object' &&
+      obj !== null &&
+      '__pharma_ttl_value' in obj &&
+      'expiresAt' in obj &&
+      typeof (obj as Record<string, unknown>).expiresAt === 'number';
+
     // Check memory cache first to bypass IPC/disk read and JSON parsing overhead
     if (memoryCache.has(scopedKey)) {
       const cached = memoryCache.get(scopedKey);
@@ -206,7 +213,10 @@ export const storage = {
 
     if (key === SESSION_KEY) {
       try {
-        cachedUserId = value && typeof value === 'object' && 'userId' in value ? (value as { userId: string }).userId : null;
+        cachedUserId =
+          value && typeof value === 'object' && 'userId' in value
+            ? (value as { userId: string }).userId
+            : null;
         hasLoadedUserId = true;
       } catch {
         hasLoadedUserId = false;
@@ -215,27 +225,26 @@ export const storage = {
 
     try {
       const scopedKey = storage.getScopedKey(key);
-      const dataToStore = ttlMs !== undefined
-        ? { __pharma_ttl_value: value, expiresAt: Date.now() + ttlMs }
-        : value;
-      
+      const dataToStore =
+        ttlMs !== undefined ? { __pharma_ttl_value: value, expiresAt: Date.now() + ttlMs } : value;
+
       memoryCache.set(scopedKey, dataToStore);
       const stringValue = JSON.stringify(dataToStore);
-      
+
       let oldVal: string | null = null;
       if (cachedUsageBytes !== null) {
         oldVal = localStorage.getItem(scopedKey);
       }
 
       localStorage.setItem(scopedKey, stringValue);
-      
+
       // Update cache after successful write
       if (cachedUsageBytes !== null) {
         const oldLen = oldVal !== null ? (scopedKey.length + oldVal.length) * 2 : 0;
         const newLen = (scopedKey.length + stringValue.length) * 2;
         cachedUsageBytes = cachedUsageBytes - oldLen + newLen;
       }
-      
+
       // Auto-stamp version if missing
       if (!isVersionStamped) {
         if (!localStorage.getItem(StorageKeys.STORAGE_VERSION)) {
@@ -255,22 +264,26 @@ export const storage = {
           newValue: stringValue,
           storageArea: localStorage,
         });
-        Object.defineProperty(event, 'isSimulated', { value: true, writable: true, configurable: true });
+        Object.defineProperty(event, 'isSimulated', {
+          value: true,
+          writable: true,
+          configurable: true,
+        });
         window.dispatchEvent(event);
       }
     } catch (err: unknown) {
       console.error(`Error writing storage key "${key}":`, err);
-      
+
       const error = err as Record<string, unknown>;
-      const isQuotaError = 
-        error?.name === 'QuotaExceededError' || 
+      const isQuotaError =
+        error?.name === 'QuotaExceededError' ||
         error?.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
         error?.code === 22 ||
-        error?.number === 0x8007000E;
-        
+        error?.number === 0x8007000e;
+
       if (isQuotaError && typeof window !== 'undefined') {
         const event = new CustomEvent('pharma_storage_quota_exceeded', {
-          detail: { key, error }
+          detail: { key, error },
         });
         window.dispatchEvent(event);
       }
@@ -290,7 +303,7 @@ export const storage = {
 
     const scopedKey = storage.getScopedKey(key);
     memoryCache.delete(scopedKey);
-    
+
     let oldVal: string | null = null;
     if (cachedUsageBytes !== null) {
       oldVal = localStorage.getItem(scopedKey);
@@ -309,7 +322,11 @@ export const storage = {
         newValue: null,
         storageArea: localStorage,
       });
-      Object.defineProperty(event, 'isSimulated', { value: true, writable: true, configurable: true });
+      Object.defineProperty(event, 'isSimulated', {
+        value: true,
+        writable: true,
+        configurable: true,
+      });
       window.dispatchEvent(event);
     }
   },
@@ -370,30 +387,35 @@ export const storage = {
       // 1. Maintain access registry
       const ACCESS_REGISTRY_KEY = 'pharma_branch_last_access';
       const accessRegistry = storage.get<Record<string, number>>(ACCESS_REGISTRY_KEY, {});
-      
+
       if (activeBranchId) {
         accessRegistry[activeBranchId] = now;
       }
-      
-      availableBranchIds.forEach(id => {
+
+      availableBranchIds.forEach((id) => {
         if (!accessRegistry[id]) {
           accessRegistry[id] = now;
         }
       });
-      
+
       storage.set(ACCESS_REGISTRY_KEY, accessRegistry);
 
       // 2. Scan and prune closed tabs older than 7 days
       const allKeys = Object.keys(localStorage);
-      allKeys.forEach(key => {
-        if (key.startsWith('pharma_pos_closed_tabs_') || key.startsWith('pharma_purchase_closed_tabs_')) {
+      allKeys.forEach((key) => {
+        if (
+          key.startsWith('pharma_pos_closed_tabs_') ||
+          key.startsWith('pharma_purchase_closed_tabs_')
+        ) {
           try {
             const rawVal = localStorage.getItem(key);
             if (rawVal) {
               const closedTabs = JSON.parse(rawVal);
               if (Array.isArray(closedTabs)) {
                 const activeClosed = closedTabs.filter((tab: { closedAt?: number } | null) => {
-                  return tab && (typeof tab.closedAt !== 'number' || now - tab.closedAt <= SEVEN_DAYS_MS);
+                  return (
+                    tab && (typeof tab.closedAt !== 'number' || now - tab.closedAt <= SEVEN_DAYS_MS)
+                  );
                 });
                 if (activeClosed.length !== closedTabs.length) {
                   setRawKey(key, activeClosed);
@@ -410,7 +432,7 @@ export const storage = {
       const registryBranchIds = Object.keys(accessRegistry);
       const branchesToDelete: string[] = [];
 
-      registryBranchIds.forEach(branchId => {
+      registryBranchIds.forEach((branchId) => {
         const lastAccess = accessRegistry[branchId];
         const isNotAvailable = !availableBranchIds.includes(branchId);
         const isStale = now - lastAccess > THIRTY_DAYS_MS;
@@ -421,9 +443,9 @@ export const storage = {
       });
 
       if (branchesToDelete.length > 0) {
-        allKeys.forEach(key => {
-          const hasBranch = branchesToDelete.some(branchId => 
-            key.includes(`_${branchId}`) || key.includes(`purchases_cart_${branchId}`)
+        allKeys.forEach((key) => {
+          const hasBranch = branchesToDelete.some(
+            (branchId) => key.includes(`_${branchId}`) || key.includes(`purchases_cart_${branchId}`)
           );
           if (hasBranch) {
             removeRawKey(key);
@@ -431,7 +453,7 @@ export const storage = {
         });
 
         // Prune from registry
-        branchesToDelete.forEach(branchId => {
+        branchesToDelete.forEach((branchId) => {
           delete accessRegistry[branchId];
         });
         storage.set(ACCESS_REGISTRY_KEY, accessRegistry);
@@ -440,7 +462,7 @@ export const storage = {
     } catch (error) {
       console.error('[Storage] Error during cleanup operation:', error);
     }
-  }
+  },
 };
 
 if (typeof window !== 'undefined') {
@@ -458,5 +480,3 @@ if (typeof window !== 'undefined') {
     }
   });
 }
-
-

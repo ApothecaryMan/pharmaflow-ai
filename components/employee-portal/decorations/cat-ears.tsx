@@ -17,11 +17,7 @@ export function CatEars() {
               strokeWidth='1.5'
               strokeLinejoin='round'
             />
-            <path
-              d='M25,34 C21,22 20,12 23,4 C24,12 26,22 28,29 Z'
-              fill='#F43F5E'
-              opacity='0.35'
-            />
+            <path d='M25,34 C21,22 20,12 23,4 C24,12 26,22 28,29 Z' fill='#F43F5E' opacity='0.35' />
             <path
               d='M25,34 C21,22 18,10 22,2 C25,-2 28,-2 31,3 C37,14 42,22 44,27 C36,28 30,31 25,34 Z'
               fill='#FFB6C1'

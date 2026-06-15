@@ -65,7 +65,7 @@ export const auditRepository = {
     this._pendingQueue = [];
 
     const results = await Promise.allSettled(
-      batch.map(entry =>
+      batch.map((entry) =>
         supabase.rpc('log_audit_event', {
           p_username: entry.username,
           p_employee_id: entry.employeeId || null,
@@ -119,7 +119,7 @@ export const auditRepository = {
       return [];
     }
 
-    return (data || []).map(row => ({
+    return (data || []).map((row) => ({
       id: row.id,
       timestamp: row.created_at,
       username: row.username,
@@ -130,7 +130,7 @@ export const auditRepository = {
       branchId: row.branch_id,
       orgId: row.org_id,
       action: row.action as any,
-      details: row.details
+      details: row.details,
     }));
-  }
+  },
 };

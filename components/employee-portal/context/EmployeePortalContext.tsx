@@ -1,7 +1,7 @@
 import React, { createContext, useContext } from 'react';
+import { authService } from '../../../services/auth/authService';
 import { employeeProfileRepository } from '../../../services/hr/repositories/employeeProfileRepository';
 import { employmentRequestRepository } from '../../../services/hr/repositories/employmentRequestRepository';
-import { authService } from '../../../services/auth/authService';
 
 interface EmployeePortalServices {
   employeeProfileRepository: typeof employeeProfileRepository;
@@ -24,9 +24,7 @@ export const EmployeePortalProvider: React.FC<{
   const contextValue = React.useMemo(() => ({ ...defaultServices, ...services }), [services]);
 
   return (
-    <EmployeePortalContext.Provider value={contextValue}>
-      {children}
-    </EmployeePortalContext.Provider>
+    <EmployeePortalContext.Provider value={contextValue}>{children}</EmployeePortalContext.Provider>
   );
 };
 

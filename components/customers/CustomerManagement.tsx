@@ -2,34 +2,42 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
-import { permissionsService } from '../../services/auth/permissionsService';
+import { StorageKeys } from '../../config/storageKeys';
+import { useSettings } from '../../context';
+import { useData } from '../../context/DataContext';
 import { COUNTRY_CODES } from '../../data/countryCodes';
 import { AREAS, CITIES, GOVERNORATES, getLocationName } from '../../data/locations';
+import { authService } from '../../services/auth/authService';
+import { permissionsService } from '../../services/auth/permissionsService';
+import { branchService } from '../../services/org/branchService';
 import type { Customer } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
-import { useData } from '../../context/DataContext';
+import { storage } from '../../utils/storage';
 import { useContextMenu } from '../common/ContextMenu';
 import { FilterDropdown } from '../common/FilterDropdown';
+import type { FilterConfig } from '../common/FilterPill';
+import { InteractiveCard } from '../common/InteractiveCard';
 import { LocationSelector } from '../common/LocationSelector';
 import { Modal } from '../common/Modal';
-import { SegmentedControl } from '../common/SegmentedControl';
-import { SmartEmailInput, SmartPhoneInput, SmartInput, SmartTextarea, useSmartDirection } from '../common/SmartInputs';
-import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
-import { InteractiveCard } from '../common/InteractiveCard';
-import { type FilterConfig } from '../common/FilterPill';
-import { authService } from '../../services/auth/authService';
-import { Switch } from '../common/Switch';
-import { useSettings } from '../../context';
-import { branchService } from '../../services/org/branchService';
-import { Tooltip } from '../common/Tooltip';
 import { PageHeader } from '../common/PageHeader';
 import { SearchInput } from '../common/SearchInput';
-import { storage } from '../../utils/storage';
-import { StorageKeys } from '../../config/storageKeys';
+import { SegmentedControl } from '../common/SegmentedControl';
+import {
+  SmartEmailInput,
+  SmartInput,
+  SmartPhoneInput,
+  SmartTextarea,
+  useSmartDirection,
+} from '../common/SmartInputs';
+import { Switch } from '../common/Switch';
+import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
+import { Tooltip } from '../common/Tooltip';
 
 interface CustomerManagementProps {
   customers: Customer[];
-  onAddCustomer: (customer: Omit<Customer, 'id' | 'serialId' | 'code' | 'createdAt' | 'updatedAt'>) => void;
+  onAddCustomer: (
+    customer: Omit<Customer, 'id' | 'serialId' | 'code' | 'createdAt' | 'updatedAt'>
+  ) => void;
   onUpdateCustomer: (customer: Customer) => void;
   onDeleteCustomer: (id: string) => void;
   color: string;
@@ -91,7 +99,9 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null);
   const [copyFeedback, setCopyFeedback] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'additional'>('basic');
-  const [showStats, setShowStats] = useState(() => storage.get<boolean>(StorageKeys.HEADER_STATS_VISIBLE, false));
+  const [showStats, setShowStats] = useState(() =>
+    storage.get<boolean>(StorageKeys.HEADER_STATS_VISIBLE, false)
+  );
 
   useEffect(() => {
     storage.set(StorageKeys.HEADER_STATS_VISIBLE, showStats);
@@ -129,20 +139,21 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     { id: 'email', label: t.contactOptions.email, icon: 'mail' },
   ];
 
-  const statusFilterConfig = useMemo<FilterConfig>(() => ({
-    id: 'status',
-    label: t.headers?.status || 'Status',
-    icon: 'rule',
-    mode: 'single',
-    options: [
-      { label: t.status?.active || 'Active', value: 'active', icon: 'check_circle' },
-      { label: t.status?.inactive || 'Inactive', value: 'inactive', icon: 'cancel' },
-    ],
-  }), [t]);
+  const statusFilterConfig = useMemo<FilterConfig>(
+    () => ({
+      id: 'status',
+      label: t.headers?.status || 'Status',
+      icon: 'rule',
+      mode: 'single',
+      options: [
+        { label: t.status?.active || 'Active', value: 'active', icon: 'check_circle' },
+        { label: t.status?.inactive || 'Inactive', value: 'inactive', icon: 'cancel' },
+      ],
+    }),
+    [t]
+  );
 
   // Contact Options
-
-
 
   /**
    * generateUniqueCode - Generates a mnemonic code (e.g., CUST-123456)
@@ -153,7 +164,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   };
 
   /**
-   * getNextSerialId - Finds the highest existing serialId 
+   * getNextSerialId - Finds the highest existing serialId
    * and returns the next value in the sequence.
    */
   const getNextSerialId = () => {
@@ -161,7 +172,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   };
 
   /**
-   * Generator Strategy Reference: 
+   * Generator Strategy Reference:
    * - Unique code: 'CUST-' + 6-digit random (e.g., CUST-123456)
    * - Serial ID: Max existing serial + 1
    * Delegated to: useEntityActions.handleAddCustomer for final verification
@@ -225,7 +236,9 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       handleCloseModal();
     } else {
       // Logic for ID, serialId, and code is centralized in the service layer.
-      onAddCustomer(formData as Omit<Customer, 'id' | 'serialId' | 'code' | 'createdAt' | 'updatedAt'>);
+      onAddCustomer(
+        formData as Omit<Customer, 'id' | 'serialId' | 'code' | 'createdAt' | 'updatedAt'>
+      );
 
       if (isKioskMode) {
         handleCloseModal();
@@ -321,8 +334,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
 
     // Activity thresholds
-    const thirtyDaysAgo = now.getTime() - (30 * 24 * 60 * 60 * 1000);
-    const oneYearAgo = now.getTime() - (365 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = now.getTime() - 30 * 24 * 60 * 60 * 1000;
+    const oneYearAgo = now.getTime() - 365 * 24 * 60 * 60 * 1000;
 
     return customers.reduce(
       (acc, c) => {
@@ -382,7 +395,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
           return (
             <div className='flex items-center gap-3 w-full h-full'>
               <div
-                className="flex items-center justify-center rounded-full text-white font-bold"
+                className='flex items-center justify-center rounded-full text-white font-bold'
                 style={{
                   backgroundColor: 'var(--color-primary)',
                   width: '32px',
@@ -510,7 +523,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
   const tableColumns = useMemo(() => {
     if (showAllBranches) return columns;
-    return columns.filter(col => !('accessorKey' in col) || col.accessorKey !== 'branchId');
+    return columns.filter((col) => !('accessorKey' in col) || col.accessorKey !== 'branchId');
   }, [columns, showAllBranches]);
 
   // Address Form Section Component
@@ -526,15 +539,14 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         selectedGovernorate={formData.governorate}
         selectedCity={formData.city}
         selectedArea={formData.area}
-        onGovernorateChange={(val) => setFormData(prev => ({ ...prev, governorate: val }))}
-        onCityChange={(val) => setFormData(prev => ({ ...prev, city: val }))}
-        onAreaChange={(val) => setFormData(prev => ({ ...prev, area: val }))}
+        onGovernorateChange={(val) => setFormData((prev) => ({ ...prev, governorate: val }))}
+        onCityChange={(val) => setFormData((prev) => ({ ...prev, city: val }))}
+        onAreaChange={(val) => setFormData((prev) => ({ ...prev, area: val }))}
         t={t}
         color={color}
       />
 
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mt-4'>
-
         {/* Street Address */}
         <div>
           <label className='block text-xs font-medium text-gray-500 mb-1'>
@@ -621,7 +633,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 }}
               >
                 <span className='material-symbols-rounded text-primary-500 mb-1'>shopping_bag</span>
-                <PriceDisplay value={c.totalPurchases || 0} size="lg" />
+                <PriceDisplay value={c.totalPurchases || 0} size='lg' />
                 <span className='text-xs font-medium text-primary-600/70 dark:text-primary-500/70 uppercase tracking-wide'>
                   Total Purchases
                 </span>
@@ -728,7 +740,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       <PageHeader
         leftContent={
           mode === 'list' ? (
-            <div className="w-full max-w-md">
+            <div className='w-full max-w-md'>
               <SearchInput
                 value={searchQuery}
                 onSearchChange={setSearchQuery}
@@ -736,7 +748,9 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 color={color}
                 filterConfigs={[statusFilterConfig]}
                 activeFilters={activeFilters}
-                onUpdateFilter={(gid, vals) => setActiveFilters(prev => ({ ...prev, [gid]: vals }))}
+                onUpdateFilter={(gid, vals) =>
+                  setActiveFilters((prev) => ({ ...prev, [gid]: vals }))
+                }
               />
             </div>
           ) : null
@@ -744,9 +758,24 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         centerContent={
           <SegmentedControl
             options={[
-              { value: 'customers', label: t.allCustomers || 'List', icon: 'group', permission: 'customer.view' },
-              { value: 'add-customer', label: t.addCustomer || 'Add', icon: 'person_add', permission: 'customer.add' },
-              { value: 'customer-history', label: t.customerHistory?.title || 'History', icon: 'history', permission: 'customer.view' },
+              {
+                value: 'customers',
+                label: t.allCustomers || 'List',
+                icon: 'group',
+                permission: 'customer.view',
+              },
+              {
+                value: 'add-customer',
+                label: t.addCustomer || 'Add',
+                icon: 'person_add',
+                permission: 'customer.add',
+              },
+              {
+                value: 'customer-history',
+                label: t.customerHistory?.title || 'History',
+                icon: 'history',
+                permission: 'customer.view',
+              },
             ]}
             value={mode === 'add' ? 'add-customer' : 'customers'}
             onChange={(val) => {
@@ -758,11 +787,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 onViewChange?.(val);
               }
             }}
-            shape="pill"
-            size="md"
-            iconSize="--icon-lg"
+            shape='pill'
+            size='md'
+            iconSize='--icon-lg'
             useGraphicFont={true}
-            className="w-full sm:w-[480px]"
+            className='w-full sm:w-[480px]'
           />
         }
         rightContent={
@@ -782,10 +811,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none'>
                   {t.globalView}
                 </span>
-                <Switch
-                  checked={showAllBranches}
-                  onChange={setShowAllBranches}
-                />
+                <Switch checked={showAllBranches} onChange={setShowAllBranches} />
               </label>
             </div>
           ) : null
@@ -796,7 +822,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         toggleTooltip={showStats ? t.hideSummary : t.showSummary}
         bottomContent={
           canViewStats && mode === 'list' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in'>
               <InteractiveCard
                 isLoading={isLoading}
                 className={`flex flex-col px-5 py-3.5 rounded-3xl ${language === 'AR' ? 'items-end' : 'items-start'}`}
@@ -804,11 +830,13 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   {
                     theme: 'bg-primary-50 dark:bg-primary-900/20',
                     content: (
-                      <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
-                        <span className="text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400 mb-1">
+                      <div
+                        className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}
+                      >
+                        <span className='text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400 mb-1'>
                           {t.summary?.total || 'Total Customers'}
                         </span>
-                        <span className="text-2xl font-bold text-primary-900 dark:text-primary-100">
+                        <span className='text-2xl font-bold text-primary-900 dark:text-primary-100'>
                           {summaryStats.total}
                         </span>
                       </div>
@@ -817,11 +845,13 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   {
                     theme: 'bg-green-50 dark:bg-green-900/20',
                     content: (
-                      <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
-                        <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400 mb-1">
+                      <div
+                        className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}
+                      >
+                        <span className='text-[10px] font-bold uppercase text-green-600 dark:text-green-400 mb-1'>
                           {t.summary?.newThisMonth || 'New This Month'}
                         </span>
-                        <span className="text-2xl font-bold text-green-900 dark:text-green-100">
+                        <span className='text-2xl font-bold text-green-900 dark:text-green-100'>
                           {summaryStats.newThisMonth}
                         </span>
                       </div>
@@ -830,16 +860,18 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   {
                     theme: 'bg-cyan-50 dark:bg-cyan-900/20',
                     content: (
-                      <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
-                        <span className="text-[10px] font-bold uppercase text-cyan-600 dark:text-cyan-400 mb-1">
+                      <div
+                        className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}
+                      >
+                        <span className='text-[10px] font-bold uppercase text-cyan-600 dark:text-cyan-400 mb-1'>
                           {t.summary?.newToday || 'New Today'}
                         </span>
-                        <span className="text-2xl font-bold text-cyan-900 dark:text-cyan-100">
+                        <span className='text-2xl font-bold text-cyan-900 dark:text-cyan-100'>
                           {summaryStats.newToday}
                         </span>
                       </div>
                     ),
-                  }
+                  },
                 ]}
               />
 
@@ -850,11 +882,13 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   {
                     theme: 'bg-indigo-50 dark:bg-indigo-900/20',
                     content: (
-                      <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
-                        <span className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400 mb-1">
+                      <div
+                        className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}
+                      >
+                        <span className='text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400 mb-1'>
                           {t.summary?.activeTotal || 'Active (Yearly)'}
                         </span>
-                        <span className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">
+                        <span className='text-2xl font-bold text-indigo-900 dark:text-indigo-100'>
                           {summaryStats.activeTotal}
                         </span>
                       </div>
@@ -863,16 +897,18 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   {
                     theme: 'bg-violet-50 dark:bg-violet-900/20',
                     content: (
-                      <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
-                        <span className="text-[10px] font-bold uppercase text-violet-600 dark:text-violet-400 mb-1">
+                      <div
+                        className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}
+                      >
+                        <span className='text-[10px] font-bold uppercase text-violet-600 dark:text-violet-400 mb-1'>
                           {t.summary?.activeRecently || 'Active (30 Days)'}
                         </span>
-                        <span className="text-2xl font-bold text-violet-900 dark:text-violet-100">
+                        <span className='text-2xl font-bold text-violet-900 dark:text-violet-100'>
                           {summaryStats.activeRecently}
                         </span>
                       </div>
                     ),
-                  }
+                  },
                 ]}
               />
 
@@ -883,16 +919,22 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   {
                     theme: 'bg-amber-50 dark:bg-amber-900/20',
                     content: (
-                      <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
-                        <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400 mb-1">
+                      <div
+                        className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}
+                      >
+                        <span className='text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400 mb-1'>
                           {language === 'AR' ? 'متوسط النقاط' : 'Avg. Points'}
                         </span>
-                        <span className="text-2xl font-bold text-amber-900 dark:text-amber-100">
-                          {(summaryStats.total > 0 ? customers.reduce((acc, c) => acc + (c.points || 0), 0) / summaryStats.total : 0).toFixed(0)}
+                        <span className='text-2xl font-bold text-amber-900 dark:text-amber-100'>
+                          {(summaryStats.total > 0
+                            ? customers.reduce((acc, c) => acc + (c.points || 0), 0) /
+                              summaryStats.total
+                            : 0
+                          ).toFixed(0)}
                         </span>
                       </div>
                     ),
-                  }
+                  },
                 ]}
               />
 
@@ -903,16 +945,25 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   {
                     theme: 'bg-emerald-50 dark:bg-emerald-900/20',
                     content: (
-                      <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
-                        <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 mb-1">
+                      <div
+                        className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}
+                      >
+                        <span className='text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 mb-1'>
                           {language === 'AR' ? 'متوسط المشتريات' : 'Avg. Purchases'}
                         </span>
-                        <span className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">
-                          <PriceDisplay value={summaryStats.total > 0 ? customers.reduce((acc, c) => acc + (c.totalPurchases || 0), 0) / summaryStats.total : 0} />
+                        <span className='text-2xl font-bold text-emerald-900 dark:text-emerald-100'>
+                          <PriceDisplay
+                            value={
+                              summaryStats.total > 0
+                                ? customers.reduce((acc, c) => acc + (c.totalPurchases || 0), 0) /
+                                  summaryStats.total
+                                : 0
+                            }
+                          />
                         </span>
                       </div>
                     ),
-                  }
+                  },
                 ]}
               />
             </div>
@@ -920,8 +971,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         }
       />
 
-      <div className="flex-1 min-h-0 flex flex-col space-y-6 animate-fade-in">
-
+      <div className='flex-1 min-h-0 flex flex-col space-y-6 animate-fade-in'>
         {/* Success Message */}
         {showSuccess && mode === 'add' && (
           <div
@@ -939,7 +989,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         {mode === 'list' ? (
           <>
             {/* Table Card */}
-            <div className="flex-1 min-h-0">
+            <div className='flex-1 min-h-0'>
               <TanStackTable
                 data={filteredCustomers}
                 columns={tableColumns}
@@ -1055,7 +1105,9 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 {/* Medical Info Card */}
                 <div className='bg-white dark:bg-gray-900 rounded-3xl p-6 card-shadow'>
                   <h3 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4'>
-                    <span className='material-symbols-rounded text-primary-500'>medical_services</span>
+                    <span className='material-symbols-rounded text-primary-500'>
+                      medical_services
+                    </span>
                     {t.modal.conditions}
                   </h3>
 
@@ -1072,10 +1124,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                         key={condition}
                         type='button'
                         onClick={() => toggleCondition(condition)}
-                        className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${(formData.chronicConditions || []).includes(condition)
+                        className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
+                          (formData.chronicConditions || []).includes(condition)
                             ? `border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 bg-transparent ring-1 ring-primary-200 dark:ring-primary-900/10 shadow-xs`
                             : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
-                          }`}
+                        }`}
                       >
                         {(formData.chronicConditions || []).includes(condition) && (
                           <span className='material-symbols-rounded text-xs'>check_circle</span>
@@ -1122,7 +1175,10 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                         isOpen={isContactOpen}
                         onToggle={() => setIsContactOpen(!isContactOpen)}
                         onSelect={(option) => {
-                          setFormData({ ...formData, preferredContact: option.id as Customer['preferredContact'] });
+                          setFormData({
+                            ...formData,
+                            preferredContact: option.id as Customer['preferredContact'],
+                          });
                           setIsContactOpen(false);
                         }}
                         keyExtractor={(item) => item.id}
@@ -1329,7 +1385,10 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       isOpen={isModalContactOpen}
                       onToggle={() => setIsModalContactOpen(!isModalContactOpen)}
                       onSelect={(option) => {
-                        setFormData({ ...formData, preferredContact: option.id as Customer['preferredContact'] });
+                        setFormData({
+                          ...formData,
+                          preferredContact: option.id as Customer['preferredContact'],
+                        });
                         setIsModalContactOpen(false);
                       }}
                       keyExtractor={(item) => item.id}
@@ -1370,12 +1429,16 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 {/* Insurance */}
                 <div className='p-4 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-700'>
                   <h4 className='text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2'>
-                    <span className='material-symbols-rounded text-primary-500'>health_and_safety</span>
+                    <span className='material-symbols-rounded text-primary-500'>
+                      health_and_safety
+                    </span>
                     {t.modal.insuranceDetails}
                   </h4>
                   <div className='grid grid-cols-2 gap-4'>
                     <div>
-                      <label className='block text-xs text-gray-500 mb-1'>{t.modal.insurance}</label>
+                      <label className='block text-xs text-gray-500 mb-1'>
+                        {t.modal.insurance}
+                      </label>
                       <SmartInput
                         type='text'
                         value={formData.insuranceProvider || ''}
@@ -1415,10 +1478,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                         key={condition}
                         type='button'
                         onClick={() => toggleCondition(condition)}
-                        className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${(formData.chronicConditions || []).includes(condition)
+                        className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
+                          (formData.chronicConditions || []).includes(condition)
                             ? `border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 bg-transparent ring-1 ring-primary-200 dark:ring-primary-900/10 shadow-xs`
                             : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
-                          }`}
+                        }`}
                       >
                         {(formData.chronicConditions || []).includes(condition) && (
                           <span className='material-symbols-rounded text-xs'>check_circle</span>
@@ -1537,10 +1601,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                           key={condition}
                           type='button'
                           onClick={() => toggleCondition(condition)}
-                          className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${(formData.chronicConditions || []).includes(condition)
+                          className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
+                            (formData.chronicConditions || []).includes(condition)
                               ? `border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 bg-transparent ring-1 ring-primary-200 dark:ring-primary-900/10 shadow-xs`
                               : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
-                            }`}
+                          }`}
                         >
                           {(formData.chronicConditions || []).includes(condition) && (
                             <span className='material-symbols-rounded text-sm'>check_circle</span>

@@ -1,25 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { money, pricing, tax } from '../../utils/money';
-import { permissionsService } from '../../services/auth/permissionsService';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import { useSettings } from '../../context';
 import { PENDING_APPROVAL_HELP } from '../../i18n/helpInstructions';
-import { type Purchase, type Employee, type Shift } from '../../types';
-import { getDisplayName } from '../../utils/drugDisplayName';
+import { permissionsService } from '../../services/auth/permissionsService';
+import type { Employee, Purchase, Shift } from '../../types';
 import { formatCurrencyParts } from '../../utils/currency';
+import { getDisplayName } from '../../utils/drugDisplayName';
+import { checkExpiryStatus, formatExpiryDate, getExpiryStatusStyle } from '../../utils/expiryUtils';
+import { money, pricing, tax } from '../../utils/money';
 import {
   HelpButton,
   HelpModal,
   Modal,
-  useSmartDirection,
   PageHeader,
   SearchInput,
   SegmentedControl,
+  useSmartDirection,
 } from '../common';
-import { checkExpiryStatus, formatExpiryDate, getExpiryStatusStyle } from '../../utils/expiryUtils';
 
 // --- Sub-components (SalesHistory Style) ---
 
-const CurrencyDisplay: React.FC<{ amount: number; className?: string }> = ({ amount, className = '' }) => {
+const CurrencyDisplay: React.FC<{ amount: number; className?: string }> = ({
+  amount,
+  className = '',
+}) => {
   const parts = formatCurrencyParts(amount);
   return (
     <span className={`tabular-nums ${className}`}>
@@ -164,7 +168,11 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
             <SegmentedControl
               options={[
                 { value: 'create', label: t.newPurchase || 'New Purchase', icon: 'shopping_cart' },
-                { value: 'approve', label: t.pendingApproval?.title || 'Approve', icon: 'assignment_turned_in' },
+                {
+                  value: 'approve',
+                  label: t.pendingApproval?.title || 'Approve',
+                  icon: 'assignment_turned_in',
+                },
                 { value: 'history', label: t.viewHistory || 'History', icon: 'history' },
               ]}
               value='approve'
@@ -173,11 +181,11 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                 if (val === 'history') onViewChange?.('purchase-history');
                 else onViewChange?.('purchases', { mode: val });
               }}
-              shape="pill"
-              size="md"
-              iconSize="--icon-lg"
+              shape='pill'
+              size='md'
+              iconSize='--icon-lg'
               useGraphicFont={true}
-              className="w-full sm:w-[520px]"
+              className='w-full sm:w-[520px]'
             />
           }
           rightContent={
@@ -198,7 +206,10 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
         <div className='flex-1 overflow-auto p-4 lg:p-6'>
           <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6'>
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className='bg-white dark:bg-(--bg-card) rounded-3xl border border-gray-100 dark:border-(--border-divider) p-5 space-y-4 animate-pulse'>
+              <div
+                key={i}
+                className='bg-white dark:bg-(--bg-card) rounded-3xl border border-gray-100 dark:border-(--border-divider) p-5 space-y-4 animate-pulse'
+              >
                 <div className='flex justify-between items-start'>
                   <div className='space-y-2'>
                     <div className='h-3 w-16 bg-gray-100 dark:bg-neutral-800 rounded' />
@@ -207,7 +218,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                   <div className='h-8 w-8 bg-gray-100 dark:bg-neutral-800 rounded-full' />
                 </div>
                 <div className='space-y-3 pt-2'>
-                  {[1, 2, 3].map(j => (
+                  {[1, 2, 3].map((j) => (
                     <div key={j} className='flex justify-between'>
                       <div className='h-3 w-20 bg-gray-100 dark:bg-neutral-800 rounded' />
                       <div className='h-3 w-12 bg-gray-100 dark:bg-neutral-800 rounded' />
@@ -231,10 +242,12 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
           </div>
           <div className='text-center'>
             <h3 className='text-lg font-medium text-gray-600 dark:text-gray-300'>
-              {(search || externalSearch) ? t.noResults || 'No matches found' : t.allCaughtUp || 'All caught up!'}
+              {search || externalSearch
+                ? t.noResults || 'No matches found'
+                : t.allCaughtUp || 'All caught up!'}
             </h3>
             <p className='text-sm opacity-60'>
-              {(search || externalSearch)
+              {search || externalSearch
                 ? t.tryDifferentSearch || 'Try searching for another supplier or ID.'
                 : t.noPendingOrders || 'No pending purchase orders requiring approval.'}
             </p>
@@ -246,8 +259,9 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
             {filteredPendingPurchases.map((purchase) => (
               <div
                 key={purchase.id}
-                className={`bg-white dark:bg-(--bg-card) rounded-3xl p-5 border border-gray-100 dark:border-(--border-divider) shadow-sm flex flex-col relative overflow-hidden group cursor-pointer hover:border-gray-200 dark:hover:border-primary-500/50 transition-colors ${isLoading ? 'animate-pulse pointer-events-none opacity-80' : ''
-                  }`}
+                className={`bg-white dark:bg-(--bg-card) rounded-3xl p-5 border border-gray-100 dark:border-(--border-divider) shadow-sm flex flex-col relative overflow-hidden group cursor-pointer hover:border-gray-200 dark:hover:border-primary-500/50 transition-colors ${
+                  isLoading ? 'animate-pulse pointer-events-none opacity-80' : ''
+                }`}
                 onClick={() => setSelectedPurchase(purchase)}
               >
                 {/* Header */}
@@ -256,7 +270,10 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                     <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate'>
                       {t.supplier || 'Supplier'}
                     </p>
-                    <h3 className='text-base font-bold text-gray-800 dark:text-gray-100 truncate' title={purchase.supplierName}>
+                    <h3
+                      className='text-base font-bold text-gray-800 dark:text-gray-100 truncate'
+                      title={purchase.supplierName}
+                    >
                       {purchase.supplierName}
                     </h3>
                   </div>
@@ -266,7 +283,8 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                       {t.pendingReview || 'Pending'}
                     </div>
                     <p className='text-[10px] text-gray-400 font-mono'>
-                      {t.invCode || 'INV'}: {purchase.externalInvoiceId || purchase.invoiceId.slice(0, 8)}
+                      {t.invCode || 'INV'}:{' '}
+                      {purchase.externalInvoiceId || purchase.invoiceId.slice(0, 8)}
                     </p>
                   </div>
                 </div>
@@ -274,33 +292,51 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                 {/* Data Rows */}
                 <div className='space-y-3 mb-5'>
                   <div className='flex justify-between items-center'>
-                    <span className='text-gray-500 dark:text-gray-400 text-xs font-medium'>{t.totalCost || 'Total Cost'}</span>
+                    <span className='text-gray-500 dark:text-gray-400 text-xs font-medium'>
+                      {t.totalCost || 'Total Cost'}
+                    </span>
                     <span className='font-bold text-primary-600 dark:text-primary-400 text-sm'>
                       <CurrencyDisplay amount={purchase.totalCost} />
                     </span>
                   </div>
                   <div className='flex justify-between items-center'>
-                    <span className='text-gray-500 dark:text-gray-400 text-xs font-medium'>{t.date || 'Date'}</span>
+                    <span className='text-gray-500 dark:text-gray-400 text-xs font-medium'>
+                      {t.date || 'Date'}
+                    </span>
                     <span className='font-medium text-gray-700 dark:text-gray-300 text-xs flex items-center gap-1'>
                       {new Date(purchase.date).toLocaleDateString()}
-                      <span className='text-[10px] opacity-50 font-mono'>({formatTime(new Date(purchase.date))})</span>
+                      <span className='text-[10px] opacity-50 font-mono'>
+                        ({formatTime(new Date(purchase.date))})
+                      </span>
                     </span>
                   </div>
                   <div className='flex justify-between items-center'>
-                    <span className='text-gray-500 dark:text-gray-400 text-xs font-medium'>{t.items || 'Items'}</span>
+                    <span className='text-gray-500 dark:text-gray-400 text-xs font-medium'>
+                      {t.items || 'Items'}
+                    </span>
                     <span className='font-medium text-gray-700 dark:text-gray-300 text-xs flex items-center gap-2'>
-                      <span>{purchase.items.reduce((acc, item) => acc + item.quantity, 0)} {t.items || 'Items'}</span>
+                      <span>
+                        {purchase.items.reduce((acc, item) => acc + item.quantity, 0)}{' '}
+                        {t.items || 'Items'}
+                      </span>
                       <span className='opacity-30'>•</span>
                       <span className='flex items-center gap-1 bg-gray-50 dark:bg-white/5 px-1.5 py-0.5 rounded-md'>
-                        <span className='material-symbols-rounded text-[12px] opacity-60'>person</span>
-                        <span className='text-[10px]'>{purchase.createdByName || t.unknown || 'Unknown'}</span>
+                        <span className='material-symbols-rounded text-[12px] opacity-60'>
+                          person
+                        </span>
+                        <span className='text-[10px]'>
+                          {purchase.createdByName || t.unknown || 'Unknown'}
+                        </span>
                       </span>
                     </span>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className='mt-auto pt-3 border-t border-gray-100 dark:border-(--border-divider) grid grid-cols-2 gap-3' onClick={(e) => e.stopPropagation()}>
+                <div
+                  className='mt-auto pt-3 border-t border-gray-100 dark:border-(--border-divider) grid grid-cols-2 gap-3'
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {permissionsService.can('purchase.approve') && (
                     <button
                       onClick={(e) => handleOpenApprove(purchase.id, e)}
@@ -314,7 +350,9 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                   {purchase.paymentMethod === 'cash' && !currentShift ? (
                     <div className='py-2 px-1 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 flex items-center justify-center gap-1 text-red-600 dark:text-red-400'>
                       <span className='material-symbols-rounded text-[14px]'>warning</span>
-                      <span className='text-[9px] font-bold uppercase truncate'>{t.noOpenShift || 'Open Shift First'}</span>
+                      <span className='text-[9px] font-bold uppercase truncate'>
+                        {t.noOpenShift || 'Open Shift First'}
+                      </span>
                     </div>
                   ) : permissionsService.can('purchase.reject') ? (
                     <button
@@ -324,7 +362,9 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                       <span className='material-symbols-rounded text-[18px]'>cancel</span>
                       {t.reject || 'Reject'}
                     </button>
-                  ) : <div />}
+                  ) : (
+                    <div />
+                  )}
                 </div>
               </div>
             ))}
@@ -346,35 +386,54 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
               <div className='grid grid-cols-1 sm:grid-cols-2 bg-gray-50/50 dark:bg-white/[0.03] rounded-2xl border border-gray-100 dark:border-white/5 overflow-hidden divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-white/5'>
                 {[
                   {
-                    label: t.modal?.date || 'Date', icon: 'calendar_today', value: (
+                    label: t.modal?.date || 'Date',
+                    icon: 'calendar_today',
+                    value: (
                       <span className='flex items-center gap-1.5'>
                         {new Date(selectedPurchase.date).toLocaleDateString()}
                         <span className='opacity-30 mx-0.5'>•</span>
                         {formatTime(new Date(selectedPurchase.date))}
                       </span>
-                    )
+                    ),
                   },
-                  { label: t.modal?.id || 'ID', icon: 'tag', value: selectedPurchase.invoiceId || selectedPurchase.id.slice(0, 8) },
-                  { label: t.supplier || 'Supplier', icon: 'store', value: selectedPurchase.supplierName },
+                  {
+                    label: t.modal?.id || 'ID',
+                    icon: 'tag',
+                    value: selectedPurchase.invoiceId || selectedPurchase.id.slice(0, 8),
+                  },
+                  {
+                    label: t.supplier || 'Supplier',
+                    icon: 'store',
+                    value: selectedPurchase.supplierName,
+                  },
                   {
                     label: language === 'AR' ? 'بواسطة:' : 'Created By:',
                     icon: 'person_add',
-                    value: selectedPurchase.createdByName || t.unknown || 'Unknown'
+                    value: selectedPurchase.createdByName || t.unknown || 'Unknown',
                   },
                   selectedPurchase.approvedBy && {
                     label: t.approvedBy || 'Approved By:',
                     icon: 'verified_user',
-                    value: selectedPurchase.approvedBy
-                  }
-                ].filter(Boolean).map((item: any, i) => (
-                  <div key={i} className={`flex items-center justify-between py-2 px-4 bg-transparent transition-all border-b sm:border-b last:border-b-0 border-gray-100 dark:border-white/10`}>
-                    <div className='flex items-center gap-2 shrink-0'>
-                      <span className='material-symbols-rounded text-base opacity-40'>{item.icon}</span>
-                      <span className='text-[9px] font-bold uppercase tracking-wider opacity-50'>{item.label}</span>
+                    value: selectedPurchase.approvedBy,
+                  },
+                ]
+                  .filter(Boolean)
+                  .map((item: any, i) => (
+                    <div
+                      key={i}
+                      className={`flex items-center justify-between py-2 px-4 bg-transparent transition-all border-b sm:border-b last:border-b-0 border-gray-100 dark:border-white/10`}
+                    >
+                      <div className='flex items-center gap-2 shrink-0'>
+                        <span className='material-symbols-rounded text-base opacity-40'>
+                          {item.icon}
+                        </span>
+                        <span className='text-[9px] font-bold uppercase tracking-wider opacity-50'>
+                          {item.label}
+                        </span>
+                      </div>
+                      <div className='text-[13px] font-bold text-right pl-2'>{item.value}</div>
                     </div>
-                    <div className='text-[13px] font-bold text-right pl-2'>{item.value}</div>
-                  </div>
-                ))}
+                  ))}
               </div>
 
               <div>
@@ -386,41 +445,78 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                     <thead className='bg-gray-50 dark:bg-gray-950'>
                       <tr className='border-b border-gray-200 dark:border-gray-800 text-[10px] text-gray-500 uppercase'>
                         <th className='p-2 font-bold'>{t.tableHeaders?.item || 'Item'}</th>
-                        <th className='p-2 font-bold text-center'>{t.tableHeaders?.expiry || 'Expiry'}</th>
-                        <th className='p-2 font-bold text-center'>{t.tableHeaders?.qty || 'Qty'}</th>
-                        <th className='p-2 font-bold text-right'>{t.tableHeaders?.cost || 'Cost'}</th>
-                        <th className='p-2 font-bold text-center'>{t.tableHeaders?.discount || 'Disc%'}</th>
-                        <th className='p-2 font-bold text-center'>{t.tableHeaders?.tax || 'Tax%'}</th>
-                        <th className='p-2 font-bold text-right'>{t.tableHeaders?.publicPrice || 'Sale'}</th>
-                        <th className='p-2 font-bold text-right'>{t.tableHeaders?.total || 'Total'}</th>
+                        <th className='p-2 font-bold text-center'>
+                          {t.tableHeaders?.expiry || 'Expiry'}
+                        </th>
+                        <th className='p-2 font-bold text-center'>
+                          {t.tableHeaders?.qty || 'Qty'}
+                        </th>
+                        <th className='p-2 font-bold text-right'>
+                          {t.tableHeaders?.cost || 'Cost'}
+                        </th>
+                        <th className='p-2 font-bold text-center'>
+                          {t.tableHeaders?.discount || 'Disc%'}
+                        </th>
+                        <th className='p-2 font-bold text-center'>
+                          {t.tableHeaders?.tax || 'Tax%'}
+                        </th>
+                        <th className='p-2 font-bold text-right'>
+                          {t.tableHeaders?.publicPrice || 'Sale'}
+                        </th>
+                        <th className='p-2 font-bold text-right'>
+                          {t.tableHeaders?.total || 'Total'}
+                        </th>
                       </tr>
                     </thead>
                     <tbody className='text-[13px]'>
                       {selectedPurchase.items.map((item, idx) => (
-                        <tr key={idx} className='border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors'>
+                        <tr
+                          key={idx}
+                          className='border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors'
+                        >
                           <td className='p-2'>
                             <div className='flex flex-col'>
-                              <span className='font-bold text-gray-800 dark:text-gray-200'>{getDisplayName(item, textTransform)}</span>
-                              {item.barcode && <span className='text-[9px] text-gray-400 font-mono'>{item.barcode}</span>}
+                              <span className='font-bold text-gray-800 dark:text-gray-200'>
+                                {getDisplayName(item, textTransform)}
+                              </span>
+                              {item.barcode && (
+                                <span className='text-[9px] text-gray-400 font-mono'>
+                                  {item.barcode}
+                                </span>
+                              )}
                             </div>
                           </td>
                           <td className='p-2 text-center'>
-                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${getExpiryStatusStyle(checkExpiryStatus(item.expiryDate || ''), 'badge')}`}>
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${getExpiryStatusStyle(checkExpiryStatus(item.expiryDate || ''), 'badge')}`}
+                            >
                               {formatExpiryDate(item.expiryDate || '')}
                             </span>
                           </td>
                           <td className='p-2 text-center font-bold'>{item.quantity}</td>
-                          <td className='p-2 text-right'><CurrencyDisplay amount={item.costPrice} /></td>
+                          <td className='p-2 text-right'>
+                            <CurrencyDisplay amount={item.costPrice} />
+                          </td>
                           <td className='p-2 text-center text-gray-500'>{item.discount || 0}%</td>
                           <td className='p-2 text-center text-gray-500'>{item.tax ?? 14}%</td>
-                          <td className='p-2 text-right text-primary-600 font-medium'><CurrencyDisplay amount={item.publicPrice || 0} /></td>
+                          <td className='p-2 text-right text-primary-600 font-medium'>
+                            <CurrencyDisplay amount={item.publicPrice || 0} />
+                          </td>
                           <td className='p-2 text-right font-bold'>
                             {(() => {
                               const lineNet = money.multiply(item.costPrice, item.quantity, 0);
-                              const totalNet = selectedPurchase.items.reduce((sum, it) => money.add(sum, money.multiply(it.costPrice, it.quantity, 0)), 0);
+                              const totalNet = selectedPurchase.items.reduce(
+                                (sum, it) =>
+                                  money.add(sum, money.multiply(it.costPrice, it.quantity, 0)),
+                                0
+                              );
                               const totalTax = selectedPurchase.totalTax || 0;
-                              const itemTaxShare = totalNet > 0 ? (totalTax * lineNet) / totalNet : 0;
-                              const lineTotal = money.add(lineNet, Math.round(itemTaxShare * 100) / 100);
+                              const itemTaxShare =
+                                totalNet > 0 ? (totalTax * lineNet) / totalNet : 0;
+                              const lineTotal = money.add(
+                                lineNet,
+                                Math.round(itemTaxShare * 100) / 100
+                              );
                               return <CurrencyDisplay amount={lineTotal} />;
                             })()}
                           </td>
@@ -433,8 +529,13 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
 
               <div className='pt-2'>
                 <div className='flex justify-between items-center py-3 px-6 bg-gray-100/50 dark:bg-white/[0.03] rounded-2xl border border-gray-100 dark:border-white/5'>
-                  <span className='font-bold text-base'>{language === 'AR' ? 'الإجمالي النهائي' : t.modal?.total || 'Total'}</span>
-                  <CurrencyDisplay amount={selectedPurchase.totalCost} className='text-xl font-black tabular-nums' />
+                  <span className='font-bold text-base'>
+                    {language === 'AR' ? 'الإجمالي النهائي' : t.modal?.total || 'Total'}
+                  </span>
+                  <CurrencyDisplay
+                    amount={selectedPurchase.totalCost}
+                    className='text-xl font-black tabular-nums'
+                  />
                 </div>
               </div>
             </div>
@@ -443,7 +544,9 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
               {selectedPurchase.paymentMethod === 'cash' && !currentShift ? (
                 <div className='flex-1 py-3 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 flex items-center justify-center gap-2'>
                   <span className='material-symbols-rounded text-base animate-pulse'>warning</span>
-                  <span className='font-bold text-xs uppercase'>{t.noOpenShift || 'Open Shift First'}</span>
+                  <span className='font-bold text-xs uppercase'>
+                    {t.noOpenShift || 'Open Shift First'}
+                  </span>
                 </div>
               ) : (
                 <>
@@ -492,7 +595,8 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
             {t.confirmApproval?.title || 'Confirm Approval'}
           </h3>
           <p className='text-xs text-gray-500 mb-6'>
-            {t.confirmApproval?.subtitle || 'Are you sure you want to approve this purchase? Order will transition to Approved and wait for physical receipt.'}
+            {t.confirmApproval?.subtitle ||
+              'Are you sure you want to approve this purchase? Order will transition to Approved and wait for physical receipt.'}
           </p>
 
           <div className='text-left mb-6'>
@@ -500,8 +604,12 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
               {t.approvedBy || 'Approved By'}
             </label>
             <div className='flex items-center gap-2 justify-center py-2.5 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5'>
-              <span className='material-symbols-rounded text-gray-400 text-base'>account_circle</span>
-              <span className='text-base font-bold'>{employees?.find(e => e.id === currentEmployeeId)?.name || t.unknown || 'Unknown'}</span>
+              <span className='material-symbols-rounded text-gray-400 text-base'>
+                account_circle
+              </span>
+              <span className='text-base font-bold'>
+                {employees?.find((e) => e.id === currentEmployeeId)?.name || t.unknown || 'Unknown'}
+              </span>
             </div>
           </div>
 
@@ -537,7 +645,8 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
             {t.confirmRejection?.title || 'Confirm Rejection'}
           </h3>
           <p className='text-xs text-gray-500 mb-6'>
-            {t.confirmRejection?.subtitle || 'Are you sure you want to reject this purchase? This action cannot be undone.'}
+            {t.confirmRejection?.subtitle ||
+              'Are you sure you want to reject this purchase? This action cannot be undone.'}
           </p>
 
           <div className='mb-6'>
@@ -568,8 +677,19 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
         </div>
       </Modal>
 
-      <HelpButton onClick={() => setShowHelp(true)} title={helpContent.title} color={color} isRTL={language === 'AR'} />
-      <HelpModal show={showHelp} onClose={() => setShowHelp(false)} helpContent={helpContent as any} color={color} language={language} />
+      <HelpButton
+        onClick={() => setShowHelp(true)}
+        title={helpContent.title}
+        color={color}
+        isRTL={language === 'AR'}
+      />
+      <HelpModal
+        show={showHelp}
+        onClose={() => setShowHelp(false)}
+        helpContent={helpContent as any}
+        color={color}
+        language={language}
+      />
     </div>
   );
 };

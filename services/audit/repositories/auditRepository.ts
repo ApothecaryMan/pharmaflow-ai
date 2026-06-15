@@ -10,8 +10,8 @@ const mapAuditToDb = (a: any): any => {
   if (a.action) db.action = a.action;
   if (a.entityType) db.entity_type = a.entityType;
   // Make sure it's a valid uuid before insertion if applicable
-  if (a.entityId && a.entityId.length === 36) db.entity_id = a.entityId; 
-  
+  if (a.entityId && a.entityId.length === 36) db.entity_id = a.entityId;
+
   let detailsObj: any = {};
   if (typeof a.details === 'string') {
     detailsObj.message = a.details;
@@ -20,7 +20,7 @@ const mapAuditToDb = (a: any): any => {
   }
   if (a.userName) detailsObj.userName = a.userName;
   db.details = Object.keys(detailsObj).length > 0 ? detailsObj : null;
-  
+
   if (a.ipAddress) db.ip_address = a.ipAddress;
   if (a.timestamp) db.timestamp = a.timestamp;
   return db;
@@ -47,7 +47,11 @@ export const auditRepository = {
   },
 
   async getLogs(branchId?: string, limit = 100): Promise<AuditEntry[]> {
-    let query = supabase.from('audit_logs').select('*').order('timestamp', { ascending: false }).limit(limit);
+    let query = supabase
+      .from('audit_logs')
+      .select('*')
+      .order('timestamp', { ascending: false })
+      .limit(limit);
     if (branchId) {
       query = query.eq('branch_id', branchId);
     }
@@ -63,8 +67,8 @@ export const auditRepository = {
       .eq('org_id', orgId)
       .order('timestamp', { ascending: false })
       .limit(limit);
-    
+
     if (error) throw error;
     return (data || []).map(mapDbToAudit);
-  }
+  },
 };

@@ -8,10 +8,10 @@ import {
   useMemo,
   useState,
 } from 'react';
-import type { CashTransaction, Shift } from '../../types';
 import { useData } from '../../context/DataContext';
-import { cashService } from '../../services/cash/cashService';
 import { supabase } from '../../lib/supabase';
+import { cashService } from '../../services/cash/cashService';
+import type { CashTransaction, Shift } from '../../types';
 
 /**
  * ShiftContext
@@ -27,7 +27,11 @@ interface ShiftContextType {
   isLoading: boolean;
   startShift: (newShift: Shift) => Promise<void>;
   endShift: (closedShift: Shift) => Promise<void>;
-  addTransaction: (shiftId: string, transaction: CashTransaction, updates?: Partial<Shift>) => Promise<void>;
+  addTransaction: (
+    shiftId: string,
+    transaction: CashTransaction,
+    updates?: Partial<Shift>
+  ) => Promise<void>;
   refreshShifts: () => Promise<void>;
 }
 
@@ -48,17 +52,17 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     if (!activeBranchId) {
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       const loadedShifts = await cashService.getAllShifts(activeBranchId);
-      
+
       // Sort by openTime descending
       loadedShifts.sort((a, b) => new Date(b.openTime).getTime() - new Date(a.openTime).getTime());
 
       // Fetch transactions for the open shift if it exists
-      const openShift = loadedShifts.find(s => s.status === 'open');
+      const openShift = loadedShifts.find((s) => s.status === 'open');
       if (openShift) {
         const txs = await cashService.getTransactions(openShift.id);
         openShift.transactions = txs;
@@ -78,72 +82,83 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     refreshShifts();
 
     // Listen for realtime updates from Supabase
-    const channel = supabase.channel(`shifts-realtime-${activeBranchId}`)
+    const channel = supabase
+      .channel(`shifts-realtime-${activeBranchId}`)
       .on(
         'postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
+        {
+          event: '*',
+          schema: 'public',
           table: 'shifts',
-          filter: `branch_id=eq.${activeBranchId}` 
+          filter: `branch_id=eq.${activeBranchId}`,
         },
         (payload: any) => {
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newShift = cashService.mapFromDb(payload.new);
-            setShifts(prev => {
-              const existing = prev.find(s => s.id === newShift.id);
+            setShifts((prev) => {
+              const existing = prev.find((s) => s.id === newShift.id);
               // Preserve transactions if they exist in the current state
               // Critical fix: ensure we don't overwrite if existing has transactions and new one doesn't
-              newShift.transactions = (existing?.transactions?.length ? existing.transactions : (newShift.transactions || []));
-              
-              const filtered = prev.filter(s => s.id !== newShift.id);
+              newShift.transactions = existing?.transactions?.length
+                ? existing.transactions
+                : newShift.transactions || [];
+
+              const filtered = prev.filter((s) => s.id !== newShift.id);
               const updated = [newShift, ...filtered];
               // Keep sorted
-              return updated.sort((a, b) => new Date(b.openTime).getTime() - new Date(a.openTime).getTime());
+              return updated.sort(
+                (a, b) => new Date(b.openTime).getTime() - new Date(a.openTime).getTime()
+              );
             });
           } else if (payload.eventType === 'DELETE') {
-            setShifts(prev => prev.filter(s => s.id !== payload.old.id));
+            setShifts((prev) => prev.filter((s) => s.id !== payload.old.id));
           }
         }
       )
       .on(
         'postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
+        {
+          event: '*',
+          schema: 'public',
           table: 'cash_transactions',
-          filter: `branch_id=eq.${activeBranchId}`
+          filter: `branch_id=eq.${activeBranchId}`,
         },
         (payload: any) => {
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newTx = cashService.mapFromDbTransaction(payload.new);
-            
+
             // Update the shifts list to include this transaction
-            setShifts(prev => prev.map(s => {
-              if (s.id === newTx.shiftId) {
-                const existingTxs = s.transactions || [];
-                // Replace or add the transaction
-                const filtered = existingTxs.filter(t => t.id !== newTx.id);
-                const updatedTxs = [newTx, ...filtered];
-                // Sort transactions by time descending
-                updatedTxs.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-                return { ...s, transactions: updatedTxs };
-              }
-              return s;
-            }));
+            setShifts((prev) =>
+              prev.map((s) => {
+                if (s.id === newTx.shiftId) {
+                  const existingTxs = s.transactions || [];
+                  // Replace or add the transaction
+                  const filtered = existingTxs.filter((t) => t.id !== newTx.id);
+                  const updatedTxs = [newTx, ...filtered];
+                  // Sort transactions by time descending
+                  updatedTxs.sort(
+                    (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()
+                  );
+                  return { ...s, transactions: updatedTxs };
+                }
+                return s;
+              })
+            );
           } else if (payload.eventType === 'DELETE') {
             const deletedId = payload.old.id;
-            setShifts(prev => prev.map(s => ({
-              ...s,
-              transactions: (s.transactions || []).filter(t => t.id !== deletedId)
-            })));
+            setShifts((prev) =>
+              prev.map((s) => ({
+                ...s,
+                transactions: (s.transactions || []).filter((t) => t.id !== deletedId),
+              }))
+            );
           }
         }
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-           // Optionally refresh again on successful subscription to avoid misses
-           refreshShifts();
+          // Optionally refresh again on successful subscription to avoid misses
+          refreshShifts();
         }
       });
 
@@ -154,54 +169,60 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // --- Actions ---
 
-  const startShift = useCallback(async (newShift: Shift) => {
-    try {
-      const createdShift = await cashService.openShift(
-        newShift.openingBalance,
-        newShift.openedBy,
-        activeBranchId
-      );
-      
-      // If there was an opening transaction, it's handled by openShift service usually,
-      // but let's check if we need to add it explicitly.
-      // Looking at cashService.openShift, it creates the shift but doesn't add the 'opening' transaction record.
-      // Let's add it if provided in the newShift.
-      if (newShift.transactions && newShift.transactions.length > 0) {
-        const openingTx = newShift.transactions.find(t => t.type === 'opening');
-        if (openingTx) {
-          await cashService.addTransaction(createdShift.id, {
-            branchId: activeBranchId,
-            shiftId: createdShift.id,
-            time: openingTx.time,
-            type: 'opening',
-            amount: openingTx.amount,
-            reason: openingTx.reason,
-            userId: openingTx.userId,
-          });
+  const startShift = useCallback(
+    async (newShift: Shift) => {
+      try {
+        const createdShift = await cashService.openShift(
+          newShift.openingBalance,
+          newShift.openedBy,
+          activeBranchId
+        );
+
+        // If there was an opening transaction, it's handled by openShift service usually,
+        // but let's check if we need to add it explicitly.
+        // Looking at cashService.openShift, it creates the shift but doesn't add the 'opening' transaction record.
+        // Let's add it if provided in the newShift.
+        if (newShift.transactions && newShift.transactions.length > 0) {
+          const openingTx = newShift.transactions.find((t) => t.type === 'opening');
+          if (openingTx) {
+            await cashService.addTransaction(createdShift.id, {
+              branchId: activeBranchId,
+              shiftId: createdShift.id,
+              time: openingTx.time,
+              type: 'opening',
+              amount: openingTx.amount,
+              reason: openingTx.reason,
+              userId: openingTx.userId,
+            });
+          }
         }
+
+        await refreshShifts();
+      } catch (err) {
+        console.error('[ShiftProvider] startShift failed:', err);
+        throw err;
       }
+    },
+    [activeBranchId, refreshShifts]
+  );
 
-      await refreshShifts();
-    } catch (err) {
-      console.error('[ShiftProvider] startShift failed:', err);
-      throw err;
-    }
-  }, [activeBranchId, refreshShifts]);
-
-  const endShift = useCallback(async (closedShift: Shift) => {
-    try {
-      await cashService.closeShift(
-        closedShift.id,
-        closedShift.closingBalance || 0,
-        closedShift.closedBy || '',
-        closedShift.notes
-      );
-      await refreshShifts();
-    } catch (err) {
-      console.error('[ShiftProvider] endShift failed:', err);
-      throw err;
-    }
-  }, [refreshShifts]);
+  const endShift = useCallback(
+    async (closedShift: Shift) => {
+      try {
+        await cashService.closeShift(
+          closedShift.id,
+          closedShift.closingBalance || 0,
+          closedShift.closedBy || '',
+          closedShift.notes
+        );
+        await refreshShifts();
+      } catch (err) {
+        console.error('[ShiftProvider] endShift failed:', err);
+        throw err;
+      }
+    },
+    [refreshShifts]
+  );
 
   const addTransaction = useCallback(
     async (shiftId: string, transaction: CashTransaction, updates: Partial<Shift> = {}) => {
@@ -230,15 +251,18 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, [shifts, activeBranchId]);
 
   // Memoize context value to prevent unnecessary consumer re-renders (memory-leak-audit #7)
-  const value = useMemo<ShiftContextType>(() => ({
-    shifts: branchShifts,
-    currentShift,
-    isLoading,
-    startShift,
-    endShift,
-    addTransaction,
-    refreshShifts,
-  }), [branchShifts, currentShift, isLoading, startShift, endShift, addTransaction, refreshShifts]);
+  const value = useMemo<ShiftContextType>(
+    () => ({
+      shifts: branchShifts,
+      currentShift,
+      isLoading,
+      startShift,
+      endShift,
+      addTransaction,
+      refreshShifts,
+    }),
+    [branchShifts, currentShift, isLoading, startShift, endShift, addTransaction, refreshShifts]
+  );
 
   return <ShiftContext.Provider value={value}>{children}</ShiftContext.Provider>;
 };

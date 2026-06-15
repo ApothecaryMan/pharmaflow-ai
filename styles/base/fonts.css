@@ -1,22 +1,45 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@100..700&display=swap") layer(base); 
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@100; 200; 300; 400; 500; 600; 700&display=swap") layer(base); 
-@import url("https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,slnt,wdth,wght@8..144,-10..0,25..151,100..1000&display=swap") layer(base);
-@import "tailwindcss"; 
-@import "tw-animate-css"; 
-@import "shadcn/tailwind.css"; 
-@import "@fontsource-variable/geist"; 
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@100..700&display=swap")
+  layer(base);
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@100; 200; 300; 400; 500; 600; 700&display=swap")
+  layer(base);
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,slnt,wdth,wght@8..144,-10..0,25..151,100..1000&display=swap")
+  layer(base);
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
 
 /* ── Thmanyah Serif Display (Graphic Serif) ── */
-@font-face  { font-family: "HeadingFont"; src: url("/fonts/thmanyahserifdisplay-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
-@font-face  { font-family: "HeadingFont"; src: url("/fonts/thmanyahserifdisplay-Medium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face {
+  font-family: "HeadingFont";
+  src: url("/fonts/thmanyahserifdisplay-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "HeadingFont";
+  src: url("/fonts/thmanyahserifdisplay-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* ── Thmanyah Sans (Graphic Sans) ── */
-@font-face  { font-family: "GraphicSansFont"; 
-    src: url("/fonts/thmanyahsans-Regular.woff2") format("woff2"); 
-    font-weight: 400; font-style: normal; font-display: swap; }
-@font-face  { font-family: "GraphicSansFont"; 
-    src: url("/fonts/thmanyahsans-Medium.woff2") format("woff2"); 
-    font-weight: 500; font-style: normal; font-display: swap; }
+@font-face {
+  font-family: "GraphicSansFont";
+  src: url("/fonts/thmanyahsans-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "GraphicSansFont";
+  src: url("/fonts/thmanyahsans-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
 
 /*
 --- Script Firewall: Unicode Proxy Strategy ---
@@ -26,15 +49,23 @@ and prevents Arabic fonts from stealing English rendering.
 */
 
 /* Latin/English Proxy */
-@font-face  { font-family: "En-Firewall"; 
-    src: local("-apple-system"), local("BlinkMacSystemFont"), local("Segoe UI"), local("Roboto"), local("Helvetica Neue"), local("Arial"), local("sans-serif");
+@font-face {
+  font-family: "En-Firewall";
+  src:
+    local("-apple-system"), local("BlinkMacSystemFont"), local("Segoe UI"), local("Roboto"),
+    local("Helvetica Neue"), local("Arial"), local("sans-serif");
 
-/* Latin, Latin-ext, and common symbols only */
-unicode-range: U+0000-00FF, U+0100-024F, U+0259, U+1E00-1EFF, U+2000-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF; }
+  /* Latin, Latin-ext, and common symbols only */
+  unicode-range:
+    U+0000-00FF, U+0100-024F, U+0259, U+1E00-1EFF, U+2000-20AB, U+20AD-20CF, U+2C60-2C7F,
+    U+A720-A7FF;
+}
 
 /* Arabic Proxy */
-@font-face  { font-family: "Ar-Firewall"; 
-    src: local("Segoe UI"), local("Tahoma"), local("Arial"), local("sans-serif");
+@font-face {
+  font-family: "Ar-Firewall";
+  src: local("Segoe UI"), local("Tahoma"), local("Arial"), local("sans-serif");
 
-/* Arabic, Arabic Supplement, Presentation Forms A/B */
-unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+  /* Arabic, Arabic Supplement, Presentation Forms A/B */
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
+}

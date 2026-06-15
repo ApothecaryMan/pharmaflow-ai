@@ -11,8 +11,8 @@
  */
 
 import { StorageKeys } from '../config/storageKeys';
-import type { AppSettings } from '../services/settings/types';
 import { supabase } from '../lib/supabase';
+import type { AppSettings } from '../services/settings/types';
 
 // Supported Entity Types
 export type EntityType =
@@ -93,7 +93,7 @@ export const idGenerator = {
       // 1. Get next value from Supabase
       const { data, error } = await supabase.rpc('increment_sequence', {
         p_branch_id: branchId,
-        p_entity_type: type
+        p_entity_type: type,
       });
 
       if (error) throw error;
@@ -106,8 +106,8 @@ export const idGenerator = {
       console.error(`[idGenerator] Sequence generation failed for ${type}:`, err);
       throw new Error(
         `Failed to generate ID for ${type}. ` +
-        `This may indicate a database connectivity issue. ` +
-        `Transaction aborted to preserve data integrity.`
+          `This may indicate a database connectivity issue. ` +
+          `Transaction aborted to preserve data integrity.`
       );
     }
   },
@@ -135,23 +135,23 @@ export const idGenerator = {
    */
   code: async (prefix: 'CUST' | 'DRUG', branchId: string, branchCode?: string): Promise<string> => {
     const type: EntityType = prefix === 'CUST' ? 'customers-serial' : 'inventory';
-    
+
     try {
       const { data, error } = await supabase.rpc('increment_sequence', {
         p_branch_id: branchId,
-        p_entity_type: type
+        p_entity_type: type,
       });
       if (error) throw error;
-      
-      // Use branchCode for customers (e.g., B1-1), 
+
+      // Use branchCode for customers (e.g., B1-1),
       // but keep 'DRUG' for medications to maintain clear classification.
-      const finalPrefix = (prefix === 'CUST' && branchCode) ? branchCode : prefix;
-      
+      const finalPrefix = prefix === 'CUST' && branchCode ? branchCode : prefix;
+
       return `${finalPrefix}-${data}`;
     } catch (err) {
       console.error(`[idGenerator] Code generation failed for ${prefix}:`, err);
       const ts = Date.now().toString(36).toUpperCase();
-      const finalPrefix = (prefix === 'CUST' && branchCode) ? branchCode : prefix;
+      const finalPrefix = prefix === 'CUST' && branchCode ? branchCode : prefix;
       return `${finalPrefix}-TEMP-${ts}`;
     }
   },
@@ -166,10 +166,10 @@ export const idGenerator = {
     try {
       const { data, error } = await supabase.rpc('increment_sequence', {
         p_branch_id: branchId,
-        p_entity_type: 'barcodes'
+        p_entity_type: 'barcodes',
       });
       if (error) throw error;
-      
+
       // Start from 1000 (DB sequence starts at 1, so we add 999)
       const finalValue = Number(data) + 999;
       return finalValue.toString();
@@ -189,13 +189,13 @@ export const idGenerator = {
   generateBatchBarcode: (drugId: number, expiryDate: string | Date): string => {
     // 1. Encode Drug ID (e.g., 2166 => "1O6")
     const drugPart = drugId.toString(36).toUpperCase();
-    
+
     // 2. Encode Expiry Date as months since 2024-01
     const date = new Date(expiryDate);
     const startYear = 2024;
     const months = (date.getFullYear() - startYear) * 12 + date.getMonth();
     const datePart = months.toString(36).toUpperCase().padStart(2, '0');
-    
+
     return `${drugPart}${datePart}`;
   },
 
@@ -206,16 +206,16 @@ export const idGenerator = {
   decodeBatchBarcode: (barcode: string): { drugId: number; expiryDate: Date } => {
     const datePart = barcode.slice(-2);
     const drugPart = barcode.slice(0, -2);
-    
+
     const drugId = parseInt(drugPart, 36);
     const months = parseInt(datePart, 36);
-    
+
     const year = Math.floor(months / 12) + 2024;
     const month = months % 12;
-    
+
     return {
       drugId,
-      expiryDate: new Date(year, month, 1)
+      expiryDate: new Date(year, month, 1),
     };
   },
 

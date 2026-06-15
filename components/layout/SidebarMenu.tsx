@@ -1,12 +1,12 @@
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { AnimatePresence, motion } from 'framer-motion';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { MenuItem } from '../../config/menuData';
+import { useSettings } from '../../context';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { SearchInput } from '../common/SearchInput';
 import { useSmartDirection } from '../common/SmartInputs';
-import { useSettings } from '../../context';
 import { Tooltip } from '../common/Tooltip';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface SidebarMenuProps {
   menuItems: MenuItem[];
@@ -145,9 +145,9 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
 
     // Flatten the submenus into a single list of items and dividers for virtualization
     const flatItems = useMemo(() => {
-      const rows: Array<{ 
-        type: 'divider' | 'item'; 
-        data: any; 
+      const rows: Array<{
+        type: 'divider' | 'item';
+        data: any;
         submenuId: string;
         submenuLabel: string;
       }> = [];
@@ -179,7 +179,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
       estimateSize: (index) => {
         const item = flatItems[index];
         if (item.type === 'divider') return 25;
-        return sidebarCollapsed ? 54 : 46; 
+        return sidebarCollapsed ? 54 : 46;
       },
       overscan: 10,
     });
@@ -199,12 +199,12 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
           {!hideSearch && (
             <motion.div
               initial={false}
-              animate={{ 
+              animate={{
                 height: sidebarCollapsed ? 0 : 'auto',
                 opacity: sidebarCollapsed ? 0 : 1,
                 pointerEvents: sidebarCollapsed ? 'none' : 'auto',
               }}
-              transition={{ duration: 0.2, ease: "easeInOut" }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
               className='px-3 overflow-hidden sticky top-0 z-10'
               style={{ backgroundColor: 'var(--bg-navbar)' }}
             >
@@ -233,9 +233,9 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
             onScroll={handleScroll}
             className='flex-1 space-y-1.5 w-full overflow-y-auto pb-[6px] custom-scrollbar'
             animate={{
-                paddingLeft: sidebarCollapsed ? 6 : 12,
-                paddingRight: sidebarCollapsed ? 6 : 12,
-                paddingTop: sidebarCollapsed ? 6 : 0,
+              paddingLeft: sidebarCollapsed ? 6 : 12,
+              paddingRight: sidebarCollapsed ? 6 : 12,
+              paddingTop: sidebarCollapsed ? 6 : 0,
             }}
             transition={{ duration: 0.2 }}
           >
@@ -303,11 +303,13 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                       }}
                       className={`
                         relative flex items-center type-interactive transition-all duration-200
-                        ${sidebarCollapsed 
-                          ? 'justify-center w-11 h-11 rounded-full' 
-                          : 'w-full gap-2.5 ltr:text-left rtl:text-right px-3 py-2 rounded-lg'
+                        ${
+                          sidebarCollapsed
+                            ? 'justify-center w-11 h-11 rounded-full'
+                            : 'w-full gap-2.5 ltr:text-left rtl:text-right px-3 py-2 rounded-lg'
                         }
-                        ${!isImplemented
+                        ${
+                          !isImplemented
                             ? 'opacity-30 cursor-not-allowed text-gray-400 dark:text-gray-600'
                             : isActive
                               ? sidebarCollapsed
@@ -319,9 +321,9 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                       `}
                     >
                       {isActive && sidebarCollapsed && (
-                        <motion.div 
-                          layoutId="active-indicator"
-                          className='absolute ltr:left-0 rtl:right-0 w-1 h-6 bg-primary-600 rounded-full' 
+                        <motion.div
+                          layoutId='active-indicator'
+                          className='absolute ltr:left-0 rtl:right-0 w-1 h-6 bg-primary-600 rounded-full'
                         />
                       )}
 
@@ -332,7 +334,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                           {itemIcon}
                         </span>
                       )}
-                      
+
                       <AnimatePresence>
                         {!sidebarCollapsed && (
                           <motion.span
@@ -346,7 +348,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                           </motion.span>
                         )}
                       </AnimatePresence>
-                      
+
                       <AnimatePresence>
                         {!isImplemented && !sidebarCollapsed && (
                           <motion.span
@@ -376,8 +378,8 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                       className={sidebarCollapsed ? 'flex justify-center' : ''}
                     >
                       {sidebarCollapsed ? (
-                        <Tooltip 
-                          content={translatedLabel} 
+                        <Tooltip
+                          content={translatedLabel}
                           position={language === 'AR' ? 'bottom' : 'bottom'}
                           delay={100}
                         >

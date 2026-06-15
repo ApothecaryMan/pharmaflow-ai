@@ -1,11 +1,14 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useSettings } from '../../../context';
-import { useData } from '../../../services';
-import { attendanceReportService, type AttendanceReportSummary } from '../../../services/hr/attendanceReportService';
-import { formatDuration } from '../../../utils/attendanceUtils';
-import { TRANSLATIONS } from '../../../i18n/translations';
-import { usePersistedState } from '../../../hooks/common/usePersistedState';
+import { useEffect, useMemo, useState } from 'react';
 import { StorageKeys } from '../../../config/storageKeys';
+import { useSettings } from '../../../context';
+import { usePersistedState } from '../../../hooks/common/usePersistedState';
+import { TRANSLATIONS } from '../../../i18n/translations';
+import { useData } from '../../../services';
+import {
+  type AttendanceReportSummary,
+  attendanceReportService,
+} from '../../../services/hr/attendanceReportService';
+import { formatDuration } from '../../../utils/attendanceUtils';
 
 interface UseAttendanceReportsProps {
   onViewChange?: (view: string, params?: any) => void;
@@ -53,20 +56,19 @@ export const useAttendanceReports = ({ onViewChange }: UseAttendanceReportsProps
   // --- Filtering ---
   const filteredEmployees = useMemo(() => {
     if (!report) return [];
-    
+
     let baseList = report.employees;
-    
+
     // Filter by presence if requested
     if (showOnlyPresent) {
-      baseList = baseList.filter(e => e.firstIn !== null);
+      baseList = baseList.filter((e) => e.firstIn !== null);
     }
 
     if (!searchQuery.trim()) return baseList;
 
     const q = searchQuery.toLowerCase();
-    return baseList.filter(e => 
-      e.employeeName.toLowerCase().includes(q) || 
-      e.employeeCode.toLowerCase().includes(q)
+    return baseList.filter(
+      (e) => e.employeeName.toLowerCase().includes(q) || e.employeeCode.toLowerCase().includes(q)
     );
   }, [report, searchQuery, showOnlyPresent]);
 
@@ -76,50 +78,53 @@ export const useAttendanceReports = ({ onViewChange }: UseAttendanceReportsProps
   };
 
   // --- Column Configuration ---
-  const columns = useMemo(() => [
-    { 
-      id: 'code', 
-      label: t.attendance.employeeCode, 
-      width: '10%',
-      key: 'employeeCode'
-    },
-    { 
-      id: 'employee', 
-      label: t.attendance.employeeName, 
-      width: '20%',
-      key: 'employeeName'
-    },
-    { 
-      id: 'firstIn', 
-      label: t.attendance.firstIn, 
-      width: '15%',
-      key: 'firstIn'
-    },
-    { 
-      id: 'lastOut', 
-      label: t.attendance.lastOut, 
-      width: '15%',
-      key: 'lastOut'
-    },
-    { 
-      id: 'duration', 
-      label: isRTL ? 'الساعات' : 'Hours', // t.attendance.totalHours is plural? let's see
-      width: '15%',
-      key: 'totalMinutes'
-    },
-    { 
-      id: 'status', 
-      label: t.attendance.lateStatus, 
-      width: '15%',
-      key: 'isLate'
-    },
-    { 
-      id: 'lateMinutes', 
-      label: t.attendance.late, // Using 'Late' as header
-      width: '15%',
-      key: 'lateMinutes'
-    }
-  ], [t, isRTL]);
+  const columns = useMemo(
+    () => [
+      {
+        id: 'code',
+        label: t.attendance.employeeCode,
+        width: '10%',
+        key: 'employeeCode',
+      },
+      {
+        id: 'employee',
+        label: t.attendance.employeeName,
+        width: '20%',
+        key: 'employeeName',
+      },
+      {
+        id: 'firstIn',
+        label: t.attendance.firstIn,
+        width: '15%',
+        key: 'firstIn',
+      },
+      {
+        id: 'lastOut',
+        label: t.attendance.lastOut,
+        width: '15%',
+        key: 'lastOut',
+      },
+      {
+        id: 'duration',
+        label: isRTL ? 'الساعات' : 'Hours', // t.attendance.totalHours is plural? let's see
+        width: '15%',
+        key: 'totalMinutes',
+      },
+      {
+        id: 'status',
+        label: t.attendance.lateStatus,
+        width: '15%',
+        key: 'isLate',
+      },
+      {
+        id: 'lateMinutes',
+        label: t.attendance.late, // Using 'Late' as header
+        width: '15%',
+        key: 'lateMinutes',
+      },
+    ],
+    [t, isRTL]
+  );
 
   return {
     report,

@@ -14,13 +14,12 @@ import {
 } from 'recharts';
 import { getLocationName } from '../../data/locations';
 import type { Customer, Sale } from '../../types';
+import { formatCurrency, getCurrencySymbol } from '../../utils/currency';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { ExpandedModal } from '../common/ExpandedModal';
-import { SmallCard } from '../common/SmallCard';
 import { PageHeader } from '../common/PageHeader';
 import { SegmentedControl } from '../common/SegmentedControl';
-import { formatCurrency, getCurrencySymbol } from '../../utils/currency';
-
+import { SmallCard } from '../common/SmallCard';
 
 interface CustomerOverviewProps {
   customers: Customer[];
@@ -275,529 +274,556 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
     </button>
   );
 
-
-
   return (
-    <div className='h-full overflow-y-auto px-page space-y-4 animate-fade-in pb-10' dir={language === 'AR' ? 'rtl' : 'ltr'}>
+    <div
+      className='h-full overflow-y-auto px-page space-y-4 animate-fade-in pb-10'
+      dir={language === 'AR' ? 'rtl' : 'ltr'}
+    >
       <PageHeader
-        mb="mb-0"
+        mb='mb-0'
         centerContent={
           <SegmentedControl
             options={[
-              { label: language === 'AR' ? 'نظرة عامة على العملاء' : 'Customer Overview', value: 'customer-overview' },
-              { label: language === 'AR' ? 'نظرة عامة على الولاء' : 'Loyalty Overview', value: 'loyalty-overview' },
-              { label: language === 'AR' ? 'ولاء العملاء' : 'Customer Loyalty', value: 'loyalty-lookup' },
+              {
+                label: language === 'AR' ? 'نظرة عامة على العملاء' : 'Customer Overview',
+                value: 'customer-overview',
+              },
+              {
+                label: language === 'AR' ? 'نظرة عامة على الولاء' : 'Loyalty Overview',
+                value: 'loyalty-overview',
+              },
+              {
+                label: language === 'AR' ? 'ولاء العملاء' : 'Customer Loyalty',
+                value: 'loyalty-lookup',
+              },
             ]}
             value='customer-overview'
             onChange={(val) => onViewChange?.(String(val))}
-            size="md"
-            shape="pill"
+            size='md'
+            shape='pill'
           />
         }
       />
 
-      <div className="space-y-6 animate-fade-in">
-
-      {/* Row 1: Key Metrics */}
-      <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4'>
-        {/* Total Customers */}
-        <div
-          onClick={() => setExpandedView('total')}
-          className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
-        >
-          <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
-            open_in_full
-          </span>
-          <SmallCard
-            icon='group'
-            title={t?.totalCustomers || 'Total Customers'}
-            value={totalCustomers}
-            subValue={`${activeCustomers} ${t?.active || 'Active'} • ${inactiveCustomers} ${t?.inactive || 'Inactive'}`}
-            iconColor='primary'
-          />
-        </div>
-
-        {/* Customer Lifetime Value */}
-        <div
-          onClick={() => setExpandedView('lifetimeValue')}
-          className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
-        >
-          <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
-            open_in_full
-          </span>
-          <SmallCard
-            icon='attach_money'
-            title={t?.lifetimeValue || 'Avg. Lifetime Value'}
-            value={customerLifetimeValue}
-            type='currency'
-            currencyLabel={getCurrencySymbol('EGP', language === 'AR' ? 'ar-EG' : 'en-US')}
-            subValue={t?.perCustomer || 'Per Customer'}
-            iconColor='emerald'
-          />
-        </div>
-
-        {/* New Customers */}
-        <div
-          onClick={() => setExpandedView('newCustomers')}
-          className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
-        >
-          <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
-            open_in_full
-          </span>
-          <SmallCard
-            icon='person_add'
-            title={t?.newCustomers || 'New Customers'}
-            value={newCustomersThisWeek}
-            subValue={`${t?.thisWeek || 'This Week'}`}
-            trend={newCustomersThisMonth > 0 ? 'up' : 'neutral'}
-            trendValue={`${newCustomersThisMonth} ${t?.thisMonth || 'This Month'}`}
-            iconColor='blue'
-          />
-        </div>
-
-        {/* Loyalty Points */}
-        <div
-          onClick={() => setExpandedView('loyaltyPoints')}
-          className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
-        >
-          <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
-            open_in_full
-          </span>
-          <SmallCard
-            icon='loyalty'
-            title={t?.loyaltyPoints || 'Loyalty Points'}
-            value={totalLoyaltyPoints}
-            subValue={`${t?.avgPoints || 'Avg'}: ${avgPointsPerCustomer.toFixed(0)} pts`}
-            iconColor='amber'
-          />
-        </div>
-      </div>
-
-      {/* Row 2: Charts */}
-      <div className='grid grid-cols-1 lg:grid-cols-3 gap-4'>
-        {/* Location Distribution */}
-        <div className={`p-5 rounded-3xl ${CARD_BASE} h-80 relative group`}>
-          <div className='flex justify-between items-center mb-3'>
-            <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-              <span className='material-symbols-rounded text-primary-500 text-[20px]'>
-                location_on
-              </span>
-              {t?.locationDistribution || 'Location Distribution'}
-            </h3>
-            <ExpandButton onClick={() => setExpandedView('location')} />
+      <div className='space-y-6 animate-fade-in'>
+        {/* Row 1: Key Metrics */}
+        <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4'>
+          {/* Total Customers */}
+          <div
+            onClick={() => setExpandedView('total')}
+            className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
+          >
+            <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
+              open_in_full
+            </span>
+            <SmallCard
+              icon='group'
+              title={t?.totalCustomers || 'Total Customers'}
+              value={totalCustomers}
+              subValue={`${activeCustomers} ${t?.active || 'Active'} • ${inactiveCustomers} ${t?.inactive || 'Inactive'}`}
+              iconColor='primary'
+            />
           </div>
-          {locationDistribution.length > 0 ? (
-            <ResponsiveContainer
-              width='100%'
-              height='85%'
-              className='mx-auto'
-              style={{ direction: 'ltr' }}
-            >
-              <PieChart>
-                <Pie
-                  data={locationDistribution.slice(0, 6)}
-                  cx='50%'
-                  cy='50%'
-                  outerRadius={80}
-                  dataKey='count'
-                  nameKey='name'
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={false}
-                >
-                  {locationDistribution.slice(0, 6).map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      return (
-                        <div className='bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700'>
-                          <p className='text-xs font-medium text-gray-500 dark:text-gray-400 mb-1'>
-                            {payload[0].name}
-                          </p>
-                          <p className='text-lg font-bold text-gray-900 dark:text-gray-100'>
-                            {payload[0].value}
-                            <span className='text-xs font-normal text-gray-500 ms-1'>
-                              (
-                              {(((payload[0].value as number) / customers.length) * 100).toFixed(0)}
-                              %)
-                            </span>
-                          </p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className='h-full flex items-center justify-center text-gray-400'>
-              {t?.noData || 'No location data'}
+
+          {/* Customer Lifetime Value */}
+          <div
+            onClick={() => setExpandedView('lifetimeValue')}
+            className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
+          >
+            <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
+              open_in_full
+            </span>
+            <SmallCard
+              icon='attach_money'
+              title={t?.lifetimeValue || 'Avg. Lifetime Value'}
+              value={customerLifetimeValue}
+              type='currency'
+              currencyLabel={getCurrencySymbol('EGP', language === 'AR' ? 'ar-EG' : 'en-US')}
+              subValue={t?.perCustomer || 'Per Customer'}
+              iconColor='emerald'
+            />
+          </div>
+
+          {/* New Customers */}
+          <div
+            onClick={() => setExpandedView('newCustomers')}
+            className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
+          >
+            <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
+              open_in_full
+            </span>
+            <SmallCard
+              icon='person_add'
+              title={t?.newCustomers || 'New Customers'}
+              value={newCustomersThisWeek}
+              subValue={`${t?.thisWeek || 'This Week'}`}
+              trend={newCustomersThisMonth > 0 ? 'up' : 'neutral'}
+              trendValue={`${newCustomersThisMonth} ${t?.thisMonth || 'This Month'}`}
+              iconColor='blue'
+            />
+          </div>
+
+          {/* Loyalty Points */}
+          <div
+            onClick={() => setExpandedView('loyaltyPoints')}
+            className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
+          >
+            <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
+              open_in_full
+            </span>
+            <SmallCard
+              icon='loyalty'
+              title={t?.loyaltyPoints || 'Loyalty Points'}
+              value={totalLoyaltyPoints}
+              subValue={`${t?.avgPoints || 'Avg'}: ${avgPointsPerCustomer.toFixed(0)} pts`}
+              iconColor='amber'
+            />
+          </div>
+        </div>
+
+        {/* Row 2: Charts */}
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-4'>
+          {/* Location Distribution */}
+          <div className={`p-5 rounded-3xl ${CARD_BASE} h-80 relative group`}>
+            <div className='flex justify-between items-center mb-3'>
+              <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
+                <span className='material-symbols-rounded text-primary-500 text-[20px]'>
+                  location_on
+                </span>
+                {t?.locationDistribution || 'Location Distribution'}
+              </h3>
+              <ExpandButton onClick={() => setExpandedView('location')} />
             </div>
-          )}
+            {locationDistribution.length > 0 ? (
+              <ResponsiveContainer
+                width='100%'
+                height='85%'
+                className='mx-auto'
+                style={{ direction: 'ltr' }}
+              >
+                <PieChart>
+                  <Pie
+                    data={locationDistribution.slice(0, 6)}
+                    cx='50%'
+                    cy='50%'
+                    outerRadius={80}
+                    dataKey='count'
+                    nameKey='name'
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={false}
+                  >
+                    {locationDistribution.slice(0, 6).map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className='bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700'>
+                            <p className='text-xs font-medium text-gray-500 dark:text-gray-400 mb-1'>
+                              {payload[0].name}
+                            </p>
+                            <p className='text-lg font-bold text-gray-900 dark:text-gray-100'>
+                              {payload[0].value}
+                              <span className='text-xs font-normal text-gray-500 ms-1'>
+                                (
+                                {(((payload[0].value as number) / customers.length) * 100).toFixed(
+                                  0
+                                )}
+                                %)
+                              </span>
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className='h-full flex items-center justify-center text-gray-400'>
+                {t?.noData || 'No location data'}
+              </div>
+            )}
+          </div>
+
+          {/* Top Customers */}
+          <div className={`lg:col-span-2 p-5 rounded-3xl ${CARD_BASE} h-80 flex flex-col group`}>
+            <div className='flex justify-between items-center mb-3'>
+              <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
+                <span className='material-symbols-rounded text-yellow-500 text-[20px]'>
+                  workspace_premium
+                </span>
+                {t?.topCustomers || 'Top Customers'}
+              </h3>
+              <ExpandButton onClick={() => setExpandedView('topCustomers')} />
+            </div>
+            <div className='flex-1 overflow-y-auto space-y-2 pe-1'>
+              {topCustomers.length === 0 ? (
+                <div className='h-full flex items-center justify-center text-gray-400 text-sm'>
+                  {t?.noCustomers || 'No customer data'}
+                </div>
+              ) : (
+                topCustomers.slice(0, 5).map((customer, index) => (
+                  <div
+                    key={customer.id}
+                    className='flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+                  >
+                    <div className='flex items-center gap-3 overflow-hidden'>
+                      <div
+                        className={`w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-300 font-bold text-sm flex items-center justify-center shrink-0`}
+                      >
+                        {index + 1}
+                      </div>
+                      <div className='min-w-0'>
+                        <span className='text-sm font-medium text-gray-700 dark:text-gray-200 truncate block'>
+                          {customer.name}
+                        </span>
+                        <span className='text-xs text-gray-400'>{customer.code}</span>
+                      </div>
+                    </div>
+                    <div className='text-end'>
+                      <span className='text-sm font-bold text-gray-900 dark:text-gray-100'>
+                        {formatCurrency(
+                          customer.totalPurchases,
+                          'EGP',
+                          language === 'AR' ? 'ar-EG' : 'en-US'
+                        )}
+                      </span>
+                      <span className='text-xs text-gray-400 block'>{customer.points} pts</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Top Customers */}
-        <div className={`lg:col-span-2 p-5 rounded-3xl ${CARD_BASE} h-80 flex flex-col group`}>
-          <div className='flex justify-between items-center mb-3'>
-            <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-              <span className='material-symbols-rounded text-yellow-500 text-[20px]'>
-                workspace_premium
-              </span>
-              {t?.topCustomers || 'Top Customers'}
-            </h3>
-            <ExpandButton onClick={() => setExpandedView('topCustomers')} />
-          </div>
-          <div className='flex-1 overflow-y-auto space-y-2 pe-1'>
-            {topCustomers.length === 0 ? (
-              <div className='h-full flex items-center justify-center text-gray-400 text-sm'>
-                {t?.noCustomers || 'No customer data'}
+        {/* Row 3: Health & Engagement */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+          {/* Health Insights */}
+          <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col group`}>
+            <div className='flex justify-between items-center mb-3'>
+              <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
+                <span className='material-symbols-rounded text-rose-500 text-[20px]'>
+                  health_and_safety
+                </span>
+                {t?.healthInsights || 'Health Insights'}
+              </h3>
+              <ExpandButton onClick={() => setExpandedView('healthInsights')} />
+            </div>
+
+            <div className='grid grid-cols-2 gap-4 mb-4'>
+              <div className='p-3 rounded-xl bg-gray-50 dark:bg-primary-500/10 border border-transparent dark:border-primary-500/20'>
+                <p className='text-xs font-bold text-primary-600 dark:text-blue-400 uppercase'>
+                  {t?.withInsurance || 'With Insurance'}
+                </p>
+                <p className='text-xl font-bold text-blue-900 dark:text-blue-100'>
+                  {healthInsights.withInsurance}
+                </p>
+                <p className='text-xs text-primary-600 dark:text-blue-400'>
+                  {healthInsights.insuranceRate.toFixed(1)}%
+                </p>
               </div>
-            ) : (
-              topCustomers.slice(0, 5).map((customer, index) => (
+              <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-transparent dark:border-gray-700/50'>
+                <p className='text-xs font-bold text-gray-500 uppercase'>
+                  {t?.chronicConditions || 'Chronic Conditions'}
+                </p>
+                <p className='text-xl font-bold text-gray-900 dark:text-gray-100'>
+                  {healthInsights.conditions.length}
+                </p>
+                <p className='text-xs text-gray-400'>{t?.tracked || 'Types Tracked'}</p>
+              </div>
+            </div>
+
+            <div className='space-y-2 overflow-y-auto max-h-32'>
+              {healthInsights.conditions.slice(0, 4).map((condition) => (
+                <div
+                  key={condition.name}
+                  className='flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800/40 border border-transparent dark:border-gray-700/50'
+                >
+                  <span className='text-sm text-gray-700 dark:text-gray-300'>{condition.name}</span>
+                  <span className='text-xs font-bold text-gray-500 bg-white dark:bg-gray-800 px-2 py-1 rounded-md'>
+                    {condition.count} {t?.patients || 'patients'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Customer Engagement */}
+          <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col group`}>
+            <div className='flex justify-between items-center mb-3'>
+              <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
+                <span className='material-symbols-rounded text-emerald-500 text-[20px]'>
+                  trending_up
+                </span>
+                {t?.engagement || 'Customer Engagement'}
+              </h3>
+              <ExpandButton onClick={() => setExpandedView('engagement')} />
+            </div>
+
+            <div className='grid grid-cols-3 gap-3'>
+              <div className='p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-transparent dark:border-emerald-500/20 text-center'>
+                <p className='text-2xl font-bold text-emerald-600 dark:text-emerald-400'>
+                  {engagementMetrics.activeRate.toFixed(0)}%
+                </p>
+                <p className='text-xs text-gray-500 dark:text-gray-400'>
+                  {t?.activeRate || 'Active Rate'}
+                </p>
+              </div>
+              <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-transparent dark:border-gray-700/50 text-center'>
+                <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
+                  {engagementMetrics.avgDaysSinceVisit}
+                </p>
+                <p className='text-xs text-gray-500 dark:text-gray-400'>
+                  {t?.avgDays || 'Avg Days'}
+                </p>
+              </div>
+              <div className='p-3 rounded-xl bg-orange-50 dark:bg-orange-500/10 border border-transparent dark:border-orange-500/20 text-center'>
+                <p className='text-2xl font-bold text-orange-600 dark:text-orange-400'>
+                  {engagementMetrics.inactiveCustomers}
+                </p>
+                <p className='text-xs text-gray-500 dark:text-gray-400'>
+                  {t?.inactive90 || 'Inactive 90d+'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Row 4: Segmentation & Contact Preferences */}
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-4'>
+          {/* Customer Segmentation */}
+          <div className={`lg:col-span-2 p-5 rounded-3xl ${CARD_BASE} group`}>
+            <div className='flex justify-between items-center mb-4'>
+              <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
+                <span className='material-symbols-rounded text-purple-500 text-[20px]'>
+                  category
+                </span>
+                {t?.segmentation || 'Customer Segmentation'}
+              </h3>
+              <ExpandButton onClick={() => setExpandedView('segmentation')} />
+            </div>
+
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
+              <div className='p-4 rounded-2xl bg-linear-to-br from-amber-50 to-amber-100 dark:from-amber-500/10 dark:to-amber-500/5 border border-amber-200 dark:border-amber-500/20'>
+                <div className='flex items-center gap-2 mb-2'>
+                  <span className='material-symbols-rounded text-amber-500'>star</span>
+                  <span className='text-xs font-bold text-amber-700 dark:text-amber-400 uppercase'>
+                    {t?.vip || 'VIP'}
+                  </span>
+                </div>
+                <p className='text-2xl font-bold text-amber-900 dark:text-amber-100'>
+                  {segmentation.vip.length}
+                </p>
+                <p className='text-xs text-amber-600 dark:text-amber-400'>
+                  {formatCurrency(1000, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0)}+
+                </p>
+              </div>
+
+              <div className='p-4 rounded-2xl bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-500/10 dark:to-blue-500/5 border border-gray-200 dark:border-primary-500/20'>
+                <div className='flex items-center gap-2 mb-2'>
+                  <span className='material-symbols-rounded text-primary-500'>verified</span>
+                  <span className='text-xs font-bold text-blue-700 dark:text-blue-400 uppercase'>
+                    {t?.regular || 'Regular'}
+                  </span>
+                </div>
+                <p className='text-2xl font-bold text-blue-900 dark:text-blue-100'>
+                  {segmentation.regular.length}
+                </p>
+                <p className='text-xs text-primary-600 dark:text-blue-400'>
+                  {formatCurrency(100, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0)} -{' '}
+                  {formatCurrency(1000, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0)}
+                </p>
+              </div>
+
+              <div className='p-4 rounded-2xl bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-800/30 border border-gray-200 dark:border-gray-700/50'>
+                <div className='flex items-center gap-2 mb-2'>
+                  <span className='material-symbols-rounded text-gray-500'>person</span>
+                  <span className='text-xs font-bold text-gray-600 dark:text-gray-400 uppercase'>
+                    {t?.basic || 'Basic'}
+                  </span>
+                </div>
+                <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
+                  {segmentation.basic.length}
+                </p>
+                <p className='text-xs text-gray-500 dark:text-gray-400'>
+                  &lt;{formatCurrency(100, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0)}
+                </p>
+              </div>
+
+              <div className='p-4 rounded-2xl bg-linear-to-br from-red-50 to-red-100 dark:from-red-500/10 dark:to-red-500/5 border border-red-200 dark:border-red-500/20'>
+                <div className='flex items-center gap-2 mb-2'>
+                  <span className='material-symbols-rounded text-red-500'>warning</span>
+                  <span className='text-xs font-bold text-red-700 dark:text-red-400 uppercase'>
+                    {t?.atRisk || 'At Risk'}
+                  </span>
+                </div>
+                <p className='text-2xl font-bold text-red-900 dark:text-red-100'>
+                  {segmentation.atRisk.length}
+                </p>
+                <p className='text-xs text-red-600 dark:text-red-400'>
+                  60+ {t?.daysInactive || 'days inactive'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Preferences */}
+          <div className={`p-5 rounded-3xl ${CARD_BASE} group`}>
+            <div className='flex justify-between items-center mb-4'>
+              <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
+                <span className='material-symbols-rounded text-teal-500 text-[20px]'>
+                  contact_phone
+                </span>
+                {t?.contactPrefs || 'Contact Preferences'}
+              </h3>
+              <ExpandButton onClick={() => setExpandedView('contactPreferences')} />
+            </div>
+
+            <div className='space-y-3'>
+              {contactPreferences.map((pref) => {
+                const percentage = customers.length > 0 ? (pref.count / customers.length) * 100 : 0;
+                const icons: Record<string, string> = { phone: 'call', email: 'mail', sms: 'sms' };
+                const labels: Record<string, string> = {
+                  phone: t?.phone || 'Phone',
+                  email: t?.email || 'Email',
+                  sms: t?.sms || 'SMS/WhatsApp',
+                };
+
+                return (
+                  <div key={pref.name} className='space-y-1'>
+                    <div className='flex items-center justify-between'>
+                      <div className='flex items-center gap-2'>
+                        <span className='material-symbols-rounded text-[16px] text-gray-400'>
+                          {icons[pref.name] || 'contact_page'}
+                        </span>
+                        <span className='text-sm text-gray-700 dark:text-gray-300'>
+                          {labels[pref.name] || pref.name}
+                        </span>
+                      </div>
+                      <span className='text-sm font-bold text-gray-900 dark:text-gray-100'>
+                        {pref.count}
+                      </span>
+                    </div>
+                    <div className='w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2'>
+                      <div
+                        className={`bg-primary-500 h-2 rounded-full transition-all`}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 5: Recent Activity & Satisfaction */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+          {/* Recent Activity */}
+          <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col group max-h-80`}>
+            <div className='flex justify-between items-center mb-3'>
+              <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
+                <span className='material-symbols-rounded text-indigo-500 text-[20px]'>
+                  history
+                </span>
+                {t?.recentActivity || 'Recent Customer Activity'}
+              </h3>
+              <ExpandButton onClick={() => setExpandedView('recentActivity')} />
+            </div>
+            <div className='flex-1 overflow-y-auto space-y-2 pe-1'>
+              {recentCustomers.slice(0, 5).map((customer) => (
                 <div
                   key={customer.id}
-                  className='flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+                  className='flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
                 >
-                  <div className='flex items-center gap-3 overflow-hidden'>
+                  <div className='flex items-center gap-3'>
                     <div
-                      className={`w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-300 font-bold text-sm flex items-center justify-center shrink-0`}
+                      className={`w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-xs`}
                     >
-                      {index + 1}
+                      {customer.name.substring(0, 2).toUpperCase()}
                     </div>
-                    <div className='min-w-0'>
-                      <span className='text-sm font-medium text-gray-700 dark:text-gray-200 truncate block'>
+                    <div>
+                      <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
                         {customer.name}
-                      </span>
-                      <span className='text-xs text-gray-400'>{customer.code}</span>
+                      </p>
+                      <p className='text-xs text-gray-500'>{customer.code}</p>
                     </div>
                   </div>
                   <div className='text-end'>
-                    <span className='text-sm font-bold text-gray-900 dark:text-gray-100'>
-                      {formatCurrency(customer.totalPurchases, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US')}
-                    </span>
-                    <span className='text-xs text-gray-400 block'>{customer.points} pts</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Row 3: Health & Engagement */}
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-        {/* Health Insights */}
-        <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col group`}>
-          <div className='flex justify-between items-center mb-3'>
-            <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-              <span className='material-symbols-rounded text-rose-500 text-[20px]'>
-                health_and_safety
-              </span>
-              {t?.healthInsights || 'Health Insights'}
-            </h3>
-            <ExpandButton onClick={() => setExpandedView('healthInsights')} />
-          </div>
-
-          <div className='grid grid-cols-2 gap-4 mb-4'>
-            <div className='p-3 rounded-xl bg-gray-50 dark:bg-primary-500/10 border border-transparent dark:border-primary-500/20'>
-              <p className='text-xs font-bold text-primary-600 dark:text-blue-400 uppercase'>
-                {t?.withInsurance || 'With Insurance'}
-              </p>
-              <p className='text-xl font-bold text-blue-900 dark:text-blue-100'>
-                {healthInsights.withInsurance}
-              </p>
-              <p className='text-xs text-primary-600 dark:text-blue-400'>
-                {healthInsights.insuranceRate.toFixed(1)}%
-              </p>
-            </div>
-            <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-transparent dark:border-gray-700/50'>
-              <p className='text-xs font-bold text-gray-500 uppercase'>
-                {t?.chronicConditions || 'Chronic Conditions'}
-              </p>
-              <p className='text-xl font-bold text-gray-900 dark:text-gray-100'>
-                {healthInsights.conditions.length}
-              </p>
-              <p className='text-xs text-gray-400'>{t?.tracked || 'Types Tracked'}</p>
-            </div>
-          </div>
-
-          <div className='space-y-2 overflow-y-auto max-h-32'>
-            {healthInsights.conditions.slice(0, 4).map((condition) => (
-              <div
-                key={condition.name}
-                className='flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800/40 border border-transparent dark:border-gray-700/50'
-              >
-                <span className='text-sm text-gray-700 dark:text-gray-300'>{condition.name}</span>
-                <span className='text-xs font-bold text-gray-500 bg-white dark:bg-gray-800 px-2 py-1 rounded-md'>
-                  {condition.count} {t?.patients || 'patients'}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Customer Engagement */}
-        <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col group`}>
-          <div className='flex justify-between items-center mb-3'>
-            <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-              <span className='material-symbols-rounded text-emerald-500 text-[20px]'>
-                trending_up
-              </span>
-              {t?.engagement || 'Customer Engagement'}
-            </h3>
-            <ExpandButton onClick={() => setExpandedView('engagement')} />
-          </div>
-
-          <div className='grid grid-cols-3 gap-3'>
-            <div className='p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-transparent dark:border-emerald-500/20 text-center'>
-              <p className='text-2xl font-bold text-emerald-600 dark:text-emerald-400'>
-                {engagementMetrics.activeRate.toFixed(0)}%
-              </p>
-              <p className='text-xs text-gray-500 dark:text-gray-400'>
-                {t?.activeRate || 'Active Rate'}
-              </p>
-            </div>
-            <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-transparent dark:border-gray-700/50 text-center'>
-              <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
-                {engagementMetrics.avgDaysSinceVisit}
-              </p>
-              <p className='text-xs text-gray-500 dark:text-gray-400'>{t?.avgDays || 'Avg Days'}</p>
-            </div>
-            <div className='p-3 rounded-xl bg-orange-50 dark:bg-orange-500/10 border border-transparent dark:border-orange-500/20 text-center'>
-              <p className='text-2xl font-bold text-orange-600 dark:text-orange-400'>
-                {engagementMetrics.inactiveCustomers}
-              </p>
-              <p className='text-xs text-gray-500 dark:text-gray-400'>
-                {t?.inactive90 || 'Inactive 90d+'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Row 4: Segmentation & Contact Preferences */}
-      <div className='grid grid-cols-1 lg:grid-cols-3 gap-4'>
-        {/* Customer Segmentation */}
-        <div className={`lg:col-span-2 p-5 rounded-3xl ${CARD_BASE} group`}>
-          <div className='flex justify-between items-center mb-4'>
-            <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-              <span className='material-symbols-rounded text-purple-500 text-[20px]'>category</span>
-              {t?.segmentation || 'Customer Segmentation'}
-            </h3>
-            <ExpandButton onClick={() => setExpandedView('segmentation')} />
-          </div>
-
-          <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
-            <div className='p-4 rounded-2xl bg-linear-to-br from-amber-50 to-amber-100 dark:from-amber-500/10 dark:to-amber-500/5 border border-amber-200 dark:border-amber-500/20'>
-              <div className='flex items-center gap-2 mb-2'>
-                <span className='material-symbols-rounded text-amber-500'>star</span>
-                <span className='text-xs font-bold text-amber-700 dark:text-amber-400 uppercase'>
-                  {t?.vip || 'VIP'}
-                </span>
-              </div>
-              <p className='text-2xl font-bold text-amber-900 dark:text-amber-100'>
-                {segmentation.vip.length}
-              </p>
-              <p className='text-xs text-amber-600 dark:text-amber-400'>
-                {formatCurrency(1000, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0)}+
-              </p>
-            </div>
-
-            <div className='p-4 rounded-2xl bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-500/10 dark:to-blue-500/5 border border-gray-200 dark:border-primary-500/20'>
-              <div className='flex items-center gap-2 mb-2'>
-                <span className='material-symbols-rounded text-primary-500'>verified</span>
-                <span className='text-xs font-bold text-blue-700 dark:text-blue-400 uppercase'>
-                  {t?.regular || 'Regular'}
-                </span>
-              </div>
-              <p className='text-2xl font-bold text-blue-900 dark:text-blue-100'>
-                {segmentation.regular.length}
-              </p>
-              <p className='text-xs text-primary-600 dark:text-blue-400'>
-                {formatCurrency(100, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0)} - {formatCurrency(1000, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0)}
-              </p>
-            </div>
-
-            <div className='p-4 rounded-2xl bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-800/30 border border-gray-200 dark:border-gray-700/50'>
-              <div className='flex items-center gap-2 mb-2'>
-                <span className='material-symbols-rounded text-gray-500'>person</span>
-                <span className='text-xs font-bold text-gray-600 dark:text-gray-400 uppercase'>
-                  {t?.basic || 'Basic'}
-                </span>
-              </div>
-              <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
-                {segmentation.basic.length}
-              </p>
-              <p className='text-xs text-gray-500 dark:text-gray-400'>
-                &lt;{formatCurrency(100, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0)}
-              </p>
-            </div>
-
-            <div className='p-4 rounded-2xl bg-linear-to-br from-red-50 to-red-100 dark:from-red-500/10 dark:to-red-500/5 border border-red-200 dark:border-red-500/20'>
-              <div className='flex items-center gap-2 mb-2'>
-                <span className='material-symbols-rounded text-red-500'>warning</span>
-                <span className='text-xs font-bold text-red-700 dark:text-red-400 uppercase'>
-                  {t?.atRisk || 'At Risk'}
-                </span>
-              </div>
-              <p className='text-2xl font-bold text-red-900 dark:text-red-100'>
-                {segmentation.atRisk.length}
-              </p>
-              <p className='text-xs text-red-600 dark:text-red-400'>
-                60+ {t?.daysInactive || 'days inactive'}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Contact Preferences */}
-        <div className={`p-5 rounded-3xl ${CARD_BASE} group`}>
-          <div className='flex justify-between items-center mb-4'>
-            <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-              <span className='material-symbols-rounded text-teal-500 text-[20px]'>
-                contact_phone
-              </span>
-              {t?.contactPrefs || 'Contact Preferences'}
-            </h3>
-            <ExpandButton onClick={() => setExpandedView('contactPreferences')} />
-          </div>
-
-          <div className='space-y-3'>
-            {contactPreferences.map((pref) => {
-              const percentage = customers.length > 0 ? (pref.count / customers.length) * 100 : 0;
-              const icons: Record<string, string> = { phone: 'call', email: 'mail', sms: 'sms' };
-              const labels: Record<string, string> = {
-                phone: t?.phone || 'Phone',
-                email: t?.email || 'Email',
-                sms: t?.sms || 'SMS/WhatsApp',
-              };
-
-              return (
-                <div key={pref.name} className='space-y-1'>
-                  <div className='flex items-center justify-between'>
-                    <div className='flex items-center gap-2'>
-                      <span className='material-symbols-rounded text-[16px] text-gray-400'>
-                        {icons[pref.name] || 'contact_page'}
-                      </span>
-                      <span className='text-sm text-gray-700 dark:text-gray-300'>
-                        {labels[pref.name] || pref.name}
-                      </span>
-                    </div>
-                    <span className='text-sm font-bold text-gray-900 dark:text-gray-100'>
-                      {pref.count}
-                    </span>
-                  </div>
-                  <div className='w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2'>
-                    <div
-                      className={`bg-primary-500 h-2 rounded-full transition-all`}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Row 5: Recent Activity & Satisfaction */}
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-        {/* Recent Activity */}
-        <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col group max-h-80`}>
-          <div className='flex justify-between items-center mb-3'>
-            <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-              <span className='material-symbols-rounded text-indigo-500 text-[20px]'>history</span>
-              {t?.recentActivity || 'Recent Customer Activity'}
-            </h3>
-            <ExpandButton onClick={() => setExpandedView('recentActivity')} />
-          </div>
-          <div className='flex-1 overflow-y-auto space-y-2 pe-1'>
-            {recentCustomers.slice(0, 5).map((customer) => (
-              <div
-                key={customer.id}
-                className='flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
-              >
-                <div className='flex items-center gap-3'>
-                  <div
-                    className={`w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-xs`}
-                  >
-                    {customer.name.substring(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                      {customer.name}
+                    <p className='text-xs text-gray-400'>
+                      {new Date(customer.lastVisit).toLocaleDateString()}
                     </p>
-                    <p className='text-xs text-gray-500'>{customer.code}</p>
                   </div>
                 </div>
-                <div className='text-end'>
-                  <p className='text-xs text-gray-400'>
-                    {new Date(customer.lastVisit).toLocaleDateString()}
+              ))}
+            </div>
+          </div>
+
+          {/* Satisfaction Metrics */}
+          <div className={`p-5 rounded-3xl ${CARD_BASE} group`}>
+            <div className='flex justify-between items-center mb-4'>
+              <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
+                <span className='material-symbols-rounded text-pink-500 text-[20px]'>
+                  sentiment_satisfied
+                </span>
+                {t?.satisfaction || 'Satisfaction Metrics'}
+              </h3>
+              <ExpandButton onClick={() => setExpandedView('satisfaction')} />
+            </div>
+
+            <div className='grid grid-cols-3 gap-4'>
+              <div className='text-center'>
+                <div
+                  className={`w-16 h-16 mx-auto rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-2`}
+                >
+                  <p className='text-xl font-bold text-emerald-600 dark:text-emerald-400'>
+                    {satisfactionMetrics.repeatRate.toFixed(0)}%
                   </p>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Satisfaction Metrics */}
-        <div className={`p-5 rounded-3xl ${CARD_BASE} group`}>
-          <div className='flex justify-between items-center mb-4'>
-            <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-              <span className='material-symbols-rounded text-pink-500 text-[20px]'>
-                sentiment_satisfied
-              </span>
-              {t?.satisfaction || 'Satisfaction Metrics'}
-            </h3>
-            <ExpandButton onClick={() => setExpandedView('satisfaction')} />
-          </div>
-
-          <div className='grid grid-cols-3 gap-4'>
-            <div className='text-center'>
-              <div
-                className={`w-16 h-16 mx-auto rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-2`}
-              >
-                <p className='text-xl font-bold text-emerald-600 dark:text-emerald-400'>
-                  {satisfactionMetrics.repeatRate.toFixed(0)}%
+                <p className='text-xs text-gray-500 dark:text-gray-400'>
+                  {t?.repeatRate || 'Repeat Rate'}
                 </p>
               </div>
-              <p className='text-xs text-gray-500 dark:text-gray-400'>
-                {t?.repeatRate || 'Repeat Rate'}
-              </p>
-            </div>
 
-            <div className='text-center'>
-              <div
-                className={`w-16 h-16 mx-auto rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-2`}
-              >
-                <p className='text-lg font-bold text-primary-600 dark:text-blue-400'>
-                  {formatCurrency(satisfactionMetrics.avgOrderValue, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0)}
+              <div className='text-center'>
+                <div
+                  className={`w-16 h-16 mx-auto rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-2`}
+                >
+                  <p className='text-lg font-bold text-primary-600 dark:text-blue-400'>
+                    {formatCurrency(
+                      satisfactionMetrics.avgOrderValue,
+                      'EGP',
+                      language === 'AR' ? 'ar-EG' : 'en-US',
+                      0
+                    )}
+                  </p>
+                </div>
+                <p className='text-xs text-gray-500 dark:text-gray-400'>
+                  {t?.avgOrder || 'Avg Order'}
                 </p>
               </div>
-              <p className='text-xs text-gray-500 dark:text-gray-400'>
-                {t?.avgOrder || 'Avg Order'}
-              </p>
-            </div>
 
-            <div className='text-center'>
-              <div
-                className={`w-16 h-16 mx-auto rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mb-2`}
-              >
-                <p className='text-xl font-bold text-orange-600 dark:text-orange-400'>
-                  {satisfactionMetrics.returnRate.toFixed(1)}%
+              <div className='text-center'>
+                <div
+                  className={`w-16 h-16 mx-auto rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mb-2`}
+                >
+                  <p className='text-xl font-bold text-orange-600 dark:text-orange-400'>
+                    {satisfactionMetrics.returnRate.toFixed(1)}%
+                  </p>
+                </div>
+                <p className='text-xs text-gray-500 dark:text-gray-400'>
+                  {t?.returnRate || 'Return Rate'}
                 </p>
               </div>
-              <p className='text-xs text-gray-500 dark:text-gray-400'>
-                {t?.returnRate || 'Return Rate'}
-              </p>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
       {/* Expanded Modals */}
 
@@ -949,7 +975,11 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               </div>
               <div className='text-end'>
                 <p className='text-lg font-bold text-gray-900 dark:text-gray-100'>
-                  {formatCurrency(customer.totalPurchases, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US')}
+                  {formatCurrency(
+                    customer.totalPurchases,
+                    'EGP',
+                    language === 'AR' ? 'ar-EG' : 'en-US'
+                  )}
                 </p>
                 <p className='text-xs text-gray-400'>
                   {t?.lastVisit || 'Last'}: {new Date(customer.lastVisit).toLocaleDateString()}

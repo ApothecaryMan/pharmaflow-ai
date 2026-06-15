@@ -8,11 +8,7 @@ export function PhoenixWings() {
           stroke='var(--svg-color, #EA580C)'
           strokeWidth='1.2'
         />
-        <path
-          d='M-3,50 C-13,35 -29,22 -21,2 C-17,-4 -9,8 -3,50 Z'
-          fill='#EA580C'
-          opacity='0.8'
-        />
+        <path d='M-3,50 C-13,35 -29,22 -21,2 C-17,-4 -9,8 -3,50 Z' fill='#EA580C' opacity='0.8' />
         <path
           d='M15,65 C9,48 -8,30 -5,18 C1,12 11,48 15,65 Z'
           fill='#FB923C'

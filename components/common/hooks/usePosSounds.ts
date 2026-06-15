@@ -7,7 +7,7 @@ export const usePosSounds = () => {
   const initAudio = useCallback(() => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({
-        latencyHint: 'interactive'
+        latencyHint: 'interactive',
       });
     }
   }, []);

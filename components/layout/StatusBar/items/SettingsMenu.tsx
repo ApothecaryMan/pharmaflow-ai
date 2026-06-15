@@ -1,19 +1,18 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AVAILABLE_FONTS_AR, AVAILABLE_FONTS_EN } from '../../../../config/fonts';
-import { permissionsService } from '../../../../services/auth/permissionsService';
 import { useSettings } from '../../../../context';
 import { useData } from '../../../../context/DataContext';
+import { useSmartPosition } from '../../../../hooks/common/useSmartPosition';
 import { TRANSLATIONS } from '../../../../i18n/translations';
-import { type Language } from '../../../../types';
+import { permissionsService } from '../../../../services/auth/permissionsService';
+import type { Language } from '../../../../types';
 import { SegmentedControl } from '../../../common/SegmentedControl';
 import { Switch } from '../../../common/Switch';
-import { StatusBarItem } from '../StatusBarItem';
-import { useSmartPosition } from '../../../../hooks/common/useSmartPosition';
 import { Tooltip } from '../../../common/Tooltip';
+import { StatusBarItem } from '../StatusBarItem';
 
 // --- Utility Components & Helpers ---
-
-
 
 const SettingsRow: React.FC<{
   icon: string;
@@ -22,26 +21,22 @@ const SettingsRow: React.FC<{
   className?: string;
   onClick?: () => void;
 }> = ({ icon, label, children, className = '', onClick }) => (
-  <div 
+  <div
     className={`flex items-center justify-between transition-colors px-2 ${
-      onClick 
-        ? 'py-1.5 cursor-pointer hover:bg-(--bg-menu-hover) rounded-lg group' 
-        : 'py-1'
+      onClick ? 'py-1.5 cursor-pointer hover:bg-(--bg-menu-hover) rounded-lg group' : 'py-1'
     } ${className}`}
     onClick={onClick}
   >
-    <div className="flex items-center gap-2">
-      <span 
+    <div className='flex items-center gap-2'>
+      <span
         className={`material-symbols-rounded text-(--text-secondary) transition-colors ${onClick ? 'group-hover:text-(--text-primary)' : ''}`}
         style={{ fontSize: 'var(--icon-settings)' }}
       >
         {icon}
       </span>
-      <span className="text-xs font-medium text-(--text-primary)">{label}</span>
+      <span className='text-xs font-medium text-(--text-primary)'>{label}</span>
     </div>
-    <div className="flex items-center gap-2">
-      {children}
-    </div>
+    <div className='flex items-center gap-2'>{children}</div>
   </div>
 );
 
@@ -56,7 +51,8 @@ const SubmenuWrapper: React.FC<{
 }> = ({ isOpen, isMobile, children, title, side = 'left', align = 'top', isRTL = false }) => {
   if (!isOpen) return null;
 
-  const mobileClasses = 'relative w-full mt-2 p-2.5 space-y-2 rounded-xl border-none shadow-none bg-(--bg-page-surface)';
+  const mobileClasses =
+    'relative w-full mt-2 p-2.5 space-y-2 rounded-xl border-none shadow-none bg-(--bg-page-surface)';
 
   const desktopClasses = `absolute ${align === 'top' ? 'top-0' : 'bottom-0'} w-64 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-2.5 space-y-2 bg-(--bg-menu)`;
 
@@ -68,8 +64,15 @@ const SubmenuWrapper: React.FC<{
     : { insetInlineEnd: 'calc(100% + 12px)' };
 
   return (
-    <div className={isMobile ? mobileClasses : desktopClasses} style={isMobile ? undefined : desktopStyle}>
-      {title && <label className="text-[10px] font-bold uppercase mb-1 block text-(--text-tertiary) border-b border-(--border-divider)/30 pb-1">{title}</label>}
+    <div
+      className={isMobile ? mobileClasses : desktopClasses}
+      style={isMobile ? undefined : desktopStyle}
+    >
+      {title && (
+        <label className='text-[10px] font-bold uppercase mb-1 block text-(--text-tertiary) border-b border-(--border-divider)/30 pb-1'>
+          {title}
+        </label>
+      )}
       {children}
     </div>
   );
@@ -86,7 +89,18 @@ const SubmenuSection: React.FC<{
   rowExtra?: React.ReactNode;
   isRTL?: boolean;
   children: React.ReactNode;
-}> = ({ id, icon, label, expandedSubmenu, onToggle, isMobile, title, rowExtra, isRTL = false, children }) => {
+}> = ({
+  id,
+  icon,
+  label,
+  expandedSubmenu,
+  onToggle,
+  isMobile,
+  title,
+  rowExtra,
+  isRTL = false,
+  children,
+}) => {
   const isOpen = expandedSubmenu === id;
   const { ref, position, checkPosition } = useSmartPosition({ requiredWidth: 256 });
 
@@ -95,7 +109,7 @@ const SubmenuSection: React.FC<{
   }, [isOpen, checkPosition]);
 
   return (
-    <div className="space-y-1 relative" ref={ref}>
+    <div className='space-y-1 relative' ref={ref}>
       <SettingsRow icon={icon} label={label} onClick={() => onToggle(id)}>
         {rowExtra}
         <span
@@ -105,7 +119,14 @@ const SubmenuSection: React.FC<{
           chevron_left
         </span>
       </SettingsRow>
-      <SubmenuWrapper isOpen={isOpen} isMobile={isMobile} title={title} side={position.side} align={position.align} isRTL={isRTL}>
+      <SubmenuWrapper
+        isOpen={isOpen}
+        isMobile={isMobile}
+        title={title}
+        side={position.side}
+        align={position.align}
+        isRTL={isRTL}
+      >
         {children}
       </SubmenuWrapper>
     </div>
@@ -129,21 +150,60 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 }) => {
   const settings = useSettings();
   const {
-    language, darkMode, setDarkMode, setTheme, availableThemes, theme: currentTheme,
-    fontFamilyEN, setFontFamilyEN, fontFamilyAR, setFontFamilyAR,
-    textTransform, setTextTransform, hideInactiveModules, setHideInactiveModules,
-    navStyle, setNavStyle, developerMode, setDeveloperMode,
-    showTicker, setShowTicker,
-    showTickerSales, setShowTickerSales, showTickerInventory, setShowTickerInventory,
-    showTickerCustomers, setShowTickerCustomers, showTickerTopSeller, setShowTickerTopSeller,
-    borderRadius, setBorderRadius, sidebarStyle, setSidebarStyle,
-    graphicStyle, setGraphicStyle, graphicFontVariant, setGraphicFontVariant,
-    cardBorderLight, setCardBorderLight, enableCustomCardCss, setEnableCustomCardCss,
-    customCardCss, setCustomCardCss, numeralSystem, setNumeralSystem,
-    switchVariant, setSwitchVariant, badgeStyle, setBadgeStyle,
-    modalPresentationMode, setModalPresentationMode,
-    sidebarModalWidth, setSidebarModalWidth,
-    navbarMenuLayout, setNavbarMenuLayout,
+    language,
+    darkMode,
+    setDarkMode,
+    setTheme,
+    availableThemes,
+    theme: currentTheme,
+    fontFamilyEN,
+    setFontFamilyEN,
+    fontFamilyAR,
+    setFontFamilyAR,
+    textTransform,
+    setTextTransform,
+    hideInactiveModules,
+    setHideInactiveModules,
+    navStyle,
+    setNavStyle,
+    developerMode,
+    setDeveloperMode,
+    showTicker,
+    setShowTicker,
+    showTickerSales,
+    setShowTickerSales,
+    showTickerInventory,
+    setShowTickerInventory,
+    showTickerCustomers,
+    setShowTickerCustomers,
+    showTickerTopSeller,
+    setShowTickerTopSeller,
+    borderRadius,
+    setBorderRadius,
+    sidebarStyle,
+    setSidebarStyle,
+    graphicStyle,
+    setGraphicStyle,
+    graphicFontVariant,
+    setGraphicFontVariant,
+    cardBorderLight,
+    setCardBorderLight,
+    enableCustomCardCss,
+    setEnableCustomCardCss,
+    customCardCss,
+    setCustomCardCss,
+    numeralSystem,
+    setNumeralSystem,
+    switchVariant,
+    setSwitchVariant,
+    badgeStyle,
+    setBadgeStyle,
+    modalPresentationMode,
+    setModalPresentationMode,
+    sidebarModalWidth,
+    setSidebarModalWidth,
+    navbarMenuLayout,
+    setNavbarMenuLayout,
   } = settings;
 
   const { activeBranchId, updateBranch, activeBranch } = useData();
@@ -155,8 +215,6 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   const statusSmartPos = useSmartPosition({ requiredWidth: 256 });
   const isAR = language === 'AR';
   const t = TRANSLATIONS[language].settings;
-
-
 
   // Mobile Detection
   const [isMobile, setIsMobile] = useState(false);
@@ -171,7 +229,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setExpandedSubmenu(null);
   }, []);
 
-  useEffect(() => { if (!isOpen) closeAllSubmenus(); }, [isOpen, closeAllSubmenus]);
+  useEffect(() => {
+    if (!isOpen) closeAllSubmenus();
+  }, [isOpen, closeAllSubmenus]);
 
   // Auto-close submenus when master switch is turned off
   useEffect(() => {
@@ -191,7 +251,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   }, []);
 
   const toggleSubmenu = (name: string) => {
-    setExpandedSubmenu(prev => prev === name ? null : name);
+    setExpandedSubmenu((prev) => (prev === name ? null : name));
   };
 
   const menuContainerClasses = useMemo(() => {
@@ -211,333 +271,565 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   }, [dropDirection, align, isMobile]);
 
   return (
-    <div className={`relative ${showTrigger && triggerVariant === 'statusBar' ? 'h-full flex items-center' : ''}`} ref={dropdownRef}>
-      {showTrigger && (
-        triggerVariant === 'statusBar' ? (
-          <StatusBarItem icon="settings" tooltip={t.settings} variant={isOpen ? 'info' : 'default'} onClick={() => setIsOpen(!isOpen)} />
+    <div
+      className={`relative ${showTrigger && triggerVariant === 'statusBar' ? 'h-full flex items-center' : ''}`}
+      ref={dropdownRef}
+    >
+      {showTrigger &&
+        (triggerVariant === 'statusBar' ? (
+          <StatusBarItem
+            icon='settings'
+            tooltip={t.settings}
+            variant={isOpen ? 'info' : 'default'}
+            onClick={() => setIsOpen(!isOpen)}
+          />
         ) : (
-          <button onClick={() => setIsOpen(!isOpen)} className={`flex items-center justify-center w-10 h-10 ${isOpen ? 'text-primary-500' : 'text-(--text-secondary)'}`}>
-            <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-settings)' }}>settings</span>
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className={`flex items-center justify-center w-10 h-10 ${isOpen ? 'text-primary-500' : 'text-(--text-secondary)'}`}
+          >
+            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-settings)' }}>
+              settings
+            </span>
           </button>
-        )
-      )}
+        ))}
 
       {isOpen && (
         <>
           {isMobile && (
-            <div 
-              className="fixed inset-0 bg-black/40 z-140 animate-fade-in"
+            <div
+              className='fixed inset-0 bg-black/40 z-140 animate-fade-in'
               onClick={() => setIsOpen(false)}
             />
           )}
           <div className={menuContainerClasses}>
-          <div className="px-3 py-2 border-b border-(--border-divider) text-center">
-            <span className="text-xs font-bold text-(--text-primary)">{t.settings}</span>
-          </div>
+            <div className='px-3 py-2 border-b border-(--border-divider) text-center'>
+              <span className='text-xs font-bold text-(--text-primary)'>{t.settings}</span>
+            </div>
 
-            <div className="p-2 space-y-1.5" style={{ direction: isAR ? 'rtl' : 'ltr' }}>
+            <div className='p-2 space-y-1.5' style={{ direction: isAR ? 'rtl' : 'ltr' }}>
               {/* --- Appearance Section --- */}
-              <SubmenuSection isRTL={isAR} id="themes" icon="brightness_6" label={t.themesMenu} expandedSubmenu={expandedSubmenu} onToggle={toggleSubmenu} isMobile={isMobile}>
-                  <div className="flex items-center gap-1.5">
-                    <span className="material-symbols-rounded text-(--text-secondary)" style={{ fontSize: 'var(--icon-settings)' }}>palette</span>
-                    <SegmentedControl
-                      value={currentTheme.name}
-                      onChange={(val) => setTheme(availableThemes.find(th => th.name === val)!)}
-                       size="xs" fullWidth shape="pill"
-                      options={availableThemes.map(th => ({ label: '', value: th.name, dotColor: th.hex }))}
-                    />
-                  </div>
-                  <SettingsRow icon="brightness_6" label={t.darkMode}>
-                    <SegmentedControl value={darkMode} onChange={v => setDarkMode(v as boolean)}  size="xs"  shape="pill" iconSize="--icon-settings" options={[{ label: '', value: false, icon: 'light_mode' }, { label: '', value: true, icon: 'dark_mode' }]} />
-                  </SettingsRow>
-                  <SettingsRow icon="ad_units" label={t.badgeStyle}>
-                    <SegmentedControl
-                      value={badgeStyle || 'default'}
-                      onChange={v => setBadgeStyle?.(v as any)}
-                      size="xs"
-                      shape="pill"
-                      options={[
-                        { label: t.badgeStyleDefault, value: 'default' },
-                        { label: t.badgeStylePill, value: 'pill' },
-                        { label: t.badgeStyleSlim, value: 'slim' },
-                      ]}
-                    />
-                  </SettingsRow>
-                  {developerMode && (
-                    <>
-                      <SettingsRow icon="rounded_corner" label={t.borderRadius}>
-                        <SegmentedControl value={borderRadius || 'default'} onChange={v => setBorderRadius?.(v as any)}  size="xs" shape="pill" options={[{ label: t.radiusSharp, value: 'sharp' }, { label: t.radiusFull, value: 'full' }, { label: t.radiusDefault, value: 'default' }]} />
-                      </SettingsRow>
-                      
-                      <div className="flex items-center gap-1.5 py-1">
-                        <span className="material-symbols-rounded text-(--text-secondary)" style={{ fontSize: 'var(--icon-settings)' }}>toggle_on</span>
-                        <div className="flex-1 overflow-x-auto scrollbar-none pb-0.5">
-                          <SegmentedControl 
-                            value={switchVariant || 'default'} 
-                            onChange={v => setSwitchVariant?.(v as any)} 
-                            size="xs" 
-                            shape="pill" 
-                            iconSize="--icon-settings"
-                            options={[
-                              { label: '', value: 'default', icon: 'done' },
-                              { label: '', value: 'ios', icon: 'toggle_on' },
-                              { label: '', value: 'minimal', icon: 'check_box_outline_blank' },
-                              { label: '', value: 'slim', icon: 'horizontal_rule' },
-                            ]} 
-                          />
-                        </div>
-                      </div>
-                    </>
-                  )}
-                  {!darkMode && developerMode && (
-                    <>
-                      <SettingsRow icon="border_style" label={t.borderStyle || t.cardStyle}>
+              <SubmenuSection
+                isRTL={isAR}
+                id='themes'
+                icon='brightness_6'
+                label={t.themesMenu}
+                expandedSubmenu={expandedSubmenu}
+                onToggle={toggleSubmenu}
+                isMobile={isMobile}
+              >
+                <div className='flex items-center gap-1.5'>
+                  <span
+                    className='material-symbols-rounded text-(--text-secondary)'
+                    style={{ fontSize: 'var(--icon-settings)' }}
+                  >
+                    palette
+                  </span>
+                  <SegmentedControl
+                    value={currentTheme.name}
+                    onChange={(val) => setTheme(availableThemes.find((th) => th.name === val)!)}
+                    size='xs'
+                    fullWidth
+                    shape='pill'
+                    options={availableThemes.map((th) => ({
+                      label: '',
+                      value: th.name,
+                      dotColor: th.hex,
+                    }))}
+                  />
+                </div>
+                <SettingsRow icon='brightness_6' label={t.darkMode}>
+                  <SegmentedControl
+                    value={darkMode}
+                    onChange={(v) => setDarkMode(v as boolean)}
+                    size='xs'
+                    shape='pill'
+                    iconSize='--icon-settings'
+                    options={[
+                      { label: '', value: false, icon: 'light_mode' },
+                      { label: '', value: true, icon: 'dark_mode' },
+                    ]}
+                  />
+                </SettingsRow>
+                <SettingsRow icon='ad_units' label={t.badgeStyle}>
+                  <SegmentedControl
+                    value={badgeStyle || 'default'}
+                    onChange={(v) => setBadgeStyle?.(v as any)}
+                    size='xs'
+                    shape='pill'
+                    options={[
+                      { label: t.badgeStyleDefault, value: 'default' },
+                      { label: t.badgeStylePill, value: 'pill' },
+                      { label: t.badgeStyleSlim, value: 'slim' },
+                    ]}
+                  />
+                </SettingsRow>
+                {developerMode && (
+                  <>
+                    <SettingsRow icon='rounded_corner' label={t.borderRadius}>
+                      <SegmentedControl
+                        value={borderRadius || 'default'}
+                        onChange={(v) => setBorderRadius?.(v as any)}
+                        size='xs'
+                        shape='pill'
+                        options={[
+                          { label: t.radiusSharp, value: 'sharp' },
+                          { label: t.radiusFull, value: 'full' },
+                          { label: t.radiusDefault, value: 'default' },
+                        ]}
+                      />
+                    </SettingsRow>
+
+                    <div className='flex items-center gap-1.5 py-1'>
+                      <span
+                        className='material-symbols-rounded text-(--text-secondary)'
+                        style={{ fontSize: 'var(--icon-settings)' }}
+                      >
+                        toggle_on
+                      </span>
+                      <div className='flex-1 overflow-x-auto scrollbar-none pb-0.5'>
                         <SegmentedControl
-                          value={cardBorderLight || 'default'}
-                          onChange={v => setCardBorderLight?.(v as any)} 
-                          size="xs" 
-                          shape="pill" 
+                          value={switchVariant || 'default'}
+                          onChange={(v) => setSwitchVariant?.(v as any)}
+                          size='xs'
+                          shape='pill'
+                          iconSize='--icon-settings'
                           options={[
-                            { label: t.cardThick, value: 'default' },
-                            { label: t.cardThin, value: 'thin' },
-                            { label: t.cardNone, value: 'none' },
-                          ]} 
+                            { label: '', value: 'default', icon: 'done' },
+                            { label: '', value: 'ios', icon: 'toggle_on' },
+                            { label: '', value: 'minimal', icon: 'check_box_outline_blank' },
+                            { label: '', value: 'slim', icon: 'horizontal_rule' },
+                          ]}
                         />
-                      </SettingsRow>
-                      <SettingsRow icon="code" label={t.customCardCss}>
-                        <div className="flex flex-col gap-1.5 py-1 w-full">
-                          <div className="flex items-center justify-end">
-                            <Switch checked={enableCustomCardCss} onChange={setEnableCustomCardCss} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
-                          </div>
-                          <textarea
-                            value={customCardCss || ''}
-                            onChange={(e) => setCustomCardCss?.(e.target.value)}
-                            placeholder="box-shadow: 0px 4px 6px rgba(0,0,0,0.1);"
-                            className="w-full text-xs p-2 rounded-lg bg-(--bg-input) border border-(--border-divider) text-(--text-primary) outline-hidden font-mono min-h-[60px] resize-y scrollbar-none"
-                            spellCheck={false}
-                            dir="ltr"
+                      </div>
+                    </div>
+                  </>
+                )}
+                {!darkMode && developerMode && (
+                  <>
+                    <SettingsRow icon='border_style' label={t.borderStyle || t.cardStyle}>
+                      <SegmentedControl
+                        value={cardBorderLight || 'default'}
+                        onChange={(v) => setCardBorderLight?.(v as any)}
+                        size='xs'
+                        shape='pill'
+                        options={[
+                          { label: t.cardThick, value: 'default' },
+                          { label: t.cardThin, value: 'thin' },
+                          { label: t.cardNone, value: 'none' },
+                        ]}
+                      />
+                    </SettingsRow>
+                    <SettingsRow icon='code' label={t.customCardCss}>
+                      <div className='flex flex-col gap-1.5 py-1 w-full'>
+                        <div className='flex items-center justify-end'>
+                          <Switch
+                            checked={enableCustomCardCss}
+                            onChange={setEnableCustomCardCss}
+                            theme={currentTheme.name.toLowerCase()}
+                            activeColor={currentTheme.hex}
                           />
                         </div>
-                      </SettingsRow>
-                    </>
-                  )}
-                </SubmenuSection>
+                        <textarea
+                          value={customCardCss || ''}
+                          onChange={(e) => setCustomCardCss?.(e.target.value)}
+                          placeholder='box-shadow: 0px 4px 6px rgba(0,0,0,0.1);'
+                          className='w-full text-xs p-2 rounded-lg bg-(--bg-input) border border-(--border-divider) text-(--text-primary) outline-hidden font-mono min-h-[60px] resize-y scrollbar-none'
+                          spellCheck={false}
+                          dir='ltr'
+                        />
+                      </div>
+                    </SettingsRow>
+                  </>
+                )}
+              </SubmenuSection>
 
-
-
-              <div className="border-t border-(--border-divider) my-0.5 opacity-50" />
+              <div className='border-t border-(--border-divider) my-0.5 opacity-50' />
 
               {/* --- Sidebar --- */}
-              <SubmenuSection isRTL={isAR} id="sidebar" icon="view_sidebar" label={t.sidebarSettings} expandedSubmenu={expandedSubmenu} onToggle={toggleSubmenu} isMobile={isMobile} title={t.sidebarSettings}>
-                  <SettingsRow icon="dashboard_customize" label={t.navigationLayout}>
-                    <SegmentedControl value={navStyle || 1} onChange={v => setNavStyle(v as any)}  size="xs"  shape="pill" iconSize="--icon-settings" options={[{ label: '', value: 1, icon: 'view_sidebar' }, { label: '', value: 2, icon: 'web_asset' }]} />
-                  </SettingsRow>
-                  {navStyle === 1 && (
-                    <SettingsRow icon="view_sidebar" label={t.sidebarStyle}>
-                      <SegmentedControl value={sidebarStyle} onChange={v => setSidebarStyle(v as any)}  size="xs"  shape="pill" iconSize="--icon-settings" options={[{ label: '', value: 1, icon: 'view_sidebar' }, { label: '', value: 2, icon: 'dock_to_left' }, { label: '', value: 3, icon: 'mouse' }]} />
-                    </SettingsRow>
-                  )}
-                  {navStyle === 2 && (
-                    <SettingsRow icon="grid_view" label={t.navbarMenuLayout}>
-                      <SegmentedControl
-                        value={navbarMenuLayout || 'single'}
-                        onChange={v => setNavbarMenuLayout(v as 'single' | 'multi')}
-                        size="xs"
-                        shape="pill"
-                        iconSize="--icon-settings"
-                        options={[
-                          { label: '', value: 'single', icon: 'view_list' },
-                          { label: '', value: 'multi', icon: 'grid_view' },
-                        ]}
-                      />
-                    </SettingsRow>
-                  )}
-                  <SettingsRow icon="filter_center_focus" label={t.focusMode}>
-                    <Switch checked={hideInactiveModules || false} onChange={setHideInactiveModules} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
-                  </SettingsRow>
-                </SubmenuSection>
-              <SettingsRow icon="translate" label={t.language}>
-                <SegmentedControl value={language} onChange={v => settings.setLanguage(v as any)}  size="xs" shape="pill" options={[{ label: 'EN', value: 'EN' }, { label: 'AR', value: 'AR' }]} />
-              </SettingsRow>
-              <SubmenuSection isRTL={isAR} id="modalSettings" icon="dock_to_left" label={t.modalSettings} expandedSubmenu={expandedSubmenu} onToggle={toggleSubmenu} isMobile={isMobile} title={t.modalSettings}>
-                  <SettingsRow icon="dock_to_left" label={t.modalPresentationStyle}>
+              <SubmenuSection
+                isRTL={isAR}
+                id='sidebar'
+                icon='view_sidebar'
+                label={t.sidebarSettings}
+                expandedSubmenu={expandedSubmenu}
+                onToggle={toggleSubmenu}
+                isMobile={isMobile}
+                title={t.sidebarSettings}
+              >
+                <SettingsRow icon='dashboard_customize' label={t.navigationLayout}>
+                  <SegmentedControl
+                    value={navStyle || 1}
+                    onChange={(v) => setNavStyle(v as any)}
+                    size='xs'
+                    shape='pill'
+                    iconSize='--icon-settings'
+                    options={[
+                      { label: '', value: 1, icon: 'view_sidebar' },
+                      { label: '', value: 2, icon: 'web_asset' },
+                    ]}
+                  />
+                </SettingsRow>
+                {navStyle === 1 && (
+                  <SettingsRow icon='view_sidebar' label={t.sidebarStyle}>
                     <SegmentedControl
-                      value={modalPresentationMode || 'modal'}
-                      onChange={v => setModalPresentationMode?.(v as any)}
-                      size="xs"
-                      shape="pill"
+                      value={sidebarStyle}
+                      onChange={(v) => setSidebarStyle(v as any)}
+                      size='xs'
+                      shape='pill'
+                      iconSize='--icon-settings'
                       options={[
-                        { label: t.modalPresentationModeModal, value: 'modal' },
-                        { label: t.modalPresentationModeSidebar, value: 'sidebar' },
+                        { label: '', value: 1, icon: 'view_sidebar' },
+                        { label: '', value: 2, icon: 'dock_to_left' },
+                        { label: '', value: 3, icon: 'mouse' },
                       ]}
                     />
                   </SettingsRow>
-                  {modalPresentationMode === 'sidebar' && (
-                    <SettingsRow icon="straighten" label={t.sidebarModalWidth}>
-                      <SegmentedControl
-                        value={sidebarModalWidth || 'md'}
-                        onChange={v => setSidebarModalWidth?.(v as any)}
-                        size="xs"
-                        shape="pill"
-                        options={[
-                          { label: t.sidebarModalWidthNarrow, value: 'sm' },
-                          { label: t.sidebarModalWidthStandard, value: 'md' },
-                          { label: t.sidebarModalWidthWide, value: 'lg' },
-                          { label: t.sidebarModalWidthExtraWide, value: 'xl' },
-                        ]}
-                      />
-                    </SettingsRow>
-                  )}
-                </SubmenuSection>
-              <SettingsRow icon="text_fields" label={t.textTransform}>
+                )}
+                {navStyle === 2 && (
+                  <SettingsRow icon='grid_view' label={t.navbarMenuLayout}>
+                    <SegmentedControl
+                      value={navbarMenuLayout || 'single'}
+                      onChange={(v) => setNavbarMenuLayout(v as 'single' | 'multi')}
+                      size='xs'
+                      shape='pill'
+                      iconSize='--icon-settings'
+                      options={[
+                        { label: '', value: 'single', icon: 'view_list' },
+                        { label: '', value: 'multi', icon: 'grid_view' },
+                      ]}
+                    />
+                  </SettingsRow>
+                )}
+                <SettingsRow icon='filter_center_focus' label={t.focusMode}>
+                  <Switch
+                    checked={hideInactiveModules || false}
+                    onChange={setHideInactiveModules}
+                    theme={currentTheme.name.toLowerCase()}
+                    activeColor={currentTheme.hex}
+                  />
+                </SettingsRow>
+              </SubmenuSection>
+              <SettingsRow icon='translate' label={t.language}>
+                <SegmentedControl
+                  value={language}
+                  onChange={(v) => settings.setLanguage(v as any)}
+                  size='xs'
+                  shape='pill'
+                  options={[
+                    { label: 'EN', value: 'EN' },
+                    { label: 'AR', value: 'AR' },
+                  ]}
+                />
+              </SettingsRow>
+              <SubmenuSection
+                isRTL={isAR}
+                id='modalSettings'
+                icon='dock_to_left'
+                label={t.modalSettings}
+                expandedSubmenu={expandedSubmenu}
+                onToggle={toggleSubmenu}
+                isMobile={isMobile}
+                title={t.modalSettings}
+              >
+                <SettingsRow icon='dock_to_left' label={t.modalPresentationStyle}>
+                  <SegmentedControl
+                    value={modalPresentationMode || 'modal'}
+                    onChange={(v) => setModalPresentationMode?.(v as any)}
+                    size='xs'
+                    shape='pill'
+                    options={[
+                      { label: t.modalPresentationModeModal, value: 'modal' },
+                      { label: t.modalPresentationModeSidebar, value: 'sidebar' },
+                    ]}
+                  />
+                </SettingsRow>
+                {modalPresentationMode === 'sidebar' && (
+                  <SettingsRow icon='straighten' label={t.sidebarModalWidth}>
+                    <SegmentedControl
+                      value={sidebarModalWidth || 'md'}
+                      onChange={(v) => setSidebarModalWidth?.(v as any)}
+                      size='xs'
+                      shape='pill'
+                      options={[
+                        { label: t.sidebarModalWidthNarrow, value: 'sm' },
+                        { label: t.sidebarModalWidthStandard, value: 'md' },
+                        { label: t.sidebarModalWidthWide, value: 'lg' },
+                        { label: t.sidebarModalWidthExtraWide, value: 'xl' },
+                      ]}
+                    />
+                  </SettingsRow>
+                )}
+              </SubmenuSection>
+              <SettingsRow icon='text_fields' label={t.textTransform}>
                 <Switch
                   checked={textTransform === 'uppercase'}
-                  onChange={() => setTextTransform(textTransform === 'normal' ? 'uppercase' : 'normal')}
+                  onChange={() =>
+                    setTextTransform(textTransform === 'normal' ? 'uppercase' : 'normal')
+                  }
                   theme={currentTheme.name.toLowerCase()}
                   activeColor={currentTheme.hex}
                 />
               </SettingsRow>
 
-              <div className="border-t border-(--border-divider) my-0.5 opacity-50" />
+              <div className='border-t border-(--border-divider) my-0.5 opacity-50' />
 
               {/* --- Typography Section --- */}
-              <SubmenuSection isRTL={isAR} id="typography" icon="font_download" label={t.typography} expandedSubmenu={expandedSubmenu} onToggle={toggleSubmenu} isMobile={isMobile}>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium flex items-center gap-1.5 text-(--text-primary)"><span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-settings)' }}>text_fields</span>{t.fontEN}</label>
-                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                      {AVAILABLE_FONTS_EN.map(f => (
-                        <button 
-                          key={f.value} 
-                          onClick={() => setFontFamilyEN(f.value)} 
-                          className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all whitespace-nowrap flex-shrink-0 ${fontFamilyEN === f.value ? 'bg-black text-white dark:bg-white dark:text-black' : 'border-(--border-divider) text-(--text-primary)'}`} 
-                          style={{ fontFamily: f.value }}
-                        >
-                          {f.label}
-                        </button>
-                      ))}
-                    </div>
+              <SubmenuSection
+                isRTL={isAR}
+                id='typography'
+                icon='font_download'
+                label={t.typography}
+                expandedSubmenu={expandedSubmenu}
+                onToggle={toggleSubmenu}
+                isMobile={isMobile}
+              >
+                <div className='space-y-1'>
+                  <label className='text-xs font-medium flex items-center gap-1.5 text-(--text-primary)'>
+                    <span
+                      className='material-symbols-rounded'
+                      style={{ fontSize: 'var(--icon-settings)' }}
+                    >
+                      text_fields
+                    </span>
+                    {t.fontEN}
+                  </label>
+                  <div className='flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none'>
+                    {AVAILABLE_FONTS_EN.map((f) => (
+                      <button
+                        key={f.value}
+                        onClick={() => setFontFamilyEN(f.value)}
+                        className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all whitespace-nowrap flex-shrink-0 ${fontFamilyEN === f.value ? 'bg-black text-white dark:bg-white dark:text-black' : 'border-(--border-divider) text-(--text-primary)'}`}
+                        style={{ fontFamily: f.value }}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium flex items-center gap-1.5 text-(--text-primary)"><span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-settings)' }}>translate</span>{t.fontAR}</label>
-                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                      {AVAILABLE_FONTS_AR.map(f => (
-                        <button 
-                          key={f.value} 
-                          onClick={() => setFontFamilyAR(f.value)} 
-                          className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all whitespace-nowrap flex-shrink-0 ${fontFamilyAR === f.value ? 'bg-black text-white dark:bg-white dark:text-black' : 'border-(--border-divider) text-(--text-primary)'}`} 
-                          style={{ fontFamily: f.value }}
-                        >
-                          {f.label}
-                        </button>
-                      ))}
-                    </div>
+                </div>
+                <div className='space-y-1'>
+                  <label className='text-xs font-medium flex items-center gap-1.5 text-(--text-primary)'>
+                    <span
+                      className='material-symbols-rounded'
+                      style={{ fontSize: 'var(--icon-settings)' }}
+                    >
+                      translate
+                    </span>
+                    {t.fontAR}
+                  </label>
+                  <div className='flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none'>
+                    {AVAILABLE_FONTS_AR.map((f) => (
+                      <button
+                        key={f.value}
+                        onClick={() => setFontFamilyAR(f.value)}
+                        className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all whitespace-nowrap flex-shrink-0 ${fontFamilyAR === f.value ? 'bg-black text-white dark:bg-white dark:text-black' : 'border-(--border-divider) text-(--text-primary)'}`}
+                        style={{ fontFamily: f.value }}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
                   </div>
-                  {isAR && (
-                    <SettingsRow icon="123" label={t.numeralSystem}>
-                      <SegmentedControl
-                        value={numeralSystem}
-                        onChange={v => setNumeralSystem(v as any)}
-                        size="xs"
-                        shape="pill"
-                        options={[
-                          { label: t.numeralArabic, value: 'AR' },
-                          { label: t.numeralLatin, value: 'EN' }
-                        ]}
-                      />
-                    </SettingsRow>
-                  )}
-                  {isAR && (
-                    <SettingsRow icon="style" label={t.graphicStyle}>
-                      <SegmentedControl
-                        value={!graphicStyle ? 'off' : graphicFontVariant}
-                        onChange={(val) => {
-                          if (val === 'off') {
-                            setGraphicStyle(false);
-                          } else {
-                            setGraphicStyle(true);
-                            setGraphicFontVariant(val as 'serif' | 'sans');
-                          }
-                        }}
-                         size="xs" fullWidth shape="pill"
-                        options={[
-                          { label: 'إيقاف', value: 'off' },
-                          { label: 'جرافيكي', value: 'serif', fontFamily: '"HeadingFont"' },
-                          { label: 'مودرن', value: 'sans', fontFamily: '"GraphicSansFont"' },
-                        ]}
-                      />
-                    </SettingsRow>
-                  )}
-                </SubmenuSection>
+                </div>
+                {isAR && (
+                  <SettingsRow icon='123' label={t.numeralSystem}>
+                    <SegmentedControl
+                      value={numeralSystem}
+                      onChange={(v) => setNumeralSystem(v as any)}
+                      size='xs'
+                      shape='pill'
+                      options={[
+                        { label: t.numeralArabic, value: 'AR' },
+                        { label: t.numeralLatin, value: 'EN' },
+                      ]}
+                    />
+                  </SettingsRow>
+                )}
+                {isAR && (
+                  <SettingsRow icon='style' label={t.graphicStyle}>
+                    <SegmentedControl
+                      value={!graphicStyle ? 'off' : graphicFontVariant}
+                      onChange={(val) => {
+                        if (val === 'off') {
+                          setGraphicStyle(false);
+                        } else {
+                          setGraphicStyle(true);
+                          setGraphicFontVariant(val as 'serif' | 'sans');
+                        }
+                      }}
+                      size='xs'
+                      fullWidth
+                      shape='pill'
+                      options={[
+                        { label: 'إيقاف', value: 'off' },
+                        { label: 'جرافيكي', value: 'serif', fontFamily: '"HeadingFont"' },
+                        { label: 'مودرن', value: 'sans', fontFamily: '"GraphicSansFont"' },
+                      ]}
+                    />
+                  </SettingsRow>
+                )}
+              </SubmenuSection>
 
-              <div className="border-t border-(--border-divider) my-0.5 opacity-50" />
+              <div className='border-t border-(--border-divider) my-0.5 opacity-50' />
 
               {/* --- Workspace & Status Bar --- */}
               {permissionsService.isOrgAdmin() && (
                 <>
-                  <div className="py-1">
-                    <SettingsRow icon="science" label={t.developerMode}>
-                  <Tooltip 
-                    content={
-                      <div className="flex flex-col gap-1 text-xs">
-                        <span className="font-bold mb-1">{isAR ? 'يفتح خيارات متقدمة:' : 'Unlocks advanced options:'}</span>
-                        <ul className="list-disc list-inside opacity-90 space-y-0.5">
-                          <li>{isAR ? 'مخطط الأبعاد (Blueprint)' : 'Blueprint mode in Label Studio'}</li>
-                          <li>{isAR ? 'أنماط حواف وزوايا البطاقات' : 'Card border & corner styles'}</li>
-                          <li>{isAR ? 'تخصيص CSS للبطاقات' : 'Custom Card CSS'}</li>
-                          <li>{isAR ? 'أشكال أزرار السويتش' : 'Switch button variants'}</li>
-                          <li>{isAR ? 'الوصول للموديلات التجريبية (Test Lab)' : 'Access to Experimental Modules'}</li>
-                          <li>{isAR ? 'إظهار الصفحات قيد التطوير' : 'Show Unimplemented Pages'}</li>
-                          <li>{isAR ? 'تخطي الصلاحيات لصفحات الـ Debug' : 'Bypass permissions for Debug pages'}</li>
-                        </ul>
-                      </div>
-                    }
-                    position="top"
-                  >
-                    <span className="material-symbols-rounded text-[16px] text-gray-400 dark:text-gray-500 hover:text-primary-500 mr-2 rtl:ml-2 rtl:mr-0">info</span>
-                  </Tooltip>
-                  <Switch checked={developerMode || false} onChange={setDeveloperMode} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
-                  </SettingsRow>
+                  <div className='py-1'>
+                    <SettingsRow icon='science' label={t.developerMode}>
+                      <Tooltip
+                        content={
+                          <div className='flex flex-col gap-1 text-xs'>
+                            <span className='font-bold mb-1'>
+                              {isAR ? 'يفتح خيارات متقدمة:' : 'Unlocks advanced options:'}
+                            </span>
+                            <ul className='list-disc list-inside opacity-90 space-y-0.5'>
+                              <li>
+                                {isAR
+                                  ? 'مخطط الأبعاد (Blueprint)'
+                                  : 'Blueprint mode in Label Studio'}
+                              </li>
+                              <li>
+                                {isAR
+                                  ? 'أنماط حواف وزوايا البطاقات'
+                                  : 'Card border & corner styles'}
+                              </li>
+                              <li>{isAR ? 'تخصيص CSS للبطاقات' : 'Custom Card CSS'}</li>
+                              <li>{isAR ? 'أشكال أزرار السويتش' : 'Switch button variants'}</li>
+                              <li>
+                                {isAR
+                                  ? 'الوصول للموديلات التجريبية (Test Lab)'
+                                  : 'Access to Experimental Modules'}
+                              </li>
+                              <li>
+                                {isAR ? 'إظهار الصفحات قيد التطوير' : 'Show Unimplemented Pages'}
+                              </li>
+                              <li>
+                                {isAR
+                                  ? 'تخطي الصلاحيات لصفحات الـ Debug'
+                                  : 'Bypass permissions for Debug pages'}
+                              </li>
+                            </ul>
+                          </div>
+                        }
+                        position='top'
+                      >
+                        <span className='material-symbols-rounded text-[16px] text-gray-400 dark:text-gray-500 hover:text-primary-500 mr-2 rtl:ml-2 rtl:mr-0'>
+                          info
+                        </span>
+                      </Tooltip>
+                      <Switch
+                        checked={developerMode || false}
+                        onChange={setDeveloperMode}
+                        theme={currentTheme.name.toLowerCase()}
+                        activeColor={currentTheme.hex}
+                      />
+                    </SettingsRow>
                   </div>
-                  <div className="border-t border-(--border-divider) my-0.5 opacity-50" />
+                  <div className='border-t border-(--border-divider) my-0.5 opacity-50' />
                 </>
               )}
 
               {/* --- POS Settings --- */}
-              <div className="pt-1 space-y-1.5">
-                <label className="text-[10px] font-bold uppercase text-(--text-tertiary)">{t.posSettings}</label>
-                <SettingsRow icon="moped" label={t.defaultDeliveryFee}>
-                  <div className="flex items-center gap-2">
+              <div className='pt-1 space-y-1.5'>
+                <label className='text-[10px] font-bold uppercase text-(--text-tertiary)'>
+                  {t.posSettings}
+                </label>
+                <SettingsRow icon='moped' label={t.defaultDeliveryFee}>
+                  <div className='flex items-center gap-2'>
                     <input
-                      type="number"
+                      type='number'
                       value={deliveryFee}
-                      onChange={(e) => updateBranch?.(activeBranchId, { deliveryFee: Number(e.target.value) })}
-                      className="w-16 h-7 bg-black/5 dark:bg-white/5 border-none rounded-md px-2 text-xs font-bold focus:ring-1 focus:ring-primary-500/50 text-center"
+                      onChange={(e) =>
+                        updateBranch?.(activeBranchId, { deliveryFee: Number(e.target.value) })
+                      }
+                      className='w-16 h-7 bg-black/5 dark:bg-white/5 border-none rounded-md px-2 text-xs font-bold focus:ring-1 focus:ring-primary-500/50 text-center'
                     />
-                    <span className="text-[10px] font-bold text-(--text-tertiary)">{t.egp}</span>
+                    <span className='text-[10px] font-bold text-(--text-tertiary)'>{t.egp}</span>
                   </div>
                 </SettingsRow>
               </div>
 
               {showTicker !== undefined && (
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase text-(--text-tertiary)">{t.statusBarSettings}</label>
-                  <div className="relative" ref={statusSmartPos.ref}>
-                    <SettingsRow icon="speed" label={t.quickStatuses} onClick={() => toggleSubmenu('status')}>
+                <div className='space-y-1'>
+                  <label className='text-[10px] font-bold uppercase text-(--text-tertiary)'>
+                    {t.statusBarSettings}
+                  </label>
+                  <div className='relative' ref={statusSmartPos.ref}>
+                    <SettingsRow
+                      icon='speed'
+                      label={t.quickStatuses}
+                      onClick={() => toggleSubmenu('status')}
+                    >
                       <div onClick={(e) => e.stopPropagation()}>
-                        <Switch checked={showTicker || false} onChange={setShowTicker} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
+                        <Switch
+                          checked={showTicker || false}
+                          onChange={setShowTicker}
+                          theme={currentTheme.name.toLowerCase()}
+                          activeColor={currentTheme.hex}
+                        />
                       </div>
-                      <span 
+                      <span
                         className={`material-symbols-rounded transition-transform text-(--text-tertiary) group-hover:text-(--text-secondary) ${expandedSubmenu === 'status' ? 'rotate-180' : ''}`}
                         style={{ fontSize: 'var(--icon-settings)' }}
                       >
                         chevron_left
                       </span>
                     </SettingsRow>
-                    <SubmenuWrapper isOpen={expandedSubmenu === 'status' && showTicker} isMobile={isMobile} side={statusSmartPos.position.side} align={statusSmartPos.position.align} isRTL={isAR}>
-                      <SettingsRow icon="trending_up" label={t.showSales} className="hover:bg-(--bg-menu-hover) px-2 rounded-lg"><Switch checked={showTickerSales} onChange={setShowTickerSales} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
-                      <SettingsRow icon="inventory_2" label={t.showInventory} className="hover:bg-(--bg-menu-hover) px-2 rounded-lg"><Switch checked={showTickerInventory} onChange={setShowTickerInventory} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
-                      <SettingsRow icon="group" label={t.showCustomers} className="hover:bg-(--bg-menu-hover) px-2 rounded-lg"><Switch checked={showTickerCustomers} onChange={setShowTickerCustomers} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
-                      <SettingsRow icon="star" label={t.showTopSeller} className="hover:bg-(--bg-menu-hover) px-2 rounded-lg"><Switch checked={showTickerTopSeller} onChange={setShowTickerTopSeller} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} /></SettingsRow>
+                    <SubmenuWrapper
+                      isOpen={expandedSubmenu === 'status' && showTicker}
+                      isMobile={isMobile}
+                      side={statusSmartPos.position.side}
+                      align={statusSmartPos.position.align}
+                      isRTL={isAR}
+                    >
+                      <SettingsRow
+                        icon='trending_up'
+                        label={t.showSales}
+                        className='hover:bg-(--bg-menu-hover) px-2 rounded-lg'
+                      >
+                        <Switch
+                          checked={showTickerSales}
+                          onChange={setShowTickerSales}
+                          theme={currentTheme.name.toLowerCase()}
+                          activeColor={currentTheme.hex}
+                        />
+                      </SettingsRow>
+                      <SettingsRow
+                        icon='inventory_2'
+                        label={t.showInventory}
+                        className='hover:bg-(--bg-menu-hover) px-2 rounded-lg'
+                      >
+                        <Switch
+                          checked={showTickerInventory}
+                          onChange={setShowTickerInventory}
+                          theme={currentTheme.name.toLowerCase()}
+                          activeColor={currentTheme.hex}
+                        />
+                      </SettingsRow>
+                      <SettingsRow
+                        icon='group'
+                        label={t.showCustomers}
+                        className='hover:bg-(--bg-menu-hover) px-2 rounded-lg'
+                      >
+                        <Switch
+                          checked={showTickerCustomers}
+                          onChange={setShowTickerCustomers}
+                          theme={currentTheme.name.toLowerCase()}
+                          activeColor={currentTheme.hex}
+                        />
+                      </SettingsRow>
+                      <SettingsRow
+                        icon='star'
+                        label={t.showTopSeller}
+                        className='hover:bg-(--bg-menu-hover) px-2 rounded-lg'
+                      >
+                        <Switch
+                          checked={showTickerTopSeller}
+                          onChange={setShowTickerTopSeller}
+                          theme={currentTheme.name.toLowerCase()}
+                          activeColor={currentTheme.hex}
+                        />
+                      </SettingsRow>
                     </SubmenuWrapper>
                   </div>
                 </div>

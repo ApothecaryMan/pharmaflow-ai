@@ -2,19 +2,21 @@ import * as QRCode from 'qrcode';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
+import { useSettings } from '../../context';
+import { useData } from '../../context/DataContext';
 import { useDebounce } from '../../hooks/common/useDebounce';
 import type { TRANSLATIONS } from '../../i18n/translations';
 import type { Drug } from '../../types';
+import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { useContextMenu } from '../common/ContextMenu';
 import { FilterDropdown } from '../common/FilterDropdown';
+import { usePosSounds } from '../common/hooks/usePosSounds';
 import { Modal } from '../common/Modal';
 import { ScreenCalibration } from '../common/ScreenCalibration';
 import { useSmartDirection } from '../common/SmartInputs';
 import { useStatusBar } from '../layout/StatusBar';
-import { usePosSounds } from '../common/hooks/usePosSounds';
-import { idGenerator } from '../../utils/idGenerator';
 import { BarcodePreview } from './BarcodePreview';
 import {
   DEFAULT_LABEL_DESIGN,
@@ -28,8 +30,6 @@ import {
 } from './LabelPrinter';
 import { PropertyInspector } from './studio/PropertyInspector';
 import { TemplateGalleryModal } from './studio/TemplateGalleryModal';
-import { useData } from '../../context/DataContext';
-import { useSettings } from '../../context';
 
 interface BarcodeStudioProps {
   inventory: Drug[];
@@ -48,7 +48,10 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const { playError } = usePosSounds();
   const { branches, activeBranchId, updateBranch } = useData();
   const { developerMode } = useSettings();
-  const activeBranch = useMemo(() => branches?.find((b: any) => b.id === activeBranchId), [branches, activeBranchId]);
+  const activeBranch = useMemo(
+    () => branches?.find((b: any) => b.id === activeBranchId),
+    [branches, activeBranchId]
+  );
   const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -107,17 +110,36 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const [showBlueprint, setShowBlueprint] = useState(false);
 
   // Data State - Dynamically synced from ReceiptDesigner storage
-  const [receiptSettings, setLocalReceiptSettings] = useState(() => getReceiptSettings(activeBranchId, activeBranch?.name, activeBranch?.phone, activeBranch?.printSettings));
+  const [receiptSettings, setLocalReceiptSettings] = useState(() =>
+    getReceiptSettings(
+      activeBranchId,
+      activeBranch?.name,
+      activeBranch?.phone,
+      activeBranch?.printSettings
+    )
+  );
   const [isLoaded, setIsLoaded] = useState(false);
 
   // --- Receipt Settings Polling (Optimized) ---
   useEffect(() => {
     // Initial load
-    setLocalReceiptSettings(getReceiptSettings(activeBranchId, activeBranch?.name, activeBranch?.phone, activeBranch?.printSettings));
+    setLocalReceiptSettings(
+      getReceiptSettings(
+        activeBranchId,
+        activeBranch?.name,
+        activeBranch?.phone,
+        activeBranch?.printSettings
+      )
+    );
 
     // Check every 3 seconds for changes
     const interval = setInterval(() => {
-      const newSettings = getReceiptSettings(activeBranchId, activeBranch?.name, activeBranch?.phone, activeBranch?.printSettings);
+      const newSettings = getReceiptSettings(
+        activeBranchId,
+        activeBranch?.name,
+        activeBranch?.phone,
+        activeBranch?.printSettings
+      );
       setLocalReceiptSettings((current) => {
         // Only update if changed to avoid re-renders
         if (
@@ -178,11 +200,11 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       printOffsetY: debouncedPrintOffsets.y,
     };
     if (activeBranchId) {
-      updateBranch(activeBranchId, { 
-        printSettings: { 
-          ...(activeBranch?.printSettings || {}), 
-          [StorageKeys.LABEL_DESIGN]: designState 
-        } 
+      updateBranch(activeBranchId, {
+        printSettings: {
+          ...(activeBranch?.printSettings || {}),
+          [StorageKeys.LABEL_DESIGN]: designState,
+        },
       });
     }
   }, [
@@ -229,7 +251,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     setTemplates(loadedTemplates);
 
     // Load Default Template ID
-    const savedDefaultId = activeBranch?.printSettings?.[StorageKeys.LABEL_DEFAULT_TEMPLATE] || null;
+    const savedDefaultId =
+      activeBranch?.printSettings?.[StorageKeys.LABEL_DEFAULT_TEMPLATE] || null;
     if (savedDefaultId) {
       setDefaultTemplateId(savedDefaultId);
     }
@@ -337,7 +360,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
         if (dx !== 0 || dy !== 0) {
           e.preventDefault(); // Prevent page scrolling
-          
+
           setElements((prev) =>
             prev.map((el) => {
               if (el.id === selectedElementId) {
@@ -381,11 +404,12 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       // Merge missing elements from DEFAULT_LABEL_DESIGN
       const existingIds = new Set(state.elements.map((el: any) => el.id));
       const missingElements = DEFAULT_LABEL_DESIGN.elements.filter((el) => !existingIds.has(el.id));
-      
+
       const activePreset = state.selectedPreset || '38x25';
-      const presetW = activePreset === 'custom'
-        ? (state.customDims?.w || 38)
-        : (LABEL_PRESETS[activePreset] || LABEL_PRESETS['38x25']).w;
+      const presetW =
+        activePreset === 'custom'
+          ? state.customDims?.w || 38
+          : (LABEL_PRESETS[activePreset] || LABEL_PRESETS['38x25']).w;
 
       const sanitizedElements = [...state.elements, ...missingElements].map((el: any) => {
         if (el.align === 'center') {
@@ -501,18 +525,18 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       name: newTemplateName,
       design: design,
       author: 'ZINC Designer',
-      createdAt: Date.now()
+      createdAt: Date.now(),
     };
 
     const updatedTemplates = [...templates, newTemplate];
     setTemplates(updatedTemplates);
-    
+
     if (activeBranchId) {
-      updateBranch(activeBranchId, { 
-        printSettings: { 
-          ...(activeBranch?.printSettings || {}), 
-          [StorageKeys.LABEL_TEMPLATES]: updatedTemplates 
-        } 
+      updateBranch(activeBranchId, {
+        printSettings: {
+          ...(activeBranch?.printSettings || {}),
+          [StorageKeys.LABEL_TEMPLATES]: updatedTemplates,
+        },
       });
     }
 
@@ -527,13 +551,13 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     const design = getDesignState();
     const updatedTemplates = templates.map((t) => (t.id === id ? { ...t, design } : t));
     setTemplates(updatedTemplates);
-    
+
     if (activeBranchId) {
-      updateBranch(activeBranchId, { 
-        printSettings: { 
-          ...(activeBranch?.printSettings || {}), 
-          [StorageKeys.LABEL_TEMPLATES]: updatedTemplates 
-        } 
+      updateBranch(activeBranchId, {
+        printSettings: {
+          ...(activeBranch?.printSettings || {}),
+          [StorageKeys.LABEL_TEMPLATES]: updatedTemplates,
+        },
       });
     }
 
@@ -559,11 +583,11 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     const updated = templates.filter((t) => t.id !== id);
     setTemplates(updated);
     if (activeBranchId) {
-      updateBranch(activeBranchId, { 
-        printSettings: { 
-          ...(activeBranch?.printSettings || {}), 
-          [StorageKeys.LABEL_TEMPLATES]: updated 
-        } 
+      updateBranch(activeBranchId, {
+        printSettings: {
+          ...(activeBranch?.printSettings || {}),
+          [StorageKeys.LABEL_TEMPLATES]: updated,
+        },
       });
     }
     if (activeTemplateId === id) {
@@ -970,7 +994,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
   const handlePrint = async () => {
     if (!selectedDrug) return;
-    
+
     const design: LabelDesign = {
       elements,
       selectedPreset,
@@ -981,18 +1005,15 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       printOffsetY,
       labelGap,
     };
-    
+
     const isDouble = selectedPreset === '38x25';
-    
-    await printLabels(
-      [{ drug: selectedDrug, quantity: isDouble ? 2 : 1 }], 
-      { 
-        design,
-        activeBranchId,
-        activeBranchName: storeName,
-        activeBranchPhone: hotline,
-      }
-    );
+
+    await printLabels([{ drug: selectedDrug, quantity: isDouble ? 2 : 1 }], {
+      design,
+      activeBranchId,
+      activeBranchName: storeName,
+      activeBranchPhone: hotline,
+    });
   };
 
   return (
@@ -1021,8 +1042,12 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
               className='h-8 px-2 flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-muted/50 hover:bg-gray-50 dark:hover:bg-muted text-gray-600 dark:text-gray-300 transition-all shadow-sm group'
               title='معرض القوالب'
             >
-              <span className='material-symbols-rounded text-sm group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors'>view_carousel</span>
-              <span className='text-[10px] font-bold uppercase tracking-wider hidden md:block'>Gallery</span>
+              <span className='material-symbols-rounded text-sm group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors'>
+                view_carousel
+              </span>
+              <span className='text-[10px] font-bold uppercase tracking-wider hidden md:block'>
+                Gallery
+              </span>
             </button>
             {/* Compact Template Selector */}
             <div className='relative w-36 h-8'>
@@ -1125,17 +1150,17 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
         <div className='flex-1 flex justify-center min-w-0'>
           <div className='flex items-center gap-1.5 px-3 py-1 bg-gray-100/50 dark:bg-muted/30 rounded-2xl border border-gray-200/50 dark:border-border overflow-x-auto scrollbar-hide'>
             {elements.map((el) => (
-                <button
-                  key={el.id}
-                  onClick={() => toggleVisibility(el.id)}
-                  className={`whitespace-nowrap px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all border ${
-                    el.isVisible
-                      ? `bg-primary-500/10 text-primary-600 border-primary-200/50 dark:bg-accent dark:text-foreground dark:border-border/30 shadow-sm`
-                      : 'bg-transparent text-gray-400 border-transparent hover:bg-gray-100 dark:text-muted-foreground dark:hover:bg-muted/40'
-                  }`}
-                >
-                  {el.label}
-                </button>
+              <button
+                key={el.id}
+                onClick={() => toggleVisibility(el.id)}
+                className={`whitespace-nowrap px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all border ${
+                  el.isVisible
+                    ? `bg-primary-500/10 text-primary-600 border-primary-200/50 dark:bg-accent dark:text-foreground dark:border-border/30 shadow-sm`
+                    : 'bg-transparent text-gray-400 border-transparent hover:bg-gray-100 dark:text-muted-foreground dark:hover:bg-muted/40'
+                }`}
+              >
+                {el.label}
+              </button>
             ))}
           </div>
         </div>
@@ -1146,11 +1171,11 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
           <div className='flex items-center bg-gray-50/50 dark:bg-muted/30 p-0.5 rounded-lg border border-gray-100 dark:border-border'>
             <button
               onClick={() => addElement('text')}
-                className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
-                  elements.some((el) => el.type === 'text' && el.id.startsWith('custom-'))
-                    ? `bg-primary-500 dark:bg-accent text-white shadow-xs`
-                    : 'hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground'
-                }`}
+              className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
+                elements.some((el) => el.type === 'text' && el.id.startsWith('custom-'))
+                  ? `bg-primary-500 dark:bg-accent text-white shadow-xs`
+                  : 'hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground'
+              }`}
               title={t.toolbar.addText}
             >
               <span className='material-symbols-rounded text-[18px] leading-none'>title</span>
@@ -1169,7 +1194,9 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                 }
               }}
               className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
-                elements.some((el) => el.type === 'image' && el.id.startsWith('img-') || el.id === 'logo')
+                elements.some(
+                  (el) => (el.type === 'image' && el.id.startsWith('img-')) || el.id === 'logo'
+                )
                   ? `bg-primary-500 dark:bg-accent text-white shadow-xs`
                   : 'hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground'
               }`}
@@ -1212,7 +1239,9 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
               className='hidden sm:flex items-center px-2 h-7 bg-gray-50/50 dark:bg-muted/30 rounded-lg border border-gray-100 dark:border-border text-[10px] font-bold text-gray-500 dark:text-muted-foreground gap-1.5'
               title='Estimated Printing Payload Size'
             >
-              <span className='material-symbols-rounded text-sm text-gray-400 dark:text-muted-foreground/60'>database</span>
+              <span className='material-symbols-rounded text-sm text-gray-400 dark:text-muted-foreground/60'>
+                database
+              </span>
               <span>{payloadSize}</span>
             </div>
           )}
@@ -1292,49 +1321,58 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
                 {/* Floating Live Dimensions Blueprint */}
                 {developerMode && (
-                  <div className="absolute bottom-4 left-4 z-20 flex flex-col items-start gap-2">
+                  <div className='absolute bottom-4 left-4 z-20 flex flex-col items-start gap-2'>
                     {showBlueprint ? (
-                    <div className="bg-white/95 dark:bg-muted/95 backdrop-blur-md p-4 rounded-2xl border border-gray-200 dark:border-border shadow-xl w-80 max-h-72 overflow-y-auto animate-fade-in flex flex-col gap-2">
-                      <div className="flex items-center justify-between border-b border-gray-100 dark:border-border pb-2">
-                        <div className="flex items-center gap-1.5 text-primary-600 dark:text-primary-400">
-                          <span className="material-symbols-rounded text-lg">square_foot</span>
-                          <span className="text-xs font-black uppercase tracking-wider">مخطط أبعاد المكونات بالمللي</span>
+                      <div className='bg-white/95 dark:bg-muted/95 backdrop-blur-md p-4 rounded-2xl border border-gray-200 dark:border-border shadow-xl w-80 max-h-72 overflow-y-auto animate-fade-in flex flex-col gap-2'>
+                        <div className='flex items-center justify-between border-b border-gray-100 dark:border-border pb-2'>
+                          <div className='flex items-center gap-1.5 text-primary-600 dark:text-primary-400'>
+                            <span className='material-symbols-rounded text-lg'>square_foot</span>
+                            <span className='text-xs font-black uppercase tracking-wider'>
+                              مخطط أبعاد المكونات بالمللي
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => setShowBlueprint(false)}
+                            className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-all flex items-center justify-center'
+                          >
+                            <span className='material-symbols-rounded text-sm'>close</span>
+                          </button>
                         </div>
-                        <button
-                          onClick={() => setShowBlueprint(false)}
-                          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-all flex items-center justify-center"
+                        <div
+                          className='text-[10px] font-mono bg-gray-50 dark:bg-black/20 p-2.5 rounded-lg border border-gray-100 dark:border-border/30 overflow-x-auto text-gray-700 dark:text-gray-300 select-all cursor-pointer'
+                          title='انقر لتحديد الكل ونسخ الكود'
                         >
-                          <span className="material-symbols-rounded text-sm">close</span>
-                        </button>
+                          {`{\n` +
+                            elements
+                              .map((el) => {
+                                const props = [
+                                  `"x": ${el.x}`,
+                                  `"y": ${el.y}`,
+                                  el.fontSize ? `"fontSize": ${el.fontSize}` : null,
+                                  el.fontWeight ? `"fontWeight": "${el.fontWeight}"` : null,
+                                  `"align": "${el.align || 'left'}"`,
+                                  el.width ? `"width": ${el.width}` : null,
+                                  el.height ? `"height": ${el.height}` : null,
+                                ]
+                                  .filter(Boolean)
+                                  .join(', ');
+                                return `  "${el.id}": { ${props} }`;
+                              })
+                              .join(',\n') +
+                            `\n}`}
+                        </div>
                       </div>
-                      <div className="text-[10px] font-mono bg-gray-50 dark:bg-black/20 p-2.5 rounded-lg border border-gray-100 dark:border-border/30 overflow-x-auto text-gray-700 dark:text-gray-300 select-all cursor-pointer" title="انقر لتحديد الكل ونسخ الكود">
-                        {`{\n` +
-                          elements.map(el => {
-                            const props = [
-                              `"x": ${el.x}`,
-                              `"y": ${el.y}`,
-                              el.fontSize ? `"fontSize": ${el.fontSize}` : null,
-                              el.fontWeight ? `"fontWeight": "${el.fontWeight}"` : null,
-                              `"align": "${el.align || 'left'}"`,
-                              el.width ? `"width": ${el.width}` : null,
-                              el.height ? `"height": ${el.height}` : null,
-                            ].filter(Boolean).join(', ');
-                            return `  "${el.id}": { ${props} }`;
-                          }).join(',\n') +
-                        `\n}`}
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setShowBlueprint(true)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white/90 dark:bg-muted/90 backdrop-blur-md rounded-xl border border-gray-200 dark:border-border shadow-md hover:bg-gray-50 dark:hover:bg-accent text-primary-600 dark:text-primary-400 text-[10px] font-black uppercase tracking-wider transition-all"
-                    >
-                      <span className="material-symbols-rounded text-sm">square_foot</span>
-                      <span>عرض مخطط الأبعاد (Live Blueprint)</span>
-                    </button>
-                  )}
-                </div>
-              )}
+                    ) : (
+                      <button
+                        onClick={() => setShowBlueprint(true)}
+                        className='flex items-center gap-1.5 px-3 py-1.5 bg-white/90 dark:bg-muted/90 backdrop-blur-md rounded-xl border border-gray-200 dark:border-border shadow-md hover:bg-gray-50 dark:hover:bg-accent text-primary-600 dark:text-primary-400 text-[10px] font-black uppercase tracking-wider transition-all'
+                      >
+                        <span className='material-symbols-rounded text-sm'>square_foot</span>
+                        <span>عرض مخطط الأبعاد (Live Blueprint)</span>
+                      </button>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>

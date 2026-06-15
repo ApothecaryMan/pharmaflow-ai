@@ -1,11 +1,4 @@
-import React from 'react';
-import { useInventoryHandlers } from './inventory/useInventoryHandlers';
-import { useSalesHandlers } from './sales/useSalesHandlers';
-import { usePurchaseHandlers } from './purchases/usePurchaseHandlers';
-import { useCustomerHandlers } from './customers/useCustomerHandlers';
-import { useSupplierHandlers } from './suppliers/useSupplierHandlers';
-import { useEmployeeHandlers } from './hr/useEmployeeHandlers';
-import { useShift } from './sales/useShift';
+import type React from 'react';
 import type {
   ActionContext,
   CartItem,
@@ -19,6 +12,13 @@ import type {
   StockBatch,
   Supplier,
 } from '../types';
+import { useCustomerHandlers } from './customers/useCustomerHandlers';
+import { useEmployeeHandlers } from './hr/useEmployeeHandlers';
+import { useInventoryHandlers } from './inventory/useInventoryHandlers';
+import { usePurchaseHandlers } from './purchases/usePurchaseHandlers';
+import { useSalesHandlers } from './sales/useSalesHandlers';
+import { useShift } from './sales/useShift';
+import { useSupplierHandlers } from './suppliers/useSupplierHandlers';
 
 export interface SaleData {
   items: CartItem[];
@@ -89,7 +89,10 @@ export interface UseEntityHandlersParams {
   markAsReceived?: (id: string, receiverId: string, receiverName: string) => Promise<void>;
   completeSale: (saleData: any, context: ActionContext) => Promise<Sale>;
   processSalesReturn: (returnData: any, sale: Sale, context: ActionContext) => Promise<void>;
-  createPurchaseReturn: (ret: Omit<PurchaseReturn, 'id'>, context: ActionContext) => Promise<PurchaseReturn>;
+  createPurchaseReturn: (
+    ret: Omit<PurchaseReturn, 'id'>,
+    context: ActionContext
+  ) => Promise<PurchaseReturn>;
   getVerifiedDate: () => Date;
   validateTransactionTime: (date: Date) => { valid: boolean; message?: string };
   updateLastTransactionTime: (time: number) => void;

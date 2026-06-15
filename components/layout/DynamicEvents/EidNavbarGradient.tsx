@@ -1,9 +1,11 @@
-import React from 'react';
+import type React from 'react';
 
 interface EidNavbarGradientProps {
-  customGradient: {
-    colors: string[];
-  } | undefined;
+  customGradient:
+    | {
+        colors: string[];
+      }
+    | undefined;
 }
 
 export const EidNavbarGradient: React.FC<EidNavbarGradientProps> = ({ customGradient }) => {

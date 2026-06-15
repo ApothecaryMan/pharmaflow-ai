@@ -1,17 +1,11 @@
-import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
-import maplibregl from "maplibre-gl";
+import type maplibregl from 'maplibre-gl';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icons from '@/components/common/Icons';
-import {
-  Map,
-  MapControls,
-  MapClusterLayer,
-  useMap,
-  type MapViewport,
-} from "@/components/ui/map";
-import { SegmentedControl } from "../common/SegmentedControl";
-import CustomerDeliveryView, { DELIVERY_ROUTE } from "./CustomerDeliveryView";
-import { useData } from "../../context/DataContext";
-import { useSettings } from "../../context";
+import { Map, MapClusterLayer, MapControls, type MapViewport, useMap } from '@/components/ui/map';
+import { useSettings } from '../../context';
+import { useData } from '../../context/DataContext';
+import { SegmentedControl } from '../common/SegmentedControl';
+import CustomerDeliveryView, { DELIVERY_ROUTE } from './CustomerDeliveryView';
 
 // ----------------------------------------------------
 // Mock Data Generation
@@ -25,14 +19,14 @@ function generateMockCustomers(center: [number, number]): GeoJSON.FeatureCollect
     length: NUM_CUSTOMERS,
   }).map((_, i) => {
     // Basic dispersion: center cluster + some outliers
-    const r = Math.pow(Math.random(), 3) * 0.15; // heavily clustered towards center
+    const r = Math.random() ** 3 * 0.15; // heavily clustered towards center
     const theta = Math.random() * 2 * Math.PI;
     const lng = center[0] + r * Math.cos(theta);
     const lat = center[1] + r * Math.sin(theta);
 
     return {
-      type: "Feature",
-      geometry: { type: "Point", coordinates: [lng, lat] },
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [lng, lat] },
       properties: {
         id: `customer-${i}`,
         value: Math.random() * 100, // random purchase metric
@@ -40,7 +34,7 @@ function generateMockCustomers(center: [number, number]): GeoJSON.FeatureCollect
     };
   });
 
-  return { type: "FeatureCollection", features };
+  return { type: 'FeatureCollection', features };
 }
 
 // ----------------------------------------------------
@@ -58,61 +52,71 @@ function DashboardOverlay({
   darkMode: boolean;
 }) {
   return (
-    <div className={`absolute inset-x-0 bottom-6 z-10 mx-auto w-11/12 max-w-lg rounded-2xl border p-5 shadow-2xl pointer-events-none transition-all duration-300 ${
-      darkMode 
-        ? "bg-black/60 backdrop-blur-2xl border-white/10 shadow-[0_0_40px_-10px_rgba(0,255,255,0.3)] text-white" 
-        : "bg-white/90 backdrop-blur-2xl border-zinc-200 shadow-xl text-zinc-950"
-    }`}>
-      <div className="flex items-center justify-between pointer-events-auto">
+    <div
+      className={`absolute inset-x-0 bottom-6 z-10 mx-auto w-11/12 max-w-lg rounded-2xl border p-5 shadow-2xl pointer-events-none transition-all duration-300 ${
+        darkMode
+          ? 'bg-black/60 backdrop-blur-2xl border-white/10 shadow-[0_0_40px_-10px_rgba(0,255,255,0.3)] text-white'
+          : 'bg-white/90 backdrop-blur-2xl border-zinc-200 shadow-xl text-zinc-950'
+      }`}
+    >
+      <div className='flex items-center justify-between pointer-events-auto'>
         {/* Metric 1 */}
-        <div className="flex items-center space-x-4">
-          <div className={`p-3 rounded-xl border ${
-            darkMode 
-              ? "bg-cyan-500/20 border-cyan-500/30 text-cyan-400" 
-              : "bg-cyan-50 border-cyan-200 text-cyan-600"
-          }`}>
+        <div className='flex items-center space-x-4'>
+          <div
+            className={`p-3 rounded-xl border ${
+              darkMode
+                ? 'bg-cyan-500/20 border-cyan-500/30 text-cyan-400'
+                : 'bg-cyan-50 border-cyan-200 text-cyan-600'
+            }`}
+          >
             {isDeliveryView ? (
-              <span className="material-symbols-rounded text-2xl">local_shipping</span>
+              <span className='material-symbols-rounded text-2xl'>local_shipping</span>
             ) : (
-              <span className="material-symbols-rounded text-2xl">groups</span>
+              <span className='material-symbols-rounded text-2xl'>groups</span>
             )}
           </div>
           <div>
-            <p className={`text-xs font-semibold tracking-wider uppercase ${
-              darkMode ? "text-zinc-400" : "text-zinc-500"
-            }`}>
-              {isDeliveryView ? "Delivery Status" : "Active Network"}
+            <p
+              className={`text-xs font-semibold tracking-wider uppercase ${
+                darkMode ? 'text-zinc-400' : 'text-zinc-500'
+              }`}
+            >
+              {isDeliveryView ? 'Delivery Status' : 'Active Network'}
             </p>
-            <p className="text-2xl font-bold tracking-tight">
-              {isDeliveryView ? "In Transit" : totalCustomers.toLocaleString()}
+            <p className='text-2xl font-bold tracking-tight'>
+              {isDeliveryView ? 'In Transit' : totalCustomers.toLocaleString()}
             </p>
           </div>
         </div>
 
         {/* Divider */}
-        <div className={`h-10 w-px ${darkMode ? "bg-white/10" : "bg-zinc-200"}`} />
+        <div className={`h-10 w-px ${darkMode ? 'bg-white/10' : 'bg-zinc-200'}`} />
 
         {/* Metric 2 */}
-        <div className="flex items-center space-x-4 pr-4">
-          <div className={`p-3 rounded-xl border ${
-            darkMode 
-              ? "bg-fuchsia-500/20 border-fuchsia-500/30 text-fuchsia-400" 
-              : "bg-fuchsia-50 border-fuchsia-200 text-fuchsia-600"
-          }`}>
+        <div className='flex items-center space-x-4 pr-4'>
+          <div
+            className={`p-3 rounded-xl border ${
+              darkMode
+                ? 'bg-fuchsia-500/20 border-fuchsia-500/30 text-fuchsia-400'
+                : 'bg-fuchsia-50 border-fuchsia-200 text-fuchsia-600'
+            }`}
+          >
             {isDeliveryView ? (
-              <span className="material-symbols-rounded text-2xl">timer</span>
+              <span className='material-symbols-rounded text-2xl'>timer</span>
             ) : (
-              <span className="material-symbols-rounded text-2xl">bolt</span>
+              <span className='material-symbols-rounded text-2xl'>bolt</span>
             )}
           </div>
           <div>
-            <p className={`text-xs font-semibold tracking-wider uppercase ${
-              darkMode ? "text-zinc-400" : "text-zinc-500"
-            }`}>
-              {isDeliveryView ? "Est. Time" : "Hot Zones"}
+            <p
+              className={`text-xs font-semibold tracking-wider uppercase ${
+                darkMode ? 'text-zinc-400' : 'text-zinc-500'
+              }`}
+            >
+              {isDeliveryView ? 'Est. Time' : 'Hot Zones'}
             </p>
-            <p className="text-2xl font-bold tracking-tight">
-              {isDeliveryView ? "12 mins" : highDensityZones}
+            <p className='text-2xl font-bold tracking-tight'>
+              {isDeliveryView ? '12 mins' : highDensityZones}
             </p>
           </div>
         </div>
@@ -127,8 +131,8 @@ function DashboardOverlay({
 export default function CustomerDensityMap({ language = 'ar' }: { language?: any }) {
   const { activeBranch } = useData();
   const { darkMode } = useSettings();
-  const [activeTab, setActiveTab] = useState("distribution");
-  const isDeliveryView = activeTab === "delivery";
+  const [activeTab, setActiveTab] = useState('distribution');
+  const isDeliveryView = activeTab === 'delivery';
   const mapRef = useRef<maplibregl.Map | null>(null);
 
   // Resolve store coordinates: active branch coords or Cairo center fallback
@@ -185,58 +189,62 @@ export default function CustomerDensityMap({ language = 'ar' }: { language?: any
   }, [isDeliveryView, storeLocation, resolvedTruckLocation]);
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-[#09090b]">
+    <div className='relative w-full h-full overflow-hidden bg-[#09090b]'>
       <Map
         ref={mapRef}
-        theme={darkMode ? "dark" : "light"}
+        theme={darkMode ? 'dark' : 'light'}
         language={language}
         healthFocus={true}
         showHouseNumbers={isDeliveryView}
         viewport={viewportRef.current}
         onViewportChange={handleViewportChange}
       >
-        {activeTab === "distribution" ? (
+        {activeTab === 'distribution' ? (
           <MapClusterLayer
             data={geojsonData}
             clusterRadius={60}
             clusterThresholds={[50, 200]}
             // Neon color palette: Cyan for scattered, Fuchsia/Magenta for density
-            clusterColors={["rgba(6, 182, 212, 0.8)", "rgba(217, 70, 239, 0.9)", "rgba(236, 72, 153, 0.95)"]}
-            pointColor="rgba(6, 182, 212, 0.7)"
+            clusterColors={[
+              'rgba(6, 182, 212, 0.8)',
+              'rgba(217, 70, 239, 0.9)',
+              'rgba(236, 72, 153, 0.95)',
+            ]}
+            pointColor='rgba(6, 182, 212, 0.7)'
           />
         ) : (
-          <CustomerDeliveryView key="delivery-view" language={language} />
+          <CustomerDeliveryView key='delivery-view' language={language} />
         )}
 
         {/* Subtle Map Controls */}
         <MapControls
-          position="top-right"
+          position='top-right'
           showZoom
           showCompass
           show3D
           showLocate
           showFullscreen
-          className="opacity-80 hover:opacity-100 transition-opacity"
+          className='opacity-80 hover:opacity-100 transition-opacity'
         />
       </Map>
 
       {/* View Switcher Overlay */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 w-[90%] max-w-sm">
+      <div className='absolute top-6 left-1/2 -translate-x-1/2 z-10 w-[90%] max-w-sm'>
         <SegmentedControl
           value={activeTab}
           onChange={(val) => setActiveTab(val as string)}
-          shape="pill"
-          size="sm"
+          shape='pill'
+          size='sm'
           options={[
             {
-              label: "التوزيع الجغرافي",
-              value: "distribution",
-              icon: "map"
+              label: 'التوزيع الجغرافي',
+              value: 'distribution',
+              icon: 'map',
             },
             {
-              label: "دليفري",
-              value: "delivery",
-              icon: "local_shipping"
+              label: 'دليفري',
+              value: 'delivery',
+              icon: 'local_shipping',
             },
           ]}
         />

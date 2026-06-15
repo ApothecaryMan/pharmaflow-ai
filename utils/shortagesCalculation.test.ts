@@ -1,24 +1,26 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { money } from './money';
 
 // Standardized shortage restock calculation logic mapped from ShortagesPage and intelligenceService
 interface DrugMock {
-  stock: number;         // in units
-  minStock: number;      // in packs
+  stock: number; // in units
+  minStock: number; // in packs
   unitsPerPack: number;
-  costPrice: number;     // in EGP
+  costPrice: number; // in EGP
 }
 
-function calculateShortageItem(
-  drug: DrugMock,
-  avgDailySales: number
-) {
+function calculateShortageItem(drug: DrugMock, avgDailySales: number) {
   const stock = drug.stock;
   const minStock = drug.minStock;
   const unitsPerPack = drug.unitsPerPack || 1;
 
   // 1. Classification Check (Units vs Packs)
-  let alertType: 'NORMAL' | 'OUT_OF_STOCK_SOLD' | 'OUT_OF_STOCK_DEFAULT' | 'MANUAL_MINIMUM_REACHED' | 'PREDICTIVE_SHORTAGE' = 'NORMAL';
+  let alertType:
+    | 'NORMAL'
+    | 'OUT_OF_STOCK_SOLD'
+    | 'OUT_OF_STOCK_DEFAULT'
+    | 'MANUAL_MINIMUM_REACHED'
+    | 'PREDICTIVE_SHORTAGE' = 'NORMAL';
   const stockDays = avgDailySales > 0 ? stock / avgDailySales : null;
 
   if (stock <= 0) {
@@ -31,17 +33,18 @@ function calculateShortageItem(
 
   // 2. High Precision Weekly Lost Sales (using money engine)
   const weeklyLostPacks = (avgDailySales / unitsPerPack) * 7;
-  const weeklyLostSales = stock === 0
-    ? money.multiply(drug.costPrice, Math.round(weeklyLostPacks * 10000), 4)
-    : 0;
+  const weeklyLostSales =
+    stock === 0 ? money.multiply(drug.costPrice, Math.round(weeklyLostPacks * 10000), 4) : 0;
 
   // 3. Suggested Order Quantity (in packs)
-  const safetyStockPacks = avgDailySales > 0
-    ? Math.max(0, Math.ceil((14 * avgDailySales * 1.5 - stock) / unitsPerPack))
-    : 0;
-  const minStockReplenishPacks = (stock <= minStock * unitsPerPack && minStock > 0)
-    ? Math.max(0, minStock - Math.floor(stock / unitsPerPack))
-    : 0;
+  const safetyStockPacks =
+    avgDailySales > 0
+      ? Math.max(0, Math.ceil((14 * avgDailySales * 1.5 - stock) / unitsPerPack))
+      : 0;
+  const minStockReplenishPacks =
+    stock <= minStock * unitsPerPack && minStock > 0
+      ? Math.max(0, minStock - Math.floor(stock / unitsPerPack))
+      : 0;
   const suggestedQty = Math.max(safetyStockPacks, minStockReplenishPacks);
 
   return {
@@ -89,7 +92,7 @@ describe('Shortage & Reorder Precision Logic', () => {
     // Out of stock. Daily sales = 2.5 units. unitsPerPack = 10. Cost = 120.50 EGP.
     // weeklyLostPacks = (2.5 / 10) * 7 = 1.75 packs.
     // Expected lost sales = 1.75 * 120.50 = 210.875 EGP -> rounded to 210.88 EGP.
-    const drug: DrugMock = { stock: 0, minStock: 5, unitsPerPack: 10, costPrice: 120.50 };
+    const drug: DrugMock = { stock: 0, minStock: 5, unitsPerPack: 10, costPrice: 120.5 };
     const result = calculateShortageItem(drug, 2.5);
     expect(result.weeklyLostSales).toBe(210.88);
   });

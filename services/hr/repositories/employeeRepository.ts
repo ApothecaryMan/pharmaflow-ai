@@ -5,9 +5,17 @@ export const employeeRepository = {
   tableName: 'employees',
 
   mapFromDb(db: any): Employee {
-    const branchName = db.branches ? (Array.isArray(db.branches) ? db.branches[0]?.name : db.branches.name) : undefined;
-    const orgName = db.organizations ? (Array.isArray(db.organizations) ? db.organizations[0]?.name : db.organizations.name) : undefined;
-    
+    const branchName = db.branches
+      ? Array.isArray(db.branches)
+        ? db.branches[0]?.name
+        : db.branches.name
+      : undefined;
+    const orgName = db.organizations
+      ? Array.isArray(db.organizations)
+        ? db.organizations[0]?.name
+        : db.organizations.name
+      : undefined;
+
     return {
       id: db.id,
       orgId: db.org_id,
@@ -71,23 +79,25 @@ export const employeeRepository = {
     return db;
   },
 
-  BASE_COLUMNS: 'id, org_id, branch_id, employee_code, name, name_arabic, phone, email, position, department, role, start_date, status, end_date, salary, notes, username, auth_user_id, password, biometric_credential_id, biometric_public_key, photo',
+  BASE_COLUMNS:
+    'id, org_id, branch_id, employee_code, name, name_arabic, phone, email, position, department, role, start_date, status, end_date, salary, notes, username, auth_user_id, password, biometric_credential_id, biometric_public_key, photo',
 
   async getAll(orgId: string, branchId?: string): Promise<Employee[]> {
     let query = supabase.from(this.tableName).select(this.BASE_COLUMNS).eq('org_id', orgId);
-    
+
     if (branchId) {
       const ADMIN_ROLES = ['admin', 'pharmacist_owner', 'manager'];
       query = query.or(`branch_id.eq.${branchId},role.in.(${ADMIN_ROLES.join(',')})`);
     }
-    
+
     const { data, error } = await query.order('name', { ascending: true });
     if (error) throw error;
-    return (data || []).map(item => this.mapFromDb(item));
+    return (data || []).map((item) => this.mapFromDb(item));
   },
 
   async getById(id: string): Promise<Employee | null> {
-    const { data, error } = await supabase.from(this.tableName)
+    const { data, error } = await supabase
+      .from(this.tableName)
       .select('*')
       .eq('id', id)
       .maybeSingle();
@@ -96,21 +106,25 @@ export const employeeRepository = {
   },
 
   async getDocuments(id: string): Promise<Partial<Employee> | null> {
-    const { data, error } = await supabase.from(this.tableName)
+    const { data, error } = await supabase
+      .from(this.tableName)
       .select('national_id_card, national_id_card_back, main_syndicate_card, sub_syndicate_card')
       .eq('id', id)
       .maybeSingle();
     if (error) throw error;
-    return data ? {
-      nationalIdCard: data.national_id_card || undefined,
-      nationalIdCardBack: data.national_id_card_back || undefined,
-      mainSyndicateCard: data.main_syndicate_card || undefined,
-      subSyndicateCard: data.sub_syndicate_card || undefined,
-    } : null;
+    return data
+      ? {
+          nationalIdCard: data.national_id_card || undefined,
+          nationalIdCardBack: data.national_id_card_back || undefined,
+          mainSyndicateCard: data.main_syndicate_card || undefined,
+          subSyndicateCard: data.sub_syndicate_card || undefined,
+        }
+      : null;
   },
 
   async getDocument(id: string, column: string): Promise<string | null> {
-    const { data, error } = await supabase.from(this.tableName)
+    const { data, error } = await supabase
+      .from(this.tableName)
       .select(column)
       .eq('id', id)
       .maybeSingle();
@@ -124,7 +138,8 @@ export const employeeRepository = {
   },
 
   async update(id: string, updates: Partial<Employee>): Promise<Employee> {
-    const { data, error } = await supabase.from(this.tableName)
+    const { data, error } = await supabase
+      .from(this.tableName)
       .update(this.mapToDb(updates))
       .eq('id', id)
       .select()
@@ -140,7 +155,8 @@ export const employeeRepository = {
   },
 
   async getByAuthUserId(userId: string): Promise<Employee | null> {
-    const { data, error } = await supabase.from(this.tableName)
+    const { data, error } = await supabase
+      .from(this.tableName)
       .select('*')
       .eq('auth_user_id', userId)
       .limit(1)
@@ -161,7 +177,8 @@ export const employeeRepository = {
   },
 
   async getByUsername(username: string): Promise<Employee | null> {
-    const { data, error } = await supabase.from(this.tableName)
+    const { data, error } = await supabase
+      .from(this.tableName)
       .select('*')
       .eq('username', username)
       .maybeSingle();
@@ -176,7 +193,8 @@ export const employeeRepository = {
   },
 
   async getByEmail(email: string): Promise<Employee | null> {
-    const { data, error } = await supabase.from(this.tableName)
+    const { data, error } = await supabase
+      .from(this.tableName)
       .select('*')
       .eq('email', email)
       .maybeSingle();
@@ -186,7 +204,7 @@ export const employeeRepository = {
 
   async upsert(employees: Employee[]): Promise<void> {
     if (employees.length === 0) return;
-    const dbEmployees = employees.map(e => this.mapToDb(e));
+    const dbEmployees = employees.map((e) => this.mapToDb(e));
     const { error } = await supabase.from(this.tableName).upsert(dbEmployees);
     if (error) throw error;
   },
@@ -199,13 +217,18 @@ export const employeeRepository = {
    */
   async linkGlobalAccount(employeeId: string, globalIdentifier: string): Promise<Employee> {
     // 1. Determine if identifier is UUID or username
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(globalIdentifier);
-    
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      globalIdentifier
+    );
+
     // 2. Query user_profiles
     const query = supabase
       .from('user_profiles')
       .select('id, username')
-      .eq(isUUID ? 'id' : 'username', isUUID ? globalIdentifier : globalIdentifier.replace(/^@/, ''))
+      .eq(
+        isUUID ? 'id' : 'username',
+        isUUID ? globalIdentifier : globalIdentifier.replace(/^@/, '')
+      )
       .single();
 
     const { data: profile, error: profileError } = await query;
@@ -219,7 +242,7 @@ export const employeeRepository = {
       .from(this.tableName)
       .update({
         auth_user_id: profile.id,
-        username: profile.username
+        username: profile.username,
       })
       .eq('id', employeeId)
       .select()
@@ -230,5 +253,5 @@ export const employeeRepository = {
     }
 
     return this.mapFromDb(updatedEmployee);
-  }
+  },
 };

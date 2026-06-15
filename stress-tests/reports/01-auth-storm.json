@@ -10,55 +10,48 @@
         "id": "a23d13cb82c00ce9340704de8cb86ff9",
         "groups": [],
         "checks": [
-            {
-              "name": "✅ Login status 200",
-              "path": "::🔐 Auth Login Flow::✅ Login status 200",
-              "id": "f70b161cb7730b4ff062e7dca22d530b",
-              "passes": 2,
-              "fails": 0
-            },
-            {
-              "name": "✅ Has access_token",
-              "path": "::🔐 Auth Login Flow::✅ Has access_token",
-              "id": "ad8df7c6e988b5960310c4f79347e6ba",
-              "passes": 2,
-              "fails": 0
-            },
-            {
-              "name": "✅ Login under 2s",
-              "path": "::🔐 Auth Login Flow::✅ Login under 2s",
-              "id": "94e934d3cdd615464c4909e3955985c9",
-              "passes": 2,
-              "fails": 0
-            },
-            {
-              "fails": 0,
-              "name": "✅ Session valid",
-              "path": "::🔐 Auth Login Flow::✅ Session valid",
-              "id": "aea8096523eb1c9a90abcfbbe7812826",
-              "passes": 2
-            },
-            {
-              "path": "::🔐 Auth Login Flow::✅ Employee data loaded",
-              "id": "6ab1928932277c6afaee79a2d0605096",
-              "passes": 2,
-              "fails": 0,
-              "name": "✅ Employee data loaded"
-            }
-          ]
+          {
+            "name": "✅ Login status 200",
+            "path": "::🔐 Auth Login Flow::✅ Login status 200",
+            "id": "f70b161cb7730b4ff062e7dca22d530b",
+            "passes": 2,
+            "fails": 0
+          },
+          {
+            "name": "✅ Has access_token",
+            "path": "::🔐 Auth Login Flow::✅ Has access_token",
+            "id": "ad8df7c6e988b5960310c4f79347e6ba",
+            "passes": 2,
+            "fails": 0
+          },
+          {
+            "name": "✅ Login under 2s",
+            "path": "::🔐 Auth Login Flow::✅ Login under 2s",
+            "id": "94e934d3cdd615464c4909e3955985c9",
+            "passes": 2,
+            "fails": 0
+          },
+          {
+            "fails": 0,
+            "name": "✅ Session valid",
+            "path": "::🔐 Auth Login Flow::✅ Session valid",
+            "id": "aea8096523eb1c9a90abcfbbe7812826",
+            "passes": 2
+          },
+          {
+            "path": "::🔐 Auth Login Flow::✅ Employee data loaded",
+            "id": "6ab1928932277c6afaee79a2d0605096",
+            "passes": 2,
+            "fails": 0,
+            "name": "✅ Employee data loaded"
+          }
+        ]
       }
     ],
     "checks": []
   },
   "options": {
-    "summaryTrendStats": [
-      "avg",
-      "min",
-      "med",
-      "max",
-      "p(90)",
-      "p(95)"
-    ],
+    "summaryTrendStats": ["avg", "min", "med", "max", "p(90)", "p(95)"],
     "summaryTimeUnit": "",
     "noColor": false
   },

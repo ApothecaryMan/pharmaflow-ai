@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { GOVERNORATES, CITIES, AREAS } from '../../data/locations';
+import type React from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { AREAS, CITIES, GOVERNORATES } from '../../data/locations';
 import { FilterDropdown } from './FilterDropdown';
 
 interface LocationSelectorProps {
@@ -27,7 +28,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   language,
   showLabels = true,
   color = 'primary',
-  variant = 'input' as 'minimal' | 'input'
+  variant = 'input' as 'minimal' | 'input',
 }) => {
   const isRTL = language === 'AR';
 
@@ -62,33 +63,37 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
   // Reset dependent fields when parent changes from outside
   useEffect(() => {
-    if (selectedGovernorate && selectedCity && !availableCities.find(c => c.id === selectedCity)) {
+    if (
+      selectedGovernorate &&
+      selectedCity &&
+      !availableCities.find((c) => c.id === selectedCity)
+    ) {
       onCityChange('');
     }
   }, [selectedGovernorate, availableCities, selectedCity, onCityChange]);
 
   useEffect(() => {
-    if (selectedCity && selectedArea && !availableAreas.find(a => a.id === selectedArea)) {
+    if (selectedCity && selectedArea && !availableAreas.find((a) => a.id === selectedArea)) {
       onAreaChange('');
     }
   }, [selectedCity, availableAreas, selectedArea, onAreaChange]);
 
-  const currentGov = GOVERNORATES.find(g => g.id === selectedGovernorate);
-  const currentCity = CITIES.find(c => c.id === selectedCity);
-  const currentArea = AREAS.find(a => a.id === selectedArea);
+  const currentGov = GOVERNORATES.find((g) => g.id === selectedGovernorate);
+  const currentCity = CITIES.find((c) => c.id === selectedCity);
+  const currentArea = AREAS.find((a) => a.id === selectedArea);
 
   const renderLocation = (loc: any) => (
     <div className={`flex items-center gap-2 ${isRTL ? 'text-right' : 'text-left'}`}>
-      <span className="text-sm">{language === 'AR' ? loc.name_ar : loc.name_en}</span>
+      <span className='text-sm'>{language === 'AR' ? loc.name_ar : loc.name_en}</span>
     </div>
   );
 
-  const labelClass = "text-xs font-bold text-gray-500 uppercase mb-1 block";
+  const labelClass = 'text-xs font-bold text-gray-500 uppercase mb-1 block';
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
       {/* Governorate */}
-      <div className="space-y-1">
+      <div className='space-y-1'>
         {showLabels && <label className={labelClass}>{labels.governorate}</label>}
         <FilterDropdown
           items={GOVERNORATES}
@@ -102,17 +107,23 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             setIsGovernorateOpen(false);
           }}
           renderItem={(gov) => renderLocation(gov)}
-          renderSelected={(gov) => gov ? renderLocation(gov) : <span className="text-gray-400">{labels.selectGovernorate}</span>}
+          renderSelected={(gov) =>
+            gov ? (
+              renderLocation(gov)
+            ) : (
+              <span className='text-gray-400'>{labels.selectGovernorate}</span>
+            )
+          }
           keyExtractor={(gov) => gov.id}
-          className="w-full"
+          className='w-full'
           variant={variant}
           color={color}
-          minHeight="42px"
+          minHeight='42px'
         />
       </div>
 
       {/* City */}
-      <div className="space-y-1">
+      <div className='space-y-1'>
         {showLabels && <label className={labelClass}>{labels.city}</label>}
         <FilterDropdown
           items={availableCities}
@@ -125,18 +136,20 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             setIsCityOpen(false);
           }}
           renderItem={(city) => renderLocation(city)}
-          renderSelected={(city) => city ? renderLocation(city) : <span className="text-gray-400">{labels.selectCity}</span>}
+          renderSelected={(city) =>
+            city ? renderLocation(city) : <span className='text-gray-400'>{labels.selectCity}</span>
+          }
           keyExtractor={(city) => city.id}
-          className="w-full"
+          className='w-full'
           variant={variant}
           color={color}
           disabled={!selectedGovernorate}
-          minHeight="42px"
+          minHeight='42px'
         />
       </div>
 
       {/* Area */}
-      <div className="space-y-1">
+      <div className='space-y-1'>
         {showLabels && <label className={labelClass}>{labels.area}</label>}
         <FilterDropdown
           items={availableAreas}
@@ -148,13 +161,15 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             setIsAreaOpen(false);
           }}
           renderItem={(area) => renderLocation(area)}
-          renderSelected={(area) => area ? renderLocation(area) : <span className="text-gray-400">{labels.selectArea}</span>}
+          renderSelected={(area) =>
+            area ? renderLocation(area) : <span className='text-gray-400'>{labels.selectArea}</span>
+          }
           keyExtractor={(area) => area.id}
-          className="w-full"
+          className='w-full'
           variant={variant}
           color={color}
           disabled={!selectedCity}
-          minHeight="42px"
+          minHeight='42px'
         />
       </div>
     </div>

@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { transactionService } from './transactionService';
 import { supabase } from '../../lib/supabase';
+import { cashService } from '../cash/cashService';
 import { batchService } from '../inventory/batchService';
 import { inventoryService } from '../inventory/inventoryService';
 import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
 import { salesService } from '../sales/salesService';
-import { cashService } from '../cash/cashService';
+import { transactionService } from './transactionService';
 
 // Mock Supabase
 vi.mock('../../lib/supabase', () => ({
@@ -113,9 +113,7 @@ describe('transactionService - processReturn Atomicity', () => {
     ],
   };
 
-  const mockInventory: any[] = [
-    { id: 'D1', name: 'Drug 1', stock: 10, unitsPerPack: 1 },
-  ];
+  const mockInventory: any[] = [{ id: 'D1', name: 'Drug 1', stock: 10, unitsPerPack: 1 }];
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -138,11 +136,11 @@ describe('transactionService - processReturn Atomicity', () => {
     expect(result.error).toBe('DB_SALE_UPDATE_FAILED');
 
     // 4. Verify Rollbacks were called
-    
+
     // Rollback 1: Re-deduct from batches
     expect(batchService.allocateStockBulk).toHaveBeenCalledWith(
       expect.arrayContaining([
-        expect.objectContaining({ drugId: 'D1', quantity: 1, preferredBatchId: 'B1' })
+        expect.objectContaining({ drugId: 'D1', quantity: 1, preferredBatchId: 'B1' }),
       ]),
       'BR1',
       expect.any(Date)
@@ -155,7 +153,7 @@ describe('transactionService - processReturn Atomicity', () => {
 
     // Rollback 3: Delete return record
     expect(supabase.from).toHaveBeenCalledWith('returns');
-    
+
     // Rollback 4: Delete return items
     expect(supabase.from).toHaveBeenCalledWith('return_items');
 
@@ -184,11 +182,11 @@ describe('transactionService - processCheckout Atomicity', () => {
       isUnit: false,
       price: 100,
       unitsPerPack: 1,
-    }
+    },
   ];
 
   const mockInventory: any[] = [
-    { id: 'D1', name: 'Drug 1', stock: 10, unitsPerPack: 1, batches: [{ id: 'B1', quantity: 10 }] }
+    { id: 'D1', name: 'Drug 1', stock: 10, unitsPerPack: 1, batches: [{ id: 'B1', quantity: 10 }] },
   ];
 
   beforeEach(() => {
@@ -200,10 +198,10 @@ describe('transactionService - processCheckout Atomicity', () => {
   it('rolls back inventory and movements if salesService fails', async () => {
     // 1. Setup failure at step 4C (salesService.create)
     vi.mocked(salesService.create).mockRejectedValueOnce(new Error('SALES_DB_ERROR'));
-    
+
     // Mock bulk allocation success
     vi.mocked(batchService.allocateStockBulk).mockResolvedValueOnce([
-      { drugId: 'D1', allocations: [{ batchId: 'B1', quantity: 1, expiryDate: '2030-01-01' }] }
+      { drugId: 'D1', allocations: [{ batchId: 'B1', quantity: 1, expiryDate: '2030-01-01' }] },
     ]);
 
     // 2. Execute
@@ -214,7 +212,7 @@ describe('transactionService - processCheckout Atomicity', () => {
         paymentMethod: 'cash',
         total: 100,
         subtotal: 100,
-        globalDiscount: 0
+        globalDiscount: 0,
       },
       mockInventory,
       mockContext
@@ -242,10 +240,13 @@ describe('transactionService - processCheckout Atomicity', () => {
 
   it('successfully completes a walk-in cash sale', async () => {
     vi.mocked(batchService.allocateStockBulk).mockResolvedValueOnce([
-      { drugId: 'D1', allocations: [{ batchId: 'B1', quantity: 1, expiryDate: '2030-01-01' }] }
+      { drugId: 'D1', allocations: [{ batchId: 'B1', quantity: 1, expiryDate: '2030-01-01' }] },
     ]);
-    
-    vi.mocked(salesService.create).mockResolvedValueOnce({ id: 'NEW_SALE', serialId: 'PF-001' } as any);
+
+    vi.mocked(salesService.create).mockResolvedValueOnce({
+      id: 'NEW_SALE',
+      serialId: 'PF-001',
+    } as any);
 
     const result = await transactionService.processCheckout(
       {
@@ -254,7 +255,7 @@ describe('transactionService - processCheckout Atomicity', () => {
         paymentMethod: 'cash',
         total: 100,
         subtotal: 100,
-        globalDiscount: 0
+        globalDiscount: 0,
       },
       mockInventory,
       mockContext
@@ -293,19 +294,33 @@ describe('transactionService - Cancellation & Modification', () => {
       saleType: 'walk-in',
       total: 100,
       items: [
-        { id: 'D1', quantity: 1, isUnit: false, batchAllocations: [{ batchId: 'B1', quantity: 10 }] }
-      ]
+        {
+          id: 'D1',
+          quantity: 1,
+          isUnit: false,
+          batchAllocations: [{ batchId: 'B1', quantity: 10 }],
+        },
+      ],
     };
 
     const result = await transactionService.processCancellation(sale, mockInventory, mockContext);
 
     expect(result.success).toBe(true);
-    expect(inventoryService.updateStockBulk).toHaveBeenCalledWith([{ id: 'D1', quantity: 10 }], true);
-    expect(cashService.addTransaction).toHaveBeenCalledWith('SHIFT1', expect.objectContaining({
-      amount: 100,
-      type: 'return'
-    }));
-    expect(salesService.update).toHaveBeenCalledWith('S1', expect.objectContaining({ status: 'cancelled' }));
+    expect(inventoryService.updateStockBulk).toHaveBeenCalledWith(
+      [{ id: 'D1', quantity: 10 }],
+      true
+    );
+    expect(cashService.addTransaction).toHaveBeenCalledWith(
+      'SHIFT1',
+      expect.objectContaining({
+        amount: 100,
+        type: 'return',
+      })
+    );
+    expect(salesService.update).toHaveBeenCalledWith(
+      'S1',
+      expect.objectContaining({ status: 'cancelled' })
+    );
   });
 
   it('processCancellation: should rollback if sales update fails', async () => {
@@ -314,7 +329,14 @@ describe('transactionService - Cancellation & Modification', () => {
       status: 'completed',
       saleType: 'walk-in',
       total: 100,
-      items: [{ id: 'D1', quantity: 1, isUnit: false, batchAllocations: [{ batchId: 'B1', quantity: 10 }] }]
+      items: [
+        {
+          id: 'D1',
+          quantity: 1,
+          isUnit: false,
+          batchAllocations: [{ batchId: 'B1', quantity: 10 }],
+        },
+      ],
     };
 
     vi.mocked(salesService.update).mockRejectedValueOnce(new Error('DB Error'));
@@ -333,18 +355,27 @@ describe('transactionService - Cancellation & Modification', () => {
       id: 'S_DEL',
       saleType: 'delivery',
       items: [
-        { id: 'D1', quantity: 1, isUnit: false, batchAllocations: [{ batchId: 'B1', quantity: 10 }] }
-      ]
+        {
+          id: 'D1',
+          quantity: 1,
+          isUnit: false,
+          batchAllocations: [{ batchId: 'B1', quantity: 10 }],
+        },
+      ],
     };
 
     const updates = {
-      items: [] // Remove all items
+      items: [], // Remove all items
     };
 
-    const result = await transactionService.processOrderModification(sale, updates, mockInventory, mockContext);
+    const result = await transactionService.processOrderModification(
+      sale,
+      updates,
+      mockInventory,
+      mockContext
+    );
 
     expect(result.success).toBe(true);
     expect(inventoryService.updateStock).toHaveBeenCalledWith('D1', 10);
   });
 });
-

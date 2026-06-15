@@ -3,20 +3,20 @@
  * Refactored to use Repositories for data access.
  */
 
-import {
-  type UserSession,
-  type LoginAuditEntry,
-  type IndividualRegistrationPayload,
-  type OrgRole,
-  type AccountType,
-} from '../../types';
-import { supabase, isSupabaseConfigured } from '../../lib/supabase';
-import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
-import { employeeRepository } from '../hr/repositories/employeeRepository';
-import { orgRepository } from '../org/repositories/orgRepository';
-import { orgService } from '../org/orgService';
+import { isSupabaseConfigured, supabase } from '../../lib/supabase';
+import type {
+  AccountType,
+  IndividualRegistrationPayload,
+  LoginAuditEntry,
+  OrgRole,
+  UserSession,
+} from '../../types';
 import { isTauri } from '../../utils/platform';
+import { storage } from '../../utils/storage';
+import { employeeRepository } from '../hr/repositories/employeeRepository';
+import { orgService } from '../org/orgService';
+import { orgRepository } from '../org/repositories/orgRepository';
 
 const SESSION_KEY = StorageKeys.SESSION;
 const AUDIT_KEY = StorageKeys.LOGIN_AUDIT;
@@ -97,7 +97,10 @@ export const authService = {
     }
 
     try {
-      const { data: { user: sbUser }, error } = await supabase.auth.getUser();
+      const {
+        data: { user: sbUser },
+        error,
+      } = await supabase.auth.getUser();
 
       if (error || !sbUser) {
         storage.remove(SESSION_KEY);
@@ -218,8 +221,8 @@ export const authService = {
         email,
         password,
         options: {
-          data: { name, username, accountType }
-        }
+          data: { name, username, accountType },
+        },
       });
       if (error) throw error;
       return { success: true };
@@ -228,7 +231,9 @@ export const authService = {
     }
   },
 
-  async registerIndividual(payload: IndividualRegistrationPayload): Promise<{ success: boolean; message?: string }> {
+  async registerIndividual(
+    payload: IndividualRegistrationPayload
+  ): Promise<{ success: boolean; message?: string }> {
     try {
       const password = payload.password || this.generateTempPassword();
       const { data, error } = await supabase.auth.signUp({
@@ -242,8 +247,8 @@ export const authService = {
             accountType: 'employee',
             phone: payload.phone || '',
             licenseNumber: payload.licenseNumber || '',
-          }
-        }
+          },
+        },
       });
       if (error) throw error;
 
@@ -262,7 +267,9 @@ export const authService = {
           if (payload.nameArabic) profileInsert.name_arabic = payload.nameArabic;
           if (payload.licenseNumber) profileInsert.license_number = payload.licenseNumber;
 
-          const { error: profileError } = await supabase.from('user_profiles').insert(profileInsert);
+          const { error: profileError } = await supabase
+            .from('user_profiles')
+            .insert(profileInsert);
           if (profileError) {
             console.error('Failed to create user profile', profileError);
           }
@@ -306,7 +313,7 @@ export const authService = {
 
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: loginEmail,
-      password
+      password,
     });
 
     if (authError) throw authError;
@@ -324,7 +331,8 @@ export const authService = {
     if (!existingProfile) {
       const meta = authData.user.user_metadata || {};
       const metaUsername = meta?.username;
-      const insertUsername = metaUsername || (profileUsername.startsWith('@') ? profileUsername : `@${profileUsername}`);
+      const insertUsername =
+        metaUsername || (profileUsername.startsWith('@') ? profileUsername : `@${profileUsername}`);
 
       const { error: insertError } = await supabase.from('user_profiles').insert({
         id: authData.user.id,
@@ -366,7 +374,8 @@ export const authService = {
 
     storage.set(SESSION_KEY, session);
     cachedSession = session;
-    if (session.accountType === 'pharmacy' && session.orgId) orgService.setActiveOrgId(session.orgId);
+    if (session.accountType === 'pharmacy' && session.orgId)
+      orgService.setActiveOrgId(session.orgId);
 
     // Log System Login
     this.logAuditEvent({
@@ -377,7 +386,7 @@ export const authService = {
       employeeId: session.employeeId,
       employeeCode: session.employeeCode,
       employeeName: session.employeeName,
-      details: `Account: ${session.username}`
+      details: `Account: ${session.username}`,
     });
 
     return session;
@@ -396,7 +405,7 @@ export const authService = {
           employeeId: session.employeeId,
           employeeCode: session.employeeCode,
           employeeName: session.employeeName,
-          details: 'Account Logout'
+          details: 'Account Logout',
         });
       }
 
@@ -409,7 +418,7 @@ export const authService = {
       // Clear navigation state to prevent stale view on next login
       storage.remove('pharma_view');
       storage.remove('pharma_activeModule');
-      
+
       // Clear org-specific keys
       storage.remove('pharma_active_org_id');
       storage.remove('pharma_active_branch_id');
@@ -424,7 +433,7 @@ export const authService = {
             keysToRemove.push(key);
           }
         }
-        keysToRemove.forEach(key => localStorage.removeItem(key));
+        keysToRemove.forEach((key) => localStorage.removeItem(key));
       }
 
       // Clear session key last so getScopedKey() works correctly during cleanup
@@ -432,7 +441,6 @@ export const authService = {
 
       // Flush in-memory caches to prevent stale data in next session
       storage.resetCaches();
-
     } catch (err) {
       console.error('Logout error:', err);
     }
@@ -462,11 +470,13 @@ export const authService = {
       }
     }
     if (typeof window !== 'undefined' && typeof StorageEvent !== 'undefined') {
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: storage.getScopedKey('pharma_currentEmployeeId'),
-        newValue: null,
-        storageArea: localStorage,
-      }));
+      window.dispatchEvent(
+        new StorageEvent('storage', {
+          key: storage.getScopedKey('pharma_currentEmployeeId'),
+          newValue: null,
+          storageArea: localStorage,
+        })
+      );
     }
   },
 
@@ -477,7 +487,7 @@ export const authService = {
   logAuditEvent(entry: Omit<LoginAuditEntry, 'id' | 'timestamp'>): void {
     const finalEntry: any = { ...entry };
     const session = this.getCurrentUserSync();
-    
+
     if (!finalEntry.orgId && session?.orgId) {
       finalEntry.orgId = session.orgId;
     }
@@ -489,9 +499,11 @@ export const authService = {
     }
 
     // 1. Sync to Supabase via SECURITY DEFINER RPC (fire-and-forget)
-    import('./repositories/auditRepository').then(({ auditRepository }) => {
-      auditRepository.insert(finalEntry).catch(() => {});
-    }).catch(() => {});
+    import('./repositories/auditRepository')
+      .then(({ auditRepository }) => {
+        auditRepository.insert(finalEntry).catch(() => {});
+      })
+      .catch(() => {});
 
     // 2. Keep a small local cache for immediate UI feedback (Optional)
     const history = this.getLoginHistorySync();
@@ -518,11 +530,15 @@ export const authService = {
     return storage.get<LoginAuditEntry[]>(AUDIT_KEY, []);
   },
 
-  async registerBiometric(employeeId: string, credentialId: string, publicKey: string): Promise<boolean> {
+  async registerBiometric(
+    employeeId: string,
+    credentialId: string,
+    publicKey: string
+  ): Promise<boolean> {
     try {
       await employeeRepository.update(employeeId, {
         biometricCredentialId: credentialId,
-        biometricPublicKey: publicKey
+        biometricPublicKey: publicKey,
       });
       return true;
     } catch {
@@ -530,7 +546,10 @@ export const authService = {
     }
   },
 
-  async loginWithBiometric(credentialId: string, employees: any[]): Promise<{ session: UserSession; id: string } | null> {
+  async loginWithBiometric(
+    credentialId: string,
+    employees: any[]
+  ): Promise<{ session: UserSession; id: string } | null> {
     const employee = employees.find((emp) => emp.biometricCredentialId === credentialId);
     if (!employee) return null;
 
@@ -563,7 +582,7 @@ export const authService = {
       employeeId: session.employeeId,
       employeeCode: session.employeeCode,
       employeeName: session.employeeName,
-      details: 'Biometric Login'
+      details: 'Biometric Login',
     });
 
     return { session, id: employee.id };
@@ -591,7 +610,7 @@ export const authService = {
   async updatePassword(newPassword: string): Promise<{ success: boolean; message?: string }> {
     try {
       const { data, error } = await supabase.auth.updateUser({
-        password: newPassword
+        password: newPassword,
       });
       if (error) throw error;
 

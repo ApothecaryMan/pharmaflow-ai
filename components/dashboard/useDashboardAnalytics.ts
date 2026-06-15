@@ -197,13 +197,13 @@ export const useDashboardAnalytics = ({
 
     type DailyData = { day: string; net?: number; sales?: number };
     let aggregated: { day: string; sales: number }[] = [];
-    
+
     if (timeRange === '7' || timeRange === '30') {
       // Get the range from dateRangeService to maintain consistency with app-wide verified time
       const range = dateRangeService.getDateRange(period);
       const days = dateRangeService.getDaysInRange(range.start, range.end);
       const dayMap = new Map<string, number>(days.map((day) => [day, 0]));
-      
+
       // Populate with actual data (convert UTC timestamps to local dates)
       finDaily.forEach((d: unknown) => {
         const data = d as DailyData;
@@ -212,7 +212,7 @@ export const useDashboardAnalytics = ({
           dayMap.set(dayKey, (dayMap.get(dayKey) || 0) + (data.net || 0));
         }
       });
-      
+
       aggregated = Array.from(dayMap.entries()).map(([day, sales]) => ({
         day,
         sales,
@@ -238,17 +238,17 @@ export const useDashboardAnalytics = ({
           const weekNum = Math.ceil(day / 7);
           const monthKey = data.day.substring(0, 7); // YYYY-MM
           const weekKey = `${monthKey}-W${weekNum}`;
-          
+
           const existing = weeklyMap.get(weekKey) || { day: weekKey, sales: 0 };
           existing.sales += data.net || 0;
           weeklyMap.set(weekKey, existing);
         });
         rawAggregated = Array.from(weeklyMap.values());
       }
-      
+
       aggregated = rawAggregated.map((d) => ({
         day: d.day,
-        sales: d.sales !== undefined ? d.sales : (d.net || 0),
+        sales: d.sales !== undefined ? d.sales : d.net || 0,
       }));
     }
 

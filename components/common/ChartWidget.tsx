@@ -11,9 +11,9 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { SegmentedControl } from './SegmentedControl'; // Adjust path if needed
-import { formatCurrencyParts, formatCompactCurrencyParts } from '../../utils/currency';
+import { formatCompactCurrencyParts, formatCurrencyParts } from '../../utils/currency';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { SegmentedControl } from './SegmentedControl'; // Adjust path if needed
 
 // --- Custom Tooltip Component ---
 export const CustomTooltipContent = memo(
@@ -41,7 +41,9 @@ export const CustomTooltipContent = memo(
             <span className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider'>
               {tooltipLabelFormatter ? tooltipLabelFormatter(label) : label}
             </span>
-            <span className='text-[10px] font-medium text-gray-400 dark:text-gray-500'>{primaryLabel || 'Overview'}</span>
+            <span className='text-[10px] font-medium text-gray-400 dark:text-gray-500'>
+              {primaryLabel || 'Overview'}
+            </span>
           </div>
 
           {/* Main Value Body */}
@@ -52,13 +54,15 @@ export const CustomTooltipContent = memo(
                   const parts = formatCompactCurrencyParts(mainData.value);
                   return (
                     <>
-                      <span 
+                      <span
                         className='text-xl font-black tabular-nums tracking-tight'
                         style={{ color: mainData.color || mainData.fill }}
                       >
                         {parts.amount}
                       </span>
-                      <span className='text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase'>{parts.symbol}</span>
+                      <span className='text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase'>
+                        {parts.symbol}
+                      </span>
                     </>
                   );
                 })()}
@@ -76,10 +80,17 @@ export const CustomTooltipContent = memo(
                 return (
                   <div key={idx} className='flex items-center justify-between gap-6'>
                     <div className='flex items-center gap-1.5'>
-                      <div className='w-1.5 h-1.5 rounded-full' style={{ backgroundColor: item.color || item.stroke || item.fill || '#9ca3af' }} />
-                      <span className='text-[11px] font-medium text-gray-600 dark:text-gray-400 truncate max-w-[80px]'>{name}</span>
+                      <div
+                        className='w-1.5 h-1.5 rounded-full'
+                        style={{
+                          backgroundColor: item.color || item.stroke || item.fill || '#9ca3af',
+                        }}
+                      />
+                      <span className='text-[11px] font-medium text-gray-600 dark:text-gray-400 truncate max-w-[80px]'>
+                        {name}
+                      </span>
                     </div>
-                    <div className="flex items-baseline gap-1">
+                    <div className='flex items-baseline gap-1'>
                       <span className='text-[11px] font-bold text-gray-700 dark:text-gray-200 tabular-nums'>
                         {formatCompactCurrencyParts(item.value).amount}
                       </span>
@@ -209,13 +220,14 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
   };
 
   return (
-    <div
-      className={`lg:col-span-2 ${CARD_BASE} p-5 rounded-3xl group ${className || ''}`}
-    >
+    <div className={`lg:col-span-2 ${CARD_BASE} p-5 rounded-3xl group ${className || ''}`}>
       {/* Header */}
       <div className={`flex items-center justify-between mb-4 ${headerClassName || ''}`}>
         <h3 className='text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2'>
-          <span className={`material-symbols-rounded`} style={{ color, fontSize: 'var(--icon-navbar-dropdown)' }}>
+          <span
+            className={`material-symbols-rounded`}
+            style={{ color, fontSize: 'var(--icon-navbar-dropdown)' }}
+          >
             {icon}
           </span>
           {title}
@@ -268,7 +280,9 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
               className='w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95 opacity-0 group-hover:opacity-100'
               title={language === 'AR' ? 'توسيع الرسم البياني' : 'Expand Chart'}
             >
-              <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>open_in_full</span>
+              <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
+                open_in_full
+              </span>
             </button>
           )}
         </div>
@@ -281,19 +295,20 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
         style={{ minHeight: 200, minWidth: 0 }}
       >
         {isLoading && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center">
-             <span className="material-symbols-rounded animate-spin text-primary-500 dark:text-primary-400" style={{ fontSize: '32px' }}>
-                progress_activity
-             </span>
+          <div className='absolute inset-0 z-10 flex items-center justify-center'>
+            <span
+              className='material-symbols-rounded animate-spin text-primary-500 dark:text-primary-400'
+              style={{ fontSize: '32px' }}
+            >
+              progress_activity
+            </span>
           </div>
         )}
         {isReady && !isLoading && (
           <ResponsiveContainer width='100%' height='100%' minWidth={0} minHeight={0} debounce={50}>
             <ComposedChart
               data={data}
-              margin={
-                chartMargin || { top: 15, right: 0, left: 0, bottom: 20 }
-              }
+              margin={chartMargin || { top: 15, right: 0, left: 0, bottom: 20 }}
             >
               <defs>
                 <linearGradient
@@ -322,7 +337,9 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                 width={45}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(value) => (value === 0 ? '' : value.toLocaleString('en-US', { notation: 'compact' }))}
+                tickFormatter={(value) =>
+                  value === 0 ? '' : value.toLocaleString('en-US', { notation: 'compact' })
+                }
                 tick={{
                   fill: 'var(--text-secondary)',
                   fontSize: 12,
@@ -361,7 +378,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                     fill='none'
                     animationDuration={600}
                     animationBegin={idx * 150} // Staggered entry
-                    animationEasing="ease-out"
+                    animationEasing='ease-out'
                     activeDot={false}
                   />
                 ))}
@@ -382,7 +399,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                       fill={sec.isDashed ? `${sec.color}10` : 'none'}
                       animationDuration={600}
                       animationBegin={idx * 150}
-                      animationEasing="ease-out"
+                      animationEasing='ease-out'
                       activeDot={false}
                     />
                   );
@@ -401,7 +418,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                       activeDot={{ r: 4, strokeWidth: 0, fill: sec.color }}
                       animationDuration={600}
                       animationBegin={idx * 150}
-                      animationEasing="ease-out"
+                      animationEasing='ease-out'
                     />
                   );
                 }
@@ -418,7 +435,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                   fill={`url(#gradient-${title.replace(/[^a-zA-Z0-9]/g, '-')})`}
                   animationDuration={1000}
                   animationBegin={(dataKeys.comparison?.length || 0) * 150 + 100} // Start after comparison lines
-                  animationEasing="ease-out"
+                  animationEasing='ease-out'
                 />
               ) : (
                 <Bar
@@ -426,11 +443,11 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                   fill={color}
                   radius={[20, 20, 20, 20]}
                   animationDuration={1000}
-                  animationEasing="ease-out"
+                  animationEasing='ease-out'
                 />
               )}
-              </ComposedChart>
-            </ResponsiveContainer>
+            </ComposedChart>
+          </ResponsiveContainer>
         )}
       </div>
 

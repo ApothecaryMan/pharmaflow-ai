@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { authService } from './authService';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UserSession } from '../../types';
 import { storage } from '../../utils/storage';
+import { authService } from './authService';
 
 describe('AuthService', () => {
   beforeEach(() => {
@@ -16,13 +16,13 @@ describe('AuthService', () => {
 
   it('getCurrentUserSync should return session from storage', () => {
     const mockSession: UserSession = {
-        username: 'test',
-        branchId: 'B1',
-        role: 'admin',
-        department: 'pharmacy'
+      username: 'test',
+      branchId: 'B1',
+      role: 'admin',
+      department: 'pharmacy',
     };
     localStorage.setItem('branch_pilot_session', JSON.stringify(mockSession));
-    
+
     const user = authService.getCurrentUserSync();
     expect(user).toEqual(mockSession);
   });
@@ -67,10 +67,8 @@ describe('AuthService', () => {
     expect(localStorage.getItem('branch_pilot_session')).toBeNull();
   });
 
-
-  
   it('login should fail with wrong credentials', async () => {
-      await expect(authService.login('wrong', 'pass')).rejects.toThrow();
-      expect(localStorage.getItem('branch_pilot_session')).toBeNull();
+    await expect(authService.login('wrong', 'pass')).rejects.toThrow();
+    expect(localStorage.getItem('branch_pilot_session')).toBeNull();
   });
 });

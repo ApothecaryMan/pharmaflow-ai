@@ -1,7 +1,10 @@
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
+import { useData } from '../../context/DataContext';
+import { useShift } from '../../hooks/sales/useShift';
 import type { Sale, Shift } from '../../types';
+import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { SegmentedControl } from '../common/SegmentedControl';
@@ -9,9 +12,6 @@ import { SmartInput, useSmartDirection } from '../common/SmartInputs';
 import { useStatusBar } from '../layout/StatusBar';
 import { generateInvoiceHTML, type InvoiceTemplateOptions } from '../sales/InvoiceTemplate';
 import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
-import { useShift } from '../../hooks/sales/useShift';
-import { idGenerator } from '../../utils/idGenerator';
-import { useData } from '../../context/DataContext';
 
 interface ReceiptDesignerProps {
   color: string;
@@ -21,7 +21,10 @@ interface ReceiptDesignerProps {
 
 export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, language }) => {
   const { branches, activeBranchId, updateBranch } = useData();
-  const activeBranch = useMemo(() => branches?.find((b: any) => b.id === activeBranchId), [branches, activeBranchId]);
+  const activeBranch = useMemo(
+    () => branches?.find((b: any) => b.id === activeBranchId),
+    [branches, activeBranchId]
+  );
   const { getVerifiedDate } = useStatusBar();
   const [hasMounted, setHasMounted] = useState(false);
   const { shifts } = useShift();
@@ -74,21 +77,24 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       if (savedTemplates.length > 0) {
         templatesToSet = savedTemplates;
         // Find saved active or default
-        const savedActive = activeBranch.printSettings?.[StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID] || null;
+        const savedActive =
+          activeBranch.printSettings?.[StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID] || null;
         if (savedActive && savedTemplates.some((t: SavedTemplate) => t.id === savedActive)) {
           activeId = savedActive;
         } else {
           const def = savedTemplates.find((t: SavedTemplate) => t.isDefault);
-          activeId = (def ? def.id : savedTemplates[0].id);
+          activeId = def ? def.id : savedTemplates[0].id;
         }
       } else {
         // Fallback to default
-        const initial = [{
-          id: 'default',
-          name: 'Standard Template',
-          isDefault: true,
-          options: defaultOptions,
-        }];
+        const initial = [
+          {
+            id: 'default',
+            name: 'Standard Template',
+            isDefault: true,
+            options: defaultOptions,
+          },
+        ];
         templatesToSet = initial;
         activeId = 'default';
       }
@@ -325,15 +331,15 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       total: showDeliveryPreview ? 111.0 : 101.0,
       returns: showReturnsPreview
         ? [
-          {
-            id: 'RET-1',
-            date: getVerifiedDate().toISOString(),
-            totalRefund: 15.5,
-            items: [],
-            originalSaleId: DUMMY_SALE.id,
-            userId: 'admin',
-          },
-        ]
+            {
+              id: 'RET-1',
+              date: getVerifiedDate().toISOString(),
+              totalRefund: 15.5,
+              items: [],
+              originalSaleId: DUMMY_SALE.id,
+              userId: 'admin',
+            },
+          ]
         : undefined,
     } as Sale;
 
@@ -412,7 +418,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   return (
     <div className='flex flex-col lg:flex-row h-full gap-6'>
       {/* LEFT: Controls */}
-      <div className={`w-full lg:w-1/3 bg-white dark:bg-gray-800 rounded-2xl shadow-xs p-4 overflow-y-auto custom-scrollbar flex flex-col gap-4 transition-opacity duration-300 ${previewMode === 'shift' ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
+      <div
+        className={`w-full lg:w-1/3 bg-white dark:bg-gray-800 rounded-2xl shadow-xs p-4 overflow-y-auto custom-scrollbar flex flex-col gap-4 transition-opacity duration-300 ${previewMode === 'shift' ? 'opacity-30 pointer-events-none grayscale' : ''}`}
+      >
         {/* Template Manager Header */}
         <div className='w-full'>
           <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1 block px-1'>
@@ -554,7 +562,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                         const newSettings = {
                           ...(activeBranch?.printSettings || {}),
                           [StorageKeys.RECEIPT_TEMPLATES]: templates,
-                          [StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID]: activeTemplateId
+                          [StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID]: activeTemplateId,
                         };
                         await updateBranch(activeBranchId, { printSettings: newSettings });
                         setLastSavedOptions(JSON.stringify(options));
@@ -816,8 +824,10 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   <span>{t.receiptDesigner.options.address}</span>
                   {activeBranch?.address && options.headerAddress !== activeBranch.address && (
                     <button
-                      onClick={() => setOptions({ ...options, headerAddress: activeBranch.address })}
-                      className="text-[10px] text-primary-500 hover:underline"
+                      onClick={() =>
+                        setOptions({ ...options, headerAddress: activeBranch.address })
+                      }
+                      className='text-[10px] text-primary-500 hover:underline'
                     >
                       {language === 'AR' ? 'استخدام بيانات الفرع' : 'Use Branch Info'}
                     </button>
@@ -836,7 +846,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   {activeBranch?.area && options.headerArea !== activeBranch.area && (
                     <button
                       onClick={() => setOptions({ ...options, headerArea: activeBranch.area })}
-                      className="text-[10px] text-primary-500 hover:underline"
+                      className='text-[10px] text-primary-500 hover:underline'
                     >
                       {language === 'AR' ? 'استخدام بيانات الفرع' : 'Use Branch Info'}
                     </button>
@@ -966,17 +976,23 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
         {/* Top-Right Action Button */}
         <div className='absolute top-4 right-4 z-20 flex gap-2'>
           <button
-            type="button"
+            type='button'
             className={`h-7 px-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-md rounded-xl border shadow-xs text-[10px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer pointer-events-auto ${previewMode === 'shift' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-gray-200/50 dark:border-gray-700/50 text-gray-700 dark:text-gray-300'}`}
             onClick={() => setPreviewMode(previewMode === 'sale' ? 'shift' : 'sale')}
           >
             <span className='material-symbols-rounded'>receipt_long</span>
-            {previewMode === 'shift' ? (language === 'AR' ? 'إيصال المبيعات' : 'Sale Receipt') : (language === 'AR' ? 'إيصال تسليم وردية' : 'Shift Receipt')}
+            {previewMode === 'shift'
+              ? language === 'AR'
+                ? 'إيصال المبيعات'
+                : 'Sale Receipt'
+              : language === 'AR'
+                ? 'إيصال تسليم وردية'
+                : 'Shift Receipt'}
           </button>
 
           {previewMode === 'shift' && (
             <button
-              type="button"
+              type='button'
               className={`h-7 px-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-md rounded-xl border shadow-xs text-[10px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer pointer-events-auto ${showDuplicatePreview ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-gray-200/50 dark:border-gray-700/50 text-gray-700 dark:text-gray-300'}`}
               onClick={() => setShowDuplicatePreview(!showDuplicatePreview)}
             >

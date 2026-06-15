@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Drug } from '../../../types';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { inventoryRepository } from '../../../services/inventory/repositories/inventoryRepository';
+import type { Drug } from '../../../types';
 
 export interface PrescriptionItem {
   drug: Drug;
@@ -15,7 +15,8 @@ export function usePrescriptionPricing() {
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
-    inventoryRepository.getAll()
+    inventoryRepository
+      .getAll()
       .then((data) => {
         if (!cancelled) setInventory(data);
       })
@@ -23,7 +24,9 @@ export function usePrescriptionPricing() {
       .finally(() => {
         if (!cancelled) setIsLoading(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const addItem = useCallback((drug: Drug) => {
@@ -31,9 +34,7 @@ export function usePrescriptionPricing() {
       const existing = prev.find((item) => item.drug.id === drug.id);
       if (existing) {
         return prev.map((item) =>
-          item.drug.id === drug.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
+          item.drug.id === drug.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
       return [...prev, { drug, quantity: 1 }];
@@ -60,7 +61,10 @@ export function usePrescriptionPricing() {
   }, []);
 
   const totals = useMemo(() => {
-    const subtotal = prescriptionItems.reduce((sum, item) => sum + item.drug.publicPrice * item.quantity, 0);
+    const subtotal = prescriptionItems.reduce(
+      (sum, item) => sum + item.drug.publicPrice * item.quantity,
+      0
+    );
     return { subtotal, grandTotal: subtotal };
   }, [prescriptionItems]);
 

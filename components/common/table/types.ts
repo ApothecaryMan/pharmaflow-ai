@@ -1,5 +1,5 @@
+import type { ColumnDef, RowData, SortingState } from '@tanstack/react-table';
 import type React from 'react';
-import { type RowData, type ColumnDef, type SortingState } from '@tanstack/react-table';
 import type { FilterConfig } from '../FilterPill';
 
 declare module '@tanstack/react-table' {
@@ -56,4 +56,3 @@ export interface TanStackTableProps<TData extends { id: string | number }, TValu
   enableNewRowAnimation?: boolean;
   onVisibleRowsChange?: (visibleRows: TData[]) => void;
 }
-

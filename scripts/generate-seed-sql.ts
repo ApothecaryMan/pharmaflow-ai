@@ -1,4 +1,3 @@
-
 import fs from 'fs';
 import path from 'path';
 
@@ -19,11 +18,11 @@ if (!jsonMatch) {
   process.exit(1);
 }
 
-let jsonStr = jsonMatch[1]
-  .replace(/\/\/.*$/gm, '') 
-  .replace(/(\w+):/g, '"$1":') 
-  .replace(/'/g, '"') 
-  .replace(/,(\s*[\]\}])/g, '$1'); 
+const jsonStr = jsonMatch[1]
+  .replace(/\/\/.*$/gm, '')
+  .replace(/(\w+):/g, '"$1":')
+  .replace(/'/g, '"')
+  .replace(/,(\s*[\]}])/g, '$1');
 
 const inventory = JSON.parse(jsonStr);
 
@@ -35,8 +34,8 @@ function escape(str: any) {
 
 function formatArray(arr: any[]) {
   if (!arr || !Array.isArray(arr)) return 'NULL';
-  const escaped = arr.map(v => `"${v.replace(/"/g, '\\"')}"`).join(',');
-  return `'\{${escaped}\}'`;
+  const escaped = arr.map((v) => `"${v.replace(/"/g, '\\"')}"`).join(',');
+  return `'{${escaped}}'`;
 }
 
 function generateChunkSql(chunk: any[], chunkIndex: number) {
@@ -53,8 +52,14 @@ function generateChunkSql(chunk: any[], chunkIndex: number) {
 
   for (const item of chunk) {
     const nameAr = item.nameAr || item.nameAr;
-    const activeSub = Array.isArray(item.genericName) ? item.genericName.join(', ') : item.genericName;
-    const expiry = item.expiryDate ? (item.expiryDate.length === 7 ? `${item.expiryDate}-01` : item.expiryDate) : null;
+    const activeSub = Array.isArray(item.genericName)
+      ? item.genericName.join(', ')
+      : item.genericName;
+    const expiry = item.expiryDate
+      ? item.expiryDate.length === 7
+        ? `${item.expiryDate}-01`
+        : item.expiryDate
+      : null;
     const dosage = item.dosageForm || item.dosage_form;
 
     sql += `  -- Item: ${item.name}\n`;

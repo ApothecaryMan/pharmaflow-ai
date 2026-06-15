@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { hashPassword, verifyPassword } from './hashUtils';
 
 describe('HashUtils', () => {
@@ -6,7 +6,7 @@ describe('HashUtils', () => {
     const password = 'mySecretPassword123';
     const hash1 = await hashPassword(password);
     const hash2 = await hashPassword(password);
-    
+
     expect(hash1).toBeDefined();
     expect(typeof hash1).toBe('string');
     expect(hash1.length).toBeGreaterThan(0);
@@ -16,7 +16,7 @@ describe('HashUtils', () => {
   it('should verify correct password', async () => {
     const password = 'correctBatteryHorse';
     const hash = await hashPassword(password);
-    
+
     const isValid = await verifyPassword(password, hash);
     expect(isValid).toBe(true);
   });
@@ -24,7 +24,7 @@ describe('HashUtils', () => {
   it('should reject incorrect password', async () => {
     const password = 'securePassword';
     const hash = await hashPassword(password);
-    
+
     const isValid = await verifyPassword('wrongPassword', hash);
     expect(isValid).toBe(false);
   });

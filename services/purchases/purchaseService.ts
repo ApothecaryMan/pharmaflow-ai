@@ -3,18 +3,18 @@
  * Business logic layer that orchestrates data access via PurchaseRepository.
  */
 
-import { BaseDomainService } from '../core/baseDomainService';
-import type { Purchase, PurchaseStatus, StockMovement, StockBatch } from '../../types';
-import { idGenerator } from '../../utils/idGenerator';
-import { settingsService } from '../settings/settingsService';
 import { supabase } from '../../lib/supabase';
-import { inventoryService } from '../inventory/inventoryService';
-import { batchService } from '../inventory/batchService';
-import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
-import { resolveUnits } from '../../utils/stockUtils';
+import type { Purchase, PurchaseStatus, StockBatch, StockMovement } from '../../types';
 import { normalizeExpiryToISO } from '../../utils/expiryUtils';
-import * as stockOps from '../../utils/stockOperations';
+import { idGenerator } from '../../utils/idGenerator';
 import { money } from '../../utils/money';
+import * as stockOps from '../../utils/stockOperations';
+import { resolveUnits } from '../../utils/stockUtils';
+import { BaseDomainService } from '../core/baseDomainService';
+import { batchService } from '../inventory/batchService';
+import { inventoryService } from '../inventory/inventoryService';
+import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
+import { settingsService } from '../settings/settingsService';
 import { purchaseRepository } from './repositories/purchaseRepository';
 import type { PurchaseFilters, PurchaseService, PurchaseStats } from './types';
 
@@ -59,8 +59,9 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
 
   async create(purchase: Omit<Purchase, 'id'>, branchId?: string): Promise<Purchase> {
     const settings = await settingsService.getAll();
-    const effectiveBranchId = branchId || (purchase as any).branchId || settings.activeBranchId || settings.branchCode;
-    
+    const effectiveBranchId =
+      branchId || (purchase as any).branchId || settings.activeBranchId || settings.branchCode;
+
     const newPurchase: Purchase = {
       ...purchase,
       id: idGenerator.uuid(),
@@ -69,7 +70,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
       orgId: settings.orgId,
       date: purchase.date || new Date().toISOString(),
     } as Purchase;
-    
+
     return purchaseRepository.insert(newPurchase);
   }
 
@@ -80,13 +81,13 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
   async approve(id: string, approverId: string, approverName: string): Promise<Purchase> {
     const purchase = await this.getById(id);
     if (!purchase) throw new Error('Purchase not found');
-    
+
     const updates = {
       status: 'approved' as PurchaseStatus,
       approvedBy: approverName,
       approvalDate: new Date().toISOString(),
     };
-    
+
     return this.update(id, updates);
   }
 
@@ -103,7 +104,11 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     return updatedPurchase || purchase;
   }
 
-  private async processInventoryReceipt(purchase: Purchase, performerId: string, performerName: string): Promise<void> {
+  private async processInventoryReceipt(
+    purchase: Purchase,
+    performerId: string,
+    performerName: string
+  ): Promise<void> {
     try {
       // 🚀 Performance Optimization: Use Atomic Server-Side RPC
       const { data, error } = await supabase.rpc('process_purchase_receipt', {
@@ -111,17 +116,19 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
           purchaseId: purchase.id,
           performerId,
           performerName,
-          items: purchase.items.map(item => ({
+          items: purchase.items.map((item) => ({
             drugId: item.drugId,
             name: item.name,
             quantity: resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack),
-            expiryDate: normalizeExpiryToISO(item.expiryDate) || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            expiryDate:
+              normalizeExpiryToISO(item.expiryDate) ||
+              new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             costPrice: item.costPrice,
             publicPrice: item.publicPrice,
             unitPrice: item.unitPrice,
-            unitCostPrice: item.unitCostPrice
-          }))
-        }
+            unitCostPrice: item.unitCostPrice,
+          })),
+        },
       });
 
       if (error || !data?.success) {
@@ -133,12 +140,12 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
       console.warn('[PurchaseService] Atomic RPC failed, falling back to legacy processing:', err);
       // 🛡️ Safety Fallback: Use legacy sequential processing
       await this.processInventoryReceiptLegacy(purchase, performerId, performerName);
-      
+
       // Update status manually since legacy path doesn't do it inside
       await this.update(purchase.id, {
         status: 'received',
         receivedBy: performerName,
-        receivedAt: new Date().toISOString()
+        receivedAt: new Date().toISOString(),
       });
     }
   }
@@ -147,7 +154,11 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
    * 🛡️ Legacy Sequential Processing (Fallback Path)
    * This logic is kept to ensure system stability if the RPC is unavailable.
    */
-  private async processInventoryReceiptLegacy(purchase: Purchase, performerId: string, performerName: string): Promise<void> {
+  private async processInventoryReceiptLegacy(
+    purchase: Purchase,
+    performerId: string,
+    performerName: string
+  ): Promise<void> {
     const settings = await settingsService.getAll();
     const branchId = purchase.branchId;
 
@@ -155,34 +166,42 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
       const currentStock = await batchService.getTotalStock(item.drugId);
       const unitsToAdd = resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack);
 
-      let expiryDate = normalizeExpiryToISO(item.expiryDate) || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const expiryDate =
+        normalizeExpiryToISO(item.expiryDate) ||
+        new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-      await batchService.createBatch({
-        drugId: item.drugId,
-        quantity: unitsToAdd,
-        expiryDate: expiryDate,
-        costPrice: item.costPrice,
-        purchaseId: purchase.id,
-        dateReceived: new Date().toISOString(),
-        branchId: branchId,
-        orgId: purchase.orgId || settings.orgId,
-        version: 1,
-      }, branchId);
+      await batchService.createBatch(
+        {
+          drugId: item.drugId,
+          quantity: unitsToAdd,
+          expiryDate: expiryDate,
+          costPrice: item.costPrice,
+          purchaseId: purchase.id,
+          dateReceived: new Date().toISOString(),
+          branchId: branchId,
+          orgId: purchase.orgId || settings.orgId,
+          version: 1,
+        },
+        branchId
+      );
     }
 
     for (const item of purchase.items) {
       const earliestExpiry = await batchService.getEarliestExpiry(item.drugId, branchId);
       const globalWAC = await batchService.calculateGlobalWAC(item.drugId, branchId);
-      
-      const normalizedExpiry = item.expiryDate && item.expiryDate.length === 7 && item.expiryDate.includes('-') 
-        ? `${item.expiryDate}-01` 
-        : item.expiryDate;
+
+      const normalizedExpiry =
+        item.expiryDate && item.expiryDate.length === 7 && item.expiryDate.includes('-')
+          ? `${item.expiryDate}-01`
+          : item.expiryDate;
 
       await inventoryService.update(item.drugId, {
         publicPrice: item.publicPrice,
         unitPrice: item.unitPrice,
         costPrice: globalWAC || item.costPrice,
-        unitCostPrice: globalWAC ? money.divide(globalWAC, item.unitsPerPack || 1) : item.unitCostPrice,
+        unitCostPrice: globalWAC
+          ? money.divide(globalWAC, item.unitsPerPack || 1)
+          : item.unitCostPrice,
         expiryDate: earliestExpiry || normalizedExpiry,
       });
     }
@@ -208,11 +227,11 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
   async save(purchases: Purchase[], branchId?: string): Promise<void> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    
-    const processedPurchases = purchases.map(p => ({
+
+    const processedPurchases = purchases.map((p) => ({
       ...p,
       branchId: p.branchId || effectiveBranchId,
-      orgId: p.orgId || settings.orgId
+      orgId: p.orgId || settings.orgId,
     }));
 
     await purchaseRepository.upsert(processedPurchases);

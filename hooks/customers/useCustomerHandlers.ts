@@ -1,8 +1,8 @@
-import React from 'react';
+import type React from 'react';
 import { useCallback, useMemo } from 'react';
 import { useAlert } from '../../context';
-import { permissionsService } from '../../services/auth/permissionsService';
 import { auditService } from '../../services/audit/auditService';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { customerService } from '../../services/customers/customerService';
 import type { Customer, Employee, Sale } from '../../types';
 
@@ -39,11 +39,15 @@ export function useCustomerHandlers({
       }
 
       try {
-        const result = await customerService.create({
-          ...customer,
-          createdAt: customer.createdAt || getVerifiedDate().toISOString(),
-          registeredByEmployeeId: customer.registeredByEmployeeId || currentEmployeeId || undefined,
-        }, activeBranchId);
+        const result = await customerService.create(
+          {
+            ...customer,
+            createdAt: customer.createdAt || getVerifiedDate().toISOString(),
+            registeredByEmployeeId:
+              customer.registeredByEmployeeId || currentEmployeeId || undefined,
+          },
+          activeBranchId
+        );
 
         setCustomers((prev) => [...prev, result]);
         success('Customer added successfully');

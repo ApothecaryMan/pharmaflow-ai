@@ -1,13 +1,14 @@
-import React, { useCallback } from 'react';
+import type React from 'react';
+import { useCallback } from 'react';
 import { useAlert } from '../../context';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { batchService } from '../../services/inventory/batchService';
 import { inventoryService } from '../../services/inventory/inventoryService';
 import { salesService } from '../../services/sales/salesService';
 import { transactionService } from '../../services/transactions/transactionService';
-import { validateSaleData } from '../../utils/validation';
 import { formatCurrency } from '../../utils/currency';
 import { measurePerformance } from '../../utils/monitoring';
+import { validateSaleData } from '../../utils/validation';
 
 declare global {
   interface Window {
@@ -15,17 +16,17 @@ declare global {
   }
 }
 
-import type { 
-  ActionContext, 
-  CartItem, 
-  Drug, 
-  Employee, 
-  Return, 
-  Sale, 
-  StockBatch,
+import type {
+  ActionContext,
+  CartItem,
+  CashTransaction,
   Customer,
+  Drug,
+  Employee,
+  Return,
+  Sale,
   Shift,
-  CashTransaction
+  StockBatch,
 } from '../../types';
 
 export interface SaleData {
@@ -131,7 +132,10 @@ export function useSalesHandlers({
         return true;
       } catch (err: unknown) {
         console.error('[handleCompleteSale] Fatal error:', err);
-        error((err instanceof Error ? err.message : String(err)) || 'An unexpected error occurred during checkout.');
+        error(
+          (err instanceof Error ? err.message : String(err)) ||
+            'An unexpected error occurred during checkout.'
+        );
         return false;
       }
     },
@@ -188,7 +192,9 @@ export function useSalesHandlers({
         }
 
         if (employee?.role === 'senior_cashier' && sale.total > SENIOR_CASHIER_CANCEL_LIMIT) {
-          error(`Permission denied: Senior Cashiers cannot cancel sales exceeding EGP ${SENIOR_CASHIER_CANCEL_LIMIT}. Manager approval required.`);
+          error(
+            `Permission denied: Senior Cashiers cannot cancel sales exceeding EGP ${SENIOR_CASHIER_CANCEL_LIMIT}. Manager approval required.`
+          );
           return;
         }
 
@@ -203,9 +209,13 @@ export function useSalesHandlers({
         setBatches(updatedBatches);
         const freshInventory = await inventoryService.getAll(activeBranchId);
         setInventory(freshInventory);
-        
-        setSales((prev) => prev.map((s) => (s.id === saleId ? { ...s, status: 'cancelled', updatedAt: context.timestamp } : s)));
-        
+
+        setSales((prev) =>
+          prev.map((s) =>
+            s.id === saleId ? { ...s, status: 'cancelled', updatedAt: context.timestamp } : s
+          )
+        );
+
         success(`Order #${sale.serialId || sale.id} cancelled and stock returned.`);
         return;
       }
@@ -216,7 +226,12 @@ export function useSalesHandlers({
           return;
         }
 
-        const result = await transactionService.processOrderModification(sale, updates, inventory, context);
+        const result = await transactionService.processOrderModification(
+          sale,
+          updates,
+          inventory,
+          context
+        );
 
         if (!result.success) {
           error(result.error || 'Failed to modify order');
@@ -227,14 +242,20 @@ export function useSalesHandlers({
         setBatches(updatedBatches);
         const freshInventory = await inventoryService.getAll(activeBranchId);
         setInventory(freshInventory);
-        
+
         success(`Order #${sale.serialId || sale.id} modified successfully.`);
       }
 
-      if (updates.status === 'completed' && sale.status !== 'completed' && sale.saleType === 'delivery' && currentShift && !sale.shiftTransactionRecorded) {
+      if (
+        updates.status === 'completed' &&
+        sale.status !== 'completed' &&
+        sale.saleType === 'delivery' &&
+        currentShift &&
+        !sale.shiftTransactionRecorded
+      ) {
         const isCash = sale.paymentMethod === 'cash';
-        const txAmount = ("total" in updates ? (updates.total as number) : undefined) ?? sale.total;
-        
+        const txAmount = ('total' in updates ? (updates.total as number) : undefined) ?? sale.total;
+
         await transactionService.addTransaction(currentShift.id, {
           branchId: activeBranchId,
           shiftId: currentShift.id,
@@ -243,7 +264,7 @@ export function useSalesHandlers({
           amount: txAmount,
           reason: `Delivery Finalized #${sale.serialId || sale.id}`,
           userId: context.performerName || 'System',
-          relatedSaleId: saleId
+          relatedSaleId: saleId,
         });
         updates.shiftTransactionRecorded = true;
         success(`Delivery #${sale.serialId || sale.id} completed and payment recorded.`);
@@ -293,16 +314,20 @@ export function useSalesHandlers({
 
         const userRole = permissionsService.getEffectiveRole();
         if (userRole === 'pharmacist' && returnData.totalRefund > 100000) {
-           error('Permission denied: Pharmacists cannot refund more than 1000.00 EGP per transaction. Please request manager approval.');
-           return false;
+          error(
+            'Permission denied: Pharmacists cannot refund more than 1000.00 EGP per transaction. Please request manager approval.'
+          );
+          return false;
         }
         if (userRole === 'cashier' && returnData.totalRefund > 50000) {
-           error('Permission denied: Cashiers cannot refund more than 500.00 EGP per transaction.');
-           return false;
+          error('Permission denied: Cashiers cannot refund more than 500.00 EGP per transaction.');
+          return false;
         }
 
         if (!currentShift) {
-          error('Permission denied: An active shift must be open to process returns and issue refunds.');
+          error(
+            'Permission denied: An active shift must be open to process returns and issue refunds.'
+          );
           return false;
         }
 
@@ -320,7 +345,9 @@ export function useSalesHandlers({
         }
 
         if (sale.status === 'cancelled') {
-          error('Cannot process return for a cancelled sale. Stock was already restored during cancellation.');
+          error(
+            'Cannot process return for a cancelled sale. Stock was already restored during cancellation.'
+          );
           return false;
         }
 

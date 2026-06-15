@@ -9,11 +9,7 @@ export function FeatheryWings() {
           strokeWidth='0.8'
           strokeLinejoin='round'
         />
-        <path
-          d='M10,58 Q6,48 8,36 Q10,28 16,30 Q14,40 12,50Z'
-          fill='#FFFFFF'
-          opacity='0.6'
-        />
+        <path d='M10,58 Q6,48 8,36 Q10,28 16,30 Q14,40 12,50Z' fill='#FFFFFF' opacity='0.6' />
         <path
           d='M122,66 C134,48 132,26 120,10 Q116,4 110,8 Q112,18 114,28 Q108,16 100,12 Q96,10 94,16 Q100,26 106,36 Q98,24 90,20 Q86,18 86,24 Q94,36 102,48 Q110,58 118,66Z'
           fill='var(--svg-color, #E2E8F0)'

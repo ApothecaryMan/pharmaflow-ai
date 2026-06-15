@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createSearchRegex, parseSearchTerm } from './searchUtils';
 
 describe('SearchUtils', () => {
@@ -18,18 +18,18 @@ describe('SearchUtils', () => {
       const regex = createSearchRegex('pan+adol');
       expect(regex.test('Pan+adol')).toBe(true);
     });
-    
+
     it('anchors start effectively', () => {
-        // "pan" -> ^pan (starts with)
-        const regex = createSearchRegex('pan');
-        expect(regex.test('Panadol')).toBe(true);
-        // Depending on logic: logic says if NO leading space -> ^ (start of string)
-        expect(regex.test('Aspirin Panadol')).toBe(false); 
+      // "pan" -> ^pan (starts with)
+      const regex = createSearchRegex('pan');
+      expect(regex.test('Panadol')).toBe(true);
+      // Depending on logic: logic says if NO leading space -> ^ (start of string)
+      expect(regex.test('Aspirin Panadol')).toBe(false);
     });
-    
+
     it('allows match anywhere if leading space', () => {
-        const regex = createSearchRegex(' pan');
-        expect(regex.test('Aspirin Panadol')).toBe(true);
+      const regex = createSearchRegex(' pan');
+      expect(regex.test('Aspirin Panadol')).toBe(true);
     });
   });
 

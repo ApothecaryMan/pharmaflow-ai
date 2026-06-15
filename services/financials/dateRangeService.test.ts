@@ -1,12 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { dateRangeService } from './dateRangeService';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import timeService from '../timeService';
+import { dateRangeService } from './dateRangeService';
 
 // Mock timeService to return a fixed date
 vi.mock('../timeService', () => ({
   default: {
-    getVerifiedDate: vi.fn().mockReturnValue(new Date('2026-05-28T12:00:00.000Z'))
-  }
+    getVerifiedDate: vi.fn().mockReturnValue(new Date('2026-05-28T12:00:00.000Z')),
+  },
 }));
 
 describe('dateRangeService', () => {
@@ -40,7 +40,7 @@ describe('dateRangeService', () => {
     expect(start.getFullYear()).toBe(2026);
     expect(start.getMonth()).toBe(3); // April
     expect(start.getDate()).toBe(1);
-    
+
     expect(end.getFullYear()).toBe(2026);
     expect(end.getMonth()).toBe(3); // April
     expect(end.getDate()).toBe(30);

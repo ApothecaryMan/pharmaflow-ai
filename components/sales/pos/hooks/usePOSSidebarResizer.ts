@@ -1,7 +1,7 @@
-import React from 'react';
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { storage } from '../../../../utils/storage';
+import type React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StorageKeys } from '../../../../config/storageKeys';
+import { storage } from '../../../../utils/storage';
 
 export const usePOSSidebarResizer = () => {
   const [sidebarWidth, setSidebarWidth] = useState(() => {

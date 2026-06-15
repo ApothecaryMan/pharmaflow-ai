@@ -26,11 +26,37 @@ export function Fakhma() {
           stroke='var(--svg-color-border, #B45309)'
           strokeWidth='0.6'
         />
-        <polygon points='64,-1 68,4 64,9 60,4' fill='#38BDF8' stroke='#0284C7' strokeWidth='0.5' className='shimmering-gem' />
-        <polygon points='44,9 47,12 44,15 41,12' fill='#34D399' stroke='#059669' strokeWidth='0.5' />
-        <polygon points='84,9 87,12 84,15 81,12' fill='#34D399' stroke='#059669' strokeWidth='0.5' />
-        <polygon points='14,14 17,17 14,20 11,17' fill='#F87171' stroke='#DC2626' strokeWidth='0.5' />
-        <polygon points='114,14 117,17 114,20 111,17' fill='#F87171' stroke='#DC2626' strokeWidth='0.5' />
+        <polygon
+          points='64,-1 68,4 64,9 60,4'
+          fill='#38BDF8'
+          stroke='#0284C7'
+          strokeWidth='0.5'
+          className='shimmering-gem'
+        />
+        <polygon
+          points='44,9 47,12 44,15 41,12'
+          fill='#34D399'
+          stroke='#059669'
+          strokeWidth='0.5'
+        />
+        <polygon
+          points='84,9 87,12 84,15 81,12'
+          fill='#34D399'
+          stroke='#059669'
+          strokeWidth='0.5'
+        />
+        <polygon
+          points='14,14 17,17 14,20 11,17'
+          fill='#F87171'
+          stroke='#DC2626'
+          strokeWidth='0.5'
+        />
+        <polygon
+          points='114,14 117,17 114,20 111,17'
+          fill='#F87171'
+          stroke='#DC2626'
+          strokeWidth='0.5'
+        />
         <circle cx='34' cy='37.5' r='2' fill='#F87171' className='shimmering-gem' />
         <circle cx='49' cy='39' r='2' fill='#34D399' />
         <circle cx='64' cy='39.5' r='2.5' fill='#38BDF8' className='shimmering-gem' />

@@ -1,27 +1,28 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { type Purchase, type PurchaseReturn, type Drug, type Supplier, type Employee, type Shift } from '../../types';
-import { parseSearchTerm } from '../../utils/searchUtils';
-import { checkExpiryStatus, formatExpiryDate, getExpiryStatusStyle } from '../../utils/expiryUtils';
-import { money, tax } from '../../utils/money';
-import {
-  PageHeader,
-  SearchInput,
-  SegmentedControl,
-  DateRangePicker,
-  FilterPill,
-  type FilterConfig,
-  TanStackTable,
-  PriceDisplay,
-  Modal,
-  useSmartDirection,
-  Switch,
-  useContextMenu,
-} from '../common';
+import type React from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSettings } from '../../context';
 import { useData } from '../../context/DataContext';
-import { getDisplayName } from '../../utils/drugDisplayName';
 import { permissionsService } from '../../services/auth/permissionsService';
+import type { Drug, Employee, Purchase, PurchaseReturn, Shift, Supplier } from '../../types';
+import { getDisplayName } from '../../utils/drugDisplayName';
+import { checkExpiryStatus, formatExpiryDate, getExpiryStatusStyle } from '../../utils/expiryUtils';
+import { money, tax } from '../../utils/money';
+import { parseSearchTerm } from '../../utils/searchUtils';
+import {
+  DateRangePicker,
+  type FilterConfig,
+  FilterPill,
+  Modal,
+  PageHeader,
+  PriceDisplay,
+  SearchInput,
+  SegmentedControl,
+  Switch,
+  TanStackTable,
+  useContextMenu,
+  useSmartDirection,
+} from '../common';
 
 interface PurchaseHistoryProps {
   purchases: Purchase[];
@@ -60,21 +61,24 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
   const [historySearch, setHistorySearch] = useState('');
   const [showAllBranches, setShowAllBranches] = useState(false);
 
-  const statusFilterConfig: FilterConfig = useMemo(() => ({
-    id: 'status',
-    label: t.status?.title || 'Status',
-    icon: 'rule',
-    mode: 'single',
-    options: [
-      { value: 'all', label: t.status?.all || 'All Status' },
-      { value: 'pending', label: t.status?.pending || 'Pending' },
-      { value: 'completed', label: t.status?.completed || 'Completed' },
-      { value: 'returned', label: t.status?.returned || 'Returned' },
-      { value: 'rejected', label: t.status?.rejected || 'Rejected' },
-      { value: 'approved', label: t.status?.approved || 'Approved' },
-    ],
-    defaultValue: 'all'
-  }), [t]);
+  const statusFilterConfig: FilterConfig = useMemo(
+    () => ({
+      id: 'status',
+      label: t.status?.title || 'Status',
+      icon: 'rule',
+      mode: 'single',
+      options: [
+        { value: 'all', label: t.status?.all || 'All Status' },
+        { value: 'pending', label: t.status?.pending || 'Pending' },
+        { value: 'completed', label: t.status?.completed || 'Completed' },
+        { value: 'returned', label: t.status?.returned || 'Returned' },
+        { value: 'rejected', label: t.status?.rejected || 'Rejected' },
+        { value: 'approved', label: t.status?.approved || 'Approved' },
+      ],
+      defaultValue: 'all',
+    }),
+    [t]
+  );
 
   const { showMenu } = useContextMenu();
 
@@ -125,7 +129,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
 
   // Optimization: Map of purchase IDs that have returns
   const purchasesWithReturns = useMemo(() => {
-    return new Set(purchaseReturns.map(r => r.purchaseId));
+    return new Set(purchaseReturns.map((r) => r.purchaseId));
   }, [purchaseReturns]);
 
   const getPurchaseReturns = (purchaseId: string) => {
@@ -139,7 +143,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
 
     // Branch Filter (unless Global View is ON)
     if (!showAllBranches && activeBranchId) {
-      data = data.filter(p => p.branchId === activeBranchId);
+      data = data.filter((p) => p.branchId === activeBranchId);
     }
 
     // Date Filter
@@ -197,7 +201,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
               <span className='text-[10px] text-gray-400 font-medium'>{formatTime(date)}</span>
             </div>
           );
-        }
+        },
       },
       {
         header: t.tableHeaders?.supplier || 'Supplier',
@@ -219,7 +223,9 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
           const badgeClass = isCash ? 'badge-success' : 'badge-info';
           return (
             <span className={`${badgeClass} inline-flex items-center gap-1.5`}>
-              <span className='material-symbols-rounded text-xs'>{isCash ? 'payments' : 'credit_card'}</span>
+              <span className='material-symbols-rounded text-xs'>
+                {isCash ? 'payments' : 'credit_card'}
+              </span>
               <span>{isCash ? t.cash || 'Cash' : t.credit || 'Credit'}</span>
             </span>
           );
@@ -229,7 +235,9 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
         header: t.tableHeaders?.items || 'Items',
         accessorFn: (row: any) => row.items?.length || 0,
         meta: { align: 'center' },
-        cell: (info: any) => <span className='text-xs text-gray-500 font-medium'>{info.getValue()}</span>,
+        cell: (info: any) => (
+          <span className='text-xs text-gray-500 font-medium'>{info.getValue()}</span>
+        ),
       },
       {
         header: t.tableHeaders?.total || 'Total',
@@ -237,7 +245,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
         meta: { align: 'end' },
         cell: (info: any) => {
           if (!permissionsService.can('reports.view_financial')) {
-            return <span className="text-gray-400 opacity-20 select-none">••••••</span>;
+            return <span className='text-gray-400 opacity-20 select-none'>••••••</span>;
           }
           const p = info.row.original;
           const returns = getPurchaseReturns(p.id);
@@ -249,7 +257,8 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
               </div>
               {totalReturned > 0 && (
                 <span className='text-[10px] text-orange-600 dark:text-orange-400 font-medium'>
-                  <PriceDisplay value={-totalReturned} /> {t.detailsModal?.returnedLabel || 'returned'}
+                  <PriceDisplay value={-totalReturned} />{' '}
+                  {t.detailsModal?.returnedLabel || 'returned'}
                 </span>
               )}
             </div>
@@ -352,7 +361,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
               className='h-9 text-sm'
               filterConfigs={[statusFilterConfig]}
               activeFilters={activeFilters}
-              onUpdateFilter={(gid, vals) => setActiveFilters(prev => ({ ...prev, [gid]: vals }))}
+              onUpdateFilter={(gid, vals) => setActiveFilters((prev) => ({ ...prev, [gid]: vals }))}
             />
           </div>
         }
@@ -360,7 +369,11 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
           <SegmentedControl
             options={[
               { value: 'create', label: t.newPurchase || 'Purchase', icon: 'shopping_cart' },
-              { value: 'approve', label: t.pendingApproval?.title || 'Approve', icon: 'assignment_turned_in' },
+              {
+                value: 'approve',
+                label: t.pendingApproval?.title || 'Approve',
+                icon: 'assignment_turned_in',
+              },
               { value: 'history', label: t.viewHistory || 'History', icon: 'history' },
             ]}
             value='history'
@@ -369,11 +382,11 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
               if (val === 'approve') onViewChange?.('pending-approval');
               else onViewChange?.('purchases', { mode: 'create' });
             }}
-            shape="pill"
-            size="md"
-            iconSize="--icon-lg"
+            shape='pill'
+            size='md'
+            iconSize='--icon-lg'
             useGraphicFont={true}
-            className="w-full sm:w-[520px]"
+            className='w-full sm:w-[520px]'
           />
         }
         rightContent={
@@ -390,11 +403,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
               <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none'>
                 {t.globalView || 'Global'}
               </span>
-              <Switch
-                checked={showAllBranches}
-                onChange={setShowAllBranches}
-                activeColor={color}
-              />
+              <Switch checked={showAllBranches} onChange={setShowAllBranches} activeColor={color} />
             </label>
           </div>
         }
@@ -433,10 +442,14 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
           <div className='p-6 space-y-6'>
             <div className='grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-6 p-1'>
               <div className='group relative'>
-                <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>{t.tableHeaders?.supplier || 'Supplier'}</p>
+                <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>
+                  {t.tableHeaders?.supplier || 'Supplier'}
+                </p>
                 <div className='flex items-center gap-2'>
-                  <p className='font-bold text-gray-900 dark:text-white truncate max-w-[150px]'>{selectedPurchase.supplierName}</p>
-                  <button 
+                  <p className='font-bold text-gray-900 dark:text-white truncate max-w-[150px]'>
+                    {selectedPurchase.supplierName}
+                  </p>
+                  <button
                     onClick={() => copyToClipboard(selectedPurchase.supplierName)}
                     className='p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'
                   >
@@ -446,11 +459,15 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
               </div>
 
               <div className='group relative'>
-                <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>{t.detailsModal?.invNumber || 'Inv #'}</p>
+                <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>
+                  {t.detailsModal?.invNumber || 'Inv #'}
+                </p>
                 <div className='flex items-center gap-2'>
-                  <p className='font-mono font-bold text-gray-900 dark:text-white'>{selectedPurchase.externalInvoiceId || '-'}</p>
+                  <p className='font-mono font-bold text-gray-900 dark:text-white'>
+                    {selectedPurchase.externalInvoiceId || '-'}
+                  </p>
                   {selectedPurchase.externalInvoiceId && (
-                    <button 
+                    <button
                       onClick={() => copyToClipboard(selectedPurchase.externalInvoiceId)}
                       className='p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200'
                     >
@@ -461,36 +478,54 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
               </div>
 
               <div>
-                <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>{t.paymentMethod || 'Payment'}</p>
+                <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>
+                  {t.paymentMethod || 'Payment'}
+                </p>
                 <div className='flex items-center gap-2'>
-                  <span className={`material-symbols-rounded text-sm ${selectedPurchase.paymentMethod === 'cash' ? 'text-emerald-500' : 'text-blue-500'}`}>
+                  <span
+                    className={`material-symbols-rounded text-sm ${selectedPurchase.paymentMethod === 'cash' ? 'text-emerald-500' : 'text-blue-500'}`}
+                  >
                     {selectedPurchase.paymentMethod === 'cash' ? 'payments' : 'credit_card'}
                   </span>
                   <p className='font-bold text-gray-900 dark:text-white capitalize text-sm'>
-                    {selectedPurchase.paymentMethod === 'cash' ? (t.cash || 'Cash') : (t.credit || 'Credit')}
+                    {selectedPurchase.paymentMethod === 'cash'
+                      ? t.cash || 'Cash'
+                      : t.credit || 'Credit'}
                   </p>
                 </div>
               </div>
 
               <div>
-                <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>{t.tableHeaders?.date || 'Date'}</p>
+                <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>
+                  {t.tableHeaders?.date || 'Date'}
+                </p>
                 <div className='flex items-center gap-2'>
-                  <span className='material-symbols-rounded text-sm text-zinc-400'>calendar_today</span>
-                  <p className='font-bold text-gray-900 dark:text-white text-sm'>{new Date(selectedPurchase.date).toLocaleDateString()}</p>
+                  <span className='material-symbols-rounded text-sm text-zinc-400'>
+                    calendar_today
+                  </span>
+                  <p className='font-bold text-gray-900 dark:text-white text-sm'>
+                    {new Date(selectedPurchase.date).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
 
               <div>
-                <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>{language === 'AR' ? 'بواسطة' : 'By'}</p>
+                <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>
+                  {language === 'AR' ? 'بواسطة' : 'By'}
+                </p>
                 <div className='flex items-center gap-2'>
                   <span className='material-symbols-rounded text-sm text-zinc-400'>person</span>
-                  <p className='font-bold text-gray-900 dark:text-white text-sm truncate'>{selectedPurchase.createdByName || t.unknown || 'Unknown'}</p>
+                  <p className='font-bold text-gray-900 dark:text-white text-sm truncate'>
+                    {selectedPurchase.createdByName || t.unknown || 'Unknown'}
+                  </p>
                 </div>
               </div>
 
               {selectedPurchase.approvedBy && (
                 <div>
-                  <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>{t.status?.approved || 'Approved'}</p>
+                  <p className='text-[10px] text-gray-400 uppercase font-bold mb-1 tracking-wider'>
+                    {t.status?.approved || 'Approved'}
+                  </p>
                   <div className='flex items-center gap-2 text-blue-600 dark:text-blue-400'>
                     <span className='material-symbols-rounded text-sm'>verified_user</span>
                     <p className='font-bold text-sm truncate'>{selectedPurchase.approvedBy}</p>
@@ -498,7 +533,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
                 </div>
               )}
             </div>
-            
+
             <div className='rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden'>
               <table className='w-full text-left border-collapse'>
                 <thead>
@@ -509,47 +544,61 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
                     <th className='px-4 py-3 text-right'>{t.detailsModal?.cost || 'Cost'}</th>
                     <th className='px-4 py-3 text-center'>{t.detailsModal?.discount || 'Disc%'}</th>
                     <th className='px-4 py-3 text-center'>{t.detailsModal?.tax || 'Tax%'}</th>
-                    <th className='px-4 py-3 text-right'>{t.detailsModal?.publicPrice || 'Sale'}</th>
+                    <th className='px-4 py-3 text-right'>
+                      {t.detailsModal?.publicPrice || 'Sale'}
+                    </th>
                     <th className='px-4 py-3 text-right'>{t.detailsModal?.total || 'Total'}</th>
                   </tr>
                 </thead>
                 <tbody className='divide-y divide-gray-50 dark:divide-gray-900 text-sm'>
                   {selectedPurchase.items.map((item, idx) => (
-                    <tr key={idx} className='hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors'>
+                    <tr
+                      key={idx}
+                      className='hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors'
+                    >
                       <td className='px-4 py-3'>
                         <div className='flex flex-col'>
-                          <span className='font-bold text-gray-900 dark:text-white'>{getDisplayName(item as any, textTransform)}</span>
-                          {item.barcode && <span className='text-[10px] text-gray-400 font-mono'>{item.barcode}</span>}
+                          <span className='font-bold text-gray-900 dark:text-white'>
+                            {getDisplayName(item as any, textTransform)}
+                          </span>
+                          {item.barcode && (
+                            <span className='text-[10px] text-gray-400 font-mono'>
+                              {item.barcode}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className='px-4 py-3 text-center'>
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${getExpiryStatusStyle(checkExpiryStatus(item.expiryDate || ''), 'badge')}`}>
+                        <span
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${getExpiryStatusStyle(checkExpiryStatus(item.expiryDate || ''), 'badge')}`}
+                        >
                           {formatExpiryDate(item.expiryDate || '')}
                         </span>
                       </td>
-                      <td className='px-4 py-3 text-center font-bold'>
-                        {item.quantity}
-                      </td>
+                      <td className='px-4 py-3 text-center font-bold'>{item.quantity}</td>
                       <td className='px-4 py-3 text-right font-mono text-gray-600 dark:text-gray-400'>
-                        <PriceDisplay value={item.costPrice} size="sm" />
+                        <PriceDisplay value={item.costPrice} size='sm' />
                       </td>
-                      <td className='px-4 py-3 text-center text-gray-500'>
-                        {item.discount || 0}%
-                      </td>
-                      <td className='px-4 py-3 text-center text-gray-500'>
-                        {item.tax ?? 14}%
-                      </td>
+                      <td className='px-4 py-3 text-center text-gray-500'>{item.discount || 0}%</td>
+                      <td className='px-4 py-3 text-center text-gray-500'>{item.tax ?? 14}%</td>
                       <td className='px-4 py-3 text-right text-primary-600 font-medium'>
-                        <PriceDisplay value={item.publicPrice || 0} size="sm" />
+                        <PriceDisplay value={item.publicPrice || 0} size='sm' />
                       </td>
                       <td className='px-4 py-3 text-right font-bold text-gray-900 dark:text-white'>
                         {(() => {
                           const lineNet = money.multiply(item.costPrice, item.quantity, 0);
-                          const totalNet = selectedPurchase.items.reduce((sum, it) => money.add(sum, money.multiply(it.costPrice, it.quantity, 0)), 0);
+                          const totalNet = selectedPurchase.items.reduce(
+                            (sum, it) =>
+                              money.add(sum, money.multiply(it.costPrice, it.quantity, 0)),
+                            0
+                          );
                           const totalTax = selectedPurchase.totalTax || 0;
                           const itemTaxShare = totalNet > 0 ? (totalTax * lineNet) / totalNet : 0;
-                          const lineTotal = money.add(lineNet, Math.round(itemTaxShare * 100) / 100);
-                          return <PriceDisplay value={lineTotal} size="sm" />;
+                          const lineTotal = money.add(
+                            lineNet,
+                            Math.round(itemTaxShare * 100) / 100
+                          );
+                          return <PriceDisplay value={lineTotal} size='sm' />;
                         })()}
                       </td>
                     </tr>
@@ -557,9 +606,14 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
                 </tbody>
                 <tfoot>
                   <tr className='bg-gray-50/50 dark:bg-gray-900/30 font-bold border-t border-gray-100 dark:border-gray-800'>
-                    <td colSpan={7} className='px-4 py-4 text-right text-gray-400 uppercase text-[10px] tracking-widest'>{t.summary?.totalCost || 'Grand Total'}</td>
+                    <td
+                      colSpan={7}
+                      className='px-4 py-4 text-right text-gray-400 uppercase text-[10px] tracking-widest'
+                    >
+                      {t.summary?.totalCost || 'Grand Total'}
+                    </td>
                     <td className='px-4 py-4 text-right'>
-                      <PriceDisplay value={selectedPurchase.totalCost} size="lg" />
+                      <PriceDisplay value={selectedPurchase.totalCost} size='lg' />
                     </td>
                   </tr>
                 </tfoot>

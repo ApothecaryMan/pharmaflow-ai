@@ -1,11 +1,12 @@
-import React, { useMemo, useCallback, useEffect, useRef, useState } from 'react';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useAlert } from '../../../../context';
+import { employeeRepository } from '../../../../services/hr/repositories/employeeRepository';
 import type { Employee } from '../../../../types';
 import { useContextMenu } from '../../../common/ContextMenu';
 import { usePosSounds } from '../../../common/hooks/usePosSounds';
 import { useSmartDirection } from '../../../common/SmartInputs';
 import { StatusBarItem } from '../StatusBarItem';
-import { useAlert } from '../../../../context';
-import { employeeRepository } from '../../../../services/hr/repositories/employeeRepository';
 
 interface QuickLoginProps {
   userName?: string;
@@ -24,17 +25,17 @@ type Step = 'idle' | 'username' | 'password' | 'new-password';
 
 // --- Sub-components for flattening and modularity ---
 
-const PasskeyButton: React.FC<{ 
-  onClick: () => void; 
+const PasskeyButton: React.FC<{
+  onClick: () => void;
   title: string;
 }> = ({ onClick, title }) => (
   <button
     onClick={onClick}
-    className="flex items-center justify-center h-full px-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+    className='flex items-center justify-center h-full px-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors'
     title={title}
   >
-    <span 
-      className="material-symbols-rounded text-primary-500 leading-none" 
+    <span
+      className='material-symbols-rounded text-primary-500 leading-none'
       style={{ fontSize: 'calc(var(--status-icon-size, 16px) + 2px)' }}
     >
       fingerprint
@@ -54,7 +55,19 @@ const LoginInputView: React.FC<{
   dir: 'rtl' | 'ltr';
   inputRef: React.RefObject<HTMLInputElement | null>;
   t?: any;
-}> = ({ step, inputVal, setInputVal, isError, setIsError, onKeyDown, onForgotPassword, language, dir, inputRef, t }) => {
+}> = ({
+  step,
+  inputVal,
+  setInputVal,
+  isError,
+  setIsError,
+  onKeyDown,
+  onForgotPassword,
+  language,
+  dir,
+  inputRef,
+  t,
+}) => {
   const isNewPass = step === 'new-password';
   const isAR = language === 'AR';
 
@@ -65,19 +78,26 @@ const LoginInputView: React.FC<{
   }, [step, t, isNewPass]);
 
   return (
-    <div className={`relative flex items-center h-full w-fit overflow-hidden ${isNewPass ? 'px-0 border-none' : 'px-2 gap-2 bg-white/50 dark:bg-gray-900/50 border-x border-gray-300 dark:border-gray-700'}`}>
+    <div
+      className={`relative flex items-center h-full w-fit overflow-hidden ${isNewPass ? 'px-0 border-none' : 'px-2 gap-2 bg-white/50 dark:bg-gray-900/50 border-x border-gray-300 dark:border-gray-700'}`}
+    >
       {isNewPass && (
         <>
           <div
-            className="absolute inset-[-100%] animate-spin-slow"
-            style={{ background: 'conic-gradient(from 0deg, #3b82f6, #8b5cf6, #ec4899, #ef4444, #f59e0b, #10b981, #3b82f6)' }}
+            className='absolute inset-[-100%] animate-spin-slow'
+            style={{
+              background:
+                'conic-gradient(from 0deg, #3b82f6, #8b5cf6, #ec4899, #ef4444, #f59e0b, #10b981, #3b82f6)',
+            }}
           />
-          <div className="absolute inset-[1.5px] bg-(--bg-menu) rounded-[1px] z-0" />
+          <div className='absolute inset-[1.5px] bg-(--bg-menu) rounded-[1px] z-0' />
         </>
       )}
 
-      <div className={`relative z-10 flex items-center h-full w-full ${isNewPass ? 'px-2 gap-2' : ''}`}>
-        <span 
+      <div
+        className={`relative z-10 flex items-center h-full w-full ${isNewPass ? 'px-2 gap-2' : ''}`}
+      >
+        <span
           className={`material-symbols-rounded leading-none ${isError ? 'text-red-500' : 'text-primary-500 dark:text-blue-400'}`}
           style={{ fontSize: 'var(--status-icon-size, 16px)' }}
         >
@@ -95,21 +115,24 @@ const LoginInputView: React.FC<{
           onKeyDown={onKeyDown}
           placeholder={placeholder}
           className={`bg-transparent border-none outline-hidden text-[11px] font-bold text-(--text-primary) placeholder-gray-500 ${isNewPass ? 'w-32' : 'w-24'} focus:ring-0 ${isError ? 'text-red-500 dark:text-red-400' : ''}`}
-          autoComplete="off"
+          autoComplete='off'
         />
         {step === 'username' && isError && (
-          <span className="text-[9px] text-red-500 ml-1 font-normal">
+          <span className='text-[9px] text-red-500 ml-1 font-normal'>
             {t?.notFound || 'Not found'}
           </span>
         )}
         {step === 'password' && (
           <button
-            onClick={(e) => { e.stopPropagation(); onForgotPassword(); }}
-            className="ml-auto text-gray-400 hover:text-primary-500 cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              onForgotPassword();
+            }}
+            className='ml-auto text-gray-400 hover:text-primary-500 cursor-pointer'
             title={t?.forgotPassword || 'Forgot Password?'}
           >
-            <span 
-              className="material-symbols-rounded block leading-none" 
+            <span
+              className='material-symbols-rounded block leading-none'
               style={{ fontSize: 'var(--status-icon-size, 16px)' }}
             >
               help
@@ -178,9 +201,9 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
     if (step === 'username') {
       const query = inputVal.trim();
       if (!query) return;
-      
-      let found = employees.find(emp => emp.username === query);
-      
+
+      let found = employees.find((emp) => emp.username === query);
+
       if (!found) {
         try {
           const dbFound = await employeeRepository.getByUsername(query);
@@ -202,7 +225,9 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
     } else if (step === 'password') {
       if (tempEmployee && onSelectEmployee) {
         const { verifyPassword } = await import('../../../../services/auth/hashUtils');
-        const isValid = tempEmployee.password ? await verifyPassword(inputVal.trim(), tempEmployee.password) : false;
+        const isValid = tempEmployee.password
+          ? await verifyPassword(inputVal.trim(), tempEmployee.password)
+          : false;
         if (isValid) {
           playSuccess();
           onSelectEmployee(tempEmployee.id);
@@ -235,25 +260,31 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
   const handlePasskeyLogin = async () => {
     try {
       const { startAuthentication } = await import('@simplewebauthn/browser');
-      const { generateChallenge, bufferToBase64, isWebAuthnSupported } = await import('../../../../utils/webAuthnUtils');
+      const { generateChallenge, bufferToBase64, isWebAuthnSupported } = await import(
+        '../../../../utils/webAuthnUtils'
+      );
       const { authService } = await import('../../../../services/auth/authService');
 
       if (!(await isWebAuthnSupported())) {
-        alert.warning(t?.biometricUnsupported || 'Browser does not support Passkeys. Ensure you are on HTTPS.');
+        alert.warning(
+          t?.biometricUnsupported || 'Browser does not support Passkeys. Ensure you are on HTTPS.'
+        );
         return;
       }
 
       // Smart optimization: If user already typed their username, target their specific passkey
       // to skip the browser selection list.
-      let allowCredentials = undefined;
+      let allowCredentials;
       if (step === 'username' && inputVal.trim()) {
-        const found = employees.find(emp => emp.username === inputVal.trim());
+        const found = employees.find((emp) => emp.username === inputVal.trim());
         if (found?.biometricCredentialId) {
-          allowCredentials = [{
-            id: found.biometricCredentialId,
-            type: 'public-key' as const,
-            transports: ['internal'] as AuthenticatorTransport[],
-          }];
+          allowCredentials = [
+            {
+              id: found.biometricCredentialId,
+              type: 'public-key' as const,
+              transports: ['internal'] as AuthenticatorTransport[],
+            },
+          ];
         }
       }
 
@@ -299,7 +330,10 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
         label: t?.signOut || (isAR ? 'تسجيل الخروج' : 'Sign Out'),
         icon: 'logout',
         danger: true,
-        action: () => { onSelectEmployee(null); resetState(); },
+        action: () => {
+          onSelectEmployee(null);
+          resetState();
+        },
       },
     ]);
   };
@@ -332,7 +366,12 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node) && step !== 'idle') resetState();
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node) &&
+        step !== 'idle'
+      )
+        resetState();
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -341,36 +380,40 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
   if (!onSelectEmployee) {
     return (
       <StatusBarItem
-        icon="person"
+        icon='person'
         label={roleLabel ? `${userName} (${roleLabel})` : userName}
         tooltip={roleLabel || userName}
-        variant="default"
+        variant='default'
       />
     );
   }
 
   return (
-    <div className="relative flex items-center h-full" ref={containerRef} dir={isAR ? 'rtl' : 'ltr'}>
+    <div
+      className='relative flex items-center h-full'
+      ref={containerRef}
+      dir={isAR ? 'rtl' : 'ltr'}
+    >
       {step === 'idle' ? (
-        <div onContextMenu={handleContextMenu} className="h-full flex items-center">
+        <div onContextMenu={handleContextMenu} className='h-full flex items-center'>
           <StatusBarItem
-            icon="person"
+            icon='person'
             label={loginLabel}
             tooltip={tooltipText}
             onClick={handleStartLogin}
             variant={currentEmployeeId ? 'info' : 'warning'}
-            className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/10"
+            className='cursor-pointer hover:bg-black/5 dark:hover:bg-white/10'
           >
             {isLoading && currentEmployeeId && (
-              <span className="inline-flex items-center gap-1">
-                <span className="w-12 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full" />
+              <span className='inline-flex items-center gap-1'>
+                <span className='w-12 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full' />
               </span>
             )}
           </StatusBarItem>
           {!currentEmployeeId && (
-            <PasskeyButton 
-              onClick={handlePasskeyLogin} 
-              title={isAR ? 'تسجيل الدخول بمفتاح المرور' : 'Login with Passkey'} 
+            <PasskeyButton
+              onClick={handlePasskeyLogin}
+              title={isAR ? 'تسجيل الدخول بمفتاح المرور' : 'Login with Passkey'}
             />
           )}
         </div>

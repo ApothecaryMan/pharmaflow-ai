@@ -1,20 +1,26 @@
-import React, { useState, useMemo } from 'react';
-import type { Sale, Return, Shift } from '../../types';
-import { getDisplayName } from '../../utils/drugDisplayName';
-import { formatCurrency } from '../../utils/currency';
-import { money, pricing } from '../../utils/money';
-import { permissionsService } from '../../services/auth/permissionsService';
-import { Modal } from '../common/Modal';
-import { MaterialTabs } from '../common/MaterialTabs';
-import { ReturnModal } from './ReturnModal';
-import { getActiveReceiptSettings, printInvoice, type InvoiceTemplateOptions } from './InvoiceTemplate';
+import type React from 'react';
+import { useMemo, useState } from 'react';
 import { useData } from '../../context/DataContext';
+import { permissionsService } from '../../services/auth/permissionsService';
+import type { Return, Sale, Shift } from '../../types';
+import { formatCurrency } from '../../utils/currency';
+import { getDisplayName } from '../../utils/drugDisplayName';
+import { money, pricing } from '../../utils/money';
+import { MaterialTabs } from '../common/MaterialTabs';
+import { Modal } from '../common/Modal';
+import {
+  getActiveReceiptSettings,
+  type InvoiceTemplateOptions,
+  printInvoice,
+} from './InvoiceTemplate';
+import { ReturnModal } from './ReturnModal';
 
 interface SaleDetailModalProps {
   sale: Sale | null;
   isOpen: boolean;
   onClose: () => void;
-  t: Translations; slations;
+  t: Translations;
+  slations;
   language: string;
   color: string;
   textTransform: any;
@@ -34,7 +40,9 @@ const SmartQuantityBadge: React.FC<{
   avgDiscount: number;
   language: string;
 }> = ({ packQty, unitQty, hasDiscount, avgDiscount, language }) => (
-  <div className={`relative ${packQty > 0 && unitQty > 0 ? 'w-[52px]' : 'w-10'} h-10 shrink-0 group`}>
+  <div
+    className={`relative ${packQty > 0 && unitQty > 0 ? 'w-[52px]' : 'w-10'} h-10 shrink-0 group`}
+  >
     {hasDiscount && (
       <div className='absolute -top-1 -right-1 z-20 flex items-center justify-center'>
         <div className='absolute w-2 h-2 bg-emerald-500 rounded-full shadow-sm' />
@@ -47,15 +55,25 @@ const SmartQuantityBadge: React.FC<{
     )}
     <div className='flex w-full h-full bg-gray-100 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 overflow-hidden group-hover:border-primary-500/30 group-hover:shadow-lg group-hover:shadow-primary-500/5 transition-all duration-300'>
       {packQty > 0 && (
-        <div className={`flex flex-col items-center justify-center flex-1 leading-none ${unitQty > 0 ? 'border-r border-gray-200/50 dark:border-white/5' : ''}`}>
-          <span className='text-[13px] font-black text-gray-900 dark:text-white tabular-nums'>{packQty}</span>
-          <span className='text-[7px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mt-0.5'>{language === 'AR' ? 'علبة' : 'BOX'}</span>
+        <div
+          className={`flex flex-col items-center justify-center flex-1 leading-none ${unitQty > 0 ? 'border-r border-gray-200/50 dark:border-white/5' : ''}`}
+        >
+          <span className='text-[13px] font-black text-gray-900 dark:text-white tabular-nums'>
+            {packQty}
+          </span>
+          <span className='text-[7px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mt-0.5'>
+            {language === 'AR' ? 'علبة' : 'BOX'}
+          </span>
         </div>
       )}
       {unitQty > 0 && (
         <div className='flex flex-col items-center justify-center flex-1 leading-none'>
-          <span className='text-[12px] font-black text-primary-600 dark:text-primary-400 tabular-nums'>{unitQty}</span>
-          <span className='text-[7px] font-black text-primary-600/60 dark:text-primary-400/60 uppercase tracking-wider mt-0.5'>{language === 'AR' ? 'وحدة' : 'UNIT'}</span>
+          <span className='text-[12px] font-black text-primary-600 dark:text-primary-400 tabular-nums'>
+            {unitQty}
+          </span>
+          <span className='text-[7px] font-black text-primary-600/60 dark:text-primary-400/60 uppercase tracking-wider mt-0.5'>
+            {language === 'AR' ? 'وحدة' : 'UNIT'}
+          </span>
         </div>
       )}
     </div>
@@ -70,13 +88,26 @@ const StatCapsule: React.FC<{
   side?: 'start' | 'end' | 'full';
 }> = ({ label, value, icon, variant = 'default', side = 'full' }) => {
   const isSuccess = variant === 'success';
-  const roundedClasses = side === 'start' ? 'rounded-s-2xl rounded-e-sm' : side === 'end' ? 'rounded-e-2xl rounded-s-sm' : 'rounded-2xl';
-  const bgClasses = isSuccess ? 'bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-500/10' : 'bg-gray-50 dark:bg-white/[0.03] border-gray-100 dark:border-white/5';
-  const textClasses = isSuccess ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-900 dark:text-gray-100';
+  const roundedClasses =
+    side === 'start'
+      ? 'rounded-s-2xl rounded-e-sm'
+      : side === 'end'
+        ? 'rounded-e-2xl rounded-s-sm'
+        : 'rounded-2xl';
+  const bgClasses = isSuccess
+    ? 'bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-500/10'
+    : 'bg-gray-50 dark:bg-white/[0.03] border-gray-100 dark:border-white/5';
+  const textClasses = isSuccess
+    ? 'text-emerald-600 dark:text-emerald-500'
+    : 'text-gray-900 dark:text-gray-100';
 
   return (
-    <div className={`flex-1 flex items-center justify-between gap-2 px-3 py-2 border ${bgClasses} ${roundedClasses}`}>
-      <div className={`flex items-center gap-1.5 ${isSuccess ? 'opacity-80' : 'opacity-50'} ${textClasses}`}>
+    <div
+      className={`flex-1 flex items-center justify-between gap-2 px-3 py-2 border ${bgClasses} ${roundedClasses}`}
+    >
+      <div
+        className={`flex items-center gap-1.5 ${isSuccess ? 'opacity-80' : 'opacity-50'} ${textClasses}`}
+      >
         <span className='material-symbols-rounded text-[14px]'>{icon}</span>
         <span className='text-[9px] font-bold uppercase tracking-wider'>{label}</span>
       </div>
@@ -88,37 +119,55 @@ const StatCapsule: React.FC<{
 const ModificationItem: React.FC<{
   mod: any;
   textTransform: any;
-  t: Translations; slations;
+  t: Translations;
+  slations;
 }> = ({ mod, textTransform, t }) => {
   const typeColors: Record<string, string> = {
     item_removed: 'text-rose-500',
     item_added: 'text-emerald-500',
     default: 'text-indigo-500',
   };
-  const icon = mod.type === 'item_removed' ? 'remove_circle' : mod.type === 'item_added' ? 'add_circle' : 'edit_square';
+  const icon =
+    mod.type === 'item_removed'
+      ? 'remove_circle'
+      : mod.type === 'item_added'
+        ? 'add_circle'
+        : 'edit_square';
   const colorClass = typeColors[mod.type] || typeColors.default;
 
   return (
     <div className='text-[11px] text-gray-600 dark:text-gray-400 flex items-center justify-between bg-gray-50 dark:bg-white/[0.03] px-2.5 py-1.5 rounded-xl border border-gray-100 dark:border-white/5'>
       <div className='flex items-center gap-2.5 overflow-hidden'>
-        <span className={`material-symbols-rounded text-[16px] shrink-0 ${colorClass}`}>{icon}</span>
+        <span className={`material-symbols-rounded text-[16px] shrink-0 ${colorClass}`}>
+          {icon}
+        </span>
         <span className='font-bold text-gray-900 dark:text-gray-200 truncate max-w-[140px]'>
           {getDisplayName({ name: mod.itemName, dosageForm: mod.dosageForm }, textTransform)}
         </span>
       </div>
       <div className='whitespace-nowrap font-medium flex items-center gap-1.5 shrink-0 uppercase tracking-tighter'>
         {mod.type === 'item_removed' ? (
-          <span className='text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded text-[9px] font-black'>{t.modal.removed || 'Removed'}</span>
+          <span className='text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded text-[9px] font-black'>
+            {t.modal.removed || 'Removed'}
+          </span>
         ) : mod.type === 'quantity_update' || mod.type === 'discount_update' ? (
           <div className='flex items-center gap-1 text-[10px]'>
-            <span className='opacity-40'>{mod.type === 'quantity_update' ? mod.previousQuantity : `${mod.previousDiscount}%`}</span>
+            <span className='opacity-40'>
+              {mod.type === 'quantity_update' ? mod.previousQuantity : `${mod.previousDiscount}%`}
+            </span>
             <span className='material-symbols-rounded text-[12px] opacity-20'>arrow_forward</span>
-            <span className='font-black text-indigo-600 dark:text-indigo-400'>{mod.type === 'quantity_update' ? mod.newQuantity : `${mod.newDiscount}%`}</span>
+            <span className='font-black text-indigo-600 dark:text-indigo-400'>
+              {mod.type === 'quantity_update' ? mod.newQuantity : `${mod.newDiscount}%`}
+            </span>
           </div>
         ) : (
           <div className='flex items-center gap-1.5'>
-            <span className='text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded text-[9px] font-black'>{t.modal.added || 'Added'}</span>
-            <span className='font-black text-emerald-600 dark:text-emerald-400'>({mod.newQuantity})</span>
+            <span className='text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded text-[9px] font-black'>
+              {t.modal.added || 'Added'}
+            </span>
+            <span className='font-black text-emerald-600 dark:text-emerald-400'>
+              ({mod.newQuantity})
+            </span>
           </div>
         )}
       </div>
@@ -126,9 +175,10 @@ const ModificationItem: React.FC<{
   );
 };
 
-const ListWrapper: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <div className={`flex flex-col gap-0.5 ${className}`}>{children}</div>
-);
+const ListWrapper: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children,
+  className = '',
+}) => <div className={`flex flex-col gap-0.5 ${className}`}>{children}</div>;
 
 const ListItem: React.FC<{
   index: number;
@@ -139,7 +189,14 @@ const ListItem: React.FC<{
 }> = ({ index, total, children, className = '', onClick }) => {
   const isFirst = index === 0;
   const isLast = index === total - 1;
-  const rounding = isFirst && isLast ? 'rounded-2xl' : isFirst ? 'rounded-t-2xl rounded-b-md' : isLast ? 'rounded-b-2xl rounded-t-md' : 'rounded-md';
+  const rounding =
+    isFirst && isLast
+      ? 'rounded-2xl'
+      : isFirst
+        ? 'rounded-t-2xl rounded-b-md'
+        : isLast
+          ? 'rounded-b-2xl rounded-t-md'
+          : 'rounded-md';
   return (
     <div
       onClick={onClick}
@@ -151,8 +208,17 @@ const ListItem: React.FC<{
 };
 
 export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
-  sale, isOpen, onClose, t, language, color, textTransform,
-  currentShift, currentEmployeeId, currentDailyRefunds = 0, onProcessReturn,
+  sale,
+  isOpen,
+  onClose,
+  t,
+  language,
+  color,
+  textTransform,
+  currentShift,
+  currentEmployeeId,
+  currentDailyRefunds = 0,
+  onProcessReturn,
 }) => {
   const { inventory, branches } = useData();
   const [returnModalOpen, setReturnModalOpen] = useState(false);
@@ -160,7 +226,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
 
   const inventoryMap = useMemo(() => {
     const map = new Map();
-    inventory.forEach(d => {
+    inventory.forEach((d) => {
       map.set(d.id, d);
       d.batches?.forEach((b: any) => map.set(b.id, d));
     });
@@ -174,19 +240,35 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
 
   const handlePrint = () => {
     const saleBranch = branches?.find((b: any) => b.id === sale.branchId);
-    printInvoice(sale, { ...getActiveReceiptSettings(saleBranch?.printSettings), language: language as 'EN' | 'AR' });
+    printInvoice(sale, {
+      ...getActiveReceiptSettings(saleBranch?.printSettings),
+      language: language as 'EN' | 'AR',
+    });
   };
 
   return (
     <>
       <Modal
-        isOpen={isOpen && !returnModalOpen} onClose={onClose} size='lg' title={t.modal.title}
-        icon='receipt_long' className='overscroll-contain'
-        tabs={sale.customerCode ? [
-          { label: t.modal.items || 'Items', value: 'items', icon: 'list' },
-          { label: t.modal.modificationHistory || 'History', value: 'history', icon: 'history' },
-        ] : undefined}
-        activeTab={activeTab} onTabChange={setActiveTab}
+        isOpen={isOpen && !returnModalOpen}
+        onClose={onClose}
+        size='lg'
+        title={t.modal.title}
+        icon='receipt_long'
+        className='overscroll-contain'
+        tabs={
+          sale.customerCode
+            ? [
+                { label: t.modal.items || 'Items', value: 'items', icon: 'list' },
+                {
+                  label: t.modal.modificationHistory || 'History',
+                  value: 'history',
+                  icon: 'history',
+                },
+              ]
+            : undefined
+        }
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       >
         <div className='flex flex-col h-full max-h-[80vh]'>
           {/* 1. Header Info Section (Fixed) */}
@@ -194,9 +276,16 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
             <ListWrapper>
               {[
                 {
-                  label: t.modal.date, icon: 'calendar_today', value: (() => {
+                  label: t.modal.date,
+                  icon: 'calendar_today',
+                  value: (() => {
                     const d = new Date(sale.date);
-                    let timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true, numberingSystem: 'latn' });
+                    let timeStr = d.toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true,
+                      numberingSystem: 'latn',
+                    });
                     if (language === 'AR') timeStr = timeStr.replace('AM', 'ص').replace('PM', 'م');
                     return (
                       <div className='flex items-center gap-1.5'>
@@ -205,34 +294,60 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                         <span>{timeStr}</span>
                       </div>
                     );
-                  })()
+                  })(),
                 },
                 {
-                  label: t.modal.id, icon: 'tag', value: (
+                  label: t.modal.id,
+                  icon: 'tag',
+                  value: (
                     <div className='flex items-center gap-2'>
                       {sale.status && (
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-lg border font-bold uppercase tracking-wider ${sale.status === 'completed' ? 'border-emerald-500/50 text-emerald-500 bg-emerald-500/5' :
-                            'border-primary-500/50 text-primary-500 bg-primary-500/5'
-                          }`}>
-                          {(language === 'AR' ? { 'completed': 'مكتمل', 'cancelled': 'ملغي', 'returned': 'مرتجع' }[sale.status] : sale.status.toUpperCase()) || sale.status}
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded-lg border font-bold uppercase tracking-wider ${
+                            sale.status === 'completed'
+                              ? 'border-emerald-500/50 text-emerald-500 bg-emerald-500/5'
+                              : 'border-primary-500/50 text-primary-500 bg-primary-500/5'
+                          }`}
+                        >
+                          {(language === 'AR'
+                            ? { completed: 'مكتمل', cancelled: 'ملغي', returned: 'مرتجع' }[
+                                sale.status
+                              ]
+                            : sale.status.toUpperCase()) || sale.status}
                         </span>
                       )}
                       <span className='font-mono'>{sale.serialId || sale.id}</span>
                     </div>
-                  )
+                  ),
                 },
                 {
-                  label: t.modal.customer, icon: 'person', value: (
+                  label: t.modal.customer,
+                  icon: 'person',
+                  value: (
                     <div className='flex items-center gap-1.5 truncate'>
                       <span className='font-bold'>{sale.customerName || 'Guest'}</span>
-                      {sale.customerCode && <><span className='opacity-30'>•</span><span className='text-xs'>{sale.customerCode}</span></>}
+                      {sale.customerCode && (
+                        <>
+                          <span className='opacity-30'>•</span>
+                          <span className='text-xs'>{sale.customerCode}</span>
+                        </>
+                      )}
                     </div>
-                  )
+                  ),
                 },
-                { label: t.modal.payment, icon: 'payments', value: sale.paymentMethod === 'visa' ? t.visa : t.cash }
+                {
+                  label: t.modal.payment,
+                  icon: 'payments',
+                  value: sale.paymentMethod === 'visa' ? t.visa : t.cash,
+                },
               ].map((item, i, arr) => (
                 <ListItem key={i} index={i} total={arr.length}>
-                  <div className='flex items-center gap-2 shrink-0'><span className='material-symbols-rounded text-base opacity-40'>{item.icon}</span><span className={labelText}>{item.label}</span></div>
+                  <div className='flex items-center gap-2 shrink-0'>
+                    <span className='material-symbols-rounded text-base opacity-40'>
+                      {item.icon}
+                    </span>
+                    <span className={labelText}>{item.label}</span>
+                  </div>
                   <div className='text-[12px] font-bold text-right pl-2'>{item.value}</div>
                 </ListItem>
               ))}
@@ -243,7 +358,9 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
           <div className='flex-1 overflow-y-auto min-h-0 custom-scrollbar pr-1'>
             {activeTab === 'items' ? (
               <div className='pt-1'>
-                <p className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2 tracking-widest'>{t.modal.items}</p>
+                <p className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2 tracking-widest'>
+                  {t.modal.items}
+                </p>
                 <ListWrapper>
                   {(() => {
                     const groups: Record<string, any> = {};
@@ -253,11 +370,12 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                       const drugId = item.drugId ?? item.drug_id ?? drug?.id ?? item.id;
 
                       const dosageForm = item.dosageForm ?? item.dosage_form ?? drug?.dosageForm;
-                      const unitsPerPack = item.unitsPerPack ?? item.units_per_pack ?? drug?.unitsPerPack ?? 1;
+                      const unitsPerPack =
+                        item.unitsPerPack ?? item.units_per_pack ?? drug?.unitsPerPack ?? 1;
                       const publicPrice = item.publicPrice ?? item.public_price ?? 0;
                       const itemDiscount = item.discount ?? item.discount_percentage ?? 0;
 
-                      const g: any = groups[drugId] ||= {
+                      const g: any = (groups[drugId] ||= {
                         id: drugId,
                         name: item.name,
                         dosageForm: dosageForm,
@@ -269,16 +387,20 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                         unitsPerPack: unitsPerPack,
                         itemBasePrice: publicPrice,
                         itemDiscount: itemDiscount,
-                        expiries: new Set<string>()
-                      };
+                        expiries: new Set<string>(),
+                      });
 
                       const isUnit = !!item.isUnit;
                       const lineKey = `${drugId}_${isUnit ? 'unit' : 'pack'}`;
-                      const ret = sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[drugId] || 0;
+                      const ret =
+                        sale.itemReturnedQuantities?.[lineKey] ||
+                        sale.itemReturnedQuantities?.[drugId] ||
+                        0;
 
-                      if (isUnit) g.unitQty += item.quantity; else g.packQty += item.quantity;
+                      if (isUnit) g.unitQty += item.quantity;
+                      else g.packQty += item.quantity;
                       const realQty = item.quantity - ret;
-                      const price = isUnit ? (publicPrice / (unitsPerPack || 1)) : publicPrice;
+                      const price = isUnit ? publicPrice / (unitsPerPack || 1) : publicPrice;
 
                       const lineTotal = money.multiply(price, realQty, 0);
                       const discountedTotal = pricing.afterDiscount(lineTotal, itemDiscount);
@@ -287,7 +409,11 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                       g.preDiscountTotal = money.add(g.preDiscountTotal, lineTotal);
                       g.returnedQty += ret;
 
-                      const expiry = item.batchAllocations?.[0]?.expiryDate || item.expiryDate || item.expiry_date || drug?.expiryDate;
+                      const expiry =
+                        item.batchAllocations?.[0]?.expiryDate ||
+                        item.expiryDate ||
+                        item.expiry_date ||
+                        drug?.expiryDate;
                       if (expiry) {
                         const d = new Date(expiry);
                         const month = (d.getMonth() + 1).toString().padStart(2, '0');
@@ -299,9 +425,13 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                     const groupList = Object.values(groups);
                     return groupList.map((g: any, i) => {
                       const hasRet = g.returnedQty > 0;
-                      const isFullRet = g.returnedQty >= (g.packQty + g.unitQty);
+                      const isFullRet = g.returnedQty >= g.packQty + g.unitQty;
                       const hasDisc = g.preDiscountTotal > g.totalPrice + 0.01;
-                      const disc = hasDisc ? Math.round(((g.preDiscountTotal - g.totalPrice) / g.preDiscountTotal) * 100) : 0;
+                      const disc = hasDisc
+                        ? Math.round(
+                            ((g.preDiscountTotal - g.totalPrice) / g.preDiscountTotal) * 100
+                          )
+                        : 0;
                       const expiryList = Array.from(g.expiries as Set<string>);
 
                       return (
@@ -309,19 +439,43 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                           key={g.id}
                           index={i}
                           total={groupList.length}
-                          className={hasRet ? `!bg-rose-50/50 dark:!bg-rose-950/20 !border-rose-200 dark:!border-rose-900/30` : ''}
+                          className={
+                            hasRet
+                              ? `!bg-rose-50/50 dark:!bg-rose-950/20 !border-rose-200 dark:!border-rose-900/30`
+                              : ''
+                          }
                         >
-                          <div className='flex justify-between items-center w-full min-w-0' dir='ltr'>
+                          <div
+                            className='flex justify-between items-center w-full min-w-0'
+                            dir='ltr'
+                          >
                             <div className='flex items-center gap-2.5 min-w-0 flex-1'>
-                              <SmartQuantityBadge packQty={g.packQty} unitQty={g.unitQty} hasDiscount={hasDisc} avgDiscount={disc} language={language} />
+                              <SmartQuantityBadge
+                                packQty={g.packQty}
+                                unitQty={g.unitQty}
+                                hasDiscount={hasDisc}
+                                avgDiscount={disc}
+                                language={language}
+                              />
                               <div className='text-left min-w-0 flex-1 py-0.5'>
-                                <p className='font-bold truncate text-[13px]'>{getDisplayName({ name: g.name, dosageForm: g.dosageForm }, textTransform)}</p>
+                                <p className='font-bold truncate text-[13px]'>
+                                  {getDisplayName(
+                                    { name: g.name, dosageForm: g.dosageForm },
+                                    textTransform
+                                  )}
+                                </p>
                                 <div className='text-[10px] text-gray-400 flex items-center flex-wrap gap-1.5 mt-0.5'>
                                   {!permissionsService.can('sale.view_assigned_only') && (
                                     <>
                                       <span>{formatCurrency(g.itemBasePrice)}</span>
-                                      {hasDisc && <span className='px-1 rounded bg-green-500/10 text-green-600 font-black text-[9px]'>-{disc}%</span>}
-                                      {expiryList.length > 0 && <span className='opacity-30 self-center'>•</span>}
+                                      {hasDisc && (
+                                        <span className='px-1 rounded bg-green-500/10 text-green-600 font-black text-[9px]'>
+                                          -{disc}%
+                                        </span>
+                                      )}
+                                      {expiryList.length > 0 && (
+                                        <span className='opacity-30 self-center'>•</span>
+                                      )}
                                     </>
                                   )}
                                   {expiryList.length > 0 && (
@@ -334,14 +488,26 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                             </div>
                             <div className='text-right flex flex-col items-end shrink-0 pl-1'>
                               {hasRet && (
-                                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1 mb-1 ${isFullRet ? 'bg-red-100/80 text-red-600' : 'bg-orange-100/80 text-orange-600'}`}>
-                                  {isFullRet ? (language === 'AR' ? 'مرتجع كلي' : 'FULL RETURN') : (language === 'AR' ? `مرتجع (${g.returnedQty})` : `RET (${g.returnedQty})`)}
+                                <span
+                                  className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1 mb-1 ${isFullRet ? 'bg-red-100/80 text-red-600' : 'bg-orange-100/80 text-orange-600'}`}
+                                >
+                                  {isFullRet
+                                    ? language === 'AR'
+                                      ? 'مرتجع كلي'
+                                      : 'FULL RETURN'
+                                    : language === 'AR'
+                                      ? `مرتجع (${g.returnedQty})`
+                                      : `RET (${g.returnedQty})`}
                                 </span>
                               )}
                               {!isFullRet && (
                                 <div className='flex flex-col items-end leading-tight'>
                                   <span className='font-bold'>{formatCurrency(g.totalPrice)}</span>
-                                  {hasDisc && <span className='text-[9px] text-gray-400 line-through opacity-60'>{formatCurrency(g.preDiscountTotal)}</span>}
+                                  {hasDisc && (
+                                    <span className='text-[9px] text-gray-400 line-through opacity-60'>
+                                      {formatCurrency(g.preDiscountTotal)}
+                                    </span>
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -354,23 +520,62 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
               </div>
             ) : (
               <div className='pt-1'>
-                <div className='flex items-center gap-2 mb-3'><span className='material-symbols-rounded text-base text-gray-400'>history</span><p className={labelText}>{t.modal.modificationHistory || 'History'}</p></div>
+                <div className='flex items-center gap-2 mb-3'>
+                  <span className='material-symbols-rounded text-base text-gray-400'>history</span>
+                  <p className={labelText}>{t.modal.modificationHistory || 'History'}</p>
+                </div>
                 {sale.modificationHistory?.length ? (
                   <ListWrapper>
-                    {sale.modificationHistory.slice().reverse().map((r, i, arr) => (
-                      <ListItem key={i} index={i} total={arr.length} className='flex-col !items-stretch py-3'>
-                        <div className='flex justify-between items-center mb-2.5'>
-                          <div className='flex items-center gap-1.5'><div className='w-6 h-6 rounded-full bg-primary-500/10 flex items-center justify-center'><span className='material-symbols-rounded text-primary-500 text-xs'>person</span></div><span className='text-[11px] font-bold'>{r.modifiedBy}</span></div>
-                          <span className='text-[9px] text-gray-400 font-mono bg-gray-100 dark:bg-white/5 px-1.5 py-0.5 rounded'>{new Date(r.timestamp).toLocaleString('en-US', { numberingSystem: 'latn', hour12: true, month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                        <div className='flex flex-col gap-1.5'>
-                          {r.modifications.map((m, mi) => <ModificationItem key={mi} mod={m} textTransform={textTransform} t={t} />)}
-                        </div>
-                      </ListItem>
-                    ))}
+                    {sale.modificationHistory
+                      .slice()
+                      .reverse()
+                      .map((r, i, arr) => (
+                        <ListItem
+                          key={i}
+                          index={i}
+                          total={arr.length}
+                          className='flex-col !items-stretch py-3'
+                        >
+                          <div className='flex justify-between items-center mb-2.5'>
+                            <div className='flex items-center gap-1.5'>
+                              <div className='w-6 h-6 rounded-full bg-primary-500/10 flex items-center justify-center'>
+                                <span className='material-symbols-rounded text-primary-500 text-xs'>
+                                  person
+                                </span>
+                              </div>
+                              <span className='text-[11px] font-bold'>{r.modifiedBy}</span>
+                            </div>
+                            <span className='text-[9px] text-gray-400 font-mono bg-gray-100 dark:bg-white/5 px-1.5 py-0.5 rounded'>
+                              {new Date(r.timestamp).toLocaleString('en-US', {
+                                numberingSystem: 'latn',
+                                hour12: true,
+                                month: 'numeric',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+                          <div className='flex flex-col gap-1.5'>
+                            {r.modifications.map((m, mi) => (
+                              <ModificationItem
+                                key={mi}
+                                mod={m}
+                                textTransform={textTransform}
+                                t={t}
+                              />
+                            ))}
+                          </div>
+                        </ListItem>
+                      ))}
                   </ListWrapper>
                 ) : (
-                  <div className='flex flex-col items-center justify-center py-12 text-gray-400'><span className='material-symbols-rounded text-4xl mb-2 opacity-20'>history</span><p className='text-xs'>{t.modal.noHistory || 'No history'}</p></div>
+                  <div className='flex flex-col items-center justify-center py-12 text-gray-400'>
+                    <span className='material-symbols-rounded text-4xl mb-2 opacity-20'>
+                      history
+                    </span>
+                    <p className='text-xs'>{t.modal.noHistory || 'No history'}</p>
+                  </div>
                 )}
               </div>
             )}
@@ -379,12 +584,19 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
           {/* 3. Footer Section (Totals & Buttons - Fixed) */}
           <div className='shrink-0 pt-3'>
             <div className={`pt-2 border-t ${bdr} space-y-2`}>
-              {sale.subtotal !== undefined && sale.subtotal !== sale.total && !permissionsService.can('sale.view_assigned_only') && (
-                <div className='flex justify-between items-center text-[12px] text-gray-500 px-1'>
-                  <div className='flex items-center gap-2'><span className='material-symbols-rounded text-base opacity-40'>payments</span><span>{t.modal.subtotal}</span></div>
-                  <span className='font-medium'>{formatCurrency(sale.subtotal)}</span>
-                </div>
-              )}
+              {sale.subtotal !== undefined &&
+                sale.subtotal !== sale.total &&
+                !permissionsService.can('sale.view_assigned_only') && (
+                  <div className='flex justify-between items-center text-[12px] text-gray-500 px-1'>
+                    <div className='flex items-center gap-2'>
+                      <span className='material-symbols-rounded text-base opacity-40'>
+                        payments
+                      </span>
+                      <span>{t.modal.subtotal}</span>
+                    </div>
+                    <span className='font-medium'>{formatCurrency(sale.subtotal)}</span>
+                  </div>
+                )}
               {(() => {
                 const hasDel = Number(sale.deliveryFee) > 0;
                 const subAndDel = money.add(sale.subtotal || 0, sale.deliveryFee || 0);
@@ -393,14 +605,35 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                 if (!hasDel && !hasSav) return null;
                 return (
                   <div className='flex items-stretch gap-1'>
-                    {hasDel && <StatCapsule label={t.pos?.deliveryOrder || t.deliveryFee || 'Delivery'} value={`+${formatCurrency(sale.deliveryFee!)}`} icon='delivery_dining' side={hasSav ? 'start' : 'full'} />}
-                    {hasSav && <StatCapsule label={language === 'AR' ? 'إجمالي الخصم' : 'Savings'} value={`-${formatCurrency(sav)}`} icon='savings' variant='success' side={hasDel ? 'end' : 'full'} />}
+                    {hasDel && (
+                      <StatCapsule
+                        label={t.pos?.deliveryOrder || t.deliveryFee || 'Delivery'}
+                        value={`+${formatCurrency(sale.deliveryFee!)}`}
+                        icon='delivery_dining'
+                        side={hasSav ? 'start' : 'full'}
+                      />
+                    )}
+                    {hasSav && (
+                      <StatCapsule
+                        label={language === 'AR' ? 'إجمالي الخصم' : 'Savings'}
+                        value={`-${formatCurrency(sav)}`}
+                        icon='savings'
+                        variant='success'
+                        side={hasDel ? 'end' : 'full'}
+                      />
+                    )}
                   </div>
                 );
               })()}
-              <div className={`flex justify-between items-center py-3 px-4 bg-gray-100/50 dark:bg-white/[0.03] rounded-2xl border ${bdr}`}>
-                <span className='font-bold text-[14px]'>{language === 'AR' ? 'الإجمالي الصافي' : t.modal.total}</span>
-                <span className='text-xl font-black tabular-nums tracking-tight'>{formatCurrency(sale.netTotal !== undefined ? sale.netTotal : sale.total)}</span>
+              <div
+                className={`flex justify-between items-center py-3 px-4 bg-gray-100/50 dark:bg-white/[0.03] rounded-2xl border ${bdr}`}
+              >
+                <span className='font-bold text-[14px]'>
+                  {language === 'AR' ? 'الإجمالي الصافي' : t.modal.total}
+                </span>
+                <span className='text-xl font-black tabular-nums tracking-tight'>
+                  {formatCurrency(sale.netTotal !== undefined ? sale.netTotal : sale.total)}
+                </span>
               </div>
             </div>
 
@@ -415,17 +648,32 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                   const returned = sale.itemReturnedQuantities?.[lineKey] || 0;
                   return returned < it.quantity;
                 });
-                const inShift = !!currentShift && new Date(sale.date) >= new Date(currentShift.openTime);
-                const canRef = onProcessReturn && permissionsService.can('sale.refund') && !(sale.saleType === 'delivery' && sale.status !== 'completed') && (permissionsService.getEffectiveRole() !== 'cashier' || inShift);
+                const inShift =
+                  !!currentShift && new Date(sale.date) >= new Date(currentShift.openTime);
+                const canRef =
+                  onProcessReturn &&
+                  permissionsService.can('sale.refund') &&
+                  !(sale.saleType === 'delivery' && sale.status !== 'completed') &&
+                  (permissionsService.getEffectiveRole() !== 'cashier' || inShift);
                 return (
                   <>
                     {hasRemaining && canRef && (
-                      <button onClick={() => setReturnModalOpen(true)} className='flex-1 py-3 rounded-full font-bold text-white bg-orange-600 hover:opacity-90 cursor-pointer transition-opacity flex items-center justify-center gap-2'>
-                        <span className='material-symbols-rounded text-base'>assignment_return</span>{t.returns?.processReturn || 'Return'}
+                      <button
+                        onClick={() => setReturnModalOpen(true)}
+                        className='flex-1 py-3 rounded-full font-bold text-white bg-orange-600 hover:opacity-90 cursor-pointer transition-opacity flex items-center justify-center gap-2'
+                      >
+                        <span className='material-symbols-rounded text-base'>
+                          assignment_return
+                        </span>
+                        {t.returns?.processReturn || 'Return'}
                       </button>
                     )}
-                    <button onClick={handlePrint} className='flex-1 py-3 rounded-full font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 cursor-pointer transition-colors flex items-center justify-center gap-2'>
-                      <span className='material-symbols-rounded text-base'>print</span>{t.modal.print}
+                    <button
+                      onClick={handlePrint}
+                      className='flex-1 py-3 rounded-full font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 cursor-pointer transition-colors flex items-center justify-center gap-2'
+                    >
+                      <span className='material-symbols-rounded text-base'>print</span>
+                      {t.modal.print}
                     </button>
                   </>
                 );
@@ -437,9 +685,20 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
 
       {returnModalOpen && onProcessReturn && (
         <ReturnModal
-          isOpen={returnModalOpen} sale={sale} onClose={() => setReturnModalOpen(false)}
-          onConfirm={async (d) => { await onProcessReturn(d); setReturnModalOpen(false); onClose(); }}
-          color={color} t={t} language={language} currentDailyRefunds={currentDailyRefunds} currentShift={currentShift} currentEmployeeId={currentEmployeeId}
+          isOpen={returnModalOpen}
+          sale={sale}
+          onClose={() => setReturnModalOpen(false)}
+          onConfirm={async (d) => {
+            await onProcessReturn(d);
+            setReturnModalOpen(false);
+            onClose();
+          }}
+          color={color}
+          t={t}
+          language={language}
+          currentDailyRefunds={currentDailyRefunds}
+          currentShift={currentShift}
+          currentEmployeeId={currentEmployeeId}
         />
       )}
     </>

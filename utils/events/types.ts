@@ -1,4 +1,10 @@
-export type EventType = 'CURSOR' | 'ANIMATION' | 'BANNER' | 'OVERLAY' | 'NAVBAR_ICONS' | 'WALKING_COW';
+export type EventType =
+  | 'CURSOR'
+  | 'ANIMATION'
+  | 'BANNER'
+  | 'OVERLAY'
+  | 'NAVBAR_ICONS'
+  | 'WALKING_COW';
 
 export interface DynamicEvent {
   id: string;

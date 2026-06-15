@@ -2,8 +2,23 @@ export function LegendaryPhoenixAura() {
   return (
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
       <g opacity='0.98'>
-        <circle cx='64' cy='64' r='54' stroke='var(--svg-color, #F59E0B)' strokeWidth='2' opacity='0.3' />
-        <circle cx='64' cy='64' r='56' stroke='#EF4444' strokeWidth='0.8' strokeDasharray='4 8' opacity='0.6' />
+        <circle
+          cx='64'
+          cy='64'
+          r='54'
+          stroke='var(--svg-color, #F59E0B)'
+          strokeWidth='2'
+          opacity='0.3'
+        />
+        <circle
+          cx='64'
+          cy='64'
+          r='56'
+          stroke='#EF4444'
+          strokeWidth='0.8'
+          strokeDasharray='4 8'
+          opacity='0.6'
+        />
         <g transform='translate(64, 8)'>
           <path d='M0,-16 C14,-6 18,6 0,8 C-18,6 -14,-6 0,-16 Z' fill='#EF4444' opacity='0.5' />
           <path d='M0,-12 C8,-4 12,6 0,10 C-12,6 -8,-4 0,-12 Z' fill='#F97316' opacity='0.8' />
@@ -15,7 +30,10 @@ export function LegendaryPhoenixAura() {
           <path d='M0,12 C8,4 12,-4 0,-10 C-12,-4 -8,4 0,12 Z' fill='#EF4444' />
           <path d='M0,8 C5,2 8,-4 0,-8 C-8,-4 -5,2 0,8 Z' fill='#F59E0B' />
           <path d='M4,4 C14,14 24,10 30,0 C20,8 10,6 2,-2 Z' fill='var(--svg-color, #F59E0B)' />
-          <path d='M-4,4 C-14,14 -24,10 -30,0 C-20,8 -10,6 -2,-2 Z' fill='var(--svg-color, #F59E0B)' />
+          <path
+            d='M-4,4 C-14,14 -24,10 -30,0 C-20,8 -10,6 -2,-2 Z'
+            fill='var(--svg-color, #F59E0B)'
+          />
         </g>
         <g transform='translate(14, 64)'>
           <path d='M6,36 C-8,16 -12,-10 6,-32 C-10,-5 -5,16 10,32 Z' fill='#991B1B' opacity='0.9' />

@@ -1,6 +1,6 @@
 /**
  * Platform Detection Utility
- * 
+ *
  * Detects whether the app is running inside Tauri desktop shell
  * or as a regular web/PWA application. Used throughout the codebase
  * to conditionally enable/disable features per platform.

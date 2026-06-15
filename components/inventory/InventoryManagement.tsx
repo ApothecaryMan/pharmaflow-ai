@@ -1,4 +1,4 @@
-import { type ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import React, { useEffect, useMemo, useState } from 'react';
 import type { Drug } from '../../types';
 import { TanStackTable } from '../common/TanStackTable';
@@ -76,7 +76,9 @@ export const InventoryManagement: React.FC<InventoryManagementProps> = ({
         cell: (info) => {
           const stock = info.getValue() as number;
           return (
-            <span className={`font-bold ${stock < 10 ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}>
+            <span
+              className={`font-bold ${stock < 10 ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}
+            >
               {stock}
             </span>
           );
@@ -128,7 +130,9 @@ export const InventoryManagement: React.FC<InventoryManagementProps> = ({
             {language === 'AR' ? 'المخزون المتطور' : 'Advanced Inventory'}
           </h1>
           <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>
-            {language === 'AR' ? 'عرض متقدم باستخدام جداول متطورة' : 'Advanced view with enhanced data tables'}
+            {language === 'AR'
+              ? 'عرض متقدم باستخدام جداول متطورة'
+              : 'Advanced view with enhanced data tables'}
           </p>
         </div>
       </div>

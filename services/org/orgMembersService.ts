@@ -1,6 +1,6 @@
 import { supabase } from '../../lib/supabase';
-import { idGenerator } from '../../utils/idGenerator';
 import type { OrgMember, OrgRole } from '../../types';
+import { idGenerator } from '../../utils/idGenerator';
 
 export interface OrgInvite {
   id: string;
@@ -61,9 +61,9 @@ export const orgMembersService = {
         .eq('token', token)
         .eq('status', 'pending')
         .single();
-      
+
       if (error || !data) return null;
-      
+
       return {
         id: data.id,
         orgId: data.org_id,
@@ -96,10 +96,7 @@ export const orgMembersService = {
       if (memberError) throw memberError;
 
       // 2. Mark invite as accepted
-      await supabase
-        .from('org_invites')
-        .update({ status: 'accepted' })
-        .eq('id', invite.id);
+      await supabase.from('org_invites').update({ status: 'accepted' }).eq('id', invite.id);
 
       return true;
     } catch (err) {
@@ -118,10 +115,10 @@ export const orgMembersService = {
         .delete()
         .eq('org_id', orgId)
         .eq('id', memberId);
-      
+
       return !error;
     } catch {
       return false;
     }
-  }
+  },
 };

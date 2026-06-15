@@ -1,8 +1,8 @@
-import React from 'react';
+import type React from 'react';
 import { useCallback } from 'react';
 import { useAlert } from '../../context';
-import { permissionsService } from '../../services/auth/permissionsService';
 import { auditService } from '../../services/audit/auditService';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { supplierService } from '../../services/suppliers/supplierService';
 import type { Purchase, Supplier } from '../../types';
 
@@ -94,7 +94,9 @@ export function useSupplierHandlers({
 
       const hasPurchases = purchases.some((p) => p.supplierId === id);
       if (hasPurchases) {
-        error('Cannot delete supplier with existing purchase orders. Set status to inactive instead.');
+        error(
+          'Cannot delete supplier with existing purchase orders. Set status to inactive instead.'
+        );
         return;
       }
 

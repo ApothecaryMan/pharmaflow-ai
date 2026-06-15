@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 
 export const SVGCow: React.FC = () => {
   return (
@@ -45,7 +45,7 @@ export const SVGCow: React.FC = () => {
           transform-origin: 15px 20px;
         }
       `}</style>
-      
+
       {/* Legs */}
       {/* Back Left Leg */}
       <g className='cow-leg-bl' style={{ transformOrigin: '25px 35px' }}>
@@ -59,12 +59,30 @@ export const SVGCow: React.FC = () => {
       </g>
       {/* Back Right Leg */}
       <g className='cow-leg-br' style={{ transformOrigin: '32px 35px' }}>
-        <rect x='29' y='32' width='6' height='16' rx='3' fill='#FFFFFF' stroke='#E2E8F0' strokeWidth='0.5' />
+        <rect
+          x='29'
+          y='32'
+          width='6'
+          height='16'
+          rx='3'
+          fill='#FFFFFF'
+          stroke='#E2E8F0'
+          strokeWidth='0.5'
+        />
         <rect x='29' y='45' width='6' height='3' rx='1' fill='#111111' />
       </g>
       {/* Front Right Leg */}
       <g className='cow-leg-fr' style={{ transformOrigin: '72px 35px' }}>
-        <rect x='69' y='32' width='6' height='16' rx='3' fill='#FFFFFF' stroke='#E2E8F0' strokeWidth='0.5' />
+        <rect
+          x='69'
+          y='32'
+          width='6'
+          height='16'
+          rx='3'
+          fill='#FFFFFF'
+          stroke='#E2E8F0'
+          strokeWidth='0.5'
+        />
         <rect x='69' y='45' width='6' height='3' rx='1' fill='#111111' />
       </g>
 
@@ -72,13 +90,28 @@ export const SVGCow: React.FC = () => {
       <g className='cow-body-group'>
         {/* Tail */}
         <g className='cow-tail'>
-          <path d='M 15 20 C 8 20, 5 28, 5 35' stroke='#FFFFFF' strokeWidth='2.5' fill='none' strokeLinecap='round' />
+          <path
+            d='M 15 20 C 8 20, 5 28, 5 35'
+            stroke='#FFFFFF'
+            strokeWidth='2.5'
+            fill='none'
+            strokeLinecap='round'
+          />
           <circle cx='5' cy='35' r='2' fill='#111111' />
         </g>
-        
+
         {/* Body */}
-        <rect x='15' y='15' width='65' height='24' rx='8' fill='#FFFFFF' stroke='#E2E8F0' strokeWidth='0.5' />
-        
+        <rect
+          x='15'
+          y='15'
+          width='65'
+          height='24'
+          rx='8'
+          fill='#FFFFFF'
+          stroke='#E2E8F0'
+          strokeWidth='0.5'
+        />
+
         {/* Spots */}
         <path d='M 25 15 C 28 20, 34 20, 36 15 Z' fill='#111111' />
         <path d='M 45 17 C 48 24, 54 24, 56 17 Z' fill='#111111' />
@@ -87,8 +120,26 @@ export const SVGCow: React.FC = () => {
 
         {/* Head Group */}
         <g className='cow-head'>
-          <rect x='70' y='10' width='10' height='13' rx='2' fill='#FFFFFF' stroke='#E2E8F0' strokeWidth='0.5' />
-          <rect x='73' y='2' width='19' height='17' rx='5' fill='#FFFFFF' stroke='#E2E8F0' strokeWidth='0.5' />
+          <rect
+            x='70'
+            y='10'
+            width='10'
+            height='13'
+            rx='2'
+            fill='#FFFFFF'
+            stroke='#E2E8F0'
+            strokeWidth='0.5'
+          />
+          <rect
+            x='73'
+            y='2'
+            width='19'
+            height='17'
+            rx='5'
+            fill='#FFFFFF'
+            stroke='#E2E8F0'
+            strokeWidth='0.5'
+          />
           <path d='M 73 5 C 77 7, 77 11, 73 13 Z' fill='#111111' />
           {/* Horns */}
           <path d='M 77 2 C 76 -3, 72 -5, 72 -5 C 72 -5, 76 -3, 78 0 Z' fill='#E2E8F0' />

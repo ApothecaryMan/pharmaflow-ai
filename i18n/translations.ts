@@ -2991,7 +2991,8 @@ export const TRANSLATIONS = {
       passwordLength: 'Password must be at least 4 characters',
       goBack: 'Go Back',
       accountSetup: 'Account Setup',
-      inviteAdminInstructions: 'Send an invitation to the pharmacy administrator or manager to complete the setup and access the system.',
+      inviteAdminInstructions:
+        'Send an invitation to the pharmacy administrator or manager to complete the setup and access the system.',
       globalEmailOrUsername: 'Global Email or Username',
       emailExample: 'e.g. ahmed@email.com',
       autoAcceptNote: 'If you enter your current email, the invite will auto-accept.',
@@ -3010,7 +3011,8 @@ export const TRANSLATIONS = {
       confirmPassword: 'Confirm',
       finishAndSave: 'Finish & Save',
       step3Admin: 'Step 3: Invite the first admin for this branch to start using the system.',
-      cannotInviteSelf: 'Cannot invite the admin account. Please invite a separate employee account.',
+      cannotInviteSelf:
+        'Cannot invite the admin account. Please invite a separate employee account.',
       waitingForAcceptance: 'Waiting for acceptance from',
     },
   },
@@ -6011,7 +6013,8 @@ export const TRANSLATIONS = {
       passwordLength: 'يجب أن تتكون كلمة المرور من 4 أحرف على الأقل',
       goBack: 'الرجوع',
       accountSetup: 'إعداد الحساب',
-      inviteAdminInstructions: 'أرسل دعوة لمدير أو مالك الصيدلية لإكمال إعدادات النظام وتفعيل الحساب.',
+      inviteAdminInstructions:
+        'أرسل دعوة لمدير أو مالك الصيدلية لإكمال إعدادات النظام وتفعيل الحساب.',
       globalEmailOrUsername: 'البريد الإلكتروني أو اسم المستخدم العالمي',
       emailExample: 'مثال: ahmed@email.com',
       autoAcceptNote: 'إذا قمت بإدخال بريدك الحالي، سيتم قبول الدعوة تلقائياً.',

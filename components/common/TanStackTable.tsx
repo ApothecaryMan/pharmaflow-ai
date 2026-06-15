@@ -38,34 +38,29 @@ import React, { useRef, useState } from 'react';
 import { useSettings } from '../../context/SettingsContext';
 import { useLongPress } from '../../hooks/common/useLongPress';
 import { TRANSLATIONS } from '../../i18n/translations';
-import { CARD_BASE } from '../../utils/themeStyles';
 import { storage } from '../../utils/storage';
-import {
-  ContextMenuItem,
-  ContextMenuTrigger,
-  useContextMenu,
-} from './ContextMenu';
+import { CARD_BASE } from '../../utils/themeStyles';
+import { ContextMenuItem, ContextMenuTrigger, useContextMenu } from './ContextMenu';
 import type { FilterConfig } from './FilterPill';
 import { SearchInput } from './SearchInput';
 import { getHeaderJustifyClass, getTextAlignClass } from './TableAlignment';
-
-// Modular Table Imports
-import { type TanStackTableProps } from './table/types';
 import {
-  unifiedFilterFn,
-  globalFilterFnStable,
-  getStoredSettings,
+  computeColumnMeta,
   copyTextToClipboard,
   getColumnWidth,
-  computeColumnMeta,
   getHeaderAlignment,
   getSmartAlignment,
+  getStoredSettings,
+  globalFilterFnStable,
+  unifiedFilterFn,
 } from './table/helpers';
-import { PriceDisplay } from './table/PriceDisplay';
 import { MemoizedCell } from './table/MemoizedCell';
 import { MemoizedRow } from './table/MemoizedRow';
 import { PageButton } from './table/PageButton';
+import { PriceDisplay } from './table/PriceDisplay';
 import { TableContextMenu } from './table/TableContextMenu';
+// Modular Table Imports
+import type { TanStackTableProps } from './table/types';
 export { PriceDisplay };
 
 const EMPTY_ALIGNMENT = {};
@@ -73,7 +68,13 @@ const EMPTY_ALIGNMENT = {};
 // ─── Hook: Row Change Animation ───
 // Tracks newly added and updated rows for animation purposes.
 function useRowChangeAnimation(
-  data: { id: string | number; status?: string; updated_at?: string; quantity?: number; price?: number }[],
+  data: {
+    id: string | number;
+    status?: string;
+    updated_at?: string;
+    quantity?: number;
+    price?: number;
+  }[],
   enableNewRowAnimation: boolean,
   pendingRowIds: Set<string | number>
 ) {
@@ -168,10 +169,7 @@ const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
       className='flex items-center justify-between h-10 border-t shrink-0 select-none bg-(--bg-card) border-(--border-divider)'
     >
       {/* Left Zone: Data Summary (Fixed width to prevent jitter) */}
-      <div
-        dir='auto'
-        className={`w-56 flex items-center h-full ${isRtl ? 'justify-end' : ''}`}
-      >
+      <div dir='auto' className={`w-56 flex items-center h-full ${isRtl ? 'justify-end' : ''}`}>
         <div className='flex items-center gap-1 px-2.5 h-full text-[11px] uppercase font-bold tracking-wide text-(--text-secondary) tabular-nums'>
           {isShowAll ? (
             <span className='whitespace-nowrap font-bold'>
@@ -182,8 +180,7 @@ const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
               <span className='shrink-0'>{t.showing || 'Showing'}</span>
               <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
                 {(
-                  table.getState().pagination.pageIndex *
-                  table.getState().pagination.pageSize +
+                  table.getState().pagination.pageIndex * table.getState().pagination.pageSize +
                   1
                 ).toLocaleString()}
               </span>
@@ -191,7 +188,7 @@ const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
               <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
                 {Math.min(
                   (table.getState().pagination.pageIndex + 1) *
-                  table.getState().pagination.pageSize,
+                    table.getState().pagination.pageSize,
                   table.getFilteredRowModel().rows.length
                 ).toLocaleString()}
               </span>
@@ -228,8 +225,9 @@ const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
                   setJumpValue((table.getState().pagination.pageIndex + 1).toString());
                 }
               }}
-              className={`px-4 flex items-center h-full text-[12px] font-bold text-(--text-secondary) tabular-nums transition-colors group ${!isJumping ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/10' : ''
-                }`}
+              className={`px-4 flex items-center h-full text-[12px] font-bold text-(--text-secondary) tabular-nums transition-colors group ${
+                !isJumping ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/10' : ''
+              }`}
             >
               {isJumping ? (
                 <div className='flex items-center gap-1'>
@@ -307,10 +305,11 @@ const TablePaginationBar: React.FC<TablePaginationBarProps> = ({
         {enableShowAll && (
           <button
             onClick={() => setIsShowAll(!isShowAll)}
-            className={`px-2.5 h-full flex items-center justify-center transition-colors ${isShowAll
+            className={`px-2.5 h-full flex items-center justify-center transition-colors ${
+              isShowAll
                 ? `text-primary-600 bg-primary-500/10 dark:text-primary-400 dark:bg-primary-400/10`
                 : 'text-(--text-secondary) hover:text-(--text-primary) hover:bg-black/5 dark:hover:bg-white/10'
-              }`}
+            }`}
             title={isShowAll ? 'Paginated View' : t.showAll || 'Show All'}
           >
             <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
@@ -361,7 +360,6 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   enableNewRowAnimation = true,
   onVisibleRowsChange,
 }: TanStackTableProps<TData, TValue>) {
-
   const { language, numeralLocale, textLocale } = useSettings();
   const isAR = language === 'AR';
   const isRtl = isAR; // Source of truth from state, not DOM, to prevent sync lag
@@ -373,14 +371,11 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   const onRowLongPressRef = useRef(onRowLongPress);
   onRowLongPressRef.current = onRowLongPress;
 
-  const handleLongPress = React.useCallback(
-    (e: React.TouchEvent) => {
-      if (onRowLongPressRef.current && currentTouchRow.current) {
-        onRowLongPressRef.current(e, currentTouchRow.current);
-      }
-    },
-    []
-  );
+  const handleLongPress = React.useCallback((e: React.TouchEvent) => {
+    if (onRowLongPressRef.current && currentTouchRow.current) {
+      onRowLongPressRef.current(e, currentTouchRow.current);
+    }
+  }, []);
 
   const {
     onTouchStart: onRowTouchStart,
@@ -567,10 +562,12 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
   const { showMenu } = useContextMenu();
 
-
-
   const [localLoading, setLocalLoading] = React.useState(true);
-  const { newRowIds, updatedRowIds } = useRowChangeAnimation(data as any, enableNewRowAnimation, pendingRowIds);
+  const { newRowIds, updatedRowIds } = useRowChangeAnimation(
+    data as any,
+    enableNewRowAnimation,
+    pendingRowIds
+  );
 
   // Stable refs for callbacks to prevent MemoizedRow re-renders
   const onRowClickRef = useRef(onRowClick);
@@ -783,7 +780,12 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
   // --- Unified Column Metadata ---
   const columnMetaMap = React.useMemo(
-    () => new Map(table.getAllLeafColumns().map((column) => [column.id, computeColumnMeta(column, columnAlignment)])),
+    () =>
+      new Map(
+        table
+          .getAllLeafColumns()
+          .map((column) => [column.id, computeColumnMeta(column, columnAlignment)])
+      ),
     [columns, columnAlignment]
   );
 
@@ -861,11 +863,15 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
 
       {/* Unified Card Wrapper */}
       <div
-        className={`flex flex-col flex-1 min-h-0 ${lite ? 'bg-transparent' : `${CARD_BASE} rounded-2xl overflow-hidden`
-          }`}
+        className={`flex flex-col flex-1 min-h-0 ${
+          lite ? 'bg-transparent' : `${CARD_BASE} rounded-2xl overflow-hidden`
+        }`}
       >
         {/* Table Scroll Area */}
-        <div ref={tableContainerRef} className='flex-1 overflow-y-scroll  custom-scrollbar relative'>
+        <div
+          ref={tableContainerRef}
+          className='flex-1 overflow-y-scroll  custom-scrollbar relative'
+        >
           {visibleColumnsCount === 0 ? (
             <ContextMenuTrigger
               className='h-full w-full'
@@ -930,9 +936,10 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                                   {/* Absolute Sort Indicators */}
                                   <span
                                     className={`absolute top-1/2 -translate-y-1/2 flex items-center
-                                      ${align === 'end'
-                                        ? 'ltr:right-full ltr:pr-1 rtl:left-full rtl:pl-1 opacity-100'
-                                        : 'ltr:left-full ltr:pl-1 rtl:right-full rtl:pr-1'
+                                      ${
+                                        align === 'end'
+                                          ? 'ltr:right-full ltr:pr-1 rtl:left-full rtl:pl-1 opacity-100'
+                                          : 'ltr:left-full ltr:pl-1 rtl:right-full rtl:pr-1'
                                       }
                                     `}
                                   >
@@ -941,7 +948,9 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
                                         className='material-symbols-rounded leading-none text-current opacity-70'
                                         style={{ fontSize: 'var(--icon-lg)' }}
                                       >
-                                        {header.column.getIsSorted() === 'asc' ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                        {header.column.getIsSorted() === 'asc'
+                                          ? 'arrow_drop_up'
+                                          : 'arrow_drop_down'}
                                       </span>
                                     )}
                                   </span>
@@ -1092,8 +1101,9 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       {import.meta.env.DEV && (
         <button
           onClick={handleCopyTableConfig}
-          className={`absolute z-40 p-2.5 rounded-xl border border-primary-500/20 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/50 hover:bg-white dark:hover:bg-zinc-900 text-primary-600 dark:text-primary-400 transition-all duration-300 active:scale-95 group/dev-btn flex items-center gap-1.5 right-4 ${enablePagination && (table.getPageCount() > 1 || isShowAll) ? 'bottom-16' : 'bottom-4'
-            }`}
+          className={`absolute z-40 p-2.5 rounded-xl border border-primary-500/20 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/50 hover:bg-white dark:hover:bg-zinc-900 text-primary-600 dark:text-primary-400 transition-all duration-300 active:scale-95 group/dev-btn flex items-center gap-1.5 right-4 ${
+            enablePagination && (table.getPageCount() > 1 || isShowAll) ? 'bottom-16' : 'bottom-4'
+          }`}
           title='Copy Column Layout & Alignment (Dev Only)'
         >
           <span className='material-symbols-rounded block text-lg transition-transform duration-300 group-hover/dev-btn:rotate-6'>

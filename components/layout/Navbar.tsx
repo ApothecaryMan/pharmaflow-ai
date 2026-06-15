@@ -296,28 +296,47 @@ const NavbarComponent: React.FC<NavbarProps> = ({
           }
           id='navbar-logo-icon'
         />
-        <div className='hidden md:flex items-center gap-[6px] ltr:ml-2 rtl:mr-2' id='navbar-app-title' dir='ltr'>
+        <div
+          className='hidden md:flex items-center gap-[6px] ltr:ml-2 rtl:mr-2'
+          id='navbar-app-title'
+          dir='ltr'
+        >
           {[
             {
               char: 'Z',
               viewBox: '40 75 170 185',
-              svgElement: <path d="M 40,75 L 210,75 L 210,110 L 85,225 L 210,225 L 210,260 L 40,260 L 40,225 L 165,110 L 40,110 Z" fill="currentColor" />
+              svgElement: (
+                <path
+                  d='M 40,75 L 210,75 L 210,110 L 85,225 L 210,225 L 210,260 L 40,260 L 40,225 L 165,110 L 40,110 Z'
+                  fill='currentColor'
+                />
+              ),
             },
             {
               char: 'I',
               viewBox: '290 75 35 185',
-              svgElement: <rect x="290" y="75" width="35" height="185" fill="currentColor" />
+              svgElement: <rect x='290' y='75' width='35' height='185' fill='currentColor' />,
             },
             {
               char: 'N',
               viewBox: '420 75 140 185',
-              svgElement: <path d="M 420,75 L 560,75 L 560,260 L 525,260 L 525,110 L 455,110 L 455,260 L 420,260 Z" fill="currentColor" />
+              svgElement: (
+                <path
+                  d='M 420,75 L 560,75 L 560,260 L 525,260 L 525,110 L 455,110 L 455,260 L 420,260 Z'
+                  fill='currentColor'
+                />
+              ),
             },
             {
               char: 'C',
               viewBox: '670 75 170 185',
-              svgElement: <path d="M 670,75 L 840,75 L 840,110 L 705,110 L 705,225 L 840,225 L 840,260 L 670,260 Z" fill="currentColor" />
-            }
+              svgElement: (
+                <path
+                  d='M 670,75 L 840,75 L 840,110 L 705,110 L 705,225 L 840,225 L 840,260 L 670,260 Z'
+                  fill='currentColor'
+                />
+              ),
+            },
           ].map((item, index) => {
             const charKey = item.char;
             const acronym = (t as any).zincAcronym?.[charKey];
@@ -347,7 +366,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   id={`nav-char-${charKey}-${index}`}
                   className='text-gray-900 dark:text-white transition-transform hover:scale-125 hover:text-primary-500 cursor-default flex items-center justify-center'
                 >
-                  <svg viewBox={item.viewBox} className="h-[15px] w-auto">
+                  <svg viewBox={item.viewBox} className='h-[15px] w-auto'>
                     {item.svgElement}
                   </svg>
                 </div>

@@ -48,7 +48,10 @@ export const orgService = {
     return orgRepository.getById(orgId);
   },
 
-  async update(orgId: string, updates: Partial<Pick<Organization, 'name' | 'logoUrl'>>): Promise<Organization> {
+  async update(
+    orgId: string,
+    updates: Partial<Pick<Organization, 'name' | 'logoUrl'>>
+  ): Promise<Organization> {
     const dbUpdates: any = {};
     if (updates.name) dbUpdates.name = updates.name;
     if (updates.logoUrl !== undefined) dbUpdates.logo_url = updates.logoUrl;
@@ -97,7 +100,7 @@ export const orgService = {
     const { supabase } = await import('../../lib/supabase');
     // Update Org owner
     await supabase.from('organizations').update({ owner_id: userId }).eq('id', orgId);
-    
+
     // Update Membership
     await supabase
       .from('org_members')

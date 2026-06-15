@@ -1,5 +1,5 @@
-import { CartItem } from '../../types';
-import { money, tax, pricing } from '../../utils/money';
+import type { CartItem } from '../../types';
+import { money, pricing, tax } from '../../utils/money';
 
 /**
  * Pricing Service - Centralized logic for all financial calculations in POS and Sales.
@@ -11,11 +11,13 @@ export const pricingService = {
    * Always uses Unit-First logic: UnitPrice * TotalUnits.
    */
   calculateItemGrossTotal: (item: CartItem): number => {
-    const totalUnits = (item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1));
-    const unitPrice = item.unitPrice || (item.unitsPerPack && item.unitsPerPack > 1 
-      ? money.divide(item.publicPrice, item.unitsPerPack) 
-      : item.publicPrice);
-    
+    const totalUnits = item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1);
+    const unitPrice =
+      item.unitPrice ||
+      (item.unitsPerPack && item.unitsPerPack > 1
+        ? money.divide(item.publicPrice, item.unitsPerPack)
+        : item.publicPrice);
+
     return money.multiply(unitPrice, totalUnits, 0);
   },
 
@@ -24,12 +26,12 @@ export const pricingService = {
    */
   calculateItemTotal: (item: CartItem): number => {
     const gross = pricingService.calculateItemGrossTotal(item);
-    
+
     if (item.discount && item.discount > 0) {
       const discountAmount = money.multiply(gross, item.discount, 2);
       return money.subtract(gross, discountAmount);
     }
-    
+
     return gross;
   },
 
@@ -56,17 +58,19 @@ export const pricingService = {
     }
 
     // 4. Calculate Tax per item and sum it up
-    // Since we apply global discount to the total, we need to proportionally 
+    // Since we apply global discount to the total, we need to proportionally
     // distribute the global discount across items to get the effective item price for tax.
-    
+
     let totalTaxAmount = 0;
-    const itemWeights = items.map(item => money.toSmallestUnit(pricingService.calculateItemTotal(item)));
+    const itemWeights = items.map((item) =>
+      money.toSmallestUnit(pricingService.calculateItemTotal(item))
+    );
     const allocatedFinalTotals = money.allocate(finalTotal, itemWeights);
 
     items.forEach((item, idx) => {
       const itemFinalTotal = allocatedFinalTotals[idx];
       const itemTaxRate = item.tax ?? 0; // Use item-specific tax rate or 0
-      
+
       if (itemTaxRate > 0) {
         // Extract tax from the allocated final total of this item
         const itemTax = tax.inclusiveAmount(itemFinalTotal, itemTaxRate);
@@ -88,17 +92,22 @@ export const pricingService = {
    * Calculates the precise refund amount for selected items using the allocate algorithm.
    * This ensures that partial returns always sum up to the original net total.
    */
-  calculateRefundAmount: (sale: any, selectedItems: Map<string, number>, inventoryMap?: Map<string, any>): number => {
+  calculateRefundAmount: (
+    sale: any,
+    selectedItems: Map<string, number>,
+    inventoryMap?: Map<string, any>
+  ): number => {
     if (selectedItems.size === 0) return 0;
 
     // 1. Calculate the weights for all items in the original sale
     const itemWeights = sale.items.map((item: any) => {
       // Use Unit-First logic to get the correct line total
-      const totalUnits = (item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1));
-      const unitPrice = (item.unitsPerPack && item.unitsPerPack > 1) 
-        ? money.divide(item.publicPrice, item.unitsPerPack) 
-        : item.publicPrice;
-      
+      const totalUnits = item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1);
+      const unitPrice =
+        item.unitsPerPack && item.unitsPerPack > 1
+          ? money.divide(item.publicPrice, item.unitsPerPack)
+          : item.publicPrice;
+
       const itemTotal = money.multiply(unitPrice, totalUnits, 0);
       return money.toSmallestUnit(itemTotal);
     });
@@ -115,13 +124,13 @@ export const pricingService = {
       const drugId = item.drugId ?? item.drug_id ?? drug?.id ?? item.id;
 
       const lineKey = item.isUnit ? `${drugId}_unit` : `${drugId}_pack`;
-      
+
       if (selectedItems.has(lineKey)) {
         const returnedQty = selectedItems.get(lineKey) || 0;
         // Share per single unit/pack in this line
         const sharePerFullQty = allocatedAmounts[index];
         const sharePerIndividualItem = money.divide(sharePerFullQty, item.quantity);
-        
+
         const itemRefund = money.multiply(sharePerIndividualItem, returnedQty, 0);
         totalRefund = money.add(totalRefund, itemRefund);
       }
@@ -130,12 +139,15 @@ export const pricingService = {
     return totalRefund;
   },
 
-
   /**
    * Calculates the maximum allowed discount for an item based on its profit margin.
    * Ensures the discount doesn't wipe out the margin completely.
    */
-  calculateMaxDiscount: (costPrice: number, publicPrice: number, manualMaxDiscount?: number): number => {
+  calculateMaxDiscount: (
+    costPrice: number,
+    publicPrice: number,
+    manualMaxDiscount?: number
+  ): number => {
     const margin = pricing.actualMargin(costPrice || 0, publicPrice || 0);
 
     let calculatedMax = 10;
@@ -143,7 +155,8 @@ export const pricingService = {
       calculatedMax = Math.floor(margin / 2);
     }
 
-    const effectiveMax = manualMaxDiscount && manualMaxDiscount > 0 ? manualMaxDiscount : calculatedMax;
+    const effectiveMax =
+      manualMaxDiscount && manualMaxDiscount > 0 ? manualMaxDiscount : calculatedMax;
     return Math.max(0, effectiveMax);
   },
 };

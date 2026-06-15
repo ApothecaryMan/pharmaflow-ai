@@ -39,5 +39,5 @@ export const validationService = {
     if (!email) return true; // Optional by default in many forms
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
-  }
+  },
 };

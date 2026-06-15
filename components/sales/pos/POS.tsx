@@ -1,60 +1,59 @@
-
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
-import React from 'react';
+import type React from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { usePosShortcuts } from '../../common/hooks/usePosShortcuts';
-import { usePosSounds } from '../../common/hooks/usePosSounds';
-import { type UserRole } from '../../../config/permissions';
-import { permissionsService } from '../../../services/auth/permissionsService';
+import type { UserRole } from '../../../config/permissions';
 import { useAlert, useSettings } from '../../../context';
+import { useData } from '../../../context/DataContext';
 import { getLocationName } from '../../../data/locations';
+import { useInventorySearch } from '../../../hooks/inventory/useInventorySearch';
 import { useFilterDropdown } from '../../../hooks/layout/useFilterDropdown';
 import { usePOSTabs } from '../../../hooks/sales/usePOSTabs';
 import { useShift } from '../../../hooks/sales/useShift'; // Import useShift
-import { useData } from '../../../context/DataContext';
 import type { TRANSLATIONS } from '../../../i18n/translations';
+import { permissionsService } from '../../../services/auth/permissionsService';
+import { batchService, getGroupingKey } from '../../../services/inventory/batchService';
+import { pricingService } from '../../../services/sales/pricingService';
+import { inventorySearchEngine } from '../../../services/search/drugSearchService';
 import type { CartItem, Customer, Drug, Employee, Language, Sale, Shift } from '../../../types';
 import { getArabicDisplayName, getDisplayName } from '../../../utils/drugDisplayName';
-import { batchService, getGroupingKey } from '../../../services/inventory/batchService';
-import { inventorySearchEngine } from '../../../services/search/drugSearchService';
+import {
+  formatExpiryDate,
+  getExpiryColorClass,
+  parseExpiryEndOfMonth,
+} from '../../../utils/expiryUtils';
 import { formatStock } from '../../../utils/inventory';
-import { resolveDisplayStock } from '../../../utils/stockUtils';
-import * as stockOps from '../../../utils/stockOperations';
-import { parseSearchTerm } from '../../../utils/searchUtils';
-import { formatExpiryDate, getExpiryColorClass, parseExpiryEndOfMonth } from '../../../utils/expiryUtils';
 import { money } from '../../../utils/money';
+import { parseSearchTerm } from '../../../utils/searchUtils';
+import * as stockOps from '../../../utils/stockOperations';
+import { resolveDisplayStock } from '../../../utils/stockUtils';
 
 import { useContextMenu } from '../../common/ContextMenu';
 import { FilterDropdown } from '../../common/FilterDropdown';
-import { type FilterConfig } from '../../common/FilterPill';
+import type { FilterConfig } from '../../common/FilterPill';
+import { usePosShortcuts } from '../../common/hooks/usePosShortcuts';
+import { usePosSounds } from '../../common/hooks/usePosSounds';
 import { Modal } from '../../common/Modal';
 import { SearchEngineInput } from '../../common/SearchEngineInput';
 import { SegmentedControl } from '../../common/SegmentedControl';
 import { SmartAutocomplete } from '../../common/SmartInputs';
 import { PriceDisplay, TanStackTable } from '../../common/TanStackTable';
 import { useStatusBar } from '../../layout/StatusBar';
-import { SortableCartItem } from './SortableCartItem';
-
-import { POSPageHeader } from './ui/POSPageHeader';
-import { POSCustomerPanel } from './ui/POSCustomerPanel';
-import { POSCartSidebar } from './ui/POSCartSidebar';
-
 import { DeliveryOrdersModal } from './DeliveryOrdersModal';
-import { POSDrugOverview } from './ui/POSDrugOverview';
-import { POSDrugBranches } from './ui/POSDrugBranches';
-import { POSDrugAnalytics } from './ui/POSDrugAnalytics';
-import { POSCustomerHistoryModal } from './ui/POSCustomerHistoryModal';
-import { ClosedTabsHistoryModal } from './ui/ClosedTabsHistoryModal';
-
-import { usePOSSidebarResizer } from './hooks/usePOSSidebarResizer';
-import { usePOSSearchAndFilters } from './hooks/usePOSSearchAndFilters';
-import { usePOSCustomer } from './hooks/usePOSCustomer';
-import { useInventorySearch } from '../../../hooks/inventory/useInventorySearch';
+import { useBarcodeScanner } from './hooks/useBarcodeScanner';
 import { usePOSCart } from './hooks/usePOSCart';
 import { usePOSCheckout } from './hooks/usePOSCheckout';
-import { useBarcodeScanner } from './hooks/useBarcodeScanner';
-import { pricingService } from '../../../services/sales/pricingService';
-
+import { usePOSCustomer } from './hooks/usePOSCustomer';
+import { usePOSSearchAndFilters } from './hooks/usePOSSearchAndFilters';
+import { usePOSSidebarResizer } from './hooks/usePOSSidebarResizer';
+import { SortableCartItem } from './SortableCartItem';
+import { ClosedTabsHistoryModal } from './ui/ClosedTabsHistoryModal';
+import { POSCartSidebar } from './ui/POSCartSidebar';
+import { POSCustomerHistoryModal } from './ui/POSCustomerHistoryModal';
+import { POSCustomerPanel } from './ui/POSCustomerPanel';
+import { POSDrugAnalytics } from './ui/POSDrugAnalytics';
+import { POSDrugBranches } from './ui/POSDrugBranches';
+import { POSDrugOverview } from './ui/POSDrugOverview';
+import { POSPageHeader } from './ui/POSPageHeader';
 
 // --- Main POS Component ---
 interface POSProps {
@@ -111,9 +110,19 @@ export const POS: React.FC<POSProps> = ({
   const { activeBranchId, isLoading } = useData();
 
   const {
-    tabs, activeTab, activeTabId, addTab, removeTab,
-    switchTab, updateTab, renameTab, togglePin, reorderTabs, maxTabs,
-    closedTabs, restoreTab,
+    tabs,
+    activeTab,
+    activeTabId,
+    addTab,
+    removeTab,
+    switchTab,
+    updateTab,
+    renameTab,
+    togglePin,
+    reorderTabs,
+    maxTabs,
+    closedTabs,
+    restoreTab,
   } = usePOSTabs(activeBranchId);
 
   const { currentShift, refreshShifts } = useShift();
@@ -124,34 +133,84 @@ export const POS: React.FC<POSProps> = ({
   const { sidebarWidth, sidebarRef, startResizing } = usePOSSidebarResizer();
 
   const {
-    search, setSearch, stockFilter, setStockFilter, selectedCategory, setSelectedCategory,
-    activeFilterDropdown, setActiveFilterDropdown, posFilterConfigs, posActiveFilters,
-    handlePosFilterUpdate, getBroadCategory,
+    search,
+    setSearch,
+    stockFilter,
+    setStockFilter,
+    selectedCategory,
+    setSelectedCategory,
+    activeFilterDropdown,
+    setActiveFilterDropdown,
+    posFilterConfigs,
+    posActiveFilters,
+    handlePosFilterUpdate,
+    getBroadCategory,
   } = usePOSSearchAndFilters({ t, activeTab, activeTabId, updateTab });
 
   const {
-    customerName, setCustomerName, customerCode, setCustomerCode, selectedCustomer, setSelectedCustomer,
-    showCustomerDropdown, setShowCustomerDropdown, filteredCustomers, setFilteredCustomers,
-    highlightedCustomerIndex, setHighlightedCustomerIndex, showCodeDropdown, setShowCodeDropdown,
-    filteredByCode, setFilteredByCode, handleCustomerSelect, clearCustomerSelection, customerDropdownHook,
+    customerName,
+    setCustomerName,
+    customerCode,
+    setCustomerCode,
+    selectedCustomer,
+    setSelectedCustomer,
+    showCustomerDropdown,
+    setShowCustomerDropdown,
+    filteredCustomers,
+    setFilteredCustomers,
+    highlightedCustomerIndex,
+    setHighlightedCustomerIndex,
+    showCodeDropdown,
+    setShowCodeDropdown,
+    filteredByCode,
+    setFilteredByCode,
+    handleCustomerSelect,
+    clearCustomerSelection,
+    customerDropdownHook,
   } = usePOSCustomer({ activeTab, activeTabId, updateTab, customers });
 
   const {
-    cart, setCart, mergedCartItems, globalDiscount, setGlobalDiscount, addToCart, addGroupToCart,
-    removeFromCart, removeDrugFromCart, switchBatchWithAutoSplit, updateQuantity, toggleUnitMode,
-    updateItemDiscount, cartSensors, handleCartDragEnd, selectedUnits, setSelectedUnits,
-    openUnitDropdown, setOpenUnitDropdown, selectedBatches, setSelectedBatches,
-    openBatchDropdown, setOpenBatchDropdown,
+    cart,
+    setCart,
+    mergedCartItems,
+    globalDiscount,
+    setGlobalDiscount,
+    addToCart,
+    addGroupToCart,
+    removeFromCart,
+    removeDrugFromCart,
+    switchBatchWithAutoSplit,
+    updateQuantity,
+    toggleUnitMode,
+    updateItemDiscount,
+    cartSensors,
+    handleCartDragEnd,
+    selectedUnits,
+    setSelectedUnits,
+    openUnitDropdown,
+    setOpenUnitDropdown,
+    selectedBatches,
+    setSelectedBatches,
+    openBatchDropdown,
+    setOpenBatchDropdown,
   } = usePOSCart({
-    activeTab, activeTabId, updateTab, inventory, showToastError, addNotification,
-    playBeep, playError, t,
+    activeTab,
+    activeTabId,
+    updateTab,
+    inventory,
+    showToastError,
+    addNotification,
+    playBeep,
+    playError,
+    t,
   });
 
   const [activeIndex, setActiveIndex] = useState(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
-  const [viewingDrugTab, setViewingDrugTab] = useState<'overview' | 'branches' | 'analytics'>('overview');
-
+  const [viewingDrugTab, setViewingDrugTab] = useState<'overview' | 'branches' | 'analytics'>(
+    'overview'
+  );
 
   // Initialize Smart Barcode Scanner (Background Detection)
   useBarcodeScanner({
@@ -173,15 +232,21 @@ export const POS: React.FC<POSProps> = ({
       setHighlightedItemId(mergedCartItems[0].id);
     } else if (mergedCartItems.length === 0) {
       setHighlightedItemId(null);
-    } else if (highlightedItemId && !mergedCartItems.find(i => i.id === highlightedItemId)) {
+    } else if (highlightedItemId && !mergedCartItems.find((i) => i.id === highlightedItemId)) {
       // Fallback if item was removed: pick the last one or stay null
-      setHighlightedItemId(mergedCartItems.length > 0 ? mergedCartItems[mergedCartItems.length - 1].id : null);
+      setHighlightedItemId(
+        mergedCartItems.length > 0 ? mergedCartItems[mergedCartItems.length - 1].id : null
+      );
     }
   }, [mergedCartItems, highlightedItemId]);
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
+      if (
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'TEXTAREA'
+      )
+        return;
       if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
         e.preventDefault();
         searchInputRef.current?.focus();
@@ -198,31 +263,63 @@ export const POS: React.FC<POSProps> = ({
       grossSubtotal: totals.grossSubtotal,
       cartTotal: totals.finalTotal,
       subtotal: totals.grossSubtotal,
-      taxAmount: totals.taxAmount
+      taxAmount: totals.taxAmount,
     };
   }, [cart, globalDiscount]);
 
   const {
-    paymentMethod, setPaymentMethod, deliveryEmployeeId, setDeliveryEmployeeId,
-    showDeliveryModal, setShowDeliveryModal, isCheckoutMode, setIsCheckoutMode,
-    isDeliveryMode, setIsDeliveryMode, amountPaid, setAmountPaid, deliveryFee, setDeliveryFee, handleCheckout, isValidOrder, isProcessing,
+    paymentMethod,
+    setPaymentMethod,
+    deliveryEmployeeId,
+    setDeliveryEmployeeId,
+    showDeliveryModal,
+    setShowDeliveryModal,
+    isCheckoutMode,
+    setIsCheckoutMode,
+    isDeliveryMode,
+    setIsDeliveryMode,
+    amountPaid,
+    setAmountPaid,
+    deliveryFee,
+    setDeliveryFee,
+    handleCheckout,
+    isValidOrder,
+    isProcessing,
   } = usePOSCheckout({
-    cart, mergedCartItems, showToastError, addNotification, getVerifiedDate,
-    activeTab, activeTabId, removeTab, onCompleteSale, customerName, customerCode,
-    selectedCustomer, language, t, cartTotal, subtotal, globalDiscount, playSuccess,
-    activeBranchId, sales: sales || [], refreshShifts,
+    cart,
+    mergedCartItems,
+    showToastError,
+    addNotification,
+    getVerifiedDate,
+    activeTab,
+    activeTabId,
+    removeTab,
+    onCompleteSale,
+    customerName,
+    customerCode,
+    selectedCustomer,
+    language,
+    t,
+    cartTotal,
+    subtotal,
+    globalDiscount,
+    playSuccess,
+    activeBranchId,
+    sales: sales || [],
+    refreshShifts,
   });
 
   const { totalDiscountAmount, orderDiscountPercent, totalItems } = useMemo(() => {
     const discountAmt = money.subtract(grossSubtotal, cartTotal);
-    const discountPct = grossSubtotal > 0
-      ? money.multiply(money.divide(discountAmt, grossSubtotal), 100, 0)
-      : 0;
+    const discountPct =
+      grossSubtotal > 0 ? money.multiply(money.divide(discountAmt, grossSubtotal), 100, 0) : 0;
 
     return {
       totalDiscountAmount: discountAmt,
       orderDiscountPercent: discountPct,
-      totalItems: mergedCartItems.filter((item) => (item.pack?.quantity || 0) + (item.unit?.quantity || 0) > 0).length,
+      totalItems: mergedCartItems.filter(
+        (item) => (item.pack?.quantity || 0) + (item.unit?.quantity || 0) > 0
+      ).length,
     };
   }, [grossSubtotal, cartTotal, mergedCartItems]);
 
@@ -243,7 +340,7 @@ export const POS: React.FC<POSProps> = ({
         requestAnimationFrame(() => {
           activeCartRow.scrollIntoView({
             behavior: 'smooth',
-            block: 'nearest'
+            block: 'nearest',
           });
         });
       }
@@ -278,38 +375,44 @@ export const POS: React.FC<POSProps> = ({
     const escaped = rawTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const words = escaped.split(/\s+/).filter(Boolean);
     if (words.length === 0) return null;
-    return new RegExp(words.map(w => `\\b${w}`).join('|'), 'gi');
+    return new RegExp(words.map((w) => `\\b${w}`).join('|'), 'gi');
   }, [search]);
 
-  const highlightMatch = useCallback((text: string, forceHighlight: boolean = true) => {
-    // Only enable highlighting for scientific search (starting with @)
-    if (!search.trimStart().startsWith('@')) return text;
+  const highlightMatch = useCallback(
+    (text: string, forceHighlight: boolean = true) => {
+      // Only enable highlighting for scientific search (starting with @)
+      if (!search.trimStart().startsWith('@')) return text;
 
-    if (!highlightRegex || !text) return text;
+      if (!highlightRegex || !text) return text;
 
-    try {
-      const regex = new RegExp(highlightRegex.source, highlightRegex.flags);
-      const segments: React.ReactNode[] = [];
-      let lastIndex = 0;
-      let match: RegExpExecArray | null;
+      try {
+        const regex = new RegExp(highlightRegex.source, highlightRegex.flags);
+        const segments: React.ReactNode[] = [];
+        let lastIndex = 0;
+        let match: RegExpExecArray | null;
 
-      while ((match = regex.exec(text)) !== null) {
-        if (match.index > lastIndex) segments.push(text.slice(lastIndex, match.index));
-        segments.push(
-          <span key={match.index} className="text-primary-600 dark:text-primary-400 bg-primary-500/10 rounded-sm px-0.5">
-            {match[0]}
-          </span>
-        );
-        lastIndex = regex.lastIndex;
-        if (match[0].length === 0) break;
+        while ((match = regex.exec(text)) !== null) {
+          if (match.index > lastIndex) segments.push(text.slice(lastIndex, match.index));
+          segments.push(
+            <span
+              key={match.index}
+              className='text-primary-600 dark:text-primary-400 bg-primary-500/10 rounded-sm px-0.5'
+            >
+              {match[0]}
+            </span>
+          );
+          lastIndex = regex.lastIndex;
+          if (match[0].length === 0) break;
+        }
+
+        if (lastIndex < text.length) segments.push(text.slice(lastIndex));
+        return segments.length === 0 ? text : <>{segments}</>;
+      } catch (e) {
+        return text;
       }
-
-      if (lastIndex < text.length) segments.push(text.slice(lastIndex));
-      return segments.length === 0 ? text : <>{segments}</>;
-    } catch (e) {
-      return text;
-    }
-  }, [highlightRegex, search]);
+    },
+    [highlightRegex, search]
+  );
 
   // Dynamic suggestions: generic names when @ prefix, else drug names (requires 2+ chars)
   const searchSuggestions = useMemo(() => {
@@ -334,7 +437,7 @@ export const POS: React.FC<POSProps> = ({
       const generics = new Set<string>();
       filteredBase.forEach((d) => {
         if (Array.isArray(d.genericName)) {
-          d.genericName.forEach(gn => generics.add(`@${gn}`));
+          d.genericName.forEach((gn) => generics.add(`@${gn}`));
         } else if (d.genericName) {
           generics.add(`@${d.genericName}`);
         }
@@ -363,9 +466,9 @@ export const POS: React.FC<POSProps> = ({
   // PERF: tableData no longer depends on `cart`. This prevents rebuilding
   // thousands of row objects on every cart add/remove/quantity change.
   const tableData = useMemo(() => {
-    return batchService.groupInventory(filteredDrugs).map(g => ({
+    return batchService.groupInventory(filteredDrugs).map((g) => ({
       ...g,
-      id: g.groupId // Use stable drug key as row ID for selection/shortcuts
+      id: g.groupId, // Use stable drug key as row ID for selection/shortcuts
     }));
   }, [filteredDrugs]);
 
@@ -388,24 +491,39 @@ export const POS: React.FC<POSProps> = ({
     const summary = batchService.getDrugInventorySummary(viewingDrug, batchesMap);
 
     // 2. Get Substitutes from SearchEngine (Scientific Search)
-    const substitutes = (inventorySearchEngine.searchByScientificName(viewingDrug.genericName) as Drug[])
-      .filter(d => d.id !== viewingDrug.id)
+    const substitutes = (
+      inventorySearchEngine.searchByScientificName(viewingDrug.genericName) as Drug[]
+    )
+      .filter((d) => d.id !== viewingDrug.id)
       .slice(0, 5);
 
     const detailTabs = [
-      { label: currentLang === 'ar' ? 'نظرة عامة' : 'Overview', value: 'overview', icon: 'dashboard' },
-      { label: currentLang === 'ar' ? 'الفروع' : 'Branches', value: 'branches', icon: 'location_on' },
+      {
+        label: currentLang === 'ar' ? 'نظرة عامة' : 'Overview',
+        value: 'overview',
+        icon: 'dashboard',
+      },
+      {
+        label: currentLang === 'ar' ? 'الفروع' : 'Branches',
+        value: 'branches',
+        icon: 'location_on',
+      },
       ...(permissionsService.can('reports.view_financial')
-        ? [{ label: currentLang === 'ar' ? 'تحليلات' : 'Analytics', value: 'analytics', icon: 'analytics' }]
-        : []
-      ),
+        ? [
+            {
+              label: currentLang === 'ar' ? 'تحليلات' : 'Analytics',
+              value: 'analytics',
+              icon: 'analytics',
+            },
+          ]
+        : []),
     ];
 
     return {
       sortedBatches: summary.batches,
       substitutes,
       totalStock: summary.totalStock,
-      detailTabs
+      detailTabs,
     };
   }, [viewingDrug, inventory, batchesMap, currentLang]);
 
@@ -460,7 +578,7 @@ export const POS: React.FC<POSProps> = ({
     onNavigate: (direction) => {
       if (mergedCartItems.length === 0) return;
       setHighlightedItemId((prevId) => {
-        const currentIndex = mergedCartItems.findIndex(i => i.id === prevId);
+        const currentIndex = mergedCartItems.findIndex((i) => i.id === prevId);
         const nextIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
         const clamped = Math.max(0, Math.min(nextIndex, mergedCartItems.length - 1));
         const newItem = mergedCartItems[clamped];
@@ -472,7 +590,7 @@ export const POS: React.FC<POSProps> = ({
       });
     },
     onQuantityChange: (delta) => {
-      const item = mergedCartItems.find(i => i.id === highlightedItemId);
+      const item = mergedCartItems.find((i) => i.id === highlightedItemId);
       if (!highlightedItemId || !item) {
         playError();
         return;
@@ -484,7 +602,7 @@ export const POS: React.FC<POSProps> = ({
       updateQuantity(targetId, useUnit, delta);
     },
     onDelete: () => {
-      const item = mergedCartItems.find(i => i.id === highlightedItemId);
+      const item = mergedCartItems.find((i) => i.id === highlightedItemId);
       if (!highlightedItemId || !item) return;
       if (item.pack) removeFromCart(item.pack.id, false);
       if (item.unit) removeFromCart(item.unit.id, true);
@@ -534,7 +652,7 @@ export const POS: React.FC<POSProps> = ({
           const isScientificSearch = search.trimStart().startsWith('@');
 
           return (
-            <div className="flex flex-col w-full min-w-0 items-start text-start overflow-hidden">
+            <div className='flex flex-col w-full min-w-0 items-start text-start overflow-hidden'>
               <span className='font-bold text-sm text-gray-900 dark:text-gray-100 drug-name truncate w-full'>
                 {displayName}
               </span>
@@ -570,11 +688,7 @@ export const POS: React.FC<POSProps> = ({
           const unitsPerPack = row.unitsPerPack || 1;
 
           if (info.getValue() <= 0) {
-            return (
-              <span className='badge-danger'>
-                {t.outOfStock || 'Out of Stock'}
-              </span>
-            );
+            return <span className='badge-danger'>{t.outOfStock || 'Out of Stock'}</span>;
           }
 
           const displayValue = resolveDisplayStock(
@@ -665,9 +779,7 @@ export const POS: React.FC<POSProps> = ({
           if (availableBatches.length === 0) {
             return (
               <div className='w-full h-full flex items-center justify-center'>
-                <span className='badge-danger'>
-                  {t.noStock || 'Out of Stock'}
-                </span>
+                <span className='badge-danger'>{t.noStock || 'Out of Stock'}</span>
               </div>
             );
           }
@@ -676,13 +788,14 @@ export const POS: React.FC<POSProps> = ({
             const i = availableBatches[0];
             return (
               <div className='w-full h-full flex items-center justify-center'>
-                <div className={`text-sm font-bold tabular-nums ${i ? getExpiryColorClass(i.expiryDate) : 'text-gray-700 dark:text-gray-300'}`}>
+                <div
+                  className={`text-sm font-bold tabular-nums ${i ? getExpiryColorClass(i.expiryDate) : 'text-gray-700 dark:text-gray-300'}`}
+                >
                   {i ? (
-                    formatExpiryDate(i.expiryDate) + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
+                    formatExpiryDate(i.expiryDate) +
+                    ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                   ) : (
-                    <span className='badge-danger'>
-                      {t.noStock}
-                    </span>
+                    <span className='badge-danger'>{t.noStock}</span>
                   )}
                 </div>
               </div>
@@ -710,7 +823,9 @@ export const POS: React.FC<POSProps> = ({
                   const i = item as Drug | undefined;
                   const colorClass = i ? getExpiryColorClass(i.expiryDate) : 'text-red-500';
                   return (
-                    <div className={`w-full px-2 text-sm font-bold text-center truncate transition-colors ${colorClass}`}>
+                    <div
+                      className={`w-full px-2 text-sm font-bold text-center truncate transition-colors ${colorClass}`}
+                    >
                       {i ? (
                         formatExpiryDate(i.expiryDate) +
                         ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
@@ -723,7 +838,9 @@ export const POS: React.FC<POSProps> = ({
                 renderItem={(item) => {
                   const i = item as Drug;
                   return (
-                    <div className={`w-full px-2 text-sm font-bold text-center ${getExpiryColorClass(i.expiryDate)}`}>
+                    <div
+                      className={`w-full px-2 text-sm font-bold text-center ${getExpiryColorClass(i.expiryDate)}`}
+                    >
                       {formatExpiryDate(i.expiryDate) +
                         ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`}
                     </div>
@@ -755,7 +872,8 @@ export const POS: React.FC<POSProps> = ({
         cell: (info) => {
           // Computed lazily from ref — doesn't force table re-render on cart change
           const count = info.row.original.batches.reduce(
-            (sum: number, d: any) => sum + (cartQtyMapRef.current.get(d.id) || 0), 0
+            (sum: number, d: any) => sum + (cartQtyMapRef.current.get(d.id) || 0),
+            0
           );
           if (count <= 0) return null;
           return (
@@ -768,7 +886,18 @@ export const POS: React.FC<POSProps> = ({
         },
       }),
     ],
-    [color, t, language, selectedUnits, openUnitDropdown, selectedBatches, openBatchDropdown, textTransform, highlightMatch, search]
+    [
+      color,
+      t,
+      language,
+      selectedUnits,
+      openUnitDropdown,
+      selectedBatches,
+      openBatchDropdown,
+      textTransform,
+      highlightMatch,
+      search,
+    ]
   );
 
   return (
@@ -793,8 +922,9 @@ export const POS: React.FC<POSProps> = ({
       <div className='flex-1 flex flex-col lg:flex-row gap-3 animate-fade-in relative overflow-hidden'>
         {/* Product Grid - Hidden on Mobile if Cart Tab is active */}
         <div
-          className={`flex-1 flex flex-col gap-2 h-full overflow-hidden ${mobileTab === 'cart' ? 'hidden lg:flex' : 'flex'
-            }`}
+          className={`flex-1 flex flex-col gap-2 h-full overflow-hidden ${
+            mobileTab === 'cart' ? 'hidden lg:flex' : 'flex'
+          }`}
         >
           {/* Customer Details */}
           <POSCustomerPanel
@@ -835,12 +965,11 @@ export const POS: React.FC<POSProps> = ({
                 resultsCount={totalResults}
                 placeholder={t.searchPlaceholder}
                 color={color}
-                className=""
+                className=''
                 // Filter Integration
                 filterConfigs={posFilterConfigs}
                 activeFilters={posActiveFilters}
                 onUpdateFilter={handlePosFilterUpdate}
-
                 onKeyDown={(e) => {
                   const term = search.trim();
 
@@ -855,9 +984,7 @@ export const POS: React.FC<POSProps> = ({
                   if (e.key === 'ArrowUp') {
                     e.preventDefault();
                     if (tableData.length > 0) {
-                      setActiveIndex(
-                        (prev) => (prev - 1 + tableData.length) % tableData.length
-                      );
+                      setActiveIndex((prev) => (prev - 1 + tableData.length) % tableData.length);
                     }
                     return;
                   }
@@ -896,13 +1023,13 @@ export const POS: React.FC<POSProps> = ({
                   showMenu(e.clientX, e.clientY, [
                     ...(selection
                       ? [
-                        {
-                          label: t.copy,
-                          icon: 'content_copy',
-                          action: () => navigator.clipboard.writeText(selection),
-                          danger: false,
-                        },
-                      ]
+                          {
+                            label: t.copy,
+                            icon: 'content_copy',
+                            action: () => navigator.clipboard.writeText(selection),
+                            danger: false,
+                          },
+                        ]
                       : []),
                     {
                       label: t.paste,
@@ -976,7 +1103,12 @@ export const POS: React.FC<POSProps> = ({
               customEmptyState={
                 search.trim() === '' ? (
                   <div className='h-full flex flex-col items-center justify-center text-gray-400 space-y-3 p-8 select-none'>
-                    <span className='material-symbols-rounded opacity-20' style={{ fontSize: '60px' }}>search</span>
+                    <span
+                      className='material-symbols-rounded opacity-20'
+                      style={{ fontSize: '60px' }}
+                    >
+                      search
+                    </span>
                     <h1 className='text-2xl font-bold tracking-tight page-title'>
                       {t.searchPlaceholder}
                     </h1>
@@ -1073,7 +1205,7 @@ export const POS: React.FC<POSProps> = ({
             activeTab={viewingDrugTab}
             onTabChange={setViewingDrugTab}
           >
-            <div className='flex flex-col gap-6 p-1' dir="ltr">
+            <div className='flex flex-col gap-6 p-1' dir='ltr'>
               {viewingDrugTab === 'overview' && (
                 <POSDrugOverview
                   viewingDrug={viewingDrug}
@@ -1085,9 +1217,7 @@ export const POS: React.FC<POSProps> = ({
                 />
               )}
 
-              {viewingDrugTab === 'branches' && (
-                <POSDrugBranches viewingDrug={viewingDrug} t={t} />
-              )}
+              {viewingDrugTab === 'branches' && <POSDrugBranches viewingDrug={viewingDrug} t={t} />}
 
               {viewingDrugTab === 'analytics' && (
                 <POSDrugAnalytics viewingDrug={viewingDrug} t={t} />
@@ -1133,9 +1263,13 @@ export const POS: React.FC<POSProps> = ({
           t={t}
           language={language}
           onAddToCart={(code) => {
-            const drug = inventory.find(d => d.internalCode === code || d.barcode === code || d.id === code);
+            const drug = inventory.find(
+              (d) => d.internalCode === code || d.barcode === code || d.id === code
+            );
             if (drug) {
-              const group = inventory.filter(d => d.name === drug.name && d.dosageForm === drug.dosageForm);
+              const group = inventory.filter(
+                (d) => d.name === drug.name && d.dosageForm === drug.dosageForm
+              );
               addGroupToCart(group);
               if (historyCustomer) {
                 handleCustomerSelect(historyCustomer);

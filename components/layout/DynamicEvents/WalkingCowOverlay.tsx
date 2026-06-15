@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import type React from 'react';
+import { useState } from 'react';
 import { SVGCow } from './SVGCow';
 
 interface WalkingCowOverlayProps {
@@ -29,7 +30,7 @@ export const WalkingCowOverlay: React.FC<WalkingCowOverlayProps> = ({ id, payloa
   const handleClick = (e: React.MouseEvent) => {
     const target = e.currentTarget as HTMLElement;
     const prevPointerEvents = target.style.pointerEvents;
-    
+
     // Temporarily disable pointer events to click through
     target.style.pointerEvents = 'none';
 
@@ -42,7 +43,7 @@ export const WalkingCowOverlay: React.FC<WalkingCowOverlayProps> = ({ id, payloa
           cancelable: true,
           view: window,
           clientX: e.clientX,
-          clientY: e.clientY
+          clientY: e.clientY,
         });
         elementBehind.dispatchEvent(clickEvent);
       }
@@ -80,7 +81,7 @@ export const WalkingCowOverlay: React.FC<WalkingCowOverlayProps> = ({ id, payloa
           duration: payload.speed || 30,
           ease: 'linear',
           repeat: Infinity,
-          times: [0, 0.47, 0.485, 0.50, 0.97, 0.985, 1.0],
+          times: [0, 0.47, 0.485, 0.5, 0.97, 0.985, 1.0],
         }}
       >
         <motion.div

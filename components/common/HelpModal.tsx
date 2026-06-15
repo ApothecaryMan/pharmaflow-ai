@@ -195,7 +195,7 @@ interface HelpButtonProps {
 export const HelpButton: React.FC<HelpButtonProps> = ({ onClick, title, color, isRTL = false }) => (
   <button
     onClick={onClick}
-    className="fixed end-6 bottom-12 p-1 text-black/80 dark:text-white/80 hover:text-black dark:hover:text-white z-40 transition-transform active:scale-95"
+    className='fixed end-6 bottom-12 p-1 text-black/80 dark:text-white/80 hover:text-black dark:hover:text-white z-40 transition-transform active:scale-95'
     title={title}
     aria-label={title}
   >

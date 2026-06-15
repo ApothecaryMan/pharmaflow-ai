@@ -119,7 +119,9 @@ export const useEmployeeAllTimeAttendance = (
 
         // Get the last active date from the most recent event
         const lastActiveDate =
-          events.length > 0 ? new Date(events[events.length - 1].timestamp).toLocaleDateString() : null;
+          events.length > 0
+            ? new Date(events[events.length - 1].timestamp).toLocaleDateString()
+            : null;
 
         // Format the duration
         const formattedDuration = formatDuration(summary.totalMinutes, language);

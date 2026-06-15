@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { settingsService } from './settingsService';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { storage } from '../../utils/storage';
+import { settingsService } from './settingsService';
 import { AppSettings } from './types';
 
 // Mock storage
@@ -13,10 +13,10 @@ vi.mock('../../utils/storage', () => ({
 }));
 
 describe('SettingsService', () => {
-  const defaultSettings = { 
-    darkMode: false, 
+  const defaultSettings = {
+    darkMode: false,
     language: 'EN',
-    branchCode: 'B1'
+    branchCode: 'B1',
   };
 
   beforeEach(() => {
@@ -41,7 +41,7 @@ describe('SettingsService', () => {
   it('should update a single setting', async () => {
     (storage.get as any).mockReturnValue({});
     await settingsService.set('darkMode', true);
-    
+
     expect(storage.set).toHaveBeenCalled();
     // Get the second arg of first call to storage.set
     const setCallArgs = (storage.set as any).mock.calls[0];

@@ -1,16 +1,16 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
-import { useMemo, useRef, useEffect } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { CASH_REGISTER_HELP } from '../../i18n/helpInstructions';
 import type { CashTransaction, CashTransactionType, Employee, Language } from '../../types';
 import { formatCurrencyParts } from '../../utils/currency';
 import { CARD_BASE, INPUT_BASE } from '../../utils/themeStyles';
+import { AnimatedCounter } from '../common/AnimatedCounter';
 import { HelpButton, HelpModal } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
+import { PageHeader } from '../common/PageHeader';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useSmartDirection } from '../common/SmartInputs';
-import { PageHeader } from '../common/PageHeader';
-import { AnimatedCounter } from '../common/AnimatedCounter';
 import { TanStackTable } from '../common/TanStackTable';
 import { PriceDisplay } from '../common/table/PriceDisplay';
 import { useCashRegister } from './useCashRegister';
@@ -60,7 +60,6 @@ const TX_ICONS: Record<string, string> = {
   purchase_return: 'keyboard_return',
   expense: 'receipt_long',
 };
-
 
 export const CashRegister: React.FC<CashRegisterProps> = ({
   color,
@@ -127,10 +126,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         cell: (info) => {
           const type = info.getValue() as CashTransactionType;
           return (
-            <span className={`${getTxBadgeClass(type)} gap-1.5`} dir={language === 'AR' ? 'rtl' : 'ltr'}>
-              <span className={`material-symbols-rounded`}>
-                {TX_ICONS[type] || 'receipt'}
-              </span>
+            <span
+              className={`${getTxBadgeClass(type)} gap-1.5`}
+              dir={language === 'AR' ? 'rtl' : 'ltr'}
+            >
+              <span className={`material-symbols-rounded`}>{TX_ICONS[type] || 'receipt'}</span>
               {t.cashRegister.types[type] || type}
             </span>
           );
@@ -163,7 +163,10 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           if (match) {
             return (
               <span className='flex items-center gap-1.5 font-medium'>
-                <span className='material-symbols-rounded text-gray-400 dark:text-gray-500' style={{ fontSize: 'var(--icon-sm)' }}>
+                <span
+                  className='material-symbols-rounded text-gray-400 dark:text-gray-500'
+                  style={{ fontSize: 'var(--icon-sm)' }}
+                >
                   tag
                 </span>
                 <span className='tabular-nums tracking-normal text-[11px] text-gray-900 dark:text-gray-100'>
@@ -199,14 +202,16 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         cell: (info) => {
           const amountVal = info.getValue() as number;
           const row = info.row.original;
-          const isPositive = ['in', 'opening', 'sale', 'card_sale', 'purchase_return'].includes(row.type);
+          const isPositive = ['in', 'opening', 'sale', 'card_sale', 'purchase_return'].includes(
+            row.type
+          );
           const displayValue = isPositive ? Math.abs(amountVal) : -Math.abs(amountVal);
 
           return (
             <div
               className={`text-[11px] font-bold ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}
             >
-              <PriceDisplay value={displayValue} showSign size="sm" />
+              <PriceDisplay value={displayValue} showSign size='sm' />
             </div>
           );
         },
@@ -223,18 +228,22 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
     >
       {/* Header */}
       <PageHeader
-        mb="mb-0"
+        mb='mb-0'
         centerContent={
           <SegmentedControl
-            size="md"
-            shape="pill"
-            iconSize="--icon-lg"
+            size='md'
+            shape='pill'
+            iconSize='--icon-lg'
             useGraphicFont={true}
             options={[
-              { label: t.cashRegister?.title || 'Register', value: 'cash-register', icon: 'point_of_sale' },
+              {
+                label: t.cashRegister?.title || 'Register',
+                value: 'cash-register',
+                icon: 'point_of_sale',
+              },
               { label: t.shiftHistory?.title || 'Shifts', value: 'shift-history', icon: 'history' },
             ]}
-            value="cash-register"
+            value='cash-register'
             onChange={(val) => onViewChange?.(val as string)}
           />
         }
@@ -242,17 +251,17 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           <div className='flex gap-3'>
             {isLoading ? (
               <>
-                <div className="px-4 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-700 animate-pulse flex items-center gap-2">
-                  <div className="w-5 h-5 bg-zinc-300 dark:bg-zinc-600 rounded-full" />
-                  <div className="w-16 h-4 bg-zinc-300 dark:bg-zinc-600 rounded" />
+                <div className='px-4 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-700 animate-pulse flex items-center gap-2'>
+                  <div className='w-5 h-5 bg-zinc-300 dark:bg-zinc-600 rounded-full' />
+                  <div className='w-16 h-4 bg-zinc-300 dark:bg-zinc-600 rounded' />
                 </div>
-                <div className="px-4 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-700 animate-pulse hidden md:flex items-center gap-2">
-                  <div className="w-5 h-5 bg-zinc-300 dark:bg-zinc-600 rounded-full" />
-                  <div className="w-16 h-4 bg-zinc-300 dark:bg-zinc-600 rounded" />
+                <div className='px-4 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-700 animate-pulse hidden md:flex items-center gap-2'>
+                  <div className='w-5 h-5 bg-zinc-300 dark:bg-zinc-600 rounded-full' />
+                  <div className='w-16 h-4 bg-zinc-300 dark:bg-zinc-600 rounded' />
                 </div>
-                <div className="px-4 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-700 animate-pulse hidden lg:flex items-center gap-2">
-                  <div className="w-5 h-5 bg-zinc-300 dark:bg-zinc-600 rounded-full" />
-                  <div className="w-16 h-4 bg-zinc-300 dark:bg-zinc-600 rounded" />
+                <div className='px-4 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-700 animate-pulse hidden lg:flex items-center gap-2'>
+                  <div className='w-5 h-5 bg-zinc-300 dark:bg-zinc-600 rounded-full' />
+                  <div className='w-16 h-4 bg-zinc-300 dark:bg-zinc-600 rounded' />
                 </div>
               </>
             ) : currentShift ? (
@@ -262,7 +271,12 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     onClick={() => setModalMode('in')}
                     className={`px-4 py-2 rounded-xl bg-emerald-100 text-emerald-700 hover:bg-emerald-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap`}
                   >
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>add</span>
+                    <span
+                      className='material-symbols-rounded'
+                      style={{ fontSize: 'var(--icon-md)' }}
+                    >
+                      add
+                    </span>
                     {t.cashRegister.actions.addCash}
                   </button>
                 )}
@@ -271,7 +285,12 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     onClick={() => setModalMode('out')}
                     className={`px-4 py-2 rounded-xl bg-orange-100 text-orange-700 hover:bg-orange-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap`}
                   >
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>remove</span>
+                    <span
+                      className='material-symbols-rounded'
+                      style={{ fontSize: 'var(--icon-md)' }}
+                    >
+                      remove
+                    </span>
                     {t.cashRegister.actions.removeCash}
                   </button>
                 )}
@@ -280,7 +299,12 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     onClick={() => setModalMode('close')}
                     className={`px-4 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-bold transition-colors flex items-center gap-2 whitespace-nowrap`}
                   >
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>lock</span>
+                    <span
+                      className='material-symbols-rounded'
+                      style={{ fontSize: 'var(--icon-md)' }}
+                    >
+                      lock
+                    </span>
                     {t.cashRegister.actions.closeShift}
                   </button>
                 )}
@@ -291,7 +315,9 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   onClick={() => setModalMode('open')}
                   className={`px-6 py-2.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border border-zinc-800 dark:border-zinc-200 hover:bg-zinc-950 dark:hover:bg-zinc-100 font-bold transition-all flex items-center gap-2`}
                 >
-                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>lock_open</span>
+                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
+                    lock_open
+                  </span>
                   {t.cashRegister.actions.openShift}
                 </button>
               )
@@ -307,11 +333,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           {/* Status Card */}
           <div className={`p-6 rounded-3xl ${CARD_BASE} relative overflow-hidden group`}>
             <div className='absolute -bottom-8 ltr:-right-8 rtl:-left-8 opacity-10 pointer-events-none select-none'>
-              <img
-                src="/locker.png"
-                alt=""
-                className="w-[220px] h-[220px] object-contain"
-              />
+              <img src='/locker.png' alt='' className='w-[220px] h-[220px] object-contain' />
             </div>
 
             <p className='text-sm font-bold uppercase text-gray-500 mb-2'>
@@ -321,8 +343,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
               <div
                 className={`w-3 h-3 rounded-full ${isLoading ? 'bg-zinc-200 dark:bg-zinc-700 animate-pulse' : currentShift ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}
               ></div>
-              <h3 className={`text-2xl font-bold ${isLoading ? 'h-8 w-24 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
-                {!isLoading && (currentShift ? t.cashRegister.status.open : t.cashRegister.status.closed)}
+              <h3
+                className={`text-2xl font-bold ${isLoading ? 'h-8 w-24 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+              >
+                {!isLoading &&
+                  (currentShift ? t.cashRegister.status.open : t.cashRegister.status.closed)}
               </h3>
             </div>
             {(currentShift || isLoading) && (
@@ -336,14 +361,17 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     <div className='h-5 w-24 bg-zinc-200 dark:bg-zinc-700 rounded-lg animate-pulse' />
                   ) : (
                     <>
-                      <span className="badge-neutral gap-1.5">
-                        <span className="material-symbols-rounded">schedule</span>
+                      <span className='badge-neutral gap-1.5'>
+                        <span className='material-symbols-rounded'>schedule</span>
                         {(() => {
-                          const timeStr = new Date(currentShift!.openTime).toLocaleTimeString('en-US', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: true,
-                          });
+                          const timeStr = new Date(currentShift!.openTime).toLocaleTimeString(
+                            'en-US',
+                            {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: true,
+                            }
+                          );
 
                           const parts = timeStr.split(' ');
                           const timeValue = parts[0];
@@ -381,9 +409,10 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   {isLoading ? (
                     <div className='h-5 w-32 bg-zinc-200 dark:bg-zinc-700 rounded-lg animate-pulse' />
                   ) : (
-                    <span className="badge-purple gap-1.5">
-                      <span className="material-symbols-rounded">person</span>
-                      {employees?.find((e) => e.id === currentShift!.openedBy)?.name || currentShift!.openedBy}
+                    <span className='badge-purple gap-1.5'>
+                      <span className='material-symbols-rounded'>person</span>
+                      {employees?.find((e) => e.id === currentShift!.openedBy)?.name ||
+                        currentShift!.openedBy}
                     </span>
                   )}
                 </div>
@@ -396,8 +425,8 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   {isLoading ? (
                     <div className='h-5 w-16 bg-zinc-200 dark:bg-zinc-700 rounded-lg animate-pulse' />
                   ) : (
-                    <span className="badge-neutral gap-1.5">
-                      <span className="material-symbols-rounded">tag</span>
+                    <span className='badge-neutral gap-1.5'>
+                      <span className='material-symbols-rounded'>tag</span>
                       {currentShift!.id.slice(-6)}
                     </span>
                   )}
@@ -407,25 +436,32 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           </div>
 
           {/* Balance Cards (Only if Open or Loading) */}
-          {(currentShift || isLoading) ? (
+          {currentShift || isLoading ? (
             <div className='space-y-3'>
               {(isLoading || (currentShift && permissions.canViewExpectedBalance)) && (
-                <div
-                  className={`p-5 rounded-3xl ${CARD_BASE} relative overflow-hidden group`}
-                >
+                <div className={`p-5 rounded-3xl ${CARD_BASE} relative overflow-hidden group`}>
                   <div className='flex items-center gap-2 mb-1.5 relative z-10'>
-                    <span className='material-symbols-rounded text-primary-600 dark:text-primary-400' style={{ fontSize: 'var(--icon-md)' }}>
+                    <span
+                      className='material-symbols-rounded text-primary-600 dark:text-primary-400'
+                      style={{ fontSize: 'var(--icon-md)' }}
+                    >
                       account_balance_wallet
                     </span>
-                    <p className={`text-xs font-bold uppercase text-primary-800 dark:text-primary-300`}>
+                    <p
+                      className={`text-xs font-bold uppercase text-primary-800 dark:text-primary-300`}
+                    >
                       {t.cashRegister.summary.expectedBalance}
                     </p>
                   </div>
-                  <div className={`text-3xl font-bold text-gray-900 dark:text-gray-100 tabular-nums relative z-10 flex items-baseline gap-2 ${isLoading ? "h-10 w-32 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse" : ""}`}>
+                  <div
+                    className={`text-3xl font-bold text-gray-900 dark:text-gray-100 tabular-nums relative z-10 flex items-baseline gap-2 ${isLoading ? 'h-10 w-32 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                  >
                     {!isLoading && (
                       <>
                         <AnimatedCounter value={currentBalance} />
-                        <span className="text-base font-normal opacity-40">{language === "AR" ? "ج.م" : "EGP"}</span>
+                        <span className='text-base font-normal opacity-40'>
+                          {language === 'AR' ? 'ج.م' : 'EGP'}
+                        </span>
                       </>
                     )}
                   </div>
@@ -437,11 +473,18 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.openingBalance}
                   </p>
-                  <div className={`text-base font-bold text-gray-700 dark:text-gray-300 flex items-baseline gap-1 ${isLoading ? 'h-6 w-16 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                  <div
+                    className={`text-base font-bold text-gray-700 dark:text-gray-300 flex items-baseline gap-1 ${isLoading ? 'h-6 w-16 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                  >
                     {!isLoading && (
                       <>
-                        <AnimatedCounter value={currentShift?.openingBalance || 0} fractionDigits={0} />
-                        <span className='text-[10px] opacity-60 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
+                        <AnimatedCounter
+                          value={currentShift?.openingBalance || 0}
+                          fractionDigits={0}
+                        />
+                        <span className='text-[10px] opacity-60 font-normal'>
+                          {language === 'AR' ? 'ج.م' : 'EGP'}
+                        </span>
                       </>
                     )}
                   </div>
@@ -450,12 +493,21 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cashSales}
                   </p>
-                  <div className={`text-base font-bold text-emerald-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                  <div
+                    className={`text-base font-bold text-emerald-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                  >
                     {!isLoading && (
                       <>
-                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
+                        <span
+                          className='material-symbols-rounded'
+                          style={{ fontSize: 'var(--icon-lg)' }}
+                        >
+                          add
+                        </span>
                         <AnimatedCounter value={currentShift?.cashSales || 0} fractionDigits={0} />
-                        <span className='text-[10px] opacity-60 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
+                        <span className='text-[10px] opacity-60 font-normal'>
+                          {language === 'AR' ? 'ج.م' : 'EGP'}
+                        </span>
                       </>
                     )}
                   </div>
@@ -464,12 +516,21 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cardSales}
                   </p>
-                  <div className={`text-base font-bold text-violet-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                  <div
+                    className={`text-base font-bold text-violet-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                  >
                     {!isLoading && (
                       <>
-                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
+                        <span
+                          className='material-symbols-rounded'
+                          style={{ fontSize: 'var(--icon-lg)' }}
+                        >
+                          add
+                        </span>
                         <AnimatedCounter value={currentShift?.cardSales || 0} fractionDigits={0} />
-                        <span className='text-[10px] opacity-60 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
+                        <span className='text-[10px] opacity-60 font-normal'>
+                          {language === 'AR' ? 'ج.م' : 'EGP'}
+                        </span>
                       </>
                     )}
                   </div>
@@ -478,12 +539,21 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cashIn}
                   </p>
-                  <div className={`text-base font-bold text-orange-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                  <div
+                    className={`text-base font-bold text-orange-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                  >
                     {!isLoading && (
                       <>
-                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
+                        <span
+                          className='material-symbols-rounded'
+                          style={{ fontSize: 'var(--icon-lg)' }}
+                        >
+                          add
+                        </span>
                         <AnimatedCounter value={currentShift?.cashIn || 0} fractionDigits={0} />
-                        <span className='text-[10px] opacity-60 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
+                        <span className='text-[10px] opacity-60 font-normal'>
+                          {language === 'AR' ? 'ج.م' : 'EGP'}
+                        </span>
                       </>
                     )}
                   </div>
@@ -492,12 +562,21 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cashOut}
                   </p>
-                  <div className={`text-base font-bold text-red-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                  <div
+                    className={`text-base font-bold text-red-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                  >
                     {!isLoading && (
                       <>
-                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>remove</span>
+                        <span
+                          className='material-symbols-rounded'
+                          style={{ fontSize: 'var(--icon-lg)' }}
+                        >
+                          remove
+                        </span>
                         <AnimatedCounter value={currentShift?.cashOut || 0} fractionDigits={0} />
-                        <span className='text-[10px] opacity-60 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
+                        <span className='text-[10px] opacity-60 font-normal'>
+                          {language === 'AR' ? 'ج.م' : 'EGP'}
+                        </span>
                       </>
                     )}
                   </div>
@@ -506,12 +585,24 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cashPurchases}
                   </p>
-                  <div className={`text-base font-bold text-red-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                  <div
+                    className={`text-base font-bold text-red-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                  >
                     {!isLoading && (
                       <>
-                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>remove</span>
-                        <AnimatedCounter value={currentShift?.cashPurchases || 0} fractionDigits={0} />
-                        <span className='text-[10px] opacity-60 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
+                        <span
+                          className='material-symbols-rounded'
+                          style={{ fontSize: 'var(--icon-lg)' }}
+                        >
+                          remove
+                        </span>
+                        <AnimatedCounter
+                          value={currentShift?.cashPurchases || 0}
+                          fractionDigits={0}
+                        />
+                        <span className='text-[10px] opacity-60 font-normal'>
+                          {language === 'AR' ? 'ج.م' : 'EGP'}
+                        </span>
                       </>
                     )}
                   </div>
@@ -520,12 +611,24 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cashPurchaseReturns}
                   </p>
-                  <div className={`text-base font-bold text-primary-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                  <div
+                    className={`text-base font-bold text-primary-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                  >
                     {!isLoading && (
                       <>
-                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
-                        <AnimatedCounter value={currentShift?.cashPurchaseReturns || 0} fractionDigits={0} />
-                        <span className='text-[10px] opacity-60 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
+                        <span
+                          className='material-symbols-rounded'
+                          style={{ fontSize: 'var(--icon-lg)' }}
+                        >
+                          add
+                        </span>
+                        <AnimatedCounter
+                          value={currentShift?.cashPurchaseReturns || 0}
+                          fractionDigits={0}
+                        />
+                        <span className='text-[10px] opacity-60 font-normal'>
+                          {language === 'AR' ? 'ج.م' : 'EGP'}
+                        </span>
                       </>
                     )}
                   </div>
@@ -534,12 +637,21 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.returns || 'Returns'}
                   </p>
-                  <div className={`text-base font-bold text-orange-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}>
+                  <div
+                    className={`text-base font-bold text-orange-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                  >
                     {!isLoading && (
                       <>
-                        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>remove</span>
+                        <span
+                          className='material-symbols-rounded'
+                          style={{ fontSize: 'var(--icon-lg)' }}
+                        >
+                          remove
+                        </span>
                         <AnimatedCounter value={currentShift?.returns || 0} fractionDigits={0} />
-                        <span className='text-[10px] opacity-60 font-normal'>{language === 'AR' ? 'ج.م' : 'EGP'}</span>
+                        <span className='text-[10px] opacity-60 font-normal'>
+                          {language === 'AR' ? 'ج.م' : 'EGP'}
+                        </span>
                       </>
                     )}
                   </div>
@@ -550,7 +662,10 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
             <div
               className={`p-8 rounded-3xl ${CARD_BASE} text-center flex flex-col items-center justify-center min-h-[430px] text-gray-400`}
             >
-              <span className='material-symbols-rounded mb-3 opacity-50' style={{ fontSize: 'var(--icon-2xl)' }}>
+              <span
+                className='material-symbols-rounded mb-3 opacity-50'
+                style={{ fontSize: 'var(--icon-2xl)' }}
+              >
                 shopping_bag
               </span>
               <p>{t.cashRegister.messages.noShift}</p>
@@ -669,7 +784,9 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
               {/* Validation Error */}
               {validationError && (
                 <p className='text-red-500 text-sm mt-2 flex items-center gap-1'>
-                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>error</span>
+                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>
+                    error
+                  </span>
                   {validationError}
                 </p>
               )}

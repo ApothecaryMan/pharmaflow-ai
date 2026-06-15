@@ -1,10 +1,10 @@
 import type React from 'react';
+import { useSettings } from '../../../context';
+import type { TRANSLATIONS } from '../../../i18n/translations';
 import type { AuditTransaction } from '../../../types/intelligence';
 import { formatCurrency } from '../../../utils/currency';
-import { Modal } from '../../common/Modal';
-import { useSettings } from '../../../context';
 import { getDisplayName } from '../../../utils/drugDisplayName';
-import { TRANSLATIONS } from '../../../i18n/translations';
+import { Modal } from '../../common/Modal';
 
 interface TransactionDetailModalProps {
   isOpen: boolean;
@@ -40,13 +40,16 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
               {t?.intelligence?.audit?.details?.dateTime || 'Date & Time'}
             </p>
             <p className='font-bold text-gray-900 dark:text-white'>
-              {new Date(transaction.timestamp).toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+              {new Date(transaction.timestamp).toLocaleDateString(
+                language === 'AR' ? 'ar-EG' : 'en-US',
+                {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }
+              )}
             </p>
           </div>
           <div className='bg-gray-50 dark:bg-gray-800 p-4 rounded-xl'>
@@ -66,15 +69,33 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
           </h4>
           <div className='grid grid-cols-2 gap-3 text-sm'>
             <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
-              <span className='text-gray-500'>{t?.intelligence?.audit?.grid?.columns?.type || 'Type'}</span>
+              <span className='text-gray-500'>
+                {t?.intelligence?.audit?.grid?.columns?.type || 'Type'}
+              </span>
               {(() => {
-                let config = { badgeClass: 'badge-neutral', icon: 'edit', label: t?.intelligence?.audit?.types?.edit || 'Edit' };
+                let config = {
+                  badgeClass: 'badge-neutral',
+                  icon: 'edit',
+                  label: t?.intelligence?.audit?.types?.edit || 'Edit',
+                };
                 if (transaction.type === 'SALE')
-                  config = { badgeClass: 'badge-success', icon: 'check_circle', label: t?.intelligence?.audit?.types?.sale || 'Sale' };
+                  config = {
+                    badgeClass: 'badge-success',
+                    icon: 'check_circle',
+                    label: t?.intelligence?.audit?.types?.sale || 'Sale',
+                  };
                 else if (transaction.type === 'RETURN')
-                  config = { badgeClass: 'badge-danger', icon: 'keyboard_return', label: t?.intelligence?.audit?.types?.return || 'Return' };
+                  config = {
+                    badgeClass: 'badge-danger',
+                    icon: 'keyboard_return',
+                    label: t?.intelligence?.audit?.types?.return || 'Return',
+                  };
                 else if (transaction.type === 'VOID')
-                  config = { badgeClass: 'badge-neutral', icon: 'cancel', label: t?.intelligence?.audit?.types?.void || 'Void' };
+                  config = {
+                    badgeClass: 'badge-neutral',
+                    icon: 'cancel',
+                    label: t?.intelligence?.audit?.types?.void || 'Void',
+                  };
 
                 return (
                   <span className={`${config.badgeClass} gap-1.5`}>
@@ -85,19 +106,25 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
               })()}
             </div>
             <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
-              <span className='text-gray-500'>{t?.intelligence?.audit?.grid?.columns?.qty || 'Qty'}</span>
+              <span className='text-gray-500'>
+                {t?.intelligence?.audit?.grid?.columns?.qty || 'Qty'}
+              </span>
               <span className='font-medium text-gray-900 dark:text-white'>
                 {transaction.quantity}
               </span>
             </div>
             <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
-              <span className='text-gray-500'>{t?.intelligence?.audit?.grid?.columns?.product || 'Product'}</span>
+              <span className='text-gray-500'>
+                {t?.intelligence?.audit?.grid?.columns?.product || 'Product'}
+              </span>
               <span className='font-medium text-gray-900 dark:text-white'>
                 {getDisplayName({ name: transaction.product_name }, textTransform)}
               </span>
             </div>
             <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
-              <span className='text-gray-500'>{t?.intelligence?.audit?.grid?.columns?.user || 'User'}</span>
+              <span className='text-gray-500'>
+                {t?.intelligence?.audit?.grid?.columns?.user || 'User'}
+              </span>
               <span className='font-medium text-gray-900 dark:text-white'>
                 {transaction.cashier_name}
               </span>
@@ -108,8 +135,15 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
         {/* Anomaly Warning */}
         {transaction.has_anomaly && (
           <div className='bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm flex items-center gap-2'>
-            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>warning</span>
-            <span>{t?.intelligence?.audit?.details?.anomalyWarning || 'Warning'}: {transaction.anomaly_reason || (t?.intelligence?.audit?.details?.anomalyDetected || 'Anomaly detected in this transaction')}</span>
+            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>
+              warning
+            </span>
+            <span>
+              {t?.intelligence?.audit?.details?.anomalyWarning || 'Warning'}:{' '}
+              {transaction.anomaly_reason ||
+                t?.intelligence?.audit?.details?.anomalyDetected ||
+                'Anomaly detected in this transaction'}
+            </span>
           </div>
         )}
 
@@ -119,7 +153,9 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             onClick={() => console.log('Print receipt')}
             className='px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors font-medium flex items-center gap-2 text-sm'
           >
-            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>print</span>
+            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
+              print
+            </span>
             {t?.common?.print || 'Print'}
           </button>
           <button

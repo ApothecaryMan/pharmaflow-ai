@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import type React from 'react';
+import { useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { salesService } from '../../services/sales';
-import { returnService } from '../../services/returns';
 import { inventoryService } from '../../services/inventory';
 import { purchaseService } from '../../services/purchases';
+import { returnService } from '../../services/returns';
+import { salesService } from '../../services/sales';
 import { inventorySearchEngine } from '../../services/search/drugSearchService';
 import type { StockBatch } from '../../types';
 
@@ -41,14 +42,13 @@ export const useRealtimeSync = ({
         (payload: any) => {
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newSale = salesService.mapFromDb(payload.new);
-            setSales(prev => [newSale, ...prev.filter(s => s.id !== newSale.id)]);
+            setSales((prev) => [newSale, ...prev.filter((s) => s.id !== newSale.id)]);
           } else if (payload.eventType === 'DELETE') {
             setSales((prev) => prev.filter((s) => s.id !== payload.old.id));
           }
         }
       )
-      .subscribe((status) => {
-      });
+      .subscribe((status) => {});
 
     // Subscribe to Returns
     const returnsChannel = supabase
@@ -64,14 +64,13 @@ export const useRealtimeSync = ({
         (payload: any) => {
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newReturn = returnService.mapFromDb(payload.new);
-            setReturns(prev => [newReturn, ...prev.filter(r => r.id !== newReturn.id)]);
+            setReturns((prev) => [newReturn, ...prev.filter((r) => r.id !== newReturn.id)]);
           } else if (payload.eventType === 'DELETE') {
             setReturns((prev) => prev.filter((r) => r.id !== payload.old.id));
           }
         }
       )
-      .subscribe((status) => {
-      });
+      .subscribe((status) => {});
 
     // Subscribe to Inventory (Drugs)
     const drugsChannel = supabase
@@ -87,7 +86,7 @@ export const useRealtimeSync = ({
         (payload: any) => {
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newDrug = inventoryService.mapFromDb(payload.new);
-            setInventory(prev => [newDrug, ...prev.filter(d => d.id !== newDrug.id)]);
+            setInventory((prev) => [newDrug, ...prev.filter((d) => d.id !== newDrug.id)]);
             inventorySearchEngine.queueUpdate(newDrug as any);
           } else if (payload.eventType === 'DELETE') {
             setInventory((prev) => prev.filter((d) => d.id !== payload.old.id));
@@ -120,10 +119,10 @@ export const useRealtimeSync = ({
               dateReceived: payload.new.date_received,
               branchId: payload.new.branch_id,
               orgId: payload.new.org_id,
-              version: payload.new.version
+              version: payload.new.version,
             };
-            
-            setBatches(prev => [newBatch, ...prev.filter(b => b.id !== newBatch.id)]);
+
+            setBatches((prev) => [newBatch, ...prev.filter((b) => b.id !== newBatch.id)]);
           } else if (payload.eventType === 'DELETE') {
             setBatches((prev) => prev.filter((b) => b.id !== payload.old.id));
           }
@@ -145,7 +144,7 @@ export const useRealtimeSync = ({
         (payload: any) => {
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newPurchase = purchaseService.mapFromDb(payload.new);
-            setPurchases(prev => [newPurchase, ...prev.filter(p => p.id !== newPurchase.id)]);
+            setPurchases((prev) => [newPurchase, ...prev.filter((p) => p.id !== newPurchase.id)]);
           } else if (payload.eventType === 'DELETE') {
             setPurchases((prev) => prev.filter((p) => p.id !== payload.old.id));
           }

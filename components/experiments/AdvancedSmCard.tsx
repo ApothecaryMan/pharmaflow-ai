@@ -16,7 +16,8 @@ import { ExpandedProgressModal } from './ExpandedProgressModal'; // Import the n
 
 interface AdvancedSmCardProps {
   color: string;
-  t: Translations; slations;
+  t: Translations;
+  slations;
   language: string;
 }
 
@@ -148,9 +149,7 @@ export const ActionCard = ({ title, icon, color, actionLabel }: any) => (
   <div
     className={`p-4 rounded-3xl ${CARD_BASE} ${CARD_HOVER} h-36 flex flex-col items-center justify-center text-center group cursor-pointer border border-transparent hover:border-primary-200 dark:hover:border-primary-800`}
   >
-    <div
-      className={`text-primary-500 dark:text-primary-400 flex items-center justify-center mb-2`}
-    >
+    <div className={`text-primary-500 dark:text-primary-400 flex items-center justify-center mb-2`}>
       <span className='material-symbols-rounded text-4xl'>{icon}</span>
     </div>
     <h4 className='font-semibold text-gray-900 dark:text-white mb-0.5'>{title}</h4>

@@ -1,5 +1,5 @@
-import type { CartItem, Customer, Sale, Drug } from '../../../../types';
 import { getLocationName } from '../../../../data/locations';
+import type { CartItem, Customer, Drug, Sale } from '../../../../types';
 
 import { formatExpiryDate as formatExpiryDateShared } from '../../../../utils/expiryUtils';
 
@@ -24,7 +24,10 @@ export const formatTime = (timestamp: number | undefined): string => {
 /**
  * Consolidates customer address components into a single string.
  */
-export const formatFullAddress = (customer: Customer | null, language: 'EN' | 'AR' = 'EN'): string | undefined => {
+export const formatFullAddress = (
+  customer: Customer | null,
+  language: 'EN' | 'AR' = 'EN'
+): string | undefined => {
   if (!customer) return undefined;
 
   return [
@@ -83,7 +86,7 @@ export const buildSalePayload = (params: SalePayloadParams): Sale => {
     items,
     branchId,
     customerName: customerName || customer?.name || 'Guest Customer',
-    customerCode: (customerCode || customer?.code) || undefined,
+    customerCode: customerCode || customer?.code || undefined,
     customerPhone: customer?.phone,
     customerAddress: formatFullAddress(customer, language),
     customerStreetAddress: customer?.streetAddress,
@@ -98,4 +101,3 @@ export const buildSalePayload = (params: SalePayloadParams): Sale => {
     processingTimeMinutes,
   } as Sale;
 };
-

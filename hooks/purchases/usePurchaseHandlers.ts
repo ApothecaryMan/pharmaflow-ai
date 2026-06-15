@@ -1,16 +1,10 @@
-import React from 'react';
+import type React from 'react';
 import { useCallback } from 'react';
 import { useAlert } from '../../context';
-import { permissionsService } from '../../services/auth/permissionsService';
 import { auditService } from '../../services/audit/auditService';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { purchaseService } from '../../services/purchases/purchaseService';
-import type { 
-  ActionContext, 
-  Employee, 
-  Purchase, 
-  PurchaseReturn, 
-  Shift
-} from '../../types';
+import type { ActionContext, Employee, Purchase, PurchaseReturn, Shift } from '../../types';
 
 export interface UsePurchaseHandlersParams {
   currentEmployeeId: string | null;
@@ -25,7 +19,10 @@ export interface UsePurchaseHandlersParams {
   addPurchase?: (purchase: Omit<Purchase, 'id'>, context?: ActionContext) => Promise<Purchase>;
   approvePurchase?: (id: string, context: ActionContext) => Promise<void>;
   markAsReceived?: (id: string, receiverId: string, receiverName: string) => Promise<void>;
-  createPurchaseReturn: (ret: Omit<PurchaseReturn, 'id'>, context: ActionContext) => Promise<PurchaseReturn>;
+  createPurchaseReturn: (
+    ret: Omit<PurchaseReturn, 'id'>,
+    context: ActionContext
+  ) => Promise<PurchaseReturn>;
 }
 
 export function usePurchaseHandlers({
@@ -70,7 +67,7 @@ export function usePurchaseHandlers({
 
         if (addPurchase) {
           const result = await addPurchase(purchase, context);
-          
+
           if (result.status === 'completed' || result.status === 'received') {
             success(`Direct Purchase PO #${result.invoiceId} completed and inventory updated`);
           } else {
@@ -85,7 +82,17 @@ export function usePurchaseHandlers({
         return false;
       }
     },
-    [addPurchase, currentEmployeeId, employees, activeBranchId, activeOrgId, currentShift, error, success, info]
+    [
+      addPurchase,
+      currentEmployeeId,
+      employees,
+      activeBranchId,
+      activeOrgId,
+      currentShift,
+      error,
+      success,
+      info,
+    ]
   );
 
   const handleApprovePurchase = useCallback(
@@ -136,7 +143,17 @@ export function usePurchaseHandlers({
         error(`Failed to approve: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
-    [purchases, approvePurchase, success, currentEmployeeId, employees, error, currentShift, activeBranchId, activeOrgId]
+    [
+      purchases,
+      approvePurchase,
+      success,
+      currentEmployeeId,
+      employees,
+      error,
+      currentShift,
+      activeBranchId,
+      activeOrgId,
+    ]
   );
 
   const handleMarkAsReceived = useCallback(
@@ -151,7 +168,7 @@ export function usePurchaseHandlers({
         error('Permission denied: Cannot mark as received');
         return;
       }
-      
+
       const purchase = purchases.find((p) => p.id === purchaseId);
       if (!purchase) {
         error('Purchase Order not found');
@@ -182,7 +199,7 @@ export function usePurchaseHandlers({
         error('Permission denied: Cannot reject purchases');
         return;
       }
-      
+
       const purchase = purchases.find((p) => p.id === purchaseId);
       if (purchase?.status === 'completed') {
         error('Cannot reject a completed purchase. Use Purchase Returns to reverse stock.');
@@ -192,10 +209,10 @@ export function usePurchaseHandlers({
       try {
         await purchaseService.reject(purchaseId, reason || '');
 
-        setPurchases((prev) => 
+        setPurchases((prev) =>
           prev.map((p) => (p.id === purchaseId ? { ...p, status: 'rejected' } : p))
         );
-        
+
         info('Purchase Order Rejected');
         auditService.log('purchase.reject', {
           userId: currentEmployeeId,
@@ -238,7 +255,9 @@ export function usePurchaseHandlers({
             }, 0);
           const maxReturnable = purchaseItem.quantity - alreadyReturned;
           if (returnItem.quantityReturned > maxReturnable) {
-            error(`Cannot return ${returnItem.quantityReturned} of ${returnItem.name}. Max returnable: ${maxReturnable}`);
+            error(
+              `Cannot return ${returnItem.quantityReturned} of ${returnItem.name}. Max returnable: ${maxReturnable}`
+            );
             return;
           }
         }
@@ -248,11 +267,11 @@ export function usePurchaseHandlers({
         const { id: _, ...returnInput } = returnData;
         const context: ActionContext = {
           performerId: currentEmployeeId,
-          performerName: employees?.find(e => e.id === currentEmployeeId)?.name || 'System',
+          performerName: employees?.find((e) => e.id === currentEmployeeId)?.name || 'System',
           branchId: activeBranchId,
           orgId: activeOrgId,
           shiftId: currentShift?.id,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         };
 
         const savedReturn = await createPurchaseReturn(returnInput as any, context);

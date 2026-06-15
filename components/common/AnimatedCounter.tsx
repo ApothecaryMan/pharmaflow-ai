@@ -46,14 +46,14 @@ export const AnimatedCounter = ({
     const start = performance.now();
 
     // Cubic ease-out function for smooth deceleration
-    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+    const easeOut = (t: number) => 1 - (1 - t) ** 3;
 
     let frameId: number;
 
     const tick = (now: number) => {
       const elapsed = now - start;
       const progress = Math.min(elapsed / duration, 1);
-      
+
       // Calculate current value based on progress and easing
       const current = from + (to - from) * easeOut(progress);
 
@@ -80,10 +80,10 @@ export const AnimatedCounter = ({
     <span
       ref={spanRef}
       className={`tabular-nums inline-block transition-colors ${className}`}
-      style={{ 
+      style={{
         fontVariantNumeric: 'tabular-nums',
         fontFeatureSettings: '"tnum"',
-        whiteSpace: 'nowrap'
+        whiteSpace: 'nowrap',
       }}
     >
       {value.toLocaleString(undefined, {

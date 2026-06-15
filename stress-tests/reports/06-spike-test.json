@@ -10,40 +10,40 @@
         "id": "5c0f8025f7e0b6654089e5b00e950f1a",
         "groups": [],
         "checks": [
-            {
-              "name": "auth login status is 200",
-              "path": "::setup::auth login status is 200",
-              "id": "83e50c28eecbcc735b217f4caf98d173",
-              "passes": 1,
-              "fails": 0
-            },
-            {
-              "name": "auth login has access_token",
-              "path": "::setup::auth login has access_token",
-              "id": "139ead8a83809cdbc14a4cff7ebf6f21",
-              "passes": 1,
-              "fails": 0
-            }
-          ]
+          {
+            "name": "auth login status is 200",
+            "path": "::setup::auth login status is 200",
+            "id": "83e50c28eecbcc735b217f4caf98d173",
+            "passes": 1,
+            "fails": 0
+          },
+          {
+            "name": "auth login has access_token",
+            "path": "::setup::auth login has access_token",
+            "id": "139ead8a83809cdbc14a4cff7ebf6f21",
+            "passes": 1,
+            "fails": 0
+          }
+        ]
       },
       {
         "groups": [],
         "checks": [
-            {
-              "name": "✅ Spike checkout status",
-              "path": "::⚡ Spike: Checkout::✅ Spike checkout status",
-              "id": "bc76f219cf066490892cc1b9ec78f921",
-              "passes": 4,
-              "fails": 0
-            },
-            {
-              "name": "✅ Spike checkout result",
-              "path": "::⚡ Spike: Checkout::✅ Spike checkout result",
-              "id": "bfb89487ba9296ec789031740e2876f2",
-              "passes": 4,
-              "fails": 0
-            }
-          ],
+          {
+            "name": "✅ Spike checkout status",
+            "path": "::⚡ Spike: Checkout::✅ Spike checkout status",
+            "id": "bc76f219cf066490892cc1b9ec78f921",
+            "passes": 4,
+            "fails": 0
+          },
+          {
+            "name": "✅ Spike checkout result",
+            "path": "::⚡ Spike: Checkout::✅ Spike checkout result",
+            "id": "bfb89487ba9296ec789031740e2876f2",
+            "passes": 4,
+            "fails": 0
+          }
+        ],
         "name": "⚡ Spike: Checkout",
         "path": "::⚡ Spike: Checkout",
         "id": "76bd37826eeda6ebd7f56817258efbae"
@@ -67,14 +67,14 @@
         "id": "1efabffdad687755da40c3388c767b62",
         "groups": [],
         "checks": [
-            {
-              "name": "✅ Spike sales OK",
-              "path": "::⚡ Spike: Sales::✅ Spike sales OK",
-              "id": "a4a10b00336095e4b878a3e0006fa7b6",
-              "passes": 1,
-              "fails": 0
-            }
-          ],
+          {
+            "name": "✅ Spike sales OK",
+            "path": "::⚡ Spike: Sales::✅ Spike sales OK",
+            "id": "a4a10b00336095e4b878a3e0006fa7b6",
+            "passes": 1,
+            "fails": 0
+          }
+        ],
         "name": "⚡ Spike: Sales",
         "path": "::⚡ Spike: Sales"
       },
@@ -83,28 +83,21 @@
         "id": "ccb8770219891787551dde29240d86c4",
         "groups": [],
         "checks": [
-            {
-              "name": "✅ Spike inventory OK",
-              "path": "::⚡ Spike: Inventory::✅ Spike inventory OK",
-              "id": "fc87603366f3f1c28753d65224d9c6e2",
-              "passes": 3,
-              "fails": 0
-            }
-          ],
+          {
+            "name": "✅ Spike inventory OK",
+            "path": "::⚡ Spike: Inventory::✅ Spike inventory OK",
+            "id": "fc87603366f3f1c28753d65224d9c6e2",
+            "passes": 3,
+            "fails": 0
+          }
+        ],
         "name": "⚡ Spike: Inventory"
       }
     ],
     "checks": []
   },
   "options": {
-    "summaryTrendStats": [
-      "avg",
-      "min",
-      "med",
-      "max",
-      "p(90)",
-      "p(95)"
-    ],
+    "summaryTrendStats": ["avg", "min", "med", "max", "p(90)", "p(95)"],
     "summaryTimeUnit": "",
     "noColor": false
   },

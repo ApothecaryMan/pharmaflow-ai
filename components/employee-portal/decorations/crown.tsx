@@ -15,7 +15,17 @@ export function Crown() {
           strokeWidth='1.5'
           opacity='0.85'
         />
-        <rect x='12' y='44' width='104' height='10' rx='2' fill='var(--svg-color, #F5D742)' stroke='var(--svg-color, #D4A017)' strokeWidth='1' opacity='0.85' />
+        <rect
+          x='12'
+          y='44'
+          width='104'
+          height='10'
+          rx='2'
+          fill='var(--svg-color, #F5D742)'
+          stroke='var(--svg-color, #D4A017)'
+          strokeWidth='1'
+          opacity='0.85'
+        />
         <circle cx='34' cy='16' r='3' fill='#E85D5D' />
         <circle cx='64' cy='12' r='4' fill='#5DA8E8' />
         <circle cx='94' cy='16' r='3' fill='#5DE87A' />

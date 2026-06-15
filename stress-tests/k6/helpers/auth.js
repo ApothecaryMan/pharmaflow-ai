@@ -3,14 +3,14 @@
  * Login to Supabase Auth and get access tokens.
  */
 
-import http from 'k6/http';
 import { check } from 'k6';
-import { SUPABASE_AUTH_URL, SUPABASE_ANON_KEY } from '../config.js';
+import http from 'k6/http';
+import { SUPABASE_ANON_KEY, SUPABASE_AUTH_URL } from '../config.js';
 
 /**
  * Login with email/password and return the access_token.
- * @param {string} email 
- * @param {string} password 
+ * @param {string} email
+ * @param {string} password
  * @returns {string|null} JWT access token
  */
 export function loginAndGetToken(email, password) {
@@ -20,7 +20,7 @@ export function loginAndGetToken(email, password) {
     {
       headers: {
         'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
+        apikey: SUPABASE_ANON_KEY,
       },
       tags: { name: 'auth_login' },
     }
@@ -29,8 +29,11 @@ export function loginAndGetToken(email, password) {
   const success = check(res, {
     'auth login status is 200': (r) => r.status === 200,
     'auth login has access_token': (r) => {
-      try { return !!JSON.parse(r.body).access_token; } 
-      catch { return false; }
+      try {
+        return !!JSON.parse(r.body).access_token;
+      } catch {
+        return false;
+      }
     },
   });
 
@@ -47,17 +50,13 @@ export function loginAndGetToken(email, password) {
  * Sign up a test user. Returns the user object.
  */
 export function signUpTestUser(email, password) {
-  const res = http.post(
-    `${SUPABASE_AUTH_URL}/signup`,
-    JSON.stringify({ email, password }),
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-      },
-      tags: { name: 'auth_signup' },
-    }
-  );
+  const res = http.post(`${SUPABASE_AUTH_URL}/signup`, JSON.stringify({ email, password }), {
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: SUPABASE_ANON_KEY,
+    },
+    tags: { name: 'auth_signup' },
+  });
 
   if (res.status === 200 || res.status === 201) {
     return JSON.parse(res.body);
@@ -69,17 +68,14 @@ export function signUpTestUser(email, password) {
  * Get current user session to verify token validity.
  */
 export function verifySession(accessToken) {
-  const res = http.get(
-    `${SUPABASE_AUTH_URL}/user`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${accessToken}`,
-      },
-      tags: { name: 'auth_verify' },
-    }
-  );
+  const res = http.get(`${SUPABASE_AUTH_URL}/user`, {
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${accessToken}`,
+    },
+    tags: { name: 'auth_verify' },
+  });
 
   return check(res, {
     'session is valid': (r) => r.status === 200,

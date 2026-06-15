@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { POSCartSidebar, type POSCartSidebarProps } from '../sales/pos/ui/POSCartSidebar';
+import type React from 'react';
+import { useState } from 'react';
 import { useData } from '../../context/DataContext';
 import { useSettings } from '../../context/SettingsContext';
 import { pricingService } from '../../services/sales/pricingService';
 import type { CartItem, Drug } from '../../types';
+import { POSCartSidebar, type POSCartSidebarProps } from '../sales/pos/ui/POSCartSidebar';
 
 interface MobileSearchCartDrawerProps extends Partial<POSCartSidebarProps> {
   isOpen: boolean;
@@ -20,7 +21,12 @@ interface MobileSearchCartDrawerProps extends Partial<POSCartSidebarProps> {
   toggleUnitMode: (id: string, currentIsUnit: boolean) => void;
   showMenu: (clientX: number, clientY: number, items: unknown[]) => void;
   batchesMap: Map<string, Drug[]>;
-  switchBatchWithAutoSplit: (currentItem: CartItem, newBatch: Drug, packQty: number, unitQty: number) => void;
+  switchBatchWithAutoSplit: (
+    currentItem: CartItem,
+    newBatch: Drug,
+    packQty: number,
+    unitQty: number
+  ) => void;
   addToCart: (drug: Drug, isUnit?: boolean, quantity?: number) => void;
   removeDrugFromCart: (id: string) => void;
   /** مسح العربة بالكامل بعد إتمام البيع */
@@ -61,17 +67,17 @@ export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
   const rawSubtotal = grossSubtotal ?? orderTotals.grossSubtotal;
 
   // Grouping logic for POSCartSidebar
-  const mergedIds = Array.from(new Set(cart.map(i => i.id)));
-  const mergedCartItems = mergedIds.map(id => {
-    const items = cart.filter(i => i.id === id);
-    const pack = items.find(i => !i.isUnit);
-    const unit = items.find(i => i.isUnit);
+  const mergedIds = Array.from(new Set(cart.map((i) => i.id)));
+  const mergedCartItems = mergedIds.map((id) => {
+    const items = cart.filter((i) => i.id === id);
+    const pack = items.find((i) => !i.isUnit);
+    const unit = items.find((i) => i.isUnit);
     const common = pack || unit;
     return {
       id,
       common,
       pack,
-      unit
+      unit,
     };
   });
 
@@ -97,19 +103,19 @@ export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
     // cartTotal = الإجمالي بعد خصومات الأصناف (الصحيح للعرض)
     cartTotal: total,
     sidebarWidth: typeof window !== 'undefined' ? window.innerWidth : 400,
-    startResizing: () => { },
+    startResizing: () => {},
     sidebarRef: { current: null },
     cartSensors: [],
-    handleCartDragEnd: () => { },
+    handleCartDragEnd: () => {},
     mergedCartItems,
     highlightedItemId: null,
-    setHighlightedItemId: () => { },
+    setHighlightedItemId: () => {},
     color: 'var(--primary-600)',
     showMenu,
     removeFromCart: onRemove,
     toggleUnitMode,
     updateItemDiscount,
-    setGlobalDiscount: () => { },
+    setGlobalDiscount: () => {},
     updateQuantity: onUpdateQuantity,
     addToCart,
     removeDrugFromCart,
@@ -117,7 +123,7 @@ export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
     switchBatchWithAutoSplit,
     currentLang: language.toLowerCase(),
     globalDiscount: 0,
-    setSearch: () => { },
+    setSearch: () => {},
     searchInputRef: { current: null },
     // grossSubtotal = الإجمالي قبل الخصم - يظهر السطر الفرعي فقط إذا اختلف عن cartTotal
     grossSubtotal: rawSubtotal,
@@ -138,7 +144,7 @@ export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
     isValidOrder: cart.length > 0,
     handleCheckout,
     deliveryEmployeeId: '',
-    setDeliveryEmployeeId: () => { },
+    setDeliveryEmployeeId: () => {},
     employees: employees || [],
     isRTL: language === 'AR',
     paymentMethod: 'cash',
@@ -147,12 +153,12 @@ export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
     taxAmount: 0,
     isLoading: false,
     deliveryFee: 0,
-    setDeliveryFee: () => { },
+    setDeliveryFee: () => {},
   };
 
   return (
-    <div className="fixed inset-0 z-[250] flex flex-col bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="mt-auto bg-white dark:bg-[#06080F] rounded-t-3xl h-[85vh] overflow-hidden flex flex-col animate-slide-up">
+    <div className='fixed inset-0 z-[250] flex flex-col bg-black/60 backdrop-blur-sm animate-fade-in'>
+      <div className='mt-auto bg-white dark:bg-[#06080F] rounded-t-3xl h-[85vh] overflow-hidden flex flex-col animate-slide-up'>
         <POSCartSidebar {...sidebarProps} />
       </div>
     </div>

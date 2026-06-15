@@ -1,16 +1,20 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Customer, Sale } from '../../types';
-import { CARD_BASE, CONTAINER_BASE } from '../../utils/themeStyles';
 import { calculateSalePoints } from '../../services/customers/loyaltyUtils';
+import type { Customer, Sale } from '../../types';
 import { formatCurrency } from '../../utils/currency';
-import { SearchDropdown, type SearchDropdownColumn, useSearchKeyboardNavigation } from '../common/SearchDropdown';
+import { CARD_BASE, CONTAINER_BASE } from '../../utils/themeStyles';
+import { PageHeader } from '../common/PageHeader';
+import {
+  SearchDropdown,
+  type SearchDropdownColumn,
+  useSearchKeyboardNavigation,
+} from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
+import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
-import { PageHeader } from '../common/PageHeader';
-import { SegmentedControl } from '../common/SegmentedControl';
 
 interface CustomerLoyaltyLookupProps {
   customers: Customer[];
@@ -79,8 +83,6 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
     setSearchTerm('');
     setSelectedCustomer(null);
   };
-
-
 
   const customerSales = useMemo(() => {
     if (!selectedCustomer) return [];
@@ -240,9 +242,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
       width: 'w-24',
       className: 'justify-center',
       render: (customer) => (
-        <span className='font-bold text-gray-500 font-mono tracking-tight'>
-          {customer.code}
-        </span>
+        <span className='font-bold text-gray-500 font-mono tracking-tight'>{customer.code}</span>
       ),
     },
     {
@@ -257,20 +257,32 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
   ];
 
   return (
-    <div className='h-full overflow-y-auto px-page space-y-4 animate-fade-in pb-10' dir={isRTL ? 'rtl' : 'ltr'}>
+    <div
+      className='h-full overflow-y-auto px-page space-y-4 animate-fade-in pb-10'
+      dir={isRTL ? 'rtl' : 'ltr'}
+    >
       <PageHeader
-        mb="mb-0"
+        mb='mb-0'
         centerContent={
           <SegmentedControl
             options={[
-              { label: language === 'AR' ? 'نظرة عامة على العملاء' : 'Customer Overview', value: 'customer-overview' },
-              { label: language === 'AR' ? 'نظرة عامة على الولاء' : 'Loyalty Overview', value: 'loyalty-overview' },
-              { label: language === 'AR' ? 'ولاء العملاء' : 'Customer Loyalty', value: 'loyalty-lookup' },
+              {
+                label: language === 'AR' ? 'نظرة عامة على العملاء' : 'Customer Overview',
+                value: 'customer-overview',
+              },
+              {
+                label: language === 'AR' ? 'نظرة عامة على الولاء' : 'Loyalty Overview',
+                value: 'loyalty-overview',
+              },
+              {
+                label: language === 'AR' ? 'ولاء العملاء' : 'Customer Loyalty',
+                value: 'loyalty-lookup',
+              },
             ]}
             value='loyalty-lookup'
             onChange={(val) => onViewChange?.(String(val))}
-            size="md"
-            shape="pill"
+            size='md'
+            shape='pill'
           />
         }
         rightContent={
@@ -330,9 +342,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
       {selectedCustomer && (
         <div className='flex-1 flex flex-col min-h-0 pb-4 pe-2'>
           {/* Customer Profile Card */}
-          <div
-            className={`p-6 ${CONTAINER_BASE} flex flex-col h-full overflow-hidden`}
-          >
+          <div className={`p-6 ${CONTAINER_BASE} flex flex-col h-full overflow-hidden`}>
             <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4'>
               <div className='flex items-center gap-4'>
                 <div
@@ -349,10 +359,11 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
                       {selectedCustomer.code}
                     </span>
                     <span
-                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-current text-[10px] font-bold uppercase tracking-wider bg-transparent ${selectedCustomer.status === 'active'
+                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-current text-[10px] font-bold uppercase tracking-wider bg-transparent ${
+                        selectedCustomer.status === 'active'
                           ? 'text-emerald-700 dark:text-emerald-400'
                           : 'text-gray-500 dark:text-gray-400'
-                        }`}
+                      }`}
                     >
                       <span className='material-symbols-rounded text-sm'>
                         {selectedCustomer.status === 'active' ? 'check_circle' : 'pause_circle'}
@@ -465,7 +476,13 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
                         <span className='opacity-70'>
                           {t.loyalty?.totalPurchases || 'Total Purchases'}
                         </span>
-                        <span>{formatCurrency(derivedTotals.totalPurchases, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US')}</span>
+                        <span>
+                          {formatCurrency(
+                            derivedTotals.totalPurchases,
+                            'EGP',
+                            language === 'AR' ? 'ar-EG' : 'en-US'
+                          )}
+                        </span>
                       </div>
                       <div className='flex justify-between gap-4 border-b border-white/10 pb-1'>
                         <span className='opacity-70'>

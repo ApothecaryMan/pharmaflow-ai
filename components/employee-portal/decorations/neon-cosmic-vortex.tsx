@@ -17,22 +17,110 @@ export function NeonCosmicVortex() {
         <circle cx='64' cy='64' r='54' stroke='#D946EF' strokeWidth='8' opacity='0.2' />
         <circle cx='64' cy='64' r='58' stroke='#06B6D4' strokeWidth='6' opacity='0.15' />
         <g className='vortex-origin spin-slower-rev'>
-          <circle cx='64' cy='64' r='57' stroke='#7C3AED' strokeWidth='4' strokeDasharray='40 80 20 60' strokeLinecap='round' opacity='0.7' />
-          <circle cx='64' cy='64' r='52' stroke='#8B5CF6' strokeWidth='2' strokeDasharray='10 40 80 30' strokeLinecap='round' opacity='0.6' />
+          <circle
+            cx='64'
+            cy='64'
+            r='57'
+            stroke='#7C3AED'
+            strokeWidth='4'
+            strokeDasharray='40 80 20 60'
+            strokeLinecap='round'
+            opacity='0.7'
+          />
+          <circle
+            cx='64'
+            cy='64'
+            r='52'
+            stroke='#8B5CF6'
+            strokeWidth='2'
+            strokeDasharray='10 40 80 30'
+            strokeLinecap='round'
+            opacity='0.6'
+          />
         </g>
         <g className='vortex-origin spin-slow'>
-          <circle cx='64' cy='64' r='55' stroke='#E879F9' strokeWidth='3' strokeDasharray='60 30 10 80' strokeLinecap='round' opacity='0.9' />
-          <circle cx='64' cy='64' r='60' stroke='#D946EF' strokeWidth='1.5' strokeDasharray='20 60 40 50' strokeLinecap='round' opacity='0.8' />
-          <circle cx='64' cy='64' r='50' stroke='#F472B6' strokeWidth='2.5' strokeDasharray='15 90 30 70' strokeLinecap='round' opacity='0.85' />
+          <circle
+            cx='64'
+            cy='64'
+            r='55'
+            stroke='#E879F9'
+            strokeWidth='3'
+            strokeDasharray='60 30 10 80'
+            strokeLinecap='round'
+            opacity='0.9'
+          />
+          <circle
+            cx='64'
+            cy='64'
+            r='60'
+            stroke='#D946EF'
+            strokeWidth='1.5'
+            strokeDasharray='20 60 40 50'
+            strokeLinecap='round'
+            opacity='0.8'
+          />
+          <circle
+            cx='64'
+            cy='64'
+            r='50'
+            stroke='#F472B6'
+            strokeWidth='2.5'
+            strokeDasharray='15 90 30 70'
+            strokeLinecap='round'
+            opacity='0.85'
+          />
         </g>
         <g className='vortex-origin spin-med-rev'>
-          <circle cx='64' cy='64' r='58' stroke='#22D3EE' strokeWidth='2' strokeDasharray='30 70 15 50' strokeLinecap='round' />
-          <circle cx='64' cy='64' r='53' stroke='#06B6D4' strokeWidth='3' strokeDasharray='5 40 80 60' strokeLinecap='round' />
-          <circle cx='64' cy='64' r='62' stroke='#67E8F9' strokeWidth='1' strokeDasharray='50 100 10 40' strokeLinecap='round' opacity='0.7' />
+          <circle
+            cx='64'
+            cy='64'
+            r='58'
+            stroke='#22D3EE'
+            strokeWidth='2'
+            strokeDasharray='30 70 15 50'
+            strokeLinecap='round'
+          />
+          <circle
+            cx='64'
+            cy='64'
+            r='53'
+            stroke='#06B6D4'
+            strokeWidth='3'
+            strokeDasharray='5 40 80 60'
+            strokeLinecap='round'
+          />
+          <circle
+            cx='64'
+            cy='64'
+            r='62'
+            stroke='#67E8F9'
+            strokeWidth='1'
+            strokeDasharray='50 100 10 40'
+            strokeLinecap='round'
+            opacity='0.7'
+          />
         </g>
         <g className='vortex-origin spin-fast'>
-          <circle cx='64' cy='64' r='56' stroke='#FFFFFF' strokeWidth='1.5' strokeDasharray='4 120 2 80' strokeLinecap='round' opacity='0.9' />
-          <circle cx='64' cy='64' r='54' stroke='#FFFFFF' strokeWidth='1' strokeDasharray='10 150 4 60' strokeLinecap='round' opacity='0.7' />
+          <circle
+            cx='64'
+            cy='64'
+            r='56'
+            stroke='#FFFFFF'
+            strokeWidth='1.5'
+            strokeDasharray='4 120 2 80'
+            strokeLinecap='round'
+            opacity='0.9'
+          />
+          <circle
+            cx='64'
+            cy='64'
+            r='54'
+            stroke='#FFFFFF'
+            strokeWidth='1'
+            strokeDasharray='10 150 4 60'
+            strokeLinecap='round'
+            opacity='0.7'
+          />
         </g>
         <g className='vortex-origin spin-slow'>
           <circle cx='64' cy='6' r='1.5' fill='#22D3EE' className='pulse-glow' />

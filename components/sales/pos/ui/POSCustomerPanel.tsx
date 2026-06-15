@@ -1,10 +1,10 @@
 import type React from 'react';
-import { SearchInput } from '../../../common/SearchInput';
-import { SegmentedControl } from '../../../common/SegmentedControl';
-import { SearchDropdown, type SearchDropdownColumn } from '../../../common/SearchDropdown';
-import { CARD_MD } from '../../../../utils/themeStyles';
 import { getLocationName } from '../../../../data/locations';
 import type { Customer, Language } from '../../../../types';
+import { CARD_MD } from '../../../../utils/themeStyles';
+import { SearchDropdown, type SearchDropdownColumn } from '../../../common/SearchDropdown';
+import { SearchInput } from '../../../common/SearchInput';
+import { SegmentedControl } from '../../../common/SegmentedControl';
 
 export interface POSCustomerPanelProps {
   t: Translations;
@@ -82,7 +82,10 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
     {
       header: t.address || 'Address',
       render: (c) => (
-        <span className='text-[11px] text-gray-500 dark:text-gray-400 line-clamp-1' title={c.streetAddress || ''}>
+        <span
+          className='text-[11px] text-gray-500 dark:text-gray-400 line-clamp-1'
+          title={c.streetAddress || ''}
+        >
           {c.streetAddress || '-'}
         </span>
       ),

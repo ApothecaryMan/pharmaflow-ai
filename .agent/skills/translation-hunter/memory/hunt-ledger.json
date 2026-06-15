@@ -11,11 +11,11 @@
     "totalTokensConsumed": 11100
   },
   "patterns": {
-    "P1_ternary":    { "hits": 53, "falsePositives": 0, "precision": 1.0 },
-    "P2_fallback":   { "hits": 12, "falsePositives": 0, "precision": 1.0 },
+    "P1_ternary": { "hits": 53, "falsePositives": 0, "precision": 1.0 },
+    "P2_fallback": { "hits": 12, "falsePositives": 0, "precision": 1.0 },
     "P3_raw_arabic": { "hits": 0, "falsePositives": 0, "precision": 1.0 },
     "P4_attributes": { "hits": 0, "falsePositives": 0, "precision": 1.0 },
-    "P5_jsx_text":   { "hits": 0, "falsePositives": 0, "precision": 1.0 }
+    "P5_jsx_text": { "hits": 0, "falsePositives": 0, "precision": 1.0 }
   },
   "learnedSkips": [],
   "hotKeys": {
@@ -24,14 +24,62 @@
     "attendance.noDataFound": 2
   },
   "scannedFiles": {
-    "components/org/OrganizationManagementPage.tsx": { "lastScan": "2026-05-09", "violations": 7, "fixed": 7, "clean": true, "tokensConsumed": 1200 },
-    "components/settings/BranchSettings.tsx": { "lastScan": "2026-05-09", "violations": 34, "fixed": 34, "clean": true, "tokensConsumed": 4800 },
-    "components/hr/attendance/AttendanceReports.tsx": { "lastScan": "2026-05-09", "violations": 2, "fixed": 2, "clean": true, "tokensConsumed": 600 },
-    "components/hr/attendance/AttendanceTerminal.tsx": { "lastScan": "2026-05-09", "violations": 0, "fixed": 0, "clean": true, "tokensConsumed": 200 },
-    "components/layout/AttendanceQuickAction.tsx": { "lastScan": "2026-05-09", "violations": 8, "fixed": 8, "clean": true, "tokensConsumed": 1200 },
-    "components/hr/attendance/EmployeeAttendanceProfile.tsx": { "lastScan": "2026-05-09", "violations": 5, "fixed": 5, "clean": true, "tokensConsumed": 800 },
-    "components/sales/CashRegister.tsx": { "lastScan": "2026-05-22", "violations": 7, "fixed": 7, "clean": true, "tokensConsumed": 1200 },
-    "components/sales/ShiftHistory.tsx": { "lastScan": "2026-05-22", "violations": 2, "fixed": 2, "clean": true, "tokensConsumed": 700 }
+    "components/org/OrganizationManagementPage.tsx": {
+      "lastScan": "2026-05-09",
+      "violations": 7,
+      "fixed": 7,
+      "clean": true,
+      "tokensConsumed": 1200
+    },
+    "components/settings/BranchSettings.tsx": {
+      "lastScan": "2026-05-09",
+      "violations": 34,
+      "fixed": 34,
+      "clean": true,
+      "tokensConsumed": 4800
+    },
+    "components/hr/attendance/AttendanceReports.tsx": {
+      "lastScan": "2026-05-09",
+      "violations": 2,
+      "fixed": 2,
+      "clean": true,
+      "tokensConsumed": 600
+    },
+    "components/hr/attendance/AttendanceTerminal.tsx": {
+      "lastScan": "2026-05-09",
+      "violations": 0,
+      "fixed": 0,
+      "clean": true,
+      "tokensConsumed": 200
+    },
+    "components/layout/AttendanceQuickAction.tsx": {
+      "lastScan": "2026-05-09",
+      "violations": 8,
+      "fixed": 8,
+      "clean": true,
+      "tokensConsumed": 1200
+    },
+    "components/hr/attendance/EmployeeAttendanceProfile.tsx": {
+      "lastScan": "2026-05-09",
+      "violations": 5,
+      "fixed": 5,
+      "clean": true,
+      "tokensConsumed": 800
+    },
+    "components/sales/CashRegister.tsx": {
+      "lastScan": "2026-05-22",
+      "violations": 7,
+      "fixed": 7,
+      "clean": true,
+      "tokensConsumed": 1200
+    },
+    "components/sales/ShiftHistory.tsx": {
+      "lastScan": "2026-05-22",
+      "violations": 2,
+      "fixed": 2,
+      "clean": true,
+      "tokensConsumed": 700
+    }
   },
   "pendingPatterns": [],
   "retiredPatterns": []

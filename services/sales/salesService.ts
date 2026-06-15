@@ -3,15 +3,21 @@
  * Business logic layer that orchestrates data access via SalesRepository.
  */
 
-import { BaseDomainService } from '../core/baseDomainService';
-import { money } from '../../utils/money';
 import type { Sale } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
-import { settingsService } from '../settings/settingsService';
-import { salesRepository } from './repositories/salesRepository';
+import { money } from '../../utils/money';
+import { BaseDomainService } from '../core/baseDomainService';
 import { dateRangeService } from '../financials/dateRangeService';
+import { settingsService } from '../settings/settingsService';
 import timeService from '../timeService';
-import type { PagedResult, SalesFilters, SalesPageOptions, SalesService, SalesStats } from './types';
+import { salesRepository } from './repositories/salesRepository';
+import type {
+  PagedResult,
+  SalesFilters,
+  SalesPageOptions,
+  SalesService,
+  SalesStats,
+} from './types';
 
 class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
   protected tableName = 'sales';
@@ -64,11 +70,12 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
 
   async create(sale: Omit<Sale, 'id'>, branchId?: string): Promise<Sale> {
     const settings = await settingsService.getAll();
-    const effectiveBranchId = branchId || sale.branchId || settings.activeBranchId || settings.branchCode;
-    
+    const effectiveBranchId =
+      branchId || sale.branchId || settings.activeBranchId || settings.branchCode;
+
     const newSale: Sale = {
       ...sale,
-      id: ("id" in sale ? (sale as Sale).id : undefined) || idGenerator.uuid(),
+      id: ('id' in sale ? (sale as Sale).id : undefined) || idGenerator.uuid(),
       branchId: effectiveBranchId,
       orgId: sale.orgId || settings.orgId,
       date: sale.date || timeService.getVerifiedDate().toISOString(),
@@ -98,8 +105,7 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
     return {
       totalSales: all.length,
       totalRevenue: totalRev,
-      averageTransaction:
-        all.length > 0 ? money.divide(totalRev, all.length) : 0,
+      averageTransaction: all.length > 0 ? money.divide(totalRev, all.length) : 0,
       todaySales: todaySales.length,
       todayRevenue: todayRev,
     };
@@ -114,11 +120,11 @@ class SalesServiceImpl extends BaseDomainService<Sale> implements SalesService {
   async save(sales: Sale[], branchId?: string): Promise<void> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    
-    const processedSales = sales.map(s => ({
+
+    const processedSales = sales.map((s) => ({
       ...s,
       branchId: s.branchId || effectiveBranchId,
-      orgId: s.orgId || settings.orgId
+      orgId: s.orgId || settings.orgId,
     }));
 
     await salesRepository.upsert(processedSales);

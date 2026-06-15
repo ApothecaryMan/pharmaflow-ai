@@ -1,20 +1,24 @@
-import { authService } from './authService';
-import { 
-  PermissionAction, 
-  ROLE_PERMISSIONS, 
-  UserRole, 
-  canPerformAction as canPerformBaseAction 
+import {
+  canPerformAction as canPerformBaseAction,
+  type PermissionAction,
+  ROLE_PERMISSIONS,
+  type UserRole,
 } from '../../config/permissions';
+import { authService } from './authService';
 
-export { type PermissionAction };
-import { OrgRole } from '../../types';
+export type { PermissionAction };
+
+import type { OrgRole } from '../../types';
 
 /**
  * Permissions Service - Enhanced with Organization-level awareness.
  * Integrates OrgRole (Owner/Admin/Member) with UserRole (Pharmacist/Cashier/etc).
  */
 export interface PermissionsService {
-  can(action: PermissionAction, context?: { branchId?: string; role?: string; orgRole?: OrgRole }): boolean;
+  can(
+    action: PermissionAction,
+    context?: { branchId?: string; role?: string; orgRole?: OrgRole }
+  ): boolean;
   verify(action: PermissionAction, context?: { branchId?: string }): void;
   getEffectiveRole(): UserRole | undefined;
   isOrgAdmin(): boolean;
@@ -31,11 +35,11 @@ class PermissionsServiceImpl implements PermissionsService {
    * 3. Otherwise -> Check branch-level role permissions
    */
   can(
-    action: PermissionAction, 
+    action: PermissionAction,
     context?: { branchId?: string; role?: string; orgRole?: OrgRole }
   ): boolean {
     const session = authService.getCurrentUserSync();
-    
+
     // Determine which roles to use (provided in context or from current session)
     const effectiveRole = context?.role || session?.role;
     const effectiveOrgRole = context?.orgRole || session?.orgRole;
@@ -46,13 +50,21 @@ class PermissionsServiceImpl implements PermissionsService {
     }
 
     if (effectiveOrgRole === 'admin') {
-      if (action.startsWith('users.') || action.startsWith('settings.') || action.startsWith('reports.')) {
+      if (
+        action.startsWith('users.') ||
+        action.startsWith('settings.') ||
+        action.startsWith('reports.')
+      ) {
         return true;
       }
     }
 
     // 2. Branch-level Scope check
-    if (context?.branchId && session?.branchId !== context.branchId && effectiveOrgRole !== 'admin') {
+    if (
+      context?.branchId &&
+      session?.branchId !== context.branchId &&
+      effectiveOrgRole !== 'admin'
+    ) {
       return false;
     }
 
@@ -84,7 +96,7 @@ class PermissionsServiceImpl implements PermissionsService {
     const session = authService.getCurrentUserSync();
     const role = session?.role;
     return (
-      session?.orgRole === 'owner' || 
+      session?.orgRole === 'owner' ||
       session?.orgRole === 'admin' ||
       role === 'pharmacist_owner' ||
       role === 'admin'
@@ -98,9 +110,9 @@ class PermissionsServiceImpl implements PermissionsService {
     const session = authService.getCurrentUserSync();
     const role = session?.role;
     return (
-      session?.orgRole === 'owner' || 
-      session?.orgRole === 'admin' || 
-      role === 'manager' || 
+      session?.orgRole === 'owner' ||
+      session?.orgRole === 'admin' ||
+      role === 'manager' ||
       role === 'pharmacist_manager' ||
       role === 'admin'
     );
@@ -112,9 +124,9 @@ class PermissionsServiceImpl implements PermissionsService {
   getAllPermissions(): PermissionAction[] {
     const session = authService.getCurrentUserSync();
     if (!session) return [];
-    
+
     if (session.orgRole === 'owner') {
-      return Object.values(ROLE_PERMISSIONS).flat() as PermissionAction[]; 
+      return Object.values(ROLE_PERMISSIONS).flat() as PermissionAction[];
     }
 
     return (ROLE_PERMISSIONS[session.role as UserRole] || []) as PermissionAction[];

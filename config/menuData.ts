@@ -1,5 +1,5 @@
+import type { ViewState } from '../types';
 import type { PermissionAction } from './permissions';
-import { type ViewState } from '../types';
 
 export interface MenuItem {
   id: string;
@@ -961,8 +961,18 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: 'attendance-leave',
         label: 'Attendance & Leave',
         items: [
-          { label: 'Mark Attendance', view: 'attendance-terminal', icon: 'touch_app', permission: 'attendance.clock' },
-          { label: 'Attendance Reports', view: 'attendance-reports', icon: 'assessment', permission: 'attendance.view' },
+          {
+            label: 'Mark Attendance',
+            view: 'attendance-terminal',
+            icon: 'touch_app',
+            permission: 'attendance.clock',
+          },
+          {
+            label: 'Attendance Reports',
+            view: 'attendance-reports',
+            icon: 'assessment',
+            permission: 'attendance.view',
+          },
           { label: 'Attendance Register', icon: 'fact_check' },
           { label: 'Biometric Integration', icon: 'fingerprint' },
           { label: 'Leave Application', icon: 'event_note' },

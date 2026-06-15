@@ -38,10 +38,34 @@ export function CyberOrbitalShroud() {
         <circle cx='26' cy='102' r='1.2' fill='#FFF' />
         <circle cx='102' cy='102' r='1.2' fill='#FFF' />
       </g>
-      <path d='M20,20 L14,26 M20,20 L26,14 M20,20 L12,12' stroke='#FFFFFF' strokeWidth='2' strokeLinecap='round' opacity='0.8' />
-      <path d='M108,20 L114,26 M108,20 L102,14 M108,20 L116,12' stroke='#FFFFFF' strokeWidth='2' strokeLinecap='round' opacity='0.8' />
-      <path d='M20,108 L14,102 M20,108 L26,114 M20,108 L12,116' stroke='#FFFFFF' strokeWidth='2' strokeLinecap='round' opacity='0.8' />
-      <path d='M108,108 L114,102 M108,108 L102,114 M108,108 L116,116' stroke='#FFFFFF' strokeWidth='2' strokeLinecap='round' opacity='0.8' />
+      <path
+        d='M20,20 L14,26 M20,20 L26,14 M20,20 L12,12'
+        stroke='#FFFFFF'
+        strokeWidth='2'
+        strokeLinecap='round'
+        opacity='0.8'
+      />
+      <path
+        d='M108,20 L114,26 M108,20 L102,14 M108,20 L116,12'
+        stroke='#FFFFFF'
+        strokeWidth='2'
+        strokeLinecap='round'
+        opacity='0.8'
+      />
+      <path
+        d='M20,108 L14,102 M20,108 L26,114 M20,108 L12,116'
+        stroke='#FFFFFF'
+        strokeWidth='2'
+        strokeLinecap='round'
+        opacity='0.8'
+      />
+      <path
+        d='M108,108 L114,102 M108,108 L102,114 M108,108 L116,116'
+        stroke='#FFFFFF'
+        strokeWidth='2'
+        strokeLinecap='round'
+        opacity='0.8'
+      />
       <polygon points='64,1 67,7 64,6 61,7' fill='var(--svg-color, #00F0FF)' />
       <polygon points='64,127 67,121 64,122 61,121' fill='var(--svg-color, #00F0FF)' />
       <polygon points='1,64 7,67 6,64 7,61' fill='var(--svg-color, #00F0FF)' />

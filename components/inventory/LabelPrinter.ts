@@ -12,8 +12,8 @@ import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatExpiryDate } from '../../utils/expiryUtils';
 import { getPrinterSettings, printLabelSilently } from '../../utils/qzPrinter';
 import { storage } from '../../utils/storage';
-import type { LabelDesign, LabelElement, SavedTemplate } from './studio/types';
 import { getBarcodeFontsCSS } from './barcodeFonts';
+import type { LabelDesign, LabelElement, SavedTemplate } from './studio/types';
 
 export type { LabelElement, LabelDesign, SavedTemplate };
 
@@ -108,7 +108,12 @@ const escapeHtml = (text: string): string => {
  * @returns True if valid, false otherwise
  */
 const validateDrug = (drug: Drug): boolean => {
-  return !!(drug && (drug.id || drug.internalCode) && drug.name && typeof drug.publicPrice === 'number');
+  return !!(
+    drug &&
+    (drug.id || drug.internalCode) &&
+    drug.name &&
+    typeof drug.publicPrice === 'number'
+  );
 };
 
 /**
@@ -150,7 +155,9 @@ export const getLabelElementContent = (
       if (expiryOverride) return expiryOverride;
       return drug.expiryDate ? formatExpiryDate(drug.expiryDate) : 'MM/YY';
     case 'genericName':
-      return Array.isArray(drug.genericName) ? drug.genericName.join(' + ') : drug.genericName || '';
+      return Array.isArray(drug.genericName)
+        ? drug.genericName.join(' + ')
+        : drug.genericName || '';
     default:
       return el.content || el.label || '';
   }
@@ -167,9 +174,9 @@ export const getReceiptSettings = (
   activeBranchPhone?: string,
   printSettings?: Record<string, any>
 ): { storeName: string; hotline: string } => {
-  const defaultSettings = { 
-    storeName: activeBranchName || 'ZINC', 
-    hotline: activeBranchPhone || '19099' 
+  const defaultSettings = {
+    storeName: activeBranchName || 'ZINC',
+    hotline: activeBranchPhone || '19099',
   };
 
   if (!printSettings) return defaultSettings;
@@ -205,7 +212,9 @@ export const getReceiptSettings = (
  * Prioritizes: Default Template ID > Autosaved Studio Design.
  * @returns The saved design or null if no custom design is found
  */
-const getDefaultTemplate = (printSettings?: Record<string, any>): { design: LabelDesign } | null => {
+const getDefaultTemplate = (
+  printSettings?: Record<string, any>
+): { design: LabelDesign } | null => {
   if (!printSettings) return null;
   try {
     const defaultTemplateId = printSettings[StorageKeys.LABEL_DEFAULT_TEMPLATE] || null;
@@ -385,7 +394,7 @@ export const generateLabelHTML = (
       return `<img src="${qrDataUrl}" ${classAttr} ${styleAttr} />`;
     }
     if (el.type === 'image') {
-      const src = (el.id === 'logo' && logoDataUrl) ? logoDataUrl : el.content;
+      const src = el.id === 'logo' && logoDataUrl ? logoDataUrl : el.content;
       if (src) return `<img src="${src}" ${classAttr} ${styleAttr} />`;
     }
     return '';
@@ -643,7 +652,10 @@ export const printLabels = async (
       JSON.stringify(options.design || (template?.design as LabelDesign) || DEFAULT_LABEL_DESIGN)
     );
 
-    if (!design.selectedPreset || (design.selectedPreset !== 'custom' && !LABEL_PRESETS[design.selectedPreset])) {
+    if (
+      !design.selectedPreset ||
+      (design.selectedPreset !== 'custom' && !LABEL_PRESETS[design.selectedPreset])
+    ) {
       design.selectedPreset = DEFAULT_LABEL_DESIGN.selectedPreset;
     }
 
@@ -661,7 +673,12 @@ export const printLabels = async (
         ? design.customDims || { w: 38, h: 25 }
         : LABEL_PRESETS[design.selectedPreset] || { w: 38, h: 25 };
 
-    const receiptSettings = getReceiptSettings(options.activeBranchId, options.activeBranchName, options.activeBranchPhone, options.printSettings);
+    const receiptSettings = getReceiptSettings(
+      options.activeBranchId,
+      options.activeBranchName,
+      options.activeBranchPhone,
+      options.printSettings
+    );
     const offsets = getPrintOffsets(options.printSettings);
     const printOffsetX = offsets.x;
     const printOffsetY = offsets.y;
@@ -695,7 +712,7 @@ export const printLabels = async (
     const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
 
     const labelFragments: string[] = [];
-    
+
     // Process HTML generation asynchronously to avoid freezing UI for large volumes
     let currentItemIdx = 0;
     let currentQtyIdx = 0;
@@ -703,7 +720,7 @@ export const printLabels = async (
     await new Promise<void>((resolve) => {
       const processChunk = () => {
         const chunkStartTime = performance.now();
-        
+
         while (currentItemIdx < validItems.length) {
           const item = validItems[currentItemIdx];
           const singleLabel = generateLabelHTML(
@@ -716,11 +733,11 @@ export const printLabels = async (
             undefined, // logoDataUrl
             classNameMap
           );
-          
+
           while (currentQtyIdx < item.quantity) {
             labelFragments.push(singleLabel);
             currentQtyIdx++;
-            
+
             // Yield every 30ms to keep UI responsive
             if (performance.now() - chunkStartTime > 30) {
               requestAnimationFrame(processChunk);
@@ -759,25 +776,31 @@ export const printLabels = async (
       try {
         const QZ_CHUNK_SIZE = 100; // Pages per chunk to prevent JavaFX/Spooler memory overflow
         let silentSuccess = true;
-        
+
         for (let c = 0; c < pages.length; c += QZ_CHUNK_SIZE) {
           const chunkPages = pages.slice(c, c + QZ_CHUNK_SIZE);
-          const chunkHTML = generatePageHTML(chunkPages.join(''), templateCSS, dims, printablePageHeight, {
-            x: printOffsetX,
-            y: printOffsetY,
-          });
-          
+          const chunkHTML = generatePageHTML(
+            chunkPages.join(''),
+            templateCSS,
+            dims,
+            printablePageHeight,
+            {
+              x: printOffsetX,
+              y: printOffsetY,
+            }
+          );
+
           const silentPrinted = await printLabelSilently(chunkHTML, {
             width: dims.w,
             height: dims.h,
           });
-          
+
           if (!silentPrinted) {
             silentSuccess = false;
             break; // Fall back to browser print if a chunk fails
           }
         }
-        
+
         if (silentSuccess) {
           console.log('Labels printed silently via QZ Tray (chunked if large)');
           return; // Success - no need for browser popup

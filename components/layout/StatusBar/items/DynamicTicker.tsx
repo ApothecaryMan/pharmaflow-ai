@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { TRANSLATIONS } from '@/i18n';
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import { Tooltip } from '../../../common/Tooltip';
 import { StatusBarItem } from '../StatusBarItem';
-import { TRANSLATIONS } from '@/i18n';
 
 // --- Types ---
 
@@ -48,14 +49,18 @@ const variantColors: Record<string, string> = {
   default: 'text-(--text-secondary)',
 };
 
-const formatVal = (v: any) => typeof v === 'number' ? v.toLocaleString() : v;
+const formatVal = (v: any) => (typeof v === 'number' ? v.toLocaleString() : v);
 
 // --- Sub-components ---
 
 const TickerItem: React.FC<{ label?: string; value?: any }> = ({ label, value }) => (
   <>
-    {label && <span className="text-[10px] font-bold uppercase tracking-wide text-(--text-secondary)">{label}</span>}
-    <span className="text-[10px] font-bold text-(--text-primary)">{formatVal(value)}</span>
+    {label && (
+      <span className='text-[10px] font-bold uppercase tracking-wide text-(--text-secondary)'>
+        {label}
+      </span>
+    )}
+    <span className='text-[10px] font-bold text-(--text-primary)'>{formatVal(value)}</span>
   </>
 );
 
@@ -79,31 +84,60 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
   const slides = useMemo(() => {
     const raw: TickerSlide[] = [
       {
-        id: 'sales', icon: 'payments', label: t.todaySales, value: data.todaySales || 0,
-        secondaryLabel: t.completed, secondaryValue: data.completedInvoices || 0,
-        tertiaryLabel: t.pending, tertiaryValue: data.pendingInvoices || 0, variant: 'success',
+        id: 'sales',
+        icon: 'payments',
+        label: t.todaySales,
+        value: data.todaySales || 0,
+        secondaryLabel: t.completed,
+        secondaryValue: data.completedInvoices || 0,
+        tertiaryLabel: t.pending,
+        tertiaryValue: data.pendingInvoices || 0,
+        variant: 'success',
       },
       {
-        id: 'inventory', icon: 'inventory_2', label: t.lowStock, value: data.lowStockCount || 0,
-        secondaryLabel: t.shortages, secondaryValue: data.shortagesCount || 0,
+        id: 'inventory',
+        icon: 'inventory_2',
+        label: t.lowStock,
+        value: data.lowStockCount || 0,
+        secondaryLabel: t.shortages,
+        secondaryValue: data.shortagesCount || 0,
         variant: (data.lowStockCount || 0) > 5 ? 'warning' : 'default',
       },
       {
-        id: 'customers', icon: 'group_add', label: t.newCustomers, value: data.newCustomersToday || 0,
+        id: 'customers',
+        icon: 'group_add',
+        label: t.newCustomers,
+        value: data.newCustomersToday || 0,
         variant: (data.newCustomersToday || 0) > 0 ? 'info' : 'default',
       },
       {
-        id: 'topSeller', icon: 'emoji_events', label: t.topSeller, value: data.topSeller?.name || '—',
-        secondaryLabel: data.topSeller ? t.invoices : undefined, secondaryValue: data.topSeller?.count,
+        id: 'topSeller',
+        icon: 'emoji_events',
+        label: t.topSeller,
+        value: data.topSeller?.name || '—',
+        secondaryLabel: data.topSeller ? t.invoices : undefined,
+        secondaryValue: data.topSeller?.count,
         variant: 'success',
       },
     ];
 
-    return raw.filter(s => {
-      const show = s.id === 'sales' ? showSales : s.id === 'inventory' ? showInventory : s.id === 'customers' ? showCustomers : showTopSeller;
+    return raw.filter((s) => {
+      const show =
+        s.id === 'sales'
+          ? showSales
+          : s.id === 'inventory'
+            ? showInventory
+            : s.id === 'customers'
+              ? showCustomers
+              : showTopSeller;
       if (!show || !permissionsService.getEffectiveRole()) return false;
 
-      const perms: Record<string, string> = { sales: 'sale.view_history', inventory: 'reports.view_inventory', customers: 'customer.view', topSeller: 'reports.view_financial' };
+      const perms: Record<string, string> = {
+        sales: 'sale.view_history',
+        inventory: 'reports.view_inventory',
+        customers: 'customer.view',
+        topSeller: 'reports.view_financial',
+      };
       return permissionsService.can(perms[s.id] as any);
     });
   }, [data, language, showSales, showInventory, showCustomers, showTopSeller]);
@@ -112,7 +146,7 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
     if (isPaused || priorityMessage || !slides.length) return;
     setIsAnimating(true);
     setTimeout(() => {
-      setCurrentIndex(p => (p + 1) % slides.length);
+      setCurrentIndex((p) => (p + 1) % slides.length);
       setIsAnimating(false);
     }, 150);
   }, [isPaused, priorityMessage, slides.length]);
@@ -135,8 +169,10 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
   const tooltip = useMemo(() => {
     if (!current) return '';
     const isAR = language === 'AR';
-    if (current.id === 'sales') return isAR ? `مبيعات اليوم: ${current.value}` : `Sales Today: ${current.value}`;
-    if (current.id === 'inventory') return isAR ? `نواقص: ${data.shortagesCount}` : `Shortages: ${data.shortagesCount}`;
+    if (current.id === 'sales')
+      return isAR ? `مبيعات اليوم: ${current.value}` : `Sales Today: ${current.value}`;
+    if (current.id === 'inventory')
+      return isAR ? `نواقص: ${data.shortagesCount}` : `Shortages: ${data.shortagesCount}`;
     return current.label;
   }, [current, language, data]);
 
@@ -148,10 +184,10 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
       variant={current.variant}
       tooltip={tooltip}
       className={`transition-all duration-150 ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
-      onClick={() => setCurrentIndex(p => (p + 1) % slides.length)}
+      onClick={() => setCurrentIndex((p) => (p + 1) % slides.length)}
     >
       <div
-        className="flex items-center gap-1.5 h-full"
+        className='flex items-center gap-1.5 h-full'
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         dir={language === 'AR' ? 'rtl' : 'ltr'}
@@ -160,14 +196,14 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
 
         {current.secondaryValue !== undefined && (
           <>
-            <span className="text-[8px] opacity-40 mx-0.5">|</span>
+            <span className='text-[8px] opacity-40 mx-0.5'>|</span>
             <TickerItem label={current.secondaryLabel} value={current.secondaryValue} />
           </>
         )}
 
         {current.tertiaryValue !== undefined && (
           <>
-            <span className="text-[8px] opacity-40 mx-0.5">|</span>
+            <span className='text-[8px] opacity-40 mx-0.5'>|</span>
             <TickerItem label={current.tertiaryLabel} value={current.tertiaryValue} />
           </>
         )}

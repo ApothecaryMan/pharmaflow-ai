@@ -1,11 +1,11 @@
-import React from 'react';
-import { Icons } from '../../common/Icons';
-import { AttendanceQuickAction } from '../AttendanceQuickAction';
-import { Language, Organization, ViewState } from '../../../types';
+import type React from 'react';
+import { TRANSLATIONS } from '../../../i18n/translations';
 import { authService } from '../../../services/auth/authService';
 import { permissionsService } from '../../../services/auth/permissionsService';
-import { TRANSLATIONS } from '../../../i18n/translations';
+import type { Language, Organization, ViewState } from '../../../types';
 import { isTauri } from '../../../utils/platform';
+import { Icons } from '../../common/Icons';
+import { AttendanceQuickAction } from '../AttendanceQuickAction';
 
 interface NavUserActionsProps {
   language: Language;
@@ -71,28 +71,35 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
             />
           ) : (
             <div
-              className="flex items-center justify-center rounded-full border border-white/20"
+              className='flex items-center justify-center rounded-full border border-white/20'
               style={{
                 backgroundColor: theme.hex,
                 width: isCompact ? '24px' : '32px',
                 height: isCompact ? '24px' : '32px',
               }}
             >
-              <Icons.Store size={isCompact ? "14px" : "var(--icon-md)"} stroke={2.5} color="white" />
+              <Icons.Store
+                size={isCompact ? '14px' : 'var(--icon-md)'}
+                stroke={2.5}
+                color='white'
+              />
             </div>
           )}
           {!isCompact && (
             <div className='hidden md:flex flex-col items-start'>
               <span className='text-xs font-bold text-gray-700 dark:text-gray-200 leading-none mb-0.5'>
                 {currentEmployeeId
-                  ? (currentEmployee?.name || authService.getCurrentUserSync()?.username || (language === 'AR' ? 'Zinc' : 'Zinc'))
-                  : (language === 'AR' ? 'تسجيل دخول الموظف' : 'Employee Login')
-                }
+                  ? currentEmployee?.name ||
+                    authService.getCurrentUserSync()?.username ||
+                    (language === 'AR' ? 'Zinc' : 'Zinc')
+                  : language === 'AR'
+                    ? 'تسجيل دخول الموظف'
+                    : 'Employee Login'}
               </span>
               {currentEmployeeId && (
                 <span className='text-[10px] text-gray-400 leading-none h-2.5 flex items-center'>
                   {isDataLoading || !activeBranch ? (
-                    <span className="w-16 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full" />
+                    <span className='w-16 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full' />
                   ) : (
                     activeBranch.name
                   )}
@@ -100,12 +107,21 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
               )}
             </div>
           )}
-          {!isCompact && <span className="material-symbols-rounded hidden md:block text-gray-400" style={{ fontSize: 'var(--icon-base)' }}>expand_more</span>}
+          {!isCompact && (
+            <span
+              className='material-symbols-rounded hidden md:block text-gray-400'
+              style={{ fontSize: 'var(--icon-base)' }}
+            >
+              expand_more
+            </span>
+          )}
         </button>
 
         {/* Profile Dropdown */}
         {showProfileMenu && (
-          <div className={`absolute ${language === 'AR' ? 'left-0' : 'right-0'} mt-2 w-72 bg-(--bg-menu) rounded-2xl shadow-[0_0_15px_rgba(0,0,0,0.15)] dark:shadow-[0_0_15px_rgba(0,0,0,0.4)] border border-(--border-divider) overflow-hidden z-[10000] animate-fade-in`}>
+          <div
+            className={`absolute ${language === 'AR' ? 'left-0' : 'right-0'} mt-2 w-72 bg-(--bg-menu) rounded-2xl shadow-[0_0_15px_rgba(0,0,0,0.15)] dark:shadow-[0_0_15px_rgba(0,0,0,0.4)] border border-(--border-divider) overflow-hidden z-[10000] animate-fade-in`}
+          >
             {/* User Info */}
             <div className='p-4 border-b border-(--border-divider) bg-(--bg-page-surface)'>
               <div className='flex items-center gap-3'>
@@ -118,28 +134,31 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                     />
                   ) : (
                     <div
-                      className="flex items-center justify-center rounded-full border border-white/10"
+                      className='flex items-center justify-center rounded-full border border-white/10'
                       style={{
                         backgroundColor: theme.hex,
                         width: '48px',
                         height: '48px',
                       }}
                     >
-                      <Icons.Store size="var(--icon-lg)" stroke={2} color="white" />
+                      <Icons.Store size='var(--icon-lg)' stroke={2} color='white' />
                     </div>
                   )}
                 </div>
                 <div>
                   <h3 className='font-bold text-gray-900 dark:text-white'>
                     {currentEmployeeId
-                      ? (currentEmployee?.name || authService.getCurrentUserSync()?.username || (language === 'AR' ? 'Zinc' : 'Zinc'))
-                      : (language === 'AR' ? 'تسجيل دخول الموظف' : 'Employee Login')
-                    }
+                      ? currentEmployee?.name ||
+                        authService.getCurrentUserSync()?.username ||
+                        (language === 'AR' ? 'Zinc' : 'Zinc')
+                      : language === 'AR'
+                        ? 'تسجيل دخول الموظف'
+                        : 'Employee Login'}
                   </h3>
                   <div className='flex items-center gap-2'>
                     <p className='text-xs text-gray-500 dark:text-gray-400'>
                       {isDataLoading || !activeOrg ? (
-                        <span className="inline-block w-20 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full" />
+                        <span className='inline-block w-20 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full' />
                       ) : (
                         activeOrg.name
                       )}
@@ -149,7 +168,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                         <span className='w-1 h-1 bg-gray-300 rounded-full' />
                         <p className='text-xs text-gray-500 dark:text-gray-400'>
                           {isDataLoading || !activeBranch ? (
-                            <span className="inline-block w-12 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full" />
+                            <span className='inline-block w-12 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full' />
                           ) : (
                             activeBranch.name
                           )}
@@ -162,49 +181,55 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
             </div>
 
             {/* Workspace Management */}
-            {authService.getCurrentUserSync()?.accountType === 'employee' && authService.getCurrentUserSync()?.destination === 'pharmacy' && (
-              <div className='p-2 border-t border-(--border-divider)'>
-                <div className='flex items-center justify-between px-2 mb-2'>
-                  <div className='flex items-center gap-1.5'>
-                    <Icons.Store size={16} className="text-gray-400" />
-                    <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
-                      {language === 'AR' ? 'مساحات العمل' : 'Workspaces'}
-                    </p>
+            {authService.getCurrentUserSync()?.accountType === 'employee' &&
+              authService.getCurrentUserSync()?.destination === 'pharmacy' && (
+                <div className='p-2 border-t border-(--border-divider)'>
+                  <div className='flex items-center justify-between px-2 mb-2'>
+                    <div className='flex items-center gap-1.5'>
+                      <Icons.Store size={16} className='text-gray-400' />
+                      <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
+                        {language === 'AR' ? 'مساحات العمل' : 'Workspaces'}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className='space-y-1 max-h-[150px] overflow-y-auto scrollbar-hide'>
-                  {authService.getCurrentUserSync()!.availableWorkspaces!.map((workspace: any) => {
-                    const isActive = authService.getCurrentUserSync()?.employeeId === workspace.id;
-                    return (
-                      <button
-                        key={workspace.id}
-                        onClick={() => {}}
-                        className={`w-full p-2 text-sm font-medium rounded-lg flex items-center justify-between transition-colors
+                  <div className='space-y-1 max-h-[150px] overflow-y-auto scrollbar-hide'>
+                    {authService
+                      .getCurrentUserSync()!
+                      .availableWorkspaces!.map((workspace: any) => {
+                        const isActive =
+                          authService.getCurrentUserSync()?.employeeId === workspace.id;
+                        return (
+                          <button
+                            key={workspace.id}
+                            onClick={() => {}}
+                            className={`w-full p-2 text-sm font-medium rounded-lg flex items-center justify-between transition-colors
                           ${
                             isActive
                               ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                               : 'text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover)'
                           }
                         `}
-                      >
-                        <div className='flex flex-col items-start'>
-                          <span>{workspace.orgName || 'Pharmacy'}</span>
-                          <span className='text-[10px] opacity-70 capitalize'>{workspace.role.replace('_', ' ')}</span>
-                        </div>
-                        {isActive && <Icons.Success size="var(--icon-md)" />}
-                      </button>
-                    );
-                  })}
+                          >
+                            <div className='flex flex-col items-start'>
+                              <span>{workspace.orgName || 'Pharmacy'}</span>
+                              <span className='text-[10px] opacity-70 capitalize'>
+                                {workspace.role.replace('_', ' ')}
+                              </span>
+                            </div>
+                            {isActive && <Icons.Success size='var(--icon-md)' />}
+                          </button>
+                        );
+                      })}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Branch Management */}
             {currentEmployeeId && (
               <div className='p-2 border-t border-(--border-divider)'>
                 <div className='flex items-center justify-between px-2 mb-2'>
                   <div className='flex items-center gap-1.5'>
-                    <Icons.Branch size={16} className="text-gray-400" />
+                    <Icons.Branch size={16} className='text-gray-400' />
                     <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
                       {language === 'AR' ? 'فروع الصيدلية' : 'Pharmacy Branches'}
                     </p>
@@ -229,7 +254,11 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                         `}
                       >
                         <div className='flex items-center gap-2'>
-                          {activeBranchId === branch.id ? <Icons.Success size="var(--icon-md)" /> : <Icons.Circle size="var(--icon-md)" />}
+                          {activeBranchId === branch.id ? (
+                            <Icons.Success size='var(--icon-md)' />
+                          ) : (
+                            <Icons.Circle size='var(--icon-md)' />
+                          )}
                           {branch.name}
                         </div>
                       </button>
@@ -237,7 +266,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                   </div>
                 ) : (
                   <div className='px-2.5 py-2 mt-1 mx-1 text-xs text-gray-500 dark:text-gray-400 bg-(--bg-page-surface) rounded-lg border border-(--border-divider) flex items-center gap-2'>
-                    <Icons.Info size={16} className="text-gray-400" />
+                    <Icons.Info size={16} className='text-gray-400' />
                     {language === 'AR' ? 'فرع واحد متاح.' : 'One branch available.'}
                   </div>
                 )}
@@ -254,7 +283,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                   }}
                   className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg flex items-center gap-2'
                 >
-                  <Icons.Desktop size="var(--icon-md)" />
+                  <Icons.Desktop size='var(--icon-md)' />
                   {language === 'AR' ? 'إعدادات سطح المكتب' : 'Desktop Settings'}
                 </button>
               </div>
@@ -279,7 +308,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                 disabled={isLoggingOut}
                 className='w-full p-2 text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-500 hover:text-white rounded-lg flex items-center justify-center gap-2'
               >
-                {isLoggingOut ? <Icons.Loading className="animate-spin" /> : <Icons.Logout />}
+                {isLoggingOut ? <Icons.Loading className='animate-spin' /> : <Icons.Logout />}
                 {t.profile.signOut}
               </button>
             </div>

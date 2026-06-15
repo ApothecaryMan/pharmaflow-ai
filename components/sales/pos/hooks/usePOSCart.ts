@@ -1,21 +1,20 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
+  type DragEndEvent,
+  KeyboardSensor,
   MouseSensor,
   TouchSensor,
-  KeyboardSensor,
   useSensor,
   useSensors,
-  type DragEndEvent,
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { type UserRole } from '../../../../config/permissions';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { UserRole } from '../../../../config/permissions';
 import { permissionsService } from '../../../../services/auth/permissionsService';
-import type { CartItem, Drug } from '../../../../types';
-import { resolvePrice } from '../../../../utils/stockUtils';
-import { isStockConstraintMet } from '../../../../utils/stockOperations';
 import { batchService } from '../../../../services/inventory/batchService';
-import type { GroupedDrug } from '../../../../types';
+import type { CartItem, Drug, GroupedDrug } from '../../../../types';
 import { money } from '../../../../utils/money';
+import { isStockConstraintMet } from '../../../../utils/stockOperations';
+import { resolvePrice } from '../../../../utils/stockUtils';
 
 interface UsePOSCartProps {
   activeTab: any;
@@ -118,274 +117,319 @@ export const usePOSCart = ({
   }, [inventory, addNotification, playError]);
 
   // --- Cart Actions ---
-  const addToCart = useCallback((drug: Drug, isUnitMode: boolean = false, initialQuantity: number = 1) => {
-    if (drug.stock <= 0) return;
+  const addToCart = useCallback(
+    (drug: Drug, isUnitMode: boolean = false, initialQuantity: number = 1) => {
+      if (drug.stock <= 0) return;
 
-    if (cartRef.current.length === 0 && !activeTab?.firstItemAt) {
-      updateTab(activeTabId, { firstItemAt: Date.now() });
-    }
-
-    setCart((prev: CartItem[]) => {
-      const totalStockUnits = Math.max(
-        drug.stock,
-        inventory
-          .filter((d) => d.name === drug.name && (d.dosageForm || '') === (drug.dosageForm || ''))
-          .reduce((sum, d) => sum + d.stock, 0)
-      );
-
-      if (!isStockConstraintMet(drug.name, drug.dosageForm || '', totalStockUnits, drug.unitsPerPack, prev, initialQuantity, isUnitMode)) {
-        return prev;
+      if (cartRef.current.length === 0 && !activeTab?.firstItemAt) {
+        updateTab(activeTabId, { firstItemAt: Date.now() });
       }
 
-      const existingIndex = prev.findIndex(
-        (item) => item.id === drug.id && !!item.isUnit === isUnitMode
-      );
-
-      if (existingIndex >= 0) {
-        const updated = [...prev];
-        updated[existingIndex] = {
-          ...updated[existingIndex],
-          quantity: updated[existingIndex].quantity + initialQuantity,
-        };
-        initialQuantity > 0 && playBeep();
-        return updated;
-      }
-
-      if (initialQuantity <= 0) return prev;
-
-      initialQuantity > 0 && playBeep();
-      return [
-        ...prev,
-        {
-          ...drug,
-          // Unit-First baseline: ensure these exist for accurate math
-          unitPrice: drug.unitPrice || (drug.unitsPerPack && drug.unitsPerPack > 1
-            ? money.divide(drug.publicPrice, drug.unitsPerPack)
-            : drug.publicPrice),
-          unitCostPrice: drug.unitCostPrice || (drug.unitsPerPack && drug.unitsPerPack > 1
-            ? money.divide(drug.costPrice || 0, drug.unitsPerPack)
-            : (drug.costPrice || 0)),
-          publicPrice: resolvePrice(drug.publicPrice, isUnitMode, drug.unitsPerPack, drug.unitPrice),
-          quantity: initialQuantity,
-          discount: prev.find((i) => i.id === drug.id && !!i.isUnit !== isUnitMode)?.discount || 0,
-          isUnit: isUnitMode,
-          basePackPrice: drug.publicPrice,
-          preferredBatchId: drug.id,
-        },
-      ];
-    });
-  }, [activeTab?.firstItemAt, activeTabId, updateTab, setCart]);
-
-  const addGroupToCart = useCallback((group: Drug[]) => {
-    // Treat the array as a potential group
-    const grouped = batchService.groupInventory(group)[0];
-    if (!grouped) return;
-
-    const drugKey = grouped.groupId;
-    const selectedBatchId = selectedBatches[drugKey];
-
-    const targetBatch = batchService.findTargetBatch(grouped, cartRef.current, selectedBatchId);
-
-    if (targetBatch) {
-      const unitMode = selectedUnits[drugKey] === 'unit';
-      addToCart(targetBatch, unitMode);
-    }
-  }, [selectedBatches, selectedUnits, addToCart]);
-
-  const removeFromCart = useCallback((id: string, isUnit: boolean) => {
-    setCart((prev: CartItem[]) => prev.filter((item) => !(item.id === id && !!item.isUnit === isUnit)));
-  }, [setCart]);
-
-  const removeDrugFromCart = useCallback((id: string) => {
-    setCart((prev: CartItem[]) => prev.filter((item) => item.id !== id));
-  }, [setCart]);
-
-  const switchBatchWithAutoSplit = useCallback((
-    currentItem: CartItem,
-    newBatch: Drug,
-    packQty: number,
-    unitQty: number
-  ) => {
-    const allBatches = inventory
-      .filter((d) => d.name === currentItem.name && d.dosageForm === currentItem.dosageForm)
-      .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
-
-    setCart((prev: CartItem[]) => {
-      const insertionIndex = prev.findIndex(
-        (item) => item.name === currentItem.name && item.dosageForm === currentItem.dosageForm
-      );
-
-      const filtered = prev.filter(
-        (item) => !(item.name === currentItem.name && item.dosageForm === currentItem.dosageForm)
-      );
-
-      const newItems: CartItem[] = [];
-      let remainingPacks = packQty;
-      let remainingUnits = unitQty;
-      const orderedBatches = [newBatch, ...allBatches.filter((b) => b.id !== newBatch.id)];
-
-      for (const batch of orderedBatches) {
-        if (remainingPacks <= 0 && remainingUnits <= 0) break;
-
-        const unitsPerPack = batch.unitsPerPack || 1;
-        const stockInPacks = Math.floor(batch.stock / unitsPerPack);
-
-        if (remainingPacks > 0) {
-          const packsTake = Math.min(remainingPacks, stockInPacks);
-          if (packsTake > 0) {
-            newItems.push({
-              ...batch,
-              quantity: packsTake,
-              discount: currentItem.discount || 0,
-              isUnit: false,
-              publicPrice: resolvePrice(batch.publicPrice, false, unitsPerPack, batch.unitPrice),
-              preferredBatchId: batch.id,
-            });
-            remainingPacks -= packsTake;
-          }
-        }
-
-        const usedPacks = newItems
-          .filter((i) => i.id === batch.id && !i.isUnit)
-          .reduce((s, i) => s + i.quantity, 0);
-        const remainingStockForUnits = (stockInPacks - usedPacks) * unitsPerPack;
-
-        if (remainingUnits > 0 && unitsPerPack > 1) {
-          const unitsTake = Math.min(remainingUnits, remainingStockForUnits);
-          if (unitsTake > 0) {
-            newItems.push({
-              ...batch,
-              quantity: unitsTake,
-              discount: currentItem.discount || 0,
-              isUnit: true,
-              publicPrice: resolvePrice(batch.publicPrice, true, unitsPerPack, batch.unitPrice),
-              preferredBatchId: batch.id,
-            });
-            remainingUnits -= unitsTake;
-          }
-        }
-      }
-
-      if (insertionIndex !== -1) {
-        const result = [...filtered];
-        result.splice(insertionIndex, 0, ...newItems);
-        return result;
-      }
-      return [...filtered, ...newItems];
-    });
-  }, [inventory, setCart]);
-
-  const updateQuantity = useCallback((id: string, isUnit: boolean, delta: number) => {
-    setCart((prev: CartItem[]) => {
-      const targetItem = prev.find((i) => i.id === id && !!i.isUnit === isUnit);
-      if (!targetItem) return prev;
-
-      // 1. Calculate Total Available Stock for this Drug (All Batches)
-      const drugDefinition = inventory.find((d) =>
-        d.id === id ||
-        (d.name === targetItem.name && d.dosageForm === targetItem.dosageForm)
-      );
-      if (!drugDefinition) return prev;
-
-      const totalStockUnits = Math.max(
-        drugDefinition.stock,
-        inventory
-          .filter((d) => d.name === targetItem.name && (d.dosageForm || '') === (targetItem.dosageForm || ''))
-          .reduce((sum, d) => sum + d.stock, 0)
-      );
-
-      // 2. Validate using refined logic (Cross-Mode/Cross-Batch)
-      const unitsPerPack = drugDefinition.unitsPerPack || 1;
-      if (!isStockConstraintMet(
-        targetItem.name,
-        targetItem.dosageForm || '',
-        totalStockUnits,
-        unitsPerPack,
-        prev,
-        delta,
-        isUnit
-      )) {
-        playError();
-        showToastError(t.stockLimitReached);
-        return prev;
-      }
-
-      const newQty = targetItem.quantity + delta;
-      if (newQty < 0) return prev;
-      if (newQty === 0) {
-        return prev.filter((i) => !(i.id === id && !!i.isUnit === isUnit));
-      }
-
-      playBeep();
-      return prev.map((item) =>
-        item.id === id && !!item.isUnit === isUnit ? { ...item, quantity: newQty } : item
-      );
-    });
-  }, [inventory, setCart, playBeep, playError, showToastError, t]);
-
-  const toggleUnitMode = useCallback((id: string, currentIsUnit: boolean) => {
-    setCart((prev: CartItem[]) => {
-      const item = prev.find((i) => i.id === id && !!i.isUnit === currentIsUnit);
-      if (!item) return prev;
-
-      const unitsPerPack = item.unitsPerPack || 1;
-      if (unitsPerPack <= 1) return prev; // Cannot toggle if no packs/units distinction
-
-      const drug = inventory.find((d) => d.id === id);
-      const newIsUnit = !currentIsUnit;
-      const convertedQty = currentIsUnit
-        ? Math.floor(item.quantity / unitsPerPack) || 1
-        : item.quantity * unitsPerPack;
-
-      const existingIndex = prev.findIndex((i) => i.id === id && !!i.isUnit === newIsUnit);
-
-      let updated = [...prev];
-      if (existingIndex >= 0) {
-        // Merge with existing item of that type
-        updated[existingIndex] = {
-          ...updated[existingIndex],
-          quantity: updated[existingIndex].quantity + convertedQty,
-        };
-        // Remove the toggled item
-        updated = updated.filter((i) => !(i.id === id && !!i.isUnit === currentIsUnit));
-      } else {
-        // Just change the type of the current item
-        updated = prev.map((i) =>
-          (i.id === id && !!i.isUnit === currentIsUnit)
-            ? {
-              ...i,
-              isUnit: newIsUnit,
-              quantity: convertedQty,
-              publicPrice: resolvePrice(
-                i.basePackPrice || drug?.publicPrice || i.publicPrice,
-                newIsUnit,
-                unitsPerPack,
-                drug?.unitPrice
-              )
-            }
-            : i
+      setCart((prev: CartItem[]) => {
+        const totalStockUnits = Math.max(
+          drug.stock,
+          inventory
+            .filter((d) => d.name === drug.name && (d.dosageForm || '') === (drug.dosageForm || ''))
+            .reduce((sum, d) => sum + d.stock, 0)
         );
+
+        if (
+          !isStockConstraintMet(
+            drug.name,
+            drug.dosageForm || '',
+            totalStockUnits,
+            drug.unitsPerPack,
+            prev,
+            initialQuantity,
+            isUnitMode
+          )
+        ) {
+          return prev;
+        }
+
+        const existingIndex = prev.findIndex(
+          (item) => item.id === drug.id && !!item.isUnit === isUnitMode
+        );
+
+        if (existingIndex >= 0) {
+          const updated = [...prev];
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            quantity: updated[existingIndex].quantity + initialQuantity,
+          };
+          initialQuantity > 0 && playBeep();
+          return updated;
+        }
+
+        if (initialQuantity <= 0) return prev;
+
+        initialQuantity > 0 && playBeep();
+        return [
+          ...prev,
+          {
+            ...drug,
+            // Unit-First baseline: ensure these exist for accurate math
+            unitPrice:
+              drug.unitPrice ||
+              (drug.unitsPerPack && drug.unitsPerPack > 1
+                ? money.divide(drug.publicPrice, drug.unitsPerPack)
+                : drug.publicPrice),
+            unitCostPrice:
+              drug.unitCostPrice ||
+              (drug.unitsPerPack && drug.unitsPerPack > 1
+                ? money.divide(drug.costPrice || 0, drug.unitsPerPack)
+                : drug.costPrice || 0),
+            publicPrice: resolvePrice(
+              drug.publicPrice,
+              isUnitMode,
+              drug.unitsPerPack,
+              drug.unitPrice
+            ),
+            quantity: initialQuantity,
+            discount:
+              prev.find((i) => i.id === drug.id && !!i.isUnit !== isUnitMode)?.discount || 0,
+            isUnit: isUnitMode,
+            basePackPrice: drug.publicPrice,
+            preferredBatchId: drug.id,
+          },
+        ];
+      });
+    },
+    [activeTab?.firstItemAt, activeTabId, updateTab, setCart]
+  );
+
+  const addGroupToCart = useCallback(
+    (group: Drug[]) => {
+      // Treat the array as a potential group
+      const grouped = batchService.groupInventory(group)[0];
+      if (!grouped) return;
+
+      const drugKey = grouped.groupId;
+      const selectedBatchId = selectedBatches[drugKey];
+
+      const targetBatch = batchService.findTargetBatch(grouped, cartRef.current, selectedBatchId);
+
+      if (targetBatch) {
+        const unitMode = selectedUnits[drugKey] === 'unit';
+        addToCart(targetBatch, unitMode);
       }
-      return updated;
-    });
-  }, [inventory, setCart]);
+    },
+    [selectedBatches, selectedUnits, addToCart]
+  );
 
-  const updateItemDiscount = useCallback((id: string, isUnit: boolean, discount: number) => {
-    if (!permissionsService.can('sale.discount')) {
-      showToastError('Permission Denied: Cannot apply item discount');
-      return;
-    }
-    setCart((prev: CartItem[]) => {
-      const item = prev.find((i) => i.id === id && !!i.isUnit === isUnit);
-      // BUG-D1: Enforce maxDiscount from the item, not just 0-100
-      const maxDisc = item?.maxDiscount && item.maxDiscount > 0 ? item.maxDiscount : 10;
-      const validDiscount = Math.min(maxDisc, Math.max(0, discount));
-      return prev.map((i) =>
-        i.id === id && !!i.isUnit === isUnit ? { ...i, discount: validDiscount } : i
+  const removeFromCart = useCallback(
+    (id: string, isUnit: boolean) => {
+      setCart((prev: CartItem[]) =>
+        prev.filter((item) => !(item.id === id && !!item.isUnit === isUnit))
       );
-    });
-  }, [showToastError, setCart]);
+    },
+    [setCart]
+  );
 
+  const removeDrugFromCart = useCallback(
+    (id: string) => {
+      setCart((prev: CartItem[]) => prev.filter((item) => item.id !== id));
+    },
+    [setCart]
+  );
+
+  const switchBatchWithAutoSplit = useCallback(
+    (currentItem: CartItem, newBatch: Drug, packQty: number, unitQty: number) => {
+      const allBatches = inventory
+        .filter((d) => d.name === currentItem.name && d.dosageForm === currentItem.dosageForm)
+        .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+
+      setCart((prev: CartItem[]) => {
+        const insertionIndex = prev.findIndex(
+          (item) => item.name === currentItem.name && item.dosageForm === currentItem.dosageForm
+        );
+
+        const filtered = prev.filter(
+          (item) => !(item.name === currentItem.name && item.dosageForm === currentItem.dosageForm)
+        );
+
+        const newItems: CartItem[] = [];
+        let remainingPacks = packQty;
+        let remainingUnits = unitQty;
+        const orderedBatches = [newBatch, ...allBatches.filter((b) => b.id !== newBatch.id)];
+
+        for (const batch of orderedBatches) {
+          if (remainingPacks <= 0 && remainingUnits <= 0) break;
+
+          const unitsPerPack = batch.unitsPerPack || 1;
+          const stockInPacks = Math.floor(batch.stock / unitsPerPack);
+
+          if (remainingPacks > 0) {
+            const packsTake = Math.min(remainingPacks, stockInPacks);
+            if (packsTake > 0) {
+              newItems.push({
+                ...batch,
+                quantity: packsTake,
+                discount: currentItem.discount || 0,
+                isUnit: false,
+                publicPrice: resolvePrice(batch.publicPrice, false, unitsPerPack, batch.unitPrice),
+                preferredBatchId: batch.id,
+              });
+              remainingPacks -= packsTake;
+            }
+          }
+
+          const usedPacks = newItems
+            .filter((i) => i.id === batch.id && !i.isUnit)
+            .reduce((s, i) => s + i.quantity, 0);
+          const remainingStockForUnits = (stockInPacks - usedPacks) * unitsPerPack;
+
+          if (remainingUnits > 0 && unitsPerPack > 1) {
+            const unitsTake = Math.min(remainingUnits, remainingStockForUnits);
+            if (unitsTake > 0) {
+              newItems.push({
+                ...batch,
+                quantity: unitsTake,
+                discount: currentItem.discount || 0,
+                isUnit: true,
+                publicPrice: resolvePrice(batch.publicPrice, true, unitsPerPack, batch.unitPrice),
+                preferredBatchId: batch.id,
+              });
+              remainingUnits -= unitsTake;
+            }
+          }
+        }
+
+        if (insertionIndex !== -1) {
+          const result = [...filtered];
+          result.splice(insertionIndex, 0, ...newItems);
+          return result;
+        }
+        return [...filtered, ...newItems];
+      });
+    },
+    [inventory, setCart]
+  );
+
+  const updateQuantity = useCallback(
+    (id: string, isUnit: boolean, delta: number) => {
+      setCart((prev: CartItem[]) => {
+        const targetItem = prev.find((i) => i.id === id && !!i.isUnit === isUnit);
+        if (!targetItem) return prev;
+
+        // 1. Calculate Total Available Stock for this Drug (All Batches)
+        const drugDefinition = inventory.find(
+          (d) =>
+            d.id === id || (d.name === targetItem.name && d.dosageForm === targetItem.dosageForm)
+        );
+        if (!drugDefinition) return prev;
+
+        const totalStockUnits = Math.max(
+          drugDefinition.stock,
+          inventory
+            .filter(
+              (d) =>
+                d.name === targetItem.name && (d.dosageForm || '') === (targetItem.dosageForm || '')
+            )
+            .reduce((sum, d) => sum + d.stock, 0)
+        );
+
+        // 2. Validate using refined logic (Cross-Mode/Cross-Batch)
+        const unitsPerPack = drugDefinition.unitsPerPack || 1;
+        if (
+          !isStockConstraintMet(
+            targetItem.name,
+            targetItem.dosageForm || '',
+            totalStockUnits,
+            unitsPerPack,
+            prev,
+            delta,
+            isUnit
+          )
+        ) {
+          playError();
+          showToastError(t.stockLimitReached);
+          return prev;
+        }
+
+        const newQty = targetItem.quantity + delta;
+        if (newQty < 0) return prev;
+        if (newQty === 0) {
+          return prev.filter((i) => !(i.id === id && !!i.isUnit === isUnit));
+        }
+
+        playBeep();
+        return prev.map((item) =>
+          item.id === id && !!item.isUnit === isUnit ? { ...item, quantity: newQty } : item
+        );
+      });
+    },
+    [inventory, setCart, playBeep, playError, showToastError, t]
+  );
+
+  const toggleUnitMode = useCallback(
+    (id: string, currentIsUnit: boolean) => {
+      setCart((prev: CartItem[]) => {
+        const item = prev.find((i) => i.id === id && !!i.isUnit === currentIsUnit);
+        if (!item) return prev;
+
+        const unitsPerPack = item.unitsPerPack || 1;
+        if (unitsPerPack <= 1) return prev; // Cannot toggle if no packs/units distinction
+
+        const drug = inventory.find((d) => d.id === id);
+        const newIsUnit = !currentIsUnit;
+        const convertedQty = currentIsUnit
+          ? Math.floor(item.quantity / unitsPerPack) || 1
+          : item.quantity * unitsPerPack;
+
+        const existingIndex = prev.findIndex((i) => i.id === id && !!i.isUnit === newIsUnit);
+
+        let updated = [...prev];
+        if (existingIndex >= 0) {
+          // Merge with existing item of that type
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            quantity: updated[existingIndex].quantity + convertedQty,
+          };
+          // Remove the toggled item
+          updated = updated.filter((i) => !(i.id === id && !!i.isUnit === currentIsUnit));
+        } else {
+          // Just change the type of the current item
+          updated = prev.map((i) =>
+            i.id === id && !!i.isUnit === currentIsUnit
+              ? {
+                  ...i,
+                  isUnit: newIsUnit,
+                  quantity: convertedQty,
+                  publicPrice: resolvePrice(
+                    i.basePackPrice || drug?.publicPrice || i.publicPrice,
+                    newIsUnit,
+                    unitsPerPack,
+                    drug?.unitPrice
+                  ),
+                }
+              : i
+          );
+        }
+        return updated;
+      });
+    },
+    [inventory, setCart]
+  );
+
+  const updateItemDiscount = useCallback(
+    (id: string, isUnit: boolean, discount: number) => {
+      if (!permissionsService.can('sale.discount')) {
+        showToastError('Permission Denied: Cannot apply item discount');
+        return;
+      }
+      setCart((prev: CartItem[]) => {
+        const item = prev.find((i) => i.id === id && !!i.isUnit === isUnit);
+        // BUG-D1: Enforce maxDiscount from the item, not just 0-100
+        const maxDisc = item?.maxDiscount && item.maxDiscount > 0 ? item.maxDiscount : 10;
+        const validDiscount = Math.min(maxDisc, Math.max(0, discount));
+        return prev.map((i) =>
+          i.id === id && !!i.isUnit === isUnit ? { ...i, discount: validDiscount } : i
+        );
+      });
+    },
+    [showToastError, setCart]
+  );
 
   const cartSensors = useSensors(
     useSensor(MouseSensor, {
@@ -399,36 +443,39 @@ export const usePOSCart = ({
     })
   );
 
-  const handleCartDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
+  const handleCartDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
 
-    if (active.id !== over?.id) {
-      setCart((prev: CartItem[]) => {
-        const groups = new Map<string, CartItem[]>();
-        const order: string[] = [];
+      if (active.id !== over?.id) {
+        setCart((prev: CartItem[]) => {
+          const groups = new Map<string, CartItem[]>();
+          const order: string[] = [];
 
-        prev.forEach((item) => {
-          if (!groups.has(item.id)) {
-            groups.set(item.id, []);
-            order.push(item.id);
-          }
-          groups.get(item.id)!.push(item);
+          prev.forEach((item) => {
+            if (!groups.has(item.id)) {
+              groups.set(item.id, []);
+              order.push(item.id);
+            }
+            groups.get(item.id)!.push(item);
+          });
+
+          const oldIndex = order.indexOf(active.id as string);
+          const newIndex = order.indexOf(over!.id as string);
+          const newOrder = arrayMove(order, oldIndex, newIndex);
+
+          const newCart: CartItem[] = [];
+          newOrder.forEach((id) => {
+            if (groups.has(id)) {
+              newCart.push(...groups.get(id)!);
+            }
+          });
+          return newCart;
         });
-
-        const oldIndex = order.indexOf(active.id as string);
-        const newIndex = order.indexOf(over!.id as string);
-        const newOrder = arrayMove(order, oldIndex, newIndex);
-
-        const newCart: CartItem[] = [];
-        newOrder.forEach((id) => {
-          if (groups.has(id)) {
-            newCart.push(...groups.get(id)!);
-          }
-        });
-        return newCart;
-      });
-    }
-  }, [setCart]);
+      }
+    },
+    [setCart]
+  );
 
   return {
     cart,

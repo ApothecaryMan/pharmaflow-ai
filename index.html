@@ -80,9 +80,9 @@
     <script>
       // Force hide icon ligatures until font is actually ready to render
       if ('fonts' in document) {
-        document.fonts.load('24px "Material Symbols Rounded"').then(function() {
+        document.fonts.load('24px "Material Symbols Rounded"').then(() => {
           document.documentElement.classList.add('fonts-loaded');
-        }).catch(function() {
+        }).catch(() => {
           // Fallback if loading fails, show text after 3s anyway
           setTimeout(() => document.documentElement.classList.add('fonts-loaded'), 3000);
         });

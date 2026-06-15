@@ -1,10 +1,10 @@
-import { branchService } from './branchService';
-import { salesService } from '../sales/salesService';
-import { inventoryService } from '../inventory/inventoryService';
-import { employeeService } from '../hr/employeeService';
-import { orgService } from './orgService';
 import { dateRangeService } from '../financials/dateRangeService';
+import { employeeService } from '../hr/employeeService';
+import { inventoryService } from '../inventory/inventoryService';
+import { salesService } from '../sales/salesService';
 import timeService from '../timeService';
+import { branchService } from './branchService';
+import { orgService } from './orgService';
 
 export interface OrgMetrics {
   totalSales: number;
@@ -118,21 +118,26 @@ const computeMetrics = (
     }
   }
 
-  const branchIds = new Set(branches.map(b => b.id));
+  const branchIds = new Set(branches.map((b) => b.id));
 
   for (const branch of branches) {
     const branchSales = salesByBranch[branch.id] || [];
     totalSales += branchSales.length;
     totalRevenue += branchSales.reduce((sum, sale) => sum + (sale.total || 0), 0);
 
-    const branchTodaySales = branchSales.filter(s => s.date && s.date.startsWith(today));
+    const branchTodaySales = branchSales.filter((s) => s.date && s.date.startsWith(today));
     todayRevenue += branchTodaySales.reduce((sum, sale) => sum + (sale.total || 0), 0);
 
     const branchInventory = inventoryByBranch[branch.id] || [];
-    totalInventoryValue += branchInventory.reduce((sum, item) => sum + ((item.publicPrice || 0) * (item.quantity || item.stock || 0)), 0);
+    totalInventoryValue += branchInventory.reduce(
+      (sum, item) => sum + (item.publicPrice || 0) * (item.quantity || item.stock || 0),
+      0
+    );
   }
 
-  const activeStaffCount = allEmployees.filter(e => e.branchId && branchIds.has(e.branchId)).length;
+  const activeStaffCount = allEmployees.filter(
+    (e) => e.branchId && branchIds.has(e.branchId)
+  ).length;
 
   return {
     totalSales,
@@ -141,7 +146,7 @@ const computeMetrics = (
     totalBranches: branches.length,
     activeStaffCount,
     totalInventoryValue,
-    lastUpdated: timeService.getVerifiedDate().toISOString()
+    lastUpdated: timeService.getVerifiedDate().toISOString(),
   };
 };
 
@@ -149,7 +154,10 @@ const computeMetrics = (
  * Standalone metrics fetcher (used by components that only need metrics, not full org data).
  * Uses stale-while-revalidate: returns cached metrics instantly, refreshes in background.
  */
-export const aggregateOrgMetrics = async (orgId: string, bypassCache = false): Promise<OrgMetrics> => {
+export const aggregateOrgMetrics = async (
+  orgId: string,
+  bypassCache = false
+): Promise<OrgMetrics> => {
   if (!bypassCache) {
     const cached = await getCachedMetrics(orgId);
     if (cached) {
@@ -218,8 +226,8 @@ export const orgAggregationService = {
     cacheMetrics(orgId, metrics).catch(() => {});
 
     // Build org-role lookup
-    const branchIds = new Set(branches.map(b => b.id));
-    const branchEmployees = allEmployees.filter(e => e.branchId && branchIds.has(e.branchId));
+    const branchIds = new Set(branches.map((b) => b.id));
+    const branchEmployees = allEmployees.filter((e) => e.branchId && branchIds.has(e.branchId));
 
     const memberRoleMap: Record<string, string> = {};
     for (const m of members) {
@@ -227,17 +235,17 @@ export const orgAggregationService = {
     }
 
     // Merge roles and split into Managers (has account) and Staff (no account)
-    const allMappedEmployees = branchEmployees.map(e => ({
+    const allMappedEmployees = branchEmployees.map((e) => ({
       ...e,
-      orgRole: e.userId ? memberRoleMap[e.userId] : undefined
+      orgRole: e.userId ? memberRoleMap[e.userId] : undefined,
     }));
 
     return {
       metrics,
       branches,
       employees: allMappedEmployees,
-      managers: allMappedEmployees.filter(e => !!e.userId),
-      staff: allMappedEmployees.filter(e => !e.userId),
+      managers: allMappedEmployees.filter((e) => !!e.userId),
+      staff: allMappedEmployees.filter((e) => !e.userId),
     };
-  }
+  },
 };

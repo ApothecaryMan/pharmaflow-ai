@@ -9,6 +9,7 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
+import { restrictToHorizontalAxis } from '@dnd-kit/modifiers';
 import {
   arrayMove,
   horizontalListSortingStrategy,
@@ -16,16 +17,15 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { restrictToHorizontalAxis } from '@dnd-kit/modifiers';
 import type React from 'react';
-import { useRef, useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useSettings } from '../../context';
 import { useLongPress } from '../../hooks/common/useLongPress';
 import type { TRANSLATIONS } from '../../i18n/translations';
 import type { SaleTab } from '../../types';
-import { useContextMenu } from '../common/ContextMenu';
-import { useSettings } from '../../context';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { useContextMenu } from '../common/ContextMenu';
 
 interface TabBarProps {
   tabs: SaleTab[];
@@ -272,14 +272,20 @@ const SortableTab = ({
             text-gray-400 hover:text-gray-700 dark:hover:text-gray-200
           `}
         >
-          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>close</span>
+          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
+            close
+          </span>
         </button>
       )}
 
       {/* Cart Items Tooltip (Immediate hover on badge) rendered in Portal */}
-      {showTooltip && hasItems && !isDragging && badgeRef.current && createPortal(
-        <div 
-          className={`
+      {showTooltip &&
+        hasItems &&
+        !isDragging &&
+        badgeRef.current &&
+        createPortal(
+          <div
+            className={`
             fixed z-[9999] shadow-xl border rounded-xl p-2 min-w-[200px] pointer-events-none transition-all animate-in fade-in zoom-in-95 duration-200
             ${
               tooltipBlur
@@ -288,29 +294,40 @@ const SortableTab = ({
             }
             text-(--text-primary)
           `}
-          style={{
-            top: badgeRef.current.getBoundingClientRect().bottom + 8,
-            left: badgeRef.current.getBoundingClientRect().left - 100 + (badgeRef.current.offsetWidth / 2),
-          }}
-        >
-          <div className="text-[10px] font-black uppercase tracking-wider mb-2 border-b border-(--border-divider) pb-1 text-(--text-tertiary) flex items-center justify-between">
-            <span>{t.cartTitle || 'Cart Items'}</span>
-          </div>
-          <ul className="flex flex-col gap-1.5 no-scrollbar">
-            {tab.cart.map(item => (
-              <li key={item.id} className="text-[11px] flex items-center justify-between gap-3 font-semibold">
-                <span className="truncate flex-1" dir="auto" style={{ color: 'var(--text-primary)' }}>
-                  {getDisplayName(item)}
-                </span>
-                <span className="tabular-nums text-primary-600 dark:text-primary-400 font-black">
-                  {item.quantity}{item.isUnit ? ' U' : ''}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>,
-        document.body
-      )}
+            style={{
+              top: badgeRef.current.getBoundingClientRect().bottom + 8,
+              left:
+                badgeRef.current.getBoundingClientRect().left -
+                100 +
+                badgeRef.current.offsetWidth / 2,
+            }}
+          >
+            <div className='text-[10px] font-black uppercase tracking-wider mb-2 border-b border-(--border-divider) pb-1 text-(--text-tertiary) flex items-center justify-between'>
+              <span>{t.cartTitle || 'Cart Items'}</span>
+            </div>
+            <ul className='flex flex-col gap-1.5 no-scrollbar'>
+              {tab.cart.map((item) => (
+                <li
+                  key={item.id}
+                  className='text-[11px] flex items-center justify-between gap-3 font-semibold'
+                >
+                  <span
+                    className='truncate flex-1'
+                    dir='auto'
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    {getDisplayName(item)}
+                  </span>
+                  <span className='tabular-nums text-primary-600 dark:text-primary-400 font-black'>
+                    {item.quantity}
+                    {item.isUnit ? ' U' : ''}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>,
+          document.body
+        )}
     </div>
   );
 };
@@ -378,9 +395,9 @@ export const TabBar: React.FC<TabBarProps> = ({
   };
 
   return (
-    <DndContext 
-      sensors={sensors} 
-      collisionDetection={closestCenter} 
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
       modifiers={[restrictToHorizontalAxis]}
     >
@@ -425,7 +442,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                   label: t.viewClosedTabs || 'View Closed Tabs History',
                   icon: 'history',
                   action: () => onOpenClosedHistory(),
-                }
+                },
               ]);
             }}
             className={`
@@ -436,7 +453,12 @@ export const TabBar: React.FC<TabBarProps> = ({
             `}
             title={t.tabs?.newTab || 'New Tab'}
           >
-            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-navbar-main)' }}>add</span>
+            <span
+              className='material-symbols-rounded'
+              style={{ fontSize: 'var(--icon-navbar-main)' }}
+            >
+              add
+            </span>
           </button>
         )}
       </div>

@@ -1,14 +1,14 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
+import { useSettings } from '../../../context';
 import type { ProcurementItem, ProcurementSummary } from '../../../types/intelligence';
+import { getDisplayName } from '../../../utils/drugDisplayName';
 import { TanStackTable } from '../../common/TanStackTable';
 import { ConfidenceIndicator } from '../common/ConfidenceIndicator';
 import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
 import { StatusBadge } from '../common/StatusBadge';
 import { GeneratePOModal } from './GeneratePOModal';
-import { useSettings } from '../../../context';
-import { getDisplayName } from '../../../utils/drugDisplayName';
 
 interface ProcurementPageProps {
   t: Translations;
@@ -39,7 +39,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
     };
     window.addEventListener('OPEN_PO_MODAL' as any, handleGlobalPO);
     (window as any).dispatchGlobalEvent = (name: string, data: any) => {
-        window.dispatchEvent(new CustomEvent(name, { detail: { ids: data } }));
+      window.dispatchEvent(new CustomEvent(name, { detail: { ids: data } }));
     };
     return () => {
       window.removeEventListener('OPEN_PO_MODAL' as any, handleGlobalPO);
@@ -102,7 +102,9 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
         meta: { align: 'start' },
         cell: (info) => (
           <div className='flex items-center gap-2'>
-            <span className='font-bold text-emerald-600 dark:text-emerald-400'>{info.getValue()}</span>
+            <span className='font-bold text-emerald-600 dark:text-emerald-400'>
+              {info.getValue()}
+            </span>
             {info.row.original.skip_reason && (
               <span className='badge-warning gap-1 !px-1.5 !py-0.5'>
                 <span className='material-symbols-rounded'>block</span>
@@ -132,7 +134,12 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
               className='p-1.5 text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors'
               title={t?.intelligence?.procurement?.generatePO || 'Generate PO'}
             >
-              <span className='material-symbols-rounded font-icon' style={{ fontSize: 'var(--icon-lg)' }}>add_shopping_cart</span>
+              <span
+                className='material-symbols-rounded font-icon'
+                style={{ fontSize: 'var(--icon-lg)' }}
+              >
+                add_shopping_cart
+              </span>
             </button>
           </div>
         ),
@@ -153,7 +160,6 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
         selectedProductIds={selectedForPO}
       />
 
-
       {/* Main Grid Container - Simplified since TanStackTable will provide card styling */}
       <div className='flex-1 min-h-0'>
         {filteredItems.length > 0 || loading ? (
@@ -172,13 +178,19 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
           />
         ) : (
           <div className='bg-(--bg-card) rounded-xl border-2 border-(--border-primary) dark:border-(--border-divider) p-8 text-center h-full flex flex-col items-center justify-center'>
-            <span className='material-symbols-rounded text-gray-400 mb-4 opacity-20' style={{ fontSize: 'var(--icon-2xl)' }}>
+            <span
+              className='material-symbols-rounded text-gray-400 mb-4 opacity-20'
+              style={{ fontSize: 'var(--icon-2xl)' }}
+            >
               inventory
             </span>
             <h3 className='text-lg font-bold text-gray-900 dark:text-white mb-2'>
               {t?.intelligence?.procurement?.empty?.title || 'No items needing order'}
             </h3>
-            <p className='text-gray-500'>{t?.intelligence?.procurement?.empty?.subtitle || 'Your inventory seems to be well stocked'}</p>
+            <p className='text-gray-500'>
+              {t?.intelligence?.procurement?.empty?.subtitle ||
+                'Your inventory seems to be well stocked'}
+            </p>
           </div>
         )}
       </div>

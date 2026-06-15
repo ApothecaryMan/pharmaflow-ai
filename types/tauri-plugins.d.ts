@@ -8,7 +8,9 @@ declare module '@tauri-apps/plugin-updater' {
     version: string;
     date?: string;
     body?: string;
-    downloadAndInstall(onProgress?: (progress: { chunkLength: number; contentLength?: number }) => void): Promise<void>;
+    downloadAndInstall(
+      onProgress?: (progress: { chunkLength: number; contentLength?: number }) => void
+    ): Promise<void>;
   }
   export function check(): Promise<Update | null>;
 }
@@ -17,7 +19,6 @@ declare module '@tauri-apps/plugin-process' {
   export function relaunch(): Promise<void>;
   export function exit(code?: number): Promise<void>;
 }
-
 
 declare module '@tauri-apps/api/window' {
   export function getCurrentWindow(): any;

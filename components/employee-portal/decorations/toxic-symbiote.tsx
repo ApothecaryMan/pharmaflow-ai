@@ -3,7 +3,15 @@ export function ToxicSymbiote() {
     <svg viewBox='0 0 128 128' fill='none' overflow='visible' className='w-full h-full'>
       <g opacity='0.98'>
         <circle cx='64' cy='64' r='54' stroke='#1F2937' strokeWidth='4' />
-        <circle cx='64' cy='64' r='54' stroke='var(--svg-color, #22C55E)' strokeWidth='1.5' strokeDasharray='15 30 10 40 5 20' opacity='0.6' />
+        <circle
+          cx='64'
+          cy='64'
+          r='54'
+          stroke='var(--svg-color, #22C55E)'
+          strokeWidth='1.5'
+          strokeDasharray='15 30 10 40 5 20'
+          opacity='0.6'
+        />
         <g fill='#030712'>
           <path d='M64,6 C80,8 96,16 108,28 C116,36 122,50 120,60 C114,46 100,32 86,22 C76,14 66,10 64,6 Z' />
           <path d='M70,8 Q85,25 110,40 Q100,25 80,12 Z' fill='#111827' />

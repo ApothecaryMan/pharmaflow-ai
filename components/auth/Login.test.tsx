@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { Login } from './Login';
-import { authService } from '../../services/auth/authService';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { authService } from '../../services/auth/authService';
+import { Login } from './Login';
 
 // Mock authService
 vi.mock('../../services/auth/authService', () => ({
@@ -30,7 +30,7 @@ describe('Login Component', () => {
 
   it('shows validation errors for empty fields', () => {
     render(<Login />);
-    
+
     const submitBtn = screen.getByRole('button', { name: /continue/i });
     fireEvent.click(submitBtn);
 
@@ -44,11 +44,11 @@ describe('Login Component', () => {
     const toggleBtn = screen.getByLabelText(/show password/i);
 
     expect(passwordInput).toHaveAttribute('type', 'password');
-    
+
     // Click toggle
     fireEvent.click(toggleBtn);
     expect(passwordInput).toHaveAttribute('type', 'text');
-    
+
     // Click toggle again
     fireEvent.click(toggleBtn);
     expect(passwordInput).toHaveAttribute('type', 'password');
@@ -73,9 +73,9 @@ describe('Login Component', () => {
     await act(async () => {
       await vi.runAllTimersAsync();
     });
-    
+
     expect(authService.login).toHaveBeenCalledWith('admin', 'password123');
-    
+
     // Should show success message after login resolves
     expect(screen.getByText(/Login Successful/i)).toBeInTheDocument();
 

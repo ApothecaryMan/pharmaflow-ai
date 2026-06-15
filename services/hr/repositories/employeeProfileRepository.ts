@@ -2,7 +2,8 @@ import { supabase } from '../../../lib/supabase';
 import type { UserProfile } from '../../../types';
 
 export const employeeProfileRepository = {
-  BASE_PROFILE_COLUMNS: 'id, username, full_name, name_arabic, email, phone, license_number, image, cover_style, design_settings, created_at, updated_at',
+  BASE_PROFILE_COLUMNS:
+    'id, username, full_name, name_arabic, email, phone, license_number, image, cover_style, design_settings, created_at, updated_at',
 
   /**
    * Fetch a user profile by ID
@@ -14,7 +15,7 @@ export const employeeProfileRepository = {
         .select(this.BASE_PROFILE_COLUMNS)
         .eq('id', id)
         .single();
-        
+
       if (error) {
         if (error.code === 'PGRST116') return null; // not found
         throw error;
@@ -24,7 +25,9 @@ export const employeeProfileRepository = {
       // Email backfill
       if (profile && !profile.email) {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
           if (user?.email) {
             const updated = await this.update(id, { email: user.email });
             if (updated) profile = updated;
@@ -77,7 +80,7 @@ export const employeeProfileRepository = {
         .or(`username.eq.${prefixed},username.eq.${bare}`)
         .limit(1)
         .maybeSingle();
-        
+
       if (error) {
         if (error.code === 'PGRST116') return null;
         throw error;
@@ -104,9 +107,12 @@ export const employeeProfileRepository = {
       if (updates.image !== undefined) payload.image = updates.image;
       if (updates.coverStyle !== undefined) payload.cover_style = updates.coverStyle;
       if (updates.nationalIdCard !== undefined) payload.national_id_card = updates.nationalIdCard;
-      if (updates.nationalIdCardBack !== undefined) payload.national_id_card_back = updates.nationalIdCardBack;
-      if (updates.mainSyndicateCard !== undefined) payload.main_syndicate_card = updates.mainSyndicateCard;
-      if (updates.subSyndicateCard !== undefined) payload.sub_syndicate_card = updates.subSyndicateCard;
+      if (updates.nationalIdCardBack !== undefined)
+        payload.national_id_card_back = updates.nationalIdCardBack;
+      if (updates.mainSyndicateCard !== undefined)
+        payload.main_syndicate_card = updates.mainSyndicateCard;
+      if (updates.subSyndicateCard !== undefined)
+        payload.sub_syndicate_card = updates.subSyndicateCard;
       if (updates.designSettings !== undefined) payload.design_settings = updates.designSettings;
 
       const { data, error } = await supabase
@@ -115,7 +121,7 @@ export const employeeProfileRepository = {
         .eq('id', id)
         .select()
         .single();
-        
+
       if (error) throw error;
       return this.mapToModel(data);
     } catch (err) {
@@ -134,7 +140,7 @@ export const employeeProfileRepository = {
         .select('national_id_card, national_id_card_back, main_syndicate_card, sub_syndicate_card')
         .eq('id', id)
         .single();
-        
+
       if (error) throw error;
       return {
         nationalIdCard: data.national_id_card,
@@ -165,7 +171,7 @@ export const employeeProfileRepository = {
       subSyndicateCard: row.sub_syndicate_card,
       designSettings: row.design_settings,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
     };
-  }
+  },
 };

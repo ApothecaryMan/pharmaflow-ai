@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { StockBatch } from '../../types';
 import { supabase } from '../../lib/supabase';
+import type { StockBatch } from '../../types';
 import { batchService } from './batchService';
 
 vi.mock('../../lib/supabase', () => ({

@@ -16,13 +16,13 @@ export interface PaginatedResult<T> {
 
 /**
  * BaseReportService
- * 
+ *
  * A specialized service for read-heavy, append-only, or historical data.
- * Unlike BaseDomainService, this focuses on history fetching, pagination, and 
+ * Unlike BaseDomainService, this focuses on history fetching, pagination, and
  * data aggregation (sums, counts).
- * 
- * Architecture Note: This is kept separate from BaseDomainService because 
- * reporting data (like Stock Movements) should generally not be modified or 
+ *
+ * Architecture Note: This is kept separate from BaseDomainService because
+ * reporting data (like Stock Movements) should generally not be modified or
  * deleted via standard CRUD methods, maintaining data integrity.
  */
 export abstract class BaseReportService<T, TFilters extends BaseReportFilters> {
@@ -45,7 +45,9 @@ export abstract class BaseReportService<T, TFilters extends BaseReportFilters> {
    */
   async getHistory(filters: TFilters): Promise<T[] | PaginatedResult<T>> {
     try {
-      let query = supabase.from(this.tableName).select('*', { count: filters.page !== undefined ? 'exact' : undefined });
+      let query = supabase
+        .from(this.tableName)
+        .select('*', { count: filters.page !== undefined ? 'exact' : undefined });
 
       if (filters.branchId && filters.branchId.toLowerCase() !== 'all') {
         query = query.eq(this.branchColumn, filters.branchId);
@@ -85,7 +87,7 @@ export abstract class BaseReportService<T, TFilters extends BaseReportFilters> {
         return {
           data: results,
           total: count || 0,
-          hasMore: (count || 0) > (filters.page * filters.pageSize),
+          hasMore: (count || 0) > filters.page * filters.pageSize,
         };
       }
 
@@ -135,7 +137,10 @@ export abstract class BaseReportService<T, TFilters extends BaseReportFilters> {
       const { data, error, count } = await query;
 
       if (error) {
-        console.error(`[BaseReportService] Error fetching aggregates from ${this.tableName}:`, error);
+        console.error(
+          `[BaseReportService] Error fetching aggregates from ${this.tableName}:`,
+          error
+        );
         return { count: 0, sums: {} };
       }
 
@@ -149,7 +154,10 @@ export abstract class BaseReportService<T, TFilters extends BaseReportFilters> {
         sums,
       };
     } catch (err) {
-      console.error(`[BaseReportService] Critical error in getAggregates for ${this.tableName}:`, err);
+      console.error(
+        `[BaseReportService] Critical error in getAggregates for ${this.tableName}:`,
+        err
+      );
       return { count: 0, sums: {} };
     }
   }

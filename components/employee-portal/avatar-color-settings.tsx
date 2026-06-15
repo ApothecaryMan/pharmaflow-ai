@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 
 export const FRAME_COLORS = [
   { name: 'Default', nameAr: 'افتراضي', value: null },

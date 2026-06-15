@@ -1,6 +1,6 @@
-import React from 'react';
-import { formatCompactCurrencyParts } from '../../utils/currency';
+import type React from 'react';
 import { useSettings } from '../../context';
+import { formatCompactCurrencyParts } from '../../utils/currency';
 
 /**
  * @fileoverview InsightTooltip Component
@@ -97,7 +97,7 @@ export const CurrencyValue: React.FC<{
 }> = ({ val, language: propLanguage, isHeader, isCurrency = true }) => {
   const { language: settingsLanguage } = useSettings();
   const currentLang = propLanguage || settingsLanguage;
-  
+
   if (typeof val !== 'number') return <>{val}</>;
   if (!isCurrency) return <>{val}</>;
 

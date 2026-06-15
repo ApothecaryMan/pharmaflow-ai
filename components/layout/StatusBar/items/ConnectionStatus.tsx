@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import type React from 'react';
+import { useMemo } from 'react';
 import { useNetworkStatus } from '@/hooks/common/useNetworkStatus';
 import { StatusBarItem } from '../StatusBarItem';
 
@@ -15,20 +16,20 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
 
   const status = useMemo(() => {
     if (!isOnline) {
-      return { 
-        icon: 'wifi_off', 
-        variant: 'error' as const, 
-        tooltip: offlineText, 
-        pulse: true 
+      return {
+        icon: 'wifi_off',
+        variant: 'error' as const,
+        tooltip: offlineText,
+        pulse: true,
       };
     }
 
     if (checking) {
-      return { 
-        icon: 'wifi', 
-        variant: 'default' as const, 
-        tooltip: 'Checking connection...', 
-        pulse: false 
+      return {
+        icon: 'wifi',
+        variant: 'default' as const,
+        tooltip: 'Checking connection...',
+        pulse: false,
       };
     }
 
@@ -39,9 +40,9 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
 
     return {
       icon: isPoor ? 'network_wifi_1_bar' : isFair ? 'network_wifi_2_bar' : 'wifi',
-      variant: isGood ? 'success' as const : 'warning' as const,
+      variant: isGood ? ('success' as const) : ('warning' as const),
       tooltip: `${onlineText}${latency !== undefined ? ` - ${latency}ms (${isGood ? 'Good' : isFair ? 'Fair' : 'Poor'})` : ''}`,
-      pulse: isPoor
+      pulse: isPoor,
     };
   }, [isOnline, latency, checking, onlineText, offlineText]);
 

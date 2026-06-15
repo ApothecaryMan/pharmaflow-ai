@@ -1,5 +1,6 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
+import type React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CARD_BASE } from '../../utils/themeStyles';
 
 export interface InteractiveCardPage {
@@ -35,35 +36,39 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
     }
   }, [pages.length, activePage]);
 
-  const navigate = useCallback((delta: number, axis: 'x' | 'y' = 'x') => {
-    if (isChanging.current || delta === 0 || pages.length <= 1) return;
-    
-    const nextIdx = (activePage + delta + pages.length) % pages.length;
-    if (nextIdx === activePage) return;
+  const navigate = useCallback(
+    (delta: number, axis: 'x' | 'y' = 'x') => {
+      if (isChanging.current || delta === 0 || pages.length <= 1) return;
 
-    // Detect RTL mode
-    const isRTL = document.documentElement.dir === 'rtl' || containerRef.current?.closest('[dir="rtl"]');
-    const xMulti = isRTL ? -1 : 1;
+      const nextIdx = (activePage + delta + pages.length) % pages.length;
+      if (nextIdx === activePage) return;
 
-    setAnim({ 
-      x: axis === 'x' ? delta * 30 * xMulti : 0, 
-      y: axis === 'y' ? delta * 20 : 0 
-    });
+      // Detect RTL mode
+      const isRTL =
+        document.documentElement.dir === 'rtl' || containerRef.current?.closest('[dir="rtl"]');
+      const xMulti = isRTL ? -1 : 1;
 
-    isChanging.current = true;
-    setActivePage(nextIdx);
-    onPageChange?.(nextIdx);
-    
-    // Safety timeout to reset isChanging
-    const timeout = setTimeout(() => (isChanging.current = false), 450);
-    return () => clearTimeout(timeout);
-  }, [activePage, pages.length, onPageChange]);
+      setAnim({
+        x: axis === 'x' ? delta * 30 * xMulti : 0,
+        y: axis === 'y' ? delta * 20 : 0,
+      });
+
+      isChanging.current = true;
+      setActivePage(nextIdx);
+      onPageChange?.(nextIdx);
+
+      // Safety timeout to reset isChanging
+      const timeout = setTimeout(() => (isChanging.current = false), 450);
+      return () => clearTimeout(timeout);
+    },
+    [activePage, pages.length, onPageChange]
+  );
 
   const onDragEnd = (_: any, { offset, velocity }: PanInfo) => {
     const isHoriz = Math.abs(offset.x) > Math.abs(offset.y);
     const val = isHoriz ? offset.x : offset.y;
     const vel = isHoriz ? velocity.x : velocity.y;
-    
+
     if (Math.abs(val) > 20 || Math.abs(vel) > 300) {
       navigate(val > 0 || vel > 300 ? -1 : 1, isHoriz ? 'x' : 'y');
     }
@@ -73,7 +78,7 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
     if (wheelLock.current) return;
     const isHoriz = Math.abs(e.deltaX) > Math.abs(e.deltaY);
     const delta = isHoriz ? e.deltaX : e.deltaY;
-    
+
     if (Math.abs(delta) > 15) {
       navigate(delta > 0 ? 1 : -1, isHoriz ? 'x' : 'y');
       wheelLock.current = setTimeout(() => (wheelLock.current = null), 600);
@@ -91,37 +96,41 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
       dragElastic={0.08}
       onDragEnd={onDragEnd}
       onWheel={!isLoading ? onWheel : undefined}
-      role="region"
-      aria-roledescription="pages"
+      role='region'
+      aria-roledescription='pages'
       className={`relative group overflow-hidden ${CARD_BASE} ${current.theme || ''} ${className} ${isLoading ? 'animate-pulse' : ''}`}
       style={{ touchAction: 'none' }}
     >
-      <div className="grid grid-cols-1 grid-rows-1 w-full h-full">
+      <div className='grid grid-cols-1 grid-rows-1 w-full h-full'>
         {pages.map((p, i) => (
-          <div key={i} className="invisible pointer-events-none row-start-1 col-start-1 opacity-0 h-full w-full" aria-hidden="true">
+          <div
+            key={i}
+            className='invisible pointer-events-none row-start-1 col-start-1 opacity-0 h-full w-full'
+            aria-hidden='true'
+          >
             {p.content}
           </div>
         ))}
-        <div className="row-start-1 col-start-1 h-full w-full">
+        <div className='row-start-1 col-start-1 h-full w-full'>
           {isLoading ? (
-            <div className="relative h-full w-full">
-              <div className="invisible" aria-hidden="true">
+            <div className='relative h-full w-full'>
+              <div className='invisible' aria-hidden='true'>
                 {current.content}
               </div>
-              <div className="absolute inset-0 flex flex-col justify-center space-y-2.5 [direction:ltr] items-start text-left">
-                <div className="h-3 w-16 bg-zinc-400/20 dark:bg-zinc-100/10 rounded" />
-                <div className="h-8 w-24 bg-zinc-400/20 dark:bg-zinc-100/10 rounded-lg" />
+              <div className='absolute inset-0 flex flex-col justify-center space-y-2.5 [direction:ltr] items-start text-left'>
+                <div className='h-3 w-16 bg-zinc-400/20 dark:bg-zinc-100/10 rounded' />
+                <div className='h-8 w-24 bg-zinc-400/20 dark:bg-zinc-100/10 rounded-lg' />
               </div>
             </div>
           ) : (
-            <AnimatePresence mode="wait" initial={false}>
+            <AnimatePresence mode='wait' initial={false}>
               <motion.div
                 key={activePage}
                 initial={{ opacity: 0, x: anim.x, y: anim.y }}
                 animate={{ opacity: 1, x: 0, y: 0 }}
                 exit={{ opacity: 0, x: -anim.x, y: -anim.y }}
                 transition={{ type: 'spring', stiffness: 260, damping: 26, mass: 1 }}
-                className="h-full w-full"
+                className='h-full w-full'
               >
                 {current.content}
               </motion.div>
@@ -131,42 +140,45 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
       </div>
 
       {pages.length > 1 && (
-        <div className="absolute top-2.5 right-2.5 z-20 flex items-center justify-center">
-          <motion.div 
+        <div className='absolute top-2.5 right-2.5 z-20 flex items-center justify-center'>
+          <motion.div
             layout
-            initial="collapsed"
-            whileHover="expanded"
-            animate="collapsed"
-            className="flex items-center rounded-full bg-white/40 dark:bg-zinc-800/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-xs overflow-hidden"
+            initial='collapsed'
+            whileHover='expanded'
+            animate='collapsed'
+            className='flex items-center rounded-full bg-white/40 dark:bg-zinc-800/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-xs overflow-hidden'
             variants={{
               collapsed: { padding: '3px 4px', gap: '2.5px' },
-              expanded: { padding: '6px 8px', gap: '5px' }
+              expanded: { padding: '6px 8px', gap: '5px' },
             }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            role="tablist"
+            role='tablist'
           >
             {pages.map((_, i) => (
               <motion.button
                 layout
                 key={i}
-                role="tab"
+                role='tab'
                 aria-selected={activePage === i}
                 aria-label={`Page ${i + 1}`}
-                onClick={(e) => { e.stopPropagation(); navigate(i - activePage); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(i - activePage);
+                }}
                 className={`rounded-full transition-colors duration-300 cursor-pointer ${
-                  activePage === i 
-                    ? 'bg-primary-500' 
+                  activePage === i
+                    ? 'bg-primary-500'
                     : 'bg-zinc-400/50 dark:bg-zinc-500/50 hover:bg-zinc-500/80'
                 }`}
                 variants={{
-                  collapsed: { 
+                  collapsed: {
                     width: activePage === i ? 10 : 3.5,
-                    height: 3.5 
+                    height: 3.5,
                   },
-                  expanded: { 
+                  expanded: {
                     width: activePage === i ? 16 : 7,
-                    height: 7 
-                  }
+                    height: 7,
+                  },
                 }}
               />
             ))}

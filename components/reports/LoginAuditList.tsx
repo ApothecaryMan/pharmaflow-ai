@@ -1,12 +1,12 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo, useState } from 'react';
+import { useSettings } from '../../context';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { useData } from '../../services';
-import { useSettings } from '../../context';
 import { authService } from '../../services/auth/authService';
 import type { LoginAuditEntry } from '../../types';
-import { TanStackTable } from '../common/TanStackTable';
 import { Switch } from '../common/Switch';
+import { TanStackTable } from '../common/TanStackTable';
 
 /**
  * LoginAuditList Component
@@ -28,8 +28,10 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
     const fetchHistory = async () => {
       setIsLoading(true);
       try {
-        const branchIds = branches.map(b => b.id);
-        const data = await authService.getLoginHistory(showAllBranches ? branchIds : activeBranchId);
+        const branchIds = branches.map((b) => b.id);
+        const data = await authService.getLoginHistory(
+          showAllBranches ? branchIds : activeBranchId
+        );
         setHistory(data);
       } finally {
         setIsLoading(false);
@@ -250,7 +252,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
         accessorKey: 'employeeCode',
         header: t.loginAudit.headers.code || 'CODE',
         cell: (info) => (
-          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-white/10">
+          <span className='text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-white/10'>
             {String(info.getValue() || '-')}
           </span>
         ),
@@ -324,7 +326,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
         header: t.loginAudit.headers.branch,
         cell: (info) => {
           const id = String(info.getValue());
-          const branch = branches.find(b => b.id === id);
+          const branch = branches.find((b) => b.id === id);
           return (
             <span className='font-semibold text-gray-800 dark:text-gray-200'>
               {branch?.name || id}
@@ -356,17 +358,17 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             {t.loginAudit.title}
           </h1>
 
-            <label className='flex items-center gap-3 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-white/10 transition-colors'>
-              <span className='text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider select-none'>
-                {t.loginAudit.globalView}
-              </span>
-              <Switch
-                checked={showAllBranches}
-                onChange={setShowAllBranches}
-                theme={currentTheme.name.toLowerCase()}
-                activeColor={currentTheme.hex}
-              />
-            </label>
+          <label className='flex items-center gap-3 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-white/10 transition-colors'>
+            <span className='text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider select-none'>
+              {t.loginAudit.globalView}
+            </span>
+            <Switch
+              checked={showAllBranches}
+              onChange={setShowAllBranches}
+              theme={currentTheme.name.toLowerCase()}
+              activeColor={currentTheme.hex}
+            />
+          </label>
         </div>
         <p className='text-gray-500 dark:text-gray-400 text-sm'>{t.loginAudit.subtitle}</p>
       </div>

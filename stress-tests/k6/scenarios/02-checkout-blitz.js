@@ -2,31 +2,35 @@
  * ═══════════════════════════════════════════════════════════
  * 🛒 SCENARIO 02: CHECKOUT BLITZ
  * ═══════════════════════════════════════════════════════════
- * 
+ *
  * Tests: High-volume concurrent POS checkout operations.
  * Simulates rush hour in a busy pharmacy with multiple cashiers
  * processing orders simultaneously via process_checkout RPC.
- * 
+ *
  * Critical checks:
  * - Stock atomicity (no overselling via race conditions)
  * - RPC response time under load
  * - Cash transaction recording accuracy
  * - Serial ID uniqueness
- * 
+ *
  * Run: k6 run stress-tests/k6/scenarios/02-checkout-blitz.js
  */
 
-import http from 'k6/http';
-import { check, sleep, group } from 'k6';
-import { Counter, Rate, Trend } from 'k6/metrics';
+import { check, group, sleep } from 'k6';
 import { SharedArray } from 'k6/data';
-import { 
-  SUPABASE_RPC_URL, SUPABASE_REST_URL, SUPABASE_ANON_KEY, 
-  getHeaders, TEST_DATA, TEST_EMAIL, TEST_PASSWORD 
+import http from 'k6/http';
+import { Counter, Rate, Trend } from 'k6/metrics';
+import {
+  getHeaders,
+  SUPABASE_ANON_KEY,
+  SUPABASE_REST_URL,
+  SUPABASE_RPC_URL,
+  TEST_DATA,
+  TEST_EMAIL,
+  TEST_PASSWORD,
 } from '../config.js';
-import { generateCheckoutPayload, randomInt } from '../helpers/data-generators.js';
 import { loginAndGetToken } from '../helpers/auth.js';
-
+import { generateCheckoutPayload, randomInt } from '../helpers/data-generators.js';
 
 // --- Custom Metrics ---
 const checkoutDuration = new Trend('checkout_rpc_duration', true);
@@ -43,19 +47,19 @@ export const options = {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '30s', target: 5 },    // Morning start
-        { duration: '1m',  target: 15 },   // Getting busy
-        { duration: '1m',  target: 25 },   // Rush hour
-        { duration: '30s', target: 25 },   // Peak sustained
-        { duration: '30s', target: 0 },    // Cool down
+        { duration: '30s', target: 5 }, // Morning start
+        { duration: '1m', target: 15 }, // Getting busy
+        { duration: '1m', target: 25 }, // Rush hour
+        { duration: '30s', target: 25 }, // Peak sustained
+        { duration: '30s', target: 0 }, // Cool down
       ],
       gracefulRampDown: '15s',
     },
   },
   thresholds: {
-    'checkout_rpc_duration': ['p(95)<3000', 'p(99)<8000'],
-    'checkout_fail_rate': ['rate<0.05'],
-    'http_req_failed': ['rate<0.10'],
+    checkout_rpc_duration: ['p(95)<3000', 'p(99)<8000'],
+    checkout_fail_rate: ['rate<0.05'],
+    http_req_failed: ['rate<0.10'],
   },
 };
 
@@ -74,8 +78,8 @@ export function setup() {
     try {
       preTestStockSnapshot = JSON.parse(res.body);
       console.log(`📊 Pre-test snapshot: ${preTestStockSnapshot.length} drugs recorded`);
-    } catch { 
-      console.warn('⚠️ Could not parse pre-test stock snapshot'); 
+    } catch {
+      console.warn('⚠️ Could not parse pre-test stock snapshot');
     }
   }
 
@@ -91,7 +95,7 @@ export default function (data) {
 
     // Call the atomic process_checkout RPC
     const start = Date.now();
-    
+
     const res = http.post(
       `${SUPABASE_RPC_URL}/process_checkout`,
       JSON.stringify({ p_payload: payload }),
@@ -107,7 +111,9 @@ export default function (data) {
 
     // Parse response
     let result = null;
-    try { result = JSON.parse(res.body); } catch {}
+    try {
+      result = JSON.parse(res.body);
+    } catch {}
 
     const isSuccess = check(res, {
       '✅ RPC status 200': (r) => r.status === 200,
@@ -121,13 +127,15 @@ export default function (data) {
       successCheckouts.add(1);
     } else {
       checkoutFailRate.add(true);
-      
+
       // Check if it's a stock error (expected under heavy load)
       if (result?.error?.includes('Insufficient stock')) {
         stockErrors.add(1);
         console.warn(`⚠️ Stock exhausted: ${result.error}`);
       } else {
-        console.error(`❌ Checkout failed: ${res.status} | ${JSON.stringify(result)?.substring(0, 300)}`);
+        console.error(
+          `❌ Checkout failed: ${res.status} | ${JSON.stringify(result)?.substring(0, 300)}`
+        );
       }
     }
 
@@ -139,13 +147,10 @@ export default function (data) {
   if (Math.random() < 0.2) {
     group('📦 Quick Stock Check', () => {
       const drug = TEST_DATA.drugs[randomInt(0, TEST_DATA.drugs.length - 1)];
-      const res = http.get(
-        `${SUPABASE_REST_URL}/drugs?id=eq.${drug.id}&select=id,name,stock`,
-        {
-          headers: getHeaders(token),
-          tags: { name: 'GET /drugs (stock-check)' },
-        }
-      );
+      const res = http.get(`${SUPABASE_REST_URL}/drugs?id=eq.${drug.id}&select=id,name,stock`, {
+        headers: getHeaders(token),
+        tags: { name: 'GET /drugs (stock-check)' },
+      });
 
       check(res, {
         '✅ Stock check OK': (r) => r.status === 200,
@@ -170,12 +175,14 @@ export function teardown(data) {
     try {
       const postStock = JSON.parse(res.body);
       const preMap = {};
-      data.preStock.forEach(d => { preMap[d.id] = d.stock; });
-      
+      data.preStock.forEach((d) => {
+        preMap[d.id] = d.stock;
+      });
+
       let totalDeducted = 0;
       let anomalies = 0;
-      
-      postStock.forEach(d => {
+
+      postStock.forEach((d) => {
         if (preMap[d.id] !== undefined) {
           const diff = preMap[d.id] - d.stock;
           if (diff > 0) totalDeducted += diff;

@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { orgService } from '../../services/org/orgService';
-import { branchService } from '../../services/org/branchService';
+import { useEffect, useState } from 'react';
 import { authService } from '../../services/auth/authService';
+import { branchService } from '../../services/org/branchService';
+import { orgService } from '../../services/org/orgService';
 
 export type OnboardingStep = 1 | 2 | 3 | 0;
 
@@ -25,7 +25,7 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
 
       // 0.1 Check bypass logic using fresh user data
       const isOwnerOrAdmin = user?.orgRole === 'owner' || user?.orgRole === 'admin';
-      
+
       // Bypass entirely for global employee accounts.
       if (user?.accountType !== 'pharmacy' && !isOwnerOrAdmin) {
         setActiveStep(0);
@@ -49,8 +49,11 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
 
       // 2. Check Branches
       const branches = await branchService.getAll(activeOrgId || undefined);
-      const isDummyBranchOnly = branches.length === 1 && branches[0].code === 'MAIN-01' && branches[0].name === 'الفرع الرئيسي';
-      
+      const isDummyBranchOnly =
+        branches.length === 1 &&
+        branches[0].code === 'MAIN-01' &&
+        branches[0].name === 'الفرع الرئيسي';
+
       if (branches.length === 0 || isDummyBranchOnly) {
         setActiveStep(2);
         return;

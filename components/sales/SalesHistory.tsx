@@ -1,18 +1,18 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import React, { useState } from 'react';
 import { useSettings } from '../../context';
-import { permissionsService } from '../../services/auth/permissionsService';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
+import { permissionsService } from '../../services/auth/permissionsService';
+import { salesService } from '../../services/sales';
 import type { Customer, Employee, Return, Sale, Shift } from '../../types';
-import { POSCustomerHistoryModal } from './pos/ui/POSCustomerHistoryModal';
+import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
+import { money } from '../../utils/money';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { DateRangePicker } from '../common/DatePicker';
 import { HelpButton, HelpModal } from '../common/HelpModal';
 import { TanStackTable } from '../common/TanStackTable';
+import { POSCustomerHistoryModal } from './pos/ui/POSCustomerHistoryModal';
 import { SaleDetailModal } from './SaleDetailModal';
-import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
-import { money } from '../../utils/money';
-import { salesService } from '../../services/sales';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -92,11 +92,14 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     if (navigationParams?.id) {
       const saleId = navigationParams.id;
       setSearchTerm(saleId);
-      salesService.getById(saleId).then((sale) => {
-        if (sale) setSelectedSale(sale);
-      }).catch((error) => {
-        console.error('[SalesHistory] Failed to load linked sale:', error);
-      });
+      salesService
+        .getById(saleId)
+        .then((sale) => {
+          if (sale) setSelectedSale(sale);
+        })
+        .catch((error) => {
+          console.error('[SalesHistory] Failed to load linked sale:', error);
+        });
     }
   }, [navigationParams]);
 
@@ -122,9 +125,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         header: t.headers.date,
         meta: { width: 202, align: 'center' },
         cell: ({ getValue }) => (
-          <span className='text-sm text-gray-700 dark:text-gray-300'>
-            {getValue() as string}
-          </span>
+          <span className='text-sm text-gray-700 dark:text-gray-300'>{getValue() as string}</span>
         ),
       },
       {
@@ -133,7 +134,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         header: t.headers.code || 'Code',
         cell: ({ getValue }) => {
           const code = getValue() as string;
-          const customer = customers.find(c => c.code === code);
+          const customer = customers.find((c) => c.code === code);
           const isClickable = !!customer;
 
           return isClickable ? (
@@ -151,9 +152,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
               {code || '-'}
             </button>
           ) : (
-            <span className='font-mono font-bold text-sm text-gray-400'>
-              {code || '-'}
-            </span>
+            <span className='font-mono font-bold text-sm text-gray-400'>{code || '-'}</span>
           );
         },
         meta: { width: 140, align: 'start' },
@@ -212,24 +211,35 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           const discountVal = (sale.subtotal || 0) * ((sale.globalDiscount || 0) / 100);
           const returnedAmount = sale.total - (sale.netTotal || 0);
 
-          const itemsText = sale.items?.map(i => `• ${i.quantity} ${i.isUnit ? (isAr ? 'شريط' : 'unit') : (isAr ? 'علبة' : 'pack')} * ${i.brandName || i.name || ''}`).join('\n');
+          const itemsText = sale.items
+            ?.map(
+              (i) =>
+                `• ${i.quantity} ${i.isUnit ? (isAr ? 'شريط' : 'unit') : isAr ? 'علبة' : 'pack'} * ${i.brandName || i.name || ''}`
+            )
+            .join('\n');
 
           const tooltipText = [
             `--- ${isAr ? 'تفاصيل الطلب' : 'Order Details'} ---`,
             itemsText,
             '-------------------',
-            sale.subtotal && `${isAr ? 'المجموع الفرعي' : 'Subtotal'}: ${formatCurrency(sale.subtotal)}`,
-            sale.globalDiscount && `${isAr ? 'الخصم' : 'Discount'}: ${sale.globalDiscount}% (-${formatCurrency(discountVal)})`,
+            sale.subtotal &&
+              `${isAr ? 'المجموع الفرعي' : 'Subtotal'}: ${formatCurrency(sale.subtotal)}`,
+            sale.globalDiscount &&
+              `${isAr ? 'الخصم' : 'Discount'}: ${sale.globalDiscount}% (-${formatCurrency(discountVal)})`,
             sale.tax && `${isAr ? 'الضريبة' : 'Tax'}: ${formatCurrency(sale.tax)}`,
-            sale.deliveryFee && `${t.headers.delivery || (isAr ? 'التوصيل' : 'Delivery')}: ${formatCurrency(sale.deliveryFee)}`,
+            sale.deliveryFee &&
+              `${t.headers.delivery || (isAr ? 'التوصيل' : 'Delivery')}: ${formatCurrency(sale.deliveryFee)}`,
             isReturned
               ? `${isAr ? 'المرتجع' : 'Returned'}: -${formatCurrency(returnedAmount)}\n${isAr ? 'صافي الإجمالي' : 'Net Total'}: ${formatCurrency(sale.netTotal || 0)}`
               : `${t.headers.total || (isAr ? 'الإجمالي' : 'Total')}: ${formatCurrency(sale.total)}`,
             '-------------------',
             `${isAr ? 'طريقة الدفع' : 'Payment Method'}: ${sale.paymentMethod === 'visa' ? t.visa : t.cash}`,
-            sale.saleType && `${isAr ? 'نوع المعاملة' : 'Transaction Type'}: ${sale.saleType === 'delivery' ? (isAr ? 'توصيل' : 'Delivery') : (isAr ? 'شراء مباشر' : 'Walk-in')}`,
-            sale.notes?.trim() && `${isAr ? 'ملاحظات' : 'Notes'}: ${sale.notes}`
-          ].filter(Boolean).join('\n');
+            sale.saleType &&
+              `${isAr ? 'نوع المعاملة' : 'Transaction Type'}: ${sale.saleType === 'delivery' ? (isAr ? 'توصيل' : 'Delivery') : isAr ? 'شراء مباشر' : 'Walk-in'}`,
+            sale.notes?.trim() && `${isAr ? 'ملاحظات' : 'Notes'}: ${sale.notes}`,
+          ]
+            .filter(Boolean)
+            .join('\n');
 
           return (
             <div
@@ -237,7 +247,9 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
               title={tooltipText}
             >
               <div className='flex items-baseline gap-1'>
-                <span className={isReturned ? 'text-orange-600 dark:text-orange-400' : ''}>{totalParts.amount}</span>
+                <span className={isReturned ? 'text-orange-600 dark:text-orange-400' : ''}>
+                  {totalParts.amount}
+                </span>
                 <span className='text-[10px] text-gray-400 font-medium'>{totalParts.symbol}</span>
               </div>
               {isReturned && (
@@ -248,7 +260,9 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
               {!!sale.deliveryFee && sale.deliveryFee > 0 && (
                 <div className='text-[10px] text-gray-400 font-normal tabular-nums flex items-baseline gap-0.5 mt-0.5'>
                   <span>{formatCurrencyParts(sale.deliveryFee).amount}</span>
-                  <span className='text-[8px] opacity-70 ps-0.5'>{formatCurrencyParts(sale.deliveryFee).symbol}</span>
+                  <span className='text-[8px] opacity-70 ps-0.5'>
+                    {formatCurrencyParts(sale.deliveryFee).symbol}
+                  </span>
                   <span className='ms-1'>{t.headers.delivery}</span>
                 </div>
               )}
@@ -261,7 +275,8 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         id: 'status',
         accessorFn: (sale) => {
           if (sale.status === 'cancelled') return 'cancelled';
-          const isReturned = (sale.netTotal !== undefined && sale.netTotal < sale.total) ||
+          const isReturned =
+            (sale.netTotal !== undefined && sale.netTotal < sale.total) ||
             (sale.itemReturnedQuantities && Object.keys(sale.itemReturnedQuantities).length > 0);
           if (isReturned) return 'returned';
           // If it's delivery and not completed, return its specific status
@@ -274,23 +289,30 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         meta: { width: 132, align: 'center' },
         cell: ({ row }) => {
           const sale = row.original;
-          const isReturned = (sale.netTotal !== undefined && sale.netTotal < sale.total) ||
+          const isReturned =
+            (sale.netTotal !== undefined && sale.netTotal < sale.total) ||
             (sale.itemReturnedQuantities && Object.keys(sale.itemReturnedQuantities).length > 0);
 
           if (isReturned) {
-            const totalReturned = sale.netTotal !== undefined ? money.subtract(sale.total, sale.netTotal) : 0;
+            const totalReturned =
+              sale.netTotal !== undefined ? money.subtract(sale.total, sale.netTotal) : 0;
             const isFullReturn = sale.netTotal === 0;
             const returnParts = formatCurrencyParts(totalReturned);
 
             return (
-              <span className={`${isFullReturn ? 'badge-purple' : 'badge-warning'} gap-1.5`} dir={language === 'AR' ? 'rtl' : 'ltr'}>
+              <span
+                className={`${isFullReturn ? 'badge-purple' : 'badge-warning'} gap-1.5`}
+                dir={language === 'AR' ? 'rtl' : 'ltr'}
+              >
                 <span className='material-symbols-rounded'>assignment_return</span>
                 {isFullReturn ? (
                   t.fullReturn
                 ) : (
                   <span className='flex items-center gap-1'>
                     <span>{t.partialReturn}</span>
-                    <span dir='ltr' className='font-bold tabular-nums'>{returnParts.amount}</span>
+                    <span dir='ltr' className='font-bold tabular-nums'>
+                      {returnParts.amount}
+                    </span>
                     <span className='text-[8px] opacity-70'>{returnParts.symbol}</span>
                   </span>
                 )}
@@ -322,7 +344,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
               icon = 'local_shipping';
             }
 
-            const statusText = sale.status ? (t[sale.status] || sale.status) : '';
+            const statusText = sale.status ? t[sale.status] || sale.status : '';
 
             return (
               <span className={`${badgeClass} gap-1.5`} dir={language === 'AR' ? 'rtl' : 'ltr'}>
@@ -357,19 +379,25 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             );
           }
 
-          const employee = employees.find(e => e.id === empId || e.userId === empId);
+          const employee = employees.find((e) => e.id === empId || e.userId === empId);
           const hasImage = !!employee?.image;
           return (
             <div className='flex items-center gap-1.5'>
               <div className='w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden border border-gray-200/50 dark:border-gray-700/50'>
                 {hasImage ? (
-                  <img src={employee.image} className='w-full h-full object-cover' alt="" />
+                  <img src={employee.image} className='w-full h-full object-cover' alt='' />
                 ) : (
                   <span className='material-symbols-rounded text-[14px] text-gray-400'>person</span>
                 )}
               </div>
               <span className='text-xs font-medium text-gray-600 dark:text-gray-400'>
-                {employee ? (language === 'AR' ? (employee.nameArabic || employee.name) : employee.name) : (language === 'AR' ? 'غير معروف' : 'Unknown')}
+                {employee
+                  ? language === 'AR'
+                    ? employee.nameArabic || employee.name
+                    : employee.name
+                  : language === 'AR'
+                    ? 'غير معروف'
+                    : 'Unknown'}
               </span>
             </div>
           );
@@ -411,10 +439,10 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         label: t.headers.soldBy,
         icon: 'person',
         mode: 'single' as const,
-        options: employees.map(emp => ({
+        options: employees.map((emp) => ({
           label: emp.name,
           value: emp.id,
-          icon: 'person'
+          icon: 'person',
         })),
       },
     ],
@@ -443,25 +471,29 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     let isCancelled = false;
     setIsPageLoading(true);
 
-    salesService.listPage({
-      branchId: activeBranchId,
-      orgId: activeOrgId,
-      page,
-      pageSize,
-      filters: serverFilters,
-      sort: { column: 'date', ascending: false },
-    }).then((result) => {
-      if (isCancelled) return;
-      setPagedSales(result.rows);
-      setTotalSales(result.total);
-    }).catch((error) => {
-      if (isCancelled) return;
-      console.error('[SalesHistory] Failed to load sales page:', error);
-      setPagedSales([]);
-      setTotalSales(0);
-    }).finally(() => {
-      if (!isCancelled) setIsPageLoading(false);
-    });
+    salesService
+      .listPage({
+        branchId: activeBranchId,
+        orgId: activeOrgId,
+        page,
+        pageSize,
+        filters: serverFilters,
+        sort: { column: 'date', ascending: false },
+      })
+      .then((result) => {
+        if (isCancelled) return;
+        setPagedSales(result.rows);
+        setTotalSales(result.total);
+      })
+      .catch((error) => {
+        if (isCancelled) return;
+        console.error('[SalesHistory] Failed to load sales page:', error);
+        setPagedSales([]);
+        setTotalSales(0);
+      })
+      .finally(() => {
+        if (!isCancelled) setIsPageLoading(false);
+      });
 
     return () => {
       isCancelled = true;
@@ -553,13 +585,13 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   const handleProcessReturn = async (returnData: Return) => {
     if (!returnData.saleId) return;
 
-    setPendingIds(prev => new Set(prev).add(returnData.saleId));
+    setPendingIds((prev) => new Set(prev).add(returnData.saleId));
     try {
       await onProcessReturn(returnData);
     } finally {
       // Small delay to let the "success" pulse take over naturally after data refresh
       setTimeout(() => {
-        setPendingIds(prev => {
+        setPendingIds((prev) => {
           const next = new Set(prev);
           next.delete(returnData.saleId);
           return next;
@@ -572,7 +604,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
 
   React.useEffect(() => {
     // TIER 1: Instant Skeleton.
-    // Delay mounting the heavy table by 100ms to allow the skeleton to show up 
+    // Delay mounting the heavy table by 100ms to allow the skeleton to show up
     // before the main thread gets busy with virtualization calculations.
     const timer = setTimeout(() => setIsMounting(false), 100);
     return () => clearTimeout(timer);
@@ -581,7 +613,10 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   const showLoading = isLoading || isMounting || isPageLoading || isDetailLoading;
 
   return (
-    <div className='h-full flex flex-col space-y-4 animate-fade-in' dir={language === 'AR' ? 'rtl' : 'ltr'}>
+    <div
+      className='h-full flex flex-col space-y-4 animate-fade-in'
+      dir={language === 'AR' ? 'rtl' : 'ltr'}
+    >
       {/* Header */}
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
         <div>
@@ -609,9 +644,10 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         )}
       </div>
 
-
       {/* Table Section */}
-      <div className={`flex-1 flex flex-col min-h-0 transition-opacity${isMounting ? 'opacity-50' : 'opacity-100'}`}>
+      <div
+        className={`flex-1 flex flex-col min-h-0 transition-opacity${isMounting ? 'opacity-50' : 'opacity-100'}`}
+      >
         <TanStackTable
           data={pagedSales}
           columns={tableColumns}

@@ -1,100 +1,178 @@
 /* --- Roboto Flex Variable Typography System --- */
 /* Variables moved to variables.css for central token management */
 
-
 /* Dark Mode Typography Optimization */
 
 /* Thins the font slightly (-25 grade) to counter the "irradiation illusion" where white text looks thicker */
-.dark body  { --grade-neutral: -25; --font-grade: -25; }
+.dark body {
+  --grade-neutral: -25;
+  --font-grade: -25;
+}
 
 /* Global Typography Reset & Script Firewall */
-body  { font-family: var(--font-en),
+body {
+  font-family:
+    var(--font-en),
+    /* 1. Latin Firewall (Restricted to Latin) */
+    var(--font-ar),
+    /* 2. Arabic Firewall (Restricted to Arabic) */
+    "En-Firewall",
+    /* 3. Global Latin Safety */
+    "Ar-Firewall",
+    /* 4. Global Arabic Safety */
+    sans-serif;
 
-/* 1. Latin Firewall (Restricted to Latin) */
-var(--font-ar),
+  /* Enable Native Browser Optical Sizing */
+  font-optical-sizing: auto;
 
-/* 2. Arabic Firewall (Restricted to Arabic) */
-"En-Firewall",
+  /* Bind Axes to Variables */
+  font-variation-settings:
+    "wght" var(--font-weight),
+    "wdth" var(--font-width),
+    "slnt" var(--font-slant);
 
-/* 3. Global Latin Safety */
-"Ar-Firewall",
+  /* Note: GRAD, XTRA, YOPQ, etc. are currently disabled as they are not reliably supported in the Google Fonts CSS2 variable range API for this font. */
 
-/* 4. Global Arabic Safety */
-sans-serif;
+  /* Smooth "Breathe" Transitions */
+  transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1);
 
-/* Enable Native Browser Optical Sizing */
-font-optical-sizing: auto;
-
-/* Bind Axes to Variables */
-font-variation-settings: "wght" var(--font-weight), "wdth" var(--font-width), "slnt" var(--font-slant);
-
-/* Note: GRAD, XTRA, YOPQ, etc. are currently disabled as they are not reliably supported in the Google Fonts CSS2 variable range API for this font. */
-
-/* Smooth "Breathe" Transitions */
-transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1);
-
-/* Rendering optimizations */
--webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+  /* Rendering optimizations */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
 
 /*
 RTL Configuration
 Note: We DO NOT override font-family here anymore.
 The body stack above handles both scripts automatically (The Firewall Strategy).
 */
-html[dir="rtl"] body, html[lang="ar"] body  {
-
-/* Cross-Script Harmonization: Scale Arabic text */
-font-size-adjust: var(--ar-scale); }
+html[dir="rtl"] body,
+html[lang="ar"] body {
+  /* Cross-Script Harmonization: Scale Arabic text */
+  font-size-adjust: var(--ar-scale);
+}
 
 /* Arabic Headings & Active UI - Inherit Full Firewall Stack */
-html[dir="rtl"] h1, html[dir="rtl"] .h1, html[dir="rtl"] h2, html[dir="rtl"] .h2, html[dir="rtl"] h3, html[dir="rtl"] .h3, html[dir="rtl"] h4, html[dir="rtl"] .h4, html[dir="rtl"] h5, html[dir="rtl"] .h5, html[dir="rtl"] h6, html[dir="rtl"] .h6, html[dir="rtl"] nav, html[lang="ar"] h1, html[lang="ar"] .h1, html[lang="ar"] h2, html[lang="ar"] .h2, html[lang="ar"] h3, html[lang="ar"] .h3, html[lang="ar"] h4, html[lang="ar"] .h4, html[lang="ar"] h5, html[lang="ar"] .h5, html[lang="ar"] h6, html[lang="ar"] .h6, html[lang="ar"] nav  { font-family: var(--font-en), var(--font-ar), "En-Firewall", "Ar-Firewall", sans-serif; }
+html[dir="rtl"] h1,
+html[dir="rtl"] .h1,
+html[dir="rtl"] h2,
+html[dir="rtl"] .h2,
+html[dir="rtl"] h3,
+html[dir="rtl"] .h3,
+html[dir="rtl"] h4,
+html[dir="rtl"] .h4,
+html[dir="rtl"] h5,
+html[dir="rtl"] .h5,
+html[dir="rtl"] h6,
+html[dir="rtl"] .h6,
+html[dir="rtl"] nav,
+html[lang="ar"] h1,
+html[lang="ar"] .h1,
+html[lang="ar"] h2,
+html[lang="ar"] .h2,
+html[lang="ar"] h3,
+html[lang="ar"] .h3,
+html[lang="ar"] h4,
+html[lang="ar"] .h4,
+html[lang="ar"] h5,
+html[lang="ar"] .h5,
+html[lang="ar"] h6,
+html[lang="ar"] .h6,
+html[lang="ar"] nav {
+  font-family: var(--font-en), var(--font-ar), "En-Firewall", "Ar-Firewall", sans-serif;
+}
 
 /* Adjust padding/height for Arabic Navigation to accommodate font weight/size */
-html[dir="rtl"] nav .main-nav-tab, html[lang="ar"] nav .main-nav-tab  { padding-top: 0.4rem !important; padding-bottom: 0.4rem !important; line-height: 1.5 !important; }
+html[dir="rtl"] nav .main-nav-tab,
+html[lang="ar"] nav .main-nav-tab {
+  padding-top: 0.4rem !important;
+  padding-bottom: 0.4rem !important;
+  line-height: 1.5 !important;
+}
 
 /* --- Contextual Typography Classes --- */
 
 /* 1. Calm: For backgrounds, secondary text, relaxed reading */
-.type-calm  { --font-weight: var(--weight-calm); --font-width: var(--width-standard); --font-grade: var(--grade-soft);
+.type-calm {
+  --font-weight: var(--weight-calm);
+  --font-width: var(--width-standard);
+  --font-grade: var(--grade-soft);
 
-/* opsz handled automatically */
+  /* opsz handled automatically */
 }
 
 /* 2. Functional: For data tables, inputs, dense UI */
-.type-functional  { --font-weight: var(--weight-functional); --font-width: var(--width-compact); --font-grade: var(--grade-neutral);
+.type-functional {
+  --font-weight: var(--weight-functional);
+  --font-width: var(--width-compact);
+  --font-grade: var(--grade-neutral);
 
-/* opsz handled automatically */
+  /* opsz handled automatically */
 }
 
 /* 3. Interactive: For buttons, tabs, links */
-.type-interactive  { --font-weight: var(--weight-medium); --font-width: var(--width-standard); --font-grade: var(--grade-neutral);
+.type-interactive {
+  --font-weight: var(--weight-medium);
+  --font-width: var(--width-standard);
+  --font-grade: var(--grade-neutral);
 
-/* opsz handled automatically */
-cursor: pointer; }
+  /* opsz handled automatically */
+  cursor: pointer;
+}
 
 /* Micro-interaction: Grade shift on hover for "tactile" feel */
-.type-interactive:hover  { --font-grade: 50; }
+.type-interactive:hover {
+  --font-grade: 50;
+}
 
 /* 4. Expressive: For headlines, hero sections, modal titles */
-.type-expressive  { --font-weight: var(--weight-bold); --font-width: var(--width-expressive); --font-grade: var(--grade-neutral);
+.type-expressive {
+  --font-weight: var(--weight-bold);
+  --font-width: var(--width-expressive);
+  --font-grade: var(--grade-neutral);
 
-/* opsz handled automatically */
+  /* opsz handled automatically */
 }
 
 /* --- Automatic Heading Hierarchy --- */
 
 /* We no longer force opsz, browser does it better */
-h1, .h1  { --font-weight: 600; --font-width: 110; }
-h2, .h2  { --font-weight: 550; --font-width: 105; }
-h3, .h3  { --font-weight: 500; --font-width: 100; }
+h1,
+.h1 {
+  --font-weight: 600;
+  --font-width: 110;
+}
+h2,
+.h2 {
+  --font-weight: 550;
+  --font-width: 105;
+}
+h3,
+.h3 {
+  --font-weight: 500;
+  --font-width: 100;
+}
 
 /* Ensure standard bold utilities still work by mapping them if needed,
 though font-variation-settings usually overrides font-weight.
 We force the variable update for these utility classes. */
-.font-bold  { --font-weight: 700; }
-.font-medium  { --font-weight: 500; }
-.font-semibold  { --font-weight: 600; }
-.font-light  { --font-weight: 300; }
+.font-bold {
+  --font-weight: 700;
+}
+.font-medium {
+  --font-weight: 500;
+}
+.font-semibold {
+  --font-weight: 600;
+}
+.font-light {
+  --font-weight: 300;
+}
 
 /* Force Arabic Bold Buttons - Using Full Firewall Stack */
-html[dir="rtl"] .font-bold, html[lang="ar"] .font-bold  { font-weight: 700 !important; font-family: var(--font-en), var(--font-ar), "En-Firewall", "Ar-Firewall", sans-serif; }
+html[dir="rtl"] .font-bold,
+html[lang="ar"] .font-bold {
+  font-weight: 700 !important;
+  font-family: var(--font-en), var(--font-ar), "En-Firewall", "Ar-Firewall", sans-serif;
+}

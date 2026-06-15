@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Modal } from '../common/Modal';
-import { employmentRequestRepository } from '../../services/hr/repositories/employmentRequestRepository';
-import { employeeProfileRepository } from '../../services/hr/repositories/employeeProfileRepository';
-import { orgService } from '../../services/org/orgService';
-import { useData } from '../../services';
 import { TRANSLATIONS } from '../../i18n/translations';
+import { useData } from '../../services';
+import { employeeProfileRepository } from '../../services/hr/repositories/employeeProfileRepository';
+import { employmentRequestRepository } from '../../services/hr/repositories/employmentRequestRepository';
+import { orgService } from '../../services/org/orgService';
 import type { EmploymentRequest, UserProfile } from '../../types';
+import { Modal } from '../common/Modal';
 
 interface Props {
   isOpen: boolean;
@@ -35,16 +35,17 @@ export function InvitationListModal({ isOpen, onClose, language }: Props) {
       setError(null);
       try {
         const orgId = orgService.getActiveOrgId();
-        if (!orgId) throw new Error(language === 'AR' ? 'لا توجد منظمة نشطة' : 'No active organization');
+        if (!orgId)
+          throw new Error(language === 'AR' ? 'لا توجد منظمة نشطة' : 'No active organization');
         const data = await employmentRequestRepository.getByOrg(orgId);
         setRequests(data);
         setIsLoading(false);
 
-        const usernames = [...new Set(data.map(r => r.targetUsername))];
+        const usernames = [...new Set(data.map((r) => r.targetUsername))];
         if (usernames.length > 0) {
           const profiles = await employeeProfileRepository.getByUsernames(usernames);
           const map = new Map<string, UserProfile>();
-          profiles.forEach(p => map.set(p.username, p));
+          profiles.forEach((p) => map.set(p.username, p));
           setProfilesByUsername(map);
         }
       } catch (err: any) {
@@ -55,8 +56,7 @@ export function InvitationListModal({ isOpen, onClose, language }: Props) {
     fetchRequests();
   }, [isOpen, language]);
 
-  const getStatusConfig = (status: string) =>
-    STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+  const getStatusConfig = (status: string) => STATUS_CONFIG[status] || STATUS_CONFIG.pending;
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
@@ -69,7 +69,7 @@ export function InvitationListModal({ isOpen, onClose, language }: Props) {
 
   const getBranchName = (branchId?: string) => {
     if (!branchId) return language === 'AR' ? 'غير محدد' : 'Unassigned';
-    const branch = branches.find(b => b.id === branchId);
+    const branch = branches.find((b) => b.id === branchId);
     return branch?.name || branchId;
   };
 
@@ -116,7 +116,12 @@ export function InvitationListModal({ isOpen, onClose, language }: Props) {
               const statusCfg = getStatusConfig(req.status);
               const profile = profilesByUsername.get(req.targetUsername);
               const initials = profile?.fullName
-                ? profile.fullName.split(' ').map(s => s[0]).join('').toUpperCase().slice(0, 2)
+                ? profile.fullName
+                    .split(' ')
+                    .map((s) => s[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2)
                 : req.targetUsername.replace('@', '').charAt(0).toUpperCase();
               return (
                 <div
@@ -127,13 +132,18 @@ export function InvitationListModal({ isOpen, onClose, language }: Props) {
                     {profile?.image ? (
                       <img src={profile.image} alt='' className='w-full h-full object-cover' />
                     ) : (
-                      <span className='material-symbols-rounded text-zinc-500 dark:text-zinc-400 text-xl'>person</span>
+                      <span className='material-symbols-rounded text-zinc-500 dark:text-zinc-400 text-xl'>
+                        person
+                      </span>
                     )}
                   </div>
 
                   <div className='flex-1 min-w-0'>
                     <div className='flex items-center gap-2 flex-wrap'>
-                      <span className='text-sm font-bold text-zinc-800 dark:text-zinc-200' dir='ltr'>
+                      <span
+                        className='text-sm font-bold text-zinc-800 dark:text-zinc-200'
+                        dir='ltr'
+                      >
                         {req.targetUsername}
                       </span>
                       <span className={`gap-1 ${statusCfg.badgeClass}`}>
@@ -148,7 +158,9 @@ export function InvitationListModal({ isOpen, onClose, language }: Props) {
                       {req.sentByName && (
                         <>
                           <span className='w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-600' />
-                          <span>{language === 'AR' ? 'بواسطة' : 'by'} {req.sentByName}</span>
+                          <span>
+                            {language === 'AR' ? 'بواسطة' : 'by'} {req.sentByName}
+                          </span>
                         </>
                       )}
                       {req.createdAt && (

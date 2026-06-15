@@ -1,6 +1,6 @@
 import { StorageKeys } from '../../config/storageKeys';
-import { storage } from '../../utils/storage';
 import { idGenerator } from '../../utils/idGenerator';
+import { storage } from '../../utils/storage';
 import { auditRepository } from './repositories/auditRepository';
 import type { AuditEntry } from './types';
 
@@ -9,7 +9,15 @@ const STORAGE_KEY_AUDIT = 'audit_logs';
 export const auditService = {
   log: async (
     action: string,
-    data: { userId?: string; userName?: string; details?: string | any; entityId?: string; entityType?: string; branchId?: string; orgId?: string }
+    data: {
+      userId?: string;
+      userName?: string;
+      details?: string | any;
+      entityId?: string;
+      entityType?: string;
+      branchId?: string;
+      orgId?: string;
+    }
   ) => {
     try {
       // Fallback for crypto.randomUUID for non-secure contexts/older browsers
@@ -48,7 +56,7 @@ export const auditService = {
       // Fallback to local storage
       let logs = storage.get<AuditEntry[]>(STORAGE_KEY_AUDIT, []);
       if (branchId) {
-        logs = logs.filter(log => !log.branchId || log.branchId === branchId);
+        logs = logs.filter((log) => !log.branchId || log.branchId === branchId);
       }
       return logs.slice(0, limit);
     }

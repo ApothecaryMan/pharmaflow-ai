@@ -1,12 +1,12 @@
 import React from 'react';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
-import { permissionsService } from '../../services/auth/permissionsService';
 import { useSettings } from '../../context';
+import { permissionsService } from '../../services/auth/permissionsService';
+import { batchService } from '../../services/inventory/batchService';
+import type { ViewState } from '../../types';
+import { InventoryModuleShell } from '../inventory/InventoryModuleShell';
 import { LandingPage } from '../layout/LandingPage';
 import { PendingBranchAssignment } from './PendingBranchAssignment';
-import type { ViewState } from '../../types';
-import { batchService } from '../../services/inventory/batchService';
-import { InventoryModuleShell } from '../inventory/InventoryModuleShell';
 
 interface PageRouterProps {
   view: ViewState;
@@ -66,8 +66,6 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
       />
     );
   }
-
-
 
   const pageConfig = PAGE_REGISTRY[view];
 
@@ -161,7 +159,8 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     onUpdateDrug: handlers.handleUpdateDrug,
     onDeleteDrug: handlers.handleDeleteDrug,
     onUpdateInventory: handlers.setInventory,
-    onBatchesChanged: async () => handlers.setBatches(await batchService.getAllBatches(data.activeBranchId)),
+    onBatchesChanged: async () =>
+      handlers.setBatches(await batchService.getAllBatches(data.activeBranchId)),
     onCompleteSale: handlers.handleCompleteSale,
     onUpdateSale: handlers.handleUpdateSale,
     onProcessReturn: handlers.handleProcessReturn,
@@ -203,10 +202,26 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     'sales-history': { ...t.salesHistory, datePickerTranslations: t.global.datePicker },
     'return-history': { ...t.returnHistory, datePickerTranslations: t.global.datePicker },
     suppliers: t.suppliers,
-    purchases: { ...t.purchases, pendingApproval: t.pendingApproval, datePickerTranslations: t.global.datePicker },
-    'purchases-test': { ...t.purchases, pendingApproval: t.pendingApproval, datePickerTranslations: t.global.datePicker },
-    'pending-approval': { ...t.purchases, pendingApproval: t.pendingApproval, datePickerTranslations: t.global.datePicker },
-    'purchase-history': { ...t.purchases, pendingApproval: t.pendingApproval, datePickerTranslations: t.global.datePicker },
+    purchases: {
+      ...t.purchases,
+      pendingApproval: t.pendingApproval,
+      datePickerTranslations: t.global.datePicker,
+    },
+    'purchases-test': {
+      ...t.purchases,
+      pendingApproval: t.pendingApproval,
+      datePickerTranslations: t.global.datePicker,
+    },
+    'pending-approval': {
+      ...t.purchases,
+      pendingApproval: t.pendingApproval,
+      datePickerTranslations: t.global.datePicker,
+    },
+    'purchase-history': {
+      ...t.purchases,
+      pendingApproval: t.pendingApproval,
+      datePickerTranslations: t.global.datePicker,
+    },
     'barcode-studio': t.barcodeStudio,
     customers: t.customers,
     'customer-history': t.customers,

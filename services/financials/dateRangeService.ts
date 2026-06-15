@@ -1,6 +1,6 @@
 import timeService from '../timeService';
 
-export type FinancialPeriod = 
+export type FinancialPeriod =
   | 'today'
   | 'last_7_days'
   | 'last_30_days'
@@ -107,8 +107,16 @@ export const dateRangeService = {
     const tempDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
 
     while (tempDate <= endDate) {
-      const monthEnd = new Date(tempDate.getFullYear(), tempDate.getMonth() + 1, 0, 23, 59, 59, 999);
-      
+      const monthEnd = new Date(
+        tempDate.getFullYear(),
+        tempDate.getMonth() + 1,
+        0,
+        23,
+        59,
+        59,
+        999
+      );
+
       // The month must be fully contained within [start, end]
       // And the end of this month must be in the past (before the start of the current month)
       if (tempDate >= startDate && monthEnd <= endDate && monthEnd < currentMonthStart) {
@@ -116,7 +124,7 @@ export const dateRangeService = {
         const month = String(tempDate.getMonth() + 1).padStart(2, '0');
         closedMonths.push(`${year}-${month}`);
       }
-      
+
       // Move to next month
       tempDate.setMonth(tempDate.getMonth() + 1);
     }

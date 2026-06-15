@@ -62,9 +62,7 @@ export const money = {
    */
   multiply: (amount: number, factorInt: number, scale: number): number => {
     const amountCents = money.toSmallestUnit(amount);
-    const resultCents = Math.round(
-      (amountCents * factorInt) / Math.pow(10, scale)
-    );
+    const resultCents = Math.round((amountCents * factorInt) / 10 ** scale);
     return money.fromSmallestUnit(resultCents);
   },
 
@@ -121,20 +119,16 @@ export const money = {
     Math.abs(money.toSmallestUnit(a) - money.toSmallestUnit(b)) < 1,
 
   /** أكبر من أو يساوي */
-  isGte: (a: number, b: number): boolean =>
-    money.toSmallestUnit(a) >= money.toSmallestUnit(b),
+  isGte: (a: number, b: number): boolean => money.toSmallestUnit(a) >= money.toSmallestUnit(b),
 
   /** أصغر من أو يساوي */
-  isLte: (a: number, b: number): boolean =>
-    money.toSmallestUnit(a) <= money.toSmallestUnit(b),
+  isLte: (a: number, b: number): boolean => money.toSmallestUnit(a) <= money.toSmallestUnit(b),
 
   /** أكبر من */
-  isGt: (a: number, b: number): boolean =>
-    money.toSmallestUnit(a) > money.toSmallestUnit(b),
+  isGt: (a: number, b: number): boolean => money.toSmallestUnit(a) > money.toSmallestUnit(b),
 
   /** أصغر من */
-  isLt: (a: number, b: number): boolean =>
-    money.toSmallestUnit(a) < money.toSmallestUnit(b),
+  isLt: (a: number, b: number): boolean => money.toSmallestUnit(a) < money.toSmallestUnit(b),
 };
 
 // ─────────────────────────────────────────────
@@ -194,11 +188,8 @@ export const pricing = {
    */
   actualMarkup: (cost: number, sellPrice: number): number => {
     if (cost === 0) return 0;
-    const profitCents =
-      money.toSmallestUnit(sellPrice) - money.toSmallestUnit(cost);
-    return money.fromSmallestUnit(
-      Math.round((profitCents / money.toSmallestUnit(cost)) * 10000)
-    );
+    const profitCents = money.toSmallestUnit(sellPrice) - money.toSmallestUnit(cost);
+    return money.fromSmallestUnit(Math.round((profitCents / money.toSmallestUnit(cost)) * 10000));
   },
 
   /**
@@ -207,8 +198,7 @@ export const pricing = {
    */
   actualMargin: (cost: number, sellPrice: number): number => {
     if (sellPrice === 0) return 0;
-    const profitCents =
-      money.toSmallestUnit(sellPrice) - money.toSmallestUnit(cost);
+    const profitCents = money.toSmallestUnit(sellPrice) - money.toSmallestUnit(cost);
     return money.fromSmallestUnit(
       Math.round((profitCents / money.toSmallestUnit(sellPrice)) * 10000)
     );
@@ -218,11 +208,7 @@ export const pricing = {
    * إجمالي سطر في الفاتورة (سعر × كمية − خصم%)
    * @example lineTotal(35, 3, 10) → 94.50  (35 × 3 مع خصم 10%)
    */
-  lineTotal: (
-    unitPrice: number,
-    quantity: number,
-    discountPct: number = 0
-  ): number => {
+  lineTotal: (unitPrice: number, quantity: number, discountPct: number = 0): number => {
     const gross = money.multiply(unitPrice, quantity, 0);
     return discountPct > 0 ? pricing.afterDiscount(gross, discountPct) : gross;
   },
@@ -307,13 +293,12 @@ export const tax = {
     subtotal: number,
     discountPct: number = 0,
     taxPct: number,
-    mode: "exclusive" | "inclusive"
+    mode: 'exclusive' | 'inclusive'
   ): { base: number; taxAmount: number; total: number } => {
     // 1. طبّق الخصم الأول
-    const afterDiscount =
-      discountPct > 0 ? pricing.afterDiscount(subtotal, discountPct) : subtotal;
+    const afterDiscount = discountPct > 0 ? pricing.afterDiscount(subtotal, discountPct) : subtotal;
 
-    if (mode === "exclusive") {
+    if (mode === 'exclusive') {
       const taxAmount = tax.exclusiveAmount(afterDiscount, taxPct);
       const total = money.add(afterDiscount, taxAmount);
       return { base: afterDiscount, taxAmount, total };
@@ -338,13 +323,13 @@ export const tax = {
    */
   multiRate: (
     lines: Array<{ amount: number; taxPct: number }>,
-    mode: "exclusive" | "inclusive"
+    mode: 'exclusive' | 'inclusive'
   ): { base: number; taxAmount: number; total: number } => {
     let base = 0;
     let taxAmount = 0;
 
     for (const line of lines) {
-      if (mode === "exclusive") {
+      if (mode === 'exclusive') {
         const lineTax = tax.exclusiveAmount(line.amount, line.taxPct);
         base = money.add(base, line.amount);
         taxAmount = money.add(taxAmount, lineTax);

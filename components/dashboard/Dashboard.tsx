@@ -153,46 +153,46 @@ const GenericListItem: React.FC<{
   onClick,
   actionLabel,
 }) => (
-    <div className='p-4 rounded-xl bg-(--bg-page-surface) border border-(--border-divider) flex items-center justify-between hover:bg-(--bg-menu-hover) transition-colors'>
-      <div className='flex items-center gap-4 min-w-0'>
-        {icon && (
-          <div className='badge-purple w-10 h-10! rounded-full! border! flex! items-center justify-center shrink-0'>
-            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
-              {icon}
+  <div className='p-4 rounded-xl bg-(--bg-page-surface) border border-(--border-divider) flex items-center justify-between hover:bg-(--bg-menu-hover) transition-colors'>
+    <div className='flex items-center gap-4 min-w-0'>
+      {icon && (
+        <div className='badge-purple w-10 h-10! rounded-full! border! flex! items-center justify-center shrink-0'>
+          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
+            {icon}
+          </span>
+        </div>
+      )}
+      <div className='min-w-0'>
+        <p className='font-bold text-(--text-primary) truncate'>{title}</p>
+        <div className='flex items-center gap-2 mt-0.5'>
+          <p className='text-xs text-(--text-tertiary)'>{subtitle}</p>
+          {badge && (
+            <span
+              className={
+                badgeColor.includes('badge-')
+                  ? badgeColor
+                  : `text-[10px] font-bold uppercase ${badgeColor}`
+              }
+            >
+              {badge}
             </span>
-          </div>
-        )}
-        <div className='min-w-0'>
-          <p className='font-bold text-(--text-primary) truncate'>{title}</p>
-          <div className='flex items-center gap-2 mt-0.5'>
-            <p className='text-xs text-(--text-tertiary)'>{subtitle}</p>
-            {badge && (
-              <span
-                className={
-                  badgeColor.includes('badge-')
-                    ? badgeColor
-                    : `text-[10px] font-bold uppercase ${badgeColor}`
-                }
-              >
-                {badge}
-              </span>
-            )}
-          </div>
+          )}
         </div>
       </div>
-      <div className='flex items-center gap-4'>
-        {value && <p className='font-bold text-(--text-primary)'>{value}</p>}
-        {onClick && (
-          <button
-            onClick={onClick}
-            className='px-4 py-2 rounded-full bg-(--bg-menu) text-primary-600 font-medium text-sm hover:bg-primary-50 transition-colors'
-          >
-            {actionLabel}
-          </button>
-        )}
-      </div>
     </div>
-  );
+    <div className='flex items-center gap-4'>
+      {value && <p className='font-bold text-(--text-primary)'>{value}</p>}
+      {onClick && (
+        <button
+          onClick={onClick}
+          className='px-4 py-2 rounded-full bg-(--bg-menu) text-primary-600 font-medium text-sm hover:bg-primary-50 transition-colors'
+        >
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  </div>
+);
 
 export const Dashboard: React.FC<DashboardProps> = ({
   inventory,
@@ -240,7 +240,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
         const parts = val.split('-');
         if (parts.length < 3) return val;
         const [yyyy, mm, w] = parts;
-        const monthName = new Date(parseInt(yyyy), parseInt(mm) - 1, 1).toLocaleDateString(locale, { month: 'short' });
+        const monthName = new Date(parseInt(yyyy), parseInt(mm) - 1, 1).toLocaleDateString(locale, {
+          month: 'short',
+        });
         return `${monthName} ${w.replace('W', language?.toUpperCase() === 'AR' ? 'أسبوع ' : 'W')}`;
       }
       const date = new Date(val);
@@ -261,11 +263,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
         const parts = val.split('-');
         if (parts.length < 3) return val;
         const [yyyy, mm, w] = parts;
-        const monthName = new Date(parseInt(yyyy), parseInt(mm) - 1, 1).toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+        const monthName = new Date(parseInt(yyyy), parseInt(mm) - 1, 1).toLocaleDateString(locale, {
+          month: 'long',
+          year: 'numeric',
+        });
         return `${language?.toUpperCase() === 'AR' ? 'الأسبوع' : 'Week'} ${w.replace('W', '')} - ${monthName}`;
       }
       const date = new Date(val);
-      return date.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      return date.toLocaleDateString(locale, {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
     },
     [language, timeRange]
   );
@@ -509,31 +519,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
           items={
             id === 'profit'
               ? [
-                { label: t.revenue, value: formatCurrency(totalRevenue) },
-                { label: t.expenses, value: formatCurrency(expensesTotal) },
-                {
-                  label: t.expand?.profitMargin || 'Margin',
-                  value: `${totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0'}%`,
-                },
-              ]
-              : id === 'expenses'
-                ? [
+                  { label: t.revenue, value: formatCurrency(totalRevenue) },
                   { label: t.expenses, value: formatCurrency(expensesTotal) },
+                  {
+                    label: t.expand?.profitMargin || 'Margin',
+                    value: `${totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0'}%`,
+                  },
                 ]
+              : id === 'expenses'
+                ? [{ label: t.expenses, value: formatCurrency(expensesTotal) }]
                 : [
-                  {
-                    label: t.expand?.metrics || 'Total Count',
-                    value: filteredData.sales.length,
-                  },
-                  {
-                    label: t.expand?.amount || 'Average',
-                    value: formatCurrency(
-                      filteredData.sales.length > 0
-                        ? totalRevenue / filteredData.sales.length
-                        : 0
-                    ),
-                  },
-                ]
+                    {
+                      label: t.expand?.metrics || 'Total Count',
+                      value: filteredData.sales.length,
+                    },
+                    {
+                      label: t.expand?.amount || 'Average',
+                      value: formatCurrency(
+                        filteredData.sales.length > 0 ? totalRevenue / filteredData.sales.length : 0
+                      ),
+                    },
+                  ]
           }
         />
 
@@ -548,7 +554,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className='border-0! bg-transparent! p-0! shadow-none!'
             chartClassName='h-[280px]!'
             headerClassName='hidden'
-            xAxisKey="day"
+            xAxisKey='day'
             xAxisFormatter={formatXAxis}
             tooltipLabelFormatter={formatTooltipLabel}
           />
@@ -836,7 +842,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           className='h-80'
           chartClassName='h-[90%]'
           isLoading={isLoading || finLoading}
-          xAxisKey="day"
+          xAxisKey='day'
           xAxisFormatter={formatXAxis}
           tooltipLabelFormatter={formatTooltipLabel}
         />

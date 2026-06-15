@@ -40,14 +40,9 @@ export const RiskPage: React.FC<RiskPageProps> = ({ t, summary, items, loading }
         selectedBatchIds={selectedBatchIds}
       />
 
-
       {/* Detailed Grid - Simplified since TanStackTable will provide card styling */}
       <div className='flex-1 min-h-0'>
-        <ExpiryRiskGrid
-          data={items}
-          t={t}
-          isLoading={loading}
-        />
+        <ExpiryRiskGrid data={items} t={t} isLoading={loading} />
       </div>
     </div>
   );

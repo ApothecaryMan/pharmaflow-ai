@@ -1,8 +1,8 @@
 import type React from 'react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { BUTTON_BASE } from '../../utils/themeStyles';
 import { useSettings } from '../../context';
+import { BUTTON_BASE } from '../../utils/themeStyles';
 
 // --- Unified Translations ---
 
@@ -64,7 +64,6 @@ const WheelPicker: React.FC<WheelPickerProps> = ({
 
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
-
 
   useLayoutEffect(() => {
     if (containerRef.current) {
@@ -216,16 +215,17 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 }) => {
   const { language, numeralSystem } = useSettings();
   const isAR = language === 'AR';
-  
+
   // Use settings-based locale if none provided, or override based on numeralSystem
-  const activeLocale = isAR 
-    ? (numeralSystem === 'AR' ? 'ar-EG' : 'en-US') 
-    : (locale || 'en-US');
+  const activeLocale = isAR ? (numeralSystem === 'AR' ? 'ar-EG' : 'en-US') : locale || 'en-US';
 
   // New: Specific locale for text/words (Months, Days of week) based ONLY on language
   const languageLocale = isAR ? 'ar-EG' : 'en-US';
 
-  const translations = customTranslations || DATE_PICKER_TRANSLATIONS[activeLocale] || DATE_PICKER_TRANSLATIONS[isAR ? 'ar-EG' : 'en-US'];
+  const translations =
+    customTranslations ||
+    DATE_PICKER_TRANSLATIONS[activeLocale] ||
+    DATE_PICKER_TRANSLATIONS[isAR ? 'ar-EG' : 'en-US'];
   // --- State ---
   const [isOpen, setIsOpen] = useState(false);
   const [alignMode, setAlignMode] = useState<'left' | 'center' | 'right'>('center');
@@ -268,28 +268,28 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       // Dropdown width is fixed at 380px roughly
       const dropdownWidth = 380;
       const dropdownHeight = 350; // estimated height
-      
+
       // Try to center below the button
-      let left = rect.left + (rect.width / 2) - (dropdownWidth / 2);
+      let left = rect.left + rect.width / 2 - dropdownWidth / 2;
       let top = rect.bottom + 8; // mt-2 equivalent
       let mode: 'left' | 'center' | 'right' = 'center';
-      
+
       // Ensure it doesn't go off the right edge
       if (left + dropdownWidth > window.innerWidth - 8) {
         left = window.innerWidth - dropdownWidth - 8;
         mode = 'right';
-      } 
+      }
       // Ensure it doesn't go off the left edge
       else if (left < 8) {
         left = 8;
         mode = 'left';
       }
-      
+
       // Check bottom overflow
       if (top + dropdownHeight > window.innerHeight && rect.top - dropdownHeight > 0) {
         top = rect.top - dropdownHeight - 8;
       }
-      
+
       setAlignMode(mode);
       setPosition({ top, left });
     }
@@ -333,10 +333,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     };
   }, [isOpen]);
 
-
-
   // --- Wheel Logic ---
-
 
   // Dynamic Day Items based on selected Month/Year
   const currentYearForDays = tempDate?.getFullYear() || new Date().getFullYear();
@@ -366,23 +363,34 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     const currentYear = new Date().getFullYear();
     const items = [];
     for (let i = currentYear - 10; i <= currentYear + 20; i++) {
-      items.push({ 
-        label: i.toLocaleString(activeLocale, { useGrouping: false }), 
-        value: i 
+      items.push({
+        label: i.toLocaleString(activeLocale, { useGrouping: false }),
+        value: i,
       });
     }
     return items;
   }, [activeLocale]);
 
-  const hourItems = useMemo(() => Array.from({ length: 12 }, (_, i) => ({
-    label: (i + 1).toLocaleString(activeLocale, { minimumIntegerDigits: 2, useGrouping: false }),
-    value: i + 1,
-  })), [activeLocale]);
+  const hourItems = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, i) => ({
+        label: (i + 1).toLocaleString(activeLocale, {
+          minimumIntegerDigits: 2,
+          useGrouping: false,
+        }),
+        value: i + 1,
+      })),
+    [activeLocale]
+  );
 
-  const minuteItems = useMemo(() => Array.from({ length: 60 }, (_, i) => ({
-    label: i.toLocaleString(activeLocale, { minimumIntegerDigits: 2, useGrouping: false }),
-    value: i,
-  })), [activeLocale]);
+  const minuteItems = useMemo(
+    () =>
+      Array.from({ length: 60 }, (_, i) => ({
+        label: i.toLocaleString(activeLocale, { minimumIntegerDigits: 2, useGrouping: false }),
+        value: i,
+      })),
+    [activeLocale]
+  );
 
   const amPmItems = [
     { label: translations.am || 'AM', value: 'AM' },
@@ -515,7 +523,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         ? 'bg-(--bg-card) border-transparent text-(--text-primary) font-bold shadow-[rgba(0,0,0,0.09)_0px_3px_12px]'
         : 'bg-transparent border-transparent text-(--text-secondary) hover:text-(--text-primary) hover:bg-white dark:hover:bg-(--bg-card)/50 font-bold';
     }
-    
+
     // Default variant
     return value
       ? 'bg-primary-200 dark:bg-primary-800/60 border-primary-400 dark:border-primary-600/50 text-primary-900 dark:text-primary-50 font-semibold shadow-xs'
@@ -544,7 +552,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         `}
       >
         {iconPosition === 'start' && (
-          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>{icon}</span>
+          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
+            {icon}
+          </span>
         )}
         <span className='text-sm font-medium whitespace-nowrap'>
           {value
@@ -552,18 +562,24 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                 const d = new Date(value);
                 const month = d.toLocaleDateString(languageLocale, { month: 'short' });
                 const day = d.getDate().toLocaleString(activeLocale, { useGrouping: false });
-                const hour = ((d.getHours() % 12) || 12).toLocaleString(activeLocale, { useGrouping: false });
-                const minute = d.getMinutes().toLocaleString(activeLocale, { minimumIntegerDigits: 2, useGrouping: false });
-                const ampm = d.getHours() >= 12 ? (translations.pm || 'PM') : (translations.am || 'AM');
-                
-                return isAR 
+                const hour = (d.getHours() % 12 || 12).toLocaleString(activeLocale, {
+                  useGrouping: false,
+                });
+                const minute = d
+                  .getMinutes()
+                  .toLocaleString(activeLocale, { minimumIntegerDigits: 2, useGrouping: false });
+                const ampm = d.getHours() >= 12 ? translations.pm || 'PM' : translations.am || 'AM';
+
+                return isAR
                   ? `${day} ${month}، ${hour}:${minute} ${ampm}`
                   : `${month} ${day}, ${hour}:${minute} ${ampm}`;
               })()
             : placeholder || label}
         </span>
         {iconPosition === 'end' && (
-          <span className='material-symbols-rounded ml-1.5' style={{ fontSize: 'var(--icon-md)' }}>{icon}</span>
+          <span className='material-symbols-rounded ml-1.5' style={{ fontSize: 'var(--icon-md)' }}>
+            {icon}
+          </span>
         )}
 
         {value && (
@@ -571,23 +587,31 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             onClick={clearSelection}
             className={`flex items-center justify-center ml-1.5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors`}
           >
-            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>close</span>
+            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>
+              close
+            </span>
           </div>
         )}
       </button>
 
       {/* --- Dropdown --- */}
-      {isOpen && createPortal(
-        <div
-          ref={dropdownRef}
-          className={`fixed z-[99999] animate-fade-in`}
-          style={{
-            top: position.top,
-            left: position.left,
-            transformOrigin: alignMode === 'right' ? 'top right' : alignMode === 'left' ? 'top left' : 'top center',
-          }}
+      {isOpen &&
+        createPortal(
+          <div
+            ref={dropdownRef}
+            className={`fixed z-[99999] animate-fade-in`}
+            style={{
+              top: position.top,
+              left: position.left,
+              transformOrigin:
+                alignMode === 'right'
+                  ? 'top right'
+                  : alignMode === 'left'
+                    ? 'top left'
+                    : 'top center',
+            }}
             dir={activeLocale === 'ar-EG' || activeLocale.startsWith('ar') ? 'rtl' : 'ltr'}
-        >
+          >
             <div
               className={`bg-white dark:bg-(--bg-card) ${styles.dropdownRounded[rounded]} shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-gray-200 dark:border-(--border-divider) p-5 w-[380px] select-none`}
             >
@@ -728,10 +752,10 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         variant='pill-dark'
         locale={locale}
         translations={t}
-        iconPosition="start"
-        icon="calendar_today"
+        iconPosition='start'
+        icon='calendar_today'
       />
-      
+
       <span className='material-symbols-rounded text-gray-400 dark:text-gray-600 px-1 text-sm rtl:rotate-180'>
         arrow_forward
       </span>
@@ -745,8 +769,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         variant='pill-dark'
         locale={locale}
         translations={t}
-        iconPosition="start"
-        icon="calendar_today"
+        iconPosition='start'
+        icon='calendar_today'
       />
     </div>
   );

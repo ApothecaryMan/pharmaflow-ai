@@ -1,7 +1,7 @@
 import type React from 'react';
 import { PHARMACY_MENU } from '../../config/menuData';
+import type { ViewState } from '../../types';
 import { SidebarMenu } from './SidebarMenu';
-import { type ViewState } from '../../types';
 
 interface SidebarContentProps {
   menuItems?: any[]; // Allow optional passed items, default to import if needed, but App.tsx passes it now.

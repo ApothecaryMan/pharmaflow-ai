@@ -2,19 +2,27 @@
  * Expense Service - Business logic layer for operational expenses & petty cash tracker.
  */
 
-import { type Expense, type ExpenseSummary } from '../../types';
-import { expenseRepository } from './repositories/expenseRepository';
+import type { Expense, ExpenseSummary } from '../../types';
 import { settingsService } from '../settings/settingsService';
+import { expenseRepository } from './repositories/expenseRepository';
 
 export interface ExpenseServiceInterface {
-  getExpenses(filters?: {
-    dateFrom?: string;
-    dateTo?: string;
-    category?: string;
-    paymentMethod?: string;
-  }, branchId?: string): Promise<Expense[]>;
-  recordExpense(expense: Omit<Expense, 'id' | 'createdAt' | 'recordedAt' | 'approved'>): Promise<Expense>;
-  getExpenseSummary(dateRange?: { from?: string; to?: string }, branchId?: string): Promise<ExpenseSummary>;
+  getExpenses(
+    filters?: {
+      dateFrom?: string;
+      dateTo?: string;
+      category?: string;
+      paymentMethod?: string;
+    },
+    branchId?: string
+  ): Promise<Expense[]>;
+  recordExpense(
+    expense: Omit<Expense, 'id' | 'createdAt' | 'recordedAt' | 'approved'>
+  ): Promise<Expense>;
+  getExpenseSummary(
+    dateRange?: { from?: string; to?: string },
+    branchId?: string
+  ): Promise<ExpenseSummary>;
   deleteExpense(id: string): Promise<boolean>;
 }
 
@@ -22,7 +30,7 @@ export const expenseService: ExpenseServiceInterface = {
   getExpenses: async (filters?, branchId?): Promise<Expense[]> => {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    
+
     try {
       return await expenseRepository.getAll(effectiveBranchId, filters);
     } catch (error) {
@@ -57,11 +65,7 @@ export const expenseService: ExpenseServiceInterface = {
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
 
     try {
-      return await expenseRepository.getSummary(
-        effectiveBranchId,
-        dateRange?.from,
-        dateRange?.to
-      );
+      return await expenseRepository.getSummary(effectiveBranchId, dateRange?.from, dateRange?.to);
     } catch (error) {
       console.error('[ExpenseService] getExpenseSummary failed:', error);
       return {
@@ -87,7 +91,7 @@ export const expenseService: ExpenseServiceInterface = {
     try {
       const expense = await expenseRepository.getById(id);
       if (!expense) throw new Error('Expense not found');
-      
+
       // Additional safety checks can be placed here if needed (e.g. check approval status)
       return await expenseRepository.delete(id);
     } catch (error) {

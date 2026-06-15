@@ -18,7 +18,7 @@ export function DevilHorns() {
           <path d='M19,28 Q24,29 27,27' stroke='#7F1D1D' strokeWidth='1' strokeLinecap='round' />
           <path d='M16,21 Q22,22 25,20' stroke='#7F1D1D' strokeWidth='1' strokeLinecap='round' />
           <path d='M15,14 Q20,15 23,13' stroke='#7F1D1D' strokeWidth='0.8' strokeLinecap='round' />
-          <path d='M16,8  Q20,9  22,7'  stroke='#7F1D1D' strokeWidth='0.8' strokeLinecap='round' />
+          <path d='M16,8  Q20,9  22,7' stroke='#7F1D1D' strokeWidth='0.8' strokeLinecap='round' />
           <path
             d='M25,6 C27,14 31,24 31,32'
             stroke='#FCA5A5'
@@ -44,8 +44,18 @@ export function DevilHorns() {
           />
           <path d='M109,28 Q104,29 101,27' stroke='#7F1D1D' strokeWidth='1' strokeLinecap='round' />
           <path d='M112,21 Q106,22 103,20' stroke='#7F1D1D' strokeWidth='1' strokeLinecap='round' />
-          <path d='M113,14 Q108,15 105,13' stroke='#7F1D1D' strokeWidth='0.8' strokeLinecap='round' />
-          <path d='M112,8  Q108,9  106,7'  stroke='#7F1D1D' strokeWidth='0.8' strokeLinecap='round' />
+          <path
+            d='M113,14 Q108,15 105,13'
+            stroke='#7F1D1D'
+            strokeWidth='0.8'
+            strokeLinecap='round'
+          />
+          <path
+            d='M112,8  Q108,9  106,7'
+            stroke='#7F1D1D'
+            strokeWidth='0.8'
+            strokeLinecap='round'
+          />
           <path
             d='M103,6 C101,14 97,24 97,32'
             strokeWidth='0.6'

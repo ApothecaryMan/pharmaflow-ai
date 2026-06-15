@@ -1,25 +1,56 @@
 /* Thin Border White Mode Override */
-html:not(.dark).thin-border-mode .card-shadow  { border: 1px solid var(--border-secondary) !important;
+html:not(.dark).thin-border-mode .card-shadow {
+  border: 1px solid var(--border-secondary) !important;
 
-/* gray-300 for darker color and 1px thickness */
+  /* gray-300 for darker color and 1px thickness */
 }
 
 /* None Border White Mode Override */
-html:not(.dark).none-border-mode .card-shadow  { border-color: transparent !important; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05); }
+html:not(.dark).none-border-mode .card-shadow {
+  border-color: transparent !important;
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.05),
+    0 2px 4px -2px rgb(0 0 0 / 0.05);
+}
 
 /* Fallback for older browsers (Chrome < 76) that don't support backdrop-filter */
-.modal-blur-active #root  { filter: blur(8px); transition: filter 0.3s ease-out; pointer-events: none; user-select: none; }
+.modal-blur-active #root {
+  filter: blur(8px);
+  transition: filter 0.3s ease-out;
+  pointer-events: none;
+  user-select: none;
+}
 
 /* Logical Transform Origin Utilities */
-.origin-inline-start  { transform-origin: left; }
-[dir='rtl'] .origin-inline-start  { transform-origin: right; }
-.origin-inline-end  { transform-origin: right; }
-[dir='rtl'] .origin-inline-end  { transform-origin: left; }
-.origin-bottom-end  { transform-origin: bottom right; }
-[dir='rtl'] .origin-bottom-end  { transform-origin: bottom left; }
+.origin-inline-start {
+  transform-origin: left;
+}
+[dir="rtl"] .origin-inline-start {
+  transform-origin: right;
+}
+.origin-inline-end {
+  transform-origin: right;
+}
+[dir="rtl"] .origin-inline-end {
+  transform-origin: left;
+}
+.origin-bottom-end {
+  transform-origin: bottom right;
+}
+[dir="rtl"] .origin-bottom-end {
+  transform-origin: bottom left;
+}
 
 /* Logical Slide-in Utilities */
-.slide-in-from-inline-start-1  { --tw-enter-translate-x: -0.25rem; }
-[dir='rtl'] .slide-in-from-inline-start-1  { --tw-enter-translate-x: 0.25rem; }
-.slide-in-from-inline-end-1  { --tw-enter-translate-x: 0.25rem; }
-[dir='rtl'] .slide-in-from-inline-end-1  { --tw-enter-translate-x: -0.25rem; }
+.slide-in-from-inline-start-1 {
+  --tw-enter-translate-x: -0.25rem;
+}
+[dir="rtl"] .slide-in-from-inline-start-1 {
+  --tw-enter-translate-x: 0.25rem;
+}
+.slide-in-from-inline-end-1 {
+  --tw-enter-translate-x: 0.25rem;
+}
+[dir="rtl"] .slide-in-from-inline-end-1 {
+  --tw-enter-translate-x: -0.25rem;
+}

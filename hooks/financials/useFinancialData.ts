@@ -1,13 +1,16 @@
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useData } from '../../context/DataContext';
 import { permissionsService } from '../../services/auth/permissionsService';
-import { financialService, type FinancialSummary } from '../../services/financials/financialService';
 import { dateRangeService, type FinancialPeriod } from '../../services/financials/dateRangeService';
+import {
+  type FinancialSummary,
+  financialService,
+} from '../../services/financials/financialService';
 import type {
-  FinancialKPIs,
-  DailyFinancialData,
   CategoryFinancialReport,
-  ProductFinancialItem
+  DailyFinancialData,
+  FinancialKPIs,
+  ProductFinancialItem,
 } from '../../types/intelligence';
 
 interface UseFinancialDataResult {
@@ -34,58 +37,64 @@ export function useFinancialData(period: FinancialPeriod = 'this_month'): UseFin
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastFetchKeyRef = useRef<string | undefined>(undefined);
 
-  const fetchData = useCallback(async (isRefresh = false) => {
-    const fetchKey = `${activeBranchId}-${period}`;
+  const fetchData = useCallback(
+    async (isRefresh = false) => {
+      const fetchKey = `${activeBranchId}-${period}`;
 
-    // Prevent duplicate fetches for the same branch and period unless it's a manual refresh
-    if (!isRefresh && lastFetchKeyRef.current === fetchKey) {
-      return;
-    }
-
-    // Abort previous request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-    lastFetchKeyRef.current = fetchKey;
-
-    setLoading(true);
-    setError(null);
-
-    const range = dateRangeService.getDateRange(period);
-
-    try {
-      const [summaryData, kpisData, dailyData, topProductsData, categoriesData] = await Promise.all([
-        financialService.getFinancialSummary(period, activeBranchId),
-        financialService.getFinancialKPIs(period, activeBranchId),
-        financialService.getDailyBreakdown(range.start, range.end, activeBranchId),
-        financialService.getTopProducts(period, activeBranchId, 10),
-        financialService.getCategoryBreakdown(period, activeBranchId),
-      ]);
-
-      if (!controller.signal.aborted) {
-        setSummary(summaryData);
-        setKpis(kpisData);
-        setDaily(dailyData);
-        setTopProducts(topProductsData);
-        setCategories(categoriesData);
-        setLoading(false);
+      // Prevent duplicate fetches for the same branch and period unless it's a manual refresh
+      if (!isRefresh && lastFetchKeyRef.current === fetchKey) {
+        return;
       }
-    } catch (err: any) {
-      if (err.name === 'AbortError') return;
 
-      console.error('[useFinancialData] Error fetching data:', err);
-      if (!controller.signal.aborted) {
-        setError(err instanceof Error ? err.message : 'Failed to load financial data');
-        setLoading(false);
+      // Abort previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
-    }
-  }, [period, activeBranchId]);
+
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      lastFetchKeyRef.current = fetchKey;
+
+      setLoading(true);
+      setError(null);
+
+      const range = dateRangeService.getDateRange(period);
+
+      try {
+        const [summaryData, kpisData, dailyData, topProductsData, categoriesData] =
+          await Promise.all([
+            financialService.getFinancialSummary(period, activeBranchId),
+            financialService.getFinancialKPIs(period, activeBranchId),
+            financialService.getDailyBreakdown(range.start, range.end, activeBranchId),
+            financialService.getTopProducts(period, activeBranchId, 10),
+            financialService.getCategoryBreakdown(period, activeBranchId),
+          ]);
+
+        if (!controller.signal.aborted) {
+          setSummary(summaryData);
+          setKpis(kpisData);
+          setDaily(dailyData);
+          setTopProducts(topProductsData);
+          setCategories(categoriesData);
+          setLoading(false);
+        }
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
+
+        console.error('[useFinancialData] Error fetching data:', err);
+        if (!controller.signal.aborted) {
+          setError(err instanceof Error ? err.message : 'Failed to load financial data');
+          setLoading(false);
+        }
+      }
+    },
+    [period, activeBranchId]
+  );
 
   useEffect(() => {
-    const canView = permissionsService.can('reports.view_intelligence') || permissionsService.can('reports.view_financial');
+    const canView =
+      permissionsService.can('reports.view_intelligence') ||
+      permissionsService.can('reports.view_financial');
     if (canView) {
       fetchData();
     } else {

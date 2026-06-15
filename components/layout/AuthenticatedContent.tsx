@@ -1,23 +1,23 @@
-import React, { useState, useCallback } from 'react';
-import { MainLayout } from './MainLayout';
-import { PageRouter } from './PageRouter';
-import { LogoutOverlay } from './LogoutOverlay';
-import { useShift } from '../../hooks/sales/useShift';
-import { useSettings, useAlert } from '../../context';
+import React, { useCallback, useState } from 'react';
+import { PAGE_REGISTRY } from '../../config/pageRegistry';
+import { useAlert, useSettings } from '../../context';
 import { useData } from '../../context/DataContext';
-import { useStatusBar } from './StatusBar';
+import type { AuthState } from '../../hooks/auth/useAuth';
 import { useAuthenticatedData } from '../../hooks/auth/useAuthenticatedData';
-import { useNavigation } from '../../hooks/layout/useNavigation';
-import { useEntityHandlers } from '../../hooks/useEntityHandlers';
 import { useSessionHandlers } from '../../hooks/auth/useSessionHandlers';
 import { useGlobalEventHandlers } from '../../hooks/infrastructure/useGlobalEventHandlers';
+import type { AppState } from '../../hooks/layout/useAppState';
+import { useNavigation } from '../../hooks/layout/useNavigation';
+import { useShift } from '../../hooks/sales/useShift';
+import { useEntityHandlers } from '../../hooks/useEntityHandlers';
 import { TRANSLATIONS } from '../../i18n/translations';
+import type { ViewState } from '../../types';
 import { Modal } from '../common/Modal';
 import { SecureGate } from '../common/SecureGate';
-import { PAGE_REGISTRY } from '../../config/pageRegistry';
-import type { AppState } from '../../hooks/layout/useAppState';
-import type { AuthState } from '../../hooks/auth/useAuth';
-import type { ViewState } from '../../types';
+import { LogoutOverlay } from './LogoutOverlay';
+import { MainLayout } from './MainLayout';
+import { PageRouter } from './PageRouter';
+import { useStatusBar } from './StatusBar';
 
 export interface AuthenticatedContentProps extends AppState, AuthState {}
 
@@ -49,9 +49,12 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 }) => {
   // --- Shifts ---
   const { currentShift } = useShift();
-  
+
   // --- Global Secure Gate State ---
-  const [pendingNavigation, setPendingNavigation] = useState<{ viewId: string; params?: any } | null>(null);
+  const [pendingNavigation, setPendingNavigation] = useState<{
+    viewId: string;
+    params?: any;
+  } | null>(null);
 
   // --- Settings from Context ---
   const {
@@ -88,7 +91,7 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     customers,
     setCustomers,
     employees,
-    setEmployees, 
+    setEmployees,
     batches,
     setBatches,
     branches,
@@ -127,8 +130,9 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       setMobileMenuOpen,
       hideInactiveModules,
       developerMode,
-      setNavigationParams: (params: any) => setNavigationParams(params), 
-      onProtectedNavigation: (viewId: string, params?: any) => setPendingNavigation({ viewId, params }),
+      setNavigationParams: (params: any) => setNavigationParams(params),
+      onProtectedNavigation: (viewId: string, params?: any) =>
+        setPendingNavigation({ viewId, params }),
       currentEmployeeId,
       activeBranchId,
       activeOrgId,
@@ -177,7 +181,7 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     activeBranchId,
     activeOrgId,
     employees,
-    setEmployees, 
+    setEmployees,
     isLoading,
     batches,
     setBatches,
@@ -311,13 +315,25 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       activeBranchId,
       activeOrgId,
     }),
-    [sales, inventory, enrichedCustomers, suppliers, purchases, purchaseReturns, returns, employees, batches, activeBranchId, activeOrgId]
+    [
+      sales,
+      inventory,
+      enrichedCustomers,
+      suppliers,
+      purchases,
+      purchaseReturns,
+      returns,
+      employees,
+      batches,
+      activeBranchId,
+      activeOrgId,
+    ]
   );
 
   // --- TRANSITION SKELETON STATE ---
   if (isLoggingOut) {
     return (
-      <LogoutOverlay 
+      <LogoutOverlay
         language={language}
         darkMode={darkMode}
         currentEmployeeId={currentEmployeeId}
@@ -411,7 +427,9 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
         standalone={true}
         isOpen={!!pendingNavigation}
         language={language}
-        storageKey={pendingNavigation ? PAGE_REGISTRY[pendingNavigation.viewId]?.storageKey : 'area_unlocked'}
+        storageKey={
+          pendingNavigation ? PAGE_REGISTRY[pendingNavigation.viewId]?.storageKey : 'area_unlocked'
+        }
         onUnlock={() => {
           if (pendingNavigation) {
             handleViewChange(pendingNavigation.viewId, pendingNavigation.params);

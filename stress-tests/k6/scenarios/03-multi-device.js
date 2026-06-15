@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════
  * 📱 SCENARIO 03: MULTI-DEVICE SIMULATION
  * ═══════════════════════════════════════════════════════════
- * 
+ *
  * Tests: Multiple POS terminals operating simultaneously.
  * Each virtual user (VU) simulates a complete device workflow:
  *   1. Login
@@ -11,28 +11,35 @@
  *   4. Checkout
  *   5. Check sales history
  *   6. Repeat
- * 
+ *
  * This tests the real-world scenario of a pharmacy with
  * multiple cashier stations, all sharing the same branch data.
- * 
+ *
  * Run: k6 run stress-tests/k6/scenarios/03-multi-device.js
  */
 
+import { check, group, sleep } from 'k6';
 import http from 'k6/http';
-import { check, sleep, group } from 'k6';
 import { Counter, Rate, Trend } from 'k6/metrics';
-import { 
-  SUPABASE_REST_URL, SUPABASE_RPC_URL,
-  getHeaders, TEST_DATA, TEST_EMAIL, TEST_PASSWORD 
+import {
+  getHeaders,
+  SUPABASE_REST_URL,
+  SUPABASE_RPC_URL,
+  TEST_DATA,
+  TEST_EMAIL,
+  TEST_PASSWORD,
 } from '../config.js';
-import { generateCheckoutPayload, randomInt, generateCustomerName } from '../helpers/data-generators.js';
 import { loginAndGetToken } from '../helpers/auth.js';
+import {
+  generateCheckoutPayload,
+  generateCustomerName,
+  randomInt,
+} from '../helpers/data-generators.js';
 
 export function setup() {
   const token = loginAndGetToken(TEST_EMAIL, TEST_PASSWORD);
   return { token };
 }
-
 
 // --- Custom Metrics ---
 const deviceCycleDuration = new Trend('device_cycle_duration', true);
@@ -48,17 +55,17 @@ export const options = {
     // Fixed number of devices, running continuously
     multi_device: {
       executor: 'constant-vus',
-      vus: 10,            // 10 POS terminals
-      duration: '3m',     // Running for 3 minutes
+      vus: 10, // 10 POS terminals
+      duration: '3m', // Running for 3 minutes
     },
   },
   thresholds: {
-    'device_cycle_duration': ['p(95)<15000'],     // Full cycle < 15s
-    'device_inventory_load_duration': ['p(95)<2000'],
-    'device_search_duration': ['p(95)<1000'],
-    'device_checkout_duration': ['p(95)<3000'],
-    'device_error_rate': ['rate<0.10'],
-    'http_req_failed': ['rate<0.10'],
+    device_cycle_duration: ['p(95)<15000'], // Full cycle < 15s
+    device_inventory_load_duration: ['p(95)<2000'],
+    device_search_duration: ['p(95)<1000'],
+    device_checkout_duration: ['p(95)<3000'],
+    device_error_rate: ['rate<0.10'],
+    http_req_failed: ['rate<0.10'],
   },
 };
 
@@ -80,12 +87,15 @@ export default function (data) {
     );
 
     inventoryLoadDuration.add(Date.now() - start);
-    
+
     const ok = check(res, {
       '✅ Inventory loaded': (r) => r.status === 200,
       '✅ Has drug data': (r) => {
-        try { return JSON.parse(r.body).length > 0; }
-        catch { return false; }
+        try {
+          return JSON.parse(r.body).length > 0;
+        } catch {
+          return false;
+        }
       },
     });
     if (!ok) hasError = true;
@@ -97,7 +107,7 @@ export default function (data) {
   group(`📱 [${deviceId}] Search Drug`, () => {
     const searchTerms = ['pana', 'augm', 'conc', 'lipi', 'nexiu', 'midath', 'kapro', 'stimu'];
     const term = searchTerms[randomInt(0, searchTerms.length - 1)];
-    
+
     const start = Date.now();
     const res = http.get(
       `${SUPABASE_REST_URL}/drugs?branch_id=eq.${TEST_DATA.branchId}&name=ilike.*${term}*&select=id,name,public_price,stock&limit=20`,
@@ -108,7 +118,7 @@ export default function (data) {
     );
 
     searchDuration.add(Date.now() - start);
-    
+
     check(res, {
       '✅ Search returned results': (r) => r.status === 200,
     });
@@ -136,7 +146,9 @@ export default function (data) {
     checkoutDuration.add(elapsed);
 
     let result = null;
-    try { result = JSON.parse(res.body); } catch {}
+    try {
+      result = JSON.parse(res.body);
+    } catch {}
 
     const ok = check(res, {
       '✅ Checkout RPC 200': (r) => r.status === 200,
@@ -175,13 +187,10 @@ export default function (data) {
   if (Math.random() < 0.3) {
     group(`📱 [${deviceId}] Check Shift`, () => {
       const shiftId = TEST_DATA.shiftIds[randomInt(0, TEST_DATA.shiftIds.length - 1)];
-      const res = http.get(
-        `${SUPABASE_REST_URL}/shifts?id=eq.${shiftId}&select=*`,
-        {
-          headers: getHeaders(token),
-          tags: { name: 'GET /shifts (balance)' },
-        }
-      );
+      const res = http.get(`${SUPABASE_REST_URL}/shifts?id=eq.${shiftId}&select=*`, {
+        headers: getHeaders(token),
+        tags: { name: 'GET /shifts (balance)' },
+      });
 
       check(res, {
         '✅ Shift data OK': (r) => r.status === 200,
@@ -214,7 +223,7 @@ export function handleSummary(data) {
   console.log(`Checkout p95:       ${Math.round(checkoutp95)}ms`);
   console.log(`Inventory Load p95: ${Math.round(invp95)}ms`);
   console.log(`Error Rate:         ${(errorRate * 100).toFixed(2)}%`);
-  console.log(`Result:             ${errorRate < 0.10 ? '✅ PASSED' : '❌ FAILED'}`);
+  console.log(`Result:             ${errorRate < 0.1 ? '✅ PASSED' : '❌ FAILED'}`);
   console.log('══════════════════════════════════════════\n');
 
   return {

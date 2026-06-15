@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import type React from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ROUTES, TEST_ROUTES } from '../../config/routes';
+import { StorageKeys } from '../../config/storageKeys';
 import { useAlert } from '../../context';
 import { authService } from '../../services/auth/authService';
+import type { UserSession, ViewState } from '../../types';
 import { storage } from '../../utils/storage';
-import { StorageKeys } from '../../config/storageKeys';
-import type { ViewState, UserSession } from '../../types';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -36,7 +37,10 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
   });
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isRecoveringPassword, setIsRecoveringPassword] = useState(() => {
-    return window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery');
+    return (
+      window.location.hash.includes('type=recovery') ||
+      window.location.search.includes('type=recovery')
+    );
   });
 
   // Logout handler
@@ -122,7 +126,9 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
     window.addEventListener('storage', handleStorageChange);
 
     // Supabase Auth Listener for external logouts (e.g., from another tab)
-    const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+    const isSupabaseConfigured =
+      import.meta.env.VITE_SUPABASE_URL &&
+      import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
     let authListener: { unsubscribe: () => void } | null = null;
 
     if (isSupabaseConfigured) {

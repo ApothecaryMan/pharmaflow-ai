@@ -40,7 +40,7 @@ export const MaterialTabs: React.FC<MaterialTabsProps> = ({
 
   const heightClass = variant === 'compact' ? 'h-auto py-1.5 min-h-[34px]' : 'h-[72px]';
 
-  const interactiveClasses = interactive 
+  const interactiveClasses = interactive
     ? `cursor-pointer ${isSelected ? 'bg-gray-200 dark:bg-gray-800' : 'bg-gray-100/80 hover:bg-gray-200/70 dark:bg-white/5 dark:hover:bg-white/10'}`
     : `cursor-default ${isSelected ? 'bg-gray-200 dark:bg-gray-800' : 'bg-gray-100/50 dark:bg-white/5'}`;
 

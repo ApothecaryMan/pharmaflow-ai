@@ -1,13 +1,9 @@
-import { type FilterFn } from '@tanstack/react-table';
-import { storage } from '../../../utils/storage';
+import type { FilterFn } from '@tanstack/react-table';
 import { normalizeDigits } from '../../../utils/localization';
 import { createSearchRegex } from '../../../utils/searchUtils';
+import { storage } from '../../../utils/storage';
 import { getSmartDirection } from '../SmartInputs';
-import {
-  getHeaderJustifyClass,
-  getItemsAlignClass,
-  getTextAlignClass,
-} from '../TableAlignment';
+import { getHeaderJustifyClass, getItemsAlignClass, getTextAlignClass } from '../TableAlignment';
 
 /**
  * A pure utility to check if a value matches a filter (string search or array pills).
@@ -79,14 +75,17 @@ export const getStoredSettings = (tableId: string) => {
 // Encapsulates clipboard copying with fallback for non-secure contexts
 export const copyTextToClipboard = (text: string): Promise<boolean> => {
   if (navigator.clipboard && window.isSecureContext) {
-    return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+    return navigator.clipboard
+      .writeText(text)
+      .then(() => true)
+      .catch(() => false);
   }
 
-  const textArea = document.createElement("textarea");
+  const textArea = document.createElement('textarea');
   textArea.value = text;
-  textArea.style.position = "fixed";
-  textArea.style.left = "-9999px";
-  textArea.style.top = "0";
+  textArea.style.position = 'fixed';
+  textArea.style.left = '-9999px';
+  textArea.style.top = '0';
   document.body.appendChild(textArea);
   textArea.focus();
   textArea.select();
@@ -101,7 +100,17 @@ export const copyTextToClipboard = (text: string): Promise<boolean> => {
   return Promise.resolve(success);
 };
 
-const ALIGN_END_KEYWORDS = ['price', 'cost', 'revenue', 'profit', 'qty', 'quantity', 'amount', 'total', 'balance'];
+const ALIGN_END_KEYWORDS = [
+  'price',
+  'cost',
+  'revenue',
+  'profit',
+  'qty',
+  'quantity',
+  'amount',
+  'total',
+  'balance',
+];
 const ALIGN_CENTER_KEYWORDS = ['status', 'active', 'is_', 'action', 'driver', 'man'];
 
 export const getSmartAlignment = (columnId: string, meta?: any): 'start' | 'end' | 'center' => {
@@ -109,10 +118,8 @@ export const getSmartAlignment = (columnId: string, meta?: any): 'start' | 'end'
     return meta.align === 'left' ? 'start' : meta.align === 'right' ? 'end' : meta.align;
 
   const id = columnId.toLowerCase();
-  if (ALIGN_END_KEYWORDS.some((key) => id.includes(key)))
-    return 'end';
-  if (ALIGN_CENTER_KEYWORDS.some((key) => id.includes(key)))
-    return 'center';
+  if (ALIGN_END_KEYWORDS.some((key) => id.includes(key))) return 'end';
+  if (ALIGN_CENTER_KEYWORDS.some((key) => id.includes(key))) return 'center';
   return 'start';
 };
 
@@ -127,7 +134,7 @@ export const getCellDirection = (columnId: string, meta: any, cellValue: any, is
   if (meta?.isId || meta?.isAction) return isRtl ? 'rtl' : 'ltr';
   // Disabled content-based auto direction check
   // if (meta?.dir === 'auto') return getSmartDirection(String(cellValue || ''));
-  return meta?.dir && meta.dir !== 'auto' ? meta.dir : (isRtl ? 'rtl' : 'ltr');
+  return meta?.dir && meta.dir !== 'auto' ? meta.dir : isRtl ? 'rtl' : 'ltr';
 };
 
 export const formatSmartDate = (
@@ -144,9 +151,13 @@ export const formatSmartDate = (
   const isYesterday = targetTs === yesterdayTs;
 
   const dateLabel = isToday
-    ? isRtl ? 'اليوم' : 'Today'
+    ? isRtl
+      ? 'اليوم'
+      : 'Today'
     : isYesterday
-      ? isRtl ? 'أمس' : 'Yesterday'
+      ? isRtl
+        ? 'أمس'
+        : 'Yesterday'
       : date.toLocaleDateString();
 
   const hourRaw = date.getHours();
@@ -171,7 +182,8 @@ export const computeColumnMeta = (column: any, columnAlignment: Record<string, a
   const meta = column.columnDef.meta;
   const header = String(column.columnDef.header || '').toLowerCase();
 
-  const align = (meta?.disableAlignment ? null : columnAlignment[id]) || getSmartAlignment(id, meta);
+  const align =
+    (meta?.disableAlignment ? null : columnAlignment[id]) || getSmartAlignment(id, meta);
 
   const isId = meta?.isId ?? (colId.includes('id') || colId.includes('code'));
   const isDate =

@@ -1,5 +1,5 @@
 import { supabase } from '../../../lib/supabase';
-import type { Expense, ExpenseSummary, ExpenseCategory } from '../../../types';
+import type { Expense, ExpenseCategory, ExpenseSummary } from '../../../types';
 
 export const expenseRepository = {
   mapFromDb(db: any): Expense {
@@ -74,17 +74,15 @@ export const expenseRepository = {
   },
 
   async getById(id: string): Promise<Expense | null> {
-    const { data, error } = await supabase
-      .from('expenses')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
+    const { data, error } = await supabase.from('expenses').select('*').eq('id', id).maybeSingle();
 
     if (error) throw error;
     return data ? this.mapFromDb(data) : null;
   },
 
-  async insert(expense: Omit<Expense, 'id' | 'createdAt' | 'recordedAt' | 'approved'>): Promise<Expense> {
+  async insert(
+    expense: Omit<Expense, 'id' | 'createdAt' | 'recordedAt' | 'approved'>
+  ): Promise<Expense> {
     const payload = {
       orgId: expense.orgId,
       branchId: expense.branchId,
@@ -104,7 +102,9 @@ export const expenseRepository = {
       throw new Error(data?.error || 'Failed to record expense via RPC');
     }
 
-    const newExpense = data.expense ? this.mapFromDb(data.expense) : await this.getById(data.expenseId);
+    const newExpense = data.expense
+      ? this.mapFromDb(data.expense)
+      : await this.getById(data.expenseId);
     if (!newExpense) {
       throw new Error('Expense recorded but could not be retrieved');
     }
@@ -117,11 +117,7 @@ export const expenseRepository = {
     return true;
   },
 
-  async getSummary(
-    branchId: string,
-    dateFrom?: string,
-    dateTo?: string
-  ): Promise<ExpenseSummary> {
+  async getSummary(branchId: string, dateFrom?: string, dateTo?: string): Promise<ExpenseSummary> {
     let query = supabase.from('expenses').select('*').eq('branch_id', branchId);
 
     if (dateFrom) query = query.gte('recorded_at', dateFrom);
@@ -151,7 +147,7 @@ export const expenseRepository = {
     for (const d of expenses) {
       const amt = Number(d.amount);
       summary.total += amt;
-      
+
       const cat = d.category as ExpenseCategory;
       if (summary.byCategory[cat] !== undefined) {
         summary.byCategory[cat] += amt;

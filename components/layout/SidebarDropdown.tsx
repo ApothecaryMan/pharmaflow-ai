@@ -1,8 +1,8 @@
 import React from 'react';
-import { type ViewState } from '../../types';
 import type { MenuItem } from '../../config/menuData';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { TRANSLATIONS } from '../../i18n/translations';
+import type { ViewState } from '../../types';
 import { ContextMenuTrigger } from '../common/ContextMenu';
 
 interface SidebarDropdownProps {
@@ -66,7 +66,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
       };
 
       updatePosition();
-      
+
       let frameId: number | null = null;
       const handleScroll = () => {
         if (frameId !== null) return;
@@ -113,17 +113,19 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
 
     const numCols = Math.min(submenusArray.length, 3);
 
-    const counts = submenusArray.map(sm => ({
+    const counts = submenusArray.map((sm) => ({
       sm,
       count: hideInactiveModules
-        ? sm.items.filter(i => typeof i === 'object' && !!i.view).length
+        ? sm.items.filter((i) => typeof i === 'object' && !!i.view).length
         : sm.items.length,
     }));
 
     const sorted = [...counts].sort((a, b) => b.count - a.count);
 
-    const bins: Array<{ items: typeof counts; total: number }> =
-      Array.from({ length: numCols }, () => ({ items: [], total: 0 }));
+    const bins: Array<{ items: typeof counts; total: number }> = Array.from(
+      { length: numCols },
+      () => ({ items: [], total: 0 })
+    );
 
     for (const item of sorted) {
       let minBin = 0;
@@ -135,10 +137,10 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
     }
 
     const origIdx = new Map(submenusArray.map((sm, i) => [sm.id, i]));
-    return bins.map(bin =>
+    return bins.map((bin) =>
       bin.items
         .sort((a, b) => Number(origIdx.get(a.sm.id) ?? 0) - Number(origIdx.get(b.sm.id) ?? 0))
-        .map(item => item.sm),
+        .map((item) => item.sm)
     );
   }, [isMulti, submenusArray, hideInactiveModules]);
 
@@ -179,9 +181,13 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
     >
       <div className={`max-h-[60vh] overflow-y-auto ${isMulti ? 'p-3' : 'py-2'}`}>
         {isMulti ? (
-          <div className="flex gap-3">
+          <div className='flex gap-3'>
             {columns.map((col, colIdx) => (
-              <div key={colIdx} className="flex flex-col gap-0" style={{ minWidth: 220, maxWidth: 280, flex: '1 1 0%' }}>
+              <div
+                key={colIdx}
+                className='flex flex-col gap-0'
+                style={{ minWidth: 220, maxWidth: 280, flex: '1 1 0%' }}
+              >
                 {col.map((submenu) => (
                   <div key={submenu.id}>
                     <div className='px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider'>

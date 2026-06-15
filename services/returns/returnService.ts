@@ -5,11 +5,11 @@
 
 import type { PurchaseReturn, Return } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
-import { settingsService } from '../settings/settingsService';
-import { inventoryService } from '../inventory/inventoryService';
-import { batchService } from '../inventory/batchService';
-import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
 import { authService } from '../auth/authService';
+import { batchService } from '../inventory/batchService';
+import { inventoryService } from '../inventory/inventoryService';
+import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
+import { settingsService } from '../settings/settingsService';
 import { returnsRepository } from './repositories/returnsRepository';
 import type { ReturnService } from './types';
 
@@ -27,15 +27,16 @@ export const returnService: ReturnService = {
 
   createSalesReturn: async (ret: Omit<Return, 'id'>, branchId?: string): Promise<Return> => {
     const settings = await settingsService.getAll();
-    const effectiveBranchId = branchId || (ret as any).branchId || settings.activeBranchId || settings.branchCode;
-    
+    const effectiveBranchId =
+      branchId || (ret as any).branchId || settings.activeBranchId || settings.branchCode;
+
     const newReturn: Return = {
       ...ret,
       id: idGenerator.uuid(),
       branchId: effectiveBranchId,
       orgId: settings.orgId,
       date: ret.date || new Date().toISOString(),
-      processedBy: ret.processedBy || authService.getCurrentUserSync()?.employeeId
+      processedBy: ret.processedBy || authService.getCurrentUserSync()?.employeeId,
     } as Return;
 
     await returnsRepository.insertSalesReturn(newReturn);
@@ -53,10 +54,14 @@ export const returnService: ReturnService = {
     return returnsRepository.getPurchaseById(id);
   },
 
-  createPurchaseReturn: async (ret: Omit<PurchaseReturn, 'id'>, branchId?: string): Promise<PurchaseReturn> => {
+  createPurchaseReturn: async (
+    ret: Omit<PurchaseReturn, 'id'>,
+    branchId?: string
+  ): Promise<PurchaseReturn> => {
     const settings = await settingsService.getAll();
-    const effectiveBranchId = branchId || (ret as any).branchId || settings.activeBranchId || settings.branchCode;
-    
+    const effectiveBranchId =
+      branchId || (ret as any).branchId || settings.activeBranchId || settings.branchCode;
+
     const newReturn: PurchaseReturn = {
       ...ret,
       id: idGenerator.uuid(),
@@ -69,8 +74,13 @@ export const returnService: ReturnService = {
     for (const item of newReturn.items) {
       // allocateStock with commitChanges=true (default) updates the batches.
       // The DB Trigger will automatically log movements and update drugs.stock.
-      const allocations = await batchService.allocateStock(item.drugId, item.quantityReturned, effectiveBranchId, true);
-      
+      const allocations = await batchService.allocateStock(
+        item.drugId,
+        item.quantityReturned,
+        effectiveBranchId,
+        true
+      );
+
       if (!allocations) {
         throw new Error(`Insufficient stock for drug: ${item.name}`);
       }
@@ -84,11 +94,11 @@ export const returnService: ReturnService = {
   saveSalesReturns: async (returns: Return[], branchId?: string): Promise<void> => {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    
-    const processedReturns = returns.map(r => ({
+
+    const processedReturns = returns.map((r) => ({
       ...r,
       branchId: r.branchId || effectiveBranchId,
-      orgId: r.orgId || settings.orgId
+      orgId: r.orgId || settings.orgId,
     }));
 
     await returnsRepository.upsertSalesReturns(processedReturns);
@@ -97,11 +107,11 @@ export const returnService: ReturnService = {
   savePurchaseReturns: async (returns: PurchaseReturn[], branchId?: string): Promise<void> => {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    
-    const processedReturns = returns.map(r => ({
+
+    const processedReturns = returns.map((r) => ({
       ...r,
       branchId: r.branchId || effectiveBranchId,
-      orgId: r.orgId || settings.orgId
+      orgId: r.orgId || settings.orgId,
     }));
 
     await returnsRepository.upsertPurchaseReturns(processedReturns);

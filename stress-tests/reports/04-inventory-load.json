@@ -7,21 +7,21 @@
       {
         "groups": [],
         "checks": [
-            {
-              "passes": 1,
-              "fails": 0,
-              "name": "auth login status is 200",
-              "path": "::setup::auth login status is 200",
-              "id": "83e50c28eecbcc735b217f4caf98d173"
-            },
-            {
-              "name": "auth login has access_token",
-              "path": "::setup::auth login has access_token",
-              "id": "139ead8a83809cdbc14a4cff7ebf6f21",
-              "passes": 1,
-              "fails": 0
-            }
-          ],
+          {
+            "passes": 1,
+            "fails": 0,
+            "name": "auth login status is 200",
+            "path": "::setup::auth login status is 200",
+            "id": "83e50c28eecbcc735b217f4caf98d173"
+          },
+          {
+            "name": "auth login has access_token",
+            "path": "::setup::auth login has access_token",
+            "id": "139ead8a83809cdbc14a4cff7ebf6f21",
+            "passes": 1,
+            "fails": 0
+          }
+        ],
         "name": "setup",
         "path": "::setup",
         "id": "5c0f8025f7e0b6654089e5b00e950f1a"
@@ -53,14 +53,14 @@
         "id": "74139ac88509ad82cffaf1839d6aeb64",
         "groups": [],
         "checks": [
-            {
-              "path": "::🏷️ Filtered Query::✅ Filter 200",
-              "id": "d4afb14078939a1c363dbba26e7f3b21",
-              "passes": 1,
-              "fails": 0,
-              "name": "✅ Filter 200"
-            }
-          ],
+          {
+            "path": "::🏷️ Filtered Query::✅ Filter 200",
+            "id": "d4afb14078939a1c363dbba26e7f3b21",
+            "passes": 1,
+            "fails": 0,
+            "name": "✅ Filter 200"
+          }
+        ],
         "name": "🏷️ Filtered Query"
       },
       {
@@ -69,27 +69,20 @@
         "id": "2d1f28e51b5eb328fbed4317324777ea",
         "groups": [],
         "checks": [
-            {
-              "name": "✅ Low stock check OK",
-              "path": "::⚠️ Low Stock Check::✅ Low stock check OK",
-              "id": "dd89694b5fa01408be5c42577f3dda7c",
-              "passes": 2,
-              "fails": 0
-            }
-          ]
+          {
+            "name": "✅ Low stock check OK",
+            "path": "::⚠️ Low Stock Check::✅ Low stock check OK",
+            "id": "dd89694b5fa01408be5c42577f3dda7c",
+            "passes": 2,
+            "fails": 0
+          }
+        ]
       }
     ],
     "checks": []
   },
   "options": {
-    "summaryTrendStats": [
-      "avg",
-      "min",
-      "med",
-      "max",
-      "p(90)",
-      "p(95)"
-    ],
+    "summaryTrendStats": ["avg", "min", "med", "max", "p(90)", "p(95)"],
     "summaryTimeUnit": "",
     "noColor": false
   },

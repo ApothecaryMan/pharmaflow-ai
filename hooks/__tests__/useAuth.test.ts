@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { useAuth } from '../auth/useAuth';
-import { authService } from '../../services/auth/authService';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ROUTES } from '../../config/routes';
+import { authService } from '../../services/auth/authService';
+import { useAuth } from '../auth/useAuth';
 
 // Mock authService
 vi.mock('../../context', () => ({
@@ -28,36 +28,40 @@ describe('useAuth Hook', () => {
     (authService.hasSession as any).mockReturnValue(true);
     // Mock user to prevent state update from overwriting true to false if user is null
     (authService.getCurrentUser as any).mockResolvedValue({ id: 'u1' });
-    
+
     const setView = vi.fn();
-    
-    const { result } = renderHook(() => useAuth({ 
-      view: ROUTES.DASHBOARD, 
-      setView, 
-    }));
+
+    const { result } = renderHook(() =>
+      useAuth({
+        view: ROUTES.DASHBOARD,
+        setView,
+      })
+    );
 
     expect(result.current.isAuthenticated).toBe(true);
 
     // Wait for the async effect to complete to avoid act() warnings
     await waitFor(() => {
-        expect(authService.getCurrentUser).toHaveBeenCalled();
+      expect(authService.getCurrentUser).toHaveBeenCalled();
     });
   });
 
   it('should check auth async on mount', async () => {
-    (authService.hasSession as any).mockReturnValue(false); 
-    (authService.getCurrentUser as any).mockResolvedValue({ id: 'u1', name: 'User' }); 
-    
+    (authService.hasSession as any).mockReturnValue(false);
+    (authService.getCurrentUser as any).mockResolvedValue({ id: 'u1', name: 'User' });
+
     const setView = vi.fn();
-    
-    const { result } = renderHook(() => useAuth({ 
-      view: ROUTES.LOGIN, 
-      setView, 
-    }));
+
+    const { result } = renderHook(() =>
+      useAuth({
+        view: ROUTES.LOGIN,
+        setView,
+      })
+    );
 
     // Wait for update
     await waitFor(() => {
-        expect(result.current.isAuthenticated).toBe(true);
+      expect(result.current.isAuthenticated).toBe(true);
     });
   });
 
@@ -66,15 +70,17 @@ describe('useAuth Hook', () => {
     (authService.getCurrentUser as any).mockResolvedValue({ id: 'u1' });
 
     const setView = vi.fn();
-    
-    const { result } = renderHook(() => useAuth({ 
-      view: ROUTES.DASHBOARD, 
-      setView, 
-    }));
+
+    const { result } = renderHook(() =>
+      useAuth({
+        view: ROUTES.DASHBOARD,
+        setView,
+      })
+    );
 
     // Wait for initial effect
     await waitFor(() => {
-       expect(authService.getCurrentUser).toHaveBeenCalled();
+      expect(authService.getCurrentUser).toHaveBeenCalled();
     });
 
     await act(async () => {
@@ -91,15 +97,17 @@ describe('useAuth Hook', () => {
     (authService.getCurrentUser as any).mockResolvedValue(null);
 
     const setView = vi.fn();
-    
-    const { result } = renderHook(() => useAuth({ 
-      view: ROUTES.LOGIN, 
-      setView, 
-    }));
-    
+
+    const { result } = renderHook(() =>
+      useAuth({
+        view: ROUTES.LOGIN,
+        setView,
+      })
+    );
+
     // Wait for effect
     await waitFor(() => {
-       expect(authService.getCurrentUser).toHaveBeenCalled();
+      expect(authService.getCurrentUser).toHaveBeenCalled();
     });
 
     // Manually force false (though it should be false already)

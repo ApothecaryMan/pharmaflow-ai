@@ -1,4 +1,4 @@
-import { type React, useState, useEffect, useRef } from 'react';
+import { type React, useEffect, useRef, useState } from 'react';
 
 // Unified buttons definition for simpler grid rendering
 const KEYS = [
@@ -21,7 +21,7 @@ const KEYS = [
   { val: '0', display: '0' },
   { val: '.', display: '.' },
   { val: '=', display: '=', type: 'equals' },
-  { val: '+', display: '+', type: 'operator' }
+  { val: '+', display: '+', type: 'operator' },
 ];
 
 export const Calculator: React.FC = () => {
@@ -32,7 +32,7 @@ export const Calculator: React.FC = () => {
   const handleCopy = (text: string) => {
     if (!text || text === 'Error') return;
     const cleanText = text.replace(/,/g, '');
-    
+
     const triggerSuccess = () => {
       setShowCopiedCheck(true);
       setTimeout(() => setShowCopiedCheck(false), 1000);
@@ -40,7 +40,8 @@ export const Calculator: React.FC = () => {
 
     // Modern API with secure context check
     if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(cleanText)
+      navigator.clipboard
+        .writeText(cleanText)
         .then(triggerSuccess)
         .catch(() => fallbackCopy(cleanText, triggerSuccess));
     } else {
@@ -77,7 +78,7 @@ export const Calculator: React.FC = () => {
       if (calcResult) {
         setCalcResult('');
       } else {
-        setCalcExpr(prev => prev.slice(0, -1));
+        setCalcExpr((prev) => prev.slice(0, -1));
       }
     } else if (val === '=') {
       if (!calcExpr) return;
@@ -108,7 +109,7 @@ export const Calculator: React.FC = () => {
           setCalcExpr(val);
         }
       } else {
-        setCalcExpr(prev => {
+        setCalcExpr((prev) => {
           if (/[+×÷-]/.test(val) && prev && /[+×÷-]/.test(prev.slice(-1))) {
             return prev.slice(0, -1) + val;
           }
@@ -126,7 +127,10 @@ export const Calculator: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+      if (
+        target &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+      ) {
         return;
       }
 
@@ -142,9 +146,21 @@ export const Calculator: React.FC = () => {
 
       const key = e.key;
       const keyMap: Record<string, string> = {
-        '+': '+', '-': '-', '*': '×', 'x': '×', 'X': '×', '/': '÷',
-        '(': '(', ')': ')', '.': '.', 'Enter': '=', '=': '=',
-        'Backspace': 'DEL', 'Escape': 'C', 'c': 'C', 'C': 'C'
+        '+': '+',
+        '-': '-',
+        '*': '×',
+        x: '×',
+        X: '×',
+        '/': '÷',
+        '(': '(',
+        ')': ')',
+        '.': '.',
+        Enter: '=',
+        '=': '=',
+        Backspace: 'DEL',
+        Escape: 'C',
+        c: 'C',
+        C: 'C',
       };
 
       if (/[0-9]/.test(key)) {
@@ -185,7 +201,7 @@ export const Calculator: React.FC = () => {
   };
 
   const renderFormattedExpression = (expr: string, size: 'sm' | 'lg' = 'lg') => {
-    if (!expr) return <span className="text-(--text-tertiary) opacity-40">0</span>;
+    if (!expr) return <span className='text-(--text-tertiary) opacity-40'>0</span>;
     const isSm = size === 'sm';
     return expr.split(/([+×÷\-()])/).map((token, index) => {
       if (!token) return null;
@@ -193,8 +209,8 @@ export const Calculator: React.FC = () => {
 
       if (/[+×÷-]/.test(token)) {
         return (
-          <span 
-            key={uniqueKey} 
+          <span
+            key={uniqueKey}
             className={`text-primary-500 font-black inline-block select-none ${isSm ? 'mx-0.5 text-[11px] font-extrabold' : 'mx-1 text-[22px]'}`}
           >
             {token}
@@ -203,8 +219,8 @@ export const Calculator: React.FC = () => {
       }
       if (/[()]/.test(token)) {
         return (
-          <span 
-            key={uniqueKey} 
+          <span
+            key={uniqueKey}
             className={`text-indigo-500 dark:text-indigo-400 font-black select-none ${isSm ? 'text-[10px]' : 'text-[20px]'}`}
           >
             {token}
@@ -212,8 +228,8 @@ export const Calculator: React.FC = () => {
         );
       }
       return (
-        <span 
-          key={uniqueKey} 
+        <span
+          key={uniqueKey}
           className={`font-semibold tracking-wider ${isSm ? 'text-(--text-secondary) text-[10px]' : 'text-(--text-primary) font-bold text-[19px]'}`}
         >
           {token}
@@ -225,61 +241,93 @@ export const Calculator: React.FC = () => {
   const livePreview = getLivePreview(calcExpr);
 
   return (
-    <div className="space-y-2">
+    <div className='space-y-2'>
       {/* Calculator Screen */}
-      <div 
-        className="w-full bg-black/5 dark:bg-white/5 rounded-lg p-2.5 text-start min-h-[68px] flex flex-col justify-between overflow-hidden font-mono"
+      <div
+        className='w-full bg-black/5 dark:bg-white/5 rounded-lg p-2.5 text-start min-h-[68px] flex flex-col justify-between overflow-hidden font-mono'
         style={{ direction: 'ltr' }}
       >
         {calcResult ? (
           <>
-            <div className="text-[10px] text-(--text-tertiary) truncate h-4 tracking-wider" dir="ltr" style={{ direction: 'ltr' }}>
+            <div
+              className='text-[10px] text-(--text-tertiary) truncate h-4 tracking-wider'
+              dir='ltr'
+              style={{ direction: 'ltr' }}
+            >
               {renderFormattedExpression(calcExpr, 'sm')}
             </div>
-            <div className="text-[22px] font-black text-primary-500 truncate h-7 tracking-wider flex items-center gap-1.5" dir="ltr" style={{ direction: 'ltr' }}>
-              <button 
-                type="button"
+            <div
+              className='text-[22px] font-black text-primary-500 truncate h-7 tracking-wider flex items-center gap-1.5'
+              dir='ltr'
+              style={{ direction: 'ltr' }}
+            >
+              <button
+                type='button'
                 onClick={() => handleCopy(calcResult)}
-                className="inline-block cursor-pointer transition-colors duration-200 hover:text-primary-600 dark:hover:text-primary-400 focus:outline-none"
+                className='inline-block cursor-pointer transition-colors duration-200 hover:text-primary-600 dark:hover:text-primary-400 focus:outline-none'
               >
                 {calcResult}
               </button>
               {showCopiedCheck && (
-                <span className="inline-flex items-center gap-1 text-green-500 select-none animate-pulse text-[10px] font-bold">
-                  <svg className="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} role="img" aria-label="Copied successfully">
+                <span className='inline-flex items-center gap-1 text-green-500 select-none animate-pulse text-[10px] font-bold'>
+                  <svg
+                    className='w-3.5 h-3.5 text-green-500'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'
+                    strokeWidth={2}
+                    role='img'
+                    aria-label='Copied successfully'
+                  >
                     <title>Copied successfully</title>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    <path strokeLinecap='round' strokeLinejoin='round' d='M5 13l4 4L19 7' />
                   </svg>
-                  <span className="font-sans">تم النسخ</span>
+                  <span className='font-sans'>تم النسخ</span>
                 </span>
               )}
             </div>
           </>
         ) : (
           <>
-            <div className="text-[19px] font-bold text-(--text-primary) truncate h-7 tracking-wider flex items-center" dir="ltr" style={{ direction: 'ltr' }}>
+            <div
+              className='text-[19px] font-bold text-(--text-primary) truncate h-7 tracking-wider flex items-center'
+              dir='ltr'
+              style={{ direction: 'ltr' }}
+            >
               {renderFormattedExpression(calcExpr, 'lg')}
             </div>
-            <div className="text-[11px] text-(--text-tertiary) opacity-60 truncate h-4 tracking-wider flex justify-start items-center gap-1.5" dir="ltr" style={{ direction: 'ltr' }}>
+            <div
+              className='text-[11px] text-(--text-tertiary) opacity-60 truncate h-4 tracking-wider flex justify-start items-center gap-1.5'
+              dir='ltr'
+              style={{ direction: 'ltr' }}
+            >
               {livePreview && (
                 <>
-                  <span className="text-[10px] select-none opacity-80">≈</span>
-                  <button 
-                    type="button"
+                  <span className='text-[10px] select-none opacity-80'>≈</span>
+                  <button
+                    type='button'
                     onClick={() => handleCopy(livePreview)}
-                    className="inline-block cursor-pointer transition-colors duration-200 hover:text-primary-500 dark:hover:text-primary-400 focus:outline-none"
+                    className='inline-block cursor-pointer transition-colors duration-200 hover:text-primary-500 dark:hover:text-primary-400 focus:outline-none'
                   >
                     {livePreview}
                   </button>
                 </>
               )}
               {showCopiedCheck && (
-                <span className="inline-flex items-center gap-0.5 text-green-500 select-none animate-pulse text-[9px] font-bold">
-                  <svg className="w-3 h-3 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} role="img" aria-label="Copied successfully">
+                <span className='inline-flex items-center gap-0.5 text-green-500 select-none animate-pulse text-[9px] font-bold'>
+                  <svg
+                    className='w-3 h-3 text-green-500'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'
+                    strokeWidth={2}
+                    role='img'
+                    aria-label='Copied successfully'
+                  >
                     <title>Copied successfully</title>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    <path strokeLinecap='round' strokeLinejoin='round' d='M5 13l4 4L19 7' />
                   </svg>
-                  <span className="font-sans">تم النسخ</span>
+                  <span className='font-sans'>تم النسخ</span>
                 </span>
               )}
             </div>
@@ -288,25 +336,28 @@ export const Calculator: React.FC = () => {
       </div>
 
       {/* Calculator Keys Grid */}
-      <div className="grid grid-cols-4 gap-1.5 font-mono" dir="ltr" style={{ direction: 'ltr' }}>
+      <div className='grid grid-cols-4 gap-1.5 font-mono' dir='ltr' style={{ direction: 'ltr' }}>
         {KEYS.map(({ val, display, type }) => {
-          let btnClass = "h-8 rounded-lg text-xs font-bold transition-all active:scale-95 ";
+          let btnClass = 'h-8 rounded-lg text-xs font-bold transition-all active:scale-95 ';
           if (type === 'clear') {
-            btnClass += "bg-red-500/10 text-red-500 hover:bg-red-500/20 text-sm font-black";
+            btnClass += 'bg-red-500/10 text-red-500 hover:bg-red-500/20 text-sm font-black';
           } else if (type === 'secondary') {
-            btnClass += "bg-black/5 dark:bg-white/5 text-(--text-secondary) hover:bg-black/10 dark:hover:bg-white/10 text-sm font-black";
+            btnClass +=
+              'bg-black/5 dark:bg-white/5 text-(--text-secondary) hover:bg-black/10 dark:hover:bg-white/10 text-sm font-black';
           } else if (type === 'operator') {
-            btnClass += "bg-primary-500/10 text-primary-500 hover:bg-primary-500/20 text-base font-black";
+            btnClass +=
+              'bg-primary-500/10 text-primary-500 hover:bg-primary-500/20 text-base font-black';
           } else if (type === 'equals') {
-            btnClass += "bg-primary-500 text-white hover:bg-primary-600 text-base font-black";
+            btnClass += 'bg-primary-500 text-white hover:bg-primary-600 text-base font-black';
           } else {
-            btnClass += "bg-black/5 dark:bg-white/5 text-(--text-primary) hover:bg-black/10 dark:hover:bg-white/10";
+            btnClass +=
+              'bg-black/5 dark:bg-white/5 text-(--text-primary) hover:bg-black/10 dark:hover:bg-white/10';
           }
 
           return (
             <button
               key={val}
-              type="button"
+              type='button'
               onClick={() => handleCalcClick(val)}
               className={btnClass}
             >

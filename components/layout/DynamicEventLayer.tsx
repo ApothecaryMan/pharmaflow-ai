@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { EventManager, type EventContext } from '../../utils/events/eventManager';
-import { useSettings } from '../../context';
 import { useMotionValue } from 'framer-motion';
-import { VirtualCursor } from './DynamicEvents/VirtualCursor';
-import { SnowPile } from './DynamicEvents/SnowPile';
-import { SnowParticles } from './DynamicEvents/SnowParticles';
-import { WalkingCowOverlay } from './DynamicEvents/WalkingCowOverlay';
-import { StandardOverlay } from './DynamicEvents/StandardOverlay';
+import React, { useEffect, useState } from 'react';
+import { useSettings } from '../../context';
+import { type EventContext, EventManager } from '../../utils/events/eventManager';
 import { EidNavbarGradient } from './DynamicEvents/EidNavbarGradient';
+import { SnowParticles } from './DynamicEvents/SnowParticles';
+import { SnowPile } from './DynamicEvents/SnowPile';
+import { StandardOverlay } from './DynamicEvents/StandardOverlay';
+import { VirtualCursor } from './DynamicEvents/VirtualCursor';
+import { WalkingCowOverlay } from './DynamicEvents/WalkingCowOverlay';
 
 export const DynamicEventLayer: React.FC<{ view?: string }> = ({ view }) => {
   const [currentPath, setCurrentPath] = useState(
@@ -56,7 +56,9 @@ export const DynamicEventLayer: React.FC<{ view?: string }> = ({ view }) => {
     document.addEventListener('mouseenter', handleMouseEnter);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove, { passive: true } as EventListenerOptions);
+      window.removeEventListener('mousemove', handleMouseMove, {
+        passive: true,
+      } as EventListenerOptions);
       document.removeEventListener('mouseleave', handleMouseLeave);
       document.removeEventListener('mouseenter', handleMouseEnter);
     };

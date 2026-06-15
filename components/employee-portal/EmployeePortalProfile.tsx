@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useMemo, useState } from 'react';
-import type { EmploymentRequest, UserProfile, Employee } from '../../types';
+import type { Employee, EmploymentRequest, UserProfile } from '../../types';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { DocumentsTab } from './tabs/DocumentsTab';
 import { HistoryTab } from './tabs/HistoryTab';
@@ -47,13 +47,11 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
   const [cachedDocs, setCachedDocs] = useState<CachedDocs | null>(null);
   const isRTL = language === 'AR';
 
-
-
   const tabs = useMemo(
     () => [
       { value: 'profile' as const, label: t.employeeProfile.profile, icon: 'person' },
       { value: 'history' as const, label: t.employeeProfile.workHistory, icon: 'work_history' },
-      { value: 'documents' as const, label: t.employeeProfile.documents, icon: 'description' }
+      { value: 'documents' as const, label: t.employeeProfile.documents, icon: 'description' },
     ],
     [t]
   );
@@ -89,16 +87,24 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
       )}
 
       {activeTab === 'documents' && (
-        <DocumentsTab 
-          profile={profile} 
-          t={t} 
-          onUpdateProfile={onUpdateProfile} 
+        <DocumentsTab
+          profile={profile}
+          t={t}
+          onUpdateProfile={onUpdateProfile}
           cachedDocs={cachedDocs}
           setCachedDocs={setCachedDocs}
         />
       )}
 
-      {activeTab === 'history' && <HistoryTab requests={requests} workspaces={workspaces} isLoading={isLoading} isRTL={isRTL} t={t} />}
+      {activeTab === 'history' && (
+        <HistoryTab
+          requests={requests}
+          workspaces={workspaces}
+          isLoading={isLoading}
+          isRTL={isRTL}
+          t={t}
+        />
+      )}
     </div>
   );
 };

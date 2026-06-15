@@ -1,28 +1,29 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { money } from '../../utils/money';
-import { formatCurrency } from '../../utils/currency';
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import type React from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { StorageKeys } from '../../config/storageKeys';
+import { useSettings } from '../../context';
+import { useData } from '../../context/DataContext';
 import { permissionsService } from '../../services/auth/permissionsService';
 import type { Drug, Purchase, PurchaseReturn, PurchaseReturnItem } from '../../types';
-import { useSettings } from '../../context';
+import { formatCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
-import { CARD_BASE, INPUT_BASE } from '../../utils/themeStyles';
 import { idGenerator } from '../../utils/idGenerator';
-import { useData } from '../../context/DataContext';
+import { money } from '../../utils/money';
+import { storage } from '../../utils/storage';
+import { CARD_BASE, INPUT_BASE } from '../../utils/themeStyles';
 import {
-  useContextMenu,
   Modal,
+  PriceDisplay,
+  SearchDropdown,
   SearchInput,
   SegmentedControl,
   SmartInput,
   SmartTextarea,
   TanStackTable,
-  PriceDisplay,
-  SearchDropdown,
+  useContextMenu,
   useSearchKeyboardNavigation,
 } from '../common';
-import { storage } from '../../utils/storage';
-import { StorageKeys } from '../../config/storageKeys';
 
 interface PurchaseReturnsProps {
   purchases: Purchase[];
@@ -88,8 +89,12 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
 
   // Live Inline Return selection states
   const [returnQuantities, setReturnQuantities] = useState<Record<string, number>>({});
-  const [returnReasons, setReturnReasons] = useState<Record<string, PurchaseReturnItem['reason']>>({});
-  const [returnConditions, setReturnConditions] = useState<Record<string, PurchaseReturnItem['condition']>>({});
+  const [returnReasons, setReturnReasons] = useState<Record<string, PurchaseReturnItem['reason']>>(
+    {}
+  );
+  const [returnConditions, setReturnConditions] = useState<
+    Record<string, PurchaseReturnItem['condition']>
+  >({});
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -136,32 +141,36 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
     }, 0);
   }, [selectedPurchase, returnQuantities]);
 
-  const poColumns = useMemo(() => [
-    {
-      header: t.purchaseReturns?.tableHeaders?.purchaseId || 'PO ID',
-      width: 'w-36 shrink-0',
-      className: 'text-gray-900 dark:text-gray-400 justify-center text-center font-mono text-xs',
-      render: (p: Purchase) => `PO #${p.id.slice(0, 8)}`,
-    },
-    {
-      header: t.purchaseReturns?.tableHeaders?.supplier || 'Supplier',
-      width: 'flex-1',
-      className: 'text-gray-900 dark:text-gray-400 font-bold',
-      render: (p: Purchase) => p.supplierName,
-    },
-    {
-      header: t.purchaseReturns?.tableHeaders?.refund || 'Total Cost',
-      width: 'w-32 shrink-0',
-      className: 'justify-end text-end text-gray-900 dark:text-gray-400 font-bold',
-      render: (p: Purchase) => formatCurrency(p.totalCost, 'EGP', language === 'AR' ? 'ar' : 'en'),
-    },
-    {
-      header: t.purchaseReturns?.tableHeaders?.date || 'Date',
-      width: 'w-28 shrink-0',
-      className: 'justify-center text-center text-gray-900 dark:text-gray-400 text-xs',
-      render: (p: Purchase) => new Date(p.date).toLocaleDateString(),
-    },
-  ], [t, language]);
+  const poColumns = useMemo(
+    () => [
+      {
+        header: t.purchaseReturns?.tableHeaders?.purchaseId || 'PO ID',
+        width: 'w-36 shrink-0',
+        className: 'text-gray-900 dark:text-gray-400 justify-center text-center font-mono text-xs',
+        render: (p: Purchase) => `PO #${p.id.slice(0, 8)}`,
+      },
+      {
+        header: t.purchaseReturns?.tableHeaders?.supplier || 'Supplier',
+        width: 'flex-1',
+        className: 'text-gray-900 dark:text-gray-400 font-bold',
+        render: (p: Purchase) => p.supplierName,
+      },
+      {
+        header: t.purchaseReturns?.tableHeaders?.refund || 'Total Cost',
+        width: 'w-32 shrink-0',
+        className: 'justify-end text-end text-gray-900 dark:text-gray-400 font-bold',
+        render: (p: Purchase) =>
+          formatCurrency(p.totalCost, 'EGP', language === 'AR' ? 'ar' : 'en'),
+      },
+      {
+        header: t.purchaseReturns?.tableHeaders?.date || 'Date',
+        width: 'w-28 shrink-0',
+        className: 'justify-center text-center text-gray-900 dark:text-gray-400 text-xs',
+        render: (p: Purchase) => new Date(p.date).toLocaleDateString(),
+      },
+    ],
+    [t, language]
+  );
 
   // Details modal state
   const [viewingReturn, setViewingReturn] = useState<PurchaseReturn | null>(null);
@@ -271,7 +280,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
     if (!selectedPurchase || calculatedTotalRefund === 0) {
       alert(
         t.purchaseReturns?.messages?.selectPurchaseAlert ||
-        'Please select a purchase and add items to return'
+          'Please select a purchase and add items to return'
       );
       return;
     }
@@ -386,7 +395,9 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
           enableTopToolbar={false}
           searchPlaceholder={t.purchaseReturns?.searchPlaceholder || 'Search returns...'}
           onRowClick={(row) => handleViewDetails(row as PurchaseReturn)}
-          onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row as PurchaseReturn))}
+          onRowContextMenu={(e, row) =>
+            showMenu(e.clientX, e.clientY, getRowActions(row as PurchaseReturn))
+          }
           color={color}
           enablePagination={true}
           enableVirtualization={false}
@@ -430,10 +441,11 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
               <button
                 onClick={(e) => handleSubmitReturn(e as any)}
                 disabled={calculatedTotalRefund === 0}
-                className={`px-8 py-3 rounded-xl shadow-lg transition-all font-bold flex items-center gap-2 ${calculatedTotalRefund === 0
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : `bg-primary-600 hover:bg-primary-700 text-white`
-                  }`}
+                className={`px-8 py-3 rounded-xl shadow-lg transition-all font-bold flex items-center gap-2 ${
+                  calculatedTotalRefund === 0
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : `bg-primary-600 hover:bg-primary-700 text-white`
+                }`}
               >
                 <span className='material-symbols-rounded'>check_circle</span>
                 {t.purchaseReturns?.submit || 'Submit Return'}
@@ -469,7 +481,9 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                     setReturnReasons({});
                     setReturnConditions({});
                   }}
-                  placeholder={t.purchaseReturns?.selectPlaceholder || 'Search and select purchase order...'}
+                  placeholder={
+                    t.purchaseReturns?.selectPlaceholder || 'Search and select purchase order...'
+                  }
                   className='h-11 text-sm'
                 />
               </div>
@@ -527,12 +541,24 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                     <table className='w-full text-sm text-start border-collapse'>
                       <thead>
                         <tr className='bg-gray-50/50 dark:bg-zinc-900/50 border-b border-gray-100 dark:border-gray-800 text-[11px] font-bold text-gray-400 uppercase tracking-wider'>
-                          <th className='p-3 text-start font-bold'>{t.purchaseReturns?.itemName || 'Item'}</th>
-                          <th className='p-3 text-center font-bold w-24'>{t.purchaseReturns?.cost || 'Cost'}</th>
-                          <th className='p-3 text-center font-bold w-40'>{t.purchaseReturns?.quantity || 'Qty (Max)'}</th>
-                          <th className='p-3 text-center font-bold w-36'>{t.purchaseReturns?.reason || 'Reason'}</th>
-                          <th className='p-3 text-center font-bold w-36'>{t.purchaseReturns?.condition || 'Condition'}</th>
-                          <th className='p-3 text-end font-bold w-28'>{t.purchaseReturns?.totalRefund || 'Refund'}</th>
+                          <th className='p-3 text-start font-bold'>
+                            {t.purchaseReturns?.itemName || 'Item'}
+                          </th>
+                          <th className='p-3 text-center font-bold w-24'>
+                            {t.purchaseReturns?.cost || 'Cost'}
+                          </th>
+                          <th className='p-3 text-center font-bold w-40'>
+                            {t.purchaseReturns?.quantity || 'Qty (Max)'}
+                          </th>
+                          <th className='p-3 text-center font-bold w-36'>
+                            {t.purchaseReturns?.reason || 'Reason'}
+                          </th>
+                          <th className='p-3 text-center font-bold w-36'>
+                            {t.purchaseReturns?.condition || 'Condition'}
+                          </th>
+                          <th className='p-3 text-end font-bold w-28'>
+                            {t.purchaseReturns?.totalRefund || 'Refund'}
+                          </th>
                         </tr>
                       </thead>
                       <tbody className='divide-y divide-gray-100 dark:divide-gray-800/60'>
@@ -549,10 +575,11 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                           return (
                             <tr
                               key={item.drugId}
-                              className={`transition-colors duration-150 ${qty > 0
-                                ? 'bg-primary-50/10 dark:bg-primary-500/5 hover:bg-primary-50/20 dark:hover:bg-primary-500/10'
-                                : 'hover:bg-gray-50/50 dark:hover:bg-zinc-900/30'
-                                }`}
+                              className={`transition-colors duration-150 ${
+                                qty > 0
+                                  ? 'bg-primary-50/10 dark:bg-primary-500/5 hover:bg-primary-50/20 dark:hover:bg-primary-500/10'
+                                  : 'hover:bg-gray-50/50 dark:hover:bg-zinc-900/30'
+                              }`}
                             >
                               <td className='p-3 font-medium text-gray-800 dark:text-gray-100'>
                                 <div className='truncate max-w-[180px] font-bold' title={item.name}>
@@ -565,7 +592,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                                 )}
                               </td>
                               <td className='p-3 text-center text-gray-500 dark:text-gray-400 tabular-nums font-medium'>
-                                <PriceDisplay value={item.costPrice} size="sm" />
+                                <PriceDisplay value={item.costPrice} size='sm' />
                               </td>
                               <td className='p-3 text-center'>
                                 <div className='flex items-center justify-center gap-1.5'>
@@ -578,10 +605,11 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                                       }))
                                     }
                                     disabled={qty === 0}
-                                    className={`w-6 h-6 rounded-md flex items-center justify-center border transition-all text-xs font-bold cursor-pointer ${qty === 0
-                                      ? 'border-gray-100 text-gray-300 dark:border-gray-800 dark:text-gray-600 cursor-not-allowed'
-                                      : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 active:scale-95'
-                                      }`}
+                                    className={`w-6 h-6 rounded-md flex items-center justify-center border transition-all text-xs font-bold cursor-pointer ${
+                                      qty === 0
+                                        ? 'border-gray-100 text-gray-300 dark:border-gray-800 dark:text-gray-600 cursor-not-allowed'
+                                        : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 active:scale-95'
+                                    }`}
                                   >
                                     —
                                   </button>
@@ -612,10 +640,11 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                                       }))
                                     }
                                     disabled={qty >= maxQty}
-                                    className={`w-6 h-6 rounded-md flex items-center justify-center border transition-all text-xs font-bold cursor-pointer ${qty >= maxQty
-                                      ? 'border-gray-100 text-gray-300 dark:border-gray-800 dark:text-gray-600 cursor-not-allowed'
-                                      : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 active:scale-95'
-                                      }`}
+                                    className={`w-6 h-6 rounded-md flex items-center justify-center border transition-all text-xs font-bold cursor-pointer ${
+                                      qty >= maxQty
+                                        ? 'border-gray-100 text-gray-300 dark:border-gray-800 dark:text-gray-600 cursor-not-allowed'
+                                        : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 active:scale-95'
+                                    }`}
                                   >
                                     +
                                   </button>
@@ -634,8 +663,9 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                                       [item.drugId]: e.target.value as any,
                                     }))
                                   }
-                                  className={`${INPUT_BASE} py-1 px-2 text-xs h-8 ${qty === 0 ? 'opacity-30 cursor-not-allowed' : ''
-                                    }`}
+                                  className={`${INPUT_BASE} py-1 px-2 text-xs h-8 ${
+                                    qty === 0 ? 'opacity-30 cursor-not-allowed' : ''
+                                  }`}
                                 >
                                   <option value='damaged'>
                                     {t.purchaseReturns?.reasons?.damaged || 'Damaged'}
@@ -667,8 +697,9 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                                       [item.drugId]: e.target.value as any,
                                     }))
                                   }
-                                  className={`${INPUT_BASE} py-1 px-2 text-xs h-8 ${qty === 0 ? 'opacity-30 cursor-not-allowed' : ''
-                                    }`}
+                                  className={`${INPUT_BASE} py-1 px-2 text-xs h-8 ${
+                                    qty === 0 ? 'opacity-30 cursor-not-allowed' : ''
+                                  }`}
                                 >
                                   <option value='damaged'>
                                     {t.purchaseReturns?.conditions?.damaged || 'Damaged'}
@@ -850,7 +881,8 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                           {
                             ...item,
                             dosageForm:
-                              item.dosageForm || drugs.find((d) => d.id === item.drugId)?.dosageForm,
+                              item.dosageForm ||
+                              drugs.find((d) => d.id === item.drugId)?.dosageForm,
                           },
                           textTransform
                         )}
@@ -861,7 +893,8 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                         <span className='opacity-70'>
                           {t.purchases?.detailsModal?.cost || 'Cost'}:
                         </span>{' '}
-                        <PriceDisplay value={item.costPrice} size="sm" /> <span className='mx-1 opacity-30'>|</span>
+                        <PriceDisplay value={item.costPrice} size='sm' />{' '}
+                        <span className='mx-1 opacity-30'>|</span>
                         <span className='opacity-70'>{t.purchaseReturns?.reason || 'Reason'}:</span>{' '}
                         {t.purchaseReturns?.reasons?.[item.reason] || item.reason}
                       </p>

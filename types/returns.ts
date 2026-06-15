@@ -1,4 +1,4 @@
-import { BatchAllocation, ItemCondition } from './inventory';
+import type { BatchAllocation, ItemCondition } from './inventory';
 
 /** Type of return/refund operation */
 export type ReturnType = 'full' | 'partial' | 'unit';

@@ -1,13 +1,14 @@
-import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
-import { DrugSearchEngine } from '../services/search/drugSearchService';
-import { 
-  openCatalogDB, 
-  loadCatalogFromDB, 
-  saveCatalogToDB, 
-  getLastSyncTime,
-  type DrugCatalogItem 
-} from '../services/search/catalogCacheService';
+import type React from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import {
+  type DrugCatalogItem,
+  getLastSyncTime,
+  loadCatalogFromDB,
+  openCatalogDB,
+  saveCatalogToDB,
+} from '../services/search/catalogCacheService';
+import { DrugSearchEngine } from '../services/search/drugSearchService';
 
 interface CatalogContextType {
   engine: DrugSearchEngine | null;
@@ -29,14 +30,17 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       const db = await openCatalogDB();
       const lastTime = await getLastSyncTime(db);
-      
+
       if (import.meta.env.DEV) {
-        console.log(`[CatalogContext] Syncing with Supabase (last sync: ${lastTime || 'never'})...`);
+        console.log(
+          `[CatalogContext] Syncing with Supabase (last sync: ${lastTime || 'never'})...`
+        );
       }
-      
-      const columns = 'id, name_en, name_ar, barcode, public_price, category, active_substance, dosage_form, updated_at';
+
+      const columns =
+        'id, name_en, name_ar, barcode, public_price, category, active_substance, dosage_form, updated_at';
       let query = supabase.from('global_drugs').select(columns);
-      
+
       // Delta Sync Logic
       if (lastTime) {
         query = query.gt('updated_at', lastTime);
@@ -52,7 +56,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
 
       if (data && data.length > 0) {
-        const mappedData: DrugCatalogItem[] = data.map(item => ({
+        const mappedData: DrugCatalogItem[] = data.map((item) => ({
           id: item.id,
           name: item.name_en,
           nameAr: item.name_ar || '',
@@ -60,21 +64,25 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
           publicPrice: Number(item.public_price),
           category: item.category || '',
           activeSubstance: item.active_substance || '',
-          genericName: item.active_substance ? item.active_substance.split(',').map(s => s.trim()) : [],
+          genericName: item.active_substance
+            ? item.active_substance.split(',').map((s) => s.trim())
+            : [],
           dosageForm: item.dosage_form || '',
-          updatedAt: item.updated_at
+          updatedAt: item.updated_at,
         }));
 
         await saveCatalogToDB(db, mappedData);
-        
+
         // Reload EVERYTHING from local DB to ensure engine has the full set
         const allItems = await loadCatalogFromDB(db);
         engine.indexData(allItems);
         setTotalItems(allItems.length);
-        
+
         setLastSync(new Date().toISOString());
         if (import.meta.env.DEV) {
-          console.log(`[CatalogContext] Sync complete. ${data.length} new items added. Total: ${allItems.length}`);
+          console.log(
+            `[CatalogContext] Sync complete. ${data.length} new items added. Total: ${allItems.length}`
+          );
         }
       } else {
         if (import.meta.env.DEV) {
@@ -82,7 +90,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
         const allItems = await loadCatalogFromDB(db);
         // We don't use totalItems from state here to avoid stale closures
-        setTotalItems(prev => {
+        setTotalItems((prev) => {
           if (prev !== allItems.length) {
             engine.indexData(allItems);
             return allItems.length;
@@ -105,11 +113,11 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       try {
         setIsLoading(true);
         const db = await openCatalogDB();
-        
+
         // 1. Load from IndexedDB
         const cachedDrugs = await loadCatalogFromDB(db);
         const syncTime = await getLastSyncTime(db);
-        
+
         if (cachedDrugs.length > 0) {
           engine.indexData(cachedDrugs);
           setTotalItems(cachedDrugs.length);
@@ -117,7 +125,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
           if (import.meta.env.DEV) {
             console.log(`[CatalogContext] Loaded ${cachedDrugs.length} items from IndexedDB.`);
           }
-          
+
           // Background sync if it's been a while (optional)
           syncWithSource();
         } else {
@@ -134,19 +142,18 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
     init();
   }, [engine, syncWithSource]);
 
-  const value = useMemo(() => ({
-    engine,
-    isLoading,
-    lastSync,
-    totalItems,
-    syncWithSource
-  }), [engine, isLoading, lastSync, totalItems]);
-
-  return (
-    <CatalogContext.Provider value={value}>
-      {children}
-    </CatalogContext.Provider>
+  const value = useMemo(
+    () => ({
+      engine,
+      isLoading,
+      lastSync,
+      totalItems,
+      syncWithSource,
+    }),
+    [engine, isLoading, lastSync, totalItems]
   );
+
+  return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>;
 };
 
 export const useCatalog = () => {

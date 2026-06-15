@@ -3,11 +3,18 @@
  * Business logic layer that orchestrates data access via BatchRepository.
  */
 
+import type {
+  BatchAllocation,
+  CartItem,
+  Drug,
+  GroupedDrug,
+  GroupingKey,
+  StockBatch,
+} from '../../types';
+import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
+import { idGenerator } from '../../utils/idGenerator';
 import { money } from '../../utils/money';
 import { resolveUnits } from '../../utils/stockUtils';
-import type { BatchAllocation, StockBatch, Drug, GroupedDrug, GroupingKey, CartItem } from '../../types';
-import { idGenerator } from '../../utils/idGenerator';
-import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { settingsService } from '../settings/settingsService';
 import { batchRepository } from './repositories/batchRepository';
 
@@ -24,7 +31,11 @@ export const getGroupingKey = (drug: Drug | Partial<Drug>): GroupingKey => {
 };
 
 export const batchService = {
-  async getAllBatches(branchId?: string, drugId?: string, drugIds?: string[]): Promise<StockBatch[]> {
+  async getAllBatches(
+    branchId?: string,
+    drugId?: string,
+    drugIds?: string[]
+  ): Promise<StockBatch[]> {
     return batchRepository.getAll(branchId, drugId, drugIds);
   },
 
@@ -35,9 +46,13 @@ export const batchService = {
   async createBatch(batch: Omit<StockBatch, 'id'>, branchId?: string): Promise<StockBatch> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || batch.branchId || settings.activeBranchId;
-    
+
     // 1. Check for existing batch with same drug, branch, and expiry
-    const existing = await batchRepository.findExistingBatch(batch.drugId, effectiveBranchId, batch.expiryDate || null);
+    const existing = await batchRepository.findExistingBatch(
+      batch.drugId,
+      effectiveBranchId,
+      batch.expiryDate || null
+    );
 
     if (existing) {
       // Merge into the matching batch
@@ -45,28 +60,28 @@ export const batchService = {
       const oldCost = existing.costPrice || 0;
       const addedQty = batch.quantity || 0;
       const addedCost = batch.costPrice || 0;
-      
+
       const newQty = oldQty + addedQty;
       let newCost = oldCost;
-      
+
       if (newQty > 0) {
-         // Weighted average cost using precision money engine
-         const oldTotalValue = money.multiply(oldCost, oldQty, 0);
-         const addedTotalValue = money.multiply(addedCost, addedQty, 0);
-         const totalValue = money.add(oldTotalValue, addedTotalValue);
-         newCost = money.divide(totalValue, newQty);
+        // Weighted average cost using precision money engine
+        const oldTotalValue = money.multiply(oldCost, oldQty, 0);
+        const addedTotalValue = money.multiply(addedCost, addedQty, 0);
+        const totalValue = money.add(oldTotalValue, addedTotalValue);
+        newCost = money.divide(totalValue, newQty);
       }
-      
+
       // Use atomic increment for safety during merging
       const success = await batchRepository.atomicIncrement(existing.id, addedQty);
       if (!success) throw new Error(`Failed to merge into batch: ${existing.id}`);
-      
+
       // Update the cost price separately since RPC only updates quantity
-      await batchRepository.update(existing.id, { 
-        costPrice: newCost, 
-        dateReceived: new Date().toISOString() 
+      await batchRepository.update(existing.id, {
+        costPrice: newCost,
+        dateReceived: new Date().toISOString(),
       });
-        
+
       const updatedBatch = await batchRepository.getById(existing.id);
       return updatedBatch!;
     }
@@ -76,19 +91,23 @@ export const batchService = {
       id: idGenerator.uuid(),
       branchId: effectiveBranchId,
       orgId: settings.orgId,
-      version: 1, 
+      version: 1,
     };
 
     await batchRepository.insert(newBatch);
     return newBatch;
   },
 
-  async updateBatchQuantity(batchId: string, delta: number, skipFetch: boolean = false): Promise<StockBatch | null> {
+  async updateBatchQuantity(
+    batchId: string,
+    delta: number,
+    skipFetch: boolean = false
+  ): Promise<StockBatch | null> {
     const success = await batchRepository.atomicIncrement(batchId, delta);
     if (!success) {
       throw new Error(`Insufficient batch stock or missing batch: ${batchId}`);
     }
-    
+
     if (skipFetch) return null;
     return batchRepository.getById(batchId);
   },
@@ -103,24 +122,37 @@ export const batchService = {
     branchId: string,
     referenceDate: Date = new Date()
   ): Promise<{ drugId: string; allocations: BatchAllocation[] }[]> {
-    const validRequests = requests.filter(req => req.quantity > 0);
-    const drugIds = [...new Set(validRequests.map(r => r.drugId))];
+    const validRequests = requests.filter((req) => req.quantity > 0);
+    const drugIds = [...new Set(validRequests.map((r) => r.drugId))];
 
     // --- Optimization: Fetch all batches for all requested drugs in ONE query ---
     const allBatches = await this.getAllBatches(branchId, undefined, drugIds);
-    const batchesByDrug = drugIds.reduce((acc, id) => {
-      acc[id] = allBatches.filter(b => b.drugId === id);
-      return acc;
-    }, {} as Record<string, StockBatch[]>);
-    
+    const batchesByDrug = drugIds.reduce(
+      (acc, id) => {
+        acc[id] = allBatches.filter((b) => b.drugId === id);
+        return acc;
+      },
+      {} as Record<string, StockBatch[]>
+    );
+
     // Process all allocation requests in parallel for maximum speed
-    const results = await Promise.all(validRequests.map(async (req) => {
-      const drugBatches = batchesByDrug[req.drugId] || [];
-      const allocs = await this.allocateStock(req.drugId, req.quantity, branchId, true, req.preferredBatchId, drugBatches, referenceDate);
-      if (!allocs) throw new Error(`Insufficient stock for: ${req.name || req.drugId}`);
-      return { drugId: req.drugId, allocations: allocs };
-    }));
-    
+    const results = await Promise.all(
+      validRequests.map(async (req) => {
+        const drugBatches = batchesByDrug[req.drugId] || [];
+        const allocs = await this.allocateStock(
+          req.drugId,
+          req.quantity,
+          branchId,
+          true,
+          req.preferredBatchId,
+          drugBatches,
+          referenceDate
+        );
+        if (!allocs) throw new Error(`Insufficient stock for: ${req.name || req.drugId}`);
+        return { drugId: req.drugId, allocations: allocs };
+      })
+    );
+
     return results;
   },
 
@@ -135,21 +167,23 @@ export const batchService = {
   ): Promise<BatchAllocation[] | null> {
     if (quantityNeeded <= 0) return null;
 
-    const batches = preFetchedBatches || await this.getAllBatches(branchId, drugId);
-    
-    let validBatches = [...batches]
-      .filter((b) => {
-        const exp = parseExpiryEndOfMonth(b.expiryDate);
-        return !isNaN(exp.getTime()) && exp > referenceDate;
-      });
-      
+    const batches = preFetchedBatches || (await this.getAllBatches(branchId, drugId));
+
+    const validBatches = [...batches].filter((b) => {
+      const exp = parseExpiryEndOfMonth(b.expiryDate);
+      return !isNaN(exp.getTime()) && exp > referenceDate;
+    });
+
     // Sort logic: if preferredBatchId matches, it comes first. Otherwise sort by expiry.
     validBatches.sort((a, b) => {
       if (preferredBatchId) {
         if (a.id === preferredBatchId) return -1;
         if (b.id === preferredBatchId) return 1;
       }
-      return parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime();
+      return (
+        parseExpiryEndOfMonth(a.expiryDate).getTime() -
+        parseExpiryEndOfMonth(b.expiryDate).getTime()
+      );
     });
 
     const totalAvailable = validBatches.reduce((sum, b) => sum + b.quantity, 0);
@@ -223,7 +257,7 @@ export const batchService = {
           version: 1,
         });
       }
-      
+
       remainingToReturn -= canReturnToThis;
     }
   },
@@ -237,7 +271,11 @@ export const batchService = {
     const batches = await this.getAllBatches(branchId, drugId);
     const valid = batches
       .filter((b) => b.quantity > 0)
-      .sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime());
+      .sort(
+        (a, b) =>
+          parseExpiryEndOfMonth(a.expiryDate).getTime() -
+          parseExpiryEndOfMonth(b.expiryDate).getTime()
+      );
     return valid.length > 0 ? valid[0].expiryDate : null;
   },
 
@@ -270,7 +308,9 @@ export const batchService = {
       batchCount: activeBatches.length,
       earliestExpiry: await this.getEarliestExpiry(drugId, branchId),
       batches: activeBatches.sort(
-        (a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime()
+        (a, b) =>
+          parseExpiryEndOfMonth(a.expiryDate).getTime() -
+          parseExpiryEndOfMonth(b.expiryDate).getTime()
       ),
     };
   },
@@ -286,7 +326,7 @@ export const batchService = {
 
     return Object.entries(groups).map(([key, items]) => {
       const allBatchesInGroup: Drug[] = [];
-      items.forEach(d => {
+      items.forEach((d) => {
         if (d.batches && d.batches.length > 0) {
           allBatchesInGroup.push(...d.batches);
         } else {
@@ -333,14 +373,17 @@ export const batchService = {
       }
       if (!a.expiryDate) return 1;
       if (!b.expiryDate) return -1;
-      return parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime();
+      return (
+        parseExpiryEndOfMonth(a.expiryDate).getTime() -
+        parseExpiryEndOfMonth(b.expiryDate).getTime()
+      );
     });
 
     const results: { batchId: string; packQty: number; unitQty: number }[] = [];
 
     for (const batch of sortedBatches) {
       if (remainingUnits <= 0) break;
-      const batchMaxUnits = (batch.stock || 0);
+      const batchMaxUnits = batch.stock || 0;
       const takeUnits = Math.min(batchMaxUnits, remainingUnits);
 
       if (takeUnits > 0) {
@@ -388,27 +431,30 @@ export const batchService = {
     return batchRepository.deleteByDrugId(drugId);
   },
 
-  validateCartStock: async (cart: CartItem[], branchId: string): Promise<{ drugId: string, name: string, available: number, required: number }[]> => {
+  validateCartStock: async (
+    cart: CartItem[],
+    branchId: string
+  ): Promise<{ drugId: string; name: string; available: number; required: number }[]> => {
     const groupedRequirements = new Map<string, number>();
-    
-    cart.forEach(item => {
+
+    cart.forEach((item) => {
       const units = resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack);
       groupedRequirements.set(item.id, (groupedRequirements.get(item.id) || 0) + units);
     });
 
-    const issues: { drugId: string, name: string, available: number, required: number }[] = [];
+    const issues: { drugId: string; name: string; available: number; required: number }[] = [];
 
     for (const [drugId, required] of groupedRequirements.entries()) {
       const drugBatches = await batchService.getAllBatches(branchId, drugId);
       const totalAvailable = drugBatches.reduce((sum, b) => sum + b.quantity, 0);
-      
+
       if (totalAvailable < required) {
-        const first = cart.find(i => i.id === drugId);
+        const first = cart.find((i) => i.id === drugId);
         issues.push({
           drugId,
           name: first?.name || 'Unknown',
           available: totalAvailable,
-          required
+          required,
         });
       }
     }
@@ -419,20 +465,22 @@ export const batchService = {
   getDrugInventorySummary(drug: Drug, batchesMap: Map<string, Drug[]>) {
     const groupId = getGroupingKey(drug);
     const batches = batchesMap.get(groupId) || [];
-    
+
     const sortedBatches = [...batches]
-      .filter(b => (b.stock || 0) > 0)
-      .sort((a, b) => 
-        parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime()
+      .filter((b) => (b.stock || 0) > 0)
+      .sort(
+        (a, b) =>
+          parseExpiryEndOfMonth(a.expiryDate).getTime() -
+          parseExpiryEndOfMonth(b.expiryDate).getTime()
       );
 
     const totalStock = sortedBatches.reduce((sum, b) => sum + (b.stock || 0), 0);
-    
+
     return {
       batches: sortedBatches,
       totalStock,
       hasStock: totalStock > 0,
-      earliestExpiry: sortedBatches[0]?.expiryDate || null
+      earliestExpiry: sortedBatches[0]?.expiryDate || null,
     };
-  }
+  },
 };

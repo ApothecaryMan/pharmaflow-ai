@@ -53,7 +53,9 @@ export const defaultOptions: InvoiceTemplateOptions = {
 /**
  * Helper to fetch the active receipt template and its options from printSettings.
  */
-export function getActiveReceiptSettings(printSettings?: Record<string, any>): InvoiceTemplateOptions {
+export function getActiveReceiptSettings(
+  printSettings?: Record<string, any>
+): InvoiceTemplateOptions {
   try {
     const templates = printSettings?.[StorageKeys.RECEIPT_TEMPLATES] || [];
     const activeId = printSettings?.[StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID] || null;
@@ -221,7 +223,7 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
       <hr class="divider">
       
       <div class="info-row">
-        <span>${sale.customerCode ? sale.customerCode : ''} ${sale.customerName || 'Guest'}${ (sale as any).isTemporaryInfo ? ' *' : ''}</span>
+        <span>${sale.customerCode ? sale.customerCode : ''} ${sale.customerName || 'Guest'}${(sale as any).isTemporaryInfo ? ' *' : ''}</span>
         <span>#${sale.dailyOrderNumber || 1}</span>
       </div>
       
@@ -240,8 +242,8 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
           ? `
       <div class="customer-section" style="text-align: center; margin: 4px 0;">
         ${sale.customerPhone ? `<div class="customer-detail" dir="ltr" style="unicode-bidi: embed;">Tel: ${sale.customerPhone}</div>` : ''}
-        ${sale.customerAddress ? `<div class="customer-detail" dir="rtl" style="unicode-bidi: embed; text-align: center;">${sale.customerAddress.replace(/\n/g, '<br>')}${ (sale as any).isTemporaryInfo ? ' *' : ''}</div>` : ''}
-        ${sale.customerStreetAddress ? `<div class="customer-detail" dir="rtl" style="unicode-bidi: embed; text-align: center;">${sale.customerStreetAddress.replace(/\n/g, '<br>')}${ (sale as any).isTemporaryInfo ? ' *' : ''}</div>` : ''}
+        ${sale.customerAddress ? `<div class="customer-detail" dir="rtl" style="unicode-bidi: embed; text-align: center;">${sale.customerAddress.replace(/\n/g, '<br>')}${(sale as any).isTemporaryInfo ? ' *' : ''}</div>` : ''}
+        ${sale.customerStreetAddress ? `<div class="customer-detail" dir="rtl" style="unicode-bidi: embed; text-align: center;">${sale.customerStreetAddress.replace(/\n/g, '<br>')}${(sale as any).isTemporaryInfo ? ' *' : ''}</div>` : ''}
       </div>
       `
           : ''
@@ -253,7 +255,9 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
           ${sale.items
             .map((item) => {
               const effectivePrice =
-                item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
+                item.isUnit && item.unitsPerPack
+                  ? item.publicPrice / item.unitsPerPack
+                  : item.publicPrice;
               const lineTotal = effectivePrice * item.quantity * (1 - (item.discount || 0) / 100);
 
               return `
@@ -329,14 +333,14 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
                     const parts = lineKey.split('_');
                     const drugId = parts[0];
                     const suffix = parts.length > 1 ? parts[1] : null;
-                    
+
                     const item = sale.items.find((it) => {
                       const itDrugId = (it as any).drugId ?? (it as any).drug_id ?? it.id;
                       if (itDrugId !== drugId) return false;
                       if (!suffix) return true;
                       if (suffix === 'unit') return !!it.isUnit;
                       if (suffix === 'pack') return !it.isUnit;
-                      return true; 
+                      return true;
                     });
                     if (!item) return '';
                     const effectivePrice =

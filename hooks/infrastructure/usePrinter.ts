@@ -6,6 +6,8 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { printerService } from '../../services/infrastructure/printerService';
+import { isTauri } from '../../utils/platform';
 import {
   connect,
   disconnect,
@@ -22,8 +24,6 @@ import {
   type SilentMode,
   savePrinterSettings,
 } from '../../utils/qzPrinter';
-import { printerService } from '../../services/infrastructure/printerService';
-import { isTauri } from '../../utils/platform';
 
 export interface UsePrinterResult {
   // Connection status

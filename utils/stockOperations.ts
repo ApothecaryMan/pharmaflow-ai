@@ -1,10 +1,10 @@
 import { batchService } from '../services/inventory/batchService';
 import { stockMovementService } from '../services/inventory/stockMovement/stockMovementService';
-import type { Drug, StockBatch, BatchAllocation, StockMovementType, CartItem } from '../types';
-import { validateStock, assertStockSufficient } from './inventory';
-import { money } from './money';
-import { resolveUnits, resolvePrice, convertToPacks, resolveDisplayStock } from './stockUtils';
+import type { BatchAllocation, CartItem, Drug, StockBatch, StockMovementType } from '../types';
 import { getFullDisplayName } from './drugDisplayName';
+import { assertStockSufficient, validateStock } from './inventory';
+import { money } from './money';
+import { convertToPacks, resolveDisplayStock, resolvePrice, resolveUnits } from './stockUtils';
 
 /**
  * Context for stock operations to ensure accurate movement logging.
@@ -27,7 +27,6 @@ export interface StockMutation {
   allocations?: BatchAllocation[];
 }
 
-
 /**
  * Deducts stock from inventory, handles batch allocation and movement logging.
  * Returns the mutation details for state updates.
@@ -42,10 +41,10 @@ export const deductStock = async (
   referenceId?: string
 ): Promise<StockMutation | null> => {
   const unitsToDeduct = resolveUnits(quantity, isUnit, drug.unitsPerPack);
-  
+
   // BUG-S1: Assert stock sufficiency BEFORE allocating batches
   assertStockSufficient(drug.stock, unitsToDeduct, drug.name);
-  
+
   // 1. Set Context for Trigger
   await stockMovementService.setContext(
     type,
@@ -91,7 +90,7 @@ export const addStock = async (
   previousStockOverride?: number
 ): Promise<StockMutation> => {
   const unitsToAdd = resolveUnits(quantity, isUnit, drug.unitsPerPack);
-  
+
   const previousStock = previousStockOverride !== undefined ? previousStockOverride : drug.stock;
   const newStock = validateStock(previousStock + unitsToAdd);
 
@@ -105,18 +104,21 @@ export const addStock = async (
   );
 
   // 2. Create Batch
-  await batchService.createBatch({
-    drugId: drug.id,
-    quantity: unitsToAdd,
-    expiryDate: expiryDate || drug.expiryDate,
-    costPrice,
-    purchaseId: referenceId || 'ADJUSTMENT',
-    dateReceived: new Date().toISOString(),
-    batchNumber: batchNumber || 'MANUAL',
-    branchId: ctx.branchId,
-    orgId: ctx.orgId,
-    version: 1,
-  }, ctx.branchId);
+  await batchService.createBatch(
+    {
+      drugId: drug.id,
+      quantity: unitsToAdd,
+      expiryDate: expiryDate || drug.expiryDate,
+      costPrice,
+      purchaseId: referenceId || 'ADJUSTMENT',
+      dateReceived: new Date().toISOString(),
+      batchNumber: batchNumber || 'MANUAL',
+      branchId: ctx.branchId,
+      orgId: ctx.orgId,
+      version: 1,
+    },
+    ctx.branchId
+  );
 
   // Note: Manual logMovement removed (handled by DB trigger)
 
@@ -158,17 +160,25 @@ export const returnStock = async (
   if (allocations && allocations.length > 0) {
     let remainingToReturn = unitsToRestore;
     const returnsToMake: BatchAllocation[] = [];
-    
+
     for (const alloc of allocations) {
-       if (remainingToReturn <= 0) break;
-       const returnQty = Math.min(alloc.quantity, remainingToReturn);
-       returnsToMake.push({...alloc, quantity: returnQty});
-       remainingToReturn -= returnQty;
+      if (remainingToReturn <= 0) break;
+      const returnQty = Math.min(alloc.quantity, remainingToReturn);
+      returnsToMake.push({ ...alloc, quantity: returnQty });
+      remainingToReturn -= returnQty;
     }
-    
+
     if (returnsToMake.length > 0) {
-      const quantityCoveredByAllocations = returnsToMake.reduce((sum, alloc) => sum + alloc.quantity, 0);
-      await batchService.returnStock(returnsToMake, quantityCoveredByAllocations, drug.id, ctx.branchId);
+      const quantityCoveredByAllocations = returnsToMake.reduce(
+        (sum, alloc) => sum + alloc.quantity,
+        0
+      );
+      await batchService.returnStock(
+        returnsToMake,
+        quantityCoveredByAllocations,
+        drug.id,
+        ctx.branchId
+      );
     }
   }
 
@@ -195,10 +205,10 @@ export const deductStockSimple = async (
   referenceId?: string
 ): Promise<StockMutation> => {
   const unitsToRemove = resolveUnits(quantity, isUnit, drug.unitsPerPack);
-  
+
   // BUG-S3: Assert stock sufficiency before deduction (purchase returns path)
   assertStockSufficient(drug.stock, unitsToRemove, drug.name);
-  
+
   // 1. Set Context for Trigger
   await stockMovementService.setContext(
     type,
@@ -264,18 +274,21 @@ export const adjustStock = async (
       // Generic adjustment: create or deduct
       if (diff > 0) {
         // Increase: Create a new manual adjustment batch
-        await batchService.createBatch({
-          drugId: drug.id,
-          quantity: diff,
-          expiryDate: options?.expiryDate || drug.expiryDate,
-          costPrice: drug.costPrice,
-          purchaseId: options?.transactionId || 'ADJUSTMENT',
-          dateReceived: new Date().toISOString(),
-          batchNumber: 'MANUAL-ADJUST',
-          branchId: ctx.branchId,
-          orgId: ctx.orgId,
-          version: 1,
-        }, ctx.branchId);
+        await batchService.createBatch(
+          {
+            drugId: drug.id,
+            quantity: diff,
+            expiryDate: options?.expiryDate || drug.expiryDate,
+            costPrice: drug.costPrice,
+            purchaseId: options?.transactionId || 'ADJUSTMENT',
+            dateReceived: new Date().toISOString(),
+            batchNumber: 'MANUAL-ADJUST',
+            branchId: ctx.branchId,
+            orgId: ctx.orgId,
+            version: 1,
+          },
+          ctx.branchId
+        );
       } else {
         // Decrease: Deduct from existing batches (FEFO)
         const unitsToDeduct = Math.abs(diff);
@@ -336,10 +349,7 @@ export const deductFromBatch = async (
 /**
  * Logs an 'initial' movement for new product creation.
  */
-export const logInitialStock = async (
-  drug: Drug,
-  ctx: StockOperationContext
-): Promise<void> => {
+export const logInitialStock = async (drug: Drug, ctx: StockOperationContext): Promise<void> => {
   if (drug.stock <= 0) return;
 
   await stockMovementService.logMovement({
@@ -359,7 +369,7 @@ export const logInitialStock = async (
 };
 
 /**
- * Validates if adding a specific quantity of a drug (in packs or units) 
+ * Validates if adding a specific quantity of a drug (in packs or units)
  * would exceed the current total stock.
  * Used in POS to prevent adding more than available.
  */
@@ -384,4 +394,3 @@ export const isStockConstraintMet = (
 
   return existingUnits + newUnits <= totalStockUnits;
 };
-

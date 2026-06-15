@@ -36,7 +36,7 @@ export const ExpandedModal: React.FC<ExpandedModalProps> = ({
 }) => {
   // Resolve content from views registry if available
   const currentView = activeView && views ? views[activeView] : null;
-  
+
   const finalTitle = currentView?.title || title || '';
   const finalChildren = currentView?.children || children;
   const finalActions = currentView?.actions || actions;

@@ -44,8 +44,9 @@ export const supplierRepository = {
 
   async getAll(effectiveBranchId: string, orgId?: string): Promise<Supplier[]> {
     let query = supabase.from(this.tableName).select('*');
-    const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
-    
+    const isAll =
+      typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+
     if (effectiveBranchId && !isAll) {
       query = query.eq('branch_id', effectiveBranchId);
     } else if (isAll && orgId) {
@@ -53,11 +54,12 @@ export const supplierRepository = {
     }
     const { data, error } = await query.order('name', { ascending: true });
     if (error) throw error;
-    return (data || []).map(item => this.mapFromDb(item));
+    return (data || []).map((item) => this.mapFromDb(item));
   },
 
   async getById(id: string): Promise<Supplier | null> {
-    const { data, error } = await supabase.from(this.tableName)
+    const { data, error } = await supabase
+      .from(this.tableName)
       .select('*')
       .eq('id', id)
       .maybeSingle();
@@ -65,18 +67,23 @@ export const supplierRepository = {
     return data ? this.mapFromDb(data) : null;
   },
 
-  async createWithRpc(supplier: Omit<Supplier, 'id'>, branchId: string, orgId: string): Promise<Supplier> {
+  async createWithRpc(
+    supplier: Omit<Supplier, 'id'>,
+    branchId: string,
+    orgId: string
+  ): Promise<Supplier> {
     const { data, error } = await supabase.rpc('create_supplier', {
       p_supplier: supplier,
       p_branch_id: branchId,
-      p_org_id: orgId
+      p_org_id: orgId,
     });
     if (error) throw error;
     return this.mapFromDb(data);
   },
 
   async update(id: string, updates: Partial<Supplier>): Promise<Supplier> {
-    const { data, error } = await supabase.from(this.tableName)
+    const { data, error } = await supabase
+      .from(this.tableName)
       .update(this.mapToDb(updates))
       .eq('id', id)
       .select()
@@ -93,8 +100,8 @@ export const supplierRepository = {
 
   async upsert(suppliers: Supplier[]): Promise<void> {
     if (suppliers.length === 0) return;
-    const dbSuppliers = suppliers.map(s => this.mapToDb(s));
+    const dbSuppliers = suppliers.map((s) => this.mapToDb(s));
     const { error } = await supabase.from(this.tableName).upsert(dbSuppliers);
     if (error) throw error;
-  }
+  },
 };

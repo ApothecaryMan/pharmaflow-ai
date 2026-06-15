@@ -3,13 +3,13 @@
  * Business logic layer that orchestrates data access via EmployeeRepository.
  */
 
-import { BaseDomainService } from '../core/baseDomainService';
+import { supabase } from '../../lib/supabase';
 import type { Employee } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
-import { settingsService } from '../settings/settingsService';
+import { BaseDomainService } from '../core/baseDomainService';
 import { orgService } from '../org/orgService';
+import { settingsService } from '../settings/settingsService';
 import { employeeRepository } from './repositories/employeeRepository';
-import { supabase } from '../../lib/supabase';
 
 class EmployeeServiceImpl extends BaseDomainService<Employee> {
   protected tableName = 'employees';
@@ -24,13 +24,16 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
 
   async getAll(branchId?: string | 'ALL', orgId?: string): Promise<Employee[]> {
     const settings = await settingsService.getAll();
-    const effectiveOrgId = orgId !== undefined ? orgId : (orgService.getActiveOrgId() || settings.orgId);
-    
+    const effectiveOrgId =
+      orgId !== undefined ? orgId : orgService.getActiveOrgId() || settings.orgId;
+
     if (!effectiveOrgId) return [];
-    
+
     const isAll = typeof branchId === 'string' && branchId.toLowerCase() === 'all';
-    const effectiveBranchId = isAll ? undefined : (branchId || settings.activeBranchId || settings.branchCode);
-    
+    const effectiveBranchId = isAll
+      ? undefined
+      : branchId || settings.activeBranchId || settings.branchCode;
+
     return employeeRepository.getAll(effectiveOrgId, effectiveBranchId);
   }
 
@@ -48,9 +51,10 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
 
   async create(employee: Employee, branchId?: string, orgId?: string): Promise<Employee> {
     const settings = await settingsService.getAll();
-    const effectiveBranchId = branchId || employee.branchId || settings.activeBranchId || settings.branchCode;
+    const effectiveBranchId =
+      branchId || employee.branchId || settings.activeBranchId || settings.branchCode;
     const effectiveOrgId = orgId || employee.orgId || settings.orgId;
-    
+
     const newEmployee: Employee = {
       ...employee,
       id: employee.id || idGenerator.uuid(),
@@ -62,18 +66,18 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
       let inserted = false;
       let lastErr = null;
       let loopCount = 0;
-      
+
       // Loop until we find a free sequence number (self-healing sequences)
       while (!inserted && loopCount < 50) {
         loopCount++;
         // Use increment_sequence RPC which runs with elevated privileges (bypassing RLS)
         const { data: seqValue, error: seqError } = await supabase.rpc('increment_sequence', {
           p_branch_id: effectiveOrgId,
-          p_entity_type: 'employees'
+          p_entity_type: 'employees',
         });
-        
+
         if (seqError) throw seqError;
-        
+
         const employeeCodeValue = `EMP-${seqValue}`;
         newEmployee.employeeCode = employeeCodeValue;
         // Also ensure the Local POS Username is the sequential number (e.g., "1")
@@ -87,7 +91,10 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
           inserted = true;
         } catch (err: any) {
           // 23505 is PostgreSQL unique constraint violation
-          if (err.code === '23505' && (err.message?.includes('employee_code') || err.message?.includes('username'))) {
+          if (
+            err.code === '23505' &&
+            (err.message?.includes('employee_code') || err.message?.includes('username'))
+          ) {
             lastErr = err;
             continue; // ID taken, loop and increment again
           }
@@ -113,11 +120,11 @@ class EmployeeServiceImpl extends BaseDomainService<Employee> {
   async save(employees: Employee[], branchId?: string): Promise<void> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    
-    const processedEmployees = employees.map(e => ({
+
+    const processedEmployees = employees.map((e) => ({
       ...e,
       branchId: e.branchId || effectiveBranchId,
-      orgId: e.orgId || settings.orgId
+      orgId: e.orgId || settings.orgId,
     }));
 
     await employeeRepository.upsert(processedEmployees);

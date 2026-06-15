@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { StorageKeys } from '../../config/storageKeys';
 import { useAlert } from '../../context';
 import { useData } from '../../context/DataContext';
 import { intelligenceService } from '../../services/intelligence/intelligenceService';
@@ -8,15 +9,14 @@ import type { ViewState } from '../../types';
 import type { ProcurementItem } from '../../types/intelligence';
 import type { Drug } from '../../types/inventory';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { money } from '../../utils/money';
+import { storage } from '../../utils/storage';
 import { CARD_BASE } from '../../utils/themeStyles';
-import { useInventoryHeader } from './InventoryHeaderContext';
 import { SearchEngineInput } from '../common/SearchEngineInput';
+import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 import { TanStackTable } from '../common/TanStackTable';
-import { SegmentedControl } from '../common/SegmentedControl';
-import { storage } from '../../utils/storage';
-import { StorageKeys } from '../../config/storageKeys';
-import { money } from '../../utils/money';
+import { useInventoryHeader } from './InventoryHeaderContext';
 
 interface ShortagesPageProps {
   t: Record<string, string>; // Mapped to t.shortages
@@ -81,7 +81,8 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
     }
   }, [selectedIds.size]);
 
-  const { setLeftContent, setRightContent, setBottomContent, setShowStatsToggle } = useInventoryHeader();
+  const { setLeftContent, setRightContent, setBottomContent, setShowStatsToggle } =
+    useInventoryHeader();
 
   // Fetch live daily sales velocities and AI predicted reorders from intelligence service
   useEffect(() => {
@@ -145,17 +146,20 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
       // Calculate estimated weekly lost sales if out of stock
       // weekly_lost_sales = avgDailySales * 7 * costPrice
       const weeklyLostPacks = (avgDailySales / unitsPerPack) * 7;
-      const weeklyLostSales = stock === 0
-        ? money.multiply(drug.costPrice ?? 0, Math.round(weeklyLostPacks * 10000), 4)
-        : 0;
+      const weeklyLostSales =
+        stock === 0
+          ? money.multiply(drug.costPrice ?? 0, Math.round(weeklyLostPacks * 10000), 4)
+          : 0;
 
       // Suggested qty: use the procurement one if available, otherwise safety stock calculation
-      const safetyStockPacks = avgDailySales > 0
-        ? Math.max(0, Math.ceil((14 * avgDailySales * 1.5 - stock) / unitsPerPack))
-        : 0;
-      const minStockReplenishPacks = (stock <= minStock * unitsPerPack && minStock > 0)
-        ? Math.max(0, minStock - Math.floor(stock / unitsPerPack))
-        : 0;
+      const safetyStockPacks =
+        avgDailySales > 0
+          ? Math.max(0, Math.ceil((14 * avgDailySales * 1.5 - stock) / unitsPerPack))
+          : 0;
+      const minStockReplenishPacks =
+        stock <= minStock * unitsPerPack && minStock > 0
+          ? Math.max(0, minStock - Math.floor(stock / unitsPerPack))
+          : 0;
       const suggestedQty =
         pItem?.suggested_order_qty ?? Math.max(safetyStockPacks, minStockReplenishPacks);
 
@@ -186,33 +190,36 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
     return Array.from(list).sort();
   }, [inventory]);
 
-  const filterConfigs = useMemo(() => [
-    {
-      id: 'category',
-      label: t.filterCategory || (isAR ? 'التصنيف' : 'Category'),
-      icon: 'category',
-      mode: 'single' as const,
-      defaultValue: 'ALL',
-      options: [
-        { value: 'ALL', label: t.filterCategory || (isAR ? 'الكل' : 'ALL') },
-        ...categories.map(cat => ({ value: cat, label: cat })),
-      ],
-    },
-    {
-      id: 'alertType',
-      label: t.filterAlert || (isAR ? 'نوع التنبيه' : 'Alert Type'),
-      icon: 'warning',
-      mode: 'single' as const,
-      defaultValue: 'ALL',
-      options: [
-        { value: 'ALL', label: t.filterAlert || (isAR ? 'الكل' : 'ALL') },
-        { value: 'OUT_OF_STOCK_SOLD', label: t.statusOutOfStockSold },
-        { value: 'MANUAL_MINIMUM_REACHED', label: t.statusManualMinimumReached },
-        { value: 'PREDICTIVE_SHORTAGE', label: t.statusPredictiveShortage },
-        { value: 'OUT_OF_STOCK_DEFAULT', label: t.statusOutOfStockDefault },
-      ],
-    },
-  ], [categories, t, isAR]);
+  const filterConfigs = useMemo(
+    () => [
+      {
+        id: 'category',
+        label: t.filterCategory || (isAR ? 'التصنيف' : 'Category'),
+        icon: 'category',
+        mode: 'single' as const,
+        defaultValue: 'ALL',
+        options: [
+          { value: 'ALL', label: t.filterCategory || (isAR ? 'الكل' : 'ALL') },
+          ...categories.map((cat) => ({ value: cat, label: cat })),
+        ],
+      },
+      {
+        id: 'alertType',
+        label: t.filterAlert || (isAR ? 'نوع التنبيه' : 'Alert Type'),
+        icon: 'warning',
+        mode: 'single' as const,
+        defaultValue: 'ALL',
+        options: [
+          { value: 'ALL', label: t.filterAlert || (isAR ? 'الكل' : 'ALL') },
+          { value: 'OUT_OF_STOCK_SOLD', label: t.statusOutOfStockSold },
+          { value: 'MANUAL_MINIMUM_REACHED', label: t.statusManualMinimumReached },
+          { value: 'PREDICTIVE_SHORTAGE', label: t.statusPredictiveShortage },
+          { value: 'OUT_OF_STOCK_DEFAULT', label: t.statusOutOfStockDefault },
+        ],
+      },
+    ],
+    [categories, t, isAR]
+  );
 
   const handleUpdateFilter = useCallback((groupId: string, newValues: any[]) => {
     setActiveFilters((prev) => ({
@@ -424,8 +431,6 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
     success(t.exportSuccess, t.exportSuccessDesc.replace('{count}', String(itemsToExport.length)));
   }, [selectedIds, shortagesData, warning, success, t]);
 
-
-
   // Define Table Columns inline to gain close access to selection states
   const columns = useMemo((): ColumnDef<EnrichedShortageItem>[] => {
     const isAllSelected =
@@ -632,9 +637,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
             colorClass = 'text-amber-600 dark:text-amber-400 font-bold';
           }
 
-          return (
-            <span className={`text-sm tabular-nums ${colorClass}`}>{item.stockDays}</span>
-          );
+          return <span className={`text-sm tabular-nums ${colorClass}`}>{item.stockDays}</span>;
         },
         meta: {
           align: 'center',
@@ -661,10 +664,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
           }
 
           return (
-            <span
-              className={`${badgeClass} w-7 h-7 rounded-full p-0`}
-              title={t.abcDescription}
-            >
+            <span className={`${badgeClass} w-7 h-7 rounded-full p-0`} title={t.abcDescription}>
               {item.abcClass}
             </span>
           );
@@ -772,9 +772,18 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
       setShowStatsToggle(false);
     };
   }, [
-    searchTerm, t, filterConfigs, activeFilters, handleUpdateFilter,
-    handleExportCSV, stats, loadingProcurement,
-    setLeftContent, setRightContent, setBottomContent, setShowStatsToggle
+    searchTerm,
+    t,
+    filterConfigs,
+    activeFilters,
+    handleUpdateFilter,
+    handleExportCSV,
+    stats,
+    loadingProcurement,
+    setLeftContent,
+    setRightContent,
+    setBottomContent,
+    setShowStatsToggle,
   ]);
 
   return (
@@ -786,40 +795,39 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
       <div className='flex-1 px-page pb-8 overflow-hidden flex flex-col'>
         <div className={`${CARD_BASE} rounded-3xl flex-1 overflow-hidden flex flex-col p-0`}>
           <div className='flex-1 overflow-hidden flex flex-col relative'>
-
-              <TanStackTable
-                data={filteredData}
-                columns={columns}
-                tableId='shortages-alerts-table'
-                dense
-                lite
-                enablePagination={true}
-                enableVirtualization={true}
-                pageSize='auto'
-                enableShowAll={true}
-                onVisibleRowsChange={setVisibleRows}
-                isLoading={loadingProcurement}
-                customEmptyState={
-                  <div className='flex flex-col items-center justify-center py-24 text-center'>
-                    <span className='material-symbols-rounded text-6xl text-zinc-300 dark:text-zinc-700 mb-4 block select-none'>
-                      check_circle
-                    </span>
-                    <h3 className='text-lg font-bold text-gray-900 dark:text-white mb-2'>
-                      {t.allGoodText}
-                    </h3>
-                    <p className='text-sm font-medium text-gray-400 dark:text-zinc-500 max-w-md'>
-                      {t.noShortagesFound}
-                    </p>
-                  </div>
-                }
-              />
+            <TanStackTable
+              data={filteredData}
+              columns={columns}
+              tableId='shortages-alerts-table'
+              dense
+              lite
+              enablePagination={true}
+              enableVirtualization={true}
+              pageSize='auto'
+              enableShowAll={true}
+              onVisibleRowsChange={setVisibleRows}
+              isLoading={loadingProcurement}
+              customEmptyState={
+                <div className='flex flex-col items-center justify-center py-24 text-center'>
+                  <span className='material-symbols-rounded text-6xl text-zinc-300 dark:text-zinc-700 mb-4 block select-none'>
+                    check_circle
+                  </span>
+                  <h3 className='text-lg font-bold text-gray-900 dark:text-white mb-2'>
+                    {t.allGoodText}
+                  </h3>
+                  <p className='text-sm font-medium text-gray-400 dark:text-zinc-500 max-w-md'>
+                    {t.noShortagesFound}
+                  </p>
+                </div>
+              }
+            />
           </div>
         </div>
       </div>
 
       {/* Floaty Action Dock Bar showing at the bottom when items are selected */}
       {selectedIds.size > 0 && (
-        <div 
+        <div
           dir='ltr'
           className='fixed bottom-22 inset-x-0 mx-auto w-fit z-50 bg-zinc-900/95 dark:bg-zinc-950/95 text-white pl-2 py-2 pr-3.5 rounded-2xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-5 duration-300 select-none'
         >
@@ -830,7 +838,9 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
             className='flex items-center justify-center w-10 h-10 bg-white text-zinc-900 hover:bg-zinc-100 border border-zinc-200 rounded-xl cursor-pointer'
             title={t.exportSelectedButtonLabel}
           >
-            <span className='material-symbols-rounded font-bold' style={{ fontSize: '20px' }}>download</span>
+            <span className='material-symbols-rounded font-bold' style={{ fontSize: '20px' }}>
+              download
+            </span>
           </button>
 
           {/* Selection text and cancel close action */}
@@ -865,7 +875,9 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
               className='text-zinc-400 hover:text-white transition-colors p-1 hover:bg-zinc-800/60 rounded-lg cursor-pointer flex items-center justify-center'
               title={t.clearSelection}
             >
-              <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>close</span>
+              <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
+                close
+              </span>
             </button>
           </div>
         </div>

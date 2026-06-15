@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { 
-  sanitizeExpiryInput, 
-  checkExpiryStatus, 
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  checkExpiryStatus,
   formatExpiryDisplay,
-  parseExpiryDisplay
+  parseExpiryDisplay,
+  sanitizeExpiryInput,
 } from './expiryUtils';
 
 describe('ExpiryUtils', () => {
@@ -40,13 +40,13 @@ describe('ExpiryUtils', () => {
 
   describe('checkExpiryStatus', () => {
     beforeEach(() => {
-        // Mock current date to 2026-06-01 for consistent tests
-        vi.useFakeTimers();
-        vi.setSystemTime(new Date('2026-06-01'));
+      // Mock current date to 2026-06-01 for consistent tests
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-06-01'));
     });
 
     afterEach(() => {
-        vi.useRealTimers();
+      vi.useRealTimers();
     });
 
     it('should return valid for future dates', () => {
@@ -79,17 +79,17 @@ describe('ExpiryUtils', () => {
     });
 
     it('should handle incomplete input', () => {
-       expect(checkExpiryStatus('12', { checkIncomplete: true })).toBe('incomplete');
+      expect(checkExpiryStatus('12', { checkIncomplete: true })).toBe('incomplete');
     });
   });
 
   describe('formatExpiryDisplay', () => {
-      it('should format MMYY to MM/20YY', () => {
-          expect(formatExpiryDisplay('1225')).toBe('12/2025');
-      });
-      it('should ignore incomplete or formatted dates', () => {
-          expect(formatExpiryDisplay('12')).toBe('12');
-          expect(formatExpiryDisplay('12/2025')).toBe('12/2025');
-      });
+    it('should format MMYY to MM/20YY', () => {
+      expect(formatExpiryDisplay('1225')).toBe('12/2025');
+    });
+    it('should ignore incomplete or formatted dates', () => {
+      expect(formatExpiryDisplay('12')).toBe('12');
+      expect(formatExpiryDisplay('12/2025')).toBe('12/2025');
+    });
   });
 });

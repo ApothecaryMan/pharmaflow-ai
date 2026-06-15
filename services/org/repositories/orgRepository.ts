@@ -1,5 +1,12 @@
 import { supabase } from '../../../lib/supabase';
-import type { Organization, OrgMember, Subscription, OrgRole, SubscriptionPlan, SubscriptionStatus } from '../../../types'; 
+import type {
+  Organization,
+  OrgMember,
+  OrgRole,
+  Subscription,
+  SubscriptionPlan,
+  SubscriptionStatus,
+} from '../../../types';
 
 interface OrganizationDbRow {
   id: string;
@@ -40,7 +47,6 @@ interface SetupInitialOrgResponse {
   membership: OrgMemberDbRow;
   subscription: SubscriptionDbRow;
 }
-
 
 export const orgRepository = {
   mapOrg(row: OrganizationDbRow): Organization {
@@ -84,7 +90,11 @@ export const orgRepository = {
   },
 
   async getById(orgId: string): Promise<Organization | null> {
-    const { data, error } = await supabase.from('organizations').select('*').eq('id', orgId).maybeSingle();
+    const { data, error } = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('id', orgId)
+      .maybeSingle();
     if (error || !data) return null;
     return this.mapOrg(data);
   },
@@ -105,7 +115,7 @@ export const orgRepository = {
       .eq('status', 'active');
 
     if (orgError) return [];
-    return (orgs || []).map(row => this.mapOrg(row));
+    return (orgs || []).map((row) => this.mapOrg(row));
   },
 
   async update(orgId: string, updates: Partial<OrganizationDbRow>): Promise<Organization> {
@@ -123,7 +133,7 @@ export const orgRepository = {
   async getMembers(orgId: string): Promise<OrgMember[]> {
     const { data, error } = await supabase.from('org_members').select('*').eq('org_id', orgId);
     if (error) return [];
-    return (data || []).map(row => this.mapMember(row));
+    return (data || []).map((row) => this.mapMember(row));
   },
 
   async getMemberRole(orgId: string, userId: string): Promise<OrgRole | null> {
@@ -185,14 +195,19 @@ export const orgRepository = {
     return this.mapSubscription(data);
   },
 
-  async setupInitialOrg(name: string, slug: string, ownerId: string, plan: string): Promise<SetupInitialOrgResponse> {
+  async setupInitialOrg(
+    name: string,
+    slug: string,
+    ownerId: string,
+    plan: string
+  ): Promise<SetupInitialOrgResponse> {
     const { data, error } = await supabase.rpc('setup_initial_organization', {
       p_name: name,
       p_slug: slug,
       p_owner_id: ownerId,
-      p_plan: plan
+      p_plan: plan,
     });
     if (error) throw error;
     return data;
-  }
+  },
 };

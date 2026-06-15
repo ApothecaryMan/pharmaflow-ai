@@ -6,7 +6,8 @@
  * chemical formula branding, and monthly/annual toggle.
  */
 
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 
 // ── Data ──
 
@@ -49,7 +50,11 @@ const PLANS: Plan[] = [
   },
   {
     tier: 'Pro tier',
-    formula: <>ZnSO<sub>4</sub></>,
+    formula: (
+      <>
+        ZnSO<sub>4</sub>
+      </>
+    ),
     name: 'Zinc Sulfate — Professional',
     isFeatured: true,
     badge: 'Most Popular',
@@ -67,7 +72,11 @@ const PLANS: Plan[] = [
   },
   {
     tier: 'Max tier',
-    formula: <>Zn(NO<sub>3</sub>)<sub>2</sub></>,
+    formula: (
+      <>
+        Zn(NO<sub>3</sub>)<sub>2</sub>
+      </>
+    ),
     name: 'Zinc Nitrate — Enterprise',
     cta: 'Contact Sales',
     ctaPrimary: true,
@@ -226,7 +235,12 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange, hideBack
       return (
         <div className='zn-price-block'>
           <div className='zn-old'>&nbsp;</div>
-          <div className='zn-amount-free' style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800 }}>Free</div>
+          <div
+            className='zn-amount-free'
+            style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800 }}
+          >
+            Free
+          </div>
           <div className='zn-period'>forever</div>
         </div>
       );
@@ -237,18 +251,37 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange, hideBack
 
     return (
       <div className='zn-price-block'>
-        <div className='zn-old'>
-          {isAnnual ? `EGP ${monthlyPrice}/mo` : '\u00A0'}
-        </div>
-        <div className='zn-amount' style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, lineHeight: 1 }}>
-          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '1.5rem', fontWeight: 700, color: 'var(--zn-text)', marginBottom: '2px', letterSpacing: '-0.02em' }}>EGP</div>
+        <div className='zn-old'>{isAnnual ? `EGP ${monthlyPrice}/mo` : '\u00A0'}</div>
+        <div
+          className='zn-amount'
+          style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, lineHeight: 1 }}
+        >
+          <div
+            style={{
+              fontFamily: "'Space Mono', monospace",
+              fontSize: '1.5rem',
+              fontWeight: 700,
+              color: 'var(--zn-text)',
+              marginBottom: '2px',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            EGP
+          </div>
           {displayPrice}
-          <span style={{ fontSize: '1rem', fontWeight: 400, color: '#444', fontFamily: "'Space Mono', monospace" }}>/mo</span>
+          <span
+            style={{
+              fontSize: '1rem',
+              fontWeight: 400,
+              color: '#444',
+              fontFamily: "'Space Mono', monospace",
+            }}
+          >
+            /mo
+          </span>
         </div>
         <div className='zn-period'>
-          {isAnnual
-            ? `billed annually — EGP ${displayPrice * 12}/yr`
-            : 'billed monthly'}
+          {isAnnual ? `billed annually — EGP ${displayPrice * 12}/yr` : 'billed monthly'}
         </div>
       </div>
     );
@@ -256,16 +289,22 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange, hideBack
 
   return (
     <>
-      <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;500;700;800&display=swap" rel="stylesheet" />
+      <link
+        href='https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;500;700;800&display=swap'
+        rel='stylesheet'
+      />
       <style>{styles}</style>
-      <div className='zn-root' dir="ltr">
+      <div className='zn-root' dir='ltr'>
         {/* Simple Back Arrow */}
         {!hideBackButton && (
           <button
             onClick={() => onViewChange?.('org-management')}
-            className="fixed top-10 left-10 z-50 flex items-center justify-center transition-opacity hover:opacity-60"
+            className='fixed top-10 left-10 z-50 flex items-center justify-center transition-opacity hover:opacity-60'
           >
-            <span className="material-symbols-rounded text-[var(--zn-text)]" style={{ fontSize: '36px' }}>
+            <span
+              className='material-symbols-rounded text-[var(--zn-text)]'
+              style={{ fontSize: '36px' }}
+            >
               arrow_back
             </span>
           </button>
@@ -274,7 +313,9 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange, hideBack
         {/* Header */}
         <div className='zn-header'>
           <p className='zn-brand'>Zinc Pharmacy OS — Pricing</p>
-          <h1 className='zn-title' style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800 }}>Choose your compound</h1>
+          <h1 className='zn-title' style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800 }}>
+            Choose your compound
+          </h1>
           <p className='zn-subtitle'>// three tiers. one stack.</p>
         </div>
 
@@ -304,10 +345,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange, hideBack
         {/* Plan Cards Grid */}
         <div className='zn-grid'>
           {PLANS.map((plan) => (
-            <div
-              key={plan.tier}
-              className={`zn-card ${plan.isFeatured ? 'featured' : ''}`}
-            >
+            <div key={plan.tier} className={`zn-card ${plan.isFeatured ? 'featured' : ''}`}>
               {plan.badge && <div className='zn-badge'>{plan.badge}</div>}
               <p className='zn-tier-label'>{plan.tier}</p>
               <div className='zn-formula-wrap'>
@@ -317,9 +355,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange, hideBack
 
               {renderPriceBlock(plan)}
 
-              <button className={`zn-btn ${plan.ctaPrimary ? 'primary' : ''}`}>
-                {plan.cta}
-              </button>
+              <button className={`zn-btn ${plan.ctaPrimary ? 'primary' : ''}`}>{plan.cta}</button>
 
               <hr className='zn-divider' />
 

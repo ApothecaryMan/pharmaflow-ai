@@ -21,7 +21,7 @@ export function generateCheckoutPayload(overrides = {}) {
   const itemCount = randomInt(1, 5);
   const selectedDrugs = pickRandomDrugs(itemCount);
 
-  const items = selectedDrugs.map(drug => ({
+  const items = selectedDrugs.map((drug) => ({
     id: drug.id,
     name: drug.name,
     dosageForm: 'Tablet',
@@ -31,7 +31,7 @@ export function generateCheckoutPayload(overrides = {}) {
     discount: Math.random() > 0.7 ? randomInt(1, 10) : 0,
   }));
 
-  const subtotal = items.reduce((sum, item) => sum + (item.publicPrice * item.quantity), 0);
+  const subtotal = items.reduce((sum, item) => sum + item.publicPrice * item.quantity, 0);
   const globalDiscount = Math.random() > 0.8 ? randomInt(5, 15) : 0;
   const total = subtotal * (1 - globalDiscount / 100);
 
@@ -63,13 +63,33 @@ export function generateCheckoutPayload(overrides = {}) {
  */
 export function generateCustomerName() {
   const firstNames = [
-    'أحمد', 'محمد', 'علي', 'حسن', 'فاطمة',
-    'سارة', 'خالد', 'مصطفى', 'ياسر', 'نورا',
-    'عمر', 'هند', 'كريم', 'منى', 'طارق',
+    'أحمد',
+    'محمد',
+    'علي',
+    'حسن',
+    'فاطمة',
+    'سارة',
+    'خالد',
+    'مصطفى',
+    'ياسر',
+    'نورا',
+    'عمر',
+    'هند',
+    'كريم',
+    'منى',
+    'طارق',
   ];
   const lastNames = [
-    'محمود', 'إبراهيم', 'عبدالله', 'حسين', 'السيد',
-    'رمضان', 'عوض', 'فؤاد', 'شعبان', 'غانم',
+    'محمود',
+    'إبراهيم',
+    'عبدالله',
+    'حسين',
+    'السيد',
+    'رمضان',
+    'عوض',
+    'فؤاد',
+    'شعبان',
+    'غانم',
   ];
   return `${firstNames[randomInt(0, firstNames.length - 1)]} ${lastNames[randomInt(0, lastNames.length - 1)]}`;
 }
@@ -89,9 +109,18 @@ export function generatePhone() {
  */
 export function generateDrug(branchId, orgId) {
   const names = [
-    'Panadol Extra', 'Augmentin 1g', 'Concor 5mg', 'Januvia 100mg',
-    'Lipitor 20mg', 'Nexium 40mg', 'Plavix 75mg', 'Ventolin Inhaler',
-    'Glucophage 500mg', 'Zithromax 500mg', 'Flagyl 500mg', 'Aspocid 75mg',
+    'Panadol Extra',
+    'Augmentin 1g',
+    'Concor 5mg',
+    'Januvia 100mg',
+    'Lipitor 20mg',
+    'Nexium 40mg',
+    'Plavix 75mg',
+    'Ventolin Inhaler',
+    'Glucophage 500mg',
+    'Zithromax 500mg',
+    'Flagyl 500mg',
+    'Aspocid 75mg',
   ];
   const categories = ['analgesics', 'antibiotics', 'cardiovascular', 'diabetes', 'gi'];
 

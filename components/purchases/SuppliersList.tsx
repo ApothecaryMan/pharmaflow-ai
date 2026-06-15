@@ -1,13 +1,17 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
-import type { Supplier } from '../../types';
-import { CARD_BASE } from '../../utils/themeStyles';
-import { idGenerator } from '../../utils/idGenerator';
 import { useData } from '../../context/DataContext';
+import { AREAS, CITIES, GOVERNORATES } from '../../data/locations';
 import { permissionsService } from '../../services/auth/permissionsService';
+import type { Supplier } from '../../types';
+import { idGenerator } from '../../utils/idGenerator';
+import { CARD_BASE } from '../../utils/themeStyles';
 import { useContextMenu } from '../common/ContextMenu';
+import type { FilterConfig } from '../common/FilterPill';
+import { LocationSelector } from '../common/LocationSelector';
 import { Modal } from '../common/Modal';
+import { PageHeader } from '../common/PageHeader';
 import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
 import {
@@ -17,11 +21,7 @@ import {
   SmartPhoneInput,
   useSmartDirection,
 } from '../common/SmartInputs';
-import { LocationSelector } from '../common/LocationSelector';
 import { TanStackTable } from '../common/TanStackTable';
-import { GOVERNORATES, CITIES, AREAS } from '../../data/locations';
-import { PageHeader } from '../common/PageHeader';
-import { type FilterConfig } from '../common/FilterPill';
 
 interface SuppliersListProps {
   suppliers: Supplier[];
@@ -34,9 +34,10 @@ interface SuppliersListProps {
   language: 'EN' | 'AR';
 }
 
-const ListWrapper: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <div className={`flex flex-col gap-0.5 ${className}`}>{children}</div>
-);
+const ListWrapper: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children,
+  className = '',
+}) => <div className={`flex flex-col gap-0.5 ${className}`}>{children}</div>;
 
 const ListItem: React.FC<{
   index: number;
@@ -46,7 +47,14 @@ const ListItem: React.FC<{
 }> = ({ index, total, children, className = '' }) => {
   const isFirst = index === 0;
   const isLast = index === total - 1;
-  const rounding = isFirst && isLast ? 'rounded-2xl' : isFirst ? 'rounded-t-2xl rounded-b-md' : isLast ? 'rounded-b-2xl rounded-t-md' : 'rounded-md';
+  const rounding =
+    isFirst && isLast
+      ? 'rounded-2xl'
+      : isFirst
+        ? 'rounded-t-2xl rounded-b-md'
+        : isLast
+          ? 'rounded-b-2xl rounded-t-md'
+          : 'rounded-md';
   return (
     <div
       className={`flex items-center justify-between py-2 px-4 bg-gray-50/50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 transition-all ${rounding} ${className}`}
@@ -102,16 +110,19 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
     t.form?.enterContactPerson || 'Enter contact person name'
   );
 
-  const governorateFilterConfig = useMemo<FilterConfig>(() => ({
-    id: 'governorate',
-    label: language === 'AR' ? 'المحافظة' : 'Governorate',
-    icon: 'location_on',
-    mode: 'multiple',
-    options: GOVERNORATES.map(gov => ({
-      label: language === 'AR' ? gov.name_ar : gov.name_en,
-      value: gov.name_en,
-    })),
-  }), [language]);
+  const governorateFilterConfig = useMemo<FilterConfig>(
+    () => ({
+      id: 'governorate',
+      label: language === 'AR' ? 'المحافظة' : 'Governorate',
+      icon: 'location_on',
+      mode: 'multiple',
+      options: GOVERNORATES.map((gov) => ({
+        label: language === 'AR' ? gov.name_ar : gov.name_en,
+        value: gov.name_en,
+      })),
+    }),
+    [language]
+  );
 
   // Copy helper
   const copyToClipboard = async (text: string) => {
@@ -225,12 +236,18 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
       icon: 'visibility',
       action: () => handleViewDetails(supplier),
     },
-    ...(permissionsService.can('supplier.update') ? [{ label: t.contextMenu?.edit || 'Edit', icon: 'edit', action: () => handleEdit(supplier) }] : []),
-    ...(permissionsService.can('supplier.delete') ? [{
-      label: t.contextMenu?.delete || 'Delete',
-      icon: 'delete',
-      action: () => handleDelete(supplier),
-    }] : []),
+    ...(permissionsService.can('supplier.update')
+      ? [{ label: t.contextMenu?.edit || 'Edit', icon: 'edit', action: () => handleEdit(supplier) }]
+      : []),
+    ...(permissionsService.can('supplier.delete')
+      ? [
+          {
+            label: t.contextMenu?.delete || 'Delete',
+            icon: 'delete',
+            action: () => handleDelete(supplier),
+          },
+        ]
+      : []),
     { separator: true },
     {
       label: t.contextMenu?.copyName || 'Copy Name',
@@ -268,22 +285,14 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
         header: t.headers?.name || 'Name',
         size: 200,
         meta: { align: 'start' },
-        cell: ({ getValue }) => (
-          <span className='truncate block'>
-            {getValue() as string}
-          </span>
-        ),
+        cell: ({ getValue }) => <span className='truncate block'>{getValue() as string}</span>,
       },
       {
         accessorKey: 'contactPerson',
         header: t.headers?.contactPerson || 'Contact Person',
         size: 180,
         meta: { align: 'center' },
-        cell: ({ getValue }) => (
-          <span className='truncate block'>
-            {getValue() as string}
-          </span>
-        ),
+        cell: ({ getValue }) => <span className='truncate block'>{getValue() as string}</span>,
       },
       {
         accessorKey: 'phone',
@@ -301,11 +310,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
         header: t.headers?.email || 'Email',
         size: 200,
         meta: { align: 'start' },
-        cell: ({ getValue }) => (
-          <span className='truncate block'>
-            {getValue() as string}
-          </span>
-        ),
+        cell: ({ getValue }) => <span className='truncate block'>{getValue() as string}</span>,
       },
       {
         id: 'governorate_display',
@@ -315,10 +320,10 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
         meta: { align: 'start', smartDate: false },
         cell: ({ row }) => {
           const id = row.original.governorate;
-          const gov = GOVERNORATES.find(g => g.id === id);
+          const gov = GOVERNORATES.find((g) => g.id === id);
           return (
             <span className='truncate block'>
-              {gov ? (language === 'AR' ? gov.name_ar : gov.name_en) : (id || '-')}
+              {gov ? (language === 'AR' ? gov.name_ar : gov.name_en) : id || '-'}
             </span>
           );
         },
@@ -330,8 +335,8 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
         meta: { align: 'start' },
         cell: ({ row, column }) => {
           const s = row.original;
-          const city = CITIES.find(c => c.id === s.city);
-          const area = AREAS.find(a => a.id === s.area);
+          const city = CITIES.find((c) => c.id === s.city);
+          const area = AREAS.find((a) => a.id === s.area);
 
           const cityName = city ? (language === 'AR' ? city.name_ar : city.name_en) : '';
           const areaName = area ? (language === 'AR' ? area.name_ar : area.name_en) : '';
@@ -341,9 +346,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
 
           return (
             <div className={`flex flex-col py-0.5 overflow-hidden items-${align}`}>
-              <span className='truncate block'>
-                {locationLine || '-'}
-              </span>
+              <span className='truncate block'>{locationLine || '-'}</span>
               {s.address && (
                 <span className='truncate block pt-1.5 opacity-75 text-[0.8em]' title={s.address}>
                   {s.address}
@@ -362,7 +365,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
       <PageHeader
         leftContent={
           mode === 'list' ? (
-            <div className="w-full max-w-md">
+            <div className='w-full max-w-md'>
               <SearchInput
                 value={search}
                 onSearchChange={setSearch}
@@ -370,7 +373,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                 color={color}
                 filterConfigs={[governorateFilterConfig]}
                 activeFilters={activeFilters}
-                onUpdateFilter={(id, vals) => setActiveFilters(prev => ({ ...prev, [id]: vals }))}
+                onUpdateFilter={(id, vals) => setActiveFilters((prev) => ({ ...prev, [id]: vals }))}
               />
             </div>
           ) : null
@@ -384,13 +387,23 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
             }}
             shape='pill'
             size='md'
-            iconSize="--icon-lg"
+            iconSize='--icon-lg'
             useGraphicFont={true}
             options={[
-              { label: t.allSuppliers || 'All Suppliers', value: 'list', icon: 'group', permission: 'supplier.view' },
-              { label: t.addNewSupplier || 'Add New Supplier', value: 'add', icon: 'person_add', permission: 'supplier.add' },
+              {
+                label: t.allSuppliers || 'All Suppliers',
+                value: 'list',
+                icon: 'group',
+                permission: 'supplier.view',
+              },
+              {
+                label: t.addNewSupplier || 'Add New Supplier',
+                value: 'add',
+                icon: 'person_add',
+                permission: 'supplier.add',
+              },
             ]}
-            className="w-full sm:w-[480px]"
+            className='w-full sm:w-[480px]'
           />
         }
       />
@@ -407,7 +420,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
               enableTopToolbar={false}
               searchPlaceholder={t.searchPlaceholder || 'Search supplier name, contact...'}
               onRowClick={(row) => handleViewDetails(row as Supplier)}
-              onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row as Supplier))}
+              onRowContextMenu={(e, row) =>
+                showMenu(e.clientX, e.clientY, getRowActions(row as Supplier))
+              }
               color={color}
               enablePagination={true}
               enableVirtualization={false}
@@ -437,7 +452,8 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                       {t.form?.id || 'ID'}
                     </label>
                     <div className='w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 font-mono text-sm'>
-                      {editForm.supplierCode || (language === 'AR' ? 'توليد تلقائي...' : 'Auto-generated...')}
+                      {editForm.supplierCode ||
+                        (language === 'AR' ? 'توليد تلقائي...' : 'Auto-generated...')}
                     </div>
                   </div>
                   <div>
@@ -465,15 +481,17 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                       selectedGovernorate={editForm.governorate}
                       selectedCity={editForm.city}
                       selectedArea={editForm.area}
-                      onGovernorateChange={(val) => setEditForm(prev => ({ ...prev, governorate: val }))}
-                      onCityChange={(val) => setEditForm(prev => ({ ...prev, city: val }))}
-                      onAreaChange={(val) => setEditForm(prev => ({ ...prev, area: val }))}
+                      onGovernorateChange={(val) =>
+                        setEditForm((prev) => ({ ...prev, governorate: val }))
+                      }
+                      onCityChange={(val) => setEditForm((prev) => ({ ...prev, city: val }))}
+                      onAreaChange={(val) => setEditForm((prev) => ({ ...prev, area: val }))}
                       t={t}
                       color={color}
                       showLabels={false}
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className='col-span-2'>
                     <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                       {t.form?.address || 'Street Address'}
                     </label>
@@ -610,9 +628,15 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                     selectedGovernorate={editForm?.governorate}
                     selectedCity={editForm?.city}
                     selectedArea={editForm?.area}
-                    onGovernorateChange={(val) => setEditForm(prev => prev ? ({ ...prev, governorate: val }) : null)}
-                    onCityChange={(val) => setEditForm(prev => prev ? ({ ...prev, city: val }) : null)}
-                    onAreaChange={(val) => setEditForm(prev => prev ? ({ ...prev, area: val }) : null)}
+                    onGovernorateChange={(val) =>
+                      setEditForm((prev) => (prev ? { ...prev, governorate: val } : null))
+                    }
+                    onCityChange={(val) =>
+                      setEditForm((prev) => (prev ? { ...prev, city: val } : null))
+                    }
+                    onAreaChange={(val) =>
+                      setEditForm((prev) => (prev ? { ...prev, area: val } : null))
+                    }
                     t={t}
                     color={color}
                     showLabels={false}
@@ -766,32 +790,72 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
         // Rule 2: Smart Memoization - Pre-calculate display values outside JSX
         const locationNames = {
           governorate: (() => {
-            const gov = GOVERNORATES.find(g => g.id === viewingSupplier.governorate);
-            return gov ? (language === 'AR' ? gov.name_ar : gov.name_en) : (viewingSupplier.governorate || '-');
+            const gov = GOVERNORATES.find((g) => g.id === viewingSupplier.governorate);
+            return gov
+              ? language === 'AR'
+                ? gov.name_ar
+                : gov.name_en
+              : viewingSupplier.governorate || '-';
           })(),
           city: (() => {
-            const city = CITIES.find(c => c.id === viewingSupplier.city);
-            return city ? (language === 'AR' ? city.name_ar : city.name_en) : (viewingSupplier.city || '-');
+            const city = CITIES.find((c) => c.id === viewingSupplier.city);
+            return city
+              ? language === 'AR'
+                ? city.name_ar
+                : city.name_en
+              : viewingSupplier.city || '-';
           })(),
           area: (() => {
-            const area = AREAS.find(a => a.id === viewingSupplier.area);
-            return area ? (language === 'AR' ? area.name_ar : area.name_en) : (viewingSupplier.area || '-');
-          })()
+            const area = AREAS.find((a) => a.id === viewingSupplier.area);
+            return area
+              ? language === 'AR'
+                ? area.name_ar
+                : area.name_en
+              : viewingSupplier.area || '-';
+          })(),
         };
 
         // Rule 7: Config-Driven UI - Define data structures as configs
         const infoItems = [
-          { label: t.form?.id || 'ID', icon: 'tag', value: <span className='font-mono'>{viewingSupplier.supplierCode || viewingSupplier.id}</span> },
-          { label: t.form?.companyName || 'Company Name', icon: 'business', value: <span className='font-bold'>{viewingSupplier.name}</span> },
-          { label: t.headers?.governorate || 'Governorate', icon: 'map', value: locationNames.governorate },
+          {
+            label: t.form?.id || 'ID',
+            icon: 'tag',
+            value: (
+              <span className='font-mono'>
+                {viewingSupplier.supplierCode || viewingSupplier.id}
+              </span>
+            ),
+          },
+          {
+            label: t.form?.companyName || 'Company Name',
+            icon: 'business',
+            value: <span className='font-bold'>{viewingSupplier.name}</span>,
+          },
+          {
+            label: t.headers?.governorate || 'Governorate',
+            icon: 'map',
+            value: locationNames.governorate,
+          },
           { label: t.headers?.city || 'City', icon: 'location_city', value: locationNames.city },
-          { label: t.headers?.area || 'Area', icon: 'near_me', value: locationNames.area }
+          { label: t.headers?.area || 'Area', icon: 'near_me', value: locationNames.area },
         ];
 
         const contactItems = [
-          { label: t.form?.contactPerson || 'Contact Person', icon: 'person', value: viewingSupplier.contactPerson },
-          { label: t.form?.phone || 'Phone', icon: 'call', value: <span dir='ltr' className='font-mono'>{viewingSupplier.phone}</span> },
-          { label: t.form?.email || 'Email', icon: 'mail', value: viewingSupplier.email }
+          {
+            label: t.form?.contactPerson || 'Contact Person',
+            icon: 'person',
+            value: viewingSupplier.contactPerson,
+          },
+          {
+            label: t.form?.phone || 'Phone',
+            icon: 'call',
+            value: (
+              <span dir='ltr' className='font-mono'>
+                {viewingSupplier.phone}
+              </span>
+            ),
+          },
+          { label: t.form?.email || 'Email', icon: 'mail', value: viewingSupplier.email },
         ];
 
         const activeItems = detailsTab === 'info' ? infoItems : contactItems;
@@ -815,8 +879,15 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                   onClick={() => setViewingSupplier(null)}
                   className='flex-1 py-3 rounded-full font-bold bg-transparent text-gray-500 dark:text-gray-400 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-all flex items-center justify-center gap-2 outline-hidden'
                 >
-                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-base)' }}>close</span>
-                  {t.suppliers?.modal?.close || t.global?.actions?.close || (language === 'AR' ? 'إغلاق' : 'Close')}
+                  <span
+                    className='material-symbols-rounded'
+                    style={{ fontSize: 'var(--icon-base)' }}
+                  >
+                    close
+                  </span>
+                  {t.suppliers?.modal?.close ||
+                    t.global?.actions?.close ||
+                    (language === 'AR' ? 'إغلاق' : 'Close')}
                 </button>
                 <button
                   onClick={() => {
@@ -826,8 +897,15 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                   }}
                   className='flex-1 py-3 rounded-full font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90 transition-opacity flex items-center justify-center gap-2 outline-hidden'
                 >
-                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-base)' }}>edit</span>
-                  {t.suppliers?.modal?.edit?.split(' ')[0] || t.global?.actions?.edit || (language === 'AR' ? 'تعديل' : 'Edit')}
+                  <span
+                    className='material-symbols-rounded'
+                    style={{ fontSize: 'var(--icon-base)' }}
+                  >
+                    edit
+                  </span>
+                  {t.suppliers?.modal?.edit?.split(' ')[0] ||
+                    t.global?.actions?.edit ||
+                    (language === 'AR' ? 'تعديل' : 'Edit')}
                 </button>
               </div>
             }
@@ -835,7 +913,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
             <div className='animate-fade-in space-y-6'>
               <div>
                 <p className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2 px-1 tracking-widest'>
-                  {detailsTab === 'info' ? (t.form?.companyInfo || 'Company Information') : (t.form?.contactInfo || 'Contact Information')}
+                  {detailsTab === 'info'
+                    ? t.form?.companyInfo || 'Company Information'
+                    : t.form?.contactInfo || 'Contact Information'}
                 </p>
                 <ListWrapper>
                   {activeItems.map((item, i, arr) => (
@@ -848,7 +928,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                         >
                           {item.icon}
                         </span>
-                        <span className='text-[9px] font-bold uppercase tracking-wider opacity-50'>{item.label}</span>
+                        <span className='text-[9px] font-bold uppercase tracking-wider opacity-50'>
+                          {item.label}
+                        </span>
                       </div>
                       <div className='text-[12px] font-bold text-right pl-2'>{item.value}</div>
                     </ListItem>
@@ -858,7 +940,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
 
               {detailsTab === 'info' && viewingSupplier.address && (
                 <div>
-                  <p className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2 px-1 tracking-widest'>{t.form?.address || 'Detailed Address'}</p>
+                  <p className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2 px-1 tracking-widest'>
+                    {t.form?.address || 'Detailed Address'}
+                  </p>
                   <div className='p-4 bg-gray-50/50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 rounded-2xl'>
                     <p className='text-sm text-gray-700 dark:text-gray-200 leading-relaxed'>
                       {viewingSupplier.address}

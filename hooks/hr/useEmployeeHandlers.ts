@@ -1,8 +1,8 @@
-import React from 'react';
+import type React from 'react';
 import { useCallback } from 'react';
 import { useAlert } from '../../context';
-import { permissionsService } from '../../services/auth/permissionsService';
 import { auditService } from '../../services/audit/auditService';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { employeeService } from '../../services/hr/employeeService';
 import type { Customer, Employee, Purchase, Sale } from '../../types';
 
@@ -70,11 +70,19 @@ export function useEmployeeHandlers({
       }
 
       if (isSelf && !permissionsService.can('users.manage')) {
-        const sensitiveFields: (keyof Employee)[] = ['role', 'salary', 'employeeCode', 'status', 'department'];
-        const hasSensitiveUpdates = sensitiveFields.some(field => field in updates);
-        
+        const sensitiveFields: (keyof Employee)[] = [
+          'role',
+          'salary',
+          'employeeCode',
+          'status',
+          'department',
+        ];
+        const hasSensitiveUpdates = sensitiveFields.some((field) => field in updates);
+
         if (hasSensitiveUpdates) {
-          error('Permission denied: You cannot update your own role, salary, or status. Contact an administrator.');
+          error(
+            'Permission denied: You cannot update your own role, salary, or status. Contact an administrator.'
+          );
           return;
         }
       }

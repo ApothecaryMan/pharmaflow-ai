@@ -1,17 +1,18 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import type { Drug } from '../../types';
-import { Modal } from '../common/Modal';
-import { SmartInput, SmartTextarea, SmartDateInput } from '../common/SmartInputs';
-import { FilterDropdown } from '../common';
+import type React from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSettings } from '../../context';
 import {
   getCategories,
   getLocalizedCategory,
   getLocalizedProductType,
   getProductTypes,
 } from '../../data/productCategories';
-import { useSettings } from '../../context';
-import { resolveUnits } from '../../utils/stockUtils';
+import type { Drug } from '../../types';
 import { validateStock } from '../../utils/inventory';
+import { resolveUnits } from '../../utils/stockUtils';
+import { FilterDropdown } from '../common';
+import { Modal } from '../common/Modal';
+import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs';
 
 interface EditProductModalProps {
   isOpen: boolean;
@@ -145,7 +146,11 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       icon={editingDrug ? 'edit' : 'add_circle'}
       tabs={[
         { label: t.modal?.tabGeneral || 'General Info', value: 'general', icon: 'info' },
-        { label: t.modal?.tabInventoryPricing || 'Inventory & Pricing', value: 'inventoryPricing', icon: 'payments' },
+        {
+          label: t.modal?.tabInventoryPricing || 'Inventory & Pricing',
+          value: 'inventoryPricing',
+          icon: 'payments',
+        },
       ]}
       activeTab={activeTab}
       onTabChange={(val) => setActiveTab(val as 'general' | 'inventoryPricing')}
@@ -160,7 +165,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
           </button>
           <button
             type='submit'
-            form="edit-drug-form"
+            form='edit-drug-form'
             className={`flex-1 py-3 rounded-xl font-medium text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all active:scale-95`}
           >
             {t.modal.save}
@@ -168,42 +173,58 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
         </div>
       }
     >
-      <form id="edit-drug-form" onSubmit={handleSubmit} className='h-full'>
+      <form id='edit-drug-form' onSubmit={handleSubmit} className='h-full'>
         {activeTab === 'general' ? (
           <div className={`${innerGridClass} gap-y-4`}>
             <div>
-              <label htmlFor="brand-name" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label
+                htmlFor='brand-name'
+                className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+              >
                 {t.modal.brand} *
               </label>
               <SmartInput
-                id="brand-name"
+                id='brand-name'
                 required
                 value={formData.name || ''}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
             <div>
-              <label htmlFor="name-arabic" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label
+                htmlFor='name-arabic'
+                className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+              >
                 {t.modal.nameArabic || 'Arabic Name'}
               </label>
               <SmartInput
-                id="name-arabic"
+                id='name-arabic'
                 value={formData.nameAr || ''}
                 onChange={(e) => setFormData({ ...formData, nameAr: e.target.value })}
-                dir="rtl"
+                dir='rtl'
               />
             </div>
             <div className='md:col-span-2 space-y-1'>
-              <label htmlFor="generic-name" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label
+                htmlFor='generic-name'
+                className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+              >
                 Generic Name
               </label>
               <SmartInput
-                id="generic-name"
-                value={Array.isArray(formData.genericName) ? formData.genericName.join(', ') : formData.genericName || ''}
+                id='generic-name'
+                value={
+                  Array.isArray(formData.genericName)
+                    ? formData.genericName.join(', ')
+                    : formData.genericName || ''
+                }
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    genericName: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                    genericName: e.target.value
+                      .split(',')
+                      .map((s) => s.trim())
+                      .filter(Boolean),
                   })
                 }
               />
@@ -287,7 +308,10 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
 
             {/* Multi-Barcode Input */}
             <div className='md:col-span-2 space-y-1'>
-              <label htmlFor="barcode-input" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label
+                htmlFor='barcode-input'
+                className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+              >
                 {t.modal.barcode}
               </label>
               <div className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus-within:ring-2 focus-within:ring-blue-500 transition-all flex flex-wrap gap-2 items-center min-h-[42px]'>
@@ -305,10 +329,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                   </span>
                 )}
                 {formData.additionalBarcodes?.map((code, idx) => (
-                  <span
-                    key={idx}
-                    className='badge-neutral gap-1'
-                  >
+                  <span key={idx} className='badge-neutral gap-1'>
                     {code}
                     <button
                       type='button'
@@ -346,14 +367,17 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
             </div>
 
             <div className='md:col-span-2 space-y-1'>
-              <label htmlFor="internal-code" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label
+                htmlFor='internal-code'
+                className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+              >
                 {t.modal.internalCode}
               </label>
               <div className='relative'>
                 <SmartInput
-                  id="internal-code"
-                  className="font-mono pr-10"
-                  placeholder="Auto-generated"
+                  id='internal-code'
+                  className='font-mono pr-10'
+                  placeholder='Auto-generated'
                   value={formData.internalCode || ''}
                   onChange={(e) => setFormData({ ...formData, internalCode: e.target.value })}
                 />
@@ -369,12 +393,15 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
             </div>
 
             <div className='md:col-span-2 flex flex-col min-h-[100px]'>
-              <label htmlFor="description-input" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label
+                htmlFor='description-input'
+                className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+              >
                 {t.modal.desc}
               </label>
               <SmartTextarea
-                id="description-input"
-                className="w-full flex-1 resize-none"
+                id='description-input'
+                className='w-full flex-1 resize-none'
                 value={formData.description || ''}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
@@ -388,13 +415,16 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
               </h4>
               <div className={pricingGridClass}>
                 <div>
-                  <label htmlFor="stock-input" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label
+                    htmlFor='stock-input'
+                    className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+                  >
                     {t.modal.stock}
                   </label>
                   <SmartInput
-                    id="stock-input"
-                    type="number"
-                    step="0.01"
+                    id='stock-input'
+                    type='number'
+                    step='0.01'
                     required
                     value={formData.stock || 0}
                     onChange={(e) =>
@@ -403,13 +433,16 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label htmlFor="units-pack" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label
+                    htmlFor='units-pack'
+                    className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+                  >
                     {t.modal.unitsPerPack}
                   </label>
                   <SmartInput
-                    id="units-pack"
-                    type="number"
-                    min="1"
+                    id='units-pack'
+                    type='number'
+                    min='1'
                     value={formData.unitsPerPack || 1}
                     onChange={(e) =>
                       setFormData({ ...formData, unitsPerPack: parseInt(e.target.value) || 1 })
@@ -423,7 +456,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                 </label>
                 <SmartDateInput
                   required
-                  className="w-full"
+                  className='w-full'
                   value={formData.expiryDate || ''}
                   onChange={(val) => setFormData({ ...formData, expiryDate: val })}
                 />
@@ -436,15 +469,18 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
               </h4>
               <div className='space-y-4'>
                 <div>
-                  <label htmlFor="public-price" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label
+                    htmlFor='public-price'
+                    className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+                  >
                     {t.modal.publicPrice}
                   </label>
                   <SmartInput
-                    id="public-price"
-                    type="number"
-                    step="0.01"
+                    id='public-price'
+                    type='number'
+                    step='0.01'
                     required
-                    className="font-bold text-green-600"
+                    className='font-bold text-green-600'
                     value={formData.publicPrice || 0}
                     onChange={(e) =>
                       setFormData({ ...formData, publicPrice: parseFloat(e.target.value) || 0 })
@@ -452,13 +488,16 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label htmlFor="cost-price" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label
+                    htmlFor='cost-price'
+                    className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+                  >
                     {t.modal.cost}
                   </label>
                   <SmartInput
-                    id="cost-price"
-                    type="number"
-                    step="0.01"
+                    id='cost-price'
+                    type='number'
+                    step='0.01'
                     value={formData.costPrice || 0}
                     onChange={(e) =>
                       setFormData({ ...formData, costPrice: parseFloat(e.target.value) || 0 })
@@ -469,32 +508,46 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
 
               <div className={pricingGridClass}>
                 <div>
-                  <label htmlFor="unit-price" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label
+                    htmlFor='unit-price'
+                    className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+                  >
                     {currentLangCode === 'ar' ? 'سعر الشريط' : 'Unit Price'}
                   </label>
                   <SmartInput
-                    id="unit-price"
-                    type="number"
-                    step="0.01"
-                    className="font-bold text-amber-600"
+                    id='unit-price'
+                    type='number'
+                    step='0.01'
+                    className='font-bold text-amber-600'
                     value={formData.unitPrice || 0}
-                    placeholder={formData.publicPrice && formData.unitsPerPack ? (formData.publicPrice / formData.unitsPerPack).toFixed(2) : ''}
+                    placeholder={
+                      formData.publicPrice && formData.unitsPerPack
+                        ? (formData.publicPrice / formData.unitsPerPack).toFixed(2)
+                        : ''
+                    }
                     onChange={(e) =>
                       setFormData({ ...formData, unitPrice: parseFloat(e.target.value) || 0 })
                     }
                   />
                 </div>
                 <div>
-                  <label htmlFor="unit-cost" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label
+                    htmlFor='unit-cost'
+                    className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+                  >
                     {currentLangCode === 'ar' ? 'تكلفة الشريط' : 'Unit Cost'}
                   </label>
                   <SmartInput
-                    id="unit-cost"
-                    type="number"
-                    step="0.01"
-                    className="text-amber-700"
+                    id='unit-cost'
+                    type='number'
+                    step='0.01'
+                    className='text-amber-700'
                     value={formData.unitCostPrice || 0}
-                    placeholder={formData.costPrice && formData.unitsPerPack ? (formData.costPrice / formData.unitsPerPack).toFixed(2) : ''}
+                    placeholder={
+                      formData.costPrice && formData.unitsPerPack
+                        ? (formData.costPrice / formData.unitsPerPack).toFixed(2)
+                        : ''
+                    }
                     onChange={(e) =>
                       setFormData({ ...formData, unitCostPrice: parseFloat(e.target.value) || 0 })
                     }
@@ -502,15 +555,18 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                 </div>
               </div>
               <div>
-                <label htmlFor="max-discount" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                <label
+                  htmlFor='max-discount'
+                  className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'
+                >
                   Max Discount (%)
                 </label>
                 <SmartInput
-                  id="max-discount"
-                  type="number"
-                  min="0"
-                  max="100"
-                  className="text-red-500"
+                  id='max-discount'
+                  type='number'
+                  min='0'
+                  max='100'
+                  className='text-red-500'
                   value={formData.maxDiscount || ''}
                   onChange={(e) =>
                     setFormData({ ...formData, maxDiscount: parseFloat(e.target.value) })

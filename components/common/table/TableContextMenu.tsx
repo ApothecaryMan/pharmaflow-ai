@@ -1,9 +1,6 @@
-import React from 'react';
 import type { Table } from '@tanstack/react-table';
-import {
-  ContextMenuCheckboxItem,
-  ContextMenuSeparator,
-} from '../ContextMenu';
+import type React from 'react';
+import { ContextMenuCheckboxItem, ContextMenuSeparator } from '../ContextMenu';
 import { AlignButton } from '../TableAlignment';
 
 export interface TableContextMenuProps {
@@ -49,9 +46,7 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
         </div>
         {table
           .getAllLeafColumns()
-          .filter(
-            (col) => col.id !== 'actions' && !(col.columnDef.meta as any)?.hideFromSettings
-          )
+          .filter((col) => col.id !== 'actions' && !(col.columnDef.meta as any)?.hideFromSettings)
           .map((col) => {
             const headerValue =
               typeof col.columnDef.header === 'function' ? col.id : col.columnDef.header;

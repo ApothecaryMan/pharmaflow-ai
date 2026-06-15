@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
-import { CartItem, type SaleTab } from '../../types';
+import type { CartItem, SaleTab } from '../../types';
 import { storage } from '../../utils/storage';
 
 const MAX_TABS = 10;
@@ -107,12 +107,12 @@ export const usePOSTabs = (activeBranchId: string) => {
     (tabId: string) => {
       // Find the tab being removed to potentially save it to history
       const tabToRemove = tabs.find((t) => t.id === tabId);
-      
+
       // Only save if it has items in the cart
       if (tabToRemove && tabToRemove.cart.length > 0) {
         setClosedTabs((prev) => {
           // Remove if it already exists to prevent duplicates
-          const filtered = prev.filter(t => t.id !== tabId);
+          const filtered = prev.filter((t) => t.id !== tabId);
           // Insert at the beginning with closedAt timestamp, keep max 10
           return [{ ...tabToRemove, closedAt: Date.now() }, ...filtered].slice(0, 10);
         });
@@ -221,7 +221,7 @@ export const usePOSTabs = (activeBranchId: string) => {
 
       // Remove from history
       setClosedTabs((prev) => prev.filter((t) => t.id !== tabId));
-      
+
       // Add back to active tabs and select it
       setTabs((prev) => [...prev, tabToRestore]);
       setActiveTabId(tabToRestore.id);

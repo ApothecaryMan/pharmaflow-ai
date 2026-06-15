@@ -9,9 +9,9 @@ import { ConnectionStatus } from './items/ConnectionStatus';
 import { DateTime } from './items/DateTime';
 import { DynamicTicker } from './items/DynamicTicker';
 import { NotificationBell } from './items/NotificationBell';
+import { QuickLogin } from './items/QuickLogin';
 import { SettingsMenu } from './items/SettingsMenu';
 import { ToolsMenu } from './items/ToolsMenu';
-import { QuickLogin } from './items/QuickLogin';
 import { VersionInfo } from './items/VersionInfo';
 import { StatusBarItem } from './StatusBarItem';
 
@@ -101,12 +101,19 @@ const defaultTranslations: StatusBarTranslations = {
 };
 
 // --- Helper sub-components for better hierarchy ---
-const StatusBarSection: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <div className={`flex items-center h-full ${className}`}>{children}</div>
-);
+const StatusBarSection: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children,
+  className = '',
+}) => <div className={`flex items-center h-full ${className}`}>{children}</div>;
 
 export const StatusBar: React.FC<StatusBarProps> = React.memo(
-  ({ t = defaultTranslations, currentEmployeeId, onSelectEmployee, iconSize = 'var(--icon-base)', isRecoveringPassword }) => {
+  ({
+    t = defaultTranslations,
+    currentEmployeeId,
+    onSelectEmployee,
+    iconSize = 'var(--icon-base)',
+    isRecoveringPassword,
+  }) => {
     // 1. Precise destructuring: Only listen to what we actually use
     const {
       language,
@@ -130,15 +137,15 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
     }, [employees, activeOrgId]);
 
     // 2. Smart Memoization: Prepare data outside JSX
-    const currentEmployee = useMemo(() => 
-      orgEmployees.find((e) => e.id === currentEmployeeId),
+    const currentEmployee = useMemo(
+      () => orgEmployees.find((e) => e.id === currentEmployeeId),
       [orgEmployees, currentEmployeeId]
     );
 
     const shiftTooltip = useMemo(() => {
       if (isShiftLoading) return isAR ? 'جاري التحميل...' : 'Loading shift...';
       if (!currentShift) return t.shiftClosed || 'Shift Closed';
-      
+
       const openTime = new Date(currentShift.openTime);
       const now = new Date();
       const isSameDay = openTime.toDateString() === now.toDateString();
@@ -154,7 +161,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
       const since = t.shiftSince || 'Since';
 
       if (isSameDay) return `${label} ${since} ${timeStr}`;
-      
+
       const dateStr = openTime.toLocaleDateString(isAR ? 'ar-EG' : 'en-GB', {
         day: 'numeric',
         month: 'short',
@@ -162,31 +169,41 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
       return `${label} ${since} ${dateStr} ${timeStr}`;
     }, [currentShift, isShiftLoading, t, isAR]);
 
-    const tickerProps = useMemo(() => ({
-      todaySales: t.ticker?.todaySales || 'Today',
-      invoices: t.ticker?.invoices || 'Invoices',
-      completed: t.ticker?.completed || 'Done',
-      pending: t.ticker?.pending || 'Pending',
-      lowStock: t.ticker?.lowStock || 'Low Stock',
-      shortages: t.ticker?.shortages || 'Shortages',
-      newCustomers: t.ticker?.newCustomers || 'New Customers',
-      topSeller: t.ticker?.topSeller || 'Top Seller',
-    }), [t.ticker]);
+    const tickerProps = useMemo(
+      () => ({
+        todaySales: t.ticker?.todaySales || 'Today',
+        invoices: t.ticker?.invoices || 'Invoices',
+        completed: t.ticker?.completed || 'Done',
+        pending: t.ticker?.pending || 'Pending',
+        lowStock: t.ticker?.lowStock || 'Low Stock',
+        shortages: t.ticker?.shortages || 'Shortages',
+        newCustomers: t.ticker?.newCustomers || 'New Customers',
+        topSeller: t.ticker?.topSeller || 'Top Seller',
+      }),
+      [t.ticker]
+    );
 
-    const notificationTranslations = useMemo(() => ({
-      notifications: t.notifications || 'Notifications',
-      noNotifications: t.noNotifications || 'No notifications',
-      clearAll: t.clearAll || 'Clear all',
-      dismiss: t.dismiss || 'Dismiss',
-      messages: t.messages,
-    }), [t]);
+    const notificationTranslations = useMemo(
+      () => ({
+        notifications: t.notifications || 'Notifications',
+        noNotifications: t.noNotifications || 'No notifications',
+        clearAll: t.clearAll || 'Clear all',
+        dismiss: t.dismiss || 'Dismiss',
+        messages: t.messages,
+      }),
+      [t]
+    );
 
     return (
       <div
-        id="status-bar"
-        dir="ltr"
-        className="hidden md:flex items-center justify-between h-6 border-t shrink-0 select-none shadow-xs bg-(--bg-statusbar) border-(--border-primary)"
-        style={{ '--status-icon-size': typeof iconSize === 'number' ? `${iconSize}px` : iconSize } as React.CSSProperties}
+        id='status-bar'
+        dir='ltr'
+        className='hidden md:flex items-center justify-between h-6 border-t shrink-0 select-none shadow-xs bg-(--bg-statusbar) border-(--border-primary)'
+        style={
+          {
+            '--status-icon-size': typeof iconSize === 'number' ? `${iconSize}px` : iconSize,
+          } as React.CSSProperties
+        }
       >
         {/* Left Section: System & Time */}
         <StatusBarSection>
@@ -196,9 +213,9 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
           <ConnectionStatus onlineText={t.online} offlineText={t.offline} />
           {currentEmployeeId && (
             <StatusBarItem
-              icon={isShiftLoading ? 'sync' : (currentShift ? 'check_circle' : 'lock')}
+              icon={isShiftLoading ? 'sync' : currentShift ? 'check_circle' : 'lock'}
               tooltip={shiftTooltip}
-              variant={isShiftLoading ? 'default' : (currentShift ? 'success' : 'error')}
+              variant={isShiftLoading ? 'default' : currentShift ? 'success' : 'error'}
               className={isShiftLoading ? 'animate-spin-slow' : ''}
             />
           )}
@@ -207,7 +224,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
         </StatusBarSection>
 
         {/* Center Section: Flexible Spacer */}
-        <div className="flex-1" />
+        <div className='flex-1' />
 
         {/* Right Section: Interactive Items */}
         <StatusBarSection>
@@ -235,10 +252,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
             t={t.quickLogin}
           />
 
-          <NotificationBell
-            language={language}
-            t={notificationTranslations}
-          />
+          <NotificationBell language={language} t={notificationTranslations} />
         </StatusBarSection>
       </div>
     );

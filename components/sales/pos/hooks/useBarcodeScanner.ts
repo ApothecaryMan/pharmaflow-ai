@@ -11,7 +11,7 @@ interface UseBarcodeScannerProps {
 
 /**
  * useBarcodeScanner
- * 
+ *
  * A smart hook that differentiates between human typing and machine barcode scanning
  * by measuring keystroke velocity (delta time).
  */
@@ -68,7 +68,7 @@ export const useBarcodeScanner = ({
       // Handle Completion (Enter key is the standard end-of-scan for most HID scanners)
       if (e.key === 'Enter') {
         const barcode = bufferRef.current.trim();
-        
+
         // Only process if we detected a "burst" of fast keys or a significant buffer
         if (barcode.length >= 3 && fastKeyCountRef.current >= 2) {
           e.preventDefault();
@@ -91,7 +91,7 @@ export const useBarcodeScanner = ({
           fastKeyCountRef.current = 0;
           return;
         }
-        
+
         // Reset on any Enter to keep it clean
         bufferRef.current = '';
         fastKeyCountRef.current = 0;
@@ -108,13 +108,10 @@ export const useBarcodeScanner = ({
           e.preventDefault();
           e.stopPropagation();
 
-          // "Smart Cleaning": If the 1st or 2nd character leaked into an input before 
+          // "Smart Cleaning": If the 1st or 2nd character leaked into an input before
           // we could identify it as a machine, we try to clean it up.
           const activeEl = document.activeElement;
-          if (
-            activeEl instanceof HTMLInputElement || 
-            activeEl instanceof HTMLTextAreaElement
-          ) {
+          if (activeEl instanceof HTMLInputElement || activeEl instanceof HTMLTextAreaElement) {
             // This is a bit aggressive but works for POS scenarios
             // If the buffer just started and we are now sure it's a machine,
             // the first 1-2 chars might be in the value.
@@ -123,7 +120,7 @@ export const useBarcodeScanner = ({
               // Remove the last 2 characters (the ones that leaked)
               // Note: This assumes the scanner typed them at the cursor position.
               activeEl.value = val.slice(0, -2);
-              
+
               // Trigger input event to notify React/Frameworks
               activeEl.dispatchEvent(new Event('input', { bubbles: true }));
             }
@@ -142,7 +139,7 @@ export const useBarcodeScanner = ({
 
     // Use capture: true to intercept before other listeners (like search inputs)
     window.addEventListener('keydown', handleKeyDown, true);
-    
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown, true);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);

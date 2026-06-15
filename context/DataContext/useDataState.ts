@@ -1,6 +1,18 @@
-import { useState, useRef, useMemo } from 'react';
-import type { Drug, Sale, Supplier, Purchase, PurchaseReturn, Return, Customer, Employee, StockBatch, Branch, Organization } from '../../types';
+import { useMemo, useRef, useState } from 'react';
 import { useComputedInventory } from '../../hooks/inventory/useComputedInventory';
+import type {
+  Branch,
+  Customer,
+  Drug,
+  Employee,
+  Organization,
+  Purchase,
+  PurchaseReturn,
+  Return,
+  Sale,
+  StockBatch,
+  Supplier,
+} from '../../types';
 
 export const useDataState = (initialInventory?: Drug[], initialSuppliers?: Supplier[]) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -20,35 +32,50 @@ export const useDataState = (initialInventory?: Drug[], initialSuppliers?: Suppl
   const [branches, setBranches] = useState<Branch[]>([]);
 
   const lastLoadedBranchId = useRef<string>('');
-  
+
   // Proper fix for the "Disappearing Data" race condition:
   // In DEV mode, we bypass the branch filter while loading so the sample data stays visible.
   // In Production, rawInventory starts empty anyway, so this has no impact on data leakage.
-  const effectiveFilterBranchId = (isLoading && import.meta.env.DEV) ? '' : activeBranchId;
+  const effectiveFilterBranchId = isLoading && import.meta.env.DEV ? '' : activeBranchId;
   const inventory = useComputedInventory(rawInventory, batches, effectiveFilterBranchId);
 
   const activeBranch = useMemo(() => {
-    return branches.find(b => b.id === activeBranchId) || null;
+    return branches.find((b) => b.id === activeBranchId) || null;
   }, [branches, activeBranchId]);
 
   return {
-    isLoading, setIsLoading,
-    activeOrgId, setActiveOrgId,
-    activeBranchId, setActiveBranchId,
+    isLoading,
+    setIsLoading,
+    activeOrgId,
+    setActiveOrgId,
+    activeBranchId,
+    setActiveBranchId,
     activeBranch,
-    activeOrg, setActiveOrg,
-    rawInventory, setRawInventory,
-    sales, setSalesState,
-    suppliers, setSuppliersState,
-    purchases, setPurchasesState,
-    purchaseReturns, setPurchaseReturnsState,
-    returns, setReturnsState,
-    customers, setCustomersState,
-    employees, setEmployeesState,
-    currentEmployee, setCurrentEmployee,
-    batches, setBatchesState,
-    branches, setBranches,
+    activeOrg,
+    setActiveOrg,
+    rawInventory,
+    setRawInventory,
+    sales,
+    setSalesState,
+    suppliers,
+    setSuppliersState,
+    purchases,
+    setPurchasesState,
+    purchaseReturns,
+    setPurchaseReturnsState,
+    returns,
+    setReturnsState,
+    customers,
+    setCustomersState,
+    employees,
+    setEmployeesState,
+    currentEmployee,
+    setCurrentEmployee,
+    batches,
+    setBatchesState,
+    branches,
+    setBranches,
     inventory,
-    lastLoadedBranchId
+    lastLoadedBranchId,
   };
 };

@@ -186,31 +186,31 @@ export const NavModules: React.FC<NavModulesProps> = ({
               </button>
 
               {isDropdownOpen && navStyle === 2 && (
-                  <SidebarDropdown
-                    module={module}
-                    currentView={activeModule === module.id ? currentView || '' : ''}
-                    onNavigate={(viewId) => {
-                      onModuleChange(module.id);
-                      if (onNavigate) {
-                        onNavigate(viewId);
-                      }
-                      setActiveDropdown(null);
-                      setActiveAnchor(null);
-                    }}
-                    onClose={() => {
-                      setActiveDropdown(null);
-                      setActiveAnchor(null);
-                    }}
-                    theme={theme}
-                    language={language}
-                    hideInactiveModules={hideInactiveModules}
-                    blur={false}
-                    anchorEl={activeAnchor}
-                    onMouseEnter={cancelClose}
-                    onMouseLeave={handleMouseLeave}
-                    onOpenInWindow={onOpenInWindow}
-                    layout={navbarMenuLayout}
-                  />
+                <SidebarDropdown
+                  module={module}
+                  currentView={activeModule === module.id ? currentView || '' : ''}
+                  onNavigate={(viewId) => {
+                    onModuleChange(module.id);
+                    if (onNavigate) {
+                      onNavigate(viewId);
+                    }
+                    setActiveDropdown(null);
+                    setActiveAnchor(null);
+                  }}
+                  onClose={() => {
+                    setActiveDropdown(null);
+                    setActiveAnchor(null);
+                  }}
+                  theme={theme}
+                  language={language}
+                  hideInactiveModules={hideInactiveModules}
+                  blur={false}
+                  anchorEl={activeAnchor}
+                  onMouseEnter={cancelClose}
+                  onMouseLeave={handleMouseLeave}
+                  onOpenInWindow={onOpenInWindow}
+                  layout={navbarMenuLayout}
+                />
               )}
             </div>
           );

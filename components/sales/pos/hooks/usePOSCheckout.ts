@@ -1,12 +1,12 @@
-import { useState, useCallback, useEffect } from 'react';
-import { type UserRole } from '../../../../config/permissions';
-import { permissionsService } from '../../../../services/auth/permissionsService';
+import { useCallback, useEffect, useState } from 'react';
+import type { UserRole } from '../../../../config/permissions';
 import { useData } from '../../../../context/DataContext';
+import { permissionsService } from '../../../../services/auth/permissionsService';
 import type { CartItem, Customer, Sale } from '../../../../types';
-import { generateInvoiceHTML, getActiveReceiptSettings } from '../../InvoiceTemplate';
+import { formatCurrency, money } from '../../../../utils/currency';
 import { getPrinterSettings, printReceiptSilently } from '../../../../utils/qzPrinter';
+import { generateInvoiceHTML, getActiveReceiptSettings } from '../../InvoiceTemplate';
 import { buildSalePayload } from '../utils/POSUtils';
-import { money, formatCurrency } from '../../../../utils/currency';
 
 interface UsePOSCheckoutProps {
   cart: CartItem[];
@@ -73,15 +73,18 @@ export const usePOSCheckout = ({
       // Find the last delivery sale for this specific customer
       const lastDeliverySale = [...sales]
         .reverse() // Start from newest
-        .find(s =>
-          s.customerCode === selectedCustomer.code &&
-          s.saleType === 'delivery' &&
-          (s.deliveryFee || 0) > 0
+        .find(
+          (s) =>
+            s.customerCode === selectedCustomer.code &&
+            s.saleType === 'delivery' &&
+            (s.deliveryFee || 0) > 0
         );
 
       if (lastDeliverySale) {
         // Must be at least the global delivery fee
-        setDeliveryFee(Math.max(globalDeliveryFee, lastDeliverySale.deliveryFee || globalDeliveryFee));
+        setDeliveryFee(
+          Math.max(globalDeliveryFee, lastDeliverySale.deliveryFee || globalDeliveryFee)
+        );
       } else {
         setDeliveryFee(globalDeliveryFee); // Default for customer with no previous delivery
       }
@@ -105,7 +108,6 @@ export const usePOSCheckout = ({
 
       setIsProcessing(true);
       try {
-
         const isDelivery = saleType === 'delivery';
         let currentDeliveryFee = 0;
         if (isDelivery) {
@@ -136,8 +138,14 @@ export const usePOSCheckout = ({
           subtotal,
           total: money.add(cartTotal, currentDeliveryFee),
           language: (language as 'EN' | 'AR') || 'EN',
-          deliveryEmployeeId: isDelivery ? (deliveryEmployeeId || undefined) : undefined,
-          status: (isPending ? 'pending' : isDelivery ? (deliveryEmployeeId ? 'with_delivery' : 'pending') : 'completed') as Sale['status'],
+          deliveryEmployeeId: isDelivery ? deliveryEmployeeId || undefined : undefined,
+          status: (isPending
+            ? 'pending'
+            : isDelivery
+              ? deliveryEmployeeId
+                ? 'with_delivery'
+                : 'pending'
+              : 'completed') as Sale['status'],
           processingTimeMinutes,
           date: getVerifiedDate(),
           branchId: activeBranchId,
@@ -155,7 +163,9 @@ export const usePOSCheckout = ({
 
         // Refresh shifts immediately to update balance and transaction list
         if (refreshShifts) {
-          refreshShifts().catch(e => console.error('Failed to refresh shifts after checkout:', e));
+          refreshShifts().catch((e) =>
+            console.error('Failed to refresh shifts after checkout:', e)
+          );
         }
 
         setIsCheckoutMode(false);
@@ -206,7 +216,6 @@ export const usePOSCheckout = ({
         } catch (e) {
           console.error('Auto-print failed:', e);
         }
-
       } finally {
         setIsProcessing(false);
       }

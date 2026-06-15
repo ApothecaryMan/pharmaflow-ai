@@ -1,18 +1,18 @@
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
+import { useData } from '../../context/DataContext';
+import { permissionsService } from '../../services/auth/permissionsService';
+import { pricingService } from '../../services/sales/pricingService';
 import type { Return, ReturnItem, ReturnReason, Sale, Shift } from '../../types';
+import { formatCurrency } from '../../utils/currency';
+import { getDisplayName } from '../../utils/drugDisplayName';
+import { idGenerator } from '../../utils/idGenerator';
+import { money, pricing, tax } from '../../utils/money';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
-import { pricingService } from '../../services/sales/pricingService';
-import { money, tax, pricing } from '../../utils/money';
 import { useSmartDirection } from '../common/SmartInputs';
-import { idGenerator } from '../../utils/idGenerator';
-import { useData } from '../../context/DataContext';
-import { permissionsService } from '../../services/auth/permissionsService';
-import { formatCurrency } from '../../utils/currency';
-import { getDisplayName } from '../../utils/drugDisplayName';
 
 interface ReturnModalProps {
   isOpen: boolean;
@@ -51,7 +51,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
 
   const inventoryMap = useMemo(() => {
     const map = new Map();
-    inventory.forEach(d => {
+    inventory.forEach((d) => {
       map.set(d.id, d);
       d.batches?.forEach((b: any) => map.set(b.id, d));
     });
@@ -254,18 +254,21 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         if (money.isGt(calculateRefund, cashBalance)) {
           setValidationError(
             t.returns.validation?.insufficientBalance ||
-            'Cash refund amount exceeds available cash balance in the current shift'
+              'Cash refund amount exceeds available cash balance in the current shift'
           );
           setIsProcessing(false);
           return;
         }
       } else {
         // For non-cash sales (Visa/Insurance), we check total shift sales volume or just allow it if needed,
-        // but typically card returns don't depend on cash drawer. 
+        // but typically card returns don't depend on cash drawer.
         // However, we follow the existing logic but fix it to include opening balance.
         const totalBalance = money.subtract(
           money.add(
-            money.add(money.add(openShift.openingBalance || 0, openShift.cashSales || 0), openShift.cardSales || 0),
+            money.add(
+              money.add(openShift.openingBalance || 0, openShift.cashSales || 0),
+              openShift.cardSales || 0
+            ),
             openShift.cashIn || 0
           ),
           money.add(openShift.returns || 0, openShift.cashOut || 0)
@@ -273,7 +276,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         if (money.isGt(calculateRefund, totalBalance)) {
           setValidationError(
             t.returns.validation?.insufficientBalance ||
-            'Return amount exceeds available sales balance'
+              'Return amount exceeds available sales balance'
           );
           setIsProcessing(false);
           return;
@@ -353,28 +356,31 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           <div key={s} className='flex items-center'>
             <div className='flex flex-col items-center'>
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${s === step
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                  s === step
                     ? `bg-primary-600 text-white shadow-lg shadow-primary-200 dark:shadow-none`
                     : s < step
                       ? `bg-primary-100 dark:bg-primary-900/50 text-primary-600`
                       : 'bg-gray-200 dark:bg-gray-800 text-gray-400'
-                  }`}
+                }`}
               >
                 <span className='material-symbols-rounded text-xl'>
                   {s < step ? 'check' : stepIcons[s - 1]}
                 </span>
               </div>
               <span
-                className={`text-[10px] mt-1 font-medium ${s === step ? `text-primary-600` : 'text-gray-400'
-                  }`}
+                className={`text-[10px] mt-1 font-medium ${
+                  s === step ? `text-primary-600` : 'text-gray-400'
+                }`}
               >
                 {stepLabels[s - 1]}
               </span>
             </div>
             {s < 3 && (
               <div
-                className={`w-12 h-0.5 mx-2 transition-colors ${s < step ? `bg-primary-600` : 'bg-gray-200 dark:bg-gray-800'
-                  }`}
+                className={`w-12 h-0.5 mx-2 transition-colors ${
+                  s < step ? `bg-primary-600` : 'bg-gray-200 dark:bg-gray-800'
+                }`}
               />
             )}
           </div>
@@ -395,10 +401,11 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
               </p>
               <button
                 onClick={isAllSelected ? deselectAll : selectAll}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${isAllSelected
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  isAllSelected
                     ? 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
                     : `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/50`
-                  }`}
+                }`}
               >
                 {isAllSelected
                   ? t.returns.deselectAll || 'Deselect All'
@@ -436,7 +443,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                           >
                             {getDisplayName({
                               name: item.name,
-                              dosageForm: item.dosageForm
+                              dosageForm: item.dosageForm,
                             })}
                             {item.isUnit && (
                               <span className='ml-1 text-base bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-wider'>
@@ -451,22 +458,22 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                               {t.modal?.qty || 'Qty'}: {item.availableQty}
                             </span>
                             {/* BUG-R10: Show expiry date to help user distinguish identical products from different batches */}
-                            <span className="text-[10px] font-mono font-bold text-gray-400 select-none">
-                              {item.batchAllocations?.[0]?.expiryDate ? (
-                                (() => {
-                                  const d = new Date(item.batchAllocations[0].expiryDate);
-                                  const month = (d.getMonth() + 1).toString().padStart(2, '0');
-                                  const year = d.getFullYear().toString().slice(-2);
-                                  return `${month}/${year}`;
-                                })()
-                              ) : (
-                                item.expiryDate ? (() => {
-                                  const d = new Date(item.expiryDate);
-                                  const month = (d.getMonth() + 1).toString().padStart(2, '0');
-                                  const year = d.getFullYear().toString().slice(-2);
-                                  return `${month}/${year}`;
-                                })() : '--/--'
-                              )}
+                            <span className='text-[10px] font-mono font-bold text-gray-400 select-none'>
+                              {item.batchAllocations?.[0]?.expiryDate
+                                ? (() => {
+                                    const d = new Date(item.batchAllocations[0].expiryDate);
+                                    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                                    const year = d.getFullYear().toString().slice(-2);
+                                    return `${month}/${year}`;
+                                  })()
+                                : item.expiryDate
+                                  ? (() => {
+                                      const d = new Date(item.expiryDate);
+                                      const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                                      const year = d.getFullYear().toString().slice(-2);
+                                      return `${month}/${year}`;
+                                    })()
+                                  : '--/--'}
                             </span>
                             {item.returnedQty > 0 && (
                               <div className='inline-flex items-center gap-1 text-[9px] bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300 px-1.5 py-0 rounded-md font-bold border border-orange-100 dark:border-orange-900/30 leading-none h-3.5'>
@@ -483,14 +490,20 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                           <div className='flex flex-col items-end leading-tight'>
                             <p className='font-bold text-gray-900 dark:text-gray-100 text-base'>
                               {(() => {
-                                const price = item.isUnit ? money.divide(item.publicPrice, item.unitsPerPack || 1) : item.publicPrice;
+                                const price = item.isUnit
+                                  ? money.divide(item.publicPrice, item.unitsPerPack || 1)
+                                  : item.publicPrice;
                                 const discounted = pricing.afterDiscount(price, item.discount || 0);
                                 return formatCurrency(discounted);
                               })()}
                             </p>
                             {item.discount > 0 && (
                               <p className='text-[10px] text-gray-400 line-through opacity-60'>
-                                {formatCurrency(item.isUnit ? money.divide(item.publicPrice, item.unitsPerPack || 1) : item.publicPrice)}
+                                {formatCurrency(
+                                  item.isUnit
+                                    ? money.divide(item.publicPrice, item.unitsPerPack || 1)
+                                    : item.publicPrice
+                                )}
                               </p>
                             )}
                           </div>
@@ -542,10 +555,11 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                             </div>
                           ) : (
                             <div
-                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all border-2 ${isSelected
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all border-2 ${
+                                isSelected
                                   ? `bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-500/20`
                                   : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-transparent'
-                                }`}
+                              }`}
                             >
                               <span
                                 className={`material-symbols-rounded text-lg ${isSelected ? 'opacity-100' : 'opacity-0'}`}
@@ -698,7 +712,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                           >
                             {getDisplayName({
                               name: item.name,
-                              dosageForm: item.dosageForm
+                              dosageForm: item.dosageForm,
                             })}
                             {item.isUnit && (
                               <span className='ml-1 text-base bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-wider'>
@@ -707,13 +721,15 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                             )}
                           </h4>
                           <div className='flex items-center gap-2 mt-0 leading-none h-4'>
-                            <span className="text-[10px] font-mono font-bold text-gray-400 select-none">
-                              {item.expiryDate ? (() => {
-                                const d = new Date(item.expiryDate);
-                                const month = (d.getMonth() + 1).toString().padStart(2, '0');
-                                const year = d.getFullYear().toString().slice(-2);
-                                return `${month}/${year}`;
-                              })() : '--/--'}
+                            <span className='text-[10px] font-mono font-bold text-gray-400 select-none'>
+                              {item.expiryDate
+                                ? (() => {
+                                    const d = new Date(item.expiryDate);
+                                    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                                    const year = d.getFullYear().toString().slice(-2);
+                                    return `${month}/${year}`;
+                                  })()
+                                : '--/--'}
                             </span>
                           </div>
                         </div>
@@ -722,16 +738,24 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                           <div className='flex flex-col items-end leading-tight'>
                             <p className='font-bold text-gray-900 dark:text-gray-100 text-base'>
                               {(() => {
-                                const basePrice = item.isUnit && item.unitsPerPack ? money.divide(item.publicPrice, item.unitsPerPack) : item.publicPrice;
-                                const discounted = pricing.afterDiscount(basePrice, item.discount || 0);
+                                const basePrice =
+                                  item.isUnit && item.unitsPerPack
+                                    ? money.divide(item.publicPrice, item.unitsPerPack)
+                                    : item.publicPrice;
+                                const discounted = pricing.afterDiscount(
+                                  basePrice,
+                                  item.discount || 0
+                                );
                                 return formatCurrency(discounted);
                               })()}
                             </p>
                             {item.discount > 0 && (
                               <p className='text-[10px] text-gray-400 line-through opacity-60'>
-                                {formatCurrency(item.isUnit && item.unitsPerPack
-                                  ? money.divide(item.publicPrice, item.unitsPerPack)
-                                  : item.publicPrice)}
+                                {formatCurrency(
+                                  item.isUnit && item.unitsPerPack
+                                    ? money.divide(item.publicPrice, item.unitsPerPack)
+                                    : item.publicPrice
+                                )}
                               </p>
                             )}
                           </div>
@@ -803,9 +827,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
             className={`px-8 py-2.5 rounded-xl font-bold text-white bg-primary-600 enabled:hover:bg-primary-700 disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-lg shadow-primary-200 dark:shadow-none`}
           >
             {isProcessing ? (
-              <span className='material-symbols-rounded text-[20px] animate-spin'>
-                sync
-              </span>
+              <span className='material-symbols-rounded text-[20px] animate-spin'>sync</span>
             ) : (
               <span className='material-symbols-rounded text-[20px]'>check_circle</span>
             )}

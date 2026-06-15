@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { type UserRole } from '../../../config/permissions';
+import React, { useEffect, useState } from 'react';
+import type { UserRole } from '../../../config/permissions';
 import { permissionsService } from '../../../services/auth/permissionsService';
-import type { CartItem, Drug } from '../../../types';
-import { formatExpiryDate, parseExpiryEndOfMonth, getExpiryColorClass } from '../../../utils/expiryUtils';
-import { money, pricing } from '../../../utils/money';
 import { pricingService } from '../../../services/sales/pricingService';
+import type { CartItem, Drug } from '../../../types';
+import {
+  formatExpiryDate,
+  getExpiryColorClass,
+  parseExpiryEndOfMonth,
+} from '../../../utils/expiryUtils';
+import { money, pricing } from '../../../utils/money';
 
 export interface CartItemExpiryBadgeProps {
   item: CartItem;
@@ -39,7 +43,7 @@ export const CartItemExpiryBadge: React.FC<CartItemExpiryBadgeProps> = ({
       title={currentExpiry}
     >
       <button
-        type="button"
+        type='button'
         className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${getUrgencyColor()}`}
         onClick={(e) => {
           e.stopPropagation();
@@ -57,11 +61,11 @@ export const CartItemExpiryBadge: React.FC<CartItemExpiryBadgeProps> = ({
         }}
         onPointerDown={(e) => e.stopPropagation()}
       >
-        <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>
+        <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
           event
         </span>
       </button>
-      <div className="flex-1 min-w-0 h-full flex items-center justify-center pr-1">
+      <div className='flex-1 min-w-0 h-full flex items-center justify-center pr-1'>
         <span className={`text-[10px] font-bold tabular-nums leading-none ${getUrgencyColor()}`}>
           {currentExpiry}
         </span>
@@ -106,13 +110,17 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
 
   return (
     <div
-      title={permissionsService.can('reports.view_financial')
-        ? `Max Discount: ${effectiveMax}%\nProfit Margin: ${margin.toFixed(1)}%`
-        : `Max Discount: ${effectiveMax}%`}
+      title={
+        permissionsService.can('reports.view_financial')
+          ? `Max Discount: ${effectiveMax}%\nProfit Margin: ${margin.toFixed(1)}%`
+          : `Max Discount: ${effectiveMax}%`
+      }
       className={`flex items-center rounded-lg h-6 overflow-hidden transition-all w-14 shrink-0 border
-        ${hasDiscount
-          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-          : 'bg-black/[0.03] dark:bg-white/[0.05] text-gray-400 border-gray-100/50 dark:border-white/5'}`}
+        ${
+          hasDiscount
+            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+            : 'bg-black/[0.03] dark:bg-white/[0.05] text-gray-400 border-gray-100/50 dark:border-white/5'
+        }`}
     >
       <button
         tabIndex={-1}
@@ -123,8 +131,9 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
           if (newVal > 0) setGlobalDiscount(0);
         }}
         onPointerDown={(e) => e.stopPropagation()}
-        className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${hasDiscount ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
-          }`}
+        className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${
+          hasDiscount ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
+        }`}
       >
         <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
           percent
@@ -147,10 +156,11 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
           if (unitItem) updateItemDiscount(unitItem.id, true, finalVal);
           if (finalVal > 0) setGlobalDiscount(0);
         }}
-        className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none leading-none ${hasDiscount
+        className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none leading-none ${
+          hasDiscount
             ? 'text-emerald-700 dark:text-emerald-300 placeholder-emerald-300'
             : 'text-gray-900 dark:text-gray-100 placeholder-gray-400'
-          }`}
+        }`}
       />
     </div>
   );
@@ -208,10 +218,11 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
 
     if (!isNaN(val) && val !== (target?.quantity ?? -1)) {
       // Calculate units consumed by OTHER items of the same drug in the cart
-      const otherDrugItems = cart.filter(i =>
-        i.name === item.name &&
-        (i.dosageForm || '') === (item.dosageForm || '') &&
-        !(i.id === item.id && !!i.isUnit === isUnit)
+      const otherDrugItems = cart.filter(
+        (i) =>
+          i.name === item.name &&
+          (i.dosageForm || '') === (item.dosageForm || '') &&
+          !(i.id === item.id && !!i.isUnit === isUnit)
       );
 
       const unitsConsumedByOthers = otherDrugItems.reduce((sum, i) => {
@@ -231,32 +242,91 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
     }
   };
 
-  const inputClass = "w-full h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+  const inputClass =
+    'w-full h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none';
 
   if (isMobile) {
     const renderStepper = (isUnit: boolean) => {
       const q = (isUnit ? unitItem : packItem)?.quantity || 0;
       return (
-        <div className="flex items-center rounded-lg h-6 overflow-hidden bg-black/[0.03] dark:bg-white/[0.05]">
-          <button onClick={e => { e.stopPropagation(); q > 0 && updateQuantity(item.id, isUnit, -1); }} disabled={q <= 0} className="w-5 h-full flex items-center justify-center hover:bg-black/5 text-gray-400 active:scale-90 disabled:opacity-30"><span className="material-symbols-rounded" style={{ fontSize: '14px' }}>remove</span></button>
-          <input type="number" value={isUnit ? localUnit : localPack} placeholder={isUnit ? 'U' : 'P'} onChange={e => handleQtyChange(e.target.value, isUnit)} onBlur={() => (isUnit ? localUnit : localPack) === '' && (isUnit ? setLocalUnit : setLocalPack)(q.toString())} className="w-6 h-full text-[10px] font-black text-center bg-transparent border-none p-0 focus:outline-none" />
-          <button onClick={e => { e.stopPropagation(); updateQuantity(item.id, isUnit, 1); }} className="w-5 h-full flex items-center justify-center text-primary-600 active:scale-90"><span className="material-symbols-rounded" style={{ fontSize: '14px' }}>add</span></button>
+        <div className='flex items-center rounded-lg h-6 overflow-hidden bg-black/[0.03] dark:bg-white/[0.05]'>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              q > 0 && updateQuantity(item.id, isUnit, -1);
+            }}
+            disabled={q <= 0}
+            className='w-5 h-full flex items-center justify-center hover:bg-black/5 text-gray-400 active:scale-90 disabled:opacity-30'
+          >
+            <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
+              remove
+            </span>
+          </button>
+          <input
+            type='number'
+            value={isUnit ? localUnit : localPack}
+            placeholder={isUnit ? 'U' : 'P'}
+            onChange={(e) => handleQtyChange(e.target.value, isUnit)}
+            onBlur={() =>
+              (isUnit ? localUnit : localPack) === '' &&
+              (isUnit ? setLocalUnit : setLocalPack)(q.toString())
+            }
+            className='w-6 h-full text-[10px] font-black text-center bg-transparent border-none p-0 focus:outline-none'
+          />
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              updateQuantity(item.id, isUnit, 1);
+            }}
+            className='w-5 h-full flex items-center justify-center text-primary-600 active:scale-90'
+          >
+            <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
+              add
+            </span>
+          </button>
         </div>
       );
     };
-    return <div className="flex items-center gap-0.5 shrink-0" dir="ltr">{renderStepper(false)}{hasDualMode && <><div className="w-px h-full bg-gray-100/50 dark:bg-white/5 shrink-0" />{renderStepper(true)}</>}</div>;
+    return (
+      <div className='flex items-center gap-0.5 shrink-0' dir='ltr'>
+        {renderStepper(false)}
+        {hasDualMode && (
+          <>
+            <div className='w-px h-full bg-gray-100/50 dark:bg-white/5 shrink-0' />
+            {renderStepper(true)}
+          </>
+        )}
+      </div>
+    );
   }
 
   return (
-    <div className="flex items-center rounded-lg h-6 overflow-hidden w-14 shrink-0 bg-black/[0.03] dark:bg-white/[0.05] border border-gray-100/50 dark:border-white/5">
-      <div className="flex-1 h-full flex items-center min-w-0">
-        <input type="number" value={localPack} placeholder="P" onChange={e => handleQtyChange(e.target.value, false)} onBlur={() => localPack === '' && setLocalPack(packItem?.quantity.toString() || '')} className={inputClass} />
+    <div className='flex items-center rounded-lg h-6 overflow-hidden w-14 shrink-0 bg-black/[0.03] dark:bg-white/[0.05] border border-gray-100/50 dark:border-white/5'>
+      <div className='flex-1 h-full flex items-center min-w-0'>
+        <input
+          type='number'
+          value={localPack}
+          placeholder='P'
+          onChange={(e) => handleQtyChange(e.target.value, false)}
+          onBlur={() => localPack === '' && setLocalPack(packItem?.quantity.toString() || '')}
+          className={inputClass}
+        />
       </div>
       {hasDualMode && (
-        <><div className="w-px h-full bg-gray-100/50 dark:bg-white/5 shrink-0" />
-          <div className="flex-1 h-full flex items-center min-w-0">
-            <input type="number" value={localUnit} placeholder="U" title={`1 Pack = ${unitsPerPack} Units`} onChange={e => handleQtyChange(e.target.value, true)} onBlur={() => localUnit === '' && setLocalUnit(unitItem?.quantity.toString() || '')} className={inputClass} />
-          </div></>
+        <>
+          <div className='w-px h-full bg-gray-100/50 dark:bg-white/5 shrink-0' />
+          <div className='flex-1 h-full flex items-center min-w-0'>
+            <input
+              type='number'
+              value={localUnit}
+              placeholder='U'
+              title={`1 Pack = ${unitsPerPack} Units`}
+              onChange={(e) => handleQtyChange(e.target.value, true)}
+              onBlur={() => localUnit === '' && setLocalUnit(unitItem?.quantity.toString() || '')}
+              className={inputClass}
+            />
+          </div>
+        </>
       )}
     </div>
   );

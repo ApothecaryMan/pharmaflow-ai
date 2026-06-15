@@ -16,13 +16,33 @@ export function FlowerCrown() {
           strokeLinecap='round'
           fill='none'
         />
-        <path d='M24,32 C16,28 14,18 24,16 C28,22 28,28 24,32 Z' fill='#15803D' stroke='#166534' strokeWidth='0.5' />
+        <path
+          d='M24,32 C16,28 14,18 24,16 C28,22 28,28 24,32 Z'
+          fill='#15803D'
+          stroke='#166534'
+          strokeWidth='0.5'
+        />
         <path d='M19,24 Q24,24 24,23' stroke='#86EFAC' strokeWidth='0.4' />
-        <path d='M42,21 C36,12 40,4 48,8 C46,16 46,18 42,21 Z' fill='#22C55E' stroke='#15803D' strokeWidth='0.5' />
+        <path
+          d='M42,21 C36,12 40,4 48,8 C46,16 46,18 42,21 Z'
+          fill='#22C55E'
+          stroke='#15803D'
+          strokeWidth='0.5'
+        />
         <path d='M42,11 Q44,15 45,15' stroke='#DCFCE7' strokeWidth='0.4' />
-        <path d='M86,21 C92,12 88,4 80,8 C82,16 82,18 86,21 Z' fill='#22C55E' stroke='#15803D' strokeWidth='0.5' />
+        <path
+          d='M86,21 C92,12 88,4 80,8 C82,16 82,18 86,21 Z'
+          fill='#22C55E'
+          stroke='#15803D'
+          strokeWidth='0.5'
+        />
         <path d='M86,11 Q84,15 83,15' stroke='#DCFCE7' strokeWidth='0.4' />
-        <path d='M104,32 C112,28 114,18 104,16 C100,22 100,28 104,32 Z' fill='#15803D' stroke='#166534' strokeWidth='0.5' />
+        <path
+          d='M104,32 C112,28 114,18 104,16 C100,22 100,28 104,32 Z'
+          fill='#15803D'
+          stroke='#166534'
+          strokeWidth='0.5'
+        />
         <path d='M109,24 Q104,24 104,23' stroke='#86EFAC' strokeWidth='0.4' />
         <circle cx='38' cy='28' r='2.5' fill='#FBBF24' stroke='#D97706' strokeWidth='0.5' />
         <circle cx='90' cy='28' r='2.5' fill='#FBBF24' stroke='#D97706' strokeWidth='0.5' />
@@ -53,11 +73,41 @@ export function FlowerCrown() {
             <path d='M0,-9 C-5,-9 -6,-3 0,-1 C6,-3 5,-9 0,-9 Z' transform='rotate(216)' />
             <path d='M0,-9 C-5,-9 -6,-3 0,-1 C6,-3 5,-9 0,-9 Z' transform='rotate(288)' />
           </g>
-          <path d='M0,-8 L0,-4' stroke='#FFEDD5' strokeWidth='0.6' strokeLinecap='round' transform='rotate(0)' />
-          <path d='M0,-8 L0,-4' stroke='#FFEDD5' strokeWidth='0.6' strokeLinecap='round' transform='rotate(72)' />
-          <path d='M0,-8 L0,-4' stroke='#FFEDD5' strokeWidth='0.6' strokeLinecap='round' transform='rotate(144)' />
-          <path d='M0,-8 L0,-4' stroke='#FFEDD5' strokeWidth='0.6' strokeLinecap='round' transform='rotate(216)' />
-          <path d='M0,-8 L0,-4' stroke='#FFEDD5' strokeWidth='0.6' strokeLinecap='round' transform='rotate(288)' />
+          <path
+            d='M0,-8 L0,-4'
+            stroke='#FFEDD5'
+            strokeWidth='0.6'
+            strokeLinecap='round'
+            transform='rotate(0)'
+          />
+          <path
+            d='M0,-8 L0,-4'
+            stroke='#FFEDD5'
+            strokeWidth='0.6'
+            strokeLinecap='round'
+            transform='rotate(72)'
+          />
+          <path
+            d='M0,-8 L0,-4'
+            stroke='#FFEDD5'
+            strokeWidth='0.6'
+            strokeLinecap='round'
+            transform='rotate(144)'
+          />
+          <path
+            d='M0,-8 L0,-4'
+            stroke='#FFEDD5'
+            strokeWidth='0.6'
+            strokeLinecap='round'
+            transform='rotate(216)'
+          />
+          <path
+            d='M0,-8 L0,-4'
+            stroke='#FFEDD5'
+            strokeWidth='0.6'
+            strokeLinecap='round'
+            transform='rotate(288)'
+          />
           <circle cx='0' cy='0' r='2.5' fill='#FEF08A' />
         </g>
         <g transform='translate(64, 17)'>
@@ -97,11 +147,41 @@ export function FlowerCrown() {
             <path d='M0,-9 C-5,-9 -6,-3 0,-1 C6,-3 5,-9 0,-9 Z' transform='rotate(216)' />
             <path d='M0,-9 C-5,-9 -6,-3 0,-1 C6,-3 5,-9 0,-9 Z' transform='rotate(288)' />
           </g>
-          <path d='M0,-8 L0,-4' stroke='#F3E8FF' strokeWidth='0.6' strokeLinecap='round' transform='rotate(0)' />
-          <path d='M0,-8 L0,-4' stroke='#F3E8FF' strokeWidth='0.6' strokeLinecap='round' transform='rotate(72)' />
-          <path d='M0,-8 L0,-4' stroke='#F3E8FF' strokeWidth='0.6' strokeLinecap='round' transform='rotate(144)' />
-          <path d='M0,-8 L0,-4' stroke='#F3E8FF' strokeWidth='0.6' strokeLinecap='round' transform='rotate(216)' />
-          <path d='M0,-8 L0,-4' stroke='#F3E8FF' strokeWidth='0.6' strokeLinecap='round' transform='rotate(288)' />
+          <path
+            d='M0,-8 L0,-4'
+            stroke='#F3E8FF'
+            strokeWidth='0.6'
+            strokeLinecap='round'
+            transform='rotate(0)'
+          />
+          <path
+            d='M0,-8 L0,-4'
+            stroke='#F3E8FF'
+            strokeWidth='0.6'
+            strokeLinecap='round'
+            transform='rotate(72)'
+          />
+          <path
+            d='M0,-8 L0,-4'
+            stroke='#F3E8FF'
+            strokeWidth='0.6'
+            strokeLinecap='round'
+            transform='rotate(144)'
+          />
+          <path
+            d='M0,-8 L0,-4'
+            stroke='#F3E8FF'
+            strokeWidth='0.6'
+            strokeLinecap='round'
+            transform='rotate(216)'
+          />
+          <path
+            d='M0,-8 L0,-4'
+            stroke='#F3E8FF'
+            strokeWidth='0.6'
+            strokeLinecap='round'
+            transform='rotate(288)'
+          />
           <circle cx='0' cy='0' r='2.5' fill='#FEF08A' />
         </g>
         <g transform='translate(98, 36)'>

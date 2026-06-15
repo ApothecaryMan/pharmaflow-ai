@@ -1,7 +1,7 @@
-import React from 'react';
-import { PermissionAction } from '../../config/permissions';
+import type React from 'react';
+import type { PermissionAction } from '../../config/permissions';
 import { permissionsService } from '../../services/auth/permissionsService';
-import { OrgRole } from '../../types';
+import type { OrgRole } from '../../types';
 
 interface HasPermissionProps {
   /** The action to check permission for */

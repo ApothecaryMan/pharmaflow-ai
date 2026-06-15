@@ -49,7 +49,7 @@ export const PERMISSIONS_MAPPING: Record<string, PermissionAction> = {
   'medicine-search': 'inventory.view',
   'customer-density-map': 'customer.view',
   'org-management': 'settings.view',
-  'services': 'settings.view',
+  services: 'settings.view',
   'attendance-terminal': 'attendance.clock',
   'attendance-reports': 'attendance.view',
   'employee-attendance-profile': 'attendance.view',

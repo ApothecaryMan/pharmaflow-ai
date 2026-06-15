@@ -1,6 +1,6 @@
 import type { SettingsState } from '../context/SettingsContext';
-import { storage } from './storage';
 import { getLocalizedProductType } from '../data/productCategories';
+import { storage } from './storage';
 
 /**
  * Drug Display Name Utility

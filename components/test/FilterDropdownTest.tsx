@@ -1,8 +1,8 @@
 import type React from 'react';
 import { useState } from 'react';
-import { FilterDropdownPlayground as FilterDropdown } from './FilterDropdownPlayground';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { ComboBox } from './ComboBox';
+import { FilterDropdownPlayground as FilterDropdown } from './FilterDropdownPlayground';
 
 interface SimpleItem {
   id: string;
@@ -15,7 +15,12 @@ export const FilterDropdownTest: React.FC = () => {
   const testItems: SimpleItem[] = [
     { id: '1', name: 'Main Pharmacy', nameAr: 'الصيدلية الرئيسية', icon: 'store' },
     { id: '2', name: 'Downtown Branch', nameAr: 'فرع وسط البلد', icon: 'location_on' },
-    { id: '3', name: 'North Clinic Outlet', nameAr: 'منفذ العيادة الشمالي', icon: 'local_hospital' },
+    {
+      id: '3',
+      name: 'North Clinic Outlet',
+      nameAr: 'منفذ العيادة الشمالي',
+      icon: 'local_hospital',
+    },
     { id: '4', name: 'Airport 24/7 Branch', nameAr: 'فرع المطار 24 ساعة', icon: 'schedule' },
   ];
 
@@ -32,8 +37,18 @@ export const FilterDropdownTest: React.FC = () => {
 
   // State for Behavioral Tests
   const [selectedDisabled, setSelectedDisabled] = useState<SimpleItem>(testItems[0]);
-  const [selectedSingle, setSelectedSingle] = useState<SimpleItem>({ id: 'alone', name: 'Single Item Only', nameAr: 'عنصر وحيد فقط', icon: 'info' });
-  const [selectedLong, setSelectedLong] = useState<SimpleItem>({ id: 'long', name: 'Extremely Long Category Name That Might Overflow Sibling Boundaries', nameAr: 'اسم طويل جداً', icon: 'text_fields' });
+  const [selectedSingle, setSelectedSingle] = useState<SimpleItem>({
+    id: 'alone',
+    name: 'Single Item Only',
+    nameAr: 'عنصر وحيد فقط',
+    icon: 'info',
+  });
+  const [selectedLong, setSelectedLong] = useState<SimpleItem>({
+    id: 'long',
+    name: 'Extremely Long Category Name That Might Overflow Sibling Boundaries',
+    nameAr: 'اسم طويل جداً',
+    icon: 'text_fields',
+  });
 
   return (
     <div className='p-6 max-w-5xl mx-auto space-y-10 min-h-screen pb-48'>
@@ -49,7 +64,6 @@ export const FilterDropdownTest: React.FC = () => {
 
       {/* CONTAINER 1: Visual Styles and Configurations */}
       <div className={`p-6 rounded-3xl ${CARD_BASE} border border-divider flex flex-col gap-6`}>
-
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 py-4'>
           {/* Variant 1: Input Variant */}
           <div className='flex flex-col gap-3'>
@@ -107,7 +121,9 @@ export const FilterDropdownTest: React.FC = () => {
                       <span className='material-symbols-rounded text-[16px]'>{item?.icon}</span>
                       <span className='truncate'>{item?.name}</span>
                     </div>
-                    <span className='material-symbols-rounded text-[14px] ml-1 shrink-0'>expand_more</span>
+                    <span className='material-symbols-rounded text-[14px] ml-1 shrink-0'>
+                      expand_more
+                    </span>
                   </div>
                 )}
                 renderItem={(item) => (
@@ -184,7 +200,6 @@ export const FilterDropdownTest: React.FC = () => {
 
       {/* CONTAINER 2: ComboBox Premium Glassmorphism Design */}
       <div className={`p-6 rounded-3xl ${CARD_BASE} border border-divider flex flex-col gap-6`}>
-
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 py-4'>
           {/* ComboBox Variant 1: Standard Input with Search Icon */}
           <div className='flex flex-col gap-3'>
@@ -257,13 +272,16 @@ export const FilterDropdownTest: React.FC = () => {
 
       {/* CONTAINER 3: Behavioral & Edge Case Testing */}
       <div className={`p-6 rounded-3xl ${CARD_BASE} border border-divider flex flex-col gap-6`}>
-
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 py-4'>
           {/* Test Case A: Disabled State */}
           <div className='flex flex-col gap-3'>
             <div>
-              <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>A. Disabled State</span>
-              <p className='text-[10px] text-gray-400 mt-0.5'>Locks selection and prevent clicks.</p>
+              <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>
+                A. Disabled State
+              </span>
+              <p className='text-[10px] text-gray-400 mt-0.5'>
+                Locks selection and prevent clicks.
+              </p>
             </div>
             <div className='relative w-full h-10'>
               <FilterDropdown<SimpleItem>
@@ -275,7 +293,9 @@ export const FilterDropdownTest: React.FC = () => {
                 className='w-full'
                 minHeight='40px'
                 keyExtractor={(item) => item.id}
-                renderSelected={(item) => <span className='truncate block'>{item?.name} (Disabled)</span>}
+                renderSelected={(item) => (
+                  <span className='truncate block'>{item?.name} (Disabled)</span>
+                )}
                 renderItem={(item) => <span>{item.name}</span>}
               />
             </div>
@@ -284,7 +304,9 @@ export const FilterDropdownTest: React.FC = () => {
           {/* Test Case B: Single Item */}
           <div className='flex flex-col gap-3'>
             <div>
-              <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>B. Single Item</span>
+              <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>
+                B. Single Item
+              </span>
               <p className='text-[10px] text-gray-400 mt-0.5'>Removes borders/bg automatically.</p>
             </div>
             <div className='relative w-full h-10'>
@@ -305,8 +327,12 @@ export const FilterDropdownTest: React.FC = () => {
           {/* Test Case C: Long Text Wrap / Auto-Hide Arrow */}
           <div className='flex flex-col gap-3'>
             <div>
-              <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>C. Long Text & Auto-Hide</span>
-              <p className='text-[10px] text-gray-400 mt-0.5'>Hides arrow when text length is {`> 3`}.</p>
+              <span className='text-xs font-bold text-gray-600 dark:text-gray-400'>
+                C. Long Text & Auto-Hide
+              </span>
+              <p className='text-[10px] text-gray-400 mt-0.5'>
+                Hides arrow when text length is {`> 3`}.
+              </p>
             </div>
             <div className='relative w-full h-10'>
               <FilterDropdown<SimpleItem>

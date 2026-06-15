@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════
  * 🔄 SCENARIO 05: MIXED WORKLOAD (Realistic Day)
  * ═══════════════════════════════════════════════════════════
- * 
+ *
  * Tests: Simulates a realistic pharmacy workday with diverse
  * concurrent operations from different user roles:
  *
@@ -11,26 +11,30 @@
  *   📊 Manager (15%):     Sales reports & analytics
  *   📦 Stock Clerk (10%): Stock updates & movements
  *   🔐 Auth (10%):        Login/logout operations
- * 
+ *
  * Run: k6 run stress-tests/k6/scenarios/05-mixed-workload.js
  */
 
+import { check, group, sleep } from 'k6';
 import http from 'k6/http';
-import { check, sleep, group } from 'k6';
-import { Counter, Trend, Rate } from 'k6/metrics';
-import { 
-  SUPABASE_REST_URL, SUPABASE_RPC_URL, SUPABASE_AUTH_URL,
-  SUPABASE_ANON_KEY, getHeaders, TEST_DATA,
-  TEST_EMAIL, TEST_PASSWORD 
+import { Counter, Rate, Trend } from 'k6/metrics';
+import {
+  getHeaders,
+  SUPABASE_ANON_KEY,
+  SUPABASE_AUTH_URL,
+  SUPABASE_REST_URL,
+  SUPABASE_RPC_URL,
+  TEST_DATA,
+  TEST_EMAIL,
+  TEST_PASSWORD,
 } from '../config.js';
-import { generateCheckoutPayload, randomInt, generateDrug } from '../helpers/data-generators.js';
 import { loginAndGetToken } from '../helpers/auth.js';
+import { generateCheckoutPayload, generateDrug, randomInt } from '../helpers/data-generators.js';
 
 export function setup() {
   const token = loginAndGetToken(TEST_EMAIL, TEST_PASSWORD);
   return { token };
 }
-
 
 // --- Custom Metrics ---
 const cashierDuration = new Trend('mixed_cashier_duration', true);
@@ -47,21 +51,21 @@ export const options = {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '30s', target: 5 },     // Morning start
-        { duration: '1m',  target: 15 },    // Full staff
-        { duration: '1m30s', target: 20 },  // Peak hours
-        { duration: '30s',  target: 10 },   // Afternoon lull
-        { duration: '30s',  target: 0 },    // End of day
+        { duration: '30s', target: 5 }, // Morning start
+        { duration: '1m', target: 15 }, // Full staff
+        { duration: '1m30s', target: 20 }, // Peak hours
+        { duration: '30s', target: 10 }, // Afternoon lull
+        { duration: '30s', target: 0 }, // End of day
       ],
       gracefulRampDown: '15s',
     },
   },
   thresholds: {
-    'mixed_cashier_duration': ['p(95)<4000'],
-    'mixed_pharmacist_duration': ['p(95)<6000'],
-    'mixed_manager_duration': ['p(95)<3000'],
-    'mixed_error_rate': ['rate<0.10'],
-    'http_req_failed': ['rate<0.10'],
+    mixed_cashier_duration: ['p(95)<4000'],
+    mixed_pharmacist_duration: ['p(95)<6000'],
+    mixed_manager_duration: ['p(95)<3000'],
+    mixed_error_rate: ['rate<0.10'],
+    http_req_failed: ['rate<0.10'],
   },
 };
 
@@ -95,7 +99,7 @@ export default function (data) {
 function doCashierWork(token) {
   group('👤 Cashier: Checkout', () => {
     const start = Date.now();
-    
+
     // Quick inventory check first
     http.get(
       `${SUPABASE_REST_URL}/drugs?branch_id=eq.${TEST_DATA.branchId}&select=id,name,public_price,stock&status=eq.active&limit=50`,
@@ -113,10 +117,13 @@ function doCashierWork(token) {
     cashierDuration.add(Date.now() - start);
 
     let result;
-    try { result = JSON.parse(res.body); } catch {}
+    try {
+      result = JSON.parse(res.body);
+    } catch {}
 
     const ok = check(res, {
-      '✅ Cashier checkout OK': (r) => r.status === 200 && (result?.success || result?.error?.includes('Insufficient')),
+      '✅ Cashier checkout OK': (r) =>
+        r.status === 200 && (result?.success || result?.error?.includes('Insufficient')),
     });
 
     opsErrors.add(!ok);
@@ -138,7 +145,7 @@ function doPharmacistWork(token) {
     // Check expiring soon
     const today = new Date().toISOString().split('T')[0];
     const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    
+
     http.get(
       `${SUPABASE_REST_URL}/drugs?branch_id=eq.${TEST_DATA.branchId}&expiry_date=lte.${futureDate}&select=id,name,stock,expiry_date&order=expiry_date.asc&limit=50`,
       { headers: getHeaders(token), tags: { name: 'GET /drugs (expiring)' } }
@@ -160,16 +167,16 @@ function doManagerWork(token) {
     );
 
     // Cash transactions (ordered by time)
-    http.get(
-      `${SUPABASE_REST_URL}/cash_transactions?select=*&order=time.desc&limit=50`,
-      { headers: getHeaders(token), tags: { name: 'GET /cash_transactions' } }
-    );
+    http.get(`${SUPABASE_REST_URL}/cash_transactions?select=*&order=time.desc&limit=50`, {
+      headers: getHeaders(token),
+      tags: { name: 'GET /cash_transactions' },
+    });
 
     // Audit logs (ordered by timestamp)
-    http.get(
-      `${SUPABASE_REST_URL}/audit_logs?select=*&order=timestamp.desc&limit=30`,
-      { headers: getHeaders(token), tags: { name: 'GET /audit_logs' } }
-    );
+    http.get(`${SUPABASE_REST_URL}/audit_logs?select=*&order=timestamp.desc&limit=30`, {
+      headers: getHeaders(token),
+      tags: { name: 'GET /audit_logs' },
+    });
 
     // Financial summary RPC (uses p_date_from and p_date_to)
     http.post(
@@ -224,7 +231,7 @@ function doAuthWork() {
       {
         headers: {
           'Content-Type': 'application/json',
-          'apikey': SUPABASE_ANON_KEY,
+          apikey: SUPABASE_ANON_KEY,
         },
         tags: { name: 'POST /auth/login (mixed)' },
       }
@@ -253,7 +260,7 @@ export function handleSummary(data) {
   console.log(`Pharmacist p95:     ${Math.round(pharmacistP95)}ms`);
   console.log(`Manager p95:        ${Math.round(managerP95)}ms`);
   console.log(`Error Rate:         ${(errRate * 100).toFixed(2)}%`);
-  console.log(`Result:             ${errRate < 0.10 ? '✅ PASSED' : '❌ FAILED'}`);
+  console.log(`Result:             ${errRate < 0.1 ? '✅ PASSED' : '❌ FAILED'}`);
   console.log('══════════════════════════════════════════\n');
 
   return {

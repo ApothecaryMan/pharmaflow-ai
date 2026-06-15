@@ -3,9 +3,9 @@
  * Business logic layer that orchestrates data access via CustomerRepository.
  */
 
-import { BaseEntityService } from '../core/baseEntityService';
 import type { Customer } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
+import { BaseEntityService } from '../core/baseEntityService';
 import { settingsService } from '../settings/settingsService';
 import { customerRepository } from './repositories/customerRepository';
 import type { CustomerFilters, CustomerService, CustomerStats } from './types';
@@ -50,13 +50,20 @@ class CustomerServiceImpl extends BaseEntityService<Customer> implements Custome
 
   async create(customer: Omit<Customer, 'id'>, branchId?: string): Promise<Customer> {
     const settings = await settingsService.getAll();
-    const effectiveBranchId = branchId || (customer as any).branchId || settings.activeBranchId || settings.branchCode;
-    
+    const effectiveBranchId =
+      branchId || (customer as any).branchId || settings.activeBranchId || settings.branchCode;
+
     const newCustomer: Customer = {
       ...customer,
       id: idGenerator.uuid(),
-      serialId: await idGenerator.generate('customers-serial', settings.activeBranchId || '', settings.branchCode),
-      code: customer.code || idGenerator.code('CUST', settings.activeBranchId || '', settings.branchCode),
+      serialId: await idGenerator.generate(
+        'customers-serial',
+        settings.activeBranchId || '',
+        settings.branchCode
+      ),
+      code:
+        customer.code ||
+        idGenerator.code('CUST', settings.activeBranchId || '', settings.branchCode),
       createdAt: new Date().toISOString(),
       points: customer.points || 0,
       totalPurchases: customer.totalPurchases || 0,
@@ -79,7 +86,7 @@ class CustomerServiceImpl extends BaseEntityService<Customer> implements Custome
   async addLoyaltyPoints(id: string, points: number): Promise<Customer> {
     const customer = await this.getById(id);
     if (!customer) throw new Error('Customer not found');
-    
+
     const updatedPoints = (customer.points || 0) + points;
     return this.update(id, { points: updatedPoints });
   }
@@ -87,10 +94,10 @@ class CustomerServiceImpl extends BaseEntityService<Customer> implements Custome
   async redeemLoyaltyPoints(id: string, points: number): Promise<Customer> {
     const customer = await this.getById(id);
     if (!customer) throw new Error('Customer not found');
-    
+
     const current = customer.points || 0;
     if (current < points) throw new Error('Insufficient points');
-    
+
     const updatedPoints = current - points;
     return this.update(id, { points: updatedPoints });
   }
@@ -112,11 +119,11 @@ class CustomerServiceImpl extends BaseEntityService<Customer> implements Custome
   async save(customers: Customer[], branchId?: string): Promise<void> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    
-    const processedCustomers = customers.map(c => ({
+
+    const processedCustomers = customers.map((c) => ({
       ...c,
       branchId: c.branchId || effectiveBranchId,
-      orgId: c.orgId || settings.orgId
+      orgId: c.orgId || settings.orgId,
     }));
 
     await customerRepository.upsert(processedCustomers);

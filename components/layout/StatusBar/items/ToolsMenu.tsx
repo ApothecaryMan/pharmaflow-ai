@@ -1,4 +1,4 @@
-import { type React, useEffect, useRef, useState, useMemo } from 'react';
+import { type React, useEffect, useMemo, useRef, useState } from 'react';
 import { useSettings } from '../../../../context';
 import { TRANSLATIONS } from '../../../../i18n/translations';
 import { StatusBarItem } from '../StatusBarItem';
@@ -28,49 +28,68 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   const { language, settingsBlur } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
-  const [activeTool, setActiveTool] = useState<'converter' | 'calculator' | 'holidays'>('converter');
+  const [activeTool, setActiveTool] = useState<'converter' | 'calculator' | 'holidays'>(
+    'converter'
+  );
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const t = TRANSLATIONS[language].settings;
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node) && !isPinned) setIsOpen(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node) && !isPinned)
+        setIsOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isPinned]);
 
-  const menuContainerClasses = useMemo(() => `
+  const menuContainerClasses = useMemo(
+    () => `
     absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
     ${align === 'start' ? 'inset-s-0 origin-top-start' : 'inset-e-0 origin-top-end'}
     w-64 rounded-xl shadow-2xl border border-(--border-divider) z-110 animate-fade-in
     ${getMenuSurfaceClasses(settingsBlur)}
-  `, [dropDirection, align, settingsBlur]);
+  `,
+    [dropDirection, align, settingsBlur]
+  );
 
   const cT = t.currencyConverter;
 
   return (
-    <div className={`relative ${showTrigger && triggerVariant === 'statusBar' ? 'h-full flex items-center' : ''}`} ref={dropdownRef}>
-      {showTrigger && (
-        triggerVariant === 'statusBar' ? (
-          <StatusBarItem icon="build" tooltip={t.tools} variant={isOpen ? 'info' : 'default'} onClick={() => setIsOpen(!isOpen)} />
+    <div
+      className={`relative ${showTrigger && triggerVariant === 'statusBar' ? 'h-full flex items-center' : ''}`}
+      ref={dropdownRef}
+    >
+      {showTrigger &&
+        (triggerVariant === 'statusBar' ? (
+          <StatusBarItem
+            icon='build'
+            tooltip={t.tools}
+            variant={isOpen ? 'info' : 'default'}
+            onClick={() => setIsOpen(!isOpen)}
+          />
         ) : (
-          <button type="button" onClick={() => setIsOpen(!isOpen)} className={`flex items-center justify-center w-10 h-10 ${isOpen ? 'text-primary-500' : 'text-(--text-secondary)'}`}>
-            <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-settings)' }}>build</span>
+          <button
+            type='button'
+            onClick={() => setIsOpen(!isOpen)}
+            className={`flex items-center justify-center w-10 h-10 ${isOpen ? 'text-primary-500' : 'text-(--text-secondary)'}`}
+          >
+            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-settings)' }}>
+              build
+            </span>
           </button>
-        )
-      )}
+        ))}
 
       {isOpen && (
         <div className={menuContainerClasses}>
           {/* Segmented Control Header */}
-          <div className="px-2 py-1.5 border-b border-(--border-divider) flex items-center justify-between">
-            <div className="flex bg-black/5 dark:bg-white/5 p-0.5 rounded-lg border border-(--border-divider) w-[80%]">
-              {(['converter', 'calculator', 'holidays'] as const).map(tool => (
+          <div className='px-2 py-1.5 border-b border-(--border-divider) flex items-center justify-between'>
+            <div className='flex bg-black/5 dark:bg-white/5 p-0.5 rounded-lg border border-(--border-divider) w-[80%]'>
+              {(['converter', 'calculator', 'holidays'] as const).map((tool) => (
                 <button
                   key={tool}
-                  type="button"
+                  type='button'
                   onClick={() => setActiveTool(tool)}
                   className={`flex-1 py-1 flex items-center justify-center rounded-md transition-all duration-200 focus:outline-none ${
                     activeTool === tool
@@ -78,33 +97,37 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                       : 'text-(--text-secondary) hover:text-(--text-primary)'
                   }`}
                   title={
-                    tool === 'converter' 
-                      ? (cT?.title || 'Converter') 
-                      : tool === 'calculator' 
-                        ? (t.calculator?.title || 'Calculator') 
-                        : (t.holidays?.title || 'Holidays')
+                    tool === 'converter'
+                      ? cT?.title || 'Converter'
+                      : tool === 'calculator'
+                        ? t.calculator?.title || 'Calculator'
+                        : t.holidays?.title || 'Holidays'
                   }
                 >
-                  <span className="material-symbols-rounded text-base leading-none">
-                    {tool === 'converter' ? 'payments' : tool === 'calculator' ? 'calculate' : 'calendar_month'}
+                  <span className='material-symbols-rounded text-base leading-none'>
+                    {tool === 'converter'
+                      ? 'payments'
+                      : tool === 'calculator'
+                        ? 'calculate'
+                        : 'calendar_month'}
                   </span>
                 </button>
               ))}
             </div>
-            
-            <button 
-              type="button"
+
+            <button
+              type='button'
               onClick={() => setIsPinned(!isPinned)}
               className={`flex items-center justify-center w-6 h-6 rounded-md transition-colors hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none ${
                 isPinned ? 'text-primary-500' : 'text-(--text-tertiary)'
               }`}
               title={isPinned ? 'Unpin' : 'Pin to stay open'}
             >
-              <span className="material-symbols-rounded text-[16px] leading-none">keep</span>
+              <span className='material-symbols-rounded text-[16px] leading-none'>keep</span>
             </button>
           </div>
-          
-          <div className="p-3 space-y-3" style={{ direction: language === 'AR' ? 'rtl' : 'ltr' }}>
+
+          <div className='p-3 space-y-3' style={{ direction: language === 'AR' ? 'rtl' : 'ltr' }}>
             {activeTool === 'calculator' && <Calculator />}
             {activeTool === 'converter' && <CurrencyConverter />}
             {activeTool === 'holidays' && <HolidaysTracker />}

@@ -1,4 +1,4 @@
-import { ItemCondition } from './inventory';
+import type { ItemCondition } from './inventory';
 
 /** Status of a purchase order */
 export type PurchaseStatus = 'completed' | 'pending' | 'rejected' | 'received' | 'approved';

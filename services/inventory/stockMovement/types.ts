@@ -91,13 +91,29 @@ export interface PaginatedStockMovements {
 export interface StockMovementService {
   getAll: () => Promise<StockMovement[]>;
   getByDrugId: (drugId: string) => Promise<StockMovement[]>;
-  logMovement: (movement: Omit<StockMovement, 'id' | 'timestamp' | 'performedBy'> & { performedBy?: string }) => Promise<StockMovement>;
-  logMovementsBulk: (movements: (Omit<StockMovement, 'id' | 'timestamp' | 'performedBy'> & { performedBy?: string })[]) => Promise<StockMovement[]>;
+  logMovement: (
+    movement: Omit<StockMovement, 'id' | 'timestamp' | 'performedBy'> & { performedBy?: string }
+  ) => Promise<StockMovement>;
+  logMovementsBulk: (
+    movements: (Omit<StockMovement, 'id' | 'timestamp' | 'performedBy'> & {
+      performedBy?: string;
+    })[]
+  ) => Promise<StockMovement[]>;
   getHistory: (filters: StockMovementFilters) => Promise<StockMovement[] | PaginatedStockMovements>;
-  getSummaryByDrug: (drugId: string, filters: StockMovementFilters) => Promise<StockMovementSummary>;
+  getSummaryByDrug: (
+    drugId: string,
+    filters: StockMovementFilters
+  ) => Promise<StockMovementSummary>;
   getKPISummary: (filters: StockMovementFilters) => Promise<StockMovementKPISummary>;
   approveMovement: (id: string, userId: string) => Promise<void>;
   rejectMovement: (id: string, userId: string) => Promise<void>;
   calculateMovementValue: (movement: StockMovement, drug: any) => number;
-  setContext: (type: string, refId?: string, perfId?: string, perfName?: string, reason?: string, notes?: string) => Promise<void>;
+  setContext: (
+    type: string,
+    refId?: string,
+    perfId?: string,
+    perfName?: string,
+    reason?: string,
+    notes?: string
+  ) => Promise<void>;
 }

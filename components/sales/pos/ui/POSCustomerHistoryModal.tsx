@@ -1,13 +1,13 @@
-import React, { useMemo, useState } from 'react';
-import { Modal } from '../../../common/Modal';
-import { SegmentedControl } from '../../../common/SegmentedControl';
-import { MaterialTabs } from '../../../common/MaterialTabs';
-import type { Customer, Sale, Language, CartItem } from '../../../../types';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale/ar';
 import { enUS } from 'date-fns/locale/en-US';
-import { getDisplayName } from '../../../../utils/drugDisplayName';
+import React, { useMemo, useState } from 'react';
+import type { CartItem, Customer, Language, Sale } from '../../../../types';
 import { formatCurrency, money, pricing } from '../../../../utils/currency';
+import { getDisplayName } from '../../../../utils/drugDisplayName';
+import { MaterialTabs } from '../../../common/MaterialTabs';
+import { Modal } from '../../../common/Modal';
+import { SegmentedControl } from '../../../common/SegmentedControl';
 
 interface POSCustomerHistoryModalProps {
   isOpen: boolean;
@@ -56,15 +56,17 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
 
     const counts: Record<string, { item: CartItem; frequency: number }> = {};
 
-    customerSales.forEach(sale => {
+    customerSales.forEach((sale) => {
       const uniqueCodesInSale = new Set<string>();
-      sale.items.forEach(item => {
+      sale.items.forEach((item) => {
         const code = item.internalCode || item.barcode || item.id;
         if (code) uniqueCodesInSale.add(code);
       });
 
-      uniqueCodesInSale.forEach(code => {
-        const representativeItem = sale.items.find(i => (i.internalCode || i.barcode || i.id) === code);
+      uniqueCodesInSale.forEach((code) => {
+        const representativeItem = sale.items.find(
+          (i) => (i.internalCode || i.barcode || i.id) === code
+        );
         if (representativeItem) {
           if (!counts[code]) {
             counts[code] = {
@@ -88,7 +90,7 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
       onClose={onClose}
       title={t.modal?.history || t.customerHistory?.title || 'Customer History'}
       size='2xl'
-      bodyClassName="p-1.5"
+      bodyClassName='p-1.5'
       tabs={[
         {
           label: t.history || 'Purchase History',
@@ -140,7 +142,10 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
               <label className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest leading-none mb-1'>
                 {t.phone || 'Phone'}
               </label>
-              <span className='text-xs font-bold text-zinc-600 dark:text-zinc-400 font-mono' dir='ltr'>
+              <span
+                className='text-xs font-bold text-zinc-600 dark:text-zinc-400 font-mono'
+                dir='ltr'
+              >
                 {customer.phone || '---'}
               </span>
             </div>
@@ -156,26 +161,31 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                   <span className='material-symbols-rounded' style={{ fontSize: '32px' }}>
                     receipt_long
                   </span>
-                  <p className='text-xs font-medium'>{t.noSalesFound || 'No sales history found'}</p>
+                  <p className='text-xs font-medium'>
+                    {t.noSalesFound || 'No sales history found'}
+                  </p>
                 </div>
               ) : (
                 customerSales.map((sale, idx) => (
-                  <div key={sale.id} className="flex flex-col">
+                  <div key={sale.id} className='flex flex-col'>
                     <MaterialTabs
                       index={idx}
                       total={customerSales.length}
                       isSelected={expandedSaleId === sale.id}
                       onClick={() => setExpandedSaleId(expandedSaleId === sale.id ? null : sale.id)}
-                      className="!h-auto py-1.5 !px-3"
+                      className='!h-auto py-1.5 !px-3'
                     >
                       <div className='flex items-center justify-between w-full gap-2.5'>
                         {/* Right Section (Start in RTL): Invoice Details & Status */}
                         <div className='flex items-center gap-2.5 flex-1 min-w-0'>
                           {/* Payment Icon */}
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${sale.paymentMethod === 'visa'
-                              ? 'bg-blue-500/10 text-blue-500'
-                              : 'bg-emerald-500/10 text-emerald-500'
-                            }`}>
+                          <div
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                              sale.paymentMethod === 'visa'
+                                ? 'bg-blue-500/10 text-blue-500'
+                                : 'bg-emerald-500/10 text-emerald-500'
+                            }`}
+                          >
                             <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
                               {sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}
                             </span>
@@ -183,19 +193,25 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
 
                           <div className='flex flex-col min-w-0'>
                             <div className='flex items-center gap-1.5'>
-                              <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${sale.status === 'completed'
-                                  ? 'bg-emerald-500'
-                                  : 'bg-amber-500'
-                                }`} />
+                              <div
+                                className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                  sale.status === 'completed' ? 'bg-emerald-500' : 'bg-amber-500'
+                                }`}
+                              />
                               <span className='font-black text-zinc-900 dark:text-zinc-100 truncate text-[13px] uppercase tracking-tight'>
-                                {t.invoice || 'Invoice'} {sale.dailyOrderNumber ? `#${sale.dailyOrderNumber}` : ''}
-                                <span className="ml-1.5 opacity-40 font-medium text-[11px]">
+                                {t.invoice || 'Invoice'}{' '}
+                                {sale.dailyOrderNumber ? `#${sale.dailyOrderNumber}` : ''}
+                                <span className='ml-1.5 opacity-40 font-medium text-[11px]'>
                                   {sale.serialId || sale.id.substring(0, 8)}
                                 </span>
                               </span>
                             </div>
                             <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-tighter'>
-                              {format(new Date(sale.date), language === 'AR' ? 'PPPP - hh:mm a' : 'MMM d, yyyy - hh:mm a', { locale: dateLocale })}
+                              {format(
+                                new Date(sale.date),
+                                language === 'AR' ? 'PPPP - hh:mm a' : 'MMM d, yyyy - hh:mm a',
+                                { locale: dateLocale }
+                              )}
                             </span>
                           </div>
                         </div>
@@ -212,34 +228,53 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                             <span className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 bg-zinc-100/50 dark:bg-zinc-800/30 px-1.5 py-0.5 rounded tabular-nums min-w-[20px] text-center'>
                               {sale.items.length}
                             </span>
-                            <div className={`transition-all active:scale-95 cursor-pointer ${expandedSaleId === sale.id ? 'rotate-180 text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-600'}`}>
-                              <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
+                            <div
+                              className={`transition-all active:scale-95 cursor-pointer ${expandedSaleId === sale.id ? 'rotate-180 text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-600'}`}
+                            >
+                              <span
+                                className='material-symbols-rounded'
+                                style={{ fontSize: '20px' }}
+                              >
                                 expand_more
                               </span>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </MaterialTabs>                    {/* Expandable Item Details */}
+                    </MaterialTabs>{' '}
+                    {/* Expandable Item Details */}
                     {expandedSaleId === sale.id && (
-                      <div className='px-2.5 pb-2.5 bg-zinc-50 dark:bg-zinc-900/30 border-x border-b border-zinc-100 dark:border-zinc-800/50 rounded-b-lg -mt-1 pt-3 transition-all animate-slide-down' dir='ltr'>
+                      <div
+                        className='px-2.5 pb-2.5 bg-zinc-50 dark:bg-zinc-900/30 border-x border-b border-zinc-100 dark:border-zinc-800/50 rounded-b-lg -mt-1 pt-3 transition-all animate-slide-down'
+                        dir='ltr'
+                      >
                         <div className='space-y-2'>
                           <h4 className='text-[9px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest px-1'>
                             {t.invoiceDetails || 'Invoice Items'}
                           </h4>
                           <div className='bg-white dark:bg-zinc-950/40 rounded-lg border border-zinc-100 dark:border-zinc-800/50 p-1 space-y-0.5'>
                             {sale.items.map((item, idx) => (
-                              <div key={idx} className='flex items-center justify-between text-[11px] py-1.5 px-2 border-b border-zinc-50 dark:border-zinc-900/50 last:border-0'>
+                              <div
+                                key={idx}
+                                className='flex items-center justify-between text-[11px] py-1.5 px-2 border-b border-zinc-50 dark:border-zinc-900/50 last:border-0'
+                              >
                                 <div className='flex flex-col'>
                                   <span className='font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-tight'>
                                     {getDisplayName(item)}
                                   </span>
                                   <div className='flex items-center gap-1.5 mt-1'>
                                     <div className='px-1.5 py-0.5 rounded-sm bg-zinc-50 dark:bg-zinc-900/40 text-[9px] font-bold text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 border border-zinc-200/50 dark:border-zinc-700/50 tabular-nums font-mono shadow-sm'>
-                                      <span>{item.batchAllocations?.[0]?.batchNumber || '---'}</span>
+                                      <span>
+                                        {item.batchAllocations?.[0]?.batchNumber || '---'}
+                                      </span>
                                       <span className='w-px h-2 bg-zinc-200 dark:bg-zinc-700' />
                                       <span className='text-zinc-400 dark:text-zinc-500'>
-                                        {item.batchAllocations?.[0]?.expiryDate ? format(new Date(item.batchAllocations[0].expiryDate), 'MM/yy') : '--/--'}
+                                        {item.batchAllocations?.[0]?.expiryDate
+                                          ? format(
+                                              new Date(item.batchAllocations[0].expiryDate),
+                                              'MM/yy'
+                                            )
+                                          : '--/--'}
                                       </span>
                                     </div>
                                     {item.discount > 0 && (
@@ -254,7 +289,13 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                                     x{item.quantity}
                                   </span>
                                   <span className='font-black text-zinc-900 dark:text-zinc-100 min-w-[70px] text-right tabular-nums'>
-                                    {formatCurrency(pricing.lineTotal(item.publicPrice, item.quantity, item.discount))}
+                                    {formatCurrency(
+                                      pricing.lineTotal(
+                                        item.publicPrice,
+                                        item.quantity,
+                                        item.discount
+                                      )
+                                    )}
                                   </span>
                                 </div>
                               </div>
@@ -266,11 +307,15 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                             {sale.globalDiscount > 0 && (
                               <div className='flex justify-between text-[9px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
                                 <span>{t.globalDiscount || 'Global Discount'}</span>
-                                <span className='tabular-nums'>-{formatCurrency(sale.globalDiscount)}</span>
+                                <span className='tabular-nums'>
+                                  -{formatCurrency(sale.globalDiscount)}
+                                </span>
                               </div>
                             )}
                             <div className='flex justify-between items-center'>
-                              <span className='text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest leading-none'>{t.total || 'Total'}</span>
+                              <span className='text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest leading-none'>
+                                {t.total || 'Total'}
+                              </span>
                               <span className='text-lg font-black text-white dark:text-zinc-950 leading-none tabular-nums'>
                                 {formatCurrency(sale.total)}
                               </span>
@@ -290,7 +335,9 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                   <span className='material-symbols-rounded' style={{ fontSize: '40px' }}>
                     grade
                   </span>
-                  <p className='text-[10px] font-black uppercase tracking-widest'>{t.favoritesEmpty || 'No favorites yet'}</p>
+                  <p className='text-[10px] font-black uppercase tracking-widest'>
+                    {t.favoritesEmpty || 'No favorites yet'}
+                  </p>
                 </div>
               ) : (
                 favoriteDrugs.map(({ item, frequency }, idx) => {
@@ -322,13 +369,14 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                             <span className='font-black text-[13px] text-zinc-900 dark:text-zinc-100 uppercase tracking-tight truncate'>
                               {getDisplayName(item)}
                             </span>
-
                           </div>
                         </div>
 
                         {onAddToCart && (
                           <button
-                            onClick={() => onAddToCart(item.internalCode || item.barcode || item.id)}
+                            onClick={() =>
+                              onAddToCart(item.internalCode || item.barcode || item.id)
+                            }
                             className='flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 active:scale-95 transition-all shadow-sm'
                           >
                             <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>

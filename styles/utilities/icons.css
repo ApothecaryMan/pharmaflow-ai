@@ -40,8 +40,15 @@
   }
 
   @keyframes icon-shimmer {
-    0%, 100% { opacity: 0.3; transform: scale(0.9); }
-    50% { opacity: 0.6; transform: scale(1); }
+    0%,
+    100% {
+      opacity: 0.3;
+      transform: scale(0.9);
+    }
+    50% {
+      opacity: 0.6;
+      transform: scale(1);
+    }
   }
 
   .icon-filled {

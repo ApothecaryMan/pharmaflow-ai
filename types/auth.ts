@@ -26,31 +26,31 @@ export interface UserSession {
 
   /** Top-level app destination selected from the global account context. */
   destination?: AccountDestination;
-  
+
   /** Organization ID the user belongs to */
   orgId?: string;
-  
+
   /** Role within the organization */
   orgRole?: string;
-  
+
   /** Unique username */
   username: string;
-  
+
   /** Linked employee ID (UUID) */
   employeeId?: string;
-  
+
   /** Linked employee code (e.g. EMP-001) */
   employeeCode?: string;
-  
+
   /** Active branch ID (UUID) */
   branchId: string;
-  
+
   /** Department classification */
   department: 'sales' | 'pharmacy' | 'marketing' | 'hr' | 'it' | 'logistics' | 'unassigned';
-  
+
   /** Display name of the employee */
   employeeName?: string;
-  
+
   /** System-wide functional role */
   role:
     | 'admin'
@@ -67,10 +67,10 @@ export interface UserSession {
     | 'officeboy'
     | 'manager'
     | 'unassigned';
-    
+
   /** Flag to indicate if the user needs to select a workspace */
   needsWorkspaceSelection?: boolean;
-  
+
   /** Available workspaces for this user */
   availableWorkspaces?: Employee[];
 
@@ -84,28 +84,28 @@ export interface UserSession {
 export interface LoginAuditEntry {
   /** Unique audit ID */
   id: string;
-  
+
   /** ISO timestamp */
   timestamp: string;
-  
+
   /** Username of the person involved */
   username: string;
-  
+
   /** Role snapshot at time of event */
   role: string;
-  
+
   /** Branch ID context */
   branchId: string;
-  
+
   /** Organization ID context */
   orgId?: string;
-  
+
   /** Type of auth event */
   action: 'login' | 'logout' | 'switch_user' | 'system_login' | 'system_logout' | 'switch_branch';
-  
+
   /** Additional metadata */
   details?: string;
-  
+
   /** Linked employee ID */
   employeeId?: string;
 

@@ -1,15 +1,14 @@
-import { Camera, Pencil, Save, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Camera, ChevronDown, ChevronUp, Pencil, Save, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MAX_UPLOAD_SIZE_KB } from '../../../config';
-import type { EmploymentRequest, UserProfile, Employee } from '../../../types';
+import type { Employee, EmploymentRequest, UserProfile } from '../../../types';
 import { BANNER_STYLES, renderBanner } from '../../../utils/banners';
 import { PROFILE_GLASS_CARD_BASE } from '../../../utils/themeStyles';
 import { Tooltip } from '../../common/Tooltip';
+import { ColorPicker, FRAME_COLORS } from '../avatar-color-settings';
 import { AVATAR_DECORATIONS, DECORATION_KEYFRAMES, getDecoration } from '../avatar-decorations';
-import { FRAME_COLORS, ColorPicker } from '../avatar-color-settings';
-import AvatarRing, { RING_STYLES } from '../avatar-ring';
 import type { RingStyle } from '../avatar-ring';
-import { AnimationToggle } from '../avatar-ring';
+import AvatarRing, { AnimationToggle, RING_STYLES } from '../avatar-ring';
 
 type BannerId = (typeof BANNER_STYLES)[number]['id'];
 
@@ -22,7 +21,11 @@ const getInitials = (name: string) => {
   return name.slice(0, 2).toUpperCase();
 };
 
-const readFileAsBase64 = (file: File, t: Translations, readerRef?: React.MutableRefObject<FileReader | null>): Promise<string> => {
+const readFileAsBase64 = (
+  file: File,
+  t: Translations,
+  readerRef?: React.MutableRefObject<FileReader | null>
+): Promise<string> => {
   return new Promise((resolve, reject) => {
     if (file.size > MAX_UPLOAD_SIZE_KB * 1024) {
       reject(
@@ -132,12 +135,12 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [isRegisteringFingerprint, setIsRegisteringFingerprint] = useState<string | null>(null);
   const [collapsedWorkspaces, setCollapsedWorkspaces] = useState<Set<string>>(
-    () => new Set(workspaces.map(w => w.id))
+    () => new Set(workspaces.map((w) => w.id))
   );
   const [visibleCredentials, setVisibleCredentials] = useState<Set<string>>(new Set());
 
   const toggleWorkspace = (id: string) => {
-    setCollapsedWorkspaces(prev => {
+    setCollapsedWorkspaces((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -146,7 +149,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   };
 
   const toggleCredentials = (id: string) => {
-    setVisibleCredentials(prev => {
+    setVisibleCredentials((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -190,23 +193,23 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       case 'active':
         return {
           container: 'bg-emerald-500/10 text-emerald-500',
-          icon: 'check_circle'
+          icon: 'check_circle',
         };
       case 'holiday':
         return {
           container: 'bg-amber-500/10 text-amber-500',
-          icon: 'beach_access'
+          icon: 'beach_access',
         };
       case 'pending':
         return {
           container: 'bg-blue-500/10 text-blue-500',
-          icon: 'pending'
+          icon: 'pending',
         };
       case 'inactive':
       default:
         return {
           container: 'bg-red-500/10 text-red-500',
-          icon: 'cancel'
+          icon: 'cancel',
         };
     }
   };
@@ -232,12 +235,24 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const [preview, setPreview] = useState<string | undefined>(undefined);
   const [removeImage, setRemoveImage] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [avatarDecoration, setAvatarDecoration] = useState(() => profile?.designSettings?.avatar?.decorationId ?? 'none');
-  const [decorationAnimated, setDecorationAnimated] = useState(() => profile?.designSettings?.avatar?.decorationAnimated ?? true);
-  const [frameColor, setFrameColor] = useState<string | null>(() => profile?.designSettings?.avatar?.frameColor ?? null);
-  const [ringStyle, setRingStyle] = useState<RingStyle>(() => (profile?.designSettings?.avatar?.ringStyle as RingStyle) ?? 'solid');
-  const [ringThickness, setRingThickness] = useState(() => profile?.designSettings?.avatar?.ringThickness ?? 4);
-  const [ringAnimated, setRingAnimated] = useState(() => profile?.designSettings?.avatar?.ringAnimated ?? false);
+  const [avatarDecoration, setAvatarDecoration] = useState(
+    () => profile?.designSettings?.avatar?.decorationId ?? 'none'
+  );
+  const [decorationAnimated, setDecorationAnimated] = useState(
+    () => profile?.designSettings?.avatar?.decorationAnimated ?? true
+  );
+  const [frameColor, setFrameColor] = useState<string | null>(
+    () => profile?.designSettings?.avatar?.frameColor ?? null
+  );
+  const [ringStyle, setRingStyle] = useState<RingStyle>(
+    () => (profile?.designSettings?.avatar?.ringStyle as RingStyle) ?? 'solid'
+  );
+  const [ringThickness, setRingThickness] = useState(
+    () => profile?.designSettings?.avatar?.ringThickness ?? 4
+  );
+  const [ringAnimated, setRingAnimated] = useState(
+    () => profile?.designSettings?.avatar?.ringAnimated ?? false
+  );
 
   useEffect(() => {
     if (profile?.designSettings) {
@@ -251,7 +266,8 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       }
       if (ds.avatar) {
         if (ds.avatar.decorationId !== undefined) setAvatarDecoration(ds.avatar.decorationId);
-        if (ds.avatar.decorationAnimated !== undefined) setDecorationAnimated(ds.avatar.decorationAnimated);
+        if (ds.avatar.decorationAnimated !== undefined)
+          setDecorationAnimated(ds.avatar.decorationAnimated);
         if (ds.avatar.frameColor !== undefined) setFrameColor(ds.avatar.frameColor);
         if (ds.avatar.ringStyle !== undefined) setRingStyle(ds.avatar.ringStyle as RingStyle);
         if (ds.avatar.ringThickness !== undefined) setRingThickness(ds.avatar.ringThickness);
@@ -270,33 +286,42 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 3;
 
-  const handleBannerPointerDown = useCallback((e: React.PointerEvent) => {
-    setIsDragging(true);
-    dragStart.current = { x: e.clientX, y: e.clientY };
-    offsetStart.current = { ...bannerOffset };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, [bannerOffset]);
+  const handleBannerPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      setIsDragging(true);
+      dragStart.current = { x: e.clientX, y: e.clientY };
+      offsetStart.current = { ...bannerOffset };
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    },
+    [bannerOffset]
+  );
 
-  const handleBannerPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isDragging) return;
-    const dx = (e.clientX - dragStart.current.x) / bannerZoom;
-    const dy = (e.clientY - dragStart.current.y) / bannerZoom;
-    setBannerOffset({
-      x: offsetStart.current.x + dx,
-      y: offsetStart.current.y + dy,
-    });
-  }, [isDragging, bannerZoom]);
+  const handleBannerPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!isDragging) return;
+      const dx = (e.clientX - dragStart.current.x) / bannerZoom;
+      const dy = (e.clientY - dragStart.current.y) / bannerZoom;
+      setBannerOffset({
+        x: offsetStart.current.x + dx,
+        y: offsetStart.current.y + dy,
+      });
+    },
+    [isDragging, bannerZoom]
+  );
 
   const handleBannerPointerUp = useCallback(() => {
     setIsDragging(false);
   }, []);
 
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    if (!isEditing) return;
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setBannerZoom(prev => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev + delta)));
-  }, [isEditing]);
+  const handleWheel = useCallback(
+    (e: React.WheelEvent) => {
+      if (!isEditing) return;
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      setBannerZoom((prev) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev + delta)));
+    },
+    [isEditing]
+  );
 
   useEffect(() => {
     if (isEditing) {
@@ -340,10 +365,10 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const displayUsername = (profile?.username || sessionUsername || '').replace(/^@/, '');
   const memberSince = profile?.createdAt
     ? new Date(profile.createdAt).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
     : '—';
 
   const acceptedRequests = useMemo(
@@ -393,8 +418,8 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
             zoom: bannerZoom,
             offsetX: bannerOffset.x,
             offsetY: bannerOffset.y,
-          }
-        }
+          },
+        },
       } as Partial<UserProfile>);
       setPreview(undefined);
       setRemoveImage(false);
@@ -490,7 +515,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
               <div className='flex items-center gap-1 bg-white/80 dark:bg-black/40 backdrop-blur-md px-2 py-1 rounded-xl border border-black/10 dark:border-white/10 pointer-events-auto'>
                 <button
                   type='button'
-                  onClick={() => setBannerZoom(prev => Math.max(MIN_ZOOM, +(prev - 0.1).toFixed(1)))}
+                  onClick={() =>
+                    setBannerZoom((prev) => Math.max(MIN_ZOOM, +(prev - 0.1).toFixed(1)))
+                  }
                   disabled={bannerZoom <= MIN_ZOOM}
                   className='w-6 h-6 flex items-center justify-center rounded text-[14px] font-bold text-(--text-primary) hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-30 transition-colors'
                 >
@@ -501,7 +528,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 </span>
                 <button
                   type='button'
-                  onClick={() => setBannerZoom(prev => Math.min(MAX_ZOOM, +(prev + 0.1).toFixed(1)))}
+                  onClick={() =>
+                    setBannerZoom((prev) => Math.min(MAX_ZOOM, +(prev + 0.1).toFixed(1)))
+                  }
                   disabled={bannerZoom >= MAX_ZOOM}
                   className='w-6 h-6 flex items-center justify-center rounded text-[14px] font-bold text-(--text-primary) hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-30 transition-colors'
                 >
@@ -524,7 +553,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
             {/* Bottom hint */}
             <div className='flex justify-center pb-2'>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full bg-black/40 text-white/70 backdrop-blur-sm transition-opacity duration-500 ${showHint ? 'opacity-100' : 'opacity-0'}`}>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full bg-black/40 text-white/70 backdrop-blur-sm transition-opacity duration-500 ${showHint ? 'opacity-100' : 'opacity-0'}`}
+              >
                 {isRTL ? 'اسحب للتحريك · قرص للتكبير' : 'Drag to pan · Scroll to zoom'}
               </span>
             </div>
@@ -543,14 +574,16 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
               title={
                 isEditing
                   ? t.employeeProfile.fileTooLarge.replace(
-                    '{{size}}',
-                    MAX_UPLOAD_SIZE_KB.toString()
-                  )
+                      '{{size}}',
+                      MAX_UPLOAD_SIZE_KB.toString()
+                    )
                   : undefined
               }
             >
-              <div className='w-28 h-28 rounded-full border-4 overflow-visible bg-(--bg-secondary) shadow-md flex items-center justify-center relative'
-                style={{ borderColor: frameColor ? 'transparent' : 'var(--bg-page-surface)' }}>
+              <div
+                className='w-28 h-28 rounded-full border-4 overflow-visible bg-(--bg-secondary) shadow-md flex items-center justify-center relative'
+                style={{ borderColor: frameColor ? 'transparent' : 'var(--bg-page-surface)' }}
+              >
                 {/* Inner clipped container keeps image/initials inside the circle */}
                 <div className='absolute inset-0 rounded-full overflow-hidden'>
                   {avatarSrc ? (
@@ -562,7 +595,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   )}
                 </div>
                 {avatarDecoration !== 'none' && (
-                  <div className={`absolute -inset-2 pointer-events-none z-[1] ${!decorationAnimated ? 'pause-animations' : ''}`}>
+                  <div
+                    className={`absolute -inset-2 pointer-events-none z-[1] ${!decorationAnimated ? 'pause-animations' : ''}`}
+                  >
                     {getDecoration(avatarDecoration)}
                   </div>
                 )}
@@ -654,14 +689,20 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
               </h3>
             </div>
             <p className='text-xs font-semibold mt-1'>
-              {workspaces.length > 0
-                ? <span className='text-emerald-600 dark:text-emerald-400'>{
-                    workspaces.length === 1
-                      ? [workspaces[0].orgName, workspaces[0].branchName].filter(Boolean).join(' - ')
-                      : workspaces.map(w => w.orgName).filter(Boolean).join(', ')
-                    || (isRTL ? 'موظف' : 'Employed')}</span>
-                : <span className='text-primary-600 dark:text-primary-400'>{isRTL ? 'غير موظف' : 'Unemployed'}</span>
-              }
+              {workspaces.length > 0 ? (
+                <span className='text-emerald-600 dark:text-emerald-400'>
+                  {workspaces.length === 1
+                    ? [workspaces[0].orgName, workspaces[0].branchName].filter(Boolean).join(' - ')
+                    : workspaces
+                        .map((w) => w.orgName)
+                        .filter(Boolean)
+                        .join(', ') || (isRTL ? 'موظف' : 'Employed')}
+                </span>
+              ) : (
+                <span className='text-primary-600 dark:text-primary-400'>
+                  {isRTL ? 'غير موظف' : 'Unemployed'}
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -679,7 +720,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 isRTL={isRTL}
               />
             </div>
-            <div className={`decoration-carousel flex items-center gap-3 overflow-x-auto flex-nowrap scrollbar-none pt-8 pb-4 px-3 -mx-6 ${!decorationAnimated ? 'pause-animations' : ''}`}>
+            <div
+              className={`decoration-carousel flex items-center gap-3 overflow-x-auto flex-nowrap scrollbar-none pt-8 pb-4 px-3 -mx-6 ${!decorationAnimated ? 'pause-animations' : ''}`}
+            >
               {AVATAR_DECORATIONS.map((dec) => (
                 <button
                   key={dec.id}
@@ -689,18 +732,18 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   title={isRTL ? dec.nameAr : dec.name}
                 >
                   {/* Mini avatar circle */}
-                  <div className={`absolute inset-1 rounded-full overflow-hidden bg-(--bg-secondary) flex items-center justify-center transition-shadow duration-150 ${
-                    avatarDecoration === dec.id
-                      ? 'ring-2 ring-primary-500 shadow-md'
-                      : 'ring-1 ring-(--border-secondary) shadow-sm'
-                  }`}>
+                  <div
+                    className={`absolute inset-1 rounded-full overflow-hidden bg-(--bg-secondary) flex items-center justify-center transition-shadow duration-150 ${
+                      avatarDecoration === dec.id
+                        ? 'ring-2 ring-primary-500 shadow-md'
+                        : 'ring-1 ring-(--border-secondary) shadow-sm'
+                    }`}
+                  >
                     <div className='w-full h-full bg-gradient-to-br from-primary-500/10 to-primary-600/20' />
                   </div>
                   {/* Decoration overlay matching real avatar layout */}
                   {dec.svg ? (
-                    <div className='absolute inset-0 pointer-events-none z-[1]'>
-                      {dec.svg}
-                    </div>
+                    <div className='absolute inset-0 pointer-events-none z-[1]'>{dec.svg}</div>
                   ) : (
                     <span className='material-symbols-rounded text-[14px] text-(--text-tertiary) z-[1]'>
                       close
@@ -708,7 +751,13 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   )}
                   {dec.isAnimated && (
                     <div className='absolute inset-0 z-10 flex items-center justify-center pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'>
-                      <svg width='24' height='24' viewBox='0 0 24 24' fill='currentColor' className='text-white'>
+                      <svg
+                        width='24'
+                        height='24'
+                        viewBox='0 0 24 24'
+                        fill='currentColor'
+                        className='text-white'
+                      >
                         {decorationAnimated ? (
                           <>
                             <rect x='6' y='4' width='4' height='16' rx='1' />
@@ -723,7 +772,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 </button>
               ))}
             </div>
-             <div className='pt-1.5 space-y-3'>
+            <div className='pt-1.5 space-y-3'>
               <ColorPicker
                 label={isRTL ? 'لون الإطار' : 'Frame Color'}
                 colors={FRAME_COLORS}
@@ -737,7 +786,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
               {frameColor && (
                 <>
                   <div className='space-y-1.5'>
-                    <p className='text-[10px] font-bold uppercase tracking-wider text-(--text-tertiary)'>{isRTL ? 'نمط الإطار' : 'Ring Style'}</p>
+                    <p className='text-[10px] font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                      {isRTL ? 'نمط الإطار' : 'Ring Style'}
+                    </p>
                     <div className='flex items-center gap-1.5 flex-wrap'>
                       {RING_STYLES.filter((s) => s.id !== 'animated').map((s) => (
                         <button
@@ -764,7 +815,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   <div className='flex items-end gap-3'>
                     <div className='flex-1 space-y-1.5'>
                       <div className='flex items-center justify-between'>
-                        <p className='text-[10px] font-bold uppercase tracking-wider text-(--text-tertiary)'>{isRTL ? 'سماكة الإطار' : 'Ring Thickness'}</p>
+                        <p className='text-[10px] font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                          {isRTL ? 'سماكة الإطار' : 'Ring Thickness'}
+                        </p>
                         <span className='text-[11px] text-(--text-tertiary)'>{ringThickness}</span>
                       </div>
                       <input
@@ -780,12 +833,10 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   </div>
                 </>
               )}
+            </div>
           </div>
-          </div>
-
-         
         )}
- 
+
         {/* Info Grid or Edit Form */}
         <div className='space-y-4'>
           <div className='space-y-3 pt-2'>
@@ -886,11 +937,14 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
             ) : isLoading ? (
               <div className='grid grid-cols-2 gap-2 animate-pulse'>
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className={`${PROFILE_GLASS_CARD_BASE} flex items-center gap-2.5 h-12`}>
-                    <div className="w-4 h-4 rounded bg-black/10 dark:bg-white/10 shrink-0"></div>
-                    <div className="flex-1 space-y-1.5 min-w-0">
-                      <div className="h-2 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
-                      <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-2/3"></div>
+                  <div
+                    key={i}
+                    className={`${PROFILE_GLASS_CARD_BASE} flex items-center gap-2.5 h-12`}
+                  >
+                    <div className='w-4 h-4 rounded bg-black/10 dark:bg-white/10 shrink-0'></div>
+                    <div className='flex-1 space-y-1.5 min-w-0'>
+                      <div className='h-2 bg-black/10 dark:bg-white/10 rounded w-1/3'></div>
+                      <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-2/3'></div>
                     </div>
                   </div>
                 ))}
@@ -901,12 +955,12 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   { icon: 'badge', label: t.employeeProfile.fullName, value: displayName },
                   ...(profile?.nameArabic
                     ? [
-                      {
-                        icon: 'translate',
-                        label: t.employeeProfile.nameArabic,
-                        value: profile.nameArabic,
-                      },
-                    ]
+                        {
+                          icon: 'translate',
+                          label: t.employeeProfile.nameArabic,
+                          value: profile.nameArabic,
+                        },
+                      ]
                     : []),
                   ...(profile?.email
                     ? [{ icon: 'mail', label: t.employeeProfile.email, value: profile.email }]
@@ -916,12 +970,12 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                     : []),
                   ...(profile?.licenseNumber
                     ? [
-                      {
-                        icon: 'health_and_safety',
-                        label: t.employeeProfile.licenseNo,
-                        value: profile.licenseNumber,
-                      },
-                    ]
+                        {
+                          icon: 'health_and_safety',
+                          label: t.employeeProfile.licenseNo,
+                          value: profile.licenseNumber,
+                        },
+                      ]
                     : []),
                   {
                     icon: 'calendar_month',
@@ -961,292 +1015,400 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   <>
                     <div className={`${PROFILE_GLASS_CARD_BASE} p-4 space-y-3 animate-pulse`}>
                       <div className='flex items-center justify-between border-b border-black/10 dark:border-white/5 pb-3'>
-                        <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-1/3"></div>
-                        <div className="h-4 bg-black/10 dark:bg-white/10 rounded w-16"></div>
+                        <div className='h-4 bg-black/10 dark:bg-white/10 rounded w-1/3'></div>
+                        <div className='h-4 bg-black/10 dark:bg-white/10 rounded w-16'></div>
                       </div>
                       <div className='grid grid-cols-2 sm:grid-cols-5 gap-y-3 gap-x-4 border-b border-black/10 dark:border-white/5 pb-3'>
                         {[...Array(5)].map((_, i) => (
                           <div key={i}>
-                            <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-16 mb-2"></div>
-                            <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-24"></div>
+                            <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-16 mb-2'></div>
+                            <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-24'></div>
                           </div>
                         ))}
                       </div>
                       <div className='border-b border-black/10 dark:border-white/5 pb-3'>
-                        <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-20 mb-2"></div>
-                        <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-full"></div>
+                        <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-20 mb-2'></div>
+                        <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-full'></div>
                       </div>
                       <div className='flex flex-col gap-2 pt-3'>
                         <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
                           <div className='flex gap-4'>
                             <div>
-                              <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-16 mb-2"></div>
-                              <div className="h-5 bg-black/10 dark:bg-white/10 rounded w-20"></div>
+                              <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-16 mb-2'></div>
+                              <div className='h-5 bg-black/10 dark:bg-white/10 rounded w-20'></div>
                             </div>
                             <div>
-                              <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-16 mb-2"></div>
-                              <div className="h-5 bg-black/10 dark:bg-white/10 rounded w-20"></div>
+                              <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-16 mb-2'></div>
+                              <div className='h-5 bg-black/10 dark:bg-white/10 rounded w-20'></div>
                             </div>
                           </div>
                           <div className='grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto'>
-                            <div className="h-7 bg-black/10 dark:bg-white/10 rounded w-full sm:w-28"></div>
-                            <div className="h-7 bg-black/10 dark:bg-white/10 rounded w-full sm:w-28"></div>
+                            <div className='h-7 bg-black/10 dark:bg-white/10 rounded w-full sm:w-28'></div>
+                            <div className='h-7 bg-black/10 dark:bg-white/10 rounded w-full sm:w-28'></div>
                           </div>
                         </div>
                       </div>
                     </div>
                   </>
-                ) : workspaces.map((ws) => (
-                  <div key={ws.id} className={`${PROFILE_GLASS_CARD_BASE} p-5 ${collapsedWorkspaces.has(ws.id) ? '' : 'space-y-4'}`}>
-                    <div 
-                      className={`flex items-center justify-between cursor-pointer select-none group transition-colors ${collapsedWorkspaces.has(ws.id) ? '' : 'border-b border-black/10 dark:border-white/5 pb-4'}`}
-                      onClick={() => toggleWorkspace(ws.id)}
+                ) : (
+                  workspaces.map((ws) => (
+                    <div
+                      key={ws.id}
+                      className={`${PROFILE_GLASS_CARD_BASE} p-5 ${collapsedWorkspaces.has(ws.id) ? '' : 'space-y-4'}`}
                     >
-                      <span className='text-sm font-bold text-(--text-primary) flex items-center gap-2'>
-                        {ws.orgName ? (
-                          <span className='text-base'>
-                            {ws.orgName} - {ws.branchName || t.employeeProfile.unknownBranch}
-                          </span>
-                        ) : (
-                          <span className='text-base'>{ws.branchName || t.employeeProfile.unknownBranch}</span>
-                        )}
-                      </span>
-                      <div className='flex items-center gap-3'>
-                        <div className={`px-2 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 ${getStatusStyle(ws.status).container}`}>
-                          <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
-                            {getStatusStyle(ws.status).icon}
-                          </span>
-                          {(t.employeeList.statusOptions as any)[ws.status] || ws.status}
-                        </div>
-                        <div className="w-8 h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 text-(--text-tertiary) group-hover:bg-black/10 dark:group-hover:bg-white/10 group-hover:text-(--text-primary) transition-all">
-                          {collapsedWorkspaces.has(ws.id) ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
-                        </div>
-                      </div>
-                    </div>
-
-                    {!collapsedWorkspaces.has(ws.id) && (
-                      <div className='space-y-4 animate-fade-in'>
-                        <div className='grid grid-cols-2 sm:grid-cols-5 gap-y-4 gap-x-4 border-b border-black/10 dark:border-white/5 pb-4'>
-                      <div>
-                        <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
-                          <span className='material-symbols-rounded text-[14px]'>domain</span>
-                          {t.employeeList.department}
-                        </span>
-                        <div className='text-xs font-semibold mt-1 text-(--text-primary) truncate'>
-                          {ws.department ? (t.employeeList.departments as any)[ws.department] || ws.department : '—'}
-                        </div>
-                      </div>
-                      <div>
-                        <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
-                          <span className='material-symbols-rounded text-[14px]'>admin_panel_settings</span>
-                          {t.employeeList.role}
-                        </span>
-                        <div className='text-xs font-semibold mt-1 text-(--text-primary) truncate'>
-                          {ws.role ? (t.employeeList.roles as any)[ws.role] || ws.role : '—'}
-                        </div>
-                      </div>
-                      <div>
-                        <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
-                          <span className='material-symbols-rounded text-[14px]'>work</span>
-                          {t.employeeList.position}
-                        </span>
-                        <div className='text-xs font-semibold mt-1 text-(--text-primary) truncate'>
-                          {ws.position || '—'}
-                        </div>
-                      </div>
-                      <div>
-                        <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
-                          <span className='material-symbols-rounded text-[14px]'>payments</span>
-                          {t.employeeList.salary}
-                        </span>
-                        <div className='text-xs font-semibold mt-1 text-(--text-primary) truncate'>
-                          {ws.salary ? `${ws.salary} ${t.global.currency}` : '—'}
-                        </div>
-                      </div>
-                      {(ws.status !== 'inactive' || ws.endDate) && (
-                      <div>
-                        <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
-                          <span className='material-symbols-rounded text-[14px]'>history_toggle_off</span>
-                          {t.employeeProfile.duration}
-                        </span>
-                        <div className='text-xs font-semibold mt-1 text-(--text-primary) truncate'>
-                          {calculateDuration(ws.startDate, ws.status === 'inactive' ? ws.endDate : undefined)}
-                        </div>
-                      </div>
-                      )}
-                    </div>
-
-                    <div className='border-b border-black/10 dark:border-white/5 pb-3'>
-                      <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1 mb-2'>
-                        <span className='material-symbols-rounded text-[14px]'>military_tech</span>
-                        {t.employeeList.tabs.achievements || (isRTL ? 'الإنجازات' : 'Achievements')}
-                      </span>
-
-                      <div className='flex flex-wrap items-center gap-x-4 gap-y-2 text-xs mt-2'>
-                        {/* Transactions Stat */}
-                        <Tooltip position="top" content={
-                          <div className='flex items-center gap-2'>
-                            <span>{isRTL ? 'مبيعات:' : 'Sales:'} <span className='font-bold ml-0.5'>0</span></span>
-                            <span className='w-px h-2.5 bg-white/30 dark:bg-black/30'></span>
-                            <span>{isRTL ? 'مرتجعات:' : 'Returns:'} <span className='font-bold ml-0.5'>0</span></span>
-                          </div>
-                        }>
-                          <div tabIndex={0} className='group relative flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none'>
-                            <span className='material-symbols-rounded text-[16px] text-emerald-500'>point_of_sale</span>
-                            <span className='font-bold text-(--text-primary)'>0</span>
-                            <span className='text-(--text-tertiary)'>{isRTL ? 'معاملة' : 'Transactions'}</span>
-                          </div>
-                        </Tooltip>
-
-                        <div className='hidden sm:block w-px h-3 bg-black/10 dark:bg-white/10'></div>
-
-                        {/* Items Stat */}
-                        <Tooltip position="top" content={
-                          <div className='flex items-center gap-2'>
-                            <span>{isRTL ? 'أدوية:' : 'Medicine:'} <span className='font-bold ml-0.5'>0</span></span>
-                            <span className='w-px h-2.5 bg-white/30 dark:bg-black/30'></span>
-                            <span>{isRTL ? 'تجميل:' : 'Cosmetics:'} <span className='font-bold ml-0.5'>0</span></span>
-                          </div>
-                        }>
-                          <div tabIndex={0} className='group relative flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none'>
-                            <span className='material-symbols-rounded text-[16px] text-blue-500'>package_2</span>
-                            <span className='font-bold text-(--text-primary)'>0</span>
-                            <span className='text-(--text-tertiary)'>{isRTL ? 'منتج' : 'Items'}</span>
-                          </div>
-                        </Tooltip>
-
-                        <div className='hidden sm:block w-px h-3 bg-black/10 dark:bg-white/10'></div>
-
-                        {/* Days Stat */}
-                        <Tooltip position="top" content={
-                          <div className='flex items-center gap-2'>
-                            <span>{isRTL ? 'حضور:' : 'Present:'} <span className='font-bold ml-0.5'>0</span></span>
-                            <span className='w-px h-2.5 bg-white/30 dark:bg-black/30'></span>
-                            <span>{isRTL ? 'غياب/إجازة:' : 'Absent:'} <span className='font-bold ml-0.5'>0</span></span>
-                          </div>
-                        }>
-                          <div tabIndex={0} className='group relative flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none'>
-                            <span className='material-symbols-rounded text-[16px] text-blue-400'>schedule</span>
-                            <span className='font-bold text-(--text-primary)'>0</span>
-                            <span className='text-(--text-tertiary)'>{isRTL ? 'يوم عمل' : 'Days'}</span>
-                          </div>
-                        </Tooltip>
-                      </div>
-                    </div>
-
-                    <div className='mt-4'>
-                      <button
-                        type="button"
-                        onClick={() => toggleCredentials(ws.id)}
-                        className='flex items-center gap-1.5 text-[10px] font-bold text-(--text-tertiary) uppercase hover:text-(--text-primary) transition-colors'
+                      <div
+                        className={`flex items-center justify-between cursor-pointer select-none group transition-colors ${collapsedWorkspaces.has(ws.id) ? '' : 'border-b border-black/10 dark:border-white/5 pb-4'}`}
+                        onClick={() => toggleWorkspace(ws.id)}
                       >
-                        <span className='material-symbols-rounded text-[14px]'>
-                          {visibleCredentials.has(ws.id) ? 'visibility' : 'visibility_off'}
+                        <span className='text-sm font-bold text-(--text-primary) flex items-center gap-2'>
+                          {ws.orgName ? (
+                            <span className='text-base'>
+                              {ws.orgName} - {ws.branchName || t.employeeProfile.unknownBranch}
+                            </span>
+                          ) : (
+                            <span className='text-base'>
+                              {ws.branchName || t.employeeProfile.unknownBranch}
+                            </span>
+                          )}
                         </span>
-                        {isRTL ? 'بيانات الدخول' : 'Credentials'}
-                      </button>
+                        <div className='flex items-center gap-3'>
+                          <div
+                            className={`px-2 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 ${getStatusStyle(ws.status).container}`}
+                          >
+                            <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
+                              {getStatusStyle(ws.status).icon}
+                            </span>
+                            {(t.employeeList.statusOptions as any)[ws.status] || ws.status}
+                          </div>
+                          <div className='w-8 h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 text-(--text-tertiary) group-hover:bg-black/10 dark:group-hover:bg-white/10 group-hover:text-(--text-primary) transition-all'>
+                            {collapsedWorkspaces.has(ws.id) ? (
+                              <ChevronDown className='w-5 h-5' />
+                            ) : (
+                              <ChevronUp className='w-5 h-5' />
+                            )}
+                          </div>
+                        </div>
+                      </div>
 
-                      {visibleCredentials.has(ws.id) && (
-                        <div className='mt-4 space-y-3'>
-                          <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
-                            <div className='flex gap-4'>
-                              <div>
-                                <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
-                                  <span className='material-symbols-rounded text-[14px]'>account_circle</span>
-                                  {t.login.username}
-                                </span>
-                                <div className='text-xs font-mono mt-1 text-(--text-primary) bg-black/5 dark:bg-black/20 px-2 py-1 rounded w-fit' dir='ltr'>
-                                  {ws.username || '—'}
-                                </div>
-                              </div>
-                              <div>
-                                <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
-                                  <span className='material-symbols-rounded text-[14px]'>key</span>
-                                  {t.login.password || 'Password'}
-                                </span>
-                                <div className={`text-xs font-mono mt-1 px-2 py-1 rounded w-fit max-w-[130px] truncate ${ws.password ? 'text-(--text-primary) bg-black/5 dark:bg-black/20' : 'text-red-500 bg-red-500/10'}`} dir='ltr'>
-                                  {ws.password || (isRTL ? 'لم يتم تعيينه' : 'Not Set')}
-                                </div>
+                      {!collapsedWorkspaces.has(ws.id) && (
+                        <div className='space-y-4 animate-fade-in'>
+                          <div className='grid grid-cols-2 sm:grid-cols-5 gap-y-4 gap-x-4 border-b border-black/10 dark:border-white/5 pb-4'>
+                            <div>
+                              <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                                <span className='material-symbols-rounded text-[14px]'>domain</span>
+                                {t.employeeList.department}
+                              </span>
+                              <div className='text-xs font-semibold mt-1 text-(--text-primary) truncate'>
+                                {ws.department
+                                  ? (t.employeeList.departments as any)[ws.department] ||
+                                    ws.department
+                                  : '—'}
                               </div>
                             </div>
-                            <div className='grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto'>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setEditingPasswordId(editingPasswordId === ws.id ? null : ws.id);
-                                  setNewPassword('');
-                                }}
-                                className='flex items-center justify-center gap-1 bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 px-2 py-1.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold transition-colors w-full sm:w-auto'
-                              >
-                                <span className='material-symbols-rounded text-[14px]'>password</span>
-                                {ws.password
-                                  ? (t.employeeProfile.changePassword || 'Change Password')
-                                  : (isRTL ? 'إنشاء كلمة مرور' : 'Create Password')}
-                              </button>
+                            <div>
+                              <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                                <span className='material-symbols-rounded text-[14px]'>
+                                  admin_panel_settings
+                                </span>
+                                {t.employeeList.role}
+                              </span>
+                              <div className='text-xs font-semibold mt-1 text-(--text-primary) truncate'>
+                                {ws.role ? (t.employeeList.roles as any)[ws.role] || ws.role : '—'}
+                              </div>
+                            </div>
+                            <div>
+                              <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                                <span className='material-symbols-rounded text-[14px]'>work</span>
+                                {t.employeeList.position}
+                              </span>
+                              <div className='text-xs font-semibold mt-1 text-(--text-primary) truncate'>
+                                {ws.position || '—'}
+                              </div>
+                            </div>
+                            <div>
+                              <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                                <span className='material-symbols-rounded text-[14px]'>
+                                  payments
+                                </span>
+                                {t.employeeList.salary}
+                              </span>
+                              <div className='text-xs font-semibold mt-1 text-(--text-primary) truncate'>
+                                {ws.salary ? `${ws.salary} ${t.global.currency}` : '—'}
+                              </div>
+                            </div>
+                            {(ws.status !== 'inactive' || ws.endDate) && (
+                              <div>
+                                <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                                  <span className='material-symbols-rounded text-[14px]'>
+                                    history_toggle_off
+                                  </span>
+                                  {t.employeeProfile.duration}
+                                </span>
+                                <div className='text-xs font-semibold mt-1 text-(--text-primary) truncate'>
+                                  {calculateDuration(
+                                    ws.startDate,
+                                    ws.status === 'inactive' ? ws.endDate : undefined
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
 
-                              <button
-                                type="button"
-                                disabled={isRegisteringFingerprint === ws.id || !onRegisterWorkspaceFingerprint}
-                                onClick={async () => {
-                                  try {
-                                    setIsRegisteringFingerprint(ws.id);
-                                    await onRegisterWorkspaceFingerprint?.(ws.id, ws.username || '');
-                                  } finally {
-                                    setIsRegisteringFingerprint(null);
-                                  }
-                                }}
-                                className={`flex items-center justify-center gap-1 px-2 py-1.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold transition-colors disabled:opacity-50 w-full sm:w-auto ${ws.biometricCredentialId
-                                  ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
-                                  : 'bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 text-(--text-tertiary)'
-                                  }`}
+                          <div className='border-b border-black/10 dark:border-white/5 pb-3'>
+                            <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1 mb-2'>
+                              <span className='material-symbols-rounded text-[14px]'>
+                                military_tech
+                              </span>
+                              {t.employeeList.tabs.achievements ||
+                                (isRTL ? 'الإنجازات' : 'Achievements')}
+                            </span>
+
+                            <div className='flex flex-wrap items-center gap-x-4 gap-y-2 text-xs mt-2'>
+                              {/* Transactions Stat */}
+                              <Tooltip
+                                position='top'
+                                content={
+                                  <div className='flex items-center gap-2'>
+                                    <span>
+                                      {isRTL ? 'مبيعات:' : 'Sales:'}{' '}
+                                      <span className='font-bold ml-0.5'>0</span>
+                                    </span>
+                                    <span className='w-px h-2.5 bg-white/30 dark:bg-black/30'></span>
+                                    <span>
+                                      {isRTL ? 'مرتجعات:' : 'Returns:'}{' '}
+                                      <span className='font-bold ml-0.5'>0</span>
+                                    </span>
+                                  </div>
+                                }
                               >
-                                {isRegisteringFingerprint === ws.id ? (
-                                  <span className="w-3.5 h-3.5 border-2 rounded-full animate-spin border-t-transparent"></span>
-                                ) : (
-                                  <span className='material-symbols-rounded text-[14px]'>fingerprint</span>
-                                )}
-                                {ws.biometricCredentialId
-                                  ? (t.employeeProfile.fingerprintEnabled || 'Fingerprint Enabled')
-                                  : (t.employeeProfile.setupPasskey || 'Setup Passkey')}
-                              </button>
+                                <div
+                                  tabIndex={0}
+                                  className='group relative flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none'
+                                >
+                                  <span className='material-symbols-rounded text-[16px] text-emerald-500'>
+                                    point_of_sale
+                                  </span>
+                                  <span className='font-bold text-(--text-primary)'>0</span>
+                                  <span className='text-(--text-tertiary)'>
+                                    {isRTL ? 'معاملة' : 'Transactions'}
+                                  </span>
+                                </div>
+                              </Tooltip>
+
+                              <div className='hidden sm:block w-px h-3 bg-black/10 dark:bg-white/10'></div>
+
+                              {/* Items Stat */}
+                              <Tooltip
+                                position='top'
+                                content={
+                                  <div className='flex items-center gap-2'>
+                                    <span>
+                                      {isRTL ? 'أدوية:' : 'Medicine:'}{' '}
+                                      <span className='font-bold ml-0.5'>0</span>
+                                    </span>
+                                    <span className='w-px h-2.5 bg-white/30 dark:bg-black/30'></span>
+                                    <span>
+                                      {isRTL ? 'تجميل:' : 'Cosmetics:'}{' '}
+                                      <span className='font-bold ml-0.5'>0</span>
+                                    </span>
+                                  </div>
+                                }
+                              >
+                                <div
+                                  tabIndex={0}
+                                  className='group relative flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none'
+                                >
+                                  <span className='material-symbols-rounded text-[16px] text-blue-500'>
+                                    package_2
+                                  </span>
+                                  <span className='font-bold text-(--text-primary)'>0</span>
+                                  <span className='text-(--text-tertiary)'>
+                                    {isRTL ? 'منتج' : 'Items'}
+                                  </span>
+                                </div>
+                              </Tooltip>
+
+                              <div className='hidden sm:block w-px h-3 bg-black/10 dark:bg-white/10'></div>
+
+                              {/* Days Stat */}
+                              <Tooltip
+                                position='top'
+                                content={
+                                  <div className='flex items-center gap-2'>
+                                    <span>
+                                      {isRTL ? 'حضور:' : 'Present:'}{' '}
+                                      <span className='font-bold ml-0.5'>0</span>
+                                    </span>
+                                    <span className='w-px h-2.5 bg-white/30 dark:bg-black/30'></span>
+                                    <span>
+                                      {isRTL ? 'غياب/إجازة:' : 'Absent:'}{' '}
+                                      <span className='font-bold ml-0.5'>0</span>
+                                    </span>
+                                  </div>
+                                }
+                              >
+                                <div
+                                  tabIndex={0}
+                                  className='group relative flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none'
+                                >
+                                  <span className='material-symbols-rounded text-[16px] text-blue-400'>
+                                    schedule
+                                  </span>
+                                  <span className='font-bold text-(--text-primary)'>0</span>
+                                  <span className='text-(--text-tertiary)'>
+                                    {isRTL ? 'يوم عمل' : 'Days'}
+                                  </span>
+                                </div>
+                              </Tooltip>
                             </div>
                           </div>
 
-                          {editingPasswordId === ws.id && (
-                            <div className='flex items-center gap-2 bg-black/10 p-2 rounded'>
-                              <input
-                                type="password"
-                                placeholder={t.employeeProfile.newPassword || 'New Password'}
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                className='flex-1 bg-transparent text-xs border-b border-black/20 dark:border-white/20 px-1 py-1 focus:outline-none focus:border-primary-500'
-                              />
-                              <button
-                                type="button"
-                                disabled={!newPassword || isUpdatingPassword || !onUpdateWorkspacePassword}
-                                onClick={async () => {
-                                  try {
-                                    setIsUpdatingPassword(true);
-                                    await onUpdateWorkspacePassword?.(ws.id, newPassword);
-                                    setEditingPasswordId(null);
-                                    setNewPassword('');
-                                  } finally {
-                                    setIsUpdatingPassword(false);
-                                  }
-                                }}
-                                className='px-3 py-1 bg-primary-500 text-white rounded text-[10px] font-bold disabled:opacity-50'
-                              >
-                                {isUpdatingPassword ? '...' : (t.employeeProfile.save || 'Save')}
-                              </button>
-                            </div>
-                          )}
+                          <div className='mt-4'>
+                            <button
+                              type='button'
+                              onClick={() => toggleCredentials(ws.id)}
+                              className='flex items-center gap-1.5 text-[10px] font-bold text-(--text-tertiary) uppercase hover:text-(--text-primary) transition-colors'
+                            >
+                              <span className='material-symbols-rounded text-[14px]'>
+                                {visibleCredentials.has(ws.id) ? 'visibility' : 'visibility_off'}
+                              </span>
+                              {isRTL ? 'بيانات الدخول' : 'Credentials'}
+                            </button>
+
+                            {visibleCredentials.has(ws.id) && (
+                              <div className='mt-4 space-y-3'>
+                                <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
+                                  <div className='flex gap-4'>
+                                    <div>
+                                      <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                                        <span className='material-symbols-rounded text-[14px]'>
+                                          account_circle
+                                        </span>
+                                        {t.login.username}
+                                      </span>
+                                      <div
+                                        className='text-xs font-mono mt-1 text-(--text-primary) bg-black/5 dark:bg-black/20 px-2 py-1 rounded w-fit'
+                                        dir='ltr'
+                                      >
+                                        {ws.username || '—'}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <span className='text-[10px] font-bold text-(--text-tertiary) uppercase flex items-center gap-1'>
+                                        <span className='material-symbols-rounded text-[14px]'>
+                                          key
+                                        </span>
+                                        {t.login.password || 'Password'}
+                                      </span>
+                                      <div
+                                        className={`text-xs font-mono mt-1 px-2 py-1 rounded w-fit max-w-[130px] truncate ${ws.password ? 'text-(--text-primary) bg-black/5 dark:bg-black/20' : 'text-red-500 bg-red-500/10'}`}
+                                        dir='ltr'
+                                      >
+                                        {ws.password || (isRTL ? 'لم يتم تعيينه' : 'Not Set')}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className='grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto'>
+                                    <button
+                                      type='button'
+                                      onClick={() => {
+                                        setEditingPasswordId(
+                                          editingPasswordId === ws.id ? null : ws.id
+                                        );
+                                        setNewPassword('');
+                                      }}
+                                      className='flex items-center justify-center gap-1 bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 px-2 py-1.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold transition-colors w-full sm:w-auto'
+                                    >
+                                      <span className='material-symbols-rounded text-[14px]'>
+                                        password
+                                      </span>
+                                      {ws.password
+                                        ? t.employeeProfile.changePassword || 'Change Password'
+                                        : isRTL
+                                          ? 'إنشاء كلمة مرور'
+                                          : 'Create Password'}
+                                    </button>
+
+                                    <button
+                                      type='button'
+                                      disabled={
+                                        isRegisteringFingerprint === ws.id ||
+                                        !onRegisterWorkspaceFingerprint
+                                      }
+                                      onClick={async () => {
+                                        try {
+                                          setIsRegisteringFingerprint(ws.id);
+                                          await onRegisterWorkspaceFingerprint?.(
+                                            ws.id,
+                                            ws.username || ''
+                                          );
+                                        } finally {
+                                          setIsRegisteringFingerprint(null);
+                                        }
+                                      }}
+                                      className={`flex items-center justify-center gap-1 px-2 py-1.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold transition-colors disabled:opacity-50 w-full sm:w-auto ${
+                                        ws.biometricCredentialId
+                                          ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                                          : 'bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 text-(--text-tertiary)'
+                                      }`}
+                                    >
+                                      {isRegisteringFingerprint === ws.id ? (
+                                        <span className='w-3.5 h-3.5 border-2 rounded-full animate-spin border-t-transparent'></span>
+                                      ) : (
+                                        <span className='material-symbols-rounded text-[14px]'>
+                                          fingerprint
+                                        </span>
+                                      )}
+                                      {ws.biometricCredentialId
+                                        ? t.employeeProfile.fingerprintEnabled ||
+                                          'Fingerprint Enabled'
+                                        : t.employeeProfile.setupPasskey || 'Setup Passkey'}
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {editingPasswordId === ws.id && (
+                                  <div className='flex items-center gap-2 bg-black/10 p-2 rounded'>
+                                    <input
+                                      type='password'
+                                      placeholder={t.employeeProfile.newPassword || 'New Password'}
+                                      value={newPassword}
+                                      onChange={(e) => setNewPassword(e.target.value)}
+                                      className='flex-1 bg-transparent text-xs border-b border-black/20 dark:border-white/20 px-1 py-1 focus:outline-none focus:border-primary-500'
+                                    />
+                                    <button
+                                      type='button'
+                                      disabled={
+                                        !newPassword ||
+                                        isUpdatingPassword ||
+                                        !onUpdateWorkspacePassword
+                                      }
+                                      onClick={async () => {
+                                        try {
+                                          setIsUpdatingPassword(true);
+                                          await onUpdateWorkspacePassword?.(ws.id, newPassword);
+                                          setEditingPasswordId(null);
+                                          setNewPassword('');
+                                        } finally {
+                                          setIsUpdatingPassword(false);
+                                        }
+                                      }}
+                                      className='px-3 py-1 bg-primary-500 text-white rounded text-[10px] font-bold disabled:opacity-50'
+                                    >
+                                      {isUpdatingPassword
+                                        ? '...'
+                                        : t.employeeProfile.save || 'Save'}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -1259,10 +1421,13 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
             {isLoading ? (
               <div className='grid grid-cols-2 sm:grid-cols-3 gap-2 animate-pulse'>
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className={`${PROFILE_GLASS_CARD_BASE} flex flex-col items-center justify-center py-3 ${i === 2 ? 'col-span-2 sm:col-span-1' : ''}`}>
-                    <div className="w-6 h-6 bg-black/10 dark:bg-white/10 rounded-full mb-2"></div>
-                    <div className="h-5 bg-black/10 dark:bg-white/10 rounded w-8 mb-1"></div>
-                    <div className="h-2 bg-black/10 dark:bg-white/10 rounded w-16"></div>
+                  <div
+                    key={i}
+                    className={`${PROFILE_GLASS_CARD_BASE} flex flex-col items-center justify-center py-3 ${i === 2 ? 'col-span-2 sm:col-span-1' : ''}`}
+                  >
+                    <div className='w-6 h-6 bg-black/10 dark:bg-white/10 rounded-full mb-2'></div>
+                    <div className='h-5 bg-black/10 dark:bg-white/10 rounded w-8 mb-1'></div>
+                    <div className='h-2 bg-black/10 dark:bg-white/10 rounded w-16'></div>
                   </div>
                 ))}
               </div>

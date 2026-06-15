@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import packageJson from '../../package.json';
 
 export interface UpdateInfo {
@@ -23,36 +23,39 @@ export const useUpdateCheck = () => {
   const lastCheckRef = useRef(0);
   const currentVersion = packageJson.version;
 
-  const checkForUpdates = useCallback(async (force = false) => {
-    // Cooldown: skip if checked recently (unless forced)
-    const now = Date.now();
-    if (!force && now - lastCheckRef.current < CHECK_COOLDOWN_MS) return;
-    if (isCheckingRef.current) return;
+  const checkForUpdates = useCallback(
+    async (force = false) => {
+      // Cooldown: skip if checked recently (unless forced)
+      const now = Date.now();
+      if (!force && now - lastCheckRef.current < CHECK_COOLDOWN_MS) return;
+      if (isCheckingRef.current) return;
 
-    isCheckingRef.current = true;
-    lastCheckRef.current = now;
-    setIsChecking(true);
-    try {
-      const response = await fetch('/version.json?t=' + now, {
-        cache: 'no-store'
-      });
-      if (!response.ok) throw new Error('Failed to fetch version info');
-      
-      const data: UpdateInfo = await response.json();
-      
-      if (data.version !== currentVersion) {
-        setUpdateInfo(data);
-        setHasUpdate(true);
-      } else {
-        setHasUpdate(false);
+      isCheckingRef.current = true;
+      lastCheckRef.current = now;
+      setIsChecking(true);
+      try {
+        const response = await fetch('/version.json?t=' + now, {
+          cache: 'no-store',
+        });
+        if (!response.ok) throw new Error('Failed to fetch version info');
+
+        const data: UpdateInfo = await response.json();
+
+        if (data.version !== currentVersion) {
+          setUpdateInfo(data);
+          setHasUpdate(true);
+        } else {
+          setHasUpdate(false);
+        }
+      } catch (error) {
+        console.error('[UpdateCheck] Error checking for updates:', error);
+      } finally {
+        isCheckingRef.current = false;
+        setIsChecking(false);
       }
-    } catch (error) {
-      console.error('[UpdateCheck] Error checking for updates:', error);
-    } finally {
-      isCheckingRef.current = false;
-      setIsChecking(false);
-    }
-  }, [currentVersion]);
+    },
+    [currentVersion]
+  );
 
   useEffect(() => {
     // 1. Check once on mount
@@ -106,13 +109,12 @@ export const useUpdateCheck = () => {
     window.location.href = url.toString();
   }, []);
 
-
   return {
     hasUpdate,
     updateInfo,
     isChecking,
     checkForUpdates,
     performUpdate,
-    currentVersion
+    currentVersion,
   };
 };

@@ -120,8 +120,16 @@ export const attendanceService = {
   async getTodayTimeline(branchId: string): Promise<AttendanceEvent[]> {
     // Calculate today's date boundaries using UTC to match Supabase
     const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
-    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString();
+    const startOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    ).toISOString();
+    const endOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate() + 1
+    ).toISOString();
 
     const { data, error } = await supabase
       .from('attendance_events')
@@ -143,9 +151,16 @@ export const attendanceService = {
    * @param branchId - The branch context
    * @returns The last event type ('IN' | 'OUT') or null if no events today
    */
-  async getEmployeeStatus(employeeId: string, branchId: string): Promise<AttendanceEventType | null> {
+  async getEmployeeStatus(
+    employeeId: string,
+    branchId: string
+  ): Promise<AttendanceEventType | null> {
     const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+    const startOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    ).toISOString();
 
     const { data, error } = await supabase
       .from('attendance_events')

@@ -18,7 +18,6 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
   onToggle,
   color = 'emerald',
 }) => {
-
   return (
     <div className='bg-white/50 dark:bg-muted/40 rounded-2xl border border-gray-100 dark:border-border/50 shadow-xs transition-all duration-300 group overflow-hidden'>
       <button

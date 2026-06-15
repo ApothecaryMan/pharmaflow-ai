@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFilterDropdown } from '../../../../hooks/layout/useFilterDropdown';
 import type { Customer } from '../../../../types';
 
@@ -9,7 +9,12 @@ interface UsePOSCustomerProps {
   customers: Customer[];
 }
 
-export const usePOSCustomer = ({ activeTab, activeTabId, updateTab, customers }: UsePOSCustomerProps) => {
+export const usePOSCustomer = ({
+  activeTab,
+  activeTabId,
+  updateTab,
+  customers,
+}: UsePOSCustomerProps) => {
   const customerName = activeTab?.customerName || '';
   const setCustomerName = useCallback(
     (name: string) => updateTab(activeTabId, { customerName: name }),
@@ -30,15 +35,18 @@ export const usePOSCustomer = ({ activeTab, activeTabId, updateTab, customers }:
   const [showCodeDropdown, setShowCodeDropdown] = useState(false);
   const [filteredByCode, setFilteredByCode] = useState<Customer[]>([]);
 
-  const handleCustomerSelect = useCallback((customer: Customer) => {
-    setSelectedCustomer(customer);
-    setCustomerName(customer.name);
-    setCustomerCode(customer.code || '');
-    setShowCustomerDropdown(false);
-    setShowCodeDropdown(false);
-    setFilteredCustomers([]);
-    setFilteredByCode([]);
-  }, [setCustomerName, setCustomerCode]);
+  const handleCustomerSelect = useCallback(
+    (customer: Customer) => {
+      setSelectedCustomer(customer);
+      setCustomerName(customer.name);
+      setCustomerCode(customer.code || '');
+      setShowCustomerDropdown(false);
+      setShowCodeDropdown(false);
+      setFilteredCustomers([]);
+      setFilteredByCode([]);
+    },
+    [setCustomerName, setCustomerCode]
+  );
 
   const clearCustomerSelection = useCallback(() => {
     setSelectedCustomer(null);

@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { customerService } from './customerService';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Customer } from '../../types';
+import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
-import { idGenerator } from '../../utils/idGenerator';
-import { Customer } from '../../types';
+import { customerService } from './customerService';
 
 // Mocks
 vi.mock('../../utils/storage', () => ({
@@ -30,7 +30,7 @@ describe('CustomerService', () => {
 
   beforeEach(() => {
     mockCustomers = [
-      { id: 'C1', name: 'John Doe', branchId: 'B1', phone: '123', points: 100 } as Customer
+      { id: 'C1', name: 'John Doe', branchId: 'B1', phone: '123', points: 100 } as Customer,
     ];
     vi.clearAllMocks();
     (storage.get as any).mockReturnValue(mockCustomers);
@@ -41,7 +41,7 @@ describe('CustomerService', () => {
   it('should create customer with correct defaults', async () => {
     const newCustomer = { name: 'Jane Doe', phone: '456' };
     const created = await customerService.create(newCustomer as any);
-    
+
     expect(created.id).toBe('C_NEW');
     expect(created.branchId).toBe('B1');
     expect(created.points).toBe(0);
@@ -60,6 +60,8 @@ describe('CustomerService', () => {
   });
 
   it('should fail to redeem if points insufficient', async () => {
-    await expect(customerService.redeemLoyaltyPoints('C1', 200)).rejects.toThrow('Insufficient points');
+    await expect(customerService.redeemLoyaltyPoints('C1', 200)).rejects.toThrow(
+      'Insufficient points'
+    );
   });
 });

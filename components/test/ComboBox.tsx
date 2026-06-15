@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFilterDropdown } from '../../hooks/layout/useFilterDropdown';
 
 export interface ComboBoxProps<T> {
@@ -126,9 +127,10 @@ export function ComboBox<T>({
         onMouseDown={handleMouseDown}
         className={`w-full flex items-center justify-between text-left outline-hidden transition-all duration-300 border
           ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
-          ${isMinimal
-            ? 'bg-transparent border-transparent hover:bg-gray-100 dark:hover:bg-gray-800'
-            : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600'
+          ${
+            isMinimal
+              ? 'bg-transparent border-transparent hover:bg-gray-100 dark:hover:bg-gray-800'
+              : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600'
           }
         `}
         style={{
@@ -182,21 +184,22 @@ export function ComboBox<T>({
               </div>
             ) : (
               items.map((item) => {
-                const isSelected = selectedItem ? keyExtractor(item) === keyExtractor(selectedItem) : false;
+                const isSelected = selectedItem
+                  ? keyExtractor(item) === keyExtractor(selectedItem)
+                  : false;
                 return (
                   <div
                     key={keyExtractor(item)}
                     onClick={(e) => handleOptionClick(e, item)}
                     className={`w-full text-left rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-between
-                      ${isSelected
-                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-bold'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'
+                      ${
+                        isSelected
+                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-bold'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'
                       }`}
                     style={{ padding: itemPaddingClasses }}
                   >
-                    <div className='flex-1 min-w-0'>
-                      {renderItem(item, isSelected)}
-                    </div>
+                    <div className='flex-1 min-w-0'>{renderItem(item, isSelected)}</div>
                     {isSelected && (
                       <span className='material-symbols-rounded text-gray-500 dark:text-gray-400 text-[18px] ml-2 shrink-0'>
                         check

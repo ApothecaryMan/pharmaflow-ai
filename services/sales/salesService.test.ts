@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { salesService } from './salesService';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Sale } from '../../types';
+import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
-import { idGenerator } from '../../utils/idGenerator';
-import { Sale } from '../../types';
+import { salesService } from './salesService';
 
 // Mocks
 vi.mock('../../utils/storage', () => ({
@@ -39,7 +39,7 @@ describe('SalesService', () => {
       paymentMethod: 'cash',
       status: 'completed',
       branchId: 'MAIN',
-      customerCode: 'C1'
+      customerCode: 'C1',
     },
     {
       id: 'S2',
@@ -52,8 +52,8 @@ describe('SalesService', () => {
       paymentMethod: 'visa',
       status: 'completed',
       branchId: 'MAIN',
-      customerCode: 'C2'
-    }
+      customerCode: 'C2',
+    },
   ];
 
   beforeEach(() => {
@@ -83,11 +83,11 @@ describe('SalesService', () => {
       items: [],
       total: 200,
       subtotal: 200,
-      paymentMethod: 'cash'
+      paymentMethod: 'cash',
     };
 
     const created = await salesService.create(newSaleData);
-    
+
     expect(created.id).toBe('SALE_NEW');
     expect(created.branchId).toBe('MAIN');
     expect(storage.set).toHaveBeenCalled();
@@ -96,9 +96,9 @@ describe('SalesService', () => {
   it('should calculate stats correctly', async () => {
     // Mock date to match "today" logic in service (it uses new Date() internally)
     // For specific date tests, mocking Date is better, but here we can check total revenue simply
-    
+
     const stats = await salesService.getStats();
-    
+
     expect(stats.totalSales).toBe(2);
     expect(stats.totalRevenue).toBe(150); // 100 + 50
     expect(stats.averageTransaction).toBe(75); // 150 / 2
@@ -108,7 +108,7 @@ describe('SalesService', () => {
     // Filter by min amount
     const filters = { minAmount: 80 };
     const filtered = await salesService.filter(filters);
-    
+
     expect(filtered).toHaveLength(1);
     expect(filtered[0].id).toBe('S1');
   });

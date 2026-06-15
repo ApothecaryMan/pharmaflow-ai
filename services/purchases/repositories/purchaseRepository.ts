@@ -61,8 +61,9 @@ export const purchaseRepository = {
 
   async getAll(effectiveBranchId: string, orgId?: string): Promise<Purchase[]> {
     let query = supabase.from(this.tableName).select('*');
-    const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
-    
+    const isAll =
+      typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+
     if (effectiveBranchId && !isAll) {
       query = query.eq('branch_id', effectiveBranchId);
     } else if (isAll && orgId) {
@@ -70,11 +71,12 @@ export const purchaseRepository = {
     }
     const { data, error } = await query.order('date', { ascending: false });
     if (error) throw error;
-    return (data || []).map(item => this.mapFromDb(item));
+    return (data || []).map((item) => this.mapFromDb(item));
   },
 
   async getById(id: string): Promise<Purchase | null> {
-    const { data, error } = await supabase.from(this.tableName)
+    const { data, error } = await supabase
+      .from(this.tableName)
       .select('*')
       .eq('id', id)
       .maybeSingle();
@@ -82,28 +84,34 @@ export const purchaseRepository = {
     return data ? this.mapFromDb(data) : null;
   },
 
-  async findByFilters(filters: PurchaseFilters, effectiveBranchId: string, orgId?: string): Promise<Purchase[]> {
+  async findByFilters(
+    filters: PurchaseFilters,
+    effectiveBranchId: string,
+    orgId?: string
+  ): Promise<Purchase[]> {
     let query = supabase.from(this.tableName).select('*');
-    const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
-    
+    const isAll =
+      typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+
     if (effectiveBranchId && !isAll) {
       query = query.eq('branch_id', effectiveBranchId);
     } else if (isAll && orgId) {
       query = query.eq('org_id', orgId);
     }
-    
+
     if (filters.status) query = query.eq('status', filters.status);
     if (filters.supplierId) query = query.eq('supplier_id', filters.supplierId);
     if (filters.dateFrom) query = query.gte('date', filters.dateFrom);
     if (filters.dateTo) query = query.lte('date', filters.dateTo);
-    
+
     const { data, error } = await query.order('date', { ascending: false });
     if (error) throw error;
-    return (data || []).map(item => this.mapFromDb(item));
+    return (data || []).map((item) => this.mapFromDb(item));
   },
 
   async insert(purchase: Purchase): Promise<Purchase> {
-    const { data, error } = await supabase.from(this.tableName)
+    const { data, error } = await supabase
+      .from(this.tableName)
       .insert(this.mapToDb(purchase))
       .select()
       .single();
@@ -112,7 +120,8 @@ export const purchaseRepository = {
   },
 
   async update(id: string, updates: Partial<Purchase>): Promise<Purchase> {
-    const { data, error } = await supabase.from(this.tableName)
+    const { data, error } = await supabase
+      .from(this.tableName)
       .update(this.mapToDb(updates))
       .eq('id', id)
       .select()
@@ -123,8 +132,8 @@ export const purchaseRepository = {
 
   async upsert(purchases: Purchase[]): Promise<void> {
     if (purchases.length === 0) return;
-    const dbPurchases = purchases.map(p => this.mapToDb(p));
+    const dbPurchases = purchases.map((p) => this.mapToDb(p));
     const { error } = await supabase.from(this.tableName).upsert(dbPurchases);
     if (error) throw error;
-  }
+  },
 };

@@ -1,21 +1,18 @@
-import React, { useMemo, useState } from "react";
-import { 
-  MapMarker, 
-  MarkerContent, 
-  MapRoute 
-} from "@/components/ui/map";
-import { useData } from "../../context/DataContext";
+import type React from 'react';
+import { useMemo, useState } from 'react';
+import { MapMarker, MapRoute, MarkerContent } from '@/components/ui/map';
+import { useData } from '../../context/DataContext';
 
 // ----------------------------------------------------
 // Mock Delivery Data (Simplified per design)
 // ----------------------------------------------------
 export const DELIVERY_ROUTE: [number, number][] = [
-  [31.2357, 30.0440],
-  [31.2400, 30.0450],
-  [31.2450, 30.0420],
-  [31.2550, 30.0480],
-  [31.2650, 30.0460],
-  [31.2750, 30.0500],
+  [31.2357, 30.044],
+  [31.24, 30.045],
+  [31.245, 30.042],
+  [31.255, 30.048],
+  [31.265, 30.046],
+  [31.275, 30.05],
 ];
 
 export const STORE_LOCATION: [number, number] = DELIVERY_ROUTE[0];
@@ -31,12 +28,12 @@ function PointMarker({ longitude, latitude, label }: PointMarkerProps) {
   return (
     <MapMarker longitude={longitude} latitude={latitude}>
       <MarkerContent>
-        <div className="flex flex-col items-center">
-          <span className="text-sm font-bold text-white mb-1 shadow-sm bg-black/40 px-2 py-0.5 rounded whitespace-nowrap border border-white/10">
+        <div className='flex flex-col items-center'>
+          <span className='text-sm font-bold text-white mb-1 shadow-sm bg-black/40 px-2 py-0.5 rounded whitespace-nowrap border border-white/10'>
             {label}
           </span>
-          <div className="size-4 bg-primary-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
-             <div className="size-1.5 bg-white rounded-full" />
+          <div className='size-4 bg-primary-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center'>
+            <div className='size-1.5 bg-white rounded-full' />
           </div>
         </div>
       </MarkerContent>
@@ -44,40 +41,40 @@ function PointMarker({ longitude, latitude, label }: PointMarkerProps) {
   );
 }
 
-function PharmacyMarker({ 
-  longitude, 
-  latitude, 
-  name, 
-  logoUrl 
-}: { 
-  longitude: number; 
-  latitude: number; 
-  name: string; 
-  logoUrl?: string; 
+function PharmacyMarker({
+  longitude,
+  latitude,
+  name,
+  logoUrl,
+}: {
+  longitude: number;
+  latitude: number;
+  name: string;
+  logoUrl?: string;
 }) {
   const [imageError, setImageError] = useState(false);
 
   return (
     <MapMarker longitude={longitude} latitude={latitude}>
       <MarkerContent>
-        <div className="flex flex-col items-center">
+        <div className='flex flex-col items-center'>
           {/* Pharmacy Name Tooltip */}
-          <span className="text-xs font-bold text-white mb-1.5 shadow-lg bg-black/80 px-2.5 py-1 rounded-xl border border-white/20 backdrop-blur-md whitespace-nowrap">
+          <span className='text-xs font-bold text-white mb-1.5 shadow-lg bg-black/80 px-2.5 py-1 rounded-xl border border-white/20 backdrop-blur-md whitespace-nowrap'>
             {name}
           </span>
           {/* Pharmacy Logo Container */}
-          <div className="relative group">
-            <div className="absolute inset-0 rounded-full bg-primary-500/30 blur-md group-hover:bg-primary-500/50 transition-all duration-300" />
-            <div className="size-11 rounded-full border-2 border-primary-500 bg-zinc-950 shadow-2xl flex items-center justify-center overflow-hidden relative z-10 transition-transform duration-300 hover:scale-110">
+          <div className='relative group'>
+            <div className='absolute inset-0 rounded-full bg-primary-500/30 blur-md group-hover:bg-primary-500/50 transition-all duration-300' />
+            <div className='size-11 rounded-full border-2 border-primary-500 bg-zinc-950 shadow-2xl flex items-center justify-center overflow-hidden relative z-10 transition-transform duration-300 hover:scale-110'>
               {logoUrl && !imageError ? (
-                <img 
-                  src={logoUrl} 
-                  alt={name} 
-                  className="w-full h-full object-cover" 
+                <img
+                  src={logoUrl}
+                  alt={name}
+                  className='w-full h-full object-cover'
                   onError={() => setImageError(true)}
                 />
               ) : (
-                <span className="material-symbols-rounded text-white text-xl">local_pharmacy</span>
+                <span className='material-symbols-rounded text-white text-xl'>local_pharmacy</span>
               )}
             </div>
           </div>
@@ -96,8 +93,10 @@ function DeliveryTruckMarker({ longitude, latitude }: DeliveryTruckMarkerProps) 
   return (
     <MapMarker longitude={longitude} latitude={latitude}>
       <MarkerContent>
-        <div className="size-8 bg-primary-500 rounded-full border-2 border-white shadow-xl flex items-center justify-center">
-           <span className="material-symbols-rounded text-white text-xl font-fill">local_shipping</span>
+        <div className='size-8 bg-primary-500 rounded-full border-2 border-white shadow-xl flex items-center justify-center'>
+          <span className='material-symbols-rounded text-white text-xl font-fill'>
+            local_shipping
+          </span>
         </div>
       </MarkerContent>
     </MapMarker>
@@ -134,28 +133,28 @@ export default function CustomerDeliveryView({ language = 'ar' }: CustomerDelive
   }, [routeCoordinates]);
 
   const pharmacyName = useMemo(() => {
-    return activeOrg?.name || activeBranch?.name || (language === 'ar' ? "الصيدلية" : "Pharmacy");
+    return activeOrg?.name || activeBranch?.name || (language === 'ar' ? 'الصيدلية' : 'Pharmacy');
   }, [activeOrg, activeBranch, language]);
 
   return (
     <>
       <MapRoute
-        id="delivery-main-route"
+        id='delivery-main-route'
         coordinates={routeCoordinates}
-        color="#3b82f6"
+        color='#3b82f6'
         width={6}
         opacity={0.9}
       />
-      <PharmacyMarker 
-        longitude={storeLocation[0]} 
-        latitude={storeLocation[1]} 
-        name={pharmacyName} 
+      <PharmacyMarker
+        longitude={storeLocation[0]}
+        latitude={storeLocation[1]}
+        name={pharmacyName}
         logoUrl={activeOrg?.logoUrl}
       />
-      <PointMarker 
-        longitude={HOME_LOCATION[0]} 
-        latitude={HOME_LOCATION[1]} 
-        label={language === 'ar' ? "المنزل" : "Home"} 
+      <PointMarker
+        longitude={HOME_LOCATION[0]}
+        latitude={HOME_LOCATION[1]}
+        label={language === 'ar' ? 'المنزل' : 'Home'}
       />
       <DeliveryTruckMarker longitude={truckLocation[0]} latitude={truckLocation[1]} />
     </>

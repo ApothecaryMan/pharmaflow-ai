@@ -9,8 +9,8 @@
  */
 
 import { StorageKeys } from '../config/storageKeys';
-import { storage } from '../utils/storage';
 import { supabase } from '../lib/supabase';
+import { storage } from '../utils/storage';
 
 interface TimeResponse {
   datetime: string;
@@ -42,7 +42,8 @@ class TimeService {
       const storedSync = storage.get<string | number | null>(StorageKeys.LAST_SYNC, null);
 
       if (storedOffset !== null) {
-        const parsedOffset = typeof storedOffset === 'number' ? storedOffset : parseInt(storedOffset, 10);
+        const parsedOffset =
+          typeof storedOffset === 'number' ? storedOffset : parseInt(storedOffset, 10);
         this.offset = isNaN(parsedOffset) ? 0 : parsedOffset;
       }
 
@@ -68,13 +69,13 @@ class TimeService {
     // 1. Try Supabase First (Source of Truth for the App)
     try {
       const { data, error } = await supabase.rpc('get_server_time');
-      
+
       if (!error && data) {
         const serverTime = new Date(data).getTime();
         const endTime = Date.now();
         const latency = (endTime - systemTime) / 2;
-        
-        this.offset = (serverTime + latency) - endTime;
+
+        this.offset = serverTime + latency - endTime;
         this.lastSyncTime = endTime;
 
         storage.set(StorageKeys.TIME_OFFSET, this.offset.toString());
@@ -169,7 +170,6 @@ class TimeService {
     // Return false to signal that sync was NOT successful (using fallback)
     return false;
   }
-
 
   /**
    * Get verified current date (system time + offset)

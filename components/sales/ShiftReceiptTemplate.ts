@@ -1,7 +1,11 @@
 import type { Employee, Language, Shift } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 
-export const generateShiftReceiptHTML = (shift: Shift, language: Language = 'EN', employees?: Employee[]): string => {
+export const generateShiftReceiptHTML = (
+  shift: Shift,
+  language: Language = 'EN',
+  employees?: Employee[]
+): string => {
   const isAr = language === 'AR';
 
   // Format currency helpers - without currency symbol
@@ -30,26 +34,40 @@ export const generateShiftReceiptHTML = (shift: Shift, language: Language = 'EN'
 
   const durationHrs = Math.floor((shift.shiftDurationMinutes || 0) / 60);
   const durationMins = (shift.shiftDurationMinutes || 0) % 60;
-  const durationText = isAr 
-    ? `${durationHrs} س ${durationMins} د` 
+  const durationText = isAr
+    ? `${durationHrs} س ${durationMins} د`
     : `${durationHrs}h ${durationMins}m`;
 
-  const openedByName = employees?.find(e => e.id === shift.openedBy)?.name || shift.openedBy;
-  const closedByName = shift.closedBy ? (employees?.find(e => e.id === shift.closedBy)?.name || shift.closedBy) : '-';
+  const openedByName = employees?.find((e) => e.id === shift.openedBy)?.name || shift.openedBy;
+  const closedByName = shift.closedBy
+    ? employees?.find((e) => e.id === shift.closedBy)?.name || shift.closedBy
+    : '-';
 
   const cashSalesNum = shift.cashSales || 0;
   const cardSalesNum = shift.cardSales || 0;
-  const totalRevenues = shift.openingBalance + cashSalesNum + (shift.cashIn || 0) + (shift.cashPurchaseReturns || 0) + cardSalesNum;
-  
+  const totalRevenues =
+    shift.openingBalance +
+    cashSalesNum +
+    (shift.cashIn || 0) +
+    (shift.cashPurchaseReturns || 0) +
+    cardSalesNum;
+
   const cashReturnsNum = shift.returns || 0;
   const totalExpenses = (shift.cashPurchases || 0) + cashReturnsNum + (shift.cashOut || 0);
 
   const varianceNum = (shift.closingBalance || 0) - (shift.expectedBalance || 0);
-  const varianceText = varianceNum > 0 
-    ? (isAr ? `زيادة` : `Surplus`)
-    : varianceNum < 0 
-      ? (isAr ? `عجز` : `Shortage`)
-      : (isAr ? `متطابق` : `Balanced`);
+  const varianceText =
+    varianceNum > 0
+      ? isAr
+        ? `زيادة`
+        : `Surplus`
+      : varianceNum < 0
+        ? isAr
+          ? `عجز`
+          : `Shortage`
+        : isAr
+          ? `متطابق`
+          : `Balanced`;
 
   const html = `
 <!DOCTYPE html>
@@ -173,11 +191,15 @@ export const generateShiftReceiptHTML = (shift: Shift, language: Language = 'EN'
   </style>
 </head>
 <body>
-  ${shift.printCount && shift.printCount > 1 ? `
+  ${
+    shift.printCount && shift.printCount > 1
+      ? `
     <div class="text-center">
       <div class="duplicate-watermark">${isAr ? 'نسخة مكررة' : 'DUPLICATE COPY'}</div>
     </div>
-  ` : ''}
+  `
+      : ''
+  }
   <div class="text-center header-title">${title}</div>
   <div class="strong-divider"></div>
 

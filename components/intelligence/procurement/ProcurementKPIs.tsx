@@ -26,7 +26,9 @@ export const ProcurementKPIs: React.FC<ProcurementKPIsProps> = ({ summary, t, is
         value={summary?.items_out_of_stock || 0}
         subValue={t?.intelligence?.procurement?.kpis?.items || 'items'}
         icon='warning'
-        iconColor={summary?.items_out_of_stock && summary.items_out_of_stock > 0 ? 'red' : 'emerald'}
+        iconColor={
+          summary?.items_out_of_stock && summary.items_out_of_stock > 0 ? 'red' : 'emerald'
+        }
         isLoading={isLoading}
       />
 
@@ -42,7 +44,11 @@ export const ProcurementKPIs: React.FC<ProcurementKPIsProps> = ({ summary, t, is
       <SmallCard
         title={t?.intelligence?.procurement?.kpis?.pendingPO || 'Pending PO'}
         value={summary?.pending_po_count || 0}
-        subValue={summary ? `${t?.settings?.common?.value || 'Value'} ${formatCurrency(summary.pending_po_value)}` : ''}
+        subValue={
+          summary
+            ? `${t?.settings?.common?.value || 'Value'} ${formatCurrency(summary.pending_po_value)}`
+            : ''
+        }
         icon='pending_actions'
         iconColor='gray'
         isLoading={isLoading}

@@ -26,7 +26,9 @@ export interface AddShiftTransactionParams {
  *
  * @returns true if transaction was added successfully, false if no open shift
  */
-export async function addTransactionToOpenShift(params: AddShiftTransactionParams): Promise<boolean> {
+export async function addTransactionToOpenShift(
+  params: AddShiftTransactionParams
+): Promise<boolean> {
   const { type, amount, reason, userId, relatedSaleId, getVerifiedDate } = params;
 
   try {

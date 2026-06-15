@@ -1,4 +1,5 @@
-import React, { forwardRef, useState, useEffect, useMemo, useRef } from 'react';
+import type React from 'react';
+import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import { useSettings } from '../../context/SettingsContext';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { ContextMenuItem, ContextMenuSeparator, useContextMenu } from './ContextMenu';
@@ -79,9 +80,9 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         setCurrentSuggestion('');
         return;
       }
-      const match = suggestions.find(s =>
-        s.toLowerCase().startsWith(value.toLowerCase()) &&
-        s.toLowerCase() !== value.toLowerCase()
+      const match = suggestions.find(
+        (s) =>
+          s.toLowerCase().startsWith(value.toLowerCase()) && s.toLowerCase() !== value.toLowerCase()
       );
       setCurrentSuggestion(match || '');
     }, [value, suggestions, enableAutocomplete]);
@@ -213,17 +214,21 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           }
         }}
       >
-        <div className={`
+        <div
+          className={`
           flex items-center h-full select-none
           ${isFocused ? 'text-black dark:text-white' : 'text-gray-400'}
-        `}>
+        `}
+        >
           {/* leading icon removed ps-3 since wrapper has ps-3 */}
           {typeof icon === 'string' ? (
             <span
               className='material-symbols-rounded'
               style={{
                 fontSize: '22px',
-                fontVariationSettings: isFocused ? "'FILL' 0, 'wght' 700, 'GRAD' 0, 'opsz' 24" : "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24"
+                fontVariationSettings: isFocused
+                  ? "'FILL' 0, 'wght' 700, 'GRAD' 0, 'opsz' 24"
+                  : "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24",
               }}
             >
               {icon}
@@ -233,10 +238,12 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           )}
         </div>
 
-        <div className={`
+        <div
+          className={`
              relative flex-1 h-full flex items-center
              ${hasActiveFilters ? 'ms-1' : 'ms-2'}
-        `}>
+        `}
+        >
           <input
             ref={ref}
             {...props}
@@ -247,10 +254,10 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             onKeyUp={(e) => setIsCapsLock(e.getModifierState('CapsLock'))}
             placeholder={hasActiveFilters ? placeholder?.split(',')[0] + '...' : placeholder}
             spellCheck='false'
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="none"
-            inputMode="search"
+            autoComplete='off'
+            autoCorrect='off'
+            autoCapitalize='none'
+            inputMode='search'
             className={`
                 w-full h-full bg-transparent
                 text-base font-medium text-gray-900 dark:text-gray-100 
@@ -260,9 +267,12 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
               `}
           />
           {ghostText && (
-            <div className={`absolute inset-y-0 ${dir === 'rtl' ? 'right-0' : 'left-0'} flex items-center pointer-events-none overflow-hidden select-none`}>
-              <span className="invisible whitespace-pre text-base font-medium">{value}</span>
-              <span className={`
+            <div
+              className={`absolute inset-y-0 ${dir === 'rtl' ? 'right-0' : 'left-0'} flex items-center pointer-events-none overflow-hidden select-none`}
+            >
+              <span className='invisible whitespace-pre text-base font-medium'>{value}</span>
+              <span
+                className={`
                         inline-flex items-center px-1.5 py-0.5 ms-1
                         rounded-lg 
                         bg-gray-100 dark:bg-(--bg-surface-neutral) 
@@ -270,16 +280,22 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                         text-gray-600 dark:text-gray-400 
                         animate-in fade-in duration-100
                         ${isCapsLock ? 'uppercase' : ''}
-                    `}>
+                    `}
+              >
                 {isCapsLock ? ghostText.toUpperCase() : ghostText}
-                <span className="material-symbols-rounded ms-1 opacity-60" style={{ fontSize: 'var(--icon-sm)' }}>keyboard_tab</span>
+                <span
+                  className='material-symbols-rounded ms-1 opacity-60'
+                  style={{ fontSize: 'var(--icon-sm)' }}
+                >
+                  keyboard_tab
+                </span>
               </span>
             </div>
           )}
         </div>
 
         {hasActiveFilters && (
-          <div className="flex items-center gap-1.5 h-full ms-auto">
+          <div className='flex items-center gap-1.5 h-full ms-auto'>
             {activeGroups.map((groupId) => {
               const config = filterConfigs.find((c) => c.id === groupId);
               const values = activeFilters[groupId];
@@ -302,16 +318,18 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         )}
 
         <div className='flex items-center gap-1.5 ms-auto h-full'>
-
           {filterConfigs.length > 0 && (
-            <div className={`
+            <div
+              className={`
               flex items-center h-8 px-1 ${rounded === 'full' ? 'rounded-full' : 'rounded-2xl'}
               border
-              ${hasActiveFilters
-                ? 'border-gray-200 dark:border-(--border-divider) bg-white dark:bg-(--bg-surface-neutral) shadow-xs'
-                : 'border-transparent bg-transparent hover:border-gray-200 dark:hover:border-(--border-divider) hover:bg-gray-50 dark:hover:bg-(--bg-surface-neutral)'
+              ${
+                hasActiveFilters
+                  ? 'border-gray-200 dark:border-(--border-divider) bg-white dark:bg-(--bg-surface-neutral) shadow-xs'
+                  : 'border-transparent bg-transparent hover:border-gray-200 dark:hover:border-(--border-divider) hover:bg-gray-50 dark:hover:bg-(--bg-surface-neutral)'
               }
-            `}>
+            `}
+            >
               {hasActiveFilters && (
                 <Tooltip content={t.global.table.clearAllFilters}>
                   <button
@@ -319,7 +337,9 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                     onClick={handleClearAllFilters}
                     className='text-gray-400 hover:text-red-500 dark:hover:text-red-400 flex items-center justify-center w-7 h-7 rounded-full'
                   >
-                    <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>filter_list_off</span>
+                    <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
+                      filter_list_off
+                    </span>
                   </button>
                 </Tooltip>
               )}
@@ -333,26 +353,32 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                   onClick={handleOpenFilterMenu}
                   className={`
                     flex items-center justify-center w-7 h-7 rounded-full
-                    ${hasActiveFilters
-                      ? 'text-emerald-600 dark:text-emerald-400 font-bold'
-                      : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}
+                    ${
+                      hasActiveFilters
+                        ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                        : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                    }
                   `}
                 >
-                  <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>tune</span>
+                  <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
+                    tune
+                  </span>
                 </button>
               </Tooltip>
             </div>
           )}
 
-          {(badge || isLoading || (resultsCount !== undefined && (value?.trim().length ?? 0) > 0)) && (
+          {(badge ||
+            isLoading ||
+            (resultsCount !== undefined && (value?.trim().length ?? 0) > 0)) && (
             <div className='pointer-events-none flex items-center ps-1 pe-0.5'>
               {badge || (
-                <div className="flex items-center gap-2">
+                <div className='flex items-center gap-2'>
                   {isLoading && (
-                    <span className="w-3 h-3 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                    <span className='w-3 h-3 border-2 border-primary-500 border-t-transparent rounded-full animate-spin' />
                   )}
                   {!isLoading && resultsCount !== undefined && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-(--bg-surface-neutral) text-gray-500 dark:text-gray-400 text-[11px] font-black uppercase tracking-wider animate-in zoom-in duration-200">
+                    <span className='inline-flex items-center px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-(--bg-surface-neutral) text-gray-500 dark:text-gray-400 text-[11px] font-black uppercase tracking-wider animate-in zoom-in duration-200'>
                       {resultsCount} {t.pos.resultsLabel}
                     </span>
                   )}

@@ -1,13 +1,6 @@
 {
   "options": {
-    "summaryTrendStats": [
-      "avg",
-      "min",
-      "med",
-      "max",
-      "p(90)",
-      "p(95)"
-    ],
+    "summaryTrendStats": ["avg", "min", "med", "max", "p(90)", "p(95)"],
     "summaryTimeUnit": "",
     "noColor": false
   },
@@ -293,21 +286,21 @@
       {
         "groups": [],
         "checks": [
-            {
-              "passes": 1,
-              "fails": 0,
-              "name": "auth login status is 200",
-              "path": "::setup::auth login status is 200",
-              "id": "83e50c28eecbcc735b217f4caf98d173"
-            },
-            {
-              "fails": 0,
-              "name": "auth login has access_token",
-              "path": "::setup::auth login has access_token",
-              "id": "139ead8a83809cdbc14a4cff7ebf6f21",
-              "passes": 1
-            }
-          ],
+          {
+            "passes": 1,
+            "fails": 0,
+            "name": "auth login status is 200",
+            "path": "::setup::auth login status is 200",
+            "id": "83e50c28eecbcc735b217f4caf98d173"
+          },
+          {
+            "fails": 0,
+            "name": "auth login has access_token",
+            "path": "::setup::auth login has access_token",
+            "id": "139ead8a83809cdbc14a4cff7ebf6f21",
+            "passes": 1
+          }
+        ],
         "name": "setup",
         "path": "::setup",
         "id": "5c0f8025f7e0b6654089e5b00e950f1a"
@@ -325,27 +318,27 @@
         "id": "7fad1503f1be5924b110f539ffea68ca",
         "groups": [],
         "checks": [
-            {
-              "name": "✅ Cashier checkout OK",
-              "path": "::👤 Cashier: Checkout::✅ Cashier checkout OK",
-              "id": "1ccff8483de7d1e43a853973697ce7bd",
-              "passes": 4,
-              "fails": 0
-            }
-          ]
+          {
+            "name": "✅ Cashier checkout OK",
+            "path": "::👤 Cashier: Checkout::✅ Cashier checkout OK",
+            "id": "1ccff8483de7d1e43a853973697ce7bd",
+            "passes": 4,
+            "fails": 0
+          }
+        ]
       },
       {
         "id": "4fb461786fa880c66d3c1fa3b54bd349",
         "groups": [],
         "checks": [
-            {
-              "name": "✅ Inventory loaded",
-              "path": "::💊 Pharmacist: Browse::✅ Inventory loaded",
-              "id": "94b65c6d79d497cca188172600aa01a3",
-              "passes": 8,
-              "fails": 0
-            }
-          ],
+          {
+            "name": "✅ Inventory loaded",
+            "path": "::💊 Pharmacist: Browse::✅ Inventory loaded",
+            "id": "94b65c6d79d497cca188172600aa01a3",
+            "passes": 8,
+            "fails": 0
+          }
+        ],
         "name": "💊 Pharmacist: Browse",
         "path": "::💊 Pharmacist: Browse"
       },
@@ -354,14 +347,14 @@
         "id": "16422fe96b59f07f05aa6c3933de2fb9",
         "groups": [],
         "checks": [
-            {
-              "name": "✅ Auth login OK",
-              "path": "::🔐 Auth: Login Cycle::✅ Auth login OK",
-              "id": "42e07c677a1b4134b9d9a37cd2be073f",
-              "passes": 1,
-              "fails": 0
-            }
-          ],
+          {
+            "name": "✅ Auth login OK",
+            "path": "::🔐 Auth: Login Cycle::✅ Auth login OK",
+            "id": "42e07c677a1b4134b9d9a37cd2be073f",
+            "passes": 1,
+            "fails": 0
+          }
+        ],
         "name": "🔐 Auth: Login Cycle"
       }
     ],

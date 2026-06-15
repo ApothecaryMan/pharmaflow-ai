@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { supplierService } from './supplierService';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Supplier } from '../../types';
+import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
-import { idGenerator } from '../../utils/idGenerator';
-import { Supplier } from '../../types';
+import { supplierService } from './supplierService';
 
 // Mocks
 vi.mock('../../utils/storage', () => ({
@@ -30,7 +30,7 @@ describe('SupplierService', () => {
 
   beforeEach(() => {
     mockSuppliers = [
-      { id: 'S1', name: 'Pharma Dist', branchId: 'B1', contactPerson: 'John' } as Supplier
+      { id: 'S1', name: 'Pharma Dist', branchId: 'B1', contactPerson: 'John' } as Supplier,
     ];
     vi.clearAllMocks();
     (storage.get as any).mockReturnValue(mockSuppliers);
@@ -41,7 +41,7 @@ describe('SupplierService', () => {
   it('should create supplier', async () => {
     const newSup = { name: 'New Supplier', phone: '123' };
     const result = await supplierService.create(newSup as any);
-    
+
     expect(result.id).toBe('S_NEW');
     expect(storage.set).toHaveBeenCalled();
   });
@@ -57,7 +57,7 @@ describe('SupplierService', () => {
 
   it('should delete supplier', async () => {
     await supplierService.delete('S1');
-    
+
     const setCall = (storage.set as any).mock.calls[0];
     const savedData = setCall[1];
     expect(savedData).toHaveLength(0); // S1 removed

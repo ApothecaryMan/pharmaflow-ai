@@ -127,12 +127,14 @@ export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean 
     // Get the computed background color of the navbar from CSS variables
     // This makes it fully dynamic and responsive to CSS changes
     const computedNavbarColor = getComputedStyle(root).getPropertyValue('--bg-navbar').trim();
-    const titleBarColor = isLoginView ? '#000000' : (computedNavbarColor || (darkMode ? '#1f1f1f' : '#ffffff'));
+    const titleBarColor = isLoginView
+      ? '#000000'
+      : computedNavbarColor || (darkMode ? '#1f1f1f' : '#ffffff');
 
     // Update ALL theme-color meta tags to match the current mode
     const metaTags = document.querySelectorAll('meta[name="theme-color"]');
     if (metaTags.length > 0) {
-      metaTags.forEach(tag => tag.setAttribute('content', titleBarColor));
+      metaTags.forEach((tag) => tag.setAttribute('content', titleBarColor));
     } else {
       const meta = document.createElement('meta');
       meta.name = 'theme-color';

@@ -164,7 +164,6 @@ export const checkExpiryStatus = (
     return 'valid';
   }
 
-
   // Invalid month
   if (isNaN(month) || isNaN(year) || month < 1 || month > 12) return 'invalid';
 
@@ -244,7 +243,10 @@ export const normalizeExpiryToISO = (dateStr: string | null | undefined): string
   }
 
   // 3. Handle MM/YY, MM/YYYY, MM-YY, or MM-YYYY
-  if (trimmed.includes('/') || (trimmed.includes('-') && trimmed.length <= 7 && !trimmed.startsWith('20'))) {
+  if (
+    trimmed.includes('/') ||
+    (trimmed.includes('-') && trimmed.length <= 7 && !trimmed.startsWith('20'))
+  ) {
     const separator = trimmed.includes('/') ? '/' : '-';
     const parts = trimmed.split(separator);
     if (parts.length === 2) {
@@ -268,7 +270,7 @@ export const normalizeExpiryToISO = (dateStr: string | null | undefined): string
  * representing the LAST second of the LAST day of that month.
  * This is used for logical calculations (isExpired, nearExpiry) so that
  * an item labeled 2024-03 expires on 2024-03-31 23:59:59.
- * 
+ *
  * @param dateStr - Expiry date string (YYYY-MM or YYYY-MM-DD)
  * @returns Date object at the end of the month
  */
@@ -284,7 +286,7 @@ export const parseExpiryEndOfMonth = (dateStr: string): Date => {
   // To get end of month M, we go to start of month M+1 (which is index M)
   const date = new Date(year, month, 1);
   date.setMilliseconds(-1);
-  
+
   return date;
 };
 
@@ -317,7 +319,7 @@ export const getExpiryColorClass = (expiryDate: string): string => {
   const date = parseExpiryEndOfMonth(expiryDate);
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  
+
   // Set threshold to 6 months
   const threshold = new Date(today);
   threshold.setMonth(today.getMonth() + 6);
@@ -327,6 +329,6 @@ export const getExpiryColorClass = (expiryDate: string): string => {
   } else if (date <= threshold) {
     return 'text-amber-500 font-bold';
   }
-  
+
   return 'text-gray-700 dark:text-gray-300';
 };

@@ -3,10 +3,10 @@
  * Business logic layer that orchestrates data access via BranchRepository.
  */
 
-import { BaseDomainService } from '../core/baseDomainService';
 import type { Branch } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
+import { BaseDomainService } from '../core/baseDomainService';
 import { employeeService } from '../hr/employeeService';
 import { orgService } from './orgService';
 import { branchRepository } from './repositories/branchRepository';
@@ -42,12 +42,12 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
 
   async getActive(): Promise<Branch | null> {
     const activeId = storage.get(ACTIVE_BRANCH_KEY, '');
-    
+
     if (!activeId) {
       return await this.ensureDefaultBranch();
     }
     const branch = await this.getById(activeId);
-    return branch || await this.ensureDefaultBranch();
+    return branch || (await this.ensureDefaultBranch());
   }
 
   setActive(branchId: string): void {
@@ -70,13 +70,13 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
       }
       return max;
     }, 0);
-    
+
     return `BR-${String(maxSerial + 1).padStart(3, '0')}`;
   }
 
   async create(data: Omit<Branch, 'id' | 'createdAt' | 'updatedAt'>): Promise<Branch> {
-    const code = data.code || await this.generateCode(data.orgId);
-    
+    const code = data.code || (await this.generateCode(data.orgId));
+
     const newBranch: Branch = {
       ...data,
       id: idGenerator.uuid(),
@@ -102,12 +102,12 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
 
   async assignEmployees(branchId: string, employeeIds: string[]): Promise<void> {
     const allEmployees = await employeeService.getAll('ALL');
-    
-    const employeesToUpdate = allEmployees.filter(emp => {
+
+    const employeesToUpdate = allEmployees.filter((emp) => {
       // If it's in the list, set its branchId to target
       if (employeeIds.includes(emp.id)) {
         return emp.branchId !== branchId;
-      } 
+      }
       // If it's not in the list but was in this branch, clear it
       else if (emp.branchId === branchId) {
         return true;
@@ -123,21 +123,21 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
 
   async ensureDefaultBranch(orgId?: string): Promise<Branch | null> {
     const branches = orgId ? await this.getAllByOrg(orgId) : await this.getAll();
-    
+
     if (branches.length === 0) {
       return null;
     }
 
     const activeId = storage.get(ACTIVE_BRANCH_KEY, '');
-    const activeExists = activeId && branches.some(b => b.id === activeId);
-    
+    const activeExists = activeId && branches.some((b) => b.id === activeId);
+
     if (!activeExists) {
       const firstBranch = branches[0];
       this.setActive(firstBranch.id);
       return firstBranch;
     }
 
-    return branches.find(b => b.id === activeId) || null;
+    return branches.find((b) => b.id === activeId) || null;
   }
 
   async updatePrintSettings(branchId: string, printSettings: Record<string, any>): Promise<void> {

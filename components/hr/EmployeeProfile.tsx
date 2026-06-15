@@ -1,25 +1,24 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { permissionsService } from '../../services/auth/permissionsService';
 import { COLOR_HEX_MAP } from '../../config/themeColors';
+import { useData } from '../../context/DataContext';
 import { useShift } from '../../hooks/sales/useShift';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { analyzeEmployeePerformance } from '../../services/geminiService';
 import type { Employee, Sale, Shift, ThemeColor } from '../../types';
-import { useData } from '../../context/DataContext';
 import {
   type DateRangeFilter,
   type EmployeeSalesStats,
+  getDateRange,
   getEmployeeSalesStats,
   getPreviousDateRange,
-  getDateRange,
 } from '../../utils/employeeStats';
 import { ChartWidget } from '../common/ChartWidget';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { Modal } from '../common/Modal';
+import { PageHeader } from '../common/PageHeader';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 import { ExpandedChartModal } from '../experiments/ExpandedChartModal';
-import { PageHeader } from '../common/PageHeader';
-
 
 // Filter Modes for the component
 type FilterMode = 'today' | 'week' | 'month' | 'year' | 'all';
@@ -242,7 +241,9 @@ const AIPerformanceSummary: React.FC<{
                   <h4 className='font-bold text-gray-900 dark:text-white text-lg'>
                     {employee?.name || '...'}
                   </h4>
-                  <p className='text-sm text-gray-500 dark:text-gray-400'>{employee?.role || '...'}</p>
+                  <p className='text-sm text-gray-500 dark:text-gray-400'>
+                    {employee?.role || '...'}
+                  </p>
                 </div>
               </div>
             );
@@ -345,7 +346,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   language,
   currentEmployeeId: initialEmployeeId,
   isLoading = false,
-  onViewChange
+  onViewChange,
 }) => {
   // --- Data Context ---
   const { employees: contextEmployees, sales: contextSales, currentEmployee } = useData();
@@ -866,16 +867,28 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
         centerContent={
           <SegmentedControl
             options={[
-              { value: 'staff-overview', label: language === 'AR' ? 'نظرة عامة' : 'Overview', icon: 'supervisor_account' },
-              { value: 'employee-list', label: language === 'AR' ? 'قائمة الموظفين' : 'Employees', icon: 'badge' },
-              { value: 'employee-profile', label: language === 'AR' ? 'ملف الموظف' : 'Profile', icon: 'person' }
+              {
+                value: 'staff-overview',
+                label: language === 'AR' ? 'نظرة عامة' : 'Overview',
+                icon: 'supervisor_account',
+              },
+              {
+                value: 'employee-list',
+                label: language === 'AR' ? 'قائمة الموظفين' : 'Employees',
+                icon: 'badge',
+              },
+              {
+                value: 'employee-profile',
+                label: language === 'AR' ? 'ملف الموظف' : 'Profile',
+                icon: 'person',
+              },
             ]}
-            value="employee-profile"
+            value='employee-profile'
             onChange={(val) => onViewChange?.(val as any)}
-            size="md"
-            iconSize="--icon-lg"
-            shape="pill"
-            className="w-full sm:w-[480px]"
+            size='md'
+            iconSize='--icon-lg'
+            shape='pill'
+            className='w-full sm:w-[480px]'
             useGraphicFont={true}
           />
         }
@@ -893,32 +906,36 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                     <img
                       src={selectedEmployee.image}
                       alt={selectedEmployee.name}
-                      className="w-10 h-10 rounded-xl object-cover border border-zinc-200 dark:border-zinc-700/80"
+                      className='w-10 h-10 rounded-xl object-cover border border-zinc-200 dark:border-zinc-700/80'
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center text-primary-700 dark:text-primary-300 text-sm font-black uppercase border border-primary-100 dark:border-primary-800/50">
+                    <div className='w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center text-primary-700 dark:text-primary-300 text-sm font-black uppercase border border-primary-100 dark:border-primary-800/50'>
                       {initials}
                     </div>
                   )}
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-zinc-900" />
+                  <div className='absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-zinc-900' />
                 </div>
               );
             })()}
-            <div className="min-w-0">
+            <div className='min-w-0'>
               {isLoading ? (
-                <div className="flex flex-col gap-2 [direction:ltr] items-start">
-                  <div className="h-4 w-32 bg-zinc-400/20 dark:bg-zinc-100/10 rounded-sm animate-pulse" />
-                  <div className="h-3 w-20 bg-zinc-400/10 dark:bg-zinc-100/5 rounded-sm animate-pulse" />
+                <div className='flex flex-col gap-2 [direction:ltr] items-start'>
+                  <div className='h-4 w-32 bg-zinc-400/20 dark:bg-zinc-100/10 rounded-sm animate-pulse' />
+                  <div className='h-3 w-20 bg-zinc-400/10 dark:bg-zinc-100/5 rounded-sm animate-pulse' />
                 </div>
               ) : (
                 <>
-                  <h1 className="text-base font-bold text-zinc-900 dark:text-white tracking-tight leading-none mb-1.5 truncate">
+                  <h1 className='text-base font-bold text-zinc-900 dark:text-white tracking-tight leading-none mb-1.5 truncate'>
                     {selectedEmployee?.name}
                   </h1>
-                  <div className="flex items-center gap-2 leading-none">
-                    <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{selectedEmployee?.role}</span>
-                    <span className="w-0.5 h-0.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-                    <span className="text-[9px] font-mono text-zinc-400 opacity-80">#{selectedEmployee?.employeeCode}</span>
+                  <div className='flex items-center gap-2 leading-none'>
+                    <span className='text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
+                      {selectedEmployee?.role}
+                    </span>
+                    <span className='w-0.5 h-0.5 rounded-full bg-zinc-300 dark:bg-zinc-700' />
+                    <span className='text-[9px] font-mono text-zinc-400 opacity-80'>
+                      #{selectedEmployee?.employeeCode}
+                    </span>
                   </div>
                 </>
               )}

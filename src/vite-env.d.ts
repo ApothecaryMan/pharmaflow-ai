@@ -12,4 +12,3 @@ interface ImportMeta {
 }
 
 type Translations = typeof import('../i18n/translations').translations;
-

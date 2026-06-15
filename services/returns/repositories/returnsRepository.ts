@@ -1,5 +1,5 @@
 import { supabase } from '../../../lib/supabase';
-import type { Return, PurchaseReturn } from '../../../types';
+import type { PurchaseReturn, Return } from '../../../types';
 
 export const returnsRepository = {
   salesTableName: 'returns',
@@ -99,11 +99,12 @@ export const returnsRepository = {
     }
     const { data, error } = await query.order('date', { ascending: false });
     if (error) throw error;
-    return (data || []).map(item => this.mapSalesFromDb(item));
+    return (data || []).map((item) => this.mapSalesFromDb(item));
   },
 
   async getSalesById(id: string): Promise<Return | null> {
-    const { data, error } = await supabase.from(this.salesTableName)
+    const { data, error } = await supabase
+      .from(this.salesTableName)
       .select('*, items:return_items(*)')
       .eq('id', id)
       .maybeSingle();
@@ -141,7 +142,7 @@ export const returnsRepository = {
 
   async upsertSalesReturns(returns: Return[]): Promise<void> {
     if (returns.length === 0) return;
-    const dbReturns = returns.map(r => this.mapSalesToDb(r));
+    const dbReturns = returns.map((r) => this.mapSalesToDb(r));
     const { error } = await supabase.from(this.salesTableName).upsert(dbReturns);
     if (error) throw error;
   },
@@ -154,11 +155,12 @@ export const returnsRepository = {
     }
     const { data, error } = await query.order('date', { ascending: false });
     if (error) throw error;
-    return (data || []).map(item => this.mapPurchaseFromDb(item));
+    return (data || []).map((item) => this.mapPurchaseFromDb(item));
   },
 
   async getPurchaseById(id: string): Promise<PurchaseReturn | null> {
-    const { data, error } = await supabase.from(this.purchaseTableName)
+    const { data, error } = await supabase
+      .from(this.purchaseTableName)
       .select('*, items:purchase_return_items(*)')
       .eq('id', id)
       .maybeSingle();
@@ -173,8 +175,8 @@ export const returnsRepository = {
 
   async upsertPurchaseReturns(returns: PurchaseReturn[]): Promise<void> {
     if (returns.length === 0) return;
-    const dbReturns = returns.map(r => this.mapPurchaseToDb(r));
+    const dbReturns = returns.map((r) => this.mapPurchaseToDb(r));
     const { error } = await supabase.from(this.purchaseTableName).upsert(dbReturns);
     if (error) throw error;
-  }
+  },
 };

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import { PageHeader } from '../common/PageHeader';
 
 interface ScrollbarDesign {
@@ -27,8 +28,10 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
       id: 'phantom-ghost',
       nameEn: 'Phantom Blade (Ghost Stripe)',
       nameAr: 'الشريط الخفي (المسطح النحيف)',
-      descriptionEn: '100% invisible by default. Fades in as an ultra-thin, flat 3px sharp line of faded gray when mouse enters.',
-      descriptionAr: 'مخفي تماماً بنسبة 100%. يظهر كشريط مسطح رمادي باهت فائق النحافة (3 بكسل) وبحواف حادة عند دخول الفأرة.',
+      descriptionEn:
+        '100% invisible by default. Fades in as an ultra-thin, flat 3px sharp line of faded gray when mouse enters.',
+      descriptionAr:
+        'مخفي تماماً بنسبة 100%. يظهر كشريط مسطح رمادي باهت فائق النحافة (3 بكسل) وبحواف حادة عند دخول الفأرة.',
       icon: 'linear_scale',
       className: 'scrollbar-ghost',
       colorClass: 'from-zinc-400 to-zinc-650',
@@ -61,7 +64,8 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
       id: 'neon-glow',
       nameEn: 'Neon Breeze (Glassmorphic)',
       nameAr: 'نسيم النيون (الزجاجي المضيء)',
-      descriptionEn: 'Vibrant neon gradient glow with glassmorphic track, perfect for modern dark mode interfaces.',
+      descriptionEn:
+        'Vibrant neon gradient glow with glassmorphic track, perfect for modern dark mode interfaces.',
       descriptionAr: 'وهج نيون متدرج وحيوي مع مسار زجاجي، مثالي لواجهات الوضع الداكن الحديثة.',
       icon: 'electric_bolt',
       className: 'scrollbar-neon',
@@ -92,8 +96,10 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
       id: 'stealth-blade',
       nameEn: 'Stealth Blade (Minimalist)',
       nameAr: 'الشفرة الخفية (البسيط التفاعلي)',
-      descriptionEn: 'Ultra-thin, zero-intrusive indicator that elegantly expands its width on container hover.',
-      descriptionAr: 'مؤشر فائق النحافة وغير مزعج على الإطلاق، يتسع عرضه بأناقة عند حوم الفأرة فوق الحاوية.',
+      descriptionEn:
+        'Ultra-thin, zero-intrusive indicator that elegantly expands its width on container hover.',
+      descriptionAr:
+        'مؤشر فائق النحافة وغير مزعج على الإطلاق، يتسع عرضه بأناقة عند حوم الفأرة فوق الحاوية.',
       icon: 'visibility_off',
       className: 'scrollbar-stealth',
       colorClass: 'from-zinc-700 to-zinc-900',
@@ -124,8 +130,10 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
       id: 'aurora-wave',
       nameEn: 'Liquid Aurora (Gradient Wave)',
       nameAr: 'الشفق السائل (موجة التدرج)',
-      descriptionEn: 'Bold liquid sunset gradient that adds high energy and beautiful character to card containers.',
-      descriptionAr: 'تدرج غروب الشمس السائل والجريء الذي يضيف طاقة وحيوية رائعة إلى حاويات البطاقات.',
+      descriptionEn:
+        'Bold liquid sunset gradient that adds high energy and beautiful character to card containers.',
+      descriptionAr:
+        'تدرج غروب الشمس السائل والجريء الذي يضيف طاقة وحيوية رائعة إلى حاويات البطاقات.',
       icon: 'waves',
       className: 'scrollbar-aurora',
       colorClass: 'from-pink-500 to-rose-600',
@@ -157,8 +165,10 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
       id: 'cyberpunk-terminal',
       nameEn: 'Retro Terminal (Cyberpunk)',
       nameAr: 'المنفذ القديم (سايبربانك)',
-      descriptionEn: 'Nostalgic solid terminal style with neon amber, pixel borders, and grid-aligned dashed track.',
-      descriptionAr: 'نمط منفذ الأوامر الكلاسيكي مع لون الكهرمان النيون، حدود بكسلية، ومسار متقطع متناسق.',
+      descriptionEn:
+        'Nostalgic solid terminal style with neon amber, pixel borders, and grid-aligned dashed track.',
+      descriptionAr:
+        'نمط منفذ الأوامر الكلاسيكي مع لون الكهرمان النيون، حدود بكسلية، ومسار متقطع متناسق.',
       icon: 'terminal',
       className: 'scrollbar-cyber',
       colorClass: 'from-amber-500 to-yellow-655',
@@ -187,8 +197,10 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
       id: 'velvet-organic',
       nameEn: 'Soft Velvet (Organic Fluid)',
       nameAr: 'المخمل الناعم (الانسيابي العضوي)',
-      descriptionEn: 'Extremely gentle, comfortable pastel design that seamlessly blends into premium corporate themes.',
-      descriptionAr: 'تصميم لطيف ومريح للغاية بألوان هادئة، يندمج بسلاسة فائقة مع سمات الشركات الراقية.',
+      descriptionEn:
+        'Extremely gentle, comfortable pastel design that seamlessly blends into premium corporate themes.',
+      descriptionAr:
+        'تصميم لطيف ومريح للغاية بألوان هادئة، يندمج بسلاسة فائقة مع سمات الشركات الراقية.',
       icon: 'bubble_chart',
       className: 'scrollbar-velvet',
       colorClass: 'from-emerald-500 to-teal-650',
@@ -223,24 +235,30 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const dummyParagraphs = language === 'AR' 
-    ? [
-        "هذا النص مخصص لمعاينة التمرير. يتيح لك تصميم سكرول بار مخصص تحسين واجهة المستخدم بشكل كبير وجعلها تبدو أكثر تميزاً واحترافية.",
-        "نحن نؤمن بأن التفاصيل الصغيرة هي التي تصنع الفارق الحقيقي بين التطبيقات العادية والتطبيقات الاستثنائية فائقة الجودة.",
-        "يمكنك تجربة تمرير الصفحة للأعلى وللأسفل لملاحظة سلاسة حركة المؤشر وتفاعله مع حركات الفأرة المختلفة.",
-        "انسخ كود CSS المخصص المرفق بكل تصميم واستخدمه مباشرة في مشاريعك للحصول على مظهر فني فوري ومبهر!"
-      ]
-    : [
-        "This content is generated to demonstrate the custom scrollbar in action. Tailoring your scrollbars drastically enhances the look and feel of data containers.",
-        "We believe that micro-details are what set apart a generic application from a truly world-class, premium digital experience.",
-        "Try scrolling up and down inside this card component to observe the visual feedback, hover transitions, and fluid movement.",
-        "Simply copy the clean, self-contained CSS snippet for any style and drop it directly into your own design system!"
-      ];
+  const dummyParagraphs =
+    language === 'AR'
+      ? [
+          'هذا النص مخصص لمعاينة التمرير. يتيح لك تصميم سكرول بار مخصص تحسين واجهة المستخدم بشكل كبير وجعلها تبدو أكثر تميزاً واحترافية.',
+          'نحن نؤمن بأن التفاصيل الصغيرة هي التي تصنع الفارق الحقيقي بين التطبيقات العادية والتطبيقات الاستثنائية فائقة الجودة.',
+          'يمكنك تجربة تمرير الصفحة للأعلى وللأسفل لملاحظة سلاسة حركة المؤشر وتفاعله مع حركات الفأرة المختلفة.',
+          'انسخ كود CSS المخصص المرفق بكل تصميم واستخدمه مباشرة في مشاريعك للحصول على مظهر فني فوري ومبهر!',
+        ]
+      : [
+          'This content is generated to demonstrate the custom scrollbar in action. Tailoring your scrollbars drastically enhances the look and feel of data containers.',
+          'We believe that micro-details are what set apart a generic application from a truly world-class, premium digital experience.',
+          'Try scrolling up and down inside this card component to observe the visual feedback, hover transitions, and fluid movement.',
+          'Simply copy the clean, self-contained CSS snippet for any style and drop it directly into your own design system!',
+        ];
 
   return (
-    <div className="h-full space-y-6 animate-fade-in overflow-y-auto p-6 scrollbar-sandbox" dir={language === 'AR' ? 'rtl' : 'ltr'}>
+    <div
+      className='h-full space-y-6 animate-fade-in overflow-y-auto p-6 scrollbar-sandbox'
+      dir={language === 'AR' ? 'rtl' : 'ltr'}
+    >
       {/* Scope CSS Styles Injection */}
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         /* Overriding Webkit disabling standard property */
         .scrollbar-sandbox .scrollbar-ghost, 
         .scrollbar-sandbox .scrollbar-neon, 
@@ -389,51 +407,64 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
         .scrollbar-sandbox .scrollbar-velvet::-webkit-scrollbar-thumb:hover {
           background: rgba(16, 185, 129, 0.7) !important;
         }
-      ` }} />
+      `,
+        }}
+      />
 
       {/* Dynamic Unified PageHeader */}
       <PageHeader
-        title={language === 'AR' ? 'معرض مصمم السكرول بار المخصص' : 'Custom Scrollbar Design Studio'}
-        subtitle={language === 'AR' ? 'استكشف وانسخ 6 تصميمات سكرول بار مذهلة وفائقة الجودة لواجهاتك الفاخرة' : 'Explore and copy 6 high-aesthetic, production-grade custom scrollbar styles'}
+        title={
+          language === 'AR' ? 'معرض مصمم السكرول بار المخصص' : 'Custom Scrollbar Design Studio'
+        }
+        subtitle={
+          language === 'AR'
+            ? 'استكشف وانسخ 6 تصميمات سكرول بار مذهلة وفائقة الجودة لواجهاتك الفاخرة'
+            : 'Explore and copy 6 high-aesthetic, production-grade custom scrollbar styles'
+        }
         sticky={false}
-        mb="mb-6"
+        mb='mb-6'
       />
 
       {/* Showcase Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
         {scrollbarDesigns.map((design) => (
-          <div 
+          <div
             key={design.id}
-            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
+            className='bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between'
           >
             <div>
               {/* Header Icon & Title */}
-              <div className="flex items-center gap-3.5 mb-4">
-                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${design.colorClass} flex items-center justify-center text-white shadow-xs`}>
-                  <span className="material-symbols-rounded text-[22px]">{design.icon}</span>
+              <div className='flex items-center gap-3.5 mb-4'>
+                <div
+                  className={`w-10 h-10 rounded-xl bg-gradient-to-br ${design.colorClass} flex items-center justify-center text-white shadow-xs`}
+                >
+                  <span className='material-symbols-rounded text-[22px]'>{design.icon}</span>
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-zinc-900 dark:text-white">
+                  <h3 className='text-sm font-black text-zinc-900 dark:text-white'>
                     {language === 'AR' ? design.nameAr : design.nameEn}
                   </h3>
-                  <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-550 uppercase tracking-widest">
+                  <span className='text-[9px] font-bold text-zinc-400 dark:text-zinc-550 uppercase tracking-widest'>
                     ID: {design.id}
                   </span>
                 </div>
               </div>
 
               {/* Description */}
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mb-5 h-8 overflow-hidden text-ellipsis">
+              <p className='text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mb-5 h-8 overflow-hidden text-ellipsis'>
                 {language === 'AR' ? design.descriptionAr : design.descriptionEn}
               </p>
 
               {/* Scrollable Container Showcase */}
-              <div 
+              <div
                 className={`h-40 overflow-y-auto p-4 bg-zinc-50 dark:bg-zinc-950/40 rounded-2xl border border-zinc-150 dark:border-zinc-800/80 mb-5 select-none transition-all duration-300 ${design.className}`}
               >
-                <div className="space-y-3.5">
+                <div className='space-y-3.5'>
                   {dummyParagraphs.map((para, idx) => (
-                    <p key={idx} className="text-[11px] leading-relaxed text-zinc-650 dark:text-zinc-400 font-medium">
+                    <p
+                      key={idx}
+                      className='text-[11px] leading-relaxed text-zinc-650 dark:text-zinc-400 font-medium'
+                    >
                       {para}
                     </p>
                   ))}
@@ -442,8 +473,8 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
             </div>
 
             {/* Bottom Actions */}
-            <div className="pt-4 border-t border-zinc-100 dark:border-zinc-850 flex items-center justify-between">
-              <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-550 uppercase tracking-wider">
+            <div className='pt-4 border-t border-zinc-100 dark:border-zinc-850 flex items-center justify-between'>
+              <span className='text-[9px] font-bold text-zinc-400 dark:text-zinc-550 uppercase tracking-wider'>
                 CSS self-contained
               </span>
               <button
@@ -454,12 +485,16 @@ export const ScrollbarLab: React.FC<ScrollbarLabProps> = ({ language }) => {
                     : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
                 }`}
               >
-                <span className="material-symbols-rounded text-[18px]">
+                <span className='material-symbols-rounded text-[18px]'>
                   {copiedId === design.id ? 'check' : 'content_copy'}
                 </span>
                 {copiedId === design.id
-                  ? (language === 'AR' ? 'تم النسخ!' : 'Copied!')
-                  : (language === 'AR' ? 'نسخ كود CSS' : 'Copy CSS')}
+                  ? language === 'AR'
+                    ? 'تم النسخ!'
+                    : 'Copied!'
+                  : language === 'AR'
+                    ? 'نسخ كود CSS'
+                    : 'Copy CSS'}
               </button>
             </div>
           </div>

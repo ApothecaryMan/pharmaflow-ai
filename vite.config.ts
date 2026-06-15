@@ -13,14 +13,14 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
     },
     plugins: [
-      tailwindcss(), 
+      tailwindcss(),
       react(),
       {
         name: 'html-version-transform',
         transformIndexHtml(html) {
           return html.replace(/__APP_VERSION__/g, pkg.version);
-        }
-      }
+        },
+      },
     ],
 
     define: {

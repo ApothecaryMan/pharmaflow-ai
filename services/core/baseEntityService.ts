@@ -4,12 +4,14 @@ import { BaseDomainService } from './baseDomainService';
 
 /**
  * BaseEntityService
- * 
+ *
  * Extends BaseDomainService to provide standardized search and status-based filtering.
- * Ideal for business entities like Customers, Suppliers, or Employees that need 
+ * Ideal for business entities like Customers, Suppliers, or Employees that need
  * text-search capabilities and status management (active/inactive).
  */
-export abstract class BaseEntityService<T extends { id: string; branchId?: string; orgId?: string; status?: string }> extends BaseDomainService<T> {
+export abstract class BaseEntityService<
+  T extends { id: string; branchId?: string; orgId?: string; status?: string },
+> extends BaseDomainService<T> {
   /**
    * Column(s) used for text search. Defaults to 'name'.
    */
@@ -26,11 +28,12 @@ export abstract class BaseEntityService<T extends { id: string; branchId?: strin
 
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    const isAllBranch = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+    const isAllBranch =
+      typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
 
     try {
       let supabaseQuery = (supabase as any).from(this.tableName).select('*');
-      
+
       if (effectiveBranchId && !isAllBranch) {
         supabaseQuery = supabaseQuery.eq('branch_id', effectiveBranchId);
       } else if (isAllBranch && settings.orgId) {
@@ -38,16 +41,14 @@ export abstract class BaseEntityService<T extends { id: string; branchId?: strin
       }
 
       // Build OR filter for search columns
-      const orFilter = this.searchColumns
-        .map(col => `${col}.ilike.%${query}%`)
-        .join(',');
-      
+      const orFilter = this.searchColumns.map((col) => `${col}.ilike.%${query}%`).join(',');
+
       supabaseQuery = supabaseQuery.or(orFilter);
 
       const { data, error } = await supabaseQuery;
       if (error) throw error;
 
-      return (data || []).map(item => this.mapFromDb(item));
+      return (data || []).map((item) => this.mapFromDb(item));
     } catch (err) {
       console.error(`[BaseEntityService] search failed for ${this.tableName}:`, err);
       return [];
@@ -60,11 +61,12 @@ export abstract class BaseEntityService<T extends { id: string; branchId?: strin
   async filterByStatus(status: string, branchId?: string): Promise<T[]> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    const isAllBranch = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+    const isAllBranch =
+      typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
 
     try {
       let query = (supabase as any).from(this.tableName).select('*').eq('status', status);
-      
+
       if (effectiveBranchId && !isAllBranch) {
         query = query.eq('branch_id', effectiveBranchId);
       } else if (isAllBranch && settings.orgId) {
@@ -74,7 +76,7 @@ export abstract class BaseEntityService<T extends { id: string; branchId?: strin
       const { data, error } = await query;
       if (error) throw error;
 
-      return (data || []).map(item => this.mapFromDb(item));
+      return (data || []).map((item) => this.mapFromDb(item));
     } catch (err) {
       console.error(`[BaseEntityService] filterByStatus failed for ${this.tableName}:`, err);
       return [];

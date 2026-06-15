@@ -1,6 +1,6 @@
-import type React from 'react';
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import { Modal } from '../common/Modal';
 import { ProfileCardModal } from './ProfileCardModal';
 import { ProfileEditModal } from './ProfileEditModal';
@@ -211,7 +211,8 @@ export const LOCAL_TRANSLATIONS = {
     incorrectPassword: 'Incorrect password',
     deleteCurrentPasskey: 'Delete current passkey for this employee?',
     passkeyRegistrationFailed: 'Passkey registration failed',
-    browserNotSupportPasskeys: 'Browser does not support Passkeys. Ensure you are on HTTPS or Localhost.',
+    browserNotSupportPasskeys:
+      'Browser does not support Passkeys. Ensure you are on HTTPS or Localhost.',
     officialDocuments: 'Official Documents',
     nationalIdCard: 'National ID Card',
     uploadFront: 'Upload Front',
@@ -345,7 +346,8 @@ export const LOCAL_TRANSLATIONS = {
     incorrectPassword: 'كلمة المرور غير صحيحة',
     deleteCurrentPasskey: 'هل تريد حذف مفتاح المرور الحالي لهذا الموظف؟',
     passkeyRegistrationFailed: 'فشل تسجيل مفتاح المرور',
-    browserNotSupportPasskeys: 'المتصفح لا يدعم مفاتيح المرور. تأكد من استخدام بروتوكول آمن HTTPS أو Localhost.',
+    browserNotSupportPasskeys:
+      'المتصفح لا يدعم مفاتيح المرور. تأكد من استخدام بروتوكول آمن HTTPS أو Localhost.',
     officialDocuments: 'الوثائق الرسمية',
     nationalIdCard: 'بطاقة الرقم القومي',
     uploadFront: 'رفع الوجه الأمامي',
@@ -403,15 +405,21 @@ interface ModalConfig {
   testType?: 'standard' | 'multipage' | 'profile-card' | 'edit-profile';
 }
 
-const LogoAsterisk = ({ color = 'currentColor', scale = 1.4 }: { color?: string, scale?: number }) => (
+const LogoAsterisk = ({
+  color = 'currentColor',
+  scale = 1.4,
+}: {
+  color?: string;
+  scale?: number;
+}) => (
   <g transform={`translate(70 70) scale(${scale})`} fill={color}>
-    <rect x="-4" y="-35" width="8" height="70" rx=".5" transform="rotate(45)"/>
-    <rect x="-4" y="-35" width="8" height="20" rx=".5"/>
-    <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(-45)"/>
-    <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(90)"/>
-    <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(135)"/>
-    <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(180)"/>
-    <rect x="-4" y="-35" width="8" height="20" rx=".5" transform="rotate(270)"/>
+    <rect x='-4' y='-35' width='8' height='70' rx='.5' transform='rotate(45)' />
+    <rect x='-4' y='-35' width='8' height='20' rx='.5' />
+    <rect x='-4' y='-35' width='8' height='20' rx='.5' transform='rotate(-45)' />
+    <rect x='-4' y='-35' width='8' height='20' rx='.5' transform='rotate(90)' />
+    <rect x='-4' y='-35' width='8' height='20' rx='.5' transform='rotate(135)' />
+    <rect x='-4' y='-35' width='8' height='20' rx='.5' transform='rotate(180)' />
+    <rect x='-4' y='-35' width='8' height='20' rx='.5' transform='rotate(270)' />
   </g>
 );
 
@@ -419,166 +427,266 @@ const LogoSpinnersPlayground = ({ language }: { language: 'EN' | 'AR' }) => {
   return (
     <div className='bg-(--bg-card) rounded-2xl p-6 shadow-xs border border-(--border-divider)'>
       <h3 className='text-lg font-semibold text-(--text-primary) flex items-center gap-2 mb-4'>
-        <span className='material-symbols-rounded text-[24px]' style={{ color: 'var(--color-primary-500, #3b82f6)' }}>
+        <span
+          className='material-symbols-rounded text-[24px]'
+          style={{ color: 'var(--color-primary-500, #3b82f6)' }}
+        >
           progress_activity
         </span>
         {language === 'AR' ? 'مختبر سبينر التحميل' : 'Logo Loading Spinners Lab'}
       </h3>
       <div className='grid grid-cols-2 md:grid-cols-4 gap-6'>
-        
         {/* V1: Smooth Spin (No Box) */}
-        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
-          <svg viewBox="0 0 140 140" className="w-16 h-16 text-primary-500 animate-spin" style={{ animationDuration: '2s' }}>
+        <div className='flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50'>
+          <svg
+            viewBox='0 0 140 140'
+            className='w-16 h-16 text-primary-500 animate-spin'
+            style={{ animationDuration: '2s' }}
+          >
             <LogoAsterisk />
           </svg>
-          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Smooth Asterisk</span>
+          <span className='mt-4 text-sm font-medium text-gray-600 dark:text-gray-400'>
+            Smooth Asterisk
+          </span>
         </div>
 
         {/* V2: Stepped Spin (Clockwise Ticks) */}
-        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
-          <svg viewBox="0 0 140 140" className="w-16 h-16 text-primary-500 animate-spin" style={{ animationDuration: '1.5s', animationTimingFunction: 'steps(8)' }}>
+        <div className='flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50'>
+          <svg
+            viewBox='0 0 140 140'
+            className='w-16 h-16 text-primary-500 animate-spin'
+            style={{ animationDuration: '1.5s', animationTimingFunction: 'steps(8)' }}
+          >
             <LogoAsterisk />
           </svg>
-          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Stepped Asterisk</span>
+          <span className='mt-4 text-sm font-medium text-gray-600 dark:text-gray-400'>
+            Stepped Asterisk
+          </span>
         </div>
 
         {/* V3a: Orbiting Dots */}
-        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
-          <svg viewBox="0 0 140 140" className="w-16 h-16">
-            <g className="animate-spin" style={{ transformOrigin: '70px 70px', animationDuration: '3s' }}>
-              <circle cx="70" cy="16" r="5" fill="var(--color-primary-500, #3b82f6)" />
-              <circle cx="124" cy="70" r="5" fill="var(--color-primary-500, #3b82f6)" />
-              <circle cx="70" cy="124" r="5" fill="var(--color-primary-500, #3b82f6)" />
-              <circle cx="16" cy="70" r="5" fill="var(--color-primary-500, #3b82f6)" />
+        <div className='flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50'>
+          <svg viewBox='0 0 140 140' className='w-16 h-16'>
+            <g
+              className='animate-spin'
+              style={{ transformOrigin: '70px 70px', animationDuration: '3s' }}
+            >
+              <circle cx='70' cy='16' r='5' fill='var(--color-primary-500, #3b82f6)' />
+              <circle cx='124' cy='70' r='5' fill='var(--color-primary-500, #3b82f6)' />
+              <circle cx='70' cy='124' r='5' fill='var(--color-primary-500, #3b82f6)' />
+              <circle cx='16' cy='70' r='5' fill='var(--color-primary-500, #3b82f6)' />
             </g>
             <LogoAsterisk scale={0.7} />
           </svg>
-          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Orbiting Dots</span>
+          <span className='mt-4 text-sm font-medium text-gray-600 dark:text-gray-400'>
+            Orbiting Dots
+          </span>
         </div>
 
         {/* V3b: Pulse Ring */}
-        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
-          <svg viewBox="0 0 140 140" className="w-16 h-16">
+        <div className='flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50'>
+          <svg viewBox='0 0 140 140' className='w-16 h-16'>
             <motion.circle
-              cx="70" cy="70" r="30"
-              fill="none" stroke="var(--color-primary-500, #3b82f6)" strokeWidth="2"
+              cx='70'
+              cy='70'
+              r='30'
+              fill='none'
+              stroke='var(--color-primary-500, #3b82f6)'
+              strokeWidth='2'
               animate={{ r: [28, 56, 28], opacity: [0.7, 0, 0.7] }}
               transition={{ repeat: Infinity, duration: 2, ease: 'easeOut' }}
             />
             <motion.circle
-              cx="70" cy="70" r="30"
-              fill="none" stroke="var(--color-primary-500, #3b82f6)" strokeWidth="2"
+              cx='70'
+              cy='70'
+              r='30'
+              fill='none'
+              stroke='var(--color-primary-500, #3b82f6)'
+              strokeWidth='2'
               animate={{ r: [28, 56, 28], opacity: [0.7, 0, 0.7] }}
               transition={{ repeat: Infinity, duration: 2, ease: 'easeOut', delay: 0.6 }}
             />
             <motion.circle
-              cx="70" cy="70" r="30"
-              fill="none" stroke="var(--color-primary-500, #3b82f6)" strokeWidth="2"
+              cx='70'
+              cy='70'
+              r='30'
+              fill='none'
+              stroke='var(--color-primary-500, #3b82f6)'
+              strokeWidth='2'
               animate={{ r: [28, 56, 28], opacity: [0.7, 0, 0.7] }}
               transition={{ repeat: Infinity, duration: 2, ease: 'easeOut', delay: 1.2 }}
             />
             <LogoAsterisk scale={0.7} />
           </svg>
-          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Pulse Ring</span>
+          <span className='mt-4 text-sm font-medium text-gray-600 dark:text-gray-400'>
+            Pulse Ring
+          </span>
         </div>
 
         {/* V3c: Radar Sweep */}
-        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
-          <svg viewBox="0 0 140 140" className="w-16 h-16">
-            <circle cx="70" cy="70" r="56" fill="none" stroke="var(--color-primary-500, #3b82f6)" strokeWidth="1" opacity="0.25" />
-            <g className="animate-spin" style={{ transformOrigin: '70px 70px', animationDuration: '2s' }}>
-              <path d="M70 70 L70 14 A56 56 0 0 1 126 70 Z" fill="var(--color-primary-500, #3b82f6)" opacity="0.15" />
+        <div className='flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50'>
+          <svg viewBox='0 0 140 140' className='w-16 h-16'>
+            <circle
+              cx='70'
+              cy='70'
+              r='56'
+              fill='none'
+              stroke='var(--color-primary-500, #3b82f6)'
+              strokeWidth='1'
+              opacity='0.25'
+            />
+            <g
+              className='animate-spin'
+              style={{ transformOrigin: '70px 70px', animationDuration: '2s' }}
+            >
+              <path
+                d='M70 70 L70 14 A56 56 0 0 1 126 70 Z'
+                fill='var(--color-primary-500, #3b82f6)'
+                opacity='0.15'
+              />
             </g>
             <LogoAsterisk scale={0.7} />
           </svg>
-          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Radar Sweep</span>
+          <span className='mt-4 text-sm font-medium text-gray-600 dark:text-gray-400'>
+            Radar Sweep
+          </span>
         </div>
 
         {/* V3d: Morph Scale */}
-        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
+        <div className='flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50'>
           <motion.svg
-            viewBox="0 0 140 140"
-            className="w-16 h-16 text-primary-500"
+            viewBox='0 0 140 140'
+            className='w-16 h-16 text-primary-500'
             animate={{ scale: [0.5, 1.25, 0.5] }}
             transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
             style={{ transformOrigin: 'center' }}
           >
             <LogoAsterisk />
           </motion.svg>
-          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Morph Scale</span>
+          <span className='mt-4 text-sm font-medium text-gray-600 dark:text-gray-400'>
+            Morph Scale
+          </span>
         </div>
 
         {/* V3e: Bounce */}
-        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
+        <div className='flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50'>
           <motion.svg
-            viewBox="0 0 140 140"
-            className="w-16 h-16 text-primary-500"
+            viewBox='0 0 140 140'
+            className='w-16 h-16 text-primary-500'
             animate={{ y: [0, -12, 0] }}
             transition={{ repeat: Infinity, duration: 0.7, ease: 'easeInOut' }}
           >
             <LogoAsterisk />
           </motion.svg>
-          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Bounce</span>
+          <span className='mt-4 text-sm font-medium text-gray-600 dark:text-gray-400'>Bounce</span>
         </div>
 
         {/* V3f: Spinning Ring */}
-        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
-          <svg viewBox="0 0 140 140" className="w-16 h-16">
-            <circle cx="70" cy="70" r="50" fill="none" stroke="var(--color-primary-500, #3b82f6)"
-              strokeWidth="3" strokeLinecap="round" strokeDasharray="70 240"
-              className="animate-spin" style={{ transformOrigin: '70px 70px', animationDuration: '1.5s' }}
+        <div className='flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50'>
+          <svg viewBox='0 0 140 140' className='w-16 h-16'>
+            <circle
+              cx='70'
+              cy='70'
+              r='50'
+              fill='none'
+              stroke='var(--color-primary-500, #3b82f6)'
+              strokeWidth='3'
+              strokeLinecap='round'
+              strokeDasharray='70 240'
+              className='animate-spin'
+              style={{ transformOrigin: '70px 70px', animationDuration: '1.5s' }}
             />
             <LogoAsterisk scale={0.7} />
           </svg>
-          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Spinning Ring</span>
+          <span className='mt-4 text-sm font-medium text-gray-600 dark:text-gray-400'>
+            Spinning Ring
+          </span>
         </div>
 
         {/* V3g: Advanced Multi-Ring Pro */}
-        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
-          <svg viewBox="0 0 140 140" className="w-16 h-16">
+        <div className='flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50'>
+          <svg viewBox='0 0 140 140' className='w-16 h-16'>
             <defs>
-              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="var(--color-primary-400, #60a5fa)" />
-                <stop offset="100%" stopColor="var(--color-primary-700, #1d4ed8)" />
+              <linearGradient id='ringGrad' x1='0%' y1='0%' x2='100%' y2='100%'>
+                <stop offset='0%' stopColor='var(--color-primary-400, #60a5fa)' />
+                <stop offset='100%' stopColor='var(--color-primary-700, #1d4ed8)' />
               </linearGradient>
             </defs>
             {/* Outer ring - slow reverse */}
-            <circle cx="70" cy="70" r="50" fill="none" stroke="url(#ringGrad)"
-              strokeWidth="2.5" strokeLinecap="round" strokeDasharray="40 275"
-              className="animate-spin" style={{ transformOrigin: '70px 70px', animationDuration: '4s', animationDirection: 'reverse' }}
-              opacity="0.7"
+            <circle
+              cx='70'
+              cy='70'
+              r='50'
+              fill='none'
+              stroke='url(#ringGrad)'
+              strokeWidth='2.5'
+              strokeLinecap='round'
+              strokeDasharray='40 275'
+              className='animate-spin'
+              style={{
+                transformOrigin: '70px 70px',
+                animationDuration: '4s',
+                animationDirection: 'reverse',
+              }}
+              opacity='0.7'
             />
             {/* Middle ring - medium */}
-            <circle cx="70" cy="70" r="40" fill="none" stroke="var(--color-primary-400, #60a5fa)"
-              strokeWidth="2" strokeLinecap="round" strokeDasharray="55 195"
-              className="animate-spin" style={{ transformOrigin: '70px 70px', animationDuration: '2.5s' }}
+            <circle
+              cx='70'
+              cy='70'
+              r='40'
+              fill='none'
+              stroke='var(--color-primary-400, #60a5fa)'
+              strokeWidth='2'
+              strokeLinecap='round'
+              strokeDasharray='55 195'
+              className='animate-spin'
+              style={{ transformOrigin: '70px 70px', animationDuration: '2.5s' }}
             />
             {/* Inner ring - fast reverse */}
-            <circle cx="70" cy="70" r="30" fill="none" stroke="var(--color-primary-300, #93c5fd)"
-              strokeWidth="1.5" strokeLinecap="round" strokeDasharray="25 160"
-              className="animate-spin" style={{ transformOrigin: '70px 70px', animationDuration: '1.2s', animationDirection: 'reverse' }}
+            <circle
+              cx='70'
+              cy='70'
+              r='30'
+              fill='none'
+              stroke='var(--color-primary-300, #93c5fd)'
+              strokeWidth='1.5'
+              strokeLinecap='round'
+              strokeDasharray='25 160'
+              className='animate-spin'
+              style={{
+                transformOrigin: '70px 70px',
+                animationDuration: '1.2s',
+                animationDirection: 'reverse',
+              }}
             />
             {/* Slow-spinning asterisk */}
-            <g className="animate-spin" style={{ transformOrigin: '70px 70px', animationDuration: '8s' }}>
-              <LogoAsterisk scale={0.5} color="var(--color-primary-500, #3b82f6)" />
+            <g
+              className='animate-spin'
+              style={{ transformOrigin: '70px 70px', animationDuration: '8s' }}
+            >
+              <LogoAsterisk scale={0.5} color='var(--color-primary-500, #3b82f6)' />
             </g>
           </svg>
-          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Multi-Ring Pro</span>
+          <span className='mt-4 text-sm font-medium text-gray-600 dark:text-gray-400'>
+            Multi-Ring Pro
+          </span>
         </div>
 
         {/* V4: Elastic Spin */}
-        <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
-          <motion.svg 
-            viewBox="0 0 140 140" 
-            className="w-16 h-16 text-primary-500"
+        <div className='flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50'>
+          <motion.svg
+            viewBox='0 0 140 140'
+            className='w-16 h-16 text-primary-500'
             animate={{ rotate: [0, 180, 360] }}
-            transition={{ repeat: Infinity, ease: "easeInOut", duration: 1.5 }}
+            transition={{ repeat: Infinity, ease: 'easeInOut', duration: 1.5 }}
           >
             <LogoAsterisk />
           </motion.svg>
-          <span className="mt-4 text-sm font-medium text-gray-600 dark:text-gray-400">Elastic Asterisk</span>
+          <span className='mt-4 text-sm font-medium text-gray-600 dark:text-gray-400'>
+            Elastic Asterisk
+          </span>
         </div>
-        
       </div>
     </div>
   );
@@ -613,7 +721,7 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
     nationalIdCard: MOCK_ID_FRONT,
     nationalIdCardBack: MOCK_ID_BACK,
     mainSyndicateCard: MOCK_SYNDICATE_MAIN,
-    subSyndicateCard: MOCK_SYNDICATE_SUB
+    subSyndicateCard: MOCK_SYNDICATE_SUB,
   });
 
   // Sync default bio when language changes
@@ -644,9 +752,10 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
       onClick={() => openModal(config)}
       className={`
         flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all
-        ${variant === 'primary'
-          ? `bg-primary-500 text-white hover:bg-primary-600 shadow-lg hover:shadow-xl`
-          : 'bg-(--bg-secondary) hover:bg-(--bg-hover) text-(--text-primary) border border-(--border-divider)'
+        ${
+          variant === 'primary'
+            ? `bg-primary-500 text-white hover:bg-primary-600 shadow-lg hover:shadow-xl`
+            : 'bg-(--bg-secondary) hover:bg-(--bg-hover) text-(--text-primary) border border-(--border-divider)'
         }
       `}
       style={variant === 'primary' ? { backgroundColor: 'var(--color-primary-500, #3b82f6)' } : {}}
@@ -847,7 +956,11 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
 
       {/* The Modal */}
       <Modal
-        isOpen={isOpen && modalConfig.testType !== 'profile-card' && modalConfig.testType !== 'edit-profile'}
+        isOpen={
+          isOpen &&
+          modalConfig.testType !== 'profile-card' &&
+          modalConfig.testType !== 'edit-profile'
+        }
         onClose={() => setIsOpen(false)}
         size={modalConfig.size}
         title={modalConfig.title}
@@ -875,35 +988,35 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
         }
         headerActions={modalConfig.headerActions}
         closeOnBackdropClick={modalConfig.closeOnBackdropClick ?? true}
-        bodyClassName="p-5"
+        bodyClassName='p-5'
       >
         {/* Modal Content */}
         {modalConfig.testType === 'multipage' ? (
-          <div className="space-y-4 animate-fade-in">
-            <div className="p-6 text-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+          <div className='space-y-4 animate-fade-in'>
+            <div className='p-6 text-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl'>
               {activePage === 'page1' ? (
-                <div className="animate-fade-in">
-                  <span className="material-symbols-rounded text-6xl text-primary-500 mb-4">
+                <div className='animate-fade-in'>
+                  <span className='material-symbols-rounded text-6xl text-primary-500 mb-4'>
                     description
                   </span>
-                  <h3 className="text-xl font-bold text-(--text-primary) mb-2">
+                  <h3 className='text-xl font-bold text-(--text-primary) mb-2'>
                     {language === 'AR' ? 'محتوى الصفحة الأولى' : 'Page 1 Content'}
                   </h3>
-                  <p className="text-(--text-secondary)">
+                  <p className='text-(--text-secondary)'>
                     {language === 'AR'
                       ? 'هذا هو المحتوى الخاص بالصفحة الأولى. يمكنك التبديل إلى الصفحة الثانية باستخدام عناصر التحكم في الأعلى.'
                       : 'This is the content for Page 1. You can switch to Page 2 using the controls above.'}
                   </p>
                 </div>
               ) : (
-                <div className="animate-fade-in">
-                  <span className="material-symbols-rounded text-6xl text-purple-500 mb-4">
+                <div className='animate-fade-in'>
+                  <span className='material-symbols-rounded text-6xl text-purple-500 mb-4'>
                     settings
                   </span>
-                  <h3 className="text-xl font-bold text-(--text-primary) mb-2">
+                  <h3 className='text-xl font-bold text-(--text-primary) mb-2'>
                     {language === 'AR' ? 'محتوى الصفحة الثانية' : 'Page 2 Content'}
                   </h3>
-                  <p className="text-(--text-secondary)">
+                  <p className='text-(--text-secondary)'>
                     {language === 'AR'
                       ? 'هذا هو المحتوى الخاص بالصفحة الثانية. لاحظ كيف يتغير المحتوى دون إغلاق النافذة.'
                       : 'This is the content for Page 2. Notice how the content changes without closing the modal.'}
@@ -913,26 +1026,26 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="p-4 bg-(--bg-secondary) border border-(--border-divider) rounded-xl">
-              <h4 className="font-medium text-gray-800 dark:text-white mb-2">
+          <div className='space-y-4'>
+            <div className='p-4 bg-(--bg-secondary) border border-(--border-divider) rounded-xl'>
+              <h4 className='font-medium text-gray-800 dark:text-white mb-2'>
                 {language === 'AR' ? 'تكوين النافذة' : 'Modal Configuration'}
               </h4>
-              <pre className="text-sm text-gray-600 dark:text-gray-400 overflow-auto">
+              <pre className='text-sm text-gray-600 dark:text-gray-400 overflow-auto'>
                 {JSON.stringify(modalConfig, null, 2)}
               </pre>
             </div>
 
-            <p className="text-(--text-secondary)">
+            <p className='text-(--text-secondary)'>
               {language === 'AR'
                 ? 'هذا محتوى تجريبي للنافذة. يمكنك إغلاق النافذة بالضغط على زر الإغلاق أو الضغط على ESC أو النقر على الخلفية (إذا كان مفعلاً).'
                 : 'This is sample modal content. You can close this modal by clicking the close button, pressing ESC, or clicking the backdrop (if enabled).'}
             </p>
 
-            <div className="flex gap-3 pt-4">
+            <div className='flex gap-3 pt-4'>
               <button
                 onClick={() => setIsOpen(false)}
-                className="flex-1 px-4 py-2.5 rounded-xl font-medium text-white transition-colors"
+                className='flex-1 px-4 py-2.5 rounded-xl font-medium text-white transition-colors'
                 style={{ backgroundColor: 'var(--color-primary-500, #3b82f6)' }}
               >
                 {language === 'AR' ? 'إغلاق' : 'Close Modal'}

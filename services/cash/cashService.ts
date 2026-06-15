@@ -3,11 +3,11 @@
  * Business logic layer that orchestrates data access via CashRepository.
  */
 
-import { type CashTransaction, type Shift } from '../../types';
+import type { CashTransaction, Shift } from '../../types';
+import { idGenerator } from '../../utils/idGenerator';
 import { money } from '../../utils/money';
 import { settingsService } from '../settings/settingsService';
 import { cashRepository } from './repositories/cashRepository';
-import { idGenerator } from '../../utils/idGenerator';
 
 /**
  * Cash Service Interface
@@ -16,8 +16,16 @@ export interface CashServiceInterface {
   getCurrentShift(branchId?: string): Promise<Shift | null>;
   getAllShifts(branchId?: string): Promise<Shift[]>;
   openShift(openingBalance: number, openedBy: string, branchId?: string): Promise<Shift>;
-  closeShift(shiftId: string, closingBalance: number, closedBy: string, notes?: string): Promise<Shift>;
-  addTransaction(shiftId: string, transaction: Omit<CashTransaction, 'id'>): Promise<CashTransaction>;
+  closeShift(
+    shiftId: string,
+    closingBalance: number,
+    closedBy: string,
+    notes?: string
+  ): Promise<Shift>;
+  addTransaction(
+    shiftId: string,
+    transaction: Omit<CashTransaction, 'id'>
+  ): Promise<CashTransaction>;
   getTransactions(shiftId?: string): Promise<CashTransaction[]>;
   mapFromDb(db: any): Shift;
   mapFromDbTransaction(db: any): CashTransaction;
@@ -27,7 +35,7 @@ export const cashService: CashServiceInterface = {
   getCurrentShift: async (branchId?: string): Promise<Shift | null> => {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    
+
     try {
       return await cashRepository.getCurrentShift(effectiveBranchId);
     } catch (error) {
@@ -42,7 +50,11 @@ export const cashService: CashServiceInterface = {
     return cashRepository.getAllShifts(effectiveBranchId);
   },
 
-  openShift: async (openingBalance: number, openedBy: string, branchId?: string): Promise<Shift> => {
+  openShift: async (
+    openingBalance: number,
+    openedBy: string,
+    branchId?: string
+  ): Promise<Shift> => {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
 
@@ -69,14 +81,19 @@ export const cashService: CashServiceInterface = {
     return newShift;
   },
 
-  closeShift: async (shiftId: string, closingBalance: number, closedBy: string, notes?: string): Promise<Shift> => {
+  closeShift: async (
+    shiftId: string,
+    closingBalance: number,
+    closedBy: string,
+    notes?: string
+  ): Promise<Shift> => {
     const shift = await cashRepository.getShiftById(shiftId);
     if (!shift) throw new Error('Shift not found');
-    
+
     const totalIn = money.add(shift.openingBalance, money.add(shift.cashIn, shift.cashSales));
     const totalOut = money.add(shift.cashOut, shift.returns);
     const expectedBalance = money.subtract(totalIn, totalOut);
-    
+
     const updates: Partial<Shift> = {
       status: 'closed',
       closeTime: new Date().toISOString(),
@@ -90,7 +107,10 @@ export const cashService: CashServiceInterface = {
     return { ...shift, ...updates } as Shift;
   },
 
-  addTransaction: async (shiftId: string, transaction: Omit<CashTransaction, 'id'>): Promise<CashTransaction> => {
+  addTransaction: async (
+    shiftId: string,
+    transaction: Omit<CashTransaction, 'id'>
+  ): Promise<CashTransaction> => {
     const newTx: CashTransaction = {
       ...transaction,
       id: idGenerator.uuid(),
@@ -100,31 +120,55 @@ export const cashService: CashServiceInterface = {
     await cashRepository.insertTransaction(newTx);
 
     // Update shift totals atomically
-    const incrementArgs: { 
-      cashIn: number; cashOut: number; cashSales: number; cardSales: number; returns: number;
-      cashPurchases: number; cashPurchaseReturns: number;
+    const incrementArgs: {
+      cashIn: number;
+      cashOut: number;
+      cashSales: number;
+      cardSales: number;
+      returns: number;
+      cashPurchases: number;
+      cashPurchaseReturns: number;
     } = {
-      cashIn: 0, cashOut: 0, cashSales: 0, cardSales: 0, returns: 0,
-      cashPurchases: 0, cashPurchaseReturns: 0,
+      cashIn: 0,
+      cashOut: 0,
+      cashSales: 0,
+      cardSales: 0,
+      returns: 0,
+      cashPurchases: 0,
+      cashPurchaseReturns: 0,
     };
     switch (transaction.type) {
-      case 'in':        incrementArgs.cashIn = Math.abs(transaction.amount); break;
-      case 'out':       incrementArgs.cashOut = Math.abs(transaction.amount); break;
-      case 'sale':      incrementArgs.cashSales = Math.abs(transaction.amount); break;
-      case 'card_sale': incrementArgs.cardSales = Math.abs(transaction.amount); break;
-      case 'return':    incrementArgs.returns = Math.abs(transaction.amount); break;
-      case 'purchase':  incrementArgs.cashPurchases = Math.abs(transaction.amount); break;
-      case 'purchase_return': incrementArgs.cashPurchaseReturns = Math.abs(transaction.amount); break;
+      case 'in':
+        incrementArgs.cashIn = Math.abs(transaction.amount);
+        break;
+      case 'out':
+        incrementArgs.cashOut = Math.abs(transaction.amount);
+        break;
+      case 'sale':
+        incrementArgs.cashSales = Math.abs(transaction.amount);
+        break;
+      case 'card_sale':
+        incrementArgs.cardSales = Math.abs(transaction.amount);
+        break;
+      case 'return':
+        incrementArgs.returns = Math.abs(transaction.amount);
+        break;
+      case 'purchase':
+        incrementArgs.cashPurchases = Math.abs(transaction.amount);
+        break;
+      case 'purchase_return':
+        incrementArgs.cashPurchaseReturns = Math.abs(transaction.amount);
+        break;
       case 'adjustment':
         // Adjustments are special: they can be negative to reduce a total
         if (transaction.amount < 0) {
-           incrementArgs.cashSales = transaction.amount; 
+          incrementArgs.cashSales = transaction.amount;
         } else {
-           incrementArgs.cashIn = transaction.amount;
+          incrementArgs.cashIn = transaction.amount;
         }
         break;
     }
-    
+
     await cashRepository.incrementShiftTotals(shiftId, incrementArgs);
 
     return newTx;
@@ -138,7 +182,7 @@ export const cashService: CashServiceInterface = {
     const effectiveBranchId = settings.activeBranchId || settings.branchCode;
     return cashRepository.getAllTransactions(effectiveBranchId);
   },
-  
+
   mapFromDb: (db: any) => cashRepository.mapShiftFromDb(db),
   mapFromDbTransaction: (db: any) => cashRepository.mapTransactionFromDb(db),
 };

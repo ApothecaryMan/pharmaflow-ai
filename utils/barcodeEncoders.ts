@@ -63,7 +63,10 @@ export const encodeCode128 = (text: string): string => {
 
   const initialDigits = countDigits(0);
   // Start with Subset C if we have >= 4 digits, or exactly 2 digits for the whole string
-  if (initialDigits >= 4 || (initialDigits >= 2 && initialDigits === validText.length && validText.length % 2 === 0)) {
+  if (
+    initialDigits >= 4 ||
+    (initialDigits >= 2 && initialDigits === validText.length && validText.length % 2 === 0)
+  ) {
     currentSet = 'C';
     const startValue = START_CODE_C;
     encoded += mapValueToChar(startValue);

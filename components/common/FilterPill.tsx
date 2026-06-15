@@ -64,7 +64,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({
     if (leaveTimeoutRef.current) clearTimeout(leaveTimeoutRef.current);
 
     const menuContent = (
-      <div 
+      <div
         className='font-sans'
         onMouseEnter={() => {
           if (leaveTimeoutRef.current) clearTimeout(leaveTimeoutRef.current);
@@ -82,17 +82,18 @@ export const FilterPill: React.FC<FilterPillProps> = ({
         {config.options.map((option) => {
           const isSelected = selectedValues.includes(option.value);
 
-          let isDefault = config.defaultValue !== undefined && config.defaultValue === option.value;
-          
+          const isDefault =
+            config.defaultValue !== undefined && config.defaultValue === option.value;
+
           const labelContent = (
-              <div className="flex items-center gap-2">
-                  <span>{option.label}</span>
-                  {isDefault && (
-                       <span className="inline-flex items-center px-1 py-0 rounded-sm border border-(--border-divider) text-gray-500 dark:text-gray-400 text-[9px] font-semibold uppercase tracking-wider bg-(--bg-surface-neutral) leading-none h-4">
-                          DEF
-                       </span>
-                  )}
-              </div>
+            <div className='flex items-center gap-2'>
+              <span>{option.label}</span>
+              {isDefault && (
+                <span className='inline-flex items-center px-1 py-0 rounded-sm border border-(--border-divider) text-gray-500 dark:text-gray-400 text-[9px] font-semibold uppercase tracking-wider bg-(--bg-surface-neutral) leading-none h-4'>
+                  DEF
+                </span>
+              )}
+            </div>
           );
 
           return (
@@ -109,8 +110,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({
                   } else {
                     newValues = [];
                   }
-                }
-                else {
+                } else {
                   if (checked) {
                     newValues.push(option.value);
                   } else {
@@ -193,7 +193,8 @@ export const FilterPill: React.FC<FilterPillProps> = ({
       {/* Text Content (Hidden if collapsed) */}
       {!collapsed && (
         <span className='text-xs font-medium whitespace-nowrap max-w-[150px] truncate'>
-          <span className='opacity-50 me-1'>{config.label}:</span><span
+          <span className='opacity-50 me-1'>{config.label}:</span>
+          <span
             className={config.mode === 'single' ? 'text-emerald-600 dark:text-emerald-400' : ''}
           >
             {selectedValues.length > 2

@@ -1,23 +1,21 @@
-import {
-  type ColumnDef,
-} from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { permissionsService } from '../../services/auth/permissionsService';
 import { useData } from '../../services';
 import { authService } from '../../services/auth/authService';
-import type { Branch, Employee, UserSession } from '../../types';
-import { usePosSounds } from '../common/hooks/usePosSounds';
-import { SegmentedControl } from '../common/SegmentedControl';
-import { type FilterConfig } from '../common/FilterPill';
-import { TanStackTable } from '../common/TanStackTable';
-import { Switch } from '../common/Switch';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { employeeService } from '../../services/hr/employeeService';
 import { orgService } from '../../services/org/orgService';
-import { SearchInput } from '../common/SearchInput';
+import type { Branch, Employee, UserSession } from '../../types';
+import type { FilterConfig } from '../common/FilterPill';
+import { usePosSounds } from '../common/hooks/usePosSounds';
 import { PageHeader } from '../common/PageHeader';
-import { EmployeeFormModal } from './EmployeeFormModal';
+import { SearchInput } from '../common/SearchInput';
+import { SegmentedControl } from '../common/SegmentedControl';
+import { Switch } from '../common/Switch';
+import { TanStackTable } from '../common/TanStackTable';
 import { EmployeeDetailsModal } from './EmployeeDetailsModal';
+import { EmployeeFormModal } from './EmployeeFormModal';
 import { HireEmployeeModal } from './HireEmployeeModal';
 import { InvitationListModal } from './InvitationListModal';
 
@@ -143,7 +141,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         try {
           const all = await employeeService.getAll('ALL');
           setAllEmployeesFetched(all);
-        } catch (err) { }
+        } catch (err) {}
       }
     }
   };
@@ -163,37 +161,47 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   }, [employees]);
 
   // --- Filter Configs ---
-  const employeeFilterConfigs = useMemo<FilterConfig[]>(() => [
-    {
-      id: 'status',
-      label: t.employeeList.status,
-      icon: 'rule',
-      mode: 'single',
-      options: Object.entries(t.employeeList.statusOptions)
-        .filter(([key]) => key !== 'all')
-        .map(([key, label]) => ({
-          label: label as string,
-          value: key,
-          icon: key === 'active' ? 'check_circle' : key === 'holiday' ? 'beach_access' : key === 'pending' ? 'pending' : 'cancel',
-          color: key === 'active' ? 'emerald' : key === 'holiday' ? 'amber' : 'gray'
-        }))
-    },
-    {
-      id: 'department',
-      label: t.employeeList.department,
-      icon: 'business',
-      mode: 'single',
-      options: availableDepartments.map(d => ({
-        label: d.label,
-        value: d.key,
-        icon: 'folder'
-      }))
-    }
-  ], [t, availableDepartments]);
+  const employeeFilterConfigs = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: 'status',
+        label: t.employeeList.status,
+        icon: 'rule',
+        mode: 'single',
+        options: Object.entries(t.employeeList.statusOptions)
+          .filter(([key]) => key !== 'all')
+          .map(([key, label]) => ({
+            label: label as string,
+            value: key,
+            icon:
+              key === 'active'
+                ? 'check_circle'
+                : key === 'holiday'
+                  ? 'beach_access'
+                  : key === 'pending'
+                    ? 'pending'
+                    : 'cancel',
+            color: key === 'active' ? 'emerald' : key === 'holiday' ? 'amber' : 'gray',
+          })),
+      },
+      {
+        id: 'department',
+        label: t.employeeList.department,
+        icon: 'business',
+        mode: 'single',
+        options: availableDepartments.map((d) => ({
+          label: d.label,
+          value: d.key,
+          icon: 'folder',
+        })),
+      },
+    ],
+    [t, availableDepartments]
+  );
 
   const filteredEmployees = useMemo(() => {
     const list = showAllBranches ? allEmployeesFetched : employees;
-    return list.filter((e) => (e.role as any));
+    return list.filter((e) => e.role as any);
   }, [employees, allEmployeesFetched, showAllBranches]);
 
   // --- Columns ---
@@ -253,7 +261,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         accessorKey: 'branchId',
         header: t.employeeList.table.branch,
         cell: ({ row }) => {
-          const branch = branches.find(b => b.id === row.original.branchId);
+          const branch = branches.find((b) => b.id === row.original.branchId);
           return (
             <span className='badge-neutral gap-1.5'>
               {branch?.name || t.employeeList.unassigned}
@@ -273,10 +281,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
               }}
               className='p-1 text-gray-400 hover:text-emerald-600 transition-colors'
             >
-              <span
-                className='material-symbols-rounded'
-                style={{ fontSize: 'var(--icon-lg)' }}
-              >
+              <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>
                 visibility
               </span>
             </button>
@@ -289,10 +294,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                   }}
                   className='p-1 text-gray-400 hover:text-primary-600 transition-colors'
                 >
-                  <span
-                    className='material-symbols-rounded'
-                    style={{ fontSize: 'var(--icon-lg)' }}
-                  >
+                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>
                     edit
                   </span>
                 </button>
@@ -303,10 +305,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                   }}
                   className='p-1 text-gray-400 hover:text-red-600 transition-colors'
                 >
-                  <span
-                    className='material-symbols-rounded'
-                    style={{ fontSize: 'var(--icon-lg)' }}
-                  >
+                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>
                     delete
                   </span>
                 </button>
@@ -343,7 +342,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         try {
           const all = await employeeService.getAll('ALL');
           setAllEmployeesFetched(all);
-        } catch (err) { }
+        } catch (err) {}
       }
 
       if (onUpdateEmployees) onUpdateEmployees(employees);
@@ -363,7 +362,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
     <div className='h-full flex flex-col space-y-4 animate-fade-in overflow-hidden'>
       <PageHeader
         leftContent={
-          <div className="w-full max-w-md">
+          <div className='w-full max-w-md'>
             <SearchInput
               value={globalFilter}
               onSearchChange={setGlobalFilter}
@@ -371,37 +370,37 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
               color={color}
               filterConfigs={employeeFilterConfigs}
               activeFilters={activeFilters}
-              onUpdateFilter={(id, vals) => setActiveFilters(prev => ({ ...prev, [id]: vals }))}
+              onUpdateFilter={(id, vals) => setActiveFilters((prev) => ({ ...prev, [id]: vals }))}
             />
           </div>
         }
         centerContent={
           <SegmentedControl
             options={[
-              { value: 'staff-overview', label: t.employeeList.navTabs.overview, icon: 'supervisor_account' },
+              {
+                value: 'staff-overview',
+                label: t.employeeList.navTabs.overview,
+                icon: 'supervisor_account',
+              },
               { value: 'employee-list', label: t.employeeList.navTabs.employees, icon: 'badge' },
-              { value: 'employee-profile', label: t.employeeList.navTabs.profile, icon: 'person' }
+              { value: 'employee-profile', label: t.employeeList.navTabs.profile, icon: 'person' },
             ]}
-            value="employee-list"
+            value='employee-list'
             onChange={(val) => onViewChange?.(val as any)}
-            size="md"
-            iconSize="--icon-lg"
-            shape="pill"
-            className="w-full sm:w-[480px]"
+            size='md'
+            iconSize='--icon-lg'
+            shape='pill'
+            className='w-full sm:w-[480px]'
             useGraphicFont={true}
           />
         }
         rightContent={
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-3 px-3 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
-              <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none shrink-0">
+          <div className='flex items-center gap-3'>
+            <label className='flex items-center gap-3 px-3 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors'>
+              <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none shrink-0'>
                 {t.employeeList.globalView}
               </span>
-              <Switch
-                checked={showAllBranches}
-                onChange={setShowAllBranches}
-                activeColor={color}
-              />
+              <Switch checked={showAllBranches} onChange={setShowAllBranches} activeColor={color} />
             </label>
 
             {permissionsService.can('users.manage') && (
@@ -409,16 +408,20 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                 <button
                   type='button'
                   onClick={() => setIsInvitationListOpen(true)}
-                  className="p-2.5 h-10 w-10 flex items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 hover:border-emerald-500/30 hover:bg-emerald-500/10 transition-all active:scale-95 cursor-pointer"
+                  className='p-2.5 h-10 w-10 flex items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 hover:border-emerald-500/30 hover:bg-emerald-500/10 transition-all active:scale-95 cursor-pointer'
                   title={language === 'AR' ? 'عرض الدعوات' : 'View Invitations'}
                 >
-                  <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>how_to_reg</span>
+                  <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
+                    how_to_reg
+                  </span>
                 </button>
                 <button
                   onClick={() => setIsHireModalOpen(true)}
-                  className="flex items-center justify-center gap-2 px-6 h-10 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-xl transition-all active:scale-95 whitespace-nowrap font-bold text-xs uppercase tracking-wider cursor-pointer"
+                  className='flex items-center justify-center gap-2 px-6 h-10 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-xl transition-all active:scale-95 whitespace-nowrap font-bold text-xs uppercase tracking-wider cursor-pointer'
                 >
-                  <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>person_add</span>
+                  <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
+                    person_add
+                  </span>
                   <span>{language === 'AR' ? 'تعيين عبر الاسم' : 'Hire'}</span>
                 </button>
                 <button
@@ -426,9 +429,11 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                     setEditingEmployee(null);
                     setIsModalOpen(true);
                   }}
-                  className="flex items-center justify-center gap-2 px-6 h-10 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 rounded-xl shadow-sm transition-all active:scale-95 whitespace-nowrap font-bold text-xs uppercase tracking-wider cursor-pointer"
+                  className='flex items-center justify-center gap-2 px-6 h-10 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 rounded-xl shadow-sm transition-all active:scale-95 whitespace-nowrap font-bold text-xs uppercase tracking-wider cursor-pointer'
                 >
-                  <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>add</span>
+                  <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
+                    add
+                  </span>
                   <span>{t.employeeList.addEmployee}</span>
                 </button>
               </>

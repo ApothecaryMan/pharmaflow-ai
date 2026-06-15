@@ -1,16 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { mockSuccess, mockError } = vi.hoisted(() => ({
   mockSuccess: vi.fn(),
   mockError: vi.fn(),
 }));
 
-import { useEntityHandlers, SaleData } from '../useEntityHandlers';
-import { batchService } from '../../services/inventory/batchService';
 import { useAlert } from '../../context';
-import { Drug } from '../../types';
 import { permissionsService } from '../../services/auth/permissionsService';
+import { batchService } from '../../services/inventory/batchService';
+import type { Drug } from '../../types';
+import { type SaleData, useEntityHandlers } from '../useEntityHandlers';
 
 // Mock Dependencies
 vi.mock('../../context', () => ({
@@ -22,14 +22,14 @@ vi.mock('../../context', () => ({
   }),
   useShift: vi.fn().mockReturnValue({
     addTransaction: vi.fn(),
-    currentShift: { id: 'test-shift', status: 'open' }
+    currentShift: { id: 'test-shift', status: 'open' },
   }),
 }));
 
 vi.mock('../useShift', () => ({
   useShift: vi.fn().mockReturnValue({
     addTransaction: vi.fn(),
-    currentShift: { id: 'test-shift', status: 'open' }
+    currentShift: { id: 'test-shift', status: 'open' },
   }),
 }));
 
@@ -125,7 +125,7 @@ describe('useEntityHandlers: handleCompleteSale', () => {
 
   const mockEmployees = [
     { id: 'emp1', name: 'Test Admin', role: 'admin' },
-    { id: 'cashier1', name: 'Test Cashier', role: 'cashier' }
+    { id: 'cashier1', name: 'Test Cashier', role: 'cashier' },
   ] as any[];
 
   beforeEach(async () => {
@@ -188,10 +188,12 @@ describe('useEntityHandlers: handleCompleteSale', () => {
     await act(async () => {
       await result.current.handleCompleteSale(saleData);
     });
-    
+
     expect(defaultProps.completeSale).toHaveBeenCalledWith(
-        expect.objectContaining({ items: expect.arrayContaining([expect.objectContaining({ id: 'drug1' })]) }),
-        expect.any(Object)
+      expect.objectContaining({
+        items: expect.arrayContaining([expect.objectContaining({ id: 'drug1' })]),
+      }),
+      expect.any(Object)
     );
     expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining('completed'));
   });
@@ -199,7 +201,7 @@ describe('useEntityHandlers: handleCompleteSale', () => {
   it('should handle complete sale failure', async () => {
     defaultProps.completeSale.mockRejectedValue(new Error('Failed to complete sale'));
     const { result } = renderHook(() => useEntityHandlers(defaultProps));
-    
+
     await act(async () => {
       await result.current.handleCompleteSale({ items: [] } as any);
     });
@@ -209,7 +211,10 @@ describe('useEntityHandlers: handleCompleteSale', () => {
 
   it('should prevent sale if validateStockAvailability (pre-check) fails', async () => {
     const { validateStockAvailability } = await import('../../utils/validation');
-    (validateStockAvailability as any).mockReturnValueOnce({ success: false, message: 'Insufficient stock' });
+    (validateStockAvailability as any).mockReturnValueOnce({
+      success: false,
+      message: 'Insufficient stock',
+    });
 
     const { result } = renderHook(() => useEntityHandlers(defaultProps));
 
@@ -232,7 +237,6 @@ describe('useEntityHandlers: handleCompleteSale', () => {
     expect(mockSetSales).not.toHaveBeenCalled();
   });
 });
-
 
 describe('useEntityHandlers: Drug Management', () => {
   const mockSetInventory = vi.fn();
@@ -292,10 +296,12 @@ describe('useEntityHandlers: Drug Management', () => {
   });
 
   it('should require login to update drug', async () => {
-    const { result } = renderHook(() => useEntityHandlers({
-      ...defaultProps,
-      currentEmployeeId: null, // No login
-    }));
+    const { result } = renderHook(() =>
+      useEntityHandlers({
+        ...defaultProps,
+        currentEmployeeId: null, // No login
+      })
+    );
 
     await act(() => {
       result.current.handleUpdateDrug({ id: '1', name: 'Drug', publicPrice: 10 } as Drug);
@@ -309,7 +315,12 @@ describe('useEntityHandlers: Drug Management', () => {
     const { result } = renderHook(() => useEntityHandlers(defaultProps));
 
     await act(() => {
-       result.current.handleAddDrug({ id: '1', name: 'Valid Drug', publicPrice: 10, stock: 5 } as Drug);
+      result.current.handleAddDrug({
+        id: '1',
+        name: 'Valid Drug',
+        publicPrice: 10,
+        stock: 5,
+      } as Drug);
     });
 
     expect(mockSetInventory).toHaveBeenCalled();
@@ -359,20 +370,20 @@ describe('useEntityHandlers: RBAC & Security', () => {
   };
 
   it('should prevent Cashier from deleting drugs', async () => {
-    const employees = [
-        { id: 'cashier1', name: 'Cashier', role: 'cashier' }
-    ] as any;
+    const employees = [{ id: 'cashier1', name: 'Cashier', role: 'cashier' }] as any;
 
     (permissionsService.can as any).mockReturnValue(false);
 
-    const { result } = renderHook(() => useEntityHandlers({
+    const { result } = renderHook(() =>
+      useEntityHandlers({
         ...baseProps,
         currentEmployeeId: 'cashier1',
-        employees
-    } as any));
+        employees,
+      } as any)
+    );
 
     await act(() => {
-        result.current.handleDeleteDrug('1');
+      result.current.handleDeleteDrug('1');
     });
 
     expect(mockSetInventory).not.toHaveBeenCalled();
@@ -380,43 +391,43 @@ describe('useEntityHandlers: RBAC & Security', () => {
   });
 
   it('should allow Manager to delete drugs', async () => {
-    const employees = [
-        { id: 'mgr1', name: 'Manager', role: 'manager' }
-    ] as any;
+    const employees = [{ id: 'mgr1', name: 'Manager', role: 'manager' }] as any;
 
     (permissionsService.can as any).mockReturnValue(true);
 
-    const { result } = renderHook(() => useEntityHandlers({
+    const { result } = renderHook(() =>
+      useEntityHandlers({
         ...baseProps,
         currentEmployeeId: 'mgr1',
         employees,
         setInventory: mockSetInventory,
         setEmployees: vi.fn(),
-    } as any));
+      } as any)
+    );
 
     await act(() => {
-        result.current.handleDeleteDrug('1');
+      result.current.handleDeleteDrug('1');
     });
 
     expect(mockSetInventory).toHaveBeenCalled();
   });
 
   it('should prevent Cashier from adding suppliers', async () => {
-    const employees = [
-        { id: 'cashier1', name: 'Cashier', role: 'cashier' }
-    ] as any;
+    const employees = [{ id: 'cashier1', name: 'Cashier', role: 'cashier' }] as any;
 
     (permissionsService.can as any).mockReturnValue(false);
 
-    const { result } = renderHook(() => useEntityHandlers({
+    const { result } = renderHook(() =>
+      useEntityHandlers({
         ...baseProps,
         currentEmployeeId: 'cashier1',
         employees,
-        setSuppliers: vi.fn() // Ensure spy is fresh/clean
-    } as any));
+        setSuppliers: vi.fn(), // Ensure spy is fresh/clean
+      } as any)
+    );
 
     await act(() => {
-        result.current.handleAddSupplier({ id: 's1', name: 'Sup' } as any);
+      result.current.handleAddSupplier({ id: 's1', name: 'Sup' } as any);
     });
 
     expect(mockError).toHaveBeenCalledWith(expect.stringContaining('Permission denied'));
@@ -477,27 +488,29 @@ describe('useEntityHandlers: Edge Cases', () => {
       .mockResolvedValueOnce({ serialId: 'PF-0001', id: 'sale-1' })
       .mockRejectedValueOnce(new Error('Insufficient stock'));
 
-    const { result } = renderHook(() => useEntityHandlers({
+    const { result } = renderHook(() =>
+      useEntityHandlers({
         ...getProps(),
         completeSale: mockComplete,
-        currentEmployeeId: 'emp1'
-    } as any));
+        currentEmployeeId: 'emp1',
+      } as any)
+    );
 
     const saleData = {
-        items: [{ id: '1', quantity: 1, isUnit: true }] as any,
-        total: 10,
-        customerName: 'G',
-        paymentMethod: 'cash',
-        globalDiscount: 0,
-        subtotal: 10
+      items: [{ id: '1', quantity: 1, isUnit: true }] as any,
+      total: 10,
+      customerName: 'G',
+      paymentMethod: 'cash',
+      globalDiscount: 0,
+      subtotal: 10,
     } as SaleData;
 
     await act(async () => {
-        await result.current.handleCompleteSale(saleData);
+      await result.current.handleCompleteSale(saleData);
     });
-    
+
     await act(async () => {
-        await result.current.handleCompleteSale(saleData);
+      await result.current.handleCompleteSale(saleData);
     });
 
     expect(mockSuccess).toHaveBeenCalledTimes(1);
@@ -506,28 +519,32 @@ describe('useEntityHandlers: Edge Cases', () => {
 
   it('should respect manual batch selection (preferredBatchId)', async () => {
     const mockComplete = vi.fn().mockResolvedValue({ serialId: 'PF-0001', id: 'sale-1' });
-    const { result } = renderHook(() => useEntityHandlers({
+    const { result } = renderHook(() =>
+      useEntityHandlers({
         ...getProps(),
         completeSale: mockComplete,
-        currentEmployeeId: 'emp1'
-    } as any));
+        currentEmployeeId: 'emp1',
+      } as any)
+    );
 
     const saleData = {
-        items: [{ 
-          id: '1', 
-          quantity: 1, 
+      items: [
+        {
+          id: '1',
+          quantity: 1,
           isUnit: true,
-          preferredBatchId: 'batch-specific-123' 
-        }] as any,
-        total: 10,
-        customerName: 'Manuel',
-        paymentMethod: 'cash',
-        globalDiscount: 0,
-        subtotal: 10
+          preferredBatchId: 'batch-specific-123',
+        },
+      ] as any,
+      total: 10,
+      customerName: 'Manuel',
+      paymentMethod: 'cash',
+      globalDiscount: 0,
+      subtotal: 10,
     } as SaleData;
 
     await act(async () => {
-        await result.current.handleCompleteSale(saleData);
+      await result.current.handleCompleteSale(saleData);
     });
 
     expect(mockComplete).toHaveBeenCalled();
@@ -567,23 +584,25 @@ describe('useEntityHandlers: Customer Management (enrichedCustomers)', () => {
     markAsReceived: vi.fn(),
   };
 
-   it('should correctly calculate total purchases from sales', () => {
-     const customers = [
-       { id: 'c1', name: 'John Doe', code: 'C100', totalPurchases: 0, lastVisit: '' } as any
-     ];
-     // Matches by name (fallback if no code match or legacy)
-     const sales = [
-       { id: 's1', customerCode: 'C100', total: 100, date: '2024-01-01' } as any,
-       { id: 's2', customerName: 'John Doe', total: 50, date: '2024-01-02' } as any
-     ] as any[]; 
+  it('should correctly calculate total purchases from sales', () => {
+    const customers = [
+      { id: 'c1', name: 'John Doe', code: 'C100', totalPurchases: 0, lastVisit: '' } as any,
+    ];
+    // Matches by name (fallback if no code match or legacy)
+    const sales = [
+      { id: 's1', customerCode: 'C100', total: 100, date: '2024-01-01' } as any,
+      { id: 's2', customerName: 'John Doe', total: 50, date: '2024-01-02' } as any,
+    ] as any[];
 
-     const { result } = renderHook(() => useEntityHandlers({
-       ...defaultProps,
-       customers,
-       sales
-     } as any));
+    const { result } = renderHook(() =>
+      useEntityHandlers({
+        ...defaultProps,
+        customers,
+        sales,
+      } as any)
+    );
 
-     expect(result.current.enrichedCustomers[0].totalPurchases).toBe(150);
-     expect(result.current.enrichedCustomers[0].lastVisit).toBe('2024-01-02');
-   });
+    expect(result.current.enrichedCustomers[0].totalPurchases).toBe(150);
+    expect(result.current.enrichedCustomers[0].lastVisit).toBe('2024-01-02');
+  });
 });

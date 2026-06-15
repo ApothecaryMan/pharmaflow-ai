@@ -6,9 +6,9 @@
  * falls back to QZ Tray or browser printing elsewhere.
  */
 
+import { list_thermal_printers, print_thermal_printer } from 'tauri-plugin-thermal-printer';
 import { isTauri } from '../../utils/platform';
 import * as qz from '../../utils/qzPrinter';
-import { list_thermal_printers, print_thermal_printer } from 'tauri-plugin-thermal-printer';
 
 export type PrinterInterface = 'tauri' | 'qz' | 'browser';
 
@@ -29,7 +29,8 @@ class UniversalPrinterService {
   private loadSettings(): UniversalPrinterSettings {
     const qzSettings = qz.getPrinterSettings();
     const tauriPrinter = localStorage.getItem('desktop_receipt_printer');
-    const preferredInterface = (localStorage.getItem('preferred_printer_interface') as any) || 'auto';
+    const preferredInterface =
+      (localStorage.getItem('preferred_printer_interface') as any) || 'auto';
 
     return {
       ...qzSettings,
@@ -47,7 +48,7 @@ class UniversalPrinterService {
       try {
         const tauriPrinters = await list_thermal_printers();
         if (tauriPrinters && tauriPrinters.length > 0) {
-          return tauriPrinters.map(p => p.name);
+          return tauriPrinters.map((p) => p.name);
         }
       } catch (e) {
         console.warn('[PrinterService] Failed to list Tauri printers:', e);
@@ -76,12 +77,12 @@ class UniversalPrinterService {
           // If we have raw ESC/POS data, it's better for thermal printers
           // But usually we have HTML. The plugin might handle HTML to image conversion.
           // For now, let's assume the plugin wants ESC/POS or we have a way to convert.
-          await print_thermal_printer({ 
+          await print_thermal_printer({
             printer: printerName,
             sections: [{ Text: { text: html, styles: { align: 'left', size: 'normal' } } }],
             options: { code_page: 0 },
-            paper_size: 'Mm80'
-          }); 
+            paper_size: 'Mm80',
+          });
           return true;
         } catch (e) {
           console.error('[PrinterService] Tauri print failed:', e);
@@ -91,7 +92,11 @@ class UniversalPrinterService {
     }
 
     // 2. Try QZ Tray
-    if (enabled && silentMode !== 'off' && (preferredInterface === 'auto' || preferredInterface === 'qz')) {
+    if (
+      enabled &&
+      silentMode !== 'off' &&
+      (preferredInterface === 'auto' || preferredInterface === 'qz')
+    ) {
       try {
         const success = await qz.printReceiptSilently(html);
         if (success) return true;
@@ -110,7 +115,7 @@ class UniversalPrinterService {
   public async printLabel(html: string, size: { width: number; height: number }): Promise<boolean> {
     // Labels are more complex, QZ Tray is usually better for custom sizes unless plugin supports it
     const { enabled, silentMode } = this.settings;
-    
+
     if (enabled && silentMode !== 'off') {
       try {
         const success = await qz.printLabelSilently(html, size);

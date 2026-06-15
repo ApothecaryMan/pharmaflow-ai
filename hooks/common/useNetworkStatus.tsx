@@ -1,8 +1,15 @@
-import { useState, useEffect } from 'react';
-import { checkRealConnectivity, NetworkResult } from '@/utils/network';
+import { useEffect, useState } from 'react';
+import { checkRealConnectivity, type NetworkResult } from '@/utils/network';
 
-export function useNetworkStatus(): { isOnline: boolean; latency: number | undefined; checking: boolean } {
-  const [networkInfo, setNetworkInfo] = useState<NetworkResult>({ online: true, latency: undefined });
+export function useNetworkStatus(): {
+  isOnline: boolean;
+  latency: number | undefined;
+  checking: boolean;
+} {
+  const [networkInfo, setNetworkInfo] = useState<NetworkResult>({
+    online: true,
+    latency: undefined,
+  });
   const [checking, setChecking] = useState<boolean>(true);
 
   useEffect(() => {
@@ -43,9 +50,9 @@ export function useNetworkStatus(): { isOnline: boolean; latency: number | undef
     };
   }, []);
 
-  return { 
-    isOnline: networkInfo.online, 
-    latency: networkInfo.latency, 
-    checking 
+  return {
+    isOnline: networkInfo.online,
+    latency: networkInfo.latency,
+    checking,
   };
 }

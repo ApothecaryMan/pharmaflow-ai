@@ -7,7 +7,10 @@ export const stockMovementRepository = {
   },
 
   async deleteByReferenceId(referenceId: string): Promise<boolean> {
-    const { error } = await supabase.from('stock_movements').delete().eq('reference_id', referenceId);
+    const { error } = await supabase
+      .from('stock_movements')
+      .delete()
+      .eq('reference_id', referenceId);
     return !error;
-  }
+  },
 };

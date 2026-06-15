@@ -1,15 +1,15 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
-import { permissionsService } from '../../services/auth/permissionsService';
-import { useShift } from '../../hooks/sales/useShift';
-import type { CashTransaction, CashTransactionType, Employee, Language, Shift } from '../../types';
-import { useData } from '../../services';
-import { expenseService } from '../../services/financials/expenseService';
-import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
-import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
-import { getPrinterSettings, printReceiptSilently } from '../../utils/qzPrinter';
+import { useShift } from '../../hooks/sales/useShift';
+import { useData } from '../../services';
+import { permissionsService } from '../../services/auth/permissionsService';
+import { expenseService } from '../../services/financials/expenseService';
+import type { CashTransaction, CashTransactionType, Employee, Language, Shift } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
+import { getPrinterSettings, printReceiptSilently } from '../../utils/qzPrinter';
+import { storage } from '../../utils/storage';
+import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
 
 interface UseCashRegisterProps {
   t: Translations;
@@ -78,8 +78,10 @@ export const useCashRegister = ({
       if (filterType === 'all') return true;
       if (filterType === 'sales') return tx.type === 'sale' || tx.type === 'card_sale';
       if (filterType === 'returns') return tx.type === 'return';
-      if (filterType === 'purchases') return tx.type === 'purchase' || tx.type === 'purchase_return';
-      if (filterType === 'operations') return ['in', 'out', 'opening', 'closing', 'expense'].includes(tx.type);
+      if (filterType === 'purchases')
+        return tx.type === 'purchase' || tx.type === 'purchase_return';
+      if (filterType === 'operations')
+        return ['in', 'out', 'opening', 'closing', 'expense'].includes(tx.type);
       return true;
     });
   }, [currentShift, filterType]);
@@ -88,10 +90,15 @@ export const useCashRegister = ({
     if (!currentShift) return { all: 0, sales: 0, returns: 0, operations: 0, purchases: 0 };
     return {
       all: currentShift.transactions.length,
-      sales: currentShift.transactions.filter((tx) => tx.type === 'sale' || tx.type === 'card_sale').length,
+      sales: currentShift.transactions.filter((tx) => tx.type === 'sale' || tx.type === 'card_sale')
+        .length,
       returns: currentShift.transactions.filter((tx) => tx.type === 'return').length,
-      purchases: currentShift.transactions.filter((tx) => tx.type === 'purchase' || tx.type === 'purchase_return').length,
-      operations: currentShift.transactions.filter((tx) => ['in', 'out', 'opening', 'closing', 'expense'].includes(tx.type)).length,
+      purchases: currentShift.transactions.filter(
+        (tx) => tx.type === 'purchase' || tx.type === 'purchase_return'
+      ).length,
+      operations: currentShift.transactions.filter((tx) =>
+        ['in', 'out', 'opening', 'closing', 'expense'].includes(tx.type)
+      ).length,
     };
   }, [currentShift]);
 
@@ -127,7 +134,7 @@ export const useCashRegister = ({
     const startUser = employees?.find((e) => e.id === currentEmployeeId);
     const userName = startUser ? startUser.name : 'Pharmacist';
     const newShiftId = idGenerator.uuid();
-    const activeBranch = branches.find(b => b.id === activeBranchId);
+    const activeBranch = branches.find((b) => b.id === activeBranchId);
     const branchCode = activeBranch?.code || 'PF';
 
     const newShift: Shift = {
@@ -157,12 +164,26 @@ export const useCashRegister = ({
       ],
     };
 
-    startShift(newShift).then(() => {
-      closeModal();
-    }).catch(err => {
-      setValidationError(err.message || 'Failed to open shift');
-    });
-  }, [amountInput, currentEmployeeId, permissions.canOpenShift, t, language, activeBranchId, branches, getVerifiedDate, reasonInput, startShift, closeModal]);
+    startShift(newShift)
+      .then(() => {
+        closeModal();
+      })
+      .catch((err) => {
+        setValidationError(err.message || 'Failed to open shift');
+      });
+  }, [
+    amountInput,
+    currentEmployeeId,
+    permissions.canOpenShift,
+    t,
+    language,
+    activeBranchId,
+    branches,
+    getVerifiedDate,
+    reasonInput,
+    startShift,
+    closeModal,
+  ]);
 
   const handleCloseShift = useCallback(() => {
     if (!currentShift) return;
@@ -194,18 +215,29 @@ export const useCashRegister = ({
     const shiftEnd = closeTs.getTime();
 
     const cashPurchases = purchases
-      .filter((p) => p.paymentMethod === 'cash' && new Date(p.date).getTime() >= shiftStart && new Date(p.date).getTime() <= shiftEnd)
+      .filter(
+        (p) =>
+          p.paymentMethod === 'cash' &&
+          new Date(p.date).getTime() >= shiftStart &&
+          new Date(p.date).getTime() <= shiftEnd
+      )
       .reduce((sum, p) => sum + p.totalCost, 0);
 
     const cashPurchaseReturns = purchaseReturns
-      .filter((pr) => new Date(pr.date).getTime() >= shiftStart && new Date(pr.date).getTime() <= shiftEnd)
+      .filter(
+        (pr) => new Date(pr.date).getTime() >= shiftStart && new Date(pr.date).getTime() <= shiftEnd
+      )
       .reduce((sum, pr) => sum + pr.totalRefund, 0);
 
     const cashInvoiceCount = currentShift.transactions.filter((tx) => tx.type === 'sale').length;
-    const cardInvoiceCount = currentShift.transactions.filter((tx) => tx.type === 'card_sale').length;
+    const cardInvoiceCount = currentShift.transactions.filter(
+      (tx) => tx.type === 'card_sale'
+    ).length;
 
     const totalDiscounts = sales
-      .filter((s) => new Date(s.date).getTime() >= shiftStart && new Date(s.date).getTime() <= shiftEnd)
+      .filter(
+        (s) => new Date(s.date).getTime() >= shiftStart && new Date(s.date).getTime() <= shiftEnd
+      )
       .reduce((sum, s) => sum + (s.globalDiscount || 0), 0);
 
     const shiftDurationMinutes = Math.round((shiftEnd - shiftStart) / 60000);
@@ -246,11 +278,13 @@ export const useCashRegister = ({
       ],
     };
 
-    endShift(closedShift).then(() => {
-      closeModal();
-    }).catch(err => {
-      setValidationError(err.message || 'Failed to close shift');
-    });
+    endShift(closedShift)
+      .then(() => {
+        closeModal();
+      })
+      .catch((err) => {
+        setValidationError(err.message || 'Failed to close shift');
+      });
 
     // Printing Logic
     setTimeout(async () => {
@@ -287,7 +321,24 @@ export const useCashRegister = ({
         console.error('Print failed:', e);
       }
     }, 500);
-  }, [currentShift, amountInput, currentEmployeeId, permissions.canCloseShift, t, language, employees, getVerifiedDate, purchases, purchaseReturns, sales, currentBalance, reasonInput, activeBranchId, endShift, closeModal]);
+  }, [
+    currentShift,
+    amountInput,
+    currentEmployeeId,
+    permissions.canCloseShift,
+    t,
+    language,
+    employees,
+    getVerifiedDate,
+    purchases,
+    purchaseReturns,
+    sales,
+    currentBalance,
+    reasonInput,
+    activeBranchId,
+    endShift,
+    closeModal,
+  ]);
 
   const handleCashTransaction = useCallback(async () => {
     if (!currentShift || !modalMode) return;
@@ -303,11 +354,15 @@ export const useCashRegister = ({
     }
 
     if (modalMode === 'in' && !permissions.canAddCash) {
-      setValidationError(language === 'AR' ? 'غير مصرح لك بإضافة نقدية' : 'You do not have permission to add cash');
+      setValidationError(
+        language === 'AR' ? 'غير مصرح لك بإضافة نقدية' : 'You do not have permission to add cash'
+      );
       return;
     }
     if (modalMode === 'out' && !permissions.canRemoveCash) {
-      setValidationError(language === 'AR' ? 'غير مصرح لك بسحب نقدية' : 'You do not have permission to remove cash');
+      setValidationError(
+        language === 'AR' ? 'غير مصرح لك بسحب نقدية' : 'You do not have permission to remove cash'
+      );
       return;
     }
 
@@ -358,7 +413,22 @@ export const useCashRegister = ({
     } catch (err: any) {
       setValidationError(err.message || 'Failed to record transaction');
     }
-  }, [currentShift, modalMode, amountInput, permissions.canAddCash, permissions.canRemoveCash, t, language, reasonInput, getVerifiedDate, activeBranchId, activeOrgId, currentEmployeeId, addTransaction, closeModal]);
+  }, [
+    currentShift,
+    modalMode,
+    amountInput,
+    permissions.canAddCash,
+    permissions.canRemoveCash,
+    t,
+    language,
+    reasonInput,
+    getVerifiedDate,
+    activeBranchId,
+    activeOrgId,
+    currentEmployeeId,
+    addTransaction,
+    closeModal,
+  ]);
 
   return {
     // State

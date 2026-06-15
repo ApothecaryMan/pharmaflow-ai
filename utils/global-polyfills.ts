@@ -1,9 +1,9 @@
 /**
  * Global Localization Polyfills
- * 
- * This file overrides the default behavior of JS localization methods 
+ *
+ * This file overrides the default behavior of JS localization methods
  * to respect the application's global numeral system and language settings.
- * 
+ *
  * It monkey-patches:
  * - Number.prototype.toLocaleString
  * - Date.prototype.toLocaleString
@@ -25,18 +25,19 @@ const OriginalDateTimeFormat = Intl.DateTimeFormat;
 
 /**
  * Helper to determine the best locale to use.
- * Priority: 
+ * Priority:
  * 1. Explicitly passed locale (if any)
  * 2. Global window setting
  * 3. Browser default
  */
-const getActiveLocale = (passedLocale?: string | string[], type: 'numeral' | 'text' = 'numeral') => {
+const getActiveLocale = (
+  passedLocale?: string | string[],
+  type: 'numeral' | 'text' = 'numeral'
+) => {
   if (passedLocale && passedLocale !== 'undefined') return passedLocale;
-  
-  const globalSetting = type === 'numeral' 
-    ? window.__NUMERAL_LOCALE__ 
-    : window.__TEXT_LOCALE__;
-    
+
+  const globalSetting = type === 'numeral' ? window.__NUMERAL_LOCALE__ : window.__TEXT_LOCALE__;
+
   return globalSetting || undefined;
 };
 
@@ -59,9 +60,18 @@ const replaceDigits = (text: string, toArabic: boolean) => {
  * Configuration for technical data that should never be converted
  */
 const TECHNICAL_KEYWORDS = [
-  'id', 'sku', 'barcode', 'batch', 'serial', 
-  'email', 'address', 'phone', 'mobile', 
-  'invoice', 'receipt', 'code'
+  'id',
+  'sku',
+  'barcode',
+  'batch',
+  'serial',
+  'email',
+  'address',
+  'phone',
+  'mobile',
+  'invoice',
+  'receipt',
+  'code',
 ];
 
 /**
@@ -72,13 +82,13 @@ const shouldSkipNode = (node: Node): boolean => {
   while (current) {
     if (current.nodeType === Node.ELEMENT_NODE) {
       const el = current as HTMLElement;
-      
+
       // Explicit skip via data attribute
       if (el.getAttribute('data-no-convert') === 'true') return true;
-      
+
       // Skip interactive inputs to avoid breaking user entry
       if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return true;
-      
+
       // Skip specific font/icon families (Google Material Symbols)
       const style = window.getComputedStyle(el);
       if (style.fontFamily.includes('Material Symbols')) return true;
@@ -86,7 +96,7 @@ const shouldSkipNode = (node: Node): boolean => {
       // Skip columns marked as technical in TanStackTable
       // Note: TanStackTable now adds data-no-convert, but we keep keyword check for extra safety
       const id = el.getAttribute('data-column-id')?.toLowerCase() || '';
-      if (TECHNICAL_KEYWORDS.some(k => id.includes(k))) return true;
+      if (TECHNICAL_KEYWORDS.some((k) => id.includes(k))) return true;
     }
     current = current.parentNode;
   }
@@ -98,7 +108,7 @@ const processNode = (node: Node, toArabic: boolean) => {
 
   if (node.nodeType === Node.TEXT_NODE) {
     const originalValue = node.nodeValue || '';
-    
+
     // Skip nodes that have the invisible protection marker (\u200B)
     if (originalValue.startsWith('\u200B')) {
       return;
@@ -121,10 +131,10 @@ let isProcessing = false;
  */
 (window as any).__UPDATE_DIGITS__ = () => {
   if (isProcessing) return;
-  
+
   const currentLocale = window.__NUMERAL_LOCALE__;
   const toArabic = currentLocale === 'ar-EG';
-  
+
   // Initial pass to fix current DOM
   isProcessing = true;
   processNode(document.body, toArabic);
@@ -134,12 +144,12 @@ let isProcessing = false;
   if (!observer) {
     observer = new MutationObserver((mutations) => {
       if (isProcessing) return;
-      
+
       // CRITICAL: Re-evaluate toArabic based on the CURRENT window setting
       // to avoid stale closure issues when settings change.
       const latestLocale = window.__NUMERAL_LOCALE__;
       const latestToArabic = latestLocale === 'ar-EG';
-      
+
       isProcessing = true;
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => processNode(node, latestToArabic));
@@ -152,19 +162,27 @@ let isProcessing = false;
     observer.observe(document.body, {
       childList: true,
       subtree: true,
-      characterData: true
+      characterData: true,
     });
   }
 };
 
 // 1. Monkey-patch Number.prototype.toLocaleString
-Number.prototype.toLocaleString = function(this: number, locales?: string | string[], options?: Intl.NumberFormatOptions) {
+Number.prototype.toLocaleString = function (
+  this: number,
+  locales?: string | string[],
+  options?: Intl.NumberFormatOptions
+) {
   const activeLocale = getActiveLocale(locales, 'numeral');
   return originalNumberToLocaleString.call(this, activeLocale, options);
 };
 
 // 2. Monkey-patch Date.prototype.toLocaleString
-Date.prototype.toLocaleString = function(this: Date, locales?: string | string[], options?: Intl.DateTimeFormatOptions) {
+Date.prototype.toLocaleString = function (
+  this: Date,
+  locales?: string | string[],
+  options?: Intl.DateTimeFormatOptions
+) {
   // Dates usually need text (Months) but digits follow the numeral system.
   // Intl usually handles this correctly if we pass the numeral-aware locale.
   const activeLocale = getActiveLocale(locales, 'numeral');
@@ -172,11 +190,11 @@ Date.prototype.toLocaleString = function(this: Date, locales?: string | string[]
 };
 
 // 3. Monkey-patch Intl.NumberFormat
-// @ts-ignore - Overriding native Intl constructor
-Intl.NumberFormat = function(locales?: string | string[], options?: Intl.NumberFormatOptions) {
+// @ts-expect-error - Overriding native Intl constructor
+Intl.NumberFormat = function (locales?: string | string[], options?: Intl.NumberFormatOptions) {
   const activeLocale = getActiveLocale(locales, 'numeral');
   return new OriginalNumberFormat(activeLocale, options);
-} as any;
+};
 
 Object.defineProperty(Intl.NumberFormat, 'prototype', {
   value: OriginalNumberFormat.prototype,
@@ -186,12 +204,12 @@ Object.defineProperty(Intl.NumberFormat, 'supportedLocalesOf', {
 });
 
 // 4. Monkey-patch Intl.DateTimeFormat
-// @ts-ignore - Overriding native Intl constructor
-Intl.DateTimeFormat = function(locales?: string | string[], options?: Intl.DateTimeFormatOptions) {
+// @ts-expect-error - Overriding native Intl constructor
+Intl.DateTimeFormat = function (locales?: string | string[], options?: Intl.DateTimeFormatOptions) {
   // Use numeral locale to ensure digits follow user preference
   const activeLocale = getActiveLocale(locales, 'numeral');
   return new OriginalDateTimeFormat(activeLocale, options);
-} as any;
+};
 
 Object.defineProperty(Intl.DateTimeFormat, 'prototype', {
   value: OriginalDateTimeFormat.prototype,

@@ -64,9 +64,9 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
     };
 
     const currentDims = dims || { w: 38, h: 25 };
-    const isDouble = currentDims.w === 38 && currentDims.h === 25; 
+    const isDouble = currentDims.w === 38 && currentDims.h === 25;
     const labelHeight = isDouble ? 12 : currentDims.h;
-    
+
     // Use the same gaps as LabelPrinter.ts to ensure what you see is what you get
     const innerGap = isDouble ? 1 : 0;
     const outerGap = 0; // Outer gap (pitch) is handled by the printer, not shown in preview
@@ -179,7 +179,7 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
         scrolling='no'
         style={{
           width: `${dims.w}mm`,
-          height: `${showPairedPreview ? (dims.h === 25 ? 25 : dims.h * 2) : (dims.h === 25 ? 12 : dims.h)}mm`, 
+          height: `${showPairedPreview ? (dims.h === 25 ? 25 : dims.h * 2) : dims.h === 25 ? 12 : dims.h}mm`,
           border: 'none',
           display: 'block',
           overflow: 'hidden',

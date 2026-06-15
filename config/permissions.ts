@@ -1,6 +1,6 @@
-import { UserRole } from './employeeRoles';
+import type { UserRole } from './employeeRoles';
 
-export { type UserRole };
+export type { UserRole };
 
 /**
  * Organization-level Access Roles

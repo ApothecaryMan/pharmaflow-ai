@@ -1,7 +1,6 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { TRANSLATIONS } from '../../../../i18n/translations';
-import { type FilterConfig } from '../../../common/FilterPill';
-
+import type { FilterConfig } from '../../../common/FilterPill';
 
 interface UsePOSSearchAndFiltersProps {
   t: typeof TRANSLATIONS.EN.pos;
@@ -10,7 +9,12 @@ interface UsePOSSearchAndFiltersProps {
   updateTab: (id: string, updates: any) => void;
 }
 
-export const usePOSSearchAndFilters = ({ t, activeTab, activeTabId, updateTab }: UsePOSSearchAndFiltersProps) => {
+export const usePOSSearchAndFilters = ({
+  t,
+  activeTab,
+  activeTabId,
+  updateTab,
+}: UsePOSSearchAndFiltersProps) => {
   // Use active tab's search query
   const search = activeTab?.searchQuery || '';
   const setSearch = useCallback(
@@ -25,7 +29,9 @@ export const usePOSSearchAndFilters = ({ t, activeTab, activeTabId, updateTab }:
 
   const [stockFilter, setStockFilter] = useState<'all' | 'in_stock' | 'out_of_stock'>('in_stock');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [activeFilterDropdown, setActiveFilterDropdown] = useState<'category' | 'stock' | null>(null);
+  const [activeFilterDropdown, setActiveFilterDropdown] = useState<'category' | 'stock' | null>(
+    null
+  );
 
   // Filter configurations for POS
   const posFilterConfigs = useMemo<FilterConfig[]>(

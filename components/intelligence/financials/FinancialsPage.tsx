@@ -1,20 +1,23 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
-import type { ProductFinancialItem, FinancialKPIs, CategoryFinancialItem } from '../../../types/intelligence';
+import type {
+  CategoryFinancialItem,
+  FinancialKPIs,
+  ProductFinancialItem,
+} from '../../../types/intelligence';
 import { formatCurrency } from '../../../utils/currency';
 import { TanStackTable } from '../../common/TanStackTable';
-
 
 const categoryColumnHelper = createColumnHelper<CategoryFinancialItem>();
 const productColumnHelper = createColumnHelper<ProductFinancialItem>();
 
+import { useSettings } from '../../../context';
 import { useFinancials } from '../../../hooks/sales/useFinancials';
 import type { FinancialPeriod } from '../../../services/intelligence/intelligenceService';
+import { getDisplayName } from '../../../utils/drugDisplayName';
 import { SegmentedControl } from '../../common/SegmentedControl';
 import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
-import { useSettings } from '../../../context';
-import { getDisplayName } from '../../../utils/drugDisplayName';
 
 interface FinancialsPageProps {
   t: Translations;
@@ -97,15 +100,9 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
           const dist = info.getValue();
           return (
             <div className='flex gap-1.5'>
-              <span className='badge-success !px-1.5 !py-0.5'>
-                A:{dist.a}
-              </span>
-              <span className='badge-info !px-1.5 !py-0.5'>
-                B:{dist.b}
-              </span>
-              <span className='badge-neutral !px-1.5 !py-0.5'>
-                C:{dist.c}
-              </span>
+              <span className='badge-success !px-1.5 !py-0.5'>A:{dist.a}</span>
+              <span className='badge-info !px-1.5 !py-0.5'>B:{dist.b}</span>
+              <span className='badge-neutral !px-1.5 !py-0.5'>C:{dist.c}</span>
             </div>
           );
         },
@@ -205,7 +202,6 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
 
   return (
     <div className='h-full flex flex-col space-y-4 overflow-hidden'>
-
       {/* Tables Section - Simplified since TanStackTable will provide card styling */}
       <div className='flex-1 min-h-0'>
         {activeTab === 'products' ? (
@@ -228,7 +224,10 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
               />
             ) : (
               <div className='bg-(--bg-card) rounded-xl border-2 border-(--border-primary) dark:border-(--border-divider) p-12 text-center h-full flex flex-col items-center justify-center text-gray-500 text-sm'>
-                <span className='material-symbols-rounded mb-2 opacity-20' style={{ fontSize: 'var(--icon-xl)' }}>
+                <span
+                  className='material-symbols-rounded mb-2 opacity-20'
+                  style={{ fontSize: 'var(--icon-xl)' }}
+                >
                   inventory
                 </span>
                 <p>{t.intelligence.financials.sections.noData}</p>

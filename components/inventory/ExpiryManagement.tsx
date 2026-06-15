@@ -1,25 +1,26 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import React, { useMemo, useState } from 'react';
+import type React from 'react';
+import { useMemo, useState } from 'react';
+import { StorageKeys } from '../../config/storageKeys';
+import { useAlert, useSettings } from '../../context';
+import { useData } from '../../context/DataContext';
 import type { Drug, StockBatch } from '../../types';
-import { formatCurrencyParts, formatCompactCurrencyParts } from '../../utils/currency';
+import { formatCompactCurrencyParts, formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
+import { idGenerator } from '../../utils/idGenerator';
 import { formatStock } from '../../utils/inventory';
-import { SmallCard } from '../common/SmallCard';
+import * as stockOps from '../../utils/stockOperations';
+import { storage } from '../../utils/storage';
 import { ContextMenuItem, useContextMenu } from '../common/ContextMenu';
+import type { FilterConfig } from '../common/FilterPill';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
+import { SmallCard } from '../common/SmallCard';
 import { SmartInput } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
-import { type FilterConfig } from '../common/FilterPill';
 import { useStatusBar } from '../layout/StatusBar';
-import { useData } from '../../context/DataContext';
-import { useAlert, useSettings } from '../../context';
-import * as stockOps from '../../utils/stockOperations';
-import { idGenerator } from '../../utils/idGenerator';
-import { storage } from '../../utils/storage';
-import { StorageKeys } from '../../config/storageKeys';
-import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 
 interface ExpiryManagementProps {
   inventory: Drug[];
@@ -51,7 +52,6 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
   const { success, error } = useAlert();
   const { showMenu, hideMenu } = useContextMenu();
 
-
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -80,10 +80,11 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
     try {
       const typeStr = activeModal === 'damage' ? 'damage' : 'return_supplier';
       const reasonStr = activeModal === 'damage' ? 'expired' : 'other';
-      const defaultNote = activeModal === 'damage' ? 'Damaged from Expiry Module' : 'Returned from Expiry Module';
+      const defaultNote =
+        activeModal === 'damage' ? 'Damaged from Expiry Module' : 'Returned from Expiry Module';
       const entityType = activeModal === 'damage' ? 'generic' : 'returns';
       const referenceId = idGenerator.generateSync(entityType as any, activeBranchId);
-      
+
       const mutation = await stockOps.deductFromBatch(
         selectedActionBatch.drug,
         selectedActionBatch.id,
@@ -104,17 +105,20 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
       );
 
       success(
-        t.expiryManagement?.actionSuccess || 
-        `Successfully ${activeModal === 'damage' ? 'damaged' : 'returned'} stock`
+        t.expiryManagement?.actionSuccess ||
+          `Successfully ${activeModal === 'damage' ? 'damaged' : 'returned'} stock`
       );
-      
+
       if (onUpdateInventory && mutation) {
-        onUpdateInventory({ ...selectedActionBatch.drug, stock: mutation.newStock }, selectedActionBatch); 
+        onUpdateInventory(
+          { ...selectedActionBatch.drug, stock: mutation.newStock },
+          selectedActionBatch
+        );
       }
       if (onBatchesChanged) {
         onBatchesChanged();
       }
-      
+
       // Update local batches logic ideally triggers from parent re-fetch, but typically we close the modal and rely on that.
       setActiveModal(null);
     } catch (err) {
@@ -124,17 +128,17 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
   };
 
   const getRowActions = (row: BatchWithDrug) => (
-    <div className="font-sans min-w-[160px]">
-      <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-gray-800">
+    <div className='font-sans min-w-[160px]'>
+      <div className='px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-gray-800'>
         {t.expiryManagement?.actions || 'Actions'} {row.batchNumber ? `- ${row.batchNumber}` : ''}
       </div>
       <ContextMenuItem
-        icon="keyboard_return"
+        icon='keyboard_return'
         label={t.expiryManagement?.returnToSupplier || 'Return to Supplier'}
         onClick={() => openActionModal(row, 'return')}
       />
       <ContextMenuItem
-        icon="delete_forever"
+        icon='delete_forever'
         label={t.expiryManagement?.damageStock || 'Damage Stock'}
         danger
         onClick={() => openActionModal(row, 'damage')}
@@ -201,18 +205,29 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
       },
     };
   }, [batches, inventory, getVerifiedDate]);
- 
-  const expiryFilterConfig = useMemo<FilterConfig>(() => ({
-    id: 'expiryDate',
-    label: t.expiryManagement?.expiryDate || 'Expiry Status',
-    icon: 'event_busy',
-    mode: 'single',
-    options: [
-      { label: t.expiryManagement?.expired || 'Expired', value: 'expired', icon: 'event_busy' },
-      { label: t.expiryManagement?.nearExpiry30 || '< 30 Days', value: 'near30', icon: 'warning' },
-      { label: t.expiryManagement?.nearExpiry90 || '< 90 Days', value: 'near90', icon: 'calendar_month' },
-    ],
-  }), [t]);
+
+  const expiryFilterConfig = useMemo<FilterConfig>(
+    () => ({
+      id: 'expiryDate',
+      label: t.expiryManagement?.expiryDate || 'Expiry Status',
+      icon: 'event_busy',
+      mode: 'single',
+      options: [
+        { label: t.expiryManagement?.expired || 'Expired', value: 'expired', icon: 'event_busy' },
+        {
+          label: t.expiryManagement?.nearExpiry30 || '< 30 Days',
+          value: 'near30',
+          icon: 'warning',
+        },
+        {
+          label: t.expiryManagement?.nearExpiry90 || '< 90 Days',
+          value: 'near90',
+          icon: 'calendar_month',
+        },
+      ],
+    }),
+    [t]
+  );
 
   const filteredData = enrichedBatches;
 
@@ -226,10 +241,14 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
           const item = row.original;
           const drug = item.drug;
           return (
-            <div className="flex flex-col">
-              {drug.barcode && <span className="font-mono text-xs text-gray-600 dark:text-gray-400">BC: {drug.barcode}</span>}
-              <span className="font-mono text-xs text-gray-500">
-                {item.batchNumber ? `B: ${item.batchNumber}` : `ID: ${item.id.substring(0,6)}`}
+            <div className='flex flex-col'>
+              {drug.barcode && (
+                <span className='font-mono text-xs text-gray-600 dark:text-gray-400'>
+                  BC: {drug.barcode}
+                </span>
+              )}
+              <span className='font-mono text-xs text-gray-500'>
+                {item.batchNumber ? `B: ${item.batchNumber}` : `ID: ${item.id.substring(0, 6)}`}
               </span>
             </div>
           );
@@ -244,9 +263,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
           const item = row.original;
           const drug = item.drug;
           const displayName = getDisplayName(drug, textTransform);
-          return (
-            <span className="font-bold text-gray-900 dark:text-gray-100">{displayName}</span>
-          );
+          return <span className='font-bold text-gray-900 dark:text-gray-100'>{displayName}</span>;
         },
         meta: { width: 170 }, // Decreased width
       },
@@ -256,10 +273,10 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
         cell: ({ row }) => {
           const item = row.original;
           return (
-            <span className="font-medium text-gray-800 dark:text-gray-200">
+            <span className='font-medium text-gray-800 dark:text-gray-200'>
               {formatStock(item.quantity, item.drug.unitsPerPack, {
                 packs: t.expiryManagement?.details?.packs || 'Packs',
-                outOfStock: t.expiryManagement?.status?.outOfStock || 'Out of Stock'
+                outOfStock: t.expiryManagement?.status?.outOfStock || 'Out of Stock',
               })}
             </span>
           );
@@ -272,8 +289,8 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
         cell: ({ row }) => {
           const parts = formatCurrencyParts(row.original.costPrice);
           return (
-            <span className="text-gray-600 dark:text-gray-400 font-medium">
-              {parts.amount} <span className="text-xs font-normal">{parts.symbol}</span>
+            <span className='text-gray-600 dark:text-gray-400 font-medium'>
+              {parts.amount} <span className='text-xs font-normal'>{parts.symbol}</span>
             </span>
           );
         },
@@ -288,8 +305,8 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
           const loss = getValue() as number;
           const parts = formatCompactCurrencyParts(loss);
           return (
-            <span className="text-red-600 dark:text-red-400 font-bold">
-              {parts.amount} <span className="text-xs font-normal">{parts.symbol}</span>
+            <span className='text-red-600 dark:text-red-400 font-bold'>
+              {parts.amount} <span className='text-xs font-normal'>{parts.symbol}</span>
             </span>
           );
         },
@@ -301,15 +318,17 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
           const expiry = parseExpiryEndOfMonth(row.original.expiryDate);
           const now = getVerifiedDate();
           const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-          
+
           let colorClass = 'text-green-600 bg-green-50 dark:bg-green-900/20';
           let statusText = t.expiryManagement?.status?.valid || 'Valid';
-          
+
           if (expiry < today) {
             colorClass = 'text-red-600 bg-red-50 dark:bg-red-900/20 shadow-red-500/10 font-bold';
             statusText = t.expiryManagement?.status?.expired || 'Expired';
           } else {
-            const daysLeft = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            const daysLeft = Math.ceil(
+              (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+            );
             if (daysLeft <= 30) {
               colorClass = 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 font-bold';
               statusText = `< 30 ${t.expiryManagement?.time?.days || 'Days'}`;
@@ -320,8 +339,8 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
           }
 
           return (
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-sm font-medium tabular-nums">
+            <div className='flex flex-col items-center gap-1'>
+              <span className='text-sm font-medium tabular-nums'>
                 {expiry.toLocaleDateString('en-US', { month: '2-digit', year: 'numeric' })}
               </span>
               <span className={`text-[10px] px-2 py-0.5 rounded-full ${colorClass}`}>
@@ -336,53 +355,53 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
   }, [t, getVerifiedDate, textTransform]);
 
   return (
-    <div className="h-full flex flex-col gap-6 animate-fade-in">
+    <div className='h-full flex flex-col gap-6 animate-fade-in'>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
+      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0'>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight page-title">
+          <h1 className='text-2xl font-bold tracking-tight page-title'>
             {t.expiryManagement?.title || 'Expiry Management'}
           </h1>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 shrink-0">
+      <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 shrink-0'>
         <SmallCard
           title={t.expiryManagement?.expiredItems || 'Expired Items'}
           value={stats.expiredValue}
-          type="currency"
+          type='currency'
           currencyLabel={formatCurrencyParts(0).symbol}
-          icon="event_busy"
-          iconColor="rose"
+          icon='event_busy'
+          iconColor='rose'
           subValue={stats.expiredCount.toString()}
         />
 
         <SmallCard
           title={t.expiryManagement?.nearExpiry30 || 'Expiring < 30 Days'}
           value={stats.near30Value}
-          type="currency"
+          type='currency'
           currencyLabel={formatCurrencyParts(0).symbol}
-          icon="warning"
-          iconColor="orange"
+          icon='warning'
+          iconColor='orange'
           subValue={stats.near30Count.toString()}
         />
 
         <SmallCard
           title={t.expiryManagement?.nearExpiry90 || 'Expiring < 90 Days'}
           value={stats.near90Value}
-          type="currency"
+          type='currency'
           currencyLabel={formatCurrencyParts(0).symbol}
-          icon="calendar_month"
-          iconColor="amber"
+          icon='calendar_month'
+          iconColor='amber'
           subValue={stats.near90Count.toString()}
         />
       </div>
 
       {/* Filters & Table Wrapper */}
-      <div className="flex-1 flex flex-col min-h-0 gap-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0">
-          <div className="w-full max-w-xl">
+      <div className='flex-1 flex flex-col min-h-0 gap-4'>
+        <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0'>
+          <div className='w-full max-w-xl'>
             <SearchInput
               value={searchQuery}
               onSearchChange={setSearchQuery}
@@ -391,7 +410,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
               color={color}
               filterConfigs={[expiryFilterConfig]}
               activeFilters={activeFilters}
-              onUpdateFilter={(gid, vals) => setActiveFilters(prev => ({ ...prev, [gid]: vals }))}
+              onUpdateFilter={(gid, vals) => setActiveFilters((prev) => ({ ...prev, [gid]: vals }))}
             />
           </div>
 
@@ -403,15 +422,17 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
               { label: t.expiryManagement?.nearExpiry90 || '< 90 Days', value: 'near90' },
             ]}
             value={activeFilters['expiryDate']?.[0] || 'all'}
-            onChange={(val) => setActiveFilters(prev => ({ ...prev, expiryDate: val === 'all' ? [] : [val] }))}
+            onChange={(val) =>
+              setActiveFilters((prev) => ({ ...prev, expiryDate: val === 'all' ? [] : [val] }))
+            }
           />
         </div>
 
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className='flex-1 min-h-0 overflow-hidden'>
           <TanStackTable
             data={filteredData}
             columns={columns}
-            tableId="expiry_management_table"
+            tableId='expiry_management_table'
             color={color}
             enableTopToolbar={false}
             enableSearch={false}
@@ -424,9 +445,11 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
             emptyMessage={t.expiryManagement?.noRecords || 'No batches found matching criteria'}
             enablePagination={true}
             enableShowAll={true}
-            pageSize="auto"
+            pageSize='auto'
             enableVirtualization={false}
-            onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row as BatchWithDrug))}
+            onRowContextMenu={(e, row) =>
+              showMenu(e.clientX, e.clientY, getRowActions(row as BatchWithDrug))
+            }
           />
         </div>
       </div>
@@ -435,63 +458,81 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
       <Modal
         isOpen={activeModal !== null}
         onClose={() => setActiveModal(null)}
-        title={activeModal === 'damage' ? (t.expiryManagement?.damageStock || 'Damage Stock') : (t.expiryManagement?.returnToSupplier || 'Return to Supplier')}
+        title={
+          activeModal === 'damage'
+            ? t.expiryManagement?.damageStock || 'Damage Stock'
+            : t.expiryManagement?.returnToSupplier || 'Return to Supplier'
+        }
         icon={activeModal === 'damage' ? 'delete_forever' : 'keyboard_return'}
-        size="md"
+        size='md'
       >
-        <div className="p-6 space-y-6">
-          <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
-            <h4 className="font-bold text-gray-900 dark:text-gray-100">{selectedActionBatch?.drug.name}</h4>
-            <div className="mt-1 flex text-sm text-gray-500 gap-4">
-              <span>{t.expiryManagement?.batch || 'Batch'}: {selectedActionBatch?.batchNumber || 'N/A'}</span>
-              <span>{t.expiryManagement?.available || 'Available'}: <span className="font-bold">{selectedActionBatch?.quantity}</span></span>
+        <div className='p-6 space-y-6'>
+          <div className='bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700'>
+            <h4 className='font-bold text-gray-900 dark:text-gray-100'>
+              {selectedActionBatch?.drug.name}
+            </h4>
+            <div className='mt-1 flex text-sm text-gray-500 gap-4'>
+              <span>
+                {t.expiryManagement?.batch || 'Batch'}: {selectedActionBatch?.batchNumber || 'N/A'}
+              </span>
+              <span>
+                {t.expiryManagement?.available || 'Available'}:{' '}
+                <span className='font-bold'>{selectedActionBatch?.quantity}</span>
+              </span>
             </div>
             {activeModal === 'damage' && (
-              <div className="mt-2 text-sm text-red-600 dark:text-red-400 font-medium bg-red-50 dark:bg-red-900/20 p-2 rounded-lg inline-block">
-                {t.expiryManagement?.potentialLoss || 'Potential Loss'}: {formatCurrencyParts((selectedActionBatch?.quantity || 0) * (selectedActionBatch?.costPrice || 0)).amount} {formatCurrencyParts(0).symbol}
+              <div className='mt-2 text-sm text-red-600 dark:text-red-400 font-medium bg-red-50 dark:bg-red-900/20 p-2 rounded-lg inline-block'>
+                {t.expiryManagement?.potentialLoss || 'Potential Loss'}:{' '}
+                {
+                  formatCurrencyParts(
+                    (selectedActionBatch?.quantity || 0) * (selectedActionBatch?.costPrice || 0)
+                  ).amount
+                }{' '}
+                {formatCurrencyParts(0).symbol}
               </div>
             )}
           </div>
 
-          <div className="space-y-4">
+          <div className='space-y-4'>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                 {t.expiryManagement?.quantity || 'Quantity'}
               </label>
               <input
-                type="number"
+                type='number'
                 max={selectedActionBatch?.quantity}
                 value={actionQty}
                 onChange={(e) => setActionQty(e.target.value)}
-                className="w-full px-3 py-2 border rounded-xl dark:bg-gray-800 dark:border-gray-700 outline-none focus:ring-2 focus:ring-primary-500"
+                className='w-full px-3 py-2 border rounded-xl dark:bg-gray-800 dark:border-gray-700 outline-none focus:ring-2 focus:ring-primary-500'
               />
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                {t.expiryManagement?.notes || 'Notes'} ({t.expiryManagement?.optional || 'Optional'})
+              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                {t.expiryManagement?.notes || 'Notes'} ({t.expiryManagement?.optional || 'Optional'}
+                )
               </label>
               <SmartInput
                 value={actionNotes}
                 onChange={(e) => setActionNotes(e.target.value)}
                 placeholder={t.expiryManagement?.addNotes || 'Add any reason or details...'}
-                className="w-full"
+                className='w-full'
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+          <div className='flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800'>
             <button
               onClick={() => setActiveModal(null)}
-              className="px-4 py-2 font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 rounded-xl transition-colors"
+              className='px-4 py-2 font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 rounded-xl transition-colors'
             >
               {t.expiryManagement?.cancel || 'Cancel'}
             </button>
             <button
               onClick={handleSaveAction}
               className={`px-4 py-2 font-medium text-white rounded-xl transition-colors ${
-                activeModal === 'damage' 
-                  ? 'bg-red-600 hover:bg-red-700' 
+                activeModal === 'damage'
+                  ? 'bg-red-600 hover:bg-red-700'
                   : `bg-${color}-600 hover:bg-${color}-700`
               }`}
             >

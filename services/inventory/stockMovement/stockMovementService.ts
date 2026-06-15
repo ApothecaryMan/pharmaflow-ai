@@ -1,21 +1,21 @@
-import { BaseReportService, BaseReportFilters } from '../../core/baseReportService';
-import { idGenerator } from '../../../utils/idGenerator';
-import { settingsService } from '../../settings/settingsService';
 import { supabase } from '../../../lib/supabase';
+import { idGenerator } from '../../../utils/idGenerator';
 import { authService } from '../../auth/authService';
-import type { 
-  StockMovement, 
-  StockMovementFilters, 
-  StockMovementService, 
-  StockMovementSummary, 
-  StockMovementKPISummary, 
-  PaginatedStockMovements 
+import { BaseReportFilters, BaseReportService } from '../../core/baseReportService';
+import { settingsService } from '../../settings/settingsService';
+import type {
+  PaginatedStockMovements,
+  StockMovement,
+  StockMovementFilters,
+  StockMovementKPISummary,
+  StockMovementService,
+  StockMovementSummary,
 } from './types';
 
-class StockMovementServiceImpl 
-  extends BaseReportService<StockMovement, StockMovementFilters> 
-  implements StockMovementService {
-  
+class StockMovementServiceImpl
+  extends BaseReportService<StockMovement, StockMovementFilters>
+  implements StockMovementService
+{
   protected tableName = 'stock_movements';
 
   protected mapDbToDomain(db: any): StockMovement {
@@ -70,7 +70,8 @@ class StockMovementServiceImpl
     if (m.reviewedBy) db.reviewed_by = m.reviewedBy;
     if (m.reviewedAt) db.reviewed_at = m.reviewedAt;
     if (m.expiryDate) {
-      if (m.expiryDate.length === 7 && /^\d{4}-\d{2}$/.test(m.expiryDate)) db.expiry_date = `${m.expiryDate}-01`;
+      if (m.expiryDate.length === 7 && /^\d{4}-\d{2}$/.test(m.expiryDate))
+        db.expiry_date = `${m.expiryDate}-01`;
       else db.expiry_date = m.expiryDate;
     }
     if (m.publicPrice !== undefined) db.public_price_snapshot = m.publicPrice;
@@ -85,7 +86,7 @@ class StockMovementServiceImpl
   async getAll(branchId?: string): Promise<StockMovement[]> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    
+
     const results = await this.getHistory({ branchId: effectiveBranchId } as StockMovementFilters);
     return results as StockMovement[];
   }
@@ -133,7 +134,9 @@ class StockMovementServiceImpl
   /**
    * Overriding getHistory to handle pagination and custom filters like drugId, status, type.
    */
-  async getHistory(filters: StockMovementFilters): Promise<StockMovement[] | PaginatedStockMovements> {
+  async getHistory(
+    filters: StockMovementFilters
+  ): Promise<StockMovement[] | PaginatedStockMovements> {
     try {
       let query = (supabase as any).from(this.tableName).select('*', { count: 'exact' });
 
@@ -162,13 +165,13 @@ class StockMovementServiceImpl
 
       if (error) throw error;
 
-      const results = (data || []).map(item => this.mapDbToDomain(item));
+      const results = (data || []).map((item) => this.mapDbToDomain(item));
 
       if (filters.page !== undefined && filters.pageSize !== undefined) {
         return {
           data: results,
           total: count || 0,
-          hasMore: (count || 0) > (filters.page * filters.pageSize),
+          hasMore: (count || 0) > filters.page * filters.pageSize,
         } as PaginatedStockMovements;
       }
 
@@ -179,15 +182,28 @@ class StockMovementServiceImpl
     }
   }
 
-  async getSummaryByDrug(drugId: string, filters: StockMovementFilters): Promise<StockMovementSummary> {
-    const history = await this.getHistory({ ...filters, drugId, page: undefined }) as StockMovement[];
+  async getSummaryByDrug(
+    drugId: string,
+    filters: StockMovementFilters
+  ): Promise<StockMovementSummary> {
+    const history = (await this.getHistory({
+      ...filters,
+      drugId,
+      page: undefined,
+    })) as StockMovement[];
 
     const summary = history.reduce(
       (acc, m) => {
         const qty = Math.abs(m.quantity);
-        if (['purchase', 'return_customer', 'transfer_in', 'initial'].includes(m.type) || (m.type === 'adjustment' && m.quantity > 0)) {
+        if (
+          ['purchase', 'return_customer', 'transfer_in', 'initial'].includes(m.type) ||
+          (m.type === 'adjustment' && m.quantity > 0)
+        ) {
           acc.totalIn += qty;
-        } else if (['sale', 'return_supplier', 'transfer_out', 'damage'].includes(m.type) || (m.type === 'adjustment' && m.quantity < 0)) {
+        } else if (
+          ['sale', 'return_supplier', 'transfer_out', 'damage'].includes(m.type) ||
+          (m.type === 'adjustment' && m.quantity < 0)
+        ) {
           acc.totalOut += qty;
         }
 
@@ -210,14 +226,20 @@ class StockMovementServiceImpl
   }
 
   async getKPISummary(filters: StockMovementFilters): Promise<StockMovementKPISummary> {
-    const history = await this.getHistory({ ...filters, page: undefined }) as StockMovement[];
+    const history = (await this.getHistory({ ...filters, page: undefined })) as StockMovement[];
 
     return history.reduce(
       (acc, m) => {
         const qty = Math.abs(m.quantity);
-        if (['purchase', 'return_customer', 'transfer_in', 'initial'].includes(m.type) || (m.type === 'adjustment' && m.quantity > 0)) {
+        if (
+          ['purchase', 'return_customer', 'transfer_in', 'initial'].includes(m.type) ||
+          (m.type === 'adjustment' && m.quantity > 0)
+        ) {
           acc.totalStockIn += qty;
-        } else if (['sale', 'return_supplier', 'transfer_out', 'damage'].includes(m.type) || (m.type === 'adjustment' && m.quantity < 0)) {
+        } else if (
+          ['sale', 'return_supplier', 'transfer_out', 'damage'].includes(m.type) ||
+          (m.type === 'adjustment' && m.quantity < 0)
+        ) {
           acc.totalStockOut += qty;
         }
 
@@ -238,21 +260,30 @@ class StockMovementServiceImpl
     await this.updateMovementStatus(id, 'rejected', userId);
   }
 
-  private async updateMovementStatus(id: string, status: 'approved' | 'rejected', userId: string): Promise<void> {
+  private async updateMovementStatus(
+    id: string,
+    status: 'approved' | 'rejected',
+    userId: string
+  ): Promise<void> {
     const reviewedAt = new Date().toISOString();
-    
-    const { error } = await (supabase as any).from(this.tableName)
+
+    const { error } = await (supabase as any)
+      .from(this.tableName)
       .update({ status, reviewed_by: userId, reviewed_at: reviewedAt })
       .eq('id', id);
     if (error) throw error;
   }
 
-  async logMovementsBulk(movements: (Omit<StockMovement, 'id' | 'timestamp' | 'performedBy'> & { performedBy?: string })[]): Promise<StockMovement[]> {
+  async logMovementsBulk(
+    movements: (Omit<StockMovement, 'id' | 'timestamp' | 'performedBy'> & {
+      performedBy?: string;
+    })[]
+  ): Promise<StockMovement[]> {
     const settings = await settingsService.getAll();
     const timestamp = new Date().toISOString();
     const activeBranchId = settings.activeBranchId || settings.branchCode;
 
-    const newMovements = movements.map(m => ({
+    const newMovements = movements.map((m) => ({
       ...m,
       id: idGenerator.uuid(),
       branchId: m.branchId || activeBranchId,
@@ -260,7 +291,7 @@ class StockMovementServiceImpl
       timestamp,
     }));
 
-    const dbMovements = newMovements.map(m => this.mapDomainToDb(m as StockMovement));
+    const dbMovements = newMovements.map((m) => this.mapDomainToDb(m as StockMovement));
     const { error } = await (supabase as any).from(this.tableName).insert(dbMovements);
     if (error) throw error;
 
@@ -270,19 +301,20 @@ class StockMovementServiceImpl
   calculateMovementValue(movement: StockMovement, drug: any): number {
     const qty = Math.abs(movement.quantity);
     if (['sale', 'return_customer'].includes(movement.type)) {
-      const price = movement.publicPrice !== undefined ? movement.publicPrice : (drug?.publicPrice || 0);
+      const price =
+        movement.publicPrice !== undefined ? movement.publicPrice : drug?.publicPrice || 0;
       return qty * price;
     }
-    const cost = movement.costPrice !== undefined ? movement.costPrice : (drug?.costPrice || 0);
+    const cost = movement.costPrice !== undefined ? movement.costPrice : drug?.costPrice || 0;
     return qty * cost;
   }
-  
+
   async setContext(
-    type: string, 
-    refId?: string, 
-    perfId?: string, 
-    perfName?: string, 
-    reason?: string, 
+    type: string,
+    refId?: string,
+    perfId?: string,
+    perfName?: string,
+    reason?: string,
     notes?: string
   ): Promise<void> {
     const { error } = await supabase.rpc('set_stock_context', {
@@ -291,7 +323,7 @@ class StockMovementServiceImpl
       p_perf_id: perfId || null,
       p_perf_name: perfName || null,
       p_reason: reason || null,
-      p_notes: notes || null
+      p_notes: notes || null,
     });
     if (error) console.error('[StockMovementService] Failed to set context:', error);
   }

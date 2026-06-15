@@ -26,13 +26,14 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { CARD_BASE } from '../../utils/themeStyles';
 import { useSettings } from '../../context/SettingsContext';
+import { CARD_BASE } from '../../utils/themeStyles';
 import { PerformanceGoalsCard } from './PerformanceGoalsCard';
 
 interface DashboardExperimentsProps {
   color: string;
-  t: Translations; slations;
+  t: Translations;
+  slations;
   language: string;
 }
 
@@ -93,9 +94,39 @@ const dailyTrafficData = [
 
 // 6. Radial Bar - Performance Goals
 const performanceGoalsData = [
-  { name: 'Sales Target', translationKey: 'salesTarget', icon: 'ads_click', value: 78, fill: '#3b82f6', bgLight: '#bfdbfe', bgDark: '#1e3a8a', textLight: '#1d4ed8', textDark: '#dbeafe' },
-  { name: 'Customer Satisfaction', translationKey: 'customerSatisfaction', icon: 'sentiment_very_satisfied', value: 92, fill: '#10b981', bgLight: '#bbf7d0', bgDark: '#064e3b', textLight: '#047857', textDark: '#d1fae5' },
-  { name: 'Inventory Turnover', translationKey: 'inventoryTurnover', icon: 'inventory_2', value: 65, fill: '#f59e0b', bgLight: '#fed7aa', bgDark: '#78350f', textLight: '#b45309', textDark: '#fef3c7' },
+  {
+    name: 'Sales Target',
+    translationKey: 'salesTarget',
+    icon: 'ads_click',
+    value: 78,
+    fill: '#3b82f6',
+    bgLight: '#bfdbfe',
+    bgDark: '#1e3a8a',
+    textLight: '#1d4ed8',
+    textDark: '#dbeafe',
+  },
+  {
+    name: 'Customer Satisfaction',
+    translationKey: 'customerSatisfaction',
+    icon: 'sentiment_very_satisfied',
+    value: 92,
+    fill: '#10b981',
+    bgLight: '#bbf7d0',
+    bgDark: '#064e3b',
+    textLight: '#047857',
+    textDark: '#d1fae5',
+  },
+  {
+    name: 'Inventory Turnover',
+    translationKey: 'inventoryTurnover',
+    icon: 'inventory_2',
+    value: 65,
+    fill: '#f59e0b',
+    bgLight: '#fed7aa',
+    bgDark: '#78350f',
+    textLight: '#b45309',
+    textDark: '#fef3c7',
+  },
 ];
 
 // 7. Progress Bars - Task Completion
@@ -253,34 +284,67 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
   };
 
   const labels = {
-    title: t?.dashboardExperiments?.title || (isRTL ? 'تجارب بطاقات لوحة التحكم' : 'Dashboard Card Experiments'),
-    card1: t?.dashboardExperiments?.card1 || (isRTL ? 'اتجاه المبيعات (مخطط خطي)' : 'Sales Trend (Line Chart)'),
-    card2: t?.dashboardExperiments?.card2 || (isRTL ? 'الإيرادات حسب الفئة (مخطط شريطي)' : 'Revenue by Category (Bar Chart)'),
-    card3: t?.dashboardExperiments?.card3 || (isRTL ? 'شرائح العملاء (مخطط دائري)' : 'Customer Segments (Pie Chart)'),
-    card4: t?.dashboardExperiments?.card4 || (isRTL ? 'حالة المخزون (مخطط دائري مفرغ)' : 'Stock Status (Donut Chart)'),
-    card5: t?.dashboardExperiments?.card5 || (isRTL ? 'حركة الزوار اليومية (مخطط مساحي)' : 'Daily Traffic (Area Chart)'),
-    card6: t?.dashboardExperiments?.card6 || (isRTL ? 'أهداف الأداء (مخطط شعاعي)' : 'Performance Goals (Radial Bar)'),
-    card7: t?.dashboardExperiments?.card7 || (isRTL ? 'إنجاز المهام (أشرطة التقدم)' : 'Task Completion (Progress Bars)'),
-    card8: t?.dashboardExperiments?.card8 || (isRTL ? 'إحصائية سريعة (مع خط مصغر)' : 'Quick Stat (with Sparkline)'),
-    card9: t?.dashboardExperiments?.card9 || (isRTL ? 'نشاط أسبوعي (خريطة حرارية)' : 'Weekly Activity (Heatmap)'),
-    card10: t?.dashboardExperiments?.card10 || (isRTL ? 'السعر مقابل المبيعات (مخطط انتشار)' : 'Price vs Sales (Scatter Plot)'),
-    card11: t?.dashboardExperiments?.card11 || (isRTL ? 'المبيعات الشهرية (أعمدة مكدسة)' : 'Monthly Sales (Stacked Bar)'),
+    title:
+      t?.dashboardExperiments?.title ||
+      (isRTL ? 'تجارب بطاقات لوحة التحكم' : 'Dashboard Card Experiments'),
+    card1:
+      t?.dashboardExperiments?.card1 ||
+      (isRTL ? 'اتجاه المبيعات (مخطط خطي)' : 'Sales Trend (Line Chart)'),
+    card2:
+      t?.dashboardExperiments?.card2 ||
+      (isRTL ? 'الإيرادات حسب الفئة (مخطط شريطي)' : 'Revenue by Category (Bar Chart)'),
+    card3:
+      t?.dashboardExperiments?.card3 ||
+      (isRTL ? 'شرائح العملاء (مخطط دائري)' : 'Customer Segments (Pie Chart)'),
+    card4:
+      t?.dashboardExperiments?.card4 ||
+      (isRTL ? 'حالة المخزون (مخطط دائري مفرغ)' : 'Stock Status (Donut Chart)'),
+    card5:
+      t?.dashboardExperiments?.card5 ||
+      (isRTL ? 'حركة الزوار اليومية (مخطط مساحي)' : 'Daily Traffic (Area Chart)'),
+    card6:
+      t?.dashboardExperiments?.card6 ||
+      (isRTL ? 'أهداف الأداء (مخطط شعاعي)' : 'Performance Goals (Radial Bar)'),
+    card7:
+      t?.dashboardExperiments?.card7 ||
+      (isRTL ? 'إنجاز المهام (أشرطة التقدم)' : 'Task Completion (Progress Bars)'),
+    card8:
+      t?.dashboardExperiments?.card8 ||
+      (isRTL ? 'إحصائية سريعة (مع خط مصغر)' : 'Quick Stat (with Sparkline)'),
+    card9:
+      t?.dashboardExperiments?.card9 ||
+      (isRTL ? 'نشاط أسبوعي (خريطة حرارية)' : 'Weekly Activity (Heatmap)'),
+    card10:
+      t?.dashboardExperiments?.card10 ||
+      (isRTL ? 'السعر مقابل المبيعات (مخطط انتشار)' : 'Price vs Sales (Scatter Plot)'),
+    card11:
+      t?.dashboardExperiments?.card11 ||
+      (isRTL ? 'المبيعات الشهرية (أعمدة مكدسة)' : 'Monthly Sales (Stacked Bar)'),
     card12: t?.dashboardExperiments?.card12 || (isRTL ? 'قمع المبيعات' : 'Sales Funnel'),
     card13: t?.dashboardExperiments?.card13 || (isRTL ? 'مؤشر الهدف' : 'Target Gauge'),
-    card14: t?.dashboardExperiments?.card14 || (isRTL ? 'أفضل المنتجات (أعمدة أفقية)' : 'Top Products (Horizontal Bar)'),
-    card15: t?.dashboardExperiments?.card15 || (isRTL ? 'الإيرادات مقابل الطلبات (مخطط مركب)' : 'Revenue vs Orders (Composed)'),
-    totalRevenue: t?.dashboardExperiments?.totalRevenue || (isRTL ? 'إجمالي الإيرادات' : 'Total Revenue'),
-    vsLastMonth: t?.dashboardExperiments?.vsLastMonth || (isRTL ? 'مقارنة بالشهر الماضي' : 'vs last month'),
+    card14:
+      t?.dashboardExperiments?.card14 ||
+      (isRTL ? 'أفضل المنتجات (أعمدة أفقية)' : 'Top Products (Horizontal Bar)'),
+    card15:
+      t?.dashboardExperiments?.card15 ||
+      (isRTL ? 'الإيرادات مقابل الطلبات (مخطط مركب)' : 'Revenue vs Orders (Composed)'),
+    totalRevenue:
+      t?.dashboardExperiments?.totalRevenue || (isRTL ? 'إجمالي الإيرادات' : 'Total Revenue'),
+    vsLastMonth:
+      t?.dashboardExperiments?.vsLastMonth || (isRTL ? 'مقارنة بالشهر الماضي' : 'vs last month'),
     morning: t?.dashboardExperiments?.morning || (isRTL ? 'صباحاً' : 'Morning'),
     afternoon: t?.dashboardExperiments?.afternoon || (isRTL ? 'ظهراً' : 'Afternoon'),
     evening: t?.dashboardExperiments?.evening || (isRTL ? 'مساءً' : 'Evening'),
-    targetAchieved: t?.dashboardExperiments?.targetAchieved || (isRTL ? 'تحقيق الهدف' : 'Target Achieved'),
+    targetAchieved:
+      t?.dashboardExperiments?.targetAchieved || (isRTL ? 'تحقيق الهدف' : 'Target Achieved'),
     salesTarget: t?.dashboardExperiments?.salesTarget || (isRTL ? 'هدف المبيعات' : 'Sales Target'),
-    customerSatisfaction: t?.dashboardExperiments?.customerSatisfaction || (isRTL ? 'رضا العملاء' : 'Customer Satisfaction'),
-    inventoryTurnover: t?.dashboardExperiments?.inventoryTurnover || (isRTL ? 'معدل دوران المخزون' : 'Inventory Turnover'),
+    customerSatisfaction:
+      t?.dashboardExperiments?.customerSatisfaction ||
+      (isRTL ? 'رضا العملاء' : 'Customer Satisfaction'),
+    inventoryTurnover:
+      t?.dashboardExperiments?.inventoryTurnover ||
+      (isRTL ? 'معدل دوران المخزون' : 'Inventory Turnover'),
   };
-
-
 
   // Get heatmap color based on value
   const getHeatmapColor = (value: number) => {
@@ -314,7 +378,9 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
         {/* Card 1: Line Chart - Sales Trend */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-72 flex flex-col`}>
           <h3 className='text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2'>
-            <span className='material-symbols-rounded text-primary-500 text-[20px]'>show_chart</span>
+            <span className='material-symbols-rounded text-primary-500 text-[20px]'>
+              show_chart
+            </span>
             {labels.card1}
           </h3>
           <div className='flex-1' dir='ltr'>
@@ -385,7 +451,12 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
                   tick={{ fill: chartStyle.tick, fontSize: 10 }}
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
-                <Bar dataKey='revenue' fill='url(#barGradient1)' radius={[6, 6, 0, 0]} activeBar={{ fillOpacity: 0.85 }} />
+                <Bar
+                  dataKey='revenue'
+                  fill='url(#barGradient1)'
+                  radius={[6, 6, 0, 0]}
+                  activeBar={{ fillOpacity: 0.85 }}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -809,7 +880,13 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
                   radius={[0, 0, 99, 99]}
                   activeBar={{ fillOpacity: 0.85 }}
                 />
-                <Bar dataKey='cosmetics' name='Cosmetics' stackId='a' fill='#8b5cf6' activeBar={{ fillOpacity: 0.85 }} />
+                <Bar
+                  dataKey='cosmetics'
+                  name='Cosmetics'
+                  stackId='a'
+                  fill='#8b5cf6'
+                  activeBar={{ fillOpacity: 0.85 }}
+                />
                 <Bar
                   dataKey='equipment'
                   name='Equipment'

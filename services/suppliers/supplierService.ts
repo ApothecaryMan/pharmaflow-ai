@@ -3,8 +3,8 @@
  * Business logic layer that orchestrates data access via SupplierRepository.
  */
 
-import { BaseEntityService } from '../core/baseEntityService';
 import type { Supplier } from '../../types';
+import { BaseEntityService } from '../core/baseEntityService';
 import { settingsService } from '../settings/settingsService';
 import { supplierRepository } from './repositories/supplierRepository';
 import type { SupplierService } from './types';
@@ -33,12 +33,14 @@ class SupplierServiceImpl extends BaseEntityService<Supplier> implements Supplie
 
   async create(supplier: Omit<Supplier, 'id'>, branchId?: string): Promise<Supplier> {
     const settings = await settingsService.getAll();
-    
-    const isUuid = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-    const effectiveBranchId = (branchId && isUuid(branchId)) 
-      ? branchId 
-      : (settings.activeBranchId || (supplier as any).branchId);
-    
+
+    const isUuid = (id: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const effectiveBranchId =
+      branchId && isUuid(branchId)
+        ? branchId
+        : settings.activeBranchId || (supplier as any).branchId;
+
     if (!effectiveBranchId || !isUuid(effectiveBranchId)) {
       throw new Error('Valid Branch ID is required for supplier creation');
     }
@@ -57,11 +59,11 @@ class SupplierServiceImpl extends BaseEntityService<Supplier> implements Supplie
   async save(suppliers: Supplier[], branchId?: string): Promise<void> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    
-    const processedSuppliers = suppliers.map(s => ({
+
+    const processedSuppliers = suppliers.map((s) => ({
       ...s,
       branchId: s.branchId || effectiveBranchId,
-      orgId: s.orgId || settings.orgId
+      orgId: s.orgId || settings.orgId,
     }));
 
     await supplierRepository.upsert(processedSuppliers);

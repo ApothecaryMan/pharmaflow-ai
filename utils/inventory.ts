@@ -28,7 +28,9 @@
 export const validateStock = (stock: number): number => {
   if (isNaN(stock)) return 0;
   if (stock < 0) {
-    console.warn(`[validateStock] Negative stock detected: ${stock}. Clamping to 0. This may indicate an oversell.`);
+    console.warn(
+      `[validateStock] Negative stock detected: ${stock}. Clamping to 0. This may indicate an oversell.`
+    );
     return 0;
   }
   return Math.round(stock);
@@ -39,7 +41,11 @@ export const validateStock = (stock: number): number => {
  * Use this in transactional paths (checkout, returns) to catch overselling.
  * @throws Error if the resulting stock would be negative.
  */
-export const assertStockSufficient = (currentStock: number, deduction: number, drugName?: string): void => {
+export const assertStockSufficient = (
+  currentStock: number,
+  deduction: number,
+  drugName?: string
+): void => {
   const result = currentStock - deduction;
   if (result < 0) {
     throw new Error(
@@ -93,7 +99,7 @@ export const formatStock = (
 /**
  * Formats a raw unit count into packs/fractional packs without clamping or "Out of Stock" labels.
  * Useful for deltas and movement history where negative or zero values are meaningful.
- * 
+ *
  * @param stock - Total units
  * @param unitsPerPack - Conversion factor
  * @param label - Label for packs (e.g. "Packs" or "علبة")
@@ -106,12 +112,14 @@ export const formatStockAmount = (
   // Use absolute value for the core conversion if we want to handle negative signs externally
   // But usually for deltas we might want to keep the sign.
   // parseFloat(packs.toFixed(2)) handles rounding and trailing zeros.
-  
+
   if (unitsPerPack === 1) return `${stock} ${label}`;
-  
+
   const packs = stock / unitsPerPack;
-  const formattedPacks = Number.isInteger(packs) ? packs.toString() : parseFloat(packs.toFixed(2)).toString();
-  
+  const formattedPacks = Number.isInteger(packs)
+    ? packs.toString()
+    : parseFloat(packs.toFixed(2)).toString();
+
   return `${formattedPacks} ${label}`;
 };
 

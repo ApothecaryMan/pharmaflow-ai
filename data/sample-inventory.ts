@@ -666,7 +666,14 @@ export const CSV_INVENTORY: Drug[] = [
     dbId: '19316',
     name: 'hair nails 30',
     publicPrice: 15,
-    genericName: ['calcium pantothenate', 'keratin', 'l-cystine', 'para-aminobenzoic acid', 'vitamin b1', 'yeast'],
+    genericName: [
+      'calcium pantothenate',
+      'keratin',
+      'l-cystine',
+      'para-aminobenzoic acid',
+      'vitamin b1',
+      'yeast',
+    ],
     class: 'hair care',
     category: 'Medicine',
     unitsPerPack: 3,
@@ -1967,7 +1974,7 @@ export const CSV_INVENTORY: Drug[] = [
     name: 'haema- 14',
     publicPrice: 18,
     genericName: [
-      'ferrous fumarate+vitamins(b1+b2+b6+b12+c+d+e)+folic acid+calcium+copper+linoleic acid+linolenic acid+manganese'
+      'ferrous fumarate+vitamins(b1+b2+b6+b12+c+d+e)+folic acid+calcium+copper+linoleic acid+linolenic acid+manganese',
     ],
     class: 'anemia.iron supplement',
     category: 'Medicine',
@@ -3189,7 +3196,7 @@ export const CSV_INVENTORY: Drug[] = [
     name: 'cempion 10',
     publicPrice: 125,
     genericName: [
-      'lactoferrin+colostrum+iron+vitamin b complex+folic acid+vitamin c+vitamin e+cocoa powder+zinc+seleni'
+      'lactoferrin+colostrum+iron+vitamin b complex+folic acid+vitamin c+vitamin e+cocoa powder+zinc+seleni',
     ],
     class: 'iron supplement',
     category: 'Medicine',
@@ -4170,7 +4177,15 @@ export const CSV_INVENTORY: Drug[] = [
     dbId: '774',
     name: 'leil 100gm',
     publicPrice: 160,
-    genericName: ['caffeine', 'l.carnitine', 'peanut', 'coconut', 'wheat germ', 'green tea', 'aloe vera'],
+    genericName: [
+      'caffeine',
+      'l.carnitine',
+      'peanut',
+      'coconut',
+      'wheat germ',
+      'green tea',
+      'aloe vera',
+    ],
     class: 'skin firming for stretch marks',
     category: 'Medicine',
     unitsPerPack: 1,
@@ -5091,7 +5106,7 @@ export const CSV_INVENTORY: Drug[] = [
     name: 'sensotect',
     publicPrice: 80,
     genericName: [
-      'hyaluronic acid+chlorhexidine digluconate+clove oil+dill oil+dimethicone+propolis+peppermint'
+      'hyaluronic acid+chlorhexidine digluconate+clove oil+dill oil+dimethicone+propolis+peppermint',
     ],
     class: 'oral ulcers   oral fungus    infant colic pain relief',
     category: 'Medicine',
@@ -5553,7 +5568,7 @@ export const CSV_INVENTORY: Drug[] = [
     name: 'vida queen skin 30 ml',
     publicPrice: 200,
     genericName: [
-      'hyaluronic acid + collagen(marine) + ascorbic acid(vitamin c) + mandelic acid + panthenol'
+      'hyaluronic acid + collagen(marine) + ascorbic acid(vitamin c) + mandelic acid + panthenol',
     ],
     class: 'skin serum',
     category: 'Medicine',

@@ -1,32 +1,38 @@
 /**
  * ═══════════════════════════════════════════════════════════
- * ⚡ SCENARIO 06: SPIKE TEST 
+ * ⚡ SCENARIO 06: SPIKE TEST
  * ═══════════════════════════════════════════════════════════
- * 
+ *
  * Tests: System behavior during sudden traffic spikes.
  * Simulates a scenario like:
  *   - A pharmacy chain running a promotion
  *   - End-of-month insurance billing rush
  *   - System recovery after downtime
- * 
+ *
  * The test goes from 5 → 80 users in just 10 seconds, then
  * holds at 80 for 30 seconds before ramping back down.
- * 
+ *
  * Run: k6 run stress-tests/k6/scenarios/06-spike-test.js
  */
 
+import { check, group, sleep } from 'k6';
 import http from 'k6/http';
-import { check, sleep, group } from 'k6';
-import { Counter, Trend, Rate } from 'k6/metrics';
-import { SUPABASE_REST_URL, SUPABASE_RPC_URL, getHeaders, TEST_DATA, TEST_EMAIL, TEST_PASSWORD } from '../config.js';
-import { generateCheckoutPayload, randomInt } from '../helpers/data-generators.js';
+import { Counter, Rate, Trend } from 'k6/metrics';
+import {
+  getHeaders,
+  SUPABASE_REST_URL,
+  SUPABASE_RPC_URL,
+  TEST_DATA,
+  TEST_EMAIL,
+  TEST_PASSWORD,
+} from '../config.js';
 import { loginAndGetToken } from '../helpers/auth.js';
+import { generateCheckoutPayload, randomInt } from '../helpers/data-generators.js';
 
 export function setup() {
   const token = loginAndGetToken(TEST_EMAIL, TEST_PASSWORD);
   return { token };
 }
-
 
 // --- Custom Metrics ---
 const requestDuration = new Trend('spike_request_duration', true);
@@ -41,21 +47,21 @@ export const options = {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '20s', target: 5 },     // Normal operation
-        { duration: '10s', target: 80 },     // 🔥 SPIKE! 5 → 80 in 10s
-        { duration: '30s', target: 80 },     // Sustained spike  
-        { duration: '20s', target: 10 },     // Recovery
-        { duration: '10s', target: 0 },      // Cool down
+        { duration: '20s', target: 5 }, // Normal operation
+        { duration: '10s', target: 80 }, // 🔥 SPIKE! 5 → 80 in 10s
+        { duration: '30s', target: 80 }, // Sustained spike
+        { duration: '20s', target: 10 }, // Recovery
+        { duration: '10s', target: 0 }, // Cool down
       ],
       gracefulRampDown: '10s',
     },
   },
   thresholds: {
     // More lenient thresholds for spike test (system is expected to struggle)
-    'spike_request_duration': ['p(95)<5000', 'p(99)<10000'],
-    'spike_error_rate': ['rate<0.20'],     // Allow up to 20% during spike
-    'spike_checkout_duration': ['p(95)<8000'],
-    'http_req_failed': ['rate<0.20'],
+    spike_request_duration: ['p(95)<5000', 'p(99)<10000'],
+    spike_error_rate: ['rate<0.20'], // Allow up to 20% during spike
+    spike_checkout_duration: ['p(95)<8000'],
+    http_req_failed: ['rate<0.20'],
   },
 };
 
@@ -102,7 +108,9 @@ function doCheckout(token) {
     requestDuration.add(elapsed);
 
     let result;
-    try { result = JSON.parse(res.body); } catch {}
+    try {
+      result = JSON.parse(res.body);
+    } catch {}
 
     const ok = check(res, {
       '✅ Spike checkout status': (r) => r.status === 200,
@@ -184,7 +192,7 @@ export function handleSummary(data) {
   console.log(`Checkout p95:       ${Math.round(checkP95)}ms`);
   console.log(`Error Rate:         ${(errRate * 100).toFixed(2)}%`);
   console.log(`Peak VUs:           80`);
-  console.log(`Spike Resilience:   ${errRate < 0.20 ? '✅ SURVIVED' : '❌ COLLAPSED'}`);
+  console.log(`Spike Resilience:   ${errRate < 0.2 ? '✅ SURVIVED' : '❌ COLLAPSED'}`);
   console.log('══════════════════════════════════════════\n');
 
   return {

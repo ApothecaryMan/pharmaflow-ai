@@ -1,6 +1,6 @@
 import { money } from './money';
 
-// Performance: Cache formatters to avoid costly re-allocation 
+// Performance: Cache formatters to avoid costly re-allocation
 const formatterCache = new Map<string, Intl.NumberFormat>();
 
 const getFormatter = (options: Intl.NumberFormatOptions, locale: string) => {
@@ -13,7 +13,9 @@ const getFormatter = (options: Intl.NumberFormatOptions, locale: string) => {
 
 const getIsArabic = (locale?: string) => {
   const currentLang = typeof document !== 'undefined' ? document.documentElement.lang : 'en';
-  return locale ? locale.toLowerCase().startsWith('ar') : currentLang.toLowerCase().startsWith('ar');
+  return locale
+    ? locale.toLowerCase().startsWith('ar')
+    : currentLang.toLowerCase().startsWith('ar');
 };
 
 export const formatCurrency = (
@@ -22,7 +24,7 @@ export const formatCurrency = (
   locale?: string,
   decimals: number = 2,
   hideSymbol: boolean = false
- ): string => {
+): string => {
   // 1. Detect language from DOM if not provided
   const isArabic = getIsArabic(locale);
   // Default fallback if no locale provided - strictly for non-component usage
@@ -31,28 +33,34 @@ export const formatCurrency = (
   // 2. Handle EGP specific formatting (EGP vs ج.م)
 
   if (currency === 'EGP') {
-    const formatter = getFormatter({
-      style: 'decimal',
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }, 'en-US'); // Force dot separator
+    const formatter = getFormatter(
+      {
+        style: 'decimal',
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      },
+      'en-US'
+    ); // Force dot separator
 
     // Ensure amount is rounded to desired precision
     const formattedAmount = formatter.format(amount);
-    
+
     if (hideSymbol) return formattedAmount;
 
-    return isArabic 
-      ? `\u2067${formattedAmount}\u00A0ج.م\u2069` 
+    return isArabic
+      ? `\u2067${formattedAmount}\u00A0ج.م\u2069`
       : `\u2066${formattedAmount}\u00A0EGP\u2069`;
   }
 
-  const formatter = getFormatter({
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }, targetLocale);
+  const formatter = getFormatter(
+    {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    },
+    targetLocale
+  );
 
   return formatter.format(amount);
 };
@@ -69,11 +77,14 @@ export const formatCurrencyParts = (
 
   // 2. Handle EGP specific formatting (EGP vs ج.م)
   if (currency === 'EGP') {
-    const formatter = getFormatter({
-      style: 'decimal',
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }, 'en-US'); // Force dot separator
+    const formatter = getFormatter(
+      {
+        style: 'decimal',
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      },
+      'en-US'
+    ); // Force dot separator
 
     return {
       amount: formatter.format(amount),
@@ -81,12 +92,15 @@ export const formatCurrencyParts = (
     };
   }
 
-  const formatter = getFormatter({
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }, targetLocale);
+  const formatter = getFormatter(
+    {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    },
+    targetLocale
+  );
 
   const parts = formatter.formatToParts(amount);
 
@@ -110,15 +124,15 @@ export const getCurrencySymbol = (currency: string = 'EGP', locale?: string): st
     return isArabic ? 'ج.م' : 'EGP';
   }
 
-  const formatter = getFormatter({
-    style: 'currency',
-    currency,
-  }, targetLocale);
-
-  return (
-    formatter.formatToParts(0)
-      .find((p) => p.type === 'currency')?.value || currency
+  const formatter = getFormatter(
+    {
+      style: 'currency',
+      currency,
+    },
+    targetLocale
   );
+
+  return formatter.formatToParts(0).find((p) => p.type === 'currency')?.value || currency;
 };
 
 export const formatCompactCurrency = (
@@ -131,33 +145,42 @@ export const formatCompactCurrency = (
   const isArabic = getIsArabic(locale);
   const targetLocale = locale || (isArabic ? 'ar-EG' : 'en-US');
 
-  const formatter = getFormatter({
-    notation: 'compact',
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }, targetLocale);
-
-  if (currency === 'EGP') {
-    const formatter = getFormatter({
+  const formatter = getFormatter(
+    {
       notation: 'compact',
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
-    }, 'en-US'); // Force dot separator
+    },
+    targetLocale
+  );
+
+  if (currency === 'EGP') {
+    const formatter = getFormatter(
+      {
+        notation: 'compact',
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      },
+      'en-US'
+    ); // Force dot separator
 
     const formattedAmount = formatter.format(amount);
     if (hideSymbol) return formattedAmount;
-    return isArabic 
-      ? `\u2067${formattedAmount}\u00A0ج.م\u2069` 
+    return isArabic
+      ? `\u2067${formattedAmount}\u00A0ج.م\u2069`
       : `\u2066${formattedAmount}\u00A0EGP\u2069`;
   }
 
-  const currencyFormatter = getFormatter({
-    notation: 'compact',
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }, targetLocale);
+  const currencyFormatter = getFormatter(
+    {
+      notation: 'compact',
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    },
+    targetLocale
+  );
 
   return currencyFormatter.format(amount);
 };
@@ -171,18 +194,24 @@ export const formatCompactCurrencyParts = (
   const isArabic = getIsArabic(locale);
   const targetLocale = locale || (isArabic ? 'ar-EG' : 'en-US');
 
-  const formatter = getFormatter({
-    notation: 'compact',
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }, targetLocale);
-
-  if (currency === 'EGP') {
-    const formatter = getFormatter({
+  const formatter = getFormatter(
+    {
       notation: 'compact',
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
-    }, 'en-US'); // Force dot separator
+    },
+    targetLocale
+  );
+
+  if (currency === 'EGP') {
+    const formatter = getFormatter(
+      {
+        notation: 'compact',
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      },
+      'en-US'
+    ); // Force dot separator
 
     return {
       amount: formatter.format(amount),
@@ -190,12 +219,15 @@ export const formatCompactCurrencyParts = (
     };
   }
 
-  const currencyFormatter = getFormatter({
-    notation: 'compact',
-    style: 'currency',
-    currency: currency,
-    maximumFractionDigits: decimals,
-  }, targetLocale);
+  const currencyFormatter = getFormatter(
+    {
+      notation: 'compact',
+      style: 'currency',
+      currency: currency,
+      maximumFractionDigits: decimals,
+    },
+    targetLocale
+  );
 
   const parts = currencyFormatter.formatToParts(amount);
 

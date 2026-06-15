@@ -54,7 +54,8 @@ export const inventoryRepository = {
     if (d.damagedStock !== undefined) db.damaged_stock = d.damagedStock;
     if (d.expiryDate !== undefined) {
       if (d.expiryDate === '') db.expiry_date = null;
-      else if (d.expiryDate.length === 7 && /^\d{4}-\d{2}$/.test(d.expiryDate)) db.expiry_date = `${d.expiryDate}-01`;
+      else if (d.expiryDate.length === 7 && /^\d{4}-\d{2}$/.test(d.expiryDate))
+        db.expiry_date = `${d.expiryDate}-01`;
       else db.expiry_date = d.expiryDate;
     }
     if (d.description !== undefined) db.description = d.description;
@@ -79,11 +80,12 @@ export const inventoryRepository = {
     if (branchId) query = query.eq('branch_id', branchId);
     const { data, error } = await query;
     if (error) throw error;
-    return (data || []).map(item => this.mapFromDb(item));
+    return (data || []).map((item) => this.mapFromDb(item));
   },
 
   async getById(id: string): Promise<Drug | null> {
-    const { data, error } = await supabase.from(this.tableName)
+    const { data, error } = await supabase
+      .from(this.tableName)
       .select('*')
       .eq('id', id)
       .maybeSingle();
@@ -92,7 +94,8 @@ export const inventoryRepository = {
   },
 
   async getByBarcode(barcode: string): Promise<Drug | null> {
-    const { data, error } = await supabase.from(this.tableName)
+    const { data, error } = await supabase
+      .from(this.tableName)
       .select('*')
       .eq('barcode', barcode)
       .maybeSingle();
@@ -106,7 +109,8 @@ export const inventoryRepository = {
   },
 
   async update(id: string, updates: Partial<Drug>): Promise<Drug> {
-    const { data, error } = await supabase.from(this.tableName)
+    const { data, error } = await supabase
+      .from(this.tableName)
       .update(this.mapToDb(updates))
       .eq('id', id)
       .select()
@@ -126,8 +130,8 @@ export const inventoryRepository = {
 
   async upsert(drugs: Drug[]): Promise<void> {
     if (drugs.length === 0) return;
-    const dbDrugs = drugs.map(d => this.mapToDb(d));
+    const dbDrugs = drugs.map((d) => this.mapToDb(d));
     const { error } = await supabase.from(this.tableName).upsert(dbDrugs, { onConflict: 'id' });
     if (error) throw error;
-  }
+  },
 };

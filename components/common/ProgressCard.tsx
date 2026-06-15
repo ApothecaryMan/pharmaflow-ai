@@ -151,7 +151,7 @@ export const FlexDataCard: React.FC<FlexDataCardProps> = ({
 
       {/* Data Items Section */}
       <div className='flex-1 flex gap-6'>
-        {(isLoading ? Array.from({ length: 2 }) as any[] : items).map((item, index) => (
+        {(isLoading ? (Array.from({ length: 2 }) as any[]) : items).map((item, index) => (
           <div key={index} className='flex-1 flex flex-col justify-center'>
             {/* Header: Value & Label */}
             <div className='flex justify-between items-end mb-2'>

@@ -1,7 +1,7 @@
 /**
  * Localization Utilities
- * 
- * Handles digit normalization and locale-aware parsing to ensure 
+ *
+ * Handles digit normalization and locale-aware parsing to ensure
  * consistency between UI display and data processing.
  */
 
@@ -14,13 +14,13 @@ const ENGLISH_DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
  */
 export const normalizeDigits = (str: string | number | null | undefined): string => {
   if (str === null || str === undefined) return '';
-  
+
   let result = String(str);
-  
+
   for (let i = 0; i < 10; i++) {
     result = result.replace(new RegExp(ARABIC_DIGITS[i], 'g'), ENGLISH_DIGITS[i]);
   }
-  
+
   return result;
 };
 
@@ -30,13 +30,13 @@ export const normalizeDigits = (str: string | number | null | undefined): string
  */
 export const toArabicDigits = (str: string | number | null | undefined): string => {
   if (str === null || str === undefined) return '';
-  
+
   let result = String(str);
-  
+
   for (let i = 0; i < 10; i++) {
     result = result.replace(new RegExp(ENGLISH_DIGITS[i], 'g'), ARABIC_DIGITS[i]);
   }
-  
+
   return result;
 };
 
@@ -46,9 +46,9 @@ export const toArabicDigits = (str: string | number | null | undefined): string 
 export const parseLocalizedNumber = (value: string | number | null | undefined): number => {
   if (value === null || value === undefined || value === '') return 0;
   if (typeof value === 'number') return value;
-  
+
   const normalized = normalizeDigits(value);
   const parsed = parseFloat(normalized.replace(/[^\d.-]/g, ''));
-  
+
   return isNaN(parsed) ? 0 : parsed;
 };

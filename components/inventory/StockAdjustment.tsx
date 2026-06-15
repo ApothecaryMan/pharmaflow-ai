@@ -2,31 +2,31 @@ import type { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
+import { useData } from '../../context/DataContext';
+import { permissionsService } from '../../services/auth/permissionsService';
 import { type StockMovement, stockMovementService } from '../../services/inventory';
 import { batchService } from '../../services/inventory/batchService';
-import { permissionsService } from '../../services/auth/permissionsService';
 import type { Drug, StockBatch } from '../../types';
+import { formatCurrency } from '../../utils/currency';
 import { getDisplayName, getFullDisplayName } from '../../utils/drugDisplayName';
-import * as stockOps from '../../utils/stockOperations';
+import { formatExpiryDate } from '../../utils/expiryUtils';
 import { idGenerator } from '../../utils/idGenerator';
+import { money } from '../../utils/money';
 import { parseSearchTerm } from '../../utils/searchUtils';
+import * as stockOps from '../../utils/stockOperations';
 import { storage } from '../../utils/storage';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { FilterDropdown } from '../common/FilterDropdown';
-import { formatExpiryDate } from '../../utils/expiryUtils';
 import { usePosSounds } from '../common/hooks/usePosSounds';
-import { useData } from '../../context/DataContext';
 import { Modal } from '../common/Modal';
 import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartInput, useSmartDirection } from '../common/SmartInputs';
 // UI Redesign Imports
-import { TanStackTable, PriceDisplay } from '../common/TanStackTable';
+import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
 import { StockAdjustmentPrint } from './StockAdjustmentPrint';
-import { money } from '../../utils/money';
-import { formatCurrency } from '../../utils/currency';
 
 interface StockAdjustmentProps {
   onUpdateInventory: (drugs: Drug[]) => void;
@@ -67,7 +67,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   const { activeBranchId, activeOrgId, branches, currentEmployee, inventory } = useData();
 
   // Try to get pharmacy name from active branch, then storage/organization fallbacks
-  const activeBranch = branches.find(b => b.id === activeBranchId);
+  const activeBranch = branches.find((b) => b.id === activeBranchId);
   const pharmacyName = activeBranch?.name || storage.get('pharma_name', 'Zinc Pharmacy');
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -96,7 +96,9 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
   // View State
   const [activeView, setActiveView] = useState<'adjust' | 'history'>('adjust');
-  const [historyTab, setHistoryTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+  const [historyTab, setHistoryTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>(
+    'pending'
+  );
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>({
     from: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0],
     to: new Date().toISOString().split('T')[0],
@@ -139,22 +141,22 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       // 2. Persist stock change to inventoryService (durable)
       try {
         const { inventoryService } = await import('../../services/inventory/inventoryService');
-        await inventoryService.updateStockBulk([{
-          id: movement.drugId,
-          quantity: movement.quantity, // The difference
-          batchId: movement.batchId,
-        }]);
+        await inventoryService.updateStockBulk([
+          {
+            id: movement.drugId,
+            quantity: movement.quantity, // The difference
+            batchId: movement.batchId,
+          },
+        ]);
       } catch (persistErr) {
         console.error('Failed to persist stock to service:', persistErr);
       }
 
       // 4. Sync Drug.stock with React state
-      const drug = inventory.find(d => d.id === movement.drugId);
+      const drug = inventory.find((d) => d.id === movement.drugId);
       if (drug) {
         const updatedDrug = { ...drug, stock: movement.newStock };
-        onUpdateInventory(
-          inventory.map(d => d.id === drug.id ? updatedDrug : d)
-        );
+        onUpdateInventory(inventory.map((d) => (d.id === drug.id ? updatedDrug : d)));
       }
 
       // 5. Refresh
@@ -163,7 +165,9 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       playSuccess();
     } catch (err) {
       console.error('Approve failed', err);
-      alertError(language === 'AR' ? t.common?.error || 'فشل في العملية' : 'Failed to approve adjustment');
+      alertError(
+        language === 'AR' ? t.common?.error || 'فشل في العملية' : 'Failed to approve adjustment'
+      );
       playError();
     }
   };
@@ -176,31 +180,45 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       info(language === 'AR' ? t.pendingApproval.reject : 'Adjustment rejected');
     } catch (err) {
       console.error('Reject failed', err);
-      alertError(language === 'AR' ? t.common?.error || 'فشل في العملية' : 'Failed to reject adjustment');
+      alertError(
+        language === 'AR' ? t.common?.error || 'فشل في العملية' : 'Failed to reject adjustment'
+      );
       playError();
     }
   };
 
   const handleApproveAll = async () => {
-    const pendingItems = history.filter(item => item.status === 'pending');
+    const pendingItems = history.filter((item) => item.status === 'pending');
     if (pendingItems.length === 0) {
-      info(language === 'AR' ? 'لا توجد تعديلات معلقة للموافقة عليها' : 'No pending adjustments to approve');
+      info(
+        language === 'AR'
+          ? 'لا توجد تعديلات معلقة للموافقة عليها'
+          : 'No pending adjustments to approve'
+      );
       return;
     }
 
     try {
       // Best effort parallel execution
-      const promises = pendingItems.map(item => handleApprove(item));
+      const promises = pendingItems.map((item) => handleApprove(item));
       await Promise.all(promises);
-      success(language === 'AR' ? `تمت الموافقة على ${pendingItems.length} تعديلات بنجاح` : `Successfully approved ${pendingItems.length} adjustments`);
+      success(
+        language === 'AR'
+          ? `تمت الموافقة على ${pendingItems.length} تعديلات بنجاح`
+          : `Successfully approved ${pendingItems.length} adjustments`
+      );
     } catch (err) {
       console.error('Failed to approve all:', err);
-      alertError(language === 'AR' ? 'حدث خطأ أثناء موافقة الكل. يرجى المحاولة مرة أخرى.' : 'An error occurred while approving all. Please try again.');
+      alertError(
+        language === 'AR'
+          ? 'حدث خطأ أثناء موافقة الكل. يرجى المحاولة مرة أخرى.'
+          : 'An error occurred while approving all. Please try again.'
+      );
     }
   };
 
   const handleRejectAll = async () => {
-    const pendingItems = history.filter(item => item.status === 'pending');
+    const pendingItems = history.filter((item) => item.status === 'pending');
     if (pendingItems.length === 0) {
       info(language === 'AR' ? 'لا توجد تعديلات معلقة لرفضها' : 'No pending adjustments to reject');
       return;
@@ -208,13 +226,23 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
     try {
       const currentEmployeeId = currentEmployee?.id || 'user';
-      const promises = pendingItems.map(item => stockMovementService.rejectMovement(item.id, currentEmployeeId));
+      const promises = pendingItems.map((item) =>
+        stockMovementService.rejectMovement(item.id, currentEmployeeId)
+      );
       await Promise.all(promises);
       loadHistory();
-      info(language === 'AR' ? `تم رفض ${pendingItems.length} تعديلات` : `Rejected ${pendingItems.length} adjustments`);
+      info(
+        language === 'AR'
+          ? `تم رفض ${pendingItems.length} تعديلات`
+          : `Rejected ${pendingItems.length} adjustments`
+      );
     } catch (err) {
       console.error('Failed to reject all:', err);
-      alertError(language === 'AR' ? 'حدث خطأ أثناء رفض الكل. يرجى المحاولة مرة أخرى.' : 'An error occurred while rejecting all. Please try again.');
+      alertError(
+        language === 'AR'
+          ? 'حدث خطأ أثناء رفض الكل. يرجى المحاولة مرة أخرى.'
+          : 'An error occurred while rejecting all. Please try again.'
+      );
     }
   };
 
@@ -267,7 +295,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
     }
 
     // 2. Check Batches
-    const drugBatches = batches.filter(b => b.drugId === drug.id);
+    const drugBatches = batches.filter((b) => b.drugId === drug.id);
 
     if (drugBatches.length > 0) {
       playBeep(); // Attention needed
@@ -311,7 +339,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
           // If item has batches, we try to find a matching batch or pick first.
           // For MVP, let's pick first batch if exists.
-          const drugBatches = batches.filter(b => b.drugId === drug.id);
+          const drugBatches = batches.filter((b) => b.drugId === drug.id);
           const batch = drugBatches.length > 0 ? drugBatches[0] : null;
 
           const currentStock = batch ? batch.quantity : drug.stock;
@@ -331,7 +359,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
             difference: qty > 0 ? qty - currentStock : 1,
             reason: 'inventory_count',
             notes: 'Imported via CSV',
-            costPrice: batch ? (batch.costPrice || drug.costPrice) : drug.costPrice,
+            costPrice: batch ? batch.costPrice || drug.costPrice : drug.costPrice,
             batchId: batch?.id,
             expiryDate: expiry,
           });
@@ -341,10 +369,18 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
       if (addedCount > 0) {
         setAdjustments(newAdjustments);
-        success(language === 'AR' ? `تم استيراد ${addedCount} عنصر بنجاح` : `Successfully imported ${addedCount} items`);
+        success(
+          language === 'AR'
+            ? `تم استيراد ${addedCount} عنصر بنجاح`
+            : `Successfully imported ${addedCount} items`
+        );
         playSuccess();
       } else {
-        warning(language === 'AR' ? 'لم يتم العثور على عناصر صحيحة في الملف' : 'No valid items found in file');
+        warning(
+          language === 'AR'
+            ? 'لم يتم العثور على عناصر صحيحة في الملف'
+            : 'No valid items found in file'
+        );
         playError();
       }
     };
@@ -375,7 +411,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
   const handleAddItem = (drug: Drug) => {
     // Check if drug has batches.
-    const drugBatches = batches.filter(b => b.drugId === drug.id);
+    const drugBatches = batches.filter((b) => b.drugId === drug.id);
 
     if (drugBatches.length > 0) {
       setBatchSelectionDrug(drug);
@@ -434,7 +470,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       difference: 0,
       reason: 'inventory_count',
       notes: '',
-      costPrice: batch ? (batch.costPrice || drug.costPrice) : drug.costPrice,
+      costPrice: batch ? batch.costPrice || drug.costPrice : drug.costPrice,
       batchId: batch?.id,
       expiryDate: expiry,
     };
@@ -485,7 +521,8 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       const currentEmployeeName =
         currentEmployee?.name ||
         currentEmployee?.username ||
-        (import.meta.env.VITE_SUPER_USER || (language === 'AR' ? 'مستخدم النظام' : 'System User'));
+        import.meta.env.VITE_SUPER_USER ||
+        (language === 'AR' ? 'مستخدم النظام' : 'System User');
 
       // RBAC Check for Approval
       const isManager = permissionsService.can('inventory.approve');
@@ -498,7 +535,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       for (const item of adjustments) {
         // Only log actual changes
         if (item.difference !== 0) {
-          const drug = inventory.find(d => d.id === item.drugId);
+          const drug = inventory.find((d) => d.id === item.drugId);
           if (!drug) continue;
 
           await stockOps.adjustStock(
@@ -565,7 +602,9 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       if (isManager) {
         success(language === 'AR' ? t.stockAdjustment.success : 'Inventory updated successfully');
       } else {
-        success(language === 'AR' ? t.stockAdjustment.success : 'Adjustments submitted for approval');
+        success(
+          language === 'AR' ? t.stockAdjustment.success : 'Adjustments submitted for approval'
+        );
       }
       playSuccess();
 
@@ -632,7 +671,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                 {item.expiryDate ? formatExpiryDate(item.expiryDate) : 'N/A'}
               </div>
               {item.batchId && (
-                <div className='mt-0.5 text-[10px] font-bold text-gray-400 opacity-80 uppercase' dir='ltr'>
+                <div
+                  className='mt-0.5 text-[10px] font-bold text-gray-400 opacity-80 uppercase'
+                  dir='ltr'
+                >
                   {item.batchId}
                 </div>
               )}
@@ -659,10 +701,11 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
             type='number'
             inputMode='decimal'
             className={`w-20 text-center px-2 py-1 rounded-md border text-sm tabular-nums outline-hidden focus:ring-2 ring-blue-500/20 transition-colors
-                ${info.row.original.newStock !== info.row.original.currentStock
-                ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/10 text-amber-700'
-                : 'border-(--border-divider) bg-(--bg-input) text-(--text-primary)'
-              }`}
+                ${
+                  info.row.original.newStock !== info.row.original.currentStock
+                    ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/10 text-amber-700'
+                    : 'border-(--border-divider) bg-(--bg-input) text-(--text-primary)'
+                }`}
             value={info.getValue() as number}
             onChange={(e) => updateAdjustment(info.row.index, 'newStock', e.target.value)}
             onClick={(e) => (e.target as HTMLInputElement).select()}
@@ -692,9 +735,11 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         cell: (info) => {
           const item = info.row.original;
           const impact = money.multiply(item.costPrice, item.difference, 0);
-          if (impact === 0) return <span className="text-gray-300">-</span>;
+          if (impact === 0) return <span className='text-gray-300'>-</span>;
           return (
-            <div className={`text-xs font-bold tabular-nums ${impact > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+            <div
+              className={`text-xs font-bold tabular-nums ${impact > 0 ? 'text-emerald-600' : 'text-rose-600'}`}
+            >
               <PriceDisplay value={impact} showSign />
             </div>
           );
@@ -741,7 +786,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
             onClick={() => setEditingNoteIndex(info.row.index)}
             className='w-full text-start text-xs px-2 py-1.5 bg-transparent border-0 border-b border-(--border-divider) hover:border-primary-500 rounded-none transition-colors text-(--text-secondary) truncate cursor-pointer italic'
           >
-            {info.getValue() as string || t.stockAdjustment.notes}
+            {(info.getValue() as string) || t.stockAdjustment.notes}
           </button>
         ),
       },
@@ -794,9 +839,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
           return (
             <div>
-              <div className='font-bold text-sm text-(--text-primary)'>
-                {displayName}
-              </div>
+              <div className='font-bold text-sm text-(--text-primary)'>{displayName}</div>
               <div className='text-sm text-gray-400 mt-0.5 uppercase tracking-tight'>
                 {drug?.barcode || item.drugId}
               </div>
@@ -818,10 +861,17 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           return (
             <div className='flex flex-col'>
               <span className='text-sm text-(--text-primary)'>
-                {hasExpiry ? formatExpiryDate(item.expiryDate) : (language === 'AR' ? 'عام' : 'Generic')}
+                {hasExpiry
+                  ? formatExpiryDate(item.expiryDate)
+                  : language === 'AR'
+                    ? 'عام'
+                    : 'Generic'}
               </span>
               {item.batchId && (
-                <div className='mt-0.5 text-[10px] font-bold text-gray-400 opacity-80 uppercase' dir='ltr'>
+                <div
+                  className='mt-0.5 text-[10px] font-bold text-gray-400 opacity-80 uppercase'
+                  dir='ltr'
+                >
                   {item.batchId}
                 </div>
               )}
@@ -835,10 +885,11 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         header: t.stockAdjustment.table.diff,
         cell: (info) => (
           <span
-            className={`font-mono font-bold text-xs tabular-nums px-1.5 py-0.5 rounded-lg border ${(info.getValue() as number) > 0
-              ? 'bg-transparent border-green-200 text-green-700 dark:border-green-900/50 dark:text-green-400'
-              : 'bg-transparent border-red-200 text-red-700 dark:border-red-900/50 dark:text-red-400'
-              }`}
+            className={`font-mono font-bold text-xs tabular-nums px-1.5 py-0.5 rounded-lg border ${
+              (info.getValue() as number) > 0
+                ? 'bg-transparent border-green-200 text-green-700 dark:border-green-900/50 dark:text-green-400'
+                : 'bg-transparent border-red-200 text-red-700 dark:border-red-900/50 dark:text-red-400'
+            }`}
           >
             {(info.getValue() as number) > 0 ? '+' : ''}
             {info.getValue() as number}
@@ -853,7 +904,9 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           const m = info.row.original;
           const impact = (m.costPrice || 0) * (m.quantity || 0);
           return (
-            <span className={`font-mono font-bold text-xs tabular-nums ${impact >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+            <span
+              className={`font-mono font-bold text-xs tabular-nums ${impact >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}
+            >
               {formatCurrency(Math.abs(impact))}
             </span>
           );
@@ -892,12 +945,13 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
             <div className='flex items-center justify-end gap-3 w-full'>
               {/* Status Badge */}
               <span
-                className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-transparent border ${isPending
-                  ? 'text-amber-700 border-amber-200 dark:text-amber-400 dark:border-amber-900/50'
-                  : status === 'rejected'
-                    ? 'text-red-700 border-red-200 dark:text-red-400 dark:border-red-900/50'
-                    : 'text-emerald-700 border-emerald-200 dark:text-emerald-400 dark:border-emerald-900/50'
-                  }`}
+                className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-transparent border ${
+                  isPending
+                    ? 'text-amber-700 border-amber-200 dark:text-amber-400 dark:border-amber-900/50'
+                    : status === 'rejected'
+                      ? 'text-red-700 border-red-200 dark:text-red-400 dark:border-red-900/50'
+                      : 'text-emerald-700 border-emerald-200 dark:text-emerald-400 dark:border-emerald-900/50'
+                }`}
               >
                 <span className='material-symbols-rounded text-sm'>
                   {isPending ? 'schedule' : status === 'rejected' ? 'cancel' : 'check_circle'}
@@ -1151,26 +1205,32 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
               />
 
               {/* Bulk Actions (Visible if pending tab) */}
-              {historyTab === 'pending' && history.some(i => i.status === 'pending') && permissionsService.can('inventory.approve') && (
-                <div className="flex gap-1.5 items-center">
-                  <button
-                    onClick={handleApproveAll}
-                    title={language === 'AR' ? 'موافقة الكل' : 'Approve All'}
-                    className='h-8 px-3 inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-transparent text-emerald-700 dark:text-emerald-400 font-bold text-xs transition-all hover:bg-emerald-50 dark:hover:bg-emerald-500/10 active:scale-95 cursor-pointer'
-                  >
-                    <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>done_all</span>
-                    <span>{language === 'AR' ? 'موافقة الكل' : 'Approve All'}</span>
-                  </button>
-                  <button
-                    onClick={handleRejectAll}
-                    title={language === 'AR' ? 'رفض الكل' : 'Reject All'}
-                    className='h-8 px-3 inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 dark:border-red-500/30 bg-transparent text-red-700 dark:text-red-400 font-bold text-xs transition-all hover:bg-red-50 dark:hover:bg-red-500/10 active:scale-95 cursor-pointer'
-                  >
-                    <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>close</span>
-                    <span>{language === 'AR' ? 'رفض الكل' : 'Reject All'}</span>
-                  </button>
-                </div>
-              )}
+              {historyTab === 'pending' &&
+                history.some((i) => i.status === 'pending') &&
+                permissionsService.can('inventory.approve') && (
+                  <div className='flex gap-1.5 items-center'>
+                    <button
+                      onClick={handleApproveAll}
+                      title={language === 'AR' ? 'موافقة الكل' : 'Approve All'}
+                      className='h-8 px-3 inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-transparent text-emerald-700 dark:text-emerald-400 font-bold text-xs transition-all hover:bg-emerald-50 dark:hover:bg-emerald-500/10 active:scale-95 cursor-pointer'
+                    >
+                      <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
+                        done_all
+                      </span>
+                      <span>{language === 'AR' ? 'موافقة الكل' : 'Approve All'}</span>
+                    </button>
+                    <button
+                      onClick={handleRejectAll}
+                      title={language === 'AR' ? 'رفض الكل' : 'Reject All'}
+                      className='h-8 px-3 inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 dark:border-red-500/30 bg-transparent text-red-700 dark:text-red-400 font-bold text-xs transition-all hover:bg-red-50 dark:hover:bg-red-500/10 active:scale-95 cursor-pointer'
+                    >
+                      <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
+                        close
+                      </span>
+                      <span>{language === 'AR' ? 'رفض الكل' : 'Reject All'}</span>
+                    </button>
+                  </div>
+                )}
 
               {/* Filter Tabs */}
               <div className='ml-auto xl:ml-0 overflow-x-auto min-w-0 max-w-[full] flex'>
@@ -1178,9 +1238,24 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                   value={historyTab}
                   onChange={(v) => setHistoryTab(v)}
                   options={[
-                    { label: t.purchases.status.pending, value: 'pending' as const, icon: 'pending_actions', activeColor: 'amber' },
-                    { label: language === 'AR' ? 'موافق عليه' : 'Approved', value: 'approved' as const, icon: 'check_circle', activeColor: 'emerald' },
-                    { label: language === 'AR' ? 'مرفوض' : 'Rejected', value: 'rejected' as const, icon: 'cancel', activeColor: 'red' },
+                    {
+                      label: t.purchases.status.pending,
+                      value: 'pending' as const,
+                      icon: 'pending_actions',
+                      activeColor: 'amber',
+                    },
+                    {
+                      label: language === 'AR' ? 'موافق عليه' : 'Approved',
+                      value: 'approved' as const,
+                      icon: 'check_circle',
+                      activeColor: 'emerald',
+                    },
+                    {
+                      label: language === 'AR' ? 'مرفوض' : 'Rejected',
+                      value: 'rejected' as const,
+                      icon: 'cancel',
+                      activeColor: 'red',
+                    },
                     { label: t.global.actions.all, value: 'all' as const },
                   ]}
                   size='xs'
@@ -1239,7 +1314,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                       {t.inventory.headers.expiry}:{' '}
                       {new Date(batch.expiryDate).toLocaleDateString()}
                     </div>
-                    <div className='mt-0.5 text-[10px] font-bold text-gray-400 opacity-80 uppercase' dir='ltr'>
+                    <div
+                      className='mt-0.5 text-[10px] font-bold text-gray-400 opacity-80 uppercase'
+                      dir='ltr'
+                    >
                       {batch.id}
                     </div>
                   </div>

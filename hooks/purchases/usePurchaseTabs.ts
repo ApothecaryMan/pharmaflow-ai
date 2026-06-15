@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
-import { PurchaseItem, PurchaseTab } from '../../types';
-import { storage } from '../../utils/storage';
+import type { PurchaseItem, PurchaseTab } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
+import { storage } from '../../utils/storage';
 
 const MAX_TABS = 10;
 
@@ -36,13 +36,13 @@ export const usePurchaseTabs = (activeBranchId: string) => {
     const legacyItemsKey = `purchases_cart_${activeBranchId}_items`;
     const legacySupplierKey = `purchases_cart_${activeBranchId}_supplier`;
     const legacyItems = storage.get<PurchaseItem[]>(legacyItemsKey, []);
-    
+
     let currentTabs = storage.get<PurchaseTab[]>(tabsKey, []);
 
     // 2. If legacy data exists and we don't have real tabs yet
     if (legacyItems.length > 0 && currentTabs.length === 0) {
       const legacySupplier = storage.get<string>(legacySupplierKey, '');
-      
+
       const migratedTab: PurchaseTab = {
         ...createNewTab(1),
         cart: legacyItems,
@@ -135,7 +135,7 @@ export const usePurchaseTabs = (activeBranchId: string) => {
       const tabToRemove = tabs.find((t) => t.id === tabId);
       if (tabToRemove && tabToRemove.cart.length > 0) {
         setClosedTabs((prev) => {
-          const filtered = prev.filter(t => t.id !== tabId);
+          const filtered = prev.filter((t) => t.id !== tabId);
           return [{ ...tabToRemove, closedAt: Date.now() }, ...filtered].slice(0, 10);
         });
       }
@@ -163,7 +163,10 @@ export const usePurchaseTabs = (activeBranchId: string) => {
   }, []);
 
   const updateTab = useCallback(
-    (tabId: string, updates: Partial<PurchaseTab> | ((prev: PurchaseTab) => Partial<PurchaseTab>)) => {
+    (
+      tabId: string,
+      updates: Partial<PurchaseTab> | ((prev: PurchaseTab) => Partial<PurchaseTab>)
+    ) => {
       setTabs((prev) =>
         prev.map((tab) =>
           tab.id === tabId
