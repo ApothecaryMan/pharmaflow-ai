@@ -4,29 +4,47 @@ import type { LoginAuditEntry } from '../../../types';
 export const auditRepository = {
   /** Queue of entries that failed to sync to Supabase (e.g. RLS permission denied) */
   _pendingQueue: [] as Omit<LoginAuditEntry, 'id' | 'timestamp'>[],
+  _listenerAttached: false,
 
   /**
-   * Save a new audit event to the database.
-   * Falls back to a local queue when Supabase RLS denies the write,
+   * Attach a one-time onAuthStateChange listener that flushes the pending
+   * queue as soon as the user's session becomes available. This handles the
+   * race condition where audit events fire before the auth state propagates.
+   */
+  _ensureAuthListener(): void {
+    if (this._listenerAttached) return;
+    this._listenerAttached = true;
+
+    supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        this._flushQueue();
+      }
+    });
+  },
+
+  /**
+   * Save a new audit event to the database via SECURITY DEFINER RPC.
+   * Falls back to a local queue when Supabase is unreachable,
    * so no data is lost and no noisy 401 errors appear in the console.
    */
   async insert(entry: Omit<LoginAuditEntry, 'id' | 'timestamp'>): Promise<void> {
-    // First, try to flush any previously queued entries
+    // Ensure auth listener is wired up to flush queue on sign-in
+    this._ensureAuthListener();
+
+    // Try to flush any previously queued entries first
     await this._flushQueue();
 
-    const { error } = await supabase
-      .from('login_audits')
-      .insert({
-        username: entry.username,
-        employee_id: entry.employeeId,
-        employee_code: entry.employeeCode,
-        employee_name: entry.employeeName,
-        role: entry.role,
-        branch_id: entry.branchId || null,
-        org_id: entry.orgId || null,
-        action: entry.action,
-        details: entry.details,
-      });
+    const { error } = await supabase.rpc('log_audit_event', {
+      p_username: entry.username,
+      p_employee_id: entry.employeeId || null,
+      p_employee_code: entry.employeeCode || null,
+      p_employee_name: entry.employeeName || null,
+      p_role: entry.role || null,
+      p_branch_id: entry.branchId || null,
+      p_org_id: entry.orgId || null,
+      p_action: entry.action || null,
+      p_details: entry.details || null,
+    });
 
     if (error) {
       // Queue for retry instead of logging a scary error
@@ -37,36 +55,46 @@ export const auditRepository = {
 
   /**
    * Attempt to flush queued audit entries to Supabase.
-   * Called automatically before each new insert.
+   * Called automatically before each new insert AND on auth state change.
    */
   async _flushQueue(): Promise<void> {
     if (this._pendingQueue.length === 0) return;
 
+    // Take a snapshot of the queue and clear it optimistically
     const batch = [...this._pendingQueue];
-    const rows = batch.map(e => ({
-      username: e.username,
-      employee_id: e.employeeId,
-      employee_code: e.employeeCode,
-      employee_name: e.employeeName,
-      role: e.role,
-      branch_id: e.branchId || null,
-      org_id: e.orgId || null,
-      action: e.action,
-      details: e.details,
-    }));
+    this._pendingQueue = [];
 
-    const { error } = await supabase.from('login_audits').insert(rows);
-    if (!error) {
-      // Successfully flushed — clear queue
-      this._pendingQueue = [];
-    }
-    // If still failing, keep them queued for next attempt
+    const results = await Promise.allSettled(
+      batch.map(entry =>
+        supabase.rpc('log_audit_event', {
+          p_username: entry.username,
+          p_employee_id: entry.employeeId || null,
+          p_employee_code: entry.employeeCode || null,
+          p_employee_name: entry.employeeName || null,
+          p_role: entry.role || null,
+          p_branch_id: entry.branchId || null,
+          p_org_id: entry.orgId || null,
+          p_action: entry.action || null,
+          p_details: entry.details || null,
+        })
+      )
+    );
+
+    // Re-queue any that failed
+    results.forEach((result, i) => {
+      if (result.status === 'rejected' || (result.status === 'fulfilled' && result.value.error)) {
+        this._pendingQueue.push(batch[i]);
+      }
+    });
   },
 
   /**
    * Fetch audit logs with filtering
    */
   async getAll(branchId?: string | string[], limit = 500): Promise<LoginAuditEntry[]> {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) return [];
+
     let query = supabase
       .from('login_audits')
       .select('*')

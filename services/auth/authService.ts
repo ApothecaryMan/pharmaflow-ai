@@ -488,10 +488,10 @@ export const authService = {
       }
     }
 
-    // 1. Sync to Supabase (Server-side)
+    // 1. Sync to Supabase via SECURITY DEFINER RPC (fire-and-forget)
     import('./repositories/auditRepository').then(({ auditRepository }) => {
-      auditRepository.insert(finalEntry);
-    });
+      auditRepository.insert(finalEntry).catch(() => {});
+    }).catch(() => {});
 
     // 2. Keep a small local cache for immediate UI feedback (Optional)
     const history = this.getLoginHistorySync();
