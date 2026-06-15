@@ -60,8 +60,8 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
   // Centralized Guard Function
   const resolveView = useCallback(
     (targetView: ViewState): ViewState => {
-      // A. Production Guard
-      if (import.meta.env.PROD && TEST_ROUTES.includes(targetView)) {
+      // A. Developer Routes Guard
+      if (import.meta.env.VITE_BLOCK_DEV_ROUTES === 'true' && TEST_ROUTES.includes(targetView)) {
         if (targetView !== ROUTES.LOGIN) return ROUTES.DASHBOARD;
       }
 
@@ -166,7 +166,7 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
         return;
       }
 
-      if (import.meta.env.PROD && TEST_ROUTES.includes(view)) {
+      if (import.meta.env.VITE_BLOCK_DEV_ROUTES === 'true' && TEST_ROUTES.includes(view)) {
         error('Access Denied: Developer routes are disabled.');
       }
       setView(correctView);
