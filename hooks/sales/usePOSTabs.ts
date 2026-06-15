@@ -61,7 +61,16 @@ export const usePOSTabs = (activeBranchId: string) => {
 
   // Save to storage whenever tabs change
   useEffect(() => {
-    storage.set(tabsKey, tabs);
+    // Compress tabs before saving to localStorage to prevent 5MB bloat
+    const compressedTabs = tabs.map((tab) => ({
+      ...tab,
+      cart: tab.cart.map((item) => {
+        // Strip out heavy nested arrays like 'batches' from the Drug object
+        const { batches, description, ...leanItem } = item;
+        return leanItem as CartItem;
+      }),
+    }));
+    storage.set(tabsKey, compressedTabs);
   }, [tabs, tabsKey]);
 
   // Save active tab ID whenever it changes
@@ -71,7 +80,14 @@ export const usePOSTabs = (activeBranchId: string) => {
 
   // Save closed tabs
   useEffect(() => {
-    storage.set(closedTabsKey, closedTabs);
+    const compressedClosedTabs = closedTabs.map((tab) => ({
+      ...tab,
+      cart: tab.cart.map((item) => {
+        const { batches, description, ...leanItem } = item;
+        return leanItem as CartItem;
+      }),
+    }));
+    storage.set(closedTabsKey, compressedClosedTabs);
   }, [closedTabs, closedTabsKey]);
 
   // Add new tab

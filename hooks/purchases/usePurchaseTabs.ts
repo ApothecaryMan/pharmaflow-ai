@@ -96,7 +96,14 @@ export const usePurchaseTabs = (activeBranchId: string) => {
 
   useEffect(() => {
     if (!activeBranchId || tabs.length === 0) return;
-    storage.set(tabsKey, tabs);
+    const compressedTabs = tabs.map((tab) => ({
+      ...tab,
+      cart: tab.cart.map((item) => {
+        const { batches, description, ...leanItem } = item;
+        return leanItem as PurchaseItem;
+      }),
+    }));
+    storage.set(tabsKey, compressedTabs);
   }, [tabs, tabsKey, activeBranchId]);
 
   useEffect(() => {
@@ -106,7 +113,14 @@ export const usePurchaseTabs = (activeBranchId: string) => {
 
   useEffect(() => {
     if (!activeBranchId) return;
-    storage.set(closedTabsKey, closedTabs);
+    const compressedClosedTabs = closedTabs.map((tab) => ({
+      ...tab,
+      cart: tab.cart.map((item) => {
+        const { batches, description, ...leanItem } = item;
+        return leanItem as PurchaseItem;
+      }),
+    }));
+    storage.set(closedTabsKey, compressedClosedTabs);
   }, [closedTabs, closedTabsKey, activeBranchId]);
 
   const addTab = useCallback(() => {
