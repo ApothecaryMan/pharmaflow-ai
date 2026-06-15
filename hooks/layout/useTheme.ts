@@ -146,10 +146,7 @@ export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean 
   useEffect(() => {
     const favicon = document.querySelector('link[rel="icon"]');
     if (favicon) {
-      favicon.setAttribute(
-        'href',
-        darkMode || isLoginView ? '/logo_icon_white.svg' : '/app_icon.svg'
-      );
+      favicon.setAttribute('href', '/app_icon.svg');
     }
-  }, [color, darkMode, isLoginView]);
+  }, []);
 };
