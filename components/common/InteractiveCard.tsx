@@ -104,11 +104,14 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
         ))}
         <div className="row-start-1 col-start-1 h-full w-full">
           {isLoading ? (
-            <div className="h-full w-full flex flex-col justify-center space-y-2.5 [direction:ltr] items-start text-left">
-              {/* Title Skeleton */}
-              <div className="h-3 w-16 bg-zinc-400/20 dark:bg-zinc-100/10 rounded" />
-              {/* Value Skeleton */}
-              <div className="h-8 w-24 bg-zinc-400/20 dark:bg-zinc-100/10 rounded-lg" />
+            <div className="relative h-full w-full">
+              <div className="invisible" aria-hidden="true">
+                {current.content}
+              </div>
+              <div className="absolute inset-0 flex flex-col justify-center space-y-2.5 [direction:ltr] items-start text-left">
+                <div className="h-3 w-16 bg-zinc-400/20 dark:bg-zinc-100/10 rounded" />
+                <div className="h-8 w-24 bg-zinc-400/20 dark:bg-zinc-100/10 rounded-lg" />
+              </div>
             </div>
           ) : (
             <AnimatePresence mode="wait" initial={false}>
