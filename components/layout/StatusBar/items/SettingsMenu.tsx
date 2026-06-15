@@ -39,7 +39,7 @@ const SettingsRow: React.FC<{
       </span>
       <span className="text-xs font-medium text-(--text-primary)">{label}</span>
     </div>
-    <div className="flex items-center gap-2" onClick={(e) => { if(onClick) e.stopPropagation(); }}>
+    <div className="flex items-center gap-2">
       {children}
     </div>
   </div>
@@ -523,7 +523,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   <label className="text-[10px] font-bold uppercase text-(--text-tertiary)">{t.statusBarSettings}</label>
                   <div className="relative" ref={statusSmartPos.ref}>
                     <SettingsRow icon="speed" label={t.quickStatuses} onClick={() => toggleSubmenu('status')}>
-                      <Switch checked={showTicker || false} onChange={setShowTicker} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Switch checked={showTicker || false} onChange={setShowTicker} theme={currentTheme.name.toLowerCase()} activeColor={currentTheme.hex} />
+                      </div>
                       <span 
                         className={`material-symbols-rounded transition-transform text-(--text-tertiary) group-hover:text-(--text-secondary) ${expandedSubmenu === 'status' ? 'rotate-180' : ''}`}
                         style={{ fontSize: 'var(--icon-settings)' }}

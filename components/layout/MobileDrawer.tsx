@@ -44,7 +44,6 @@ interface MobileDrawerProps {
   handleNavigate: (path: ViewState) => void;
   handleViewChange: (view: ViewState) => void;
   t: Translations;
-  profileImage: string | null;
   currentEmployeeId?: string | null;
   employees?: Employee[];
   onLogout?: () => void;
@@ -86,7 +85,6 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
   handleNavigate,
   handleViewChange,
   t,
-  profileImage,
   currentEmployeeId,
   employees = [],
   onLogout,
@@ -100,7 +98,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
   const unmountTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Sanitize profile image
-  const safeProfileImage = sanitizeProfileImage(profileImage);
+  const safeProfileImage = sanitizeProfileImage(currentEmployee?.image ?? null);
 
   // ============================================================================
   // EFFECT: Handle Animation Timing and Scroll Lock

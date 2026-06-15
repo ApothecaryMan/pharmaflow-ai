@@ -27,8 +27,6 @@ interface TitleBarProps {
   view?: ViewState;
   activeModule?: string;
   dashboardSubView?: string;
-  profileImage?: string | null;
-  setProfileImage?: (image: string | null) => void;
   employees?: any[];
   currentEmployeeId?: string | null;
  
@@ -55,8 +53,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   
   const { 
     currentEmployeeId, 
-    profileImage, 
-    setProfileImage, 
     setCurrentEmployeeId,
     setView,
     setActiveModule,
@@ -416,8 +412,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({
             <NavUserActions
               language={language}
               theme={currentTheme}
-              profileImage={profileImage}
-              setProfileImage={setProfileImage}
               showProfileMenu={showProfileMenu}
               setShowProfileMenu={setShowProfileMenu}
               profileRef={profileRef}

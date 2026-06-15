@@ -26,8 +26,6 @@ export interface AppState {
   setMobileMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
 
   // User state
-  profileImage: string | null;
-  setProfileImage: React.Dispatch<React.SetStateAction<string | null>>;
   currentEmployeeId: string | null;
   setCurrentEmployeeId: React.Dispatch<React.SetStateAction<string | null>>;
   windowedView: ViewState | null;
@@ -62,10 +60,6 @@ export function useAppState(): AppState {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // --- User/Session State ---
-  const [profileImage, setProfileImage] = usePersistedState<string | null>(
-    StorageKeys.PROFILE_IMAGE,
-    null
-  );
   const [currentEmployeeId, setCurrentEmployeeId] = usePersistedState<string | null>(
     StorageKeys.CURRENT_EMPLOYEE_ID,
     null
@@ -88,8 +82,6 @@ export function useAppState(): AppState {
     setMobileMenuOpen,
 
     // User state
-    profileImage,
-    setProfileImage,
     currentEmployeeId,
     setCurrentEmployeeId,
     windowedView,

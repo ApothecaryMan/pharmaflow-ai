@@ -10,7 +10,6 @@ import { isTauri } from '../../../utils/platform';
 interface NavUserActionsProps {
   language: Language;
   theme: { hex: string; primary: string };
-  profileImage: string | null;
   showProfileMenu: boolean;
   setShowProfileMenu: (show: boolean) => void;
   profileRef: React.RefObject<HTMLDivElement>;
@@ -33,7 +32,6 @@ interface NavUserActionsProps {
 export const NavUserActions: React.FC<NavUserActionsProps> = ({
   language,
   theme,
-  profileImage,
   showProfileMenu,
   setShowProfileMenu,
   profileRef,
@@ -65,9 +63,9 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
           onClick={() => setShowProfileMenu(!showProfileMenu)}
           className={`flex items-center gap-2 py-0.5 px-1 ${!isCompact ? 'ltr:pr-3 rtl:pl-3' : ''} rounded-full border border-transparent hover:border-(--border-divider) hover:bg-(--bg-navbar-hover) ${showProfileMenu ? 'border-(--border-divider) bg-(--bg-navbar-hover)' : ''}`}
         >
-          {profileImage ? (
+          {currentEmployee?.image ? (
             <img
-              src={profileImage}
+              src={currentEmployee.image}
               alt='Profile'
               className={`${isCompact ? 'w-6 h-6' : 'w-8 h-8'} rounded-full object-cover border border-(--border-divider)`}
             />
@@ -102,7 +100,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
               )}
             </div>
           )}
-          {!isCompact && <Icons.ExpandMore size="var(--icon-base)" className="hidden md:block text-gray-400" />}
+          {!isCompact && <span className="material-symbols-rounded hidden md:block text-gray-400" style={{ fontSize: 'var(--icon-base)' }}>expand_more</span>}
         </button>
 
         {/* Profile Dropdown */}
@@ -112,9 +110,9 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
             <div className='p-4 border-b border-(--border-divider) bg-(--bg-page-surface)'>
               <div className='flex items-center gap-3'>
                 <div className='relative group'>
-                  {profileImage ? (
+                  {currentEmployee?.image ? (
                     <img
-                      src={profileImage}
+                      src={currentEmployee.image}
                       alt='Profile'
                       className='w-12 h-12 rounded-full object-cover border border-(--border-divider)'
                     />

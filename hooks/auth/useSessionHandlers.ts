@@ -19,7 +19,6 @@ interface SessionHandlersProps {
   employees: Employee[];
   currentEmployeeId: string | null;
   setCurrentEmployeeId: (id: string | null) => void;
-  setProfileImage: (img: string | null) => void;
   setView: (view: ViewState) => void;
   setActiveModule: (module: string) => void;
   setNavigationParams: (params: Record<string, unknown> | null) => void;
@@ -35,7 +34,6 @@ export const useSessionHandlers = ({
   employees,
   currentEmployeeId,
   setCurrentEmployeeId,
-  setProfileImage,
   setView,
   setActiveModule,
   setNavigationParams,
@@ -188,7 +186,6 @@ export const useSessionHandlers = ({
     try {
       console.log('[Session] Clearing session states');
       await handleSelectEmployee(null);
-      setProfileImage(null);
       setView(ROUTES.DASHBOARD);
       setActiveModule(ROUTES.DASHBOARD);
 
@@ -209,7 +206,7 @@ export const useSessionHandlers = ({
     } finally {
       setIsLoggingOut(false);
     }
-  }, [handleLogout, handleSelectEmployee, setProfileImage, setView, setActiveModule]);
+  }, [handleLogout, handleSelectEmployee, setView, setActiveModule]);
 
   return {
     isLoggingOut,

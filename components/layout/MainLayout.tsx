@@ -29,8 +29,6 @@ interface MainLayoutProps {
   handleNavigate: (path: string) => void;
   handleViewChange: (view: string) => void;
   // Other
-  profileImage: string | null;
-  setProfileImage: (img: string | null) => void;
   currentEmployeeId: string | null;
   setCurrentEmployeeId: (id: string | null) => void;
   employees: any[];
@@ -100,8 +98,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   handleModuleChange,
   handleNavigate,
   handleViewChange,
-  profileImage,
-  setProfileImage,
   currentEmployeeId,
   setCurrentEmployeeId,
   employees,
@@ -256,7 +252,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 language={language}
                 hideInactiveModules={hideInactiveModules}
                 isStandalone={isStandalone}
-                profileImage={profileImage}
                 currentEmployeeId={currentEmployeeId}
                 onSelectEmployee={setCurrentEmployeeId}
                 employees={employees}

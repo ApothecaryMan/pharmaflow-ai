@@ -80,7 +80,6 @@ interface MobileNavigationProps {
   language: 'EN' | 'AR';
   hideInactiveModules: boolean;
   isStandalone: boolean;
-  profileImage: string | null;
   currentEmployeeId?: string | null;
   onSelectEmployee?: (id: string | null) => void;
   employees?: Employee[];
@@ -504,7 +503,6 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
   language,
   hideInactiveModules,
   isStandalone,
-  profileImage,
   currentEmployeeId,
   onSelectEmployee,
   employees = [],
@@ -683,7 +681,6 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
         handleNavigate={handleNavigate}
         handleViewChange={handleViewChange}
         t={t}
-        profileImage={profileImage}
         currentEmployeeId={currentEmployeeId}
         employees={employees}
         onLogout={() => onSelectEmployee?.(null)}

@@ -31,8 +31,6 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   setDashboardSubView,
   mobileMenuOpen,
   setMobileMenuOpen,
-  profileImage,
-  setProfileImage,
   currentEmployeeId,
   setCurrentEmployeeId,
   navigationParams,
@@ -201,7 +199,6 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     employees,
     currentEmployeeId,
     setCurrentEmployeeId,
-    setProfileImage,
     setView,
     setActiveModule,
     setNavigationParams,
@@ -344,8 +341,6 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       handleModuleChange={handleModuleChange}
       handleNavigate={handleNavigate}
       handleViewChange={handleViewChange}
-      profileImage={profileImage}
-      setProfileImage={setProfileImage}
       currentEmployeeId={currentEmployeeId}
       setCurrentEmployeeId={handleSelectEmployee}
       employees={employees}
