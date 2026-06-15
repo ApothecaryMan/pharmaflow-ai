@@ -8,7 +8,6 @@
 import { StorageKeys } from '../../config/storageKeys';
 import { CartItem, type Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
-import { storage } from '../../utils/storage';
 
 export interface InvoiceTemplateOptions {
   /** Store name to display in header */
@@ -52,16 +51,12 @@ export const defaultOptions: InvoiceTemplateOptions = {
 };
 
 /**
- * Helper to fetch the active receipt template and its options from storage.
- * Synchronized with ReceiptDesigner's saving logic.
+ * Helper to fetch the active receipt template and its options from printSettings.
  */
-export function getActiveReceiptSettings(branchId?: string): InvoiceTemplateOptions {
+export function getActiveReceiptSettings(printSettings?: Record<string, any>): InvoiceTemplateOptions {
   try {
-    const templatesKey = branchId ? `receipt_designer_${branchId}_${StorageKeys.RECEIPT_TEMPLATES}` : StorageKeys.RECEIPT_TEMPLATES;
-    const activeIdKey = branchId ? `receipt_designer_${branchId}_${StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID}` : StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID;
-
-    const templates = storage.get<any[]>(templatesKey, []);
-    const activeId = storage.get<string | null>(activeIdKey, null);
+    const templates = printSettings?.[StorageKeys.RECEIPT_TEMPLATES] || [];
+    const activeId = printSettings?.[StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID] || null;
 
     const activeTemplate =
       templates.find((t: any) => t.id === activeId) ||

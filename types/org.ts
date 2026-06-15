@@ -101,6 +101,8 @@ export interface Branch {
   longitude?: number;
   /** Active status */
   status: 'active' | 'inactive';
+  /** Branch-specific print settings (receipts, labels) */
+  printSettings?: Record<string, any>;
   /** ISO date of creation */
   createdAt?: string;
   /** ISO date of last update */

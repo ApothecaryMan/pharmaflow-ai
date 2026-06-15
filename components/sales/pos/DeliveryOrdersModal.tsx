@@ -30,6 +30,7 @@ import { resolveUnits, resolvePrice } from '../../../utils/stockUtils';
 import * as stockOps from '../../../utils/stockOperations';
 import { idGenerator } from '../../../utils/idGenerator';
 import { useShift } from '../../../hooks/sales/useShift';
+import { useData } from '../../../context/DataContext';
 
 const ShiftWarning = ({ t, compact = false }: { t: Translations; compact?: boolean }) => (
   <div className={`flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 ${compact ? 'h-7 px-2 w-full' : 'h-[42px] px-4'}`}>
@@ -137,6 +138,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   activeBranchId,
 }) => {
   const { currentShift } = useShift();
+  const { branches } = useData();
   const hasOpenShift = !!currentShift;
   const [activeTab, setActiveTab] = useState<DeliveryTab>('all');
   const { error: showToastError } = useAlert();
@@ -294,7 +296,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         label: t.printReceipt || 'Print Receipt',
         icon: 'print',
         action: () => {
-          const opts = getActiveReceiptSettings(activeBranchId);
+          const activeBranch = branches?.find((b: any) => b.id === activeBranchId);
+          const opts = getActiveReceiptSettings(activeBranch?.printSettings);
           printInvoice(sale, opts);
         },
       },

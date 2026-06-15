@@ -173,7 +173,7 @@ export const usePOSCheckout = ({
         removeTab(activeTabId);
 
         try {
-          const opts = getActiveReceiptSettings(activeBranchId);
+          const opts = getActiveReceiptSettings(activeBranch?.printSettings);
           const shouldPrint = (isDelivery && opts.autoPrintOnDelivery) || opts.autoPrintOnComplete;
 
           if (shouldPrint) {

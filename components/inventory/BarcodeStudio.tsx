@@ -46,7 +46,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
   const { playError } = usePosSounds();
-  const { branches, activeBranchId } = useData();
+  const { branches, activeBranchId, updateBranch } = useData();
   const { developerMode } = useSettings();
   const activeBranch = useMemo(() => branches?.find((b: any) => b.id === activeBranchId), [branches, activeBranchId]);
   const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
@@ -107,17 +107,17 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const [showBlueprint, setShowBlueprint] = useState(false);
 
   // Data State - Dynamically synced from ReceiptDesigner storage
-  const [receiptSettings, setLocalReceiptSettings] = useState(() => getReceiptSettings(activeBranchId, activeBranch?.name, activeBranch?.phone));
+  const [receiptSettings, setLocalReceiptSettings] = useState(() => getReceiptSettings(activeBranchId, activeBranch?.name, activeBranch?.phone, activeBranch?.printSettings));
   const [isLoaded, setIsLoaded] = useState(false);
 
   // --- Receipt Settings Polling (Optimized) ---
   useEffect(() => {
     // Initial load
-    setLocalReceiptSettings(getReceiptSettings(activeBranchId, activeBranch?.name, activeBranch?.phone));
+    setLocalReceiptSettings(getReceiptSettings(activeBranchId, activeBranch?.name, activeBranch?.phone, activeBranch?.printSettings));
 
     // Check every 3 seconds for changes
     const interval = setInterval(() => {
-      const newSettings = getReceiptSettings(activeBranchId, activeBranch?.name, activeBranch?.phone);
+      const newSettings = getReceiptSettings(activeBranchId, activeBranch?.name, activeBranch?.phone, activeBranch?.printSettings);
       setLocalReceiptSettings((current) => {
         // Only update if changed to avoid re-renders
         if (
@@ -177,7 +177,14 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       printOffsetX: debouncedPrintOffsets.x,
       printOffsetY: debouncedPrintOffsets.y,
     };
-    storage.set(StorageKeys.LABEL_DESIGN, designState);
+    if (activeBranchId) {
+      updateBranch(activeBranchId, { 
+        printSettings: { 
+          ...(activeBranch?.printSettings || {}), 
+          [StorageKeys.LABEL_DESIGN]: designState 
+        } 
+      });
+    }
   }, [
     debouncedElements,
     debouncedSelectedPreset,
@@ -218,17 +225,17 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   // Load Templates & Last State
   useEffect(() => {
     // Load Templates
-    const loadedTemplates = storage.get<SavedTemplate[]>(StorageKeys.LABEL_TEMPLATES, []);
+    const loadedTemplates = activeBranch?.printSettings?.[StorageKeys.LABEL_TEMPLATES] || [];
     setTemplates(loadedTemplates);
 
     // Load Default Template ID
-    const savedDefaultId = storage.get<string | null>(StorageKeys.LABEL_DEFAULT_TEMPLATE, null);
+    const savedDefaultId = activeBranch?.printSettings?.[StorageKeys.LABEL_DEFAULT_TEMPLATE] || null;
     if (savedDefaultId) {
       setDefaultTemplateId(savedDefaultId);
     }
 
     // Load Last Session (Autosave) or Default Template
-    const savedDesign = storage.get<any | null>(StorageKeys.LABEL_DESIGN, null);
+    const savedDesign = activeBranch?.printSettings?.[StorageKeys.LABEL_DESIGN] || null;
 
     if (savedDesign) {
       try {
@@ -499,7 +506,15 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
     const updatedTemplates = [...templates, newTemplate];
     setTemplates(updatedTemplates);
-    storage.set(StorageKeys.LABEL_TEMPLATES, updatedTemplates);
+    
+    if (activeBranchId) {
+      updateBranch(activeBranchId, { 
+        printSettings: { 
+          ...(activeBranch?.printSettings || {}), 
+          [StorageKeys.LABEL_TEMPLATES]: updatedTemplates 
+        } 
+      });
+    }
 
     setActiveTemplateId(newId);
     justLoaded.current = true;
@@ -512,7 +527,16 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     const design = getDesignState();
     const updatedTemplates = templates.map((t) => (t.id === id ? { ...t, design } : t));
     setTemplates(updatedTemplates);
-    storage.set(StorageKeys.LABEL_TEMPLATES, updatedTemplates);
+    
+    if (activeBranchId) {
+      updateBranch(activeBranchId, { 
+        printSettings: { 
+          ...(activeBranch?.printSettings || {}), 
+          [StorageKeys.LABEL_TEMPLATES]: updatedTemplates 
+        } 
+      });
+    }
+
     justLoaded.current = true;
     setSaveStatus(t.templateSaved);
     setTimeout(() => setSaveStatus(''), 2000);
@@ -534,7 +558,14 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const deleteTemplate = (id: string) => {
     const updated = templates.filter((t) => t.id !== id);
     setTemplates(updated);
-    storage.set(StorageKeys.LABEL_TEMPLATES, updated);
+    if (activeBranchId) {
+      updateBranch(activeBranchId, { 
+        printSettings: { 
+          ...(activeBranch?.printSettings || {}), 
+          [StorageKeys.LABEL_TEMPLATES]: updated 
+        } 
+      });
+    }
     if (activeTemplateId === id) {
       initializeLayout(selectedPreset);
     }

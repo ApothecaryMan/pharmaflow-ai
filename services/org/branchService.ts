@@ -139,6 +139,10 @@ class BranchServiceImpl extends BaseDomainService<Branch> {
 
     return branches.find(b => b.id === activeId) || null;
   }
+
+  async updatePrintSettings(branchId: string, printSettings: Record<string, any>): Promise<void> {
+    await this.update(branchId, { printSettings });
+  }
 }
 
 export const branchService = new BranchServiceImpl();

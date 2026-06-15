@@ -20,10 +20,9 @@ interface ReceiptDesignerProps {
 }
 
 export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, language }) => {
-  const { branches, activeBranchId } = useData();
+  const { branches, activeBranchId, updateBranch } = useData();
   const activeBranch = useMemo(() => branches?.find((b: any) => b.id === activeBranchId), [branches, activeBranchId]);
   const { getVerifiedDate } = useStatusBar();
-  // Track if component has mounted (to avoid overwriting localStorage on first render)
   const [hasMounted, setHasMounted] = useState(false);
   const { shifts } = useShift();
   const [previewMode, setPreviewMode] = useState<'sale' | 'shift'>('sale');
@@ -60,30 +59,26 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
     language: language,
   };
 
-  // Branch-scoped storage keys
-  const getTemplateKey = (key: string) => `receipt_designer_${activeBranchId}_${key}`;
-
   const [templates, setTemplates] = useState<SavedTemplate[]>([]);
   const [activeTemplateId, setActiveTemplateId] = useState<string>('');
 
   // Initial load and sync when branch changes
   useEffect(() => {
-    // Only proceed if activeBranch is loaded (to get correct defaults if needed)
-    if (!activeBranchId || !branches || branches.length === 0) return;
+    if (!activeBranchId || !branches || branches.length === 0 || !activeBranch) return;
 
     try {
-      const savedTemplates = storage.get<SavedTemplate[]>(getTemplateKey(StorageKeys.RECEIPT_TEMPLATES), []);
+      const savedTemplates = activeBranch.printSettings?.[StorageKeys.RECEIPT_TEMPLATES] || [];
       let activeId = '';
       let templatesToSet = [];
 
       if (savedTemplates.length > 0) {
         templatesToSet = savedTemplates;
         // Find saved active or default
-        const savedActive = storage.get<string | null>(getTemplateKey(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID), null);
-        if (savedActive && savedTemplates.some(t => t.id === savedActive)) {
+        const savedActive = activeBranch.printSettings?.[StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID] || null;
+        if (savedActive && savedTemplates.some((t: SavedTemplate) => t.id === savedActive)) {
           activeId = savedActive;
         } else {
-          const def = savedTemplates.find((t) => t.isDefault);
+          const def = savedTemplates.find((t: SavedTemplate) => t.isDefault);
           activeId = (def ? def.id : savedTemplates[0].id);
         }
       } else {
@@ -101,7 +96,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       setTemplates(templatesToSet);
       setActiveTemplateId(activeId);
 
-      const activeTemplate = templatesToSet.find(t => t.id === activeId);
+      const activeTemplate = templatesToSet.find((t: SavedTemplate) => t.id === activeId);
       if (activeTemplate) {
         setOptions(activeTemplate.options);
         setLastSavedOptions(JSON.stringify(activeTemplate.options));
@@ -109,7 +104,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
     } catch (e) {
       console.error('Failed to load templates', e);
     }
-  }, [activeBranchId, branches]); // Added branches as dependency
+  }, [activeBranchId, branches]); // Will re-run if activeBranch changes
 
   const [options, setOptions] = useState<InvoiceTemplateOptions>(() => {
     const active = templates.find((t) => t.id === activeTemplateId) || templates[0];
@@ -120,6 +115,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   const [isEditingName, setIsEditingName] = useState<string | null>(null);
   const [editingNameValue, setEditingNameValue] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Track last saved state to show/hide save button
   const [lastSavedOptions, setLastSavedOptions] = useState<string>(() => JSON.stringify(options));
@@ -135,24 +131,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
     }
   };
 
-  // Persist templates to branch-scoped storage
-  useEffect(() => {
-    if (hasMounted && activeBranchId) {
-      try {
-        storage.set(getTemplateKey(StorageKeys.RECEIPT_TEMPLATES), templates);
-        storage.set(getTemplateKey(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID), activeTemplateId);
-        setQuotaError(false);
-      } catch (error) {
-        console.error('Failed to save settings:', error);
-        if (
-          error instanceof DOMException &&
-          (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED')
-        ) {
-          setQuotaError(true);
-        }
-      }
-    }
-  }, [templates, activeTemplateId, hasMounted, activeBranchId]);
+  // Removed auto-save useEffect because we want manual explicit saves to DB
 
   const handleCreateTemplate = () => {
     if (!newTemplateName.trim()) return;
@@ -569,10 +548,23 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 </div>
                 {hasChanges && (
                   <button
-                    onClick={() => {
-                      storage.set(getTemplateKey(StorageKeys.RECEIPT_TEMPLATES), templates);
-                      storage.set(getTemplateKey(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID), activeTemplateId);
-                      setLastSavedOptions(JSON.stringify(options));
+                    onClick={async () => {
+                      setIsSaving(true);
+                      try {
+                        const newSettings = {
+                          ...(activeBranch?.printSettings || {}),
+                          [StorageKeys.RECEIPT_TEMPLATES]: templates,
+                          [StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID]: activeTemplateId
+                        };
+                        await updateBranch(activeBranchId, { printSettings: newSettings });
+                        setLastSavedOptions(JSON.stringify(options));
+                        setQuotaError(false);
+                      } catch (err) {
+                        console.error('Failed to save settings:', err);
+                        setQuotaError(true);
+                      } finally {
+                        setIsSaving(false);
+                      }
                     }}
                     className='w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all border border-emerald-100 dark:border-emerald-800/50 animate-fadeIn'
                     title={t.common?.save || 'Save'}

@@ -154,7 +154,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
   sale, isOpen, onClose, t, language, color, textTransform,
   currentShift, currentEmployeeId, currentDailyRefunds = 0, onProcessReturn,
 }) => {
-  const { inventory } = useData();
+  const { inventory, branches } = useData();
   const [returnModalOpen, setReturnModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'items' | 'history'>('items');
 
@@ -173,7 +173,8 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
   const labelText = 'text-[9px] font-bold uppercase tracking-wider opacity-50';
 
   const handlePrint = () => {
-    printInvoice(sale, { ...getActiveReceiptSettings(sale.branchId), language: language as 'EN' | 'AR' });
+    const saleBranch = branches?.find((b: any) => b.id === sale.branchId);
+    printInvoice(sale, { ...getActiveReceiptSettings(saleBranch?.printSettings), language: language as 'EN' | 'AR' });
   };
 
   return (

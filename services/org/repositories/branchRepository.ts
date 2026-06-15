@@ -21,6 +21,7 @@ export const branchRepository = {
       longitude:
         db.longitude !== null && db.longitude !== undefined ? Number(db.longitude) : undefined,
       status: db.status || 'active',
+      printSettings: db.print_settings || {},
       createdAt: db.created_at || new Date().toISOString(),
       updatedAt: db.updated_at || new Date().toISOString(),
     };
@@ -42,6 +43,7 @@ export const branchRepository = {
     if (b.latitude !== undefined) db.latitude = b.latitude;
     if (b.longitude !== undefined) db.longitude = b.longitude;
     if (b.status !== undefined) db.status = b.status;
+    if (b.printSettings !== undefined) db.print_settings = b.printSettings;
     return db;
   },
 

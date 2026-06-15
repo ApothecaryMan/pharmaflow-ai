@@ -51,6 +51,8 @@ export interface PrintOptions {
   activeBranchName?: string;
   /** Optional active branch phone number for fallback hotline */
   activeBranchPhone?: string;
+  /** DB-backed print settings for the active branch */
+  printSettings?: Record<string, any>;
 }
 
 // --- Constants ---
@@ -162,35 +164,24 @@ export const getLabelElementContent = (
 export const getReceiptSettings = (
   activeBranchId?: string,
   activeBranchName?: string,
-  activeBranchPhone?: string
+  activeBranchPhone?: string,
+  printSettings?: Record<string, any>
 ): { storeName: string; hotline: string } => {
-  const branchId = activeBranchId || storage.get<string>('pharma_activeBranchId', '');
   const defaultSettings = { 
     storeName: activeBranchName || 'ZINC', 
     hotline: activeBranchPhone || '19099' 
   };
 
+  if (!printSettings) return defaultSettings;
+
   try {
-    const templateKey = branchId 
-      ? `receipt_designer_${branchId}_${StorageKeys.RECEIPT_TEMPLATES}` 
-      : StorageKeys.RECEIPT_TEMPLATES;
-    
-    let templates = storage.get<any[]>(templateKey, []);
-    
-    // Fallback if branch-scoped templates is empty, but we have global
-    if (templates.length === 0 && branchId) {
-      templates = storage.get<any[]>(StorageKeys.RECEIPT_TEMPLATES, []);
-    }
+    const templates = printSettings[StorageKeys.RECEIPT_TEMPLATES] || [];
 
     if (templates.length === 0) {
       return defaultSettings;
     }
 
-    const activeTemplateIdKey = branchId 
-      ? `receipt_designer_${branchId}_${StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID}` 
-      : StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID;
-      
-    const activeId = storage.get<string | null>(activeTemplateIdKey, null);
+    const activeId = printSettings[StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID] || null;
     const activeTemplate =
       templates.find((t: any) => t?.id === activeId) ||
       templates.find((t: any) => t?.isDefault) ||
@@ -210,14 +201,15 @@ export const getReceiptSettings = (
 };
 
 /**
- * Resolves the preferred label design from Storage.
+ * Resolves the preferred label design from printSettings.
  * Prioritizes: Default Template ID > Autosaved Studio Design.
  * @returns The saved design or null if no custom design is found
  */
-const getDefaultTemplate = (): { design: LabelDesign } | null => {
+const getDefaultTemplate = (printSettings?: Record<string, any>): { design: LabelDesign } | null => {
+  if (!printSettings) return null;
   try {
-    const defaultTemplateId = storage.get<string | null>(StorageKeys.LABEL_DEFAULT_TEMPLATE, null);
-    const savedTemplates = storage.get<any[]>(StorageKeys.LABEL_TEMPLATES, []);
+    const defaultTemplateId = printSettings[StorageKeys.LABEL_DEFAULT_TEMPLATE] || null;
+    const savedTemplates = printSettings[StorageKeys.LABEL_TEMPLATES] || [];
 
     if (defaultTemplateId && savedTemplates.length > 0) {
       const defaultTemplate = savedTemplates.find((t: any) => t.id === defaultTemplateId);
@@ -227,9 +219,9 @@ const getDefaultTemplate = (): { design: LabelDesign } | null => {
     }
 
     // Fallback to autosaved design
-    const savedDesign = storage.get<any | null>(StorageKeys.LABEL_DESIGN, null);
+    const savedDesign = printSettings[StorageKeys.LABEL_DESIGN] || null;
     if (savedDesign) {
-      // parsed is already an object because storage.get parses JSON
+      // parsed is already an object because it's JSONB
       if (savedDesign.elements && savedDesign.elements.length > 0) {
         return { design: savedDesign };
       }
@@ -244,9 +236,10 @@ const getDefaultTemplate = (): { design: LabelDesign } | null => {
  * Reads printer calibration settings (X/Y offsets) from the saved design.
  * @returns Offset object in millimeters
  */
-const getPrintOffsets = (): { x: number; y: number } => {
+const getPrintOffsets = (printSettings?: Record<string, any>): { x: number; y: number } => {
+  if (!printSettings) return { x: 0, y: 0 };
   try {
-    const savedDesign = storage.get<any | null>(StorageKeys.LABEL_DESIGN, null);
+    const savedDesign = printSettings[StorageKeys.LABEL_DESIGN] || null;
     if (savedDesign) {
       return {
         x: savedDesign.printOffsetX || 0,
@@ -644,7 +637,7 @@ export const printLabels = async (
   let printWindow: Window | null = null;
 
   try {
-    const template = options.forceBasicTemplate ? null : getDefaultTemplate();
+    const template = options.forceBasicTemplate ? null : getDefaultTemplate(options.printSettings);
     // Deep clone to prevent mutation when applying overrides
     const design = JSON.parse(
       JSON.stringify(options.design || (template?.design as LabelDesign) || DEFAULT_LABEL_DESIGN)
@@ -668,8 +661,8 @@ export const printLabels = async (
         ? design.customDims || { w: 38, h: 25 }
         : LABEL_PRESETS[design.selectedPreset] || { w: 38, h: 25 };
 
-    const receiptSettings = getReceiptSettings(options.activeBranchId, options.activeBranchName, options.activeBranchPhone);
-    const offsets = getPrintOffsets();
+    const receiptSettings = getReceiptSettings(options.activeBranchId, options.activeBranchName, options.activeBranchPhone, options.printSettings);
+    const offsets = getPrintOffsets(options.printSettings);
     const printOffsetX = offsets.x;
     const printOffsetY = offsets.y;
 

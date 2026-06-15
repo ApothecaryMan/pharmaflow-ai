@@ -294,7 +294,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
     }));
 
     // Load current design from storage (matches BarcodeStudio's autosave key)
-    const currentDesign = storage.get<any>(StorageKeys.LABEL_DESIGN, null);
+    const currentDesign = activeBranch?.printSettings?.[StorageKeys.LABEL_DESIGN] || null;
 
     printLabels(itemsToPrint, {
       design: currentDesign,
@@ -302,6 +302,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
       activeBranchId,
       activeBranchName: activeBranch?.name,
       activeBranchPhone: activeBranch?.phone,
+      printSettings: activeBranch?.printSettings,
     });
 
     // Optional: Clear queue after print? Or keep for re-print?
@@ -319,7 +320,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
 
     try {
       // Load current design from storage (matches BarcodeStudio's autosave key)
-      const storedDesign = storage.get<any>(StorageKeys.LABEL_DESIGN, null);
+      const storedDesign = activeBranch?.printSettings?.[StorageKeys.LABEL_DESIGN] || null;
 
       // Deep clone to prevent mutation when applying overrides
       const design: LabelDesign = JSON.parse(
@@ -346,7 +347,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
       const renderDims = { w: dims.w, h: labelHeight };
 
       const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
-      const receiptSettings = getReceiptSettings(activeBranchId, activeBranch?.name, activeBranch?.phone);
+      const receiptSettings = getReceiptSettings(activeBranchId, activeBranch?.name, activeBranch?.phone, activeBranch?.printSettings);
 
       const labelHTML = generateLabelHTML(
         selectedDrug,
@@ -368,7 +369,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
 
   // Calculate box dimensions (1mm = 3.78px)
   const previewDims = useMemo(() => {
-    const storedDesign = storage.get<any>(StorageKeys.LABEL_DESIGN, null);
+    const storedDesign = activeBranch?.printSettings?.[StorageKeys.LABEL_DESIGN] || null;
     const design = storedDesign || DEFAULT_LABEL_DESIGN;
     const dims = design.selectedPreset === 'custom'
       ? design.customDims || { w: 38, h: 25 }
