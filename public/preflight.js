@@ -3,7 +3,7 @@
  * Keeps lightweight boot-time version, theme, and direction setup.
  */
 (() => {
-  const CURRENT_VERSION = '2.042';
+  const CURRENT_VERSION = '2.043';
   const VERSION_KEY = 'pharma_storage_version';
   const SESSION_KEY = 'branch_pilot_session';
 
