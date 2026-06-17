@@ -21,9 +21,3 @@ export const ROUTES = {
   PORTAL: 'employee-portal',
 } as const;
 
-export const TEST_ROUTES = [
-  ROUTES.LOGIN,
-  ROUTES.MODAL_TESTS,
-  ROUTES.FILTER_DROPDOWN_TEST,
-  ROUTES.TEST_THEME,
-];

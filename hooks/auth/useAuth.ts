@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { ROUTES, TEST_ROUTES } from '../../config/routes';
+import { ROUTES } from '../../config/routes';
 import { StorageKeys } from '../../config/storageKeys';
 import { useAlert } from '../../context';
 import { authService } from '../../services/auth/authService';
@@ -60,10 +60,7 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
   // Centralized Guard Function
   const resolveView = useCallback(
     (targetView: ViewState): ViewState => {
-      // A. Developer Routes Guard
-      if (import.meta.env.VITE_BLOCK_DEV_ROUTES === 'true' && TEST_ROUTES.includes(targetView)) {
-        if (targetView !== ROUTES.LOGIN) return ROUTES.DASHBOARD;
-      }
+
 
       // B. Auth Guard
       if (!isAuthenticated && targetView !== ROUTES.LOGIN) {
@@ -166,9 +163,6 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
         return;
       }
 
-      if (import.meta.env.VITE_BLOCK_DEV_ROUTES === 'true' && TEST_ROUTES.includes(view)) {
-        error('Access Denied: Developer routes are disabled.');
-      }
       setView(correctView);
     }
   }, [view, isAuthChecking, resolveView, setView, error, isAuthenticated]);
