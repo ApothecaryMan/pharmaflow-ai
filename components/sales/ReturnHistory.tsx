@@ -99,11 +99,16 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
   t,
   language,
   datePickerTranslations,
-  // @ts-expect-error
   navigationParams,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
+
+  const [page, setPage] = useState(1);
+  const [pagedReturns, setPagedReturns] = useState<Return[]>(returns || []);
+  const [totalReturns, setTotalReturns] = useState(returns?.length || 0);
+  const [isPageLoading, setIsPageLoading] = useState(false);
+  const pageSize = 50;
 
   // Handle Navigation Params (Deep Linking)
   React.useEffect(() => {
@@ -129,6 +134,50 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
 
   // Locale for dates
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
+
+  const serverFilters = useMemo(() => {
+    return {
+      dateFrom: dateRange.from ? `${dateRange.from}T00:00:00` : undefined,
+      dateTo: dateRange.to ? `${dateRange.to}T23:59:59` : undefined,
+      search: searchTerm || undefined,
+      reason: activeFilters.reason?.[0] !== 'all' ? activeFilters.reason?.[0] : undefined,
+    };
+  }, [activeFilters, dateRange, searchTerm]);
+
+  React.useEffect(() => {
+    let isCancelled = false;
+    setIsPageLoading(true);
+
+    import('../../services/returns/returnService').then(({ returnService }) => {
+      returnService
+        .listSalesReturnsPage({
+          page,
+          pageSize,
+          filters: serverFilters,
+          sort: { column: 'date', ascending: false },
+        })
+        .then((result) => {
+          if (isCancelled) return;
+          setPagedReturns(result.rows);
+          setTotalReturns(result.total);
+        })
+        .catch((error) => {
+          if (isCancelled) return;
+          console.error('[ReturnHistory] Failed to load returns page:', error);
+          setPagedReturns([]);
+          setTotalReturns(0);
+        })
+        .finally(() => {
+          if (!isCancelled) setIsPageLoading(false);
+        });
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [page, serverFilters, returns]);
+
+  const totalPages = Math.max(1, Math.ceil(totalReturns / pageSize));
 
   const getRowActions = (returnItem: Return) => [
     {
@@ -259,46 +308,6 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
     [t, locale, sales, color, textTransform]
   );
 
-  const filterableColumns = useMemo(
-    () => [
-      {
-        id: 'reason',
-        label: t.headers.reason,
-        icon: 'help',
-        mode: 'multiple' as const,
-        options: [
-          { label: t.reasons?.customer_request || 'Customer Request', value: 'customer_request' },
-          { label: t.reasons?.damaged || 'Damaged', value: 'damaged' },
-          { label: t.reasons?.defective || 'Defective', value: 'defective' },
-          { label: t.reasons?.expired || 'Expired', value: 'expired' },
-          { label: t.reasons?.wrong_item || 'Wrong Item', value: 'wrong_item' },
-          { label: t.reasons?.overage || 'Overage', value: 'overage' },
-        ],
-      },
-    ],
-    [t]
-  );
-
-  // Filter returns by date only (text search handled by TanStackTable globalFilter)
-  const filteredReturns = useMemo(() => {
-    let data = [...returns].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-    // Date Filter
-    if (dateRange.from) {
-      const fromDate = new Date(dateRange.from).getTime();
-      data = data.filter((r) => new Date(r.date).getTime() >= fromDate);
-    }
-    if (dateRange.to) {
-      const toDate = new Date(dateRange.to).getTime();
-      // Add 1 day to include the end date fully if it's just a date string without time
-      // Actually Purchase logic just compares timestamps. Assuming consistent formats.
-      // Purchase logic: data = data.filter(p => new Date(p.date).getTime() <= toDate);
-      data = data.filter((r) => new Date(r.date).getTime() <= toDate);
-    }
-
-    return data;
-  }, [returns, dateRange]);
-
   return (
     <div className='h-full flex flex-col space-y-4 animate-fade-in'>
       {/* Header */}
@@ -307,19 +316,59 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
           <h1 className='text-2xl font-bold tracking-tight page-title'>{t.title}</h1>
           <p className='text-sm text-gray-500 dark:text-gray-400'>{t.subtitle}</p>
         </div>
+        <div className='flex items-center gap-2 h-9'>
+          <div className='h-9 rounded-full border border-(--border-divider) bg-white dark:bg-gray-900 flex items-center overflow-hidden'>
+            <button
+              type='button'
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1 || isPageLoading}
+              className='h-full w-9 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800'
+              title={language === 'AR' ? 'السابق' : 'Previous'}
+            >
+              <span className='material-symbols-rounded text-lg'>chevron_left</span>
+            </button>
+            <span className='px-2 text-xs font-bold tabular-nums text-gray-600 dark:text-gray-300'>
+              {page} / {totalPages}
+            </span>
+            <button
+              type='button'
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages || isPageLoading}
+              className='h-full w-9 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800'
+              title={language === 'AR' ? 'التالي' : 'Next'}
+            >
+              <span className='material-symbols-rounded text-lg'>chevron_right</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Table Section */}
       <div className='flex-1 flex flex-col min-h-0'>
         <TanStackTable<Return, any>
-          data={filteredReturns}
+          data={pagedReturns}
           columns={columns}
           tableId='return_history'
           globalFilter={searchTerm}
           onSearchChange={setSearchTerm}
-          filterableColumns={filterableColumns}
+          filterableColumns={[
+            {
+              id: 'reason',
+              label: t.headers.reason,
+              icon: 'help',
+              mode: 'multiple' as const,
+              options: [
+                { label: t.reasons?.customer_request || 'Customer Request', value: 'customer_request' },
+                { label: t.reasons?.damaged || 'Damaged', value: 'damaged' },
+                { label: t.reasons?.defective || 'Defective', value: 'defective' },
+                { label: t.reasons?.expired || 'Expired', value: 'expired' },
+                { label: t.reasons?.wrong_item || 'Wrong Item', value: 'wrong_item' },
+                { label: t.reasons?.overage || 'Overage', value: 'overage' },
+              ],
+            },
+          ]}
           initialFilters={activeFilters}
-          onFilterChange={setActiveFilters}
+          onFilterChange={(f) => { setActiveFilters(f); setPage(1); }}
           enableTopToolbar={true}
           enableSearch={true}
           searchPlaceholder={t.searchPlaceholder}
@@ -328,15 +377,17 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
           color={color}
           enablePagination={true}
           enableVirtualization={false}
-          pageSize='auto'
-          enableShowAll={true}
+          pageSize={pageSize}
+          isLoading={isPageLoading}
           rightCustomControls={
-            <DateRangePicker
-              startDate={dateRange.from}
-              endDate={dateRange.to}
-              onStartDateChange={(val) => setDateRange((prev) => ({ ...prev, from: val }))}
-              onEndDateChange={(val) => setDateRange((prev) => ({ ...prev, to: val }))}
-              color='gray'
+            <DatePicker
+              label={t.headers?.date || 'Date'}
+              value={dateRange.from}
+              onChange={(v) => {
+                setDateRange((prev) => ({ ...prev, from: v, to: prev.to || v }));
+                setPage(1);
+              }}
+              color={color}
               locale={locale}
             />
           }

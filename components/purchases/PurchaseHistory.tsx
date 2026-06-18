@@ -61,6 +61,12 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
   const [historySearch, setHistorySearch] = useState('');
   const [showAllBranches, setShowAllBranches] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const [pagedPurchases, setPagedPurchases] = useState<Purchase[]>(purchases || []);
+  const [totalPurchases, setTotalPurchases] = useState(purchases?.length || 0);
+  const [isPageLoading, setIsPageLoading] = useState(false);
+  const pageSize = 50;
+
   const statusFilterConfig: FilterConfig = useMemo(
     () => ({
       id: 'status',
@@ -136,46 +142,50 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
     return purchaseReturns.filter((r) => r.purchaseId === purchaseId);
   };
 
-  const sortedHistory = useMemo(() => {
-    let data = [...purchases].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+  const serverFilters = useMemo(() => {
+    return {
+      dateFrom: dateRange.from ? `${dateRange.from}T00:00:00` : undefined,
+      dateTo: dateRange.to ? `${dateRange.to}T23:59:59` : undefined,
+      search: historySearch || undefined,
+      status: activeFilters.status?.[0] !== 'all' ? activeFilters.status?.[0] : undefined,
+    };
+  }, [activeFilters, dateRange, historySearch]);
 
-    // Branch Filter (unless Global View is ON)
-    if (!showAllBranches && activeBranchId) {
-      data = data.filter((p) => p.branchId === activeBranchId);
-    }
+  useEffect(() => {
+    let isCancelled = false;
+    setIsPageLoading(true);
 
-    // Date Filter
-    if (dateRange.from) {
-      const fromDate = new Date(dateRange.from).getTime();
-      data = data.filter((p) => new Date(p.date).getTime() >= fromDate);
-    }
-    if (dateRange.to) {
-      const toDate = new Date(dateRange.to).getTime();
-      data = data.filter((p) => new Date(p.date).getTime() <= toDate);
-    }
+    import('../../services/purchases/purchaseService').then(({ purchaseService }) => {
+      purchaseService
+        .listPage({
+          branchId: showAllBranches ? 'all' : activeBranchId,
+          page,
+          pageSize,
+          filters: serverFilters,
+          sort: { column: 'date', ascending: false },
+        })
+        .then((result) => {
+          if (isCancelled) return;
+          setPagedPurchases(result.rows);
+          setTotalPurchases(result.total);
+        })
+        .catch((error) => {
+          if (isCancelled) return;
+          console.error('[PurchaseHistory] Failed to load purchases page:', error);
+          setPagedPurchases([]);
+          setTotalPurchases(0);
+        })
+        .finally(() => {
+          if (!isCancelled) setIsPageLoading(false);
+        });
+    });
 
-    // Search Filter
-    if (historySearch.trim()) {
-      const { mode: searchMode, regex } = parseSearchTerm(historySearch);
+    return () => {
+      isCancelled = true;
+    };
+  }, [activeBranchId, showAllBranches, page, serverFilters, purchases]);
 
-      if (searchMode === 'ingredient' || searchMode === 'generic') {
-        data = data.filter(
-          (p) => p.items && p.items.some((item) => item.name && regex.test(item.name))
-        );
-      } else {
-        data = data.filter(
-          (p) =>
-            (p.invoiceId && regex.test(p.invoiceId)) ||
-            (p.externalInvoiceId && regex.test(p.externalInvoiceId)) ||
-            (p.supplierName && regex.test(p.supplierName))
-        );
-      }
-    }
-
-    return data;
-  }, [purchases, showAllBranches, activeBranchId, dateRange, historySearch]);
+  const totalPages = Math.max(1, Math.ceil(totalPurchases / pageSize));
 
   const columns = useMemo<ColumnDef<Purchase>[]>(
     () => [
@@ -399,34 +409,61 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
               color='gray'
               locale={language === 'AR' ? 'ar-EG' : 'en-US'}
             />
-            <label className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors h-9'>
-              <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none'>
-                {t.globalView || 'Global'}
-              </span>
-              <Switch checked={showAllBranches} onChange={setShowAllBranches} activeColor={color} />
-            </label>
+              <label className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors h-9'>
+                <span className='text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider select-none'>
+                  {t.globalView || 'Global'}
+                </span>
+                <Switch checked={showAllBranches} onChange={setShowAllBranches} activeColor={color} />
+              </label>
+
+              <div className='h-9 rounded-full border border-(--border-divider) bg-white dark:bg-gray-900 flex items-center overflow-hidden'>
+                <button
+                  type='button'
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1 || isPageLoading}
+                  className='h-full w-9 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  title={language === 'AR' ? 'السابق' : 'Previous'}
+                >
+                  <span className='material-symbols-rounded text-lg'>chevron_left</span>
+                </button>
+                <span className='px-2 text-xs font-bold tabular-nums text-gray-600 dark:text-gray-300'>
+                  {page} / {totalPages}
+                </span>
+                <button
+                  type='button'
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages || isPageLoading}
+                  className='h-full w-9 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  title={language === 'AR' ? 'التالي' : 'Next'}
+                >
+                  <span className='material-symbols-rounded text-lg'>chevron_right</span>
+                </button>
+              </div>
           </div>
         }
       />
 
       <div className='flex-1 overflow-hidden'>
         <TanStackTable<Purchase, any>
-          data={sortedHistory}
+          data={pagedPurchases}
           columns={columns}
           color={color}
           onRowClick={(p) => setSelectedPurchase(p)}
           onRowContextMenu={(e, p) => showMenu(e.clientX, e.clientY, getRowContextActions(p))}
           tableId='purchases_history_v3'
-          isLoading={isLoading}
+          isLoading={isLoading || isPageLoading}
           enablePagination={true}
-          pageSize='auto'
+          pageSize={pageSize}
           enableVirtualization={true}
           enableTopToolbar={true}
           enableSearch={false}
           filterableColumns={[statusFilterConfig]}
           initialFilters={activeFilters}
-          onFilterChange={setActiveFilters}
-          manualFiltering={false}
+          onFilterChange={(filters) => {
+            setActiveFilters(filters);
+            setPage(1);
+          }}
+          manualFiltering={true}
         />
       </div>
 

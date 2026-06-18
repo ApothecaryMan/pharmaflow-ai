@@ -793,40 +793,17 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const drugSearchDir = useSmartDirection(search, t.searchDrug);
 
   // Invoice ID State
-  const [invoiceId, setInvoiceId] = useState(() => {
-    if (!purchases || purchases.length === 0) return 'INV-000001';
+  const [invoiceId, setInvoiceId] = useState('INV-000001');
 
-    // Find max ID
-    const maxId = purchases.reduce((max, p) => {
-      const match = p.invoiceId?.match(/INV-(\d+)/);
-      if (match) {
-        const num = parseInt(match[1], 10);
-        return num > max ? num : max;
-      }
-      return max;
-    }, 0);
-
-    return `INV-${String(maxId + 1).padStart(6, '0')}`;
-  });
-
-  // Live Sync: Update next ID when new purchases arrive via Realtime
   useEffect(() => {
-    if (!purchases || purchases.length === 0) return;
-
-    const maxId = purchases.reduce((max, p) => {
-      const match = p.invoiceId?.match(/INV-(\d+)/);
-      if (match) {
-        const num = parseInt(match[1], 10);
-        return num > max ? num : max;
-      }
-      return max;
-    }, 0);
-
-    const nextId = `INV-${String(maxId + 1).padStart(6, '0')}`;
-    if (nextId !== invoiceId) {
-      setInvoiceId(nextId);
-    }
-  }, [purchases, invoiceId]);
+    let isCancelled = false;
+    import('../../services/purchases/purchaseService').then(({ purchaseService }) => {
+      purchaseService.getNextInvoiceId().then((nextId) => {
+        if (!isCancelled) setInvoiceId(nextId);
+      });
+    });
+    return () => { isCancelled = true; };
+  }, [purchases]); // Keep listening to purchases prop changes to bump ID when new ones arrive via realtime
 
   const externalInvoiceIdDir = useSmartDirection(
     externalInvoiceId,

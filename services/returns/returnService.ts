@@ -11,14 +11,29 @@ import { inventoryService } from '../inventory/inventoryService';
 import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
 import { settingsService } from '../settings/settingsService';
 import { returnsRepository } from './repositories/returnsRepository';
-import type { ReturnService } from './types';
+import type { ReturnService, ReturnsPageOptions } from './types';
 
 export const returnService: ReturnService = {
   // Sales Returns
   getAllSalesReturns: async (branchId?: string): Promise<Return[]> => {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    return returnsRepository.getAllSales(effectiveBranchId);
+    return returnsRepository.getAllSales(effectiveBranchId, settings.orgId);
+  },
+
+  getRecentSalesReturns: async (branchId?: string, limit: number = 100): Promise<Return[]> => {
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    return returnsRepository.getRecentSales(effectiveBranchId, settings.orgId, limit);
+  },
+
+  listSalesReturnsPage: async (options: ReturnsPageOptions): Promise<{ rows: Return[]; total: number; page: number; pageSize: number }> => {
+    const settings = await settingsService.getAll();
+    return returnsRepository.listSalesReturnsPage({
+      ...options,
+      branchId: options.branchId || settings.activeBranchId || settings.branchCode,
+      orgId: options.orgId || settings.orgId,
+    });
   },
 
   getSalesReturnById: async (id: string): Promise<Return | null> => {
@@ -47,7 +62,13 @@ export const returnService: ReturnService = {
   getAllPurchaseReturns: async (branchId?: string): Promise<PurchaseReturn[]> => {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    return returnsRepository.getAllPurchases(effectiveBranchId);
+    return returnsRepository.getAllPurchases(effectiveBranchId, settings.orgId);
+  },
+
+  getRecentPurchaseReturns: async (branchId?: string, limit: number = 100): Promise<PurchaseReturn[]> => {
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    return returnsRepository.getRecentPurchase(effectiveBranchId, settings.orgId, limit);
   },
 
   getPurchaseReturnById: async (id: string): Promise<PurchaseReturn | null> => {

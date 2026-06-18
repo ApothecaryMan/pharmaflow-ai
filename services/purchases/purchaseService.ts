@@ -16,7 +16,7 @@ import { inventoryService } from '../inventory/inventoryService';
 import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
 import { settingsService } from '../settings/settingsService';
 import { purchaseRepository } from './repositories/purchaseRepository';
-import type { PurchaseFilters, PurchaseService, PurchaseStats } from './types';
+import type { PurchaseFilters, PurchasesPageOptions, PurchaseService, PurchaseStats } from './types';
 
 class PurchaseServiceImpl extends BaseDomainService<Purchase> implements PurchaseService {
   protected tableName = 'purchases';
@@ -33,6 +33,12 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     return purchaseRepository.getAll(effectiveBranchId, settings.orgId);
+  }
+
+  async getRecent(branchId?: string, limit: number = 100): Promise<Purchase[]> {
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    return purchaseRepository.getRecent(effectiveBranchId, settings.orgId, limit);
   }
 
   async getById(id: string): Promise<Purchase | null> {
@@ -55,6 +61,41 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     return purchaseRepository.findByFilters(filters, effectiveBranchId, settings.orgId);
+  }
+
+  async listPage(options: PurchasesPageOptions): Promise<{ rows: Purchase[]; total: number; page: number; pageSize: number }> {
+    const settings = await settingsService.getAll();
+    return purchaseRepository.listPage({
+      ...options,
+      branchId: options.branchId || settings.activeBranchId || settings.branchCode,
+      orgId: options.orgId || settings.orgId,
+    });
+  }
+
+  async getNextInvoiceId(branchId?: string): Promise<string> {
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    const { data, error } = await supabase
+      .from(this.tableName)
+      .select('invoice_id')
+      .eq('branch_id', effectiveBranchId)
+      .order('date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error && error.code !== 'PGRST116') {
+      console.warn('Failed to get latest invoice ID', error);
+      return 'INV-000001';
+    }
+
+    if (data?.invoice_id) {
+      const parts = data.invoice_id.split('-');
+      if (parts.length === 2 && !isNaN(parseInt(parts[1]))) {
+        const nextNum = parseInt(parts[1]) + 1;
+        return `INV-${nextNum.toString().padStart(6, '0')}`;
+      }
+    }
+    return 'INV-000001';
   }
 
   async create(purchase: Omit<Purchase, 'id'>, branchId?: string): Promise<Purchase> {

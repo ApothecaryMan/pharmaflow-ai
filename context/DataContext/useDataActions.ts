@@ -138,9 +138,9 @@ export const useDataActions = ({
           inventoryService.getAll(branchId),
           salesService.getRecent(branchId, 100),
           supplierService.getAll(branchId),
-          purchaseService.getAll(branchId),
-          returnService.getAllPurchaseReturns(branchId),
-          returnService.getAllSalesReturns(branchId),
+          purchaseService.getRecent(branchId, 100),
+          returnService.getRecentPurchaseReturns(branchId, 100),
+          returnService.getRecentSalesReturns(branchId, 100),
           customerService.getAll(branchId),
           batchService.getAllBatches(branchId),
         ]);

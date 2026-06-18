@@ -1,6 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import type { Purchase, PurchaseStatus } from '../../../types';
-import type { PurchaseFilters } from '../types';
+import type { PurchaseFilters, PurchasesPageOptions } from '../types';
 
 export const purchaseRepository = {
   tableName: 'purchases',
@@ -71,6 +71,18 @@ export const purchaseRepository = {
     return (data || []).map((item) => this.mapFromDb(item));
   },
 
+  async getRecent(effectiveBranchId: string, orgId?: string, limit: number = 100): Promise<Purchase[]> {
+    let query = supabase.from(this.tableName).select('*');
+    if (effectiveBranchId && effectiveBranchId.toLowerCase() !== 'all') {
+      query = query.eq('branch_id', effectiveBranchId);
+    } else if (orgId) {
+      query = query.eq('org_id', orgId);
+    }
+    const { data, error } = await query.order('date', { ascending: false }).limit(limit);
+    if (error) throw error;
+    return (data || []).map((item) => this.mapFromDb(item));
+  },
+
   async getById(id: string): Promise<Purchase | null> {
     const { data, error } = await supabase.from(this.tableName).select('*').eq('id', id).maybeSingle();
     if (error) throw error;
@@ -97,6 +109,57 @@ export const purchaseRepository = {
     const { data, error } = await query.order('date', { ascending: false });
     if (error) throw error;
     return (data || []).map((item) => this.mapFromDb(item));
+  },
+
+  async listPage(options: PurchasesPageOptions): Promise<{ rows: Purchase[]; total: number; page: number; pageSize: number }> {
+    const page = Math.max(1, options.page || 1);
+    const pageSize = Math.min(Math.max(1, options.pageSize || 50), 200);
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    const filters = options.filters || {};
+    const effectiveBranchId = options.branchId || '';
+    const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+
+    let query = supabase.from(this.tableName).select('*', { count: 'exact' });
+
+    if (effectiveBranchId && !isAll) {
+      query = query.eq('branch_id', effectiveBranchId);
+    } else if (isAll && options.orgId) {
+      query = query.eq('org_id', options.orgId);
+    }
+
+    if (filters.dateFrom) query = query.gte('date', filters.dateFrom);
+    if (filters.dateTo) query = query.lte('date', filters.dateTo);
+    if (filters.status) query = query.eq('status', filters.status);
+    if (filters.supplierId) query = query.eq('supplier_id', filters.supplierId);
+
+    if (filters.search?.trim()) {
+      const term = filters.search.trim().replace(/[%_,]/g, '');
+      query = query.or(
+        [
+          `id.ilike.%${term}%`,
+          `invoice_id.ilike.%${term}%`,
+          `external_invoice_id.ilike.%${term}%`,
+          `supplier_name_snapshot.ilike.%${term}%`,
+        ].join(',')
+      );
+    }
+
+    const sortColumn = options.sort?.column || 'date';
+    const ascending = options.sort?.ascending ?? false;
+
+    const { data, error, count } = await query
+      .order(sortColumn, { ascending })
+      .range(from, to);
+
+    if (error) throw error;
+
+    return {
+      rows: (data || []).map((item) => this.mapFromDb(item)),
+      total: count || 0,
+      page,
+      pageSize,
+    };
   },
 
   async insert(purchase: Purchase): Promise<Purchase> {

@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import type { PurchaseReturn, Return } from '../../../types';
+import type { ReturnsPageOptions } from '../types';
 
 export const returnsRepository = {
   salesTableName: 'returns',
@@ -104,6 +105,18 @@ export const returnsRepository = {
     return (data || []).map((item) => this.mapSalesFromDb(item));
   },
 
+  async getRecentSales(effectiveBranchId: string, orgId?: string, limit: number = 100): Promise<Return[]> {
+    let query = supabase.from(this.salesTableName).select('*, items:return_items(*)');
+    if (effectiveBranchId && effectiveBranchId.toLowerCase() !== 'all') {
+      query = query.eq('branch_id', effectiveBranchId);
+    } else if (orgId) {
+      query = query.eq('org_id', orgId);
+    }
+    const { data, error } = await query.order('date', { ascending: false }).limit(limit);
+    if (error) throw error;
+    return (data || []).map((item) => this.mapSalesFromDb(item));
+  },
+
   async getSalesById(id: string): Promise<Return | null> {
     const { data, error } = await supabase
       .from(this.salesTableName)
@@ -112,6 +125,55 @@ export const returnsRepository = {
       .maybeSingle();
     if (error) throw error;
     return data ? this.mapSalesFromDb(data) : null;
+  },
+
+  async listSalesReturnsPage(options: ReturnsPageOptions): Promise<{ rows: Return[]; total: number; page: number; pageSize: number }> {
+    const page = Math.max(1, options.page || 1);
+    const pageSize = Math.min(Math.max(1, options.pageSize || 50), 200);
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    const filters = options.filters || {};
+    const effectiveBranchId = options.branchId || '';
+    const isAll = typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
+
+    let query = supabase.from(this.salesTableName).select('*, items:return_items(*)', { count: 'exact' });
+
+    if (effectiveBranchId && !isAll) {
+      query = query.eq('branch_id', effectiveBranchId);
+    } else if (isAll && options.orgId) {
+      query = query.eq('org_id', options.orgId);
+    }
+
+    if (filters.dateFrom) query = query.gte('date', filters.dateFrom);
+    if (filters.dateTo) query = query.lte('date', filters.dateTo);
+    if (filters.reason) query = query.eq('reason', filters.reason);
+
+    if (filters.search?.trim()) {
+      const term = filters.search.trim().replace(/[%_,]/g, '');
+      query = query.or(
+        [
+          `id.ilike.%${term}%`,
+          `serial_id.ilike.%${term}%`,
+          `sale_id.ilike.%${term}%`,
+        ].join(',')
+      );
+    }
+
+    const sortColumn = options.sort?.column || 'date';
+    const ascending = options.sort?.ascending ?? false;
+
+    const { data, error, count } = await query
+      .order(sortColumn, { ascending })
+      .range(from, to);
+
+    if (error) throw error;
+
+    return {
+      rows: (data || []).map((item) => this.mapSalesFromDb(item)),
+      total: count || 0,
+      page,
+      pageSize,
+    };
   },
 
   async insertReturn(ret: Return, processedBy?: string): Promise<void> {
@@ -158,6 +220,18 @@ export const returnsRepository = {
       query = query.eq('org_id', orgId);
     }
     const { data, error } = await query.order('date', { ascending: false });
+    if (error) throw error;
+    return (data || []).map((item) => this.mapPurchaseFromDb(item));
+  },
+
+  async getRecentPurchase(effectiveBranchId: string, orgId?: string, limit: number = 100): Promise<PurchaseReturn[]> {
+    let query = supabase.from(this.purchaseTableName).select('*, items:purchase_return_items(*)');
+    if (effectiveBranchId && effectiveBranchId.toLowerCase() !== 'all') {
+      query = query.eq('branch_id', effectiveBranchId);
+    } else if (orgId) {
+      query = query.eq('org_id', orgId);
+    }
+    const { data, error } = await query.order('date', { ascending: false }).limit(limit);
     if (error) throw error;
     return (data || []).map((item) => this.mapPurchaseFromDb(item));
   },
