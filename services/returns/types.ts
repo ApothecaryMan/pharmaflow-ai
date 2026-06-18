@@ -28,6 +28,7 @@ export interface ReturnService {
   getRecentSalesReturns(branchId?: string, limit?: number): Promise<Return[]>;
   getSalesReturnById(id: string): Promise<Return | null>;
   listSalesReturnsPage(options: ReturnsPageOptions): Promise<{ rows: Return[]; total: number; page: number; pageSize: number }>;
+  listPurchaseReturnsPage(options: ReturnsPageOptions): Promise<{ rows: PurchaseReturn[]; total: number; page: number; pageSize: number }>;
   createSalesReturn(ret: Omit<Return, 'id'>, branchId?: string): Promise<Return>;
 
   // Purchase Returns

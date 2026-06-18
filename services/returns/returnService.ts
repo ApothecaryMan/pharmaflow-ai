@@ -75,6 +75,16 @@ export const returnService: ReturnService = {
     return returnsRepository.getPurchaseById(id);
   },
 
+  listPurchaseReturnsPage: async (options: ReturnsPageOptions): Promise<{ rows: PurchaseReturn[]; total: number; page: number; pageSize: number }> => {
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = options.branchId || settings.activeBranchId || settings.branchCode;
+    return returnsRepository.listPurchaseReturnsPage({
+      ...options,
+      branchId: effectiveBranchId,
+      orgId: settings.orgId,
+    });
+  },
+
   createPurchaseReturn: async (
     ret: Omit<PurchaseReturn, 'id'>,
     branchId?: string

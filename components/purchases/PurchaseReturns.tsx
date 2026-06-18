@@ -24,6 +24,8 @@ import {
   useContextMenu,
   useSearchKeyboardNavigation,
 } from '../common';
+import { purchaseService } from '../../services/purchases/purchaseService';
+import { returnService } from '../../services/returns/returnService';
 
 interface PurchaseReturnsProps {
   purchases: Purchase[];
@@ -53,6 +55,38 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   const { showMenu } = useContextMenu();
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
+
+  // Pagination states for History Table
+  const [page, setPage] = useState(1);
+  const [pagedReturns, setPagedReturns] = useState<PurchaseReturn[]>(purchaseReturns || []);
+  const [totalReturns, setTotalReturns] = useState(purchaseReturns?.length || 0);
+  const [isPageLoading, setIsPageLoading] = useState(false);
+  const pageSize = 50;
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPage = async () => {
+      try {
+        setIsPageLoading(true);
+        const serverFilters = { search: search || undefined };
+        const result = await returnService.listPurchaseReturnsPage({
+          page,
+          pageSize,
+          filters: serverFilters,
+        });
+        if (isMounted) {
+          setPagedReturns(result.rows);
+          setTotalReturns(result.total);
+        }
+      } catch (err) {
+        console.error('Failed to load purchase returns page', err);
+      } finally {
+        if (isMounted) setIsPageLoading(false);
+      }
+    };
+    fetchPage();
+    return () => { isMounted = false; };
+  }, [page, search, activeBranchId]);
 
   // Create Return state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -106,20 +140,56 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
-  const filteredAvailablePurchases = useMemo(() => {
-    if (!poSearch) return availablePurchases;
-    const query = poSearch.toLowerCase();
-    return availablePurchases.filter(
-      (p) =>
-        p.id.toLowerCase().includes(query) ||
-        p.supplierName.toLowerCase().includes(query) ||
-        (p.externalInvoiceId && p.externalInvoiceId.toLowerCase().includes(query)) ||
-        (p.invoiceId && p.invoiceId.toLowerCase().includes(query))
-    );
-  }, [availablePurchases, poSearch]);
+  const [searchedPurchases, setSearchedPurchases] = useState<Purchase[]>([]);
+  const [isSearchingPo, setIsSearchingPo] = useState(false);
+
+  // Instead of static filtering, we search the server dynamically
+  useEffect(() => {
+    let isMounted = true;
+    if (!poSearch) {
+      setSearchedPurchases([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setIsSearchingPo(true);
+        const result = await purchaseService.listPage({
+          page: 1,
+          pageSize: 20,
+          filters: { search: poSearch }
+        });
+        
+        if (isMounted) {
+          // Filter to only completed/received that are not fully returned
+          const available = result.rows.filter((p) => {
+            if (p.status !== 'completed' && p.status !== 'received') return false;
+            // Note: getReturnedQuantity checks locally. If the user returns an old PO that is not in memory,
+            // getReturnedQuantity will return 0. Ideally, this should be server-side too,
+            // but we'll leave it as a client-side best-effort check for now.
+            const allReturned = p.items.every((item) => {
+              const returned = getReturnedQuantity(p.id, item.drugId);
+              return returned >= item.quantity;
+            });
+            return !allReturned;
+          });
+          setSearchedPurchases(available);
+        }
+      } catch (err) {
+        console.error('Failed to search POs', err);
+      } finally {
+        if (isMounted) setIsSearchingPo(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [poSearch, activeBranchId]);
 
   const { highlightedIndex, onKeyDown } = useSearchKeyboardNavigation({
-    results: filteredAvailablePurchases,
+    results: searchedPurchases,
     onSelect: (purchase) => {
       setSelectedPurchase(purchase);
       setPoSearch('');
@@ -362,15 +432,42 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
             {t.purchaseReturns?.historySubtitle || 'View all purchase returns'}
           </p>
         </div>
-        {permissionsService.can('purchase.return') && (
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold shadow-lg shadow-primary-200 dark:shadow-none transition-all active:scale-95`}
-          >
-            <span className='material-symbols-rounded text-[20px]'>add_circle</span>
-            {t.purchaseReturns?.createReturn || 'Create Return'}
-          </button>
-        )}
+        <div className='flex items-center gap-4 h-10'>
+          {/* Pagination Controls */}
+          <div className='h-10 rounded-full border border-(--border-divider) bg-white dark:bg-gray-900 flex items-center overflow-hidden'>
+            <button
+              type='button'
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1 || isPageLoading}
+              className='h-full w-10 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'
+              title={language === 'AR' ? 'السابق' : 'Previous'}
+            >
+              <span className='material-symbols-rounded text-lg'>chevron_left</span>
+            </button>
+            <span className='px-3 text-[13px] font-bold tabular-nums text-gray-600 dark:text-gray-300'>
+              {page} / {Math.ceil(totalReturns / pageSize) || 1}
+            </span>
+            <button
+              type='button'
+              onClick={() => setPage((p) => Math.min(Math.ceil(totalReturns / pageSize) || 1, p + 1))}
+              disabled={page >= (Math.ceil(totalReturns / pageSize) || 1) || isPageLoading}
+              className='h-full w-10 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'
+              title={language === 'AR' ? 'التالي' : 'Next'}
+            >
+              <span className='material-symbols-rounded text-lg'>chevron_right</span>
+            </button>
+          </div>
+          
+          {permissionsService.can('purchase.return') && (
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className={`flex items-center gap-2 px-4 h-10 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold shadow-lg shadow-primary-200 dark:shadow-none transition-all active:scale-95`}
+            >
+              <span className='material-symbols-rounded text-[20px]'>add_circle</span>
+              {t.purchaseReturns?.createReturn || 'Create Return'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* RETURN HISTORY TABLE (Always visible now) */}
@@ -387,7 +484,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
 
       <div className={`flex-1 overflow-hidden ${CARD_BASE} rounded-xl p-0 flex flex-col`}>
         <TanStackTable
-          data={purchaseReturns}
+          data={pagedReturns}
           columns={columns}
           tableId='purchase_returns_history'
           globalFilter={search}
@@ -401,8 +498,9 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
           color={color}
           enablePagination={true}
           enableVirtualization={false}
-          pageSize='auto'
-          enableShowAll={true}
+          pageSize={pageSize}
+          isLoading={isPageLoading}
+          enableShowAll={false}
         />
       </div>
 
@@ -489,7 +587,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
               </div>
 
               <SearchDropdown
-                results={filteredAvailablePurchases}
+                results={searchedPurchases}
                 onSelect={(purchase) => {
                   setSelectedPurchase(purchase);
                   setPoSearch('');
