@@ -320,8 +320,9 @@ export const useDataActions = ({
       context
     );
     if (!result.success || !result.sale) throw new Error(result.error);
+    await refreshAll();
     return result.sale;
-  }, []);
+  }, [refreshAll]);
 
   const addSupplier = useCallback(
     async (supplier: any) => {
@@ -364,13 +365,15 @@ export const useDataActions = ({
   const approvePurchase = useCallback(async (id: string, context: ActionContext) => {
     const result = await transactionService.processPurchaseTransaction(id, context);
     if (!result.success) throw new Error(result.error);
-  }, []);
+    await refreshAll();
+  }, [refreshAll]);
 
   const markAsReceived = useCallback(
     async (id: string, receiverId: string, receiverName: string) => {
       await purchaseService.markAsReceived(id, receiverId, receiverName);
+      await refreshAll();
     },
-    []
+    [refreshAll]
   );
 
   const rejectPurchase = useCallback(
@@ -401,8 +404,9 @@ export const useDataActions = ({
   const createPurchaseReturn = useCallback(async (ret: any, context: ActionContext) => {
     const result = await transactionService.processPurchaseReturnTransaction(ret, context);
     if (!result.success || !result.data) throw new Error(result.error);
+    await refreshAll();
     return result.data;
-  }, []);
+  }, [refreshAll]);
 
   const addReturn = useCallback(
     async (ret: any) => {
