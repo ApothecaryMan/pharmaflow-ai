@@ -25,7 +25,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   align = 'start',
   triggerVariant = 'statusBar',
 }) => {
-  const { language, settingsBlur } = useSettings();
+  const { language } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const [activeTool, setActiveTool] = useState<'converter' | 'calculator' | 'holidays'>(
@@ -49,9 +49,8 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
     ${align === 'start' ? 'inset-s-0 origin-top-start' : 'inset-e-0 origin-top-end'}
     w-64 rounded-xl shadow-2xl border border-(--border-divider) z-110 animate-fade-in
-    ${getMenuSurfaceClasses(settingsBlur)}
   `,
-    [dropDirection, align, settingsBlur]
+    [dropDirection, align]
   );
 
   const cT = t.currencyConverter;
@@ -91,11 +90,10 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                   key={tool}
                   type='button'
                   onClick={() => setActiveTool(tool)}
-                  className={`flex-1 py-1 flex items-center justify-center rounded-md transition-all duration-200 focus:outline-none ${
-                    activeTool === tool
+                  className={`flex-1 py-1 flex items-center justify-center rounded-md transition-all duration-200 focus:outline-none ${activeTool === tool
                       ? 'bg-white dark:bg-white/10 text-primary-500 shadow-xs'
                       : 'text-(--text-secondary) hover:text-(--text-primary)'
-                  }`}
+                    }`}
                   title={
                     tool === 'converter'
                       ? cT?.title || 'Converter'
@@ -118,9 +116,8 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
             <button
               type='button'
               onClick={() => setIsPinned(!isPinned)}
-              className={`flex items-center justify-center w-6 h-6 rounded-md transition-colors hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none ${
-                isPinned ? 'text-primary-500' : 'text-(--text-tertiary)'
-              }`}
+              className={`flex items-center justify-center w-6 h-6 rounded-md transition-colors hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none ${isPinned ? 'text-primary-500' : 'text-(--text-tertiary)'
+                }`}
               title={isPinned ? 'Unpin' : 'Pin to stay open'}
             >
               <span className='material-symbols-rounded text-[16px] leading-none'>keep</span>
