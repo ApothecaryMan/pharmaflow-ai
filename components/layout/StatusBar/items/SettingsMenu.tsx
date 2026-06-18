@@ -286,7 +286,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
         ) : (
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className={`flex items-center justify-center w-10 h-10 ${isOpen ? 'text-primary-500' : 'text-(--text-secondary)'}`}
+            className={`flex items-center justify-center w-10 h-10 ${isOpen ? 'text-primary-500' : 'text-(--text-primary) opacity-85 hover:opacity-100'}`}
           >
             <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-settings)' }}>
               settings

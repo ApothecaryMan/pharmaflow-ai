@@ -23,11 +23,11 @@ export interface StatusBarItemProps {
 
 const variantStyles: Record<string, string> = {
   default:
-    'text-(--text-secondary) hover:text-(--text-primary) hover:bg-black/5 dark:hover:bg-white/10',
-  success: 'text-emerald-500 hover:bg-emerald-500/10',
-  warning: 'text-amber-500 hover:bg-amber-500/10',
-  error: 'text-red-500 hover:bg-red-500/10',
-  info: 'text-primary-500 hover:bg-primary-500/10',
+    'text-(--text-primary) opacity-85 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10',
+  success: 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10',
+  warning: 'text-amber-600 dark:text-amber-400 hover:bg-amber-500/10',
+  error: 'text-red-600 dark:text-red-400 hover:bg-red-500/10',
+  info: 'text-primary-600 dark:text-primary-400 hover:bg-primary-500/10',
 };
 
 export const StatusBarItem: React.FC<StatusBarItemProps> = ({

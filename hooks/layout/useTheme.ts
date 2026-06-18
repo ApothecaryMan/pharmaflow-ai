@@ -121,8 +121,10 @@ export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean 
     // In light mode, subtly tint the page background with the accent color
     if (!darkMode && hex) {
       root.style.setProperty('--bg-page-surface', `color-mix(in srgb, ${hex} 6%, #f1f3f5)`);
+      root.style.setProperty('--bg-statusbar', `color-mix(in srgb, ${hex} 12%, var(--bg-secondary))`);
     } else {
       root.style.setProperty('--bg-page-surface', '');
+      root.style.setProperty('--bg-statusbar', '');
     }
 
     if (darkMode || isLoginView) {
@@ -149,7 +151,7 @@ export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean 
       meta.id = '__pharma_theme_color';
       document.head.appendChild(meta);
     }
-  }, [color, darkMode, isLoginView]);
+  }, [color, darkMode, isLoginView, hex]);
 
   // Favicon — separate effect so meta-tag cleanup doesn't affect it
   useEffect(() => {

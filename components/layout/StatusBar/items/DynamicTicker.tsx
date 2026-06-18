@@ -42,11 +42,11 @@ export interface DynamicTickerProps {
 // --- Constants & Helpers ---
 
 const variantColors: Record<string, string> = {
-  success: 'text-emerald-500',
-  warning: 'text-amber-500',
-  error: 'text-red-500',
-  info: 'text-primary-500',
-  default: 'text-(--text-secondary)',
+  success: 'text-emerald-600 dark:text-emerald-400',
+  warning: 'text-amber-600 dark:text-amber-400',
+  error: 'text-red-600 dark:text-red-400',
+  info: 'text-primary-600 dark:text-primary-400',
+  default: 'text-(--text-primary) opacity-85',
 };
 
 const formatVal = (v: any) => (typeof v === 'number' ? v.toLocaleString() : v);
@@ -56,7 +56,7 @@ const formatVal = (v: any) => (typeof v === 'number' ? v.toLocaleString() : v);
 const TickerItem: React.FC<{ label?: string; value?: any }> = ({ label, value }) => (
   <>
     {label && (
-      <span className='text-[10px] font-bold uppercase tracking-wide text-(--text-secondary)'>
+      <span className='text-[10px] font-bold uppercase tracking-wide text-(--text-primary) opacity-85'>
         {label}
       </span>
     )}
