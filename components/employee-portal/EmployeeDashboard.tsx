@@ -10,11 +10,14 @@ import { employmentRequestRepository } from '../../services/hr/repositories/empl
 import type { Employee, EmploymentRequest, UserProfile } from '../../types';
 import { ContextMenuProvider } from '../common/ContextMenu';
 import { EmployeeMobileDock } from './EmployeeMobileDock';
-import { EmployeePortalProfile } from './EmployeePortalProfile';
 import { EmployeeSideDrawer } from './EmployeeSideDrawer';
-import { EmploymentRequestsList } from './EmploymentRequestsList';
 import { useEmployeeDashboardData } from './hooks/useEmployeeDashboardData';
-import PrescriptionPricing from './PrescriptionPricing';
+import { lazy, Suspense } from 'react';
+import { PageLoader } from '../common/PageLoader';
+
+const EmployeePortalProfile = lazy(() => import('./EmployeePortalProfile').then(m => ({ default: m.EmployeePortalProfile })));
+const EmploymentRequestsList = lazy(() => import('./EmploymentRequestsList').then(m => ({ default: m.EmploymentRequestsList })));
+const PrescriptionPricing = lazy(() => import('./PrescriptionPricing').then(m => ({ default: m.default })));
 
 type EmployeeView = 'profile' | 'requests' | 'pricing';
 
@@ -234,57 +237,59 @@ export function EmployeeDashboard({
 
         {/* Scrollable Main Content */}
         <main className='flex-1 min-h-0 overflow-y-auto overscroll-contain'>
-          <div className='p-4 sm:p-6 max-w-7xl mx-auto w-full space-y-6 sm:space-y-8 pb-28 md:pb-6'>
-            {activeView === 'pricing' && <PrescriptionPricing />}
+          <div className='p-4 sm:p-6 max-w-7xl mx-auto w-full space-y-6 sm:space-y-8 pb-28 md:pb-6 relative min-h-[200px]'>
+            <Suspense fallback={<PageLoader />}>
+              {activeView === 'pricing' && <PrescriptionPricing />}
 
-            {activeView === 'profile' && (
-              <EmployeePortalProfile
-                profile={profile}
-                sessionName={sessionName}
-                sessionUsername={sessionUsername}
-                requests={requests}
-                workspaces={workspaces}
-                language={language}
-                t={t}
-                isLoading={isLoading}
-                onUpdateProfile={handleUpdateProfile}
-                onUpdateWorkspacePassword={handleUpdateWorkspacePassword}
-                onRegisterWorkspaceFingerprint={handleRegisterWorkspaceFingerprint}
-              />
-            )}
-
-            {activeView === 'requests' && (
-              <section className='space-y-3 sm:space-y-4'>
-                <div className='flex items-center justify-between'>
-                  <h3 className='text-lg sm:text-xl font-semibold text-(--text-primary) flex items-center gap-2'>
-                    <Clock className='w-4 h-4 sm:w-5 sm:h-5 text-primary-500' />
-                    <span className='truncate'>
-                      {t.login?.pendingRequests || 'Pending Employment Requests'}
-                    </span>
-                  </h3>
-                  {isLoading ? (
-                    <span className='text-xs text-(--text-tertiary)'>{t.common.loading}</span>
-                  ) : (
-                    <span
-                      className='px-2.5 sm:px-3 py-0.5 bg-(--bg-secondary) rounded-full text-base sm:text-lg font-medium text-(--text-tertiary) shrink-0 leading-none'
-                      style={{ fontFamily: 'GraphicSansFont, sans-serif' }}
-                    >
-                      {requests.length}
-                    </span>
-                  )}
-                </div>
-
-                <EmploymentRequestsList
+              {activeView === 'profile' && (
+                <EmployeePortalProfile
+                  profile={profile}
+                  sessionName={sessionName}
+                  sessionUsername={sessionUsername}
                   requests={requests}
-                  userId={session?.userId || ''}
-                  username={profile?.username || sessionUsername || ''}
-                  onRefresh={() => loadData()}
-                  t={t}
+                  workspaces={workspaces}
                   language={language}
+                  t={t}
                   isLoading={isLoading}
+                  onUpdateProfile={handleUpdateProfile}
+                  onUpdateWorkspacePassword={handleUpdateWorkspacePassword}
+                  onRegisterWorkspaceFingerprint={handleRegisterWorkspaceFingerprint}
                 />
-              </section>
-            )}
+              )}
+
+              {activeView === 'requests' && (
+                <section className='space-y-3 sm:space-y-4'>
+                  <div className='flex items-center justify-between'>
+                    <h3 className='text-lg sm:text-xl font-semibold text-(--text-primary) flex items-center gap-2'>
+                      <Clock className='w-4 h-4 sm:w-5 sm:h-5 text-primary-500' />
+                      <span className='truncate'>
+                        {t.login?.pendingRequests || 'Pending Employment Requests'}
+                      </span>
+                    </h3>
+                    {isLoading ? (
+                      <span className='text-xs text-(--text-tertiary)'>{t.common.loading}</span>
+                    ) : (
+                      <span
+                        className='px-2.5 sm:px-3 py-0.5 bg-(--bg-secondary) rounded-full text-base sm:text-lg font-medium text-(--text-tertiary) shrink-0 leading-none'
+                        style={{ fontFamily: 'GraphicSansFont, sans-serif' }}
+                      >
+                        {requests.length}
+                      </span>
+                    )}
+                  </div>
+
+                  <EmploymentRequestsList
+                    requests={requests}
+                    userId={session?.userId || ''}
+                    username={profile?.username || sessionUsername || ''}
+                    onRefresh={() => loadData()}
+                    t={t}
+                    language={language}
+                    isLoading={isLoading}
+                  />
+                </section>
+              )}
+            </Suspense>
           </div>
         </main>
 

@@ -7,6 +7,9 @@ import type { ViewState } from '../../types';
 import { InventoryModuleShell } from '../inventory/InventoryModuleShell';
 import { LandingPage } from '../layout/LandingPage';
 import { PendingBranchAssignment } from './PendingBranchAssignment';
+import { ErrorBoundary } from '../common/ErrorBoundary';
+import { PageLoader } from '../common/PageLoader';
+import { Suspense } from 'react';
 
 interface PageRouterProps {
   view: ViewState;
@@ -244,12 +247,22 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   if (['inventory', 'add-product', 'stock-movement', 'shortages'].includes(view)) {
     return (
       <InventoryModuleShell activeView={view} onViewChange={handleNavigate} t={t}>
-        <PageComponent {...props} />
+        <ErrorBoundary onReset={() => setView('dashboard')}>
+          <Suspense fallback={<PageLoader />}>
+            <PageComponent {...props} />
+          </Suspense>
+        </ErrorBoundary>
       </InventoryModuleShell>
     );
   }
 
-  return <PageComponent {...props} />;
+  return (
+    <ErrorBoundary onReset={() => setView('dashboard')}>
+      <Suspense fallback={<PageLoader />}>
+        <PageComponent {...props} />
+      </Suspense>
+    </ErrorBoundary>
+  );
 };
 
 // Export memoized version to prevent unnecessary re-renders

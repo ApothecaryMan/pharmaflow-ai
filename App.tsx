@@ -184,6 +184,36 @@ const App: React.FC = () => {
     };
   }, [checkQuota, t, alert]);
 
+  // 3.2 Global Unhandled Error Toast
+  React.useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('[Global Error Handler] Unhandled Promise Rejection:', event.reason);
+      
+      const reason = event.reason;
+      
+      // Don't show toast for intentional aborts
+      if (reason?.name === 'AbortError') return;
+
+      const title = language === 'AR' ? 'خطأ في النظام' : 'System Error';
+      let message = language === 'AR' ? 'حدث خطأ غير متوقع. جرب مرة أخرى.' : 'An unexpected error occurred. Please try again.';
+
+      if (reason?.message?.includes('FetchError') || reason?.message?.includes('Network Error') || reason?.message?.includes('Failed to fetch')) {
+        message = language === 'AR' 
+          ? 'خطأ في الاتصال بالخادم. تأكد من اتصالك بالإنترنت.' 
+          : 'Server connection error. Please check your internet connection.';
+      } else if (reason?.code === '42501') {
+        message = language === 'AR' ? 'ليس لديك صلاحية لإتمام هذه العملية.' : 'You do not have permission to perform this action.';
+      } else if (reason instanceof Error && reason.message) {
+        message = reason.message;
+      }
+
+      alert.error(message, title);
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    return () => window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+  }, [alert, language]);
+
   // 4. Onboarding Status Hook (Architectural Abstraction)
   const {
     activeStep,
