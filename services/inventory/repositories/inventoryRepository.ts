@@ -75,30 +75,35 @@ export const inventoryRepository = {
     return db;
   },
 
-  async getAll(branchId?: string): Promise<Drug[]> {
+  async getAll(branchId?: string, orgId?: string): Promise<Drug[]> {
     let query = supabase.from(this.tableName).select('*');
-    if (branchId) query = query.eq('branch_id', branchId);
+
+    if (branchId && branchId.toLowerCase() !== 'all') {
+      query = query.eq('branch_id', branchId);
+    } else if (orgId) {
+      query = query.eq('org_id', orgId);
+    }
     const { data, error } = await query;
     if (error) throw error;
     return (data || []).map((item) => this.mapFromDb(item));
   },
 
   async getById(id: string): Promise<Drug | null> {
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
+    const { data, error } = await supabase.from(this.tableName).select('*').eq('id', id).maybeSingle();
     if (error) throw error;
     return data ? this.mapFromDb(data) : null;
   },
 
-  async getByBarcode(barcode: string): Promise<Drug | null> {
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select('*')
-      .eq('barcode', barcode)
-      .maybeSingle();
+  async getByBarcode(barcode: string, orgId?: string, branchId?: string): Promise<Drug | null> {
+    let query = supabase.from(this.tableName).select('*').eq('barcode', barcode);
+
+    if (branchId && branchId.toLowerCase() !== 'all') {
+      query = query.eq('branch_id', branchId);
+    } else if (orgId) {
+      query = query.eq('org_id', orgId);
+    }
+
+    const { data, error } = await query.maybeSingle();
     if (error) throw error;
     return data ? this.mapFromDb(data) : null;
   },

@@ -92,10 +92,12 @@ export const returnsRepository = {
   },
 
   // --- Sales Return Methods ---
-  async getAllSales(effectiveBranchId: string): Promise<Return[]> {
+  async getAllSales(effectiveBranchId: string, orgId?: string): Promise<Return[]> {
     let query = supabase.from(this.salesTableName).select('*, items:return_items(*)');
-    if (effectiveBranchId !== 'all') {
+    if (effectiveBranchId && effectiveBranchId.toLowerCase() !== 'all') {
       query = query.eq('branch_id', effectiveBranchId);
+    } else if (orgId) {
+      query = query.eq('org_id', orgId);
     }
     const { data, error } = await query.order('date', { ascending: false });
     if (error) throw error;
@@ -148,10 +150,12 @@ export const returnsRepository = {
   },
 
   // --- Purchase Return Methods ---
-  async getAllPurchases(effectiveBranchId: string): Promise<PurchaseReturn[]> {
+  async getAllPurchases(effectiveBranchId: string, orgId?: string): Promise<PurchaseReturn[]> {
     let query = supabase.from(this.purchaseTableName).select('*, items:purchase_return_items(*)');
-    if (effectiveBranchId !== 'all') {
+    if (effectiveBranchId && effectiveBranchId.toLowerCase() !== 'all') {
       query = query.eq('branch_id', effectiveBranchId);
+    } else if (orgId) {
+      query = query.eq('org_id', orgId);
     }
     const { data, error } = await query.order('date', { ascending: false });
     if (error) throw error;

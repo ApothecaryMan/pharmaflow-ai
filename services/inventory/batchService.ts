@@ -36,7 +36,7 @@ export const batchService = {
     drugId?: string,
     drugIds?: string[]
   ): Promise<StockBatch[]> {
-    return batchRepository.getAll(branchId, drugId, drugIds);
+    return batchRepository.getAll(branchId, undefined, drugId, drugIds);
   },
 
   async getBatchById(batchId: string): Promise<StockBatch | null> {

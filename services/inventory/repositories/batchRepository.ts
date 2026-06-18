@@ -34,10 +34,14 @@ export const mapDbToBatch = (db: any): StockBatch => ({
 });
 
 export const batchRepository = {
-  async getAll(branchId?: string, drugId?: string, drugIds?: string[]): Promise<StockBatch[]> {
+  async getAll(branchId?: string, orgId?: string, drugId?: string, drugIds?: string[]): Promise<StockBatch[]> {
     try {
       let query = supabase.from('stock_batches').select('*');
-      if (branchId) query = query.eq('branch_id', branchId);
+      if (branchId && branchId.toLowerCase() !== 'all') {
+        query = query.eq('branch_id', branchId);
+      } else if (orgId) {
+        query = query.eq('org_id', orgId);
+      }
       if (drugId) query = query.eq('drug_id', drugId);
       if (drugIds && drugIds.length > 0) query = query.in('drug_id', drugIds);
 
@@ -51,11 +55,7 @@ export const batchRepository = {
   },
 
   async getById(batchId: string): Promise<StockBatch | null> {
-    const { data, error } = await supabase
-      .from('stock_batches')
-      .select('*')
-      .eq('id', batchId)
-      .maybeSingle();
+    const { data, error } = await supabase.from('stock_batches').select('*').eq('id', batchId).maybeSingle();
     if (error || !data) return null;
     return mapDbToBatch(data);
   },

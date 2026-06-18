@@ -2,6 +2,7 @@ import { supabase } from '../../lib/supabase';
 
 export interface BaseReportFilters {
   branchId?: string;
+  orgId?: string;
   startDate?: string;
   endDate?: string;
   page?: number;
@@ -51,6 +52,8 @@ export abstract class BaseReportService<T, TFilters extends BaseReportFilters> {
 
       if (filters.branchId && filters.branchId.toLowerCase() !== 'all') {
         query = query.eq(this.branchColumn, filters.branchId);
+      } else if (filters.branchId?.toLowerCase() === 'all' && filters.orgId) {
+        query = query.eq('org_id', filters.orgId);
       }
 
       if (filters.startDate) {
@@ -121,6 +124,8 @@ export abstract class BaseReportService<T, TFilters extends BaseReportFilters> {
 
       if (filters.branchId && filters.branchId.toLowerCase() !== 'all') {
         query = query.eq(this.branchColumn, filters.branchId);
+      } else if (filters.branchId?.toLowerCase() === 'all' && filters.orgId) {
+        query = query.eq('org_id', filters.orgId);
       }
 
       if (filters.startDate) {

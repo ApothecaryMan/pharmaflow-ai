@@ -216,11 +216,7 @@ export const salesRepository = {
   },
 
   async getById(id: string): Promise<Sale | null> {
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
+    const { data, error } = await supabase.from(this.tableName).select('*').eq('id', id).maybeSingle();
     if (error) throw error;
     return data ? this.mapFromDb(data) : null;
   },
@@ -231,12 +227,9 @@ export const salesRepository = {
     orgId?: string
   ): Promise<Sale[]> {
     let query = supabase.from(this.tableName).select('*');
-    const isAll =
-      typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
-
-    if (effectiveBranchId && !isAll) {
+    if (effectiveBranchId && effectiveBranchId.toLowerCase() !== 'all') {
       query = query.eq('branch_id', effectiveBranchId);
-    } else if (isAll && orgId) {
+    } else if (orgId) {
       query = query.eq('org_id', orgId);
     }
 

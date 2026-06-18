@@ -141,7 +141,12 @@ class StockMovementServiceImpl
       let query = (supabase as any).from(this.tableName).select('*', { count: 'exact' });
 
       // Apply Base Filters
-      if (filters.branchId) query = query.eq('branch_id', filters.branchId);
+      if (filters.branchId && filters.branchId.toLowerCase() !== 'all') {
+        query = query.eq('branch_id', filters.branchId);
+      } else if (filters.orgId) {
+        query = query.eq('org_id', filters.orgId);
+      }
+      
       if (filters.startDate) query = query.gte('timestamp', filters.startDate);
       if (filters.endDate) query = query.lte('timestamp', filters.endDate);
 

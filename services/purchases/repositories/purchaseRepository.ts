@@ -61,12 +61,9 @@ export const purchaseRepository = {
 
   async getAll(effectiveBranchId: string, orgId?: string): Promise<Purchase[]> {
     let query = supabase.from(this.tableName).select('*');
-    const isAll =
-      typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
-
-    if (effectiveBranchId && !isAll) {
+    if (effectiveBranchId && effectiveBranchId.toLowerCase() !== 'all') {
       query = query.eq('branch_id', effectiveBranchId);
-    } else if (isAll && orgId) {
+    } else if (orgId) {
       query = query.eq('org_id', orgId);
     }
     const { data, error } = await query.order('date', { ascending: false });
@@ -75,11 +72,7 @@ export const purchaseRepository = {
   },
 
   async getById(id: string): Promise<Purchase | null> {
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
+    const { data, error } = await supabase.from(this.tableName).select('*').eq('id', id).maybeSingle();
     if (error) throw error;
     return data ? this.mapFromDb(data) : null;
   },
@@ -90,12 +83,9 @@ export const purchaseRepository = {
     orgId?: string
   ): Promise<Purchase[]> {
     let query = supabase.from(this.tableName).select('*');
-    const isAll =
-      typeof effectiveBranchId === 'string' && effectiveBranchId.toLowerCase() === 'all';
-
-    if (effectiveBranchId && !isAll) {
+    if (effectiveBranchId && effectiveBranchId.toLowerCase() !== 'all') {
       query = query.eq('branch_id', effectiveBranchId);
-    } else if (isAll && orgId) {
+    } else if (orgId) {
       query = query.eq('org_id', orgId);
     }
 
