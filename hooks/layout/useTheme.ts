@@ -108,7 +108,7 @@ const COLOR_PALETTES: Record<string, Record<string, string>> = {
   },
 };
 
-export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean = false) => {
+export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean = false, hex?: string) => {
   useEffect(() => {
     const palette = COLOR_PALETTES[color] || COLOR_PALETTES.blue;
     const root = document.documentElement;
@@ -117,6 +117,13 @@ export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean 
     Object.entries(palette).forEach(([shade, value]) => {
       root.style.setProperty(`--primary-${shade}`, value);
     });
+
+    // In light mode, subtly tint the page background with the accent color
+    if (!darkMode && hex) {
+      root.style.setProperty('--bg-page-surface', `color-mix(in srgb, ${hex} 6%, #f1f3f5)`);
+    } else {
+      root.style.setProperty('--bg-page-surface', '');
+    }
 
     if (darkMode || isLoginView) {
       root.classList.add('dark');

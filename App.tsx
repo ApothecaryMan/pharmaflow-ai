@@ -224,7 +224,7 @@ const App: React.FC = () => {
 
   // 5. Dynamic Theme Hook - Handles PWA Title Bar & Global Dark Mode
   // When not authenticated, we force isLoginView=true for the black theme color override
-  useTheme(theme.primary, darkMode, !authState.isAuthenticated);
+  useTheme(theme.primary, darkMode, !authState.isAuthenticated, theme.hex);
 
   // 6. Stable Login Callbacks
   const { setIsAuthenticated } = authState;
