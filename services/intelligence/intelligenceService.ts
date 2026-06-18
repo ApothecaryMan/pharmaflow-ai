@@ -222,9 +222,9 @@ export const intelligenceService = {
         product_name: getDisplayName({ name: drug.name, dosageForm: drug.dosageForm }),
         sku: drug.barcode || drug.internalCode || drug.id.slice(-8),
         supplier_id: drug.supplierId || 'UNKNOWN',
-        supplier_name: drug.supplierId ? `Supplier ${drug.supplierId}` : 'غير معروف', // Placeholder until supplierService is integrated
+        supplier_name: drug.supplierId ? `Supplier ${drug.supplierId}` : 'UNKNOWN', // Placeholder until supplierService is integrated
         category_id: drug.category || 'GENERAL',
-        category_name: drug.category || 'عام',
+        category_name: drug.category || 'GENERAL',
         current_stock: currentStock,
         stock_days: stockDays ? Math.round(stockDays) : null,
         stock_status: stockStatus,
@@ -244,9 +244,9 @@ export const intelligenceService = {
         suggested_order_qty: suggestedQty,
         skip_reason:
           stockStatus === 'OVERSTOCK'
-            ? 'مخزون زائد'
+            ? 'OVERSTOCK'
             : stockStatus === 'NORMAL'
-              ? 'مخزون كافي'
+              ? 'SUFFICIENT_STOCK'
               : null,
         confidence_score: confidenceScore,
         confidence_components: {
@@ -487,7 +487,7 @@ export const intelligenceService = {
       return {
         id: c.category,
         category_id: c.category,
-        category_name: c.category === 'GENERAL' ? 'عام' : c.category,
+        category_name: c.category,
         products_count: Math.round(topProducts.length / (rawCategories.length || 1)),
         revenue: c.revenue,
         cogs: c.cogs,
@@ -529,9 +529,7 @@ export const intelligenceService = {
     for (const sale of sales) {
       if (sale.status !== 'completed') continue;
 
-      const cashierName = sale.soldByEmployeeId
-        ? employeeMap.get(sale.soldByEmployeeId) || 'غير معروف'
-        : 'غير معروف';
+      const cashierName = employeeMap.get(sale.soldByEmployeeId!) || 'UNKNOWN';
 
       for (const item of sale.items) {
         transactions.push({
@@ -544,7 +542,13 @@ export const intelligenceService = {
           cashier_name: cashierName,
           product_name: getDisplayName({ name: item.name, dosageForm: item.dosageForm }),
           quantity: item.quantity,
-          amount: money.multiply(item.publicPrice || (item as any).price || 0, item.quantity, 0),
+          amount: money.multiply(
+            item.isUnit
+              ? money.divide(item.publicPrice, item.unitsPerPack || 1)
+              : item.publicPrice,
+            item.quantity,
+            0
+          ),
           has_anomaly: false,
         });
       }
@@ -552,7 +556,7 @@ export const intelligenceService = {
 
     // Convert returns to audit transactions
     for (const ret of returns) {
-      const cashierName = ret.processedBy || 'غير معروف';
+      const cashierName = ret.processedBy || 'UNKNOWN';
 
       for (const item of ret.items) {
         transactions.push({
@@ -564,13 +568,7 @@ export const intelligenceService = {
           product_name: item.name,
           quantity: item.quantityReturned,
           amount: money.subtract(0, item.refundAmount),
-          has_anomaly: ret.reason === 'other' || ret.reason === 'damaged',
-          anomaly_reason:
-            ret.reason === 'other'
-              ? 'سبب غير محدد'
-              : ret.reason === 'damaged'
-                ? 'منتج تالف'
-                : undefined,
+          has_anomaly: false,
         });
       }
     }

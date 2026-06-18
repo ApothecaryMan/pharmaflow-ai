@@ -175,7 +175,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
           drugId: item.drugId,
           quantity: unitsToAdd,
           expiryDate: expiryDate,
-          costPrice: item.costPrice,
+          costPrice: item.unitCostPrice || money.divide(item.costPrice, item.unitsPerPack || 1),
           purchaseId: purchase.id,
           dateReceived: new Date().toISOString(),
           branchId: branchId,
@@ -188,7 +188,7 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
 
     for (const item of purchase.items) {
       const earliestExpiry = await batchService.getEarliestExpiry(item.drugId, branchId);
-      const globalWAC = await batchService.calculateGlobalWAC(item.drugId, branchId);
+      const globalWAC = await batchService.calculateGlobalWAC(item.drugId, branchId); // Now returns a Unit WAC
 
       const normalizedExpiry =
         item.expiryDate && item.expiryDate.length === 7 && item.expiryDate.includes('-')
@@ -198,10 +198,8 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
       await inventoryService.update(item.drugId, {
         publicPrice: item.publicPrice,
         unitPrice: item.unitPrice,
-        costPrice: globalWAC || item.costPrice,
-        unitCostPrice: globalWAC
-          ? money.divide(globalWAC, item.unitsPerPack || 1)
-          : item.unitCostPrice,
+        costPrice: globalWAC ? money.multiply(globalWAC, item.unitsPerPack || 1, 2) : item.costPrice,
+        unitCostPrice: globalWAC || item.unitCostPrice,
         expiryDate: earliestExpiry || normalizedExpiry,
       });
     }

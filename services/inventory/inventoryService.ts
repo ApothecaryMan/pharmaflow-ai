@@ -212,7 +212,10 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
 
     return {
       totalProducts: all.length,
-      totalValue: all.reduce((sum, d) => sum + (d.publicPrice || 0) * (d.stock || 0), 0),
+      totalValue: all.reduce(
+        (sum, d) => sum + (d.publicPrice || 0) * ((d.stock || 0) / (d.unitsPerPack || 1)),
+        0
+      ),
       lowStockCount: all.filter((d) => (d.stock || 0) < (d.minStock || 10) && (d.stock || 0) > 0)
         .length,
       expiringSoonCount: all.filter((d) => parseExpiryEndOfMonth(d.expiryDate) <= thirtyDays)

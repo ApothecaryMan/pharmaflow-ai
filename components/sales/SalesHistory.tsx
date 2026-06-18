@@ -498,7 +498,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [activeBranchId, activeOrgId, page, serverFilters]);
+  }, [activeBranchId, activeOrgId, page, serverFilters, sales]);
 
   const totalRevenue = pagedSales.reduce((sum, sale) => money.add(sum, sale.total), 0);
   const totalPages = Math.max(1, Math.ceil(totalSales / pageSize));
@@ -588,6 +588,31 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     setPendingIds((prev) => new Set(prev).add(returnData.saleId));
     try {
       await onProcessReturn(returnData);
+
+      // Update pagedSales locally immediately to reflect return status and net totals
+      setPagedSales((prevPaged) =>
+        prevPaged.map((sale) => {
+          if (sale.id === returnData.saleId) {
+            const returnedQuantities = { ...(sale.itemReturnedQuantities || {}) };
+            const totalRefund = returnData.totalRefund || 0;
+            let netTotal = sale.netTotal !== undefined ? sale.netTotal : sale.total;
+            netTotal = Math.max(0, netTotal - totalRefund);
+
+            returnData.items.forEach((item) => {
+              const lineKey = item.isUnit ? `${item.drugId}_unit` : `${item.drugId}_pack`;
+              returnedQuantities[lineKey] = (returnedQuantities[lineKey] || 0) + item.quantityReturned;
+            });
+
+            return {
+              ...sale,
+              netTotal,
+              itemReturnedQuantities: returnedQuantities,
+              updatedAt: new Date().toISOString(),
+            };
+          }
+          return sale;
+        })
+      );
     } finally {
       // Small delay to let the "success" pulse take over naturally after data refresh
       setTimeout(() => {
