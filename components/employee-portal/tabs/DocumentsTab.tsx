@@ -6,6 +6,11 @@ import { employeeProfileRepository } from '../../../services/hr/repositories/emp
 import type { UserProfile } from '../../../types';
 import { PROFILE_GLASS_CARD_BASE } from '../../../utils/themeStyles';
 
+const PROFILE_GLASS_CARD_NO_BORDER = PROFILE_GLASS_CARD_BASE
+  .split(' ')
+  .filter(c => c !== 'border' && !c.startsWith('border-') && !c.startsWith('dark:border-'))
+  .join(' ') + ' border border-transparent';
+
 const readFileAsBase64 = (file: File, t: Translations): Promise<string> => {
   return new Promise((resolve, reject) => {
     if (file.size > MAX_UPLOAD_SIZE_KB * 1024) {
@@ -49,7 +54,7 @@ const DocCard: React.FC<DocCardProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className={`${PROFILE_GLASS_CARD_BASE} p-3`}>
+    <div className={`${PROFILE_GLASS_CARD_NO_BORDER} p-3`}>
       <div className='flex items-center justify-between gap-3'>
         <div className='flex items-center gap-2.5 min-w-0'>
           {isLoadingDocs ? (

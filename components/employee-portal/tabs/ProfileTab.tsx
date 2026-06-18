@@ -5,6 +5,11 @@ import type { Employee, EmploymentRequest, UserProfile } from '../../../types';
 import { BANNER_STYLES, renderBanner } from '../../../utils/banners';
 import { PROFILE_GLASS_CARD_BASE } from '../../../utils/themeStyles';
 import { Tooltip } from '../../common/Tooltip';
+
+const PROFILE_GLASS_CARD_NO_BORDER = PROFILE_GLASS_CARD_BASE
+  .split(' ')
+  .filter(c => c !== 'border' && !c.startsWith('border-') && !c.startsWith('dark:border-'))
+  .join(' ') + ' border border-transparent';
 import { ColorPicker, FRAME_COLORS } from '../avatar-color-settings';
 import { AVATAR_DECORATIONS, DECORATION_KEYFRAMES, getDecoration } from '../avatar-decorations';
 import type { RingStyle } from '../avatar-ring';
@@ -76,7 +81,7 @@ export const EditField: React.FC<EditFieldProps> = ({
   disabled = false,
 }) => (
   <div
-    className={`${PROFILE_GLASS_CARD_BASE} flex items-center gap-2.5 ${disabled ? 'opacity-60' : ''}`}
+    className={`${PROFILE_GLASS_CARD_NO_BORDER} flex items-center gap-2.5 ${disabled ? 'opacity-60' : ''}`}
   >
     <span className='material-symbols-rounded text-[18px] text-primary-500 shrink-0'>{icon}</span>
     <div className='min-w-0 flex-1'>
@@ -920,7 +925,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   onChange={(v) => setEditFields((prev) => ({ ...prev, licenseNumber: v }))}
                   dir={isRTL ? 'rtl' : 'ltr'}
                 />
-                <div className={`${PROFILE_GLASS_CARD_BASE} flex items-center gap-2.5`}>
+                <div className={`${PROFILE_GLASS_CARD_NO_BORDER} flex items-center gap-2.5`}>
                   <span className='material-symbols-rounded text-[18px] text-primary-500'>
                     calendar_month
                   </span>
@@ -939,7 +944,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 {[...Array(6)].map((_, i) => (
                   <div
                     key={i}
-                    className={`${PROFILE_GLASS_CARD_BASE} flex items-center gap-2.5 h-12`}
+                    className={`${PROFILE_GLASS_CARD_NO_BORDER} flex items-center gap-2.5 h-12`}
                   >
                     <div className='w-4 h-4 rounded bg-black/10 dark:bg-white/10 shrink-0'></div>
                     <div className='flex-1 space-y-1.5 min-w-0'>
@@ -985,7 +990,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className={`${PROFILE_GLASS_CARD_BASE} flex items-center gap-2.5`}
+                    className={`${PROFILE_GLASS_CARD_NO_BORDER} flex items-center gap-2.5`}
                   >
                     <span className='material-symbols-rounded text-[18px] text-primary-500'>
                       {item.icon}
@@ -1013,7 +1018,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
               <div className='flex flex-col gap-4'>
                 {isLoading ? (
                   <>
-                    <div className={`${PROFILE_GLASS_CARD_BASE} p-4 space-y-3 animate-pulse`}>
+                    <div className={`${PROFILE_GLASS_CARD_NO_BORDER} p-4 space-y-3 animate-pulse`}>
                       <div className='flex items-center justify-between border-b border-black/10 dark:border-white/5 pb-3'>
                         <div className='h-4 bg-black/10 dark:bg-white/10 rounded w-1/3'></div>
                         <div className='h-4 bg-black/10 dark:bg-white/10 rounded w-16'></div>
@@ -1054,7 +1059,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   workspaces.map((ws) => (
                     <div
                       key={ws.id}
-                      className={`${PROFILE_GLASS_CARD_BASE} p-5 ${collapsedWorkspaces.has(ws.id) ? '' : 'space-y-4'}`}
+                      className={`${PROFILE_GLASS_CARD_NO_BORDER} p-5 ${collapsedWorkspaces.has(ws.id) ? '' : 'space-y-4'}`}
                     >
                       <div
                         className={`flex items-center justify-between cursor-pointer select-none group transition-colors ${collapsedWorkspaces.has(ws.id) ? '' : 'border-b border-black/10 dark:border-white/5 pb-4'}`}
@@ -1423,7 +1428,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 {[...Array(3)].map((_, i) => (
                   <div
                     key={i}
-                    className={`${PROFILE_GLASS_CARD_BASE} flex flex-col items-center justify-center py-3 ${i === 2 ? 'col-span-2 sm:col-span-1' : ''}`}
+                    className={`${PROFILE_GLASS_CARD_NO_BORDER} flex flex-col items-center justify-center py-3 ${i === 2 ? 'col-span-2 sm:col-span-1' : ''}`}
                   >
                     <div className='w-6 h-6 bg-black/10 dark:bg-white/10 rounded-full mb-2'></div>
                     <div className='h-5 bg-black/10 dark:bg-white/10 rounded w-8 mb-1'></div>
@@ -1434,7 +1439,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
             ) : (
               <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
                 <div
-                  className={`${PROFILE_GLASS_CARD_BASE} flex flex-col items-center justify-center py-3`}
+                  className={`${PROFILE_GLASS_CARD_NO_BORDER} flex flex-col items-center justify-center py-3`}
                 >
                   <span className='material-symbols-rounded text-[22px] text-emerald-500'>
                     how_to_reg
@@ -1447,7 +1452,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   </p>
                 </div>
                 <div
-                  className={`${PROFILE_GLASS_CARD_BASE} flex flex-col items-center justify-center py-3`}
+                  className={`${PROFILE_GLASS_CARD_NO_BORDER} flex flex-col items-center justify-center py-3`}
                 >
                   <span className='material-symbols-rounded text-[22px] text-amber-500'>
                     pending_actions
@@ -1460,7 +1465,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   </p>
                 </div>
                 <div
-                  className={`${PROFILE_GLASS_CARD_BASE} flex flex-col items-center justify-center py-3 col-span-2 sm:col-span-1`}
+                  className={`${PROFILE_GLASS_CARD_NO_BORDER} flex flex-col items-center justify-center py-3 col-span-2 sm:col-span-1`}
                 >
                   <span className='material-symbols-rounded text-[22px] text-primary-500'>
                     work_history
