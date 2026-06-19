@@ -112,8 +112,9 @@ export const expenseRepository = {
   },
 
   async delete(id: string): Promise<boolean> {
-    const { error } = await supabase.from('expenses').delete().eq('id', id);
+    const { data, error } = await supabase.rpc('delete_expense', { p_expense_id: id });
     if (error) throw error;
+    if (data && !data.success) throw new Error(data.error || 'Failed to delete expense');
     return true;
   },
 

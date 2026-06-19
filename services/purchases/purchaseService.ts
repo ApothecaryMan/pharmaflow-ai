@@ -128,12 +128,12 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
     return this.update(id, updates);
   }
 
-  async markAsReceived(id: string, receiverId: string, receiverName: string): Promise<Purchase> {
+  async markAsReceived(id: string, receiverId: string, receiverName: string, shiftId?: string): Promise<Purchase> {
     const purchase = await this.getById(id);
     if (!purchase) throw new Error('Purchase not found');
     if (purchase.status === 'received' || purchase.status === 'completed') return purchase;
 
-    await this.processInventoryReceipt(purchase, receiverId, receiverName);
+    await this.processInventoryReceipt(purchase, receiverId, receiverName, shiftId);
 
     const updatedPurchase = await this.getById(id);
     return updatedPurchase || purchase;
@@ -142,13 +142,15 @@ class PurchaseServiceImpl extends BaseDomainService<Purchase> implements Purchas
   private async processInventoryReceipt(
     purchase: Purchase,
     performerId: string,
-    performerName: string
+    performerName: string,
+    shiftId?: string
   ): Promise<void> {
     const { data, error } = await supabase.rpc('process_purchase_receipt', {
       p_payload: {
         purchaseId: purchase.id,
         performerId,
         performerName,
+        shiftId,
       },
     });
 

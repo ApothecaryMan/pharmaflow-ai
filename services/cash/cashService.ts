@@ -4,6 +4,7 @@
  */
 
 import type { CashTransaction, Shift } from '../../types';
+import { supabase } from '../../lib/supabase';
 import { idGenerator } from '../../utils/idGenerator';
 import { money } from '../../utils/money';
 import { settingsService } from '../settings/settingsService';
@@ -61,23 +62,19 @@ export const cashService: CashServiceInterface = {
     const current = await cashService.getCurrentShift(effectiveBranchId);
     if (current) throw new Error('A shift is already open for this branch');
 
-    const newShift: Shift = {
-      id: idGenerator.uuid(), // Generate ID client-side
-      status: 'open',
-      openTime: new Date().toISOString(),
+    const payload = {
+      branchId: effectiveBranchId,
       openedBy,
       openingBalance,
-      cashIn: 0,
-      cashOut: 0,
-      cashSales: 0,
-      cardSales: 0,
-      returns: 0,
-      branchId: effectiveBranchId,
-      orgId: settings.orgId,
-      transactions: [],
-    } as Shift;
+      openTime: new Date().toISOString(),
+    };
 
-    await cashRepository.insertShift(newShift);
+    const { data, error } = await supabase.rpc('open_shift', { p_payload: payload });
+    if (error) throw new Error(error.message);
+    if (!data?.success) throw new Error(data?.error || 'Failed to open shift');
+
+    const newShift = await cashRepository.getShiftById(data.shiftId);
+    if (!newShift) throw new Error('Shift created but could not be fetched');
     return newShift;
   },
 
@@ -90,88 +87,46 @@ export const cashService: CashServiceInterface = {
     const shift = await cashRepository.getShiftById(shiftId);
     if (!shift) throw new Error('Shift not found');
 
-    const totalIn = money.add(shift.openingBalance, money.add(shift.cashIn, shift.cashSales));
-    const totalOut = money.add(shift.cashOut, shift.returns);
-    const expectedBalance = money.subtract(totalIn, totalOut);
-
-    const updates: Partial<Shift> = {
-      status: 'closed',
-      closeTime: new Date().toISOString(),
+    const payload = {
+      id: shiftId,
       closedBy,
       closingBalance,
-      expectedBalance,
       notes,
+      closeTime: new Date().toISOString(),
     };
 
-    await cashRepository.updateShift(shiftId, updates);
-    return { ...shift, ...updates } as Shift;
+    const { data, error } = await supabase.rpc('close_shift', { p_payload: payload });
+    if (error) throw new Error(error.message);
+    if (!data?.success) throw new Error(data?.error || 'Failed to close shift');
+
+    const closedShift = await cashRepository.getShiftById(shiftId);
+    if (!closedShift) throw new Error('Shift closed but could not be fetched');
+    return closedShift;
   },
 
   addTransaction: async (
     shiftId: string,
     transaction: Omit<CashTransaction, 'id'>
   ): Promise<CashTransaction> => {
-    const newTx: CashTransaction = {
+    const payload = {
+      shiftId,
+      branchId: transaction.branchId,
+      type: transaction.type,
+      amount: transaction.amount,
+      reason: transaction.reason,
+      userId: transaction.userId,
+      time: transaction.time || new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase.rpc('process_cash_transaction', { p_payload: payload });
+    if (error) throw new Error(error.message);
+    if (!data?.success) throw new Error(data?.error || 'Failed to process transaction');
+
+    return {
       ...transaction,
-      id: idGenerator.uuid(),
+      id: data.transactionId,
       shiftId,
     } as CashTransaction;
-
-    await cashRepository.insertTransaction(newTx);
-
-    // Update shift totals atomically
-    const incrementArgs: {
-      cashIn: number;
-      cashOut: number;
-      cashSales: number;
-      cardSales: number;
-      returns: number;
-      cashPurchases: number;
-      cashPurchaseReturns: number;
-    } = {
-      cashIn: 0,
-      cashOut: 0,
-      cashSales: 0,
-      cardSales: 0,
-      returns: 0,
-      cashPurchases: 0,
-      cashPurchaseReturns: 0,
-    };
-    switch (transaction.type) {
-      case 'in':
-        incrementArgs.cashIn = Math.abs(transaction.amount);
-        break;
-      case 'out':
-        incrementArgs.cashOut = Math.abs(transaction.amount);
-        break;
-      case 'sale':
-        incrementArgs.cashSales = Math.abs(transaction.amount);
-        break;
-      case 'card_sale':
-        incrementArgs.cardSales = Math.abs(transaction.amount);
-        break;
-      case 'return':
-        incrementArgs.returns = Math.abs(transaction.amount);
-        break;
-      case 'purchase':
-        incrementArgs.cashPurchases = Math.abs(transaction.amount);
-        break;
-      case 'purchase_return':
-        incrementArgs.cashPurchaseReturns = Math.abs(transaction.amount);
-        break;
-      case 'adjustment':
-        // Adjustments are special: they can be negative to reduce a total
-        if (transaction.amount < 0) {
-          incrementArgs.cashSales = transaction.amount;
-        } else {
-          incrementArgs.cashIn = transaction.amount;
-        }
-        break;
-    }
-
-    await cashRepository.incrementShiftTotals(shiftId, incrementArgs);
-
-    return newTx;
   },
 
   getTransactions: async (shiftId?: string): Promise<CashTransaction[]> => {

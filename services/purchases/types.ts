@@ -45,7 +45,7 @@ export interface PurchaseService {
   create(purchase: Omit<Purchase, 'id'>, branchId?: string): Promise<Purchase>;
   update(id: string, updates: Partial<Purchase>): Promise<Purchase>;
   approve(id: string, approverId: string, approverName: string): Promise<Purchase>;
-  markAsReceived(id: string, receiverId: string, receiverName: string): Promise<Purchase>;
+  markAsReceived(id: string, receiverId: string, receiverName: string, shiftId?: string): Promise<Purchase>;
   reject(id: string, reason: string): Promise<Purchase>;
   delete(id: string): Promise<boolean>;
   getStats(branchId?: string): Promise<PurchaseStats>;

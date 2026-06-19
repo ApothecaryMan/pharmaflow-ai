@@ -86,7 +86,7 @@ export interface UseEntityHandlersParams {
   isLoading: boolean;
   addPurchase?: (purchase: Omit<Purchase, 'id'>, context?: ActionContext) => Promise<Purchase>;
   approvePurchase?: (id: string, context: ActionContext) => Promise<void>;
-  markAsReceived?: (id: string, receiverId: string, receiverName: string) => Promise<void>;
+  markAsReceived?: (id: string, receiverId: string, receiverName: string, shiftId?: string) => Promise<void>;
   completeSale: (saleData: any, context: ActionContext) => Promise<Sale>;
   processSalesReturn: (returnData: any, sale: Sale, context: ActionContext) => Promise<void>;
   createPurchaseReturn: (

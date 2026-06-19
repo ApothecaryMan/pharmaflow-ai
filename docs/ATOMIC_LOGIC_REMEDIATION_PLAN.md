@@ -31,24 +31,27 @@ Files:
 Current behavior:
 
 - `markAsReceived` calls `process_purchase_receipt`.
-- If the RPC fails, `processInventoryReceipt` falls back to `processInventoryReceiptLegacy`.
-- The legacy path creates batches and updates inventory from the client.
 
-Change:
+### 2. Purchase Orders
+- [x] Create atomic `process_purchase_receipt` RPC.
+  - Updates inventory correctly
+  - Processes cash deduction
+  - Sets stock context and applies `atomic_increment_shift`
+- [x] Update `purchaseService` to use new RPC and pass down `shiftId`.
+- [x] Refactor `transactionService.processPurchaseTransaction` to remove client-side cash mutations.
 
-- Remove the client-side legacy fallback.
-- If `process_purchase_receipt` fails, return the RPC error and do not write any purchase, batch, stock, movement, or inventory state from the client.
+### 3. Purchase Returns
+- [x] Create atomic `process_purchase_return` RPC.
+  - Decrements inventory correctly
+  - Adds refund amount to cash drawer via `atomic_increment_shift`
+- [x] Refactor `transactionService.processPurchaseReturnTransaction` to remove client-side cash.
+- [x] Pass down `shiftId` via `DataContext`.
 
-Reason:
-
-Purchase receipt must be atomic. Either the purchase status, stock batches, inventory prices, stock movements, and audit trail are all written together, or none of them are written.
-
-Atomic requirement:
-
-- One server transaction.
-- No client rollback stack.
-- No partial batch creation.
-- No client-side inventory price update after an RPC failure.
+### 4. Delivery Orders
+- [x] Create atomic `finalize_delivery_order` RPC.
+  - Adds sales cash and updates sale status correctly.
+- [x] Update `hooks/sales/useSalesHandlers.ts` to call `transactionService.processDeliveryFinalization`.
+- [x] Implement `processDeliveryFinalization` in `transactionService.ts`.
 
 ### 2. Make `process_purchase_receipt` the only receipt write path
 
@@ -262,6 +265,49 @@ A cash transaction without a matching shift total, or a shift total without a ma
 Atomic requirement:
 
 - Transaction insert and shift total update must commit or roll back together.
+
+### 7.5 Add `delete_expense` RPC
+
+Proposed RPC:
+
+- `delete_expense(p_payload jsonb)`
+
+Current client path:
+
+- `expenseService.deleteExpense`
+- `expenseRepository.delete`
+
+Server-side responsibilities:
+
+- Validate `expense.delete` permissions and access.
+- Delete the expense record.
+- Delete the associated `cash_transaction` record atomically.
+- Revert the `shifts` table totals atomically.
+
+Reason:
+
+Directly deleting an expense from the client via `.delete()` leaves the cash drawer and `cash_transactions` table out of sync.
+
+Atomic requirement:
+
+- Expense deletion must refund the shift cash totals simultaneously.
+
+### 7.6 Atomic Delivery Finalization
+
+Current client path:
+
+- `salesService.update` (to set `status = 'completed'`)
+- `transactionService.addTransaction` (to record the payment in the shift)
+
+Server-side responsibilities:
+
+- Create a `finalize_delivery_order(p_payload jsonb)` RPC or update `process_order_modification`.
+- Update the sale status to `completed`.
+- Insert the `cash_transaction` and update shift totals atomically if `shiftId` is provided.
+
+Reason:
+
+Completing a delivery sale currently updates the sales table directly and then separately records cash. If the second request fails, the sale is closed but the drawer is short.
 
 ## P3: Server-Side Authorization
 

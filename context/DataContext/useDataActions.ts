@@ -360,8 +360,8 @@ export const useDataActions = ({
   }, [refreshAll]);
 
   const markAsReceived = useCallback(
-    async (id: string, receiverId: string, receiverName: string) => {
-      await purchaseService.markAsReceived(id, receiverId, receiverName);
+    async (id: string, receiverId: string, receiverName: string, shiftId?: string) => {
+      await purchaseService.markAsReceived(id, receiverId, receiverName, shiftId);
       await refreshAll();
     },
     [refreshAll]

@@ -122,22 +122,6 @@ export const cashRepository = {
     return data ? this.mapShiftFromDb(data) : null;
   },
 
-  async insertShift(shift: Shift): Promise<Shift> {
-    const { data, error } = await supabase
-      .from('shifts')
-      .insert(this.mapShiftToDb(shift))
-      .select()
-      .single();
-
-    if (error) throw error;
-    return this.mapShiftFromDb(data);
-  },
-
-  async updateShift(id: string, updates: Partial<Shift>): Promise<void> {
-    const { error } = await supabase.from('shifts').update(this.mapShiftToDb(updates)).eq('id', id);
-    if (error) throw error;
-  },
-
   // --- Transactions ---
   mapTransactionFromDb(db: CashTransactionDbRow): CashTransaction {
     return {
@@ -191,41 +175,9 @@ export const cashRepository = {
     return (data || []).map((d) => this.mapTransactionFromDb(d));
   },
 
-  async insertTransaction(transaction: CashTransaction): Promise<void> {
-    const { error } = await supabase
-      .from('cash_transactions')
-      .insert(this.mapTransactionToDb(transaction));
-    if (error) throw error;
-  },
-
   async deleteTransaction(transactionId: string): Promise<boolean> {
     const { error } = await supabase.from('cash_transactions').delete().eq('id', transactionId);
     if (error) throw error;
     return true;
-  },
-
-  async incrementShiftTotals(
-    shiftId: string,
-    amounts: {
-      cashIn: number;
-      cashOut: number;
-      cashSales: number;
-      cardSales: number;
-      returns: number;
-      cashPurchases?: number;
-      cashPurchaseReturns?: number;
-    }
-  ): Promise<void> {
-    const { error } = await supabase.rpc('atomic_increment_shift', {
-      p_shift_id: shiftId,
-      p_cash_in: amounts.cashIn,
-      p_cash_out: amounts.cashOut,
-      p_cash_sales: amounts.cashSales,
-      p_card_sales: amounts.cardSales,
-      p_returns: amounts.returns,
-      p_cash_purchases: amounts.cashPurchases || 0,
-      p_cash_purchase_returns: amounts.cashPurchaseReturns || 0,
-    });
-    if (error) throw error;
   },
 };

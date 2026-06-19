@@ -249,25 +249,21 @@ export function useSalesHandlers({
       if (
         updates.status === 'completed' &&
         sale.status !== 'completed' &&
-        sale.saleType === 'delivery' &&
-        currentShift &&
-        !sale.shiftTransactionRecorded
+        sale.saleType === 'delivery'
       ) {
-        const isCash = sale.paymentMethod === 'cash';
-        const txAmount = ('total' in updates ? (updates.total as number) : undefined) ?? sale.total;
-
-        await transactionService.addTransaction(currentShift.id, {
-          branchId: activeBranchId,
-          shiftId: currentShift.id,
-          time: context.timestamp,
-          type: isCash ? 'sale' : 'card_sale',
-          amount: txAmount,
-          reason: `Delivery Finalized #${sale.serialId || sale.id}`,
-          userId: context.performerName || 'System',
-          relatedSaleId: saleId,
-        });
-        updates.shiftTransactionRecorded = true;
-        success(`Delivery #${sale.serialId || sale.id} completed and payment recorded.`);
+        if (!currentShift) {
+          error('Shift must be open to finalize delivery order');
+          return;
+        }
+        if (!sale.shiftTransactionRecorded) {
+          const result = await transactionService.processDeliveryFinalization(saleId, context);
+          if (!result.success) {
+            error(result.error || 'Failed to finalize delivery payment');
+            return;
+          }
+          updates.shiftTransactionRecorded = true;
+          success(`Delivery #${sale.serialId || sale.id} completed and payment recorded.`);
+        }
       }
 
       const finalUpdates: Partial<Sale> = {
@@ -293,7 +289,6 @@ export function useSalesHandlers({
       setBatches,
       setSales,
       currentShift,
-      addTransaction,
       error,
       success,
     ]

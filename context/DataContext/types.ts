@@ -77,7 +77,7 @@ export interface DataActions {
   setPurchases: (purchases: Purchase[] | ((prev: Purchase[]) => Purchase[])) => void;
   addPurchase: (purchase: Omit<Purchase, 'id'>, context?: ActionContext) => Promise<Purchase>;
   approvePurchase: (id: string, context: ActionContext) => Promise<void>;
-  markAsReceived: (id: string, receiverId: string, receiverName: string) => Promise<void>;
+  markAsReceived: (id: string, receiverId: string, receiverName: string, shiftId?: string) => Promise<void>;
   rejectPurchase: (id: string) => Promise<void>;
 
   // Returns

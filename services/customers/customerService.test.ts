@@ -21,7 +21,9 @@ vi.mock('../settings/settingsService', () => ({
 
 vi.mock('../../utils/idGenerator', () => ({
   idGenerator: {
-    generate: vi.fn(),
+    generate: vi.fn().mockResolvedValue('C_NEW'),
+    uuid: vi.fn().mockReturnValue('C_NEW'),
+    code: vi.fn().mockResolvedValue('CUST-NEW'),
   },
 }));
 

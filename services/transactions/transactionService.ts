@@ -281,19 +281,6 @@ export const transactionService = {
         context.performerName
       );
 
-      // Record Shift Transaction if Cash
-      if (purchase.paymentMethod === 'cash' && context.shiftId) {
-        await cashService.addTransaction(context.shiftId, {
-          branchId: context.branchId,
-          shiftId: context.shiftId,
-          time: context.timestamp,
-          type: 'purchase',
-          amount: -purchase.totalCost,
-          reason: `Purchase #${purchase.id}`,
-          userId: context.performerId,
-        });
-      }
-
       auditService.log('purchase.complete', {
         userId: context.performerId,
         details: `Completed PO #${purchase.invoiceId || purchase.id} (${context.performerName})`,
@@ -333,32 +320,12 @@ export const transactionService = {
         await supabase.from('purchases').delete().eq('id', newPurchase.id);
       });
 
-      // 2. For direct purchases, we handle cash/audit directly without "Manager Approval" label
-      if (purchase.paymentMethod === 'cash' && context.shiftId) {
-        await cashService.addTransaction(context.shiftId, {
-          branchId: context.branchId,
-          orgId: context.orgId,
-          shiftId: context.shiftId,
-          time: context.timestamp,
-          type: 'purchase',
-          amount: -purchase.totalCost,
-          reason: `Direct PO #${newPurchase.invoiceId || newPurchase.id} from ${purchase.supplierName}`,
-          userId: context.performerId,
-        });
-      }
-
-      auditService.log('purchase.direct_create', {
-        userId: context.performerId,
-        details: `Direct Purchase PO #${newPurchase.invoiceId || newPurchase.id} (${context.performerName})`,
-        entityId: newPurchase.id,
-        branchId: context.branchId,
-      });
-
-      // 3. Immediately mark as received to update inventory
+      // 2. Immediately mark as received to update inventory and deduct cash via RPC
       const receivedPurchase = await purchaseService.markAsReceived(
         newPurchase.id,
         context.performerId,
-        context.performerName
+        context.performerName,
+        context.shiftId
       );
 
       return { success: true, data: receivedPurchase };
@@ -377,20 +344,14 @@ export const transactionService = {
       const originalPurchase = await purchaseService.getById(returnInput.purchaseId);
       if (!originalPurchase) throw new Error('Original purchase order not found');
 
-      const savedReturn = await returnService.createPurchaseReturn(returnInput, context.branchId);
-
-      if (originalPurchase.paymentMethod === 'cash' && context.shiftId) {
-        await cashService.addTransaction(context.shiftId, {
-          branchId: context.branchId,
-          orgId: context.orgId,
-          shiftId: context.shiftId,
-          time: context.timestamp,
-          type: 'purchase_return',
-          amount: savedReturn.totalRefund,
-          reason: `Purchase Return #${savedReturn.id} for PO #${originalPurchase.invoiceId || originalPurchase.id}`,
-          userId: context.performerId || 'System',
-        });
-      }
+      const savedReturn = await returnService.createPurchaseReturn(
+        {
+          ...returnInput,
+          paymentMethod: originalPurchase.paymentMethod,
+          shiftId: context.shiftId
+        } as any,
+        context.branchId
+      );
 
       auditService.log('purchase.return', {
         userId: context.performerId,
@@ -405,6 +366,36 @@ export const transactionService = {
       return { success: false, error: err.message || 'Purchase return failed' };
     }
   },
+  async processDeliveryFinalization(
+    saleId: string,
+    context: ActionContext
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { data, error } = await supabase.rpc('finalize_delivery_order', {
+        p_payload: {
+          saleId,
+          shiftId: context.shiftId,
+          performerId: context.performerId,
+          performerName: context.performerName,
+        },
+      });
+
+      if (error) {
+        console.error('[TransactionService] RPC error:', error);
+        return { success: false, error: error.message || 'Server error during delivery finalization' };
+      }
+
+      if (data && !data.success) {
+        return { success: false, error: data.error || 'Delivery finalization failed' };
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('[TransactionService] Delivery finalization failed:', err);
+      return { success: false, error: err.message || 'Delivery finalization failed' };
+    }
+  },
+
   async addTransaction(shiftId: string, tx: any): Promise<any> {
     return cashService.addTransaction(shiftId, tx);
   },
