@@ -75,6 +75,27 @@ function bumpVersion() {
       console.log(`✅ Updated public/version.json (Date: ${newReleaseDate})`);
     }
 
+    // 4.5. Update src-tauri/tauri.conf.json
+    const tauriConfPath = path.resolve(process.cwd(), 'src-tauri/tauri.conf.json');
+    if (fs.existsSync(tauriConfPath)) {
+      const tauriConf = JSON.parse(fs.readFileSync(tauriConfPath, 'utf8'));
+      // Tauri requires semver format (major.minor.patch), so we try to parse our custom version format
+      const tauriVersionParts = newVersion.split('.');
+      if (tauriVersionParts.length === 2) {
+        const minorAndPatch = tauriVersionParts[1];
+        if (minorAndPatch.length >= 3) {
+            const minor = minorAndPatch.substring(0, 1);
+            const patch = minorAndPatch.substring(1);
+            tauriConf.version = `${tauriVersionParts[0]}.${minor}.${Number(patch)}`;
+        } else {
+            tauriConf.version = `${tauriVersionParts[0]}.${minorAndPatch}.0`;
+        }
+      } else {
+        tauriConf.version = newVersion;
+      }
+      fs.writeFileSync(tauriConfPath, JSON.stringify(tauriConf, null, 2) + '\n');
+      console.log(`✅ Updated src-tauri/tauri.conf.json (Version: ${tauriConf.version})`);
+    }
     // 5. Update public/preflight.js (New!)
     const preflightPath = path.resolve(process.cwd(), 'public/preflight.js');
     if (fs.existsSync(preflightPath)) {
