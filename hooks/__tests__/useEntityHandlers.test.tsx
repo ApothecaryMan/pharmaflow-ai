@@ -233,7 +233,7 @@ describe('useEntityHandlers: handleCompleteSale', () => {
     });
 
     // Should fail before touching batch service
-    expect(batchService.allocateStockBulk).not.toHaveBeenCalled();
+    expect(batchService.allocateStock).not.toHaveBeenCalled();
     expect(mockSetSales).not.toHaveBeenCalled();
   });
 });

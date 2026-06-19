@@ -97,23 +97,5 @@ describe('batchService edge cases', () => {
     expect(updateSpy).toHaveBeenNthCalledWith(3, 'soon', 50, true);
   });
 
-  it('returns partial quantities to original allocations without over-restoring', async () => {
-    const rpc = vi.mocked(supabase.rpc);
 
-    await batchService.returnStock(
-      [
-        { batchId: 'soon', quantity: 50, expiryDate: '2030-01-01', batchNumber: 'SOON' },
-        { batchId: 'later', quantity: 10, expiryDate: '2031-01-01', batchNumber: 'LATER' },
-      ],
-      12,
-      'D1',
-      'BR1'
-    );
-
-    expect(rpc).toHaveBeenCalledTimes(1);
-    expect(rpc).toHaveBeenCalledWith('atomic_increment_batch', {
-      p_batch_id: 'soon',
-      p_delta: 12,
-    });
-  });
 });

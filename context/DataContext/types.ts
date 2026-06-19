@@ -50,7 +50,6 @@ export interface DataActions {
   setInventory: (inventory: Drug[] | ((prev: Drug[]) => Drug[])) => void;
   addProduct: (product: Omit<Drug, 'id'>) => Promise<Drug>;
   updateProduct: (id: string, updates: Partial<Drug>) => Promise<Drug>;
-  updateStock: (id: string, quantity: number) => Promise<void>;
 
   // Sales
   setSales: (sales: Sale[] | ((prev: Sale[]) => Sale[])) => void;

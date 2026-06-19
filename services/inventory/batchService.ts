@@ -43,6 +43,7 @@ export const batchService = {
     return batchRepository.getById(batchId);
   },
 
+  /** @internal Do not use for business flows. Use RPCs instead (e.g. process_stock_adjustment). */
   async createBatch(batch: Omit<StockBatch, 'id'>, branchId?: string): Promise<StockBatch> {
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || batch.branchId || settings.activeBranchId;
@@ -98,6 +99,7 @@ export const batchService = {
     return newBatch;
   },
 
+  /** @internal Do not use for business flows. Use RPCs instead. */
   async updateBatchQuantity(
     batchId: string,
     delta: number,
@@ -112,50 +114,13 @@ export const batchService = {
     return batchRepository.getById(batchId);
   },
 
+  /** @internal Do not use for business flows. Use RPCs instead. */
   async updateBatch(batchId: string, updates: Partial<StockBatch>): Promise<StockBatch | null> {
     await batchRepository.update(batchId, updates);
     return batchRepository.getById(batchId);
   },
 
-  async allocateStockBulk(
-    requests: { drugId: string; quantity: number; name?: string; preferredBatchId?: string }[],
-    branchId: string,
-    referenceDate: Date = new Date()
-  ): Promise<{ drugId: string; allocations: BatchAllocation[] }[]> {
-    const validRequests = requests.filter((req) => req.quantity > 0);
-    const drugIds = [...new Set(validRequests.map((r) => r.drugId))];
-
-    // --- Optimization: Fetch all batches for all requested drugs in ONE query ---
-    const allBatches = await this.getAllBatches(branchId, undefined, drugIds);
-    const batchesByDrug = drugIds.reduce(
-      (acc, id) => {
-        acc[id] = allBatches.filter((b) => b.drugId === id);
-        return acc;
-      },
-      {} as Record<string, StockBatch[]>
-    );
-
-    // Process all allocation requests in parallel for maximum speed
-    const results = await Promise.all(
-      validRequests.map(async (req) => {
-        const drugBatches = batchesByDrug[req.drugId] || [];
-        const allocs = await this.allocateStock(
-          req.drugId,
-          req.quantity,
-          branchId,
-          true,
-          req.preferredBatchId,
-          drugBatches,
-          referenceDate
-        );
-        if (!allocs) throw new Error(`Insufficient stock for: ${req.name || req.drugId}`);
-        return { drugId: req.drugId, allocations: allocs };
-      })
-    );
-
-    return results;
-  },
-
+  /** @internal Do not use for business flows. Use RPCs instead. */
   async allocateStock(
     drugId: string,
     quantityNeeded: number,
@@ -224,43 +189,7 @@ export const batchService = {
     return allocations;
   },
 
-  async returnStock(
-    allocations: BatchAllocation[],
-    quantityToReturn: number,
-    drugId: string,
-    branchId: string,
-    referenceDate: Date = new Date()
-  ): Promise<void> {
-    if (!allocations || allocations.length === 0 || quantityToReturn <= 0) return;
 
-    let remainingToReturn = quantityToReturn;
-    const sortedAllocations = [...allocations].sort((a, b) => b.quantity - a.quantity);
-
-    for (const alloc of sortedAllocations) {
-      if (remainingToReturn <= 0) break;
-      const canReturnToThis = Math.min(alloc.quantity, remainingToReturn);
-      if (canReturnToThis <= 0) continue;
-
-      const success = await batchRepository.atomicIncrement(alloc.batchId, canReturnToThis);
-
-      if (!success) {
-        // Recreate batch if it was deleted but we are returning to it
-        await this.createBatch({
-          drugId,
-          quantity: canReturnToThis,
-          expiryDate: alloc.expiryDate,
-          costPrice: 0,
-          dateReceived: referenceDate.toISOString(),
-          batchNumber: alloc.batchNumber || 'RECREATED',
-          branchId: branchId,
-          orgId: (await settingsService.getAll()).orgId,
-          version: 1,
-        });
-      }
-
-      remainingToReturn -= canReturnToThis;
-    }
-  },
 
   async getTotalStock(drugId: string, branchId?: string): Promise<number> {
     const batches = await this.getAllBatches(branchId, drugId);

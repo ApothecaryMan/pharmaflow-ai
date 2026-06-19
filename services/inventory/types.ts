@@ -50,12 +50,6 @@ export interface InventoryService {
   filter(filters: InventoryFilters): Promise<Drug[]>;
   create(drug: Omit<Drug, 'id'>, branchId?: string): Promise<Drug>;
   update(id: string, drug: Partial<Drug>): Promise<Drug>;
-  updateStock(id: string, quantity: number, skipBatch?: boolean, batchId?: string): Promise<Drug>;
-  updateStockCount(id: string, quantity: number): Promise<void>;
-  updateStockBulk(
-    mutations: { id: string; quantity: number; batchId?: string }[],
-    skipBatch?: boolean
-  ): Promise<void>;
   processStockAdjustment(payload: ProcessStockAdjustmentPayload): Promise<void>;
   delete(id: string): Promise<boolean>;
   getStats(): Promise<InventoryStats>;

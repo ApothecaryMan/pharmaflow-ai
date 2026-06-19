@@ -68,11 +68,7 @@ describe('InventoryService', () => {
     expect(panadol).toBeUndefined();
   });
 
-  it('should update stock', async () => {
-    const updated = await inventoryService.updateStock('D1', -10);
-    expect(updated.stock).toBe(40);
-    expect(storage.set).toHaveBeenCalled();
-  });
+
 
   it('should get stats correctly', async () => {
     const stats = await inventoryService.getStats();

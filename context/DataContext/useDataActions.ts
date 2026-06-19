@@ -293,15 +293,6 @@ export const useDataActions = ({
     [setRawInventory]
   );
 
-  const updateStock = useCallback(
-    async (id: string, quantity: number) => {
-      await inventoryService.updateStock(id, quantity);
-      setRawInventory((prev: any) =>
-        prev.map((p: any) => (p.id === id ? { ...p, stock: p.stock + quantity } : p))
-      );
-    },
-    [setRawInventory]
-  );
 
   const addSale = useCallback(
     async (sale: any) => {
@@ -476,7 +467,6 @@ export const useDataActions = ({
     syncBatches,
     addProduct,
     updateProduct,
-    updateStock,
     addSale,
     completeSale,
     addSupplier,
