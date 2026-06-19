@@ -37,6 +37,7 @@ interface DocCardProps {
   deleting?: boolean;
   isLoadingDocs?: boolean;
   t: Translations;
+  className?: string;
 }
 
 const DocCard: React.FC<DocCardProps> = ({
@@ -50,11 +51,12 @@ const DocCard: React.FC<DocCardProps> = ({
   deleting,
   isLoadingDocs,
   t,
+  className = 'rounded-xl',
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className={`${PROFILE_GLASS_CARD_NO_BORDER} p-3`}>
+    <div className={`${PROFILE_GLASS_CARD_NO_BORDER.replace('rounded-xl', '').trim()} ${className} p-3`}>
       <div className='flex items-center justify-between gap-3'>
         <div className='flex items-center gap-2.5 min-w-0'>
           {isLoadingDocs ? (
@@ -238,27 +240,45 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
 
   return (
     <div className='animate-fade-in space-y-6'>
-      <div className='space-y-3'>
-        <h4 className='text-xs font-bold uppercase tracking-wider text-primary-500 flex items-center gap-1.5'>
+      <div className='space-y-2'>
+        <h4 className='text-sm font-bold uppercase tracking-wider text-(--text-primary) flex items-center gap-1.5'>
           <FileText className='w-3.5 h-3.5' />
           {t.employeeProfile.officialDocuments}
         </h4>
 
-        {DOC_FIELDS.map(({ field, labelKey }) => (
-          <DocCard
-            key={field}
-            title={t.employeeProfile[labelKey]}
-            image={localDocs[field] as string | undefined}
-            onUpload={onUpdateProfile ? (file) => handleDocUpload(field, file) : undefined}
-            onRemove={onUpdateProfile ? () => handleDocRemove(field) : undefined}
-            isExpanded={expandedDocs.has(field)}
-            onToggleExpand={() => toggleExpanded(field)}
-            loading={uploadingDoc === field}
-            deleting={deletingDoc === field}
-            isLoadingDocs={isLoadingDocs}
-            t={t}
-          />
-        ))}
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-0.5 sm:gap-2'>
+          {DOC_FIELDS.map(({ field, labelKey }, index, arr) => {
+            const isFirst = index === 0;
+            const isLast = index === arr.length - 1;
+            const isSingle = arr.length === 1;
+
+            let roundedClass = 'max-sm:rounded-sm sm:rounded-xl';
+            if (isSingle) {
+              roundedClass = 'max-sm:rounded-2xl sm:rounded-xl';
+            } else if (isFirst) {
+              roundedClass = 'max-sm:rounded-t-2xl max-sm:rounded-b-sm sm:rounded-xl';
+            } else if (isLast) {
+              roundedClass = 'max-sm:rounded-b-2xl max-sm:rounded-t-sm sm:rounded-xl';
+            }
+
+            return (
+              <DocCard
+                key={field}
+                title={t.employeeProfile[labelKey]}
+                image={localDocs[field] as string | undefined}
+                onUpload={onUpdateProfile ? (file) => handleDocUpload(field, file) : undefined}
+                onRemove={onUpdateProfile ? () => handleDocRemove(field) : undefined}
+                isExpanded={expandedDocs.has(field)}
+                onToggleExpand={() => toggleExpanded(field)}
+                loading={uploadingDoc === field}
+                deleting={deletingDoc === field}
+                isLoadingDocs={isLoadingDocs}
+                t={t}
+                className={roundedClass}
+              />
+            );
+          })}
+        </div>
       </div>
     </div>
   );

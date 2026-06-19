@@ -121,7 +121,7 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
 
           {/* Menu Items */}
           <nav className='p-3 pb-1 order-2'>
-            <div className='bg-(--bg-secondary) rounded-2xl p-1 space-y-0.5'>
+            <div className='bg-black/5 dark:bg-white/5 rounded-2xl p-1 space-y-0.5'>
               {menuItems.map((item) => (
                 <button
                   key={item.id}
@@ -131,8 +131,8 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
                   }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                     activeView === item.id
-                      ? 'bg-(--bg-card) text-(--text-primary) shadow-xs'
-                      : 'text-(--text-tertiary) hover:text-(--text-secondary)'
+                      ? 'bg-white dark:bg-white/10 text-(--text-primary) shadow-xs'
+                      : 'text-(--text-secondary) hover:text-(--text-primary)'
                   }`}
                 >
                   <item.icon className='w-5 h-5' />
@@ -144,7 +144,7 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
 
           {/* Dark Mode & Language Toggles */}
           <div className='px-3 pb-2 order-3'>
-            <div className='bg-(--bg-secondary) rounded-2xl p-1 space-y-0.5'>
+            <div className='bg-black/5 dark:bg-white/5 rounded-2xl p-1 space-y-0.5'>
               <SettingsToggle icon={Sun} iconOff={Moon} label={t.employeeProfile.darkMode} />
               <LanguageToggle isRTL={isRTL} t={t} />
             </div>
@@ -180,7 +180,7 @@ const SettingsToggle: React.FC<{
   const { darkMode, setDarkMode } = useSettings();
 
   return (
-    <div className='w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-(--text-tertiary)'>
+    <div className='w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-(--text-secondary)'>
       <span className='flex items-center gap-3'>
         {darkMode ? <IconOn className='w-5 h-5' /> : <IconOff className='w-5 h-5' />}
         {label}
@@ -200,7 +200,7 @@ const LanguageToggle: React.FC<{ isRTL: boolean; t: Translations }> = ({ isRTL, 
   return (
     <button
       onClick={() => setLanguage(currentLang === 'AR' ? 'EN' : 'AR')}
-      className='w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-(--text-tertiary) hover:text-(--text-secondary) transition-all'
+      className='w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-(--text-secondary) hover:text-(--text-primary) transition-all'
     >
       <span className='flex items-center gap-3'>
         <Globe className='w-5 h-5' />

@@ -844,9 +844,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
         {/* Info Grid or Edit Form */}
         <div className='space-y-4'>
-          <div className='space-y-3 pt-2'>
+          <div className='space-y-2 pt-2'>
             <div className='flex items-center justify-between'>
-              <h4 className='text-xs font-bold uppercase tracking-wider text-primary-500'>
+              <h4 className='text-sm font-bold uppercase tracking-wider text-(--text-primary)'>
                 {t.employeeProfile.personalInformation}
               </h4>
               {onUpdateProfile &&
@@ -940,22 +940,37 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 </div>
               </div>
             ) : isLoading ? (
-              <div className='grid grid-cols-2 gap-2 animate-pulse'>
-                {[...Array(6)].map((_, i) => (
-                  <div
-                    key={i}
-                    className={`${PROFILE_GLASS_CARD_NO_BORDER} flex items-center gap-2.5 h-12`}
-                  >
-                    <div className='w-4 h-4 rounded bg-black/10 dark:bg-white/10 shrink-0'></div>
-                    <div className='flex-1 space-y-1.5 min-w-0'>
-                      <div className='h-2 bg-black/10 dark:bg-white/10 rounded w-1/3'></div>
-                      <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-2/3'></div>
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-0.5 sm:gap-2 animate-pulse'>
+                {[...Array(6)].map((_, index, arr) => {
+                  const isFirst = index === 0;
+                  const isLast = index === arr.length - 1;
+                  const isSingle = arr.length === 1;
+
+                  let roundedClass = 'max-sm:rounded-sm sm:rounded-xl';
+                  if (isSingle) {
+                    roundedClass = 'max-sm:rounded-2xl sm:rounded-xl';
+                  } else if (isFirst) {
+                    roundedClass = 'max-sm:rounded-t-2xl max-sm:rounded-b-sm sm:rounded-xl';
+                  } else if (isLast) {
+                    roundedClass = 'max-sm:rounded-b-2xl max-sm:rounded-t-sm sm:rounded-xl';
+                  }
+
+                  return (
+                    <div
+                      key={index}
+                      className={`${PROFILE_GLASS_CARD_NO_BORDER.replace('rounded-xl', '').trim()} ${roundedClass} flex items-center gap-2.5 h-12`}
+                    >
+                      <div className='w-4 h-4 rounded bg-black/10 dark:bg-white/10 shrink-0'></div>
+                      <div className='flex-1 space-y-1.5 min-w-0'>
+                        <div className='h-2 bg-black/10 dark:bg-white/10 rounded w-1/3'></div>
+                        <div className='h-3 bg-black/10 dark:bg-white/10 rounded w-2/3'></div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
-              <div className='grid grid-cols-2 gap-2'>
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-0.5 sm:gap-2'>
                 {[
                   { icon: 'badge', label: t.employeeProfile.fullName, value: displayName },
                   ...(profile?.nameArabic
@@ -987,32 +1002,47 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                     label: t.employeeProfile.memberSince,
                     value: memberSince,
                   },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className={`${PROFILE_GLASS_CARD_NO_BORDER} flex items-center gap-2.5`}
-                  >
-                    <span className='material-symbols-rounded text-[18px] text-primary-500'>
-                      {item.icon}
-                    </span>
-                    <div className='min-w-0'>
-                      <p className='text-[10px] text-(--text-tertiary) font-bold truncate'>
-                        {item.label}
-                      </p>
-                      <p className='text-xs font-semibold text-(--text-primary) truncate'>
-                        {item.value}
-                      </p>
+                ].map((item, index, arr) => {
+                  const isFirst = index === 0;
+                  const isLast = index === arr.length - 1;
+                  const isSingle = arr.length === 1;
+
+                  let roundedClass = 'max-sm:rounded-sm sm:rounded-xl';
+                  if (isSingle) {
+                    roundedClass = 'max-sm:rounded-2xl sm:rounded-xl';
+                  } else if (isFirst) {
+                    roundedClass = 'max-sm:rounded-t-2xl max-sm:rounded-b-sm sm:rounded-xl';
+                  } else if (isLast) {
+                    roundedClass = 'max-sm:rounded-b-2xl max-sm:rounded-t-sm sm:rounded-xl';
+                  }
+
+                  return (
+                    <div
+                      key={item.label}
+                      className={`${PROFILE_GLASS_CARD_NO_BORDER.replace('rounded-xl', '').trim()} ${roundedClass} flex items-center gap-2.5`}
+                    >
+                      <span className='material-symbols-rounded text-[18px] text-primary-500'>
+                        {item.icon}
+                      </span>
+                      <div className='min-w-0'>
+                        <p className='text-[10px] text-(--text-tertiary) font-bold truncate'>
+                          {item.label}
+                        </p>
+                        <p className='text-xs font-semibold text-(--text-primary) truncate'>
+                          {item.value}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
 
           {/* Login & Fingerprint Credentials (Workspaces) */}
           {(workspaces.length > 0 || isLoading) && (
-            <div className='space-y-3 pt-2'>
-              <h4 className='text-xs font-bold uppercase tracking-wider text-primary-500'>
+            <div className='space-y-2 pt-2'>
+              <h4 className='text-sm font-bold uppercase tracking-wider text-(--text-primary)'>
                 {t.employeeProfile.workspacesAndCredentials}
               </h4>
               <div className='flex flex-col gap-4'>
@@ -1419,8 +1449,8 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
           )}
 
           {/* Quick Stats */}
-          <div className='space-y-3 pt-2'>
-            <h4 className='text-xs font-bold uppercase tracking-wider text-primary-500'>
+          <div className='space-y-2 pt-2'>
+            <h4 className='text-sm font-bold uppercase tracking-wider text-(--text-primary)'>
               {t.employeeProfile.overview}
             </h4>
             {isLoading ? (
