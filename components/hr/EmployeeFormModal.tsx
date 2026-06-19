@@ -269,26 +269,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
     }
   };
 
-  const getBannerStyleByDepartment = (dept: string) => {
-    switch (dept) {
-      case 'pharmacy':
-        return 'pharma';
-      case 'it':
-        return 'cyberhex';
-      case 'hr':
-        return 'abstract';
-      case 'sales':
-        return 'synthwave';
-      case 'logistics':
-        return 'chaos';
-      case 'marketing':
-        return 'floral';
-      default:
-        return 'pattern';
-    }
-  };
-
-  const bannerStyle = getBannerStyleByDepartment(formData.department || 'pharmacy');
+  const bannerStyle = formData.coverStyle || 'pattern';
   const activeBanner = BANNER_STYLES.find((b) => b.id === bannerStyle);
   const bannerAccent = activeBanner?.accentColor || 'var(--primary-500)';
 
@@ -359,48 +340,51 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
               </span>
               {[
                 {
-                  dept: 'pharmacy',
+                  styleId: 'pharma',
                   color: '#0d9488',
                   label: language === 'AR' ? 'صيدلي' : 'Pharma',
                 },
                 {
-                  dept: 'sales',
+                  styleId: 'synthwave',
                   color: '#ec4899',
                   label: language === 'AR' ? 'نيون' : 'Synthwave',
                 },
-                { dept: 'hr', color: '#8b5cf6', label: language === 'AR' ? 'تجريدي' : 'Abstract' },
+                { styleId: 'abstract', color: '#8b5cf6', label: language === 'AR' ? 'تجريدي' : 'Abstract' },
                 {
-                  dept: 'it',
+                  styleId: 'cyberhex',
                   color: '#10b981',
                   label: language === 'AR' ? 'سيبر شبكي' : 'Cyberhex',
                 },
                 {
-                  dept: 'logistics',
+                  styleId: 'chaos',
                   color: '#f97316',
                   label: language === 'AR' ? 'تموجات' : 'Chaos',
                 },
                 {
-                  dept: 'marketing',
+                  styleId: 'floral',
                   color: '#f43f5e',
                   label: language === 'AR' ? 'ورود' : 'Floral',
                 },
-              ].map((opt) => (
-                <button
-                  key={opt.dept}
-                  type='button'
-                  onClick={() => {
-                    setFormData((prev) => ({ ...prev, department: opt.dept as any }));
-                    playBeep();
-                  }}
-                  className={`w-4 h-4 rounded-full border-2 transition-all hover:scale-125 ${
-                    formData.department === opt.dept
-                      ? 'border-white scale-110 shadow-sm'
-                      : 'border-transparent opacity-60 hover:opacity-100'
-                  }`}
-                  style={{ backgroundColor: opt.color }}
-                  title={opt.label}
-                />
-              ))}
+              ].map((opt) => {
+                const isActive = (formData.coverStyle || 'pattern') === opt.styleId;
+                return (
+                  <button
+                    key={opt.styleId}
+                    type='button'
+                    onClick={() => {
+                      setFormData((prev) => ({ ...prev, coverStyle: opt.styleId }));
+                      playBeep();
+                    }}
+                    className={`w-4 h-4 rounded-full border-2 transition-all hover:scale-125 ${
+                      isActive
+                        ? 'border-white scale-110 shadow-sm'
+                        : 'border-transparent opacity-60 hover:opacity-100'
+                    }`}
+                    style={{ backgroundColor: opt.color }}
+                    title={opt.label}
+                  />
+                );
+              })}
             </div>
           </div>
 

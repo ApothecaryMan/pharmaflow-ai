@@ -94,7 +94,16 @@ export const Inventory: React.FC<InventoryProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDrug, setEditingDrug] = useState<Drug | null>(null);
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
+  const [activeDetailsTab, setActiveDetailsTab] = useState<'general' | 'pharmacy'>('general');
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
+  const viewingDrugBatches = useMemo(() => {
+    if (!viewingDrug) return [];
+    if (viewingDrug.barcode) {
+      return inventory.filter(d => d.barcode === viewingDrug.barcode);
+    }
+    return inventory.filter(d => d.name === viewingDrug.name && d.dosageForm === viewingDrug.dosageForm);
+  }, [inventory, viewingDrug]);
   const menuRef = useRef<HTMLDivElement>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [selectedBatches, setSelectedBatches] = useState<Record<string, string>>({}); // groupId -> drugId
@@ -157,10 +166,10 @@ export const Inventory: React.FC<InventoryProps> = ({
     };
   }, []);
 
-  const handleViewDetails = (id: string) => {
-    const drug = inventory.find((d) => d.id === id);
+  const handleViewDetails = (drug: Drug) => {
     if (drug) {
       setViewingDrug(drug);
+      setActiveDetailsTab('general');
     }
     setActiveMenuId(null);
   };
@@ -369,7 +378,7 @@ export const Inventory: React.FC<InventoryProps> = ({
     actions.push({
       label: t.actionsMenu.viewDetails || t.actionsMenu.view,
       icon: 'visibility',
-      action: () => handleViewDetails(drug.id),
+      action: () => handleViewDetails(drug),
     });
     actions.push({ separator: true });
     actions.push({
@@ -734,10 +743,10 @@ export const Inventory: React.FC<InventoryProps> = ({
                   <span className='text-xl font-bold text-primary-900 dark:text-primary-100'>
                     {summaryStats.totalItems >= 1000
                       ? new Intl.NumberFormat('en-US', {
-                          notation: 'compact',
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }).format(summaryStats.totalItems)
+                        notation: 'compact',
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }).format(summaryStats.totalItems)
                       : summaryStats.totalItems}
                   </span>
                 </div>
@@ -906,134 +915,191 @@ export const Inventory: React.FC<InventoryProps> = ({
           zIndex={50}
           title={t.actionsMenu.view}
           icon='visibility'
-        >
-          <div className='space-y-6'>
-            <div className='flex justify-between items-start'>
-              <div>
-                <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 page-title'>
-                  {getDisplayName({ name: viewingDrug.name }, textTransform)}{' '}
-                  {viewingDrug.dosageForm && (
-                    <span className='text-lg text-gray-500 font-normal'>
-                      {getDisplayName(
-                        {
-                          name: `(${getLocalizedProductType(viewingDrug.dosageForm, 'en')})`,
-                        },
-                        textTransform
-                      )}
-                    </span>
-                  )}
-                </h1>
-                <p className='text-gray-500 font-medium text-start' dir='ltr'>
-                  {Array.isArray(viewingDrug.genericName)
-                    ? viewingDrug.genericName.join(' + ')
-                    : (viewingDrug.genericName as any)}
-                </p>
-              </div>
-              <span className={getCategoryBadgeClass(viewingDrug.category)}>
-                {getLocalizedCategory(viewingDrug.category || 'General', currentLang)}
-              </span>
+          tabs={[
+            { label: t.generalInfo || 'معلومات عامة', value: 'general', icon: 'info' },
+            { label: t.pharmacyDetails || 'تفاصيل الصيدلية', value: 'pharmacy', icon: 'storefront' }
+          ]}
+          activeTab={activeDetailsTab}
+          onTabChange={setActiveDetailsTab}
+          hideCloseButton={true}
+          footer={
+            <div className='flex gap-3'>
+              <button
+                onClick={() => handlePrintBarcode(viewingDrug)}
+                className={`flex-1 py-2.5 rounded-full font-medium text-(--text-primary) bg-(--bg-elevated) hover:bg-(--border-divider) border border-(--border-divider) shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 type-interactive`}
+              >
+                <span className='material-symbols-rounded'>qr_code_2</span>
+                {t.actionsMenu.printBarcode}
+              </button>
+              {permissionsService.can('inventory.update') && (
+                <button
+                  onClick={() => {
+                    setViewingDrug(null);
+                    handleOpenEdit(viewingDrug);
+                  }}
+                  className='flex-1 py-2.5 rounded-full font-medium text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-colors type-interactive flex items-center justify-center gap-2'
+                >
+                  <span className='material-symbols-rounded'>edit</span>
+                  {t.actionsMenu.edit}
+                </button>
+              )}
+              <button
+                onClick={() => setViewingDrug(null)}
+                className='w-12 py-2.5 rounded-full font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors flex items-center justify-center'
+              >
+                <span className='material-symbols-rounded'>close</span>
+              </button>
             </div>
-
-            <div className='grid grid-cols-2 gap-4'>
-              <div className='p-3 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700'>
-                <label className='text-[10px] font-bold text-gray-400 uppercase'>
-                  {t.details?.stockLevel}
-                </label>
-                {(() => {
-                  const stockParts = formatStockParts(viewingDrug.stock, viewingDrug.unitsPerPack, {
-                    packs: t.details?.packs || 'Packs',
-                    outOfStock: t.outOfStock || 'Out of Stock',
-                  });
-                  return (
-                    <p
-                      className={`text-xl font-bold ${viewingDrug.stock < (viewingDrug.unitsPerPack || 1) ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}
-                    >
-                      {stockParts.value}{' '}
-                      {stockParts.label && (
-                        <span className='text-xs font-normal text-gray-500'>
-                          {stockParts.label}
+          }
+        >
+          <div className='space-y-6 pt-2 pb-4'>
+            {activeDetailsTab === 'general' ? (
+              <div className='space-y-6 animate-fade-in'>
+                <div className='flex justify-between items-start bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700'>
+                  <div>
+                    <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 page-title'>
+                      {getDisplayName({ name: viewingDrug.name }, textTransform)}{' '}
+                      {viewingDrug.dosageForm && (
+                        <span className='text-lg text-gray-500 font-normal'>
+                          {getDisplayName(
+                            {
+                              name: `(${getLocalizedProductType(viewingDrug.dosageForm, 'en')})`,
+                            },
+                            textTransform
+                          )}
                         </span>
                       )}
+                    </h1>
+                    <p className='text-gray-500 font-medium text-start mt-1' dir='ltr'>
+                      {Array.isArray(viewingDrug.genericName)
+                        ? viewingDrug.genericName.join(' + ')
+                        : (viewingDrug.genericName as any)}
                     </p>
-                  );
-                })()}
-              </div>
-              <div className='p-3 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700'>
-                <label className='text-[10px] font-bold text-gray-400 uppercase'>
-                  {t.modal?.expiry}
-                </label>
-                <p className='text-xl font-bold text-gray-700 dark:text-gray-300'>
-                  {(() => {
-                    const d = new Date(viewingDrug.expiryDate);
-                    return !isNaN(d.getTime())
-                      ? d.toLocaleDateString('en-US', { month: '2-digit', year: 'numeric' })
-                      : viewingDrug.expiryDate;
-                  })()}
-                </p>
-              </div>
-            </div>
+                  </div>
+                  <span className={getCategoryBadgeClass(viewingDrug.category)}>
+                    {getLocalizedCategory(viewingDrug.category || 'General', currentLang)}
+                  </span>
+                </div>
 
-            <div className='space-y-3'>
-              <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
-                <span className='text-sm text-gray-500'>{t.details?.sellingPrice}</span>
-                <span className='text-sm font-bold text-gray-900 dark:text-gray-100'>
-                  {formatCurrency(viewingDrug.publicPrice)}
-                </span>
-              </div>
-              <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
-                <span className='text-sm text-gray-500'>{t.details?.costPrice}</span>
-                <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                  {formatCurrency(viewingDrug.costPrice || 0)}
-                </span>
-              </div>
-              <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
-                <span className='text-sm text-gray-500'>{t.details?.unitsPerPack}</span>
-                <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                  {viewingDrug.unitsPerPack || 1}
-                </span>
-              </div>
-              <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
-                <span className='text-sm text-gray-500'>{t.details?.barcode}</span>
-                <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                  {viewingDrug.barcode || 'N/A'}
-                </span>
-              </div>
-              <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
-                <span className='text-sm text-gray-500'>{t.details?.internalCode}</span>
-                <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                  {viewingDrug.internalCode || 'N/A'}
-                </span>
-              </div>
-            </div>
+                <div className='space-y-3'>
+                  <div className='flex justify-between py-3 border-b border-gray-100 dark:border-gray-800 items-center'>
+                    <div className='flex items-center gap-2 text-gray-500'>
+                      <span className='material-symbols-rounded text-lg'>inventory_2</span>
+                      <span className='text-sm'>{t.details?.unitsPerPack || 'Units per Pack'}</span>
+                    </div>
+                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full'>
+                      {viewingDrug.unitsPerPack || 1}
+                    </span>
+                  </div>
+                  <div className='flex justify-between py-3 border-b border-gray-100 dark:border-gray-800 items-center'>
+                    <div className='flex items-center gap-2 text-gray-500'>
+                      <span className='material-symbols-rounded text-lg'>barcode</span>
+                      <span className='text-sm'>{t.details?.barcode || 'Barcode'}</span>
+                    </div>
+                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                      {viewingDrug.barcode || 'N/A'}
+                    </span>
+                  </div>
+                  <div className='flex justify-between py-3 border-b border-gray-100 dark:border-gray-800 items-center'>
+                    <div className='flex items-center gap-2 text-gray-500'>
+                      <span className='material-symbols-rounded text-lg'>tag</span>
+                      <span className='text-sm'>{t.details?.internalCode || 'Internal Code'}</span>
+                    </div>
+                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                      {viewingDrug.internalCode || 'N/A'}
+                    </span>
+                  </div>
+                </div>
 
-            <div>
-              <label className='text-[10px] font-bold text-gray-400 uppercase mb-1 block'>
-                {t.details?.description}
-              </label>
-              <p className='text-sm text-gray-600 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl'>
-                {viewingDrug.description || t.details?.noDescription}
-              </p>
-            </div>
-          </div>
+                <div>
+                  <label className='text-[10px] font-bold text-gray-400 uppercase mb-2 flex items-center gap-1'>
+                    <span className='material-symbols-rounded text-[14px]'>description</span>
+                    {t.details?.description || 'Description'}
+                  </label>
+                  <p className='text-sm text-gray-600 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700'>
+                    {viewingDrug.description || t.details?.noDescription || 'No description available.'}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className='space-y-6 animate-fade-in'>
+                <div className='overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900/50'>
+                  <table className='w-full text-center text-sm'>
+                    <thead className='border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50'>
+                      <tr>
+                        <th className='px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-xs'>
+                          {t.modal?.expiry || (currentLang === 'ar' ? 'تاريخ الانتهاء' : 'Expiry Date')}
+                        </th>
+                        <th className='px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-xs'>
+                          {t.details?.stockLevel || (currentLang === 'ar' ? 'الكمية' : 'Total Qty')}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className='divide-y divide-gray-100 dark:divide-gray-800/50'>
+                      {Object.entries(
+                        viewingDrugBatches.reduce((acc: Record<string, number>, batch) => {
+                          const date = batch.expiryDate;
+                          acc[date] = (acc[date] || 0) + batch.stock;
+                          return acc;
+                        }, {})
+                      )
+                        .sort(
+                          ([dateA], [dateB]) =>
+                            parseExpiryEndOfMonth(dateA).getTime() - parseExpiryEndOfMonth(dateB).getTime()
+                        )
+                        .map(([expiryDate, rawStock], idx) => {
+                          const totalStock = rawStock as number;
+                          const stockParts = formatStockParts(totalStock, viewingDrug.unitsPerPack, {
+                            packs: t.details?.packs || 'Packs',
+                            outOfStock: t.outOfStock || 'Out of Stock',
+                          });
+                          
+                          return (
+                            <tr
+                              key={idx}
+                              className='hover:bg-gray-50/50 dark:hover:bg-gray-800/10 transition-colors'
+                            >
+                              <td className='px-4 py-3'>
+                                <span className={`font-medium tabular-nums ${getExpiryColorClass(expiryDate)}`}>
+                                  {formatExpiryDate(expiryDate)}
+                                </span>
+                              </td>
+                              <td className='px-4 py-3'>
+                                <span
+                                  className={`font-bold tabular-nums ${totalStock < (viewingDrug.unitsPerPack || 1) ? 'text-red-500' : 'text-primary-600 dark:text-primary-400'}`}
+                                >
+                                  {stockParts.value} {stockParts.label && <span className='text-xs font-normal opacity-80'>{stockParts.label}</span>}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
 
-          <div className='p-4 flex gap-3'>
-            <button
-              onClick={() => handlePrintBarcode(viewingDrug)}
-              className={`flex-1 py-2.5 rounded-full font-medium text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 type-interactive`}
-            >
-              <span className='material-symbols-rounded'>qr_code_2</span>
-              {t.actionsMenu.printBarcode}
-            </button>
-            {permissionsService.can('inventory.update') && (
-              <button
-                onClick={() => {
-                  setViewingDrug(null);
-                  handleOpenEdit(viewingDrug);
-                }}
-                className='flex-1 py-2.5 rounded-full font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors type-interactive'
-              >
-                {t.actionsMenu.edit}
-              </button>
+                <div className='bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700 p-4 space-y-4'>
+                  <div className='flex justify-between items-center'>
+                    <div className='flex items-center gap-2 text-gray-500'>
+                      <span className='material-symbols-rounded text-lg'>sell</span>
+                      <span className='text-sm font-medium'>{t.details?.sellingPrice || 'Selling Price'}</span>
+                    </div>
+                    <span className='text-xl font-bold text-green-600 dark:text-green-400'>
+                      {formatCurrency(viewingDrug.publicPrice)}
+                    </span>
+                  </div>
+                  <div className='h-px bg-gray-200 dark:bg-gray-700 w-full'></div>
+                  <div className='flex justify-between items-center'>
+                    <div className='flex items-center gap-2 text-gray-500'>
+                      <span className='material-symbols-rounded text-lg'>shopping_cart</span>
+                      <span className='text-sm font-medium'>{t.details?.costPrice || 'Cost Price'}</span>
+                    </div>
+                    <span className='text-lg font-bold text-gray-700 dark:text-gray-300'>
+                      {formatCurrency(viewingDrug.costPrice || 0)}
+                    </span>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </Modal>

@@ -262,7 +262,6 @@ export const storage = {
         const event = new StorageEvent('storage', {
           key: scopedKey,
           newValue: stringValue,
-          storageArea: localStorage,
         });
         Object.defineProperty(event, 'isSimulated', {
           value: true,
@@ -320,7 +319,6 @@ export const storage = {
       const event = new StorageEvent('storage', {
         key: scopedKey,
         newValue: null,
-        storageArea: localStorage,
       });
       Object.defineProperty(event, 'isSimulated', {
         value: true,

@@ -48,6 +48,7 @@ export interface Employee {
   nationalIdCardBack?: string; // Base64 encoded National ID Card Back Side
   mainSyndicateCard?: string; // Base64 encoded Main Syndicate Card (كارنيه النقابة الرئيسية)
   subSyndicateCard?: string; // Base64 encoded Sub Syndicate Card (كارنيه النقابة الفرعية)
+  coverStyle?: string; // Banner style id
   designSettings?: {
     avatar?: {
       decorationId?: string;

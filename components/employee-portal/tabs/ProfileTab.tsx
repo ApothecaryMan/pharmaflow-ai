@@ -1107,14 +1107,16 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                           )}
                         </span>
                         <div className='flex items-center gap-3'>
-                          <div
-                            className={`px-2 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 ${getStatusStyle(ws.status).container}`}
-                          >
-                            <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
-                              {getStatusStyle(ws.status).icon}
-                            </span>
-                            {(t.employeeList.statusOptions as any)[ws.status] || ws.status}
-                          </div>
+                          {ws.status?.toLowerCase() !== 'active' && (
+                            <div
+                              className={`px-2 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 ${getStatusStyle(ws.status).container}`}
+                            >
+                              <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
+                                {getStatusStyle(ws.status).icon}
+                              </span>
+                              {(t.employeeList.statusOptions as any)[ws.status] || ws.status}
+                            </div>
+                          )}
                           <div className='w-8 h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 text-(--text-tertiary) group-hover:bg-black/10 dark:group-hover:bg-white/10 group-hover:text-(--text-primary) transition-all'>
                             {collapsedWorkspaces.has(ws.id) ? (
                               <ChevronDown className='w-5 h-5' />

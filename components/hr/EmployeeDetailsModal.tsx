@@ -95,27 +95,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
     );
   };
 
-  // Map department to a dynamic CSS banner style
-  const getBannerStyleByDepartment = (dept: string) => {
-    switch (dept) {
-      case 'pharmacy':
-        return 'pharma';
-      case 'it':
-        return 'cyberhex';
-      case 'hr':
-        return 'abstract';
-      case 'sales':
-        return 'synthwave';
-      case 'logistics':
-        return 'chaos';
-      case 'marketing':
-        return 'floral';
-      default:
-        return 'pattern';
-    }
-  };
-
-  const bannerStyle = getBannerStyleByDepartment(employee.department);
+  const bannerStyle = employee.coverStyle || 'pattern';
   const activeBanner = BANNER_STYLES.find((b) => b.id === bannerStyle);
   const bannerAccent = activeBanner?.accentColor || 'var(--primary-500)';
 

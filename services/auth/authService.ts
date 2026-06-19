@@ -474,7 +474,6 @@ export const authService = {
         new StorageEvent('storage', {
           key: storage.getScopedKey('pharma_currentEmployeeId'),
           newValue: null,
-          storageArea: localStorage,
         })
       );
     }
