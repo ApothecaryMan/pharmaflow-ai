@@ -15,6 +15,7 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { LocationSelector } from '../common/LocationSelector';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
+import { SecureGate } from '../common/SecureGate';
 import { PageHeader } from '../common/PageHeader';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartInput, SmartPhoneInput } from '../common/SmartInputs';
@@ -833,129 +834,131 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
   ];
 
   return (
-    <div className='flex flex-col h-full overflow-hidden'>
-      <PageHeader
-        centerContent={
-          availableTabs.length > 1 ? (
-            <SegmentedControl
-              options={availableTabs}
-              value='branch-management'
-              onChange={(val) => onViewChange?.(val as any)}
-              size='md'
-              iconSize='--icon-lg'
-              shape='pill'
-              className='w-full sm:w-[480px]'
-              useGraphicFont={true}
-            />
-          ) : null
-        }
-        rightContent={
-          <button
-            onClick={() => handleOpenModal()}
-            className='flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider transition-none bg-zinc-900 text-zinc-50 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-200 cursor-pointer shadow-sm'
-          >
-            <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
-              add
-            </span>
-            {t.settings.addBranch}
-          </button>
-        }
-        dir={language === 'AR' ? 'rtl' : 'ltr'}
-        mb='mb-0'
-      />
-
-      <div className='flex-1 overflow-y-auto p-6 custom-scrollbar'>
-        <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4'>
-          {isLoading ? (
-            <>
-              {[1, 2, 3, 4, 5].map((i) => (
-                <BranchCard
-                  key={i}
-                  employees={[]}
-                  language={language}
-                  onEdit={() => {}}
-                  onDelete={() => {}}
-                  isSubmitting={false}
-                  isLoading={true}
-                />
-              ))}
-            </>
-          ) : branches.length === 0 ? (
-            <div className='col-span-full py-20 flex flex-col items-center justify-center text-center opacity-40'>
-              <span className='material-symbols-rounded text-zinc-400' style={{ fontSize: '64px' }}>
-                domain_disabled
-              </span>
-              <h3 className='text-lg font-bold mt-4'>{t.settings.noBranchesYet}</h3>
-              <p className='text-sm mt-1'>{t.settings.startAddingFirst}</p>
-            </div>
-          ) : (
-            branches.map((branch) => (
-              <BranchCard
-                key={branch.id}
-                branch={branch}
-                employees={employees.filter((e) => e.branchId === branch.id)}
-                language={language}
-                onEdit={handleOpenModal}
-                onDelete={handleDelete}
-                isSubmitting={isSubmitting}
+    <SecureGate language={language} storageKey='branch_settings_unlocked'>
+      <div className='flex flex-col h-full overflow-hidden'>
+        <PageHeader
+          centerContent={
+            availableTabs.length > 1 ? (
+              <SegmentedControl
+                options={availableTabs}
+                value='branch-management'
+                onChange={(val) => onViewChange?.(val as any)}
+                size='md'
+                iconSize='--icon-lg'
+                shape='pill'
+                className='w-full sm:w-[480px]'
+                useGraphicFont={true}
               />
-            ))
-          )}
-        </div>
-      </div>
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingBranch?.id ? t.settings.branchManagement : t.settings.addBranch}
-        className='max-w-xl'
-        hideCloseButton={true}
-        tabs={modalTabs}
-        activeTab={modalView}
-        onTabChange={(val) => setModalView(val as 'general' | 'employees' | 'attendance')}
-      >
-        <div className='space-y-6 min-h-[400px] py-2'>
-          {modalView === 'general'
-            ? renderGeneralView()
-            : modalView === 'employees'
-              ? renderEmployeesView()
-              : renderAttendanceView()}
-
-          {error && (
-            <div className='p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-2 mt-4 animate-shake'>
+            ) : null
+          }
+          rightContent={
+            <button
+              onClick={() => handleOpenModal()}
+              className='flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider transition-none bg-zinc-900 text-zinc-50 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-200 cursor-pointer shadow-sm'
+            >
               <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
-                error
+                add
               </span>
-              {error}
-            </div>
-          )}
+              {t.settings.addBranch}
+            </button>
+          }
+          dir={language === 'AR' ? 'rtl' : 'ltr'}
+          mb='mb-0'
+        />
 
-          {modalView !== 'attendance' && (
-            <div className='flex gap-3 pt-6 border-t border-zinc-100 dark:border-zinc-800/50 mt-6'>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className='flex-1 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-none'
-              >
-                {language === 'AR' ? 'إلغاء' : 'Cancel'}
-              </button>
-              <button
-                disabled={isSubmitting}
-                onClick={handleSave}
-                className='flex-1 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest text-white shadow-sm disabled:opacity-50 flex items-center justify-center transition-none'
-                style={{ backgroundColor: color }}
-              >
-                {isSubmitting ? (
-                  <span className='text-[10px] font-bold'>
-                    {language === 'AR' ? 'جاري الحفظ...' : 'SAVING...'}
-                  </span>
-                ) : (
-                  t.settings.saveBranch
-                )}
-              </button>
-            </div>
-          )}
+        <div className='flex-1 overflow-y-auto p-6 custom-scrollbar'>
+          <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4'>
+            {isLoading ? (
+              <>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <BranchCard
+                    key={i}
+                    employees={[]}
+                    language={language}
+                    onEdit={() => {}}
+                    onDelete={() => {}}
+                    isSubmitting={false}
+                    isLoading={true}
+                  />
+                ))}
+              </>
+            ) : branches.length === 0 ? (
+              <div className='col-span-full py-20 flex flex-col items-center justify-center text-center opacity-40'>
+                <span className='material-symbols-rounded text-zinc-400' style={{ fontSize: '64px' }}>
+                  domain_disabled
+                </span>
+                <h3 className='text-lg font-bold mt-4'>{t.settings.noBranchesYet}</h3>
+                <p className='text-sm mt-1'>{t.settings.startAddingFirst}</p>
+              </div>
+            ) : (
+              branches.map((branch) => (
+                <BranchCard
+                  key={branch.id}
+                  branch={branch}
+                  employees={employees.filter((e) => e.branchId === branch.id)}
+                  language={language}
+                  onEdit={handleOpenModal}
+                  onDelete={handleDelete}
+                  isSubmitting={isSubmitting}
+                />
+              ))
+            )}
+          </div>
         </div>
-      </Modal>
-    </div>
+
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title={editingBranch?.id ? t.settings.branchManagement : t.settings.addBranch}
+          className='max-w-xl'
+          hideCloseButton={true}
+          tabs={modalTabs}
+          activeTab={modalView}
+          onTabChange={(val) => setModalView(val as 'general' | 'employees' | 'attendance')}
+        >
+          <div className='space-y-6 min-h-[400px] py-2'>
+            {modalView === 'general'
+              ? renderGeneralView()
+              : modalView === 'employees'
+                ? renderEmployeesView()
+                : renderAttendanceView()}
+
+            {error && (
+              <div className='p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-2 mt-4 animate-shake'>
+                <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
+                  error
+                </span>
+                {error}
+              </div>
+            )}
+
+            {modalView !== 'attendance' && (
+              <div className='flex gap-3 pt-6 border-t border-zinc-100 dark:border-zinc-800/50 mt-6'>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className='flex-1 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-none'
+                >
+                  {language === 'AR' ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  disabled={isSubmitting}
+                  onClick={handleSave}
+                  className='flex-1 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest text-white shadow-sm disabled:opacity-50 flex items-center justify-center transition-none'
+                  style={{ backgroundColor: color }}
+                >
+                  {isSubmitting ? (
+                    <span className='text-[10px] font-bold'>
+                      {language === 'AR' ? 'جاري الحفظ...' : 'SAVING...'}
+                    </span>
+                  ) : (
+                    t.settings.saveBranch
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        </Modal>
+      </div>
+    </SecureGate>
   );
 };

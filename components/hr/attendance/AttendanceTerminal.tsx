@@ -215,13 +215,7 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
           }
         } catch (bioErr) {
           // Biometric failed or cancelled
-          // If employee has PIN → show PIN input instead
-          if (selectedEmployee.attendancePin && !pinOverride) {
-            setShowPinInput(true);
-            setIsClocking(false);
-            return;
-          }
-          console.warn('[AttendanceTerminal] Biometric verification skipped:', bioErr);
+          console.warn('[AttendanceTerminal] Biometric verification failed:', bioErr);
         }
       } else if (selectedEmployee.attendancePin && !pinOverride) {
         // Path B: No biometric, but has PIN → show PIN input
@@ -232,6 +226,10 @@ export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language
 
       // Step 1b: PIN verification (if coming from PIN input)
       if (pinOverride && selectedEmployee.attendancePin) {
+        if (selectedEmployee.biometricCredentialId) {
+          setIsClocking(false);
+          return;
+        }
         const pinValid = await attendanceService.verifyEmployeePin(
           pinOverride,
           selectedEmployee.attendancePin

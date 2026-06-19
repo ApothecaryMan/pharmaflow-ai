@@ -85,7 +85,6 @@ const GlobalContextMenuWrapper: React.FC<{
 };
 
 import { isTauri } from '../../utils/platform';
-import { TitleBar } from './TitleBar';
 
 export const MainLayout: React.FC<MainLayoutProps> = ({
   children,
@@ -151,27 +150,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               backgroundColor: 'var(--bg-primary)',
               color: 'var(--text-primary)',
               ...(isStandalone ? { '--navbar-height': '0px', '--statusbar-height': '0px' } : {}),
-              ...(isTauri() && !isStandalone ? { '--navbar-height': '44px' } : {}),
             } as React.CSSProperties
           }
           dir={language === 'AR' ? 'rtl' : 'ltr'}
         >
-          {/* TitleBar (Only in Tauri) */}
-          {isTauri() && !isStandalone && (
-            <TitleBar
-              onLogout={onLogout}
-              onOpenInWindow={onOpenInWindow}
-              onModuleChange={handleModuleChange}
-              onNavigate={handleNavigate}
-              onToggleFullscreen={toggleFullscreen}
-              view={view}
-              activeModule={activeModule}
-              dashboardSubView={dashboardSubView}
-            />
-          )}
-
-          {/* Navbar (Only in Web) */}
-          {!isStandalone && !isTauri() && (
+          {/* Navbar (Rendered for both Web and Tauri with native decorations) */}
+          {!isStandalone && (
             <Navbar
               menuItems={filteredMenuItems}
               activeModule={activeModule}

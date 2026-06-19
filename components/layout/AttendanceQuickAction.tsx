@@ -152,6 +152,13 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
     e?.preventDefault();
     if (pin.length !== 4 || !selectedEmployee || !activeBranchId) return;
 
+    if (selectedEmployee.biometricCredentialId) {
+      setStep('error');
+      setErrorMessage(t.attendance.fingerprintOnly);
+      setTimeout(reset, 3000);
+      return;
+    }
+
     setIsLoading(true);
     const token = sessionStorage.getItem(SESSION_TOKEN_KEY);
 
@@ -232,7 +239,7 @@ export const AttendanceQuickAction: React.FC<AttendanceQuickActionProps> = ({ la
         </button>
       )}
 
-      {step === 'pin' && (
+      {step === 'pin' && !selectedEmployee?.biometricCredentialId && (
         <form
           ref={(el) => {
             if (el) (el as any)._formRef = el;

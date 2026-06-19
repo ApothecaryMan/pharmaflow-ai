@@ -723,8 +723,6 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'pharmacy-configuration',
     requiredProps: ['language', 'color', 'onViewChange'],
     permission: PERMISSIONS_MAPPING['branch-management'],
-    isProtected: true,
-    storageKey: 'branch_settings_unlocked',
   },
   'medicine-search': {
     id: 'medicine-search',

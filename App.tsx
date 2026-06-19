@@ -27,7 +27,6 @@ const AuthenticatedContent = lazy(() =>
 
 import { SecureGate } from './components/common/SecureGate';
 import { NotificationOverlay } from './components/features/alerts/NotificationOverlay';
-import { TitleBar } from './components/layout/TitleBar';
 import { PAGE_REGISTRY } from './config/pageRegistry';
 import { UserRole } from './config/permissions';
 import { ROUTES } from './config/routes';
@@ -331,7 +330,6 @@ const App: React.FC = () => {
 
   return (
     <div className='h-screen flex flex-col overflow-hidden bg-[var(--bg-page-surface)]'>
-      {!authState.isAuthenticated && <TitleBar />}
       <div className='flex-1 overflow-hidden relative'>
         <NotificationOverlay />
         {authState.isAuthenticated ? (
