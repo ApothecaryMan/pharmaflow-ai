@@ -13,8 +13,7 @@ import { permissionsService } from '../../../../services/auth/permissionsService
 import { batchService } from '../../../../services/inventory/batchService';
 import type { CartItem, Drug, GroupedDrug } from '../../../../types';
 import { money } from '../../../../utils/money';
-import { isStockConstraintMet } from '../../../../utils/stockOperations';
-import { resolvePrice } from '../../../../utils/stockUtils';
+import { convertToPacks, resolvePrice, resolveUnits, isStockConstraintMet } from '../../../../utils/stockUtils';
 
 interface UsePOSCartProps {
   activeTab: any;

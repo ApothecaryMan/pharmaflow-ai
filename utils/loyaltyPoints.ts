@@ -1,5 +1,4 @@
 import type { CartItem } from '../types';
-import * as stockOps from './stockOperations';
 import { resolvePrice } from './stockUtils';
 
 /**

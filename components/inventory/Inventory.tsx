@@ -23,7 +23,6 @@ import {
 } from '../../utils/expiryUtils';
 import { formatStock, formatStockParts, validateStock } from '../../utils/inventory';
 import { money } from '../../utils/money';
-import * as stockOps from '../../utils/stockOperations';
 import { convertToPacks, resolveUnits } from '../../utils/stockUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { FilterDropdown, SegmentedControl } from '../common';

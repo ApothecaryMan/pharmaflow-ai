@@ -4,11 +4,9 @@
  */
 
 import type { PurchaseReturn, Return } from '../../types';
+import { supabase } from '../../lib/supabase';
 import { idGenerator } from '../../utils/idGenerator';
 import { authService } from '../auth/authService';
-import { batchService } from '../inventory/batchService';
-import { inventoryService } from '../inventory/inventoryService';
-import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
 import { settingsService } from '../settings/settingsService';
 import { returnsRepository } from './repositories/returnsRepository';
 import type { ReturnService, ReturnsPageOptions } from './types';
@@ -101,24 +99,16 @@ export const returnService: ReturnService = {
       date: ret.date || new Date().toISOString(),
     } as PurchaseReturn;
 
-    // 1. Process Inventory Deductions (FEFO)
-    for (const item of newReturn.items) {
-      // allocateStock with commitChanges=true (default) updates the batches.
-      // The DB Trigger will automatically log movements and update drugs.stock.
-      const allocations = await batchService.allocateStock(
-        item.drugId,
-        item.quantityReturned,
-        effectiveBranchId,
-        true
-      );
+    const session = authService.getCurrentUserSync();
+    const { error } = await supabase.rpc('process_purchase_return', {
+      p_payload: {
+        ...newReturn,
+        processedBy: session?.employeeId,
+        processedByName: session?.username,
+      },
+    });
+    if (error) throw error;
 
-      if (!allocations) {
-        throw new Error(`Insufficient stock for drug: ${item.name}`);
-      }
-    }
-
-    // 2. Save Return Record
-    await returnsRepository.insertPurchaseReturn(newReturn);
     return newReturn;
   },
 

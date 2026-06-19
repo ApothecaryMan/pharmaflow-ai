@@ -5,7 +5,6 @@ import type { CartItem, Drug } from '../../types';
 import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { parsePriceRange, parseSearchTerm } from '../../utils/searchUtils';
-import * as stockOps from '../../utils/stockOperations';
 import { convertToPacks } from '../../utils/stockUtils';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { MaterialTabs } from '../common/MaterialTabs';

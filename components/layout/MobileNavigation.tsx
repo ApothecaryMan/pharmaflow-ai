@@ -10,7 +10,6 @@ import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { permissionsService } from '../../services/auth/permissionsService';
 import type { CartItem, Drug, Employee, ViewState } from '../../types';
 import { formatCurrencyParts } from '../../utils/currency';
-import * as stockOps from '../../utils/stockOperations';
 import { resolvePrice } from '../../utils/stockUtils';
 import { useContextMenu } from '../common/ContextMenu';
 import { usePosSounds } from '../common/hooks/usePosSounds';

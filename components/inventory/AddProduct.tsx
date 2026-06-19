@@ -12,7 +12,6 @@ import { validationService } from '../../services/validation/validationService';
 import type { Drug } from '../../types';
 import { validateStock } from '../../utils/inventory';
 import { pricing } from '../../utils/money';
-import * as stockOps from '../../utils/stockOperations';
 import { resolveUnits } from '../../utils/stockUtils';
 import { CARD_LG, INPUT_BASE } from '../../utils/themeStyles';
 import { FilterDropdown } from '../common/FilterDropdown';

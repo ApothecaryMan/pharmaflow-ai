@@ -1,3 +1,4 @@
+import type { CartItem } from '../types';
 import { money } from './money';
 
 /**
@@ -45,4 +46,31 @@ export const resolveDisplayStock = (
   if (mode === 'unit') return stock;
   const packs = stock / (unitsPerPack || 1);
   return parseFloat(packs.toFixed(2));
+};
+
+/**
+ * Validates if adding a specific quantity of a drug (in packs or units)
+ * would exceed the current total stock.
+ * Used in POS to prevent adding more than available.
+ */
+export const isStockConstraintMet = (
+  drugName: string,
+  dosageForm: string,
+  totalStockUnits: number,
+  unitsPerPack: number | undefined,
+  currentCart: CartItem[],
+  delta: number,
+  isUnit: boolean
+): boolean => {
+  // Calculate existing units in cart for this drug (all batches/modes)
+  const existingUnits = currentCart
+    .filter((item) => item.name === drugName && (item.dosageForm || '') === (dosageForm || ''))
+    .reduce((sum, item) => {
+      return sum + resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack || unitsPerPack);
+    }, 0);
+
+  // Calculate new units to be added
+  const newUnits = resolveUnits(delta, isUnit, unitsPerPack);
+
+  return existingUnits + newUnits <= totalStockUnits;
 };

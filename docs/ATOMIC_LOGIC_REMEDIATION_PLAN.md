@@ -75,6 +75,46 @@ Reason:
 
 The server must be the source of truth for receipt data. Client payloads can be stale, incomplete, or tampered with.
 
+## P0.5: Client-Side Dead Code Cleanup (Completed 2026-06-19)
+
+### Completed: Remove dead `stockOperations.ts` imports
+
+The following files had `import * as stockOps from '…/stockOperations'` but never called any function from it. All 7 dead imports removed:
+
+- `services/transactions/transactionService.ts` — checkout/cancellation/return/modification all use RPCs now.
+- `components/sales/pos/POS.tsx` — delegates to hooks; stockOps never called directly.
+- `components/sales/pos/DeliveryOrdersModal.tsx` — uses `resolveUnits`/`resolvePrice` from `stockUtils` directly.
+- `components/layout/MobileNavigation.tsx` — uses `resolvePrice` from `stockUtils` directly.
+- `components/mobile/MobileMedicineSearch.tsx` — uses `convertToPacks` from `stockUtils` directly.
+- `utils/loyaltyPoints.ts` — uses `resolvePrice` from `stockUtils` directly.
+- `utils/validation.ts` — uses `resolveUnits` from `stockUtils` directly.
+
+### Completed: Remove dead functions from `stockOperations.ts`
+
+Four functions that mutated batches from the client were confirmed dead (no production callers) and removed:
+
+| Function | Superseded By |
+|---|---|
+| `deductStock` | `process_checkout` RPC |
+| `returnStock` | `process_cancellation` / `process_return` RPCs |
+| `deductStockSimple` | `process_purchase_return` RPC |
+| `deductFromBatch` | `process_stock_adjustment` RPC |
+
+Imports trimmed: removed `StockBatch`, `assertStockSufficient`, `money`, `convertToPacks`, `resolveDisplayStock`, `resolvePrice` — no longer needed by remaining functions.
+
+### Completed: Migrate `handleRestock` and `handleUpdateDrug`
+
+- `addStock` and `adjustStock` functions were removed from `stockOperations.ts`.
+- `useInventoryHandlers.handleRestock` and `handleUpdateDrug` now call the `process_stock_adjustment` RPC directly via `inventoryService.processStockAdjustment`.
+- Client-side batch mutations for manual stock additions and edits are completely eliminated.
+
+### Completed: Full Elimination of `stockOperations.ts`
+
+- `logInitialStock` was merged directly into `useInventoryHandlers.ts` using the atomic `stockMovementService`.
+- `isStockConstraintMet` was moved to `stockUtils.ts`.
+- The file `utils/stockOperations.ts` has been deleted entirely.
+- Client-side batch mutations for POS and inventory are completely eliminated.
+
 ## P1: Atomic Inventory
 
 ### 3. Add a server-side stock adjustment RPC

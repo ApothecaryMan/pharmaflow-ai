@@ -24,7 +24,6 @@ import {
 import { formatStock } from '../../../utils/inventory';
 import { money } from '../../../utils/money';
 import { parseSearchTerm } from '../../../utils/searchUtils';
-import * as stockOps from '../../../utils/stockOperations';
 import { resolveDisplayStock } from '../../../utils/stockUtils';
 
 import { useContextMenu } from '../../common/ContextMenu';

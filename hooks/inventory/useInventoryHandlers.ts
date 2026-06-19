@@ -7,7 +7,8 @@ import { batchService } from '../../services/inventory/batchService';
 import { inventoryService } from '../../services/inventory/inventoryService';
 import { stockMovementService } from '../../services/inventory/stockMovement/stockMovementService';
 import type { Drug, Employee, StockBatch } from '../../types';
-import * as stockOps from '../../utils/stockOperations';
+import { getFullDisplayName } from '../../utils/drugDisplayName';
+import { resolveUnits } from '../../utils/stockUtils';
 
 export interface UseInventoryHandlersParams {
   inventory: Drug[];
@@ -46,10 +47,19 @@ export function useInventoryHandlers({
         setInventory((prev) => [...prev, result]);
 
         if (result.stock > 0) {
-          stockOps.logInitialStock(result, {
+          await stockMovementService.logMovement({
+            drugId: result.id,
+            drugName: getFullDisplayName(result),
             branchId: activeBranchId,
+            orgId: result.orgId,
+            type: 'initial',
+            quantity: result.stock,
+            previousStock: 0,
+            newStock: result.stock,
+            reason: 'Initial Inventory Setup',
             performedBy: currentEmployeeId,
             performedByName: employee?.name,
+            status: 'approved',
           });
         }
 
@@ -89,20 +99,18 @@ export function useInventoryHandlers({
         setInventory((prev) => prev.map((d) => (d.id === drug.id ? result : d)));
 
         if (oldDrug && oldDrug.stock !== result.stock) {
-          await stockOps.adjustStock(
-            oldDrug,
-            result.stock,
-            'Manual Edit',
-            {
-              branchId: activeBranchId,
-              performedBy: currentEmployeeId,
-              performedByName: employee?.name,
-            },
-            {
+          const diff = result.stock - oldDrug.stock;
+          await inventoryService.processStockAdjustment({
+            branchId: activeBranchId,
+            performerId: currentEmployeeId,
+            performerName: employee?.name,
+            adjustments: [{
+              drugId: drug.id,
+              quantity: diff,
+              reason: 'Manual Edit',
               notes: 'Pharmacist manual stock correction',
-              status: 'approved',
-            }
-          );
+            }],
+          });
           const updatedBatches = await batchService.getAllBatches(activeBranchId);
           setBatches(updatedBatches);
         }
@@ -199,29 +207,31 @@ export function useInventoryHandlers({
       if (!drug) return;
 
       try {
-        const mutation = await stockOps.addStock(
-          drug,
-          qty,
-          !!isUnit,
-          drug.expiryDate,
-          drug.costPrice,
-          'adjustment',
-          'Manual Restock / Adjustment',
-          {
-            branchId: activeBranchId,
-            performedBy: currentEmployeeId!,
-            performedByName: employee?.name,
-          },
-          'RESTOCK',
-          'MANUAL_RESTOCK'
-        );
-        if (mutation) {
+        // Convert to units if needed — the RPC works in base units
+        const unitsToAdd = resolveUnits(qty, !!isUnit, drug.unitsPerPack);
+
+        await inventoryService.processStockAdjustment({
+          branchId: activeBranchId,
+          performerId: currentEmployeeId!,
+          performerName: employee?.name,
+          adjustments: [{
+            drugId: drug.id,
+            quantity: unitsToAdd,
+            reason: 'Manual Restock / Adjustment',
+            notes: 'MANUAL_RESTOCK',
+            expiryDate: drug.expiryDate,
+          }],
+        });
+
+        // Refresh local state from server
+        const updatedDrug = await inventoryService.getById(id);
+        if (updatedDrug) {
           setInventory((prev) =>
-            prev.map((d) => (d.id === id ? { ...d, stock: mutation.newStock } : d))
+            prev.map((d) => (d.id === id ? updatedDrug : d))
           );
-          const updatedBatches = await batchService.getAllBatches(activeBranchId);
-          setBatches(updatedBatches);
         }
+        const updatedBatches = await batchService.getAllBatches(activeBranchId);
+        setBatches(updatedBatches);
 
         auditService.log('inventory.update', {
           userId: currentEmployeeId,

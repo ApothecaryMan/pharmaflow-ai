@@ -16,7 +16,6 @@ import type {
 } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { money } from '../../utils/money';
-import * as stockOps from '../../utils/stockOperations';
 import { resolveUnits } from '../../utils/stockUtils';
 import { auditService } from '../audit/auditService';
 import { cashService } from '../cash/cashService';

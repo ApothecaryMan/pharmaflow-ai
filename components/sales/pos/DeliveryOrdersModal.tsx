@@ -18,7 +18,6 @@ import {
 import { formatCurrency, money, pricing } from '../../../utils/currency';
 import { getDisplayName } from '../../../utils/drugDisplayName';
 import { idGenerator } from '../../../utils/idGenerator';
-import * as stockOps from '../../../utils/stockOperations';
 import { resolvePrice, resolveUnits } from '../../../utils/stockUtils';
 import { useContextMenu } from '../../common/ContextMenu';
 import { FilterDropdown } from '../../common/FilterDropdown';
