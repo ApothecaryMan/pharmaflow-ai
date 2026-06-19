@@ -26,7 +26,7 @@ vi.mock('../../context', () => ({
   }),
 }));
 
-vi.mock('../useShift', () => ({
+vi.mock('../sales/useShift', () => ({
   useShift: vi.fn().mockReturnValue({
     addTransaction: vi.fn(),
     currentShift: { id: 'test-shift', status: 'open' },

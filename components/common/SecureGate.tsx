@@ -2,15 +2,11 @@ import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { Modal } from './Modal';
+import { useData } from '../../context/DataContext';
+import { permissionsService } from '../../services/auth/permissionsService';
 
 // --- CONFIGURATION CONSTANTS ---
 const INACTIVITY_TIMEOUT = 12 * 60 * 1000; // 12 Minutes
-const MAX_ATTEMPTS = 5;
-const LOCKOUT_DURATION = 30 * 1000; // 30 Seconds
-
-// Storage Keys
-const ATTEMPTS_KEY = 'secure_gate_attempts';
-const LOCKOUT_KEY = 'secure_gate_lockout_until';
 
 interface SecureGateProps {
   children?: React.ReactNode;
@@ -33,41 +29,20 @@ export const SecureGate: React.FC<SecureGateProps> = ({
   standalone = false,
 }) => {
   const t = TRANSLATIONS[language];
+  const { currentEmployee } = useData();
+
   const [isUnlocked, setIsUnlocked] = useState(() => sessionStorage.getItem(storageKey) === 'true');
   const [internalIsOpen, setInternalIsOpen] = useState(true);
-  const [passwordInput, setPasswordInput] = useState('');
-  const [passwordError, setPasswordError] = useState(false);
 
-  // Security State with Persistence Initialization
-  const [attempts, setAttempts] = useState(() => {
-    const saved = sessionStorage.getItem(ATTEMPTS_KEY);
-    return saved ? parseInt(saved, 10) : 0;
-  });
-
-  const [lockoutUntil, setLockoutUntil] = useState<number | null>(() => {
-    const saved = sessionStorage.getItem(LOCKOUT_KEY);
-    return saved ? parseInt(saved, 10) : null;
-  });
-
-  const [timeLeft, setTimeLeft] = useState(() => {
-    const saved = sessionStorage.getItem(LOCKOUT_KEY);
-    if (!saved) return 0;
-    const remaining = Math.ceil((parseInt(saved, 10) - Date.now()) / 1000);
-    return remaining > 0 ? remaining : 0;
-  });
-
-  // Persist Security State
-  useEffect(() => {
-    sessionStorage.setItem(ATTEMPTS_KEY, attempts.toString());
-  }, [attempts]);
-
-  useEffect(() => {
-    if (lockoutUntil) {
-      sessionStorage.setItem(LOCKOUT_KEY, lockoutUntil.toString());
-    } else {
-      sessionStorage.removeItem(LOCKOUT_KEY);
-    }
-  }, [lockoutUntil]);
+  // Determine authorization based on role
+  const userRole = currentEmployee?.role;
+  const isAuthorized =
+    userRole === 'admin' ||
+    userRole === 'pharmacist_owner' ||
+    userRole === 'pharmacist_manager' ||
+    userRole === 'manager' ||
+    permissionsService.isOrgAdmin() ||
+    permissionsService.isManager();
 
   // Decide which state to use
   const actualIsModalOpen = standalone ? !!externalIsOpen : internalIsOpen;
@@ -85,31 +60,9 @@ export const SecureGate: React.FC<SecureGateProps> = ({
         setIsUnlocked(false);
         if (!standalone) setInternalIsOpen(true);
         sessionStorage.removeItem(storageKey);
-        setPasswordInput('');
       }, INACTIVITY_TIMEOUT);
     }
   }, [isUnlocked, storageKey, standalone]);
-
-  // Handle lockout timer
-  useEffect(() => {
-    if (!lockoutUntil) return;
-
-    const timer = setInterval(() => {
-      const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
-      if (remaining <= 0) {
-        setLockoutUntil(null);
-        setAttempts(0);
-        setTimeLeft(0);
-        sessionStorage.removeItem(ATTEMPTS_KEY);
-        sessionStorage.removeItem(LOCKOUT_KEY);
-        clearInterval(timer);
-      } else {
-        setTimeLeft(remaining);
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [lockoutUntil]);
 
   useEffect(() => {
     if (isUnlocked) {
@@ -131,31 +84,12 @@ export const SecureGate: React.FC<SecureGateProps> = ({
 
   const handleUnlockInternal = (e?: React.FormEvent) => {
     e?.preventDefault();
+    if (!isAuthorized) return;
 
-    // Check lockout
-    if (lockoutUntil && Date.now() < lockoutUntil) return;
-
-    const correctPass = import.meta.env.VITE_BRANCH_SETTINGS_PASS;
-    if (passwordInput === correctPass) {
-      setIsUnlocked(true);
-      sessionStorage.setItem(storageKey, 'true');
-      sessionStorage.removeItem(ATTEMPTS_KEY);
-      sessionStorage.removeItem(LOCKOUT_KEY);
-      setPasswordError(false);
-      setAttempts(0);
-      resetInactivityTimer();
-      if (onUnlock) onUnlock();
-    } else {
-      const newAttempts = attempts + 1;
-      setAttempts(newAttempts);
-      setPasswordError(true);
-
-      if (newAttempts >= MAX_ATTEMPTS) {
-        const expiry = Date.now() + LOCKOUT_DURATION;
-        setLockoutUntil(expiry);
-        setTimeLeft(LOCKOUT_DURATION / 1000);
-      }
-    }
+    setIsUnlocked(true);
+    sessionStorage.setItem(storageKey, 'true');
+    resetInactivityTimer();
+    if (onUnlock) onUnlock();
   };
 
   const handleCloseInternal = () => {
@@ -166,64 +100,51 @@ export const SecureGate: React.FC<SecureGateProps> = ({
     }
   };
 
-  const isLockedOut = (lockoutUntil && timeLeft > 0) || timeLeft > 0;
-
   const renderForm = () => (
     <form onSubmit={handleUnlockInternal} className='w-full space-y-4'>
-      <div className='relative group'>
-        <input
-          type='password'
-          value={passwordInput}
-          disabled={isLockedOut}
-          onChange={(e) => {
-            setPasswordInput(e.target.value);
-            setPasswordError(false);
-          }}
-          placeholder={language === 'AR' ? '••••••••' : 'Password'}
-          autoFocus
-          className={`w-full px-5 py-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900/70 border-2 transition-all outline-none text-center font-mono tracking-widest ${
-            isLockedOut
-              ? 'opacity-50 cursor-not-allowed border-zinc-200 dark:border-zinc-800'
-              : passwordError
-                ? 'border-red-500 ring-red-500/20 bg-red-50/10'
-                : 'border-zinc-100 dark:border-zinc-800 focus:border-zinc-300 dark:focus:border-zinc-600 focus:bg-white dark:focus:bg-zinc-800'
-          }`}
-        />
-
-        {isLockedOut ? (
-          <div className='mt-3 flex items-center justify-center gap-1.5 text-amber-600 dark:text-amber-500 text-[10px] font-bold uppercase tracking-wider animate-pulse'>
-            <span className='material-symbols-rounded text-sm'>timer</span>
-            {language === 'AR'
-              ? `تم القفل.. حاول بعد ${timeLeft} ثانية`
-              : `Locked out.. retry in ${timeLeft}s`}
+      <div className='relative p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-900/70 border-2 border-zinc-100 dark:border-zinc-800 text-center transition-all'>
+        {isAuthorized ? (
+          <div className='flex flex-col items-center gap-2'>
+            <span className='material-symbols-rounded text-green-500 text-3xl'>check_circle</span>
+            <span className='text-zinc-900 dark:text-zinc-100 font-black text-sm tracking-wide'>
+              {t.secureGate.authorizedTitle}
+            </span>
+            <span className='text-zinc-500 dark:text-zinc-400 text-xs mt-1 font-medium'>
+              {currentEmployee ? `${currentEmployee.name} (${t.employeeList?.roles[userRole as keyof typeof t.employeeList.roles] || userRole})` : ''}
+            </span>
           </div>
         ) : (
-          passwordError && (
-            <div className='mt-3 flex items-center justify-center gap-1.5 text-red-500 text-[10px] font-bold uppercase tracking-wider'>
-              <span className='material-symbols-rounded text-sm'>error</span>
-              {language === 'AR' ? 'كلمة المرور غير صحيحة' : 'Incorrect password'}
-              <span className='ml-1 opacity-60'>
-                ({attempts}/{MAX_ATTEMPTS})
-              </span>
-            </div>
-          )
+          <div className='flex flex-col items-center gap-2'>
+            <span className='material-symbols-rounded text-red-500 text-3xl'>cancel</span>
+            <span className='text-zinc-900 dark:text-zinc-100 font-black text-sm tracking-wide'>
+              {t.secureGate.unauthorizedTitle}
+            </span>
+            <span className='text-zinc-500 dark:text-zinc-400 text-xs px-2 mt-1 leading-relaxed font-medium'>
+              {t.secureGate.unauthorizedDesc}
+            </span>
+          </div>
         )}
       </div>
 
-      <button
-        type='submit'
-        disabled={isLockedOut || !passwordInput}
-        className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-2 group shadow-lg ${
-          isLockedOut || !passwordInput
-            ? 'bg-zinc-200 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed shadow-none'
-            : 'bg-zinc-900 text-zinc-50 hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-300 cursor-pointer shadow-zinc-900/20 dark:shadow-zinc-100/10'
-        }`}
-      >
-        {language === 'AR' ? 'دخول المنطقة' : 'Unlock Area'}
-        <span className='material-symbols-rounded text-base group-hover:translate-x-1 transition-transform rtl:group-hover:-translate-x-1 opacity-60'>
-          arrow_forward
-        </span>
-      </button>
+      {isAuthorized ? (
+        <button
+          type='submit'
+          className='w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-2 group shadow-lg bg-zinc-900 text-zinc-50 hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-300 cursor-pointer shadow-zinc-900/20 dark:shadow-zinc-100/10'
+        >
+          {t.secureGate.confirmUnlock}
+          <span className='material-symbols-rounded text-base group-hover:translate-x-1 transition-transform rtl:group-hover:-translate-x-1 opacity-60'>
+            arrow_forward
+          </span>
+        </button>
+      ) : (
+        <button
+          type='button'
+          onClick={handleCloseInternal}
+          className='w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-2 group bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 cursor-pointer'
+        >
+          {t.common.close}
+        </button>
+      )}
     </form>
   );
 
@@ -233,24 +154,24 @@ export const SecureGate: React.FC<SecureGateProps> = ({
       <Modal
         isOpen={actualIsModalOpen}
         onClose={handleCloseInternal}
-        title={language === 'AR' ? 'تحقق من الهوية' : 'Identity Verification'}
+        title={t.secureGate.identityVerification}
         className='max-w-sm'
       >
         <div className='flex flex-col items-center text-center p-4'>
           <div
             className={`mb-6 w-16 h-16 rounded-2xl border flex items-center justify-center transition-colors ${
-              isLockedOut
-                ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800/30'
-                : 'bg-zinc-50 dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
+              isAuthorized
+                ? 'bg-zinc-50 dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
+                : 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30'
             }`}
           >
             <span
               className={`material-symbols-rounded transition-colors ${
-                isLockedOut ? 'text-amber-500' : 'text-zinc-400 dark:text-zinc-500'
+                isAuthorized ? 'text-zinc-400 dark:text-zinc-500' : 'text-red-500'
               }`}
               style={{ fontSize: '32px' }}
             >
-              {isLockedOut ? 'timer' : 'security'}
+              {isAuthorized ? 'security' : 'gpp_bad'}
             </span>
           </div>
 
@@ -258,22 +179,10 @@ export const SecureGate: React.FC<SecureGateProps> = ({
             <h2
               className={`text-xl font-black mb-2 tracking-tight text-zinc-900 dark:text-zinc-100 ${language === 'AR' ? 'font-arabic' : ''}`}
             >
-              {isLockedOut
-                ? language === 'AR'
-                  ? 'تم قفل المحاولات'
-                  : 'Too Many Attempts'
-                : language === 'AR'
-                  ? 'كلمة المرور مطلوبة'
-                  : 'Password Required'}
+              {isAuthorized ? t.secureGate.authorizedTitle : t.secureGate.unauthorizedTitle}
             </h2>
             <p className='text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed px-4 opacity-70'>
-              {isLockedOut
-                ? language === 'AR'
-                  ? 'لقد تجاوزت الحد الأقصى للمحاولات.'
-                  : 'You have exceeded the maximum attempts.'
-                : language === 'AR'
-                  ? 'يرجى إدخال كلمة مرور الفروع للمتابعة'
-                  : 'Please enter the branch settings password to continue'}
+              {isAuthorized ? t.secureGate.authorizedDesc : t.secureGate.unauthorizedDesc}
             </p>
           </div>
 
@@ -298,19 +207,18 @@ export const SecureGate: React.FC<SecureGateProps> = ({
               </span>
             </div>
             <h3 className='text-zinc-900 dark:text-zinc-100 font-black text-xl mb-2 tracking-tight'>
-              {language === 'AR' ? 'منطقة محمية' : 'Protected Area'}
+              {t.secureGate.protectedArea}
             </h3>
             <p className='text-zinc-500 dark:text-zinc-400 text-sm mb-8 max-w-[280px] text-center leading-relaxed opacity-60'>
-              {language === 'AR'
-                ? 'هذه المنطقة تتطلب كلمة مرور للوصول إليها'
-                : 'This area requires a password to access its contents'}
+              {t.secureGate.requiresPassword}
             </p>
             <button
+              type='button'
               onClick={() => setInternalIsOpen(true)}
               className='px-8 py-3 rounded-2xl bg-zinc-900 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-950 font-black text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-zinc-900/10 dark:shadow-zinc-100/5 cursor-pointer flex items-center gap-2'
             >
               <span className='material-symbols-rounded text-lg'>lock_open</span>
-              {language === 'AR' ? 'فتح المنطقة' : 'Unlock Now'}
+              {t.secureGate.unlockNow}
             </button>
           </div>
         )}
@@ -318,24 +226,24 @@ export const SecureGate: React.FC<SecureGateProps> = ({
         <Modal
           isOpen={actualIsModalOpen}
           onClose={handleCloseInternal}
-          title={language === 'AR' ? 'تحقق من الهوية' : 'Identity Verification'}
+          title={t.secureGate.identityVerification}
           className='max-w-sm'
         >
           <div className='flex flex-col items-center text-center p-4'>
             <div
               className={`mb-6 w-16 h-16 rounded-2xl border flex items-center justify-center transition-colors ${
-                isLockedOut
-                  ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800/30'
-                  : 'bg-zinc-50 dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
+                isAuthorized
+                  ? 'bg-zinc-50 dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
+                  : 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30'
               }`}
             >
               <span
                 className={`material-symbols-rounded transition-colors ${
-                  isLockedOut ? 'text-amber-500' : 'text-zinc-400 dark:text-zinc-500'
+                  isAuthorized ? 'text-zinc-400 dark:text-zinc-500' : 'text-red-500'
                 }`}
                 style={{ fontSize: '32px' }}
               >
-                {isLockedOut ? 'timer' : 'security'}
+                {isAuthorized ? 'security' : 'gpp_bad'}
               </span>
             </div>
 
@@ -343,22 +251,10 @@ export const SecureGate: React.FC<SecureGateProps> = ({
               <h2
                 className={`text-xl font-black mb-2 tracking-tight text-zinc-900 dark:text-zinc-100 ${language === 'AR' ? 'font-arabic' : ''}`}
               >
-                {isLockedOut
-                  ? language === 'AR'
-                    ? 'تم قفل المحاولات'
-                    : 'Too Many Attempts'
-                  : language === 'AR'
-                    ? 'كلمة المرور مطلوبة'
-                    : 'Password Required'}
+                {isAuthorized ? t.secureGate.authorizedTitle : t.secureGate.unauthorizedTitle}
               </h2>
               <p className='text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed px-4 opacity-70'>
-                {isLockedOut
-                  ? language === 'AR'
-                    ? 'لقد تجاوزت الحد الأقصى للمحاولات.'
-                    : 'You have exceeded the maximum attempts.'
-                  : language === 'AR'
-                    ? 'يرجى إدخال كلمة مرور الفروع للمتابعة'
-                    : 'Please enter the branch settings password to continue'}
+                {isAuthorized ? t.secureGate.authorizedDesc : t.secureGate.unauthorizedDesc}
               </p>
             </div>
 
