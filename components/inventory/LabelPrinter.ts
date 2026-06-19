@@ -555,13 +555,31 @@ export const generatePageHTML = (
   css: string,
   dims: { w: number; h: number },
   pageHeight: number,
-  offsets: { x: number; y: number } = { x: 0, y: 0 }
+  offsets: { x: number; y: number } = { x: 0, y: 0 },
+  rotatePage: boolean = false
 ): string => {
   const fontCSS = getBarcodeFontsCSS();
+  
+  // If rotated, swap the @page dimensions to trick the browser into Portrait mode
+  const pageW = rotatePage ? pageHeight : dims.w;
+  const pageH = rotatePage ? dims.w : pageHeight;
+  
+  // To fit the original container into the swapped page, we rotate it by -90deg from the center
+  const rotationCSS = rotatePage ? `
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      margin-top: -${pageHeight / 2}mm;
+      margin-left: -${dims.w / 2}mm;
+      transform: rotate(-90deg) translate(${offsets.y}mm, -${offsets.x}mm);
+  ` : `
+      transform: translate(${offsets.x}mm, ${offsets.y}mm);
+  `;
+
   const fullCSS = `
             ${fontCSS}
             ${css}
-            @page { size: ${dims.w}mm ${pageHeight}mm; margin: 0; }
+            @page { size: ${pageW}mm ${pageH}mm; margin: 0; }
             * { margin: 0; padding: 0; box-sizing: border-box; }
             html, body { 
                 margin: 0; 
@@ -577,11 +595,11 @@ export const generatePageHTML = (
             }
             .print-container {
                 width: ${dims.w}mm;
+                height: ${pageHeight}mm;
                 background: white;
                 font-size: 0;
                 line-height: 0;
-                /* Use transform for offsets - this allows moving "ink" without affecting layout flow or paper size triggers */
-                transform: translate(${offsets.x}mm, ${offsets.y}mm);
+                ${rotationCSS}
                 box-sizing: border-box;
             }
             .page-container {
@@ -787,7 +805,8 @@ export const printLabels = async (
             {
               x: printOffsetX,
               y: printOffsetY,
-            }
+            },
+            design.rotatePage
           );
 
           const silentPrinted = await printLabelSilently(chunkHTML, {
@@ -820,7 +839,7 @@ export const printLabels = async (
     const htmlContent = generatePageHTML(allPagesHTML, templateCSS, dims, printablePageHeight, {
       x: printOffsetX,
       y: printOffsetY,
-    });
+    }, design.rotatePage);
 
     // Browser print fallback
     printWindow = window.open('', '', PRINT_WINDOW_CONFIG.features);
