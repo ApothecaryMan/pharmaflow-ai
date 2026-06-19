@@ -5,6 +5,7 @@ import { useAlert, useSettings } from '../../context';
 import { useData } from '../../context/DataContext';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { type StockMovement, stockMovementService } from '../../services/inventory';
+import { inventoryService } from '../../services/inventory/inventoryService';
 import { batchService } from '../../services/inventory/batchService';
 import type { Drug, StockBatch } from '../../types';
 import { formatCurrency } from '../../utils/currency';
@@ -13,7 +14,6 @@ import { formatExpiryDate } from '../../utils/expiryUtils';
 import { idGenerator } from '../../utils/idGenerator';
 import { money } from '../../utils/money';
 import { parseSearchTerm } from '../../utils/searchUtils';
-import * as stockOps from '../../utils/stockOperations';
 import { storage } from '../../utils/storage';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { DatePicker, DateRangePicker } from '../common/DatePicker';
@@ -133,24 +133,27 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
   const handleApprove = async (movement: StockMovement) => {
     try {
-      const currentEmployeeId = currentEmployee?.id || 'user';
+      const currentEmployeeId = currentEmployee?.id;
+      if (!currentEmployeeId) throw new Error('Current employee is required to approve adjustments');
 
-      // 1. Update Service Status
-      await stockMovementService.approveMovement(movement.id, currentEmployeeId);
-
-      // 2. Persist stock change to inventoryService (durable)
-      try {
-        const { inventoryService } = await import('../../services/inventory/inventoryService');
-        await inventoryService.updateStockBulk([
+      await inventoryService.processStockAdjustment({
+        branchId: movement.branchId || activeBranchId,
+        orgId: movement.orgId || activeOrgId,
+        performerId: currentEmployeeId,
+        performerName: currentEmployee?.name || currentEmployee?.username || 'User',
+        transactionId: movement.transactionId,
+        movementId: movement.id,
+        adjustments: [
           {
-            id: movement.drugId,
-            quantity: movement.quantity, // The difference
+            drugId: movement.drugId,
+            quantity: movement.quantity,
             batchId: movement.batchId,
+            reason: movement.reason,
+            notes: movement.notes,
+            expiryDate: movement.expiryDate,
           },
-        ]);
-      } catch (persistErr) {
-        console.error('Failed to persist stock to service:', persistErr);
-      }
+        ],
+      });
 
       // 4. Sync Drug.stock with React state
       const drug = inventory.find((d) => d.id === movement.drugId);
@@ -517,7 +520,9 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
     // Log movements for each adjustment
     try {
-      const currentEmployeeId = currentEmployee?.id || 'user';
+      const currentEmployeeId = currentEmployee?.id;
+      if (!currentEmployeeId) throw new Error('Current employee is required to save adjustments');
+
       const currentEmployeeName =
         currentEmployee?.name ||
         currentEmployee?.username ||
@@ -529,8 +534,15 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
       const status = isManager ? 'approved' : 'pending';
 
-      const transactionId = idGenerator.generateSync('movement', activeBranchId);
-      const stockMutations: { id: string; quantity: number; batchId?: string }[] = [];
+      const transactionId = idGenerator.uuid();
+      const approvedAdjustments: {
+        drugId: string;
+        quantity: number;
+        batchId?: string;
+        reason?: string;
+        notes?: string;
+        expiryDate?: string;
+      }[] = [];
 
       for (const item of adjustments) {
         // Only log actual changes
@@ -538,40 +550,46 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           const drug = inventory.find((d) => d.id === item.drugId);
           if (!drug) continue;
 
-          await stockOps.adjustStock(
-            drug,
-            item.newStock,
-            item.reason,
-            {
-              performedBy: currentEmployee?.id || 'user',
-              performedByName: currentEmployee?.name || 'User',
+          if (status === 'approved') {
+            approvedAdjustments.push({
+              drugId: drug.id,
+              quantity: item.difference,
+              batchId: item.batchId,
+              reason: item.reason,
+              notes: item.notes,
+              expiryDate: item.expiryDate,
+            });
+          } else {
+            await stockMovementService.logMovement({
+              drugId: item.drugId,
+              drugName: item.drugName,
               branchId: activeBranchId,
               orgId: activeOrgId,
-            },
-            {
-              batchId: item.batchId,
+              type: 'adjustment',
+              quantity: item.difference,
+              previousStock: item.currentStock,
+              newStock: item.newStock,
+              reason: item.reason,
               notes: item.notes,
               transactionId: transactionId,
-              status: status,
-              expiryDate: item.expiryDate,
-            }
-          );
-
-          // Track mutations for bulk persistence
-          if (status === 'approved') {
-            stockMutations.push({
-              id: drug.id,
-              quantity: item.difference, // The exact difference to add/subtract
               batchId: item.batchId,
+              expiryDate: item.expiryDate,
+              performedBy: currentEmployeeId,
+              performedByName: currentEmployeeName,
+              status: 'pending',
             });
           }
         }
       }
 
-      // PERSISTENCE: Apply immediately to local indexedDB if approved (in bulk)
-      if (stockMutations.length > 0) {
-        import('../../services/inventory/inventoryService').then(({ inventoryService }) => {
-          inventoryService.updateStockBulk(stockMutations, true).catch(console.error);
+      if (approvedAdjustments.length > 0) {
+        await inventoryService.processStockAdjustment({
+          branchId: activeBranchId,
+          orgId: activeOrgId,
+          performerId: currentEmployeeId,
+          performerName: currentEmployeeName,
+          transactionId,
+          adjustments: approvedAdjustments,
         });
       }
 

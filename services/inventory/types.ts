@@ -21,6 +21,26 @@ export interface InventoryStats {
   outOfStockCount: number;
 }
 
+export interface StockAdjustmentMutation {
+  drugId: string;
+  quantity: number;
+  batchId?: string;
+  movementType?: string;
+  reason?: string;
+  notes?: string;
+  expiryDate?: string;
+}
+
+export interface ProcessStockAdjustmentPayload {
+  branchId: string;
+  orgId?: string;
+  performerId?: string;
+  performerName?: string;
+  transactionId?: string;
+  movementId?: string;
+  adjustments: StockAdjustmentMutation[];
+}
+
 export interface InventoryService {
   getAll(branchId?: string): Promise<Drug[]>;
   getAllBranches(branchId?: string): Promise<Drug[]>;
@@ -36,6 +56,7 @@ export interface InventoryService {
     mutations: { id: string; quantity: number; batchId?: string }[],
     skipBatch?: boolean
   ): Promise<void>;
+  processStockAdjustment(payload: ProcessStockAdjustmentPayload): Promise<void>;
   delete(id: string): Promise<boolean>;
   getStats(): Promise<InventoryStats>;
   getLowStock(threshold?: number): Promise<Drug[]>;

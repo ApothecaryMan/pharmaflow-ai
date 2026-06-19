@@ -83,6 +83,14 @@ Proposed RPC:
 
 - `process_stock_adjustment(p_payload jsonb)`
 
+Implementation status:
+
+- Started in `20260619000002_atomic_stock_adjustment.sql`.
+- `StockAdjustment` approval and manager-save paths now call the RPC instead of mutating batches from the client.
+- Pending non-manager adjustments are still logged as pending movements and are applied only when approved.
+- `ExpiryManagement` damage and supplier-return actions now use the same locked RPC path instead of direct client batch mutation.
+- Purchase supplier returns now use `process_purchase_return` to insert the return document, insert items, and deduct FEFO stock atomically.
+
 Current client paths:
 
 - `inventoryService.updateStock`

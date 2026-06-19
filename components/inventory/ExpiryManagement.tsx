@@ -4,13 +4,13 @@ import { useMemo, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
 import { useData } from '../../context/DataContext';
+import { inventoryService } from '../../services/inventory/inventoryService';
 import type { Drug, StockBatch } from '../../types';
 import { formatCompactCurrencyParts, formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { idGenerator } from '../../utils/idGenerator';
 import { formatStock } from '../../utils/inventory';
-import * as stockOps from '../../utils/stockOperations';
 import { storage } from '../../utils/storage';
 import { ContextMenuItem, useContextMenu } from '../common/ContextMenu';
 import type { FilterConfig } from '../common/FilterPill';
@@ -71,55 +71,64 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
 
   const handleSaveAction = async () => {
     if (!selectedActionBatch || !activeModal) return;
-    const qty = parseFloat(actionQty);
-    if (isNaN(qty) || qty <= 0 || qty > selectedActionBatch.quantity) {
+    const qty = Number(actionQty);
+    if (!Number.isInteger(qty) || qty <= 0 || qty > selectedActionBatch.quantity) {
       error(t.expiryManagement?.invalidQuantity || 'Invalid quantity');
       return;
     }
 
     try {
+      if (!currentEmployee?.id) {
+        throw new Error('Current employee is required to update stock');
+      }
+
       const typeStr = activeModal === 'damage' ? 'damage' : 'return_supplier';
       const reasonStr = activeModal === 'damage' ? 'expired' : 'other';
       const defaultNote =
         activeModal === 'damage' ? 'Damaged from Expiry Module' : 'Returned from Expiry Module';
-      const entityType = activeModal === 'damage' ? 'generic' : 'returns';
-      const referenceId = idGenerator.generateSync(entityType as any, activeBranchId);
+      const referenceId = idGenerator.uuid();
 
-      const mutation = await stockOps.deductFromBatch(
-        selectedActionBatch.drug,
-        selectedActionBatch.id,
-        qty,
-        typeStr as any,
-        reasonStr,
-        {
-          branchId: activeBranchId,
-          orgId: activeOrgId,
-          performedBy: currentEmployee?.id || 'user',
-          performedByName: currentEmployee?.name || 'User',
-        },
-        {
-          notes: actionNotes || defaultNote,
-          referenceId: referenceId,
-          expiryDate: selectedActionBatch.expiryDate,
-        }
-      );
+      await inventoryService.processStockAdjustment({
+        branchId: activeBranchId,
+        orgId: activeOrgId,
+        performerId: currentEmployee.id,
+        performerName: currentEmployee.name || 'User',
+        transactionId: referenceId,
+        adjustments: [
+          {
+            drugId: selectedActionBatch.drugId,
+            quantity: -qty,
+            batchId: selectedActionBatch.id,
+            movementType: typeStr,
+            reason: reasonStr,
+            notes: actionNotes || defaultNote,
+            expiryDate: selectedActionBatch.expiryDate,
+          },
+        ],
+      });
+
+      const updatedDrug = {
+        ...selectedActionBatch.drug,
+        stock: Math.max(0, selectedActionBatch.drug.stock - qty),
+      };
+
+      const updatedBatch = {
+        ...selectedActionBatch,
+        quantity: Math.max(0, selectedActionBatch.quantity - qty),
+      };
 
       success(
         t.expiryManagement?.actionSuccess ||
           `Successfully ${activeModal === 'damage' ? 'damaged' : 'returned'} stock`
       );
 
-      if (onUpdateInventory && mutation) {
-        onUpdateInventory(
-          { ...selectedActionBatch.drug, stock: mutation.newStock },
-          selectedActionBatch
-        );
+      if (onUpdateInventory) {
+        onUpdateInventory(updatedDrug, updatedBatch);
       }
       if (onBatchesChanged) {
         onBatchesChanged();
       }
 
-      // Update local batches logic ideally triggers from parent re-fetch, but typically we close the modal and rely on that.
       setActiveModal(null);
     } catch (err) {
       console.error(err);

@@ -8,7 +8,12 @@ import { BaseDomainService } from '../core/baseDomainService';
 import { settingsService } from '../settings/settingsService';
 import { batchService } from './batchService';
 import { inventoryRepository } from './repositories/inventoryRepository';
-import type { InventoryFilters, InventoryService, InventoryStats } from './types';
+import type {
+  InventoryFilters,
+  InventoryService,
+  InventoryStats,
+  ProcessStockAdjustmentPayload,
+} from './types';
 
 class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryService {
   protected tableName = 'drugs';
@@ -203,6 +208,13 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
         await this.updateStock(m.id, m.quantity, skipBatch, m.batchId, skipFetch);
       }
     }
+  }
+
+  async processStockAdjustment(payload: ProcessStockAdjustmentPayload): Promise<void> {
+    if (payload.adjustments.length === 0) return;
+
+    const { error } = await supabase.rpc('process_stock_adjustment', { p_payload: payload });
+    if (error) throw error;
   }
 
   async getStats(branchId?: string): Promise<InventoryStats> {
