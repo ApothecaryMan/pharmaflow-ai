@@ -1,14 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Drug } from '../../types';
-import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
 import { inventoryService } from './inventoryService';
+import { inventoryRepository } from './repositories/inventoryRepository';
+import { batchService } from './batchService';
 
 // Mocks
-vi.mock('../../utils/storage', () => ({
-  storage: {
-    get: vi.fn(),
-    set: vi.fn(),
+vi.mock('./repositories/inventoryRepository', () => ({
+  inventoryRepository: {
+    getAll: vi.fn(),
+    getById: vi.fn(),
+    getByBarcode: vi.fn(),
+    insert: vi.fn(),
+    update: vi.fn(),
+    upsert: vi.fn(),
+  },
+}));
+
+vi.mock('./batchService', () => ({
+  batchService: {
+    createBatch: vi.fn(),
   },
 }));
 
@@ -31,6 +42,8 @@ describe('InventoryService', () => {
         category: 'Painkillers',
         branchId: 'B1',
         publicPrice: 10,
+        unitsPerPack: 1,
+        minStock: 10,
       } as Drug,
       {
         id: 'D2',
@@ -40,12 +53,14 @@ describe('InventoryService', () => {
         category: 'Painkillers',
         branchId: 'B1',
         publicPrice: 5,
+        unitsPerPack: 1,
+        minStock: 10,
       } as Drug,
     ];
 
     vi.clearAllMocks();
-    (storage.get as any).mockReturnValue(mockInventory);
-    (settingsService.getAll as any).mockResolvedValue({ branchCode: 'B1' });
+    vi.mocked(inventoryRepository.getAll).mockResolvedValue(mockInventory);
+    vi.mocked(settingsService.getAll).mockResolvedValue({ branchCode: 'B1', orgId: 'ORG_1' } as any);
   });
 
   it('should filter low stock', async () => {
@@ -55,20 +70,13 @@ describe('InventoryService', () => {
   });
 
   it('should filter expiring soon (or expired)', async () => {
-    // Logic checks if date <= threshold. Expired dates are definitely "soon" (past).
-    // The filter checks <= (now + 30 days)
     const results = await inventoryService.filter({ expiringSoon: 30 });
-    // Aspirin is expired (2020), Panadol is 2030
-    // Should catch Aspirin
     const aspirin = results.find((d) => d.name === 'Aspirin');
     expect(aspirin).toBeDefined();
 
-    // Check it doesn't return Panadol
     const panadol = results.find((d) => d.name === 'Panadol');
     expect(panadol).toBeUndefined();
   });
-
-
 
   it('should get stats correctly', async () => {
     const stats = await inventoryService.getStats();

@@ -41,12 +41,14 @@ class InventoryServiceImpl extends BaseDomainService<Drug> implements InventoryS
   }
 
   async getByBarcode(barcode: string, branchId?: string): Promise<Drug | null> {
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     try {
-      const drug = await inventoryRepository.getByBarcode(barcode);
+      const drug = await inventoryRepository.getByBarcode(barcode, settings.orgId, effectiveBranchId);
       if (drug) return drug;
     } catch {}
 
-    const all = await this.getAll(branchId);
+    const all = await this.getAll(effectiveBranchId);
     return all.find((d) => d.barcode === barcode) || null;
   }
 

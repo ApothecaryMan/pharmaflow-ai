@@ -1,14 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Purchase } from '../../types';
-import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
 import { purchaseService } from './purchaseService';
+import { purchaseRepository } from './repositories/purchaseRepository';
 
 // Mocks
-vi.mock('../../utils/storage', () => ({
-  storage: {
-    get: vi.fn(),
-    set: vi.fn(),
+vi.mock('./repositories/purchaseRepository', () => ({
+  purchaseRepository: {
+    getAll: vi.fn(),
+    getRecent: vi.fn(),
+    listPage: vi.fn(),
+    getById: vi.fn(),
+    findByFilters: vi.fn(),
+    insert: vi.fn(),
+    update: vi.fn(),
+    upsert: vi.fn(),
   },
 }));
 
@@ -46,8 +52,16 @@ describe('PurchaseService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (storage.get as any).mockReturnValue([...mockPurchases]);
-    (settingsService.getAll as any).mockResolvedValue({ branchCode: 'MAIN' });
+    vi.mocked(settingsService.getAll).mockResolvedValue({ branchCode: 'MAIN', orgId: 'ORG_1' } as any);
+    vi.mocked(purchaseRepository.getAll).mockResolvedValue([...mockPurchases]);
+    vi.mocked(purchaseRepository.getById).mockImplementation(async (id) => {
+      return mockPurchases.find((p) => p.id === id) || null;
+    });
+    vi.mocked(purchaseRepository.insert).mockImplementation(async (p) => p);
+    vi.mocked(purchaseRepository.update).mockImplementation(async (id, updates) => {
+      const p = mockPurchases.find((item) => item.id === id);
+      return { ...p, ...updates } as Purchase;
+    });
   });
 
   it('should retrieve all purchases', async () => {
@@ -67,7 +81,7 @@ describe('PurchaseService', () => {
 
     expect(created.status).toBe('pending');
     expect(created.branchId).toBe('MAIN');
-    expect(storage.set).toHaveBeenCalled();
+    expect(purchaseRepository.insert).toHaveBeenCalled();
   });
 
   it('should approve purchase', async () => {
@@ -75,14 +89,14 @@ describe('PurchaseService', () => {
 
     expect(approved.status).toBe('approved');
     expect(approved.approvedBy).toBe('Admin');
-    expect(storage.set).toHaveBeenCalled();
+    expect(purchaseRepository.update).toHaveBeenCalled();
   });
 
   it('should reject purchase', async () => {
     const rejected = await purchaseService.reject('P1', 'Too expensive');
 
     expect(rejected.status).toBe('rejected');
-    expect(storage.set).toHaveBeenCalled();
+    expect(purchaseRepository.update).toHaveBeenCalled();
   });
 
   it('should get correct stats', async () => {

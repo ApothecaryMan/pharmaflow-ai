@@ -22,6 +22,27 @@ const GLOBAL_KEYS = new Set<string>([
   'pharma_intended_account_type',
 ]);
 
+const BRANCH_SCOPED_KEYS = new Set<string>([
+  StorageKeys.INVENTORY,
+  StorageKeys.STOCK_BATCHES,
+  StorageKeys.STOCK_MOVEMENTS,
+  StorageKeys.SALES,
+  StorageKeys.RETURNS,
+  StorageKeys.PURCHASES,
+  StorageKeys.PURCHASE_RETURNS,
+  StorageKeys.SHIFTS,
+  StorageKeys.POS_TABS,
+  StorageKeys.POS_CLOSED_TABS,
+  StorageKeys.POS_ACTIVE_TAB_ID,
+  StorageKeys.PURCHASE_TABS,
+  StorageKeys.PURCHASE_ACTIVE_TAB_ID,
+  StorageKeys.PURCHASE_CLOSED_TABS,
+  StorageKeys.DAILY_ORDER_COUNTER,
+  StorageKeys.SHIFT_RECEIPT_COUNTER,
+  StorageKeys.SALE_RECEIPT_COUNTER,
+  StorageKeys.SEQUENCES,
+]);
+
 // Performance optimizations:
 // 1. Cache the session user ID in memory to avoid JSON parsing on every read/write scoping check.
 // 2. Cache total usage bytes to prevent disk/IPC overhead of querying localStorage.
@@ -65,6 +86,21 @@ export const storage = {
   },
 
   /**
+   * Internal helper to get active branch ID from settings to scope branch-specific keys
+   */
+  getBranchId: (): string | null => {
+    if (typeof localStorage === 'undefined') return null;
+    try {
+      const settingsRaw = localStorage.getItem(StorageKeys.SETTINGS);
+      if (settingsRaw) {
+        const settings = JSON.parse(settingsRaw);
+        return settings.activeBranchId || settings.branchCode || null;
+      }
+    } catch {}
+    return null;
+  },
+
+  /**
    * Internal helper to scope keys by user ID to prevent data leakage
    */
   getScopedKey: (key: string): string => {
@@ -72,7 +108,14 @@ export const storage = {
       return key;
 
     const userId = storage.getUserId();
-    return userId ? `${key}_${userId}` : key;
+    if (!userId) return key;
+
+    if (BRANCH_SCOPED_KEYS.has(key)) {
+      const branchId = storage.getBranchId();
+      return branchId ? `${key}_${userId}_${branchId}` : `${key}_${userId}`;
+    }
+
+    return `${key}_${userId}`;
   },
 
   /**

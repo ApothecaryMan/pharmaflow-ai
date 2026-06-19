@@ -1,15 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Sale } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
-import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
 import { salesService } from './salesService';
+import { salesRepository } from './repositories/salesRepository';
 
 // Mocks
-vi.mock('../../utils/storage', () => ({
-  storage: {
-    get: vi.fn(),
-    set: vi.fn(),
+vi.mock('./repositories/salesRepository', () => ({
+  salesRepository: {
+    getAll: vi.fn(),
+    getRecent: vi.fn(),
+    listPage: vi.fn(),
+    getById: vi.fn(),
+    findByFilters: vi.fn(),
+    insert: vi.fn(),
+    update: vi.fn(),
+    upsert: vi.fn(),
   },
 }));
 
@@ -58,17 +64,12 @@ describe('SalesService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // Return mock sales for shards, but ensure we don't double count if service checks multiple shards
-    const seenShards = new Set();
-    (storage.get as any).mockImplementation((key: string, fallback: any) => {
-      if (key.includes('sales') && !seenShards.has('SALES_DATA_RETURNED')) {
-        seenShards.add('SALES_DATA_RETURNED');
-        return [...mockSales];
-      }
-      return fallback || [];
+    vi.mocked(settingsService.getAll).mockResolvedValue({ branchCode: 'MAIN', orgId: 'ORG_1' } as any);
+    vi.mocked(idGenerator.generate).mockResolvedValue('SALE_NEW');
+    vi.mocked(salesRepository.getAll).mockResolvedValue([...mockSales]);
+    vi.mocked(salesRepository.insert).mockImplementation(async (s) => {
+      return;
     });
-    (settingsService.getAll as any).mockResolvedValue({ branchCode: 'MAIN' });
-    (idGenerator.generate as any).mockReturnValue('SALE_NEW');
   });
 
   it('should retrieve all sales for current branch', async () => {
@@ -90,13 +91,10 @@ describe('SalesService', () => {
 
     expect(created.id).toBe('SALE_NEW');
     expect(created.branchId).toBe('MAIN');
-    expect(storage.set).toHaveBeenCalled();
+    expect(salesRepository.insert).toHaveBeenCalled();
   });
 
   it('should calculate stats correctly', async () => {
-    // Mock date to match "today" logic in service (it uses new Date() internally)
-    // For specific date tests, mocking Date is better, but here we can check total revenue simply
-
     const stats = await salesService.getStats();
 
     expect(stats.totalSales).toBe(2);
@@ -105,7 +103,7 @@ describe('SalesService', () => {
   });
 
   it('should filter sales correctly', async () => {
-    // Filter by min amount
+    vi.mocked(salesRepository.findByFilters).mockResolvedValue([mockSales[0]]);
     const filters = { minAmount: 80 };
     const filtered = await salesService.filter(filters);
 

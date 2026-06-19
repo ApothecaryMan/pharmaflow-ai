@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { storage } from '../../utils/storage';
 import { settingsService } from './settingsService';
-import { AppSettings } from './types';
 
 // Mock storage
 vi.mock('../../utils/storage', () => ({
@@ -13,11 +12,6 @@ vi.mock('../../utils/storage', () => ({
 }));
 
 describe('SettingsService', () => {
-  const defaultSettings = {
-    darkMode: false,
-    language: 'EN',
-    branchCode: 'B1',
-  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -26,7 +20,7 @@ describe('SettingsService', () => {
   it('should return default settings if storage is empty', async () => {
     (storage.get as any).mockReturnValue({});
     const settings = await settingsService.getAll();
-    expect(settings.branchCode).toBe('B1'); // Default
+    expect(settings.branchCode).toBe(''); // Default
     expect(settings.language).toBe('EN');
   });
 

@@ -7,6 +7,23 @@ import { Modal } from './Modal';
 // Although jsdom supports portals, sometimes keeping it simple helps if we just want to test content.
 // But standard portals work in jsdom. Let's try standard behavior first.
 
+// Mock useSettings
+vi.mock('../../context', () => ({
+  useSettings: () => ({
+    language: 'EN',
+    darkMode: false,
+    theme: { name: 'Blue', primary: 'blue', hex: '#3b82f6' },
+  }),
+}));
+
+// Mock useContextMenu
+vi.mock('./ContextMenu', () => ({
+  useContextMenu: () => ({
+    registerTrigger: vi.fn(),
+    unregisterTrigger: vi.fn(),
+  }),
+}));
+
 describe('Modal Component', () => {
   const onClose = vi.fn();
 

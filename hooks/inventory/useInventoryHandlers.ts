@@ -9,6 +9,7 @@ import { stockMovementService } from '../../services/inventory/stockMovement/sto
 import type { Drug, Employee, StockBatch } from '../../types';
 import { getFullDisplayName } from '../../utils/drugDisplayName';
 import { resolveUnits } from '../../utils/stockUtils';
+import { validateDrug } from '../../utils/validation';
 
 export interface UseInventoryHandlersParams {
   inventory: Drug[];
@@ -39,6 +40,12 @@ export function useInventoryHandlers({
       const employee = employees?.find((e) => e.id === currentEmployeeId);
       if (!permissionsService.can('inventory.add')) {
         error(`Permission denied: ${employee?.role || 'User'} cannot add items`);
+        return;
+      }
+
+      const validation = validateDrug(drug);
+      if (!validation.success) {
+        error(validation.message || 'Invalid drug data');
         return;
       }
 

@@ -24,7 +24,7 @@ describe('Login Component', () => {
   it('renders correctly', () => {
     render(<Login />);
     expect(screen.getByPlaceholderText(/username/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^Password$/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/^Password$/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /continue/i })).toBeInTheDocument();
   });
 
@@ -40,7 +40,7 @@ describe('Login Component', () => {
 
   it('toggles password visibility', () => {
     render(<Login />);
-    const passwordInput = screen.getByLabelText(/^Password$/i);
+    const passwordInput = screen.getByPlaceholderText(/^Password$/i);
     const toggleBtn = screen.getByLabelText(/show password/i);
 
     expect(passwordInput).toHaveAttribute('type', 'password');
@@ -58,12 +58,13 @@ describe('Login Component', () => {
     const mockUser = { id: 'u1', name: 'User' };
     (authService.login as any).mockResolvedValue(mockUser);
     const onViewChange = vi.fn();
+    const onLoginSuccess = vi.fn();
 
-    render(<Login onViewChange={onViewChange} />);
+    render(<Login onViewChange={onViewChange} onLoginSuccess={onLoginSuccess} />);
 
     // Fill form
     fireEvent.change(screen.getByPlaceholderText(/username/i), { target: { value: 'admin' } });
-    fireEvent.change(screen.getByLabelText(/^Password$/i), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByPlaceholderText(/^Password$/i), { target: { value: 'password123' } });
 
     // Submit
     const submitBtn = screen.getByRole('button', { name: /continue/i });
@@ -78,13 +79,7 @@ describe('Login Component', () => {
 
     // Should show success message after login resolves
     expect(screen.getByText(/Login Successful/i)).toBeInTheDocument();
-
-    // Fast-forward delay for redirect
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(1500);
-    });
-
-    expect(onViewChange).toHaveBeenCalledWith('dashboard');
+    expect(onLoginSuccess).toHaveBeenCalled();
   });
 
   it('handles login failure', async () => {
@@ -93,7 +88,7 @@ describe('Login Component', () => {
     render(<Login />);
 
     fireEvent.change(screen.getByPlaceholderText(/username/i), { target: { value: 'admin' } });
-    fireEvent.change(screen.getByLabelText(/^Password$/i), { target: { value: 'wrongpass' } });
+    fireEvent.change(screen.getByPlaceholderText(/^Password$/i), { target: { value: 'wrongpass' } });
 
     fireEvent.click(screen.getByRole('button', { name: /continue/i }));
 

@@ -33,6 +33,9 @@ function calculateChange(
 }
 
 export const financialService = {
+  isDev(): boolean {
+    return import.meta.env.DEV;
+  },
   /**
    * Calculates Total Revenue and Total Returns using precision math.
    * Duplicated from DashboardService for localized/isolated computations.
@@ -105,12 +108,14 @@ export const financialService = {
       });
 
       if (error) {
-        // Log error and trigger fallback
-        console.warn(
-          'RPC compute_financial_summary_with_snapshots failed, running client fallback:',
-          error
-        );
-        return this.fallbackFinancialSummary(start, end, branchId);
+        if (this.isDev()) {
+          console.warn(
+            'RPC compute_financial_summary_with_snapshots failed, running client fallback:',
+            error
+          );
+          return this.fallbackFinancialSummary(start, end, branchId);
+        }
+        throw error;
       }
 
       const s = data as any;
@@ -129,11 +134,14 @@ export const financialService = {
         total_returns_count: Number(s.total_returns_count || 0),
       } as FinancialSummary;
     } catch (err) {
-      console.warn(
-        'RPC compute_financial_summary_with_snapshots error, running client fallback:',
-        err
-      );
-      return this.fallbackFinancialSummary(start, end, branchId);
+      if (this.isDev()) {
+        console.warn(
+          'RPC compute_financial_summary_with_snapshots error, running client fallback:',
+          err
+        );
+        return this.fallbackFinancialSummary(start, end, branchId);
+      }
+      throw err;
     }
   },
 
@@ -204,14 +212,20 @@ export const financialService = {
       });
 
       if (error) {
-        console.warn('RPC get_daily_financial_breakdown failed, running client fallback:', error);
-        return this.fallbackDailyBreakdown(dateFrom, dateTo, branchId);
+        if (this.isDev()) {
+          console.warn('RPC get_daily_financial_breakdown failed, running client fallback:', error);
+          return this.fallbackDailyBreakdown(dateFrom, dateTo, branchId);
+        }
+        throw error;
       }
 
       return (data || []) as DailyFinancialData[];
     } catch (err) {
-      console.warn('RPC get_daily_financial_breakdown error, running client fallback:', err);
-      return this.fallbackDailyBreakdown(dateFrom, dateTo, branchId);
+      if (this.isDev()) {
+        console.warn('RPC get_daily_financial_breakdown error, running client fallback:', err);
+        return this.fallbackDailyBreakdown(dateFrom, dateTo, branchId);
+      }
+      throw err;
     }
   },
 
@@ -233,14 +247,20 @@ export const financialService = {
       });
 
       if (error) {
-        console.warn('RPC get_top_products_financial failed, running client fallback:', error);
-        return this.fallbackTopProducts(range.start, range.end, branchId, limit);
+        if (this.isDev()) {
+          console.warn('RPC get_top_products_financial failed, running client fallback:', error);
+          return this.fallbackTopProducts(range.start, range.end, branchId, limit);
+        }
+        throw error;
       }
 
       return (data || []) as ProductFinancialItem[];
     } catch (err) {
-      console.warn('RPC get_top_products_financial error, running client fallback:', err);
-      return this.fallbackTopProducts(range.start, range.end, branchId, limit);
+      if (this.isDev()) {
+        console.warn('RPC get_top_products_financial error, running client fallback:', err);
+        return this.fallbackTopProducts(range.start, range.end, branchId, limit);
+      }
+      throw err;
     }
   },
 
@@ -271,17 +291,23 @@ export const financialService = {
       });
 
       if (error) {
-        console.warn(
-          'RPC get_category_financial_breakdown failed, running client fallback:',
-          error
-        );
-        return this.fallbackCategoryBreakdown(start, end, branchId);
+        if (this.isDev()) {
+          console.warn(
+            'RPC get_category_financial_breakdown failed, running client fallback:',
+            error
+          );
+          return this.fallbackCategoryBreakdown(start, end, branchId);
+        }
+        throw error;
       }
 
       return (data || []) as CategoryFinancialReport[];
     } catch (err) {
-      console.warn('RPC get_category_financial_breakdown error, running client fallback:', err);
-      return this.fallbackCategoryBreakdown(start, end, branchId);
+      if (this.isDev()) {
+        console.warn('RPC get_category_financial_breakdown error, running client fallback:', err);
+        return this.fallbackCategoryBreakdown(start, end, branchId);
+      }
+      throw err;
     }
   },
 
@@ -554,10 +580,6 @@ export const financialService = {
   ): Promise<CategoryFinancialReport[]> {
     // Simply fetch top products (up to 200) and group them by a dummy general category or look up drugs.
     const products = await this.fallbackTopProducts(start, end, branchId, 200);
-    const catMap = new Map<
-      string,
-      { category: string; revenue: number; cogs: number; profit: number }
-    >();
 
     // For local fallback, put everything in "GENERAL"
     const general = { category: 'GENERAL', revenue: 0, cogs: 0, profit: 0 };

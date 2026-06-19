@@ -286,4 +286,41 @@ describe('StorageService', () => {
       getItemSpy.mockRestore();
     });
   });
+
+  describe('Branch Scoping', () => {
+    it('should scope branch-specific keys by both userId and branchId', () => {
+      // Mock session to return userId
+      storage.set(StorageKeys.SESSION, { userId: 'user-123' });
+      // Mock settings to return activeBranchId
+      storage.set(StorageKeys.SETTINGS, { activeBranchId: 'branch-ABC' });
+
+      const scopedKey = storage.getScopedKey(StorageKeys.INVENTORY);
+      expect(scopedKey).toBe(`${StorageKeys.INVENTORY}_user-123_branch-ABC`);
+    });
+
+    it('should scope branch-specific keys by userId only if branchId is not set', () => {
+      storage.set(StorageKeys.SESSION, { userId: 'user-123' });
+      // Remove settings
+      storage.remove(StorageKeys.SETTINGS);
+
+      const scopedKey = storage.getScopedKey(StorageKeys.INVENTORY);
+      expect(scopedKey).toBe(`${StorageKeys.INVENTORY}_user-123`);
+    });
+
+    it('should not scope global keys by userId or branchId', () => {
+      storage.set(StorageKeys.SESSION, { userId: 'user-123' });
+      storage.set(StorageKeys.SETTINGS, { activeBranchId: 'branch-ABC' });
+
+      const scopedKey = storage.getScopedKey(StorageKeys.DARK_MODE);
+      expect(scopedKey).toBe(StorageKeys.DARK_MODE);
+    });
+
+    it('should scope standard keys by userId only', () => {
+      storage.set(StorageKeys.SESSION, { userId: 'user-123' });
+      storage.set(StorageKeys.SETTINGS, { activeBranchId: 'branch-ABC' });
+
+      const scopedKey = storage.getScopedKey(StorageKeys.LOGIN_AUDIT);
+      expect(scopedKey).toBe(`${StorageKeys.LOGIN_AUDIT}_user-123`);
+    });
+  });
 });

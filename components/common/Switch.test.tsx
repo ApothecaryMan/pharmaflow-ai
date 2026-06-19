@@ -3,6 +3,15 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { Switch } from './Switch';
 
+
+// Mock useSettings
+vi.mock('../../context/SettingsContext', () => ({
+  useSettings: () => ({
+    switchVariant: 'standard',
+    theme: { name: 'Blue', primary: 'blue', hex: '#3b82f6' },
+  }),
+}));
+
 describe('Switch', () => {
   it('calls onChange when clicked', () => {
     const handleChange = vi.fn();

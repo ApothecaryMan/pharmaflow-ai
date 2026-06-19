@@ -130,6 +130,7 @@ describe('useEntityHandlers: handleCompleteSale', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    (permissionsService.can as any).mockReturnValue(true);
     // Reset validation mock to success by default
     const { validateStockAvailability, validateSaleData } = await import('../../utils/validation');
     (validateStockAvailability as any).mockReturnValue({ success: true });
@@ -245,6 +246,7 @@ describe('useEntityHandlers: Drug Management', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    (permissionsService.can as any).mockReturnValue(true);
     (useAlert as any).mockReturnValue({
       success: mockSuccess,
       error: mockError,
@@ -441,6 +443,7 @@ describe('useEntityHandlers: Edge Cases', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    (permissionsService.can as any).mockReturnValue(true);
     (useAlert as any).mockReturnValue({
       success: mockSuccess,
       error: mockError,
