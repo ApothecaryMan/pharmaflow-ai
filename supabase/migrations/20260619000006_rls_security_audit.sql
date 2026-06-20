@@ -12,10 +12,10 @@ DROP POLICY IF EXISTS movement_select_policy ON public.stock_movements;
 
 -- 2. Create select-only policies for stock_batches
 CREATE POLICY batch_select_policy ON public.stock_batches
-  FOR SELECT USING (branch_id IN (SELECT branch_id FROM public.get_my_branches()));
+  FOR SELECT USING (branch_id IN (SELECT get_user_branch_ids()));
 
 -- 3. Create select-only policies for stock_movements
 CREATE POLICY movement_select_policy ON public.stock_movements
-  FOR SELECT USING (branch_id IN (SELECT branch_id FROM public.get_my_branches()));
+  FOR SELECT USING (branch_id IN (SELECT get_user_branch_ids()));
 
 COMMIT;

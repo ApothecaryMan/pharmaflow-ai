@@ -6,7 +6,8 @@ import { useData } from '../../context/DataContext';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { startAuthentication } from '@simplewebauthn/browser';
 import { isWebAuthnSupported } from '../../utils/webAuthnUtils';
-import { verifyPassword } from '../../services/auth/hashUtils';
+import { hashPassword } from '../../services/auth/hashUtils';
+import { supabase } from '../../lib/supabase';
 import { SmartInput } from './SmartInputs';
 
 // --- CONFIGURATION CONSTANTS ---
@@ -33,7 +34,7 @@ export const SecureGate: React.FC<SecureGateProps> = ({
   standalone = false,
 }) => {
   const t = TRANSLATIONS[language];
-  const { currentEmployee, employees = [] } = useData();
+  const { currentEmployee } = useData();
 
   const [isUnlocked, setIsUnlocked] = useState(() => sessionStorage.getItem(storageKey) === 'true');
   const [internalIsOpen, setInternalIsOpen] = useState(true);
@@ -79,61 +80,47 @@ export const SecureGate: React.FC<SecureGateProps> = ({
     setErrorMessage('');
 
     try {
-      // Find the employee by username or email
-      let targetEmp = employees.find(
-        (emp: any) =>
-          emp.username?.toLowerCase() === usernameInput.trim().toLowerCase() ||
-          emp.email?.toLowerCase() === usernameInput.trim().toLowerCase()
-      );
+      // Hash the password client-side, then verify server-side via RPC
+      // The stored hash NEVER leaves the database
+      const passwordHash = await hashPassword(passwordInput);
 
-      // Fallback: if not found in list but matches current logged-in employee (via username or email)
-      if (!targetEmp && currentEmployee) {
-        const matchesUsername = currentEmployee.username?.toLowerCase() === usernameInput.trim().toLowerCase();
-        const matchesEmail = currentEmployee.email?.toLowerCase() === usernameInput.trim().toLowerCase();
-        if (matchesUsername || matchesEmail) {
-          targetEmp = currentEmployee;
-        }
-      }
+      const { data, error } = await supabase.rpc('verify_employee_credentials', {
+        p_payload: {
+          username: usernameInput.trim(),
+          passwordHash,
+        },
+      });
 
-      if (!targetEmp) {
-        setErrorMessage(t.secureGate.usernameNotFoundError);
-        setIsLoading(false);
+      if (error) {
+        console.error('[SecureGate] RPC error:', error);
+        setErrorMessage(t.secureGate.verificationFailedError);
         return;
       }
 
-      // Check authorization for the matched employee
-      const empRole = targetEmp.role;
-      const isEmpAuthorized =
-        empRole === 'admin' ||
-        empRole === 'pharmacist_owner' ||
-        empRole === 'pharmacist_manager' ||
-        empRole === 'manager' ||
-        targetEmp.orgRole === 'owner' ||
-        targetEmp.orgRole === 'admin';
+      if (!data?.success) {
+        // Map server error codes to user-facing messages
+        const errorMap: Record<string, string> = {
+          username_required: t.secureGate.usernameRequiredError,
+          password_required: t.secureGate.passwordRequiredError,
+          user_not_found: t.secureGate.usernameNotFoundError,
+          no_password_set: t.secureGate.verificationFailedError,
+          invalid_credentials: t.secureGate.incorrectPassword,
+        };
+        setErrorMessage(errorMap[data?.error] || t.secureGate.verificationFailedError);
+        return;
+      }
 
-      if (!isEmpAuthorized) {
+      // Server confirmed credentials — check authorization
+      if (!data.isAuthorized) {
         setErrorMessage(t.secureGate.unauthorizedErrorMessage);
-        setIsLoading(false);
         return;
       }
 
-      const storedHash = targetEmp.password || '';
-      
-      if (!storedHash) {
-        throw new Error('No password set for this employee');
-      }
-
-      const isValid = await verifyPassword(passwordInput, storedHash);
-
-      if (isValid) {
-        setIsUnlocked(true);
-        sessionStorage.setItem(storageKey, 'true');
-        resetInactivityTimer();
-        setPasswordInput('');
-        if (onUnlock) onUnlock();
-      } else {
-        setErrorMessage(t.secureGate.incorrectPassword);
-      }
+      setIsUnlocked(true);
+      sessionStorage.setItem(storageKey, 'true');
+      resetInactivityTimer();
+      setPasswordInput('');
+      if (onUnlock) onUnlock();
     } catch (err: any) {
       console.error('[SecureGate] Password unlock error:', err);
       setErrorMessage(t.secureGate.verificationFailedError);
@@ -230,15 +217,8 @@ export const SecureGate: React.FC<SecureGateProps> = ({
     };
   }, [storageKey]);
 
-  const handleUnlockInternal = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!isAuthorized) return;
-
-    setIsUnlocked(true);
-    sessionStorage.setItem(storageKey, 'true');
-    resetInactivityTimer();
-    if (onUnlock) onUnlock();
-  };
+  // NOTE: handleUnlockInternal was removed as it bypassed password/biometric verification.
+  // All unlock paths now go through handlePasswordUnlock or handleBiometricUnlock.
 
   const handleCloseInternal = () => {
     if (standalone) {
