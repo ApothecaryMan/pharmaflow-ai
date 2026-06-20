@@ -193,14 +193,17 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
               {
                 label: language === 'AR' ? 'نظرة عامة على العملاء' : 'Customer Overview',
                 value: 'customer-overview',
+                icon: 'groups',
               },
               {
                 label: language === 'AR' ? 'نظرة عامة على الولاء' : 'Loyalty Overview',
                 value: 'loyalty-overview',
+                icon: 'loyalty',
               },
               {
                 label: language === 'AR' ? 'ولاء العملاء' : 'Customer Loyalty',
                 value: 'loyalty-lookup',
+                icon: 'stars',
               },
             ]}
             value='loyalty-overview'

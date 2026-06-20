@@ -722,10 +722,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
         centerContent={
           <SegmentedControl
             options={[
-              { label: language === 'AR' ? 'نظرة عامة' : 'Overview', value: 'dashboard' },
+              { 
+                label: language === 'AR' ? 'نظرة عامة' : 'Overview', 
+                value: 'dashboard',
+                icon: 'dashboard'
+              },
               {
                 label: language === 'AR' ? 'المراقبة الفورية' : 'Real-time',
                 value: 'real-time-sales',
+                icon: 'monitoring'
               },
             ]}
             value='dashboard'

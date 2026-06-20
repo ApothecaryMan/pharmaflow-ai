@@ -63,19 +63,23 @@ export const InventoryModuleShell: React.FC<InventoryModuleShellProps> = ({
                 {
                   label: t.inventory?.tabs?.inventory || (isRTL ? 'المخزون' : 'Inventory'),
                   value: 'inventory',
+                  icon: 'inventory_2',
                 },
                 {
                   label: t.inventory?.tabs?.addProduct || (isRTL ? 'إضافة منتج' : 'Add Product'),
                   value: 'add-product',
+                  icon: 'add_circle',
                 },
                 {
                   label:
                     t.inventory?.tabs?.stockMovement || (isRTL ? 'حركة المخزون' : 'Stock Movement'),
                   value: 'stock-movement',
+                  icon: 'sync_alt',
                 },
                 {
                   label: t.inventory?.tabs?.shortages || (isRTL ? 'النواقص' : 'Shortages'),
                   value: 'shortages',
+                  icon: 'warning',
                 },
               ]}
               value={activeView}

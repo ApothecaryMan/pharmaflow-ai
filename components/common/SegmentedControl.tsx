@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useLayoutEffect, useMemo, useRef } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { type PermissionAction, permissionsService } from '../../services/auth/permissionsService';
 
 export interface SegmentedControlOption<T> {
@@ -50,7 +50,11 @@ export function SegmentedControl<T extends string | number | boolean>({
 }: SegmentedControlProps<T>) {
   const ref = useRef<HTMLDivElement>(null),
     isFirst = useRef(true),
-    prevDir = useRef<string | null>(null);
+    prevDir = useRef<string | null>(null),
+    fullWidthRef = useRef<number>(0);
+
+  const [isCompact, setIsCompact] = useState(false);
+
   const filtered = useMemo(
     () => options.filter((o) => !o.permission || permissionsService.can(o.permission)),
     [options]
@@ -60,6 +64,20 @@ export function SegmentedControl<T extends string | number | boolean>({
     const el = ref.current;
     if (!el) return;
     const upd = () => {
+      const parent = el.parentElement;
+      if (parent) {
+        if (!isCompact) {
+          if (el.scrollWidth > parent.clientWidth + 5) {
+            fullWidthRef.current = el.scrollWidth;
+            setIsCompact(true);
+          }
+        } else {
+          if (parent.clientWidth > fullWidthRef.current + 10) {
+            setIsCompact(false);
+          }
+        }
+      }
+
       const s = getComputedStyle(el),
         rtl = s.direction === 'rtl',
         act = el.querySelector<HTMLButtonElement>('button[data-active="true"]');
@@ -85,10 +103,11 @@ export function SegmentedControl<T extends string | number | boolean>({
     };
     const obs = new ResizeObserver(upd);
     obs.observe(el);
+    if (el.parentElement) obs.observe(el.parentElement);
     el.querySelectorAll('button').forEach((b) => obs.observe(b));
     upd();
     return () => obs.disconnect();
-  }, [value, filtered.length]);
+  }, [value, filtered.length, isCompact]);
 
   const pill = shape === 'pill',
     sz = SIZES[size];
@@ -132,6 +151,7 @@ export function SegmentedControl<T extends string | number | boolean>({
           )}
           {o.label && (
             <span
+              className={o.icon && value !== o.value && isCompact ? 'hidden' : ''}
               style={{
                 fontFamily:
                   o.fontFamily || (useGraphicFont ? 'var(--page-title-font-family)' : undefined),
@@ -142,7 +162,7 @@ export function SegmentedControl<T extends string | number | boolean>({
             </span>
           )}
           {o.count !== undefined && (
-            <span className='text-[10px] opacity-70 ms-1'>({o.count})</span>
+            <span className={`text-[10px] opacity-70 ms-1 ${o.icon && value !== o.value && isCompact ? 'hidden' : ''}`}>({o.count})</span>
           )}
         </button>
       ))}
