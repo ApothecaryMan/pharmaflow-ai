@@ -118,7 +118,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
                 />
                 <img
                   src='/logo_word_white.svg'
-                  className='h-7 object-contain opacity-90'
+                  className='h-6 object-contain opacity-90'
                   alt='Zinc'
                 />
               </div>
