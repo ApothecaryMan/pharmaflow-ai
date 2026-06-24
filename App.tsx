@@ -1,14 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion';
-import React, { lazy, Suspense, useCallback, useState } from 'react';
-import { AuthPage } from './components/auth/AuthPage';
-import { Modal } from './components/common/Modal';
-import { LogoutOverlay } from './components/layout/LogoutOverlay';
-import { MainLayout } from './components/layout/MainLayout';
-import { PageRouter } from './components/layout/PageRouter';
-import { useStatusBar } from './components/layout/StatusBar';
-import { BranchSetupScreen } from './components/onboarding/BranchSetupScreen';
-import { EmployeeSetupScreen } from './components/onboarding/EmployeeSetupScreen';
-import { OrgSetupScreen } from './components/onboarding/OrgSetupScreen';
+import React, { lazy, Suspense, useCallback } from 'react';
 import { StorageKeys } from './config/storageKeys';
 import { branchService } from './services/org/branchService';
 import { storage } from './utils/storage';
@@ -24,11 +14,32 @@ const AuthenticatedContent = lazy(() =>
     default: m.AuthenticatedContent,
   }))
 );
+const AuthPage = lazy(() =>
+  import('./components/auth/AuthPage').then((m) => ({
+    default: m.AuthPage,
+  }))
+);
+const OrgSetupScreen = lazy(() =>
+  import('./components/onboarding/OrgSetupScreen').then((m) => ({
+    default: m.OrgSetupScreen,
+  }))
+);
+const BranchSetupScreen = lazy(() =>
+  import('./components/onboarding/BranchSetupScreen').then((m) => ({
+    default: m.BranchSetupScreen,
+  }))
+);
+const EmployeeSetupScreen = lazy(() =>
+  import('./components/onboarding/EmployeeSetupScreen').then((m) => ({
+    default: m.EmployeeSetupScreen,
+  }))
+);
+const NotificationOverlay = lazy(() =>
+  import('./components/features/alerts/NotificationOverlay').then((m) => ({
+    default: m.NotificationOverlay,
+  }))
+);
 
-import { SecureGate } from './components/common/SecureGate';
-import { NotificationOverlay } from './components/features/alerts/NotificationOverlay';
-import { PAGE_REGISTRY } from './config/pageRegistry';
-import { UserRole } from './config/permissions';
 import { ROUTES } from './config/routes';
 import { CatalogProvider, LANGUAGES, THEMES, useAlert, useSettings } from './context';
 import { DataProvider, useData } from './context/DataContext';
@@ -45,7 +56,7 @@ import { useTheme } from './hooks/layout/useTheme';
 import { useUrlSync } from './hooks/layout/useUrlSync';
 import { ShiftProvider, useShift } from './hooks/sales/useShift';
 import { useEntityHandlers } from './hooks/useEntityHandlers';
-import { TRANSLATIONS } from './i18n/translations';
+import { ROOT_STRINGS } from './i18n/rootStrings';
 import { authService } from './services/auth/authService';
 import type { Supplier, ViewState } from './types';
 import { isTauri } from './utils/platform';
@@ -128,7 +139,7 @@ const App: React.FC = () => {
 
   // 3. Settings Hook (for Language)
   const { theme, darkMode, language } = useSettings();
-  const t = TRANSLATIONS[language];
+  const t = ROOT_STRINGS[language];
 
   // 3.1 Storage Quota Monitoring & Events
   const alert = useAlert();
