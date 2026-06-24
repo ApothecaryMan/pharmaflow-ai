@@ -291,6 +291,17 @@ export class DrugSearchEngine {
 
       if (aStarts && !bStarts) return -1;
       if (!aStarts && bStarts) return 1;
+
+      // Both start with or both include -> Sort by Item Rank first
+      const rankA = parseInt(((a as any).itemRank as string) || '999999', 10);
+      const rankB = parseInt(((b as any).itemRank as string) || '999999', 10);
+      const valA = isNaN(rankA) ? 999999 : rankA;
+      const valB = isNaN(rankB) ? 999999 : rankB;
+
+      if (valA !== valB) {
+        return valA - valB;
+      }
+
       return a.name.length - b.name.length;
     });
   }

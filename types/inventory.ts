@@ -98,6 +98,8 @@ export interface Drug {
   additionalBarcodes?: string[];
   /** Item classification/rank for prioritization */
   itemRank?: string;
+  /** Total number of units sold or specific zinc ranking (used for smart autocomplete & reporting) */
+  zincItemRank?: number;
   /** Legacy database ID from CSV/migration */
   dbId?: string;
   batches?: Drug[];
