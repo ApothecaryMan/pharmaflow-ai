@@ -265,7 +265,16 @@ const App: React.FC = () => {
   // (Moved isEmployeePortalUser logic above to useUrlSync)
 
   const content = authState.isAuthenticated ? (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={
+        <div className='h-screen w-screen flex items-center justify-center bg-zinc-50 dark:bg-black'>
+          <div className='flex flex-col items-center gap-4'>
+            <LogoAsterisk />
+            <p className='text-zinc-500 dark:text-zinc-400'>{t.global?.loading}</p>
+          </div>
+        </div>
+      }
+    >
       {isEmployeePortalUser ? (
         <EmployeeDashboard
           t={t}
