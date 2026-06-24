@@ -48,7 +48,7 @@ export const SearchEngineInput = forwardRef<HTMLInputElement, SearchEngineInputP
       onClear,
       resultsCount: externalResultsCount,
       isLoading: externalIsLoading = false,
-      suggestions: externalSuggestions = [],
+      suggestions: externalSuggestions,
       onSuggestionAccept,
       inventory,
       onResultsChange,
@@ -80,13 +80,20 @@ export const SearchEngineInput = forwardRef<HTMLInputElement, SearchEngineInputP
 
     // Automated Search Effect
     useEffect(() => {
+      if (!value || value.trim().length < 2) {
+        setInternalResultsCount(0);
+        onResultsChangeRef.current?.([]);
+        setInternalSuggestions([]);
+        return;
+      }
+
       // If we are using the internal global engine
       if (engine && !inventory) {
         const results = engine.search(value, activeFilters);
         setInternalResultsCount(results.length);
         onResultsChangeRef.current?.(results);
 
-        const topSuggestions = results.slice(0, 5).map((d) => d.name || '');
+        const topSuggestions = results.slice(0, 5).map((d) => `${d.name} ${d.dosageForm || ''}`.trim());
         setInternalSuggestions(topSuggestions);
       }
 
@@ -96,13 +103,14 @@ export const SearchEngineInput = forwardRef<HTMLInputElement, SearchEngineInputP
         setInternalResultsCount(results.length);
         onResultsChangeRef.current?.(results);
 
-        const topSuggestions = results.slice(0, 5).map((d) => d.name || '');
+        const topSuggestions = results.slice(0, 5).map((d) => `${d.name} ${d.dosageForm || ''}`.trim());
         setInternalSuggestions(topSuggestions);
       }
     }, [value, engine, activeFilters, inventory]);
 
     // Determine which data to use (Internal vs External)
-    const suggestions = inventory || engine ? internalSuggestions : externalSuggestions;
+    // Priority: If externalSuggestions are explicitly passed, use them.
+    const suggestions = externalSuggestions !== undefined ? externalSuggestions : internalSuggestions;
 
     // PRIORITY: If an explicit resultsCount is passed via props (externalResultsCount), use it.
     // Otherwise, fallback to internal engine count if available.
@@ -118,35 +126,35 @@ export const SearchEngineInput = forwardRef<HTMLInputElement, SearchEngineInputP
     // Shortcuts Content for Tooltip - Theme Aware
     const shortcutsHint = (
       <div className='flex flex-col gap-2.5 p-1.5 min-w-[180px]'>
-        <div className='text-[10px] font-black text-primary-600 dark:text-primary-400 uppercase tracking-[0.1em] border-b border-gray-100 dark:border-white/10 pb-1.5 mb-1 flex items-center gap-2'>
+        <div className='text-[10px] font-black text-primary-400 dark:text-primary-600 uppercase tracking-[0.1em] border-b border-white/10 dark:border-black/10 pb-1.5 mb-1 flex items-center gap-2'>
           <span className='material-symbols-rounded text-[14px]'>auto_awesome</span>
           {language === 'AR' ? 'اختصارات البحث الذكي' : 'Smart Search Shortcuts'}
         </div>
 
         <div className='flex flex-col gap-1.5'>
           <div className='flex items-center justify-between gap-3'>
-            <span className='text-[11px] text-gray-800 dark:text-gray-200 font-medium'>
+            <span className='text-[11px] text-gray-200 dark:text-gray-800 font-medium'>
               {language === 'AR' ? 'بحث علمي / مادة فعالة' : 'Scientific Search'}
             </span>
-            <kbd className='px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/15 border border-gray-200 dark:border-white/10 text-[10px] font-black text-gray-600 dark:text-white shadow-xs'>
+            <kbd className='px-1.5 py-0.5 rounded bg-white/10 dark:bg-black/5 border border-white/10 dark:border-black/10 text-[10px] font-black text-white dark:text-gray-800 shadow-xs'>
               @
             </kbd>
           </div>
-          <p className='text-[9px] text-gray-500 dark:text-gray-400 italic leading-tight'>
+          <p className='text-[9px] text-gray-400 dark:text-gray-500 italic leading-tight'>
             {language === 'AR' ? 'مثال: @باراسيتامول' : 'Example: @paracetamol'}
           </p>
         </div>
 
-        <div className='flex flex-col gap-1.5 pt-1 border-t border-gray-100 dark:border-white/5'>
+        <div className='flex flex-col gap-1.5 pt-1 border-t border-white/10 dark:border-black/10'>
           <div className='flex items-center justify-between gap-3'>
-            <span className='text-[11px] text-gray-800 dark:text-gray-200 font-medium'>
+            <span className='text-[11px] text-gray-200 dark:text-gray-800 font-medium'>
               {language === 'AR' ? 'نطاق سعري (أقل/أعلى/)' : 'Price (min/max/)'}
             </span>
-            <kbd className='px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/15 border border-gray-200 dark:border-white/10 text-[10px] font-black text-gray-600 dark:text-white shadow-xs'>
+            <kbd className='px-1.5 py-0.5 rounded bg-white/10 dark:bg-black/5 border border-white/10 dark:border-black/10 text-[10px] font-black text-white dark:text-gray-800 shadow-xs'>
               10/50/
             </kbd>
           </div>
-          <p className='text-[9px] text-gray-500 dark:text-gray-400 italic leading-tight'>
+          <p className='text-[9px] text-gray-400 dark:text-gray-500 italic leading-tight'>
             {language === 'AR' ? 'مثال: 10/50/بنادول' : 'Example: 10/50/panadol'}
           </p>
         </div>

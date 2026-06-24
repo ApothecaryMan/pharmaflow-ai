@@ -272,23 +272,9 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             >
               <span className='invisible whitespace-pre text-base font-medium'>{value}</span>
               <span
-                className={`
-                        inline-flex items-center px-1.5 py-0.5 ms-1
-                        rounded-lg 
-                        bg-gray-100 dark:bg-(--bg-surface-neutral) 
-                        text-[14px] font-black tracking-tight
-                        text-gray-600 dark:text-gray-400 
-                        animate-in fade-in duration-100
-                        ${isCapsLock ? 'uppercase' : ''}
-                    `}
+                className={`whitespace-pre text-base font-medium text-gray-300 dark:text-gray-600 ${isCapsLock ? 'uppercase' : ''}`}
               >
                 {isCapsLock ? ghostText.toUpperCase() : ghostText}
-                <span
-                  className='material-symbols-rounded ms-1 opacity-60'
-                  style={{ fontSize: 'var(--icon-sm)' }}
-                >
-                  keyboard_tab
-                </span>
               </span>
             </div>
           )}

@@ -3,7 +3,7 @@ import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Z_INDEX } from '../../src/styles/z-index';
 
-const R = 6,
+const R = 10,
   AW = 14,
   AH = 6,
   VG = 4;
@@ -144,12 +144,12 @@ export const Tooltip: React.FC<{
               </svg>
               <div
                 ref={contentRef}
-                className='relative z-10 px-2.5 py-1 text-white dark:text-black text-[11px] font-semibold tracking-tight whitespace-nowrap w-max'
+                className='relative z-10 text-white dark:text-black text-[11px] font-semibold tracking-tight whitespace-nowrap w-max'
                 style={{
-                  paddingTop: side === 'bottom' ? AH + 4 : 4,
-                  paddingBottom: side === 'top' ? AH + 4 : 4,
-                  paddingLeft: side === 'right' ? AH + 7 : 7,
-                  paddingRight: side === 'left' ? AH + 7 : 7,
+                  paddingTop: side === 'bottom' ? AH + 8 : 8,
+                  paddingBottom: side === 'top' ? AH + 8 : 8,
+                  paddingLeft: side === 'right' ? AH + 12 : 12,
+                  paddingRight: side === 'left' ? AH + 12 : 12,
                 }}
               >
                 {content}

@@ -28,7 +28,7 @@ export const useInventorySearch = ({
 
   // 2. Perform search
   const { filteredDrugs, totalResults } = useMemo(() => {
-    if (!search || search.trim().length === 0) {
+    if (!search || search.trim().length < 2) {
       return { filteredDrugs: [], totalResults: 0 };
     }
 
