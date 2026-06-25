@@ -1,19 +1,53 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import type { Drug } from '../../../../types';
+import { inventorySearchEngine } from '../../../../services/search/drugSearchService';
 
+// ─── Constants ───────────────────────────────────────────────────────────────
+const FAST_KEY_THRESHOLD_MS = 50;   // Most HID scanners fire keys < 30ms apart
+const MIN_FAST_KEYS_TO_CONFIRM = 3; // Need 3+ fast keys to confirm it's a scanner
+const MIN_BARCODE_LENGTH = 3;       // Minimum barcode length to process
+const BUFFER_TIMEOUT_MS = 500;      // Clear stale buffer after 500ms of silence
+
+// ─── Scanner Event ───────────────────────────────────────────────────────────
+export interface BarcodeScanResult {
+  barcode: string;
+  drug: Drug | null;
+  source: 'hid' | 'keyboard';
+}
+
+// ─── Hook Props ──────────────────────────────────────────────────────────────
 interface UseBarcodeScannerProps {
   inventory: Drug[];
   addToCart: (drug: Drug) => void;
   playSuccess: () => void;
   playError: () => void;
   enabled?: boolean;
+  /** Called when leaked characters need to be trimmed from React state. */
+  onLeakedChars?: (leakedCount: number) => void;
+  /** Optional callback for scan events (useful for logging/analytics). */
+  onScanResult?: (result: BarcodeScanResult) => void;
 }
 
 /**
- * useBarcodeScanner
+ * useBarcodeScanner — Barcode-First Routing
  *
- * A smart hook that differentiates between human typing and machine barcode scanning
- * by measuring keystroke velocity (delta time).
+ * Core principle: barcode scanner input NEVER touches the search field.
+ *
+ * How it works:
+ * 1. Captures keystrokes in the **capture phase** (before React handlers).
+ * 2. Measures keystroke velocity to distinguish human typing vs HID scanner.
+ * 3. Once a "burst" of fast keys (delta < 50ms) is detected, ALL subsequent
+ *    keys are intercepted and buffered internally.
+ * 4. On Enter (standard HID scanner termination):
+ *    - Looks up the barcode via O(1) HashMap in inventorySearchEngine.
+ *    - Found → addToCart() + playSuccess(). Search field stays clean.
+ *    - Not found → playError() + optional notification. Search field stays clean.
+ *
+ * Edge cases handled:
+ * - **Leaked chars**: First 1-2 chars may reach React state before detection.
+ *   The `onLeakedChars` callback notifies the parent to trim them.
+ * - **Human fast typing**: Unlikely to trigger MIN_FAST_KEYS_TO_CONFIRM.
+ * - **Scanner without Enter**: 500ms timeout clears stale buffer.
  */
 export const useBarcodeScanner = ({
   inventory,
@@ -21,128 +55,174 @@ export const useBarcodeScanner = ({
   playSuccess,
   playError,
   enabled = true,
+  onLeakedChars,
+  onScanResult,
 }: UseBarcodeScannerProps) => {
-  const bufferRef = useRef<string>('');
-  const lastKeyTimeRef = useRef<number>(0);
-  const fastKeyCountRef = useRef<number>(0);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // ─── Refs (never change, no re-renders) ────────────────────────────────────
+  const bufferRef = useRef('');
+  const lastKeyTimeRef = useRef(0);
+  const fastKeyCountRef = useRef(0);
+  const isConfirmedScanRef = useRef(false); // true once we're sure it's a scanner
+  const leakedCharsCountRef = useRef(0); // chars that leaked before confirmation
+  const hasReportedLeakRef = useRef(false); // ensures we report leak exactly once per scan
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Exposed to siblings (e.g. handleGlobalKeyDown) so they can bail out mid-scan.
+  // Defined with the other refs so it's in scope for handleKeyDown/reset closures.
+  const isScanningRef = useRef(false);
 
-  // Keep latest references for callbacks and data to avoid effect re-runs
+  // Keep latest inventory + callbacks in refs to avoid effect re-runs
   const inventoryRef = useRef(inventory);
-  const callbacksRef = useRef({ addToCart, playSuccess, playError });
+  const callbacksRef = useRef({
+    addToCart,
+    playSuccess,
+    playError,
+    onLeakedChars,
+    onScanResult,
+  });
 
   useEffect(() => {
     inventoryRef.current = inventory;
-    callbacksRef.current = { addToCart, playSuccess, playError };
-  }, [inventory, addToCart, playSuccess, playError]);
+    callbacksRef.current = {
+      addToCart,
+      playSuccess,
+      playError,
+      onLeakedChars,
+      onScanResult,
+    };
+  }, [inventory, addToCart, playSuccess, playError, onLeakedChars, onScanResult]);
+
+  /**
+   * Process a completed barcode scan:
+   * 1. O(1) HashMap lookup via inventorySearchEngine
+   * 2. Route to cart or error
+   */
+  const processBarcode = useCallback((barcode: string) => {
+    const cb = callbacksRef.current;
+
+    // O(1) Lookup
+    const drug = inventorySearchEngine.searchByBarcode(barcode) as Drug | null;
+
+    // Also check internalCode (some scanners read internal labels)
+    const match = drug || inventoryRef.current.find(
+      (d) => d.internalCode === barcode
+    );
+
+    if (match) {
+      cb.addToCart(match);
+      cb.playSuccess();
+    } else {
+      console.warn(`[BarcodeScanner] Not found: "${barcode}"`);
+      cb.playError();
+    }
+
+    // Notify parent for analytics/logging
+    cb.onScanResult?.({
+      barcode,
+      drug: match,
+      source: 'hid',
+    });
+  }, []);
 
   useEffect(() => {
     if (!enabled) return;
 
+    const reset = () => {
+      bufferRef.current = '';
+      fastKeyCountRef.current = 0;
+      isConfirmedScanRef.current = false;
+      leakedCharsCountRef.current = 0;
+      hasReportedLeakRef.current = false;
+      isScanningRef.current = false;
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore modifier keys alone
-      if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) return;
-
-      const currentTime = Date.now();
-      const delta = lastKeyTimeRef.current > 0 ? currentTime - lastKeyTimeRef.current : 0;
-      lastKeyTimeRef.current = currentTime;
-
-      // Threshold: 50ms is usually safe for human vs machine differentiation
-      // Most scanners fire keys < 30ms apart.
-      const isFast = delta > 0 && delta < 50;
-
-      if (isFast) {
-        fastKeyCountRef.current += 1;
-      } else {
-        // Human typing speed or start of a new sequence
-        // If we were NOT in a sequence, we reset.
-        if (e.key !== 'Enter') {
-          // If we detect a slow key but had some buffer, check if we should clear it
-          if (fastKeyCountRef.current < 2) {
-            bufferRef.current = '';
-          }
-          fastKeyCountRef.current = 0;
-        }
-      }
-
-      // Handle Completion (Enter key is the standard end-of-scan for most HID scanners)
-      if (e.key === 'Enter') {
-        const barcode = bufferRef.current.trim();
-
-        // Only process if we detected a "burst" of fast keys or a significant buffer
-        if (barcode.length >= 3 && fastKeyCountRef.current >= 2) {
-          e.preventDefault();
-          e.stopPropagation();
-
-          const drug = inventoryRef.current.find(
-            (d) => d.barcode === barcode || d.internalCode === barcode
-          );
-
-          if (drug) {
-            callbacksRef.current.addToCart(drug);
-            callbacksRef.current.playSuccess();
-          } else {
-            console.warn(`[Scanner] Barcode not found: ${barcode}`);
-            callbacksRef.current.playError();
-          }
-
-          // Reset
-          bufferRef.current = '';
-          fastKeyCountRef.current = 0;
-          return;
-        }
-
-        // Reset on any Enter to keep it clean
-        bufferRef.current = '';
-        fastKeyCountRef.current = 0;
+      // Ignore modifier-only keys
+      if (
+        ['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Escape'].includes(e.key)
+      ) {
         return;
       }
 
-      // Buffer the key
+      const now = Date.now();
+      const delta = lastKeyTimeRef.current > 0 ? now - lastKeyTimeRef.current : 0;
+      lastKeyTimeRef.current = now;
+
+      const isFast = delta > 0 && delta < FAST_KEY_THRESHOLD_MS;
+      const wasConfirmed = isConfirmedScanRef.current;
+
+      // ─── Velocity Tracking ─────────────────────────────────────────────────
+      if (isFast) {
+        fastKeyCountRef.current += 1;
+        if (fastKeyCountRef.current >= MIN_FAST_KEYS_TO_CONFIRM) {
+          isConfirmedScanRef.current = true;
+          // Signal to siblings that a scan is in progress, so they can bail out.
+          isScanningRef.current = true;
+        }
+      } else if (!isConfirmedScanRef.current) {
+        // Slow key before confirmation — human typing. Reset burst.
+        fastKeyCountRef.current = 0;
+        bufferRef.current = '';
+      }
+
+      // ─── Enter Key = End of Scan ───────────────────────────────────────────
+      if (e.key === 'Enter') {
+        const barcode = bufferRef.current.trim();
+
+        if (isConfirmedScanRef.current && barcode.length >= MIN_BARCODE_LENGTH) {
+          e.preventDefault();
+          e.stopPropagation();
+          processBarcode(barcode);
+          reset();
+          return;
+        }
+
+        // Not a scan — let Enter propagate normally.
+        reset();
+        return;
+      }
+
+      // ─── Printable Character ────────────────────────────────────────────────
       if (e.key.length === 1) {
         bufferRef.current += e.key;
 
-        // Detection & Interception Logic
-        // If we are deep into a fast sequence (3+ fast keys), we start intercepting
-        if (fastKeyCountRef.current >= 2) {
+        if (isConfirmedScanRef.current) {
+          // Confirmed scanner → swallow the key. It does NOT leak, so we must
+          // NOT count it (only pre-confirmation chars reach React state).
           e.preventDefault();
           e.stopPropagation();
 
-          // "Smart Cleaning": If the 1st or 2nd character leaked into an input before
-          // we could identify it as a machine, we try to clean it up.
-          const activeEl = document.activeElement;
-          if (activeEl instanceof HTMLInputElement || activeEl instanceof HTMLTextAreaElement) {
-            // This is a bit aggressive but works for POS scenarios
-            // If the buffer just started and we are now sure it's a machine,
-            // the first 1-2 chars might be in the value.
-            if (fastKeyCountRef.current === 2) {
-              const val = activeEl.value;
-              // Remove the last 2 characters (the ones that leaked)
-              // Note: This assumes the scanner typed them at the cursor position.
-              activeEl.value = val.slice(0, -2);
-
-              // Trigger input event to notify React/Frameworks
-              activeEl.dispatchEvent(new Event('input', { bubbles: true }));
+          // On the key that just crossed the threshold, report the leak once.
+          if (!wasConfirmed && !hasReportedLeakRef.current) {
+            hasReportedLeakRef.current = true;
+            const leaked = leakedCharsCountRef.current;
+            if (leaked > 0) {
+              callbacksRef.current.onLeakedChars?.(leaked);
             }
           }
+        } else {
+          // Not confirmed yet → this char WILL reach React state. Count it.
+          leakedCharsCountRef.current += 1;
         }
       }
 
-      // Safety Timeout: If someone scans but the scanner doesn't send Enter,
-      // clear the buffer after 500ms of silence so it doesn't pollute the next scan.
+      // ─── Safety Timeout ──────────────────────────────────────────────────
+      // If scanner doesn't send Enter, clear buffer after silence.
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => {
-        bufferRef.current = '';
-        fastKeyCountRef.current = 0;
-      }, 500);
+        reset();
+      }, BUFFER_TIMEOUT_MS);
     };
 
-    // Use capture: true to intercept before other listeners (like search inputs)
+    // Capture phase: runs BEFORE React's synthetic events and other handlers.
+    // This guarantees we intercept scanner keystrokes before they reach the
+    // search input or handleGlobalKeyDown.
     window.addEventListener('keydown', handleKeyDown, true);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown, true);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [enabled]);
+  }, [enabled, processBarcode]);
+
+  return { isScanningRef };
 };

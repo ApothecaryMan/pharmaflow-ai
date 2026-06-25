@@ -212,12 +212,18 @@ export const POS: React.FC<POSProps> = ({
   );
 
   // Initialize Smart Barcode Scanner (Background Detection)
-  useBarcodeScanner({
+  // Callback to trim leaked characters from React state when scanner is detected
+  const handleLeakedChars = useCallback((leakedCount: number) => {
+    setSearch((prev: string) => prev.slice(0, -leakedCount));
+  }, [setSearch]);
+
+  const { isScanningRef } = useBarcodeScanner({
     inventory,
     addToCart,
     playSuccess,
     playError,
     enabled: hasOpenShift,
+    onLeakedChars: handleLeakedChars,
   });
 
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -241,6 +247,8 @@ export const POS: React.FC<POSProps> = ({
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Skip when barcode scanner is actively scanning (fast-key burst detected)
+      if (isScanningRef.current) return;
       if (
         document.activeElement?.tagName === 'INPUT' ||
         document.activeElement?.tagName === 'TEXTAREA'
