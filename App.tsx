@@ -34,11 +34,7 @@ const EmployeeSetupScreen = lazy(() =>
     default: m.EmployeeSetupScreen,
   }))
 );
-const NotificationOverlay = lazy(() =>
-  import('./components/features/alerts/NotificationOverlay').then((m) => ({
-    default: m.NotificationOverlay,
-  }))
-);
+import { NotificationOverlay } from './components/features/alerts/NotificationOverlay';
 
 import { ROUTES } from './config/routes';
 import { CatalogProvider, LANGUAGES, THEMES, useAlert, useSettings } from './context';
@@ -288,8 +284,6 @@ const App: React.FC = () => {
     >
       {isEmployeePortalUser ? (
         <EmployeeDashboard
-          t={t}
-          language={language}
           view={appState.view as 'profile' | 'requests'}
           onViewChange={appState.setView}
           onLogout={authState.handleLogout}
@@ -299,7 +293,7 @@ const App: React.FC = () => {
       )}
     </Suspense>
   ) : (
-    <AuthPage onLoginSuccess={handleLoginSuccess} language={language} />
+    <AuthPage onLoginSuccess={handleLoginSuccess} />
   );
 
   // Handle Onboarding Steps and Loading State

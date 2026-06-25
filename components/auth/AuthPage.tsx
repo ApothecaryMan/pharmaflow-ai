@@ -15,7 +15,6 @@ type AuthView = 'login' | 'signup' | 'forgot-password' | 'workspace-switcher';
 
 interface AuthPageProps {
   onLoginSuccess?: () => void;
-  language?: 'EN' | 'AR';
 }
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {

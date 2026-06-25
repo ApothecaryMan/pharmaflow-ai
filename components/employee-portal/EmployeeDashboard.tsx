@@ -2,11 +2,13 @@ import { startRegistration } from '@simplewebauthn/browser';
 import { Clock, Download, Menu } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useUpdateCheck } from '../../hooks/infrastructure/useUpdateCheck';
+import { TRANSLATIONS } from '../../i18n/translations';
 import { supabase } from '../../lib/supabase';
 import { authService } from '../../services/auth/authService';
 import { employeeProfileRepository } from '../../services/hr/repositories/employeeProfileRepository';
 import { employeeRepository } from '../../services/hr/repositories/employeeRepository';
 import { employmentRequestRepository } from '../../services/hr/repositories/employmentRequestRepository';
+import { useSettings } from '../../context';
 import type { Employee, EmploymentRequest, UserProfile } from '../../types';
 import { ContextMenuProvider } from '../common/ContextMenu';
 import { EmployeeMobileDock } from './EmployeeMobileDock';
@@ -22,20 +24,18 @@ const PrescriptionPricing = lazy(() => import('./PrescriptionPricing').then(m =>
 type EmployeeView = 'profile' | 'requests' | 'pricing';
 
 interface Props {
-  t: Translations;
-  language?: string;
   view?: EmployeeView;
   onViewChange?: (view: EmployeeView) => void;
   onLogout?: () => void;
 }
 
 export function EmployeeDashboard({
-  t,
-  language,
   view = 'requests',
   onViewChange,
   onLogout,
 }: Props) {
+  const { language } = useSettings();
+  const t = TRANSLATIONS[language];
   const session = authService.getCurrentUserSync();
   const { profile, requests, workspaces, isLoading, loadData, updateProfile, actionRequest } =
     useEmployeeDashboardData();
