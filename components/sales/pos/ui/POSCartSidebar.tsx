@@ -549,9 +549,6 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
                             cart={cart}
                           />
                         </div>
-                        {index < mergedCartItems.length - 1 && (
-                          <div className='h-px bg-gray-200/60 dark:bg-(--border-divider)' />
-                        )}
                       </React.Fragment>
                     );
                   })}

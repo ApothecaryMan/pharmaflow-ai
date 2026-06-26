@@ -239,13 +239,9 @@ export const usePOSCart = ({
         .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
 
       setCart((prev: CartItem[]) => {
-        const insertionIndex = prev.findIndex(
-          (item) => item.name === currentItem.name && item.dosageForm === currentItem.dosageForm
-        );
+        let currentInsertionIndex = prev.findIndex((item) => item.id === currentItem.id);
 
-        const filtered = prev.filter(
-          (item) => !(item.name === currentItem.name && item.dosageForm === currentItem.dosageForm)
-        );
+        const filtered = prev.filter((item) => item.id !== currentItem.id);
 
         const newItems: CartItem[] = [];
         let remainingPacks = packQty;
@@ -276,7 +272,7 @@ export const usePOSCart = ({
           const usedPacks = newItems
             .filter((i) => i.id === batch.id && !i.isUnit)
             .reduce((s, i) => s + i.quantity, 0);
-          const remainingStockForUnits = (stockInPacks - usedPacks) * unitsPerPack;
+          const remainingStockForUnits = batch.stock - (usedPacks * unitsPerPack);
 
           if (remainingUnits > 0 && unitsPerPack > 1) {
             const unitsTake = Math.min(remainingUnits, remainingStockForUnits);
@@ -294,12 +290,26 @@ export const usePOSCart = ({
           }
         }
 
-        if (insertionIndex !== -1) {
-          const result = [...filtered];
-          result.splice(insertionIndex, 0, ...newItems);
-          return result;
+        const finalCart = [...filtered];
+        for (const newItem of newItems) {
+          const existingIdx = finalCart.findIndex(
+            (i) => i.id === newItem.id && !!i.isUnit === !!newItem.isUnit
+          );
+          if (existingIdx !== -1) {
+            finalCart[existingIdx] = {
+              ...finalCart[existingIdx],
+              quantity: finalCart[existingIdx].quantity + newItem.quantity,
+            };
+          } else {
+            if (currentInsertionIndex !== -1) {
+              finalCart.splice(currentInsertionIndex, 0, newItem);
+              currentInsertionIndex++;
+            } else {
+              finalCart.push(newItem);
+            }
+          }
         }
-        return [...filtered, ...newItems];
+        return finalCart;
       });
     },
     [inventory, setCart]
@@ -347,8 +357,7 @@ export const usePOSCart = ({
         }
 
         const newQty = targetItem.quantity + delta;
-        if (newQty < 0) return prev;
-        if (newQty === 0) {
+        if (newQty < 0) {
           return prev.filter((i) => !(i.id === id && !!i.isUnit === isUnit));
         }
 
@@ -436,9 +445,6 @@ export const usePOSCart = ({
     }),
     useSensor(TouchSensor, {
       activationConstraint: { delay: 200, tolerance: 5 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { PopupAlert } from '../../common/PopupAlert';
 import type { UserRole } from '../../../config/permissions';
 import { permissionsService } from '../../../services/auth/permissionsService';
 import { pricingService } from '../../../services/sales/pricingService';
@@ -207,11 +208,26 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
     return allBatches.reduce((sum, b) => sum + b.stock, 0);
   }, [allBatches, item.stock]);
 
-  const [localPack, setLocalPack] = useState(packItem?.quantity.toString() || '');
-  const [localUnit, setLocalUnit] = useState(unitItem?.quantity.toString() || '');
+  const formatQty = (q?: number) => (q === 0 || q === undefined ? '' : q.toString());
 
-  useEffect(() => setLocalPack(packItem?.quantity.toString() || ''), [packItem?.quantity]);
-  useEffect(() => setLocalUnit(unitItem?.quantity.toString() || ''), [unitItem?.quantity]);
+  const [localPack, setLocalPack] = useState(formatQty(packItem?.quantity));
+  const [localUnit, setLocalUnit] = useState(formatQty(unitItem?.quantity));
+  
+  const [popupState, setPopupState] = useState<{
+    isOpen: boolean;
+    type: 'confirm' | 'warning' | 'info';
+    title?: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm?: () => void;
+    onCancel?: () => void;
+  }>({ isOpen: false, type: 'info', message: '' });
+  
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => setLocalPack(formatQty(packItem?.quantity)), [packItem?.quantity]);
+  useEffect(() => setLocalUnit(formatQty(unitItem?.quantity)), [unitItem?.quantity]);
 
   const handleQtyChange = (valStr: string, isUnit: boolean) => {
     const setLocal = isUnit ? setLocalUnit : setLocalPack;
@@ -229,7 +245,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
 
     // Zero = remove this mode's entry from cart
     if (val === 0) {
-      setLocal('0');
+      setLocal('');
       if (target) {
         updateQuantity(target.id, isUnit, -target.quantity);
       }
@@ -252,23 +268,60 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
 
     // REJECT if value exceeds total stock limit — don't clamp, don't change
     if (val > max) {
-      setLocal(target?.quantity?.toString() || '');
+      setPopupState({
+        isOpen: true,
+        type: 'warning',
+        message: t.stockLimitReached || 'لا يوجد رصيد كافي في المخزن لتلبية هذه الكمية',
+        confirmText: 'حسناً',
+        onConfirm: () => {
+          setPopupState(prev => ({ ...prev, isOpen: false }));
+          setLocal(formatQty(target?.quantity));
+        },
+      });
       return;
     }
 
-    // Auto-split: if qty exceeds CURRENT BATCH stock, distribute across batches
+    // Auto-split OR Prevent: if qty exceeds CURRENT BATCH stock
     const currentBatchStock = item.stock || 0;
     const currentBatchMax = isUnit
       ? currentBatchStock
       : Math.floor(currentBatchStock / unitsPerPack);
 
-    if (val > currentBatchMax && onSelectBatch && allBatches && allBatches.length > 1) {
-      const newPackQty = isUnit ? (packItem?.quantity || 0) : val;
-      const newUnitQty = isUnit ? val : (unitItem?.quantity || 0);
-      const currentDrug = allBatches.find((b) => b.id === item.id) || (item as unknown as Drug);
-      onSelectBatch(item, currentDrug, newPackQty, newUnitQty);
-      setLocal(val.toString());
-      return;
+    if (val > currentBatchMax) {
+      const currentCartQty = isUnit ? (unitItem?.quantity || 0) : (packItem?.quantity || 0);
+      const hasOtherBatchesInCart = cart.some(
+        (i) => i.name === item.name && i.dosageForm === item.dosageForm && i.id !== item.id
+      );
+
+      // If the row is ALREADY maxed out AND there are already other batches in the cart, prevent any further increases
+      // This forces the user to increase the quantities on the newly added batch rows instead of the completed one
+      if (currentCartQty >= currentBatchMax && val > currentCartQty && hasOtherBatchesInCart) {
+        setLocal(formatQty(target?.quantity));
+        return;
+      }
+
+      if (onSelectBatch && allBatches && allBatches.length > 1) {
+        setPopupState({
+          isOpen: true,
+          type: 'confirm',
+          title: 'توزيع باقي الكمية',
+          message: 'الكمية المطلوبة غير متوفرة بالكامل في هذه التشغيلة. هل تريد استكمال الباقي من التشغيلات الأخرى؟',
+          confirmText: 'توزيع الباقي',
+          cancelText: 'إلغاء',
+          onConfirm: () => {
+            const newPackQty = isUnit ? (packItem?.quantity || 0) : val;
+            const newUnitQty = isUnit ? val : (unitItem?.quantity || 0);
+            const currentDrug = allBatches.find((b) => b.id === item.id) || (item as unknown as Drug);
+            onSelectBatch(item, currentDrug, newPackQty, newUnitQty);
+            setPopupState(prev => ({ ...prev, isOpen: false }));
+          },
+          onCancel: () => {
+            setLocal(formatQty(target?.quantity));
+            setPopupState(prev => ({ ...prev, isOpen: false }));
+          }
+        });
+        return;
+      }
     }
 
     // Normal update within current batch
@@ -283,11 +336,21 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
   const inputClass =
     'w-full h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none';
 
+  const currentBatchStockForStyle = item.stock || 0;
+  const currentBatchMaxPacks = Math.floor(currentBatchStockForStyle / unitsPerPack);
+  const currentBatchMaxUnits = currentBatchStockForStyle;
+  const currentPackQty = packItem?.quantity || 0;
+  const currentUnitQty = unitItem?.quantity || 0;
+  const isPackMaxed = currentBatchMaxPacks > 0 && currentPackQty >= currentBatchMaxPacks;
+  const isUnitMaxed = currentBatchMaxUnits > 0 && currentUnitQty >= currentBatchMaxUnits;
+  const isAnyMaxed = isPackMaxed || isUnitMaxed;
+
   if (isMobile) {
     const renderStepper = (isUnit: boolean) => {
       const q = (isUnit ? unitItem : packItem)?.quantity || 0;
+      const isMaxed = isUnit ? isUnitMaxed : isPackMaxed;
       return (
-        <div className='flex items-center rounded-lg h-6 overflow-hidden bg-black/[0.03] dark:bg-white/[0.05]'>
+        <div className={`flex items-center rounded-lg h-6 overflow-hidden ${isMaxed ? 'bg-red-50 dark:bg-red-900/20 ring-1 ring-red-500/50' : 'bg-black/[0.03] dark:bg-white/[0.05]'}`}>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -309,17 +372,18 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
             onChange={(e) => handleQtyChange(e.target.value, isUnit)}
             onBlur={() =>
               (isUnit ? localUnit : localPack) === '' &&
-              (isUnit ? setLocalUnit : setLocalPack)(q.toString())
+              (isUnit ? setLocalUnit : setLocalPack)(formatQty(q))
             }
             onWheel={(e) => (e.target as HTMLInputElement).blur()}
-            className='w-6 h-full text-[10px] font-black text-center bg-transparent border-none p-0 focus:outline-none'
+            className={`w-6 h-full text-[10px] font-black text-center bg-transparent border-none p-0 focus:outline-none ${isMaxed ? 'text-red-600 dark:text-red-400' : ''}`}
           />
           <button
             onClick={(e) => {
               e.stopPropagation();
               updateQuantity(item.id, isUnit, 1);
             }}
-            className='w-5 h-full flex items-center justify-center text-primary-600 active:scale-90'
+            disabled={isMaxed}
+            className={`w-5 h-full flex items-center justify-center active:scale-90 ${isMaxed ? 'opacity-30 text-gray-400' : 'text-primary-600'}`}
           >
             <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
               add
@@ -329,7 +393,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
       );
     };
     return (
-      <div className='flex items-center gap-0.5 shrink-0' dir='ltr'>
+      <div className='flex items-center gap-0.5 shrink-0 relative' dir='ltr' ref={containerRef}>
         {renderStepper(false)}
         {hasDualMode && (
           <>
@@ -337,12 +401,13 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
             {renderStepper(true)}
           </>
         )}
+        <PopupAlert {...popupState} anchorRef={containerRef} />
       </div>
     );
   }
 
   return (
-    <div className='flex items-center rounded-lg h-6 overflow-hidden w-14 shrink-0 bg-black/[0.03] dark:bg-white/[0.05] border border-gray-100/50 dark:border-white/5'>
+    <div ref={containerRef} className={`flex items-center rounded-lg h-6 overflow-hidden w-14 shrink-0 border ${isAnyMaxed ? 'bg-red-50 dark:bg-red-900/20 border-red-500/50' : 'bg-black/[0.03] dark:bg-white/[0.05] border-gray-100/50 dark:border-white/5'} relative`}>
       <div className='flex-1 h-full flex items-center min-w-0'>
         <input
           type='number'
@@ -351,14 +416,14 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
           min={0}
           step={1}
           onChange={(e) => handleQtyChange(e.target.value, false)}
-          onBlur={() => localPack === '' && setLocalPack(packItem?.quantity.toString() || '')}
+          onBlur={() => localPack === '' && setLocalPack(formatQty(packItem?.quantity))}
           onWheel={(e) => (e.target as HTMLInputElement).blur()}
-          className={inputClass}
+          className={`${inputClass} ${isPackMaxed ? 'text-red-600 dark:text-red-400' : ''}`}
         />
       </div>
       {hasDualMode && (
         <>
-          <div className='w-px h-full bg-gray-100/50 dark:bg-white/5 shrink-0' />
+          <div className={`w-px h-full shrink-0 ${isAnyMaxed ? 'bg-red-500/20' : 'bg-gray-100/50 dark:bg-white/5'}`} />
           <div className='flex-1 h-full flex items-center min-w-0'>
             <input
               type='number'
@@ -368,13 +433,14 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
               step={1}
               title={`1 Pack = ${unitsPerPack} Units`}
               onChange={(e) => handleQtyChange(e.target.value, true)}
-              onBlur={() => localUnit === '' && setLocalUnit(unitItem?.quantity.toString() || '')}
+              onBlur={() => localUnit === '' && setLocalUnit(formatQty(unitItem?.quantity))}
               onWheel={(e) => (e.target as HTMLInputElement).blur()}
-              className={inputClass}
+              className={`${inputClass} ${isUnitMaxed ? 'text-red-600 dark:text-red-400' : ''}`}
             />
           </div>
         </>
       )}
+      <PopupAlert {...popupState} anchorRef={containerRef} />
     </div>
   );
 };
