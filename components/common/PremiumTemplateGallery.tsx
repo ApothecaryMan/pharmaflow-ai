@@ -26,26 +26,19 @@ export const PremiumTemplateGallery: React.FC<PremiumTemplateGalleryProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t.gallery?.title || 'Template Marketplace'} size='6xl'>
       <div className='h-[85vh] flex flex-col'>
-        <div className='flex-1 overflow-y-auto custom-scrollbar flex flex-wrap justify-center gap-6 p-1'>
+        <div className='flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar flex items-start gap-6 p-4 w-full'>
           {templates.map((template) => {
             const isSelected = selectedId === template.id;
             return (
               <div
                 key={template.id}
-                className={`w-[302px] shrink-0 group bg-white dark:bg-card border-2 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col relative ${
+                className={`shrink-0 group bg-white dark:bg-card border-2 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col relative ${
                   isSelected
                     ? `border-${color}-500 shadow-lg`
                     : 'border-gray-200 dark:border-border/60 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
+                style={{ width: 'calc(80mm + 4px)' }}
               >
-                {/* Premium Badge */}
-                {template.isPremium && (
-                  <div className='absolute top-3 left-3 z-10 bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-md'>
-                    <span className='material-symbols-rounded text-[12px]'>workspace_premium</span>
-                    {t.gallery?.premium || 'Premium'}
-                  </div>
-                )}
-                
                 {/* Selected Badge */}
                 {isSelected && (
                   <div className={`absolute top-3 right-3 z-10 bg-${color}-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md`}>
@@ -69,11 +62,11 @@ export const PremiumTemplateGallery: React.FC<PremiumTemplateGalleryProps> = ({
                     srcDoc={template.previewHtml}
                     scrolling='no'
                     className='border-none pointer-events-none'
-                    style={{ width: '302px' }}
+                    style={{ width: '100%' }}
                     onLoad={(e) => {
                       const iframe = e.target as HTMLIFrameElement;
                       if (iframe.contentWindow) {
-                        iframe.style.height = `${iframe.contentWindow.document.body.scrollHeight + 50}px`;
+                        iframe.style.height = `${iframe.contentWindow.document.body.scrollHeight + 10}px`;
                       }
                     }}
                     title={template.name}
@@ -81,20 +74,28 @@ export const PremiumTemplateGallery: React.FC<PremiumTemplateGalleryProps> = ({
                 </div>
 
                 {/* Template Info */}
-                <div className='p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-black/10'>
-                  <div className='flex items-center justify-between mb-1'>
+                <div className='p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-black/10' dir='ltr'>
+                  <div className='flex items-center justify-between'>
                     <h3 className='font-bold text-gray-800 dark:text-gray-200'>
                       {template.name}
                     </h3>
-                    <span className={`text-xs font-bold ${template.isPremium ? 'text-amber-500' : 'text-gray-500'}`}>
-                      {template.isPremium ? (template.price ? `$${template.price}` : 'PRO') : (t.gallery?.free || 'Free')}
-                    </span>
+                    <div className='flex items-center gap-1.5'>
+                      {template.isPremium ? (
+                        <>
+                          <span className='bg-amber-500/10 text-amber-500 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider whitespace-nowrap'>
+                            PAID
+                          </span>
+                          <span className='text-xs font-bold text-amber-500'>
+                            ${template.price}
+                          </span>
+                        </>
+                      ) : (
+                        <span className='bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider whitespace-nowrap'>
+                          {t.gallery?.free || 'FREE'}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  {template.description && (
-                    <p className='text-xs text-gray-500 dark:text-gray-400 line-clamp-2'>
-                      {template.description}
-                    </p>
-                  )}
                 </div>
               </div>
             );

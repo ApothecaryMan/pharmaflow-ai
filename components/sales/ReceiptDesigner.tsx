@@ -242,10 +242,10 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       {
         id: '2',
         branchId: 'BR-001',
-        name: 'Vitamin C 1000mg',
+        name: 'Vitamin C Ascorbic Panadol Acid 1000mg',
         genericName: ['Ascorbic Acid'],
-        quantity: 3,
-        publicPrice: 45.0,
+        quantity: 395,
+        publicPrice: 45000.0,
         costPrice: 30,
         category: 'Vitamins',
         isUnit: true,
@@ -590,6 +590,43 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
         </div>
 
         <hr className='border-gray-100 dark:border-gray-700/50' />
+
+        {/* Layout Selection */}
+        <div className='mt-4 mb-2'>
+          <label className='text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1'>
+            <span className='material-symbols-rounded text-[14px]'>dashboard</span>
+            {language === 'AR' ? 'شكل الفاتورة' : 'Receipt Layout'}
+          </label>
+          <div className='grid grid-cols-5 gap-2'>
+            {RECEIPT_TEMPLATES.map(t => {
+              const isActive = (options.receiptLayout || 'layout-1') === t.id;
+              const translatedName = language === 'AR' 
+                ? t.name.replace('Standard (Default)', 'الأساسي (افتراضي)')
+                        .replace('Modern Dark', 'عصري داكن')
+                        .replace('Compact Minimal', 'مضغوط')
+                        .replace('Structured Grid', 'جدول منتظم')
+                        .replace('Elegant Typography', 'أنيق طباعياً')
+                : t.name;
+                
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setOptions({ ...options, receiptLayout: t.id as any })}
+                  className={`p-1.5 rounded-lg border text-center flex flex-col items-center justify-center gap-1 transition-all ${
+                    isActive 
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 ring-1 ring-primary-500 shadow-sm' 
+                      : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
+                  title={t.description}
+                >
+                  <span className='text-[10px] font-medium leading-tight text-center break-words w-full'>
+                    {translatedName}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <div className='space-y-3'>
           {/* Logo Section - Compact Grid */}
@@ -1013,7 +1050,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
         <div className='flex-1 overflow-y-auto custom-scrollbar p-8 flex justify-center'>
           <div
             className='bg-white shadow-2xl shadow-gray-300 dark:shadow-black shrink-0 transition-all duration-200 ease-in-out rounded-lg overflow-hidden'
-            style={{ width: '79mm', height: 'fit-content', minHeight: '300px' }}
+            style={{ width: '80mm', height: 'fit-content', minHeight: '300px' }}
           >
             <iframe
               srcDoc={previewHtml}
@@ -1044,7 +1081,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
         templates={RECEIPT_TEMPLATES.map((t: any) => ({
           ...t,
           previewHtml: generateInvoiceHTML(
-            { ...DUMMY_SALE, total: 111.0, saleType: 'delivery', customerAddress: '123 Fake St' } as any, 
+            { ...DUMMY_SALE, total: 111.0, saleType: 'delivery' } as any, 
             { ...options, receiptLayout: t.id as any }
           ),
           renderDimensions: { width: '80mm', height: '140mm', scale: 1.0 }

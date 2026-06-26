@@ -6,9 +6,13 @@
  */
 
 import { StorageKeys } from '../../config/storageKeys';
-import { CartItem, type Sale } from '../../types';
+import { type Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { printDocument } from '../../utils/printing';
+import { generateLayout2HTML } from './InvoiceLayout2';
+import { generateLayout3HTML } from './InvoiceLayout3';
+import { generateLayout4HTML } from './InvoiceLayout4';
+import { generateLayout5HTML } from './InvoiceLayout5';
 
 export interface InvoiceTemplateOptions {
   /** Store name to display in header */
@@ -44,7 +48,7 @@ export interface InvoiceTemplateOptions {
   /** ID of the field currently focused in the designer, for preview highlighting */
   highlightedField?: string;
   /** Selected layout */
-  receiptLayout?: 'layout-1' | 'layout-2' | 'layout-3';
+  receiptLayout?: 'layout-1' | 'layout-2' | 'layout-3' | 'layout-4' | 'layout-5';
 }
 
 export const defaultOptions: InvoiceTemplateOptions = {
@@ -101,7 +105,7 @@ export const INVOICE_DEFAULTS = {
  * @param opts - Optional configuration for the template
  * @returns Complete HTML string for the receipt
  */
-function generateLayout1HTML(sale: Sale, opts: InvoiceTemplateOptions, _lang?: string, _defaults?: any): string {
+export function generateLayout1HTML(sale: Sale, opts: InvoiceTemplateOptions, _lang?: string, _defaults?: any): string {
   const lang = opts.language || 'EN';
   const isRTL = lang === 'AR';
 
@@ -324,7 +328,7 @@ function generateLayout1HTML(sale: Sale, opts: InvoiceTemplateOptions, _lang?: s
         </div>
         <div class="total-row" style="border-top: 1px dashed #000; padding-top: 5px; margin-top: 2px; border-bottom: 1px dashed #000; padding-bottom: 5px;">
           <span>TOTAL</span>
-          <span>${sale.total.toFixed(2)}</span>
+          <span>${sale.total.toFixed(2)} EGP</span>
         </div>
         ${
           sale.hasReturns || (sale.netTotal !== undefined && sale.netTotal < sale.total)
@@ -400,7 +404,7 @@ function generateLayout1HTML(sale: Sale, opts: InvoiceTemplateOptions, _lang?: s
       <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
       <script>
         window.onload = function() { 
-          JsBarcode("#barcode", "${sale.serialId}", {
+          JsBarcode("#barcode", "${sale.serialId || sale.id}", {
             format: "CODE128",
             lineColor: "#000",
             width: 2,
@@ -426,51 +430,20 @@ function generateLayout1HTML(sale: Sale, opts: InvoiceTemplateOptions, _lang?: s
  * @param options - Optional template configuration
  */
 
-function generateLayout2HTML(sale: Sale, opts: InvoiceTemplateOptions): string {
-  return generateLayout1HTML(sale, opts).replace(
-    '<body>',
-    '<body class="modern-dark">'
-  ).replace(
-    '</style>',
-    `.modern-dark .header { background: #000; color: #fff; padding: 10px; border-radius: 8px; margin-bottom: 12px; }
-     .modern-dark .header .highlight { outline-color: #fff !important; }
-     .modern-dark table th { border-bottom: 2px solid #000; text-transform: uppercase; }
-     .modern-dark .totals { background: #f9fafb; padding: 8px; border-radius: 8px; border: 1px solid #e5e7eb; }
-     .modern-dark .final { font-size: 14px; font-weight: bold; background: #000; color: #fff; padding: 6px; border-radius: 4px; margin-top: 4px; border: none; }
-     </style>`
-  );
-}
-
-function generateLayout3HTML(sale: Sale, opts: InvoiceTemplateOptions): string {
-  return generateLayout1HTML(sale, opts).replace(
-    '<body>',
-    '<body class="compact-minimal">'
-  ).replace(
-    '</style>',
-    `.compact-minimal { font-size: 9px !important; line-height: 1.1 !important; padding: 2px !important; }
-     .compact-minimal .header { margin-bottom: 4px; }
-     .compact-minimal .store-logo { width: 40px !important; }
-     .compact-minimal .divider { margin: 2px 0; border-top: 1px dashed #ccc; }
-     .compact-minimal table th { border-bottom: 1px solid #ccc; padding-bottom: 1px; }
-     .compact-minimal td { padding: 1px 0; }
-     .compact-minimal .totals { margin-top: 2px; }
-     .compact-minimal .total-row { margin-bottom: 1px; }
-     .compact-minimal .final { padding: 2px 0; margin-top: 2px; }
-     .compact-minimal .footer { margin-top: 4px; margin-bottom: 4px; font-size: 8px; }
-     .compact-minimal #barcode { height: 30px; }
-     </style>`
-  );
-}
 
 export const RECEIPT_TEMPLATES = [
   { id: 'layout-1', name: 'Standard (Default)', isPremium: false },
   { id: 'layout-2', name: 'Modern Dark', isPremium: true, price: 9.99, description: 'A bold, modern look with an inverted header.' },
-  { id: 'layout-3', name: 'Compact Minimal', isPremium: true, price: 4.99, description: 'Saves thermal paper with tight spacing and smaller fonts.' }
+  { id: 'layout-3', name: 'Compact Minimal', isPremium: true, price: 4.99, description: 'Saves thermal paper with tight spacing and smaller fonts.' },
+  { id: 'layout-4', name: 'Structured Grid', isPremium: true, price: 5.99, description: 'A highly organized table-based design for clear data separation.' },
+  { id: 'layout-5', name: 'Elegant Typography', isPremium: true, price: 6.99, description: 'Distinctive design using modern fonts for a premium feel.' }
 ];
 
 export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {}): string {
   if (opts.receiptLayout === 'layout-2') return generateLayout2HTML(sale, opts);
   if (opts.receiptLayout === 'layout-3') return generateLayout3HTML(sale, opts);
+  if (opts.receiptLayout === 'layout-4') return generateLayout4HTML(sale, opts);
+  if (opts.receiptLayout === 'layout-5') return generateLayout5HTML(sale, opts);
   return generateLayout1HTML(sale, opts);
 }
 

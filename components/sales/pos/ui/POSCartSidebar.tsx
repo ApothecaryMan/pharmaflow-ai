@@ -61,7 +61,7 @@ const DeliveryCalculatorContent = ({ globalDeliveryFee, setDeliveryFee, hideMenu
           <button
             onClick={() => {
               const current = parseFloat(val) || 0;
-              if (current > 0) setVal((current - 0.5).toString());
+              if (current > 0) setVal((current - 1).toString());
             }}
             className='px-2 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-500 transition-colors'
           >
@@ -69,7 +69,7 @@ const DeliveryCalculatorContent = ({ globalDeliveryFee, setDeliveryFee, hideMenu
           </button>
           <input
             type='number'
-            step='0.5'
+            step='1'
             autoFocus
             value={val}
             onChange={(e) => setVal(e.target.value)}
@@ -80,7 +80,7 @@ const DeliveryCalculatorContent = ({ globalDeliveryFee, setDeliveryFee, hideMenu
           <button
             onClick={() => {
               const current = parseFloat(val) || 0;
-              setVal((current + 0.5).toString());
+              setVal((current + 1).toString());
             }}
             className='px-2 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-500 transition-colors border-l border-gray-100 dark:border-white/10'
           >
