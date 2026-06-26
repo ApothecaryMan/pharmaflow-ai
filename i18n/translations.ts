@@ -2130,6 +2130,19 @@ export const TRANSLATIONS = {
         delivery: 'Delivery Preview',
         returns: 'Returns Preview',
       },
+      gallery: {
+        title: 'Template Marketplace',
+        subtitle: 'Choose a receipt layout that fits your pharmacy.',
+        apply: 'Apply Template',
+        premium: 'Premium',
+        unlock: 'Unlock / Buy',
+        free: 'Free',
+        layouts: {
+          'layout-1': 'Standard (Default)',
+          'layout-2': 'Modern Dark',
+          'layout-3': 'Compact Minimal',
+        }
+      },
     },
     printerSettings: {
       title: 'Printer Settings',
@@ -5566,6 +5579,19 @@ export const TRANSLATIONS = {
         addressBox: 'إظهار مربع العنوان',
         delivery: 'معاينة الدليفري',
         returns: 'معاينة المرتجع',
+      },
+      gallery: {
+        title: 'متجر القوالب',
+        subtitle: 'اختر تصميم الفاتورة المناسب لصيدليتك.',
+        apply: 'تطبيق القالب',
+        premium: 'قالب مميز',
+        unlock: 'شراء / فتح',
+        free: 'مجاني',
+        layouts: {
+          'layout-1': 'الأساسي (الافتراضي)',
+          'layout-2': 'الحديث (داكن)',
+          'layout-3': 'المضغوط (بسيط)',
+        }
       },
     },
     printerSettings: {

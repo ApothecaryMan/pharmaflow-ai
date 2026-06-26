@@ -7,10 +7,11 @@ import type { Sale, Shift } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
 import { FilterDropdown } from '../common/FilterDropdown';
+import { PremiumTemplateGallery } from '../common/PremiumTemplateGallery';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartInput, useSmartDirection } from '../common/SmartInputs';
 import { useStatusBar } from '../layout/StatusBar';
-import { generateInvoiceHTML, type InvoiceTemplateOptions } from '../sales/InvoiceTemplate';
+import { generateInvoiceHTML, type InvoiceTemplateOptions, RECEIPT_TEMPLATES } from '../sales/InvoiceTemplate';
 import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
 
 interface ReceiptDesignerProps {
@@ -122,6 +123,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   const [editingNameValue, setEditingNameValue] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
   // Track last saved state to show/hide save button
   const [lastSavedOptions, setLastSavedOptions] = useState<string>(() => JSON.stringify(options));
@@ -317,7 +319,6 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   }, [getVerifiedDate, showDuplicatePreview]);
 
   // 3. Preview HTML Generation
-  // 3. Preview HTML Generation
   const [previewHtml, setPreviewHtml] = useState('');
 
   useEffect(() => {
@@ -354,31 +355,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
     if (bytes < 1024) return `${bytes} B`;
     return `${(bytes / 1024).toFixed(1)} KB`;
   }, [previewHtml]);
-  /* 
-  // Old calculation for reference (HTML + Base64 images decoded)
-  const actualPrintSize = useMemo(() => {
-    if (!previewHtml) return '0 B';
-    
-    // حساب HTML (يشمل السلاسل النصية للصور)
-    const htmlBytes = new TextEncoder().encode(previewHtml).length;
-    
-    // حساب حجم الصور الفعلي (تقريبي من base64)
-    const images = (previewHtml.match(/data:image\/[^;]+;base64,[^"]+/g) || []) as string[];
-    const imageBytes = images.reduce((sum: number, img: string) => {
-      const parts = img.split(',');
-      if (parts.length < 2) return sum;
-      const base64 = parts[1];
-      return sum + (base64.length * 0.75); // تحويل تقريبي لحجم الباينري
-    }, 0);
-    
-    const total = htmlBytes + imageBytes;
-    
-    if (total < 1024) return `${total.toFixed(0)} B`;
-    if (total < 1024 * 1024) return `${(total / 1024).toFixed(1)} KB`;
-    return `${(total / (1024 * 1024)).toFixed(1)} MB`;
-  }, [previewHtml]);
-  */
-
+  
   const actualPrintSize = useMemo(() => {
     if (!previewHtml) return '0 B';
 
@@ -599,6 +576,13 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   className='w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-primary-500 hover:text-white transition-all border border-gray-200 dark:border-gray-700'
                 >
                   <span className='material-symbols-rounded'>add</span>
+                </button>
+                <button
+                  onClick={() => setIsGalleryOpen(true)}
+                  className='w-10 h-10 flex items-center justify-center rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 hover:bg-purple-500 hover:text-white transition-all border border-purple-200 dark:border-purple-800/50'
+                  title={t.receiptDesigner.gallery?.title || 'Templates Market'}
+                >
+                  <span className='material-symbols-rounded text-[20px]'>storefront</span>
                 </button>
               </>
             )}
@@ -1052,6 +1036,27 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
           </div>
         </div>
       </div>
+
+      {/* Templates Market Gallery */}
+      <PremiumTemplateGallery
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        templates={RECEIPT_TEMPLATES.map((t: any) => ({
+          ...t,
+          previewHtml: generateInvoiceHTML(
+            { ...DUMMY_SALE, total: 111.0, saleType: 'delivery', customerAddress: '123 Fake St' } as any, 
+            { ...options, receiptLayout: t.id as any }
+          ),
+          renderDimensions: { width: '80mm', height: '140mm', scale: 1.0 }
+        }))}
+        selectedId={options.receiptLayout || 'layout-1'}
+        onSelect={(id) => setOptions({ ...options, receiptLayout: id as any })}
+        onUnlockPremium={(id) => {
+          alert('Premium templates store coming soon!');
+        }}
+        t={t.receiptDesigner}
+        color='primary'
+      />
     </div>
   );
 };
