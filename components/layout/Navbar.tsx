@@ -21,7 +21,6 @@ import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { Switch } from '../common/Switch';
 import { Tooltip } from '../common/Tooltip';
-import { PrinterSettings } from '../settings/PrinterSettings';
 import { AttendanceQuickAction } from './AttendanceQuickAction';
 import { NavModules } from './navbar/NavModules';
 import { NavUserActions } from './navbar/NavUserActions';
@@ -103,7 +102,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   const [activeOrg, setActiveOrg] = useState<Organization | null>(null);
 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showPrinterSettings, setShowPrinterSettings] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSwitchingOrg, setIsSwitchingOrg] = useState(false);
 
@@ -433,18 +431,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({
           isDataLoading={isDataLoading}
           isLoggingOut={isLoggingOut}
           setIsLoggingOut={setIsLoggingOut}
-          setShowPrinterSettings={setShowPrinterSettings}
         />
       )}
-
-      {/* Printer Settings Modal */}
-      <PrinterSettings
-        isOpen={showPrinterSettings}
-        onClose={() => setShowPrinterSettings(false)}
-        color={theme}
-        t={t}
-        language={language}
-      />
     </nav>
   );
 };

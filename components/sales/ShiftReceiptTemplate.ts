@@ -101,6 +101,8 @@ export const generateShiftReceiptHTML = (
     .text-right { text-align: right; }
     .text-left { text-align: left; }
     .bold { font-weight: bold; }
+    .store-logo { width: 80px; height: auto; margin: 0 auto 5px auto; display: block; }
+    .store-logo svg { width: 100% !important; height: 100% !important; max-height: 15mm; object-fit: contain; }
     .divider { border-top: 1px dashed #000; margin: 5px 0; height: 0; }
     .strong-divider { border-top: 2px solid #000; margin: 6px 0; height: 0; }
     

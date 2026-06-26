@@ -27,8 +27,23 @@ export interface PrinterSettings {
   silentMode: SilentMode;
 }
 
+export type PrinterOrientation = 'portrait' | 'landscape';
+
+export interface PrintSize {
+  /** Paper width in mm */
+  width: number;
+  /** Paper height in mm */
+  height: number;
+  /**
+   * Print orientation. Labels (width > height) must be 'landscape' or the
+   * printer auto-rotates them (GitHub qzind/tray#428, #635). Defaults to
+   * auto-derived from width/height when omitted.
+   */
+  orientation?: PrinterOrientation;
+}
+
 export interface PrintConfig {
-  /** Paper size in mm [width, height] */
+  /** Paper size in mm + optional orientation */
   size?: { width: number; height: number };
   /** Print margins in mm */
   margins?: { top: number; right: number; bottom: number; left: number };
@@ -37,8 +52,18 @@ export interface PrintConfig {
   /** Color mode */
   colorType?: 'color' | 'grayscale' | 'blackwhite';
   /** Print orientation */
-  orientation?: 'portrait' | 'landscape';
+  orientation?: PrinterOrientation;
 }
+
+/**
+ * Resolves the effective orientation: explicit value wins, otherwise labels
+ * (width > height) become landscape and tall/narrow pages stay portrait.
+ */
+const resolveOrientation = (
+  width: number,
+  height: number,
+  explicit?: PrinterOrientation
+): PrinterOrientation => explicit ?? (width > height ? 'landscape' : 'portrait');
 
 // --- Constants ---
 
@@ -244,12 +269,19 @@ export const printHTML = async (
     await connect();
   }
 
+  // Resolve orientation: explicit config wins, otherwise derive from size so
+  // landscape labels (width > height) print correctly instead of being
+  // auto-rotated by QZ (qzind/tray#428, #635).
+  const orientation = config.size
+    ? resolveOrientation(config.size.width, config.size.height, config.orientation)
+    : config.orientation || 'portrait';
+
   const printerConfig = qz.configs.create(printerName, {
     size: config.size ? { width: config.size.width, height: config.size.height } : undefined,
     margins: config.margins,
     copies: config.copies || 1,
     colorType: config.colorType || 'blackwhite',
-    orientation: config.orientation || 'portrait',
+    orientation,
     scaleContent: true,
     interpolation: 'nearest-neighbor',
     rendering: 'pixelated',
@@ -322,7 +354,7 @@ export const savePrinterSettings = (settings: Partial<PrinterSettings>): Printer
  */
 export const printLabelSilently = async (
   html: string,
-  labelSize: { width: number; height: number }
+  labelSize: { width: number; height: number; orientation?: PrinterOrientation }
 ): Promise<boolean> => {
   const settings = getPrinterSettings();
 
@@ -339,7 +371,8 @@ export const printLabelSilently = async (
 
   try {
     await printHTML(settings.labelPrinter, html, {
-      size: labelSize,
+      size: { width: labelSize.width, height: labelSize.height },
+      orientation: labelSize.orientation,
       margins: { top: 0, right: 0, bottom: 0, left: 0 },
     });
     return true;
@@ -361,7 +394,10 @@ export const printLabelSilently = async (
  * Falls back to browser print if QZ unavailable
  * @returns true if printed via QZ, false if fell back to browser
  */
-export const printReceiptSilently = async (html: string): Promise<boolean> => {
+export const printReceiptSilently = async (
+  html: string,
+  options?: { orientation?: PrinterOrientation }
+): Promise<boolean> => {
   const settings = getPrinterSettings();
 
   if (!settings.enabled || settings.silentMode === 'off') {
@@ -377,7 +413,7 @@ export const printReceiptSilently = async (html: string): Promise<boolean> => {
 
   try {
     await printHTML(settings.receiptPrinter, html, {
-      size: { width: 80, height: 297 }, // 80mm thermal paper, variable height
+      orientation: options?.orientation, // receipts are portrait by default
       margins: { top: 0, right: 0, bottom: 0, left: 0 },
     });
     return true;

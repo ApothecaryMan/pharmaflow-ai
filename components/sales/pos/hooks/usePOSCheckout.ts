@@ -4,7 +4,7 @@ import { useData } from '../../../../context/DataContext';
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import type { CartItem, Customer, Sale } from '../../../../types';
 import { formatCurrency, money } from '../../../../utils/currency';
-import { getPrinterSettings, printReceiptSilently } from '../../../../utils/qzPrinter';
+import { printDocument } from '../../../../utils/printing';
 import { generateInvoiceHTML, getActiveReceiptSettings } from '../../InvoiceTemplate';
 import { buildSalePayload } from '../utils/POSUtils';
 
@@ -188,30 +188,17 @@ export const usePOSCheckout = ({
 
           if (shouldPrint) {
             const html = generateInvoiceHTML(salePayload, opts);
-            const printerSettings = getPrinterSettings();
-            const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
-
-            if (shouldTrySilent) {
-              (async () => {
-                try {
-                  const silentPrinted = await printReceiptSilently(html);
-                  if (silentPrinted) return;
-                } catch (silentErr) {
-                  if (printerSettings.silentMode !== 'fallback') return;
-                }
-                const printWindow = window.open('', '_blank', 'width=400,height=600');
-                if (printWindow) {
-                  printWindow.document.write(html);
-                  printWindow.document.close();
-                }
-              })();
-            } else {
-              const printWindow = window.open('', '_blank', 'width=400,height=600');
-              if (printWindow) {
-                printWindow.document.write(html);
-                printWindow.document.close();
-              }
-            }
+            // Fire-and-forget: printDocument handles silent→fallback policy.
+            // Receipts are complete HTML docs without an embedded auto-print
+            // script, so the browser fallback must inject its own.
+            void printDocument({
+              html,
+              width: 80,
+              height: 297,
+              kind: 'receipt',
+              orientation: 'portrait',
+              autoPrintFallback: true,
+            }).catch((e) => console.error('Auto-print failed:', e));
           }
         } catch (e) {
           console.error('Auto-print failed:', e);
@@ -244,6 +231,7 @@ export const usePOSCheckout = ({
       isProcessing,
       deliveryFee,
       refreshShifts,
+      activeBranch,
     ]
   );
 

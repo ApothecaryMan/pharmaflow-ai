@@ -1182,6 +1182,7 @@ export const PHARMACY_MENU: MenuItem[] = [
           { label: 'Third-party APIs', icon: 'api' },
           { label: 'Barcode Scanner', icon: 'qr_code_scanner' },
           { label: 'Desktop Integration', view: 'desktop-settings', icon: 'desktop_windows' },
+          { label: 'Print Settings', view: 'browser-settings', icon: 'print' },
         ],
       },
       {

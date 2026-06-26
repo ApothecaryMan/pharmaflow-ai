@@ -68,6 +68,7 @@ export const usePrinter = (): UsePrinterResult => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [printers, setPrinters] = useState<string[]>([]);
   const [isLoadingPrinters, setIsLoadingPrinters] = useState(false);
+  const isLoadingRef = useRef(false);
   const [settings, setSettings] = useState<PrinterSettings>(DEFAULT_SETTINGS);
 
   // Track if mounted
@@ -75,6 +76,7 @@ export const usePrinter = (): UsePrinterResult => {
 
   // Load settings on mount
   useEffect(() => {
+    isMounted.current = true;
     const savedSettings = getPrinterSettings();
     setSettings(savedSettings);
 
@@ -179,11 +181,20 @@ export const usePrinter = (): UsePrinterResult => {
   }, []);
 
   /**
+   * Update printer settings
+   */
+  const handleUpdateSettings = useCallback((updates: Partial<PrinterSettings>) => {
+    const updated = savePrinterSettings(updates);
+    setSettings(updated);
+  }, []);
+
+  /**
    * Refresh the list of available printers
    */
   const handleRefreshPrinters = useCallback(async () => {
-    if (isLoadingPrinters) return;
+    if (isLoadingRef.current) return;
 
+    isLoadingRef.current = true;
     setIsLoadingPrinters(true);
 
     try {
@@ -235,18 +246,12 @@ export const usePrinter = (): UsePrinterResult => {
       }
     } finally {
       if (isMounted.current) {
+        isLoadingRef.current = false;
         setIsLoadingPrinters(false);
       }
     }
-  }, [isLoadingPrinters]);
+  }, [handleUpdateSettings]);
 
-  /**
-   * Update printer settings
-   */
-  const handleUpdateSettings = useCallback((updates: Partial<PrinterSettings>) => {
-    const updated = savePrinterSettings(updates);
-    setSettings(updated);
-  }, []);
 
   /**
    * Print label (with fallback to browser)

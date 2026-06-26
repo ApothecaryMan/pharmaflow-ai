@@ -109,7 +109,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   const [activeAnchor, setActiveAnchor] = useState<HTMLElement | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [showPrinterSettings, setShowPrinterSettings] = useState(false);
   const [isWindowMaximized, setIsWindowMaximized] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [hasUpdate, setHasUpdate] = useState(false);
@@ -441,41 +440,10 @@ export const TitleBar: React.FC<TitleBarProps> = ({
               handleFileChange={() => {}}
               isLoggingOut={isLoggingOut}
               setIsLoggingOut={setIsLoggingOut}
-              setShowPrinterSettings={setShowPrinterSettings}
             />
           </>
         )}
       </div>
-
-      {/* Printer Settings Modal (Inside TitleBar context) */}
-      {showPrinterSettings && (
-        <div className='fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm'>
-          <div className='bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-white/10 overflow-hidden'>
-            <div className='flex items-center justify-between p-4 border-b border-white/5'>
-              <h3 className='text-lg font-bold'>إعدادات الطابعة</h3>
-              <button
-                onClick={() => setShowPrinterSettings(false)}
-                className='p-1 hover:bg-white/5 rounded-full transition-all'
-              >
-                <span className='material-symbols-rounded'>close</span>
-              </button>
-            </div>
-            <div className='p-6 space-y-4'>
-              {/* This would normally render the PrinterSettings component content */}
-              <p className='text-sm text-gray-500 text-center'>جاري فتح نافذة إعدادات الطابعة...</p>
-              {/* You can integrate the real component here */}
-            </div>
-            <div className='p-4 bg-gray-50 dark:bg-black/20 flex justify-end'>
-              <button
-                onClick={() => setShowPrinterSettings(false)}
-                className='px-6 py-2 bg-primary text-white rounded-xl font-bold hover:opacity-90 transition-all'
-              >
-                تم
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

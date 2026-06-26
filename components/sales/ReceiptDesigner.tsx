@@ -212,6 +212,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   const [showDeliveryPreview, setShowDeliveryPreview] = useState(false);
   const [showReturnsPreview, setShowReturnsPreview] = useState(false);
   const [showDuplicatePreview, setShowDuplicatePreview] = useState(false);
+  const [highlightedField, setHighlightedField] = useState<string | null>(null);
 
   // 2. Dummy Sale Data for Preview
   const DUMMY_SALE: Sale = {
@@ -343,9 +344,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
         : undefined,
     } as Sale;
 
-    const html = generateInvoiceHTML(activeDummySale, { ...options, language });
+    const html = generateInvoiceHTML(activeDummySale, { ...options, language, highlightedField: highlightedField || undefined });
     setPreviewHtml(html);
-  }, [options, language, showDeliveryPreview, showReturnsPreview, previewMode, DUMMY_SHIFT]);
+  }, [options, language, showDeliveryPreview, showReturnsPreview, previewMode, DUMMY_SHIFT, highlightedField]);
 
   const payloadSize = useMemo(() => {
     if (!previewHtml) return '0 B';
@@ -640,6 +641,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   >
                     <span className='material-symbols-rounded text-[12px]'>close</span>
                   </button>
+                  <div className='absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-black/40 text-white text-[9px] font-mono z-10 pointer-events-none'>
+                    {Math.round((options.logoBase64.length * (3 / 4)) / 1024)} KB
+                  </div>
                   {quotaError && (
                     <div className='absolute inset-0 bg-red-500/10 rounded-xl flex items-center justify-center pointer-events-none'>
                       <span className='text-[10px] bg-red-100 text-red-600 px-2 py-1 rounded-full font-bold'>
@@ -724,6 +728,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   >
                     <span className='material-symbols-rounded text-[12px]'>close</span>
                   </button>
+                  <div className='absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-black/40 text-white text-[9px] font-mono z-10 pointer-events-none'>
+                    {Math.round(options.logoSvgCode.length / 1024)} KB
+                  </div>
                 </div>
               ) : (
                 <textarea
@@ -765,6 +772,8 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               <SmartInput
                 value={options.storeName}
                 onChange={(e) => setOptions({ ...options, storeName: e.target.value })}
+                onFocus={() => setHighlightedField('storeName')}
+                onBlur={() => setHighlightedField(null)}
                 className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm'
                 placeholder='Name...'
               />
@@ -777,6 +786,8 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               <SmartInput
                 value={options.storeSubtitle}
                 onChange={(e) => setOptions({ ...options, storeSubtitle: e.target.value })}
+                onFocus={() => setHighlightedField('storeSubtitle')}
+                onBlur={() => setHighlightedField(null)}
                 className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm'
                 placeholder='Slogan...'
               />
@@ -789,6 +800,8 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               <SmartInput
                 value={options.headerHotline}
                 onChange={(e) => setOptions({ ...options, headerHotline: e.target.value })}
+                onFocus={() => setHighlightedField('headerHotline')}
+                onBlur={() => setHighlightedField(null)}
                 className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm'
                 placeholder='19xxx...'
               />
@@ -801,6 +814,8 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               <SmartInput
                 value={options.footerMessage}
                 onChange={(e) => setOptions({ ...options, footerMessage: e.target.value })}
+                onFocus={() => setHighlightedField('footerMessage')}
+                onBlur={() => setHighlightedField(null)}
                 className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm'
                 placeholder='Thanks...'
               />
@@ -813,6 +828,8 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               <SmartInput
                 value={options.footerInquiry}
                 onChange={(e) => setOptions({ ...options, footerInquiry: e.target.value })}
+                onFocus={() => setHighlightedField('footerInquiry')}
+                onBlur={() => setHighlightedField(null)}
                 className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm'
                 placeholder='Questions?...'
               />
@@ -836,6 +853,8 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 <SmartInput
                   value={options.headerAddress}
                   onChange={(e) => setOptions({ ...options, headerAddress: e.target.value })}
+                  onFocus={() => setHighlightedField('headerAddress')}
+                  onBlur={() => setHighlightedField(null)}
                   className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm'
                   placeholder='Street...'
                 />
@@ -855,6 +874,8 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 <SmartInput
                   value={options.headerArea}
                   onChange={(e) => setOptions({ ...options, headerArea: e.target.value })}
+                  onFocus={() => setHighlightedField('headerArea')}
+                  onBlur={() => setHighlightedField(null)}
                   className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm'
                   placeholder='Area...'
                 />
@@ -908,6 +929,8 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   options.termsCondition?.replace(/\u003cbr\u003e/g, '\n'),
                   '...'
                 )}
+                onFocus={() => setHighlightedField('termsCondition')}
+                onBlur={() => setHighlightedField(null)}
                 className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 transition-all h-20 resize-none'
                 placeholder='...'
               />

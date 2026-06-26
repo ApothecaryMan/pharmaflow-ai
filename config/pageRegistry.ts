@@ -54,6 +54,7 @@ const ReturnHistory = React.lazy(() => import('../components/sales/ReturnHistory
 const SalesHistory = React.lazy(() => import('../components/sales/SalesHistory').then(m => ({ default: m.SalesHistory })));
 const ShiftHistory = React.lazy(() => import('../components/sales/ShiftHistory').then(m => ({ default: m.ShiftHistory })));
 const BranchSettings = React.lazy(() => import('../components/settings/BranchSettings').then(m => ({ default: m.BranchSettings })));
+const BrowserPrintSettings = React.lazy(() => import('../components/settings/BrowserPrintSettings').then(m => ({ default: m.BrowserPrintSettings })));
 const DesktopSettings = React.lazy(() => import('../components/settings/DesktopSettings').then(m => ({ default: m.DesktopSettings })));
 const PricingPage = React.lazy(() => import('../components/settings/PricingPage').then(m => ({ default: m.PricingPage })));
 const A5InvoiceDesigner = React.lazy(() => import('../components/test/A5InvoiceDesigner').then(m => ({ default: m.A5InvoiceDesigner })));
@@ -816,6 +817,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'settings',
     requiredProps: ['color', 't', 'language'],
     permission: PERMISSIONS_MAPPING['desktop-settings'],
+    layout: 'standard',
+  },
+  'browser-settings': {
+    id: 'browser-settings',
+    component: BrowserPrintSettings,
+    menuLabel: 'Print Settings',
+    menuLabelAr: 'إعدادات الطباعة',
+    icon: 'print',
+    category: 'settings',
+    requiredProps: ['color', 't', 'language', 'onViewChange'],
+    permission: 'settings.view',
     layout: 'standard',
   },
   'profit-loss': {

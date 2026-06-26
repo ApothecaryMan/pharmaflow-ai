@@ -19,12 +19,14 @@ interface DesktopSettingsProps {
   t: Translations;
   language: 'EN' | 'AR';
   color?: string;
+  onViewChange?: (view: string) => void;
 }
 
 export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
   t,
   language,
   color = 'primary',
+  onViewChange,
 }) => {
   const dt = t.desktop || {};
   const pt = t.printerSettings || {};
@@ -137,7 +139,7 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
   }
 
   return (
-    <div className='space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500'>
+    <div className='space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 p-6 md:p-8 max-w-5xl mx-auto'>
       {/* Header Section */}
       <div>
         <h2 className='text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-3'>
@@ -181,9 +183,16 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
                 }}
                 keyExtractor={(p) => p}
                 renderSelected={(p) => (
-                  <span className='text-sm font-medium'>{p || pt.selectPrinter}</span>
+                  <span className='text-sm font-medium text-gray-800 dark:text-white truncate'>
+                    {p || pt.selectPrinter || (language === 'AR' ? 'اختر الطابعة...' : 'Select Printer...')}
+                  </span>
                 )}
-                renderItem={(p) => <span className='text-sm'>{p}</span>}
+                renderItem={(p) => (
+                  <div className='flex items-center gap-2 py-1'>
+                    <span className='material-symbols-rounded text-[16px] text-gray-400'>print</span>
+                    <span className='text-sm'>{p}</span>
+                  </div>
+                )}
                 variant='input'
               />
             </div>
@@ -295,6 +304,35 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
             ))}
           </div>
         </section>
+
+        {/* Browser Version Banner */}
+        <div className='md:col-span-2 mt-4'>
+          <div className={`p-5 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700/50 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4`}>
+            <div className='flex items-center gap-4'>
+              <div className={`w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 flex items-center justify-center flex-shrink-0`}>
+                <span className={`material-symbols-rounded text-[24px] text-gray-500 dark:text-gray-400`}>
+                  public
+                </span>
+              </div>
+              <div>
+                <p className='text-sm font-bold text-gray-800 dark:text-gray-200'>
+                  {language === 'AR' ? 'إعدادات الطباعة للمتصفح' : 'Browser Print Settings'}
+                </p>
+                <p className='text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-md leading-relaxed'>
+                  {language === 'AR'
+                    ? 'لإدارة طابعات QZ Tray والطباعة الصامتة عبر الشبكة.'
+                    : 'Manage QZ Tray printers and network silent printing.'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => onViewChange?.('browser-settings')}
+              className={`w-full md:w-auto px-6 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors shadow-sm`}
+            >
+              {language === 'AR' ? 'الانتقال للإعدادات' : 'Go to Settings'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -67,7 +67,8 @@ class UniversalPrinterService {
    * Universal print receipt function
    */
   public async printReceipt(html: string, rawData?: string): Promise<boolean> {
-    const { preferredInterface, tauriPrinter, enabled, silentMode } = this.settings;
+    const settings = this.loadSettings();
+    const { preferredInterface, tauriPrinter, enabled, silentMode } = settings;
 
     // 1. Try Tauri Native (if on desktop and prioritized)
     if (isTauri() && (preferredInterface === 'auto' || preferredInterface === 'tauri')) {
@@ -114,7 +115,8 @@ class UniversalPrinterService {
    */
   public async printLabel(html: string, size: { width: number; height: number }): Promise<boolean> {
     // Labels are more complex, QZ Tray is usually better for custom sizes unless plugin supports it
-    const { enabled, silentMode } = this.settings;
+    const settings = this.loadSettings();
+    const { enabled, silentMode } = settings;
 
     if (enabled && silentMode !== 'off') {
       try {

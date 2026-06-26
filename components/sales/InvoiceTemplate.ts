@@ -8,6 +8,7 @@
 import { StorageKeys } from '../../config/storageKeys';
 import { CartItem, type Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { printDocument } from '../../utils/printing';
 
 export interface InvoiceTemplateOptions {
   /** Store name to display in header */
@@ -40,6 +41,8 @@ export interface InvoiceTemplateOptions {
   autoPrintOnComplete?: boolean;
   /** Auto-print on Delivery Order Creation */
   autoPrintOnDelivery?: boolean;
+  /** ID of the field currently focused in the designer, for preview highlighting */
+  highlightedField?: string;
 }
 
 export const defaultOptions: InvoiceTemplateOptions = {
@@ -139,8 +142,8 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
         
         /* 80mm Thermal Receipt - ~300px at 72dpi */
         @page { 
-          size: 80mm auto; 
           margin: 0; 
+          size: 80mm auto;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body {
@@ -172,6 +175,8 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
         
         .header { text-align: center; margin-bottom: 10px; }
         .store-logo { width: 80px; height: auto; margin: 0 auto 5px auto; display: block; }
+        .store-logo svg { width: 100% !important; height: 100% !important; max-height: 15mm; object-fit: contain; }
+        .highlight { outline: 2px dashed #3b82f6 !important; background-color: rgba(59, 130, 246, 0.1) !important; border-radius: 2px; }
         .store-name { margin-bottom: 2px; font-weight: bold; font-size: 14px; }
         .store-info { margin-bottom: 2px; font-size: 10px; }
         .hotline { margin-top: 2px; }
@@ -213,11 +218,11 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
               ? `<img src="${opts.logoBase64}" alt="Logo" class="store-logo" style="width: 40mm; max-height: 15mm; object-fit: contain;" />`
               : `<img src="/app_icon.svg" alt="Logo" class="store-logo" style="width: 60px;" />`
         }
-        <div class="store-name">${opts.storeName ?? (lang === 'AR' ? 'ZINC' : 'ZINC')}</div>
-        <div class="store-info">${opts.storeSubtitle ?? (lang === 'AR' ? 'نظام إدارة الصيدليات' : 'Pharmacy Management System')}</div>
-        <div class="store-info" dir="auto">${opts.headerAddress ?? currentDefaults.address}</div>
-        <div class="store-info" dir="auto">${opts.headerArea ?? currentDefaults.area}</div>
-        <div class="hotline" dir="ltr">${opts.headerHotline ?? currentDefaults.hotline}</div>
+        <div class="store-name ${opts.highlightedField === 'storeName' ? 'highlight' : ''}">${opts.storeName ?? (lang === 'AR' ? 'ZINC' : 'ZINC')}</div>
+        <div class="store-info ${opts.highlightedField === 'storeSubtitle' ? 'highlight' : ''}">${opts.storeSubtitle ?? (lang === 'AR' ? 'نظام إدارة الصيدليات' : 'Pharmacy Management System')}</div>
+        <div class="store-info ${opts.highlightedField === 'headerAddress' ? 'highlight' : ''}" dir="auto">${opts.headerAddress ?? currentDefaults.address}</div>
+        <div class="store-info ${opts.highlightedField === 'headerArea' ? 'highlight' : ''}" dir="auto">${opts.headerArea ?? currentDefaults.area}</div>
+        <div class="hotline ${opts.highlightedField === 'headerHotline' ? 'highlight' : ''}" dir="ltr">${opts.headerHotline ?? currentDefaults.hotline}</div>
       </div>
       
       <hr class="divider">
@@ -372,8 +377,8 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
       </div>
       
       <div style="text-align: center; margin: 10px 0 8px 0; line-height: 1.5;">
-         ${opts.footerInquiry ? `<p style="margin: 2px 0;">${opts.footerInquiry}</p>` : ''}
-         <div style="margin-top: 4px;">
+         ${opts.footerInquiry ? `<p class="${opts.highlightedField === 'footerInquiry' ? 'highlight' : ''}" style="margin: 2px 0;">${opts.footerInquiry}</p>` : ''}
+         <div style="margin-top: 4px;" class="${opts.highlightedField === 'termsCondition' ? 'highlight' : ''}">
            ${opts.termsCondition ?? currentDefaults.terms}
          </div>
       </div>
@@ -381,8 +386,8 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
       <div class="footer">
         ${
           opts.footerMessage
-            ? `<p style="margin: 2px 0;">${opts.footerMessage}</p>`
-            : `<p style="margin: 2px 0;">THANKS FOR CHOOSING ${opts.storeName || 'US'}</p>`
+            ? `<p class="${opts.highlightedField === 'footerMessage' ? 'highlight' : ''}" style="margin: 2px 0;">${opts.footerMessage}</p>`
+            : `<p class="${opts.highlightedField === 'footerMessage' ? 'highlight' : ''}" style="margin: 2px 0;">THANKS FOR CHOOSING ${opts.storeName || 'US'}</p>`
         }
       </div>
       
@@ -393,8 +398,8 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
       <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
       <script>
         window.onload = function() { 
-          JsBarcode("#barcode", "${sale.id}", {
-            format: "CODE39",
+          JsBarcode("#barcode", "${sale.serialId}", {
+            format: "CODE128",
             lineColor: "#000",
             width: 2,
             height: 50,
@@ -412,16 +417,21 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
 }
 
 /**
- * Opens a print window with the generated invoice HTML.
+ * Prints the invoice using the unified print engine.
+ * Supports silent printing (Tauri/QZ Tray) with browser fallback.
  *
  * @param sale - The sale object to print
  * @param options - Optional template configuration
  */
-export function printInvoice(sale: Sale, options: InvoiceTemplateOptions = {}): void {
-  const printWindow = window.open('', '', 'width=600,height=800');
-  if (!printWindow) return;
-
+export async function printInvoice(sale: Sale, options: InvoiceTemplateOptions = {}): Promise<void> {
   const htmlContent = generateInvoiceHTML(sale, options);
-  printWindow.document.write(htmlContent);
-  printWindow.document.close();
+  
+  await printDocument({
+    html: htmlContent,
+    width: 80,
+    height: 297, // Standard 80mm width receipt
+    kind: 'receipt',
+    orientation: 'portrait',
+    autoPrintFallback: true, // Trigger print in popup fallback
+  });
 }

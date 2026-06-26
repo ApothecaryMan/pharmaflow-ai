@@ -69,6 +69,7 @@ export type ViewState =
   | 'attendance-reports'
   | 'employee-attendance-profile'
   | 'desktop-settings'
+  | 'browser-settings'
   | 'drug-interactions'
   | 'shortages'
   | 'scrollbar-lab'

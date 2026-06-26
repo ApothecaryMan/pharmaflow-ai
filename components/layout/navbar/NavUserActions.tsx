@@ -25,7 +25,6 @@ interface NavUserActionsProps {
   isDataLoading: boolean;
   isLoggingOut: boolean;
   setIsLoggingOut: (val: boolean) => void;
-  setShowPrinterSettings: (val: boolean) => void;
   isCompact?: boolean;
 }
 
@@ -47,7 +46,6 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
   isDataLoading,
   isLoggingOut,
   setIsLoggingOut,
-  setShowPrinterSettings,
   isCompact = false,
 }) => {
   const t = TRANSLATIONS[language];
@@ -272,6 +270,20 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                 )}
               </div>
             )}
+
+            {/* Print Settings (Always available for browser, or when not using Desktop integration) */}
+            <div className='p-2 border-t border-(--border-divider)'>
+              <button
+                onClick={() => {
+                  onNavigate?.('browser-settings');
+                  setShowProfileMenu(false);
+                }}
+                className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg flex items-center gap-2'
+              >
+                <Icons.List size='var(--icon-md)' />
+                {language === 'AR' ? 'إعدادات الطباعة' : 'Print Settings'}
+              </button>
+            </div>
 
             {/* Desktop Settings (Tauri Only) */}
             {isTauri() && (

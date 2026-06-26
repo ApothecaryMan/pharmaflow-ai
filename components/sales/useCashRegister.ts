@@ -7,7 +7,7 @@ import { permissionsService } from '../../services/auth/permissionsService';
 import { expenseService } from '../../services/financials/expenseService';
 import type { CashTransaction, CashTransactionType, Employee, Language, Shift } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
-import { getPrinterSettings, printReceiptSilently } from '../../utils/qzPrinter';
+import { printDocument } from '../../utils/printing';
 import { storage } from '../../utils/storage';
 import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
 
@@ -290,33 +290,14 @@ export const useCashRegister = ({
     setTimeout(async () => {
       try {
         const html = generateShiftReceiptHTML(closedShift, language, employees);
-        const printerSettings = getPrinterSettings();
-        const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
-        let printedSilently = false;
-
-        if (shouldTrySilent && printerSettings.receiptPrinter) {
-          try {
-            const silentPrinted = await printReceiptSilently(html);
-            if (silentPrinted) {
-              printedSilently = true;
-            }
-          } catch (silentErr) {
-            console.warn('Silent print failed, falling back:', silentErr);
-          }
-        }
-
-        if (!printedSilently) {
-          const printWindow = window.open('', '_blank', 'width=400,height=600');
-          if (printWindow) {
-            printWindow.document.write(html);
-            printWindow.document.close();
-            printWindow.focus();
-            setTimeout(() => {
-              printWindow.print();
-              printWindow.close();
-            }, 500);
-          }
-        }
+        await printDocument({
+          html,
+          width: 80,
+          height: 297,
+          kind: 'receipt',
+          orientation: 'portrait',
+          autoPrintFallback: true,
+        });
       } catch (e) {
         console.error('Print failed:', e);
       }

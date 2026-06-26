@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { useShift } from '../../hooks/sales/useShift';
 import { auditService } from '../../services/audit/auditService';
 import type { Employee, Shift } from '../../types';
-import { getPrinterSettings, printReceiptSilently } from '../../utils/qzPrinter';
+import { printDocument } from '../../utils/printing';
 import { createSearchRegex } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { DatePicker, DateRangePicker } from '../common/DatePicker';
@@ -95,34 +95,14 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
     // 3. Print
     try {
       const html = generateShiftReceiptHTML(updatedShift, language as any, employees);
-
-      const printerSettings = getPrinterSettings();
-      const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
-      let printedSilently = false;
-
-      if (shouldTrySilent && printerSettings.receiptPrinter) {
-        try {
-          const silentPrinted = await printReceiptSilently(html);
-          if (silentPrinted) {
-            printedSilently = true;
-          }
-        } catch (silentErr) {
-          console.warn('QZ Tray silent print failed:', silentErr);
-        }
-      }
-
-      if (!printedSilently) {
-        const printWindow = window.open('', '_blank', 'width=400,height=600');
-        if (printWindow) {
-          printWindow.document.write(html);
-          printWindow.document.close();
-          printWindow.focus();
-          setTimeout(() => {
-            printWindow.print();
-            printWindow.close();
-          }, 500);
-        }
-      }
+      await printDocument({
+        html,
+        width: 80,
+        height: 297,
+        kind: 'receipt',
+        orientation: 'portrait',
+        autoPrintFallback: true,
+      });
     } catch (err) {
       console.error('Reprint failed:', err);
     }

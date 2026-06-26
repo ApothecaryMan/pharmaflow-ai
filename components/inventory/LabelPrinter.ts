@@ -10,8 +10,7 @@ import type { Drug } from '../../types';
 import { encodeCode128 } from '../../utils/barcodeEncoders';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatExpiryDate } from '../../utils/expiryUtils';
-import { getPrinterSettings, printLabelSilently } from '../../utils/qzPrinter';
-import { storage } from '../../utils/storage';
+import { escapeHtml, deriveOrientation, wrapPrintHTML, printDocument } from '../../utils/printing';
 import { getBarcodeFontsCSS } from './barcodeFonts';
 import type { LabelDesign, LabelElement, SavedTemplate } from './studio/types';
 
@@ -77,29 +76,6 @@ export const getPresetDimensions = (
 ): { w: number; h: number } => {
   if (presetKey === 'custom' && customDims) return customDims;
   return LABEL_PRESETS[presetKey] || LABEL_PRESETS['38x25'];
-};
-
-/** Configuration for the popup window used to trigger the browser's print dialog */
-const PRINT_WINDOW_CONFIG = {
-  width: 800,
-  height: 1000,
-  features: 'width=800,height=1000,scrollbars=yes,resizable=yes',
-} as const;
-
-/**
- * Escapes special HTML characters to prevent XSS when rendering drug data.
- * @param text - Raw text to escape
- * @returns HTML-safe string
- */
-const escapeHtml = (text: string): string => {
-  const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
-  };
-  return text.replace(/[&<>"']/g, (m) => map[m]);
 };
 
 /**
@@ -550,85 +526,91 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
  * printLabels([{ drug: myDrug, quantity: 5 }]);
  */
 
-export const generatePageHTML = (
+/**
+ * Builds label-specific CSS + container HTML (body content only, no shell).
+ * The caller wraps this with `wrapPrintHTML` to get a complete document.
+ */
+const buildLabelPageContent = (
   contentHTML: string,
-  css: string,
+  templateCSS: string,
   dims: { w: number; h: number },
   pageHeight: number,
-  offsets: { x: number; y: number } = { x: 0, y: 0 },
-  rotatePage: boolean = false
-): string => {
-  const fontCSS = getBarcodeFontsCSS();
-  
-  // If rotated, swap the @page dimensions to trick the browser into Portrait mode
-  const pageW = rotatePage ? pageHeight : dims.w;
-  const pageH = rotatePage ? dims.w : pageHeight;
-  
-  // To fit the original container into the swapped page, we rotate it by -90deg from the center
-  const rotationCSS = rotatePage ? `
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      margin-top: -${pageHeight / 2}mm;
-      margin-left: -${dims.w / 2}mm;
-      transform: rotate(-90deg) translate(${offsets.y}mm, -${offsets.x}mm);
-  ` : `
+  offsets: { x: number; y: number } = { x: 0, y: 0 }
+): { css: string; bodyHTML: string } => {
+  const css = `
+    ${templateCSS}
+    .print-container {
+      width: ${dims.w}mm;
+      height: ${pageHeight}mm;
+      background: white;
+      font-size: 0;
+      line-height: 0;
       transform: translate(${offsets.x}mm, ${offsets.y}mm);
+      box-sizing: border-box;
+    }
+    .page-container {
+      width: ${dims.w}mm;
+      height: ${pageHeight}mm;
+      position: relative;
+      background: white;
+      font-size: 0;
+      line-height: 0;
+      box-sizing: border-box;
+    }
   `;
 
-  const fullCSS = `
-            ${fontCSS}
-            ${css}
-            @page { size: ${pageW}mm ${pageH}mm; margin: 0; }
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            html, body { 
-                margin: 0; 
-                padding: 0; 
-                background: white;
-                min-height: 100%;
-                height: auto !important;
-                overflow: visible !important;
-            }
-            body { 
-                font-family: 'Roboto', sans-serif; 
-                -webkit-print-color-adjust: exact;
-            }
-            .print-container {
-                width: ${dims.w}mm;
-                height: ${pageHeight}mm;
-                background: white;
-                font-size: 0;
-                line-height: 0;
-                ${rotationCSS}
-                box-sizing: border-box;
-            }
-            .page-container {
-                width: ${dims.w}mm;
-                height: ${pageHeight}mm;
-                position: relative;
-                background: white;
-                font-size: 0;
-                line-height: 0;
-                box-sizing: border-box;
-            }
-        `;
+  const bodyHTML = `<div class="print-container">${contentHTML}</div>`;
+  return { css, bodyHTML };
+};
 
-  return `<!DOCTYPE html>
-            <html><head><title>Print Labels</title>
-            <style>${fullCSS}</style></head><body>
-            <div class="print-container">${contentHTML}</div>
-            <script>
-                // Double-confirmation for font readiness in the new window context
-                Promise.all([
-                    document.fonts.ready,
-                    new Promise(resolve => setTimeout(resolve, 100)) // Safety delay for slow rendering engines
-                ]).then(() => {
-                    // print() call injected by consumer if needed
-                }).catch(e => {
-                    console.error('Font loading failed in print window', e);
-                });
-            </script>
-            </body></html>`;
+/**
+ * Builds a complete print-ready HTML document for a batch of label pages,
+ * using the shared `wrapPrintHTML` shell for consistent @page / reset / font
+ * loading / auto-print behaviour.
+ */
+const buildLabelDocument = (
+  contentHTML: string,
+  templateCSS: string,
+  dims: { w: number; h: number },
+  pageHeight: number,
+  offsets: { x: number; y: number },
+  autoPrint: boolean
+): string => {
+  const { css, bodyHTML } = buildLabelPageContent(contentHTML, templateCSS, dims, pageHeight, offsets);
+  const orientation = deriveOrientation(dims.w, dims.h);
+
+  return wrapPrintHTML({
+    bodyHTML,
+    css,
+    width: dims.w,
+    height: pageHeight,
+    orientation,
+    fontsCSS: getBarcodeFontsCSS(),
+    autoPrint,
+    title: 'Print Labels',
+  });
+};
+
+/**
+ * Public-facing wrapper for generating a complete label page HTML document.
+ * Used by BarcodePreview, BarcodePrinter, BarcodeStudio and TemplateGalleryModal
+ * for live preview rendering (no auto-print).
+ */
+export const generatePageHTML = (
+  contentHTML: string,
+  templateCSS: string,
+  dims: { w: number; h: number },
+  pageHeight: number,
+  offsets?: { x: number; y: number }
+): string => {
+  return buildLabelDocument(
+    contentHTML,
+    templateCSS,
+    dims,
+    pageHeight,
+    offsets ?? { x: 0, y: 0 },
+    false
+  );
 };
 
 export const printLabels = async (
@@ -650,18 +632,13 @@ export const printLabels = async (
   }
 
   // 1. Ensure fonts are fully loaded in the main window context before starting.
-  // This warms the cache and reduces the chance of missing barcode fonts in the print window.
   try {
     await document.fonts.ready;
   } catch (fontErr) {
     console.warn('Font loading check failed, proceeding anyway:', fontErr);
   }
 
-  // Check if QZ Tray silent printing should be attempted
-  const printerSettings = getPrinterSettings();
-  const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
-
-  let printWindow: Window | null = null;
+  // printDocument below handles silent→fallback policy
 
   try {
     const template = options.forceBasicTemplate ? null : getDefaultTemplate(options.printSettings);
@@ -701,30 +678,24 @@ export const printLabels = async (
     const printOffsetX = offsets.x;
     const printOffsetY = offsets.y;
 
+    const effectiveOrientation = deriveOrientation(dims.w, dims.h);
+
     // Dimensions and Pitch logic
-    // For the 38x25 double label, we have: [12mm label] + [1mm inner gap] + [12mm label] + [3mm outer gap]
-    // This results in a 28mm total pitch (page height)
     const isDouble = design.selectedPreset === '38x25';
     const labelsPerPage = isDouble ? 2 : 1;
 
-    // Configuration for the specific double-label system
     const labelHeight = isDouble ? 12 : dims.h;
     const innerGap = isDouble ? 1 : 0;
-    const outerGap = isDouble ? 3 : design.labelGap || 0; // Always 3mm for 38x25 as per roll specs
+    const outerGap = isDouble ? 3 : design.labelGap || 0;
 
-    // The effective height of the page (from top of one pair to top of next pair)
     const pageHeight = isDouble
-      ? labelHeight * 2 + innerGap + outerGap // (12*2) + 1 + 3 = 28mm
+      ? labelHeight * 2 + innerGap + outerGap
       : labelHeight + outerGap;
 
-    // Printable height of the page, excluding the physical outer gap.
-    // This matches the hardware printable area (25mm) and prevents the printer's Gap Sensor
-    // from double-feeding or causing cumulative alignment drift.
     const printablePageHeight = isDouble
-      ? labelHeight * 2 + innerGap // (12*2) + 1 = 25mm
+      ? labelHeight * 2 + innerGap
       : labelHeight;
 
-    // Correct dimensions for the individual label HTML generation
     const renderDims = { w: dims.w, h: labelHeight };
 
     const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
@@ -747,8 +718,8 @@ export const printLabels = async (
             renderDims,
             receiptSettings,
             item.expiryDateOverride,
-            undefined, // qrDataUrl
-            undefined, // logoDataUrl
+            undefined,
+            undefined,
             classNameMap
           );
 
@@ -756,7 +727,6 @@ export const printLabels = async (
             labelFragments.push(singleLabel);
             currentQtyIdx++;
 
-            // Yield every 30ms to keep UI responsive
             if (performance.now() - chunkStartTime > 30) {
               requestAnimationFrame(processChunk);
               return;
@@ -789,92 +759,30 @@ export const printLabels = async (
       pages.push(pageHTML);
     }
 
-    // Try silent printing via QZ Tray first, sending chunks if large
-    if (shouldTrySilent) {
-      try {
-        const QZ_CHUNK_SIZE = 100; // Pages per chunk to prevent JavaFX/Spooler memory overflow
-        let silentSuccess = true;
-
-        for (let c = 0; c < pages.length; c += QZ_CHUNK_SIZE) {
-          const chunkPages = pages.slice(c, c + QZ_CHUNK_SIZE);
-          const chunkHTML = generatePageHTML(
-            chunkPages.join(''),
-            templateCSS,
-            dims,
-            printablePageHeight,
-            {
-              x: printOffsetX,
-              y: printOffsetY,
-            },
-            design.rotatePage
-          );
-
-          const silentPrinted = await printLabelSilently(chunkHTML, {
-            width: dims.w,
-            height: dims.h,
-          });
-
-          if (!silentPrinted) {
-            silentSuccess = false;
-            break; // Fall back to browser print if a chunk fails
-          }
-        }
-
-        if (silentSuccess) {
-          console.log('Labels printed silently via QZ Tray (chunked if large)');
-          return; // Success - no need for browser popup
-        }
-      } catch (silentErr: any) {
-        console.warn('QZ Tray silent print failed:', silentErr);
-
-        if (printerSettings.silentMode === 'on') {
-          alert(`Silent printing failed: ${silentErr?.message || 'Check QZ Tray connection'}.`);
-          return;
-        }
-      }
-    }
-
-    // Prepare full HTML for browser print fallback
     const allPagesHTML = pages.join('');
-    const htmlContent = generatePageHTML(allPagesHTML, templateCSS, dims, printablePageHeight, {
-      x: printOffsetX,
-      y: printOffsetY,
-    }, design.rotatePage);
 
-    // Browser print fallback
-    printWindow = window.open('', '', PRINT_WINDOW_CONFIG.features);
-
-    if (!printWindow) {
-      alert('Popup blocked! Please allow popups for this site to enable manual printing.');
-      return;
-    }
-
-    // Add the print script for browser print
-    const browserHtmlContent = htmlContent.replace(
-      '</body></html>',
-      `
-            <script>
-                // Double-confirmation for font readiness in the new window context
-                Promise.all([
-                    document.fonts.ready,
-                    new Promise(resolve => setTimeout(resolve, 100)) // Safety delay for slow rendering engines
-                ]).then(() => {
-                    window.print();
-                    // Close the window after printing starts (some browsers might need this)
-                    // window.close(); 
-                }).catch(e => {
-                    console.error('Font loading failed in print window', e);
-                    window.print();
-                });
-            </script>
-            </body></html>`
+    // Single unified print: printDocument handles silent→fallback policy.
+    // Labels are wrapped via wrapPrintHTML (ships its own auto-print script),
+    // so autoPrintFallback stays false.
+    const htmlContent = buildLabelDocument(
+      allPagesHTML,
+      templateCSS,
+      dims,
+      printablePageHeight,
+      { x: printOffsetX, y: printOffsetY },
+      true // auto-print via the shell's embedded script
     );
 
-    printWindow.document.write(browserHtmlContent);
-    printWindow.document.close();
+    await printDocument({
+      html: htmlContent,
+      width: dims.w,
+      height: dims.h,
+      kind: 'label',
+      orientation: effectiveOrientation,
+      autoPrintFallback: false,
+    });
   } catch (e: any) {
     console.error('Print process failed:', e);
-    if (printWindow) printWindow.close();
     alert(`An unexpected error occurred during printing: ${e?.message || 'Unknown error'}`);
   }
 };
