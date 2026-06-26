@@ -178,6 +178,8 @@ export interface CartItemQuantityControlProps {
   t: Translations;
   currentLang: string;
   cart: CartItem[];
+  // Auto-split: distribute qty across batches when exceeding current batch
+  onSelectBatch?: (currentItem: CartItem, newBatch: Drug, packQty: number, unitQty: number) => void;
 }
 // ==========================================
 // 3. QUANTITY STEPPER (DESKTOP & MOBILE)
@@ -194,14 +196,16 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
   t,
   currentLang,
   cart,
+  onSelectBatch,
 }) => {
   const unitsPerPack = item.unitsPerPack || 1;
   const isRTL = currentLang === 'ar';
 
+  // stock is already stored in units (per type definition) — no multiplication needed
   const totalStockUnits = React.useMemo(() => {
-    if (!allBatches || allBatches.length === 0) return (item.stock || 0) * unitsPerPack;
-    return allBatches.reduce((sum, b) => sum + b.stock, 0) * unitsPerPack;
-  }, [allBatches, item.stock, unitsPerPack]);
+    if (!allBatches || allBatches.length === 0) return item.stock || 0;
+    return allBatches.reduce((sum, b) => sum + b.stock, 0);
+  }, [allBatches, item.stock]);
 
   const [localPack, setLocalPack] = useState(packItem?.quantity.toString() || '');
   const [localUnit, setLocalUnit] = useState(unitItem?.quantity.toString() || '');
@@ -212,33 +216,67 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
   const handleQtyChange = (valStr: string, isUnit: boolean) => {
     const setLocal = isUnit ? setLocalUnit : setLocalPack;
     const target = isUnit ? unitItem : packItem;
-    setLocal(valStr);
-    if (valStr === '') return;
-    const val = isUnit ? parseInt(valStr) : parseFloat(valStr);
 
-    if (!isNaN(val) && val !== (target?.quantity ?? -1)) {
-      // Calculate units consumed by OTHER items of the same drug in the cart
-      const otherDrugItems = cart.filter(
-        (i) =>
-          i.name === item.name &&
-          (i.dosageForm || '') === (item.dosageForm || '') &&
-          !(i.id === item.id && !!i.isUnit === isUnit)
-      );
+    // Allow clearing the field for re-typing
+    if (valStr === '') {
+      setLocal('');
+      return;
+    }
 
-      const unitsConsumedByOthers = otherDrugItems.reduce((sum, i) => {
-        return sum + (i.isUnit ? i.quantity : i.quantity * (i.unitsPerPack || unitsPerPack));
-      }, 0);
+    // Integer-only — reject NaN/negative
+    const val = parseInt(valStr);
+    if (isNaN(val) || val < 0) return;
 
-      const availableUnits = Math.max(0, totalStockUnits - unitsConsumedByOthers);
-      const max = isUnit ? availableUnits : Math.floor(availableUnits / unitsPerPack);
-
-      const clamped = Math.max(0, Math.min(val, max));
-
+    // Zero = remove this mode's entry from cart
+    if (val === 0) {
+      setLocal('0');
       if (target) {
-        updateQuantity(target.id, isUnit, clamped - target.quantity);
-      } else if (clamped > 0) {
-        addToCart(item, isUnit, clamped);
+        updateQuantity(target.id, isUnit, -target.quantity);
       }
+      return;
+    }
+
+    // Calculate units consumed by the OTHER mode (pack↔unit) of same drug
+    const otherDrugItems = cart.filter(
+      (i) =>
+        i.name === item.name &&
+        (i.dosageForm || '') === (item.dosageForm || '') &&
+        !(i.id === item.id && !!i.isUnit === isUnit)
+    );
+    const unitsConsumedByOthers = otherDrugItems.reduce((sum, i) => {
+      return sum + (i.isUnit ? i.quantity : i.quantity * (i.unitsPerPack || unitsPerPack));
+    }, 0);
+
+    const availableUnits = Math.max(0, totalStockUnits - unitsConsumedByOthers);
+    const max = isUnit ? availableUnits : Math.floor(availableUnits / unitsPerPack);
+
+    // REJECT if value exceeds total stock limit — don't clamp, don't change
+    if (val > max) {
+      setLocal(target?.quantity?.toString() || '');
+      return;
+    }
+
+    // Auto-split: if qty exceeds CURRENT BATCH stock, distribute across batches
+    const currentBatchStock = item.stock || 0;
+    const currentBatchMax = isUnit
+      ? currentBatchStock
+      : Math.floor(currentBatchStock / unitsPerPack);
+
+    if (val > currentBatchMax && onSelectBatch && allBatches && allBatches.length > 1) {
+      const newPackQty = isUnit ? (packItem?.quantity || 0) : val;
+      const newUnitQty = isUnit ? val : (unitItem?.quantity || 0);
+      const currentDrug = allBatches.find((b) => b.id === item.id) || (item as unknown as Drug);
+      onSelectBatch(item, currentDrug, newPackQty, newUnitQty);
+      setLocal(val.toString());
+      return;
+    }
+
+    // Normal update within current batch
+    setLocal(val.toString());
+    if (target) {
+      updateQuantity(target.id, isUnit, val - target.quantity);
+    } else if (val > 0) {
+      addToCart(item, isUnit, val);
     }
   };
 
@@ -266,11 +304,14 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
             type='number'
             value={isUnit ? localUnit : localPack}
             placeholder={isUnit ? 'U' : 'P'}
+            min={0}
+            step={1}
             onChange={(e) => handleQtyChange(e.target.value, isUnit)}
             onBlur={() =>
               (isUnit ? localUnit : localPack) === '' &&
               (isUnit ? setLocalUnit : setLocalPack)(q.toString())
             }
+            onWheel={(e) => (e.target as HTMLInputElement).blur()}
             className='w-6 h-full text-[10px] font-black text-center bg-transparent border-none p-0 focus:outline-none'
           />
           <button
@@ -307,8 +348,11 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
           type='number'
           value={localPack}
           placeholder='P'
+          min={0}
+          step={1}
           onChange={(e) => handleQtyChange(e.target.value, false)}
           onBlur={() => localPack === '' && setLocalPack(packItem?.quantity.toString() || '')}
+          onWheel={(e) => (e.target as HTMLInputElement).blur()}
           className={inputClass}
         />
       </div>
@@ -320,9 +364,12 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
               type='number'
               value={localUnit}
               placeholder='U'
+              min={0}
+              step={1}
               title={`1 Pack = ${unitsPerPack} Units`}
               onChange={(e) => handleQtyChange(e.target.value, true)}
               onBlur={() => localUnit === '' && setLocalUnit(unitItem?.quantity.toString() || '')}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
               className={inputClass}
             />
           </div>

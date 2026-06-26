@@ -230,56 +230,6 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(
       },
     });
 
-    // Helpers to handle updates (create if missing)
-    const handleQtyChange = (isUnit: boolean, delta: number) => {
-      const targetItem = isUnit ? unitItem : packItem;
-      if (targetItem) {
-        updateQuantity(targetItem.id, !!targetItem.isUnit, delta);
-      } else {
-        // Create new entry
-        if (delta > 0) addToCart(item, isUnit); // Add 1
-      }
-    };
-
-    const handleManualQty = (isUnit: boolean, val: number) => {
-      // Calculate total global stock for this drug (all batches combined)
-      // We filter by name AND dosageForm to ensure accurate stock
-      const totalGlobalStock = allBatches.reduce((sum, b) => sum + b.stock, 0);
-      const unitsPerPack = item.unitsPerPack || 1;
-      const totalStockUnits = totalGlobalStock * unitsPerPack;
-
-      // Existing totals
-      const currentPackQty = packItem ? packItem.quantity : 0;
-      const currentUnitQty = unitItem ? unitItem.quantity : 0;
-
-      // New totals based on input
-      let newPackQty = !isUnit ? val : currentPackQty;
-      let newUnitQty = isUnit ? val : currentUnitQty;
-
-      // Validate Total Request <= Total Stock
-      const requestedTotalUnits = newPackQty * unitsPerPack + newUnitQty;
-
-      if (requestedTotalUnits > totalStockUnits) {
-        // Clamp to Max
-        // If changing Pack: reduce Pack to max possible given current Unit
-        if (!isUnit) {
-          const maxPack = Math.floor((totalStockUnits - currentUnitQty) / unitsPerPack);
-          newPackQty = Math.max(0, maxPack);
-        } else {
-          // If changing Unit: reduce Unit to max possible given current Pack
-          const maxUnit = totalStockUnits - currentPackQty * unitsPerPack;
-          newUnitQty = Math.max(0, maxUnit);
-        }
-      }
-
-      // If we have any existing item, use it as the "target batch" preference
-      // If not (creating new), use commonItem (which has batch info)
-      const targetBatch = (packItem || unitItem || commonItem) as Drug;
-
-      if (val < 0) return;
-
-      onSelectBatch(item, targetBatch, newPackQty, newUnitQty);
-    };
 
     return (
       <div
@@ -356,6 +306,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(
               t={t}
               currentLang={currentLang}
               cart={cart}
+              onSelectBatch={onSelectBatch}
             />
 
             <div
