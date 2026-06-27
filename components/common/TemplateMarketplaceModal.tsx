@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal } from './Modal';
 import type { MarketplaceTemplate } from '../../types/templates';
 
-interface PremiumTemplateGalleryProps {
+interface TemplateMarketplaceModalProps {
   isOpen: boolean;
   onClose: () => void;
   templates: MarketplaceTemplate[];
@@ -13,7 +13,7 @@ interface PremiumTemplateGalleryProps {
   color: string;
 }
 
-export const PremiumTemplateGallery: React.FC<PremiumTemplateGalleryProps> = ({
+export const TemplateMarketplaceModal: React.FC<TemplateMarketplaceModalProps> = ({
   isOpen,
   onClose,
   templates,

@@ -14,6 +14,7 @@ import type { SilentMode } from '../../utils/qzPrinter';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { Switch } from '../common/Switch';
+import { SilentPrintSetup } from './SilentPrintSetup';
 
 interface BrowserPrintSettingsProps {
   color?: string;
@@ -114,8 +115,9 @@ export const BrowserPrintSettings: React.FC<BrowserPrintSettingsProps> = ({
   const pageSubtitle = pt.subtitle || (language === 'AR' ? 'إعدادات الطباعة الصامتة باستخدام QZ Tray' : 'Configure silent printing with QZ Tray');
 
   return (
-    <div className='space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 p-6 md:p-8 max-w-5xl mx-auto'>
-      {/* Header Section */}
+    <div className="h-full overflow-y-auto main-content-scroll scrollbar-hide">
+      <div className='space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 p-6 md:p-8 max-w-5xl mx-auto'>
+        {/* Header Section */}
       <div>
         <h2 className='text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-3'>
           <span className={`material-symbols-rounded text-[28px] text-${color}-500`}>
@@ -333,6 +335,13 @@ export const BrowserPrintSettings: React.FC<BrowserPrintSettingsProps> = ({
           </div>
         </section>
 
+        {/* Silent Printing Setup */}
+        {settings.enabled && (settings.silentMode === 'on' || settings.silentMode === 'fallback') && (
+          <div className='md:col-span-2'>
+            <SilentPrintSetup color={color} language={language} onTestPrint={testPrintReceipt} />
+          </div>
+        )}
+
         {/* Desktop Version Banner */}
         {isTauri() && (
           <div className='md:col-span-2'>
@@ -364,6 +373,7 @@ export const BrowserPrintSettings: React.FC<BrowserPrintSettingsProps> = ({
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 };

@@ -7,7 +7,7 @@ import type { Sale, Shift } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
 import { FilterDropdown } from '../common/FilterDropdown';
-import { PremiumTemplateGallery } from '../common/PremiumTemplateGallery';
+import { TemplateMarketplaceModal } from '../common/TemplateMarketplaceModal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartInput, useSmartDirection } from '../common/SmartInputs';
 import { useStatusBar } from '../layout/StatusBar';
@@ -1075,7 +1075,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       </div>
 
       {/* Templates Market Gallery */}
-      <PremiumTemplateGallery
+      <TemplateMarketplaceModal
         isOpen={isGalleryOpen}
         onClose={() => setIsGalleryOpen(false)}
         templates={RECEIPT_TEMPLATES.map((t: any) => ({

@@ -80,6 +80,8 @@ const DEFAULT_SETTINGS: PrinterSettings = {
 // QZ Tray script URL (CDN)
 const QZ_SCRIPT_URL = 'https://cdn.jsdelivr.net/npm/qz-tray@2/qz-tray.min.js';
 
+import { QZ_CERTIFICATE, signQZData } from './qzSecurity';
+
 // --- QZ Tray Loading ---
 
 let qzLoaded = false;
@@ -112,18 +114,22 @@ export const loadQzTray = (): Promise<void> => {
     script.onload = () => {
       qzLoaded = true;
 
-      // Configure QZ Tray Security
-      // resolving to null tells QZ to treat this as an unsigned/untrusted connection
-      // This prevents "Failed to get certificate: undefined" errors
+      // Setup QZ Security for Silent Printing
       const qzGlobal = (window as any).qz;
       if (qzGlobal) {
-        qzGlobal.security.setCertificatePromise((resolve: (cert: string | null) => void) => {
-          resolve(null);
+        qzGlobal.security.setCertificatePromise((resolve: any) => {
+          resolve(QZ_CERTIFICATE);
         });
 
+        qzGlobal.security.setSignatureAlgorithm('SHA512');
         qzGlobal.security.setSignaturePromise((toSign: string) => {
-          return (resolve: (sig: string | null) => void) => {
-            resolve(null);
+          return function (resolve: any, reject: any) {
+            signQZData(toSign)
+              .then((signature) => resolve(signature))
+              .catch((err) => {
+                console.error('QZ Signature failed:', err);
+                reject(err);
+              });
           };
         });
       }
