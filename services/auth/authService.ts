@@ -409,6 +409,7 @@ export const authService = {
         });
       }
 
+      // Clear cached session FIRST to prevent stale reads during signOut
       cachedSession = null;
       await supabase.auth.signOut();
       this.clearEmployeeSession();
@@ -443,6 +444,10 @@ export const authService = {
       storage.resetCaches();
     } catch (err) {
       console.error('Logout error:', err);
+      // Failsafe: ensure local cleanup even if Supabase signOut fails
+      cachedSession = null;
+      storage.remove(SESSION_KEY);
+      storage.resetCaches();
     }
   },
 

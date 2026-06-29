@@ -308,8 +308,8 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                   if (isLoggingOut) return;
                   setIsLoggingOut(true);
                   try {
+                    // Always use centralized logout handler (useAuth.handleLogout)
                     if (onLogout) await onLogout();
-                    else await authService.logout();
                     setShowProfileMenu(false);
                   } catch (error) {
                     console.error('Logout failed', error);

@@ -50,13 +50,11 @@ export function EmployeeDashboard({
   const sessionUsername = session?.username;
   const sessionName = session?.employeeName || profile?.fullName;
 
+  // Always delegate to the centralized logout handler (useAuth.handleLogout)
+  // to ensure React state, storage, and Supabase session are all properly cleaned up
   const handleSignOut = useCallback(async () => {
     if (onLogout) {
-      onLogout();
-    } else {
-      await authService.logout();
-      window.location.hash = '#/login';
-      window.location.pathname = '/';
+      await onLogout();
     }
   }, [onLogout]);
 
