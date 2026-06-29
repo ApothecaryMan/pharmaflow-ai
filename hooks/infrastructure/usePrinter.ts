@@ -124,11 +124,21 @@ export const usePrinter = (): UsePrinterResult => {
     }
   }, []);
 
+
+
   /**
    * Connect to QZ Tray
    */
   const handleConnect = useCallback(async () => {
-    if (isConnecting || isConnected()) return;
+    if (isConnecting) return;
+
+    if (isConnected()) {
+      if (isMounted.current) {
+        setStatus('connected');
+        await handleRefreshPrinters();
+      }
+      return;
+    }
 
     setIsConnecting(true);
     setStatus('connecting');
@@ -251,6 +261,13 @@ export const usePrinter = (): UsePrinterResult => {
       }
     }
   }, [handleUpdateSettings]);
+
+  // Fetch printers on mount if already connected
+  useEffect(() => {
+    if (isConnected() && settings.enabled) {
+      handleRefreshPrinters();
+    }
+  }, [settings.enabled, handleRefreshPrinters]);
 
 
   /**

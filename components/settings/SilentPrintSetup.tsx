@@ -22,8 +22,8 @@ export const SilentPrintSetup: React.FC<SilentPrintSetupProps> = ({
     downloadBtn: language === 'AR' ? 'تحميل ملف الترخيص (digital-certificate.txt)' : 'Download License File (digital-certificate.txt)',
     step2: language === 'AR' ? 'تثبيت الشهادة في QZ Tray' : 'Install Certificate in QZ Tray',
     step2Inst1: language === 'AR' ? 'انقر بزر الماوس الأيمن على أيقونة QZ الأخضر بجوار الساعة.' : 'Right-click on the green QZ icon near the clock.',
-    step2Inst2: language === 'AR' ? 'اختر Advanced (متقدم) ثم Certificates (الشهادات).' : 'Select Advanced then Certificates.',
-    step2Inst3: language === 'AR' ? 'اضغط على زر Add (إضافة) واختر الملف الذي حملته.' : 'Click Add and select the downloaded file.',
+    step2Inst2: language === 'AR' ? 'اختر Advanced (متقدم) ثم Site Manager.' : 'Select Advanced then Site Manager.',
+    step2Inst3: language === 'AR' ? 'ستظهر نافذة بها علامتي (+ و -)، اضغط على (+) واختر ملف الترخيص من مجلد التنزيلات.' : 'A window with (+ and -) will appear, click (+) and select the downloaded license file.',
     step3: language === 'AR' ? 'اختبار الإعداد' : 'Test Setup',
     testBtn: language === 'AR' ? 'اختبار الطباعة الصامتة' : 'Test Silent Print',
     testDesc: language === 'AR' ? 'إذا لم تظهر لك نافذة تطلب السماح بالطباعة، فهذا يعني أنك أتممت الإعداد بنجاح!' : 'If no permission dialog appears, you have set it up successfully!',
@@ -64,40 +64,40 @@ export const SilentPrintSetup: React.FC<SilentPrintSetupProps> = ({
   };
 
   return (
-    <div className={`rounded-xl border border-${color}-200 dark:border-${color}-900/50 bg-${color}-50/30 dark:bg-${color}-900/10 overflow-hidden`}>
+    <div className="rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className={`w-full flex items-center justify-between p-4 hover:bg-${color}-50/50 dark:hover:bg-${color}-900/20 transition-colors text-left`}
+        className="w-full flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors text-start"
         dir={language === 'AR' ? 'rtl' : 'ltr'}
       >
-        <div className="flex items-start gap-3">
-          <div className={`p-2 rounded-lg bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-400`}>
+        <div className="flex items-center gap-3">
+          <div className="p-1.5 rounded-md bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300">
             <span className="material-symbols-rounded text-[20px]">rocket_launch</span>
           </div>
           <div>
-            <h4 className={`text-sm font-bold text-${color}-900 dark:text-${color}-100`}>
+            <h4 className="text-sm font-bold text-gray-900 dark:text-white">
               {t.title}
             </h4>
-            <p className={`text-xs text-${color}-700/70 dark:text-${color}-300/70 mt-1`}>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {t.desc}
             </p>
           </div>
         </div>
-        <span className={`material-symbols-rounded text-${color}-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+        <span className={`material-symbols-rounded text-gray-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
           expand_more
         </span>
       </button>
 
       {isExpanded && (
-        <div className={`p-4 pt-0 border-t border-${color}-100 dark:border-${color}-900/30`} dir={language === 'AR' ? 'rtl' : 'ltr'}>
-          <div className="space-y-6 mt-4">
+        <div className="p-3 pt-0 border-t border-gray-100 dark:border-zinc-800" dir={language === 'AR' ? 'rtl' : 'ltr'}>
+          <div className="space-y-4 mt-3">
             
             {/* Step 1 */}
-            <div className="flex gap-4">
-              <div className={`flex-shrink-0 w-8 h-8 rounded-full bg-${color}-100 dark:bg-${color}-900/50 flex items-center justify-center text-${color}-600 font-bold text-sm`}>
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-gray-800 dark:text-gray-200 font-bold text-xs">
                 1
               </div>
-              <div className="space-y-2 flex-1">
+              <div className="space-y-1.5 flex-1">
                 <h5 className="font-bold text-gray-800 dark:text-gray-200 text-sm flex items-center gap-2">
                   {t.step1}
                   <span className="material-symbols-rounded text-[18px] text-gray-400">download</span>
@@ -107,7 +107,7 @@ export const SilentPrintSetup: React.FC<SilentPrintSetupProps> = ({
                 </p>
                 <button
                   onClick={handleDownload}
-                  className={`mt-2 px-4 py-2 bg-${color}-600 hover:bg-${color}-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-2`}
+                  className="mt-2 px-3 py-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-gray-100 text-xs font-bold rounded-sm transition-colors flex items-center gap-2"
                 >
                   <span className="material-symbols-rounded text-[16px]">file_download</span>
                   {t.downloadBtn}
@@ -116,11 +116,11 @@ export const SilentPrintSetup: React.FC<SilentPrintSetupProps> = ({
             </div>
 
             {/* Step 2 */}
-            <div className="flex gap-4">
-              <div className={`flex-shrink-0 w-8 h-8 rounded-full bg-${color}-100 dark:bg-${color}-900/50 flex items-center justify-center text-${color}-600 font-bold text-sm`}>
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-gray-800 dark:text-gray-200 font-bold text-xs">
                 2
               </div>
-              <div className="space-y-2 flex-1">
+              <div className="space-y-1.5 flex-1">
                 <h5 className="font-bold text-gray-800 dark:text-gray-200 text-sm flex items-center gap-2">
                   {t.step2}
                   <span className="material-symbols-rounded text-[18px] text-gray-400">settings</span>
@@ -134,11 +134,11 @@ export const SilentPrintSetup: React.FC<SilentPrintSetupProps> = ({
             </div>
 
             {/* Step 3 */}
-            <div className="flex gap-4">
-              <div className={`flex-shrink-0 w-8 h-8 rounded-full bg-${color}-100 dark:bg-${color}-900/50 flex items-center justify-center text-${color}-600 font-bold text-sm`}>
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-gray-800 dark:text-gray-200 font-bold text-xs">
                 3
               </div>
-              <div className="space-y-2 flex-1">
+              <div className="space-y-1.5 flex-1">
                 <h5 className="font-bold text-gray-800 dark:text-gray-200 text-sm flex items-center gap-2">
                   {t.step3}
                   <span className="material-symbols-rounded text-[18px] text-gray-400">science</span>
@@ -150,7 +150,7 @@ export const SilentPrintSetup: React.FC<SilentPrintSetupProps> = ({
                 <div className="flex items-center gap-3 mt-2">
                   <button
                     onClick={handleTest}
-                    className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-lg transition-colors flex items-center gap-2 border border-gray-200 dark:border-zinc-700"
+                    className="px-3 py-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-gray-100 text-xs font-bold rounded-sm transition-colors flex items-center gap-2"
                   >
                     <span className="material-symbols-rounded text-[16px]">print</span>
                     {t.testBtn}

@@ -114,24 +114,28 @@ export const loadQzTray = (): Promise<void> => {
     script.onload = () => {
       qzLoaded = true;
 
-      // Setup QZ Security for Silent Printing
+      // Setup QZ Security for Silent Printing only if WebCrypto is available
       const qzGlobal = (window as any).qz;
       if (qzGlobal) {
-        qzGlobal.security.setCertificatePromise((resolve: any) => {
-          resolve(QZ_CERTIFICATE);
-        });
+        if (window.crypto && window.crypto.subtle) {
+          qzGlobal.security.setCertificatePromise((resolve: any) => {
+            resolve(QZ_CERTIFICATE);
+          });
 
-        qzGlobal.security.setSignatureAlgorithm('SHA512');
-        qzGlobal.security.setSignaturePromise((toSign: string) => {
-          return function (resolve: any, reject: any) {
-            signQZData(toSign)
-              .then((signature) => resolve(signature))
-              .catch((err) => {
-                console.error('QZ Signature failed:', err);
-                reject(err);
-              });
-          };
-        });
+          qzGlobal.security.setSignatureAlgorithm('SHA512');
+          qzGlobal.security.setSignaturePromise((toSign: string) => {
+            return function (resolve: any, reject: any) {
+              signQZData(toSign)
+                .then((signature) => resolve(signature))
+                .catch((err) => {
+                  console.error('QZ Signature failed:', err);
+                  reject(err);
+                });
+            };
+          });
+        } else {
+          console.warn('[QZ] WebCrypto not available (HTTP connection). Falling back to manual permission prompts.');
+        }
       }
 
       resolve();
