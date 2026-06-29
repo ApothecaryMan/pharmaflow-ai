@@ -21,6 +21,7 @@ const PrescriptionPricing: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [scannedDrugs, setScannedDrugs] = useState<Drug[]>([]);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [expandedDrugId, setExpandedDrugId] = useState<string | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -47,6 +48,16 @@ const PrescriptionPricing: React.FC = () => {
   const handleResultsChange = useCallback((results: any[]) => {
     setSearchResults(results);
   }, []);
+
+  const combinedSearchResults = useMemo(() => {
+    const combined = [...scannedDrugs];
+    for (const res of searchResults) {
+      if (!combined.some((d) => d.id === res.id)) {
+        combined.push(res);
+      }
+    }
+    return combined;
+  }, [scannedDrugs, searchResults]);
 
   const handleAddItem = useCallback(
     (catalogItem: any) => {
@@ -117,9 +128,23 @@ const PrescriptionPricing: React.FC = () => {
             <div className='w-full max-w-2xl mx-auto px-2 pb-1'>
               <InlineBarcodeScanner
                 onScanSuccess={(decodedText) => {
-                  playSuccess();
-                  setSearchTerm(decodedText);
-                  setIsScannerOpen(false);
+                  const foundDrug = inventory.find(
+                    (d) =>
+                      d.id === decodedText ||
+                      d.barcode === decodedText ||
+                      d.barcodes?.includes(decodedText)
+                  );
+                  if (foundDrug) {
+                    playSuccess();
+                    setScannedDrugs((prev) => {
+                      if (prev.some((d) => d.id === foundDrug.id)) return prev;
+                      return [foundDrug, ...prev];
+                    });
+                  } else {
+                    playSuccess();
+                    setSearchTerm(decodedText);
+                  }
+                  // Scanner remains open for continuous scanning
                 }}
                 onClose={() => setIsScannerOpen(false)}
                 isActive={isScannerOpen}
@@ -131,7 +156,10 @@ const PrescriptionPricing: React.FC = () => {
         <SearchEngineInput
           value={searchTerm}
           onSearchChange={setSearchTerm}
-          onClear={() => setSearchTerm('')}
+          onClear={() => {
+            setSearchTerm('');
+            setScannedDrugs([]);
+          }}
           onResultsChange={handleResultsChange}
           showScannerIcon={true}
           onScannerClick={handleScannerClick}
@@ -166,7 +194,7 @@ const PrescriptionPricing: React.FC = () => {
 
           {/* Search Results */}
           <div className='flex-1 min-w-0 order-2 lg:order-1'>
-            {searchTerm && searchResults.length === 0 ? (
+            {searchTerm && combinedSearchResults.length === 0 ? (
               <div className='flex flex-col items-center justify-start pt-6 p-6 text-center animate-fade-in'>
                 <h3 className='text-lg font-bold text-gray-900 dark:text-gray-100 mb-2'>
                   {t.pos.noResults || (language === 'AR' ? 'لا توجد نتائج' : 'No results found')}
@@ -179,12 +207,12 @@ const PrescriptionPricing: React.FC = () => {
               </div>
             ) : (
               <div className='flex flex-col gap-1'>
-                {searchResults.slice(0, 100).map((drug, index) => (
+                {combinedSearchResults.slice(0, 100).map((drug, index) => (
                   <SearchResultItem
                     key={drug.id}
                     drug={drug}
                     index={index}
-                    totalResults={searchResults.length}
+                    totalResults={combinedSearchResults.length}
                     isExpanded={expandedDrugId === drug.id}
                     onToggleExpand={() =>
                       setExpandedDrugId(expandedDrugId === drug.id ? null : drug.id)
@@ -200,7 +228,7 @@ const PrescriptionPricing: React.FC = () => {
               </div>
             )}
 
-            {!searchTerm && (
+            {!searchTerm && scannedDrugs.length === 0 && (
               <div className='flex flex-col items-center justify-start pt-12 p-8 text-center animate-fade-in'>
                 <h3 className='text-xl font-black text-gray-900 dark:text-gray-100 mb-3 tracking-tight'>
                   {language === 'AR' ? 'ماذا تبحث عنه اليوم؟' : 'What are you looking for?'}

@@ -40,6 +40,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
 
   // --- STATE ---
   const [searchTerm, setSearchTerm] = useState('');
+  const [scannedDrugs, setScannedDrugs] = useState<Drug[]>([]);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -97,16 +98,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
     // If we have a price range, allow empty text (just price filtering)
     // Otherwise require at least 2 chars
     if (!priceRange && searchTerm.trim().length < 2) return [];
-    if (priceRange && !priceRange.searchTerm && priceRange.minPrice >= 0) {
-      // Price range only, no text filter — show all in range
-      return inventory
-        .filter(
-          (drug) =>
-            drug.publicPrice >= priceRange.minPrice && drug.publicPrice <= priceRange.maxPrice
-        )
-        .slice(0, 100);
-    }
-
+    
     const textToSearch = priceRange ? priceRange.searchTerm : searchTerm;
     // Don't allow @ with price range
     const { mode, regex } = parseSearchTerm(
@@ -159,6 +151,16 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
       })
       .slice(0, 100); // Limit results for mobile performance
   }, [inventory, searchTerm, priceRange]);
+
+  const combinedFilteredDrugs = useMemo(() => {
+    const combined = [...scannedDrugs];
+    for (const res of filteredDrugs) {
+      if (!combined.some((d) => d.id === res.id)) {
+        combined.push(res);
+      }
+    }
+    return combined;
+  }, [scannedDrugs, filteredDrugs]);
 
   // Pre-compute highlight regex ONCE per search term (memoized performance optimization)
   // Uses word-boundary \b so it only highlights at the START of words, not mid-word
@@ -233,8 +235,23 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
             <div className='w-full max-w-2xl mx-auto px-2 pb-1'>
               <InlineBarcodeScanner
                 onScanSuccess={(decodedText) => {
-                  setSearchTerm(decodedText);
-                  setIsScannerOpen(false);
+                  const foundDrug = inventory.find(
+                    (d) =>
+                      d.id === decodedText ||
+                      d.barcode === decodedText ||
+                      d.barcodes?.includes(decodedText)
+                  );
+                  if (foundDrug) {
+                    playSuccess();
+                    setScannedDrugs((prev) => {
+                      if (prev.some((d) => d.id === foundDrug.id)) return prev;
+                      return [foundDrug, ...prev];
+                    });
+                  } else {
+                    playSuccess();
+                    setSearchTerm(decodedText);
+                  }
+                  // Scanner remains open for continuous scanning
                 }}
                 onClose={() => setIsScannerOpen(false)}
                 color={color}
@@ -250,7 +267,10 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
               ref={searchInputRef}
               value={searchTerm}
               onSearchChange={setSearchTerm}
-              onClear={() => setSearchTerm('')}
+              onClear={() => {
+            setSearchTerm('');
+            setScannedDrugs([]);
+          }}
               placeholder={t.pos.searchPlaceholder}
               color={color}
               rounded='full'
@@ -284,7 +304,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
             >
               <h2 className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-2'>
                 {language === 'AR' ? 'نتائج البحث' : 'Search Results'}{' '}
-                <span className='dark:text-gray-100 text-gray-500'>({filteredDrugs.length})</span>
+                <span className='dark:text-gray-100 text-gray-500'>({combinedFilteredDrugs.length})</span>
                 {priceRange && (
                   <span className='normal-case tracking-normal text-primary-500 dark:text-primary-400 font-semibold'>
                     ({priceRange.minPrice}–{priceRange.maxPrice})
@@ -301,7 +321,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
 
       {/* Results List - Scrollable */}
       <div className='flex-1 overflow-y-auto min-h-0 flex flex-col w-full relative'>
-        {searchTerm && filteredDrugs.length === 0 ? (
+        {searchTerm && combinedFilteredDrugs.length === 0 ? (
           <div className='flex-1 flex flex-col items-center justify-start pt-6 p-6 text-center animate-fade-in'>
             <h3 className='text-lg font-bold text-gray-900 dark:text-gray-100 mb-2'>
               {t.pos.noResults || (language === 'AR' ? 'لا توجد نتائج' : 'No results found')}
@@ -314,13 +334,13 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
           </div>
         ) : (
           <div className='p-4 flex flex-col gap-1 pb-24' dir='ltr'>
-            {filteredDrugs.map((drug, index) => (
+            {combinedFilteredDrugs.slice(0, 100).map((drug, index) => (
               <MedicineSearchItem
                 key={drug.id}
                 drug={drug}
                 index={index}
                 searchTerm={searchTerm}
-                totalResults={filteredDrugs.length}
+                totalResults={combinedFilteredDrugs.length}
                 isExpanded={expandedDrugId === drug.id}
                 onToggleExpand={() =>
                   setExpandedDrugId(expandedDrugId === drug.id ? null : drug.id)
@@ -339,7 +359,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
           </div>
         )}
 
-        {!searchTerm && (
+        {!searchTerm && scannedDrugs.length === 0 && (
           <div className='flex-1 flex flex-col items-center justify-start pt-12 p-8 text-center animate-fade-in'>
             <h3 className='text-xl font-black text-gray-900 dark:text-gray-100 mb-3 tracking-tight'>
               {language === 'AR' ? 'ماذا تبحث عنه اليوم؟' : 'What are you looking for?'}
