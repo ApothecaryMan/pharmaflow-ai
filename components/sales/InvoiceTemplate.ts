@@ -13,6 +13,7 @@ import { generateLayout2HTML } from './InvoiceLayout2';
 import { generateLayout3HTML } from './InvoiceLayout3';
 import { generateLayout4HTML } from './InvoiceLayout4';
 import { generateLayout5HTML } from './InvoiceLayout5';
+import { generateLayout6HTML } from './InvoiceLayout6';
 
 export interface InvoiceTemplateOptions {
   /** Store name to display in header */
@@ -48,7 +49,7 @@ export interface InvoiceTemplateOptions {
   /** ID of the field currently focused in the designer, for preview highlighting */
   highlightedField?: string;
   /** Selected layout */
-  receiptLayout?: 'layout-1' | 'layout-2' | 'layout-3' | 'layout-4' | 'layout-5';
+  receiptLayout?: 'layout-1' | 'layout-2' | 'layout-3' | 'layout-4' | 'layout-5' | 'layout-6';
 }
 
 export const defaultOptions: InvoiceTemplateOptions = {
@@ -167,8 +168,8 @@ export function generateLayout1HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
           line-height: ${opts.receiptFont === 'receipt-basic' ? '1.5' : '1.3'};
           padding: 8px; 
           color: #000; 
-          width: 80mm;
-          max-width: 80mm;
+          width: 72mm;
+          max-width: 72mm;
           margin: 0 auto; 
           background: white; 
           -webkit-print-color-adjust: exact;
@@ -207,10 +208,10 @@ export function generateLayout1HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
         
         .footer { text-align: center; margin-top: 6px; margin-bottom: 6px; line-height: 1.2; }
         .barcode-section { text-align: center; margin-top: 4px; }
-        #barcode { width: 100%; max-width: 200px; height: 50px; }
+        #barcode { width: 100%; max-width: 200px; height: auto; }
         
         @media print {
-          body { width: 79mm; margin: 0; padding: 0 5px; }
+          body { width: 72mm; margin: 0; padding: 0; }
           .no-print { display: none; }
         }
       </style>
@@ -318,10 +319,15 @@ export function generateLayout1HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
         </div>`
             : ''
         }
+        ${
+          sale.tax && sale.tax > 0
+            ? `
         <div class="total-row">
-          <span>TAX</span>
-          <span>0.00</span>
-        </div>
+          <span>${lang === 'AR' ? 'الضريبة' : 'TAX'}</span>
+          <span>${sale.tax.toFixed(2)}</span>
+        </div>`
+            : ''
+        }
         <div class="total-row">
           <span>PAYMENT (${(sale.paymentMethod || 'CASH').toUpperCase()})</span>
           <span>${sale.total.toFixed(2)}</span>
@@ -410,8 +416,9 @@ export function generateLayout1HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
             width: 2,
             height: 50,
             displayValue: true,
-            fontSize: 12,
-            margin: 5
+            fontSize: 16,
+            margin: 5,
+            fontOptions: "bold"
           });
           const isPrint = window.location.search.includes('print=true');
           if (isPrint) setTimeout(() => window.print(), 500);
@@ -436,7 +443,8 @@ export const RECEIPT_TEMPLATES = [
   { id: 'layout-2', name: 'Modern Dark', isPremium: true, price: 9.99, description: 'A bold, modern look with an inverted header.' },
   { id: 'layout-3', name: 'Compact Minimal', isPremium: true, price: 4.99, description: 'Saves thermal paper with tight spacing and smaller fonts.' },
   { id: 'layout-4', name: 'Structured Grid', isPremium: true, price: 5.99, description: 'A highly organized table-based design for clear data separation.' },
-  { id: 'layout-5', name: 'Elegant Typography', isPremium: true, price: 6.99, description: 'Distinctive design using modern fonts for a premium feel.' }
+  { id: 'layout-5', name: 'Elegant Typography', isPremium: true, price: 6.99, description: 'Distinctive design using modern fonts for a premium feel.' },
+  { id: 'layout-6', name: 'Borderless Minimal', isPremium: true, price: 3.99, description: 'A completely clean, border-free design that organizes data using whitespace.' }
 ];
 
 export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {}): string {
@@ -444,6 +452,7 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
   if (opts.receiptLayout === 'layout-3') return generateLayout3HTML(sale, opts);
   if (opts.receiptLayout === 'layout-4') return generateLayout4HTML(sale, opts);
   if (opts.receiptLayout === 'layout-5') return generateLayout5HTML(sale, opts);
+  if (opts.receiptLayout === 'layout-6') return generateLayout6HTML(sale, opts);
   return generateLayout1HTML(sale, opts);
 }
 

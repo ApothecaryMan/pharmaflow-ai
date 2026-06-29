@@ -47,7 +47,7 @@ export function generateLayout2HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
         body { 
           font-family: ${opts.receiptFont === 'receipt-basic' ? "'Receiptional Receipt', 'Raqami', Arial, sans-serif" : "'Fake Receipt', 'Raqami', Arial, sans-serif"}; 
           font-size: ${opts.receiptFont === 'receipt-basic' ? '11px' : '12px'};
-          line-height: 1.3; padding: 8px; color: #000; width: 80mm; max-width: 80mm; margin: 0 auto; 
+          line-height: 1.3; padding: 8px; color: #000; width: 72mm; max-width: 72mm; margin: 0 auto; 
           -webkit-print-color-adjust: exact; print-color-adjust: exact;
         }
         
@@ -84,7 +84,7 @@ export function generateLayout2HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
         
         .footer { text-align: center; margin-top: 12px; line-height: 1.4; font-weight: bold; font-size: 11px; }
         .barcode-section { text-align: center; margin-top: 12px; }
-        #barcode { width: 100%; max-width: 220px; height: 50px; }
+        #barcode { width: 100%; max-width: 220px; }
       </style>
     </head>
     <body>
@@ -185,12 +185,17 @@ export function generateLayout2HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
             ? `<div class="total-row"><span>DELIVERY</span><span>${sale.deliveryFee.toFixed(2)}</span></div>`
             : ''
         }
+        ${
+          sale.tax && sale.tax > 0
+            ? `
         <div class="total-row">
           <span>TAX</span>
-          <span>0.00</span>
-        </div>
+          <span>${sale.tax.toFixed(2)}</span>
+        </div>`
+            : ''
+        }
         <div class="total-row final">
-          <span>${lang === 'AR' ? 'الإجمالي النهائي' : 'Final Total'}</span>
+          <span>TOTAL</span>
           <span>${sale.total.toFixed(2)} EGP</span>
         </div>
         
@@ -266,8 +271,9 @@ export function generateLayout2HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
             width: 2,
             height: 45,
             displayValue: true,
-            fontSize: 12,
-            margin: 5
+            fontSize: 16,
+            margin: 5,
+            fontOptions: "bold"
           });
           if (window.location.search.includes('print=true')) setTimeout(() => window.print(), 500);
         }

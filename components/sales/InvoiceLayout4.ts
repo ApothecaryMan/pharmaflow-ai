@@ -47,7 +47,7 @@ export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
           font-size: 11px;
           line-height: 1.2; 
           padding: 4px;
-          color: #000; width: 80mm; max-width: 80mm; margin: 0 auto; 
+          color: #000; width: 72mm; max-width: 72mm; margin: 0 auto; 
           -webkit-print-color-adjust: exact; print-color-adjust: exact;
         }
         
@@ -74,7 +74,7 @@ export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
         
         .footer { text-align: center; margin: 8px 0; font-size: 9px; }
         .barcode-section { text-align: center; margin-top: 4px; }
-        #barcode { width: 100%; max-width: 180px; height: 40px; }
+        #barcode { width: 100%; max-width: 180px; }
       </style>
     </head>
     <body>
@@ -174,6 +174,13 @@ export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
             <span>${lang === 'AR' ? 'خدمة التوصيل' : 'Delivery Fee'}</span>
             <span dir="ltr">${sale.deliveryFee.toFixed(2)}</span>
           </div>` : ''}
+          ${
+            sale.tax && sale.tax > 0 ? `
+          <div class="total-row">
+            <span>${lang === 'AR' ? 'الضريبة' : 'Tax'}</span>
+            <span dir="ltr">${sale.tax.toFixed(2)}</span>
+          </div>` : ''
+          }
           
           <div class="total-row final-row">
             <span>${lang === 'AR' ? 'الصافي' : 'Total'}</span>
@@ -261,7 +268,7 @@ export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
         window.onload = function() { 
           JsBarcode("#barcode", "${sale.serialId || sale.id}", {
             format: "CODE128", lineColor: "#000", width: 1.5, height: 40,
-            displayValue: true, fontSize: 11, margin: 2
+            displayValue: true, fontSize: 16, margin: 2, fontOptions: "bold"
           });
           if (window.location.search.includes('print=true')) setTimeout(() => window.print(), 500);
         }

@@ -26,7 +26,7 @@ export function generateLayout5HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
           font-size: 11px;
           line-height: 1.4; 
           padding: 8px;
-          color: #000; width: 80mm; max-width: 80mm; margin: 0 auto; 
+          color: #000; width: 72mm; max-width: 72mm; margin: 0 auto; 
           background: white; 
           -webkit-print-color-adjust: exact; print-color-adjust: exact;
         }
@@ -68,7 +68,7 @@ export function generateLayout5HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
         .footer-thanks { font-weight: 700; font-size: 12px; color: #000; margin-bottom: 4px; letter-spacing: 0.5px; }
         
         .barcode-section { text-align: center; margin-top: 8px; }
-        #barcode { width: 100%; max-width: 200px; height: 45px; }
+        #barcode { width: 100%; max-width: 200px; }
       </style>
     </head>
     <body>
@@ -157,6 +157,13 @@ export function generateLayout5HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
           <span class="meta-label">${lang === 'AR' ? 'خدمة التوصيل' : 'Delivery Fee'}</span>
           <span class="meta-value">${sale.deliveryFee.toFixed(2)}</span>
         </div>` : ''}
+        ${
+          sale.tax && sale.tax > 0 ? `
+        <div class="total-row">
+          <span class="meta-label">${lang === 'AR' ? 'الضريبة' : 'Tax'}</span>
+          <span class="meta-value">${sale.tax.toFixed(2)}</span>
+        </div>` : ''
+        }
         
         <div class="total-row final-row">
           <span>${lang === 'AR' ? 'الإجمالي المطلوب' : 'TOTAL'}</span>
@@ -237,7 +244,7 @@ export function generateLayout5HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
         window.onload = function() { 
           JsBarcode("#barcode", "${sale.serialId || sale.id}", {
             format: "CODE128", lineColor: "#000", width: 1.5, height: 35,
-            displayValue: true, fontSize: 12, margin: 0, font: "Outfit"
+            displayValue: true, fontSize: 16, margin: 0, fontOptions: "bold"
           });
         }
       </script>

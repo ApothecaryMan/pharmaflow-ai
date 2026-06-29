@@ -120,11 +120,15 @@ export const printViaIframe = (html: string): void => {
   doc.close();
 
   const contentWindow = iframe.contentWindow;
-  // Give the browser a tick to parse + load fonts before printing.
-  setTimeout(() => {
+  if (!contentWindow) {
+    document.body.removeChild(iframe);
+    return;
+  }
+
+  const executePrint = () => {
     try {
-      contentWindow?.focus();
-      contentWindow?.print();
+      contentWindow.focus();
+      contentWindow.print();
     } catch (e) {
       console.error('Iframe print failed', e);
     }
@@ -132,7 +136,19 @@ export const printViaIframe = (html: string): void => {
     setTimeout(() => {
       if (iframe.parentNode) document.body.removeChild(iframe);
     }, 1000);
-  }, 300);
+  };
+
+  // Wait for all fonts (local and Google Fonts) to load before printing
+  const ready = (contentWindow.document.fonts && contentWindow.document.fonts.ready) || Promise.resolve();
+  Promise.all([
+    ready,
+    new Promise((resolve) => setTimeout(resolve, 200)) // Small extra tick to guarantee rendering
+  ])
+    .then(executePrint)
+    .catch((e) => {
+      console.error('Font loading failed in iframe', e);
+      executePrint();
+    });
 };
 
 /**
