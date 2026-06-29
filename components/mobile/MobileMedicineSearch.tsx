@@ -238,6 +238,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
                 }}
                 onClose={() => setIsScannerOpen(false)}
                 color={color}
+                isActive={isScannerOpen}
               />
             </div>
           </div>

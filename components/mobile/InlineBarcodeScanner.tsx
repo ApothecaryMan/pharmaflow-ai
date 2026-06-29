@@ -8,12 +8,14 @@ interface InlineBarcodeScannerProps {
   onScanSuccess: (decodedText: string) => void;
   onClose: () => void;
   color?: string;
+  isActive?: boolean;
 }
 
 export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
   onScanSuccess,
   onClose,
   color,
+  isActive = true,
 }) => {
   const { language } = useSettings();
   const t = TRANSLATIONS[language];
@@ -33,11 +35,26 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    initScanner();
+    if (isActive) {
+      initScanner();
+    }
     return () => {
       stopScanner();
     };
   }, []);
+
+  useEffect(() => {
+    if (isActive) {
+      if (!streamRef.current) {
+        initScanner();
+      } else if (isScanCompleteRef.current) {
+        startDetection();
+      }
+    } else {
+      stopScanner();
+      setIsReady(false);
+    }
+  }, [isActive]);
 
   const initScanner = async () => {
     try {

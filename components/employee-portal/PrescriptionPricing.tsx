@@ -122,6 +122,7 @@ const PrescriptionPricing: React.FC = () => {
                   setIsScannerOpen(false);
                 }}
                 onClose={() => setIsScannerOpen(false)}
+                isActive={isScannerOpen}
               />
             </div>
           </div>
