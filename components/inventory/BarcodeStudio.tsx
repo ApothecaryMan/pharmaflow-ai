@@ -15,7 +15,7 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { Modal } from '../common/Modal';
 import { ScreenCalibration } from '../common/ScreenCalibration';
-import { useSmartDirection } from '../common/SmartInputs';
+import { SmartInput, useSmartDirection } from '../common/SmartInputs';
 import { useStatusBar } from '../layout/StatusBar';
 import { BarcodePreview } from './BarcodePreview';
 import {
@@ -579,6 +579,50 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     }
   };
 
+  const handleRenameTemplate = (e?: React.KeyboardEvent | React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    if (!tempTemplateName.trim() || !activeTemplateId) {
+      setEditingTemplateName(false);
+      return;
+    }
+
+    const updatedTemplates = templates.map((t) => 
+      t.id === activeTemplateId ? { ...t, name: tempTemplateName.trim() } : t
+    );
+    setTemplates(updatedTemplates);
+    
+    if (activeBranchId) {
+      updateBranch(activeBranchId, {
+        printSettings: {
+          ...(activeBranch?.printSettings || {}),
+          [StorageKeys.LABEL_TEMPLATES]: updatedTemplates,
+        },
+      });
+    }
+
+    setEditingTemplateName(false);
+    setTempTemplateName('');
+    setSaveStatus(t.templateSaved || 'Saved');
+    setTimeout(() => setSaveStatus(''), 2000);
+  };
+  const handleSetDefault = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setDefaultTemplateId(id);
+    if (activeBranchId) {
+      updateBranch(activeBranchId, {
+        printSettings: {
+          ...(activeBranch?.printSettings || {}),
+          defaultLabelTemplateId: id,
+        },
+      });
+    }
+  };
+
+
   const deleteTemplate = (id: string) => {
     const updated = templates.filter((t) => t.id !== id);
     setTemplates(updated);
@@ -1026,7 +1070,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     >
       {/* Unified Control Bar */}
       <div
-        className={`${CARD_BASE} p-2 px-4 rounded-2xl flex flex-wrap lg:flex-nowrap items-center justify-between gap-4 sticky top-0 z-30 backdrop-blur-md bg-white/90 dark:bg-muted/90 border border-gray-100 dark:border-border shadow-lg shadow-gray-200/20 dark:shadow-black/20`}
+        className={`${CARD_BASE} p-2 px-4 rounded-2xl flex flex-wrap lg:flex-nowrap items-center justify-between gap-4 sticky top-0 z-30 backdrop-blur-md bg-white/90 dark:bg-muted/90 border border-gray-100 dark:border-border`}
       >
         {/* Left Side: Branding & Templates */}
         <div className='flex items-center gap-3'>
@@ -1039,7 +1083,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
           <div className='flex items-center gap-1.5'>
             <button
               onClick={() => setIsGalleryOpen(true)}
-              className='h-8 px-2 flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-muted/50 hover:bg-gray-50 dark:hover:bg-muted text-gray-600 dark:text-gray-300 transition-all shadow-sm group'
+              className='h-10 px-3 flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-muted/50 hover:bg-gray-50 dark:hover:bg-accent text-gray-600 dark:text-gray-300 transition-all group'
               title='معرض القوالب'
             >
               <span className='material-symbols-rounded text-sm group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors'>
@@ -1049,98 +1093,160 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                 Gallery
               </span>
             </button>
-            {/* Compact Template Selector */}
-            <div className='relative w-36 h-8'>
-              <FilterDropdown
-                items={[{ id: '', name: t.createNew, design: null } as any, ...templates]}
-                selectedItem={
-                  activeTemplateId
-                    ? templates.find((tmp) => tmp.id === activeTemplateId)
-                    : ({ id: '', name: t.createNew, design: null } as any)
-                }
-                isOpen={isTemplateDropdownOpen}
-                onToggle={() => setIsTemplateDropdownOpen(!isTemplateDropdownOpen)}
-                onSelect={(item) => {
-                  setIsTemplateDropdownOpen(false);
-                  loadTemplate(item.id);
-                }}
-                keyExtractor={(item) => item.id}
-                renderSelected={(item) => (
-                  <div className='flex items-center gap-1 px-1'>
-                    <span
-                      className={`material-symbols-rounded text-sm ${!item?.id ? 'text-primary-500 dark:text-muted-foreground' : item.id === defaultTemplateId ? 'text-green-500/80 dark:text-muted-foreground' : 'text-gray-400 dark:text-muted-foreground/60'}`}
+            {/* Compact Template Selector & Rename */}
+            {editingTemplateName ? (
+              <div className='flex items-center gap-2 w-full md:w-64 animate-fadeIn'>
+                <SmartInput
+                  autoFocus
+                  value={tempTemplateName}
+                  onChange={(e) => setTempTemplateName(e.target.value)}
+                  placeholder={t.templateName || 'Rename Template'}
+                  className='flex-1 !h-10 text-sm'
+                  onKeyDown={(e) => e.key === 'Enter' && handleRenameTemplate(e as any)}
+                />
+                <button
+                  onClick={handleRenameTemplate}
+                  className='w-10 h-10 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center transition-colors shrink-0'
+                >
+                  <span className='material-symbols-rounded text-[20px]'>check</span>
+                </button>
+                <button
+                  onClick={() => { setEditingTemplateName(false); setTempTemplateName(''); }}
+                  className='w-10 h-10 bg-gray-600 hover:bg-gray-700 text-white rounded-xl flex items-center justify-center transition-colors shrink-0'
+                >
+                  <span className='material-symbols-rounded text-[20px]'>close</span>
+                </button>
+              </div>
+            ) : (
+              <div className='flex items-center gap-2'>
+                <div className='relative w-40 h-10'>
+                  <FilterDropdown
+                    items={[{ id: '', name: t.createNew, design: null } as any, ...templates]}
+                    selectedItem={
+                      activeTemplateId
+                        ? templates.find((tmp) => tmp.id === activeTemplateId)
+                        : ({ id: '', name: t.createNew, design: null } as any)
+                    }
+                    isOpen={isTemplateDropdownOpen}
+                    onToggle={() => setIsTemplateDropdownOpen(!isTemplateDropdownOpen)}
+                    onSelect={(item) => {
+                      setIsTemplateDropdownOpen(false);
+                      loadTemplate(item.id);
+                    }}
+                    keyExtractor={(item) => item.id}
+                    renderSelected={(item) => (
+                      <div className='flex items-center gap-1 px-1'>
+                        <span
+                          className={`material-symbols-rounded text-sm ${!item?.id ? 'text-primary-500 dark:text-muted-foreground' : item.id === defaultTemplateId ? 'text-green-500/80 dark:text-muted-foreground' : 'text-gray-400 dark:text-muted-foreground/60'}`}
+                        >
+                          {!item?.id
+                            ? 'add_circle'
+                            : item.id === defaultTemplateId
+                              ? 'check_circle'
+                              : 'article'}
+                        </span>
+                        <span className='text-[10px] font-bold text-gray-700 dark:text-gray-200 truncate'>
+                          {item?.name || t.createNew}
+                        </span>
+                      </div>
+                    )}
+                    renderItem={(item, isSelected) => (
+                      <div className='flex items-center gap-2'>
+                        <span
+                          className={`material-symbols-rounded text-lg ${!item.id ? 'text-primary-500 dark:text-muted-foreground' : item.id === defaultTemplateId ? 'text-green-500/80 dark:text-muted-foreground' : 'text-gray-400 dark:text-muted-foreground/60'}`}
+                        >
+                          {!item.id
+                            ? 'add_circle'
+                            : item.id === defaultTemplateId
+                              ? 'check_circle'
+                              : 'article'}
+                        </span>
+                        <span
+                          className={`text-xs ${!item.id ? 'text-primary-600 dark:text-foreground font-bold' : 'text-gray-700 dark:text-muted-foreground'}`}
+                        >
+                          {item.name}
+                        </span>
+                      </div>
+                    )}
+                    variant='input'
+                    className='absolute top-0 left-0 w-full'
+                    color={color}
+                    rounded='xl'
+                    minHeight={40}
+                  />
+                </div>
+                {activeTemplateId && (
+                  <div className='flex items-center bg-gray-100 dark:bg-muted/50 rounded-xl p-1 shrink-0 h-10 border border-gray-200 dark:border-border'>
+                    {templates.length > 1 && (
+                      <button
+                        onClick={() => deleteTemplate(activeTemplateId)}
+                        className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-white dark:hover:bg-accent transition-all'
+                        title={t.deleteTemplate || 'Delete'}
+                      >
+                        <span className='material-symbols-rounded text-[18px]'>delete</span>
+                      </button>
+                    )}
+                    {templates.find(t => t.id === activeTemplateId) && defaultTemplateId !== activeTemplateId && (
+                      <button
+                        onClick={(e) => handleSetDefault(e, activeTemplateId)}
+                        className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:bg-white dark:hover:bg-accent transition-all'
+                        title='Set Default'
+                      >
+                        <span className='material-symbols-rounded text-[18px]'>bookmark_add</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        const tpl = templates.find(t => t.id === activeTemplateId);
+                        if (tpl) {
+                           setEditingTemplateName(true);
+                           setTempTemplateName(tpl.name);
+                        }
+                      }}
+                      className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white dark:hover:bg-accent transition-all group'
+                      title='Rename'
                     >
-                      {!item?.id
-                        ? 'add_circle'
-                        : item.id === defaultTemplateId
-                          ? 'check_circle'
-                          : 'article'}
-                    </span>
-                    <span className='text-[10px] font-bold text-gray-700 dark:text-gray-200 truncate'>
-                      {item?.name || t.createNew}
-                    </span>
+                      <span className='material-symbols-rounded text-[18px] transition-all duration-300 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-500 group-hover:to-purple-500'>edit</span>
+                    </button>
                   </div>
                 )}
-                renderItem={(item, isSelected) => (
-                  <div className='flex items-center gap-2'>
-                    <span
-                      className={`material-symbols-rounded text-lg ${!item.id ? 'text-primary-500 dark:text-muted-foreground' : item.id === defaultTemplateId ? 'text-green-500/80 dark:text-muted-foreground' : 'text-gray-400 dark:text-muted-foreground/60'}`}
-                    >
-                      {!item.id
-                        ? 'add_circle'
-                        : item.id === defaultTemplateId
-                          ? 'check_circle'
-                          : 'article'}
-                    </span>
-                    <span
-                      className={`text-xs ${!item.id ? 'text-primary-600 dark:text-foreground font-bold' : 'text-gray-700 dark:text-muted-foreground'}`}
-                    >
-                      {item.name}
-                    </span>
-                  </div>
-                )}
-                variant='input'
-                className='absolute top-0 left-0 w-full'
-                color={color}
-                rounded='xl'
-                minHeight={32}
-              />
-            </div>
+              </div>
+            )}
 
             {/* Ultra-Compact Quick Tools */}
-            <div className='flex items-center bg-gray-50/50 dark:bg-muted/30 p-0.5 rounded-lg border border-gray-100 dark:border-border'>
+            <div className='flex items-center bg-gray-100 dark:bg-muted/50 rounded-xl p-1 shrink-0 h-10 border border-gray-200 dark:border-border'>
               <button
                 onClick={handleUndo}
                 disabled={history.length === 0}
-                className={`w-6 h-6 flex items-center justify-center rounded-md text-gray-400 transition-all ${history.length !== 0 ? 'hover:bg-white dark:hover:bg-accent hover:text-primary-500 dark:hover:text-foreground' : 'opacity-20 cursor-default'}`}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 transition-all ${history.length !== 0 ? 'hover:bg-white dark:hover:bg-accent hover:text-primary-500 dark:hover:text-foreground' : 'opacity-20 cursor-default'}`}
                 title={t.undo}
               >
-                <span className='material-symbols-rounded text-sm'>undo</span>
-              </button>
-              <button
-                onClick={handleRedo}
-                disabled={redoStack.length === 0}
-                className={`w-6 h-6 flex items-center justify-center rounded-md text-gray-400 transition-all ${redoStack.length !== 0 ? 'hover:bg-white dark:hover:bg-accent hover:text-primary-500 dark:hover:text-foreground' : 'opacity-20 cursor-default'}`}
-                title={t.redo}
-              >
-                <span className='material-symbols-rounded text-sm'>redo</span>
+                <span className='material-symbols-rounded text-[18px]'>undo</span>
               </button>
               <button
                 onClick={handleSaveClick}
                 disabled={!hasUnsavedChanges}
-                className={`w-6 h-6 flex items-center justify-center rounded-md text-gray-400 transition-all ${hasUnsavedChanges ? 'hover:bg-white dark:hover:bg-accent hover:text-green-500 dark:hover:text-foreground' : 'opacity-20 cursor-default'}`}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 transition-all ${hasUnsavedChanges ? 'hover:bg-white dark:hover:bg-accent hover:text-green-500 dark:hover:text-foreground' : 'opacity-20 cursor-default'}`}
                 title={t.saveTemplate}
               >
-                <span className='material-symbols-rounded text-sm'>
+                <span className='material-symbols-rounded text-[18px]'>
                   {hasUnsavedChanges ? 'save' : 'check'}
                 </span>
               </button>
               <button
+                onClick={handleRedo}
+                disabled={redoStack.length === 0}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 transition-all ${redoStack.length !== 0 ? 'hover:bg-white dark:hover:bg-accent hover:text-primary-500 dark:hover:text-foreground' : 'opacity-20 cursor-default'}`}
+                title={t.redo}
+              >
+                <span className='material-symbols-rounded text-[18px]'>redo</span>
+              </button>
+              <button
                 onClick={() => initializeLayout(selectedPreset)}
-                className='w-6 h-6 flex items-center justify-center rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-all'
+                className='w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-all'
                 title={t.toolbar.resetLayout}
               >
-                <span className='material-symbols-rounded text-sm'>restart_alt</span>
+                <span className='material-symbols-rounded text-[18px]'>restart_alt</span>
               </button>
             </div>
           </div>
@@ -1148,15 +1254,15 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
         {/* Center: Element Toggles (Compacted) */}
         <div className='flex-1 flex justify-center min-w-0'>
-          <div className='flex items-center gap-1.5 px-3 py-1 bg-gray-100/50 dark:bg-muted/30 rounded-2xl border border-gray-200/50 dark:border-border overflow-x-auto scrollbar-hide'>
+          <div className='flex items-center gap-1.5 p-1 bg-gray-100 dark:bg-muted/50 rounded-xl border border-gray-200 dark:border-border overflow-x-auto scrollbar-hide h-10 shrink-0'>
             {elements.map((el) => (
               <button
                 key={el.id}
                 onClick={() => toggleVisibility(el.id)}
-                className={`whitespace-nowrap px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all border ${
+                className={`whitespace-nowrap px-3 h-8 flex items-center justify-center rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${
                   el.isVisible
-                    ? `bg-primary-500/10 text-primary-600 border-primary-200/50 dark:bg-accent dark:text-foreground dark:border-border/30 shadow-sm`
-                    : 'bg-transparent text-gray-400 border-transparent hover:bg-gray-100 dark:text-muted-foreground dark:hover:bg-muted/40'
+                    ? `bg-primary-500/10 text-primary-600 border-primary-200/50 dark:bg-accent dark:text-foreground dark:border-border/30`
+                    : 'bg-transparent text-gray-400 border-transparent hover:bg-white dark:hover:bg-accent dark:text-muted-foreground transition-all'
                 }`}
               >
                 {el.label}
@@ -1168,17 +1274,17 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
         {/* Right Side: Actions (Add, Zoom, Print) */}
         <div className='flex items-center gap-2'>
           {/* Ultra-Compact Element Inserts */}
-          <div className='flex items-center bg-gray-50/50 dark:bg-muted/30 p-0.5 rounded-lg border border-gray-100 dark:border-border'>
+          <div className='flex items-center bg-gray-100 dark:bg-muted/50 rounded-xl p-1 shrink-0 h-10 border border-gray-200 dark:border-border'>
             <button
               onClick={() => addElement('text')}
-              className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
+              className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${
                 elements.some((el) => el.type === 'text' && el.id.startsWith('custom-'))
-                  ? `bg-primary-500 dark:bg-accent text-white shadow-xs`
+                  ? `bg-primary-500 dark:bg-accent text-white`
                   : 'hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground'
               }`}
               title={t.toolbar.addText}
             >
-              <span className='material-symbols-rounded text-[18px] leading-none'>title</span>
+              <span className='material-symbols-rounded text-[20px] leading-none'>title</span>
             </button>
             <button
               onClick={() => {
@@ -1193,27 +1299,27 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                   document.getElementById('img-upload-hidden')?.click();
                 }
               }}
-              className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
+              className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${
                 elements.some(
                   (el) => (el.type === 'image' && el.id.startsWith('img-')) || el.id === 'logo'
                 )
-                  ? `bg-primary-500 dark:bg-accent text-white shadow-xs`
+                  ? `bg-primary-500 dark:bg-accent text-white`
                   : 'hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground'
               }`}
               title={t.toolbar.addImage}
             >
-              <span className='material-symbols-rounded text-[18px] leading-none'>image</span>
+              <span className='material-symbols-rounded text-[20px] leading-none'>image</span>
             </button>
             <button
               onClick={() => addElement('qrcode')}
-              className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
+              className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${
                 elements.some((el) => el.type === 'qrcode')
-                  ? `bg-primary-500 dark:bg-accent text-white shadow-xs`
+                  ? `bg-primary-500 dark:bg-accent text-white`
                   : 'hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground'
               }`}
               title='Add QR Code'
             >
-              <span className='material-symbols-rounded text-[18px] leading-none'>qr_code_2</span>
+              <span className='material-symbols-rounded text-[20px] leading-none'>qr_code_2</span>
             </button>
             <input
               type='file'
@@ -1224,10 +1330,10 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
             />
             <button
               onClick={() => setShowCalibrationModal(true)}
-              className='w-6 h-6 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground transition-all'
+              className='w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground transition-all'
               title='Calibrate Orientation'
             >
-              <span className='material-symbols-rounded text-[18px] leading-none'>
+              <span className='material-symbols-rounded text-[20px] leading-none'>
                 aspect_ratio
               </span>
             </button>
@@ -1236,10 +1342,10 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
           {/* Payload Size Badge */}
           {isLoaded && selectedDrug && (
             <div
-              className='hidden sm:flex items-center px-2 h-7 bg-gray-50/50 dark:bg-muted/30 rounded-lg border border-gray-100 dark:border-border text-[10px] font-bold text-gray-500 dark:text-muted-foreground gap-1.5'
+              className='hidden sm:flex items-center px-3 shrink-0 h-10 bg-gray-100 dark:bg-muted/50 rounded-xl border border-gray-200 dark:border-border text-xs font-bold text-gray-500 dark:text-muted-foreground gap-1.5'
               title='Estimated Printing Payload Size'
             >
-              <span className='material-symbols-rounded text-sm text-gray-400 dark:text-muted-foreground/60'>
+              <span className='material-symbols-rounded text-[18px] text-gray-400 dark:text-muted-foreground/60'>
                 database
               </span>
               <span>{payloadSize}</span>
@@ -1247,21 +1353,21 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
           )}
 
           {/* Ultra-Compact Zoom Controls */}
-          <div className='flex items-center bg-gray-50/50 dark:bg-muted/30 p-0.5 rounded-lg border border-gray-100 dark:border-border'>
+          <div className='flex items-center bg-gray-100 dark:bg-muted/50 rounded-xl p-1 shrink-0 h-10 border border-gray-200 dark:border-border'>
             <button
               onClick={() => setZoom(Math.max(1, zoom - 0.5))}
-              className='w-6 h-6 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground transition-all'
+              className='w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground transition-all'
             >
-              <span className='material-symbols-rounded text-sm'>remove</span>
+              <span className='material-symbols-rounded text-[18px]'>remove</span>
             </button>
-            <div className='w-5 h-6 flex items-center justify-center text-gray-300 dark:text-muted-foreground/40'>
-              <span className='material-symbols-rounded text-[14px]'>zoom_in</span>
+            <div className='w-6 h-8 flex items-center justify-center text-gray-300 dark:text-muted-foreground/40'>
+              <span className='material-symbols-rounded text-[16px]'>zoom_in</span>
             </div>
             <button
               onClick={() => setZoom(Math.min(8, zoom + 0.5))}
-              className='w-6 h-6 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground transition-all'
+              className='w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground transition-all'
             >
-              <span className='material-symbols-rounded text-sm'>add</span>
+              <span className='material-symbols-rounded text-[18px]'>add</span>
             </button>
           </div>
 
@@ -1436,7 +1542,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                 if (e.key === 'Enter' && newTemplateName.trim()) saveNewTemplate();
               }}
               placeholder={t.templatePlaceholder}
-              className='w-full px-3 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
+              className='w-full px-3 py-3 rounded-xl bg-gray-50 dark:bg-muted/50 border border-gray-200 dark:border-border focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
             />
           </div>
 
@@ -1487,3 +1593,4 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     </div>
   );
 };
+

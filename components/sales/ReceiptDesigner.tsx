@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
 import { useData } from '../../context/DataContext';
 import { useShift } from '../../hooks/sales/useShift';
@@ -13,6 +13,7 @@ import { SmartInput, useSmartDirection } from '../common/SmartInputs';
 import { useStatusBar } from '../layout/StatusBar';
 import { generateInvoiceHTML, type InvoiceTemplateOptions, RECEIPT_TEMPLATES } from '../sales/InvoiceTemplate';
 import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
+import { CARD_BASE } from '../../utils/themeStyles';
 
 interface ReceiptDesignerProps {
   color: string;
@@ -66,9 +67,19 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   const [templates, setTemplates] = useState<SavedTemplate[]>([]);
   const [activeTemplateId, setActiveTemplateId] = useState<string>('');
 
+  const [hasChanges, setHasChanges] = useState(false);
+  const lastSavedState = useRef<string>('');
+  const loadedBranchId = useRef<string | null>(null);
+  const justLoaded = useRef(false);
+
   // Initial load and sync when branch changes
   useEffect(() => {
     if (!activeBranchId || !branches || branches.length === 0 || !activeBranch) return;
+
+    // Only load if it's the first time for this branch, so we don't overwrite unsaved changes on polling
+    if (loadedBranchId.current === activeBranchId && hasMounted) {
+      return;
+    }
 
     try {
       const savedTemplates = activeBranch.printSettings?.[StorageKeys.RECEIPT_TEMPLATES] || [];
@@ -106,17 +117,20 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       const activeTemplate = templatesToSet.find((t: SavedTemplate) => t.id === activeId);
       if (activeTemplate) {
         setOptions(activeTemplate.options);
-        setLastSavedOptions(JSON.stringify(activeTemplate.options));
       }
+      
+      loadedBranchId.current = activeBranchId;
+      justLoaded.current = true;
     } catch (e) {
       console.error('Failed to load templates', e);
     }
-  }, [activeBranchId, branches]); // Will re-run if activeBranch changes
+  }, [activeBranchId, branches, hasMounted]);
 
   const [options, setOptions] = useState<InvoiceTemplateOptions>(() => {
     const active = templates.find((t) => t.id === activeTemplateId) || templates[0];
     return active ? active.options : defaultOptions;
   });
+  
   const [isAddingTemplate, setIsAddingTemplate] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [isEditingName, setIsEditingName] = useState<string | null>(null);
@@ -124,10 +138,25 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-
-  // Track last saved state to show/hide save button
-  const [lastSavedOptions, setLastSavedOptions] = useState<string>(() => JSON.stringify(options));
   const [quotaError, setQuotaError] = useState(false);
+
+  // Sync options to templates
+  useEffect(() => {
+    if (hasMounted) {
+      setTemplates((prev) => prev.map((t) => (t.id === activeTemplateId ? { ...t, options } : t)));
+    }
+  }, [options, hasMounted, activeTemplateId]);
+
+  // Compute hasChanges
+  useEffect(() => {
+    if (!hasMounted) return;
+    const currentState = JSON.stringify({ templates, activeTemplateId });
+    if (justLoaded.current) {
+      lastSavedState.current = currentState;
+      justLoaded.current = false;
+    }
+    setHasChanges(currentState !== lastSavedState.current);
+  }, [templates, activeTemplateId, hasMounted]);
 
   // Handle template selection
   const handleTemplateSelect = (id: string) => {
@@ -135,11 +164,8 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
     const template = templates.find((t) => t.id === id);
     if (template) {
       setOptions(template.options);
-      setLastSavedOptions(JSON.stringify(template.options));
     }
   };
-
-  // Removed auto-save useEffect because we want manual explicit saves to DB
 
   const handleCreateTemplate = () => {
     if (!newTemplateName.trim()) return;
@@ -191,20 +217,6 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
     );
     setIsEditingName(null);
   };
-
-  // Auto-save changes to current template (debounced slightly by effect nature or just direct)
-  // For now, let's make it manual save or auto-update?
-  // Requirement says "Save option". Usually implies specific action, but "Saved Templates" often implies auto-save in modern apps.
-  // Let's simple auto-update the "active" template in memory when options change, so we don't lose work when switching?
-  // No, switching normally reloads.
-  // Let's update the active template in the `templates` array whenever `options` changes.
-  useEffect(() => {
-    if (hasMounted) {
-      setTemplates((prev) => prev.map((t) => (t.id === activeTemplateId ? { ...t, options } : t)));
-    }
-  }, [options]);
-
-  const hasChanges = JSON.stringify(options) !== lastSavedOptions;
 
   /* -------------------------------------------------------------------------- */
   /*                                  PREVIEW                                   */
@@ -394,143 +406,125 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   }, [previewHtml, options.receiptFont, options.logoBase64, options.logoSvgCode]);
 
   return (
-    <div className='flex flex-col lg:flex-row h-full gap-6'>
-      {/* LEFT: Controls */}
-      <div
-        className={`w-full lg:w-1/3 bg-white dark:bg-gray-800 rounded-2xl shadow-xs p-4 overflow-y-auto custom-scrollbar flex flex-col gap-4 transition-opacity duration-300 ${previewMode === 'shift' ? 'opacity-30 pointer-events-none grayscale' : ''}`}
-      >
-        {/* Template Manager Header */}
-        <div className='w-full'>
-          <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1 block px-1'>
+    <div className='flex flex-col h-full gap-4 py-4 max-w-[1600px] mx-auto w-full'>
+      {/* TOP: Template Manager Header */}
+      <div className={`${CARD_BASE} p-2 px-4 rounded-2xl flex flex-wrap lg:flex-nowrap items-center justify-between gap-4 sticky top-0 z-30 backdrop-blur-md bg-white/90 dark:bg-muted/90 border border-gray-100 dark:border-border`}>
+        <div className='flex items-center gap-3 w-full lg:w-auto'>
+          <h1 className='text-lg font-bold text-gray-800 dark:text-white whitespace-nowrap shrink-0'>
+            {t.receiptDesigner?.title || (language === 'AR' ? 'تصميم الفواتير' : 'Receipt Designer')}
+          </h1>
+        </div>
+
+        <div className='flex flex-wrap xl:flex-nowrap items-center justify-end gap-2 md:gap-3 shrink-0 ml-auto rtl:mr-auto max-w-full'>
+          <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1 whitespace-nowrap shrink-0 hidden md:block'>
             {isAddingTemplate ? t.receiptDesigner.newTemplate : t.receiptDesigner.activeTemplate}
           </label>
-          <div className='flex items-center gap-2'>
-            {isAddingTemplate ? (
+          <div className='flex flex-wrap md:flex-nowrap items-center gap-2 min-w-0'>
+            {isAddingTemplate || isEditingName ? (
               <div className='flex items-center gap-2 w-full animate-fadeIn'>
-                <input
+                <SmartInput
                   autoFocus
-                  value={newTemplateName}
-                  onChange={(e) => setNewTemplateName(e.target.value)}
-                  placeholder={t.receiptDesigner.newTemplatePlaceholder}
-                  className='flex-1 bg-transparent border border-primary-500 rounded-xl px-3 h-10 text-sm focus:outline-hidden text-gray-800 dark:text-white'
-                  onKeyDown={(e) => e.key === 'Enter' && handleCreateTemplate()}
+                  value={isEditingName ? editingNameValue : newTemplateName}
+                  onChange={(e) => isEditingName ? setEditingNameValue(e.target.value) : setNewTemplateName(e.target.value)}
+                  placeholder={isEditingName ? t.receiptDesigner.renameTemplate : t.receiptDesigner.newTemplatePlaceholder}
+                  className='flex-1 !h-10 text-sm'
+                  onKeyDown={(e) => e.key === 'Enter' && (isEditingName ? handleRenameTemplate(e as any) : handleCreateTemplate())}
                 />
                 <button
-                  onClick={handleCreateTemplate}
-                  className='w-10 h-10 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center transition-colors'
+                  onClick={(e) => isEditingName ? handleRenameTemplate(e as any) : handleCreateTemplate()}
+                  className='w-10 h-10 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center transition-colors shrink-0'
                 >
                   <span className='material-symbols-rounded text-[20px]'>check</span>
                 </button>
                 <button
-                  onClick={() => setIsAddingTemplate(false)}
-                  className='w-10 h-10 bg-gray-600 hover:bg-gray-700 text-white rounded-xl flex items-center justify-center transition-colors'
+                  onClick={() => { setIsAddingTemplate(false); setIsEditingName(null); }}
+                  className='w-10 h-10 bg-gray-600 hover:bg-gray-700 text-white rounded-xl flex items-center justify-center transition-colors shrink-0'
                 >
                   <span className='material-symbols-rounded text-[20px]'>close</span>
                 </button>
               </div>
             ) : (
               <>
-                <div className='relative flex-1 h-10'>
-                  <FilterDropdown<SavedTemplate>
-                    items={templates}
-                    selectedItem={templates.find((t) => t.id === activeTemplateId)}
-                    isOpen={isDropdownOpen}
-                    onToggle={() => setIsDropdownOpen(!isDropdownOpen)}
-                    onSelect={(template) => {
-                      handleTemplateSelect(template.id);
-                      setIsDropdownOpen(false);
-                    }}
-                    minHeight={38}
-                    keyExtractor={(item) => item.id}
-                    renderSelected={(item) => (
-                      <div className='flex items-center justify-between w-full'>
-                        <span className='font-bold text-gray-800 dark:text-white truncate'>
-                          {item?.name}
-                        </span>
-                        {item?.isDefault && (
-                          <span className='ml-2 text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded-md font-bold'>
-                            Def
+                <div className='relative h-10 w-full sm:w-[240px] md:w-[280px] shrink-0 flex items-center gap-1.5'>
+                  <div className='flex-1 h-full relative'>
+                    <FilterDropdown<SavedTemplate>
+                      items={templates}
+                      selectedItem={templates.find((t) => t.id === activeTemplateId)}
+                      isOpen={isDropdownOpen}
+                      onToggle={() => setIsDropdownOpen(!isDropdownOpen)}
+                      onSelect={(template) => {
+                        handleTemplateSelect(template.id);
+                        setIsDropdownOpen(false);
+                      }}
+                      minHeight={38}
+                      keyExtractor={(item) => item.id}
+                      renderSelected={(item) => (
+                        <div className='flex items-center justify-between w-full'>
+                          <span className='font-bold text-gray-800 dark:text-white truncate'>
+                            {item?.name}
                           </span>
-                        )}
-                      </div>
-                    )}
-                    renderItem={(item, isSelected) => (
-                      <div className='flex items-center justify-between w-full group py-1'>
-                        <div className='flex items-center gap-2 flex-1 min-w-0'>
-                          {isEditingName === item.id ? (
-                            <div
-                              className='flex items-center gap-1 w-full'
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <input
-                                autoFocus
-                                value={editingNameValue}
-                                onChange={(e) => setEditingNameValue(e.target.value)}
-                                className='flex-1 bg-white dark:bg-gray-800 border border-primary-500 rounded-lg px-2 py-1 text-xs focus:outline-hidden text-gray-800 dark:text-white'
-                                onKeyDown={(e) => e.key === 'Enter' && handleRenameTemplate(e)}
-                              />
-                              <button
-                                onClick={(e) => handleRenameTemplate(e)}
-                                className='w-6 h-6 bg-emerald-500 text-white rounded-lg flex items-center justify-center transition-colors shadow-xs'
-                              >
-                                <span className='material-symbols-rounded text-[14px]'>check</span>
-                              </button>
-                            </div>
-                          ) : (
-                            <>
-                              <span
-                                className={`text-sm truncate ${isSelected ? 'font-bold text-primary-600' : 'text-gray-700 dark:text-gray-300'}`}
-                              >
-                                {item.name}
-                              </span>
-                              {item.isDefault && (
-                                <span className='text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded-md font-bold'>
-                                  Def
-                                </span>
-                              )}
-                            </>
+                          {item?.isDefault && (
+                            <span className='ml-2 text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded-md font-bold'>
+                              Def
+                            </span>
                           )}
                         </div>
-                        {!isEditingName && (
-                          <div className='flex items-center gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity ml-2'>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setIsEditingName(item.id);
-                                setEditingNameValue(item.name);
-                              }}
-                              className='w-6 h-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg flex items-center justify-center text-gray-400 hover:text-primary-500 transition-colors'
-                              title={t.receiptDesigner.renameTemplate}
+                      )}
+                      renderItem={(item, isSelected) => (
+                        <div className='flex items-center justify-between w-full py-1'>
+                          <div className='flex items-center gap-2 flex-1 min-w-0'>
+                            <span
+                              className={`text-sm truncate ${isSelected ? 'font-bold text-primary-600' : 'text-gray-700 dark:text-gray-300'}`}
                             >
-                              <span className='material-symbols-rounded text-[14px]'>edit</span>
-                            </button>
-                            {!item.isDefault && (
-                              <button
-                                onClick={(e) => handleSetDefault(e, item.id)}
-                                className='w-6 h-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg flex items-center justify-center text-gray-400 hover:text-emerald-500 transition-colors'
-                                title={t.receiptDesigner.setDefault}
-                              >
-                                <span className='material-symbols-rounded text-[14px]'>
-                                  bookmark_add
-                                </span>
-                              </button>
-                            )}
-                            {templates.length > 1 && (
-                              <button
-                                onClick={(e) => handleDeleteTemplate(e, item.id)}
-                                className='w-6 h-6 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors'
-                                title={t.receiptDesigner.deleteTemplate}
-                              >
-                                <span className='material-symbols-rounded text-[14px]'>delete</span>
-                              </button>
+                              {item.name}
+                            </span>
+                            {item.isDefault && (
+                              <span className='text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded-md font-bold'>
+                                Def
+                              </span>
                             )}
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
+                      variant='input'
+                      className='w-full absolute top-0 left-0 z-10'
+                    />
+                  </div>
+
+                  {/* Context Actions for Active Template */}
+                  <div className='flex items-center bg-gray-100 dark:bg-muted/50 rounded-xl p-1 shrink-0 h-10 border border-gray-200 dark:border-border'>
+                    <button
+                      onClick={() => {
+                        const activeTpl = templates.find(t => t.id === activeTemplateId);
+                        if (activeTpl) {
+                           setIsEditingName(activeTpl.id);
+                           setEditingNameValue(activeTpl.name);
+                        }
+                      }}
+                      className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white dark:hover:bg-accent transition-all group'
+                      title={t.receiptDesigner.renameTemplate || 'Rename'}
+                    >
+                      <span className='material-symbols-rounded text-[18px] group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-500 group-hover:to-purple-500'>edit</span>
+                    </button>
+                    {templates.find(t => t.id === activeTemplateId) && !templates.find(t => t.id === activeTemplateId)?.isDefault && (
+                      <button
+                        onClick={(e) => handleSetDefault(e as any, activeTemplateId)}
+                        className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:bg-white dark:hover:bg-accent transition-all'
+                        title={t.receiptDesigner.setDefault || 'Set Default'}
+                      >
+                        <span className='material-symbols-rounded text-[18px]'>bookmark_add</span>
+                      </button>
                     )}
-                    variant='input'
-                    className='w-full absolute top-0 left-0 z-10'
-                  />
+                    {templates.length > 1 && (
+                      <button
+                        onClick={(e) => handleDeleteTemplate(e as any, activeTemplateId)}
+                        className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-white dark:hover:bg-accent transition-all'
+                        title={t.receiptDesigner.deleteTemplate || 'Delete'}
+                      >
+                        <span className='material-symbols-rounded text-[18px]'>delete</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {hasChanges && (
                   <button
@@ -543,7 +537,8 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                           [StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID]: activeTemplateId,
                         };
                         await updateBranch(activeBranchId, { printSettings: newSettings });
-                        setLastSavedOptions(JSON.stringify(options));
+                        lastSavedState.current = JSON.stringify({ templates, activeTemplateId });
+                        setHasChanges(false);
                         setQuotaError(false);
                       } catch (err) {
                         console.error('Failed to save settings:', err);
@@ -552,10 +547,11 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                         setIsSaving(false);
                       }
                     }}
-                    className='w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all border border-emerald-100 dark:border-emerald-800/50 animate-fadeIn'
+                    className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-all shadow-sm hover:shadow-md active:scale-95 shrink-0 border border-transparent animate-fadeIn'
                     title={t.common?.save || 'Save'}
                   >
-                    <span className='material-symbols-rounded'>save</span>
+                    <span className='material-symbols-rounded text-[20px]'>save</span>
+                    <span className='hidden lg:inline text-[13px] font-bold'>{t.common?.save || 'Save'}</span>
                   </button>
                 )}
                 {hasChanges && (
@@ -565,33 +561,42 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                         setOptions(defaultOptions);
                       }
                     }}
-                    className='w-10 h-10 flex items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 hover:bg-orange-500 hover:text-white transition-all border border-orange-200 dark:border-orange-800/50'
+                    className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-white dark:bg-muted/50 border border-gray-200 dark:border-border text-gray-600 dark:text-gray-400 hover:text-red-600 hover:border-red-200 dark:hover:text-red-400 dark:hover:border-red-500/50 dark:hover:bg-red-500/10 hover:bg-red-50 transition-all active:scale-95 shrink-0'
                     title={t.common?.reset || 'Reset to Defaults'}
                   >
-                    <span className='material-symbols-rounded'>restart_alt</span>
+                    <span className='material-symbols-rounded text-[20px]'>restart_alt</span>
+                    <span className='hidden lg:inline text-[13px] font-bold'>{t.common?.reset || 'Reset'}</span>
                   </button>
                 )}
                 <button
                   onClick={() => setIsAddingTemplate(true)}
-                  className='w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-primary-500 hover:text-white transition-all border border-gray-200 dark:border-gray-700'
+                  className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-white dark:bg-muted/50 border border-gray-200 dark:border-border text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all active:scale-95 shrink-0 hover:border-primary-500 dark:hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400'
+                  title={t.common?.add || 'Add'}
                 >
-                  <span className='material-symbols-rounded'>add</span>
+                  <span className='material-symbols-rounded text-[20px]'>add</span>
+                  <span className='hidden lg:inline text-[13px] font-bold'>{t.common?.add || 'Add'}</span>
                 </button>
                 <button
                   onClick={() => setIsGalleryOpen(true)}
-                  className='w-10 h-10 flex items-center justify-center rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 hover:bg-purple-500 hover:text-white transition-all border border-purple-200 dark:border-purple-800/50'
+                  className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 transition-all active:scale-95 shrink-0 border border-transparent'
                   title={t.receiptDesigner.gallery?.title || 'Templates Market'}
                 >
                   <span className='material-symbols-rounded text-[20px]'>storefront</span>
+                  <span className='hidden xl:inline text-[13px] font-bold'>{t.receiptDesigner.gallery?.title || 'Market'}</span>
                 </button>
               </>
             )}
           </div>
         </div>
+      </div>
 
-        <hr className='border-gray-100 dark:border-gray-700/50' />
-
-        {/* Layout Selection */}
+      {/* BOTTOM: Controls and Preview */}
+      <div className='flex flex-col lg:flex-row flex-1 gap-6 min-h-0'>
+        {/* LEFT: Controls */}
+        <div
+          className={`w-full lg:w-1/3 ${CARD_BASE} rounded-2xl p-4 overflow-y-auto custom-scrollbar flex flex-col gap-4 transition-opacity duration-300 ${previewMode === 'shift' ? 'opacity-30 pointer-events-none grayscale' : ''}`}
+        >
+          {/* Layout Selection */}
         <div className='mt-4 mb-2'>
           <label className='text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1'>
             <span className='material-symbols-rounded text-[14px]'>dashboard</span>
@@ -615,7 +620,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   className={`p-1.5 rounded-lg border text-center flex flex-col items-center justify-center gap-1 transition-all ${
                     isActive 
                       ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 ring-1 ring-primary-500 shadow-sm' 
-                      : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      : 'border-gray-200 dark:border-border hover:border-primary-300 dark:hover:border-primary-700 hover:bg-gray-50 dark:hover:bg-muted'
                   }`}
                   title={t.description}
                 >
@@ -646,7 +651,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               </label>
               {options.logoBase64 && !options.logoSvgCode ? (
                 <div
-                  className={`relative bg-gray-50 dark:bg-gray-900 rounded-xl p-2 flex items-center justify-center border ${quotaError ? 'border-red-500' : 'border-gray-200 dark:border-gray-800'} h-24 w-full`}
+                  className={`relative bg-gray-50 dark:bg-muted/30 rounded-xl p-2 flex items-center justify-center border ${quotaError ? 'border-red-500' : 'border-gray-200 dark:border-gray-800'} h-24 w-full`}
                 >
                   <img
                     src={options.logoBase64}
@@ -675,7 +680,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 </div>
               ) : (
                 <label
-                  className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed ${quotaError ? 'border-red-500 bg-red-50 dark:bg-red-900/10' : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'} cursor-pointer transition-colors bg-gray-50 dark:bg-gray-900 h-24 w-full`}
+                  className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed ${quotaError ? 'border-red-500 bg-red-50 dark:bg-red-900/10' : 'border-gray-300 dark:border-border hover:border-gray-400 dark:hover:border-border'} cursor-pointer transition-colors bg-gray-50 dark:bg-muted/30 h-24 w-full`}
                 >
                   {quotaError ? (
                     <>
@@ -734,7 +739,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               </label>
               {options.logoSvgCode ? (
                 <div
-                  className={`relative bg-gray-50 dark:bg-gray-900 rounded-xl p-2 flex items-center justify-center border ${quotaError ? 'border-red-500' : 'border-gray-200 dark:border-gray-800'} h-24 w-full`}
+                  className={`relative bg-gray-50 dark:bg-muted/30 rounded-xl p-2 flex items-center justify-center border ${quotaError ? 'border-red-500' : 'border-gray-200 dark:border-gray-800'} h-24 w-full`}
                 >
                   <div
                     className='w-full h-full flex items-center justify-center overflow-hidden'
@@ -760,7 +765,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                     setOptions({ ...options, logoSvgCode: e.target.value, logoBase64: '' });
                     setQuotaError(false);
                   }}
-                  className={`w-full h-24 p-2 rounded-xl border ${quotaError ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} bg-gray-50 dark:bg-gray-900 focus:outline-hidden transition-all resize-none font-mono text-[9px]`}
+                  className={`w-full h-24 p-2 rounded-xl border ${quotaError ? 'border-red-500' : 'border-gray-200 dark:border-border'} bg-gray-50 dark:bg-muted/30 focus:outline-hidden transition-all resize-none font-mono text-[9px]`}
                   placeholder='Paste SVG code here...'
                   dir='ltr'
                 />
@@ -795,7 +800,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 onChange={(e) => setOptions({ ...options, storeName: e.target.value })}
                 onFocus={() => setHighlightedField('storeName')}
                 onBlur={() => setHighlightedField(null)}
-                className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm'
+                className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-muted/30 text-sm'
                 placeholder='Name...'
               />
             </div>
@@ -809,7 +814,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 onChange={(e) => setOptions({ ...options, storeSubtitle: e.target.value })}
                 onFocus={() => setHighlightedField('storeSubtitle')}
                 onBlur={() => setHighlightedField(null)}
-                className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm'
+                className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-muted/30 text-sm'
                 placeholder='Slogan...'
               />
             </div>
@@ -823,7 +828,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 onChange={(e) => setOptions({ ...options, headerHotline: e.target.value })}
                 onFocus={() => setHighlightedField('headerHotline')}
                 onBlur={() => setHighlightedField(null)}
-                className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm'
+                className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-muted/30 text-sm'
                 placeholder='19xxx...'
               />
             </div>
@@ -837,7 +842,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 onChange={(e) => setOptions({ ...options, footerMessage: e.target.value })}
                 onFocus={() => setHighlightedField('footerMessage')}
                 onBlur={() => setHighlightedField(null)}
-                className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm'
+                className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-muted/30 text-sm'
                 placeholder='Thanks...'
               />
             </div>
@@ -851,7 +856,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 onChange={(e) => setOptions({ ...options, footerInquiry: e.target.value })}
                 onFocus={() => setHighlightedField('footerInquiry')}
                 onBlur={() => setHighlightedField(null)}
-                className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm'
+                className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-muted/30 text-sm'
                 placeholder='Questions?...'
               />
             </div>
@@ -876,7 +881,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   onChange={(e) => setOptions({ ...options, headerAddress: e.target.value })}
                   onFocus={() => setHighlightedField('headerAddress')}
                   onBlur={() => setHighlightedField(null)}
-                  className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm'
+                  className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-muted/30 text-sm'
                   placeholder='Street...'
                 />
               </div>
@@ -897,7 +902,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   onChange={(e) => setOptions({ ...options, headerArea: e.target.value })}
                   onFocus={() => setHighlightedField('headerArea')}
                   onBlur={() => setHighlightedField(null)}
-                  className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm'
+                  className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-muted/30 text-sm'
                   placeholder='Area...'
                 />
               </div>
@@ -952,7 +957,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 )}
                 onFocus={() => setHighlightedField('termsCondition')}
                 onBlur={() => setHighlightedField(null)}
-                className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 transition-all h-20 resize-none'
+                className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-muted/30 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 transition-all h-20 resize-none'
                 placeholder='...'
               />
             </div>
@@ -960,7 +965,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
 
           {/* Toggles */}
           <div className='grid grid-cols-3 gap-2 mt-2'>
-            <label className='flex items-center justify-between gap-2 cursor-pointer px-2 py-1.5 bg-gray-50 dark:bg-gray-900/50 rounded-xl h-10 transition-all hover:bg-gray-100 dark:hover:bg-gray-700'>
+            <label className='flex items-center justify-between gap-2 cursor-pointer px-2 py-1.5 bg-gray-50 dark:bg-muted/30 rounded-xl h-10 transition-all hover:bg-gray-100 dark:hover:bg-gray-700'>
               <span className='text-[10px] font-bold text-gray-500 uppercase tracking-tight leading-tight'>
                 {t.receiptDesigner.options.addressBox}
               </span>
@@ -972,7 +977,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               />
             </label>
 
-            <label className='flex items-center justify-between gap-2 cursor-pointer px-2 py-1.5 bg-gray-50 dark:bg-gray-900/50 rounded-xl h-10 transition-all hover:bg-gray-100 dark:hover:bg-gray-700'>
+            <label className='flex items-center justify-between gap-2 cursor-pointer px-2 py-1.5 bg-gray-50 dark:bg-muted/30 rounded-xl h-10 transition-all hover:bg-gray-100 dark:hover:bg-gray-700'>
               <span className='text-[10px] font-bold text-gray-500 uppercase tracking-tight leading-tight'>
                 {t.pos.deliveryOrder}
               </span>
@@ -984,7 +989,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               />
             </label>
 
-            <label className='flex items-center justify-between gap-2 cursor-pointer px-2 py-1.5 bg-gray-50 dark:bg-gray-900/50 rounded-xl h-10 transition-all hover:bg-gray-100 dark:hover:bg-gray-700'>
+            <label className='flex items-center justify-between gap-2 cursor-pointer px-2 py-1.5 bg-gray-50 dark:bg-muted/30 rounded-xl h-10 transition-all hover:bg-gray-100 dark:hover:bg-gray-700'>
               <span className='text-[10px] font-bold text-gray-500 uppercase tracking-tight leading-tight'>
                 {t.salesHistory.returns.returned}
               </span>
@@ -1002,7 +1007,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       {/* RIGHT: Preview */}
       <div className='flex-1 rounded-2xl border border-gray-200 dark:border-gray-800 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] bg-size-[20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] bg-gray-100 dark:bg-gray-950 relative flex flex-col overflow-hidden'>
         {/* Top-Left Unified Stats Badge */}
-        <div className='absolute top-4 left-4 flex items-center px-2.5 h-7 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-xl border border-gray-200/50 dark:border-gray-700/50 shadow-xs text-[10px] font-bold gap-3 z-20 pointer-events-none'>
+        <div className='absolute top-4 left-4 flex items-center px-2.5 h-7 bg-white/80 dark:bg-muted/80 backdrop-blur-md rounded-xl border border-gray-200/50 dark:border-border/50 shadow-xs text-[10px] font-bold gap-3 z-20 pointer-events-none'>
           <div className='flex items-center gap-1.2' title='Real Printing Memory Size (Actual)'>
             <span className='material-symbols-rounded text-[16px] text-primary-500'>memory</span>
             <span className='text-primary-600 dark:text-blue-400'>{actualPrintSize}</span>
@@ -1021,7 +1026,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
         <div className='absolute top-4 right-4 z-20 flex gap-2'>
           <button
             type='button'
-            className={`h-7 px-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-md rounded-xl border shadow-xs text-[10px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer pointer-events-auto ${previewMode === 'shift' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-gray-200/50 dark:border-gray-700/50 text-gray-700 dark:text-gray-300'}`}
+            className={`h-7 px-3 bg-white/80 dark:bg-muted/80 hover:bg-white dark:hover:bg-muted backdrop-blur-md rounded-xl border shadow-xs text-[10px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer pointer-events-auto ${previewMode === 'shift' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-gray-200/50 dark:border-border/50 text-gray-700 dark:text-gray-300'}`}
             onClick={() => setPreviewMode(previewMode === 'sale' ? 'shift' : 'sale')}
           >
             <span className='material-symbols-rounded'>receipt_long</span>
@@ -1037,7 +1042,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
           {previewMode === 'shift' && (
             <button
               type='button'
-              className={`h-7 px-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-md rounded-xl border shadow-xs text-[10px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer pointer-events-auto ${showDuplicatePreview ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-gray-200/50 dark:border-gray-700/50 text-gray-700 dark:text-gray-300'}`}
+              className={`h-7 px-3 bg-white/80 dark:bg-muted/80 hover:bg-white dark:hover:bg-muted backdrop-blur-md rounded-xl border shadow-xs text-[10px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer pointer-events-auto ${showDuplicatePreview ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-gray-200/50 dark:border-border/50 text-gray-700 dark:text-gray-300'}`}
               onClick={() => setShowDuplicatePreview(!showDuplicatePreview)}
             >
               <span className='material-symbols-rounded'>content_copy</span>
@@ -1073,6 +1078,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
           </div>
         </div>
       </div>
+      </div>
 
       {/* Templates Market Gallery */}
       <TemplateMarketplaceModal
@@ -1097,3 +1103,4 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
     </div>
   );
 };
+
