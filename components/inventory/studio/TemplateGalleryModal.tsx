@@ -59,7 +59,7 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
         classNameMap
       );
 
-      return generatePageHTML(labelHTML, templateCSS, renderDims, labelHeight);
+      return generatePageHTML(labelHTML, templateCSS, renderDims, labelHeight, undefined, template.design.rotatePage);
     } catch (e) {
       console.error('Failed to generate preview', e);
       return '';

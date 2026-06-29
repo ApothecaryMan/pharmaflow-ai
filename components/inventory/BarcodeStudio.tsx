@@ -956,7 +956,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     let html = generatePageHTML(finalHTML, templateCSS, dims, pageHeight, {
       x: printOffsetX,
       y: printOffsetY,
-    });
+    }, design.rotatePage);
     if (forPrint)
       html = html.replace(
         '</body>',

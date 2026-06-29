@@ -535,8 +535,20 @@ const buildLabelPageContent = (
   templateCSS: string,
   dims: { w: number; h: number },
   pageHeight: number,
-  offsets: { x: number; y: number } = { x: 0, y: 0 }
+  offsets: { x: number; y: number } = { x: 0, y: 0 },
+  rotatePage: boolean = false
 ): { css: string; bodyHTML: string } => {
+  const rotationCSS = rotatePage ? `
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      margin-top: -${pageHeight / 2}mm;
+      margin-left: -${dims.w / 2}mm;
+      transform: rotate(-90deg) translate(${offsets.y}mm, -${offsets.x}mm);
+  ` : `
+      transform: translate(${offsets.x}mm, ${offsets.y}mm);
+  `;
+
   const css = `
     ${templateCSS}
     .print-container {
@@ -545,7 +557,7 @@ const buildLabelPageContent = (
       background: white;
       font-size: 0;
       line-height: 0;
-      transform: translate(${offsets.x}mm, ${offsets.y}mm);
+      ${rotationCSS}
       box-sizing: border-box;
     }
     .page-container {
@@ -574,16 +586,20 @@ const buildLabelDocument = (
   dims: { w: number; h: number },
   pageHeight: number,
   offsets: { x: number; y: number },
-  autoPrint: boolean
+  autoPrint: boolean,
+  rotatePage: boolean = false
 ): string => {
-  const { css, bodyHTML } = buildLabelPageContent(contentHTML, templateCSS, dims, pageHeight, offsets);
-  const orientation = deriveOrientation(dims.w, dims.h);
+  const { css, bodyHTML } = buildLabelPageContent(contentHTML, templateCSS, dims, pageHeight, offsets, rotatePage);
+  
+  const pageW = rotatePage ? pageHeight : dims.w;
+  const pageH = rotatePage ? dims.w : pageHeight;
+  const orientation = deriveOrientation(pageW, pageH);
 
   return wrapPrintHTML({
     bodyHTML,
     css,
-    width: dims.w,
-    height: pageHeight,
+    width: pageW,
+    height: pageH,
     orientation,
     fontsCSS: getBarcodeFontsCSS(),
     autoPrint,
@@ -601,7 +617,8 @@ export const generatePageHTML = (
   templateCSS: string,
   dims: { w: number; h: number },
   pageHeight: number,
-  offsets?: { x: number; y: number }
+  offsets?: { x: number; y: number },
+  rotatePage: boolean = false
 ): string => {
   return buildLabelDocument(
     contentHTML,
@@ -609,7 +626,8 @@ export const generatePageHTML = (
     dims,
     pageHeight,
     offsets ?? { x: 0, y: 0 },
-    false
+    false,
+    rotatePage
   );
 };
 
@@ -678,8 +696,7 @@ export const printLabels = async (
     const printOffsetX = offsets.x;
     const printOffsetY = offsets.y;
 
-    const effectiveOrientation = deriveOrientation(dims.w, dims.h);
-
+    // Hardware orientation will be calculated after pageHeight
     // Dimensions and Pitch logic
     const isDouble = design.selectedPreset === '38x25';
     const labelsPerPage = isDouble ? 2 : 1;
@@ -697,6 +714,10 @@ export const printLabels = async (
       : labelHeight;
 
     const renderDims = { w: dims.w, h: labelHeight };
+
+    const hwPageW = design.rotatePage ? printablePageHeight : dims.w;
+    const hwPageH = design.rotatePage ? dims.w : printablePageHeight;
+    const effectiveOrientation = deriveOrientation(hwPageW, hwPageH);
 
     const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
 
@@ -770,13 +791,14 @@ export const printLabels = async (
       dims,
       printablePageHeight,
       { x: printOffsetX, y: printOffsetY },
-      true // auto-print via the shell's embedded script
+      true, // auto-print via the shell's embedded script
+      design.rotatePage
     );
 
     await printDocument({
       html: htmlContent,
-      width: dims.w,
-      height: dims.h,
+      width: hwPageW,
+      height: hwPageH,
       kind: 'label',
       orientation: effectiveOrientation,
       autoPrintFallback: false,

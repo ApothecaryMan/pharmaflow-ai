@@ -374,7 +374,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
         classNameMap
       );
 
-      return generatePageHTML(labelHTML, templateCSS, renderDims, labelHeight);
+      return generatePageHTML(labelHTML, templateCSS, renderDims, labelHeight, { x: 0, y: 0 }, design.rotatePage);
     } catch (e) {
       console.error('Failed to generate preview:', e);
       return '';
