@@ -107,7 +107,7 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
     return generatePageHTML(finalHTML, templateCSS, dims, pageHeight, {
       x: printOffsetX,
       y: printOffsetY,
-    }, false);
+    });
   };
 
   const renderPhantomElement = (el: LabelElement, offsetIndex: number = 0) => {

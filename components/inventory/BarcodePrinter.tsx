@@ -71,7 +71,6 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
     expiry: true,
     barcode: true,
     hotline: false,
-    rotatePrint: false,
   });
 
   const [selectedDrug, setSelectedDrug] = useState<Drug | null>(inventory[0] || null);
@@ -304,7 +303,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
 
     // Load current design from storage (matches BarcodeStudio's autosave key)
     const storedDesign = activeBranch?.printSettings?.[StorageKeys.LABEL_DESIGN] || null;
-    const currentDesign = storedDesign ? { ...storedDesign, rotatePage: printConfig.rotatePrint } : { ...DEFAULT_LABEL_DESIGN, rotatePage: printConfig.rotatePrint };
+    const currentDesign = storedDesign ? { ...storedDesign } : { ...DEFAULT_LABEL_DESIGN };
 
     printLabels(itemsToPrint, {
       design: currentDesign,
@@ -374,7 +373,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
         classNameMap
       );
 
-      return generatePageHTML(labelHTML, templateCSS, renderDims, labelHeight, { x: 0, y: 0 }, design.rotatePage);
+      return generatePageHTML(labelHTML, templateCSS, renderDims, labelHeight, { x: 0, y: 0 });
     } catch (e) {
       console.error('Failed to generate preview:', e);
       return '';
@@ -767,11 +766,6 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                   key: 'hotline',
                   label: t.barcodePrinter?.settings?.hotline || 'Hotline',
                   icon: 'phone',
-                },
-                {
-                  key: 'rotatePrint',
-                  label: t.barcodePrinter?.settings?.rotatePrint || 'Rotate Print 90°',
-                  icon: 'screen_rotation',
                 },
               ].map((setting) => (
                 <div

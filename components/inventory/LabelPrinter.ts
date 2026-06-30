@@ -529,25 +529,13 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
 /**
  * Builds label-specific CSS + container HTML (body content only, no shell).
  * The caller wraps this with `wrapPrintHTML` to get a complete document.
- */const buildLabelPageContent = (
+ */const buildLabelPageContent = (
   contentHTML: string,
   templateCSS: string,
   dims: { w: number; h: number },
   pageHeight: number,
-  offsets: { x: number; y: number } = { x: 0, y: 0 },
-  rotatePage: boolean = false
+  offsets: { x: number; y: number } = { x: 0, y: 0 }
 ): { css: string; bodyHTML: string } => {
-  const rotationCSS = rotatePage ? `
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      margin-top: -${pageHeight / 2}mm;
-      margin-left: -${dims.w / 2}mm;
-      transform: rotate(-90deg) translate(${offsets.y}mm, -${offsets.x}mm);
-  ` : `
-      transform: translate(${offsets.x}mm, ${offsets.y}mm);
-  `;
-
   const css = `
     ${templateCSS}
     .print-container {
@@ -556,12 +544,12 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
       background: white;
       font-size: 0;
       line-height: 0;
-      ${rotationCSS}
+      transform: translate(${offsets.x}mm, ${offsets.y}mm);
       box-sizing: border-box;
     }
     .page-container {
-      width: ${rotatePage ? pageHeight : dims.w}mm;
-      height: ${rotatePage ? dims.w : pageHeight}mm;
+      width: ${dims.w}mm;
+      height: ${pageHeight}mm;
       position: relative;
       background: white;
       font-size: 0;
@@ -592,12 +580,13 @@ const buildLabelDocument = (
   pageHeight: number,
   offsets: { x: number; y: number },
   autoPrint: boolean,
-  rotatePage: boolean = false
+  hardwarePageHeight?: number
 ): string => {
-  const { css, bodyHTML } = buildLabelPageContent(contentHTML, templateCSS, dims, pageHeight, offsets, rotatePage);
+  const { css, bodyHTML } = buildLabelPageContent(contentHTML, templateCSS, dims, pageHeight, offsets);
   
-  const pageW = rotatePage ? pageHeight : dims.w;
-  const pageH = rotatePage ? dims.w : pageHeight;
+  const physicalHeight = hardwarePageHeight || pageHeight;
+  const pageW = dims.w;
+  const pageH = physicalHeight;
   const orientation = deriveOrientation(pageW, pageH);
 
   return wrapPrintHTML({
@@ -610,7 +599,7 @@ const buildLabelDocument = (
     autoPrint,
     title: 'Print Labels',
   });
-};;
+};
 
 /**
  * Public-facing wrapper for generating a complete label page HTML document.
@@ -623,7 +612,7 @@ export const generatePageHTML = (
   dims: { w: number; h: number },
   pageHeight: number,
   offsets?: { x: number; y: number },
-  rotatePage: boolean = false
+  hardwarePageHeight?: number
 ): string => {
   return buildLabelDocument(
     contentHTML,
@@ -632,9 +621,9 @@ export const generatePageHTML = (
     pageHeight,
     offsets ?? { x: 0, y: 0 },
     false,
-    rotatePage
+    hardwarePageHeight
   );
-};
+};;
 
 export const printLabels = async (
   items: PrintLabelItem[],
@@ -720,8 +709,8 @@ export const printLabels = async (
 
     const renderDims = { w: dims.w, h: labelHeight };
 
-    const hwPageW = design.rotatePage ? printablePageHeight : dims.w;
-    const hwPageH = design.rotatePage ? dims.w : printablePageHeight;
+    const hwPageW = dims.w;
+    const hwPageH = printablePageHeight;
     const effectiveOrientation = deriveOrientation(hwPageW, hwPageH);
 
     const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
@@ -779,7 +768,7 @@ export const printLabels = async (
         ? pageLabels.length * labelHeight + Math.max(0, pageLabels.length - 1) * innerGap
         : printablePageHeight;
 
-      const pageHTML = `<div class="page-container" style="height: ${design.rotatePage ? dims.w : actualContentHeight}mm; width: ${design.rotatePage ? actualContentHeight : dims.w}mm; page-break-after: ${isLastPage ? 'auto' : 'always'};">
+      const pageHTML = `<div class="page-container" style="height: ${actualContentHeight}mm; width: ${dims.w}mm; page-break-after: ${isLastPage ? 'auto' : 'always'};">
                 <div class="print-container">
                     ${labelsContent}
                 </div>
@@ -799,7 +788,7 @@ export const printLabels = async (
       printablePageHeight,
       { x: printOffsetX, y: printOffsetY },
       true, // auto-print via the shell's embedded script
-      design.rotatePage
+      pageHeight
     );
 
     await printDocument({

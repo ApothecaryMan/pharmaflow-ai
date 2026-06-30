@@ -38,7 +38,6 @@ export interface LabelDesign {
   currency?: 'L.E' | 'USD';
   uploadedLogo?: string; // Added from usage in BarcodeStudio
   activeTemplateId?: string | null; // Added from usage
-  rotatePage?: boolean;
 }
 
 export interface SavedTemplate {
