@@ -46,11 +46,11 @@
   @supports not selector(::-webkit-scrollbar) {
     @media (hover: hover) {
       *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *) {
-        scrollbar-width: none !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: transparent transparent !important;
         transition: scrollbar-color 0.25s ease !important;
       }
       *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *):hover {
-        scrollbar-width: thin !important;
         scrollbar-color: rgba(156, 163, 175, 0.3) transparent !important;
       }
     }
