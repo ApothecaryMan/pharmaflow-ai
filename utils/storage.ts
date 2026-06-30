@@ -19,7 +19,6 @@ const GLOBAL_KEYS = new Set<string>([
   StorageKeys.PRINTER_SETTINGS,
   StorageKeys.SCREEN_CALIBRATION_RATIO,
   StorageKeys.SETTINGS,
-  'pharma_intended_account_type',
 ]);
 
 const BRANCH_SCOPED_KEYS = new Set<string>([

@@ -34,22 +34,37 @@ export const auditRepository = {
     // Try to flush any previously queued entries first
     await this._flushQueue();
 
+    const isValidUuid = (id: string | undefined | null) => 
+      id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) ? id : null;
+
+    const safeAction = ['login', 'logout'].includes(entry.action) ? entry.action : 'login';
+    const finalDetails = entry.action === safeAction 
+      ? entry.details 
+      : `[Action: ${entry.action}] ${entry.details || ''}`;
+
     const { error } = await supabase.rpc('log_audit_event', {
-      p_username: entry.username,
-      p_employee_id: entry.employeeId || null,
+      p_username: entry.username || 'System',
+      p_employee_id: isValidUuid(entry.employeeId),
       p_employee_code: entry.employeeCode || null,
       p_employee_name: entry.employeeName || null,
-      p_role: entry.role || null,
-      p_branch_id: entry.branchId || null,
-      p_org_id: entry.orgId || null,
-      p_action: entry.action || null,
-      p_details: entry.details || null,
+      p_role: entry.role === 'unassigned' ? null : (entry.role || null),
+      p_branch_id: isValidUuid(entry.branchId),
+      p_org_id: isValidUuid(entry.orgId),
+      p_action: safeAction,
+      p_details: finalDetails || null,
     });
 
     if (error) {
-      // Queue for retry instead of logging a scary error
-      this._pendingQueue.push(entry);
-      console.debug('[AuditRepository] Queued audit log for later sync:', error.code);
+      // Only queue for retry on network errors (5xx) or timeout.
+      // Do NOT queue 400 (Bad Request) or 401/403 (Auth issues) to prevent infinite loops.
+      const shouldRetry = error.code && !error.code.startsWith('40') && !error.message?.includes('JWT');
+      
+      if (shouldRetry) {
+        this._pendingQueue.push(entry);
+        console.debug('[AuditRepository] Queued audit log for later sync:', error.code);
+      } else {
+        console.debug('[AuditRepository] Discarded audit log due to unrecoverable error:', error.message);
+      }
     }
   },
 
@@ -80,10 +95,16 @@ export const auditRepository = {
       )
     );
 
-    // Re-queue any that failed
+    // Re-queue any that failed with recoverable errors
     results.forEach((result, i) => {
-      if (result.status === 'rejected' || (result.status === 'fulfilled' && result.value.error)) {
+      if (result.status === 'rejected') {
         this._pendingQueue.push(batch[i]);
+      } else if (result.status === 'fulfilled' && result.value.error) {
+        const error = result.value.error;
+        const shouldRetry = error.code && !error.code.startsWith('40') && !error.message?.includes('JWT');
+        if (shouldRetry) {
+          this._pendingQueue.push(batch[i]);
+        }
       }
     });
   },

@@ -72,9 +72,6 @@ export const SignUp: React.FC<SignUpProps> = ({
     );
 
     if (success) {
-      import('../../utils/storage').then(({ storage }) => {
-        storage.set('pharma_intended_account_type', registrationType);
-      });
       setState((prev) => ({ ...prev, isLoading: false, success: true }));
       // Optional auto-login can be done here, or redirect to login. We will auto-redirect to login
       setTimeout(() => {

@@ -59,30 +59,9 @@ const getDisplayUsername = (user: SupabaseAuthUser, fallback: string): string =>
   );
 };
 
-const determineAccountType = (
-  user: SupabaseAuthUser,
-  orgRole?: OrgRole,
-  employeeWorkspaceCount = 0
-): AccountType => {
+const determineAccountType = (user: SupabaseAuthUser): AccountType | null => {
   const meta = user.user_metadata || {};
-  const explicitType = normalizeAccountType(meta.accountType || meta.account_type);
-  if (explicitType) return explicitType;
-
-  const metaUsername = String(meta.username || '').replace(/^@/, '');
-  const isGeneratedPharmacyProfile =
-    metaUsername.startsWith('device_') || meta.name === 'Pharmacy Admin';
-
-  if (employeeWorkspaceCount > 0 && !isGeneratedPharmacyProfile) {
-    return 'employee';
-  }
-
-  const intendedType = normalizeAccountType(storage.get('pharma_intended_account_type', null));
-  if (intendedType === 'employee') return 'employee';
-  if (intendedType === 'pharmacy' && isGeneratedPharmacyProfile) return 'pharmacy';
-
-  if (orgRole === 'owner' || orgRole === 'admin') return 'pharmacy';
-
-  return 'employee';
+  return normalizeAccountType(meta.accountType);
 };
 
 export const authService = {
@@ -120,20 +99,28 @@ export const authService = {
    */
   async syncSessionWithDatabase(userId: string): Promise<UserSession | null> {
     try {
-      const [memberData, employeeWorkspaces, authResult] = await Promise.all([
-        orgRepository.getMemberByUserId(userId),
-        employeeRepository.getAllByAuthUserId(userId).catch(() => []),
-        supabase.auth.getUser(),
-      ]);
-
+      const authResult = await supabase.auth.getUser();
       const sbUser = authResult.data.user;
       if (!sbUser) return null;
 
-      const accountType = determineAccountType(
-        sbUser,
-        memberData?.role as OrgRole | undefined,
-        employeeWorkspaces.length
-      );
+      let accountType = determineAccountType(sbUser);
+      let memberData = null;
+      let employeeWorkspaces: any[] = [];
+
+      // Auto-migrate legacy accounts missing metadata
+      if (!accountType) {
+        memberData = await orgRepository.getMemberByUserId(sbUser.id);
+        accountType = (memberData?.role === 'owner' || memberData?.role === 'admin') ? 'pharmacy' : 'employee';
+        supabase.auth.updateUser({ data: { accountType } }).catch(() => {});
+      }
+
+      if (accountType === 'pharmacy') {
+        // Fetch only if not already fetched during migration
+        if (!memberData) memberData = await orgRepository.getMemberByUserId(sbUser.id);
+      } else {
+        employeeWorkspaces = await employeeRepository.getAllByAuthUserId(sbUser.id).catch(() => []);
+      }
+
       const strippedWorkspaces = employeeWorkspaces.map(stripWorkspacePayload);
 
       const existingSession = storage.get<UserSession | null>(SESSION_KEY, null);
@@ -147,7 +134,7 @@ export const authService = {
             ...existingSession!,
             accountType,
             destination: accountType === 'pharmacy' ? 'pharmacy' : 'employee_portal',
-            orgRole: (memberData?.role || existingSession!.orgRole || 'member') as OrgRole,
+            orgRole: (memberData?.role || existingSession!.orgRole || 'unassigned') as OrgRole,
             orgId: memberData?.orgId || existingSession!.orgId,
           }
         : {
@@ -158,7 +145,7 @@ export const authService = {
             branchId: '',
             orgId: accountType === 'pharmacy' ? memberData?.orgId : undefined,
             role: 'unassigned',
-            orgRole: (memberData?.role || 'member') as OrgRole,
+            orgRole: (memberData?.role || 'unassigned') as OrgRole,
             department: 'unassigned',
             availableWorkspaces: strippedWorkspaces,
             availableEmployeeWorkspaces: strippedWorkspaces,
@@ -348,14 +335,27 @@ export const authService = {
       }
     }
 
-    const [employeeWorkspaces, memberData] = await Promise.all([
-      employeeRepository.getAllByAuthUserId(authData.user.id).catch(() => []),
-      orgRepository.getMemberByUserId(authData.user.id),
-    ]);
+    let accountType = determineAccountType(authData.user);
+    let memberData = null;
+    let employeeWorkspaces: any[] = [];
+
+    // Auto-migrate legacy accounts missing metadata
+    if (!accountType) {
+      memberData = await orgRepository.getMemberByUserId(authData.user.id);
+      accountType = (memberData?.role === 'owner' || memberData?.role === 'admin') ? 'pharmacy' : 'employee';
+      supabase.auth.updateUser({ data: { accountType } }).catch(() => {});
+    }
+
+    const destination = accountType === 'pharmacy' ? 'pharmacy' : 'employee_portal';
+    
+    if (accountType === 'pharmacy') {
+      // Fetch only if not already fetched during migration
+      if (!memberData) memberData = await orgRepository.getMemberByUserId(authData.user.id);
+    } else {
+      employeeWorkspaces = await employeeRepository.getAllByAuthUserId(authData.user.id).catch(() => []);
+    }
 
     const orgRole = (memberData?.role || 'member') as OrgRole;
-    const accountType = determineAccountType(authData.user, orgRole, employeeWorkspaces.length);
-    const destination = accountType === 'pharmacy' ? 'pharmacy' : 'employee_portal';
     const strippedWorkspaces = employeeWorkspaces.map(stripWorkspacePayload);
 
     const session: UserSession = {
@@ -382,7 +382,7 @@ export const authService = {
       username: session.username,
       role: session.role,
       branchId: session.branchId || '',
-      action: 'system_login',
+      action: 'login',
       employeeId: session.employeeId,
       employeeCode: session.employeeCode,
       employeeName: session.employeeName,
@@ -401,7 +401,7 @@ export const authService = {
           username: session.username,
           role: session.role,
           branchId: session.branchId || '',
-          action: 'system_logout',
+          action: 'logout',
           employeeId: session.employeeId,
           employeeCode: session.employeeCode,
           employeeName: session.employeeName,
@@ -446,6 +446,39 @@ export const authService = {
       console.error('Logout error:', err);
       // Failsafe: ensure local cleanup even if Supabase signOut fails
       cachedSession = null;
+      
+      const userId = storage.getUserId();
+      storage.remove('pharma_view');
+      storage.remove('pharma_activeModule');
+      storage.remove('pharma_active_org_id');
+      storage.remove('pharma_active_branch_id');
+      storage.remove('area_unlocked');
+      
+      if (userId) {
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.endsWith(`_${userId}`)) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach((key) => localStorage.removeItem(key));
+      }
+      
+      // Destroy ghost session tokens manually
+      try {
+        const sbKeys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+            sbKeys.push(key);
+          }
+        }
+        sbKeys.forEach((key) => localStorage.removeItem(key));
+      } catch (e) {
+        // Ignore loop iteration errors
+      }
+
       storage.remove(SESSION_KEY);
       storage.resetCaches();
     }
@@ -561,7 +594,7 @@ export const authService = {
     const session: UserSession = {
       ...(current || {}),
       userId: current?.userId,
-      accountType: current?.accountType || 'pharmacy',
+      accountType: current?.accountType || 'employee',
       destination: current?.destination || 'pharmacy',
       username: employee.username || employee.name,
       employeeId: employee.id,
