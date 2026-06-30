@@ -10,6 +10,7 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { TemplateMarketplaceModal } from '../common/TemplateMarketplaceModal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartInput, useSmartDirection } from '../common/SmartInputs';
+import { Tooltip } from '../common/Tooltip';
 import { useStatusBar } from '../layout/StatusBar';
 import { generateInvoiceHTML, type InvoiceTemplateOptions, RECEIPT_TEMPLATES } from '../sales/InvoiceTemplate';
 import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
@@ -430,18 +431,22 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   className='flex-1 !h-10 text-sm'
                   onKeyDown={(e) => e.key === 'Enter' && (isEditingName ? handleRenameTemplate(e as any) : handleCreateTemplate())}
                 />
-                <button
-                  onClick={(e) => isEditingName ? handleRenameTemplate(e as any) : handleCreateTemplate()}
-                  className='w-10 h-10 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center transition-colors shrink-0'
-                >
-                  <span className='material-symbols-rounded text-[20px]'>check</span>
-                </button>
-                <button
-                  onClick={() => { setIsAddingTemplate(false); setIsEditingName(null); }}
-                  className='w-10 h-10 bg-gray-600 hover:bg-gray-700 text-white rounded-xl flex items-center justify-center transition-colors shrink-0'
-                >
-                  <span className='material-symbols-rounded text-[20px]'>close</span>
-                </button>
+                <Tooltip content={t.common?.save || 'Save'} position="bottom">
+                  <button
+                    onClick={(e) => isEditingName ? handleRenameTemplate(e as any) : handleCreateTemplate()}
+                    className='w-10 h-10 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center transition-colors shrink-0'
+                  >
+                    <span className='material-symbols-rounded text-[20px]'>check</span>
+                  </button>
+                </Tooltip>
+                <Tooltip content={t.common?.cancel || 'Cancel'} position="bottom">
+                  <button
+                    onClick={() => { setIsAddingTemplate(false); setIsEditingName(null); }}
+                    className='w-10 h-10 bg-gray-600 hover:bg-gray-700 text-white rounded-xl flex items-center justify-center transition-colors shrink-0'
+                  >
+                    <span className='material-symbols-rounded text-[20px]'>close</span>
+                  </button>
+                </Tooltip>
               </div>
             ) : (
               <>
@@ -493,97 +498,104 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
 
                   {/* Context Actions for Active Template */}
                   <div className='flex items-center bg-gray-100 dark:bg-muted/50 rounded-xl p-1 shrink-0 h-10 border border-gray-200 dark:border-border'>
-                    <button
-                      onClick={() => {
-                        const activeTpl = templates.find(t => t.id === activeTemplateId);
-                        if (activeTpl) {
-                           setIsEditingName(activeTpl.id);
-                           setEditingNameValue(activeTpl.name);
-                        }
-                      }}
-                      className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white dark:hover:bg-accent transition-all group'
-                      title={t.receiptDesigner.renameTemplate || 'Rename'}
-                    >
-                      <span className='material-symbols-rounded text-[18px] group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-500 group-hover:to-purple-500'>edit</span>
-                    </button>
-                    {templates.find(t => t.id === activeTemplateId) && !templates.find(t => t.id === activeTemplateId)?.isDefault && (
+                    <Tooltip content={t.receiptDesigner.renameTemplate || 'Rename'} position="bottom">
                       <button
-                        onClick={(e) => handleSetDefault(e as any, activeTemplateId)}
-                        className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:bg-white dark:hover:bg-accent transition-all'
-                        title={t.receiptDesigner.setDefault || 'Set Default'}
+                        onClick={() => {
+                          const activeTpl = templates.find(t => t.id === activeTemplateId);
+                          if (activeTpl) {
+                             setIsEditingName(activeTpl.id);
+                             setEditingNameValue(activeTpl.name);
+                          }
+                        }}
+                        className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white dark:hover:bg-accent transition-all group'
                       >
-                        <span className='material-symbols-rounded text-[18px]'>bookmark_add</span>
+                        <span className='material-symbols-rounded text-[18px] group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-500 group-hover:to-purple-500'>edit</span>
                       </button>
+                    </Tooltip>
+                    {templates.find(t => t.id === activeTemplateId) && !templates.find(t => t.id === activeTemplateId)?.isDefault && (
+                      <Tooltip content={t.receiptDesigner.setDefault || 'Set Default'} position="bottom">
+                        <button
+                          onClick={(e) => handleSetDefault(e as any, activeTemplateId)}
+                          className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:bg-white dark:hover:bg-accent transition-all'
+                        >
+                          <span className='material-symbols-rounded text-[18px]'>bookmark_add</span>
+                        </button>
+                      </Tooltip>
                     )}
                     {templates.length > 1 && (
-                      <button
-                        onClick={(e) => handleDeleteTemplate(e as any, activeTemplateId)}
-                        className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-white dark:hover:bg-accent transition-all'
-                        title={t.receiptDesigner.deleteTemplate || 'Delete'}
-                      >
-                        <span className='material-symbols-rounded text-[18px]'>delete</span>
-                      </button>
+                      <Tooltip content={t.receiptDesigner.deleteTemplate || 'Delete'} position="bottom">
+                        <button
+                          onClick={(e) => handleDeleteTemplate(e as any, activeTemplateId)}
+                          className='w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-white dark:hover:bg-accent transition-all'
+                        >
+                          <span className='material-symbols-rounded text-[18px]'>delete</span>
+                        </button>
+                      </Tooltip>
                     )}
                   </div>
                 </div>
                 {hasChanges && (
-                  <button
-                    onClick={async () => {
-                      setIsSaving(true);
-                      try {
-                        const newSettings = {
-                          ...(activeBranch?.printSettings || {}),
-                          [StorageKeys.RECEIPT_TEMPLATES]: templates,
-                          [StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID]: activeTemplateId,
-                        };
-                        await updateBranch(activeBranchId, { printSettings: newSettings });
-                        lastSavedState.current = JSON.stringify({ templates, activeTemplateId });
-                        setHasChanges(false);
-                        setQuotaError(false);
-                      } catch (err) {
-                        console.error('Failed to save settings:', err);
-                        setQuotaError(true);
-                      } finally {
-                        setIsSaving(false);
-                      }
-                    }}
-                    className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-all shadow-sm hover:shadow-md active:scale-95 shrink-0 border border-transparent animate-fadeIn'
-                    title={t.common?.save || 'Save'}
-                  >
-                    <span className='material-symbols-rounded text-[20px]'>save</span>
-                    <span className='hidden lg:inline text-[13px] font-bold'>{t.common?.save || 'Save'}</span>
-                  </button>
+                  <Tooltip content={t.common?.save || 'Save'} position="bottom">
+                    <button
+                      onClick={async () => {
+                        setIsSaving(true);
+                        try {
+                          const newSettings = {
+                            ...(activeBranch?.printSettings || {}),
+                            [StorageKeys.RECEIPT_TEMPLATES]: templates,
+                            [StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID]: activeTemplateId,
+                          };
+                          await updateBranch(activeBranchId, { printSettings: newSettings });
+                          lastSavedState.current = JSON.stringify({ templates, activeTemplateId });
+                          setHasChanges(false);
+                          setQuotaError(false);
+                        } catch (err) {
+                          console.error('Failed to save settings:', err);
+                          setQuotaError(true);
+                        } finally {
+                          setIsSaving(false);
+                        }
+                      }}
+                      className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-all shadow-sm hover:shadow-md active:scale-95 shrink-0 border border-transparent animate-fadeIn'
+                    >
+                      <span className='material-symbols-rounded text-[20px]'>save</span>
+                      <span className='hidden lg:inline text-[13px] font-bold'>{t.common?.save || 'Save'}</span>
+                    </button>
+                  </Tooltip>
                 )}
                 {hasChanges && (
-                  <button
-                    onClick={() => {
-                      if (confirm(t.common?.confirmReset || 'Reset all settings to defaults?')) {
-                        setOptions(defaultOptions);
-                      }
-                    }}
-                    className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-white dark:bg-muted/50 border border-gray-200 dark:border-border text-gray-600 dark:text-gray-400 hover:text-red-600 hover:border-red-200 dark:hover:text-red-400 dark:hover:border-red-500/50 dark:hover:bg-red-500/10 hover:bg-red-50 transition-all active:scale-95 shrink-0'
-                    title={t.common?.reset || 'Reset to Defaults'}
-                  >
-                    <span className='material-symbols-rounded text-[20px]'>restart_alt</span>
-                    <span className='hidden lg:inline text-[13px] font-bold'>{t.common?.reset || 'Reset'}</span>
-                  </button>
+                  <Tooltip content={t.common?.reset || 'Reset to Defaults'} position="bottom">
+                    <button
+                      onClick={() => {
+                        if (confirm(t.common?.confirmReset || 'Reset all settings to defaults?')) {
+                          setOptions(defaultOptions);
+                        }
+                      }}
+                      className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-white dark:bg-muted/50 border border-gray-200 dark:border-border text-gray-600 dark:text-gray-400 hover:text-red-600 hover:border-red-200 dark:hover:text-red-400 dark:hover:border-red-500/50 dark:hover:bg-red-500/10 hover:bg-red-50 transition-all active:scale-95 shrink-0'
+                    >
+                      <span className='material-symbols-rounded text-[20px]'>restart_alt</span>
+                      <span className='hidden lg:inline text-[13px] font-bold'>{t.common?.reset || 'Reset'}</span>
+                    </button>
+                  </Tooltip>
                 )}
-                <button
-                  onClick={() => setIsAddingTemplate(true)}
-                  className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-white dark:bg-muted/50 border border-gray-200 dark:border-border text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all active:scale-95 shrink-0 hover:border-primary-500 dark:hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400'
-                  title={t.common?.add || 'Add'}
-                >
-                  <span className='material-symbols-rounded text-[20px]'>add</span>
-                  <span className='hidden lg:inline text-[13px] font-bold'>{t.common?.add || 'Add'}</span>
-                </button>
-                <button
-                  onClick={() => setIsGalleryOpen(true)}
-                  className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 transition-all active:scale-95 shrink-0 border border-transparent'
-                  title={t.receiptDesigner.gallery?.title || 'Templates Market'}
-                >
-                  <span className='material-symbols-rounded text-[20px]'>storefront</span>
-                  <span className='hidden xl:inline text-[13px] font-bold'>{t.receiptDesigner.gallery?.title || 'Market'}</span>
-                </button>
+                <Tooltip content={t.common?.add || 'Add'} position="bottom">
+                  <button
+                    onClick={() => setIsAddingTemplate(true)}
+                    className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-white dark:bg-muted/50 border border-gray-200 dark:border-border text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all active:scale-95 shrink-0 hover:border-primary-500 dark:hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400'
+                  >
+                    <span className='material-symbols-rounded text-[20px]'>add</span>
+                    <span className='hidden lg:inline text-[13px] font-bold'>{t.common?.add || 'Add'}</span>
+                  </button>
+                </Tooltip>
+                <Tooltip content={t.receiptDesigner.gallery?.title || 'Templates Market'} position="bottom">
+                  <button
+                    onClick={() => setIsGalleryOpen(true)}
+                    className='h-10 px-3 lg:px-4 flex items-center gap-1.5 justify-center rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 transition-all active:scale-95 shrink-0 border border-transparent'
+                  >
+                    <span className='material-symbols-rounded text-[20px]'>storefront</span>
+                    <span className='hidden xl:inline text-[13px] font-bold'>{t.receiptDesigner.gallery?.title || 'Market'}</span>
+                  </button>
+                </Tooltip>
               </>
             )}
           </div>
@@ -645,7 +657,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 </div>
                 {quotaError && (
                   <span className='text-[10px] text-red-500 font-bold animate-pulse'>
-                    Storage Full!
+                    {t.receiptDesigner.storage?.full || 'Storage Full!'}
                   </span>
                 )}
               </label>
@@ -673,7 +685,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   {quotaError && (
                     <div className='absolute inset-0 bg-red-500/10 rounded-xl flex items-center justify-center pointer-events-none'>
                       <span className='text-[10px] bg-red-100 text-red-600 px-2 py-1 rounded-full font-bold'>
-                        File too large
+                        {t.receiptDesigner.storage?.fileTooLarge || 'File too large'}
                       </span>
                     </div>
                   )}
@@ -688,7 +700,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                         error
                       </span>
                       <span className='text-[10px] text-red-500 font-bold'>
-                        Storage Quota Exceeded
+                        {t.receiptDesigner.storage?.quotaExceeded || 'Storage Quota Exceeded'}
                       </span>
                     </>
                   ) : (
@@ -697,7 +709,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                         upload
                       </span>
                       <span className='text-[10px] text-gray-500 uppercase font-bold'>
-                        PNG / SVG
+                        {t.receiptDesigner.storage?.pngSvg || 'PNG / SVG'}
                       </span>
                     </>
                   )}
@@ -733,7 +745,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 </div>
                 {quotaError && (
                   <span className='text-[10px] text-red-500 font-bold animate-pulse'>
-                    Storage Full!
+                    {t.receiptDesigner.storage?.full || 'Storage Full!'}
                   </span>
                 )}
               </label>
@@ -872,7 +884,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                       }
                       className='text-[10px] text-primary-500 hover:underline'
                     >
-                      {language === 'AR' ? 'استخدام بيانات الفرع' : 'Use Branch Info'}
+                      {t.receiptDesigner.options?.useBranchInfo || 'Use Branch Info'}
                     </button>
                   )}
                 </label>
@@ -893,7 +905,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                       onClick={() => setOptions({ ...options, headerArea: activeBranch.area })}
                       className='text-[10px] text-primary-500 hover:underline'
                     >
-                      {language === 'AR' ? 'استخدام بيانات الفرع' : 'Use Branch Info'}
+                      {t.receiptDesigner.options?.useBranchInfo || 'Use Branch Info'}
                     </button>
                   )}
                 </label>
@@ -1008,18 +1020,21 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       <div className='flex-1 rounded-2xl border border-gray-200 dark:border-gray-800 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] bg-size-[20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] bg-gray-100 dark:bg-gray-950 relative flex flex-col overflow-hidden'>
         {/* Top-Left Unified Stats Badge */}
         <div className='absolute top-4 left-4 flex items-center px-2.5 h-7 bg-white/80 dark:bg-muted/80 backdrop-blur-md rounded-xl border border-gray-200/50 dark:border-border/50 shadow-xs text-[10px] font-bold gap-3 z-20 pointer-events-none'>
-          <div className='flex items-center gap-1.2' title='Real Printing Memory Size (Actual)'>
-            <span className='material-symbols-rounded text-[16px] text-primary-500'>memory</span>
-            <span className='text-primary-600 dark:text-blue-400'>{actualPrintSize}</span>
-          </div>
+          <Tooltip content={t.receiptDesigner.preview?.memorySize || 'Real Printing Memory Size (Actual)'} position="bottom">
+            <div className='flex items-center gap-1.2'>
+              <span className='material-symbols-rounded text-[16px] text-primary-500'>memory</span>
+              <span className='text-primary-600 dark:text-blue-400'>{actualPrintSize}</span>
+            </div>
+          </Tooltip>
           <div className='w-px h-3 bg-gray-200 dark:bg-gray-700' />
-          <div
-            className='flex items-center gap-1.2 opacity-80'
-            title='Raw Data Transfer Size (Payload)'
-          >
-            <span className='material-symbols-rounded text-[16px] text-gray-400'>database</span>
-            <span className='text-gray-500 dark:text-gray-400'>{payloadSize}</span>
-          </div>
+          <Tooltip content={t.receiptDesigner.preview?.payloadSize || 'Raw Data Transfer Size (Payload)'} position="bottom">
+            <div
+              className='flex items-center gap-1.2 opacity-80'
+            >
+              <span className='material-symbols-rounded text-[16px] text-gray-400'>database</span>
+              <span className='text-gray-500 dark:text-gray-400'>{payloadSize}</span>
+            </div>
+          </Tooltip>
         </div>
 
         {/* Top-Right Action Button */}
@@ -1031,12 +1046,8 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
           >
             <span className='material-symbols-rounded'>receipt_long</span>
             {previewMode === 'shift'
-              ? language === 'AR'
-                ? 'إيصال المبيعات'
-                : 'Sale Receipt'
-              : language === 'AR'
-                ? 'إيصال تسليم وردية'
-                : 'Shift Receipt'}
+              ? t.receiptDesigner.preview?.saleReceipt || 'Sale Receipt'
+              : t.receiptDesigner.preview?.shiftReceipt || 'Shift Receipt'}
           </button>
 
           {previewMode === 'shift' && (
@@ -1046,7 +1057,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               onClick={() => setShowDuplicatePreview(!showDuplicatePreview)}
             >
               <span className='material-symbols-rounded'>content_copy</span>
-              {language === 'AR' ? 'عرض كنسخة مكررة' : 'Preview as Duplicate'}
+              {t.receiptDesigner.preview?.previewAsDuplicate || 'Preview as Duplicate'}
             </button>
           )}
         </div>

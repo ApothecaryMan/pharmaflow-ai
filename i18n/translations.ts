@@ -17,6 +17,9 @@ export const TRANSLATIONS = {
       actions: 'Actions',
       am: 'AM',
       pm: 'PM',
+      add: 'Add',
+      reset: 'Reset',
+      confirmReset: 'Confirm Reset',
     },
     zincAcronym: {
       Z: {
@@ -2129,6 +2132,20 @@ export const TRANSLATIONS = {
         addressBox: 'Show Address Box',
         delivery: 'Delivery Preview',
         returns: 'Returns Preview',
+        useBranchInfo: 'Use Branch Info',
+      },
+      preview: {
+        memorySize: 'Real Printing Memory Size (Actual)',
+        payloadSize: 'Raw Data Transfer Size (Payload)',
+        saleReceipt: 'Sale Receipt',
+        shiftReceipt: 'Shift Receipt',
+        previewAsDuplicate: 'Preview as Duplicate',
+      },
+      storage: {
+        full: 'Storage Full!',
+        quotaExceeded: 'Storage Quota Exceeded',
+        pngSvg: 'PNG / SVG',
+        fileTooLarge: 'File too large',
       },
       gallery: {
         title: 'Template Marketplace',
@@ -3074,6 +3091,9 @@ export const TRANSLATIONS = {
       actions: 'إجراءات',
       am: 'ص',
       pm: 'م',
+      add: 'إضافة',
+      reset: 'إعادة تعيين',
+      confirmReset: 'تأكيد إعادة التعيين',
     },
     employeeList: {
       title: 'قائمة الموظفين',
@@ -5579,6 +5599,20 @@ export const TRANSLATIONS = {
         addressBox: 'إظهار مربع العنوان',
         delivery: 'معاينة الدليفري',
         returns: 'معاينة المرتجع',
+        useBranchInfo: 'استخدام بيانات الفرع',
+      },
+      preview: {
+        memorySize: 'حجم ذاكرة الطباعة الفعلي (الحقيقي)',
+        payloadSize: 'حجم نقل البيانات الخام (الحمولة)',
+        saleReceipt: 'إيصال المبيعات',
+        shiftReceipt: 'إيصال تسليم وردية',
+        previewAsDuplicate: 'عرض كنسخة مكررة',
+      },
+      storage: {
+        full: 'الذاكرة ممتلئة!',
+        quotaExceeded: 'تم تجاوز حصة التخزين',
+        pngSvg: 'PNG / SVG',
+        fileTooLarge: 'حجم الملف كبير جداً',
       },
       gallery: {
         title: 'متجر القوالب',
