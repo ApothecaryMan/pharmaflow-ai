@@ -529,8 +529,7 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
 /**
  * Builds label-specific CSS + container HTML (body content only, no shell).
  * The caller wraps this with `wrapPrintHTML` to get a complete document.
- */
-const buildLabelPageContent = (
+ */const buildLabelPageContent = (
   contentHTML: string,
   templateCSS: string,
   dims: { w: number; h: number },
@@ -561,23 +560,29 @@ const buildLabelPageContent = (
       box-sizing: border-box;
     }
     .page-container {
-      width: ${dims.w}mm;
-      height: ${pageHeight}mm;
+      width: ${rotatePage ? pageHeight : dims.w}mm;
+      height: ${rotatePage ? dims.w : pageHeight}mm;
       position: relative;
       background: white;
       font-size: 0;
       line-height: 0;
       box-sizing: border-box;
+      overflow: hidden;
     }
   `;
 
-  const bodyHTML = `<div class="print-container">${contentHTML}</div>`;
+  // If contentHTML already has page-container (from printLabels batch), use it directly.
+  // Otherwise (from preview), wrap it in page-container and print-container.
+  const bodyHTML = contentHTML.includes('class="page-container"')
+    ? contentHTML
+    : `<div class="page-container"><div class="print-container">${contentHTML}</div></div>`;
+
   return { css, bodyHTML };
 };
 
 /**
  * Builds a complete print-ready HTML document for a batch of label pages,
- * using the shared `wrapPrintHTML` shell for consistent @page / reset / font
+ * using the shared \`wrapPrintHTML\` shell for consistent @page / reset / font
  * loading / auto-print behaviour.
  */
 const buildLabelDocument = (
@@ -605,7 +610,7 @@ const buildLabelDocument = (
     autoPrint,
     title: 'Print Labels',
   });
-};
+};;
 
 /**
  * Public-facing wrapper for generating a complete label page HTML document.
@@ -774,8 +779,10 @@ export const printLabels = async (
         ? pageLabels.length * labelHeight + Math.max(0, pageLabels.length - 1) * innerGap
         : printablePageHeight;
 
-      const pageHTML = `<div class="page-container" style="height: ${actualContentHeight}mm; page-break-after: ${isLastPage ? 'auto' : 'always'};">
-                ${labelsContent}
+      const pageHTML = `<div class="page-container" style="height: ${design.rotatePage ? dims.w : actualContentHeight}mm; width: ${design.rotatePage ? actualContentHeight : dims.w}mm; page-break-after: ${isLastPage ? 'auto' : 'always'};">
+                <div class="print-container">
+                    ${labelsContent}
+                </div>
             </div>`;
       pages.push(pageHTML);
     }
