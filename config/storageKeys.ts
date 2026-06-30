@@ -56,6 +56,7 @@ export const StorageKeys = {
   LOGIN_AUDIT: 'pharmaflow_login_audit',
   CURRENT_EMPLOYEE_ID: 'pharma_currentEmployeeId',
   ACTIVE_ORG_ID: 'pharma_active_org_id',
+  ACTIVE_SESSION_ID: 'pharma_active_session_id',
 
   // Misc
   MIGRATION_V1_UNITS: 'pharma_migration_v1_units',

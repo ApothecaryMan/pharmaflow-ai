@@ -12,11 +12,12 @@ import type {
   OrgRole,
   UserSession,
 } from '../../types';
-import { isTauri } from '../../utils/platform';
+import { isTauri, getDeviceName, getBrowserName } from '../../utils/platform';
 import { storage } from '../../utils/storage';
 import { employeeRepository } from '../hr/repositories/employeeRepository';
 import { orgService } from '../org/orgService';
 import { orgRepository } from '../org/repositories/orgRepository';
+import { sessionRepository } from './repositories/sessionRepository';
 
 const SESSION_KEY = StorageKeys.SESSION;
 const AUDIT_KEY = StorageKeys.LOGIN_AUDIT;
@@ -156,6 +157,23 @@ export const authService = {
         orgService.setActiveOrgId(session.orgId);
       }
       cachedSession = session;
+
+      // Register or update active session (Full Backend)
+      sessionRepository.registerSession({
+        userId: session.userId,
+        orgId: session.orgId,
+        branchId: session.branchId,
+        employeeId: session.employeeId,
+        deviceInfo: typeof navigator !== 'undefined' ? `${getDeviceName(navigator.userAgent, navigator.platform)} - ${getBrowserName(navigator.userAgent)}` : 'Unknown Device',
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown User Agent',
+      })
+        .then((sessionId) => {
+          if (sessionId) {
+            storage.set(StorageKeys.ACTIVE_SESSION_ID, sessionId);
+          }
+        })
+        .catch(e => console.warn('Failed to register active session during sync:', e));
+
       return session;
     } catch (err) {
       console.error('Failed to sync session with database', err);
@@ -389,6 +407,23 @@ export const authService = {
       details: `Account: ${session.username}`,
     });
 
+    try {
+      await sessionRepository.registerSession({
+        userId: session.userId,
+        orgId: session.orgId,
+        branchId: session.branchId,
+        employeeId: session.employeeId,
+        deviceInfo: typeof navigator !== 'undefined' ? `${getDeviceName(navigator.userAgent, navigator.platform)} - ${getBrowserName(navigator.userAgent)}` : 'Unknown Device',
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown User Agent',
+      }).then((sessionId) => {
+        if (sessionId) {
+          storage.set(StorageKeys.ACTIVE_SESSION_ID, sessionId);
+        }
+      });
+    } catch (e) {
+      console.warn('Failed to register active session:', e);
+    }
+
     return session;
   },
 
@@ -397,7 +432,7 @@ export const authService = {
       const session = this.getCurrentUserSync();
       if (session) {
         // Log System Logout
-        this.logAuditEvent({
+        await this.logAuditEvent({
           username: session.username,
           role: session.role,
           branchId: session.branchId || '',
@@ -409,8 +444,21 @@ export const authService = {
         });
       }
 
+      // Mark session as inactive in backend
+      const currentSessionId = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
+      if (currentSessionId) {
+        try {
+          // Import dynamically or ensure sessionRepository is available
+          const { sessionRepository } = await import('./repositories/sessionRepository');
+          await sessionRepository.logoutSession(currentSessionId);
+        } catch (e) {
+          console.warn('Failed to mark session inactive during logout', e);
+        }
+      }
+
       // Clear cached session FIRST to prevent stale reads during signOut
       cachedSession = null;
+      storage.remove(StorageKeys.ACTIVE_SESSION_ID);
       await supabase.auth.signOut({ scope: 'local' });
       this.clearEmployeeSession();
 
@@ -521,7 +569,7 @@ export const authService = {
     return !!storage.get<any>(SESSION_KEY, null);
   },
 
-  logAuditEvent(entry: Omit<LoginAuditEntry, 'id' | 'timestamp'>): void {
+  async logAuditEvent(entry: Omit<LoginAuditEntry, 'id' | 'timestamp'>): Promise<void> {
     const finalEntry: any = { ...entry };
     const session = this.getCurrentUserSync();
 
@@ -535,12 +583,13 @@ export const authService = {
       }
     }
 
-    // 1. Sync to Supabase via SECURITY DEFINER RPC (fire-and-forget)
-    import('./repositories/auditRepository')
-      .then(({ auditRepository }) => {
-        auditRepository.insert(finalEntry).catch(() => {});
-      })
-      .catch(() => {});
+    // 1. Sync to Supabase via SECURITY DEFINER RPC
+    try {
+      const { auditRepository } = await import('./repositories/auditRepository');
+      await auditRepository.insert(finalEntry);
+    } catch (e) {
+      // Optional logging for debugging
+    }
 
     // 2. Keep a small local cache for immediate UI feedback (Optional)
     const history = this.getLoginHistorySync();

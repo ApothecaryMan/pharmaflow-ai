@@ -42,6 +42,7 @@ export const PERMISSIONS_MAPPING: Record<string, PermissionAction> = {
   'filter-dropdown-test': 'system.debug',
   'employee-list': 'users.view',
   'employee-profile': 'users.view',
+  'active-sessions': 'users.manage',
   intelligence: 'reports.view_financial',
   'login-audit': 'reports.view_financial',
   'staff-overview': 'users.view',

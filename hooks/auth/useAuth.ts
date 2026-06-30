@@ -10,9 +10,12 @@ import { storage } from '../../utils/storage';
 export interface AuthState {
   isAuthenticated: boolean;
   isAuthChecking: boolean;
+  isLoggingOut: boolean;
+  logoutReason: 'normal' | 'remote';
+  terminatorName: string | null;
   isRecoveringPassword: boolean;
   user: UserSession | null;
-  handleLogout: () => Promise<void>;
+  handleLogout: (reason?: 'normal' | 'remote') => Promise<void>;
   resolveView: (targetView: ViewState) => ViewState;
   setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -43,10 +46,24 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
     );
   });
 
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [logoutReason, setLogoutReason] = useState<'normal' | 'remote'>('normal');
+  const [terminatorName, setTerminatorName] = useState<string | null>(null);
+
   // Logout handler
-  const handleLogout = useCallback(async () => {
+  const handleLogout = useCallback(async (reason: 'normal' | 'remote' = 'normal') => {
     try {
+      setLogoutReason(reason);
+      setIsLoggingOut(true);
+      const startTime = Date.now();
+      
       await authService.logout();
+      
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 2000) {
+        await new Promise(r => setTimeout(r, 2000 - elapsed));
+      }
+      
       setIsAuthenticated(false);
       // Set view directly to skip route guard checks for this specific action
       setView(ROUTES.LOGIN);
@@ -54,6 +71,8 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
       // Even if API fails, client should logout
       setIsAuthenticated(false);
       setView(ROUTES.LOGIN);
+    } finally {
+      setIsLoggingOut(false);
     }
   }, [setView]);
 
@@ -141,7 +160,46 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
             checkAuth();
           }
         });
-        authListener = data.subscription;
+
+        // Remote Logout Listener
+        const channelName = `remote-logout-${Math.random().toString(36).substring(2)}`;
+        const sessionListener = supabase
+          .channel(channelName)
+          .on(
+            'broadcast',
+            { event: 'remote-logout-named' },
+            (payload) => {
+               const currentSessionId = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
+               if (currentSessionId && payload.payload.sessionId === currentSessionId) {
+                  console.warn('Session was terminated remotely by:', payload.payload.terminatorName);
+                  setTerminatorName(payload.payload.terminatorName);
+                  handleLogout('remote');
+               }
+            }
+          )
+          .on(
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'user_active_sessions' },
+            (payload) => {
+              const currentSessionId = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
+              if (
+                currentSessionId &&
+                payload.new.id === currentSessionId &&
+                payload.new.is_active === false
+              ) {
+                console.warn('Session was terminated remotely.');
+                handleLogout('remote');
+              }
+            }
+          )
+          .subscribe();
+
+        authListener = {
+          unsubscribe: () => {
+            data.subscription.unsubscribe();
+            supabase.removeChannel(sessionListener);
+          },
+        };
       });
     }
 
@@ -170,6 +228,9 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
   return {
     isAuthenticated,
     isAuthChecking,
+    isLoggingOut,
+    logoutReason,
+    terminatorName,
     isRecoveringPassword,
     user,
     handleLogout,

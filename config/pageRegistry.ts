@@ -653,6 +653,16 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     requiredProps: ['sales', 'employees', 'color', 't', 'language', 'isLoading', 'onViewChange'],
     permission: PERMISSIONS_MAPPING['employee-profile'],
   },
+  'active-sessions': {
+    id: 'active-sessions',
+    component: React.lazy(() => import('../components/settings/ActiveSessionsPage').then(m => ({ default: m.ActiveSessionsPage }))),
+    menuLabel: 'Active Sessions',
+    menuLabelAr: 'الأجهزة المتصلة',
+    icon: 'devices',
+    category: 'system',
+    requiredProps: ['color', 't', 'language'],
+    permission: PERMISSIONS_MAPPING['active-sessions'],
+  },
   login: {
     id: 'login',
     component: Login,

@@ -41,6 +41,9 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   // Auth State
   isAuthenticated,
   isAuthChecking,
+  isLoggingOut,
+  logoutReason,
+  terminatorName,
   isRecoveringPassword,
   handleLogout,
   resolveView,
@@ -199,7 +202,7 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   const t = TRANSLATIONS[language];
 
   // --- Session Handlers Hook ---
-  const { isLoggingOut, onLogoutClick, handleSelectEmployee } = useSessionHandlers({
+  const { onLogoutClick, handleSelectEmployee } = useSessionHandlers({
     employees,
     currentEmployeeId,
     setCurrentEmployeeId,
@@ -341,6 +344,8 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
         employees={employees}
         inventory={inventory}
         sales={sales}
+        logoutReason={logoutReason}
+        terminatorName={terminatorName}
       />
     );
   }

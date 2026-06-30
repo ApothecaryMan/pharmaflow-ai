@@ -58,6 +58,7 @@ export type ViewState =
   | 'login'
   | 'intelligence'
   | 'login-audit'
+  | 'active-sessions'
   | 'landing'
   | 'staff-overview'
   | 'branch-management'

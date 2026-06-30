@@ -40,7 +40,7 @@ export const useSessionHandlers = ({
   switchBranch,
   branches,
 }: SessionHandlersProps) => {
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  // State removed since useAuth handles isLoggingOut
 
   // --- Employee Selection Wrapper (Audit Logging) ---
   const handleSelectEmployee = useCallback(
@@ -187,11 +187,6 @@ export const useSessionHandlers = ({
 
   // --- Optimized Logout Handler ---
   const onLogoutClick = useCallback(async () => {
-    const startTime = Date.now();
-    const MIN_DISPLAY_TIME = 800;
-
-    setIsLoggingOut(true);
-
     try {
       console.log('[Session] Clearing session states');
       await handleSelectEmployee(null);
@@ -199,26 +194,12 @@ export const useSessionHandlers = ({
       setActiveModule(ROUTES.DASHBOARD);
 
       await handleLogout();
-
-      const elapsed = Date.now() - startTime;
-      const remaining = MIN_DISPLAY_TIME - elapsed;
-
-      if (remaining > 0) {
-        await new Promise((resolve) => setTimeout(resolve, remaining));
-      }
     } catch (error) {
       console.error('[Session] Logout error:', error);
-      const elapsed = Date.now() - startTime;
-      if (elapsed < MIN_DISPLAY_TIME) {
-        await new Promise((r) => setTimeout(r, MIN_DISPLAY_TIME - elapsed));
-      }
-    } finally {
-      setIsLoggingOut(false);
     }
   }, [handleLogout, handleSelectEmployee, setView, setActiveModule]);
 
   return {
-    isLoggingOut,
     onLogoutClick,
     handleSelectEmployee,
   };

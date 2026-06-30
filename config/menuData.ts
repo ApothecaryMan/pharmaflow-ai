@@ -1116,6 +1116,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         items: [
           { label: 'User Management', icon: 'manage_accounts' },
           { label: 'Roles & Permissions', icon: 'security' },
+          { label: 'Active Sessions', view: 'active-sessions', icon: 'devices' },
           { label: 'Password Policy', icon: 'password' },
           { label: 'Two-Factor Auth', icon: 'phonelink_lock' },
           { label: 'IP Restrictions', icon: 'public_off' },
