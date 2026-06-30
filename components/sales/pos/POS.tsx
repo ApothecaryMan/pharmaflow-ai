@@ -1023,43 +1023,6 @@ export const POS: React.FC<POSProps> = ({
                     }
                   }
                 }}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const selection = window.getSelection()?.toString();
-                  showMenu(e.clientX, e.clientY, [
-                    ...(selection
-                      ? [
-                          {
-                            label: t.copy,
-                            icon: 'content_copy',
-                            action: () => navigator.clipboard.writeText(selection),
-                            danger: false,
-                          },
-                        ]
-                      : []),
-                    {
-                      label: t.paste,
-                      icon: 'content_paste',
-                      action: async () => {
-                        try {
-                          const text = await navigator.clipboard.readText();
-                          setSearch((prev) => prev + text);
-                        } catch (err) {
-                          console.error('Failed to read clipboard', err);
-                        }
-                      },
-                      danger: false,
-                    },
-                    { separator: true } as any,
-                    {
-                      label: t.clear,
-                      icon: 'backspace',
-                      action: () => setSearch(''),
-                      danger: false,
-                    },
-                  ]);
-                }}
               />
             </div>
           </div>

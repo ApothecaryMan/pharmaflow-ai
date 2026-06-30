@@ -338,6 +338,12 @@ export const HolidaysTracker: React.FC = () => {
     return 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
   };
 
+  const getTypeIconStyle = (type: Holiday['type']) => {
+    if (type === 'national') return 'text-blue-600 dark:text-blue-400';
+    if (type === 'religious') return 'text-emerald-600 dark:text-emerald-400';
+    return 'text-amber-600 dark:text-amber-400';
+  };
+
   const getTodayCardStyle = (type: Holiday['type']) => {
     if (type === 'national') return 'bg-blue-500/10 border-blue-500/50 dark:border-blue-400/50';
     if (type === 'religious')
@@ -454,7 +460,7 @@ export const HolidaysTracker: React.FC = () => {
           <span>{isAR ? 'جاري تحديث جدول الإجازات...' : 'Syncing holiday schedule...'}</span>
         </div>
       ) : (
-        <div className='max-h-[190px] overflow-y-auto space-y-1.5 scrollbar-hide'>
+        <div className='max-h-[300px] overflow-y-auto space-y-1.5 scrollbar-hide'>
           {filteredHolidays.length === 0 ? (
             <div className='text-center py-6 text-xs text-(--text-tertiary)'>
               <span
@@ -499,7 +505,7 @@ export const HolidaysTracker: React.FC = () => {
                     </div>
                   </div>
                   <span
-                    className={`material-symbols-rounded text-xs p-1 rounded-md ${getTypeStyle(h.type)}`}
+                    className={`material-symbols-rounded text-xs ${getTypeIconStyle(h.type)}`}
                     style={{
                       fontSize: '25px',
                       width: '25px',

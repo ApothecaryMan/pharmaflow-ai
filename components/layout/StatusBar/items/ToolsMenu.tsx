@@ -6,10 +6,6 @@ import { Calculator } from './Calculator';
 import { CurrencyConverter } from './CurrencyConverter';
 import { HolidaysTracker } from './HolidaysTracker';
 
-const getMenuSurfaceClasses = (isBlur: boolean, isMobile: boolean = false) => {
-  if (!isBlur) return isMobile ? 'bg-(--bg-page-surface)' : 'bg-(--bg-menu)';
-  return 'glass-surface';
-};
 
 export interface ToolsMenuProps {
   dropDirection?: 'up' | 'down';
@@ -48,7 +44,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     () => `
     absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
     ${align === 'start' ? 'inset-s-0 origin-top-start' : 'inset-e-0 origin-top-end'}
-    w-64 rounded-xl shadow-2xl border border-(--border-divider) z-110 animate-fade-in
+    w-64 rounded-xl shadow-2xl border border-(--border-divider) z-110 animate-fade-in bg-(--bg-menu)
   `,
     [dropDirection, align]
   );
@@ -116,7 +112,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
             <button
               type='button'
               onClick={() => setIsPinned(!isPinned)}
-              className={`flex items-center justify-center w-6 h-6 rounded-md transition-colors hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none ${isPinned ? 'text-primary-500' : 'text-(--text-tertiary)'
+              className={`flex items-center justify-center w-10 h-10 rounded-full shadow-sm focus:outline-none bg-black/5 dark:bg-white/5 ${isPinned ? 'text-primary-500' : 'text-(--text-tertiary) hover:text-(--text-primary)'
                 }`}
               title={isPinned ? 'Unpin' : 'Pin to stay open'}
             >

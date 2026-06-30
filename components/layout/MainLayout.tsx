@@ -57,6 +57,13 @@ const GlobalContextMenuWrapper: React.FC<{
       className='w-full h-full'
       onContextMenu={(e) => {
         if (e.defaultPrevented) return;
+
+        // Allow default context menu on inputs and textareas
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+          return;
+        }
+
         e.preventDefault();
         showMenu(e.clientX, e.clientY, [
           {
