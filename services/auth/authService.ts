@@ -411,7 +411,7 @@ export const authService = {
 
       // Clear cached session FIRST to prevent stale reads during signOut
       cachedSession = null;
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: 'local' });
       this.clearEmployeeSession();
 
       const userId = storage.getUserId();
