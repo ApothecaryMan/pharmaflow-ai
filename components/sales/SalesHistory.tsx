@@ -10,6 +10,7 @@ import { money } from '../../utils/money';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { DateRangePicker } from '../common/DatePicker';
 import { HelpButton, HelpModal } from '../common/HelpModal';
+import { PageHeader } from '../common/PageHeader';
 import { TanStackTable } from '../common/TanStackTable';
 import { POSCustomerHistoryModal } from './pos/ui/POSCustomerHistoryModal';
 import { SaleDetailModal } from './SaleDetailModal';
@@ -643,31 +644,38 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
       dir={language === 'AR' ? 'rtl' : 'ltr'}
     >
       {/* Header */}
-      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
-        <div>
-          <h1 className='text-2xl font-bold tracking-tight page-title'>{t.title}</h1>
-          <p className='text-sm text-gray-500 dark:text-gray-400'>{t.subtitle}</p>
-        </div>
-
-        {/* Total Revenue Card - Hidden for Delivery Agents */}
-        {!permissionsService.can('sale.view_assigned_only') && (
-          <div
-            className={`px-4 py-2 rounded-2xl bg-primary-50 dark:bg-primary-900/20 ${CARD_BASE} flex flex-col items-end min-w-[140px]`}
-          >
-            <span
-              className={`text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400`}
-            >
-              {t.totalRevenue}
-            </span>
-            <span className={`text-xl font-bold text-primary-900 dark:text-primary-100`}>
-              {formatCurrency(totalRevenue)}
-            </span>
-            <span className='text-[10px] text-primary-600/70 dark:text-primary-400/70 font-semibold'>
-              {language === 'AR' ? 'الصفحة الحالية' : 'current page'}
-            </span>
+      <PageHeader
+        dir={language === 'AR' ? 'rtl' : 'ltr'}
+        centerContent={
+          <div className='flex flex-col min-w-0 items-center text-center'>
+            <h1 className='text-xl md:text-2xl font-bold text-gray-900 dark:text-white truncate tracking-tight page-title'>
+              {t.title}
+            </h1>
+            <p className='text-xs text-gray-500 dark:text-gray-400 truncate font-medium page-subtitle'>
+              {t.subtitle}
+            </p>
           </div>
-        )}
-      </div>
+        }
+        rightContent={
+          !permissionsService.can('sale.view_assigned_only') && (
+            <div
+              className={`px-4 py-2 rounded-2xl bg-primary-50 dark:bg-primary-900/20 ${CARD_BASE} flex flex-col items-end min-w-[140px]`}
+            >
+              <span
+                className={`text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400`}
+              >
+                {t.totalRevenue}
+              </span>
+              <span className={`text-xl font-bold text-primary-900 dark:text-primary-100`}>
+                {formatCurrency(totalRevenue)}
+              </span>
+              <span className='text-[10px] text-primary-600/70 dark:text-primary-400/70 font-semibold'>
+                {language === 'AR' ? 'الصفحة الحالية' : 'current page'}
+              </span>
+            </div>
+          )
+        }
+      />
 
       {/* Table Section */}
       <div
