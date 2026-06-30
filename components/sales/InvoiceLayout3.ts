@@ -57,6 +57,7 @@ export function generateLayout3HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
         .header { text-align: center; margin-bottom: 4px; }
         .store-logo { width: 35px; height: auto; margin: 0 auto 2px auto; display: block; }
         .store-logo svg { width: 100% !important; height: 100% !important; max-height: 10mm; object-fit: contain; }
+        .highlight { outline: 2px dashed #000 !important; background-color: rgba(0, 0, 0, 0.05) !important; border-radius: 4px; }
         .store-name { margin-bottom: 1px; }
         .store-info { }
         
@@ -81,8 +82,9 @@ export function generateLayout3HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
     <body>
       <div class="header">
         <!-- Logo intentionally omitted for compact layout -->
-        <div class="store-name">${opts.storeName ?? (lang === 'AR' ? 'ZINC' : 'ZINC')}</div>
-        <div class="store-info" dir="auto">${opts.headerAddress ?? currentDefaults.address} | ${opts.headerHotline ?? currentDefaults.hotline}</div>
+        <div class="store-name ${opts.highlightedField === 'storeName' ? 'highlight' : ''}">${opts.storeName ?? (lang === 'AR' ? 'ZINC' : 'ZINC')}</div>
+        ${opts.storeSubtitle ? `<div class="store-info ${opts.highlightedField === 'storeSubtitle' ? 'highlight' : ''}">${opts.storeSubtitle}</div>` : ''}
+        <div class="store-info" dir="auto"><span class="${opts.highlightedField === 'headerAddress' ? 'highlight' : ''}">${opts.headerAddress ?? currentDefaults.address}</span> | <span class="${opts.highlightedField === 'headerHotline' ? 'highlight' : ''}">${opts.headerHotline ?? currentDefaults.hotline}</span></div>
       </div>
       
       <hr class="divider">
@@ -181,8 +183,9 @@ export function generateLayout3HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
       </div>
       
       <div class="footer">
-         <div>${opts.termsCondition ?? currentDefaults.terms.replace(/<br>/g, ' - ')}</div>
-         <div style="margin-top: 2px;">${opts.footerMessage || 'THANK YOU'}</div>
+         ${opts.footerInquiry ? `<div class="${opts.highlightedField === 'footerInquiry' ? 'highlight' : ''}" style="margin-bottom: 2px;">${opts.footerInquiry}</div>` : ''}
+         <div class="${opts.highlightedField === 'termsCondition' ? 'highlight' : ''}">${opts.termsCondition ?? currentDefaults.terms.replace(/<br>/g, ' - ')}</div>
+         <div style="margin-top: 2px;" class="${opts.highlightedField === 'footerMessage' ? 'highlight' : ''}">${opts.footerMessage || 'THANK YOU'}</div>
       </div>
       
       <div class="barcode-section">

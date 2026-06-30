@@ -56,6 +56,7 @@ export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
         .header { text-align: center; margin-bottom: 6px; }
         .store-logo { width: 40px; height: auto; margin: 0 auto 4px auto; display: block; }
         .store-logo svg { width: 100% !important; height: 100% !important; max-height: 12mm; object-fit: contain; }
+        .highlight { outline: 2px dashed #000 !important; background-color: rgba(0, 0, 0, 0.05) !important; border-radius: 4px; }
         .store-name { font-weight: bold; font-size: 14px; margin-bottom: 2px; }
         .store-info { font-size: 10px; }
         
@@ -80,15 +81,21 @@ export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
     <body>
       <div class="header">
         ${
-          opts.logoSvgCode
-            ? `<div class="store-logo" style="width: 20mm; overflow: hidden; margin: 0 auto 4px auto;">${opts.logoSvgCode}</div>`
-            : opts.logoBase64
-              ? `<img src="${opts.logoBase64}" alt="Logo" class="store-logo" />`
-              : ``
+          !opts.hideLogo ? (
+            opts.logoSvgCode
+              ? `<div class="store-logo" style="width: 20mm; overflow: hidden; margin: 0 auto 4px auto;">${opts.logoSvgCode}</div>`
+              : opts.logoBase64
+                ? `<img src="${opts.logoBase64}" alt="Logo" class="store-logo" />`
+                : ``
+          ) : ''
         }
-        <div class="store-name">${opts.storeName ?? (lang === 'AR' ? 'ZINC' : 'ZINC')}</div>
-        ${opts.storeSubtitle ? `<div class="store-info">${opts.storeSubtitle}</div>` : ''}
-        <div class="store-info" dir="auto">${opts.headerAddress ?? currentDefaults.address} <br/> ${opts.headerArea ?? currentDefaults.area} <br/> ${opts.headerHotline ?? currentDefaults.hotline}</div>
+        <div class="store-name ${opts.highlightedField === 'storeName' ? 'highlight' : ''}">${opts.storeName ?? (lang === 'AR' ? 'ZINC' : 'ZINC')}</div>
+        ${opts.storeSubtitle ? `<div class="store-info ${opts.highlightedField === 'storeSubtitle' ? 'highlight' : ''}">${opts.storeSubtitle}</div>` : ''}
+        <div class="store-info" dir="auto">
+          <span class="${opts.highlightedField === 'headerAddress' ? 'highlight' : ''}" style="display: inline-block;">${opts.headerAddress ?? currentDefaults.address}</span> <br/> 
+          <span class="${opts.highlightedField === 'headerArea' ? 'highlight' : ''}" style="display: inline-block;">${opts.headerArea ?? currentDefaults.area}</span> <br/> 
+          <span class="${opts.highlightedField === 'headerHotline' ? 'highlight' : ''}" style="display: inline-block;">${opts.headerHotline ?? currentDefaults.hotline}</span>
+        </div>
       </div>
       
       <!-- Meta Table -->
@@ -255,8 +262,9 @@ export function generateLayout4HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
           })()}
       
       <div class="footer">
-         <div>${opts.termsCondition ?? currentDefaults.terms.replace(/<br>/g, ' - ')}</div>
-         <div style="margin-top: 4px; font-weight: bold; font-size: 11px;">${opts.footerMessage || 'THANK YOU'}</div>
+         ${opts.footerInquiry ? `<div class="${opts.highlightedField === 'footerInquiry' ? 'highlight' : ''}" style="margin-bottom: 4px;">${opts.footerInquiry}</div>` : ''}
+         <div class="${opts.highlightedField === 'termsCondition' ? 'highlight' : ''}">${opts.termsCondition ?? currentDefaults.terms.replace(/<br>/g, ' - ')}</div>
+         <div style="margin-top: 4px; font-weight: bold; font-size: 11px;" class="${opts.highlightedField === 'footerMessage' ? 'highlight' : ''}">${opts.footerMessage || 'THANK YOU'}</div>
       </div>
       
       <div class="barcode-section">

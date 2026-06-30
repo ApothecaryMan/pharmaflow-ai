@@ -416,7 +416,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
           </h1>
         </div>
 
-        <div className='flex flex-wrap xl:flex-nowrap items-center justify-end gap-2 md:gap-3 shrink-0 ml-auto rtl:mr-auto max-w-full'>
+        <div className='flex flex-wrap xl:flex-nowrap items-center justify-end gap-2 md:gap-3 shrink-0 ms-auto max-w-full'>
           <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1 whitespace-nowrap shrink-0 hidden md:block'>
             {isAddingTemplate ? t.receiptDesigner.newTemplate : t.receiptDesigner.activeTemplate}
           </label>
@@ -469,7 +469,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                             {item?.name}
                           </span>
                           {item?.isDefault && (
-                            <span className='ml-2 text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded-md font-bold'>
+                            <span className='ms-2 text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded-md font-bold'>
                               Def
                             </span>
                           )}
@@ -492,7 +492,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                         </div>
                       )}
                       variant='input'
-                      className='w-full absolute top-0 left-0 z-10'
+                      className='w-full absolute top-0 start-0 z-10'
                     />
                   </div>
 
@@ -668,18 +668,37 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   <img
                     src={options.logoBase64}
                     alt='Logo'
-                    className='max-h-full max-w-full object-contain'
+                    className={`max-h-full max-w-full object-contain ${options.hideLogo ? 'opacity-30 grayscale' : ''}`}
                   />
-                  <button
-                    onClick={() => {
-                      setOptions({ ...options, logoBase64: '' });
-                      setQuotaError(false);
-                    }}
-                    className='absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-xs z-10'
-                  >
-                    <span className='material-symbols-rounded text-[12px]'>close</span>
-                  </button>
-                  <div className='absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-black/40 text-white text-[9px] font-mono z-10 pointer-events-none'>
+                  <div className="absolute top-1 end-7 z-10">
+                    <Tooltip content={options.hideLogo ? (language === 'AR' ? 'إظهار' : 'Show') : (language === 'AR' ? 'إخفاء' : 'Hide')} position="top">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setOptions({ ...options, hideLogo: !options.hideLogo });
+                        }}
+                        className={`w-5 h-5 ${options.hideLogo ? 'bg-gray-500 hover:bg-gray-600' : 'bg-blue-500 hover:bg-blue-600'} text-white rounded-full flex items-center justify-center shadow-xs`}
+                      >
+                        <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
+                          {options.hideLogo ? 'visibility_off' : 'visibility'}
+                        </span>
+                      </button>
+                    </Tooltip>
+                  </div>
+                  <div className="absolute top-1 end-1 z-10">
+                    <Tooltip content={language === 'AR' ? 'مسح اللوجو' : 'Remove Logo'} position="top">
+                      <button
+                        onClick={() => {
+                          setOptions({ ...options, logoBase64: '' });
+                          setQuotaError(false);
+                        }}
+                        className='w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-xs'
+                      >
+                        <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>close</span>
+                      </button>
+                    </Tooltip>
+                  </div>
+                  <div className='absolute bottom-1 end-1 px-1.5 py-0.5 rounded-md bg-black/40 text-white text-[9px] font-mono z-10 pointer-events-none'>
                     {Math.round((options.logoBase64.length * (3 / 4)) / 1024)} KB
                   </div>
                   {quotaError && (
@@ -754,19 +773,38 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   className={`relative bg-gray-50 dark:bg-muted/30 rounded-xl p-2 flex items-center justify-center border ${quotaError ? 'border-red-500' : 'border-gray-200 dark:border-gray-800'} h-24 w-full`}
                 >
                   <div
-                    className='w-full h-full flex items-center justify-center overflow-hidden'
+                    className={`w-full h-full flex items-center justify-center overflow-hidden ${options.hideLogo ? 'opacity-30 grayscale' : ''}`}
                     dangerouslySetInnerHTML={{ __html: options.logoSvgCode }}
                   />
-                  <button
-                    onClick={() => {
-                      setOptions({ ...options, logoSvgCode: '' });
-                      setQuotaError(false);
-                    }}
-                    className='absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-xs z-10'
-                  >
-                    <span className='material-symbols-rounded text-[12px]'>close</span>
-                  </button>
-                  <div className='absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-black/40 text-white text-[9px] font-mono z-10 pointer-events-none'>
+                  <div className="absolute top-1 start-1 z-10">
+                    <Tooltip content={options.hideLogo ? (language === 'AR' ? 'إظهار' : 'Show') : (language === 'AR' ? 'إخفاء' : 'Hide')} position="top">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setOptions({ ...options, hideLogo: !options.hideLogo });
+                        }}
+                        className={`w-5 h-5 ${options.hideLogo ? 'bg-gray-500 hover:bg-gray-600' : 'bg-blue-500 hover:bg-blue-600'} text-white rounded-full flex items-center justify-center shadow-xs`}
+                      >
+                        <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
+                          {options.hideLogo ? 'visibility_off' : 'visibility'}
+                        </span>
+                      </button>
+                    </Tooltip>
+                  </div>
+                  <div className="absolute top-1 end-1 z-10">
+                    <Tooltip content={language === 'AR' ? 'مسح اللوجو' : 'Remove Logo'} position="top">
+                      <button
+                        onClick={() => {
+                          setOptions({ ...options, logoSvgCode: '' });
+                          setQuotaError(false);
+                        }}
+                        className='w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-xs'
+                      >
+                        <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>close</span>
+                      </button>
+                    </Tooltip>
+                  </div>
+                  <div className='absolute bottom-1 end-1 px-1.5 py-0.5 rounded-md bg-black/40 text-white text-[9px] font-mono z-10 pointer-events-none'>
                     {Math.round(options.logoSvgCode.length / 1024)} KB
                   </div>
                 </div>
@@ -1019,7 +1057,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       {/* RIGHT: Preview */}
       <div className='flex-1 rounded-2xl border border-gray-200 dark:border-gray-800 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] bg-size-[20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] bg-gray-100 dark:bg-gray-950 relative flex flex-col overflow-hidden'>
         {/* Top-Left Unified Stats Badge */}
-        <div className='absolute top-4 left-4 flex items-center px-2.5 h-7 bg-white/80 dark:bg-muted/80 backdrop-blur-md rounded-xl border border-gray-200/50 dark:border-border/50 shadow-xs text-[10px] font-bold gap-3 z-20 pointer-events-none'>
+        <div className='absolute top-4 start-4 flex items-center px-2.5 h-7 bg-white/80 dark:bg-muted/80 backdrop-blur-md rounded-xl border border-gray-200/50 dark:border-border/50 shadow-xs text-[10px] font-bold gap-3 z-20 pointer-events-none'>
           <Tooltip content={t.receiptDesigner.preview?.memorySize || 'Real Printing Memory Size (Actual)'} position="bottom">
             <div className='flex items-center gap-1.2'>
               <span className='material-symbols-rounded text-[16px] text-primary-500'>memory</span>
@@ -1038,7 +1076,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
         </div>
 
         {/* Top-Right Action Button */}
-        <div className='absolute top-4 right-4 z-20 flex gap-2'>
+        <div className='absolute top-4 end-4 z-20 flex gap-2'>
           <button
             type='button'
             className={`h-7 px-3 bg-white/80 dark:bg-muted/80 hover:bg-white dark:hover:bg-muted backdrop-blur-md rounded-xl border shadow-xs text-[10px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer pointer-events-auto ${previewMode === 'shift' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-gray-200/50 dark:border-border/50 text-gray-700 dark:text-gray-300'}`}

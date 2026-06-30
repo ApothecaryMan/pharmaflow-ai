@@ -42,6 +42,8 @@ export interface InvoiceTemplateOptions {
   receiptFont?: 'courier' | 'receipt-basic';
   /** Show border box around delivery address */
   showAddressBox?: boolean;
+  /** Hide the logo when printing */
+  hideLogo?: boolean;
   /** Auto-print on Payment Complete (Any Order) */
   autoPrintOnComplete?: boolean;
   /** Auto-print on Delivery Order Creation */
@@ -183,7 +185,7 @@ export function generateLayout1HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
         .header { text-align: center; margin-bottom: 10px; }
         .store-logo { width: 80px; height: auto; margin: 0 auto 5px auto; display: block; }
         .store-logo svg { width: 100% !important; height: 100% !important; max-height: 15mm; object-fit: contain; }
-        .highlight { outline: 2px dashed #3b82f6 !important; background-color: rgba(59, 130, 246, 0.1) !important; border-radius: 2px; }
+        .highlight { outline: 2px dashed #000 !important; background-color: rgba(0, 0, 0, 0.05) !important; border-radius: 4px; }
         .store-name { margin-bottom: 2px; font-weight: bold; font-size: 14px; }
         .store-info { margin-bottom: 2px; font-size: 10px; }
         .hotline { margin-top: 2px; }
@@ -219,11 +221,13 @@ export function generateLayout1HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
     <body>
       <div class="header">
         ${
-          opts.logoSvgCode
-            ? `<div class="store-logo" style="width: 40mm; max-height: 15mm; overflow: hidden; margin: 0 auto 5px auto;">${opts.logoSvgCode}</div>`
-            : opts.logoBase64
-              ? `<img src="${opts.logoBase64}" alt="Logo" class="store-logo" style="width: 40mm; max-height: 15mm; object-fit: contain;" />`
-              : `<img src="/app_icon.svg" alt="Logo" class="store-logo" style="width: 60px;" />`
+          !opts.hideLogo ? (
+            opts.logoSvgCode
+              ? `<div class="store-logo" style="width: 40mm; max-height: 15mm; overflow: hidden; margin: 0 auto 5px auto;">${opts.logoSvgCode}</div>`
+              : opts.logoBase64
+                ? `<img src="${opts.logoBase64}" alt="Logo" class="store-logo" style="width: 40mm; max-height: 15mm; object-fit: contain;" />`
+                : `<img src="/app_icon.svg" alt="Logo" class="store-logo" style="width: 60px;" />`
+          ) : ''
         }
         <div class="store-name ${opts.highlightedField === 'storeName' ? 'highlight' : ''}">${opts.storeName ?? (lang === 'AR' ? 'ZINC' : 'ZINC')}</div>
         <div class="store-info ${opts.highlightedField === 'storeSubtitle' ? 'highlight' : ''}">${opts.storeSubtitle ?? (lang === 'AR' ? 'نظام إدارة الصيدليات' : 'Pharmacy Management System')}</div>

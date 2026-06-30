@@ -58,7 +58,7 @@ export function generateLayout2HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
           background: #fff; color: #000; padding: 12px; border: 2px solid #000; border-radius: 8px; 
           text-align: center; margin-bottom: 12px; 
         }
-        .header .highlight { outline: 2px dashed #000 !important; background-color: rgba(0, 0, 0, 0.05) !important; border-radius: 4px; }
+        .highlight { outline: 2px dashed #000 !important; background-color: rgba(0, 0, 0, 0.05) !important; border-radius: 4px; }
         
         .store-logo { width: 60px; height: auto; margin: 0 auto 5px auto; display: block; }
         .store-logo svg { width: 100% !important; height: 100% !important; max-height: 15mm; object-fit: contain; }
@@ -90,11 +90,13 @@ export function generateLayout2HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
     <body>
       <div class="header">
         ${
-          opts.logoSvgCode
-            ? `<div class="store-logo" style="width: 30mm; max-height: 15mm; overflow: hidden; margin: 0 auto 5px auto;">${opts.logoSvgCode}</div>`
-            : opts.logoBase64
-              ? `<img src="${opts.logoBase64}" alt="Logo" class="store-logo" />`
-              : `<img src="/app_icon.svg" alt="Logo" class="store-logo" />`
+          !opts.hideLogo ? (
+            opts.logoSvgCode
+              ? `<div class="store-logo" style="width: 30mm; max-height: 15mm; overflow: hidden; margin: 0 auto 5px auto;">${opts.logoSvgCode}</div>`
+              : opts.logoBase64
+                ? `<img src="${opts.logoBase64}" alt="Logo" class="store-logo" />`
+                : `<img src="/app_icon.svg" alt="Logo" class="store-logo" />`
+          ) : ''
         }
         <div class="store-name ${opts.highlightedField === 'storeName' ? 'highlight' : ''}">${opts.storeName ?? (lang === 'AR' ? 'ZINC' : 'ZINC')}</div>
         <div class="store-info ${opts.highlightedField === 'storeSubtitle' ? 'highlight' : ''}">${opts.storeSubtitle ?? (lang === 'AR' ? 'نظام إدارة الصيدليات' : 'Pharmacy Management System')}</div>
