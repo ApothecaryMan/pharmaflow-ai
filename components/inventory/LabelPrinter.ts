@@ -710,7 +710,7 @@ export const printLabels = async (
     const renderDims = { w: dims.w, h: labelHeight };
 
     const hwPageW = dims.w;
-    const hwPageH = printablePageHeight;
+    const hwPageH = pageHeight;
     const effectiveOrientation = deriveOrientation(hwPageW, hwPageH);
 
     const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
