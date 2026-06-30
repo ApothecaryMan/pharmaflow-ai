@@ -381,8 +381,9 @@ export const printLabelSilently = async (
 
   try {
     await printHTML(settings.labelPrinter, html, {
-      size: { width: labelSize.width, height: labelSize.height },
-      orientation: labelSize.orientation,
+      // By omitting size and orientation, we force Java to use the Windows Printer Default (38x25)
+      // This bypasses Java Print API's bug that auto-rotates any document where Width > Height.
+      orientation: 'portrait',
       margins: { top: 0, right: 0, bottom: 0, left: 0 },
     });
     return true;

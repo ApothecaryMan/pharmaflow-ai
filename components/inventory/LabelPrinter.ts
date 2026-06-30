@@ -696,8 +696,8 @@ export const printLabels = async (
     const labelsPerPage = isDouble ? 2 : 1;
 
     const labelHeight = isDouble ? 12 : dims.h;
-    const innerGap = isDouble ? 1 : 0;
-    const outerGap = isDouble ? 3 : design.labelGap || 0;
+    const innerGap = 0; // According to diagram: "بدون فراغ"
+    const outerGap = isDouble ? 2 : design.labelGap || 0; // According to diagram: 2mm
 
     const pageHeight = isDouble
       ? labelHeight * 2 + innerGap + outerGap
