@@ -777,6 +777,28 @@ export const printLabels = async (
     }
 
     const allPagesHTML = pages.join('');
+    
+    let rawCommands: string[] | undefined;
+    const printerLanguage = design.printerLanguage || 'html';
+    
+    if (printerLanguage !== 'html') {
+      try {
+        const { generateTSPL, generateZPL } = await import('../../utils/printing/rawLabelGenerators');
+        rawCommands = [];
+        for (let i = 0; i < validItems.length; i++) {
+          const item = validItems[i];
+          for (let j = 0; j < item.quantity; j++) {
+            if (printerLanguage === 'tspl') {
+              rawCommands.push(...generateTSPL(design, item.drug, receiptSettings, item.expiryDateOverride));
+            } else if (printerLanguage === 'zpl') {
+              rawCommands.push(...generateZPL(design, item.drug, receiptSettings, item.expiryDateOverride));
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to generate raw commands, falling back to HTML', err);
+      }
+    }
 
     // Single unified print: printDocument handles silent→fallback policy.
     // Labels are wrapped via wrapPrintHTML (ships its own auto-print script),
@@ -798,6 +820,7 @@ export const printLabels = async (
       kind: 'label',
       orientation: effectiveOrientation,
       autoPrintFallback: false,
+      rawCommands,
     });
   } catch (e: any) {
     console.error('Print process failed:', e);

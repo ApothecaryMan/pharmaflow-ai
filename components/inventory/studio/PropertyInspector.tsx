@@ -4,6 +4,7 @@ import type { Drug } from '../../../types';
 import { CARD_BASE } from '../../../utils/themeStyles';
 import { SearchInput } from '../../common/SearchInput';
 import { SegmentedControl } from '../../common/SegmentedControl';
+import { FilterDropdown } from '../../common/FilterDropdown';
 import { SidebarSection } from './SidebarSection';
 import type { LabelElement } from './types';
 
@@ -43,6 +44,9 @@ interface PropertyInspectorProps {
   selectedContentDir: string;
   showHitboxCalibration: boolean;
   setShowHitboxCalibration: (val: boolean) => void;
+  printerLanguage: 'html' | 'tspl' | 'zpl';
+  setPrinterLanguage: (val: 'html' | 'tspl' | 'zpl') => void;
+  setHasUnsavedChanges: (val: boolean) => void;
 }
 
 export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
@@ -75,6 +79,9 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
   selectedContentDir,
   showHitboxCalibration,
   setShowHitboxCalibration,
+  printerLanguage,
+  setPrinterLanguage,
+  setHasUnsavedChanges,
 }) => {
   const [openSection, setOpenSection] = useState<'general' | 'calibration'>('general');
 
@@ -148,6 +155,47 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
               )}
 
               <div className='pt-2 space-y-3'>
+                <div>
+                  <label className='text-xs font-bold text-gray-500 uppercase block mb-2'>
+                    Printer Language
+                  </label>
+                  <FilterDropdown
+                    items={[
+                      { id: 'html', name: 'HTML (Standard)' },
+                      { id: 'tspl', name: 'TSPL (TSC/XPrinter)' },
+                      { id: 'zpl', name: 'ZPL (Zebra)' },
+                    ]}
+                    selectedItem={{
+                      id: printerLanguage,
+                      name:
+                        printerLanguage === 'html'
+                          ? 'HTML (Standard)'
+                          : printerLanguage === 'tspl'
+                            ? 'TSPL (TSC/XPrinter)'
+                            : 'ZPL (Zebra)',
+                    }}
+                    onSelect={(item) => {
+                      setPrinterLanguage(item.id as any);
+                      setHasUnsavedChanges(true);
+                    }}
+                    keyExtractor={(item) => item.id}
+                    renderItem={(item) => (
+                      <span className='text-sm text-gray-700 dark:text-gray-300'>
+                        {item.name}
+                      </span>
+                    )}
+                    renderSelected={(item) => (
+                      <span className='text-sm text-gray-700 dark:text-gray-300'>
+                        {item?.name}
+                      </span>
+                    )}
+                    variant='input'
+                    color={color}
+                    className='w-full'
+                    minHeight='42px'
+                    floating={true}
+                  />
+                </div>
                 <div>
                   <label className='flex items-center gap-2 cursor-pointer p-3 bg-gray-50 dark:bg-muted rounded-xl border border-gray-100 dark:border-border hover:bg-gray-100 dark:hover:bg-accent transition-colors'>
                     <input

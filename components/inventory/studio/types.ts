@@ -34,10 +34,15 @@ export interface LabelDesign {
   showPrintBorders?: boolean;
   printOffsetX?: number;
   printOffsetY?: number;
-  labelGap?: 0 | 0.5 | 1;
+  labelGap?: 0 | 0.5 | 1 | 2; // Added 2 for double labels without physical gap
   currency?: 'L.E' | 'USD';
-  uploadedLogo?: string; // Added from usage in BarcodeStudio
-  activeTemplateId?: string | null; // Added from usage
+  uploadedLogo?: string;
+  activeTemplateId?: string | null;
+  printerLanguage?: 'html' | 'tspl' | 'zpl';
+  tsplOptions?: {
+    darkness?: number; // 0-15
+    speed?: number; // 1-6
+  };
 }
 
 export interface SavedTemplate {

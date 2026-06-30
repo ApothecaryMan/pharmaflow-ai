@@ -101,8 +101,9 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const [showPrintBorders, setShowPrintBorders] = useState(false);
   const [printOffsetX, setPrintOffsetX] = useState(0);
   const [printOffsetY, setPrintOffsetY] = useState(0);
-  const [labelGap, setLabelGap] = useState<0 | 0.5 | 1>(0);
+  const [labelGap, setLabelGap] = useState<0 | 0.5 | 1 | 2>(0);
   const [currency, setCurrency] = useState<'L.E' | 'USD'>('L.E');
+  const [printerLanguage, setPrinterLanguage] = useState<'html' | 'tspl' | 'zpl'>('html');
 
   const [editingTemplateName, setEditingTemplateName] = useState(false);
   const [tempTemplateName, setTempTemplateName] = useState('');
@@ -198,6 +199,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       showPrintBorders: debouncedShowPrintBorders,
       printOffsetX: debouncedPrintOffsets.x,
       printOffsetY: debouncedPrintOffsets.y,
+      printerLanguage: printerLanguage,
     };
     if (activeBranchId) {
       updateBranch(activeBranchId, {
@@ -435,6 +437,9 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     if (typeof state.printOffsetX !== 'undefined') setPrintOffsetX(state.printOffsetX);
     if (typeof state.printOffsetY !== 'undefined') setPrintOffsetY(state.printOffsetY);
     if (typeof state.labelGap !== 'undefined') setLabelGap(state.labelGap);
+    if (state.currency) setCurrency(state.currency);
+    if (state.printerLanguage) setPrinterLanguage(state.printerLanguage);
+    if (state.uploadedLogo) setUploadedLogo(state.uploadedLogo);
     if (state.currency) setCurrency(state.currency);
   };
 
@@ -1518,6 +1523,9 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
           selectedContentDir={selectedContentDir}
           showHitboxCalibration={showHitboxCalibration}
           setShowHitboxCalibration={setShowHitboxCalibration}
+          printerLanguage={printerLanguage}
+          setPrinterLanguage={setPrinterLanguage}
+          setHasUnsavedChanges={setHasUnsavedChanges}
         />
       </div>
 

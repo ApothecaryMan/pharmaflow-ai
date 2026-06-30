@@ -129,6 +129,30 @@ class UniversalPrinterService {
 
     return false;
   }
+
+  /**
+   * Universal print label raw function
+   * Sends raw commands (TSPL/ZPL) directly to the printer
+   */
+  public async printLabelRaw(commands: string[]): Promise<boolean> {
+    const settings = this.loadSettings();
+    const { enabled, silentMode } = settings;
+
+    if (enabled && silentMode !== 'off') {
+      try {
+        if (!settings.labelPrinter) {
+          console.warn('[PrinterService] No label printer configured for raw printing');
+          return false;
+        }
+        await qz.printRaw(settings.labelPrinter, commands);
+        return true;
+      } catch (e) {
+        console.error('[PrinterService] QZ raw label print failed:', e);
+      }
+    }
+
+    return false;
+  }
 }
 
 export const printerService = new UniversalPrinterService();

@@ -41,6 +41,11 @@ export interface PrintDocumentOptions {
    * Default false.
    */
   autoPrintFallback?: boolean;
+  /**
+   * Raw printer commands (TSPL/ZPL). If provided, the engine will attempt
+   * to send these directly to the printer instead of rendering HTML.
+   */
+  rawCommands?: string[];
 }
 
 /**
@@ -57,17 +62,25 @@ export interface PrintDocumentOptions {
 export const printDocument = async (
   options: PrintDocumentOptions
 ): Promise<boolean> => {
-  const { html, width, height, kind, orientation } = options;
+  const { html, width, height, kind, orientation, rawCommands } = options;
   const settings = getPrinterSettings();
   const shouldTrySilent = settings.enabled && settings.silentMode !== 'off';
 
   if (shouldTrySilent) {
     try {
-      const silentSize = { width, height, orientation };
-      const printed =
-        kind === 'label'
-          ? await printerService.printLabel(html, silentSize)
-          : await printerService.printReceipt(html);
+      let printed = false;
+      
+      if (rawCommands && rawCommands.length > 0 && kind === 'label') {
+        // Raw printing bypasses HTML rendering
+        printed = await printerService.printLabelRaw(rawCommands);
+      } else {
+        // Standard HTML printing
+        const silentSize = { width, height, orientation };
+        printed =
+          kind === 'label'
+            ? await printerService.printLabel(html, silentSize)
+            : await printerService.printReceipt(html);
+      }
 
       if (printed) return true;
 
