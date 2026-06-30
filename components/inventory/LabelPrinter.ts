@@ -580,13 +580,21 @@ const buildLabelDocument = (
   pageHeight: number,
   offsets: { x: number; y: number },
   autoPrint: boolean,
-  hardwarePageHeight?: number
+  hardwarePageHeight?: number,
+  applyRotation: boolean = false
 ): string => {
   const { css, bodyHTML } = buildLabelPageContent(contentHTML, templateCSS, dims, pageHeight, offsets);
   
   const physicalHeight = hardwarePageHeight || pageHeight;
-  const pageW = dims.w;
-  const pageH = physicalHeight;
+  
+  // Swap W and H if rotation is applied (landscape -> portrait paper footprint)
+  const isLandscape = dims.w > physicalHeight;
+  const shouldRotate = applyRotation && isLandscape;
+  
+  const pageW = shouldRotate ? physicalHeight : dims.w;
+  const pageH = shouldRotate ? dims.w : physicalHeight;
+  
+  // Always portrait because we pre-rotated the content
   const orientation = 'portrait';
 
   return wrapPrintHTML({
@@ -710,7 +718,12 @@ export const printLabels = async (
     const renderDims = { w: dims.w, h: labelHeight };
 
     const hwPageW = dims.w;
-    const hwPageH = pageHeight;
+    const hwPageH = printablePageHeight;
+    const isLandscape = hwPageW > hwPageH;
+    const shouldRotate = isLandscape; // We enforce CSS rotation for thermal printers
+
+    const printW = shouldRotate ? hwPageH : hwPageW;
+    const printH = shouldRotate ? hwPageW : hwPageH;
     const effectiveOrientation = 'portrait';
 
     const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
@@ -768,11 +781,25 @@ export const printLabels = async (
         ? pageLabels.length * labelHeight + Math.max(0, pageLabels.length - 1) * innerGap
         : printablePageHeight;
 
-      const pageHTML = `<div class="page-container" style="height: ${actualContentHeight}mm; width: ${dims.w}mm; page-break-after: ${isLastPage ? 'auto' : 'always'};">
+      let pageHTML = `<div class="page-container" style="height: ${actualContentHeight}mm; width: ${dims.w}mm;">
                 <div class="print-container">
                     ${labelsContent}
                 </div>
             </div>`;
+
+      if (shouldRotate) {
+        pageHTML = `<div class="rotated-wrapper" style="width: ${actualContentHeight}mm; height: ${dims.w}mm; position: relative; overflow: hidden; page-break-after: ${isLastPage ? 'auto' : 'always'};">
+            <div style="width: ${dims.w}mm; height: ${actualContentHeight}mm; transform: rotate(-90deg) translateX(-100%); transform-origin: top left; overflow: hidden;">
+                ${pageHTML}
+            </div>
+        </div>`;
+      } else {
+        pageHTML = `<div class="page-container" style="height: ${actualContentHeight}mm; width: ${dims.w}mm; page-break-after: ${isLastPage ? 'auto' : 'always'};">
+                <div class="print-container">
+                    ${labelsContent}
+                </div>
+            </div>`;
+      }
       pages.push(pageHTML);
     }
 
@@ -788,13 +815,14 @@ export const printLabels = async (
       printablePageHeight,
       { x: printOffsetX, y: printOffsetY },
       true, // auto-print via the shell's embedded script
-      pageHeight
+      pageHeight,
+      shouldRotate // Apply rotation flag
     );
 
     await printDocument({
       html: htmlContent,
-      width: hwPageW,
-      height: hwPageH,
+      width: printW,
+      height: printH,
       kind: 'label',
       orientation: effectiveOrientation,
       autoPrintFallback: false,
