@@ -56,6 +56,8 @@ export const transactionService = {
       customerName: string;
       customerCode?: string;
       customerPhone?: string;
+      customerAddress?: string;
+      customerStreetAddress?: string;
       paymentMethod: 'cash' | 'visa';
       saleType?: 'walk-in' | 'delivery';
       total: number;
@@ -129,6 +131,8 @@ export const transactionService = {
       customerName: saleData.customerName,
       customerPhone: saleData.customerPhone,
       customerCode: saleData.customerCode,
+      customerAddress: saleData.customerAddress,
+      customerStreetAddress: saleData.customerStreetAddress,
       earnedPoints,
       paymentMethod: saleData.paymentMethod,
       saleType: saleData.saleType || 'walk-in',

@@ -95,25 +95,25 @@ export function useSalesHandlers({
       try {
         if (!currentEmployeeId) {
           error('Login required to complete sale');
-          return false;
+          return { success: false };
         }
         const currentUser = employees?.find((e) => e.id === currentEmployeeId);
         if (!permissionsService.can('sale.create')) {
           error('Permission denied: Cannot process sales');
-          return false;
+          return { success: false };
         }
 
         const dataValidation = validateSaleData(saleData);
         if (!dataValidation.success) {
           error(dataValidation.message || 'Invalid sale data');
-          return false;
+          return { success: false };
         }
 
         const saleDate = getVerifiedDate();
         const timeValidation = validateTransactionTime(saleDate);
         if (!timeValidation.valid) {
           error(`⚠️ ${timeValidation.message || 'Invalid transaction time'}`);
-          return false;
+          return { success: false };
         }
 
         const context: ActionContext = {
@@ -129,14 +129,14 @@ export function useSalesHandlers({
 
         updateLastTransactionTime(saleDate.getTime());
         success(`Order #${newSale.serialId} completed!`);
-        return true;
+        return { success: true, sale: newSale };
       } catch (err: unknown) {
         console.error('[handleCompleteSale] Fatal error:', err);
         error(
           (err instanceof Error ? err.message : String(err)) ||
             'An unexpected error occurred during checkout.'
         );
-        return false;
+        return { success: false };
       }
     },
     [

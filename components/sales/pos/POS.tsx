@@ -74,7 +74,7 @@ interface POSProps {
     deliveryEmployeeId?: string;
     status?: 'completed' | 'pending' | 'with_delivery' | 'on_way' | 'cancelled';
     processingTimeMinutes?: number;
-  }) => Promise<boolean>;
+  }) => Promise<{ success: boolean; sale?: Sale }>;
   color: string;
   t: typeof TRANSLATIONS.EN.pos;
   customers: Customer[];

@@ -18,7 +18,7 @@ interface UsePOSCheckoutProps {
   activeTab: any;
   activeTabId: string;
   removeTab: (id: string) => void;
-  onCompleteSale: (saleData: any) => Promise<boolean>;
+  onCompleteSale: (saleData: any) => Promise<{ success: boolean; sale?: Sale }>;
   customerName: string;
   customerCode: string;
   selectedCustomer: Customer | null;
@@ -153,9 +153,9 @@ export const usePOSCheckout = ({
 
         const salePayload = buildSalePayload(saleParams);
 
-        const success = await onCompleteSale(salePayload);
+        const result = await onCompleteSale(salePayload);
 
-        if (success === false) {
+        if (!result.success) {
           console.warn('[POS] Checkout failed. Cart preserved.');
           // onCompleteSale already throws or triggers error handling in context
           return;
@@ -186,8 +186,9 @@ export const usePOSCheckout = ({
           const opts = getActiveReceiptSettings(activeBranch?.printSettings);
           const shouldPrint = (isDelivery && opts.autoPrintOnDelivery) || opts.autoPrintOnComplete;
 
-          if (shouldPrint) {
-            const html = generateInvoiceHTML(salePayload, opts);
+          if (shouldPrint && result.sale) {
+            // Use the actual Sale object returned from the backend, which has the serialId and id
+            const html = generateInvoiceHTML(result.sale, opts);
             // Fire-and-forget: printDocument handles silent→fallback policy.
             // Receipts are complete HTML docs without an embedded auto-print
             // script, so the browser fallback must inject its own.
