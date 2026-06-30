@@ -327,7 +327,7 @@ export const printRaw = async (printerName: string, commands: string[]): Promise
   const data = commands.map((cmd) => ({
     type: 'raw',
     format: 'plain',
-    data: cmd,
+    data: cmd + '\r\n',
   }));
 
   await qz.print(printerConfig, data);
