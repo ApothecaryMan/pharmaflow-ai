@@ -587,7 +587,7 @@ const buildLabelDocument = (
   const physicalHeight = hardwarePageHeight || pageHeight;
   const pageW = dims.w;
   const pageH = physicalHeight;
-  const orientation = deriveOrientation(pageW, pageH);
+  const orientation = 'portrait';
 
   return wrapPrintHTML({
     bodyHTML,
@@ -711,7 +711,7 @@ export const printLabels = async (
 
     const hwPageW = dims.w;
     const hwPageH = pageHeight;
-    const effectiveOrientation = deriveOrientation(hwPageW, hwPageH);
+    const effectiveOrientation = 'portrait';
 
     const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
 
