@@ -10,6 +10,9 @@ import { usePosSounds } from '../common/hooks/usePosSounds';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { SearchEngineInput } from '../common/SearchEngineInput';
 import { InlineBarcodeScanner } from '../mobile/InlineBarcodeScanner';
+import { Modal } from '../common/Modal';
+import { encodeCode128 } from '../../utils/barcodeEncoders';
+import { getBarcodeFontsCSS } from '../inventory/barcodeFonts';
 import { type PrescriptionItem, usePrescriptionPricing } from './hooks/usePrescriptionPricing';
 
 const PrescriptionPricing: React.FC = () => {
@@ -29,7 +32,7 @@ const PrescriptionPricing: React.FC = () => {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [expandedDrugId, setExpandedDrugId] = useState<string | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
   const cartRef = useRef<HTMLDivElement>(null);
 
   // Measure cart height dynamically for mobile spacer
@@ -52,9 +55,7 @@ const PrescriptionPricing: React.FC = () => {
   }, [prescriptionItems.length > 0]);
 
   useEffect(() => {
-    return () => {
-      if (longPressTimer.current) clearTimeout(longPressTimer.current);
-    };
+    // Clean up if needed
   }, []);
 
   const handleScannerClick = useCallback(() => {
@@ -237,6 +238,7 @@ const PrescriptionPricing: React.FC = () => {
                     language={language}
                     textTransform={textTransform}
                     onAdd={handleAddItem}
+                    onLongPress={setViewingDrug}
                   />
                 ))}
               </div>
@@ -266,6 +268,73 @@ const PrescriptionPricing: React.FC = () => {
             )}
           </div>
         </div>
+
+      {viewingDrug && (
+        <Modal
+          isOpen={!!viewingDrug}
+          onClose={() => setViewingDrug(null)}
+          title={language === 'AR' ? 'تفاصيل الدواء' : 'Drug Details'}
+          icon='info'
+          size='md'
+          bodyClassName='p-0'
+        >
+          <div className='flex flex-col'>
+            <div className='px-6 pb-4 pt-6 space-y-6'>
+              <div dir='ltr' className='text-left px-1'>
+                <h3 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
+                  {getDisplayName(viewingDrug, textTransform)}
+                </h3>
+                <p className='text-gray-500 dark:text-gray-400 mt-1'>
+                  {Array.isArray(viewingDrug.genericName)
+                    ? viewingDrug.genericName.join(' + ')
+                    : viewingDrug.genericName}
+                </p>
+              </div>
+              
+              <div className='flex flex-col gap-[2px] mt-2'>
+                <MaterialTabs index={0} total={3} interactive={false} className='justify-between !py-3.5 !min-h-[52px]' variant='compact'>
+                  <span className='text-sm text-gray-500 dark:text-gray-400 font-medium'>
+                    {language === 'AR' ? 'السعر' : 'Price'}
+                  </span>
+                  <span className='text-base font-bold text-gray-900 dark:text-gray-100 tabular-nums'>
+                    {formatCurrency(viewingDrug.publicPrice)}
+                  </span>
+                </MaterialTabs>
+
+                <MaterialTabs index={1} total={3} interactive={false} className='justify-between !py-3.5 !min-h-[52px]' variant='compact'>
+                  <span className='text-sm text-gray-500 dark:text-gray-400 font-medium'>
+                    {language === 'AR' ? 'الباركود' : 'Barcode'}
+                  </span>
+                  <span className='text-base font-bold text-gray-900 dark:text-gray-100 tabular-nums'>
+                    {viewingDrug.barcode || '-'}
+                  </span>
+                </MaterialTabs>
+
+                <MaterialTabs index={2} total={3} interactive={false} className='justify-between !py-3.5 !min-h-[52px]' variant='compact'>
+                  <span className='text-sm text-gray-500 dark:text-gray-400 font-medium'>
+                    {language === 'AR' ? 'الوحدات' : 'Units'}
+                  </span>
+                  <span className='text-base font-bold text-gray-900 dark:text-gray-100 tabular-nums'>
+                    {viewingDrug.unitsPerPack || 1}
+                  </span>
+                </MaterialTabs>
+              </div>
+            </div>
+
+            {viewingDrug.barcode && viewingDrug.barcode !== '-' && (
+              <div className='flex flex-col items-center justify-center pt-8 pb-3 bg-white dark:bg-white/90 border-t border-gray-100 dark:border-white/10 mt-2 overflow-hidden w-full rounded-b-2xl'>
+                <style dangerouslySetInnerHTML={{ __html: getBarcodeFontsCSS() }} />
+                <div 
+                  style={{ fontFamily: "'Libre Barcode 128', monospace", fontSize: '4.5rem', lineHeight: 0.8 }} 
+                  className='text-black select-all'
+                >
+                  {encodeCode128(viewingDrug.barcode)}
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };
@@ -282,6 +351,7 @@ const SearchResultItem: React.FC<{
   language: string;
   textTransform: 'normal' | 'uppercase';
   onAdd: (drug: Drug) => void;
+  onLongPress: (drug: Drug) => void;
 }> = ({
   drug,
   index,
@@ -292,6 +362,7 @@ const SearchResultItem: React.FC<{
   language,
   textTransform,
   onAdd,
+  onLongPress,
 }) => {
   const displayName = getDisplayName(drug, textTransform);
   const genericNameStr = Array.isArray(drug.genericName)
@@ -301,28 +372,69 @@ const SearchResultItem: React.FC<{
   const isArabic = language === 'AR';
   const isOutOfStock = drug.stock <= 0;
 
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const hasLongPressed = useRef(false);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    // Only left click or touch
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    hasLongPressed.current = false;
+    longPressTimer.current = setTimeout(() => {
+      hasLongPressed.current = true;
+      onLongPress(drug);
+      longPressTimer.current = null;
+    }, 500);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const handleClick = () => {
+    if (hasLongPressed.current) {
+      hasLongPressed.current = false;
+      return;
+    }
+    onToggleExpand();
+  };
+
   return (
     <div
-      className={index < 20 ? 'animate-stagger-fade-in' : ''}
+      className={`${index < 20 ? 'animate-stagger-fade-in' : ''} select-none touch-pan-y`}
       style={{ '--index': index } as React.CSSProperties}
+      onPointerDown={handlePointerDown}
+      onPointerUp={cancelLongPress}
+      onPointerLeave={cancelLongPress}
+      onPointerCancel={cancelLongPress}
+      onContextMenu={(e) => {
+        // Prevent context menu on touch to allow long-press
+        if (e.nativeEvent.pointerType === 'touch') {
+          e.preventDefault();
+        }
+      }}
     >
       <MaterialTabs
         index={index}
         total={totalResults}
         isSelected={isExpanded}
-        onClick={onToggleExpand}
+        onClick={handleClick}
         className={`!px-0 !h-auto !min-h-[72px] border border-(--border-divider) transition-all bg-white dark:!bg-gray-800/40 dark:hover:!bg-gray-800/60 ${isExpanded ? 'pt-1 z-10 shadow-sm dark:!bg-gray-800/60' : ''}`}
       >
         <div className='flex flex-col w-full px-4 text-left'>
           <div className='h-[60px] flex items-center justify-between w-full gap-2'>
             <div className='flex-1 min-w-0'>
               <h3
-                className={`font-bold text-gray-900 dark:text-gray-100 leading-tight ${isExpanded ? 'text-base' : 'line-clamp-2'}`}
+                className={`font-bold text-gray-900 dark:text-gray-100 leading-tight text-left ${isExpanded ? 'text-base' : 'line-clamp-2'}`}
+                dir='ltr'
               >
                 {highlightMatch(displayName, 'brand')}
               </h3>
               <p
-                className={`flex items-center gap-1.5 text-xs mt-0.5 ${isExpanded ? '' : 'truncate'}`}
+                className={`flex items-center gap-1.5 text-xs mt-0.5 text-left ${isExpanded ? '' : 'truncate'}`}
+                dir='ltr'
               >
                 <span className='font-bold text-gray-800 dark:text-gray-200 tabular-nums shrink-0'>
                   {parts.amount}
@@ -470,7 +582,7 @@ const PrescriptionSummary: React.FC<{
                 className='px-3 sm:px-4 py-2 flex items-center gap-1.5 sm:gap-2'
               >
                 <div className='flex-[2] sm:flex-1 min-w-0'>
-                  <p className='text-[11px] sm:text-xs font-semibold text-gray-900 dark:text-gray-100 truncate leading-tight'>
+                  <p className='text-[11px] sm:text-xs font-semibold text-gray-900 dark:text-gray-100 truncate leading-tight text-left' dir='ltr'>
                     {getDisplayName(item.drug)}
                   </p>
                   <div className='flex items-center justify-start gap-1 mt-0.5'>
