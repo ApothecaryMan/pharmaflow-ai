@@ -161,3 +161,25 @@ export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean 
     }
   }, []);
 };
+
+/**
+ * Temporarily overrides the Android status bar (theme-color) for specific views.
+ * Automatically restores the original navbar color upon unmount.
+ */
+export const useStatusBarColorOverride = (cssVar: string = '--bg-page-surface', dependencies: any[] = []) => {
+  useEffect(() => {
+    const root = document.documentElement;
+    const timer = setTimeout(() => {
+      const targetColor = getComputedStyle(root).getPropertyValue(cssVar).trim() || '#ffffff';
+      document.querySelectorAll('meta[name="theme-color"]').forEach((tag) => tag.setAttribute('content', targetColor));
+    }, 50);
+
+    return () => {
+      clearTimeout(timer);
+      const computedNavbarColor = getComputedStyle(root).getPropertyValue('--bg-navbar').trim();
+      const restoreColor = computedNavbarColor || (root.classList.contains('dark') ? '#1f1f1f' : '#ffffff');
+      document.querySelectorAll('meta[name="theme-color"]').forEach((tag) => tag.setAttribute('content', restoreColor));
+    };
+  }, dependencies);
+};
+
