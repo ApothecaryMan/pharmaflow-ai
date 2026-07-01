@@ -108,6 +108,22 @@ const COLOR_PALETTES: Record<string, Record<string, string>> = {
   },
 };
 
+// Helper to evaluate CSS variables (like color-mix) into absolute rgb/rgba values
+// since theme-color meta tag doesn't support CSS functions.
+const evaluateCssColor = (cssVar: string, fallback: string): string => {
+  if (typeof window === 'undefined' || !document.body) return fallback;
+  const dummy = document.createElement('div');
+  dummy.style.backgroundColor = `var(${cssVar})`;
+  dummy.style.display = 'none';
+  document.body.appendChild(dummy);
+  const color = getComputedStyle(dummy).backgroundColor;
+  document.body.removeChild(dummy);
+  if (color && color !== 'rgba(0, 0, 0, 0)' && color !== 'transparent') {
+    return color;
+  }
+  return fallback;
+};
+
 export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean = false, hex?: string) => {
   useEffect(() => {
     const palette = COLOR_PALETTES[color] || COLOR_PALETTES.blue;
@@ -135,7 +151,7 @@ export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean 
 
     // Get the computed background color of the navbar from CSS variables
     // This makes it fully dynamic and responsive to CSS changes
-    const computedNavbarColor = getComputedStyle(root).getPropertyValue('--bg-navbar').trim();
+    const computedNavbarColor = evaluateCssColor('--bg-navbar', '');
     const titleBarColor = isLoginView
       ? '#000000'
       : computedNavbarColor || (darkMode ? '#1f1f1f' : '#ffffff');
@@ -170,13 +186,13 @@ export const useStatusBarColorOverride = (cssVar: string = '--bg-page-surface', 
   useEffect(() => {
     const root = document.documentElement;
     const timer = setTimeout(() => {
-      const targetColor = getComputedStyle(root).getPropertyValue(cssVar).trim() || '#ffffff';
+      const targetColor = evaluateCssColor(cssVar, '#ffffff');
       document.querySelectorAll('meta[name="theme-color"]').forEach((tag) => tag.setAttribute('content', targetColor));
     }, 50);
 
     return () => {
       clearTimeout(timer);
-      const computedNavbarColor = getComputedStyle(root).getPropertyValue('--bg-navbar').trim();
+      const computedNavbarColor = evaluateCssColor('--bg-navbar', '');
       const restoreColor = computedNavbarColor || (root.classList.contains('dark') ? '#1f1f1f' : '#ffffff');
       document.querySelectorAll('meta[name="theme-color"]').forEach((tag) => tag.setAttribute('content', restoreColor));
     };
