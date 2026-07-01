@@ -132,18 +132,6 @@ const PrescriptionPricing: React.FC = () => {
     }
   };
 
-  const handlePointerDown = (id: string) => {
-    longPressTimer.current = setTimeout(() => {
-      setExpandedDrugId((prev) => (prev === id ? null : id));
-      if (window.navigator.vibrate) window.navigator.vibrate([10, 30, 10]);
-    }, 600);
-  };
-
-  const handlePointerUp = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-    }
-  };
 
   return (
     <div className='w-full' dir='ltr'>
@@ -198,12 +186,7 @@ const PrescriptionPricing: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      {isLoading ? (
-        <div className='flex items-center justify-center py-20'>
-          <div className='w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin' />
-        </div>
-      ) : (
-        <div className='flex flex-col lg:flex-row gap-4 lg:gap-6 mt-4 max-w-6xl mx-auto'>
+      <div className='flex flex-col lg:flex-row gap-4 lg:gap-6 mt-4 max-w-6xl mx-auto'>
           {/* Prescription Cart - mobile dock (bottom), desktop sidebar (right) */}
           {prescriptionItems.length > 0 && (
             <div 
@@ -250,8 +233,6 @@ const PrescriptionPricing: React.FC = () => {
                     onToggleExpand={() =>
                       setExpandedDrugId(expandedDrugId === drug.id ? null : drug.id)
                     }
-                    onPointerDown={handlePointerDown}
-                    onPointerUp={handlePointerUp}
                     highlightMatch={highlightMatch}
                     language={language}
                     textTransform={textTransform}
@@ -285,7 +266,6 @@ const PrescriptionPricing: React.FC = () => {
             )}
           </div>
         </div>
-      )}
     </div>
   );
 };
@@ -298,8 +278,6 @@ const SearchResultItem: React.FC<{
   totalResults: number;
   isExpanded: boolean;
   onToggleExpand: () => void;
-  onPointerDown: (id: string) => void;
-  onPointerUp: () => void;
   highlightMatch: (text: string, type: 'brand' | 'generic') => React.ReactNode;
   language: string;
   textTransform: 'normal' | 'uppercase';
@@ -310,8 +288,6 @@ const SearchResultItem: React.FC<{
   totalResults,
   isExpanded,
   onToggleExpand,
-  onPointerDown,
-  onPointerUp,
   highlightMatch,
   language,
   textTransform,
@@ -334,9 +310,7 @@ const SearchResultItem: React.FC<{
         index={index}
         total={totalResults}
         isSelected={isExpanded}
-        onPointerDown={() => onPointerDown(drug.id)}
-        onPointerUp={onPointerUp}
-        onPointerLeave={onPointerUp}
+        onClick={onToggleExpand}
         className={`!px-0 !h-auto !min-h-[72px] border border-(--border-divider) transition-all bg-white dark:!bg-gray-800/40 dark:hover:!bg-gray-800/60 ${isExpanded ? 'pt-1 z-10 shadow-sm dark:!bg-gray-800/60' : ''}`}
       >
         <div className='flex flex-col w-full px-4 text-left'>
