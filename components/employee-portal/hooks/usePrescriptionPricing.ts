@@ -47,12 +47,11 @@ export function usePrescriptionPricing() {
 
   const updateQuantity = useCallback((drugId: string, delta: number) => {
     setPrescriptionItems((prev) => {
-      const updated = prev.map((item) => {
+      return prev.map((item) => {
         if (item.drug.id !== drugId) return item;
         const newQty = item.quantity + delta;
-        return { ...item, quantity: Math.max(0, newQty) };
+        return { ...item, quantity: Math.max(1, newQty) };
       });
-      return updated.filter((item) => item.quantity > 0);
     });
   }, []);
 

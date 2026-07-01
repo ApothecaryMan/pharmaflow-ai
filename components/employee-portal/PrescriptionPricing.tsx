@@ -20,7 +20,7 @@ const PrescriptionPricing: React.FC = () => {
   // Override status bar color for this page to match the background
   useStatusBarColorOverride('--bg-page-surface', [theme, darkMode]);
 
-  const { inventory, isLoading, prescriptionItems, addItem, updateQuantity, clearAll, grandTotal } =
+  const { inventory, isLoading, prescriptionItems, addItem, updateQuantity, removeItem, clearAll, grandTotal } =
     usePrescriptionPricing();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,6 +30,26 @@ const PrescriptionPricing: React.FC = () => {
   const [expandedDrugId, setExpandedDrugId] = useState<string | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const cartRef = useRef<HTMLDivElement>(null);
+
+  // Measure cart height dynamically for mobile spacer
+  useEffect(() => {
+    if (!cartRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        document.documentElement.style.setProperty(
+          '--mobile-cart-height',
+          `${entry.contentRect.height}px`
+        );
+      }
+    });
+    observer.observe(cartRef.current);
+
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--mobile-cart-height');
+    };
+  }, [prescriptionItems.length > 0]);
 
   useEffect(() => {
     return () => {
@@ -80,7 +100,11 @@ const PrescriptionPricing: React.FC = () => {
     return new RegExp(words.map((w) => `\\b${w}`).join('|'), 'gi');
   }, [searchTerm]);
 
-  const highlightMatch = (text: string) => {
+  const isGenericSearch = useMemo(() => searchTerm.trimStart().startsWith('@'), [searchTerm]);
+
+  const highlightMatch = (text: string, type: 'brand' | 'generic') => {
+    if (isGenericSearch && type !== 'generic') return text;
+    if (!isGenericSearch && type !== 'brand') return text;
     if (!highlightRegex || !text) return text;
     try {
       const regex = new RegExp(highlightRegex.source, highlightRegex.flags);
@@ -92,7 +116,7 @@ const PrescriptionPricing: React.FC = () => {
         segments.push(
           <span
             key={match.index}
-            className='text-primary-600 dark:text-primary-400 bg-primary-500/10 rounded-sm px-0.5'
+            className='text-primary-600 dark:text-primary-400'
           >
             {match[0]}
           </span>
@@ -180,19 +204,24 @@ const PrescriptionPricing: React.FC = () => {
         </div>
       ) : (
         <div className='flex flex-col lg:flex-row gap-4 lg:gap-6 mt-4 max-w-6xl mx-auto'>
-          {/* Prescription Cart - mobile dock (top), desktop sidebar (right) */}
+          {/* Prescription Cart - mobile dock (bottom), desktop sidebar (right) */}
           {prescriptionItems.length > 0 && (
-            <div className='order-1 lg:order-2 lg:w-[360px] lg:shrink-0 sticky top-16  z-10'>
-              <PrescriptionSummary
-                items={prescriptionItems}
-                onUpdateQuantity={updateQuantity}
-                onRemoveItem={(id) => updateQuantity(id, -999)}
-                onClearAll={clearAll}
-                grandTotal={grandTotal}
-                language={language}
-                expanded={isCartOpen}
-                onToggle={() => setIsCartOpen((v) => !v)}
-              />
+            <div 
+              ref={cartRef}
+              className='order-1 lg:order-2 lg:w-[360px] lg:shrink-0 lg:sticky lg:top-16 lg:z-10 max-lg:fixed max-lg:bottom-[68px] max-lg:left-0 max-lg:right-0 max-lg:z-40 max-lg:px-4 max-lg:flex max-lg:justify-center max-lg:pointer-events-none'
+            >
+              <div className='w-full max-lg:w-[90%] max-w-[360px] max-lg:pointer-events-auto'>
+                <PrescriptionSummary
+                  items={prescriptionItems}
+                  onUpdateQuantity={updateQuantity}
+                  onRemoveItem={removeItem}
+                  onClearAll={clearAll}
+                  grandTotal={grandTotal}
+                  language={language}
+                  expanded={isCartOpen}
+                  onToggle={() => setIsCartOpen((v) => !v)}
+                />
+              </div>
             </div>
           )}
 
@@ -210,7 +239,7 @@ const PrescriptionPricing: React.FC = () => {
                 </p>
               </div>
             ) : (
-              <div className='flex flex-col gap-1'>
+              <div className='flex flex-col gap-[2px]'>
                 {combinedSearchResults.slice(0, 100).map((drug, index) => (
                   <SearchResultItem
                     key={drug.id}
@@ -244,6 +273,16 @@ const PrescriptionPricing: React.FC = () => {
                 </p>
               </div>
             )}
+
+            {/* Dynamic spacer prevents cart from overlapping the last items on mobile. 
+                Parent container already has pb-28 (112px), so we subtract it from the required space (cartHeight + 68px bottom offset + 16px gap = cartHeight + 84px).
+                Required spacer = (cartHeight + 84px) - 112px = cartHeight - 28px. */}
+            {prescriptionItems.length > 0 && (
+              <div
+                className='lg:hidden w-full transition-[height] duration-400 ease-[cubic-bezier(0.2,0,0,1)]'
+                style={{ height: 'calc(var(--mobile-cart-height, 0px) - 28px)' }}
+              />
+            )}
           </div>
         </div>
       )}
@@ -261,7 +300,7 @@ const SearchResultItem: React.FC<{
   onToggleExpand: () => void;
   onPointerDown: (id: string) => void;
   onPointerUp: () => void;
-  highlightMatch: (text: string) => React.ReactNode;
+  highlightMatch: (text: string, type: 'brand' | 'generic') => React.ReactNode;
   language: string;
   textTransform: 'normal' | 'uppercase';
   onAdd: (drug: Drug) => void;
@@ -298,7 +337,7 @@ const SearchResultItem: React.FC<{
         onPointerDown={() => onPointerDown(drug.id)}
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerUp}
-        className={`!px-0 !h-auto !min-h-[72px] border border-gray-100/30 dark:border-gray-800/20 transition-all bg-white dark:!bg-(--bg-secondary) ${isExpanded ? 'pt-1 border-(--border-divider) z-10 shadow-sm' : ''}`}
+        className={`!px-0 !h-auto !min-h-[72px] border border-(--border-divider) transition-all bg-white dark:!bg-gray-800/40 dark:hover:!bg-gray-800/60 ${isExpanded ? 'pt-1 z-10 shadow-sm dark:!bg-gray-800/60' : ''}`}
       >
         <div className='flex flex-col w-full px-4 text-left'>
           <div className='h-[60px] flex items-center justify-between w-full gap-2'>
@@ -306,17 +345,21 @@ const SearchResultItem: React.FC<{
               <h3
                 className={`font-bold text-gray-900 dark:text-gray-100 leading-tight ${isExpanded ? 'text-base' : 'line-clamp-2'}`}
               >
-                {highlightMatch(displayName)}
+                {highlightMatch(displayName, 'brand')}
               </h3>
               <p
-                className={`text-gray-400 dark:text-gray-600 text-xs mt-0.5 ${isExpanded ? '' : 'truncate'}`}
+                className={`flex items-center gap-1.5 text-xs mt-0.5 ${isExpanded ? '' : 'truncate'}`}
               >
-                {highlightMatch(genericNameStr)}
+                <span className='font-bold text-gray-800 dark:text-gray-200 tabular-nums shrink-0'>
+                  {parts.amount}
+                </span>
+                <span className='text-gray-400 dark:text-gray-500 truncate'>
+                  {highlightMatch(genericNameStr, 'generic')}
+                </span>
               </p>
             </div>
             <PrescriptionAddButton
               drug={drug}
-              parts={parts}
               isArabic={isArabic}
               isOutOfStock={isOutOfStock}
               onAdd={onAdd}
@@ -332,40 +375,40 @@ const SearchResultItem: React.FC<{
 
 const PrescriptionAddButton: React.FC<{
   drug: Drug;
-  parts: { amount: string; symbol: string };
   isArabic: boolean;
   isOutOfStock: boolean;
   onAdd: (drug: Drug) => void;
-}> = ({ drug, parts, isArabic, isOutOfStock, onAdd }) => {
+}> = ({ drug, isArabic, isOutOfStock, onAdd }) => {
+  const hasUnits = drug.unitsPerPack && drug.unitsPerPack > 1;
+
   return (
-    <div className='shrink-0'>
+    <div className='shrink-0 flex items-center gap-3'>
+      <div className='flex flex-col items-end justify-center'>
+        {/* Units / Stock status */}
+        {hasUnits ? (
+          <span className='text-[9px] text-gray-500 dark:text-gray-400 font-medium mt-1 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-sm whitespace-nowrap'>
+            {drug.unitsPerPack} {isArabic ? 'وحدة' : 'Units'}
+          </span>
+        ) : (
+          <span className='text-[9px] text-gray-400 dark:text-gray-500 mt-1 whitespace-nowrap'>
+            {isArabic ? 'علبة' : 'Pack'}
+          </span>
+        )}
+      </div>
+
       <button
         onClick={(e) => {
           e.stopPropagation();
           if (!isOutOfStock) onAdd(drug);
         }}
         disabled={isOutOfStock}
-        className={`flex items-center h-8 rounded-full border transition-all duration-300 active:scale-95 px-3 ${
+        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-95 shrink-0 ${
           isOutOfStock
-            ? 'border-gray-200 dark:border-white/20 opacity-50 cursor-not-allowed'
-            : 'border-primary-500/50 hover:border-primary-500 hover:bg-primary-500/10'
+            ? 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed'
+            : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 shadow-sm'
         }`}
       >
-        <span className='font-black text-[13px] text-primary-600 dark:text-primary-400 tabular-nums'>
-          <span className='flex items-baseline gap-0.5'>
-            {isArabic ? (
-              <>
-                <span className='text-[8px] font-black opacity-60'>{parts.symbol}</span>
-                <span>{parts.amount}</span>
-              </>
-            ) : (
-              <>
-                <span>{parts.amount}</span>
-                <span className='text-[8px] font-black opacity-60'>{parts.symbol}</span>
-              </>
-            )}
-          </span>
-        </span>
+        <span className='material-symbols-rounded text-[20px]'>add</span>
       </button>
     </div>
   );
@@ -398,40 +441,42 @@ const PrescriptionSummary: React.FC<{
 
   return (
     <div
-      className='bg-white/80 dark:bg-(--bg-secondary)/80 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-gray-800/50 overflow-hidden shadow-sm lg:sticky lg:top-22'
+      className='bg-white/80 dark:bg-(--bg-secondary)/80 backdrop-blur-xl rounded-2xl max-lg:rounded-b-[2rem] max-lg:pb-[14px] border border-gray-200 dark:border-gray-800/50 max-lg:border-b-0 overflow-hidden shadow-sm lg:sticky lg:top-22'
       dir={isArabic ? 'rtl' : 'ltr'}
     >
       {/* Header Bar */}
-      <div className='px-4 py-2.5 flex items-center justify-between gap-3'>
-        <div className='flex items-center gap-2 min-w-0'>
-          <span className='material-symbols-rounded text-[18px] text-gray-500 dark:text-gray-400 shrink-0'>
-            description
-          </span>
-          <span className='text-sm font-bold text-gray-900 dark:text-gray-100 truncate'>
-            {isArabic ? 'الوصفة الطبية' : 'Prescription'}
-          </span>
-          <span className='text-[11px] font-bold text-gray-400 dark:text-gray-500 shrink-0'>
-            ({count})
-          </span>
-          <span className='text-sm font-bold text-gray-900 dark:text-gray-100 tabular-nums shrink-0'>
-            {grandTotalParts.amount} {grandTotalParts.symbol}
+      <div className='px-4 py-3 flex items-center justify-between gap-3'>
+        <div className='flex items-center gap-4 min-w-0'>
+          <div className='relative shrink-0 flex items-center justify-center'>
+            <span className='material-symbols-rounded text-[28px] text-gray-900 dark:text-gray-100'>
+              shopping_cart
+            </span>
+            <span className='absolute -top-1.5 -right-2 bg-red-500 text-white text-[10px] font-black min-w-[18px] h-[18px] rounded-full flex items-center justify-center border-2 border-white dark:border-gray-800 tabular-nums leading-none px-1 shadow-sm'>
+              {count}
+            </span>
+          </div>
+          <span className='text-xl font-black text-gray-900 dark:text-gray-100 tabular-nums shrink-0 tracking-tight'>
+            {grandTotalParts.amount} <span className='text-sm font-bold opacity-60'>{grandTotalParts.symbol}</span>
           </span>
         </div>
-        <div className='flex items-center gap-1'>
+        <div className='flex items-center gap-1.5'>
           <button
             onClick={onClearAll}
-            className='text-[11px] font-semibold text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors px-1.5 py-1 rounded-lg hover:bg-red-500/10'
+            className='p-1.5 rounded-xl text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-500/10 transition-colors'
+            title={isArabic ? 'مسح السلة' : 'Clear Cart'}
           >
-            {isArabic ? 'مسح' : 'Clear'}
+            <span className='material-symbols-rounded text-[22px]'>
+              delete
+            </span>
           </button>
           <button
             onClick={onToggle}
-            className='lg:hidden p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors'
+            className='lg:hidden p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors'
           >
             <span
-              className={`material-symbols-rounded text-[18px] text-gray-400 dark:text-gray-500 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+              className={`material-symbols-rounded text-[22px] text-gray-500 dark:text-gray-400 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
             >
-              expand_more
+              expand_less
             </span>
           </button>
         </div>
@@ -439,9 +484,10 @@ const PrescriptionSummary: React.FC<{
 
       {/* Body */}
       <div
-        className={`border-t border-gray-100 dark:border-gray-800/50 ${expanded ? 'block' : 'hidden lg:block'}`}
+        className={`grid transition-all duration-400 ease-[cubic-bezier(0.2,0,0,1)] border-gray-100 dark:border-gray-800/50 ${expanded ? 'grid-rows-[1fr] border-t opacity-100' : 'max-lg:grid-rows-[0fr] max-lg:border-t-0 max-lg:opacity-0 lg:grid-rows-[1fr] lg:border-t lg:opacity-100'}`}
       >
-        <div className='divide-y divide-gray-100 dark:divide-gray-800/30 max-h-[40vh] lg:max-h-[78vh] overflow-y-auto [direction:ltr]'>
+        <div className='overflow-hidden w-full'>
+          <div className='divide-y divide-gray-100 dark:divide-gray-800/30 max-h-[40vh] lg:max-h-[78vh] overflow-y-auto [direction:ltr]'>
           {items.map((item) => {
             const lineNet = item.drug.publicPrice * item.quantity;
             return (
@@ -453,15 +499,52 @@ const PrescriptionSummary: React.FC<{
                   <p className='text-[11px] sm:text-xs font-semibold text-gray-900 dark:text-gray-100 truncate leading-tight'>
                     {getDisplayName(item.drug)}
                   </p>
-                  <p className='text-[10px] sm:text-[11px] font-bold text-gray-500 dark:text-gray-400 tabular-nums mt-0.5'>
-                    {formatCurrency(lineNet)}
-                  </p>
+                  <div className='flex items-center justify-start gap-1 mt-0.5'>
+                    {isArabic ? (
+                      <>
+                        <span className='text-[10px] sm:text-[11px] font-bold text-primary-600 dark:text-primary-400 tabular-nums'>
+                          {formatCurrency(lineNet)}
+                        </span>
+                        <span className='text-[9px] sm:text-[10px] font-bold text-gray-400 dark:text-gray-500'>
+                          =
+                        </span>
+                        <span className='text-[10px] sm:text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums'>
+                          {item.quantity}
+                        </span>
+                        <span className='text-[9px] sm:text-[10px] font-bold text-gray-400 dark:text-gray-500'>
+                          ×
+                        </span>
+                        <span className='text-[10px] sm:text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums'>
+                          {formatCurrency(item.drug.publicPrice)}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className='text-[10px] sm:text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums'>
+                          {formatCurrency(item.drug.publicPrice)}
+                        </span>
+                        <span className='text-[9px] sm:text-[10px] font-bold text-gray-400 dark:text-gray-500'>
+                          ×
+                        </span>
+                        <span className='text-[10px] sm:text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums'>
+                          {item.quantity}
+                        </span>
+                        <span className='text-[9px] sm:text-[10px] font-bold text-gray-400 dark:text-gray-500'>
+                          =
+                        </span>
+                        <span className='text-[10px] sm:text-[11px] font-bold text-primary-600 dark:text-primary-400 tabular-nums'>
+                          {formatCurrency(lineNet)}
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <div className='flex items-center gap-0.5 bg-gray-100 dark:bg-gray-800/50 rounded-lg p-0.5 shrink-0'>
                   <button
                     onClick={() => onUpdateQuantity(item.drug.id, -1)}
-                    className='w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700/50 transition-colors active:scale-90'
+                    disabled={item.quantity <= 1}
+                    className='w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700/50 transition-colors active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:active:scale-100'
                   >
                     <span className='material-symbols-rounded text-[12px] sm:text-[14px]'>
                       remove
@@ -488,6 +571,7 @@ const PrescriptionSummary: React.FC<{
             );
           })}
         </div>
+      </div>
       </div>
     </div>
   );
