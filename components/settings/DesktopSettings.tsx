@@ -36,6 +36,9 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
   const [selectedPrinter, setSelectedPrinter] = useState<string | null>(
     localStorage.getItem('desktop_receipt_printer')
   );
+  const [selectedLabelPrinter, setSelectedLabelPrinter] = useState<string | null>(
+    localStorage.getItem('desktop_label_printer')
+  );
   const [isLoadingPrinters, setIsLoadingPrinters] = useState(false);
   const [printerStatus, setPrinterStatus] = useState<'idle' | 'testing' | 'error'>('idle');
 
@@ -173,7 +176,8 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
           </div>
 
           <div className='space-y-4'>
-            <div className='relative'>
+            <div className='space-y-2'>
+              <label className='text-xs font-bold text-gray-500 uppercase'>{language === 'AR' ? 'طابعة الفواتير (Receipts)' : 'Receipt Printer'}</label>
               <FilterDropdown<string>
                 items={printers}
                 selectedItem={selectedPrinter || undefined}
@@ -184,12 +188,37 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
                 keyExtractor={(p) => p}
                 renderSelected={(p) => (
                   <span className='text-sm font-medium text-gray-800 dark:text-white truncate'>
-                    {p || pt.selectPrinter || (language === 'AR' ? 'اختر الطابعة...' : 'Select Printer...')}
+                    {p || pt.selectPrinter || (language === 'AR' ? 'اختر طابعة الفواتير...' : 'Select Receipt Printer...')}
                   </span>
                 )}
                 renderItem={(p) => (
                   <div className='flex items-center gap-2 py-1'>
-                    <span className='material-symbols-rounded text-[16px] text-gray-400'>print</span>
+                    <span className='material-symbols-rounded text-[16px] text-gray-400'>receipt_long</span>
+                    <span className='text-sm'>{p}</span>
+                  </div>
+                )}
+                variant='input'
+              />
+            </div>
+
+            <div className='space-y-2'>
+              <label className='text-xs font-bold text-gray-500 uppercase'>{language === 'AR' ? 'طابعة الملصقات (Labels)' : 'Label Printer'}</label>
+              <FilterDropdown<string>
+                items={printers}
+                selectedItem={selectedLabelPrinter || undefined}
+                onSelect={(p) => {
+                  setSelectedLabelPrinter(p);
+                  localStorage.setItem('desktop_label_printer', p);
+                }}
+                keyExtractor={(p) => p}
+                renderSelected={(p) => (
+                  <span className='text-sm font-medium text-gray-800 dark:text-white truncate'>
+                    {p || pt.selectPrinter || (language === 'AR' ? 'اختر طابعة الملصقات...' : 'Select Label Printer...')}
+                  </span>
+                )}
+                renderItem={(p) => (
+                  <div className='flex items-center gap-2 py-1'>
+                    <span className='material-symbols-rounded text-[16px] text-gray-400'>label</span>
                     <span className='text-sm'>{p}</span>
                   </div>
                 )}

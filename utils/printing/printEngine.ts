@@ -13,6 +13,7 @@ import { getPrinterSettings } from '../qzPrinter';
 import { printerService } from '../../services/infrastructure/printerService';
 import type { PrintOrientation } from './printShell';
 import { mmToPopupSize, openPrintWindow } from './printWindow';
+import { isTauri } from '../platform';
 
 export type PrintKind = 'label' | 'receipt';
 
@@ -63,8 +64,10 @@ export const printDocument = async (
   options: PrintDocumentOptions
 ): Promise<boolean> => {
   const { html, width, height, kind, orientation, rawCommands } = options;
-  const settings = getPrinterSettings();
-  const shouldTrySilent = settings.enabled && settings.silentMode !== 'off';
+  const settings = printerService.getSettings();
+  const shouldTrySilent = 
+    (isTauri() && (settings.preferredInterface === 'auto' || settings.preferredInterface === 'tauri')) ||
+    (settings.enabled && settings.silentMode !== 'off');
 
   if (shouldTrySilent) {
     try {

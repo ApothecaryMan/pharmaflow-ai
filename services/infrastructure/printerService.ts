@@ -130,14 +130,29 @@ class UniversalPrinterService {
     return false;
   }
 
-  /**
-   * Universal print label raw function
-   * Sends raw commands (TSPL/ZPL) directly to the printer
-   */
   public async printLabelRaw(commands: string[]): Promise<boolean> {
     const settings = this.loadSettings();
-    const { enabled, silentMode } = settings;
+    const { preferredInterface, enabled, silentMode } = settings;
 
+    // 1. Try Tauri Native (if on desktop)
+    if (isTauri() && (preferredInterface === 'auto' || preferredInterface === 'tauri')) {
+      const printerName = localStorage.getItem('desktop_label_printer');
+      if (printerName) {
+        try {
+          const { invoke } = await import('@tauri-apps/api/core');
+          const payload = commands.join('\n') + '\n';
+          await invoke('print_raw_data', { printerName, data: payload });
+          return true;
+        } catch (e) {
+          console.error('[PrinterService] Tauri raw print failed:', e);
+          if (preferredInterface === 'tauri') return false;
+        }
+      } else {
+        console.warn('[PrinterService] No desktop label printer selected for Tauri');
+      }
+    }
+
+    // 2. Try QZ Tray
     if (enabled && silentMode !== 'off') {
       try {
         if (!settings.labelPrinter) {

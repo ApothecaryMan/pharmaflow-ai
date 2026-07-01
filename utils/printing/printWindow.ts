@@ -10,6 +10,8 @@
  * (injected by `wrapPrintHTML`), so callers just pass the final HTML string.
  */
 
+import { isTauri } from '../platform';
+
 export interface OpenPrintWindowOptions {
   /** Popup width in px. Derived from page size if omitted. */
   width?: number;
@@ -38,6 +40,11 @@ export const openPrintWindow = (
   html: string,
   options: OpenPrintWindowOptions = {}
 ): Window | null => {
+  if (isTauri()) {
+    printViaIframe(html);
+    return null;
+  }
+
   const width = options.width ?? 480;
   const height = options.height ?? 720;
   const features = `width=${width},height=${height},scrollbars=yes,resizable=yes`;
