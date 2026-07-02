@@ -405,8 +405,8 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
       type: 'text',
       label: 'Store Name',
       x: 19,
-      y: 1.1,
-      fontSize: 6,
+      y: 1.4,
+      fontSize: 7,
       fontWeight: 'bold',
       align: 'center',
       isVisible: true,
@@ -421,7 +421,7 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
       type: 'text',
       label: 'Drug Name',
       x: 19,
-      y: 3.1,
+      y: 3.3,
       fontSize: 7,
       fontWeight: 'bold',
       align: 'center',
@@ -437,7 +437,7 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
       type: 'barcode',
       label: 'Barcode',
       x: 19,
-      y: 4.9,
+      y: 5.1,
       fontSize: 32,
       align: 'center',
       isVisible: true,
@@ -464,7 +464,7 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
       type: 'text',
       label: 'Price',
       x: 1.5,
-      y: 10.4,
+      y: 10.8,
       fontSize: 8,
       fontWeight: 'bold',
       align: 'left',
@@ -480,7 +480,7 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
       type: 'text',
       label: 'Expiry',
       x: 36.6,
-      y: 10.4,
+      y: 10.8,
       fontSize: 8,
       fontWeight: 'bold',
       align: 'right',
@@ -696,7 +696,7 @@ export const printLabels = async (
     const labelsPerPage = isDouble ? 2 : 1;
 
     const labelHeight = isDouble ? 12 : dims.h;
-    const innerGap = 0; // According to diagram: "بدون فراغ"
+    const innerGap = isDouble ? 1 : 0; // Add 1mm gap to push the 2nd label down from the split
     const outerGap = isDouble ? 2 : design.labelGap || 0; // According to diagram: 2mm
 
     const pageHeight = isDouble

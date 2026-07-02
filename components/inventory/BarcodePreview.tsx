@@ -104,9 +104,12 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
       labelsCount === 2 ? labelHeight * 2 + innerGap + outerGap : labelHeight + outerGap;
 
     // Use the SHARED generator to ensure identical output to the printer
+    // We intentionally pass {x: 0, y: 0} for offsets here because the print offset 
+    // is a hardware calibration setting for the physical printer and shouldn't 
+    // break or shift the visual design canvas in the preview.
     return generatePageHTML(finalHTML, templateCSS, dims, pageHeight, {
-      x: printOffsetX,
-      y: printOffsetY,
+      x: 0,
+      y: 0,
     });
   };
 
@@ -188,13 +191,13 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
         title='True Preview'
       />
 
-      {/* Phantom Interaction Layer */}
       <div
         className='absolute inset-0 z-10'
         style={{
           // Mirror .print-container styles from LabelPrinter.ts
           // This ensures the coordinate system matches the print output exactly
-          transform: `translate(${printOffsetX}mm, ${printOffsetY}mm)`,
+          // (Offsets are intentionally removed here to keep the design canvas perfectly centered)
+          transform: `translate(0mm, 0mm)`,
           boxSizing: 'border-box',
           fontSize: 0,
           lineHeight: 0,
