@@ -28,6 +28,8 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
   const isProcessingRef = useRef<boolean>(false);
   const isScanCompleteRef = useRef<boolean>(false);
   const isFlashOnRef = useRef<boolean>(false);
+  const lastScannedBarcodeRef = useRef<string | null>(null);
+  const lastScannedTimeRef = useRef<number>(0);
 
   const [isFlashOn, setIsFlashOn] = useState(false);
   const [hasFlash, setHasFlash] = useState(false);
@@ -159,19 +161,42 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
           const barcodes = await detector.detect(canvas);
 
           if (barcodes.length > 0) {
-            isScanCompleteRef.current = true;
+            const currentBarcode = barcodes[0].rawValue;
+            const now = Date.now();
+            
+            // Hardware Scanner Emulation: Same Symbol Timeout
+            // If it's the exact same barcode, ignore it until timeout passes (e.g., 1500ms)
+            // If it's a different barcode, scan it instantly (0ms delay)
+            if (
+              currentBarcode === lastScannedBarcodeRef.current &&
+              now - lastScannedTimeRef.current < 1500
+            ) {
+              // Ignore this frame, but keep the camera running
+              isProcessingRef.current = false;
+              animationFrameRef.current = requestAnimationFrame(detectFrame);
+              return;
+            }
+
+            // Valid scan (either new barcode, or enough time has passed for the old one)
+            lastScannedBarcodeRef.current = currentBarcode;
+            lastScannedTimeRef.current = now;
+
             if (window.navigator.vibrate) window.navigator.vibrate([20, 30, 20]);
-            onScanSuccess(barcodes[0].rawValue);
-            // Don't auto-stop here physically, let the parent component unmount us
+            onScanSuccess(currentBarcode);
+            
+            // Immediately continue scanning for the next frame
+            isProcessingRef.current = false;
+            animationFrameRef.current = requestAnimationFrame(detectFrame);
             return;
           }
         }
       } catch (err) {
       } finally {
         isProcessingRef.current = false;
-        if (!isScanCompleteRef.current) {
-          animationFrameRef.current = requestAnimationFrame(detectFrame);
-        }
+        // Since we return inside the success block, the finally block will only run
+        // if no barcodes were found or an error occurred.
+        // Therefore, we can unconditionally queue the next frame here.
+        animationFrameRef.current = requestAnimationFrame(detectFrame);
       }
     };
 
