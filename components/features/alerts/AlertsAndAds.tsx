@@ -17,7 +17,6 @@ const ADS_LIST = [
 export const AlertsAndAds: React.FC<AlertsAndAdsProps> = ({ rotationSpeed = 8000 }) => {
   const { currentAlert } = useAlert();
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
 
   // Rotation logic for ads
   useEffect(() => {
@@ -66,32 +65,20 @@ export const AlertsAndAds: React.FC<AlertsAndAdsProps> = ({ rotationSpeed = 8000
 
   return (
     <div
-      className='flex items-center h-full relative px-3 mx-1 hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-150 cursor-default rounded-xs'
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className='relative flex items-center h-full px-2.5 opacity-85 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-150 cursor-default'
     >
       <div
         key={content.key}
-        className={`flex items-center gap-2 text-[12px] whitespace-nowrap animate-fade-in-up min-w-[200px]`}
+        className='flex items-center gap-1.5 text-[10px] font-bold tracking-wide uppercase whitespace-nowrap'
       >
         <span
-          className={`material-symbols-rounded ${content.iconColor}`}
+          className={`material-symbols-rounded leading-none ${content.iconColor}`}
           style={{ fontSize: 'var(--status-icon-size, 16px)' }}
         >
           {content.icon}
         </span>
-        <span className={`${content.textColor} font-medium tracking-wide`}>{content.text}</span>
+        <span className={`${content.textColor}`}>{content.text}</span>
       </div>
-
-      <style>{`
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(4px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in-up {
-          animation: fadeInUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-        }
-      `}</style>
     </div>
   );
 };

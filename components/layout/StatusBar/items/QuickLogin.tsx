@@ -50,7 +50,6 @@ const LoginInputView: React.FC<{
   isError: boolean;
   setIsError: (val: boolean) => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
-  onForgotPassword: () => void;
   language: 'EN' | 'AR';
   dir: 'rtl' | 'ltr';
   inputRef: React.RefObject<HTMLInputElement | null>;
@@ -62,7 +61,6 @@ const LoginInputView: React.FC<{
   isError,
   setIsError,
   onKeyDown,
-  onForgotPassword,
   language,
   dir,
   inputRef,
@@ -95,10 +93,10 @@ const LoginInputView: React.FC<{
       )}
 
       <div
-        className={`relative z-10 flex items-center h-full w-full ${isNewPass ? 'px-2 gap-2' : ''}`}
+        className='relative z-10 flex items-center h-full w-full gap-2'
       >
         <span
-          className={`material-symbols-rounded leading-none ${isError ? 'text-red-500' : 'text-primary-500 dark:text-blue-400'}`}
+          className={`material-symbols-rounded leading-none ${isError ? 'text-red-500' : ''}`}
           style={{ fontSize: 'var(--status-icon-size, 16px)' }}
         >
           {step === 'username' ? 'badge' : isNewPass ? 'key' : 'lock'}
@@ -121,23 +119,6 @@ const LoginInputView: React.FC<{
           <span className='text-[9px] text-red-500 ml-1 font-normal'>
             {t?.notFound || 'Not found'}
           </span>
-        )}
-        {step === 'password' && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onForgotPassword();
-            }}
-            className='ml-auto text-gray-400 hover:text-primary-500 cursor-pointer'
-            title={t?.forgotPassword || 'Forgot Password?'}
-          >
-            <span
-              className='material-symbols-rounded block leading-none'
-              style={{ fontSize: 'var(--status-icon-size, 16px)' }}
-            >
-              help
-            </span>
-          </button>
         )}
       </div>
     </div>
@@ -418,22 +399,40 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
           )}
         </div>
       ) : (
-        <LoginInputView
-          step={step}
-          inputVal={inputVal}
-          setInputVal={setInputVal}
-          isError={isError}
-          setIsError={setIsError}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') checkAuth();
-            else if (e.key === 'Escape') resetState();
-          }}
-          onForgotPassword={handleForgotPassword}
-          language={language}
-          dir={dir}
-          inputRef={inputRef}
-          t={t}
-        />
+        <>
+          <LoginInputView
+            step={step}
+            inputVal={inputVal}
+            setInputVal={setInputVal}
+            isError={isError}
+            setIsError={setIsError}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') checkAuth();
+              else if (e.key === 'Escape') resetState();
+            }}
+            language={language}
+            dir={dir}
+            inputRef={inputRef}
+            t={t}
+          />
+          {step === 'password' && isError && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleForgotPassword();
+              }}
+              className='flex items-center justify-center h-full px-2 opacity-85 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer'
+              title={t?.forgotPassword || 'Forgot Password?'}
+            >
+              <span
+                className='material-symbols-rounded block leading-none'
+                style={{ fontSize: 'var(--status-icon-size, 16px)' }}
+              >
+                help
+              </span>
+            </button>
+          )}
+        </>
       )}
     </div>
   );
