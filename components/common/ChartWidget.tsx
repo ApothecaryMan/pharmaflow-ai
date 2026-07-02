@@ -113,6 +113,31 @@ export const CustomTooltipContent = memo(
 );
 CustomTooltipContent.displayName = 'CustomTooltipContent';
 
+// --- Custom XAxis Tick Component ---
+const MultiLineTick = (props: any) => {
+  const { x, y, payload, tickFormatter, fill, fontSize, dy = 10 } = props;
+  const formattedValue = tickFormatter ? tickFormatter(payload.value) : payload.value;
+  
+  if (typeof formattedValue === 'string' && formattedValue.includes('\n')) {
+    const lines = formattedValue.split('\n');
+    return (
+      <text x={x} y={y} dy={dy} textAnchor="middle" fill={fill} fontSize={fontSize}>
+        {lines.map((line: string, i: number) => (
+          <tspan x={x} dy={i === 0 ? 0 : 14} key={i}>
+            {line}
+          </tspan>
+        ))}
+      </text>
+    );
+  }
+
+  return (
+    <text x={x} y={y} dy={dy} textAnchor="middle" fill={fill} fontSize={fontSize}>
+      {formattedValue}
+    </text>
+  );
+};
+
 // --- ChartWidget Component ---
 
 interface ChartWidgetProps {
@@ -224,12 +249,14 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
       {/* Header */}
       <div className={`flex items-center justify-between mb-4 ${headerClassName || ''}`}>
         <h3 className='text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2'>
-          <span
-            className={`material-symbols-rounded`}
-            style={{ color, fontSize: 'var(--icon-navbar-dropdown)' }}
-          >
-            {icon}
-          </span>
+          {icon && (
+            <span
+              className={`material-symbols-rounded`}
+              style={{ color, fontSize: 'var(--icon-navbar-dropdown)' }}
+            >
+              {icon}
+            </span>
+          )}
           {title}
         </h3>
 
@@ -328,7 +355,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={xAxisFormatter}
-                tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
+                tick={(props: any) => <MultiLineTick {...props} tickFormatter={xAxisFormatter} fill="var(--text-secondary)" fontSize={10} />}
                 interval={xAxisInterval ?? 0}
                 padding={{ left: 20, right: 20 }}
                 dy={10}

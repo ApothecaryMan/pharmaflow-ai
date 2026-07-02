@@ -257,7 +257,20 @@ export const Inventory: React.FC<InventoryProps> = ({
         : ['in_stock'];
 
     if (!stockVals.includes('all')) {
-      result = result.filter((d) => {
+      result = result.map((d) => {
+        if (d.batches && d.batches.length > 0) {
+          return {
+            ...d,
+            batches: d.batches.filter((b: any) => {
+              if (stockVals.includes('in_stock') && stockVals.includes('out_of_stock')) return true;
+              if (stockVals.includes('in_stock')) return b.stock > 0;
+              if (stockVals.includes('out_of_stock')) return b.stock <= 0;
+              return true;
+            }),
+          };
+        }
+        return d;
+      }).filter((d) => {
         if (stockVals.includes('in_stock') && stockVals.includes('out_of_stock')) return true;
         if (stockVals.includes('in_stock')) return d.stock > 0;
         if (stockVals.includes('out_of_stock')) return d.stock <= 0;
@@ -590,23 +603,31 @@ export const Inventory: React.FC<InventoryProps> = ({
                   setSelectedBatches((prev) => ({ ...prev, [groupData.groupId]: b.id }));
                 }}
                 keyExtractor={(b: any) => b.id}
-                renderSelected={(b: any) => (
-                  <div className='flex justify-center items-center w-full px-2 gap-1.5'>
-                    <span>{renderDateWrapper(b.expiryDate, true)}</span>
-                    <span className='text-[10px] text-gray-400 font-normal'>
-                      ({formatStock(b.stock, b.unitsPerPack).replace(/ Packs?/g, '')})
-                    </span>
-                  </div>
-                )}
-                renderItem={(b: any) => (
-                  <div className='flex justify-center items-center w-full px-2 gap-2'>
-                    <span>{renderDateWrapper(b.expiryDate)}</span>
-                    <span className='text-[10px] text-gray-400 font-normal'>
-                      ({formatStock(b.stock, b.unitsPerPack).replace(/ Packs?/g, '')})
-                    </span>
-                  </div>
-                )}
-                className='h-8 w-[110px] mx-auto'
+                renderSelected={(b: any) => {
+                  const colorClass = getExpiryColorClass(b.expiryDate);
+                  return (
+                    <div className={`flex items-center w-full gap-0 font-bold ${colorClass} h-full cursor-pointer hover:opacity-70 px-1`}>
+                      <span className='flex-1 text-center text-[11px]'>{formatExpiryDate(b.expiryDate)}</span>
+                      <span className='w-px self-stretch bg-current opacity-20 shrink-0' />
+                      <span className='flex-1 text-center text-xs tabular-nums'>
+                        {formatStock(b.stock, b.unitsPerPack, { packs: '', outOfStock: t.outOfStockShort || 'Out' }).trim()}
+                      </span>
+                    </div>
+                  );
+                }}
+                renderItem={(b: any) => {
+                  const colorClass = getExpiryColorClass(b.expiryDate);
+                  return (
+                    <div className={`flex items-center w-full gap-0 font-bold ${colorClass} h-full px-1`}>
+                      <span className='flex-1 text-center text-[11px]'>{formatExpiryDate(b.expiryDate)}</span>
+                      <span className='w-px self-stretch bg-current opacity-20 shrink-0' />
+                      <span className='flex-1 text-center text-xs tabular-nums'>
+                        {formatStock(b.stock, b.unitsPerPack).replace(/ Packs?/g, '')}
+                      </span>
+                    </div>
+                  );
+                }}
+                className='h-8 w-[120px] mx-auto'
                 color={color}
                 floating
                 hideArrow={true}
@@ -635,7 +656,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         options: [
           { label: t.all || 'All', value: 'all' },
           { label: t.available || 'Available', value: 'in_stock' },
-          { label: t.outOfStock || 'Out of Stock', value: 'out_of_stock' },
+          { label: t.outOfStockShort || 'Out', value: 'out_of_stock' },
         ],
         defaultValue: 'in_stock',
       },

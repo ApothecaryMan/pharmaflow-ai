@@ -153,8 +153,8 @@ const GenericListItem: React.FC<{
   onClick,
   actionLabel,
 }) => (
-  <div className='p-4 rounded-xl bg-(--bg-page-surface) border border-(--border-divider) flex items-center justify-between hover:bg-(--bg-menu-hover) transition-colors'>
-    <div className='flex items-center gap-4 min-w-0'>
+  <div dir='ltr' className='p-4 rounded-xl bg-(--bg-page-surface) border border-(--border-divider) flex items-center justify-between hover:bg-(--bg-menu-hover) transition-colors'>
+    <div className='flex items-center gap-4 min-w-0 flex-1'>
       {icon && (
         <div className='badge-purple w-10 h-10! rounded-full! border! flex! items-center justify-center shrink-0'>
           <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
@@ -164,28 +164,26 @@ const GenericListItem: React.FC<{
       )}
       <div className='min-w-0'>
         <p className='font-bold text-(--text-primary) truncate'>{title}</p>
-        <div className='flex items-center gap-2 mt-0.5'>
-          <p className='text-xs text-(--text-tertiary)'>{subtitle}</p>
-          {badge && (
-            <span
-              className={
-                badgeColor.includes('badge-')
-                  ? badgeColor
-                  : `text-[10px] font-bold uppercase ${badgeColor}`
-              }
-            >
-              {badge}
-            </span>
-          )}
-        </div>
       </div>
     </div>
-    <div className='flex items-center gap-4'>
+    <div className='flex items-center gap-3 shrink-0 ms-4'>
+      <p className='text-xs text-(--text-tertiary) shrink-0'>{subtitle}</p>
+      {badge && (
+        <span
+          className={
+            badgeColor.includes('badge-')
+              ? `${badgeColor} shrink-0`
+              : `text-[10px] font-bold uppercase shrink-0 ${badgeColor}`
+          }
+        >
+          {badge}
+        </span>
+      )}
       {value && <p className='font-bold text-(--text-primary)'>{value}</p>}
       {onClick && (
         <button
           onClick={onClick}
-          className='px-4 py-2 rounded-full bg-(--bg-menu) text-primary-600 font-medium text-sm hover:bg-primary-50 transition-colors'
+          className='text-xs px-3 py-1.5 rounded-xl font-bold bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white transition-all active:scale-95'
         >
           {actionLabel}
         </button>
@@ -246,7 +244,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
         return `${monthName} ${w.replace('W', language?.toUpperCase() === 'AR' ? 'أسبوع ' : 'W')}`;
       }
       const date = new Date(val);
-      return date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+      const formatted = date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+      return timeRange === '30' ? formatted.replace(' ', '\n') : formatted;
     },
     [language, timeRange]
   );
@@ -644,45 +643,41 @@ export const Dashboard: React.FC<DashboardProps> = ({
         title: t.recentSales,
         actions: exportBtn('transactions', recentSales20),
         children: (
-          <div className='relative space-y-4 py-1'>
-            <div
-              className={`absolute top-4 bottom-4 w-0.5 bg-gray-100 dark:bg-gray-800 z-0 ${language === 'AR' ? 'right-[11px]' : 'left-[11px]'}`}
-            />
+          <div className='flex flex-col space-y-4 py-2 px-1'>
             {recentSales20.map((sale, index) => (
-              <div key={sale.key || sale.id || `rs20-${index}`} className='relative z-10'>
-                <div
-                  className={`absolute top-6 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-sm z-10 ${sale.hasReturns ? 'bg-orange-400' : 'bg-primary-500'} ${language === 'AR' ? '-right-[18px]' : '-left-[18px]'}`}
-                />
-                <MaterialTabs
-                  index={index}
-                  total={recentSales20.length}
-                  className='h-auto! py-2 flex-col! items-stretch! gap-1 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors shadow-xs'
-                >
-                  <div className='flex items-center justify-between gap-3'>
-                    <div className='flex items-center gap-3'>
-                      <div className='badge-purple w-8 h-8! rounded-full! border! flex! items-center justify-center shrink-0'>
-                        <span className='material-symbols-rounded text-lg'>shopping_bag</span>
-                      </div>
-                      <div>
-                        <p className='font-bold text-gray-900 dark:text-gray-100 text-xs'>
-                          {sale.customerName || 'Guest'}{' '}
-                          <span className='text-[10px] font-normal opacity-50'>#{sale.id}</span>
-                        </p>
-                        <p className='text-[10px] text-gray-500'>{sale.timeAgo}</p>
-                      </div>
+              <div key={sale.key || sale.id || `rs20-${index}`} className='flex gap-4 relative group'>
+                {/* Timeline Column */}
+                <div className='relative flex flex-col items-center w-4 shrink-0'>
+                  <div
+                    className={`w-3 h-3 rounded-full border-2 border-(--bg-card) shadow-sm z-10 mt-4 ${sale.hasReturns ? 'bg-orange-400' : 'bg-primary-500'} group-hover:scale-125 transition-transform`}
+                  />
+                  {index !== recentSales20.length - 1 && (
+                    <div className='absolute top-7 -bottom-8 w-0.5 bg-gray-200 dark:bg-gray-700 z-0' />
+                  )}
+                </div>
+                
+                {/* Content Column */}
+                <div className='flex-1 min-w-0'>
+                  <div className='p-3.5 rounded-xl bg-(--bg-page-surface) border border-(--border-divider) flex items-center justify-between hover:bg-(--bg-menu-hover) transition-colors'>
+                    <div className='min-w-0 flex-1'>
+                      <p className='font-bold text-(--text-primary) text-sm truncate'>
+                        {sale.customerName || 'Guest Customer'}{' '}
+                        <span className='text-[10px] font-normal opacity-50'>#{sale.serialId || sale.id}</span>
+                      </p>
+                      <p className='text-[10px] text-(--text-tertiary) mt-0.5'>{sale.timeAgo}</p>
                     </div>
-                    <div className='text-end'>
-                      <p className='font-bold text-sm'>
+                    <div className='text-end shrink-0 ms-4'>
+                      <p className='font-bold text-sm text-(--text-primary)'>
                         {formatCurrency(sale.netTotal ?? sale.total)}
                       </p>
                       {sale.hasReturns && (
-                        <p className='text-[10px] text-orange-500 font-bold uppercase'>
+                        <p className='text-[10px] text-orange-500 font-bold uppercase mt-0.5'>
                           {t.returned}
                         </p>
                       )}
                     </div>
                   </div>
-                </MaterialTabs>
+                </div>
               </div>
             ))}
           </div>
@@ -836,6 +831,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Sales Chart (2 Cols) */}
         <ChartWidget
           title={t.trend}
+          icon=''
           data={salesData}
           dataKeys={{ primary: 'sales' }}
           color={chartColors.main}
@@ -860,7 +856,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             onExpand={() => setExpandedView('topSelling')}
             iconColor='text-yellow-500'
           />
-          <div className='flex-1 overflow-y-auto space-y-3 pe-1' dir='ltr'>
+          <div className='flex-1 overflow-y-auto space-y-1 pe-1' dir='ltr'>
             {isLoading || finLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className='flex items-center justify-between p-2 animate-pulse'>
@@ -879,14 +875,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
               topSelling.map((item, index) => (
                 <div
                   key={item.id || `ts-${index}`}
-                  className='flex items-center justify-between p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
+                  className='flex items-center justify-between py-1.5 px-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
                 >
                   <div className='flex items-center gap-3 overflow-hidden'>
-                    <div
-                      className={`w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-300 font-bold text-xs flex items-center justify-center shrink-0`}
-                    >
+                    <span className='text-2xl font-black text-gray-300 dark:text-gray-600 shrink-0 w-6 text-center mt-1'>
                       {index + 1}
-                    </div>
+                    </span>
                     <span className='text-sm font-medium text-gray-700 dark:text-gray-200 truncate item-name'>
                       {getDisplayName(item, textTransform)}
                     </span>
@@ -920,25 +914,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   key={item.id}
                   className='flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
                 >
-                  <div className='flex items-center gap-3 overflow-hidden'>
-                    <div className='badge-orange w-8 h-8! rounded-full! border! flex! items-center justify-center shrink-0'>
-                      <span className='material-symbols-rounded text-base'>warning</span>
-                    </div>
+                  <div className='flex items-center gap-3 overflow-hidden flex-1'>
                     <div className='min-w-0'>
                       <p className='font-medium text-sm text-gray-700 dark:text-gray-200 truncate item-name'>
                         {getDisplayName(item, textTransform)}
                       </p>
-                      <p className='text-[10px] text-orange-600 dark:text-orange-400 font-bold uppercase'>
-                        {item.stock} {t.expand?.allItems || 'left'}
-                      </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setRestockDrug(item)}
-                    className='text-xs px-2.5 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-medium hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-gray-700 transition-colors shrink-0 ms-2'
-                  >
-                    {t.restock}
-                  </button>
+                  <div className='flex items-center gap-3 shrink-0 ms-2'>
+                    <p className='text-[10px] text-orange-600 dark:text-orange-400 font-bold uppercase'>
+                      {item.stock} {t.expand?.allItems || 'left'}
+                    </p>
+                    <button
+                      onClick={() => setRestockDrug(item)}
+                      className='text-xs px-3 py-1.5 rounded-xl font-bold bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white transition-all active:scale-95'
+                    >
+                      {t.restock}
+                    </button>
+                  </div>
                 </div>
               ),
             },
@@ -958,31 +951,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     key={item.id}
                     className='flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
                   >
-                    <div className='flex items-center gap-3 overflow-hidden'>
-                      <div
-                        className={`${isExpired ? 'badge-danger' : 'badge-warning'} w-8 h-8! rounded-full! border! flex! items-center justify-center shrink-0`}
-                      >
-                        <span
-                          className='material-symbols-rounded'
-                          style={{ fontSize: 'var(--icon-base)' }}
-                        >
-                          event_busy
-                        </span>
-                      </div>
+                    <div className='flex items-center gap-3 overflow-hidden flex-1'>
                       <div className='min-w-0'>
                         <p className='font-medium text-sm text-gray-700 dark:text-gray-200 truncate item-name'>
                           {getDisplayName(item, textTransform)}
                         </p>
-                        <p
-                          className={`text-[10px] font-bold uppercase ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-500'}`}
-                        >
-                          {isExpired ? t.expired : `${days} ${t.days}`}
-                        </p>
                       </div>
                     </div>
-                    <span className='badge-zinc shrink-0 ms-2'>
-                      {formatExpiryDate(item.expiryDate)}
-                    </span>
+                    <div className='flex items-center gap-3 shrink-0 ms-2'>
+                      <p
+                        className={`text-[10px] font-bold uppercase ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-500'}`}
+                      >
+                        {isExpired ? t.expired : `${days} ${t.days}`}
+                      </p>
+                      <span className='badge-zinc'>
+                        {formatExpiryDate(item.expiryDate)}
+                      </span>
+                    </div>
                   </div>
                 );
               },
@@ -1059,14 +1044,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   className='flex items-center justify-between p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors'
                 >
                   <div className='flex items-center gap-3'>
-                    <div className='badge-purple w-10 h-10! rounded-xl! border! flex! items-center justify-center'>
-                      <span
-                        className='material-symbols-rounded'
-                        style={{ fontSize: 'var(--icon-lg)' }}
-                      >
-                        shopping_bag
-                      </span>
-                    </div>
                     <div>
                       <p className='text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2'>
                         {sale.customerName || 'Guest'}
@@ -1088,7 +1065,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <p className='text-xs text-gray-500 flex items-center gap-2'>
                         <span className='text-(--text-tertiary)'>{sale.timeAgo}</span>
                         <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
-                        <span className='text-xs'>#{sale.id}</span>
+                        <span className='text-xs'>#{sale.serialId || sale.id}</span>
                         <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
                         <span
                           className={`inline-flex items-center ${sale.paymentMethod === 'visa' ? 'text-primary-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}

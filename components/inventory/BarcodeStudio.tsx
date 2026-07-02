@@ -1259,12 +1259,12 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
         {/* Center: Element Toggles (Compacted) */}
         <div className='flex-1 flex justify-center min-w-0'>
-          <div className='flex items-center gap-1.5 p-1 bg-gray-100 dark:bg-muted/50 rounded-xl border border-gray-200 dark:border-border overflow-x-auto scrollbar-hide h-10 shrink-0'>
+          <div className='flex items-center gap-1 p-1 bg-gray-100 dark:bg-muted/50 rounded-xl border border-gray-200 dark:border-border overflow-x-auto scrollbar-hide h-10 shrink-0'>
             {elements.map((el) => (
               <button
                 key={el.id}
                 onClick={() => toggleVisibility(el.id)}
-                className={`whitespace-nowrap px-3 h-8 flex items-center justify-center rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                className={`whitespace-nowrap px-2 h-8 flex items-center justify-center rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${
                   el.isVisible
                     ? `bg-primary-500/10 text-primary-600 border-primary-200/50 dark:bg-accent dark:text-foreground dark:border-border/30`
                     : 'bg-transparent text-gray-400 border-transparent hover:bg-white dark:hover:bg-accent dark:text-muted-foreground transition-all'

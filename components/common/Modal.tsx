@@ -366,7 +366,7 @@ export const Modal: React.FC<ModalProps> = ({
               ) : null}
 
               {/* End Section - Header Actions + Close Button */}
-              <div className='flex items-center absolute end-2 top-0 bottom-0'>
+              <div className='flex items-center gap-2 absolute end-2 top-0 bottom-0'>
                 {headerActions}
                 {!hideCloseButton ? (
                   <button

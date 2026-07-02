@@ -829,27 +829,28 @@ export const POS: React.FC<POSProps> = ({
                 renderSelected={(item) => {
                   const i = item as Drug | undefined;
                   const colorClass = i ? getExpiryColorClass(i.expiryDate) : 'text-red-500';
-                  return (
-                    <div
-                      className={`w-full px-2 text-sm font-bold text-center truncate transition-colors ${colorClass}`}
-                    >
-                      {i ? (
-                        formatExpiryDate(i.expiryDate) +
-                        ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
-                      ) : (
-                        <span>{t.noStock}</span>
-                      )}
+                  return i ? (
+                    <div className={`flex items-center w-full gap-0 font-bold ${colorClass} h-full`}>
+                      <span className='flex-1 text-center text-[11px]'>{formatExpiryDate(i.expiryDate)}</span>
+                      <span className='w-px self-stretch bg-current opacity-20 shrink-0' />
+                      <span className='flex-1 text-center text-sm tabular-nums'>
+                        {formatStock(i.stock, i.unitsPerPack, { packs: '', outOfStock: t.outOfStockShort || 'Out' }).trim()}
+                      </span>
                     </div>
+                  ) : (
+                    <span>{t.noStock}</span>
                   );
                 }}
                 renderItem={(item) => {
                   const i = item as Drug;
+                  const c = getExpiryColorClass(i.expiryDate);
                   return (
-                    <div
-                      className={`w-full px-2 text-sm font-bold text-center ${getExpiryColorClass(i.expiryDate)}`}
-                    >
-                      {formatExpiryDate(i.expiryDate) +
-                        ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`}
+                    <div className={`flex items-center w-full gap-0 font-bold ${c} h-full`}>
+                      <span className='flex-1 text-center text-[11px]'>{formatExpiryDate(i.expiryDate)}</span>
+                      <span className='w-px self-stretch bg-current opacity-20 shrink-0' />
+                      <span className='flex-1 text-center text-sm tabular-nums'>
+                        {formatStock(i.stock, i.unitsPerPack, { packs: '', outOfStock: t.outOfStockShort || 'Out' }).trim()}
+                      </span>
                     </div>
                   );
                 }}

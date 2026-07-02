@@ -607,7 +607,6 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col h-[437px] overflow-hidden`}>
             <div className='flex items-center justify-between mb-4 gap-4'>
               <h3 className='text-lg font-bold flex items-center gap-2 shrink-0'>
-                <span className='material-symbols-rounded text-gray-400'>history</span>
                 {t.realTimeSales?.recentTransactions}
               </h3>
 
@@ -849,7 +848,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         <div className='lg:col-span-2 flex flex-col gap-4'>
           <ChartWidget
             title={t.realTimeSales?.hourlyTrend}
-            icon='trending_up'
+            icon=''
             data={hourlyAnalysis.hourlyData}
             dataKeys={{ primary: 'sales' }}
             color='#3b82f6'
@@ -866,7 +865,6 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           <div className={`p-5 rounded-3xl ${CARD_BASE} flex-1 flex flex-col`}>
             <div className='flex items-center justify-between mb-4'>
               <h3 className='text-lg font-bold flex items-center gap-2'>
-                <span className='material-symbols-rounded text-yellow-500'>hotel_class</span>
                 {t.realTimeSales?.topProducts}
               </h3>
               <span className='text-xs text-gray-400'>{t.realTimeSales?.byQty}</span>
@@ -999,7 +997,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           <div className='flex items-center justify-between mb-4'>
             <h3 className='text-lg font-bold'>{t.realTimeSales?.returnActivity}</h3>
             <span className='text-xs font-bold px-2 py-1 bg-rose-100 text-rose-700 rounded-lg'>
-              Today
+              {t.today || 'Today'}
             </span>
           </div>
           <div className='flex-1 flex flex-col justify-center items-center text-center space-y-4'>
@@ -1010,18 +1008,18 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
               <div className='text-3xl font-bold'>
                 <AnimatedCounter value={todaysSales.filter((s) => s.hasReturns).length} />
               </div>
-              <p className='text-sm text-gray-500'>Returns Processed</p>
+              <p className='text-sm text-gray-500'>{t.realTimeSales?.returnsProcessed || 'Returns Processed'}</p>
             </div>
-            <div className='w-full pt-4 border-t border-gray-100 grid grid-cols-2 gap-4'>
+            <div className='w-full pt-4 border-t border-gray-100 dark:border-gray-800 grid grid-cols-2 gap-4'>
               <div>
-                <p className='text-xs text-gray-400'>Value</p>
+                <p className='text-xs text-gray-400'>{t.realTimeSales?.value || 'Value'}</p>
                 <div className='text-lg font-bold text-rose-600'>
                   <AnimatedCounter value={returnedValue} />
                 </div>
               </div>
               <div>
-                <p className='text-xs text-gray-400'>Rate</p>
-                <div className='text-lg font-bold flex items-baseline gap-0.5'>
+                <p className='text-xs text-gray-400'>{t.realTimeSales?.rate || 'Rate'}</p>
+                <div className='text-lg font-bold flex items-center justify-center gap-0.5' dir='ltr'>
                   <AnimatedCounter
                     value={
                       (todaysSales.filter((s) => s.hasReturns).length / (transactions || 1)) * 100
