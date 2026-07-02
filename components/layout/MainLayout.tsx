@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import type React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getContentContainerClasses, LAYOUT_CONFIG } from '../../config/layoutConfig';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
 import type { UserRole } from '../../config/permissions';
@@ -13,6 +13,9 @@ import { MobileNavigation } from './MobileNavigation';
 import { Navbar } from './Navbar';
 import { SidebarContent } from './SidebarContent';
 import { StatusBar } from './StatusBar';
+import { supabase } from '../../lib/supabase';
+import { StorageKeys } from '../../config/storageKeys';
+import { storage } from '../../utils/storage';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -132,6 +135,32 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   // Determine actual sidebar state (considering hover expansion)
   // 1: Normal (Fixed), 2: Mini (Always), 3: Auto-Expand (Mini but expands on hover)
   const isActuallyCollapsed = sidebarStyle === 2 || (sidebarStyle === 3 && !isSidebarHovered);
+
+  // Session Presence (Supabase Realtime)
+  useEffect(() => {
+    const sessionId = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
+    if (!sessionId) return;
+
+    const presenceChannel = supabase.channel('online-sessions');
+
+    presenceChannel.on('presence', { event: 'sync' }, () => {
+      const state = presenceChannel.presenceState();
+      window.dispatchEvent(new CustomEvent('presence_sync', { detail: state }));
+    });
+
+    presenceChannel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await presenceChannel.track({
+          session_id: sessionId,
+          online_at: new Date().toISOString(),
+        });
+      }
+    });
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+    };
+  }, []);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {

@@ -5,8 +5,7 @@ import { sessionRepository, type UserActiveSession } from '../../services/auth/r
 import { supabase } from '../../lib/supabase';
 import { getDeviceName, getBrowserName } from '../../utils/platform';
 import { authService } from '../../services/auth/authService';
-import { storage } from '../../utils/storage';
-import { StorageKeys } from '../../config/storageKeys';
+import { employeeService } from '../../services/hr/employeeService';
 
 interface ActiveSessionsPageProps {
   color?: string;
@@ -20,9 +19,10 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
   language = 'EN',
 }) => {
   const [sessions, setSessions] = useState<UserActiveSession[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userImage, setUserImage] = useState<string | null>(null);
+  const [onlineSessionIds, setOnlineSessionIds] = useState<Set<string>>(new Set());
 
   const currentUser = authService.getCurrentUserSync();
   const userName = currentUser?.employeeName || currentUser?.username || 'Unknown';
@@ -45,23 +45,46 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
   useEffect(() => {
     loadSessions();
 
-    if (currentUser?.employeeId) {
-      const cachedEmployees: any[] = storage.get(StorageKeys.EMPLOYEES, []);
-      const emp = cachedEmployees.find((e: any) => e.id === currentUser.employeeId);
-      if (emp?.image) {
-        setUserImage(emp.image);
+    const loadEmployees = async () => {
+      try {
+        const data = await employeeService.getAll();
+        setEmployees(data);
+      } catch (err) {
+        console.error("Failed to load employees for sessions", err);
       }
-    }
+    };
+    loadEmployees();
     
-    const channel = supabase
-      .channel('active_sessions_changes')
+    const uniqueChannelName = `active_sessions_changes_${Math.random().toString(36).substring(7)}`;
+    const dbChannel = supabase
+      .channel(uniqueChannelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'user_active_sessions' }, () => {
         sessionRepository.getActiveSessions().then(setSessions);
       })
       .subscribe();
       
+    const handlePresence = (e: any) => {
+      const state = e.detail;
+      const onlineIds = new Set<string>();
+      for (const key in state) {
+        state[key].forEach((presence: any) => {
+          if (presence.session_id) onlineIds.add(presence.session_id);
+        });
+      }
+      setOnlineSessionIds(onlineIds);
+    };
+    
+    window.addEventListener('presence_sync', handlePresence);
+    
+    // Read initial state if the channel is already active in MainLayout
+    const existingPresenceChannel = supabase.getChannels().find(c => c.topic === 'realtime:online-sessions');
+    if (existingPresenceChannel) {
+      handlePresence({ detail: existingPresenceChannel.presenceState() });
+    }
+      
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(dbChannel);
+      window.removeEventListener('presence_sync', handlePresence);
     };
   }, []);
 
@@ -115,6 +138,12 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                       const displayDeviceName = getDeviceName(session.user_agent || '', session.device_info || '');
                       const displayBrowserName = getBrowserName(session.user_agent || '');
                       
+                      const sessionEmployee = session.employee_id ? employees.find(e => e.id === session.employee_id) : null;
+                      const hasEmployee = !!sessionEmployee;
+                      const sessionUserName = sessionEmployee?.name || sessionEmployee?.en_name || (language === 'AR' ? 'غير محدد (الحساب الرئيسي)' : 'Unassigned (Main Account)');
+                      const sessionUserImage = sessionEmployee?.image || null;
+                      const isOnline = onlineSessionIds.has(session.id);
+                      
                       let IconComponent = Icons.Desktop;
                       let iconColor = 'text-primary-600';
                       let iconBg = 'bg-primary-50 dark:bg-primary-900/20';
@@ -137,15 +166,23 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                       <tr key={session.id} className='block md:table-row bg-(--bg-card) border border-(--border-divider) rounded-xl md:bg-transparent md:rounded-none md:border-none'>
                         <td className='block md:table-cell px-4 pt-4 pb-2 md:px-6 md:py-4'>
                           <div className='flex items-center gap-3'>
-                            {userImage ? (
-                              <img src={userImage} alt={userName} className='w-8 h-8 rounded-full object-cover border border-(--border-divider)' />
-                            ) : (
-                              <div className='w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-primary-700 dark:text-primary-300 font-semibold border border-(--border-divider)'>
-                                {userName.charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                            <div className='font-medium text-gray-900 dark:text-gray-100'>
-                              {userName}
+                            <div className="relative" title={isOnline ? (language === 'AR' ? 'متصل الآن' : 'Online') : (language === 'AR' ? 'غير متصل' : 'Offline')}>
+                              {sessionUserImage ? (
+                                <img src={sessionUserImage} alt={sessionUserName} className={`w-8 h-8 rounded-full object-cover ${isOnline ? 'ring-2 ring-green-500 ring-offset-2 dark:ring-offset-gray-900' : 'border border-(--border-divider)'}`} />
+                              ) : (
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${isOnline ? 'ring-2 ring-green-500 ring-offset-2 dark:ring-offset-gray-900' : 'border border-(--border-divider)'} ${
+                                  hasEmployee 
+                                    ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300' 
+                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                                }`}>
+                                  {hasEmployee ? sessionUserName.charAt(0).toUpperCase() : '?'}
+                                </div>
+                              )}
+                            </div>
+                            <div className='flex items-center gap-2'>
+                              <span className={`font-medium ${hasEmployee ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400 italic'}`}>
+                                {sessionUserName}
+                              </span>
                             </div>
                           </div>
                         </td>
@@ -177,12 +214,20 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                           <div className='flex items-center gap-2 md:block'>
                             <span className='md:hidden text-xs font-semibold uppercase opacity-70'>{language === 'AR' ? 'آخر ظهور:' : 'Seen:'}</span>
                             <div className='flex items-center gap-2 md:block'>
-                              <div className='text-gray-900 dark:text-gray-100'>
-                                {new Date(session.last_seen_at).toLocaleDateString()}
-                              </div>
-                              <div className='text-xs text-gray-500'>
-                                {new Date(session.last_seen_at).toLocaleTimeString()}
-                              </div>
+                              {isOnline ? (
+                                <div className='text-green-600 dark:text-green-400 font-medium'>
+                                  {language === 'AR' ? 'متصل الآن' : 'Online Now'}
+                                </div>
+                              ) : (
+                                <>
+                                  <div className='text-gray-900 dark:text-gray-100'>
+                                    {new Date(session.last_seen_at).toLocaleDateString()}
+                                  </div>
+                                  <div className='text-xs text-gray-500'>
+                                    {new Date(session.last_seen_at).toLocaleTimeString()}
+                                  </div>
+                                </>
+                              )}
                             </div>
                           </div>
                         </td>

@@ -55,11 +55,14 @@ export const sessionRepository = {
       const existing = existingData?.[0];
 
       if (existing) {
-        // Just update last_seen_at and IP
+        // Just update last_seen_at, IP, and session context (employee, branch, org)
         await supabase
           .from('user_active_sessions')
           .update({ 
             last_seen_at: new Date().toISOString(),
+            org_id: payload.orgId || null,
+            branch_id: payload.branchId || null,
+            employee_id: payload.employeeId || null,
             ...(ipAddress ? { ip_address: ipAddress } : {})
           })
           .eq('id', existing.id);
@@ -184,5 +187,22 @@ export const sessionRepository = {
         last_seen_at: new Date().toISOString(),
       })
       .eq('id', sessionId);
+  },
+
+  /**
+   * Update the employee tied to the session
+   */
+  async updateSessionEmployee(sessionId: string, employeeId: string | null): Promise<void> {
+    const { error } = await supabase
+      .from('user_active_sessions')
+      .update({
+        employee_id: employeeId,
+        last_seen_at: new Date().toISOString(),
+      })
+      .eq('id', sessionId);
+
+    if (error) {
+      console.error('Failed to update session employee:', error);
+    }
   }
 };

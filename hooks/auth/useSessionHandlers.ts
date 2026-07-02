@@ -6,6 +6,7 @@ import { authService } from '../../services/auth/authService';
 import { permissionsService } from '../../services/auth/permissionsService';
 import type { Branch, Employee, UserSession, ViewState } from '../../types';
 import { storage } from '../../utils/storage';
+import { sessionRepository } from '../../services/auth/repositories/sessionRepository';
 
 interface ExtendedSession extends UserSession {
   _originalRole?: UserSession['role'];
@@ -79,6 +80,11 @@ export const useSessionHandlers = ({
             delete storedSession.employeeName;
             storage.set(StorageKeys.SESSION, storedSession);
           }
+          
+          const activeSessionId = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
+          if (activeSessionId) {
+            sessionRepository.updateSessionEmployee(activeSessionId, null).catch(console.error);
+          }
         } else {
           const selectedEmployee = employees.find((e) => e.id === id);
           if (selectedEmployee) {
@@ -102,6 +108,11 @@ export const useSessionHandlers = ({
               storedSession.accountType = 'pharmacy';
               storedSession.destination = 'pharmacy';
               storage.set(StorageKeys.SESSION, storedSession);
+            }
+
+            const activeSessionId = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
+            if (activeSessionId) {
+              sessionRepository.updateSessionEmployee(activeSessionId, id).catch(console.error);
             }
 
             const isFirstSelection = !currentEmployeeId;
