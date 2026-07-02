@@ -183,6 +183,20 @@ export const useSessionHandlers = ({
         }
       }
       setCurrentEmployeeId(id);
+
+      // Sync employee_id to the active backend session
+      import('../../services/auth/repositories/sessionRepository').then(({ sessionRepository }) => {
+        import('../../utils/storage').then(({ storage }) => {
+          import('../../config/storageKeys').then(({ StorageKeys }) => {
+            const activeSessionId = storage.get(StorageKeys.ACTIVE_SESSION_ID, null);
+            if (activeSessionId) {
+              const currentOrgId = session?.orgId || null;
+              const currentBranchId = session?.branchId || null;
+              sessionRepository.updateSessionWorkspace(activeSessionId, currentOrgId, currentBranchId, id).catch(console.error);
+            }
+          });
+        });
+      });
     },
     [
       employees,

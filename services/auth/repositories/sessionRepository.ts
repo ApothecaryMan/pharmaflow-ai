@@ -116,7 +116,7 @@ export const sessionRepository = {
     const seen = new Set<string>();
     const deduped: UserActiveSession[] = [];
     for (const session of data || []) {
-      const key = `${session.user_agent}-${session.ip_address || ''}`;
+      const key = `${session.user_id}-${session.org_id || 'portal'}-${session.user_agent}-${session.ip_address || ''}`;
       if (!seen.has(key)) {
         seen.add(key);
         deduped.push(session);
@@ -130,36 +130,52 @@ export const sessionRepository = {
   },
 
   /**
+   * Helper to broadcast without conflicting with existing subscriptions
+   */
+  async _broadcastEvent(sessionId: string, event: string, payload: any): Promise<void> {
+    const channelName = `session-${sessionId}`;
+    const existingChannel = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
+    
+    if (existingChannel) {
+      // Use existing channel (don't remove it!)
+      try {
+        await existingChannel.send({ type: 'broadcast', event, payload });
+      } catch (e) {
+        console.warn('Failed to send broadcast on existing channel', e);
+      }
+      return;
+    }
+
+    // Create temporary channel if none exists
+    await new Promise<void>((resolve) => {
+      const channel = supabase.channel(channelName);
+      let resolved = false;
+      
+      const cleanup = () => {
+        if (resolved) return;
+        resolved = true;
+        supabase.removeChannel(channel);
+        resolve();
+      };
+
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          channel.send({ type: 'broadcast', event, payload }).finally(cleanup);
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+           cleanup();
+        }
+      });
+      
+      setTimeout(cleanup, 1500);
+    });
+  },
+
+  /**
    * Mark a session as logged out
    */
   async logoutSession(sessionId: string, terminatorName?: string): Promise<boolean> {
     if (terminatorName) {
-      await new Promise<void>((resolve) => {
-        const channel = supabase.channel('global-session-events');
-        let resolved = false;
-        
-        const cleanup = () => {
-          if (resolved) return;
-          resolved = true;
-          supabase.removeChannel(channel);
-          resolve();
-        };
-
-        channel.subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            channel.send({
-              type: 'broadcast',
-              event: 'remote-logout-named',
-              payload: { sessionId, terminatorName },
-            }).finally(cleanup);
-          } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-             cleanup();
-          }
-        });
-        
-        // Timeout in case subscription hangs
-        setTimeout(cleanup, 1500);
-      });
+      await this._broadcastEvent(sessionId, 'remote-logout-named', { sessionId, terminatorName });
     }
 
     const { error } = await supabase
@@ -172,6 +188,25 @@ export const sessionRepository = {
 
     if (error) {
       console.error('Failed to logout session:', error);
+      return false;
+    }
+    return true;
+  },
+
+  /**
+   * Log out an employee from a specific session (Leaves the session active for the owner)
+   */
+  async logoutEmployeeFromSession(sessionId: string, terminatorName?: string): Promise<boolean> {
+    if (terminatorName) {
+      await this._broadcastEvent(sessionId, 'remote-employee-logout', { sessionId, terminatorName });
+    }
+
+    const { error } = await supabase.rpc('logout_employee_from_session', {
+      p_session_id: sessionId
+    });
+
+    if (error) {
+      console.error('Failed to remove employee from session:', error);
       return false;
     }
     return true;
@@ -203,6 +238,34 @@ export const sessionRepository = {
 
     if (error) {
       console.error('Failed to update session employee:', error);
+    }
+  },
+
+  /**
+   * Update the workspace tied to the session
+   */
+  async updateSessionWorkspace(
+    sessionId: string, 
+    orgId: string | null, 
+    branchId: string | null,
+    employeeId?: string | null
+  ): Promise<void> {
+    const updates: any = {
+      org_id: orgId,
+      branch_id: branchId,
+      last_seen_at: new Date().toISOString(),
+    };
+    if (employeeId !== undefined) {
+      updates.employee_id = employeeId;
+    }
+
+    const { error } = await supabase
+      .from('user_active_sessions')
+      .update(updates)
+      .eq('id', sessionId);
+
+    if (error) {
+      console.error('Failed to update session workspace:', error);
     }
   }
 };

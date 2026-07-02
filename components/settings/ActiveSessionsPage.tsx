@@ -76,8 +76,9 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
     
     window.addEventListener('presence_sync', handlePresence);
     
-    // Read initial state if the channel is already active in MainLayout
-    const existingPresenceChannel = supabase.getChannels().find(c => c.topic === 'realtime:online-sessions');
+    // Read initial state if the channel is already active globally
+    const channelTopic = `presence:user_${currentUser?.userId}`;
+    const existingPresenceChannel = supabase.getChannels().find(c => c.topic.includes(channelTopic));
     if (existingPresenceChannel) {
       handlePresence({ detail: existingPresenceChannel.presenceState() });
     }
@@ -86,7 +87,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
       supabase.removeChannel(dbChannel);
       window.removeEventListener('presence_sync', handlePresence);
     };
-  }, []);
+  }, [currentUser?.userId]);
 
   const handleLogout = async (sessionId: string) => {
     try {

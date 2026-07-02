@@ -1,15 +1,12 @@
 import { startRegistration } from '@simplewebauthn/browser';
 import { Clock, Download, Menu } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useUpdateCheck } from '../../hooks/infrastructure/useUpdateCheck';
 import { TRANSLATIONS } from '../../i18n/translations';
-import { supabase } from '../../lib/supabase';
 import { authService } from '../../services/auth/authService';
-import { employeeProfileRepository } from '../../services/hr/repositories/employeeProfileRepository';
 import { employeeRepository } from '../../services/hr/repositories/employeeRepository';
-import { employmentRequestRepository } from '../../services/hr/repositories/employmentRequestRepository';
 import { useSettings } from '../../context';
-import type { Employee, EmploymentRequest, UserProfile } from '../../types';
+import type { UserProfile } from '../../types';
 import { ContextMenuProvider } from '../common/ContextMenu';
 import { EmployeeMobileDock } from './EmployeeMobileDock';
 import { EmployeeSideDrawer } from './EmployeeSideDrawer';
@@ -49,6 +46,7 @@ export function EmployeeDashboard({
 
   const sessionUsername = session?.username;
   const sessionName = session?.employeeName || profile?.fullName;
+
 
   // Always delegate to the centralized logout handler (useAuth.handleLogout)
   // to ensure React state, storage, and Supabase session are all properly cleaned up

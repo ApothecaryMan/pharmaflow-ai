@@ -4,6 +4,7 @@ import type { Employee, EmploymentRequest, UserProfile } from '../../types';
 import { DocumentsTab } from './tabs/DocumentsTab';
 import { HistoryTab } from './tabs/HistoryTab';
 import { ProfileTab } from './tabs/ProfileTab';
+import { EmployeeSessionsTab } from './tabs/EmployeeSessionsTab';
 
 interface EmployeePortalProfileProps {
   profile: UserProfile | null;
@@ -26,7 +27,7 @@ export type CachedDocs = {
   subSyndicateCard?: string | null;
 };
 
-type ProfileTabType = 'profile' | 'history' | 'documents';
+type ProfileTabType = 'profile' | 'history' | 'documents' | 'sessions';
 
 export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
   profile,
@@ -51,6 +52,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
       { value: 'profile' as const, label: t.employeeProfile.profile, icon: 'person' },
       { value: 'history' as const, label: t.employeeProfile.workHistory, icon: 'work_history' },
       { value: 'documents' as const, label: t.employeeProfile.documents, icon: 'description' },
+      { value: 'sessions' as const, label: t.employeeProfile.sessions || 'Active Sessions', icon: 'devices' },
     ],
     [t]
   );
@@ -116,6 +118,15 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
           isLoading={isLoading}
           isRTL={isRTL}
           t={t}
+        />
+      )}
+
+      {activeTab === 'sessions' && (
+        <EmployeeSessionsTab
+          profile={profile}
+          t={t}
+          isRTL={isRTL}
+          workspaces={workspaces}
         />
       )}
     </div>

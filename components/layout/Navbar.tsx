@@ -180,7 +180,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   }, []);
 
   useEffect(() => {
-    if (isTauri) {
+    if (isTauri()) {
       const hexColor = darkMode ? '#1f1f1f' : '#ffffff';
       invoke('set_titlebar_color', { color: hexColor }).catch((err) => 
         console.warn('Failed to set titlebar color:', err)

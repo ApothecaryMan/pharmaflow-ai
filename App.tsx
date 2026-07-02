@@ -50,6 +50,7 @@ import { type AppState, useAppState } from './hooks/layout/useAppState';
 import { useNavigation } from './hooks/layout/useNavigation';
 import { useTheme } from './hooks/layout/useTheme';
 import { useUrlSync } from './hooks/layout/useUrlSync';
+import { usePresenceTracking } from './hooks/infrastructure/usePresenceTracking';
 import { ShiftProvider, useShift } from './hooks/sales/useShift';
 import { useEntityHandlers } from './hooks/useEntityHandlers';
 import { ROOT_STRINGS } from './i18n/rootStrings';
@@ -231,6 +232,9 @@ const App: React.FC = () => {
   // 5. Dynamic Theme Hook - Handles PWA Title Bar & Global Dark Mode
   // When not authenticated, we force isLoginView=true for the black theme color override
   useTheme(theme.primary, darkMode, !authState.isAuthenticated, theme.hex);
+
+  // 5.1 Global Presence Tracking
+  usePresenceTracking(authState.isAuthenticated, authService.getCurrentUserSync()?.userId);
 
   // 6. Stable Login Callbacks
   const { setIsAuthenticated } = authState;

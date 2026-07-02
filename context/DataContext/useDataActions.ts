@@ -223,6 +223,19 @@ export const useDataActions = ({
           });
         }
 
+        branchService.setActive(branchId);
+        
+        // Sync session in backend
+        import('../../services/auth/repositories/sessionRepository').then(({ sessionRepository }) => {
+          import('../../services/org/orgService').then(({ orgService }) => {
+            const activeSessionId = storage.get(StorageKeys.ACTIVE_SESSION_ID, null);
+            const currentOrgId = orgService.getActiveOrgId();
+            if (activeSessionId && currentOrgId) {
+              sessionRepository.updateSessionWorkspace(activeSessionId, currentOrgId, branchId).catch(console.error);
+            }
+          });
+        });
+
         setActiveBranchId(branchId);
         lastLoadedBranchId.current = branchId;
         authService.updateSession({ branchId });
@@ -252,6 +265,15 @@ export const useDataActions = ({
         authService.clearEmployeeSession();
 
         orgService.setActiveOrgId(orgId);
+        
+        // Sync session in backend
+        import('../../services/auth/repositories/sessionRepository').then(({ sessionRepository }) => {
+          const activeSessionId = storage.get(StorageKeys.ACTIVE_SESSION_ID, null);
+          if (activeSessionId) {
+            sessionRepository.updateSessionWorkspace(activeSessionId, orgId, null).catch(console.error);
+          }
+        });
+
         setActiveOrgId(orgId);
         const fullOrg = await orgService.getById(orgId);
         setActiveOrg(fullOrg);

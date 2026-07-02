@@ -1,5 +1,6 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
+import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
 import { useData } from '../../context/DataContext';
 import type { AuthState } from '../../hooks/auth/useAuth';
@@ -11,7 +12,9 @@ import { useNavigation } from '../../hooks/layout/useNavigation';
 import { useShift } from '../../hooks/sales/useShift';
 import { useEntityHandlers } from '../../hooks/useEntityHandlers';
 import { TRANSLATIONS } from '../../i18n/translations';
+import { supabase } from '../../lib/supabase';
 import type { ViewState } from '../../types';
+import { storage } from '../../utils/storage';
 import { Modal } from '../common/Modal';
 import { SecureGate } from '../common/SecureGate';
 import { LogoutOverlay } from './LogoutOverlay';
@@ -213,6 +216,32 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     switchBranch,
     branches,
   });
+
+  useEffect(() => {
+    // We listen directly to the session broadcast to lock the POS instantly
+    const currentSessionId = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
+    if (!currentSessionId) return;
+
+    const channelName = `session-${currentSessionId}`;
+    
+    // Clean up any existing channel with same name to avoid strict-mode duplication
+    const existing = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
+    if (existing) supabase.removeChannel(existing);
+
+    const channel = supabase
+      .channel(channelName)
+      .on('broadcast', { event: 'remote-employee-logout' }, (payload) => {
+        if (payload.payload?.sessionId === currentSessionId) {
+          console.log('[AuthenticatedContent] Locking POS due to remote employee logout');
+          setCurrentEmployeeId(null);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [setCurrentEmployeeId]);
 
   // --- Global Event Handlers ---
   useGlobalEventHandlers({

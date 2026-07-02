@@ -162,7 +162,16 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
         });
 
         // Remote Logout Listener
-        const channelName = `remote-logout-${Math.random().toString(36).substring(2)}`;
+        const currentSessionId = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
+        const channelName = currentSessionId ? `session-${currentSessionId}` : `global-session-events-${Math.random().toString(36).substring(2)}`;
+        
+        // Fix for React Strict Mode: remove any existing channel with the same name
+        // before creating a new one, to avoid 'cannot add callbacks after subscribe' error.
+        const existingChannel = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
+        if (existingChannel) {
+          supabase.removeChannel(existingChannel);
+        }
+        
         const sessionListener = supabase
           .channel(channelName)
           .on(

@@ -17,9 +17,9 @@ const BrandIcons = {
       <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.415-2.09-3.623-2.324-4.39-2.376-2.065-.13-4.078 1.156-5.61 1.156zM15.5 3.831c.831-1.013 1.39-2.428 1.234-3.831-1.208.052-2.676.805-3.532 1.818-.767.896-1.403 2.338-1.221 3.714 1.35.104 2.69-.701 3.52-1.701z" />
     </svg>
   ),
-  Windows: ({ size = 24, className = '', color = 'currentColor' }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} className={className}>
-      <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.951-1.801" />
+  Windows: ({ size = 24, className = '' }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="#0078D4" className={className}>
+      <path d="M1 1h10v10H1zM13 1h10v10H13zM1 13h10v10H1zM13 13h10v10H13z" />
     </svg>
   ),
   Android: ({ size = 24, className = '', color = 'currentColor' }: IconProps) => (
@@ -31,6 +31,46 @@ const BrandIcons = {
     <svg width={size} height={size} viewBox="0 0 24 24" fill={color} className={className}>
       <path d="M11.666 0c-3.111 0-5.833 2.766-5.833 6.16 0 2.223.778 4.226 2.055 5.567-1.112.56-2.5 1.545-3.333 2.92-1.333 2.197-.833 5.345 1.333 7.34 1.333 1.226 3.055 2.013 5.778 2.013s4.444-.787 5.778-2.013c2.166-1.995 2.666-5.143 1.333-7.34-.833-1.375-2.222-2.36-3.333-2.92 1.277-1.341 2.055-3.344 2.055-5.567 0-3.394-2.722-6.16-5.833-6.16zm-1.833 3.667c.722 0 1.333.642 1.333 1.432 0 .79-.611 1.433-1.333 1.433-.722 0-1.333-.643-1.333-1.433 0-.79.611-1.432 1.333-1.432zm3.667 0c.722 0 1.333.642 1.333 1.432 0 .79-.611 1.433-1.333 1.433-.722 0-1.333-.643-1.333-1.433 0-.79.611-1.432 1.333-1.432zm-2.055 4.646c.389 0 .666.29.666.657 0 .367-.278.658-.666.658-.39 0-.667-.291-.667-.658 0-.367.277-.657.667-.657z" />
     </svg>
+  ),
+  Edge: ({ size = 24, className = '' }: IconProps) => (
+    <img 
+      src="https://raw.githubusercontent.com/alrra/browser-logos/main/src/edge/edge.svg" 
+      width={size} 
+      height={size} 
+      className={className} 
+      alt="Edge" 
+      style={{ objectFit: 'contain' }}
+    />
+  ),
+  Chrome: ({ size = 24, className = '' }: IconProps) => (
+    <img 
+      src="https://raw.githubusercontent.com/alrra/browser-logos/main/src/chrome/chrome.svg" 
+      width={size} 
+      height={size} 
+      className={className} 
+      alt="Chrome" 
+      style={{ objectFit: 'contain' }}
+    />
+  ),
+  Safari: ({ size = 24, className = '' }: IconProps) => (
+    <img 
+      src="https://raw.githubusercontent.com/alrra/browser-logos/main/src/safari/safari.svg" 
+      width={size} 
+      height={size} 
+      className={className} 
+      alt="Safari" 
+      style={{ objectFit: 'contain' }}
+    />
+  ),
+  Firefox: ({ size = 24, className = '' }: IconProps) => (
+    <img 
+      src="https://raw.githubusercontent.com/alrra/browser-logos/main/src/firefox/firefox.svg" 
+      width={size} 
+      height={size} 
+      className={className} 
+      alt="Firefox" 
+      style={{ objectFit: 'contain' }}
+    />
   )
 };
 
