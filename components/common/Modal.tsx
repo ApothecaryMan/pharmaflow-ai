@@ -1,6 +1,8 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { SegmentedControl, type SegmentedControlOption } from './SegmentedControl';
+import { SearchInput } from './SearchInput';
 
 export const BUTTON_CLOSE_BASE = 'border border-transparent hover:border-(--border-divider)';
 
@@ -115,6 +117,12 @@ interface ModalProps {
    * Useful for modals that require a wider view.
    */
   preventSidebar?: boolean;
+
+  /** Enables a compact search bar below the header */
+  searchable?: boolean;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
+  searchPlaceholder?: string;
 }
 
 import ReactDOM from 'react-dom';
@@ -149,6 +157,10 @@ export const Modal: React.FC<ModalProps> = ({
   style,
   backdropStyle,
   preventSidebar = false,
+  searchable = false,
+  searchValue = '',
+  onSearchChange,
+  searchPlaceholder,
 }) => {
   const settings = useSettings();
   const {
@@ -246,54 +258,94 @@ export const Modal: React.FC<ModalProps> = ({
     }
   }, [isOpen, zIndex]);
 
+  const ContextMenuContent: React.FC<{ preventSidebar: boolean }> = ({ preventSidebar }) => {
+    const { modalPresentationMode, sidebarModalWidth, setModalPresentationMode, setSidebarModalWidth, language } = useSettings();
+    const { hideMenu } = useContextMenu();
+    const isSidebar = modalPresentationMode === 'sidebar' && !preventSidebar;
+    const tSettings = TRANSLATIONS[language].settings;
+
+    return (
+      <div className='font-sans'>
+        <div className='px-2 py-1.5'>
+          <SegmentedControl
+            options={[
+              { label: '', value: 'modal', icon: 'open_in_full' },
+              { label: '', value: 'sidebar', icon: 'vertical_split' },
+            ]}
+            value={modalPresentationMode}
+            onChange={(val) => {
+              setModalPresentationMode?.(val as 'modal' | 'sidebar');
+              hideMenu();
+            }}
+            size='xs'
+            fullWidth
+            iconSize='--icon-lg'
+          />
+        </div>
+
+        <div className='border-t border-(--border-divider)' />
+
+        {([
+          { key: 'sm' as const, label: `${tSettings.sidebarModalWidth} (${tSettings.sidebarModalWidthNarrow})` },
+          { key: 'md' as const, label: `${tSettings.sidebarModalWidth} (${tSettings.sidebarModalWidthStandard})` },
+          { key: 'lg' as const, label: `${tSettings.sidebarModalWidth} (${tSettings.sidebarModalWidthWide})` },
+          { key: 'xl' as const, label: `${tSettings.sidebarModalWidth} (${tSettings.sidebarModalWidthExtraWide})` },
+        ]).map((item) => (
+          <button
+            key={item.key}
+            onClick={() => setSidebarModalWidth?.(item.key)}
+            disabled={!isSidebar}
+            className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+              !isSidebar
+                ? 'opacity-30 cursor-not-allowed'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+            }`}
+          >
+            <span className='material-symbols-rounded text-lg'>
+              {sidebarModalWidth === item.key ? 'check_circle' : 'circle'}
+            </span>
+            <span className='text-xs font-medium'>{item.label}</span>
+          </button>
+        ))}
+      </div>
+    );
+  };
+
   const handleHeaderContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    showMenu(e.clientX, e.clientY, [
-      {
-        label: t.modalPresentationModeModal,
-        icon: modalPresentationMode === 'modal' ? 'radio_button_checked' : 'radio_button_unchecked',
-        action: () => setModalPresentationMode?.('modal'),
-      },
-      {
-        label: t.modalPresentationModeSidebar,
-        icon:
-          modalPresentationMode === 'sidebar' ? 'radio_button_checked' : 'radio_button_unchecked',
-        action: () => setModalPresentationMode?.('sidebar'),
-        disabled: preventSidebar,
-      },
-      { separator: true },
-      {
-        label: `${t.sidebarModalWidth} (${t.sidebarModalWidthNarrow})`,
-        icon: sidebarModalWidth === 'sm' ? 'check_circle' : 'circle',
-        action: () => setSidebarModalWidth?.('sm'),
-        disabled: !isSidebar,
-      },
-      {
-        label: `${t.sidebarModalWidth} (${t.sidebarModalWidthStandard})`,
-        icon: sidebarModalWidth === 'md' ? 'check_circle' : 'circle',
-        action: () => setSidebarModalWidth?.('md'),
-        disabled: !isSidebar,
-      },
-      {
-        label: `${t.sidebarModalWidth} (${t.sidebarModalWidthWide})`,
-        icon: sidebarModalWidth === 'lg' ? 'check_circle' : 'circle',
-        action: () => setSidebarModalWidth?.('lg'),
-        disabled: !isSidebar,
-      },
-      {
-        label: `${t.sidebarModalWidth} (${t.sidebarModalWidthExtraWide})`,
-        icon: sidebarModalWidth === 'xl' ? 'check_circle' : 'circle',
-        action: () => setSidebarModalWidth?.('xl'),
-        disabled: !isSidebar,
-      },
-    ]);
+    showMenu(e.clientX, e.clientY, <ContextMenuContent preventSidebar={preventSidebar} />);
   };
 
   if (!isOpen) return null;
 
   const maxWidthClass = width || LAYOUT_CONFIG.MODAL_SIZES[size] || LAYOUT_CONFIG.MODAL_SIZES.lg;
+
+  const cardVariants = {
+    modal: {
+      initial: { opacity: 0, scale: 0.95, y: 20 },
+      animate: { opacity: 1, scale: 1, y: 0 },
+      exit: { opacity: 0, scale: 0.95, y: 20 },
+    },
+    sidebar: {
+      initial: { opacity: 0, x: '100%' },
+      animate: { opacity: 1, x: 0 },
+      exit: { opacity: 0, x: '100%' },
+    },
+  };
+
+  const backdropVariants = {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
+  };
+
+  const cardTransition = { type: 'spring', damping: 28, stiffness: 300 };
+  const backdropTransition = { duration: 0.2 };
+  const exitTransition = { duration: 0 };
+
+  const mode = isSidebar ? 'sidebar' : 'modal';
 
   return ReactDOM.createPortal(
     <div
@@ -306,22 +358,39 @@ export const Modal: React.FC<ModalProps> = ({
       data-modal-type={isSidebar ? 'sidebar' : 'modal'}
       data-modal-open='true'
     >
-      {/* Backdrop with dedicated blur and animation */}
-      <div
-        className={`absolute inset-0 bg-black/10 dark:bg-black/60 animate-fade-in pointer-events-auto ${isSidebar ? 'sidebar-modal-backdrop' : 'modal-backdrop'}`}
-        style={backdropStyle}
-        onClick={closeOnBackdropClick ? onClose : undefined}
-      />
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key='backdrop'
+              className={`absolute inset-0 bg-black/10 dark:bg-black/60 pointer-events-auto ${isSidebar ? 'sidebar-modal-backdrop' : 'modal-backdrop'}`}
+              style={backdropStyle}
+              onClick={closeOnBackdropClick ? onClose : undefined}
+              variants={backdropVariants}
+              initial='initial'
+              animate='animate'
+              exit='exit'
+              transition={backdropTransition}
+            />
 
-      <div
-        className={
-          isSidebar
-            ? `relative w-full bg-(--bg-card) border border-zinc-400/40 dark:border-zinc-500/30 overflow-hidden flex flex-col sidebar-modal-card animate-scale-in select-none pointer-events-auto ${className}`
-            : `relative w-full ${maxWidthClass} bg-(--bg-card) rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col animate-scale-in max-h-[95vh] border border-zinc-400/40 dark:border-zinc-500/30 ring-1 ring-inset ring-white/20 dark:ring-white/10 select-none ${className}`
-        }
-        style={isSidebar ? style : { height: height || 'auto', ...style }}
-        onClick={(e) => e.stopPropagation()}
-      >
+            {/* Card */}
+            <motion.div
+              key='card'
+              layout
+              className={
+                isSidebar
+                  ? `relative w-full bg-(--bg-card) border border-zinc-400/40 dark:border-zinc-500/30 overflow-hidden flex flex-col sidebar-modal-card select-none pointer-events-auto ${className}`
+                  : `relative w-full ${maxWidthClass} bg-(--bg-card) rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col max-h-[95vh] border border-zinc-400/40 dark:border-zinc-500/30 ring-1 ring-inset ring-white/20 dark:ring-white/10 select-none ${className}`
+              }
+              style={isSidebar ? style : { height: height || 'auto', ...style }}
+              onClick={(e) => e.stopPropagation()}
+              variants={cardVariants[mode]}
+              initial='initial'
+              animate='animate'
+              exit='exit'
+              transition={{ ...cardTransition, exit: exitTransition }}
+            >
         {title || tabs || headerActions ? (
           <div className='h-full flex flex-col overflow-hidden'>
             {/* Header - Windows 10 Style (Compact & Functional) */}
@@ -365,8 +434,19 @@ export const Modal: React.FC<ModalProps> = ({
                 </div>
               ) : null}
 
-              {/* End Section - Header Actions + Close Button */}
+              {/* End Section - Search + Header Actions + Close Button */}
               <div className='flex items-center gap-2 absolute end-2 top-0 bottom-0'>
+                {searchable && (
+                  <div className='w-[300px]'>
+                    <SearchInput
+                      compact
+                      value={searchValue}
+                      onSearchChange={(val) => onSearchChange?.(val)}
+                      placeholder={searchPlaceholder}
+                      wrapperClassName='w-full'
+                    />
+                  </div>
+                )}
                 {headerActions}
                 {!hideCloseButton ? (
                   <button
@@ -406,7 +486,10 @@ export const Modal: React.FC<ModalProps> = ({
         ) : (
           children
         )}
-      </div>
+      </motion.div>
+        </>
+      )}
+    </AnimatePresence>
     </div>,
     document.body
   );
