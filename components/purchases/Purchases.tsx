@@ -566,6 +566,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const [taxRate, setTaxRate] = useState(14); // Default 14%, loaded from settings
 
   const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
+  const [isSupplierIconHovered, setIsSupplierIconHovered] = useState(false);
 
   const [showPurchaseTabs, setShowPurchaseTabs] = useState(() => {
     if (!activeBranchId) return true;
@@ -1512,14 +1513,16 @@ export const Purchases: React.FC<PurchasesProps> = ({
               className='h-9 text-sm'
               icon={
                 <span
-                  className='material-symbols-rounded cursor-pointer hover:text-primary-500'
+                  className='material-symbols-rounded cursor-pointer'
                   style={{ fontSize: '22px' }}
+                  onMouseEnter={() => setIsSupplierIconHovered(true)}
+                  onMouseLeave={() => setIsSupplierIconHovered(false)}
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsSupplierModalOpen(true);
                   }}
                 >
-                  search
+                  {isSupplierIconHovered ? 'list' : 'search'}
                 </span>
               }
             />

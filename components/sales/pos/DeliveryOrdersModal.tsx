@@ -24,7 +24,6 @@ import { FilterDropdown } from '../../common/FilterDropdown';
 import { InsightTooltip } from '../../common/InsightTooltip';
 import { MaterialTabs } from '../../common/MaterialTabs';
 import { Modal } from '../../common/Modal';
-import { SearchInput } from '../../common/SearchInput';
 import { SegmentedControl } from '../../common/SegmentedControl';
 import { SmartInput, SmartTextarea } from '../../common/SmartInputs';
 import { TanStackTable } from '../../common/TanStackTable';
@@ -1045,21 +1044,10 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           setActiveTab(val as DeliveryTab);
           setSelectedSaleId(null);
         }}
-        headerActions={
-          <div className='flex items-center pe-2'>
-            <div className='w-[300px] flex items-center'>
-              <SearchInput
-                value={searchQuery}
-                onSearchChange={setSearchQuery}
-                onClear={() => setSearchQuery('')}
-                placeholder={t.searchOrder || 'Search orders...'}
-                autoFocus={true}
-                wrapperClassName='w-full !h-8 !py-0 min-h-[32px]'
-                className='!py-0 text-[14px]'
-              />
-            </div>
-          </div>
-        }
+        searchable
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder={t.searchOrder || 'Search orders...'}
       >
         <div className='flex flex-col h-[70vh]'>
           {selectedSaleId && selectedSale ? (
