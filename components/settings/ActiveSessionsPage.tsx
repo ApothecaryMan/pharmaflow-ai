@@ -141,7 +141,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                       
                       const sessionEmployee = session.employee_id ? employees.find(e => e.id === session.employee_id) : null;
                       const hasEmployee = !!sessionEmployee;
-                      const sessionUserName = sessionEmployee?.name || sessionEmployee?.en_name || (language === 'AR' ? 'غير محدد (الحساب الرئيسي)' : 'Unassigned (Main Account)');
+                      const sessionUserName = sessionEmployee?.name || sessionEmployee?.en_name || (language === 'AR' ? 'غير محدد' : 'Unassigned');
                       const sessionUserImage = sessionEmployee?.image || null;
                       const isOnline = onlineSessionIds.has(session.id);
                       
@@ -202,6 +202,15 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                         <td className='block md:table-cell px-4 py-1.5 md:px-6 md:py-4 text-gray-600 dark:text-gray-400'>
                           <div className='flex items-center gap-2'>
                             <span className='md:hidden text-xs font-semibold uppercase opacity-70'>{language === 'AR' ? 'المتصفح:' : 'Browser:'}</span>
+                            {(() => {
+                              const bn = displayBrowserName.toLowerCase();
+                              let BrowserIcon = null;
+                              if (bn.includes('edge')) BrowserIcon = Icons.Edge;
+                              else if (bn.includes('chrome')) BrowserIcon = Icons.Chrome;
+                              else if (bn.includes('safari')) BrowserIcon = Icons.Safari;
+                              else if (bn.includes('firefox')) BrowserIcon = Icons.Firefox;
+                              return BrowserIcon ? <BrowserIcon size={16} className='inline-block shrink-0' /> : null;
+                            })()}
                             <span>{displayBrowserName}</span>
                           </div>
                         </td>
@@ -222,10 +231,18 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                               ) : (
                                 <>
                                   <div className='text-gray-900 dark:text-gray-100'>
-                                    {new Date(session.last_seen_at).toLocaleDateString()}
+                                    {(() => {
+                                      const opts: Intl.DateTimeFormatOptions = { timeZone: 'Africa/Cairo', year: 'numeric', month: 'numeric', day: 'numeric' };
+                                      const d = new Date(session.last_seen_at).toLocaleDateString('en-CA', opts);
+                                      const today = new Date().toLocaleDateString('en-CA', opts);
+                                      const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA', opts);
+                                      if (d === today) return language === 'AR' ? 'اليوم' : 'Today';
+                                      if (d === yesterday) return language === 'AR' ? 'أمس' : 'Yesterday';
+                                      return new Date(session.last_seen_at).toLocaleDateString(language === 'AR' ? 'ar-SA' : 'en-US', { timeZone: 'Africa/Cairo' });
+                                    })()}
                                   </div>
                                   <div className='text-xs text-gray-500'>
-                                    {new Date(session.last_seen_at).toLocaleTimeString()}
+                                    {new Date(session.last_seen_at).toLocaleTimeString(language === 'AR' ? 'ar-SA' : 'en-US', { timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit' })}
                                   </div>
                                 </>
                               )}
