@@ -14,8 +14,7 @@ import { orgService } from '../../services/org/orgService';
 import type { Organization } from '../../types';
 import { Language, ThemeColor, type ViewState } from '../../types';
 import { EventManager } from '../../utils/events/eventManager';
-import { isTauri } from '../../utils/platform';
-import { invoke } from '@tauri-apps/api/core';
+import { useSystemBarColor } from '../../utils/systemBars';
 import { ContextMenuTrigger } from '../common/ContextMenu';
 import { getIconByName, Icons } from '../common/Icons';
 import { Modal } from '../common/Modal';
@@ -134,6 +133,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   const profileRef = useRef<HTMLDivElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
   const t = TRANSLATIONS[language];
+  const systemBarColor = darkMode ? '#1f1f1f' : '#ffffff';
+  useSystemBarColor(systemBarColor);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -178,15 +179,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
-  useEffect(() => {
-    if (isTauri()) {
-      const hexColor = darkMode ? '#1f1f1f' : '#ffffff';
-      invoke('set_titlebar_color', { color: hexColor }).catch((err) => 
-        console.warn('Failed to set titlebar color:', err)
-      );
-    }
-  }, [darkMode]);
 
   const handleModuleClick = (moduleId: string, event: React.MouseEvent<HTMLButtonElement>) => {
     if (navStyle === 2) {

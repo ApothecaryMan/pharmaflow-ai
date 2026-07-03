@@ -1,18 +1,18 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSettings } from '../../context/SettingsContext';
-import { useStatusBarColorOverride } from '../../hooks/layout/useTheme';
 import { TRANSLATIONS } from '../../i18n/translations';
 import type { Drug } from '../../types';
+import { encodeCode128 } from '../../utils/barcodeEncoders';
 import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { useSystemBarColorOverride } from '../../utils/systemBars';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { MaterialTabs } from '../common/MaterialTabs';
-import { SearchEngineInput } from '../common/SearchEngineInput';
-import { InlineBarcodeScanner } from '../mobile/InlineBarcodeScanner';
 import { Modal } from '../common/Modal';
-import { encodeCode128 } from '../../utils/barcodeEncoders';
+import { SearchEngineInput } from '../common/SearchEngineInput';
 import { getBarcodeFontsCSS } from '../inventory/barcodeFonts';
+import { InlineBarcodeScanner } from '../mobile/InlineBarcodeScanner';
 import { type PrescriptionItem, usePrescriptionPricing } from './hooks/usePrescriptionPricing';
 
 const PrescriptionPricing: React.FC = () => {
@@ -21,7 +21,7 @@ const PrescriptionPricing: React.FC = () => {
   const { playSuccess } = usePosSounds();
 
   // Override status bar color for this page to match the background
-  useStatusBarColorOverride('--bg-page-surface', [theme, darkMode]);
+  useSystemBarColorOverride('--bg-page-surface', `${theme.hex}:${darkMode}`);
 
   const { inventory, isLoading, prescriptionItems, addItem, updateQuantity, removeItem, clearAll, grandTotal } =
     usePrescriptionPricing();
