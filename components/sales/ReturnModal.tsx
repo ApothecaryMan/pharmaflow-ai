@@ -349,6 +349,45 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
       zIndex={100}
       title={t.returns.processReturn}
       subtitle={`${step === 1 ? t.returns.step2 : step === 2 ? t.returns.step3 : t.returns.step4}`}
+      footer={
+        <div dir='ltr' className='flex gap-3'>
+          {step > 1 && (
+            <button
+              onClick={handleBack}
+              className='w-12 h-12 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-colors flex items-center justify-center'
+              title={t.returns.back}
+            >
+              <span className='material-symbols-rounded text-lg'>arrow_back</span>
+            </button>
+          )}
+
+          <div className='flex-1' />
+
+          {step < 3 ? (
+            <button
+              onClick={handleNext}
+              disabled={step === 1 && selectedItems.size === 0}
+              className={`px-8 py-2.5 rounded-xl font-bold text-white bg-primary-600 enabled:hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 shadow-lg shadow-primary-200 dark:shadow-none`}
+            >
+              {t.returns.next}
+              <span className='material-symbols-rounded text-lg'>arrow_forward</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleConfirm}
+              disabled={isProcessing}
+              className={`px-8 py-2.5 rounded-xl font-bold text-white bg-primary-600 enabled:hover:bg-primary-700 disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-lg shadow-primary-200 dark:shadow-none`}
+            >
+              {isProcessing ? (
+                <span className='material-symbols-rounded text-[20px] animate-spin'>sync</span>
+              ) : (
+                <span className='material-symbols-rounded text-[20px]'>check_circle</span>
+              )}
+              {isProcessing ? t.common?.processing || 'Processing...' : t.returns.confirmReturn}
+            </button>
+          )}
+        </div>
+      }
     >
       {/* Enhanced Progress Indicator */}
       <div className='flex items-center justify-center gap-2 p-4 mb-4 bg-gray-50 dark:bg-gray-950/50 rounded-2xl'>
@@ -794,45 +833,6 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
               </div>
             )}
           </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div dir='ltr' className='pt-4 border-t border-gray-200 dark:border-gray-800 flex gap-3 mt-4'>
-        {step > 1 && (
-          <button
-            onClick={handleBack}
-            className='w-12 h-12 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-colors flex items-center justify-center'
-            title={t.returns.back}
-          >
-            <span className='material-symbols-rounded text-lg'>arrow_back</span>
-          </button>
-        )}
-
-        <div className='flex-1' />
-
-        {step < 3 ? (
-          <button
-            onClick={handleNext}
-            disabled={step === 1 && selectedItems.size === 0}
-            className={`px-8 py-2.5 rounded-xl font-bold text-white bg-primary-600 enabled:hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 shadow-lg shadow-primary-200 dark:shadow-none`}
-          >
-            {t.returns.next}
-            <span className='material-symbols-rounded text-lg'>arrow_forward</span>
-          </button>
-        ) : (
-          <button
-            onClick={handleConfirm}
-            disabled={isProcessing}
-            className={`px-8 py-2.5 rounded-xl font-bold text-white bg-primary-600 enabled:hover:bg-primary-700 disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-lg shadow-primary-200 dark:shadow-none`}
-          >
-            {isProcessing ? (
-              <span className='material-symbols-rounded text-[20px] animate-spin'>sync</span>
-            ) : (
-              <span className='material-symbols-rounded text-[20px]'>check_circle</span>
-            )}
-            {isProcessing ? t.common?.processing || 'Processing...' : t.returns.confirmReturn}
-          </button>
         )}
       </div>
     </Modal>
