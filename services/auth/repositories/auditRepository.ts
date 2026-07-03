@@ -47,7 +47,7 @@ export const auditRepository = {
       p_employee_id: isValidUuid(entry.employeeId),
       p_employee_code: entry.employeeCode || null,
       p_employee_name: entry.employeeName || null,
-      p_role: entry.role === 'unassigned' ? null : (entry.role || null),
+      p_role: entry.role || 'unassigned',
       p_branch_id: isValidUuid(entry.branchId),
       p_org_id: isValidUuid(entry.orgId),
       p_action: safeAction,
@@ -82,14 +82,14 @@ export const auditRepository = {
     const results = await Promise.allSettled(
       batch.map((entry) =>
         supabase.rpc('log_audit_event', {
-          p_username: entry.username,
+          p_username: entry.username || 'System',
           p_employee_id: entry.employeeId || null,
           p_employee_code: entry.employeeCode || null,
           p_employee_name: entry.employeeName || null,
-          p_role: entry.role || null,
+          p_role: entry.role || 'unassigned',
           p_branch_id: entry.branchId || null,
           p_org_id: entry.orgId || null,
-          p_action: entry.action || null,
+          p_action: entry.action || 'login',
           p_details: entry.details || null,
         })
       )
