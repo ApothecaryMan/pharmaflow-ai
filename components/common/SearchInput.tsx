@@ -29,6 +29,9 @@ interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   activeFilters?: Record<string, any[]>; // groupID -> values[]
   onUpdateFilter?: (groupId: string, newValues: any[]) => void;
 
+  // Compact Search Props
+  compact?: boolean;
+
   // Internal Badge Logic Props
   resultsCount?: number;
   isLoading?: boolean;
@@ -56,6 +59,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
       suggestions = [],
       onSuggestionAccept,
 
+      compact = false,
       resultsCount,
       isLoading = false,
       ...props
@@ -193,6 +197,48 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     };
 
     const [isFocused, setIsFocused] = useState(false);
+
+    if (compact) {
+      return (
+        <div
+          className={`
+            flex items-center gap-1 px-2 py-1.5 text-sm rounded-lg border
+            border-gray-200 dark:border-gray-700
+            bg-(--bg-input)
+            focus-within:ring-2 focus-within:ring-primary-500
+            ${wrapperClassName}
+          `}
+          dir={dir}
+        >
+          <span
+            className='material-symbols-rounded text-gray-400 shrink-0'
+            style={{ fontSize: '20px' }}
+          >
+            {typeof icon === 'string' ? icon : 'search'}
+          </span>
+          <input
+            ref={ref}
+            type='text'
+            value={value}
+            onChange={(e) => onSearchChange(e.target.value)}
+            onKeyDown={(e) => props.onKeyDown?.(e)}
+            placeholder={placeholder}
+            className={`
+              flex-1 bg-transparent text-sm
+              text-gray-900 dark:text-gray-100
+              placeholder-gray-400 outline-hidden
+              [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-cancel-button]:hidden
+              ${className}
+            `}
+            spellCheck='false'
+            autoComplete='off'
+            autoCorrect='off'
+            autoCapitalize='none'
+            {...props}
+          />
+        </div>
+      );
+    }
 
     return (
       <div
