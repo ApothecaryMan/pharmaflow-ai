@@ -98,14 +98,21 @@ export const sessionRepository = {
   },
 
   /**
-   * Get all active sessions for the current user
+   * Get all active sessions visible to the current user.
+   * Optionally filter by userId for owner views (faster query path).
    */
-  async getActiveSessions(): Promise<UserActiveSession[]> {
-    const { data, error } = await supabase
+  async getActiveSessions(userId?: string): Promise<UserActiveSession[]> {
+    let query = supabase
       .from('user_active_sessions')
       .select('*')
-      .eq('is_active', true)
-      .order('last_seen_at', { ascending: false });
+      .eq('is_active', true);
+
+    // Scope to specific user for faster indexed lookups (owner view)
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+
+    const { data, error } = await query.order('last_seen_at', { ascending: false });
 
     if (error) {
       console.error('Failed to fetch active sessions:', error);
@@ -213,15 +220,11 @@ export const sessionRepository = {
   },
 
   /**
-   * Update the last_seen_at timestamp for a session
+   * Ping session heartbeat via optimized RPC.
+   * Also performs probabilistic cleanup of stale sessions server-side.
    */
   async pingSession(sessionId: string): Promise<void> {
-    await supabase
-      .from('user_active_sessions')
-      .update({
-        last_seen_at: new Date().toISOString(),
-      })
-      .eq('id', sessionId);
+    await supabase.rpc('ping_session', { p_session_id: sessionId });
   },
 
   /**

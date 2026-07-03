@@ -11,10 +11,27 @@
  * Uses the presence of Tauri internals in the window object.
  */
 export const isTauri = (): boolean => {
-  return '__TAURI_INTERNALS__' in window;
+  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 };
 
 export const isWeb = (): boolean => !isTauri();
+
+const TAURI_SESSION_MARKER = 'ZINCDesktop/Tauri';
+
+/**
+ * Gives desktop WebView sessions a stable identity separate from browser sessions.
+ * WebView2 user agents look like Edge, so the raw UA alone cannot identify Tauri.
+ */
+export const getSessionUserAgent = (userAgent: string): string => {
+  if (!isTauri()) return userAgent;
+  return userAgent.includes(TAURI_SESSION_MARKER)
+    ? userAgent
+    : `${userAgent} ${TAURI_SESSION_MARKER}`;
+};
+
+export const isDesktopAppUserAgent = (userAgent: string): boolean => {
+  return userAgent.toLowerCase().includes(TAURI_SESSION_MARKER.toLowerCase());
+};
 
 /**
  * Parses user agent and platform to return a human-readable device name.
@@ -47,6 +64,7 @@ export const getDeviceName = (userAgent: string, platform: string): string => {
 export const getBrowserName = (userAgent: string): string => {
   if (!userAgent) return '';
   const ua = userAgent.toLowerCase();
+  if (isDesktopAppUserAgent(userAgent)) return 'ZINC App';
   if (ua.includes('edg/')) return 'Edge';
   if (ua.includes('chrome/')) return 'Chrome'; // Will also match Edge Chromium if we don't return early
   if (ua.includes('safari/') && !ua.includes('chrome/')) return 'Safari';

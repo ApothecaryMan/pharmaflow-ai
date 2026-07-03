@@ -12,7 +12,7 @@ import type {
   OrgRole,
   UserSession,
 } from '../../types';
-import { isTauri, getDeviceName, getBrowserName } from '../../utils/platform';
+import { isTauri, getDeviceName, getBrowserName, getSessionUserAgent } from '../../utils/platform';
 import { storage } from '../../utils/storage';
 import { employeeRepository } from '../hr/repositories/employeeRepository';
 import { orgService } from '../org/orgService';
@@ -164,8 +164,8 @@ export const authService = {
         orgId: session.orgId,
         branchId: session.branchId,
         employeeId: session.employeeId,
-        deviceInfo: typeof navigator !== 'undefined' ? `${getDeviceName(navigator.userAgent, navigator.platform)} - ${getBrowserName(navigator.userAgent)}` : 'Unknown Device',
-        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown User Agent',
+        deviceInfo: typeof navigator !== 'undefined' ? `${getDeviceName(navigator.userAgent, navigator.platform)} - ${getBrowserName(getSessionUserAgent(navigator.userAgent))}` : 'Unknown Device',
+        userAgent: typeof navigator !== 'undefined' ? getSessionUserAgent(navigator.userAgent) : 'Unknown User Agent',
       })
         .then((sessionId) => {
           if (sessionId) {
@@ -413,8 +413,8 @@ export const authService = {
         orgId: session.orgId,
         branchId: session.branchId,
         employeeId: session.employeeId,
-        deviceInfo: typeof navigator !== 'undefined' ? `${getDeviceName(navigator.userAgent, navigator.platform)} - ${getBrowserName(navigator.userAgent)}` : 'Unknown Device',
-        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown User Agent',
+        deviceInfo: typeof navigator !== 'undefined' ? `${getDeviceName(navigator.userAgent, navigator.platform)} - ${getBrowserName(getSessionUserAgent(navigator.userAgent))}` : 'Unknown Device',
+        userAgent: typeof navigator !== 'undefined' ? getSessionUserAgent(navigator.userAgent) : 'Unknown User Agent',
       }).then((sessionId) => {
         if (sessionId) {
           storage.set(StorageKeys.ACTIVE_SESSION_ID, sessionId);

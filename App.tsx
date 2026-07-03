@@ -50,7 +50,7 @@ import { type AppState, useAppState } from './hooks/layout/useAppState';
 import { useNavigation } from './hooks/layout/useNavigation';
 import { useTheme } from './hooks/layout/useTheme';
 import { useUrlSync } from './hooks/layout/useUrlSync';
-import { usePresenceTracking } from './hooks/infrastructure/usePresenceTracking';
+import { useSessionHeartbeat } from './hooks/infrastructure/useSessionHeartbeat';
 import { ShiftProvider, useShift } from './hooks/sales/useShift';
 import { useEntityHandlers } from './hooks/useEntityHandlers';
 import { ROOT_STRINGS } from './i18n/rootStrings';
@@ -233,8 +233,8 @@ const App: React.FC = () => {
   // When not authenticated, we force isLoginView=true for the black theme color override
   useTheme(theme.primary, darkMode, !authState.isAuthenticated, theme.hex);
 
-  // 5.1 Global Presence Tracking
-  usePresenceTracking(authState.isAuthenticated, authService.getCurrentUserSync()?.userId);
+  // 5.1 Global Session Heartbeat — pings last_seen_at every 2 minutes for online detection
+  useSessionHeartbeat(authState.isAuthenticated);
 
   // 6. Stable Login Callbacks
   const { setIsAuthenticated } = authState;

@@ -2,8 +2,8 @@ import type React from 'react';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { sessionRepository, type UserActiveSession } from '../../../services/auth/repositories/sessionRepository';
-import { authService } from '../../../services/auth/authService';
-import { getDeviceName, getBrowserName } from '../../../utils/platform';
+import { getDeviceName, getBrowserName, isDesktopAppUserAgent } from '../../../utils/platform';
+import { isSessionOnline } from '../../../hooks/infrastructure/useSessionHeartbeat';
 import { Icons } from '../../common/Icons';
 import type { Employee, UserProfile } from '../../../types';
 
@@ -23,13 +23,14 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
   const [sessions, setSessions] = useState<UserActiveSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [onlineSessionIds, setOnlineSessionIds] = useState<Set<string>>(new Set());
 
-  const currentUser = authService.getCurrentUserSync();
+  // Tick counter — forces re-render to recalculate isSessionOnline() from cached data
+  const [, setTick] = useState(0);
 
   const loadSessions = async () => {
     try {
       setLoading(true);
+      // No userId scope needed — RLS filters via employee_id subquery
       const data = await sessionRepository.getActiveSessions();
       setSessions(data);
     } catch (err) {
@@ -64,29 +65,14 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
     }
 
     dbChannel.subscribe();
-      
-    const handlePresence = (e: any) => {
-      const state = e.detail;
-      const onlineIds = new Set<string>();
-      for (const key in state) {
-        state[key].forEach((presence: any) => {
-          if (presence.session_id) onlineIds.add(presence.session_id);
-        });
-      }
-      setOnlineSessionIds(onlineIds);
-    };
-    
-    window.addEventListener('presence_sync', handlePresence);
-    
-    const channelTopic = `presence:user_${currentUser?.userId}`;
-    const existingPresenceChannel = supabase.getChannels().find(c => c.topic.includes(channelTopic));
-    if (existingPresenceChannel) {
-      handlePresence({ detail: existingPresenceChannel.presenceState() });
-    }
+
+    // Local tick every 60s — recalculates online/offline without DB calls.
+    // Actual data updates come from the postgres_changes subscription above.
+    const tickInterval = setInterval(() => setTick(t => t + 1), 60_000);
       
     return () => {
       supabase.removeChannel(dbChannel);
-      window.removeEventListener('presence_sync', handlePresence);
+      clearInterval(tickInterval);
     };
   }, [profile?.id, workspaceIdsString]);
 
@@ -122,7 +108,7 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
   };
 
   const pharmacySessions = sessions.filter(session => session.org_id);
-  const onlineCount = pharmacySessions.filter(session => onlineSessionIds.has(session.id)).length;
+  const onlineCount = pharmacySessions.filter(session => isSessionOnline(session.last_seen_at)).length;
   const offlineCount = pharmacySessions.length - onlineCount;
 
   return (
@@ -167,7 +153,8 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
           {pharmacySessions.map(session => {
             const displayDeviceName = getDeviceName(session.user_agent || '', session.device_info || '');
               const displayBrowserName = getBrowserName(session.user_agent || '');
-              const isOnline = onlineSessionIds.has(session.id);
+              const isDesktopAppSession = isDesktopAppUserAgent(session.user_agent || '');
+              const isOnline = isSessionOnline(session.last_seen_at);
               
               let IconComponent = Icons.Desktop;
               let iconColor = 'text-gray-600 dark:text-gray-400';
@@ -187,11 +174,9 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
 
               let BrowserIcon = Icons.Globe;
               let browserTooltip = displayBrowserName || (isRTL ? 'متصفح/تطبيق غير معروف' : 'Unknown App/Browser');
-              const ua = (session.user_agent || '').toLowerCase();
-              
-              if (ua.includes('tauri') || ua.includes('zinc')) {
+              if (isDesktopAppSession) {
                 BrowserIcon = Icons.Desktop;
-                browserTooltip = isRTL ? 'تطبيق ZINC لسطح المكتب' : 'ZINC Desktop App';
+                browserTooltip = isRTL ? 'تطبيق ZINC' : 'ZINC App';
               } else if (displayBrowserName === 'Edge') {
                 BrowserIcon = Icons.Edge;
               } else if (displayBrowserName === 'Chrome') {
@@ -217,7 +202,11 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
                       
                       <div className='text-sm text-(--text-secondary) space-y-1'>
                         <div className='flex items-center gap-1.5' title={browserTooltip}>
-                          <BrowserIcon size={20} />
+                          {isDesktopAppSession ? (
+                            <img src='/app_icon_color.svg' alt='' className='w-5 h-5 shrink-0' />
+                          ) : (
+                            <BrowserIcon size={20} />
+                          )}
                           <span dir="ltr">{session.ip_address || ''}</span>
                         </div>
                         <div className='flex items-center gap-1.5'>

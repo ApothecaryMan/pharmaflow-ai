@@ -3,10 +3,11 @@ import { PageHeader } from '../common/PageHeader';
 import { Icons } from '../common/Icons';
 import { sessionRepository, type UserActiveSession } from '../../services/auth/repositories/sessionRepository';
 import { supabase } from '../../lib/supabase';
-import { getDeviceName, getBrowserName } from '../../utils/platform';
+import { getDeviceName, getBrowserName, getSessionUserAgent, isDesktopAppUserAgent } from '../../utils/platform';
 import { formatDateWithRelativeLabel, getRelativeTime, getDurationMs, getDurationStr } from '../../utils/dateFormatter';
 import { authService } from '../../services/auth/authService';
 import { employeeService } from '../../services/hr/employeeService';
+import { isSessionOnline } from '../../hooks/infrastructure/useSessionHeartbeat';
 import { Tooltip } from '../common/Tooltip';
 import { SearchInput } from '../common/SearchInput';
 
@@ -37,7 +38,6 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
   const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [onlineSessionIds, setOnlineSessionIds] = useState<Set<string>>(new Set());
 
   const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('lastSeen');
@@ -47,12 +47,16 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
 
   const currentUser = authService.getCurrentUserSync();
 
-  const currentUserAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  const currentUserAgent = typeof navigator !== 'undefined' ? getSessionUserAgent(navigator.userAgent) : '';
+
+  // Tick counter — forces re-render to recalculate isSessionOnline() from cached data
+  const [, setTick] = useState(0);
 
   const loadSessions = async () => {
     try {
       setLoading(true);
-      const data = await sessionRepository.getActiveSessions();
+      // Scope to current user for faster indexed query
+      const data = await sessionRepository.getActiveSessions(currentUser?.userId);
       setSessions(data);
     } catch (err) {
       console.error(err);
@@ -65,7 +69,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
   const refreshSessions = useCallback(async () => {
     setRefreshing(true);
     try {
-      const data = await sessionRepository.getActiveSessions();
+      const data = await sessionRepository.getActiveSessions(currentUser?.userId);
       setSessions(data);
       setError(null);
     } catch (err) {
@@ -73,7 +77,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [currentUser?.userId]);
 
   useEffect(() => {
     loadSessions();
@@ -92,32 +96,17 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
     const dbChannel = supabase
       .channel(uniqueChannelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'user_active_sessions' }, () => {
-        sessionRepository.getActiveSessions().then(setSessions);
+        sessionRepository.getActiveSessions(currentUser?.userId).then(setSessions);
       })
       .subscribe();
-      
-    const handlePresence = (e: any) => {
-      const state = e.detail;
-      const onlineIds = new Set<string>();
-      for (const key in state) {
-        state[key].forEach((presence: any) => {
-          if (presence.session_id) onlineIds.add(presence.session_id);
-        });
-      }
-      setOnlineSessionIds(onlineIds);
-    };
-    
-    window.addEventListener('presence_sync', handlePresence);
-    
-    const channelTopic = `presence:user_${currentUser?.userId}`;
-    const existingPresenceChannel = supabase.getChannels().find(c => c.topic.includes(channelTopic));
-    if (existingPresenceChannel) {
-      handlePresence({ detail: existingPresenceChannel.presenceState() });
-    }
+
+    // Local tick every 60s — recalculates online/offline without DB calls.
+    // Actual data updates come from the postgres_changes subscription above.
+    const tickInterval = setInterval(() => setTick(t => t + 1), 60_000);
       
     return () => {
       supabase.removeChannel(dbChannel);
-      window.removeEventListener('presence_sync', handlePresence);
+      clearInterval(tickInterval);
     };
   }, [currentUser?.userId]);
 
@@ -224,7 +213,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
 
   const hasOtherSessions = sessions.some(s => s.user_agent !== currentUserAgent);
 
-  const onlineCount = processedSessions.filter(s => onlineSessionIds.has(s.id)).length;
+  const onlineCount = processedSessions.filter(s => isSessionOnline(s.last_seen_at)).length;
   const offlineCount = processedSessions.length - onlineCount;
   const currentCount = processedSessions.filter(s => s.user_agent === currentUserAgent).length;
   const staleCount = processedSessions.filter(s => {
@@ -237,8 +226,8 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
     return emp?.name || emp?.en_name || (language === 'AR' ? 'غير محدد' : 'Unassigned');
   };
 
-  const onlineSessions = processedSessions.filter(s => onlineSessionIds.has(s.id));
-  const offlineSessions = processedSessions.filter(s => !onlineSessionIds.has(s.id));
+  const onlineSessions = processedSessions.filter(s => isSessionOnline(s.last_seen_at));
+  const offlineSessions = processedSessions.filter(s => !isSessionOnline(s.last_seen_at));
   const staleSessions = processedSessions.filter(s => {
     const age = Date.now() - new Date(s.created_at).getTime();
     return age > 86400000;
@@ -469,12 +458,13 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                       processedSessions.map((session) => {
                         const displayDeviceName = getDeviceName(session.user_agent || '', session.device_info || '');
                         const displayBrowserName = getBrowserName(session.user_agent || '');
+                        const isDesktopAppSession = isDesktopAppUserAgent(session.user_agent || '');
                         
                         const sessionEmployee = session.employee_id ? employees.find(e => e.id === session.employee_id) : null;
                         const hasEmployee = !!sessionEmployee;
                         const sessionUserName = sessionEmployee?.name || sessionEmployee?.en_name || (language === 'AR' ? 'غير محدد' : 'Unassigned');
                         const sessionUserImage = sessionEmployee?.image || null;
-                        const isOnline = onlineSessionIds.has(session.id);
+                        const isOnline = isSessionOnline(session.last_seen_at);
                         
                         let IconComponent = Icons.Desktop;
                         let iconColor = 'text-primary-600';
@@ -595,6 +585,9 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                           <div className='flex items-center gap-2'>
                             <span className='md:hidden text-xs font-semibold uppercase opacity-70'>{language === 'AR' ? 'المتصفح:' : 'Browser:'}</span>
                             {(() => {
+                              if (isDesktopAppSession) {
+                                return <img src='/app_icon_color.svg' alt='' className='w-4 h-4 inline-block shrink-0' />;
+                              }
                               const bn = displayBrowserName.toLowerCase();
                               let BrowserIcon = null;
                               if (bn.includes('edge')) BrowserIcon = Icons.Edge;
