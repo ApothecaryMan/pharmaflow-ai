@@ -198,19 +198,52 @@ export const usePOSCart = ({
   );
 
   const addGroupToCart = useCallback(
-    (group: Drug[]) => {
-      // Treat the array as a potential group
+    (group: Drug[], addQuantity: number = 1) => {
       const grouped = batchService.groupInventory(group)[0];
       if (!grouped) return;
 
       const drugKey = grouped.groupId;
       const selectedBatchId = selectedBatches[drugKey];
+      const unitMode = selectedUnits[drugKey] === 'unit';
 
-      const targetBatch = batchService.findTargetBatch(grouped, cartRef.current, selectedBatchId);
+      // Calculate already-in-cart units per batch so each click distributes
+      // across batches with remaining stock instead of filling the first one
+      const cartUsedUnitsPerBatch = new Map<string, number>();
+      cartRef.current.forEach((item) => {
+        const qty = item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1);
+        cartUsedUnitsPerBatch.set(item.id, (cartUsedUnitsPerBatch.get(item.id) || 0) + qty);
+      });
 
-      if (targetBatch) {
-        const unitMode = selectedUnits[drugKey] === 'unit';
-        addToCart(targetBatch, unitMode);
+      const adjustedBatches = grouped.batches.map((b) => ({
+        ...b,
+        stock: Math.max(0, (b.stock || 0) - (cartUsedUnitsPerBatch.get(b.id) || 0)),
+      }));
+
+      const distribution = batchService.autoDistributeQuantities(
+        unitMode ? 0 : addQuantity,
+        unitMode ? addQuantity : 0,
+        adjustedBatches,
+        selectedBatchId
+      );
+
+      let added = false;
+      for (const d of distribution) {
+        const batch = grouped.batches.find((b) => b.id === d.batchId);
+        if (!batch) continue;
+        if (d.packQty > 0) {
+          addToCart(batch, false, d.packQty);
+          added = true;
+        }
+        if (d.unitQty > 0) {
+          addToCart(batch, true, d.unitQty);
+          added = true;
+        }
+      }
+
+      // Safety fallback: if distribution produced nothing, use old behavior
+      if (!added) {
+        const targetBatch = batchService.findTargetBatch(grouped, cartRef.current, selectedBatchId);
+        if (targetBatch) addToCart(targetBatch, unitMode);
       }
     },
     [selectedBatches, selectedUnits, addToCart]
