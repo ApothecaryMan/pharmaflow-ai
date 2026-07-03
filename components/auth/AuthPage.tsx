@@ -4,7 +4,7 @@ import { ROUTES } from '../../config/routes';
 import { useSettings } from '../../context';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { authService } from '../../services/auth/authService';
-import { useSystemBarColor } from '../../utils/systemBars';
+import { useAutoSystemBarColor } from '../../utils/systemBars';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { PricingPage } from '../settings/PricingPage';
 import { ForgotPassword } from './ForgotPassword';
@@ -20,7 +20,6 @@ interface AuthPageProps {
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
   const { language, setLanguage } = useSettings();
-  useSystemBarColor('#000000');
 
   const [currentView, setCurrentView] = useState<AuthView>(() => {
     const hash = window.location.hash;
@@ -28,6 +27,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
     if (hash === `#/${ROUTES.FORGOT_PASSWORD}`) return 'forgot-password';
     return 'login';
   });
+  useAutoSystemBarColor(`${currentView}:${language}`, '--bg-page-surface');
 
   const handleViewChange = useCallback((view: AuthView) => {
     setCurrentView(view);

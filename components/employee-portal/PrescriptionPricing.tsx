@@ -6,7 +6,7 @@ import type { Drug } from '../../types';
 import { encodeCode128 } from '../../utils/barcodeEncoders';
 import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
-import { useSystemBarColorOverride } from '../../utils/systemBars';
+import { useAutoSystemBarColor } from '../../utils/systemBars';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
@@ -20,8 +20,7 @@ const PrescriptionPricing: React.FC = () => {
   const t = TRANSLATIONS[language];
   const { playSuccess } = usePosSounds();
 
-  // Override status bar color for this page to match the background
-  useSystemBarColorOverride('--bg-page-surface', `${theme.hex}:${darkMode}`);
+  useAutoSystemBarColor(`prescription-pricing:${theme.hex}:${darkMode}`, '--bg-page-surface');
 
   const { inventory, isLoading, prescriptionItems, addItem, updateQuantity, removeItem, clearAll, grandTotal } =
     usePrescriptionPricing();

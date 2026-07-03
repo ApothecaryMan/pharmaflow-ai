@@ -1,12 +1,13 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import type React from 'react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { getContentContainerClasses, LAYOUT_CONFIG } from '../../config/layoutConfig';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
 import { ROUTES } from '../../config/routes';
 import { useSettings } from '../../context';
 import type { ViewState } from '../../types';
-import { ContextMenuProvider } from '../common/ContextMenu';
+import { useAutoSystemBarColor } from '../../utils/systemBars';
+import { ContextMenuProvider, useContextMenu } from '../common/ContextMenu';
 import { DynamicEventLayer } from './DynamicEventLayer';
 import { MobileNavigation } from './MobileNavigation';
 import { Navbar } from './Navbar';
@@ -38,8 +39,6 @@ interface MainLayoutProps {
 }
 
 const STANDALONE_VIEWS = [ROUTES.LOGIN, 'services'];
-
-import { useContextMenu } from '../common/ContextMenu';
 
 // --- Global Context Menu Wrapper ---
 const GlobalContextMenuWrapper: React.FC<{
@@ -90,8 +89,6 @@ const GlobalContextMenuWrapper: React.FC<{
   );
 };
 
-import { isTauri } from '../../utils/platform';
-
 export const MainLayout: React.FC<MainLayoutProps> = ({
   children,
   view,
@@ -125,6 +122,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   } = useSettings();
 
   const isStandalone = STANDALONE_VIEWS.includes(view);
+  useAutoSystemBarColor(
+    `${view}:${theme.hex}:${darkMode}:${language}:${currentEmployeeId ?? ''}`,
+    isStandalone ? '--bg-page-surface' : '--bg-navbar'
+  );
 
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
 

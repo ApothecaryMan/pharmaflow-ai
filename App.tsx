@@ -40,37 +40,18 @@ import { ROUTES } from './config/routes';
 import { CatalogProvider, LANGUAGES, THEMES, useAlert, useSettings } from './context';
 import { DataProvider, useData } from './context/DataContext';
 import { type AuthState, useAuth } from './hooks/auth/useAuth';
-import { useAuthenticatedData } from './hooks/auth/useAuthenticatedData';
 import { useOnboardingStatus } from './hooks/auth/useOnboardingStatus';
-import { useSessionHandlers } from './hooks/auth/useSessionHandlers';
-import { useGlobalEventHandlers } from './hooks/infrastructure/useGlobalEventHandlers';
 import { usePreventZoom } from './hooks/infrastructure/usePreventZoom';
 // App State Hooks
 import { type AppState, useAppState } from './hooks/layout/useAppState';
-import { useNavigation } from './hooks/layout/useNavigation';
 import { useTheme } from './hooks/layout/useTheme';
 import { useUrlSync } from './hooks/layout/useUrlSync';
 import { useSessionHeartbeat } from './hooks/infrastructure/useSessionHeartbeat';
-import { ShiftProvider, useShift } from './hooks/sales/useShift';
-import { useEntityHandlers } from './hooks/useEntityHandlers';
 import { ROOT_STRINGS } from './i18n/rootStrings';
 import { authService } from './services/auth/authService';
 import type { Supplier, ViewState } from './types';
-import { isTauri } from './utils/platform';
+import { useAutoSystemBarColor } from './utils/systemBars';
 
-const INITIAL_SUPPLIERS: Supplier[] = [
-  {
-    id: '1',
-    orgId: '',
-    branchId: '1',
-    name: 'B2B',
-    contactPerson: 'B2B',
-    phone: '',
-    email: '',
-    address: '',
-    status: 'active',
-  },
-];
 
 // --- ARCHITECTURAL NOTE: THE ORCHESTRATOR PATTERN ---
 /**
@@ -229,9 +210,23 @@ const App: React.FC = () => {
     error: onboardingError,
   } = useOnboardingStatus(authState.isAuthenticated);
 
-  // 5. Dynamic Theme Hook - Handles PWA Title Bar & Global Dark Mode
-  // When not authenticated, we force isLoginView=true for the black theme color override
+  // 5. Dynamic Theme Hook - Handles CSS variables & Global Dark Mode
+  // System bars are handled separately by the automatic top-surface sampler.
   useTheme(theme.primary, darkMode, !authState.isAuthenticated, theme.hex);
+  useAutoSystemBarColor(
+    [
+      authState.isAuthenticated,
+      authState.isLoggingOut,
+      authState.logoutReason,
+      isCheckingOnboarding,
+      activeStep,
+      appState.view,
+      theme.hex,
+      darkMode,
+      language,
+    ].join(':'),
+    authState.isAuthenticated ? '--bg-navbar' : '--bg-page-surface'
+  );
 
   // 5.1 Global Session Heartbeat — pings last_seen_at every 2 minutes for online detection
   useSessionHeartbeat(authState.isAuthenticated);

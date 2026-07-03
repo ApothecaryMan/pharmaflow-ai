@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { evaluateCssColor, setSystemBarColor } from '../../utils/systemBars';
 
 // Color palette mappings for each theme
 const COLOR_PALETTES: Record<string, Record<string, string>> = {
@@ -133,15 +132,6 @@ export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean 
     } else {
       root.classList.remove('dark');
     }
-
-    // Get the computed background color of the navbar from CSS variables
-    // This makes it fully dynamic and responsive to CSS changes
-    const computedNavbarColor = evaluateCssColor('--bg-navbar', '');
-    const titleBarColor = isLoginView
-      ? '#000000'
-      : computedNavbarColor || (darkMode ? '#1f1f1f' : '#ffffff');
-
-    setSystemBarColor(titleBarColor);
   }, [color, darkMode, isLoginView, hex]);
 
   // Favicon — separate effect so meta-tag cleanup doesn't affect it

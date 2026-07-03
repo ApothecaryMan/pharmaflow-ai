@@ -1,30 +1,17 @@
-import { motion } from 'framer-motion';
 import React, { useEffect, useRef, useState } from 'react';
 import type { MenuItem } from '../../config/menuData';
-import type { UserRole } from '../../config/permissions';
 import { useSettings } from '../../context';
 import { useData } from '../../context/DataContext';
-import { useShift } from '../../hooks/sales/useShift';
-import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { authService } from '../../services/auth/authService';
-import { permissionsService } from '../../services/auth/permissionsService';
-import { branchService } from '../../services/org/branchService';
 import { orgService } from '../../services/org/orgService';
 import type { Organization } from '../../types';
 import { Language, ThemeColor, type ViewState } from '../../types';
 import { EventManager } from '../../utils/events/eventManager';
-import { useSystemBarColor } from '../../utils/systemBars';
-import { ContextMenuTrigger } from '../common/ContextMenu';
 import { getIconByName, Icons } from '../common/Icons';
-import { Modal } from '../common/Modal';
-import { SegmentedControl } from '../common/SegmentedControl';
-import { Switch } from '../common/Switch';
 import { Tooltip } from '../common/Tooltip';
-import { AttendanceQuickAction } from './AttendanceQuickAction';
 import { NavModules } from './navbar/NavModules';
 import { NavUserActions } from './navbar/NavUserActions';
-import { SidebarDropdown } from './SidebarDropdown';
 import { SettingsMenu } from './StatusBar/items/SettingsMenu';
 
 interface NavbarProps {
@@ -133,8 +120,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   const profileRef = useRef<HTMLDivElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
   const t = TRANSLATIONS[language];
-  const systemBarColor = darkMode ? '#1f1f1f' : '#ffffff';
-  useSystemBarColor(systemBarColor);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
