@@ -923,6 +923,7 @@ export const POS: React.FC<POSProps> = ({
             setCustomerName={setCustomerName}
             showCustomerDropdown={showCustomerDropdown}
             setShowCustomerDropdown={setShowCustomerDropdown}
+            customers={customers}
             filteredCustomers={filteredCustomers}
             highlightedCustomerIndex={highlightedCustomerIndex}
             setHighlightedCustomerIndex={setHighlightedCustomerIndex}

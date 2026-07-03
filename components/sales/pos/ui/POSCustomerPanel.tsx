@@ -1,10 +1,11 @@
-import type React from 'react';
+import React, { useState } from 'react';
 import { getLocationName } from '../../../../data/locations';
 import type { Customer, Language } from '../../../../types';
 import { CARD_MD } from '../../../../utils/themeStyles';
 import { SearchDropdown, type SearchDropdownColumn } from '../../../common/SearchDropdown';
 import { SearchInput } from '../../../common/SearchInput';
 import { SegmentedControl } from '../../../common/SegmentedControl';
+import { Modal } from '../../../common/Modal';
 
 export interface POSCustomerPanelProps {
   t: Translations;
@@ -15,6 +16,7 @@ export interface POSCustomerPanelProps {
   setCustomerName: (name: string) => void;
   showCustomerDropdown: boolean;
   setShowCustomerDropdown: (show: boolean) => void;
+  customers: Customer[];
   filteredCustomers: Customer[];
   highlightedCustomerIndex: number;
   setHighlightedCustomerIndex: (index: number) => void;
@@ -38,6 +40,7 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
   setCustomerName,
   showCustomerDropdown,
   setShowCustomerDropdown,
+  customers,
   filteredCustomers,
   highlightedCustomerIndex,
   setHighlightedCustomerIndex,
@@ -62,6 +65,22 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
       activeColor: 'blue',
     },
   ];
+
+  const [isCustomerIconHovered, setIsCustomerIconHovered] = useState(false);
+  const [showCustomerListModal, setShowCustomerListModal] = useState(false);
+  const [customerListSearch, setCustomerListSearch] = useState('');
+
+  const modalFilteredCustomers = React.useMemo(() => {
+    if (!customerListSearch.trim()) return customers;
+    const q = customerListSearch.toLowerCase();
+    return customers.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.code && c.code.toLowerCase().includes(q)) ||
+        (c.phone && c.phone.toLowerCase().includes(q)) ||
+        (c.streetAddress && c.streetAddress.toLowerCase().includes(q))
+    );
+  }, [customers, customerListSearch]);
 
   const customerColumns: SearchDropdownColumn<Customer>[] = [
     {
@@ -176,8 +195,6 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
             <SegmentedControl
               value={paymentMethod}
               onChange={(val) => setPaymentMethod(val as 'cash' | 'visa')}
-              color={color}
-              variant='onPage'
               iconSize='--icon-lg'
               size='xs'
               options={paymentOptions}
@@ -201,7 +218,17 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
               onFocus={() => setShowCustomerDropdown(true)}
               onKeyDown={customerDropdownHook.handleKeyDown}
               placeholder={t.customerSearchPlaceholder}
-              icon='person'
+              icon={
+                <span
+                  className='material-symbols-rounded'
+                  style={{ fontSize: '22px', cursor: 'pointer' }}
+                  onMouseEnter={() => setIsCustomerIconHovered(true)}
+                  onMouseLeave={() => setIsCustomerIconHovered(false)}
+                  onClick={() => setShowCustomerListModal(true)}
+                >
+                  {isCustomerIconHovered ? 'list' : 'person'}
+                </span>
+              }
               color={color}
               className=''
             />
@@ -225,8 +252,6 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
             <SegmentedControl
               value={paymentMethod}
               onChange={(val) => setPaymentMethod(val as 'cash' | 'visa')}
-              color={color}
-              variant='onPage'
               iconSize='--icon-lg'
               size='xs'
               options={paymentOptions}
@@ -234,6 +259,73 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
           </div>
         </div>
       )}
+
+      <Modal
+        isOpen={showCustomerListModal}
+        onClose={() => {
+          setShowCustomerListModal(false);
+          setCustomerListSearch('');
+        }}
+        title={t.customers?.allCustomers || 'All Customers'}
+        size='2xl'
+        bodyClassName='p-0'
+      >
+        <div className='flex flex-col'>
+          <div className='p-3 pb-0'>
+            <SearchInput
+              compact
+              value={customerListSearch}
+              onSearchChange={setCustomerListSearch}
+              placeholder={t.customerSearchPlaceholder}
+              icon='search'
+            />
+          </div>
+
+          <div className='overflow-y-auto min-h-[400px]'>
+            {modalFilteredCustomers.length === 0 ? (
+              <div className='p-6 text-center text-sm text-gray-400'>
+                {t.noResults || 'No customers found'}
+              </div>
+            ) : (
+              modalFilteredCustomers.map((customer) => (
+                <button
+                  key={customer.id}
+                  onClick={() => {
+                    handleCustomerSelect(customer);
+                    setShowCustomerListModal(false);
+                    setCustomerListSearch('');
+                  }}
+                  className='w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-start border-b border-gray-100 dark:border-gray-800 last:border-0'
+                >
+                  <div className='h-9 min-w-9 px-1.5 rounded-lg bg-primary-100 dark:bg-primary-700 flex items-center justify-center text-primary-600 dark:text-primary-100 shrink-0'>
+                    <span className='text-xl font-mono font-bold'>
+                      {customer.code || `#${customer.serialId}`}
+                    </span>
+                  </div>
+                  <div className='flex-1 min-w-0'>
+                    <div className='flex items-center gap-1.5'>
+                      <span className='font-bold text-sm text-gray-900 dark:text-gray-100 truncate'>
+                        {customer.name}
+                      </span>
+                      <span className='font-bold text-sm text-gray-900 dark:text-gray-100 font-mono shrink-0' dir='ltr'>
+                        {customer.phone}
+                      </span>
+                    </div>
+                    {customer.streetAddress && (
+                      <div className='flex items-center gap-2 text-xs text-gray-500'>
+                        <span className='truncate'>{customer.streetAddress}</span>
+                      </div>
+                    )}
+                  </div>
+                  <span className='material-symbols-rounded text-gray-300 text-lg'>
+                    {language === 'AR' ? 'chevron_left' : 'chevron_right'}
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

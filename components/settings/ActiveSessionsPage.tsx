@@ -8,6 +8,7 @@ import { formatDateWithRelativeLabel, getRelativeTime, getDurationMs, getDuratio
 import { authService } from '../../services/auth/authService';
 import { employeeService } from '../../services/hr/employeeService';
 import { Tooltip } from '../common/Tooltip';
+import { SearchInput } from '../common/SearchInput';
 
 interface ActiveSessionsPageProps {
   color?: string;
@@ -395,19 +396,14 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                   )}
                 </div>
 
-                <div className='flex-1 flex items-center gap-2 w-full sm:w-auto'>
-                  <div className='flex-1 relative'>
-                    <input
-                      type='text'
-                      value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
-                      placeholder={language === 'AR' ? 'بحث بالاسم أو الجهاز أو IP...' : 'Search by name, device, or IP...'}
-                      className='w-full pl-9 rtl:pl-3 rtl:pr-9 pr-3 py-1.5 text-sm border border-(--border-divider) rounded-lg bg-(--bg-card) text-gray-900 dark:text-gray-100 placeholder-gray-400 outline-none focus:ring-2 focus:ring-primary-500/40'
-                    />
-                    <svg className='absolute left-2.5 rtl:left-auto rtl:right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
-                    </svg>
-                  </div>
+                <div className='flex-1 flex items-center gap-2 w-full'>
+                  <SearchInput
+                    compact
+                    value={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    placeholder={language === 'AR' ? 'بحث بالاسم أو الجهاز أو IP...' : 'Search by name, device, or IP...'}
+                    wrapperClassName='w-full'
+                  />
 
                   <Tooltip content={
                     <div className='whitespace-normal text-[11px] font-semibold'>
@@ -417,7 +413,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                   <button
                     onClick={refreshSessions}
                     disabled={refreshing}
-                    className='p-2 border border-(--border-divider) rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 cursor-pointer flex-shrink-0'
+                    className='p-2 border border-(--border-divider) rounded-lg bg-gray-50 dark:bg-gray-800 disabled:opacity-50 cursor-pointer flex-shrink-0'
                   >
                     <svg
                       className={`w-4 h-4 text-gray-600 dark:text-gray-400 ${refreshing ? 'animate-spin' : ''}`}
