@@ -533,7 +533,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                               const prevSession = getPrevSession(session);
                               const startedLabel = formatDateWithRelativeLabel(session.created_at, language);
                               return (
-                                <div className='absolute left-0 top-full pt-1.5 z-30 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none'>
+                                <div className={`absolute ${language === 'AR' ? 'right-0' : 'left-0'} top-full pt-1.5 z-30 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none`}>
                                   <div className='bg-(--bg-card) border border-(--border-divider) rounded-lg shadow-xl p-3 min-w-[240px] space-y-2'>
                                     <div className='text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
                                       {language === 'AR' ? 'معلومات الجلسة' : 'Session Info'}
