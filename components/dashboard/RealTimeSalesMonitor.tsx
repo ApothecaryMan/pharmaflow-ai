@@ -12,7 +12,10 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { useSettings } from '../../context';
+import { emit } from '@tauri-apps/api/event';
+import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { useSettings, useAlert } from '../../context';
+import { isTauri } from '../../utils/platform';
 import { useData } from '../../context/DataContext';
 import { useShift } from '../../hooks/sales/useShift';
 import { REALTIME_SALES_MONITOR_HELP } from '../../i18n/helpInstructions';
@@ -143,7 +146,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   onViewChange,
 }) => {
   const isRTL = language === 'AR';
-  const { textTransform } = useSettings();
+  const { textTransform, darkMode } = useSettings();
   const { playHighValue } = usePosSounds();
   const [expandedView, setExpandedView] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -209,6 +212,82 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
 
   const helpContent = REALTIME_SALES_MONITOR_HELP[language] || REALTIME_SALES_MONITOR_HELP.EN;
 
+  useEffect(() => {
+    if (isTauri()) {
+      const sendUpdate = () => {
+        emit('live-widget-update', { revenue, transactions, isDark: darkMode }).catch(console.warn);
+      };
+
+      sendUpdate();
+
+      let unlisten: () => void;
+      import('@tauri-apps/api/event').then(({ listen }) => {
+        listen('live-widget-ready', () => {
+          sendUpdate();
+        }).then((u) => {
+          unlisten = u;
+        });
+      });
+
+      return () => {
+        if (unlisten) unlisten();
+      };
+    }
+  }, [revenue, transactions, darkMode]);
+
+  const alert = useAlert();
+
+  const openLiveWidget = useCallback(async () => {
+    if (!isTauri()) {
+      alert.warning(
+        language === 'AR' 
+          ? 'هذه الميزة تعمل فقط داخل تطبيق سطح المكتب (Tauri) وليس في المتصفح.' 
+          : 'This feature only works inside the Desktop App, not the web browser.',
+        language === 'AR' ? 'غير متاح' : 'Not Available'
+      );
+      return;
+    }
+    try {
+      const label = 'live-sales-widget';
+      const existingWin = await WebviewWindow.getByLabel(label);
+      
+      if (existingWin) {
+        try {
+          await existingWin.show();
+          await existingWin.unminimize();
+          await existingWin.setFocus();
+        } catch (innerErr) {
+          console.warn('Could not focus existing window:', innerErr);
+        }
+      } else {
+        const widgetWindow = new WebviewWindow(label, {
+          url: '/live-sales-widget',
+          width: 360,
+          height: 72,
+          alwaysOnTop: true,
+          decorations: false,
+          transparent: true,
+          shadow: false,
+          resizable: false,
+          skipTaskbar: true,
+          visible: false,
+          center: true,
+        });
+
+        widgetWindow.once('tauri://created', () => {
+          setTimeout(() => {
+            emit('live-widget-update', { revenue, transactions }).catch(console.warn);
+          }, 500);
+        });
+
+        widgetWindow.once('tauri://error', (e) => {
+          console.warn('Tauri Window Error:', e.payload);
+        });
+      }
+    } catch (e: any) {
+      alert.error(e.message || String(e), 'Window Creation Error');
+    }
+  }, [revenue, transactions, language, alert]);
   // --- Logic Helpers ---
   const isVIP = useCallback(
     (sale: Sale) => {
@@ -494,7 +573,8 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
               {
                 label: language === 'AR' ? 'المراقبة الفورية' : 'Real-time',
                 value: 'real-time-sales',
-                icon: 'monitoring'
+                dotColor: '#10b981',
+                pulseDot: true
               },
             ]}
             value='real-time-sales'
@@ -504,50 +584,29 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           />
         }
         leftContent={
-          <div className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'>
-            <span className='relative flex h-3 w-3'>
-              <span className='animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75'></span>
-              <span className='relative inline-flex rounded-full h-3 w-3 bg-emerald-500'></span>
-            </span>
-            <span className='text-xs font-bold text-gray-700 dark:text-gray-300 tracking-wider'>
-              {t.realTimeSales?.live || 'LIVE'}
-            </span>
+          <div className='flex items-center gap-3'>
+            <div 
+              onClick={openLiveWidget}
+              title={language === 'AR' ? 'تثبيت كـ نافذة عائمة' : 'Pin as floating widget'}
+              className='hidden sm:flex items-center gap-3 px-3 py-1.5 rounded-full bg-white dark:bg-gray-800/80 border border-gray-200/80 dark:border-gray-700 shadow-sm backdrop-blur-sm hover:shadow-md cursor-pointer active:scale-95 transition-all'
+            >
+              <div className='flex items-center gap-1.5'>
+                <span className='material-symbols-rounded text-[18px] text-primary-500'>payments</span>
+                <span className='text-sm font-bold tracking-tight text-gray-800 dark:text-gray-100'>
+                  {formatCurrency(revenue)}
+                </span>
+              </div>
+              <div className='w-px h-4 bg-gray-200 dark:bg-gray-700'></div>
+              <div className='flex items-center gap-1.5'>
+                <span className='material-symbols-rounded text-[18px] text-blue-500'>shopping_bag</span>
+                <span className='text-sm font-bold tracking-tight text-gray-800 dark:text-gray-100'>
+                  {transactions} <span className='text-xs font-medium text-gray-500 dark:text-gray-400'>{language === 'AR' ? 'طلب' : 'Orders'}</span>
+                </span>
+              </div>
+            </div>
           </div>
         }
-        rightContent={
-          <FilterDropdown
-            items={[
-              { id: 'all', name: language === 'AR' ? 'جميع الفروع' : 'All Branches' },
-              ...branches,
-            ]}
-            selectedItem={
-              branchFilter === 'all'
-                ? { id: 'all', name: language === 'AR' ? 'جميع الفروع' : 'All Branches' }
-                : branches.find((b) => b.id === branchFilter)
-            }
-            onSelect={(b) => setBranchFilter(b.id)}
-            renderSelected={(b) => (
-              <div className='flex items-center gap-2'>
-                <span className='material-symbols-rounded text-lg opacity-60'>store</span>
-                <span className='truncate max-w-[100px]'>{b?.name}</span>
-              </div>
-            )}
-            renderItem={(b) => (
-              <div className='flex items-center gap-2 py-1'>
-                <span className='material-symbols-rounded text-lg opacity-40'>store</span>
-                <span>{b.name}</span>
-              </div>
-            )}
-            keyExtractor={(b) => b.id}
-            variant='input'
-            dense
-            onBackground
-            floating={true}
-            minHeight={34}
-            zIndexHigh='z-50'
-            className='min-w-[140px]'
-          />
-        }
+
       />
 
       <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3'>

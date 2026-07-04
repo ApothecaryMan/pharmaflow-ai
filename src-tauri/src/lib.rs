@@ -128,6 +128,26 @@ fn print_raw_data(printer_name: String, data: String) -> Result<(), String> {
     }
 }
 
+#[tauri::command]
+fn update_tray_language(app: tauri::AppHandle, lang: String) -> Result<(), String> {
+    let show_text = if lang == "EN" { "Open ZINC" } else { "فتح ZINC" };
+    let quit_text = if lang == "EN" { "Quit" } else { "إغلاق" };
+    let tooltip = if lang == "EN" { "ZINC - Pharmacy Management System" } else { "ZINC - نظام إدارة الصيدليات" };
+
+    if let Some(tray) = app.tray_by_id("main_tray") {
+        let _ = tray.set_tooltip(Some(tooltip));
+        
+        if let Ok(show) = tauri::menu::MenuItem::with_id(&app, "show", show_text, true, None::<&str>) {
+            if let Ok(quit) = tauri::menu::MenuItem::with_id(&app, "quit", quit_text, true, None::<&str>) {
+                if let Ok(menu) = tauri::menu::Menu::with_items(&app, &[&show, &quit]) {
+                    let _ = tray.set_menu(Some(menu));
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -135,7 +155,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_thermal_printer::init())
-        .invoke_handler(tauri::generate_handler![set_titlebar_color, print_raw_data])
+        .invoke_handler(tauri::generate_handler![set_titlebar_color, print_raw_data, update_tray_language])
         .setup(|app| {
             // Debug-only logging
             if cfg!(debug_assertions) {
@@ -147,11 +167,11 @@ pub fn run() {
             }
 
             // System Tray Setup
-            let quit = MenuItem::with_id(app, "quit", "إغلاق | Quit", true, None::<&str>)?;
-            let show = MenuItem::with_id(app, "show", "فتح ZINC | Open", true, None::<&str>)?;
+            let quit = MenuItem::with_id(app, "quit", "إغلاق", true, None::<&str>)?;
+            let show = MenuItem::with_id(app, "show", "فتح", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show, &quit])?;
 
-            TrayIconBuilder::new()
+            let mut builder = TrayIconBuilder::with_id("main_tray")
                 .menu(&menu)
                 .tooltip("ZINC - نظام إدارة الصيدليات")
                 .on_menu_event(|app, event| match event.id.as_ref() {
@@ -163,8 +183,13 @@ pub fn run() {
                         }
                     }
                     _ => {}
-                })
-                .build(app)?;
+                });
+
+            if let Some(icon) = app.default_window_icon() {
+                builder = builder.icon(icon.clone());
+            }
+
+            builder.build(app)?;
 
             Ok(())
         })

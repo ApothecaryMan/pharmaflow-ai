@@ -725,7 +725,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {
                 label: language === 'AR' ? 'المراقبة الفورية' : 'Real-time',
                 value: 'real-time-sales',
-                icon: 'monitoring'
+                dotColor: '#10b981',
+                pulseDot: true
               },
             ]}
             value='dashboard'

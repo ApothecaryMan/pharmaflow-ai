@@ -119,6 +119,17 @@ const App: React.FC = () => {
   const { theme, darkMode, language } = useSettings();
   const t = ROOT_STRINGS[language];
 
+  // 3.01 Sync System Tray Language
+  React.useEffect(() => {
+    import('./utils/platform').then(({ isTauri }) => {
+      if (isTauri()) {
+        import('@tauri-apps/api/core').then(({ invoke }) => {
+          invoke('update_tray_language', { lang: language }).catch(console.warn);
+        });
+      }
+    });
+  }, [language]);
+
   // 3.1 Storage Quota Monitoring & Events
   const alert = useAlert();
   const hasShownWarningRef = React.useRef(false);

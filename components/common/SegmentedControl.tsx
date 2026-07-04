@@ -7,6 +7,7 @@ export interface SegmentedControlOption<T> {
   value: T;
   icon?: string;
   dotColor?: string;
+  pulseDot?: boolean;
   activeColor?: string;
   count?: number | string;
   fontFamily?: string;
@@ -147,7 +148,18 @@ export function SegmentedControl<T extends string | number | boolean>({
             </span>
           )}
           {o.dotColor && (
-            <div className='w-3 h-3 rounded-full' style={{ backgroundColor: o.dotColor }} />
+            <span className='relative flex h-2.5 w-2.5'>
+              {o.pulseDot && (
+                <span 
+                  className='animate-ping absolute inline-flex h-full w-full rounded-full opacity-75' 
+                  style={{ backgroundColor: o.dotColor }}
+                />
+              )}
+              <span 
+                className='relative inline-flex rounded-full h-2.5 w-2.5' 
+                style={{ backgroundColor: o.dotColor }} 
+              />
+            </span>
           )}
           {o.label && (
             <span
