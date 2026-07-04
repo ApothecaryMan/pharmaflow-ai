@@ -525,6 +525,34 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   ]);
 
   // --- Chart Data Mapping ---
+  const returnsData = useMemo(() => {
+    const salesWithReturns = todaysSales.filter(s => s.hasReturns);
+    salesWithReturns.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    let totalReturnedQty = 0;
+    salesWithReturns.forEach(s => {
+      s.items.forEach(item => {
+         const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
+         const qty = s.itemReturnedQuantities?.[lineKey] || s.itemReturnedQuantities?.[item.id] || 0;
+         totalReturnedQty += qty;
+      });
+    });
+    
+    const lastReturn = salesWithReturns[0] ? new Date(salesWithReturns[0].date) : null;
+    let lastReturnText = '-';
+    if (lastReturn) {
+      const diff = Math.floor((new Date().getTime() - lastReturn.getTime()) / 60000);
+      if (diff < 60) lastReturnText = language === 'AR' ? `منذ ${diff} دقيقة` : `${diff}m ago`;
+      else lastReturnText = language === 'AR' ? `منذ ${Math.floor(diff/60)} ساعة` : `${Math.floor(diff/60)}h ago`;
+    }
+
+    return {
+       count: salesWithReturns.length,
+       returnedQty: totalReturnedQty,
+       lastReturnText
+    };
+  }, [todaysSales, language]);
+
   const paymentPieData = useMemo(
     () => [
       { name: t.cash || 'Cash', value: paymentAnalysis.cashRevenue, color: '#10b981' },
@@ -1054,38 +1082,52 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         {/* Returns Chart */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} min-h-[300px] flex flex-col`}>
           <div className='flex items-center justify-between mb-4'>
-            <h3 className='text-lg font-bold'>{t.realTimeSales?.returnActivity}</h3>
-            <span className='text-xs font-bold px-2 py-1 bg-rose-100 text-rose-700 rounded-lg'>
-              {t.today || 'Today'}
-            </span>
+            <h3 className='text-lg font-bold'>{t.realTimeSales?.returnActivity || 'Returns Activity'}</h3>
+            {returnsData.count > 0 && (
+              <span className='text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-lg flex items-center gap-1'>
+                <span className='material-symbols-rounded text-[14px]'>schedule</span>
+                {returnsData.lastReturnText}
+              </span>
+            )}
+            {returnsData.count === 0 && (
+              <span className='text-xs font-bold px-2 py-1 bg-rose-100 text-rose-700 rounded-lg'>
+                {t.today || 'Today'}
+              </span>
+            )}
           </div>
           <div className='flex-1 flex flex-col justify-center items-center text-center space-y-4'>
-            <div className='w-20 h-20 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center'>
-              <span className='material-symbols-rounded text-4xl'>assignment_return</span>
+            <div className='w-16 h-16 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-500 flex items-center justify-center mb-2'>
+              <span className='material-symbols-rounded text-3xl'>assignment_return</span>
             </div>
             <div>
               <div className='text-3xl font-bold'>
-                <AnimatedCounter value={todaysSales.filter((s) => s.hasReturns).length} />
+                <AnimatedCounter value={returnsData.count} />
               </div>
               <p className='text-sm text-gray-500'>{t.realTimeSales?.returnsProcessed || 'Returns Processed'}</p>
             </div>
-            <div className='w-full pt-4 border-t border-gray-100 dark:border-gray-800 grid grid-cols-2 gap-4'>
-              <div>
-                <p className='text-xs text-gray-400'>{t.realTimeSales?.value || 'Value'}</p>
-                <div className='text-lg font-bold text-rose-600'>
+            <div className='w-full pt-4 border-t border-[var(--border-divider)] grid grid-cols-3 gap-2'>
+              <div className='px-2'>
+                <p className='text-[10px] text-gray-400 uppercase tracking-wider mb-1'>{t.realTimeSales?.value || 'Value'}</p>
+                <div className='text-sm font-bold text-rose-600'>
                   <AnimatedCounter value={returnedValue} />
                 </div>
               </div>
-              <div>
-                <p className='text-xs text-gray-400'>{t.realTimeSales?.rate || 'Rate'}</p>
-                <div className='text-lg font-bold flex items-center justify-center gap-0.5' dir='ltr'>
+              <div className='px-2'>
+                <p className='text-[10px] text-gray-400 uppercase tracking-wider mb-1'>{t.realTimeSales?.tableItems || 'Items'}</p>
+                <div className='text-sm font-bold text-gray-700 dark:text-gray-300'>
+                  <AnimatedCounter value={returnsData.returnedQty} />
+                </div>
+              </div>
+              <div className='px-2'>
+                <p className='text-[10px] text-gray-400 uppercase tracking-wider mb-1'>{t.realTimeSales?.rate || 'Rate'}</p>
+                <div className='text-sm font-bold flex items-center justify-center gap-0.5 text-gray-700 dark:text-gray-300' dir='ltr'>
                   <AnimatedCounter
                     value={
-                      (todaysSales.filter((s) => s.hasReturns).length / (transactions || 1)) * 100
+                      returnsData.count > 0 ? (returnsData.count / (transactions || 1)) * 100 : 0
                     }
                     fractionDigits={1}
                   />
-                  <span className='text-sm font-normal opacity-50'>%</span>
+                  <span className='text-[10px] font-normal opacity-50'>%</span>
                 </div>
               </div>
             </div>
