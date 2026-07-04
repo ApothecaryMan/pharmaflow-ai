@@ -14,6 +14,7 @@ import { AlertProvider, SettingsProvider } from './context';
 import { DataProvider } from './context/DataContext';
 import { ShiftProvider } from './hooks/sales/useShift';
 import { LiveWidget } from './components/dashboard/LiveWidget';
+import { HelpProvider } from './context/HelpContext';
 
 const root = ReactDOM.createRoot(rootElement);
 
@@ -27,15 +28,17 @@ if (window.location.pathname === '/live-sales-widget') {
   root.render(
     <React.StrictMode>
       <SettingsProvider>
-        <StatusBarProvider>
-          <AlertProvider>
-            <DataProvider initialSuppliers={[]}>
-              <ShiftProvider>
-                <App />
-              </ShiftProvider>
-            </DataProvider>
-          </AlertProvider>
-        </StatusBarProvider>
+        <HelpProvider>
+          <StatusBarProvider>
+            <AlertProvider>
+              <DataProvider initialSuppliers={[]}>
+                <ShiftProvider>
+                  <App />
+                </ShiftProvider>
+              </DataProvider>
+            </AlertProvider>
+          </StatusBarProvider>
+        </HelpProvider>
       </SettingsProvider>
     </React.StrictMode>
   );

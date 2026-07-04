@@ -28,7 +28,7 @@ import { AnimatedCounter } from '../common/AnimatedCounter';
 import { ChartWidget } from '../common/ChartWidget';
 import { ExpandedModal } from '../common/ExpandedModal';
 import { FilterDropdown } from '../common/FilterDropdown';
-import { HelpButton, HelpModal } from '../common/HelpModal';
+import { usePageHelp } from '../../context/HelpContext';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { InsightTooltip } from '../common/InsightTooltip';
 import { PageHeader } from '../common/PageHeader';
@@ -149,7 +149,6 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   const { textTransform, darkMode } = useSettings();
   const { playHighValue } = usePosSounds();
   const [expandedView, setExpandedView] = useState<string | null>(null);
-  const [showHelp, setShowHelp] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'VIP' | 'HIGH_VALUE'>('ALL');
   const { isLoading, branches, activeBranchId } = useData();
   const { shifts } = useShift();
@@ -211,6 +210,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   );
 
   const helpContent = REALTIME_SALES_MONITOR_HELP[language] || REALTIME_SALES_MONITOR_HELP.EN;
+  usePageHelp(helpContent);
 
   useEffect(() => {
     if (isTauri()) {
@@ -1099,19 +1099,6 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         views={monitorViews as any}
         onClose={() => setExpandedView(null)}
         color={color.name}
-      />
-      <HelpButton
-        onClick={() => setShowHelp(true)}
-        title={helpContent.title}
-        color={color.name}
-        isRTL={isRTL}
-      />
-      <HelpModal
-        show={showHelp}
-        onClose={() => setShowHelp(false)}
-        helpContent={helpContent as any}
-        color={color.name}
-        language={language}
       />
     </div>
   );

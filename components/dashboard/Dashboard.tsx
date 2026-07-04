@@ -13,7 +13,7 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { ChartWidget } from '../common/ChartWidget';
 import { ExpandedModal } from '../common/ExpandedModal';
 import { HasPermission } from '../common/HasPermission';
-import { HelpButton, HelpModal } from '../common/HelpModal';
+import { usePageHelp } from '../../context/HelpContext';
 import { CurrencyValue, InsightTooltip } from '../common/InsightTooltip';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
@@ -207,7 +207,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [restockQty, setRestockQty] = useState(10);
   const [restockIsUnit, setRestockIsUnit] = useState(false);
   const [expandedView, setExpandedView] = useState<ExpandedView>(null);
-  const [showHelp, setShowHelp] = useState(false);
   const { textTransform } = useSettings();
   const { activeBranchId, batches, isLoading } = useData();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -280,6 +279,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   );
 
   const helpContent = DASHBOARD_HELP[language as 'EN' | 'AR'] || DASHBOARD_HELP.EN;
+  usePageHelp(helpContent);
 
   useEffect(() => {
     if (!subView) return;
@@ -1200,20 +1200,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
         color={color}
       />
 
-      {/* Help */}
-      <HelpButton
-        onClick={() => setShowHelp(true)}
-        title={helpContent.title}
-        color={color}
-        isRTL={language === 'AR'}
-      />
-      <HelpModal
-        show={showHelp}
-        onClose={() => setShowHelp(false)}
-        helpContent={helpContent as any}
-        color={color}
-        language={language}
-      />
     </div>
   );
 };

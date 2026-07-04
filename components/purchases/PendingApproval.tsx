@@ -9,14 +9,13 @@ import { getDisplayName } from '../../utils/drugDisplayName';
 import { checkExpiryStatus, formatExpiryDate, getExpiryStatusStyle } from '../../utils/expiryUtils';
 import { money, pricing, tax } from '../../utils/money';
 import {
-  HelpButton,
-  HelpModal,
   Modal,
   PageHeader,
   SearchInput,
   SegmentedControl,
   useSmartDirection,
 } from '../common';
+import { usePageHelp } from '../../context/HelpContext';
 
 // --- Sub-components (SalesHistory Style) ---
 
@@ -82,7 +81,6 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   // Approve State
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [purchaseToApprove, setPurchaseToApprove] = useState<string | null>(null);
-  const [showHelp, setShowHelp] = useState(false);
   const [search, setSearch] = useState('');
 
   // Helper: Format time with Arabic AM/PM
@@ -98,6 +96,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   };
 
   const helpContent = PENDING_APPROVAL_HELP[language as 'EN' | 'AR'] || PENDING_APPROVAL_HELP.EN;
+  usePageHelp(helpContent);
 
   const pendingPurchases = purchases.filter((p) => p.status === 'pending');
 
@@ -677,19 +676,6 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
         </div>
       </Modal>
 
-      <HelpButton
-        onClick={() => setShowHelp(true)}
-        title={helpContent.title}
-        color={color}
-        isRTL={language === 'AR'}
-      />
-      <HelpModal
-        show={showHelp}
-        onClose={() => setShowHelp(false)}
-        helpContent={helpContent as any}
-        color={color}
-        language={language}
-      />
     </div>
   );
 };

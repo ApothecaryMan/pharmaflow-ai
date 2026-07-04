@@ -32,7 +32,6 @@ export const useCashRegister = ({
   const [modalMode, setModalMode] = useState<'open' | 'close' | 'in' | 'out' | null>(null);
   const [amountInput, setAmountInput] = useState<string>('');
   const [reasonInput, setReasonInput] = useState<string>('');
-  const [showHelp, setShowHelp] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [filterType, setFilterType] = useState('all');
 
@@ -421,8 +420,6 @@ export const useCashRegister = ({
     setAmountInput,
     reasonInput,
     setReasonInput,
-    showHelp,
-    setShowHelp,
     validationError,
     setValidationError,
     filterType,

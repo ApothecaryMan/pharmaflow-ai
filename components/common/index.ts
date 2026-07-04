@@ -11,7 +11,7 @@ export { ExpandedModal } from './ExpandedModal';
 export { FilterDropdown, type FilterDropdownProps } from './FilterDropdown';
 export { type FilterConfig, FilterPill } from './FilterPill';
 export { FloatingInput } from './FloatingInput';
-export { HelpButton, HelpModal } from './HelpModal';
+export { HelpModal } from './HelpModal';
 export { MaterialTabs } from './MaterialTabs';
 export { Modal } from './Modal';
 export { PageHeader } from './PageHeader';

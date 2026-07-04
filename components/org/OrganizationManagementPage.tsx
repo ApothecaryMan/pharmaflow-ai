@@ -9,8 +9,8 @@ import { permissionsService } from '../../services/auth/permissionsService';
 import { employeeService } from '../../services/hr/employeeService';
 import { type OrgData, orgAggregationService } from '../../services/org/orgAggregationService';
 import { orgService } from '../../services/org/orgService';
-import { HelpButton, HelpModal } from '../common/HelpModal';
 import { PageHeader } from '../common/PageHeader';
+import { usePageHelp } from '../../context/HelpContext';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { BranchMasterMonitor } from './BranchMasterMonitor';
 import { MemberPermissionMatrix } from './MemberPermissionMatrix';
@@ -36,7 +36,6 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { currentEmployee } = useData();
-  const [showHelp, setShowHelp] = useState(false);
   const [activeMatrixTab, setActiveMatrixTab] = useState<'managers' | 'staff'>('managers');
 
   // Upgrade Transition State
@@ -45,6 +44,8 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
 
   const t = TRANSLATIONS[language].orgManagement;
   const normalizedLang = language.toLowerCase() as 'en' | 'ar';
+  
+  usePageHelp(ORG_MANAGEMENT_HELP[language] || ORG_MANAGEMENT_HELP.EN);
 
   const fetchData = async () => {
     if (!activeOrgId) return;
@@ -118,14 +119,7 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
             useGraphicFont={true}
           />
         }
-        rightContent={
-          <button
-            onClick={() => setShowHelp(true)}
-            className='w-10 h-10 rounded-xl bg-white/50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-primary-600 transition-colors'
-          >
-            <span className='material-symbols-rounded'>help</span>
-          </button>
-        }
+
         dir={language === 'AR' ? 'rtl' : 'ltr'}
         mb='mb-0'
       />
@@ -208,21 +202,6 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
             isLoading={isLoading}
           />
         </div>
-
-        <HelpButton
-          onClick={() => setShowHelp(true)}
-          title={ORG_MANAGEMENT_HELP[language].title}
-          color={color}
-          isRTL={language === 'AR'}
-        />
-
-        <HelpModal
-          show={showHelp}
-          onClose={() => setShowHelp(false)}
-          helpContent={ORG_MANAGEMENT_HELP[language] as any}
-          color={color}
-          language={language}
-        />
 
         <UpgradeTunnelTransition
           isOpen={showUpgradeTransition}

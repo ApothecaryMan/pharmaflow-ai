@@ -9,8 +9,8 @@ import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { money } from '../../utils/money';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { DateRangePicker } from '../common/DatePicker';
-import { HelpButton, HelpModal } from '../common/HelpModal';
 import { PageHeader } from '../common/PageHeader';
+import { usePageHelp } from '../../context/HelpContext';
 import { TanStackTable } from '../common/TanStackTable';
 import { POSCustomerHistoryModal } from './pos/ui/POSCustomerHistoryModal';
 import { SaleDetailModal } from './SaleDetailModal';
@@ -61,7 +61,6 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   const [endDate, setEndDate] = useState('');
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
   const [selectedCust, setSelectedCust] = useState<Customer | null>(null);
   const [isHistOpen, setIsHistOpen] = useState(false);
   const [pendingIds, setPendingIds] = useState<Set<string | number>>(new Set());
@@ -106,6 +105,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
 
   // Get help content
   const helpContent = SALES_HISTORY_HELP[language as 'EN' | 'AR'] || SALES_HISTORY_HELP.EN;
+  usePageHelp(helpContent);
 
   // Column definitions using TanStackTable's ColumnDef
   const tableColumns = React.useMemo<ColumnDef<Sale>[]>(
@@ -767,21 +767,6 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         currentEmployeeId={currentEmployeeId}
         currentDailyRefunds={currentDailyRefunds}
         onProcessReturn={handleProcessReturn}
-      />
-
-      {/* Help */}
-      <HelpButton
-        onClick={() => setShowHelp(true)}
-        title={helpContent.title}
-        color={color}
-        isRTL={language === 'AR'}
-      />
-      <HelpModal
-        show={showHelp}
-        onClose={() => setShowHelp(false)}
-        helpContent={helpContent as any}
-        color={color}
-        language={language}
       />
 
       {/* Customer History Modal */}

@@ -10,8 +10,8 @@ import { formatExpiryDate } from '../../utils/expiryUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { useContextMenu } from '../common/ContextMenu';
 import { DatePicker, DateRangePicker } from '../common/DatePicker';
-import { HelpButton, HelpModal } from '../common/HelpModal';
 import { MaterialTabs } from '../common/MaterialTabs';
+import { usePageHelp } from '../../context/HelpContext';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
 import { TanStackTable } from '../common/TanStackTable';
@@ -125,12 +125,12 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
 
   const [selectedReturn, setSelectedReturn] = useState<Return | null>(null);
   const [viewedSale, setViewedSale] = useState<Sale | null>(null);
-  const [showHelp, setShowHelp] = useState(false);
   const { textTransform } = useSettings();
   const { showMenu } = useContextMenu();
 
   // Get help content based on language
   const helpContent = RETURN_HISTORY_HELP[language as 'EN' | 'AR'] || RETURN_HISTORY_HELP.EN;
+  usePageHelp(helpContent);
 
   // Locale for dates
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
@@ -582,20 +582,6 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
         textTransform={textTransform}
       />
 
-      {/* Help */}
-      <HelpButton
-        onClick={() => setShowHelp(true)}
-        title={helpContent.title}
-        color={color}
-        isRTL={language === 'AR'}
-      />
-      <HelpModal
-        show={showHelp}
-        onClose={() => setShowHelp(false)}
-        helpContent={helpContent as any}
-        color={color}
-        language={language}
-      />
     </div>
   );
 };

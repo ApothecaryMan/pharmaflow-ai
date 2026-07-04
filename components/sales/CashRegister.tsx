@@ -6,7 +6,6 @@ import type { CashTransaction, CashTransactionType, Employee, Language } from '.
 import { formatCurrencyParts } from '../../utils/currency';
 import { CARD_BASE, INPUT_BASE } from '../../utils/themeStyles';
 import { AnimatedCounter } from '../common/AnimatedCounter';
-import { HelpButton, HelpModal } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
 import { PageHeader } from '../common/PageHeader';
 import { SegmentedControl } from '../common/SegmentedControl';
@@ -14,6 +13,7 @@ import { useSmartDirection } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
 import { PriceDisplay } from '../common/table/PriceDisplay';
 import { useCashRegister } from './useCashRegister';
+import { usePageHelp } from '../../context/HelpContext';
 
 interface CashRegisterProps {
   color: string;
@@ -70,6 +70,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
   onViewChange,
 }) => {
   const helpContent = CASH_REGISTER_HELP[language];
+  usePageHelp(helpContent);
 
   const {
     currentShift,
@@ -80,8 +81,6 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
     setAmountInput,
     reasonInput,
     setReasonInput,
-    showHelp,
-    setShowHelp,
     validationError,
     setValidationError,
     filterType,
@@ -860,21 +859,6 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           </div>
         </Modal>
       )}
-
-      {/* Help */}
-      <HelpButton
-        onClick={() => setShowHelp(true)}
-        title={helpContent.title}
-        color={color}
-        isRTL={language === 'AR'}
-      />
-      <HelpModal
-        show={showHelp}
-        onClose={() => setShowHelp(false)}
-        helpContent={helpContent as any}
-        color={color}
-        language={language}
-      />
     </div>
   );
 };

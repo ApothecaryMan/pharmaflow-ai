@@ -13,6 +13,8 @@ import { MobileNavigation } from './MobileNavigation';
 import { Navbar } from './Navbar';
 import { SidebarContent } from './SidebarContent';
 import { StatusBar } from './StatusBar';
+import { useGlobalHelp } from '../../context/HelpContext';
+import { HelpModal } from '../common/HelpModal';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -49,6 +51,7 @@ const GlobalContextMenuWrapper: React.FC<{
   toggleFullscreen: () => void;
 }> = ({ children, t, darkMode, setDarkMode, toggleFullscreen }) => {
   const { showMenu } = useContextMenu();
+  const { helpContent, setIsHelpOpen } = useGlobalHelp();
 
   return (
     <div
@@ -76,11 +79,15 @@ const GlobalContextMenuWrapper: React.FC<{
             icon: 'refresh',
             action: () => window.location.reload(),
           },
-          {
-            label: t.global.actions.help,
-            icon: 'help',
-            action: () => alert('Help & Support\n\nContact support@zinc.ai for assistance.'),
-          },
+          ...(helpContent
+            ? [
+                {
+                  label: t.global?.actions?.instructions || 'التعليمات',
+                  icon: 'menu_book',
+                  action: () => setIsHelpOpen(true),
+                },
+              ]
+            : []),
         ]);
       }}
     >
@@ -132,6 +139,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   // Determine actual sidebar state (considering hover expansion)
   // 1: Normal (Fixed), 2: Mini (Always), 3: Auto-Expand (Mini but expands on hover)
   const isActuallyCollapsed = sidebarStyle === 2 || (sidebarStyle === 3 && !isSidebarHovered);
+
+  const { isHelpOpen, setIsHelpOpen, helpContent } = useGlobalHelp();
 
 
   const toggleFullscreen = () => {
@@ -273,6 +282,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             isRecoveringPassword={isRecoveringPassword}
           />
         </div>
+        {isHelpOpen && helpContent && (
+          <HelpModal
+            show={isHelpOpen}
+            onClose={() => setIsHelpOpen(false)}
+            helpContent={helpContent}
+            color={theme.hex}
+            language={language}
+          />
+        )}
       </GlobalContextMenuWrapper>
     </ContextMenuProvider>
   );
