@@ -67,7 +67,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - Network-first strategy (app is 100% online)
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -78,45 +78,21 @@ self.addEventListener('fetch', (event) => {
   // Skip chrome-extension and other non-http(s) requests
   if (!url.protocol.startsWith('http')) return;
 
-  // For API calls (like AI services), always go to network
-  if (url.hostname.includes('googleapis.com') && url.pathname.includes('/v1beta/')) {
-    return;
-  }
-
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Return cached version
-        return cachedResponse;
-      }
-
-      // Not in cache, fetch from network
-      return fetch(request)
-        .then((networkResponse) => {
-          // Don't cache non-successful responses
-          if (!networkResponse || networkResponse.status !== 200) {
-            return networkResponse;
+    fetch(request)
+      .catch(() => {
+        // Network failed, try to serve from our static cache
+        return caches.match(request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
           }
-
-          // Clone the response for caching
-          const responseToCache = networkResponse.clone();
-
-          // Cache dynamic content
-          caches.open(DYNAMIC_CACHE).then((cache) => {
-            cache.put(request, responseToCache);
-          });
-
-          return networkResponse;
-        })
-        .catch(() => {
-          // Network failed, try to return cached index.html for navigation requests
+          // Fallback to index.html for navigation requests
           if (request.mode === 'navigate') {
             return caches.match('/index.html');
           }
-          // Return a fallback for other requests
           return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
         });
-    })
+      })
   );
 });
 
