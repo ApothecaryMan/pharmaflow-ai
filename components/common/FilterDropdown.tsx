@@ -20,7 +20,7 @@ export interface FilterDropdownProps<T> {
   style?: React.CSSProperties;
   disabled?: boolean;
   centered?: boolean;
-  rounded?: 'xl' | 'full';
+  rounded?: 'lg' | 'xl' | 'full';
   zIndexHigh?: string;
   /**
    * When true, wraps the dropdown in a fixed-height container with absolute positioning.
@@ -152,7 +152,7 @@ export function FilterDropdown<T>({
   const outerStyle = floating && minHeight ? { ...style, height: minHeight, minHeight } : style;
 
   const innerClasses = `relative w-full flex flex-col overflow-hidden border outline-hidden group
-                    ${rounded === 'full' ? 'rounded-[20px]' : 'rounded-xl'}
+                    ${rounded === 'full' ? 'rounded-[20px]' : rounded === 'lg' ? 'rounded-lg' : 'rounded-xl'}
                     ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
                     ${effectiveIsOpen || isAnimating ? zIndexHigh : 'z-0'}
                     ${onBackground ? 'shadow-xs' : ''}

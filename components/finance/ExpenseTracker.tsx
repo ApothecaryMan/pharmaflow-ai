@@ -6,6 +6,7 @@ import { useShift } from '../../hooks/sales/useShift';
 import type { Employee, Expense, ExpenseCategory } from '../../types';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { PageHeader } from '../common/PageHeader';
+import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 import { TanStackTable } from '../common/TanStackTable';
@@ -48,6 +49,7 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
   } = useExpenses();
 
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const isRtl = language === 'AR';
 
   const categoryFilterOptions = useMemo(
@@ -445,8 +447,15 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
           <div className='lg:col-span-2 bg-(--bg-card) border border-(--border-divider) rounded-2xl overflow-hidden flex flex-col min-h-[400px]'>
             {/* Top Toolbar inside table block */}
             <div className='p-4 border-b border-(--border-divider) flex flex-wrap items-center justify-between gap-3 bg-(--bg-card)'>
-              <div className='flex items-center gap-2'>
-                <span className='material-symbols-rounded text-(--text-tertiary)'>filter_list</span>
+              <div className='w-full flex items-center gap-2'>
+                <SearchInput
+                  value={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  compact
+                  wrapperClassName='flex-1'
+                  placeholder={t.global?.actions?.search || 'Search expenses...'}
+                />
+
                 {/* Category Filter */}
                 <FilterDropdown
                   items={categoryFilterOptions}
@@ -457,10 +466,11 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                   renderItem={(item) => <span>{item.label}</span>}
                   variant='input'
                   dense={true}
-                  className='w-48'
+                  className='w-48 shrink-0'
                   color='emerald'
                   floating={true}
                   minHeight={32}
+                  rounded='lg'
                 />
 
                 {/* Payment Method Filter */}
@@ -473,10 +483,11 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                   renderItem={(item) => <span>{item.label}</span>}
                   variant='input'
                   dense={true}
-                  className='w-48'
+                  className='w-48 shrink-0'
                   color='emerald'
                   floating={true}
                   minHeight={32}
+                  rounded='lg'
                 />
               </div>
             </div>
@@ -491,6 +502,8 @@ export const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                 enablePagination={true}
                 pageSize={10}
                 dense={true}
+                globalFilter={searchQuery}
+                enableSearch={false}
               />
             </div>
           </div>
