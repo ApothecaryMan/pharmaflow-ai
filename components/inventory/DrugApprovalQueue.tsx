@@ -179,7 +179,7 @@ export const DrugApprovalQueue: React.FC<DrugApprovalQueueProps> = ({
   }, [approvals]);
 
   return (
-    <div className='h-full flex flex-col gap-3 animate-fade-in pb-10 overflow-y-auto'>
+    <div className='h-full flex flex-col gap-3 animate-fade-in overflow-y-auto'>
       {/* Page Header */}
       <PageHeader
         mb='mb-0'

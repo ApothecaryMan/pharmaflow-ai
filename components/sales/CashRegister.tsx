@@ -223,7 +223,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
   return (
     <div
       dir={language === 'AR' ? 'rtl' : 'ltr'}
-      className={`h-full flex flex-col animate-fade-in pb-10 ${language === 'AR' ? 'text-right' : 'text-left'}`}
+            className={`h-full flex flex-col animate-fade-in ${language === 'AR' ? 'text-right' : 'text-left'}`}
     >
       {/* Header */}
       <PageHeader

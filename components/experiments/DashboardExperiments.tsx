@@ -366,7 +366,7 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
 
   return (
     <div
-      className='h-full overflow-y-auto pe-2 space-y-6 animate-fade-in pb-10'
+      className='h-full overflow-y-auto pe-2 space-y-6 animate-fade-in'
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       <h1 className='text-2xl font-bold tracking-tight mb-6 page-title text-gray-900 dark:text-gray-100'>

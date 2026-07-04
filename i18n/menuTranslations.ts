@@ -432,7 +432,7 @@ export const MENU_TRANSLATIONS = {
     'Prescription History': 'سجل الوصفات',
     'Insurance & Claims': 'التأمين والمطالبات',
     'Drug Safety': 'سلامة الأدوية',
-    'Interaction Checker': 'فاحص التفاعلات',
+    'Interaction Checker': 'فاحص التفاعلات (FDA Source)',
     'FDA Label Search': 'بحث بيانات FDA',
     'Safety Alerts': 'تنبيهات السلامة',
 

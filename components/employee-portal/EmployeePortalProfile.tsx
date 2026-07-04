@@ -1,10 +1,13 @@
 import type React from 'react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import type { Employee, EmploymentRequest, UserProfile } from '../../types';
 import { DocumentsTab } from './tabs/DocumentsTab';
 import { HistoryTab } from './tabs/HistoryTab';
 import { ProfileTab } from './tabs/ProfileTab';
 import { EmployeeSessionsTab } from './tabs/EmployeeSessionsTab';
+import { supabase } from '../../lib/supabase';
+import { sessionRepository, type UserActiveSession } from '../../services/auth/repositories/sessionRepository';
+import { isSessionOnline } from '../../hooks/infrastructure/useSessionHeartbeat';
 
 interface EmployeePortalProfileProps {
   profile: UserProfile | null;
@@ -47,6 +50,64 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
   const [cachedDocs, setCachedDocs] = useState<CachedDocs | null>(null);
   const isRTL = language === 'AR';
 
+  const [sessions, setSessions] = useState<UserActiveSession[]>([]);
+  const [loadingSessions, setLoadingSessions] = useState(true);
+  const [sessionsError, setSessionsError] = useState<string | null>(null);
+  const [, setTick] = useState(0);
+
+  const workspaceIdsString = workspaces.map(w => w.id).sort().join(',');
+
+  const reloadSessions = async () => {
+    try {
+      setLoadingSessions(true);
+      const data = await sessionRepository.getActiveSessions();
+      setSessions(data);
+    } catch (err) {
+      console.error(err);
+      setSessionsError(isRTL ? 'فشل تحميل الجلسات' : 'Failed to load sessions');
+    } finally {
+      setLoadingSessions(false);
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    reloadSessions();
+
+    if (!profile?.id) return;
+
+    const employeeIds = workspaceIdsString ? workspaceIdsString.split(',') : [];
+    const uniqueChannelName = `employee_sessions_changes_profile_${Math.random().toString(36).substring(7)}`;
+    
+    let dbChannel = supabase.channel(uniqueChannelName);
+
+    // Listen to their own portal sessions
+    dbChannel = dbChannel.on('postgres_changes', { event: '*', schema: 'public', table: 'user_active_sessions', filter: `user_id=eq.${profile.id}` }, () => {
+      sessionRepository.getActiveSessions().then(data => { if (isMounted) setSessions(data); });
+    });
+
+    // Listen to their POS sessions
+    if (employeeIds.length > 0) {
+      dbChannel = dbChannel.on('postgres_changes', { event: '*', schema: 'public', table: 'user_active_sessions', filter: `employee_id=in.(${employeeIds.join(',')})` }, () => {
+        sessionRepository.getActiveSessions().then(data => { if (isMounted) setSessions(data); });
+      });
+    }
+
+    dbChannel.subscribe();
+
+    const tickInterval = setInterval(() => { if (isMounted) setTick(t => t + 1); }, 60_000);
+      
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(dbChannel);
+      clearInterval(tickInterval);
+    };
+  }, [profile?.id, workspaceIdsString, isRTL]);
+
+  const pharmacySessions = sessions.filter(session => session.org_id);
+  const onlineCount = pharmacySessions.filter(session => isSessionOnline(session.last_seen_at)).length;
+  const offlineCount = pharmacySessions.length - onlineCount;
+
   const tabs = useMemo(
     () => [
       { value: 'profile' as const, label: t.employeeProfile.profile, icon: 'person' },
@@ -73,8 +134,31 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
                   : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
               }`}
             >
-              <span className='material-symbols-rounded text-[18px] sm:text-[18px]'>{tab.icon}</span>
-              <span>{tab.label}</span>
+              <div className='flex items-center gap-2'>
+                <div className='relative flex items-center justify-center'>
+                  <span className='material-symbols-rounded text-[18px] sm:text-[20px]'>{tab.icon}</span>
+                  {tab.value === 'sessions' && (onlineCount > 0 || offlineCount > 0) && (
+                    <div className='absolute -top-2 -end-[-10px] flex items-center gap-0.5 px-1 py-0.5 rounded-full bg-gray-100 dark:bg-[#25282c] ring-2 ring-white dark:ring-[#1a1c1e] shadow-sm min-h-[14px] z-10'>
+                      {onlineCount > 0 && (
+                        <div className='flex items-center gap-0.5' title={isRTL ? 'متصل' : 'Online'}>
+                          <span className='w-1.5 h-1.5 rounded-full bg-green-500 relative'>
+                            <span className='absolute inset-0 rounded-full bg-green-500 animate-ping opacity-75'></span>
+                          </span>
+                          <span className='text-gray-800 dark:text-gray-200 font-bold text-[9px] leading-none mt-[1px]'>{onlineCount}</span>
+                        </div>
+                      )}
+                      {offlineCount > 0 && (
+                        <div className='flex items-center gap-0.5' title={isRTL ? 'غير متصل' : 'Offline'}>
+                          <span className='w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500'></span>
+                          <span className='text-gray-800 dark:text-gray-200 font-bold text-[9px] leading-none mt-[1px]'>{offlineCount}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <span>{tab.label}</span>
+              </div>
+
               {isActive && (
                 <span className='absolute bottom-0 left-0 right-0 h-[3px] bg-gray-900 dark:bg-white rounded-t-full' />
               )}
@@ -127,6 +211,10 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
           t={t}
           isRTL={isRTL}
           workspaces={workspaces}
+          sessions={sessions}
+          loading={loadingSessions}
+          error={sessionsError}
+          onReloadSessions={reloadSessions}
         />
       )}
     </div>

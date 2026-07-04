@@ -792,7 +792,7 @@ export const ShortagesPage: React.FC<ShortagesPageProps> = ({
       dir={isAR ? 'rtl' : 'ltr'}
     >
       {/* Main Content Area */}
-      <div className='flex-1 px-page pb-8 overflow-hidden flex flex-col'>
+      <div className='flex-1 px-page overflow-hidden flex flex-col'>
         <div className={`${CARD_BASE} rounded-3xl flex-1 overflow-hidden flex flex-col p-0`}>
           <div className='flex-1 overflow-hidden flex flex-col relative'>
             <TanStackTable

@@ -849,7 +849,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'reports',
     requiredProps: ['t', 'language'],
     permission: 'reports.view_financial',
-    layout: 'standard',
+    layout: 'full-bleed',
   },
   'drug-interactions': {
     id: 'drug-interactions',
@@ -860,7 +860,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'prescriptions',
     requiredProps: ['t', 'language', 'inventory'],
     permission: PERMISSIONS_MAPPING['drug-interactions'],
-    layout: 'standard',
+    layout: 'full-bleed',
   },
   shortages: {
     id: 'shortages',

@@ -881,7 +881,7 @@ export const Inventory: React.FC<InventoryProps> = ({
   }, [bottomContentElement, mode, setBottomContent, setShowStatsToggle]);
 
   return (
-    <div className='h-full flex flex-col gap-2 animate-fade-in pb-10 overflow-y-auto'>
+    <div className='h-full flex flex-col gap-2 animate-fade-in overflow-y-auto'>
       {/* Header slots are registered in the useEffect above */}
 
       {mode === 'list' ? (

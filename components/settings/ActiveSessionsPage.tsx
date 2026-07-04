@@ -288,11 +288,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
     <div className='flex flex-col h-full bg-(--bg-page-surface)'>
       <div className='flex-1 p-4 sm:p-6 overflow-hidden flex flex-col'>
         <div className='flex flex-col h-full w-full'>
-          {loading ? (
-            <div className='flex items-center justify-center p-12'>
-              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600'></div>
-            </div>
-          ) : error ? (
+          {error ? (
             <div className='p-4 bg-red-50 text-red-600 rounded-lg'>{error}</div>
           ) : (
             <>
@@ -440,8 +436,13 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
               </div>
 
               <div className='flex-1 overflow-y-auto md:bg-(--bg-card) md:border border-(--border-divider)'>
-                <table className='w-full text-sm text-left rtl:text-right block md:table'>
-                  <thead className='hidden md:table-header-group md:sticky md:top-0 z-10 text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400'>
+                {(loading || refreshing) ? (
+                  <div className='flex items-center justify-center min-h-[400px]'>
+                    <div className='animate-spin rounded-full h-10 w-10 border-4 border-gray-200 dark:border-gray-700 border-t-gray-600 dark:border-t-gray-400'></div>
+                  </div>
+                ) : (
+                  <table className='w-full text-sm text-left rtl:text-right block md:table'>
+                    <thead className='hidden md:table-header-group md:sticky md:top-0 z-10 text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400'>
                     <tr>
                       <SortableTh columnKey='user' className='px-6 py-4 font-medium'>{language === 'AR' ? 'المستخدم' : 'User'}</SortableTh>
                       <SortableTh columnKey='device' className='px-6 py-4 font-medium'>{language === 'AR' ? 'الجهاز' : 'Device'}</SortableTh>
@@ -698,6 +699,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                   )}
                 </tbody>
               </table>
+            )}
             </div>
           </>
         )}

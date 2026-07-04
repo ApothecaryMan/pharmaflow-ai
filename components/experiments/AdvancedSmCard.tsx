@@ -227,7 +227,7 @@ export const AdvancedSmCard: React.FC<AdvancedSmCardProps> = ({ color, t, langua
   };
 
   return (
-    <div className='h-full overflow-y-auto w-full p-2 space-y-8 pb-20' dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className='h-full overflow-y-auto w-full p-2 space-y-8' dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div>
         <h2 className='text-2xl font-bold text-gray-900 dark:text-white mb-2'>

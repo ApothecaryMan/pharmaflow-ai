@@ -1,9 +1,9 @@
 import type React from 'react';
-import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { sessionRepository, type UserActiveSession } from '../../../services/auth/repositories/sessionRepository';
 import { getDeviceName, getBrowserName, isDesktopAppUserAgent, getSessionUserAgent } from '../../../utils/platform';
 import { isSessionOnline } from '../../../hooks/infrastructure/useSessionHeartbeat';
+import { formatDateWithRelativeLabel, getRelativeTime } from '../../../utils/dateFormatter';
 import { Icons } from '../../common/Icons';
 import type { Employee, UserProfile } from '../../../types';
 
@@ -12,6 +12,10 @@ interface EmployeeSessionsTabProps {
   t: any;
   isRTL?: boolean;
   workspaces?: (Employee & { branches?: { name: string }; organizations?: { name: string } })[];
+  sessions: UserActiveSession[];
+  loading: boolean;
+  error: string | null;
+  onReloadSessions: () => Promise<void>;
 }
 
 export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
@@ -19,63 +23,12 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
   t,
   isRTL,
   workspaces = [],
+  sessions,
+  loading,
+  error,
+  onReloadSessions,
 }) => {
-  const [sessions, setSessions] = useState<UserActiveSession[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const currentUserAgent = typeof navigator !== 'undefined' ? getSessionUserAgent(navigator.userAgent) : '';
-
-  // Tick counter — forces re-render to recalculate isSessionOnline() from cached data
-  const [, setTick] = useState(0);
-
-  const loadSessions = async () => {
-    try {
-      setLoading(true);
-      // No userId scope needed — RLS filters via employee_id subquery
-      const data = await sessionRepository.getActiveSessions();
-      setSessions(data);
-    } catch (err) {
-      console.error(err);
-      setError(isRTL ? 'فشل تحميل الجلسات' : 'Failed to load sessions');
-    } finally {
-      setLoading(false);
-    }
-  };
-  const workspaceIdsString = workspaces.map(w => w.id).sort().join(',');
-
-  useEffect(() => {
-    loadSessions();
-
-    if (!profile?.id) return;
-
-    const employeeIds = workspaceIdsString ? workspaceIdsString.split(',') : [];
-    const uniqueChannelName = `employee_sessions_changes_${Math.random().toString(36).substring(7)}`;
-    
-    let dbChannel = supabase.channel(uniqueChannelName);
-
-    // Listen to their own portal sessions
-    dbChannel = dbChannel.on('postgres_changes', { event: '*', schema: 'public', table: 'user_active_sessions', filter: `user_id=eq.${profile.id}` }, () => {
-      sessionRepository.getActiveSessions().then(setSessions);
-    });
-
-    // Listen to their POS sessions
-    if (employeeIds.length > 0) {
-      dbChannel = dbChannel.on('postgres_changes', { event: '*', schema: 'public', table: 'user_active_sessions', filter: `employee_id=in.(${employeeIds.join(',')})` }, () => {
-        sessionRepository.getActiveSessions().then(setSessions);
-      });
-    }
-
-    dbChannel.subscribe();
-
-    // Local tick every 60s — recalculates online/offline without DB calls.
-    // Actual data updates come from the postgres_changes subscription above.
-    const tickInterval = setInterval(() => setTick(t => t + 1), 60_000);
-      
-    return () => {
-      supabase.removeChannel(dbChannel);
-      clearInterval(tickInterval);
-    };
-  }, [profile?.id, workspaceIdsString]);
 
   const handleLogout = async (session: UserActiveSession) => {
     try {
@@ -87,7 +40,7 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
         // Portal session: Destroy the entire session
         await sessionRepository.logoutSession(session.id, terminatorName);
       }
-      await loadSessions();
+      await onReloadSessions();
     } catch (err) {
       console.error('Failed to logout session', err);
     }
@@ -114,34 +67,52 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
 
   return (
     <div className='animate-fade-in space-y-6'>
-      <div className='flex items-center gap-3 px-1'>
-        <span className='material-symbols-rounded text-3xl text-(--text-secondary)'>devices</span>
-        <div className='flex items-center gap-2'>
-          <h3 className='text-lg font-semibold text-(--text-primary)'>
-            {t.employeeProfile.sessions || 'Active Sessions'}
-          </h3>
-          <div className='flex items-center gap-1.5'>
-            {onlineCount > 0 && (
-              <span className='px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400 border border-green-100 dark:border-green-800 flex items-center gap-1.5' title={isRTL ? 'متصل الآن' : 'Online'}>
-                <span className='w-1.5 h-1.5 rounded-full bg-green-500 relative'>
-                  <span className='absolute inset-0 rounded-full bg-green-500 animate-ping opacity-75'></span>
+      <div className='flex items-center justify-between px-1'>
+        <div className='flex items-center gap-3'>
+          <span className='material-symbols-rounded text-3xl text-(--text-secondary)'>devices</span>
+          <div className='flex items-center gap-2'>
+            <h3 className='text-lg font-semibold text-(--text-primary)'>
+              {t.employeeProfile.sessions || 'Active Sessions'}
+            </h3>
+            <div className='flex items-center gap-1.5'>
+              {onlineCount > 0 && (
+                <span className='px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400 border border-green-100 dark:border-green-800 flex items-center gap-1.5' title={isRTL ? 'متصل الآن' : 'Online'}>
+                  <span className='w-1.5 h-1.5 rounded-full bg-green-500 relative'>
+                    <span className='absolute inset-0 rounded-full bg-green-500 animate-ping opacity-75'></span>
+                  </span>
+                  {onlineCount}
                 </span>
-                {onlineCount}
-              </span>
-            )}
-            {offlineCount > 0 && (
-              <span className='px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700 flex items-center gap-1.5' title={isRTL ? 'غير متصل' : 'Offline'}>
-                <span className='w-1.5 h-1.5 rounded-full bg-gray-400'></span>
-                {offlineCount}
-              </span>
-            )}
+              )}
+              {offlineCount > 0 && (
+                <span className='px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700 flex items-center gap-1.5' title={isRTL ? 'غير متصل' : 'Offline'}>
+                  <span className='w-1.5 h-1.5 rounded-full bg-gray-400'></span>
+                  {offlineCount}
+                </span>
+              )}
+            </div>
           </div>
         </div>
+
+        <button
+          onClick={onReloadSessions}
+          disabled={loading}
+          className='flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-(--border-divider) rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-transparent disabled:opacity-50 cursor-pointer transition-colors text-(--text-secondary)'
+        >
+          <svg
+            className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}
+            fill='none' stroke='currentColor' strokeWidth='2' viewBox='0 0 24 24'
+          >
+            <polyline points='23 4 23 10 17 10' />
+            <polyline points='1 20 1 14 7 14' />
+            <path d='M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15' />
+          </svg>
+          <span className=''>{isRTL ? 'تحديث' : 'Refresh'}</span>
+        </button>
       </div>
 
       {loading ? (
-        <div className='flex items-center justify-center p-12'>
-          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600'></div>
+        <div className='flex items-center justify-center min-h-[300px]'>
+          <div className='animate-spin rounded-full h-10 w-10 border-4 border-gray-200 dark:border-gray-700 border-t-gray-600 dark:border-t-gray-400'></div>
         </div>
       ) : error ? (
         <div className='p-6 text-center text-red-600'>{error}</div>
@@ -156,6 +127,9 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
               const displayBrowserName = getBrowserName(session.user_agent || '');
               const isDesktopAppSession = isDesktopAppUserAgent(session.user_agent || '');
               const isOnline = isSessionOnline(session.last_seen_at);
+              const language = isRTL ? 'AR' : 'EN';
+              const relativeTime = isOnline ? '' : getRelativeTime(session.last_seen_at, language);
+              const lastSeenInfo = formatDateWithRelativeLabel(session.last_seen_at, language);
               
               let IconComponent = Icons.Desktop;
               let iconColor = 'text-gray-600 dark:text-gray-400';
@@ -221,13 +195,19 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
                               {isRTL ? 'متصل الآن' : 'Online Now'}
                             </span>
                           ) : (
-                            <span>
-                              {isRTL ? 'آخر ظهور:' : 'Last seen:'} {new Date(session.last_seen_at).toLocaleString(isRTL ? 'ar-EG' : 'en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: 'numeric',
-                                minute: '2-digit'
-                              })}
+                            <span className='flex items-center gap-1 flex-wrap'>
+                              <span className='opacity-70'>{isRTL ? 'آخر ظهور:' : 'Last seen:'}</span>
+                              {relativeTime ? (
+                                <>
+                                  <span className='text-(--text-primary) font-medium'>{relativeTime}</span>
+                                  <span className='opacity-70 text-xs'>· {lastSeenInfo.time}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className='text-(--text-primary) font-medium'>{lastSeenInfo.label}</span>
+                                  <span className='opacity-70 text-xs'>· {lastSeenInfo.time}</span>
+                                </>
+                              )}
                             </span>
                           )}
                         </div>

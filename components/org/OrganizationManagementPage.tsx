@@ -124,7 +124,7 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
         mb='mb-0'
       />
 
-      <div className='flex-1 overflow-y-auto p-page space-y-6 pb-10'>
+      <div className='flex-1 overflow-y-auto p-page space-y-6'>
         {/* Primary Metrics Grid */}
         <OrgPulseGrid
           metrics={data?.metrics}

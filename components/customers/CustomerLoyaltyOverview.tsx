@@ -182,7 +182,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
 
   return (
     <div
-      className='h-full overflow-y-auto px-page space-y-4 animate-fade-in pb-10'
+      className='h-full overflow-y-auto px-page space-y-4 animate-fade-in'
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       <PageHeader

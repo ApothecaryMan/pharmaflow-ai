@@ -710,7 +710,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div
       ref={scrollContainerRef}
-      className='h-full overflow-y-auto px-page space-y-4 animate-fade-in pb-10'
+      className='h-full overflow-y-auto px-page space-y-4 animate-fade-in'
     >
       <PageHeader
         mb='mb-0'

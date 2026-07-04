@@ -363,7 +363,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
 
   return (
     <div
-      className={`h-full flex flex-col gap-2 animate-fade-in pb-10 overflow-y-auto ${isRTL ? 'rtl' : 'ltr'}`}
+      className={`h-full flex flex-col gap-2 animate-fade-in overflow-y-auto ${isRTL ? 'rtl' : 'ltr'}`}
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       {!selectedDrug && !showAll ? (

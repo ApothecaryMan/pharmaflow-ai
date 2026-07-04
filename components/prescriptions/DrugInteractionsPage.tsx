@@ -1,11 +1,14 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import type React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { type FdaDrugLabel, openFdaService } from '../../services/inventory/openFdaService';
 import { inventorySearchEngine } from '../../services/search/drugSearchService';
 import type { Drug } from '../../types';
 import { PageHeader } from '../common/PageHeader';
 import { SearchEngineInput } from '../common/SearchEngineInput';
+import { getDisplayName } from '../../utils/drugDisplayName';
+import { CARD_BASE } from '../../utils/themeStyles';
+import { FDA } from '../common/Icons';
 
 interface DrugInteractionsPageProps {
   t: Translations;
@@ -15,16 +18,19 @@ interface DrugInteractionsPageProps {
 }
 
 type TabType = 'interactions' | 'warnings' | 'contraindications' | 'usage';
+type TabDef = { id: TabType; label: string };
 
-/**
- * DrugInteractionsPage - Ultra-Minimalist Clinical View.
- * Flat design, high-density typography, zero shadows, no thick borders.
- */
+const TAB_ICONS: Record<TabType, string> = {
+  interactions: 'sync_alt',
+  warnings: 'warning_amber',
+  contraindications: 'block',
+  usage: 'info',
+};
+
 export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
   t,
-  language = 'AR',
   inventory = [],
-  color = 'primary',
+  color = '#3b82f6',
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDrugs, setSelectedDrugs] = useState<Drug[]>([]);
@@ -32,33 +38,40 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('interactions');
   const [results, setResults] = useState<Drug[]>([]);
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  // Initialize Search Engine
+  const tabs = useMemo<TabDef[]>(
+    () => [
+      { id: 'interactions' as TabType, label: 'Interactions' },
+      { id: 'warnings' as TabType, label: 'Warnings' },
+      { id: 'contraindications' as TabType, label: 'Contraindications' },
+      { id: 'usage' as TabType, label: 'Usage' },
+    ],
+    []
+  );
+
   useEffect(() => {
     if (inventory.length > 0) {
       inventorySearchEngine.indexData(inventory);
     }
   }, [inventory]);
 
-  // Effect: Fetch FDA data for all unique ingredients in the selected drugs
   useEffect(() => {
     const fetchAllData = async () => {
       if (selectedDrugs.length === 0) {
         setFdaData(new Map());
         return;
       }
-
       setLoading(true);
-
-      // Aggregate all unique ingredients
       const allIngredients = new Set<string>();
-      selectedDrugs.forEach((drug) => {
+      for (const drug of selectedDrugs) {
         const ingredients = Array.isArray(drug.genericName)
           ? drug.genericName
           : [drug.genericName].filter(Boolean);
-        ingredients.forEach((ing) => allIngredients.add(ing));
-      });
-
+        for (const ing of ingredients) {
+          allIngredients.add(ing);
+        }
+      }
       try {
         const results = await openFdaService.fetchInteractionsForIngredients(
           Array.from(allIngredients)
@@ -70,55 +83,43 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
         setLoading(false);
       }
     };
-
     fetchAllData();
   }, [selectedDrugs]);
 
   const handleDrugToggle = (drug: Drug) => {
     setSelectedDrugs((prev) => {
       const isSelected = prev.find((d) => d.id === drug.id);
-      if (isSelected) {
-        return prev.filter((d) => d.id !== drug.id);
-      } else {
-        return [...prev, drug];
-      }
+      if (isSelected) return prev.filter((d) => d.id !== drug.id);
+      return [...prev, drug];
     });
   };
 
-  const hasAnyData = useMemo(() => {
-    return [...fdaData.values()].some((data) => data !== null);
-  }, [fdaData]);
+  const hasAnyData = useMemo(
+    () => [...fdaData.values()].some((data) => data !== null),
+    [fdaData]
+  );
 
-  const ingredientResults = useMemo(() => {
-    return [...fdaData.entries()].map(([name, data]) => ({
-      name,
-      data,
-    }));
-  }, [fdaData]);
+  const ingredientResults = useMemo(
+    () => [...fdaData.entries()].map(([name, data]) => ({ name, data })),
+    [fdaData]
+  );
 
-  // Real-time Cross-Interaction Analysis
   const detectedIssues = useMemo(() => {
     const issues: { source: string; target: string; snippet: string }[] = [];
     const allIngredients: string[] = Array.from(fdaData.keys());
-
     fdaData.forEach((data: FdaDrugLabel | null, ingName: string) => {
       const interactions = data?.drug_interactions;
-      if (!interactions || !interactions[0]) return;
+      if (!interactions?.[0]) return;
       const text = (interactions[0] as string).toLowerCase();
-
       allIngredients.forEach((otherIng) => {
-        if (ingName === otherIng) return; // Don't check against self
-
-        // Simple but effective check for ingredient mentions
+        if (ingName === otherIng) return;
         if (text.includes(otherIng.toLowerCase())) {
-          // Find a small snippet for context
           const idx = text.indexOf(otherIng.toLowerCase());
           const fullText = interactions[0] as string;
           const snippet = fullText.substring(
             Math.max(0, idx - 150),
             Math.min(fullText.length, idx + 450)
           );
-
           issues.push({
             source: ingName,
             target: otherIng,
@@ -127,92 +128,193 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
         }
       });
     });
-
     return issues;
   }, [fdaData]);
 
   const formatClinicalText = (text: string) => {
     if (!text) return null;
 
-    // Clean up common FDA headers
-    const cleanedText = text
-      .replace(/^[0-9.]+\s*DRUG INTERACTIONS\s*/i, '')
-      .replace(/^[0-9.]+\s*WARNINGS\s*/i, '')
-      .replace(/^[0-9.]+\s*CONTRAINDICATIONS\s*/i, '');
+    const renderWithSources = (content: string) => {
+      if (!content) return null;
+      const regex = /(\[[^\]]+\]|\(see\s+[^)]+\)|\(\s*\d+(?:\.\d+)?(?:\s*,\s*\d+(?:\.\d+)?)*\s*\)|\b(?:Tables?|Figures?|Sections?)\s+\d+(?:\.\d+)?(?:\s*(?:,|and|or|to|-)\s*\d+(?:\.\d+)?)*\b|\(\s*e\.?g\.?,?\s+[^)]+\)|\bSee\s+(?:the\s+)?prescribing\s+information\b)/gi;
+      return content.split(regex).map((part, i) => {
+        if (i % 2 !== 0) {
+          const isCrossReference = /^(?:Table|Figure|Section)s?\s/i.test(part);
+          const isExample = /^\(\s*e\.?g\.?/i.test(part);
 
-    // Pattern: [Header] Clinical Impact: [Impact] Intervention: [Intervention]
-    // We look for "Clinical Impact:" as the primary separator
-    const blocks = cleanedText.split(/(?=\b[A-Z][A-Za-z\s,()-]+Clinical Impact:)/g);
+          if (isCrossReference) {
+            return (
+              <span key={i} className='font-bold text-(--text-primary) bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded-md mx-0.5'>
+                {part}
+              </span>
+            );
+          }
+          if (isExample) {
+            return (
+              <span key={i} className='font-semibold text-(--text-primary) italic'>
+                {part}
+              </span>
+            );
+          }
+          return (
+             <span key={i} className='text-[10px] font-bold text-(--text-tertiary) bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded-sm mx-1 tracking-tight inline-block leading-none translate-y-[-1px]'>
+              {part}
+            </span>
+          );
+        }
+        return part;
+      });
+    };
 
-    if (blocks.length <= 1) {
-      // Fallback: Split by paragraphs or long sentences
-      const paragraphs = cleanedText.split(/\n\n|(?<=[.!?])\s+(?=[A-Z])/);
+    const renderStructuredText = (rawText: string, textClassName: string = 'font-medium text-(--text-secondary)') => {
+      const trueParagraphs = rawText.split(/(?:\n\s*){2,}/);
+      const paragraphs: string[] = [];
+      
+      trueParagraphs.forEach(trueP => {
+        const units = trueP.split(/\s+(?=\d+\.\d+\s+[A-Z])|(?<=[.!?\])])\s+(?=[A-Z])/);
+        let currentPara = '';
+        
+        units.forEach(unit => {
+          const trimmed = unit.trim();
+          if (!trimmed) return;
+          
+          const isHeader = /^(\d+\.\d+)\s+/.test(trimmed);
+          const isBullet = /^[•\-*]/.test(trimmed);
+          const endsWithRef = /[\])]$/.test(trimmed);
+          
+          const colonSubtitle = /^[^:.!?]{3,60}\s*:/s.test(trimmed);
+          const titleSubtitle = /^(?!The\s|This\s|These\s|In\s|A\s|An\s|For\s|See\s|Use\s|Avoid\s|Consult\s|Monitor\s|Consider\s|Evaluate\s|Do\snot\s|If\s|Take\s|Administer\s|Discontinue\s|Reduce\s|Increase\s|Adjust\s|Initiate\s|Stop\s|Advise\s|Instruct\s|Counsel\s|Start\s|Give\s|Ensure\s|Maintain\s|Hold\s|Interrupt\s|Resume\s|When\s)([A-Z][A-Za-z0-9/-]+(?:\s+(?:and|or|with|in|of)\s+[A-Z][A-Za-z0-9/-]+|\s+[A-Z][A-Za-z0-9/-]+){0,3})\s+(?=[A-Z][a-z])/s.test(trimmed);
+          
+          if (isHeader || isBullet || endsWithRef || colonSubtitle || titleSubtitle) {
+            if (currentPara) paragraphs.push(currentPara.trim());
+            currentPara = '';
+            
+            if (isHeader || isBullet || endsWithRef) {
+              paragraphs.push(trimmed);
+            } else {
+              currentPara = trimmed + ' ';
+            }
+            return;
+          }
+          
+          if (currentPara.length + trimmed.length > 400 && currentPara.length > 0) {
+            paragraphs.push(currentPara.trim());
+            currentPara = trimmed + ' ';
+          } else {
+            currentPara += trimmed + ' ';
+          }
+        });
+        if (currentPara) paragraphs.push(currentPara.trim());
+      });
+
       return (
-        <div className='space-y-6'>
-          {paragraphs.map((p, i) => (
-            <p
-              key={i}
-              className='text-sm leading-relaxed font-medium text-gray-600 dark:text-gray-400'
-            >
-              {p.trim()}
-            </p>
-          ))}
+        <div className='space-y-4 pt-1'>
+          {paragraphs.map((p, i) => {
+            const match = p.match(/^(\d+\.\d+)\s+(.*)/is);
+            if (match) {
+              return (
+                <div key={i} className='mt-6 mb-2 first:mt-0 flex gap-3'>
+                  <span className='font-black text-(--text-primary) bg-black/5 dark:bg-white/10 px-2.5 py-1 rounded-md text-xs h-fit shrink-0 mt-0.5 border border-black/5 dark:border-white/10'>
+                    {match[1]}
+                  </span>
+                  <p className={`text-sm leading-[1.75] text-left ${textClassName}`} dir='auto'>
+                    {renderWithSources(match[2].trim())}
+                  </p>
+                </div>
+              );
+            }
+
+            let subtitle = '';
+            let contentToRender = p;
+            
+            const colonMatch = p.match(/^([^:.!?]{3,60})\s*:\s*(.*)/s);
+            if (colonMatch) {
+              subtitle = colonMatch[1].trim();
+              contentToRender = colonMatch[2].trim();
+            } else {
+              const titleMatch = p.match(/^(?!The\s|This\s|These\s|In\s|A\s|An\s|For\s|See\s|Use\s|Avoid\s|Consult\s|Monitor\s|Consider\s|Evaluate\s|Do\snot\s|If\s|Take\s|Administer\s|Discontinue\s|Reduce\s|Increase\s|Adjust\s|Initiate\s|Stop\s|Advise\s|Instruct\s|Counsel\s|Start\s|Give\s|Ensure\s|Maintain\s|Hold\s|Interrupt\s|Resume\s|When\s)([A-Z][A-Za-z0-9/-]+(?:\s+(?:and|or|with|in|of)\s+[A-Z][A-Za-z0-9/-]+|\s+[A-Z][A-Za-z0-9/-]+){0,3})\s+(?=[A-Z][a-z])/s);
+              if (titleMatch && titleMatch[1].length < 60) {
+                subtitle = titleMatch[1].trim();
+                contentToRender = p.substring(titleMatch[1].length).trim();
+              }
+            }
+
+            return (
+              <p
+                key={i}
+                className={`text-sm leading-[1.75] text-left ${p.startsWith('•') || p.startsWith('-') ? 'ps-4' : ''} ${textClassName}`}
+                dir='auto'
+              >
+                {subtitle && <strong className='text-(--text-primary) font-bold block mb-0.5'>{subtitle}</strong>}
+                {renderWithSources(contentToRender)}
+              </p>
+            );
+          })}
         </div>
       );
+    };
+    const cleanedText = text
+      .replace(/^(?:[0-9.]+\s*)?DRUG INTERACTIONS\s*/i, '')
+      .replace(/^(?:[0-9.]+\s*)?WARNINGS\s*/i, '')
+      .replace(/^(?:[0-9.]+\s*)?CONTRAINDICATIONS\s*/i, '')
+      .replace(/^(?:[0-9.]+\s*)?INDICATIONS AND USAGE\s*/i, '');
+    const blocks = cleanedText.split(/(?<=\n|\.\s+)(?=[A-Z][A-Za-z\s,()-]+Clinical Impact\s*:)/g);
+    if (blocks.length <= 1) {
+      return renderStructuredText(cleanedText);
     }
 
     return (
-      <div className='grid gap-6'>
+      <div className='flex flex-col'>
         {blocks.map((block, i) => {
           const impactMatch = block.match(
-            /(.*?)\s*Clinical Impact:\s*(.*?)(?=\s*Intervention:|$)/is
+            /(.*?)\s*Clinical Impact\s*:\s*(.*?)(?=\s*Intervention\s*:|$)/is
           );
-          const interventionMatch = block.match(/Intervention:\s*(.*)/is);
-
+          const interventionMatch = block.match(/Intervention\s*:\s*(.*)/is);
           const header = impactMatch?.[1]?.trim();
           const impact = impactMatch?.[2]?.trim();
           const intervention = interventionMatch?.[1]?.trim();
 
           if (!impact && !intervention) {
             return (
-              <p
-                key={i}
-                className='text-sm leading-relaxed font-medium text-gray-600 dark:text-gray-400'
-              >
-                {block.trim()}
-              </p>
+              <div key={i} className='max-w-4xl'>
+                {renderStructuredText(block.trim())}
+              </div>
             );
           }
 
           return (
             <div
               key={i}
-              className='group border-s-2 border-gray-100 dark:border-white/5 ps-5 py-1 transition-colors hover:border-gray-900 dark:hover:border-white'
+              className='group relative border-s-[3px] border-(--border-divider) ps-6 pt-1 pb-12 transition-all duration-300 hover:border-(--text-primary)'
             >
               {header && (
-                <h5 className='text-base font-black uppercase tracking-tight text-gray-900 dark:text-white mb-3'>
-                  {header}
-                </h5>
+                <div className='sticky top-[92px] z-10 bg-(--bg-card) py-3 -ms-4 ps-4 -me-2 pe-2'>
+                  <h5 className='text-sm font-black uppercase tracking-[0.08em] text-(--text-primary)'>
+                    {header}
+                  </h5>
+                </div>
               )}
-              <div className='flex flex-col gap-3'>
+              <div className='flex flex-col gap-4 mt-4'>
                 {impact && (
-                  <div className='space-y-0.5'>
-                    <span className='text-[9px] font-black uppercase tracking-widest text-red-500/80 block'>
+                  <div className='space-y-1'>
+                    <span className='inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.15em] text-red-500/80'>
+                      <span className='w-1 h-1 rounded-full bg-red-500/60' />
                       Clinical Impact
                     </span>
-                    <p className='text-sm font-medium leading-relaxed text-gray-600 dark:text-gray-400 max-w-5xl'>
-                      {impact}
-                    </p>
+                    <div className='max-w-4xl'>
+                      {renderStructuredText(impact)}
+                    </div>
                   </div>
                 )}
                 {intervention && (
-                  <div className='space-y-0.5'>
-                    <span className='text-[9px] font-black uppercase tracking-widest text-blue-500/80 block'>
+                  <div className='space-y-1'>
+                    <span className='inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.15em] text-blue-500/80'>
+                      <span className='w-1 h-1 rounded-full bg-blue-500/60' />
                       Intervention
                     </span>
-                    <p className='text-sm font-bold leading-relaxed text-gray-900 dark:text-gray-200 max-w-5xl'>
-                      {intervention}
-                    </p>
+                    <div className='max-w-4xl'>
+                      {renderStructuredText(intervention)}
+                    </div>
                   </div>
                 )}
               </div>
@@ -223,145 +325,208 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
     );
   };
 
-  const renderFdaContent = () => {
-    if (loading)
-      return (
-        <div className='space-y-8 animate-pulse pt-10'>
-          <div className='h-4 w-1/3 bg-gray-100 dark:bg-white/5 rounded' />
-          <div className='space-y-4'>
-            <div className='h-4 w-full bg-gray-100 dark:bg-white/5 rounded' />
-            <div className='h-4 w-5/6 bg-gray-100 dark:bg-white/5 rounded' />
+  const renderLoadingSkeleton = () => (
+    <div className='space-y-10 pt-8'>
+      {[1, 2].map((i) => (
+        <div key={i} className='space-y-5 animate-pulse'>
+          <div className='flex items-center gap-3'>
+            <div className='h-4 w-16 bg-(--border-divider) rounded' />
+            <div className='h-6 w-48 bg-(--border-divider) rounded' />
+          </div>
+          <div className='space-y-3 ps-4 border-s-[3px] border-(--border-divider)'>
+            <div className='h-3 w-20 bg-(--border-divider) rounded' />
+            <div className='h-4 w-full bg-(--border-divider) rounded' />
+            <div className='h-4 w-4/5 bg-(--border-divider) rounded' />
+            <div className='h-4 w-3/5 bg-(--border-divider) rounded mt-4' />
+            <div className='h-3 w-16 bg-(--border-divider) rounded' />
+            <div className='h-4 w-5/6 bg-(--border-divider) rounded' />
           </div>
         </div>
-      );
+      ))}
+    </div>
+  );
 
-    if (selectedDrugs.length === 0) {
-      return (
-        <div className='flex flex-col items-center justify-center py-40 text-gray-300'>
-          <p className='text-[10px] font-black uppercase tracking-[0.4em]'>{t.selectDrug}</p>
-        </div>
-      );
-    }
-
-    if (!hasAnyData) {
-      return (
-        <div className='py-20 text-center border-t border-gray-100 dark:border-white/5'>
-          <h4
-            className='text-sm font-black text-gray-900 dark:text-white uppercase mb-2'
-            dir='auto'
+  const renderEmptyState = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className='h-full flex items-center justify-center pt-24'
+    >
+      <div className='text-center max-w-xs'>
+        <div className='relative mx-auto mb-8 w-32 h-32 flex items-center justify-center'>
+          <div className='absolute inset-0 rounded-full bg-(--border-divider) opacity-30' />
+          <span
+            className='material-symbols-rounded text-(--border-color) relative z-10'
+            style={{ fontSize: '72px' }}
           >
-            {t.noFdaData}
-          </h4>
-          <p className='text-xs text-gray-400 font-medium' dir='auto'>
-            {t.notApproved}
-          </p>
+            medication
+          </span>
         </div>
-      );
-    }
+        <p className='text-sm font-black text-(--text-tertiary) uppercase tracking-[0.12em] leading-relaxed' dir='auto'>
+          {t.selectMultipleDrugs}
+        </p>
+        <p className='mt-3 text-[11px] font-medium text-(--text-tertiary) opacity-60 leading-relaxed' dir='auto'>
+          {t.searchAndAddDrugs}
+        </p>
+      </div>
+    </motion.div>
+  );
+
+  const renderNoDataState = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className='py-20 text-center'
+    >
+      <div className='inline-flex items-center justify-center w-14 h-14 rounded-full bg-(--border-divider) mb-5'>
+        <span className='material-symbols-rounded text-(--text-tertiary)' style={{ fontSize: '24px' }}>
+          description
+        </span>
+      </div>
+      <h4 className='text-sm font-black text-(--text-primary) uppercase tracking-[0.06em] mb-2' dir='auto'>
+        No FDA data available for this drug
+      </h4>
+      <p className='text-xs font-medium text-(--text-tertiary)' dir='auto'>
+        This drug may not be FDA-registered (e.g., generic local version)
+      </p>
+    </motion.div>
+  );
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.04 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 12 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] },
+    },
+  };
+
+  const renderFdaContent = () => {
+    if (loading) return renderLoadingSkeleton();
+    if (selectedDrugs.length === 0) return renderEmptyState();
+    if (!hasAnyData) return renderNoDataState();
 
     return (
-      <div className='space-y-8 py-4'>
-        <AnimatePresence mode='wait'>
-          <motion.div
-            key={`${selectedDrugs.map((d) => d.id).join('-')}-${activeTab}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className='space-y-8'
-          >
-            {/* Direct Interaction Alerts */}
-            {activeTab === 'interactions' && detectedIssues.length > 0 && (
-              <div className='bg-red-500/5 dark:bg-red-500/10 border-s-4 border-red-500 p-6 space-y-4'>
-                <div className='flex items-center gap-3 text-red-600 dark:text-red-400'>
-                  <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
+      <motion.div
+        variants={containerVariants}
+        initial='hidden'
+        animate='visible'
+        key={`${selectedDrugs.map((d) => d.id).join('-')}-${activeTab}`}
+        className='flex flex-col pt-4'
+      >
+        {detectedIssues.length > 0 && activeTab === 'interactions' && (
+          <motion.div variants={itemVariants} className='relative overflow-hidden'>
+            <div className='absolute inset-0 bg-gradient-to-r from-red-500/[0.04] to-transparent pointer-events-none' />
+            <div className='relative border-s-[3px] border-red-500 ps-6 py-5 space-y-5'>
+              <div className='flex items-center gap-3'>
+                <span className='inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-500/10 text-red-500'>
+                  <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
                     warning
                   </span>
-                  <h3 className='text-lg font-black uppercase tracking-tighter'>
+                </span>
+                <div>
+                  <h3 className='text-sm font-black uppercase tracking-[0.06em] text-red-500'>
                     Direct Clinical Conflict Detected
                   </h3>
+                  <p className='text-[10px] font-medium text-(--text-tertiary) mt-0.5'>
+                    {detectedIssues.length} conflict{detectedIssues.length > 1 ? 's' : ''} found across selected ingredients
+                  </p>
                 </div>
-
-                <div className='grid gap-4'>
-                  {detectedIssues.map((issue, i) => (
-                    <div key={i} className='flex flex-col gap-1'>
-                      <div className='flex items-center gap-2 text-sm font-black uppercase tracking-tight text-gray-900 dark:text-white'>
-                        <span>{issue.source}</span>
-                        <span
-                          className='material-symbols-rounded text-gray-400'
-                          style={{ fontSize: '12px' }}
-                        >
-                          arrow_forward
-                        </span>
-                        <span className='text-red-600 dark:text-red-400'>{issue.target}</span>
-                      </div>
-                      <p
-                        className='text-sm font-medium text-gray-600 dark:text-gray-400 italic leading-relaxed'
-                        dir='auto'
-                      >
-                        {issue.snippet}
-                      </p>
+              </div>
+              <div className='grid gap-4'>
+                {detectedIssues.map((issue, i) => (
+                  <div key={i} className='flex flex-col gap-1.5'>
+                    <div className='flex items-center gap-2 text-xs font-black uppercase tracking-[0.04em] text-(--text-primary)'>
+                      <span>{issue.source}</span>
+                      <span className='material-symbols-rounded text-(--text-tertiary)' style={{ fontSize: '14px' }}>
+                        arrow_forward
+                      </span>
+                      <span className='text-red-500'>{issue.target}</span>
                     </div>
-                  ))}
-                </div>
-
-                <p className='text-[10px] font-bold text-gray-400 uppercase tracking-widest pt-4 border-t border-red-500/10'>
+                    <p className='text-[13px] font-medium leading-relaxed text-(--text-secondary) italic text-left' dir='auto'>
+                      {issue.snippet}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <div className='flex items-center gap-2 pt-4 border-t border-(--border-divider)'>
+                <span className='material-symbols-rounded text-(--text-tertiary)' style={{ fontSize: '12px' }}>
+                  database
+                </span>
+                <span className='text-[10px] font-bold text-(--text-tertiary) uppercase tracking-[0.1em]'>
                   Source: FDA Clinical Data Retrieval
-                </p>
+                </span>
               </div>
-            )}
-
-            {ingredientResults.map(({ name, data }, idx) => (
-              <div key={idx} className='space-y-0.5'>
-                <div className='flex flex-col'>
-                  <span className='text-[9px] font-black text-gray-400 uppercase tracking-widest'>
-                    {String(idx + 1).padStart(2, '0')} — Ingredient
-                  </span>
-                  <h4
-                    className='text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-tight'
-                    dir='auto'
-                  >
-                    {name}
-                  </h4>
-                </div>
-
-                <div className='pt-6'>
-                  {data ? (
-                    <div className='w-full' dir='auto'>
-                      {activeTab === 'interactions' &&
-                        formatClinicalText(data.drug_interactions?.[0] || t.noInteractions)}
-                      {activeTab === 'warnings' &&
-                        formatClinicalText(data.warnings?.[0] || 'No specific warnings.')}
-                      {activeTab === 'contraindications' &&
-                        formatClinicalText(data.contraindications?.[0] || 'No contraindications.')}
-                      {activeTab === 'usage' &&
-                        formatClinicalText(data.indications_and_usage?.[0] || 'No usage data.')}
-                    </div>
-                  ) : (
-                    <div className='text-xs text-gray-400 italic'>{t.noFdaData}</div>
-                  )}
-                </div>
-              </div>
-            ))}
+            </div>
           </motion.div>
-        </AnimatePresence>
-      </div>
+        )}
+
+        {ingredientResults.map(({ name, data }, idx) => (
+          <motion.div key={`${name}-${idx}`} variants={itemVariants} className='pb-16'>
+            <div className='sticky top-0 z-20 bg-(--bg-card) py-4 -mx-8 px-8'>
+              <div className='flex items-center gap-3'>
+                <div className='flex items-baseline gap-2 shrink-0'>
+                  <span className='text-[10px] font-black text-(--text-tertiary) tabular-nums tracking-[0.12em]'>
+                    {String(idx + 1).padStart(2, '0')}
+                  </span>
+                  <span className='text-[9px] font-black text-(--text-tertiary) uppercase tracking-[0.15em]'>
+                    Ingredient
+                  </span>
+                </div>
+                <div className='h-px flex-1 bg-(--border-divider)' />
+              </div>
+              <h4 className='text-2xl font-black text-(--text-primary) uppercase tracking-[-0.02em] leading-tight mt-4'>
+                {name}
+              </h4>
+            </div>
+            <div className='ps-2 mt-2'>
+              {data ? (
+                <div className='w-full'>
+                  {activeTab === 'interactions' &&
+                    formatClinicalText(data.drug_interactions?.[0] || t.noInteractions)}
+                  {activeTab === 'warnings' &&
+                    formatClinicalText(data.warnings?.[0] || 'No specific warnings.')}
+                  {activeTab === 'contraindications' &&
+                    formatClinicalText(data.contraindications?.[0] || 'No contraindications.')}
+                  {activeTab === 'usage' &&
+                    formatClinicalText(data.indications_and_usage?.[0] || 'No usage data.')}
+                </div>
+              ) : (
+                <div className='text-xs font-medium text-(--text-tertiary) italic flex items-center gap-2 text-left' dir='auto'>
+                  <span className='w-1 h-1 rounded-full bg-(--text-tertiary)' />
+                  No FDA data available for this drug
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ))}
+      </motion.div>
     );
   };
 
   return (
-    <div className='h-full flex flex-col bg-(--bg-page-surface) selection:bg-gray-100 dark:selection:bg-white/10'>
+    <div className='h-full flex flex-col bg-(--bg-page-surface) selection:bg-(--text-primary)/10'>
       <PageHeader
         leftContent={
-          selectedDrugs.length > 0 && (
-            <button
-              onClick={() => setSelectedDrugs([])}
-              className='text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-600 underline underline-offset-4 px-4'
-            >
-              Clear Cocktail
-            </button>
-          )
+          <div className='flex flex-col items-start'>
+            <h1 className={"text-2xl !font-['GraphicSansFont'] tracking-tight text-(--text-primary) flex items-center gap-2 truncate"} style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}>
+              <span className="flex items-center justify-center shrink-0 text-[#002D72] dark:text-blue-300 translate-y-[1px]">
+                <FDA size={22} className="opacity-95" />
+              </span>
+              {t.interactionAnalysis}
+            </h1>
+          </div>
         }
         centerContent={
-          <div className='w-[600px]'>
+          <div className='w-full max-w-[560px] mx-auto'>
             <SearchEngineInput
               value={searchQuery}
               onSearchChange={setSearchQuery}
@@ -370,151 +535,228 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
               onResultsChange={setResults}
               placeholder={t.searchPlaceholder}
               autoFocus
-              className='bg-transparent border-0 focus:ring-0 text-sm font-black uppercase tracking-tight'
+              className={"!font-['GraphicSansFont'] bg-transparent border-0 focus:ring-0 text-sm font-normal tracking-tight"}
             />
           </div>
         }
         rightContent={
-          <div className='flex flex-col items-end'>
-            <h1 className='text-xl font-bold text-gray-900 dark:text-white truncate tracking-tight page-title'>
-              Interaction Analysis
-            </h1>
-            <span className='text-[10px] font-medium text-gray-500 dark:text-gray-400 truncate tracking-widest italic uppercase'>
-              {selectedDrugs.length > 0
-                ? `${selectedDrugs.length} Drugs Selected`
-                : t.drugInteractions}
-            </span>
+          <div className='flex items-center gap-3'>
+            {selectedDrugs.length > 0 && (
+              <motion.button
+                type='button'
+                initial={{ opacity: 0, x: 8 }}
+                animate={{ opacity: 1, x: 0 }}
+                onClick={() => setSelectedDrugs([])}
+                className={"!font-['GraphicSansFont'] text-[10px] font-normal uppercase tracking-[0.12em] text-red-500 px-3 py-1.5 border border-red-500/30"}
+              >
+                {t.clearCocktail}
+              </motion.button>
+            )}
           </div>
         }
       />
 
-      <div className='flex-1 flex overflow-hidden'>
-        {/* Sidebar: Flat List */}
+      <div className='flex-1 flex overflow-hidden gap-3'>
         <div
-          className='w-[280px] hidden lg:flex flex-col border-e border-gray-100 dark:border-white/5 bg-(--bg-card)'
+          className={`w-[360px] hidden lg:flex flex-col ${CARD_BASE} rounded-xl`}
           dir='ltr'
         >
-          <div className='flex-1 overflow-y-auto scrollbar-hide'>
-            {results.map((drug) => {
-              const isSelected = selectedDrugs.some((d) => d.id === drug.id);
-              return (
-                <button
-                  key={drug.id}
-                  onClick={() => handleDrugToggle(drug)}
-                  className={`w-full text-start p-3 transition-none border-b border-gray-50 dark:border-white/[0.05] ${
-                    isSelected
-                      ? 'bg-gray-100 dark:bg-white/[0.08]'
-                      : 'hover:bg-gray-50 dark:hover:bg-white/[0.03]'
-                  }`}
-                >
-                  <div
-                    className={`text-sm font-black uppercase tracking-tight mb-0.5 ${isSelected ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}
+          <div className='flex-1 overflow-y-auto scrollbar-hide p-3 space-y-1.5'>
+            {results.length === 0 && searchQuery.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className='px-4 py-12 text-center'
+              >
+                <p className='text-xs font-medium text-(--text-tertiary) italic'>
+                  {t.noResults}
+                </p>
+              </motion.div>
+            )}
+            {searchQuery.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className='h-full flex flex-col items-center justify-center px-6'
+              >
+                <div className='relative mb-5 w-16 h-16 flex items-center justify-center'>
+                  <div className='absolute inset-0 rounded-full bg-(--border-divider) opacity-30' />
+                  <span
+                    className='material-symbols-rounded text-(--border-color) relative z-10'
+                    style={{ fontSize: '36px' }}
                   >
-                    {drug.name}
-                  </div>
-                  <div className='text-[10px] font-bold text-gray-400 truncate'>
-                    {Array.isArray(drug.genericName) ? drug.genericName[0] : drug.genericName}
-                  </div>
-                </button>
-              );
-            })}
+                    search
+                  </span>
+                </div>
+                <p className='text-xs font-medium text-(--text-tertiary) italic text-center' dir='auto'>
+                  {t.sidebarPlaceholder}
+                </p>
+              </motion.div>
+            )}
+            <AnimatePresence mode='popLayout'>
+              {results.map((drug, index) => {
+                const isSelected = selectedDrugs.some((d) => d.id === drug.id);
+                return (
+                  <motion.button
+                    type='button'
+                    key={drug.id}
+                    layout
+                    initial={{ opacity: 0, y: 16, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9, filter: 'blur(4px)' }}
+                    transition={{
+                      layout: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] },
+                      opacity: { duration: 0.25, delay: index * 0.035 },
+                      y: { duration: 0.25, delay: index * 0.035, ease: [0.25, 0.1, 0.25, 1] },
+                      scale: { duration: 0.25, delay: index * 0.035 },
+                    }}
+                    onClick={() => handleDrugToggle(drug)}
+                    className={`w-full text-start rounded-xl border transition-all duration-200 relative overflow-hidden ${
+                      isSelected
+                        ? 'border-transparent bg-(--bg-page-surface)'
+                        : '!border-[--accent-color]/40 !bg-[--accent-color]/8'
+                    }`}
+                    style={!isSelected ? ({ '--accent-color': color } as React.CSSProperties) : undefined}
+                  >
+                    <div className='px-4 h-[48px] flex flex-col justify-center'>
+                      <div
+                        className='flex items-baseline gap-1.5 text-sm font-bold tracking-tight w-full min-w-0'
+                        dir='ltr'
+                      >
+                        <span className='truncate text-(--text-primary) uppercase'>
+                          {(Array.isArray(drug.genericName) ? drug.genericName[0] : drug.genericName) || drug.name}
+                        </span>
+                      </div>
+                      <span className='text-[11px] font-medium text-(--text-tertiary) truncate mt-0.5' dir='ltr'>
+                        {getDisplayName(drug)}
+                      </span>
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </AnimatePresence>
           </div>
         </div>
 
-        {/* Main Area: Brutalist Hierarchy */}
-        <div className='flex-1 flex flex-col overflow-hidden bg-(--bg-page-surface)'>
-          <div className='flex-1 overflow-y-auto scrollbar-hide px-6 pt-0 text-left' dir='ltr'>
-            <div className='relative'>
-              {selectedDrugs.length > 0 && (
-                <div className='sticky top-0 z-20 bg-(--bg-page-surface) pt-6 pb-6 border-b border-gray-100 dark:border-white/5'>
-                  <div className='flex flex-col gap-4'>
-                    <div className='flex flex-wrap gap-2'>
-                      {selectedDrugs.map((drug) => (
-                        <div
-                          key={drug.id}
-                          className='flex items-center gap-3 px-4 py-2 bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-white/10 rounded-none group'
-                        >
-                          <div className='flex flex-col'>
-                            <span className='text-xs font-black text-gray-900 dark:text-white uppercase tracking-tight'>
-                              {drug.name}
-                            </span>
-                            <span className='text-[9px] font-medium text-gray-400 italic'>
-                              {drug.dosageForm}
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => handleDrugToggle(drug)}
-                            className='material-symbols-rounded text-gray-400 hover:text-red-500 transition-colors'
-                            style={{ fontSize: '16px' }}
+        <div className={`flex-1 flex flex-col overflow-hidden ${CARD_BASE} rounded-xl`} dir='ltr'>
+          <AnimatePresence mode='wait'>
+            {selectedDrugs.length > 0 ? (
+              <motion.div
+                key='selected-content'
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className='flex-1 flex flex-col overflow-hidden'
+              >
+                <div className='shrink-0 z-20 bg-(--bg-card) border-b border-(--border-divider)'>
+                  <div className='flex flex-wrap gap-2 px-4 pt-3 pb-0' dir='ltr'>
+                      {(
+                        Array.from(
+                          new Map(
+                            selectedDrugs.map((drug) => {
+                              const gen = (Array.isArray(drug.genericName) ? drug.genericName[0] : drug.genericName) || drug.name;
+                              return [gen, drug];
+                            })
+                          ).values()
+                        ) as Drug[]
+                      ).map((drug) => {
+                        const gen = (Array.isArray(drug.genericName) ? drug.genericName[0] : drug.genericName) || drug.name;
+                        return (
+                          <motion.div
+                            key={gen}
+                            layout
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                            className='group flex items-center gap-2 px-3 py-1.5 text-xs font-bold tracking-tight rounded-lg border border-(--border-divider) bg-(--bg-page-surface) text-(--text-primary) cursor-default select-none'
                           >
-                            close
-                          </button>
-                        </div>
-                      ))}
+                            <span className='truncate max-w-[120px]'>{gen}</span>
+                            <button
+                              type='button'
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedDrugs((prev: Drug[]) => prev.filter((d: Drug) => {
+                                  const g = (Array.isArray(d.genericName) ? d.genericName[0] : d.genericName) || d.name;
+                                  return g !== gen;
+                                }));
+                              }}
+                              className='material-symbols-rounded text-(--text-tertiary) opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all duration-200 shrink-0'
+                              style={{ fontSize: '12px' }}
+                            >
+                              close
+                            </button>
+                          </motion.div>
+                        );
+                      })}
                     </div>
 
-                    {/* Flat Navigation */}
                     {hasAnyData && (
-                      <div className='flex justify-center gap-8 pt-2'>
-                        {[
-                          { id: 'interactions', label: t.interactions },
-                          { id: 'warnings', label: t.warnings },
-                          { id: 'contraindications', label: t.contraindications },
-                          { id: 'usage', label: t.usage },
-                        ].map((tab) => (
-                          <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id as any)}
-                            className={`pb-3 text-[10px] font-black uppercase tracking-[0.15em] transition-none relative ${
-                              activeTab === tab.id
-                                ? 'text-gray-900 dark:text-white'
-                                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                            }`}
-                          >
-                            {tab.label}
-                            {activeTab === tab.id && (
-                              <div className='absolute bottom-0 inset-x-0 h-1 bg-gray-900 dark:bg-white' />
-                            )}
-                          </button>
-                        ))}
+                      <div className='flex gap-0 px-3 justify-center'>
+                        {tabs.map((tab) => {
+                          const isActive = activeTab === tab.id;
+                          return (
+                            <button
+                              type='button'
+                              key={tab.id}
+                              onClick={() => setActiveTab(tab.id)}
+                              className={`relative px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.12em] transition-colors duration-200 flex items-center gap-1.5 ${
+                                isActive
+                                  ? 'text-(--text-primary)'
+                                  : 'text-(--text-tertiary) hover:text-(--text-secondary)'
+                              }`}
+                            >
+                              <span
+                                className='material-symbols-rounded'
+                                style={{ fontSize: '14px', fontWeight: 200 }}
+                              >
+                                {TAB_ICONS[tab.id]}
+                              </span>
+                              {tab.label}
+                              {isActive && (
+                                <motion.div
+                                  layoutId='tab-indicator'
+                                  className='absolute bottom-0 inset-x-0 h-[2px] bg-(--text-primary)'
+                                  transition={{
+                                    type: 'spring',
+                                    stiffness: 500,
+                                    damping: 35,
+                                  }}
+                                />
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
-                </div>
-              )}
 
-              {/* Content Area */}
-              <div className='w-full py-12'>
-                <AnimatePresence mode='wait'>
-                  <motion.div
-                    key={`${selectedDrugs.map((d) => d.id).join('-')}-${activeTab}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    {selectedDrugs.length > 0 ? (
-                      renderFdaContent()
-                    ) : (
-                      <div className='h-full flex items-center justify-center pt-20'>
-                        <div className='text-center'>
-                          <span
-                            className='material-symbols-rounded text-gray-200 dark:text-white/5'
-                            style={{ fontSize: '120px' }}
-                          >
-                            medication
-                          </span>
-                          <p className='mt-4 text-sm font-black text-gray-400 uppercase tracking-widest'>
-                            Select multiple drugs to analyze interactions
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            </div>
-          </div>
+                  <div className='flex-1 overflow-y-auto scrollbar-hide px-8 pb-16' ref={contentRef}>
+                    <AnimatePresence mode='wait'>
+                      <motion.div
+                        key={`${selectedDrugs.map((d) => d.id).join('-')}-${activeTab}`}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                      >
+                        {renderFdaContent()}
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key='empty-content'
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className='flex-1 flex flex-col'
+                >
+                  {renderEmptyState()}
+                </motion.div>
+              )}
+            </AnimatePresence>
         </div>
       </div>
     </div>

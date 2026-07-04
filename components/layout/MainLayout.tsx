@@ -268,7 +268,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 <div
                   className={getContentContainerClasses(PAGE_REGISTRY[view]?.layout, isStandalone)}
                 >
-                  <div className='h-full w-full'>{children}</div>
+                  <div className='flex flex-row h-full w-full'>
+                    <div className='w-4 shrink-0' />
+                    <div className='flex-1 min-w-0'>{children}</div>
+                    <div className='w-4 shrink-0' />
+                  </div>
+                  <div className='h-4 shrink-0' />
                 </div>
               </main>
             </div>

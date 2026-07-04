@@ -1067,7 +1067,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
   return (
     <div
-      className='h-full flex flex-col space-y-4 animate-fade-in pb-10'
+      className='h-full flex flex-col space-y-4 animate-fade-in'
       onMouseMove={handleMouseMove}
       onMouseUp={handleEnd}
       onTouchMove={handleTouchMove}

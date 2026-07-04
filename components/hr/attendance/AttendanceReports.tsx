@@ -70,7 +70,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({ onViewChange }) =
 
   return (
     <div
-      className={`h-full flex flex-col gap-4 pb-10 overflow-y-auto ${isRTL ? 'rtl' : 'ltr'}`}
+            className={`h-full flex flex-col gap-4 overflow-y-auto ${isRTL ? 'rtl' : 'ltr'}`}
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       <PageHeader

@@ -183,7 +183,7 @@ export const ProfitLossPage: React.FC<{ t: Translations; language?: string }> = 
   }, [daily, period]);
 
   return (
-    <div className='h-full overflow-y-auto pb-8 scrollbar-hide'>
+    <div className='h-full overflow-y-auto scrollbar-hide'>
       {/* Header & Filters */}
       <PageHeader
         centerContent={

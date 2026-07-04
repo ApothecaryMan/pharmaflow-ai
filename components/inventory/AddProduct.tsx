@@ -247,7 +247,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
 
   return (
     <div
-      className='h-full flex flex-col gap-6 animate-fade-in pb-10 overflow-y-auto'
+      className='h-full flex flex-col gap-6 animate-fade-in overflow-y-auto'
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       {/* Progress Indicator */}
