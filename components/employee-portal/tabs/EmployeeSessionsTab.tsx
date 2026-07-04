@@ -2,7 +2,7 @@ import type React from 'react';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { sessionRepository, type UserActiveSession } from '../../../services/auth/repositories/sessionRepository';
-import { getDeviceName, getBrowserName, isDesktopAppUserAgent } from '../../../utils/platform';
+import { getDeviceName, getBrowserName, isDesktopAppUserAgent, getSessionUserAgent } from '../../../utils/platform';
 import { isSessionOnline } from '../../../hooks/infrastructure/useSessionHeartbeat';
 import { Icons } from '../../common/Icons';
 import type { Employee, UserProfile } from '../../../types';
@@ -23,6 +23,7 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
   const [sessions, setSessions] = useState<UserActiveSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const currentUserAgent = typeof navigator !== 'undefined' ? getSessionUserAgent(navigator.userAgent) : '';
 
   // Tick counter — forces re-render to recalculate isSessionOnline() from cached data
   const [, setTick] = useState(0);
@@ -234,14 +235,23 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
                     </div>
                   </div>
                   
-                  <button
-                    onClick={() => handleLogout(session)}
-                    className='w-full md:w-auto shrink-0 flex items-center justify-center gap-1.5 px-4 py-2 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 rounded-lg transition-colors font-medium text-sm'
-                  >
-                    <span className='material-symbols-rounded text-[18px]'>logout</span>
-                    {/* fallback to simple string if t.employeeProfile.signOut is not added */}
-                    {isRTL ? 'تسجيل الخروج' : 'Sign Out'}
-                  </button>
+                  {session.user_agent === currentUserAgent ? (
+                    <span className='inline-flex items-center justify-center md:justify-end gap-2 text-xs font-medium text-green-600 dark:text-green-400 shrink-0 w-full md:w-auto'>
+                      <Icons.Check size={14} />
+                      {isRTL ? 'الجهاز الحالي' : 'Current'}
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleLogout(session)}
+                      className='inline-flex shrink-0 items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/60 cursor-pointer whitespace-nowrap w-full md:w-auto justify-center'
+                      title={isRTL ? 'إنهاء الجلسة' : 'Terminate'}
+                    >
+                      <Icons.Logout size={14} />
+                      <span className='text-xs font-medium'>
+                        {isRTL ? 'إنهاء' : 'End'}
+                      </span>
+                    </button>
+                  )}
                 </div>
               );
             })}

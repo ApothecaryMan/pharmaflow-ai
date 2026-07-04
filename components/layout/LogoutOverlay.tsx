@@ -46,20 +46,13 @@ export const LogoutOverlay: React.FC<LogoutOverlayProps> = ({
 
   return (
     <div className='h-screen w-screen flex flex-col items-center justify-center bg-zinc-50 dark:bg-black relative overflow-hidden'>
-      <style>{`
-        @keyframes wave-shimmer {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        .animate-wave-text {
-          background-size: 200% auto;
-          animation: wave-shimmer 2s linear infinite;
-        }
-      `}</style>
+
       
       <div className='flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-4 px-4 dir-auto mb-16' dir={language === 'AR' ? 'rtl' : 'ltr'}>
-        <LogoAsterisk scale={1.5} />
-        <h1 className={`py-2 ${logoutReason === 'remote' ? 'text-2xl sm:text-4xl' : 'text-3xl sm:text-5xl'} font-serif tracking-tight leading-normal text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 via-zinc-400 to-zinc-900 dark:from-zinc-100 dark:via-zinc-500 dark:to-zinc-100 animate-wave-text text-center`}>
+        <h1 
+          className={`py-2 ${logoutReason === 'remote' ? 'text-xl sm:text-2xl' : 'text-2xl sm:text-3xl'} !font-['GraphicSansFont'] tracking-tight leading-normal text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 via-zinc-400 to-zinc-900 dark:from-zinc-100 dark:via-zinc-500 dark:to-zinc-100 animate-wave-text text-center`}
+          style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+        >
           {logoutReason === 'remote'
             ? language === 'AR'
               ? terminatorName ? `تم إنهاء جلستك بواسطة ${terminatorName}. جاري الخروج...` : 'تم إنهاء جلستك من جهاز آخر. جاري الخروج...'

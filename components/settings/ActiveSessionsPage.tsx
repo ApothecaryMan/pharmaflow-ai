@@ -279,11 +279,6 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
 
   return (
     <div className='flex flex-col h-full bg-(--bg-page-surface)'>
-      <PageHeader
-        title={language === 'AR' ? 'الأجهزة المتصلة' : 'Active Sessions'}
-        icon='devices'
-        color={color}
-      />
       <div className='flex-1 p-4 sm:p-6 overflow-hidden flex flex-col'>
         <div className='flex flex-col h-full w-full'>
           {loading ? (
@@ -295,6 +290,12 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
           ) : (
             <>
               <div className='flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4 flex-shrink-0'>
+                <h2 
+                  className='text-2xl !font-["GraphicSansFont"] tracking-tight leading-normal text-zinc-900 dark:text-zinc-100 me-2 sm:me-4'
+                  style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+                >
+                  {language === 'AR' ? 'الأجهزة المتصلة' : 'Active Sessions'}
+                </h2>
                 <div className='flex flex-wrap items-center gap-2'>
                   <Tooltip content={
                     <div className='whitespace-normal text-[11px] font-semibold'>

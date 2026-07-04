@@ -1,4 +1,4 @@
-import { Clock, Globe, LogOut, Menu, Moon, Search, Sun, UserCircle } from 'lucide-react';
+import { Clock, Globe, LogOut, Menu, Moon, Search, Sun, UserCircle, Loader2 } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { useSettings } from '../../context';
 import { Switch } from '../common/Switch';
@@ -33,6 +33,16 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
   const overlayRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = React.useState(false);
   const [visible, setVisible] = React.useState(false);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+
+  const handleSignOut = async () => {
+    setIsLoggingOut(true);
+    try {
+      await onSignOut();
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   React.useEffect(() => {
     if (isOpen) {
@@ -153,10 +163,15 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
           {/* Logout — after nav on mobile, at bottom on desktop */}
           <div className='px-3 pb-3 order-4 md:order-last'>
             <button
-              onClick={onSignOut}
-              className='w-full p-2 text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-500 hover:text-white rounded-lg flex items-center justify-center gap-2 transition-colors'
+              onClick={handleSignOut}
+              disabled={isLoggingOut}
+              className='w-full p-2 text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-500 hover:text-white disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-red-500 dark:disabled:hover:text-red-400 rounded-lg flex items-center justify-center gap-2 transition-colors'
             >
-              <LogOut className='w-4 h-4' />
+              {isLoggingOut ? (
+                <Loader2 className='w-4 h-4 animate-spin' />
+              ) : (
+                <LogOut className='w-4 h-4' />
+              )}
               {t.employeeProfile.signOut}
             </button>
           </div>

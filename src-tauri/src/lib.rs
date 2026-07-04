@@ -129,7 +129,7 @@ fn print_raw_data(printer_name: String, data: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn update_tray_language(app: tauri::AppHandle, lang: String) -> Result<(), String> {
+async fn update_tray_language(app: tauri::AppHandle, lang: String) -> Result<(), String> {
     let show_text = if lang == "EN" { "Open ZINC" } else { "فتح ZINC" };
     let quit_text = if lang == "EN" { "Quit" } else { "إغلاق" };
     let tooltip = if lang == "EN" { "ZINC - Pharmacy Management System" } else { "ZINC - نظام إدارة الصيدليات" };

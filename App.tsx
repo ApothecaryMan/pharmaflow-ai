@@ -287,7 +287,12 @@ const App: React.FC = () => {
         <div className='h-screen w-screen flex items-center justify-center bg-zinc-50 dark:bg-black'>
           <div className='flex flex-col items-center gap-4'>
             <LogoAsterisk />
-            <p className='text-zinc-500 dark:text-zinc-400'>{t.global?.loading}</p>
+          <p 
+            className='py-2 text-2xl sm:text-3xl !font-["GraphicSansFont"] tracking-tight leading-normal text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 via-zinc-400 to-zinc-900 dark:from-zinc-100 dark:via-zinc-500 dark:to-zinc-100 animate-wave-text text-center'
+            style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+          >
+            {t.global?.loading}
+          </p>
           </div>
         </div>
       }
@@ -315,7 +320,12 @@ const App: React.FC = () => {
       <div className='h-screen w-screen flex items-center justify-center bg-zinc-50 dark:bg-black'>
         <div className='flex flex-col items-center gap-4'>
           <LogoAsterisk />
-          <p className='text-zinc-500 dark:text-zinc-400'>{t.global?.loading}</p>
+          <p 
+            className='py-2 text-2xl sm:text-3xl !font-["GraphicSansFont"] tracking-tight leading-normal text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 via-zinc-400 to-zinc-900 dark:from-zinc-100 dark:via-zinc-500 dark:to-zinc-100 animate-wave-text text-center'
+            style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+          >
+            {t.global?.loading}
+          </p>
         </div>
       </div>
     );

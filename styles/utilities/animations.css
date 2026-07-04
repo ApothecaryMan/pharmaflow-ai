@@ -141,3 +141,13 @@
 .animate-fade-in {
   animation: fadeIn 0.2s ease-out forwards;
 }
+
+/* --- Loading Wave Animation --- */
+@keyframes wave-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.animate-wave-text {
+  background-size: 200% auto;
+  animation: wave-shimmer 2s linear infinite;
+}

@@ -569,8 +569,8 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       </div>
 
       {/* Avatar & Header */}
-      <div className='relative px-6 pb-6 -mt-12'>
-        <div className='flex flex-row items-end gap-5 mb-4 relative z-10' dir='ltr'>
+      <div className='relative pb-6 -mt-12'>
+        <div className='flex flex-row items-end gap-5 mb-4 px-6 max-sm:px-4 relative z-10' dir='ltr'>
           <div className='relative shrink-0'>
             {/* Avatar with image support */}
             <label
@@ -714,7 +714,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
         {/* Decoration picker in edit mode */}
         {isEditing && (
-          <div className='mb-4'>
+          <div className='mb-4 px-6 max-sm:px-4'>
             <div className='flex items-center justify-between mb-2'>
               <p className='text-[10px] font-bold uppercase tracking-wider text-(--text-tertiary)'>
                 {isRTL ? 'إطار الصورة' : 'Avatar Frame'}
