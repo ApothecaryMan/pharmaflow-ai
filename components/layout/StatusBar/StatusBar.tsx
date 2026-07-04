@@ -19,6 +19,11 @@ export interface StatusBarTranslations {
   ready: string;
   online: string;
   offline: string;
+  noInternet?: string;
+  checkingConnection?: string;
+  goodConnection?: string;
+  fairConnection?: string;
+  poorConnection?: string;
   version?: string;
   notifications?: string;
   noNotifications?: string;
@@ -70,7 +75,12 @@ export interface StatusBarProps {
 const defaultTranslations: StatusBarTranslations = {
   ready: 'Ready',
   online: 'Online',
-  offline: 'Offline',
+  offline: 'No Connection',
+  noInternet: 'No Internet',
+  checkingConnection: 'Checking connection...',
+  goodConnection: 'Good',
+  fairConnection: 'Fair',
+  poorConnection: 'Poor',
   version: `v${packageJson.version}`,
   notifications: 'Notifications',
   noNotifications: 'No notifications',
@@ -210,7 +220,15 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
           <VersionInfo version={t.version} />
           {currentEmployeeId && <ToolsMenu />}
           {currentEmployeeId && <SettingsMenu />}
-          <ConnectionStatus onlineText={t.online} offlineText={t.offline} />
+          <ConnectionStatus 
+            onlineText={t.online} 
+            offlineText={t.offline} 
+            noInternetText={t.noInternet} 
+            checkingText={t.checkingConnection}
+            goodText={t.goodConnection}
+            fairText={t.fairConnection}
+            poorText={t.poorConnection}
+          />
           {currentEmployeeId && (
             <StatusBarItem
               icon={isShiftLoading ? 'sync' : currentShift ? 'check_circle' : 'lock'}

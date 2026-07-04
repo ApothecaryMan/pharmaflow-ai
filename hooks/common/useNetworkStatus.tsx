@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
-import { checkRealConnectivity, type NetworkResult } from '@/utils/network';
+import { checkRealConnectivity, type NetworkResult, type ConnectionStatus } from '@/utils/network';
 
 export function useNetworkStatus(): {
   isOnline: boolean;
+  status: ConnectionStatus;
   latency: number | undefined;
   checking: boolean;
 } {
   const [networkInfo, setNetworkInfo] = useState<NetworkResult>({
-    online: true,
+    status: 'online',
     latency: undefined,
   });
   const [checking, setChecking] = useState<boolean>(true);
@@ -24,15 +25,13 @@ export function useNetworkStatus(): {
       }
     };
 
-    // Initial check
     checkStatus();
 
-    // Setup polling every 10 seconds
     pollInterval = setInterval(checkStatus, 10000);
 
     const handleWindowEvents = () => {
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
-        setNetworkInfo({ online: false, latency: undefined });
+        setNetworkInfo({ status: 'offline-device' });
       } else {
         if (isMounted) setChecking(true);
         checkStatus();
@@ -51,7 +50,8 @@ export function useNetworkStatus(): {
   }, []);
 
   return {
-    isOnline: networkInfo.online,
+    isOnline: networkInfo.status === 'online',
+    status: networkInfo.status,
     latency: networkInfo.latency,
     checking,
   };
