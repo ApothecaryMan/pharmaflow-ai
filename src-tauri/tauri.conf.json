@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "ZINC",
-  "version": "2.0.64",
+  "version": "2.0.65",
   "identifier": "com.zinc.pharmacy",
   "build": {
     "frontendDist": "../dist",
