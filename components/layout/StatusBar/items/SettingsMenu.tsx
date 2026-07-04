@@ -708,6 +708,11 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                                   ? 'تخطي الصلاحيات لصفحات الـ Debug'
                                   : 'Bypass permissions for Debug pages'}
                               </li>
+                              <li>
+                                {isAR
+                                  ? 'نسخ تخطيط الأعمدة في الجداول'
+                                  : 'Copy column layout in tables'}
+                              </li>
                             </ul>
                           </div>
                         }

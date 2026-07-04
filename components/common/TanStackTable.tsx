@@ -360,7 +360,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
   enableNewRowAnimation = true,
   onVisibleRowsChange,
 }: TanStackTableProps<TData, TValue>) {
-  const { language, numeralLocale, textLocale } = useSettings();
+  const { language, numeralLocale, textLocale, developerMode } = useSettings();
   const isAR = language === 'AR';
   const isRtl = isAR; // Source of truth from state, not DOM, to prevent sync lag
   const languageLocale = textLocale;
@@ -1098,13 +1098,13 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
         )}
       </div>
 
-      {import.meta.env.DEV && (
+      {import.meta.env.DEV && developerMode && (
         <button
           onClick={handleCopyTableConfig}
           className={`absolute z-40 p-2.5 rounded-xl border border-primary-500/20 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/50 hover:bg-white dark:hover:bg-zinc-900 text-primary-600 dark:text-primary-400 transition-all duration-300 active:scale-95 group/dev-btn flex items-center gap-1.5 right-4 ${
             enablePagination && (table.getPageCount() > 1 || isShowAll) ? 'bottom-16' : 'bottom-4'
           }`}
-          title='Copy Column Layout & Alignment (Dev Only)'
+          title='Copy Column Layout & Alignment — Requires Developer Mode'
         >
           <span className='material-symbols-rounded block text-lg transition-transform duration-300 group-hover/dev-btn:rotate-6'>
             {copied ? 'check' : 'grid_view'}
