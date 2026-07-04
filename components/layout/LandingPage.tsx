@@ -21,11 +21,11 @@ export const LandingPage: React.FC<{ language: 'EN' | 'AR'; darkMode: boolean }>
       }}
     />
 
-    <div className='flex flex-col items-center text-center max-w-2xl relative z-10'>
+    <div className='flex flex-col items-center text-center max-w-2xl relative z-10 -mt-20 md:-mt-32'>
       <img
         src={darkMode ? '/logo_icon_white.svg' : '/logo_icon_black.svg'}
         alt='ZINC'
-        className='h-64 md:h-72 mb-6'
+        className='h-48 md:h-56 mb-8'
       />
 
       <div className='space-y-6 mb-10'>
