@@ -6,6 +6,7 @@ export const ROUTES = {
   SIGNUP: 'signup' as ViewState,
   FORGOT_PASSWORD: 'forgot-password' as ViewState,
   MODAL_TESTS: 'modal-tests' as ViewState,
+  ANIMATED_COUNTER_LAB: 'animated-counter-lab' as ViewState,
   FILTER_DROPDOWN_TEST: 'filter-dropdown-test' as ViewState,
   TEST_THEME: 'test-theme' as ViewState,
   INVENTORY: 'inventory' as ViewState,

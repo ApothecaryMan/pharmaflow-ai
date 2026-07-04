@@ -45,6 +45,7 @@ export type ViewState =
   | 'purchases-test'
   | 'pos-test'
   | 'modal-tests'
+  | 'animated-counter-lab'
   | 'advanced-sm-card'
   | 'medicine-search'
   | 'org-settings'

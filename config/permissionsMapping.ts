@@ -37,6 +37,7 @@ export const PERMISSIONS_MAPPING: Record<string, PermissionAction> = {
   'dashboard-experiments': 'system.debug',
   'advanced-sm-card': 'system.debug',
   'modal-tests': 'system.debug',
+  'animated-counter-lab': 'system.debug',
   'scrollbar-lab': 'system.debug',
   'a5-invoice-designer': 'system.debug',
   'filter-dropdown-test': 'system.debug',

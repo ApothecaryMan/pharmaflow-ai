@@ -58,6 +58,7 @@ const BrowserPrintSettings = React.lazy(() => import('../components/settings/Bro
 const DesktopSettings = React.lazy(() => import('../components/settings/DesktopSettings').then(m => ({ default: m.DesktopSettings })));
 const PricingPage = React.lazy(() => import('../components/settings/PricingPage').then(m => ({ default: m.PricingPage })));
 const A5InvoiceDesigner = React.lazy(() => import('../components/test/A5InvoiceDesigner').then(m => ({ default: m.A5InvoiceDesigner })));
+const AnimatedCounterLab = React.lazy(() => import('../components/test/AnimatedCounterLab').then(m => ({ default: m.AnimatedCounterLab })));
 const FilterDropdownTest = React.lazy(() => import('../components/test/FilterDropdownTest').then(m => ({ default: m.FilterDropdownTest })));
 const ModalTests = React.lazy(() => import('../components/test/ModalTests').then(m => ({ default: m.ModalTests })));
 const ScrollbarLab = React.lazy(() => import('../components/test/ScrollbarLab').then(m => ({ default: m.ScrollbarLab })));
@@ -589,6 +590,16 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'test',
     requiredProps: ['color', 't', 'language'],
     permission: PERMISSIONS_MAPPING['modal-tests'],
+  },
+  'animated-counter-lab': {
+    id: 'animated-counter-lab',
+    component: AnimatedCounterLab,
+    menuLabel: 'Animated Counter Lab',
+    menuLabelAr: 'مختبر الأرقام المتحركة',
+    icon: 'text_format',
+    category: 'test',
+    requiredProps: [],
+    permission: PERMISSIONS_MAPPING['animated-counter-lab'],
   },
   'scrollbar-lab': {
     id: 'scrollbar-lab',

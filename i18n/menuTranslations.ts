@@ -875,6 +875,7 @@ export const MENU_TRANSLATIONS = {
     'Shortages & Alerts': 'النواقص والإنذارات التنبؤية',
     'Shortages & Predictive Alerts': 'النواقص والإنذارات التنبؤية',
     'New Tests': 'اختبارات جديدة',
+    'Animated Counter Lab': 'مختبر الأرقام المتحركة',
   },
 };
 
