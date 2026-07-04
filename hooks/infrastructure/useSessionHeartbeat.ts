@@ -22,20 +22,14 @@ export function useSessionHeartbeat(isAuthenticated: boolean) {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const sessionId = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
-    if (!sessionId) return;
+    const ping = () => {
+      const sid = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
+      if (sid) sessionRepository.pingSession(sid).catch(() => {});
+    };
 
-    // Ping immediately on mount so last_seen_at is fresh
-    sessionRepository.pingSession(sessionId).catch(() => {});
-
-    // Then ping every 2 minutes
-    intervalRef.current = setInterval(() => {
-      // Re-read session ID in case it changed (e.g., workspace switch)
-      const currentSessionId = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
-      if (currentSessionId) {
-        sessionRepository.pingSession(currentSessionId).catch(() => {});
-      }
-    }, HEARTBEAT_INTERVAL_MS);
+    // Ping immediately, then every 2 minutes
+    ping();
+    intervalRef.current = setInterval(ping, HEARTBEAT_INTERVAL_MS);
 
     return () => {
       if (intervalRef.current) {

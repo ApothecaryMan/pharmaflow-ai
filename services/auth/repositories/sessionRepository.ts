@@ -19,7 +19,8 @@ let registerPromise: Promise<string | null> | null = null;
 
 export const sessionRepository = {
   /**
-   * Register a new active session upon login
+   * Register or refresh an active session via atomic database upsert.
+   * Uses INSERT ON CONFLICT UPDATE under the hood — no race conditions.
    */
   async registerSession(payload: {
     userId: string;
@@ -32,64 +33,36 @@ export const sessionRepository = {
     if (registerPromise) return registerPromise;
 
     registerPromise = (async () => {
+      // Best-effort IP fetch with a hard 3s timeout — never blocks session registration
       let ipAddress: string | undefined;
       try {
-        const res = await fetch('https://api.ipify.org?format=json');
+        const res = await fetch('https://api.ipify.org?format=json', { 
+          signal: AbortSignal.timeout(3000) 
+        });
         if (res.ok) {
           const data = await res.json();
           ipAddress = data.ip;
         }
-      } catch (e) {
-        console.warn('Could not fetch IP address', e);
+      } catch {
+        // Silent — IP is optional metadata
       }
 
-      const { data: existingData } = await supabase
-        .from('user_active_sessions')
-        .select('id')
-        .eq('user_id', payload.userId)
-        .eq('user_agent', payload.userAgent)
-        .eq('is_active', true)
-        .order('last_seen_at', { ascending: false })
-        .limit(1);
-
-      const existing = existingData?.[0];
-
-      if (existing) {
-        // Just update last_seen_at, IP, and session context (employee, branch, org)
-        await supabase
-          .from('user_active_sessions')
-          .update({ 
-            last_seen_at: new Date().toISOString(),
-            org_id: payload.orgId || null,
-            branch_id: payload.branchId || null,
-            employee_id: payload.employeeId || null,
-            ...(ipAddress ? { ip_address: ipAddress } : {})
-          })
-          .eq('id', existing.id);
-        return existing.id;
-      }
-
-      // Otherwise insert new
-      const { data, error } = await supabase
-        .from('user_active_sessions')
-        .insert({
-          user_id: payload.userId,
-          org_id: payload.orgId || null,
-          branch_id: payload.branchId || null,
-          employee_id: payload.employeeId || null,
-          device_info: payload.deviceInfo,
-          user_agent: payload.userAgent,
-          ip_address: ipAddress || null,
-          is_active: true,
-        })
-        .select('id')
-        .single();
+      // Single atomic RPC: INSERT ON CONFLICT UPDATE
+      const { data, error } = await supabase.rpc('upsert_active_session', {
+        p_user_id:     payload.userId,
+        p_org_id:      payload.orgId || null,
+        p_branch_id:   payload.branchId || null,
+        p_employee_id: payload.employeeId || null,
+        p_device_info: payload.deviceInfo,
+        p_user_agent:  payload.userAgent,
+        p_ip_address:  ipAddress || null,
+      });
 
       if (error) {
-        console.error('Failed to register active session:', error);
+        console.error('Failed to upsert active session:', error);
         return null;
       }
-      return data?.id;
+      return data as string;
     })().finally(() => {
       registerPromise = null;
     });
@@ -119,62 +92,52 @@ export const sessionRepository = {
       return [];
     }
     
-    // Deduplicate identical sessions (caused by previous race conditions)
-    const seen = new Set<string>();
-    const deduped: UserActiveSession[] = [];
-    for (const session of data || []) {
-      const key = `${session.user_id}-${session.org_id || 'portal'}-${session.user_agent}-${session.ip_address || ''}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        deduped.push(session);
-      } else {
-        // Clean up orphaned duplicate session in the background
-        this.logoutSession(session.id).catch(() => {});
-      }
-    }
-    
-    return deduped;
+    return data || [];
   },
 
   /**
    * Helper to broadcast without conflicting with existing subscriptions
    */
   async _broadcastEvent(sessionId: string, event: string, payload: any): Promise<void> {
-    const channelName = `session-${sessionId}`;
-    const existingChannel = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
-    
-    if (existingChannel) {
-      // Use existing channel (don't remove it!)
-      try {
-        await existingChannel.send({ type: 'broadcast', event, payload });
-      } catch (e) {
-        console.warn('Failed to send broadcast on existing channel', e);
-      }
-      return;
-    }
-
-    // Create temporary channel if none exists
-    await new Promise<void>((resolve) => {
-      const channel = supabase.channel(channelName);
-      let resolved = false;
+    try {
+      const channelName = `session-${sessionId}`;
+      const existingChannel = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
       
-      const cleanup = () => {
-        if (resolved) return;
-        resolved = true;
-        supabase.removeChannel(channel);
-        resolve();
-      };
-
-      channel.subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          channel.send({ type: 'broadcast', event, payload }).finally(cleanup);
-        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-           cleanup();
+      if (existingChannel) {
+        // Use existing channel (don't remove it!)
+        try {
+          await existingChannel.send({ type: 'broadcast', event, payload });
+        } catch (e) {
+          console.warn('Failed to send broadcast on existing channel', e);
         }
+        return;
+      }
+
+      // Create temporary channel if none exists
+      await new Promise<void>((resolve) => {
+        const channel = supabase.channel(channelName);
+        let resolved = false;
+        
+        const cleanup = () => {
+          if (resolved) return;
+          resolved = true;
+          supabase.removeChannel(channel);
+          resolve();
+        };
+
+        channel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            channel.send({ type: 'broadcast', event, payload }).finally(cleanup);
+          } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+             cleanup();
+          }
+        });
+        
+        setTimeout(cleanup, 1500);
       });
-      
-      setTimeout(cleanup, 1500);
-    });
+    } catch (e) {
+      console.warn('Silent failure in _broadcastEvent to prevent blocking execution:', e);
+    }
   },
 
   /**

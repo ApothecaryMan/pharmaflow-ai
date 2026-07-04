@@ -41,7 +41,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('lastSeen');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>('desc');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null);
   const [isEndingAll, setIsEndingAll] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -208,8 +208,15 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
       });
     }
 
+    // Always pin the current device to the top
+    const currentIdx = result.findIndex(s => s.user_agent === currentUserAgent);
+    if (currentIdx > 0) {
+      const [currentSession] = result.splice(currentIdx, 1);
+      result.unshift(currentSession);
+    }
+
     return result;
-  }, [sessions, searchQuery, sortKey, sortDir, employees]);
+  }, [sessions, searchQuery, sortKey, sortDir, employees, currentUserAgent]);
 
   const hasOtherSessions = sessions.some(s => s.user_agent !== currentUserAgent);
 
@@ -291,7 +298,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
             <>
               <div className='flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4 flex-shrink-0'>
                 <h2 
-                  className='text-2xl !font-["GraphicSansFont"] tracking-tight leading-normal text-zinc-900 dark:text-zinc-100 me-2 sm:me-4'
+                  className='hidden md:block text-2xl !font-["GraphicSansFont"] tracking-tight leading-normal text-zinc-900 dark:text-zinc-100 me-2 sm:me-4'
                   style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
                 >
                   {language === 'AR' ? 'الأجهزة المتصلة' : 'Active Sessions'}
@@ -302,7 +309,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                       {processedSessions.length} {language === 'AR' ? 'جلسة' : 'sessions'} · {onlineCount} {language === 'AR' ? 'متصل' : 'Online'} · {offlineCount} {language === 'AR' ? 'غير متصل' : 'Offline'}{staleCount > 0 ? ` · ${staleCount} ${language === 'AR' ? 'قديم' : 'Stale'}` : ''}
                     </div>
                   } position='bottom'>
-                  <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-primary-100 dark:bg-primary-900/60 text-primary-600 dark:text-primary-300 rounded-lg text-sm font-medium'>
+                  <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-200 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 rounded-lg text-sm font-medium'>
                     <span>{processedSessions.length}</span>
                     <span>{language === 'AR' ? 'نشط' : 'Active'}</span>
                   </div>
@@ -491,8 +498,10 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                         const sessionEnd = session.logged_out_at || session.last_seen_at;
                         const durationStr = getDurationStr(session.created_at, sessionEnd, language);
                         
+                        const isCurrentDevice = session.user_agent === currentUserAgent;
+                        
                       return (
-                      <tr key={session.id} className='block md:table-row bg-(--bg-card) border border-(--border-divider) rounded-xl md:bg-transparent md:rounded-none md:border-none md:h-[72px]'>
+                      <tr key={session.id} className={`block md:table-row rounded-xl md:rounded-none md:h-[72px] border border-(--border-divider) md:border-none bg-(--bg-card) md:bg-transparent ${isCurrentDevice ? 'md:bg-gray-50 md:dark:bg-gray-800/60' : ''}`}>
                         <td className='block md:table-cell px-4 pt-4 pb-2 md:px-6 md:h-[72px] md:align-middle'>
                           <div className='group relative'>
                             <div className='flex items-center gap-3'>
@@ -513,6 +522,17 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                                 <span className={`font-medium truncate ${hasEmployee ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400 italic'}`}>
                                   {sessionUserName}
                                 </span>
+                                <div className='md:hidden mt-0.5 text-xs'>
+                                  {isOnline ? (
+                                    <span className='text-green-600 dark:text-green-400 font-medium'>
+                                      {language === 'AR' ? 'متصل الآن' : 'Online Now'}
+                                    </span>
+                                  ) : (
+                                    <span className='text-gray-500'>
+                                      {relativeTime ? relativeTime : lastSeenInfo.label}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
 
@@ -584,10 +604,9 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                         </td>
                         <td className='block md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle text-gray-600 dark:text-gray-400'>
                           <div className='flex items-center gap-2'>
-                            <span className='md:hidden text-xs font-semibold uppercase opacity-70'>{language === 'AR' ? 'المتصفح:' : 'Browser:'}</span>
                             {(() => {
                               if (isDesktopAppSession) {
-                                return <img src='/app_icon_color.svg' alt='' className='w-4 h-4 inline-block shrink-0' />;
+                                return <img src='/app_icon_color.svg' alt='' className='w-6 h-6 md:w-4 md:h-4 inline-block shrink-0' />;
                               }
                               const bn = displayBrowserName.toLowerCase();
                               let BrowserIcon = null;
@@ -595,17 +614,19 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                               else if (bn.includes('chrome')) BrowserIcon = Icons.Chrome;
                               else if (bn.includes('safari')) BrowserIcon = Icons.Safari;
                               else if (bn.includes('firefox')) BrowserIcon = Icons.Firefox;
-                              return BrowserIcon ? <BrowserIcon size={16} className='inline-block shrink-0' /> : null;
+                              return BrowserIcon ? <BrowserIcon className='w-6 h-6 md:w-4 md:h-4 inline-block shrink-0' /> : null;
                             })()}
-                            <span>{displayBrowserName}</span>
+                            <span className='hidden md:inline'>{displayBrowserName}</span>
+                            <span dir="ltr" className="md:hidden font-mono text-sm">{session.ip_address || '-'}</span>
                           </div>
                         </td>
                         <td className='block md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle text-gray-600 dark:text-gray-400'>
                           <div className='flex items-center gap-2'>
                             <span className='md:hidden text-xs font-semibold uppercase opacity-70'>{language === 'AR' ? 'البداية:' : 'Started:'}</span>
-                            <div className='md:block'>
+                            <div className='flex items-center gap-1 md:block'>
                               <div className='text-gray-900 dark:text-gray-100 text-xs'>{startedInfo.label}</div>
-                              <div className='text-xs text-gray-500'>{startedInfo.time}</div>
+                              <div className='text-xs text-gray-500 hidden md:block'>{startedInfo.time}</div>
+                              <div className='text-xs text-gray-500 md:hidden'>· {startedInfo.time}</div>
                             </div>
                           </div>
                         </td>
@@ -615,13 +636,13 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                             <span>{durationStr}</span>
                           </div>
                         </td>
-                        <td className='block md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle text-gray-600 dark:text-gray-400'>
+
+                        <td className='hidden md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle text-gray-600 dark:text-gray-400'>
                           <div className='flex items-center gap-2'>
-                            <span className='md:hidden text-xs font-semibold uppercase opacity-70'>{language === 'AR' ? 'IP:' : 'IP:'}</span>
                             <span dir="ltr">{session.ip_address || '-'}</span>
                           </div>
                         </td>
-                        <td className='block md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle'>
+                        <td className='hidden md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle'>
                           <div className='flex items-center gap-2 md:block'>
                             <span className='md:hidden text-xs font-semibold uppercase opacity-70'>{language === 'AR' ? 'آخر ظهور:' : 'Seen:'}</span>
                             <div className='flex items-center gap-2 md:block'>
