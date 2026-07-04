@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useSettings } from '../../context';
+import { useInView, useMotionValue, useSpring } from 'framer-motion';
 
 interface AnimatedCounterTestProps {
   value: number;
@@ -7,111 +8,72 @@ interface AnimatedCounterTestProps {
   className?: string;
   duration?: number;
   notation?: 'standard' | 'compact';
+  mode?: 'countup' | 'rolling'; // Kept for backward compatibility
+  direction?: 'up' | 'down';
+  delay?: number;
 }
 
-/**
- * AnimatedCounterTest - High-performance counting animation.
- * Uses direct DOM manipulation for 60fps smoothness and tabular-nums to prevent jitter.
- */
 export const AnimatedCounterTest = ({
   value,
   fractionDigits = 0,
   className = '',
-  duration = 1200,
+  duration = 1.2,
   notation = 'standard',
+  direction = 'up',
+  delay = 0,
 }: AnimatedCounterTestProps) => {
-  const spanRef = useRef<HTMLSpanElement>(null);
-  const prevValueRef = useRef(value);
-  const isFirstMountRef = useRef(true);
-  const { numeralLocale } = useSettings(); // Keeping for re-render trigger if needed, or remove if not needed.
-  // Actually, toLocaleString() will now use the global state.
+  const ref = useRef<HTMLSpanElement>(null);
+  const { numeralLocale } = useSettings();
+  
+  // Flawless Magic UI NumberTicker Architecture
+  const motionValue = useMotionValue(direction === "down" ? value : 0);
+  const springValue = useSpring(motionValue, {
+    damping: 60,
+    stiffness: 100,
+  });
+  const isInView = useInView(ref, { once: true, margin: "0px" });
 
   useEffect(() => {
-    const el = spanRef.current;
-    if (!el) return;
+    if (isInView) {
+      setTimeout(() => {
+        motionValue.set(direction === "down" ? 0 : value);
+      }, delay * 1000);
+    }
+  }, [motionValue, isInView, delay, value, direction]);
 
-    const from = prevValueRef.current;
-    const to = value;
+  useEffect(() => {
+    const unsubscribe = springValue.on("change", (latest) => {
+      if (ref.current) {
+        ref.current.textContent = Intl.NumberFormat(numeralLocale, {
+          notation,
+          minimumFractionDigits: notation === 'compact' ? (value >= 1000 ? 1 : 0) : fractionDigits,
+          maximumFractionDigits: notation === 'compact' ? (value >= 1000 ? 1 : 0) : fractionDigits,
+        }).format(Number(latest.toFixed(fractionDigits)));
+      }
+    });
+    return () => unsubscribe();
+  }, [springValue, fractionDigits, notation, numeralLocale, value]);
 
-    // Skip animation on first mount
-    if (isFirstMountRef.current) {
-      isFirstMountRef.current = false;
-      prevValueRef.current = to;
+  // Handle immediate slider updates flawlessly by skipping the initial delay
+  const isFirstMount = useRef(true);
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
       return;
     }
-
-    // Skip if value hasn't changed
-    if (from === to) return;
-
-    const start = performance.now();
-
-    // Cubic ease-out function for smooth deceleration
-    const easeOut = (t: number) => 1 - (1 - t) ** 3;
-
-    let frameId: number;
-
-    const tick = (now: number) => {
-      const elapsed = now - start;
-      const progress = Math.min(elapsed / duration, 1);
-
-      // Calculate current value based on progress and easing
-      const current = from + (to - from) * easeOut(progress);
-      
-      // Keep track of the current animated value so if the prop changes mid-animation,
-      // it starts from exactly where it was rather than dropping back to the original start.
-      prevValueRef.current = current;
-
-      // Format with specified decimals and notation
-      const formatted = current.toLocaleString(numeralLocale, {
-        notation,
-        minimumFractionDigits: notation === 'compact' ? (current >= 1000 ? 1 : 0) : fractionDigits,
-        maximumFractionDigits: notation === 'compact' ? (current >= 1000 ? 1 : 0) : fractionDigits,
-      });
-
-      // Prevent jitter by wrapping digits in 1ch fixed-width spans
-      el.innerHTML = formatted.split('').map(char => {
-        if (/[0-9\u0660-\u0669\u06F0-\u06F9]/.test(char)) {
-          return `<span style="display: inline-block; width: 1ch; text-align: center;">${char}</span>`;
-        }
-        return char;
-      }).join('');
-
-      if (progress < 1) {
-        frameId = requestAnimationFrame(tick);
-      } else {
-        prevValueRef.current = to; // Ensure final exact value is set
-      }
-    };
-
-    frameId = requestAnimationFrame(tick);
-
-    return () => cancelAnimationFrame(frameId);
-  }, [value, duration, fractionDigits]);
-
-  const formattedInitial = value.toLocaleString(numeralLocale, {
-    notation,
-    minimumFractionDigits: notation === 'compact' ? (value >= 1000 ? 1 : 0) : fractionDigits,
-    maximumFractionDigits: notation === 'compact' ? (value >= 1000 ? 1 : 0) : fractionDigits,
-  });
-
-  const initialHtml = formattedInitial.split('').map(char => {
-    if (/[0-9\u0660-\u0669\u06F0-\u06F9]/.test(char)) {
-      return `<span style="display: inline-block; width: 1ch; text-align: center;">${char}</span>`;
-    }
-    return char;
-  }).join('');
+    motionValue.set(value);
+  }, [value, motionValue]);
 
   return (
     <span
-      ref={spanRef}
+      ref={ref}
       dir="ltr"
-      className={`tabular-nums inline-flex transition-colors ${className}`}
+      className={`tabular-nums inline-block tracking-wider ${className}`}
       style={{
         fontVariantNumeric: 'tabular-nums',
         fontFeatureSettings: '"tnum"',
         whiteSpace: 'nowrap',
       }}
-      dangerouslySetInnerHTML={{ __html: initialHtml }}
     />
   );
 };

@@ -86,9 +86,9 @@ export const AnimatedCounterLab = () => {
           </div>
           
           <div>
-            <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Text 6xl</p>
+            <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Text 6xl (Rolling)</p>
             <div className="text-6xl tracking-tight bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl">
-                <AnimatedCounterTest value={value * 0.25} duration={2000} />
+                <AnimatedCounterTest value={value * 0.25} duration={2000} mode="rolling" />
             </div>
           </div>
         </div>
@@ -122,9 +122,9 @@ export const AnimatedCounterLab = () => {
           </div>
           
           <div>
-            <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">With Fractions & Currency</p>
+            <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">With Fractions & Currency (Rolling)</p>
             <div className="text-4xl font-bold text-amber-500 bg-amber-50 dark:bg-amber-900/10 p-4 rounded-2xl flex items-baseline gap-2">
-                <AnimatedCounterTest value={value > 0 ? (value * 0.9) + 0.99 : 0} fractionDigits={2} duration={3500} />
+                <AnimatedCounterTest value={value > 0 ? (value * 0.9) + 0.99 : 0} fractionDigits={2} mode="rolling" />
                 <span className="text-lg font-medium text-amber-600/50">EGP</span>
             </div>
           </div>
@@ -159,9 +159,9 @@ export const AnimatedCounterLab = () => {
           </div>
           
           <div>
-            <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Very Slow (5000ms)</p>
-            <div className="text-3xl font-bold bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl text-indigo-500">
-                <AnimatedCounterTest value={value} duration={5000} />
+            <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Dynamic Speed (Rolling)</p>
+            <div className="text-3xl font-bold bg-indigo-50 dark:bg-indigo-900/10 p-4 rounded-2xl text-indigo-500">
+                <AnimatedCounterTest value={value} mode="rolling" />
             </div>
           </div>
         </div>
