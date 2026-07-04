@@ -124,7 +124,7 @@ export function generateLayout5HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
             let grossSubtotal = 0;
             let totalItemDiscounts = 0;
             
-            const rows = sale.items.map((item) => {
+            const rows = (sale.items || []).map((item) => {
               const effectivePrice = item.isUnit && item.unitsPerPack ? item.publicPrice / item.unitsPerPack : item.publicPrice;
               const lineGross = effectivePrice * item.quantity;
               const lineNet = lineGross * (1 - (item.discount || 0) / 100);
@@ -191,7 +191,7 @@ export function generateLayout5HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
                     const drugId = parts[0];
                     const suffix = parts.length > 1 ? parts[1] : null;
 
-                    const item = sale.items.find((it) => {
+                    const item = (sale.items || []).find((it) => {
                       const itDrugId = (it as any).drugId ?? (it as any).drug_id ?? it.id;
                       if (itDrugId !== drugId) return false;
                       if (!suffix) return true;

@@ -93,9 +93,10 @@ export const transactionService = {
       }
 
       // 3. Return the result
+      const dbSaleData = data?.sale || data;
       return {
         success: true,
-        sale: data as unknown as Sale,
+        sale: salesRepository.mapFromDb(dbSaleData),
       };
     } catch (err: any) {
       console.timeEnd(perfLabel);

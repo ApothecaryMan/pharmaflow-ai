@@ -268,7 +268,7 @@ export function generateLayout1HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
 
       <table>
         <tbody>
-          ${sale.items
+          ${(sale.items || [])
             .map((item) => {
               const effectivePrice =
                 item.isUnit && item.unitsPerPack
@@ -355,7 +355,7 @@ export function generateLayout1HTML(sale: Sale, opts: InvoiceTemplateOptions, _l
                     const drugId = parts[0];
                     const suffix = parts.length > 1 ? parts[1] : null;
 
-                    const item = sale.items.find((it) => {
+                    const item = (sale.items || []).find((it) => {
                       const itDrugId = (it as any).drugId ?? (it as any).drug_id ?? it.id;
                       if (itDrugId !== drugId) return false;
                       if (!suffix) return true;
@@ -452,12 +452,23 @@ export const RECEIPT_TEMPLATES = [
 ];
 
 export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {}): string {
-  if (opts.receiptLayout === 'layout-2') return generateLayout2HTML(sale, opts);
-  if (opts.receiptLayout === 'layout-3') return generateLayout3HTML(sale, opts);
-  if (opts.receiptLayout === 'layout-4') return generateLayout4HTML(sale, opts);
-  if (opts.receiptLayout === 'layout-5') return generateLayout5HTML(sale, opts);
-  if (opts.receiptLayout === 'layout-6') return generateLayout6HTML(sale, opts);
-  return generateLayout1HTML(sale, opts);
+  const safeSale = {
+    ...sale,
+    items: sale.items || [],
+    total: sale.total || 0,
+    subtotal: sale.subtotal || 0,
+    tax: sale.tax || 0,
+    deliveryFee: sale.deliveryFee || 0,
+    netTotal: sale.netTotal !== undefined ? sale.netTotal : sale.total || 0,
+    globalDiscount: sale.globalDiscount || 0,
+  } as Sale;
+
+  if (opts.receiptLayout === 'layout-2') return generateLayout2HTML(safeSale, opts);
+  if (opts.receiptLayout === 'layout-3') return generateLayout3HTML(safeSale, opts);
+  if (opts.receiptLayout === 'layout-4') return generateLayout4HTML(safeSale, opts);
+  if (opts.receiptLayout === 'layout-5') return generateLayout5HTML(safeSale, opts);
+  if (opts.receiptLayout === 'layout-6') return generateLayout6HTML(safeSale, opts);
+  return generateLayout1HTML(safeSale, opts);
 }
 
 export async function printInvoice(sale: Sale, options: InvoiceTemplateOptions = {}): Promise<void> {
