@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { useSettings } from '../../context';
 import { useInView, useMotionValue, useSpring, motion, useTransform } from 'framer-motion';
 
@@ -54,13 +54,10 @@ const RollingDigit = React.memo(({ char }: { char: string }) => {
     mass: 0.5,
   });
 
-  // Calculate percentage translation unconditionally to satisfy React hooks rule
   const y = useTransform(spring, (latest) => `-${latest * 10}%`);
 
   useEffect(() => {
-    if (isDigit) {
-      spring.set(val);
-    }
+    if (isDigit) spring.set(val);
   }, [val, isDigit, spring]);
 
   if (!isDigit) {
@@ -72,7 +69,7 @@ const RollingDigit = React.memo(({ char }: { char: string }) => {
       style={{ 
         display: 'inline-flex', 
         width: '1ch', 
-        height: '1.2em', // Slightly taller to prevent cutoff/cropping
+        height: '1.2em', 
         overflow: 'hidden', 
         position: 'relative',
         verticalAlign: 'bottom',
@@ -108,13 +105,17 @@ export const AnimatedCounterTest = ({
   const ref = useRef<HTMLSpanElement>(null);
   const { numeralLocale } = useSettings();
   
-  // --- ROLLING MODE HOOKS ---
-  // Use value directly. useDeferredValue causes visible skipping/stalling during rapid scrub.
-  const formattedRollingValue = value.toLocaleString(numeralLocale, {
+  // DRY: Centralize format options
+  const formatOptions = useMemo<Intl.NumberFormatOptions>(() => ({
     notation,
     minimumFractionDigits: notation === 'compact' ? (value >= 1000 ? 1 : 0) : fractionDigits,
     maximumFractionDigits: notation === 'compact' ? (value >= 1000 ? 1 : 0) : fractionDigits,
-  });
+  }), [notation, value, fractionDigits]);
+  
+  // --- ROLLING MODE HOOKS ---
+  const formattedRollingValue = mode === 'rolling' 
+    ? value.toLocaleString(numeralLocale, formatOptions)
+    : '';
   
   // --- COUNTUP (TICKER) MODE HOOKS ---
   const motionValue = useMotionValue(direction === "down" ? value : 0);
@@ -134,17 +135,17 @@ export const AnimatedCounterTest = ({
 
   useEffect(() => {
     if (mode === 'rolling') return;
+    
+    // DRY: Use the centralized formatOptions
+    const formatter = new Intl.NumberFormat(numeralLocale, formatOptions);
+    
     const unsubscribe = springValue.on("change", (latest) => {
       if (ref.current) {
-        ref.current.textContent = Intl.NumberFormat(numeralLocale, {
-          notation,
-          minimumFractionDigits: notation === 'compact' ? (value >= 1000 ? 1 : 0) : fractionDigits,
-          maximumFractionDigits: notation === 'compact' ? (value >= 1000 ? 1 : 0) : fractionDigits,
-        }).format(Number(latest.toFixed(fractionDigits)));
+        ref.current.textContent = formatter.format(Number(latest.toFixed(fractionDigits)));
       }
     });
     return () => unsubscribe();
-  }, [springValue, fractionDigits, notation, numeralLocale, value, mode]);
+  }, [springValue, fractionDigits, numeralLocale, formatOptions, mode]);
 
   const isFirstMount = useRef(true);
   useEffect(() => {
@@ -156,39 +157,28 @@ export const AnimatedCounterTest = ({
     motionValue.set(value);
   }, [value, motionValue, mode]);
 
-  // --- RENDER ---
-  if (mode === 'rolling') {
-    const chars = formattedRollingValue.split('');
-    return (
-      <span
-        dir="ltr"
-        className={`tabular-nums inline-flex transition-colors ${className}`}
-        style={{
-          fontVariantNumeric: 'tabular-nums',
-          fontFeatureSettings: '"tnum"',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {[...chars].reverse().map((char, revIndex) => (
-          <RollingDigit 
-            key={revIndex} 
-            char={char} 
-          />
-        )).reverse()}
-      </span>
-    );
-  }
+  // DRY: Unify the container rendering
+  const baseClassName = `tabular-nums transition-colors ${className} ${
+    mode === 'rolling' ? 'inline-flex' : 'inline-block tracking-wider'
+  }`;
 
   return (
     <span
-      ref={ref}
+      ref={mode === 'countup' ? ref : null}
       dir="ltr"
-      className={`tabular-nums inline-block tracking-wider ${className}`}
+      className={baseClassName}
       style={{
         fontVariantNumeric: 'tabular-nums',
         fontFeatureSettings: '"tnum"',
         whiteSpace: 'nowrap',
       }}
-    />
+    >
+      {mode === 'rolling' && formattedRollingValue.split('').reverse().map((char, revIndex) => (
+        <RollingDigit 
+          key={revIndex} 
+          char={char} 
+        />
+      )).reverse()}
+    </span>
   );
 };
