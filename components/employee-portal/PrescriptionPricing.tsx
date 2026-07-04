@@ -526,7 +526,7 @@ const PrescriptionSummary: React.FC<{
 
   return (
     <div
-      className='bg-white/80 dark:bg-(--bg-secondary)/80 backdrop-blur-xl rounded-2xl max-lg:rounded-b-[2rem] max-lg:pb-[14px] border border-gray-200 dark:border-gray-800/50 max-lg:border-b-0 overflow-hidden shadow-sm lg:sticky lg:top-22'
+      className='bg-white dark:bg-(--bg-secondary) rounded-2xl max-lg:rounded-b-[2rem] max-lg:pb-[14px] border border-gray-200 dark:border-gray-800/50 max-lg:border-b-0 overflow-hidden shadow-sm lg:sticky lg:top-22'
       dir={isArabic ? 'rtl' : 'ltr'}
     >
       {/* Header Bar */}
