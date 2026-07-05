@@ -120,12 +120,12 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             {getValue() as string}
           </span>
         ),
-        meta: { width: 202, align: 'start' },
+        meta: { width: 233, align: 'start' },
       },
       {
         accessorKey: 'date',
         header: t.headers.date,
-        meta: { width: 202, align: 'center' },
+        meta: { width: 166, align: 'start' },
         cell: ({ getValue }) => (
           <span className='text-sm text-gray-700 dark:text-gray-300'>{getValue() as string}</span>
         ),
@@ -157,7 +157,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             <span className='font-mono font-bold text-sm text-gray-400'>{code || '-'}</span>
           );
         },
-        meta: { width: 140, align: 'start' },
+        meta: { width: 166, align: 'start' },
       },
       {
         id: 'customerInfo',
@@ -168,7 +168,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             {getValue() as string}
           </div>
         ),
-        meta: { width: 202, align: 'start' },
+        meta: { width: 166, align: 'start' },
       },
       {
         accessorKey: 'paymentMethod',
@@ -186,7 +186,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             </span>
           );
         },
-        meta: { width: 202, align: 'center' },
+        meta: { width: 166, align: 'center' },
       },
       {
         id: 'items',
@@ -197,7 +197,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             {getValue() as number} {t.items || 'items'}
           </span>
         ),
-        meta: { width: 110, align: 'start' },
+        meta: { width: 166, align: 'start' },
       },
       {
         accessorKey: 'total',
@@ -271,7 +271,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             </div>
           );
         },
-        meta: { width: 202, align: 'end' },
+        meta: { width: 166, align: 'end' },
       },
       {
         id: 'status',
@@ -288,7 +288,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           return 'completed';
         },
         header: t.status || 'Status',
-        meta: { width: 132, align: 'center' },
+        meta: { width: 166, align: 'center' },
         cell: ({ row }) => {
           const sale = row.original;
           const isReturned =
@@ -404,7 +404,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             </div>
           );
         },
-        meta: { width: 202, align: 'start' },
+        meta: { width: 166, align: 'start' },
       },
     ],
     [t, customers, employees, language]

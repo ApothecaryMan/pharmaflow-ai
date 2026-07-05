@@ -94,6 +94,8 @@ export interface Branch {
   phone?: string;
   /** Default delivery fee for this branch */
   deliveryFee?: number;
+  /** Monthly sales target for the branch */
+  monthlySalesTarget?: number;
   /** Standard shift start time (e.g., "09:00") for late detection */
   shiftStartTime?: string;
   /** Geographic coordinates for mapping and pharmacy network */

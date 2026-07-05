@@ -16,6 +16,7 @@ export const branchRepository = {
       city: db.city || undefined,
       area: db.area || undefined,
       deliveryFee: db.delivery_fee || 0,
+      monthlySalesTarget: db.monthly_sales_target || 0,
       shiftStartTime: db.shift_start_time || '09:00',
       latitude: db.latitude !== null && db.latitude !== undefined ? Number(db.latitude) : undefined,
       longitude:
@@ -39,6 +40,7 @@ export const branchRepository = {
     if (b.city !== undefined) db.city = b.city;
     if (b.area !== undefined) db.area = b.area;
     if (b.deliveryFee !== undefined) db.delivery_fee = b.deliveryFee;
+    if (b.monthlySalesTarget !== undefined) db.monthly_sales_target = b.monthlySalesTarget;
     if (b.shiftStartTime !== undefined) db.shift_start_time = b.shiftStartTime;
     if (b.latitude !== undefined) db.latitude = b.latitude;
     if (b.longitude !== undefined) db.longitude = b.longitude;

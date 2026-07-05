@@ -54,7 +54,7 @@ const SubmenuWrapper: React.FC<{
   const mobileClasses =
     'relative w-full mt-2 p-2.5 space-y-2 rounded-xl border-none shadow-none bg-(--bg-page-surface)';
 
-  const desktopClasses = `absolute ${align === 'top' ? 'top-0' : 'bottom-0'} w-64 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-2.5 space-y-2 bg-(--bg-menu)`;
+  const desktopClasses = `absolute ${align === 'top' ? 'top-0' : 'bottom-0'} w-72 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-2.5 space-y-2 bg-(--bg-menu)`;
 
   // In LTR: side 'left' → end (opens left), side 'right' → start (opens right)
   // In RTL: side 'left' → start (opens left),  side 'right' → end (opens right)
@@ -212,6 +212,11 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 
   const { activeBranchId, updateBranch, activeBranch } = useData();
   const deliveryFee = activeBranch?.deliveryFee ?? 5;
+  const daysInMonth = useMemo(() => new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate(), []);
+  const dailyTarget = useMemo(() => (activeBranch?.monthlySalesTarget || 0) > 0 ? Math.round((activeBranch?.monthlySalesTarget || 0) / daysInMonth) : 0, [activeBranch?.monthlySalesTarget, daysInMonth]);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const [localTarget, setLocalTarget] = useState(activeBranch?.monthlySalesTarget || 0);
+  useEffect(() => { setLocalTarget(activeBranch?.monthlySalesTarget || 0); }, [activeBranch?.monthlySalesTarget]);
 
   const [isOpen, setIsOpen] = useState(false);
   const [expandedSubmenu, setExpandedSubmenu] = useState<string | null>(null);
@@ -269,7 +274,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     return `
       absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
       ${align === 'start' ? 'inset-s-0 origin-top-start' : 'inset-e-0 origin-top-end'}
-      w-64 rounded-xl shadow-2xl border border-(--border-divider) z-110 animate-fade-in
+      w-72 rounded-xl shadow-2xl border border-(--border-divider) z-110 animate-fade-in
       bg-(--bg-menu)
     `;
   }, [dropDirection, align, isMobile]);
@@ -739,24 +744,74 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               )}
 
               {/* --- POS Settings --- */}
-              <div className='pt-1 space-y-1.5'>
-                <label className='text-[10px] font-bold uppercase text-(--text-tertiary)'>
-                  {t.posSettings}
-                </label>
+              <SubmenuSection
+                isRTL={isAR}
+                id='pos'
+                icon='point_of_sale'
+                label={t.posSettings}
+                expandedSubmenu={expandedSubmenu}
+                onToggle={toggleSubmenu}
+                isMobile={isMobile}
+                title={t.posSettings}
+              >
                 <SettingsRow icon='moped' label={t.defaultDeliveryFee}>
                   <div className='flex items-center gap-2'>
                     <input
                       type='number'
                       value={deliveryFee}
+                      onFocus={(e) => e.target.select()}
                       onChange={(e) =>
                         updateBranch?.(activeBranchId, { deliveryFee: Number(e.target.value) })
                       }
-                      className='w-16 h-7 bg-black/5 dark:bg-white/5 border-none rounded-md px-2 text-xs font-bold focus:ring-1 focus:ring-primary-500/50 text-center'
+                      className='w-14 h-7 bg-black/5 dark:bg-white/5 border-none rounded-md px-2 text-xs font-bold focus:ring-1 focus:ring-primary-500/50 text-left'
+                      dir='ltr'
                     />
                     <span className='text-[10px] font-bold text-(--text-tertiary)'>{t.egp}</span>
                   </div>
                 </SettingsRow>
-              </div>
+                <div className='flex items-center justify-between transition-colors px-2 py-1'>
+                  <div className='flex items-center gap-2'>
+                    <Tooltip
+                      delay={0}
+                      content={
+                        <div className='flex flex-col gap-0.5 text-xs whitespace-nowrap'>
+                          <span>{language === 'AR' ? 'الهدف اليومي:' : 'Daily Target:'} <strong>{dailyTarget.toLocaleString()}</strong></span>
+                          <span>{language === 'AR' ? 'أيام الشهر:' : 'Days in month:'} <strong>{daysInMonth}</strong></span>
+                        </div>
+                      }
+                    >
+                      <span className='material-symbols-rounded text-(--text-secondary)' style={{ fontSize: 'var(--icon-settings)' }}>track_changes</span>
+                    </Tooltip>
+                    <span className='text-xs font-medium text-(--text-primary)'>
+                      {language === 'AR' ? 'المستهدف الشهري' : 'Monthly Target'}
+                    </span>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <input
+                      type='number'
+                      value={localTarget}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setLocalTarget(val);
+                        clearTimeout(saveTimerRef.current);
+                        saveTimerRef.current = setTimeout(() => {
+                          updateBranch?.(activeBranchId, { monthlySalesTarget: val });
+                        }, 600);
+                      }}
+                      onBlur={() => {
+                        clearTimeout(saveTimerRef.current);
+                        updateBranch?.(activeBranchId, { monthlySalesTarget: localTarget });
+                      }}
+                      className='w-28 h-7 bg-black/5 dark:bg-white/5 border-none rounded-md px-2 text-xs font-bold focus:ring-1 focus:ring-primary-500/50 text-left'
+                      dir='ltr'
+                    />
+                    <span className='text-[10px] font-bold text-(--text-tertiary)'>{t.egp}</span>
+                  </div>
+                </div>
+              </SubmenuSection>
+
+              <div className='border-t border-(--border-divider) my-0.5 opacity-50' />
 
               {showTicker !== undefined && (
                 <div className='space-y-1'>
