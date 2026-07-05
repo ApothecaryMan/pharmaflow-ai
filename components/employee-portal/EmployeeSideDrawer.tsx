@@ -14,6 +14,7 @@ interface EmployeeSideDrawerProps {
   language?: string;
   profileImage?: string | null;
   t: Translations;
+  requestsCount?: number;
 }
 
 export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
@@ -27,6 +28,7 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
   language,
   profileImage,
   t,
+  requestsCount,
 }) => {
   const { theme, setTheme, setLanguage } = useSettings();
   const isRTL = language === 'AR';
@@ -146,7 +148,12 @@ export const EmployeeSideDrawer: React.FC<EmployeeSideDrawerProps> = ({
                   }`}
                 >
                   <item.icon className='w-5 h-5' />
-                  {item.label}
+                  <span className='flex-1 text-start truncate'>{item.label}</span>
+                  {item.id === 'requests' && !!requestsCount && requestsCount > 0 && (
+                    <span className='flex items-center justify-center min-w-[20px] h-[20px] bg-red-500 text-white text-[10px] font-bold rounded-full px-1.5 shadow-sm'>
+                      {requestsCount > 99 ? '99+' : requestsCount}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

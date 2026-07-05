@@ -7,6 +7,7 @@ interface EmployeeMobileDockProps {
   onOpenDrawer: () => void;
   language?: string;
   t: Translations;
+  requestsCount?: number;
 }
 
 export const EmployeeMobileDock: React.FC<EmployeeMobileDockProps> = ({
@@ -15,6 +16,7 @@ export const EmployeeMobileDock: React.FC<EmployeeMobileDockProps> = ({
   onOpenDrawer,
   language,
   t,
+  requestsCount,
 }) => {
   const isRTL = language === 'AR';
 
@@ -50,6 +52,7 @@ export const EmployeeMobileDock: React.FC<EmployeeMobileDockProps> = ({
           label={t.employeeProfile.pendingRequests}
           isActive={activeView === 'requests'}
           onClick={() => onViewChange('requests')}
+          badgeCount={requestsCount}
         />
         <DockButton
           icon={Menu}
@@ -73,9 +76,10 @@ interface DockButtonProps {
   label: string;
   isActive: boolean;
   onClick: () => void;
+  badgeCount?: number;
 }
 
-const DockButton = React.memo<DockButtonProps>(({ icon: Icon, label, isActive, onClick }) => (
+const DockButton = React.memo<DockButtonProps>(({ icon: Icon, label, isActive, onClick, badgeCount }) => (
   <button
     onClick={onClick}
     className={`
@@ -97,6 +101,11 @@ const DockButton = React.memo<DockButtonProps>(({ icon: Icon, label, isActive, o
       <Icon
         className={`w-[22px] h-[22px] relative z-10 transition-all duration-500 ${isActive ? 'scale-110' : ''}`}
       />
+      {!!badgeCount && badgeCount > 0 && (
+        <span className='absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full px-1 shadow-sm z-20 animate-scale-in'>
+          {badgeCount > 99 ? '99+' : badgeCount}
+        </span>
+      )}
     </div>
     <span
       className={`relative z-10 text-[9px] font-bold ${isActive ? 'opacity-100' : 'opacity-60'}`}

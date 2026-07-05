@@ -77,22 +77,6 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
             >
               {t.employeeProfile.sessions || 'Active Sessions'}
             </h3>
-            <div className='flex items-center gap-1.5'>
-              {onlineCount > 0 && (
-                <span className='px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400 border border-green-100 dark:border-green-800 flex items-center gap-1.5' title={isRTL ? 'متصل الآن' : 'Online'}>
-                  <span className='w-1.5 h-1.5 rounded-full bg-green-500 relative'>
-                    <span className='absolute inset-0 rounded-full bg-green-500 animate-ping opacity-75'></span>
-                  </span>
-                  {onlineCount}
-                </span>
-              )}
-              {offlineCount > 0 && (
-                <span className='px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700 flex items-center gap-1.5' title={isRTL ? 'غير متصل' : 'Offline'}>
-                  <span className='w-1.5 h-1.5 rounded-full bg-gray-400'></span>
-                  {offlineCount}
-                </span>
-              )}
-            </div>
           </div>
         </div>
 

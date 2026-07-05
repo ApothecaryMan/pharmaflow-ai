@@ -46,6 +46,7 @@ export function EmployeeDashboard({
 
   const sessionUsername = session?.username;
   const sessionName = session?.employeeName || profile?.fullName;
+  const pendingRequestsCount = requests?.filter((r) => r.status === 'pending').length || 0;
 
 
   // Always delegate to the centralized logout handler (useAuth.handleLogout)
@@ -301,6 +302,7 @@ export function EmployeeDashboard({
           language={language}
           profileImage={profile?.image}
           t={t}
+          requestsCount={pendingRequestsCount}
         />
 
         {/* Mobile Dock */}
@@ -310,6 +312,7 @@ export function EmployeeDashboard({
           onOpenDrawer={() => setDrawerOpen((prev) => !prev)}
           language={language}
           t={t}
+          requestsCount={pendingRequestsCount}
         />
       </div>
     </ContextMenuProvider>
