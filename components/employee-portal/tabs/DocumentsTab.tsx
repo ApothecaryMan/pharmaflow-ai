@@ -241,7 +241,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   return (
     <div className='animate-fade-in space-y-6'>
       <div className='space-y-2'>
-        <h4 className='text-sm font-bold uppercase tracking-wider text-(--text-primary) flex items-center gap-1.5'>
+        <h4 
+          className='text-sm font-bold uppercase tracking-wider text-(--text-primary) flex items-center gap-1.5 !font-["GraphicSansFont"]'
+          style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+        >
           <FileText className='w-3.5 h-3.5' />
           {t.employeeProfile.officialDocuments}
         </h4>

@@ -846,7 +846,10 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
         <div className='space-y-4'>
           <div className='space-y-2 pt-2'>
             <div className='flex items-center justify-between'>
-              <h4 className='text-sm font-bold uppercase tracking-wider text-(--text-primary)'>
+              <h4 
+                className='text-sm font-bold uppercase tracking-wider text-(--text-primary) !font-["GraphicSansFont"]'
+                style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+              >
                 {t.employeeProfile.personalInformation}
               </h4>
               {onUpdateProfile &&
@@ -1042,7 +1045,10 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
           {/* Login & Fingerprint Credentials (Workspaces) */}
           {(workspaces.length > 0 || isLoading) && (
             <div className='space-y-2 pt-2'>
-              <h4 className='text-sm font-bold uppercase tracking-wider text-(--text-primary)'>
+              <h4 
+                className='text-sm font-bold uppercase tracking-wider text-(--text-primary) !font-["GraphicSansFont"]'
+                style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+              >
                 {t.employeeProfile.workspacesAndCredentials}
               </h4>
               <div className='flex flex-col gap-4'>
@@ -1452,7 +1458,10 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
           {/* Quick Stats */}
           <div className='space-y-2 pt-2'>
-            <h4 className='text-sm font-bold uppercase tracking-wider text-(--text-primary)'>
+            <h4 
+              className='text-sm font-bold uppercase tracking-wider text-(--text-primary) !font-["GraphicSansFont"]'
+              style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+            >
               {t.employeeProfile.overview}
             </h4>
             {isLoading ? (

@@ -638,7 +638,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
           </div>
         </div>
 
-        <div className={`flex-1 flex flex-col overflow-hidden ${CARD_BASE} rounded-xl`} dir='ltr'>
+        <div data-no-convert='true' className={`flex-1 flex flex-col overflow-hidden ${CARD_BASE} rounded-xl`} dir='ltr'>
           <AnimatePresence mode='wait'>
             {selectedDrugs.length > 0 ? (
               <motion.div

@@ -119,7 +119,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
   );
 
   return (
-    <div className='animate-fade-in text-(--text-primary)'>
+    <div className='animate-fade-in text-(--text-primary) -mt-2 sm:-mt-4'>
       {/* Tab Bar */}
       <div className='flex mb-6 overflow-x-auto hide-scrollbar max-sm:-mx-4'>
         {tabs.map((tab) => {
@@ -128,13 +128,14 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
             <button
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
-              className={`flex-1 sm:flex-none justify-center sm:justify-start flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-3 text-[13px] sm:text-sm font-medium transition-colors relative whitespace-nowrap ${
+              className={`flex-1 sm:flex-none justify-center sm:justify-start flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-3 text-[13px] sm:text-sm font-medium transition-colors relative whitespace-nowrap !font-['GraphicSansFont'] ${
                 isActive 
                   ? 'text-gray-900 dark:text-white' 
                   : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
               }`}
+              style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
             >
-              <div className='flex items-center gap-2'>
+              <div className='flex items-center gap-0.5'>
                 <div className='relative flex items-center justify-center'>
                   <span className='material-symbols-rounded text-[18px] sm:text-[20px]'>{tab.icon}</span>
                   {tab.value === 'sessions' && (onlineCount > 0 || offlineCount > 0) && (

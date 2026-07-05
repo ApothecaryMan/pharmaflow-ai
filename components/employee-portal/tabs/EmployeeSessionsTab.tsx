@@ -71,7 +71,10 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
         <div className='flex items-center gap-3'>
           <span className='material-symbols-rounded text-3xl text-(--text-secondary)'>devices</span>
           <div className='flex items-center gap-2'>
-            <h3 className='text-lg font-semibold text-(--text-primary)'>
+            <h3 
+              className='text-lg font-semibold text-(--text-primary) !font-["GraphicSansFont"]'
+              style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+            >
               {t.employeeProfile.sessions || 'Active Sessions'}
             </h3>
             <div className='flex items-center gap-1.5'>

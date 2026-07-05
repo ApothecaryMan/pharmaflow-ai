@@ -6055,7 +6055,7 @@ export const TRANSLATIONS = {
       inventoryTurnover: 'معدل دوران المخزون',
     },
     employeeProfile: {
-      profile: 'الملف الشخصي',
+      profile: 'الملف',
       workHistory: 'السجل',
       documents: 'المستندات',
       sessions: 'الجلسات',
