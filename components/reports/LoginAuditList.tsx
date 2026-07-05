@@ -290,7 +290,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             {String(info.getValue()).substring(0, 8)}
           </span>
         ),
-        meta: { width: 80, align: 'start' },
+        meta: { width: 150, align: 'start' },
       },
       {
         accessorKey: 'timestamp',
@@ -337,7 +337,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             </div>
           );
         },
-        meta: { width: 140, align: 'center' },
+        meta: { width: 110, align: 'start' },
       },
       {
         accessorKey: 'employeeCode',
@@ -347,7 +347,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             {String(info.getValue() || '-')}
           </span>
         ),
-        meta: { width: 90, align: 'center' },
+        meta: { width: 150, align: 'center' },
       },
       {
         accessorKey: 'username',
@@ -396,7 +396,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             </div>
           );
         },
-        meta: { width: 140, align: 'start' },
+        meta: { width: 172, align: 'start' },
       },
       {
         accessorKey: 'action',
@@ -410,7 +410,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             </span>
           );
         },
-        meta: { width: 110, align: 'center' },
+        meta: { width: 150, align: 'start' },
       },
       {
         accessorKey: 'branchId',
@@ -424,7 +424,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             </span>
           );
         },
-        meta: { width: 120, align: 'center' },
+        meta: { width: 150, align: 'start' },
       },
       {
         accessorKey: 'details',
@@ -434,7 +434,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             {translateDetails(info.getValue() as string | undefined)}
           </div>
         ),
-        meta: { flex: true, align: 'start' },
+        meta: { width: 631, align: 'start' },
       },
     ],
     [t, language]

@@ -502,9 +502,6 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     };
   }, [activeBranchId, activeOrgId, page, serverFilters, sales]);
 
-  const totalRevenue = pagedSales.reduce((sum, sale) => money.add(sum, sale.total), 0);
-  const totalPages = Math.max(1, Math.ceil(totalSales / pageSize));
-
   const handleSearchChange = React.useCallback((value: string) => {
     setSearchTerm(value);
     setPage(1);
@@ -648,7 +645,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         <TanStackTable
           leftCustomControls={
             <>
-              <h1 
+              <h1
                 className='hidden md:block text-2xl !font-["GraphicSansFont"] tracking-tight leading-normal text-gray-900 dark:text-white page-title me-2 sm:me-4 shrink-0'
                 style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
               >
@@ -690,12 +687,6 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
                 placeholder={t.searchPlaceholder || 'Search sales…'}
                 wrapperClassName='w-full sm:w-[250px] lg:w-[350px]'
               />
-              {!permissionsService.can('sale.view_assigned_only') && (
-                <div className='hidden xl:flex px-3 py-1 rounded-xl bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800 flex-col items-end min-w-[120px]'>
-                  <span className='text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400'>{t.totalRevenue}</span>
-                  <span className='text-sm font-bold text-primary-900 dark:text-primary-100 leading-tight'>{formatCurrency(totalRevenue)}</span>
-                </div>
-              )}
               <DateRangePicker
                 startDate={startDate}
                 endDate={endDate}
