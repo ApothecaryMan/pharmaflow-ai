@@ -37,10 +37,9 @@ export const auditRepository = {
     // Try to flush any previously queued entries first
     await this._flushQueue();
 
-    const safeAction = ['login', 'logout'].includes(entry.action) ? entry.action : 'login';
-    const finalDetails = entry.action === safeAction 
-      ? entry.details 
-      : entry.details;
+    const allowedActions = ['login', 'logout', 'switch_user', 'switch_branch', 'system_login', 'system_logout'];
+    const safeAction = allowedActions.includes(entry.action) ? entry.action : 'login';
+    const finalDetails = entry.details;
 
     const { error } = await supabase.rpc('log_audit_event', {
       p_username: entry.username || 'System',
@@ -63,7 +62,7 @@ export const auditRepository = {
         this._pendingQueue.push(entry);
         console.debug('[AuditRepository] Queued audit log for later sync:', error.code);
       } else {
-        console.debug('[AuditRepository] Discarded audit log due to unrecoverable error:', error.message);
+        console.error('[AuditRepository] Discarded audit log due to unrecoverable error:', error);
       }
     }
   },
@@ -81,10 +80,9 @@ export const auditRepository = {
 
     const results = await Promise.allSettled(
       batch.map((entry) => {
-        const safeAction = ['login', 'logout'].includes(entry.action) ? entry.action : 'login';
-        const finalDetails = entry.action === safeAction 
-          ? entry.details 
-          : entry.details;
+        const allowedActions = ['login', 'logout', 'switch_user', 'switch_branch', 'system_login', 'system_logout'];
+        const safeAction = allowedActions.includes(entry.action) ? entry.action : 'login';
+        const finalDetails = entry.details;
 
         return supabase.rpc('log_audit_event', {
           p_username: entry.username || 'System',

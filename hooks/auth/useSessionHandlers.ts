@@ -52,7 +52,7 @@ export const useSessionHandlers = ({
         if (!id) {
           // Log Employee Logout
           const currentEmp = employees.find((e) => e.id === currentEmployeeId);
-          authService.logAuditEvent({
+          await authService.logAuditEvent({
             username: currentEmp?.name || session.username,
             role: currentEmp?.role || session.role,
             branchId: session.branchId,
@@ -119,7 +119,7 @@ export const useSessionHandlers = ({
             const previousEmployee = employees.find((e) => e.id === currentEmployeeId);
             const previousName = previousEmployee?.name || (currentEmployeeId ? 'unknown' : null);
 
-            authService.logAuditEvent({
+            await authService.logAuditEvent({
               username: selectedEmployee.name,
               role: selectedEmployee.role,
               branchId: session.branchId,
