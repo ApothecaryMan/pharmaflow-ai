@@ -61,9 +61,15 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
     return isRTL ? 'مؤسسة غير معروفة' : 'Unknown Organization';
   };
 
-  const pharmacySessions = sessions.filter(session => session.org_id);
-  const onlineCount = pharmacySessions.filter(session => isSessionOnline(session.last_seen_at)).length;
-  const offlineCount = pharmacySessions.length - onlineCount;
+  const employeeIds = workspaces.map(w => w.id);
+  const mySessions = sessions.filter(session => {
+    if (session.user_id === profile?.id) return true;
+    if (session.employee_id && employeeIds.includes(session.employee_id)) return true;
+    return false;
+  });
+
+  const onlineCount = mySessions.filter(session => isSessionOnline(session.last_seen_at)).length;
+  const offlineCount = mySessions.length - onlineCount;
 
   return (
     <div className='animate-fade-in space-y-6'>
@@ -103,13 +109,13 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
         </div>
       ) : error ? (
         <div className='p-6 text-center text-red-600'>{error}</div>
-      ) : pharmacySessions.length === 0 ? (
+      ) : mySessions.length === 0 ? (
         <div className='p-12 text-center text-(--text-secondary)'>
-          {isRTL ? 'لا توجد أجهزة مسجلة حالياً داخل الصيدلية' : 'No active pharmacy sessions currently'}
+          {isRTL ? 'لا توجد جلسات نشطة حالياً' : 'No active sessions currently'}
         </div>
       ) : (
         <div className='space-y-3'>
-          {pharmacySessions.map(session => {
+          {mySessions.map(session => {
             const displayDeviceName = getDeviceName(session.user_agent || '', session.device_info || '');
               const displayBrowserName = getBrowserName(session.user_agent || '');
               const isDesktopAppSession = isDesktopAppUserAgent(session.user_agent || '');

@@ -57,7 +57,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
 
   const workspaceIdsString = workspaces.map(w => w.id).sort().join(',');
 
-  const reloadSessions = async () => {
+  const reloadSessions = useMemo(() => async () => {
     try {
       setLoadingSessions(true);
       const data = await sessionRepository.getActiveSessions();
@@ -68,7 +68,7 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
     } finally {
       setLoadingSessions(false);
     }
-  };
+  }, [isRTL]);
 
   useEffect(() => {
     let isMounted = true;
@@ -104,9 +104,23 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
     };
   }, [profile?.id, workspaceIdsString, isRTL]);
 
-  const pharmacySessions = sessions.filter(session => session.org_id);
-  const onlineCount = pharmacySessions.filter(session => isSessionOnline(session.last_seen_at)).length;
-  const offlineCount = pharmacySessions.length - onlineCount;
+  // Refresh sessions when the sessions tab is opened
+  useEffect(() => {
+    if (activeTab === 'sessions') {
+      reloadSessions();
+    }
+  }, [activeTab, reloadSessions]);
+
+  const employeeIds = useMemo(() => workspaces.map(w => w.id), [workspaces]);
+
+  const mySessions = useMemo(() => sessions.filter(session => {
+    if (session.user_id === profile?.id) return true;
+    if (session.employee_id && employeeIds.includes(session.employee_id)) return true;
+    return false;
+  }), [sessions, profile?.id, employeeIds]);
+
+  const onlineCount = mySessions.filter(session => isSessionOnline(session.last_seen_at)).length;
+  const offlineCount = mySessions.length - onlineCount;
 
   const tabs = useMemo(
     () => [
