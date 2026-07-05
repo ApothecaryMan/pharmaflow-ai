@@ -40,16 +40,12 @@ export const MemoizedCell = React.memo(
       const formatted = formatSmartDate(cellValue, todayTs, yesterdayTs, isRtl);
       if (formatted) {
         const { isToday, dateLabel, formattedTime } = formatted;
-        content = (
-          <div className={`flex flex-col ${meta.itemsAlignClass || ''}`}>
-            <span className='font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight'>
-              {isToday ? formattedTime : dateLabel}
-            </span>
-            {!isToday && (
-              <span className='text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap -mt-0.5 tracking-tight'>
-                {formattedTime}
-              </span>
-            )}
+        content = isToday ? (
+          <span className='text-[11px] font-bold text-gray-800 dark:text-gray-200'>{formattedTime}</span>
+        ) : (
+          <div className='flex items-center gap-1.5 whitespace-nowrap'>
+            <span className='text-[11px] font-bold text-gray-800 dark:text-gray-200'>{dateLabel}</span>
+            <span className='text-[10px] text-gray-400 font-medium opacity-60'>{formattedTime}</span>
           </div>
         );
       }

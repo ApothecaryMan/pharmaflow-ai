@@ -290,7 +290,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             {String(info.getValue()).substring(0, 8)}
           </span>
         ),
-        meta: { width: 150, align: 'start' },
+        meta: { width: 150, align: 'start', isId: true, hideFromSettings: false },
       },
       {
         accessorKey: 'timestamp',
@@ -326,18 +326,20 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             });
           }
 
-          return (
+          return isToday ? (
+            <span className='text-[11px] font-bold text-gray-800 dark:text-gray-200'>
+              {timeStr}
+            </span>
+          ) : (
             <div className='flex items-center gap-2 whitespace-nowrap'>
               <span className='text-[11px] font-bold text-gray-800 dark:text-gray-200'>
-                {timeStr}
+                {dateStr}
               </span>
-              {dateStr && (
-                <span className='text-[10px] text-gray-400 font-medium opacity-60'>{dateStr}</span>
-              )}
+              <span className='text-[10px] text-gray-400 font-medium opacity-60'>{timeStr}</span>
             </div>
           );
         },
-        meta: { width: 110, align: 'start' },
+        meta: { width: 110, align: 'start', minWidth: 100, smartDate: false },
       },
       {
         accessorKey: 'employeeCode',
@@ -347,7 +349,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             {String(info.getValue() || '-')}
           </span>
         ),
-        meta: { width: 150, align: 'center' },
+        meta: { width: 150, align: 'center', dir: 'ltr', minWidth: 100 },
       },
       {
         accessorKey: 'username',
@@ -364,11 +366,10 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
           return (
             <div className='flex items-center gap-2'>
               <div
-                className={`w-6 h-6 flex items-center justify-center shrink-0 ${
-                  isAdmin
+                className={`w-6 h-6 flex items-center justify-center shrink-0 ${isAdmin
                     ? ''
                     : 'rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 text-[10px] font-bold border border-gray-200 dark:border-gray-700 overflow-hidden'
-                }`}
+                  }`}
               >
                 {isAdmin ? (
                   <>
@@ -396,7 +397,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             </div>
           );
         },
-        meta: { width: 172, align: 'start' },
+        meta: { width: 172, align: 'start', minWidth: 140 },
       },
       {
         accessorKey: 'action',
@@ -424,7 +425,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             </span>
           );
         },
-        meta: { width: 150, align: 'start' },
+        meta: { width: 150, align: 'start', dir: 'ltr' },
       },
       {
         accessorKey: 'details',
@@ -434,7 +435,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
             {translateDetails(info.getValue() as string | undefined)}
           </div>
         ),
-        meta: { width: 631, align: 'start' },
+        meta: { width: 400, align: 'start', flex: true },
       },
     ],
     [t, language]
@@ -444,35 +445,35 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
     <div className='h-full flex flex-col overflow-hidden bg-transparent px-4 sm:px-6 pt-4 sm:pt-6'>
       {/* Header Area */}
       <div className='flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4 flex-shrink-0'>
-          <h2 
-            className='hidden md:block text-2xl !font-["GraphicSansFont"] tracking-tight leading-normal text-zinc-900 dark:text-zinc-100 me-2 sm:me-4'
-            style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
-          >
-            {t.loginAudit.title}
-          </h2>
+        <h2
+          className='hidden md:block text-2xl !font-["GraphicSansFont"] tracking-tight leading-normal text-zinc-900 dark:text-zinc-100 me-2 sm:me-4'
+          style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+        >
+          {t.loginAudit.title}
+        </h2>
 
-          <div className='flex-1 flex items-center sm:justify-end gap-2 w-full'>
-            <SearchInput
-              compact
-              value={searchQuery}
-              onSearchChange={setSearchQuery}
-              placeholder={t.loginAudit.searchPlaceholder}
-              wrapperClassName='w-full sm:w-64'
+        <div className='flex-1 flex items-center sm:justify-end gap-2 w-full'>
+          <SearchInput
+            compact
+            value={searchQuery}
+            onSearchChange={setSearchQuery}
+            placeholder={t.loginAudit.searchPlaceholder}
+            wrapperClassName='w-full sm:w-64'
+          />
+
+          <label className='flex items-center gap-3 h-[34px] px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer flex-shrink-0'>
+            <span className='text-sm font-medium text-gray-700 dark:text-gray-300 select-none whitespace-nowrap'>
+              {t.loginAudit.showAllBranches}
+            </span>
+            <Switch
+              checked={showAllBranches}
+              onChange={setShowAllBranches}
+              theme={currentTheme.name.toLowerCase()}
+              activeColor={currentTheme.hex}
             />
-
-            <label className='flex items-center gap-3 h-[34px] px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer flex-shrink-0'>
-              <span className='text-sm font-medium text-gray-700 dark:text-gray-300 select-none whitespace-nowrap'>
-                {t.loginAudit.showAllBranches}
-              </span>
-              <Switch
-                checked={showAllBranches}
-                onChange={setShowAllBranches}
-                theme={currentTheme.name.toLowerCase()}
-                activeColor={currentTheme.hex}
-              />
-            </label>
-          </div>
+          </label>
         </div>
+      </div>
       {/* Table Area */}
       <div className='flex-1 overflow-hidden'>
         <TanStackTable

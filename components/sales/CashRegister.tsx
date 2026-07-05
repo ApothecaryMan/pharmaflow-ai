@@ -115,13 +115,13 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
       {
         accessorKey: 'time',
         header: t.cashRegister?.transactions?.time || 'Time',
-        meta: { align: 'center' },
-        size: 94,
+        meta: { align: 'start' },
+        size: 142,
       },
       {
         accessorKey: 'userId',
         header: t.cashRegister?.transactions?.user || 'User',
-        meta: { align: 'start' },
+        meta: { align: 'start', dir: 'ltr', isId: true, hideFromSettings: false },
         cell: (info) => {
           const empIdOrName = info.getValue() as string;
           const employee = employees?.find((e) => e.id === empIdOrName);
@@ -136,7 +136,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
       {
         accessorKey: 'type',
         header: t.cashRegister?.transactions?.type || 'Type',
-        meta: { align: 'center' },
+        meta: { align: 'center', dir: 'ltr', minWidth: 120 },
         cell: (info) => {
           const type = info.getValue() as CashTransactionType;
           return (
@@ -159,7 +159,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           const reason = info.getValue() as string;
           if (!reason) return '-';
           const match = reason.match(/^(Sale|Return|Return for Sale|Refund)\s*#(\d+)$/i);
-          
+
           let content;
           if (match) {
             content = (
@@ -197,13 +197,13 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
 
           return <div data-no-convert='true'>{content}</div>;
         },
-        size: 301,
+        size: 623,
       },
       {
         accessorKey: 'amount',
         header: t.cashRegister?.transactions?.amount || 'Amount',
-        meta: { align: 'end' },
-        size: 301,
+        meta: { align: 'end', minWidth: 100 },
+        size: 140,
         cell: (info) => {
           const amountVal = info.getValue() as number;
           const row = info.row.original;
@@ -228,7 +228,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
   return (
     <div
       dir={language === 'AR' ? 'rtl' : 'ltr'}
-            className={`h-full flex flex-col animate-fade-in ${language === 'AR' ? 'text-right' : 'text-left'}`}
+      className={`h-full flex flex-col animate-fade-in ${language === 'AR' ? 'text-right' : 'text-left'}`}
     >
       {/* Header */}
       <PageHeader
