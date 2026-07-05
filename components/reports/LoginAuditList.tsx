@@ -5,6 +5,7 @@ import { TRANSLATIONS } from '../../i18n/translations';
 import { useData } from '../../services';
 import { authService } from '../../services/auth/authService';
 import type { LoginAuditEntry } from '../../types';
+import { SearchInput } from '../common/SearchInput';
 import { Switch } from '../common/Switch';
 import { TanStackTable } from '../common/TanStackTable';
 
@@ -17,6 +18,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
   const { employees, activeBranchId, branches } = useData();
   const { theme: currentTheme } = useSettings();
   const [showAllBranches, setShowAllBranches] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [history, setHistory] = useState<LoginAuditEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,6 +80,24 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
           icon: 'storefront',
           badgeClass: 'badge-blue',
         };
+      case 'force_logout':
+        return {
+          label: t.loginAudit.actions.forceLogout,
+          icon: 'gpp_maybe',
+          badgeClass: 'badge-danger',
+        };
+      case 'switch_org':
+        return {
+          label: t.loginAudit.actions.switchOrg,
+          icon: 'domain',
+          badgeClass: 'badge-purple',
+        };
+      case 'employee_logout':
+        return {
+          label: t.loginAudit.actions.employeeLogout,
+          icon: 'person_remove',
+          badgeClass: 'badge-warning',
+        };
       default:
         return {
           label: action,
@@ -104,14 +124,14 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
           {parts.map((part, i) => {
             if (part === '{{from}}') {
               return (
-                <span key={i} className='text-gray-900 dark:text-white font-semibold mx-1'>
+                <span key={i} className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>
                   {branchSwitchMatch[1]}
                 </span>
               );
             }
             if (part === '{{to}}') {
               return (
-                <span key={i} className='text-gray-900 dark:text-white font-semibold mx-1'>
+                <span key={i} className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>
                   {branchSwitchMatch[2]}
                 </span>
               );
@@ -129,7 +149,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
       return (
         <span className='text-gray-500 dark:text-gray-400'>
           {translated[0]}
-          <span className='text-gray-900 dark:text-white font-semibold mx-1'>{switchMatch[1]}</span>
+          <span className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>{switchMatch[1]}</span>
           {translated[1]}
         </span>
       );
@@ -142,7 +162,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
       return (
         <span className='text-gray-500 dark:text-gray-400'>
           {translated[0]}
-          <span className='text-gray-900 dark:text-white font-semibold mx-1'>
+          <span className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>
             {accountMatch[1]}
           </span>
           {translated[1]}
@@ -155,6 +175,18 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
       return (
         <span className='text-gray-500 dark:text-gray-400'>
           {t.loginAudit.detailPatterns.employeeSignedOut}
+        </span>
+      );
+    }
+
+    // Pattern 3b: Employee signed out (Remotely)
+    if (details === 'Employee signed out (Remotely)') {
+      return (
+        <span className='text-gray-500 dark:text-gray-400 flex items-center gap-1.5'>
+          {t.loginAudit.detailPatterns.employeeSignedOut}
+          <span className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50'>
+            {t.loginAudit.detailPatterns.remotelyBadge}
+          </span>
         </span>
       );
     }
@@ -182,6 +214,65 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
       return (
         <span className='text-gray-500 dark:text-gray-400'>
           {t.loginAudit.detailPatterns.employeeSessionStarted}
+        </span>
+      );
+    }
+
+    // Pattern 7a: Session terminated by {name} (Remotely)
+    const terminatedRemoteMatch = details.match(/^Session terminated by (.*?) \(Remotely\)$/);
+    if (terminatedRemoteMatch) {
+      const translated = t.loginAudit.detailPatterns.terminatedBy.split('{{name}}');
+      return (
+        <span className='text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-1.5'>
+          {translated[0]}
+          <span className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>{terminatedRemoteMatch[1]}</span>
+          {translated[1]}
+          <span className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50'>
+            {t.loginAudit.detailPatterns.remotelyBadge}
+          </span>
+        </span>
+      );
+    }
+
+    // Pattern 7: Session terminated by {name}
+    const terminatedMatch = details.match(/^Session terminated by (.*)$/);
+    if (terminatedMatch) {
+      const translated = t.loginAudit.detailPatterns.terminatedBy.split('{{name}}');
+      return (
+        <span className='text-gray-500 dark:text-gray-400'>
+          {translated[0]}
+          <span className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>{terminatedMatch[1]}</span>
+          {translated[1]}
+        </span>
+      );
+    }
+
+    // Pattern 8: Employee {name} logged out by {admin}
+    const employeeLoggedOutMatch = details.match(/^Employee (.*) logged out by (.*)$/);
+    if (employeeLoggedOutMatch) {
+      const translated = t.loginAudit.detailPatterns.employeeLoggedOutBy.split('{{name}}').join('{{temp}}').split('{{admin}}').join('{{name}}').split('{{temp}}').join('{{admin}}');
+      const parts = t.loginAudit.detailPatterns.employeeLoggedOutBy
+        .split(/({{(?:name|admin)}})/)
+        .filter(Boolean);
+      return (
+        <span className='text-gray-500 dark:text-gray-400'>
+          {parts.map((part, i) => {
+            if (part === '{{name}}') {
+              return (
+                <span key={i} className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>
+                  {employeeLoggedOutMatch[1]}
+                </span>
+              );
+            }
+            if (part === '{{admin}}') {
+              return (
+                <span key={i} className='inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-200 border border-gray-200 dark:border-gray-700 mx-1'>
+                  {employeeLoggedOutMatch[2]}
+                </span>
+              );
+            }
+            return <React.Fragment key={i}>{part}</React.Fragment>;
+          })}
         </span>
       );
     }
@@ -350,31 +441,40 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
   );
 
   return (
-    <div className='h-full flex flex-col overflow-hidden bg-transparent'>
+    <div className='h-full flex flex-col overflow-hidden bg-transparent px-4 sm:px-6 pt-4 sm:pt-6'>
       {/* Header Area */}
-      <div className='pb-2'>
-        <div className='flex items-center justify-between mb-1'>
-          <h1 className='text-2xl font-bold text-gray-900 dark:text-white page-title'>
+      <div className='flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4 flex-shrink-0'>
+          <h2 
+            className='hidden md:block text-2xl !font-["GraphicSansFont"] tracking-tight leading-normal text-zinc-900 dark:text-zinc-100 me-2 sm:me-4'
+            style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+          >
             {t.loginAudit.title}
-          </h1>
+          </h2>
 
-          <label className='flex items-center gap-3 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-white/10 transition-colors'>
-            <span className='text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider select-none'>
-              {t.loginAudit.globalView}
-            </span>
-            <Switch
-              checked={showAllBranches}
-              onChange={setShowAllBranches}
-              theme={currentTheme.name.toLowerCase()}
-              activeColor={currentTheme.hex}
+          <div className='flex-1 flex items-center sm:justify-end gap-2 w-full'>
+            <SearchInput
+              compact
+              value={searchQuery}
+              onSearchChange={setSearchQuery}
+              placeholder={t.loginAudit.searchPlaceholder}
+              wrapperClassName='w-full sm:w-64'
             />
-          </label>
-        </div>
-        <p className='text-gray-500 dark:text-gray-400 text-sm'>{t.loginAudit.subtitle}</p>
-      </div>
 
+            <label className='flex items-center gap-3 h-[34px] px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer flex-shrink-0'>
+              <span className='text-sm font-medium text-gray-700 dark:text-gray-300 select-none whitespace-nowrap'>
+                {t.loginAudit.showAllBranches}
+              </span>
+              <Switch
+                checked={showAllBranches}
+                onChange={setShowAllBranches}
+                theme={currentTheme.name.toLowerCase()}
+                activeColor={currentTheme.hex}
+              />
+            </label>
+          </div>
+        </div>
       {/* Table Area */}
-      <div className='flex-1 pt-2 overflow-hidden'>
+      <div className='flex-1 overflow-hidden'>
         <TanStackTable
           tableId='login-audit-report'
           data={history}
@@ -388,6 +488,8 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
           pageSize='auto'
           enableShowAll={true}
           isLoading={isLoading}
+          enableSearch={false}
+          globalFilter={searchQuery}
         />
       </div>
     </div>
