@@ -29,7 +29,6 @@ const PrescriptionPricing: React.FC = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [scannedDrugs, setScannedDrugs] = useState<Drug[]>([]);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [expandedDrugId, setExpandedDrugId] = useState<string | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
   const cartRef = useRef<HTMLDivElement>(null);
@@ -229,10 +228,6 @@ const PrescriptionPricing: React.FC = () => {
                     drug={drug}
                     index={index}
                     totalResults={combinedSearchResults.length}
-                    isExpanded={expandedDrugId === drug.id}
-                    onToggleExpand={() =>
-                      setExpandedDrugId(expandedDrugId === drug.id ? null : drug.id)
-                    }
                     highlightMatch={highlightMatch}
                     language={language}
                     textTransform={textTransform}
@@ -344,8 +339,6 @@ const SearchResultItem: React.FC<{
   drug: Drug;
   index: number;
   totalResults: number;
-  isExpanded: boolean;
-  onToggleExpand: () => void;
   highlightMatch: (text: string, type: 'brand' | 'generic') => React.ReactNode;
   language: string;
   textTransform: 'normal' | 'uppercase';
@@ -355,8 +348,6 @@ const SearchResultItem: React.FC<{
   drug,
   index,
   totalResults,
-  isExpanded,
-  onToggleExpand,
   highlightMatch,
   language,
   textTransform,
@@ -392,14 +383,6 @@ const SearchResultItem: React.FC<{
     }
   };
 
-  const handleClick = () => {
-    if (hasLongPressed.current) {
-      hasLongPressed.current = false;
-      return;
-    }
-    onToggleExpand();
-  };
-
   return (
     <div
       className={`${index < 20 ? 'animate-stagger-fade-in' : ''} select-none touch-pan-y`}
@@ -418,21 +401,19 @@ const SearchResultItem: React.FC<{
       <MaterialTabs
         index={index}
         total={totalResults}
-        isSelected={isExpanded}
-        onClick={handleClick}
-        className={`!px-0 !h-auto !min-h-[72px] border border-(--border-divider) transition-all bg-white dark:!bg-gray-800/40 dark:hover:!bg-gray-800/60 ${isExpanded ? 'pt-1 z-10 shadow-sm dark:!bg-gray-800/60' : ''}`}
+        className='!px-0 !h-auto !min-h-[72px] border border-(--border-divider) transition-all bg-white dark:!bg-gray-800/40 dark:hover:!bg-gray-800/60'
       >
         <div className='flex flex-col w-full px-4 text-left'>
           <div className='h-[60px] flex items-center justify-between w-full gap-2'>
             <div className='flex-1 min-w-0'>
               <h3
-                className={`font-bold text-gray-900 dark:text-gray-100 leading-tight text-left ${isExpanded ? 'text-base' : 'line-clamp-2'}`}
+                className='font-bold text-gray-900 dark:text-gray-100 leading-tight text-left line-clamp-2'
                 dir='ltr'
               >
                 {highlightMatch(displayName, 'brand')}
               </h3>
               <p
-                className={`flex items-center gap-1.5 text-xs mt-0.5 text-left ${isExpanded ? '' : 'truncate'}`}
+                className='flex items-center gap-1.5 text-xs mt-0.5 text-left truncate'
                 dir='ltr'
               >
                 <span className='font-bold text-gray-800 dark:text-gray-200 tabular-nums shrink-0'>
