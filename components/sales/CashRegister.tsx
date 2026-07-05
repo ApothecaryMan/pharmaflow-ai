@@ -116,7 +116,22 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         accessorKey: 'time',
         header: t.cashRegister?.transactions?.time || 'Time',
         meta: { align: 'center' },
-        size: 109,
+        size: 94,
+      },
+      {
+        accessorKey: 'userId',
+        header: t.cashRegister?.transactions?.user || 'User',
+        meta: { align: 'start' },
+        cell: (info) => {
+          const empIdOrName = info.getValue() as string;
+          const employee = employees?.find((e) => e.id === empIdOrName);
+          return (
+            <span className='font-bold text-[10px] text-gray-500'>
+              {employee ? employee.name : empIdOrName || '-'}
+            </span>
+          );
+        },
+        size: 118,
       },
       {
         accessorKey: 'type',
@@ -134,27 +149,12 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
             </span>
           );
         },
-        size: 236,
-      },
-      {
-        accessorKey: 'userId',
-        header: t.cashRegister?.transactions?.user || 'User',
-        meta: { align: 'start' },
-        cell: (info) => {
-          const empIdOrName = info.getValue() as string;
-          const employee = employees?.find((e) => e.id === empIdOrName);
-          return (
-            <span className='font-bold text-[10px] text-gray-500'>
-              {employee ? employee.name : empIdOrName || '-'}
-            </span>
-          );
-        },
-        size: 236,
+        size: 140,
       },
       {
         accessorKey: 'reason',
         header: t.cashRegister?.transactions?.reason || 'Reason',
-        meta: { align: 'center' },
+        meta: { align: 'start' },
         cell: (info) => {
           const reason = info.getValue() as string;
           if (!reason) return '-';
@@ -197,12 +197,13 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
 
           return <div data-no-convert='true'>{content}</div>;
         },
-        size: 236,
+        size: 301,
       },
       {
         accessorKey: 'amount',
         header: t.cashRegister?.transactions?.amount || 'Amount',
         meta: { align: 'end' },
+        size: 301,
         cell: (info) => {
           const amountVal = info.getValue() as number;
           const row = info.row.original;
@@ -219,7 +220,6 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
             </div>
           );
         },
-        size: 236,
       },
     ],
     [t, language, employees]
@@ -331,9 +331,9 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
       />
 
       {/* Main Content */}
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+      <div className='flex-1 min-h-0 overflow-hidden grid grid-cols-1 md:grid-cols-4 gap-6 pb-4'>
         {/* Left Column: Status & Summary */}
-        <div className='md:col-span-1 space-y-4'>
+        <div className='md:col-span-1 space-y-4 overflow-y-auto min-h-0'>
           {/* Status Card */}
           <div className={`p-6 rounded-3xl ${CARD_BASE} relative overflow-hidden group`}>
             <div className='absolute -bottom-8 ltr:-right-8 rtl:-left-8 opacity-10 pointer-events-none select-none'>
@@ -522,7 +522,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     {t.cashRegister.summary.cardSales}
                   </p>
                   <div
-                    className={`text-base font-bold text-violet-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                    className={`text-base font-bold text-sky-500 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
                   >
                     {!isLoading && (
                       <>
@@ -545,7 +545,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     {t.cashRegister.summary.cashIn}
                   </p>
                   <div
-                    className={`text-base font-bold text-orange-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                    className={`text-base font-bold text-green-700 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
                   >
                     {!isLoading && (
                       <>
@@ -568,7 +568,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     {t.cashRegister.summary.cashOut}
                   </p>
                   <div
-                    className={`text-base font-bold text-red-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                    className={`text-base font-bold text-amber-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
                   >
                     {!isLoading && (
                       <>
@@ -591,7 +591,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     {t.cashRegister.summary.cashPurchases}
                   </p>
                   <div
-                    className={`text-base font-bold text-red-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                    className={`text-base font-bold text-red-400 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
                   >
                     {!isLoading && (
                       <>
@@ -618,7 +618,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     {t.cashRegister.summary.cashPurchaseReturns}
                   </p>
                   <div
-                    className={`text-base font-bold text-primary-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                    className={`text-base font-bold text-yellow-600 flex items-center gap-1.5 ${isLoading ? 'h-6 w-20 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
                   >
                     {!isLoading && (
                       <>
@@ -681,7 +681,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         </div>
 
         {/* Right Column: Transaction Log */}
-        <div className='md:col-span-2 flex flex-col md:h-0 md:min-h-full'>
+        <div className='md:col-span-3 flex flex-col min-h-0'>
           <div className={`rounded-3xl ${CARD_BASE} flex-1 flex flex-col h-full overflow-hidden`}>
             <div className='p-4 border-b border-(--border-divider) flex justify-between items-center shrink-0'>
               <h3 className='font-bold text-lg'>{t.cashRegister.transactions.title}</h3>
