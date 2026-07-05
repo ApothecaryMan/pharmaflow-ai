@@ -67,28 +67,28 @@ export const AnimatedCounterLab = () => {
           <div>
             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Text sm</p>
             <div className="text-sm bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl">
-                <AnimatedCounterTest value={value} duration={2500} />
+                <AnimatedCounterTest value={value} />
             </div>
           </div>
           
           <div>
             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Text base</p>
             <div className="text-base bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl">
-                <AnimatedCounterTest value={value * 0.85} duration={3500} />
+                <AnimatedCounterTest value={value * 0.85} />
             </div>
           </div>
           
           <div>
             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Text 3xl</p>
             <div className="text-3xl bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl">
-                <AnimatedCounterTest value={value * 0.6} duration={4500} />
+                <AnimatedCounterTest value={value * 0.6} />
             </div>
           </div>
           
           <div>
             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Text 6xl (Rolling)</p>
             <div className="text-6xl tracking-tight bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl">
-                <AnimatedCounterTest value={value * 0.25} duration={2000} mode="rolling" />
+                <AnimatedCounterTest value={value * 0.25} mode="rolling" />
             </div>
           </div>
         </div>
@@ -103,21 +103,21 @@ export const AnimatedCounterLab = () => {
           <div>
             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Normal Weight (400)</p>
             <div className="text-4xl font-normal text-blue-500 bg-blue-50 dark:bg-blue-900/10 p-4 rounded-2xl">
-                <AnimatedCounterTest value={value * 0.75} duration={3000} />
+                <AnimatedCounterTest value={value * 0.75} />
             </div>
           </div>
           
           <div>
             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Bold Weight (700)</p>
             <div className="text-4xl font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-2xl">
-                <AnimatedCounterTest value={value * 0.5} duration={4000} />
+                <AnimatedCounterTest value={value * 0.5} />
             </div>
           </div>
           
           <div>
             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Black Weight (900)</p>
             <div className="text-4xl font-black text-rose-500 bg-rose-50 dark:bg-rose-900/10 p-4 rounded-2xl">
-                <AnimatedCounterTest value={value * 0.33} duration={5000} />
+                <AnimatedCounterTest value={value * 0.33} />
             </div>
           </div>
           
@@ -140,21 +140,21 @@ export const AnimatedCounterLab = () => {
           <div>
             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Fast (300ms)</p>
             <div className="text-3xl font-bold bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl">
-                <AnimatedCounterTest value={value} duration={300} />
+                <AnimatedCounterTest value={value} />
             </div>
           </div>
           
           <div>
             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Normal (1200ms)</p>
             <div className="text-3xl font-bold bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl">
-                <AnimatedCounterTest value={value} duration={1200} />
+                <AnimatedCounterTest value={value} />
             </div>
           </div>
           
           <div>
             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Slow (3000ms)</p>
             <div className="text-3xl font-bold bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl">
-                <AnimatedCounterTest value={value} duration={3000} />
+                <AnimatedCounterTest value={value} />
             </div>
           </div>
           
@@ -176,28 +176,28 @@ export const AnimatedCounterLab = () => {
           <div>
             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Standard Notation</p>
             <div className="text-4xl font-bold bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl">
-                <AnimatedCounterTest value={value * 8.5} notation="standard" duration={3500} />
+                <AnimatedCounterTest value={value * 8.5} notation="standard" />
             </div>
           </div>
           
           <div>
             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Compact Notation (K/M) - Normal Speed</p>
             <div className="text-4xl font-bold text-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-900/10 p-4 rounded-2xl">
-                <AnimatedCounterTest value={value * 42} notation="compact" duration={2500} />
+                <AnimatedCounterTest value={value * 42} notation="compact" />
             </div>
           </div>
           
           <div>
             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Compact Notation (K/M) - Slow Speed</p>
             <div className="text-4xl font-bold text-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-900/10 p-4 rounded-2xl">
-                <AnimatedCounterTest value={value * 155.5} notation="compact" duration={5500} />
+                <AnimatedCounterTest value={value * 155.5} notation="compact" />
             </div>
           </div>
           
           <div>
             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Large Number Format (No Decimals)</p>
             <div className="text-4xl font-bold bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl">
-                <AnimatedCounterTest value={value * 5000} notation="compact" duration={4500} />
+                <AnimatedCounterTest value={value * 5000} notation="compact" />
             </div>
           </div>
         </div>

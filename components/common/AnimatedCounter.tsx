@@ -6,10 +6,7 @@ interface AnimatedCounterProps {
   value: number;
   fractionDigits?: number;
   className?: string;
-  duration?: number;
   notation?: 'standard' | 'compact';
-  direction?: 'up' | 'down';
-  delay?: number;
   mode?: 'countup' | 'rolling';
   minimumIntegerDigits?: number;
   dir?: 'ltr' | 'rtl' | 'auto';
@@ -128,11 +125,14 @@ export const AnimatedCounter = ({
   const formatter = useMemo(() => new Intl.NumberFormat(numeralLocale, formatOptions), [numeralLocale, formatOptions]);
 
   // --- ROLLING MODE HOOKS ---
-  const formattedRollingValue = mode === 'rolling' 
-    ? formatter.format(value)
-    : '';
+  const formattedRollingValue = useMemo(() => 
+    mode === 'rolling' ? formatter.format(value) : '',
+    [mode, formatter, value]
+  );
   
-  // --- COUNTUP (TICKER) MODE HOOKS ---
+  // --- COUNTUP MODE HOOKS ---
+  const displayValue = useMemo(() => formatter.format(value), [value, formatter]);
+
   // Initialize with value directly to skip mount animation
   const motionValue = useMotionValue(value);
   const springValue = useSpring(motionValue, {
@@ -145,7 +145,7 @@ export const AnimatedCounter = ({
     
     const unsubscribe = springValue.on("change", (latest) => {
       if (ref.current) {
-        ref.current.textContent = formatter.format(Number(latest.toFixed(fractionDigits)));
+        ref.current.textContent = formatter.format(+latest.toFixed(fractionDigits));
       }
     });
     return () => unsubscribe();
@@ -189,7 +189,7 @@ export const AnimatedCounter = ({
           );
         }).reverse()
       ) : (
-        formatter.format(value)
+        displayValue
       )}
     </span>
   );
