@@ -1,5 +1,6 @@
 import type React from 'react';
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
+import { idGenerator } from '../../../utils/idGenerator';
 
 export type AlertType = 'success' | 'error' | 'info' | 'warning';
 
@@ -9,6 +10,7 @@ export interface AlertData {
   type: AlertType;
   title?: string;
   duration?: number;
+  timestamp: string;
 }
 
 interface AlertContextType {
@@ -18,23 +20,26 @@ interface AlertContextType {
   info: (message: string, title?: string, duration?: number) => void;
   removeAlert: (id: string) => void;
   alerts: AlertData[];
-  currentAlert: AlertData | null; // Keep for backward compatibility with status bar
+  currentAlert: AlertData | null;
+  notificationHistory: AlertData[];
 }
 
 const AlertContext = createContext<AlertContextType | undefined>(undefined);
 
 export const AlertProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [alerts, setAlerts] = useState<AlertData[]>([]);
+  const [notificationHistory, setNotificationHistory] = useState<AlertData[]>([]);
 
   const addAlert = useCallback((options: Omit<AlertData, 'id'>) => {
-    const id = Date.now().toString() + Math.random().toString(36).substring(2, 9);
-    const newAlert = { ...options, id };
+    const now = Date.now();
+    const newAlert = { ...options, id: idGenerator.uuid(), timestamp: new Date(now).toISOString() };
 
     setAlerts((prev) => [...prev, newAlert]);
+    setNotificationHistory((prev) => [...prev, newAlert]);
 
     if (options.duration && options.duration > 0) {
       setTimeout(() => {
-        setAlerts((prev) => prev.filter((a) => a.id !== id));
+        setAlerts((prev) => prev.filter((a) => a.id !== newAlert.id));
       }, options.duration);
     }
   }, []);
@@ -57,8 +62,9 @@ export const AlertProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       removeAlert,
       alerts,
       currentAlert: alerts[alerts.length - 1] || null,
+      notificationHistory,
     }),
-    [addAlert, removeAlert, alerts]
+    [addAlert, removeAlert, alerts, notificationHistory]
   );
 
   return <AlertContext.Provider value={helpers}>{children}</AlertContext.Provider>;

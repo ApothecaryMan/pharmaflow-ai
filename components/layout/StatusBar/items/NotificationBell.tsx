@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { formatCurrency } from '../../../../utils/currency';
 import { type AlertData, useAlert } from '../../../features/alerts/AlertContext';
+import { getRelativeTime } from '../../../../utils/dateFormatter';
 import { StatusBarItem } from '../StatusBarItem';
 
 interface NotificationBellProps {
@@ -50,14 +50,14 @@ const getNotificationMessage = (notification: AlertData): string => {
   return notification.message || '';
 };
 
-// Extracted Notification Item for Flattening and Readability
 const NotificationItem: React.FC<{
   notification: AlertData;
-  onRemove: (id: string) => void;
-  dismissText: string;
-}> = ({ notification, onRemove, dismissText }) => (
+  isRTL?: boolean;
+  language: string;
+}> = ({ notification, isRTL, language }) => (
   <div
-    className='px-3 py-2 flex items-start gap-2 hover:bg-black/5 dark:hover:bg-white/5'
+    className={`px-3 py-2 flex ${isRTL ? 'flex-row-reverse' : ''} items-start gap-2 hover:bg-black/5 dark:hover:bg-white/5`}
+    dir='auto'
     role='listitem'
   >
     <span
@@ -66,28 +66,19 @@ const NotificationItem: React.FC<{
     >
       {getVariantIcon(notification.type)}
     </span>
-    <div className='flex-1 min-w-0'>
+    <div className={`flex-1 min-w-0 ${isRTL ? 'text-right' : ''}`}>
       {notification.title && (
-        <p className='text-[10px] font-bold text-(--text-primary) uppercase tracking-wider mb-0.5'>
+        <p className='text-[10px] font-bold text-(--text-primary) uppercase tracking-wider mb-0.5' dir='auto'>
           {notification.title}
         </p>
       )}
-      <p className='text-xs leading-relaxed text-(--text-primary)'>
+      <p className='text-xs leading-relaxed text-(--text-primary)' dir='auto'>
         {getNotificationMessage(notification)}
       </p>
+      <p className={`text-[9px] text-(--text-tertiary) mt-0.5 ${isRTL ? 'text-right' : ''}`}>
+        {getRelativeTime(notification.timestamp, language)}
+      </p>
     </div>
-    <button
-      onClick={() => onRemove(notification.id)}
-      className='text-gray-400 hover:text-black dark:hover:text-white'
-      title={dismissText}
-    >
-      <span
-        className='material-symbols-rounded'
-        style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 2px)' }}
-      >
-        close
-      </span>
-    </button>
   </div>
 );
 
@@ -104,13 +95,13 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
     },
   },
 }) => {
-  const { alerts, removeAlert } = useAlert();
+  const { alerts, notificationHistory } = useAlert();
   const [isOpen, setIsOpen] = useState(false);
+  const [lastSeenCount, setLastSeenCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Smart Memoization: Avoid redundant calculations on every render
-  const unreadCount = alerts.length;
-  const displayedNotifications = useMemo(() => alerts.slice().reverse().slice(0, 10), [alerts]);
+  const unreadCount = notificationHistory.length - lastSeenCount;
+  const displayedNotifications = useMemo(() => notificationHistory.slice().reverse().slice(0, 50), [notificationHistory]);
   const isRTL = language === 'AR';
 
   // Close dropdown when clicking outside
@@ -125,6 +116,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   }, [isOpen]);
 
   const handleToggle = () => {
+    if (!isOpen) setLastSeenCount(notificationHistory.length);
     setIsOpen(!isOpen);
   };
 
@@ -142,7 +134,6 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
       {isOpen && (
         <div
           className='absolute bottom-full right-0 mb-1 w-72 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-50 animate-scale-in origin-bottom-right'
-          dir={isRTL ? 'rtl' : 'ltr'}
           role='log'
           aria-live='polite'
         >
@@ -151,7 +142,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
 
           {/* Dropdown Header */}
           <div className='flex items-center justify-between px-3 py-2 border-b border-(--border-divider)'>
-            <span className='text-sm font-semibold text-(--text-primary)'>{t.notifications}</span>
+            <span className={`text-sm font-semibold text-(--text-primary) ${isRTL ? 'text-right w-full' : ''}`} dir='auto'>{t.notifications}</span>
           </div>
 
           {/* Notifications Scroll Area */}
@@ -160,7 +151,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
             role='list'
           >
             {displayedNotifications.length === 0 ? (
-              <div className='px-3 py-4 text-center text-sm text-(--text-tertiary)'>
+              <div className='px-3 py-4 text-center text-sm text-(--text-tertiary)' dir='auto'>
                 {t.noNotifications}
               </div>
             ) : (
@@ -168,8 +159,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                 <NotificationItem
                   key={notification.id}
                   notification={notification}
-                  onRemove={removeAlert}
-                  dismissText={t.dismiss}
+                  isRTL={isRTL}
+                  language={language}
                 />
               ))
             )}
