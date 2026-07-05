@@ -116,7 +116,7 @@ const App: React.FC = () => {
   });
 
   // 3. Settings Hook (for Language)
-  const { theme, darkMode, language } = useSettings();
+  const { theme, darkMode, language, showNotificationOverlay } = useSettings();
   const t = ROOT_STRINGS[language];
 
   // 3.01 Sync System Tray Language
@@ -365,7 +365,7 @@ const App: React.FC = () => {
   return (
     <div className='h-screen flex flex-col overflow-hidden bg-[var(--bg-page-surface)]'>
       <div className='flex-1 overflow-hidden relative'>
-        <NotificationOverlay />
+        {showNotificationOverlay !== false && <NotificationOverlay />}
         {authState.isAuthenticated ? (
           <CatalogProvider>{finalContent}</CatalogProvider>
         ) : (

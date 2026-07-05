@@ -95,7 +95,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
     },
   },
 }) => {
-  const { alerts, notificationHistory } = useAlert();
+  const { notificationHistory } = useAlert();
   const [isOpen, setIsOpen] = useState(false);
   const [lastSeenCount, setLastSeenCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);

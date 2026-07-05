@@ -128,6 +128,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
     const {
       language,
       showTicker,
+      showNotificationBell,
       showTickerSales,
       showTickerInventory,
       showTickerCustomers,
@@ -270,7 +271,9 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
             t={t.quickLogin}
           />
 
-          <NotificationBell language={language} t={notificationTranslations} />
+          {showNotificationBell !== false && (
+            <NotificationBell language={language} t={notificationTranslations} />
+          )}
         </StatusBarSection>
       </div>
     );

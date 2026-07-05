@@ -170,6 +170,10 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setDeveloperMode,
     showTicker,
     setShowTicker,
+    showNotificationBell,
+    setShowNotificationBell,
+    showNotificationOverlay,
+    setShowNotificationOverlay,
     showTickerSales,
     setShowTickerSales,
     showTickerInventory,
@@ -759,6 +763,22 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   <label className='text-[10px] font-bold uppercase text-(--text-tertiary)'>
                     {t.statusBarSettings}
                   </label>
+                  <SettingsRow icon='notifications' label={t.showNotificationBell}>
+                    <Switch
+                      checked={showNotificationBell ?? true}
+                      onChange={setShowNotificationBell}
+                      theme={currentTheme.name.toLowerCase()}
+                      activeColor={currentTheme.hex}
+                    />
+                  </SettingsRow>
+                  <SettingsRow icon='notification_important' label={t.showNotificationToast}>
+                    <Switch
+                      checked={showNotificationOverlay ?? true}
+                      onChange={setShowNotificationOverlay}
+                      theme={currentTheme.name.toLowerCase()}
+                      activeColor={currentTheme.hex}
+                    />
+                  </SettingsRow>
                   <div className='relative' ref={statusSmartPos.ref}>
                     <SettingsRow
                       icon='speed'

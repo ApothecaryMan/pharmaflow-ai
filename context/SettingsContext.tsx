@@ -68,8 +68,10 @@ export interface SettingsState {
   // Developer
   hideInactiveModules: boolean;
   developerMode: boolean;
-  // Status Bar Ticker
+  // Status Bar
   showTicker: boolean;
+  showNotificationBell: boolean;
+  showNotificationOverlay: boolean;
   showTickerSales: boolean;
   showTickerInventory: boolean;
   showTickerCustomers: boolean;
@@ -107,8 +109,10 @@ export interface SettingsContextType extends SettingsState {
   // Developer Actions
   setHideInactiveModules: (hide: boolean) => void;
   setDeveloperMode: (mode: boolean) => void;
-  // Ticker Actions
+  // Status Bar Actions
   setShowTicker: (show: boolean) => void;
+  setShowNotificationBell: (show: boolean) => void;
+  setShowNotificationOverlay: (show: boolean) => void;
   setShowTickerSales: (show: boolean) => void;
   setShowTickerInventory: (show: boolean) => void;
   setShowTickerCustomers: (show: boolean) => void;
@@ -154,6 +158,8 @@ const defaultSettings: SettingsState = {
   hideInactiveModules: true,
   developerMode: false,
   showTicker: false,
+  showNotificationBell: true,
+  showNotificationOverlay: true,
   showTickerSales: false,
   showTickerInventory: false,
   showTickerCustomers: false,
@@ -568,6 +574,14 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, showTicker }));
   }, []);
 
+  const setShowNotificationBell = useCallback((showNotificationBell: boolean) => {
+    setSettings((prev) => ({ ...prev, showNotificationBell }));
+  }, []);
+
+  const setShowNotificationOverlay = useCallback((showNotificationOverlay: boolean) => {
+    setSettings((prev) => ({ ...prev, showNotificationOverlay }));
+  }, []);
+
   const setShowTickerSales = useCallback((showTickerSales: boolean) => {
     setSettings((prev) => ({ ...prev, showTickerSales }));
   }, []);
@@ -654,6 +668,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setHideInactiveModules,
       setDeveloperMode,
       setShowTicker,
+      setShowNotificationBell,
+      setShowNotificationOverlay,
       setShowTickerSales,
       setShowTickerInventory,
       setShowTickerCustomers,
@@ -688,6 +704,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setHideInactiveModules,
       setDeveloperMode,
       setShowTicker,
+      setShowNotificationBell,
+      setShowNotificationOverlay,
       setShowTickerSales,
       setShowTickerInventory,
       setShowTickerCustomers,
