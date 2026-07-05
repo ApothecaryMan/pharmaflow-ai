@@ -11,6 +11,8 @@ interface AnimatedCounterTestProps {
   direction?: 'up' | 'down';
   delay?: number;
   mode?: 'countup' | 'rolling';
+  minimumIntegerDigits?: number;
+  dir?: 'ltr' | 'rtl' | 'auto';
 }
 
 const NUMBERS_EN = '0123456789'.split('');
@@ -105,6 +107,8 @@ export const AnimatedCounterTest = ({
   className = '',
   notation = 'standard',
   mode = 'countup',
+  minimumIntegerDigits,
+  dir = 'auto',
 }: AnimatedCounterTestProps) => {
   const ref = useRef<HTMLSpanElement>(null);
   const { numeralLocale } = useSettings();
@@ -117,7 +121,8 @@ export const AnimatedCounterTest = ({
     notation,
     minimumFractionDigits: notation === 'compact' ? (isCompactLarge ? 1 : 0) : fractionDigits,
     maximumFractionDigits: notation === 'compact' ? (isCompactLarge ? 1 : 0) : fractionDigits,
-  }), [notation, isCompactLarge, fractionDigits]);
+    minimumIntegerDigits,
+  }), [notation, isCompactLarge, fractionDigits, minimumIntegerDigits]);
   
   // PERFORMANCE: Re-use a single formatter instance instead of calling toLocaleString repeatedly
   const formatter = useMemo(() => new Intl.NumberFormat(numeralLocale, formatOptions), [numeralLocale, formatOptions]);
@@ -164,12 +169,13 @@ export const AnimatedCounterTest = ({
   return (
     <span
       ref={mode === 'countup' ? ref : null}
-      dir="ltr"
+      dir={dir}
       className={baseClassName}
       style={{
         fontVariantNumeric: 'tabular-nums',
         fontFeatureSettings: '"tnum"',
         whiteSpace: 'nowrap',
+        direction: 'ltr',
       }}
     >
       {mode === 'rolling' ? (

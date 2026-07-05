@@ -72,6 +72,7 @@ import {
   useSmartDirection,
 } from '../common';
 import { usePosSounds } from '../common/hooks/usePosSounds';
+import { AnimatedCounter } from '../common/AnimatedCounter';
 import { SupplierDirectoryModal } from './SupplierDirectoryModal';
 
 interface PurchasesProps {
@@ -811,19 +812,14 @@ export const Purchases: React.FC<PurchasesProps> = ({
     t.placeholders?.enterId || 'Enter ID'
   );
 
-  // Animation state for order ID (YouTube-style)
-  const [isOrderIdAnimating, setIsOrderIdAnimating] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  const prevInvoiceId = useRef(invoiceId);
 
-  useEffect(() => {
-    if (invoiceId !== prevInvoiceId.current) {
-      setIsOrderIdAnimating(true);
-      prevInvoiceId.current = invoiceId;
-      const timer = setTimeout(() => setIsOrderIdAnimating(false), 600);
-      return () => clearTimeout(timer);
-    }
-  }, [invoiceId]);
+  // Parse invoiceId dynamically for high-performance AnimatedCounter rolling animation
+  const invoiceIdMatch = useMemo(() => invoiceId.match(/^(.*?)(\d+)$/), [invoiceId]);
+  const invoicePrefix = invoiceIdMatch ? invoiceIdMatch[1] : '';
+  const invoiceNumStr = invoiceIdMatch ? invoiceIdMatch[2] : '0';
+  const invoiceNum = useMemo(() => parseInt(invoiceNumStr, 10), [invoiceNumStr]);
+  const invoicePadLength = invoiceNumStr.length;
 
   // Sidebar Resize Logic with branch-scoped persistence
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -1684,19 +1680,14 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 <label className='text-[11px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
                   {t.tableHeaders?.orderId || 'Order #'}
                 </label>
-                <div className='relative h-10 flex items-center'>
-                  <div
-                    className={`text-xl font-mono font-bold px-2 py-0.5 select-none transition-all duration-500 ease-out ${
-                      isOrderIdAnimating
-                        ? 'text-green-500 dark:text-green-400'
-                        : 'text-gray-600 dark:text-gray-300'
-                    }`}
-                    style={{
-                      animation: isOrderIdAnimating ? 'rollUp 0.5s ease-out' : 'none',
-                    }}
-                  >
-                    {invoiceId}
-                  </div>
+                <div dir="ltr" className='relative h-10 flex items-center px-2 py-0.5 select-none text-xl font-mono font-bold text-gray-600 dark:text-gray-300'>
+                  <span>{invoicePrefix}</span>
+                  <AnimatedCounter
+                    value={invoiceNum}
+                    mode="rolling"
+                    minimumIntegerDigits={invoicePadLength}
+                    dir="ltr"
+                  />
                 </div>
               </div>
 

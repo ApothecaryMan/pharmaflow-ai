@@ -159,8 +159,10 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           const reason = info.getValue() as string;
           if (!reason) return '-';
           const match = reason.match(/^(Sale|Return|Return for Sale|Refund)\s*#(\d+)$/i);
+          
+          let content;
           if (match) {
-            return (
+            content = (
               <span className='flex items-center gap-1.5 font-medium'>
                 <span
                   className='material-symbols-rounded text-gray-400 dark:text-gray-500'
@@ -173,24 +175,27 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 </span>
               </span>
             );
-          }
-          let displayReason = reason;
-          if (reason.startsWith('Expense: ')) {
-            const desc = reason.substring(9);
-            displayReason = language === 'AR' ? `مصروف: ${desc}` : `Expense: ${desc}`;
-          } else if (reason.startsWith('Purchase: ')) {
-            const desc = reason.substring(10);
-            displayReason = language === 'AR' ? `شراء: ${desc}` : `Purchase: ${desc}`;
-          } else if (reason.startsWith('Purchase Return: ')) {
-            const desc = reason.substring(17);
-            displayReason = language === 'AR' ? `مرتجع شراء: ${desc}` : `Purchase Return: ${desc}`;
+          } else {
+            let displayReason = reason;
+            if (reason.startsWith('Expense: ')) {
+              const desc = reason.substring(9);
+              displayReason = language === 'AR' ? `مصروف: ${desc}` : `Expense: ${desc}`;
+            } else if (reason.startsWith('Purchase: ')) {
+              const desc = reason.substring(10);
+              displayReason = language === 'AR' ? `شراء: ${desc}` : `Purchase: ${desc}`;
+            } else if (reason.startsWith('Purchase Return: ')) {
+              const desc = reason.substring(17);
+              displayReason = language === 'AR' ? `مرتجع شراء: ${desc}` : `Purchase Return: ${desc}`;
+            }
+
+            content = (
+              <span className='text-[11px] text-gray-700 dark:text-gray-300 max-w-xs truncate block'>
+                {displayReason}
+              </span>
+            );
           }
 
-          return (
-            <span className='text-[11px] text-gray-700 dark:text-gray-300 max-w-xs truncate block'>
-              {displayReason}
-            </span>
-          );
+          return <div data-no-convert='true'>{content}</div>;
         },
         size: 236,
       },
@@ -453,11 +458,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     </p>
                   </div>
                   <div
-                    className={`text-3xl font-bold text-gray-900 dark:text-gray-100 tabular-nums relative z-10 flex items-baseline gap-2 ${isLoading ? 'h-10 w-32 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                    className={`text-3xl font-bold text-gray-900 dark:text-gray-100 tabular-nums relative z-10 flex items-center gap-2 ${isLoading ? 'h-10 w-32 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
                   >
                     {!isLoading && (
                       <>
-                        <AnimatedCounter value={currentBalance} />
+                        <AnimatedCounter value={currentBalance} mode="rolling" />
                         <span className='text-base font-normal opacity-40'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
                         </span>
@@ -473,13 +478,14 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     {t.cashRegister.summary.openingBalance}
                   </p>
                   <div
-                    className={`text-base font-bold text-gray-700 dark:text-gray-300 flex items-baseline gap-1 ${isLoading ? 'h-6 w-16 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
+                    className={`text-base font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1 ${isLoading ? 'h-6 w-16 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse' : ''}`}
                   >
                     {!isLoading && (
                       <>
                         <AnimatedCounter
                           value={currentShift?.openingBalance || 0}
                           fractionDigits={0}
+                          mode="rolling"
                         />
                         <span className='text-[10px] opacity-60 font-normal'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
@@ -503,7 +509,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                         >
                           add
                         </span>
-                        <AnimatedCounter value={currentShift?.cashSales || 0} fractionDigits={0} />
+                        <AnimatedCounter value={currentShift?.cashSales || 0} fractionDigits={0} mode="rolling" />
                         <span className='text-[10px] opacity-60 font-normal'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
                         </span>
@@ -526,7 +532,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                         >
                           add
                         </span>
-                        <AnimatedCounter value={currentShift?.cardSales || 0} fractionDigits={0} />
+                        <AnimatedCounter value={currentShift?.cardSales || 0} fractionDigits={0} mode="rolling" />
                         <span className='text-[10px] opacity-60 font-normal'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
                         </span>
@@ -549,7 +555,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                         >
                           add
                         </span>
-                        <AnimatedCounter value={currentShift?.cashIn || 0} fractionDigits={0} />
+                        <AnimatedCounter value={currentShift?.cashIn || 0} fractionDigits={0} mode="rolling" />
                         <span className='text-[10px] opacity-60 font-normal'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
                         </span>
@@ -572,7 +578,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                         >
                           remove
                         </span>
-                        <AnimatedCounter value={currentShift?.cashOut || 0} fractionDigits={0} />
+                        <AnimatedCounter value={currentShift?.cashOut || 0} fractionDigits={0} mode="rolling" />
                         <span className='text-[10px] opacity-60 font-normal'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
                         </span>
@@ -598,6 +604,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                         <AnimatedCounter
                           value={currentShift?.cashPurchases || 0}
                           fractionDigits={0}
+                          mode="rolling"
                         />
                         <span className='text-[10px] opacity-60 font-normal'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
@@ -624,6 +631,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                         <AnimatedCounter
                           value={currentShift?.cashPurchaseReturns || 0}
                           fractionDigits={0}
+                          mode="rolling"
                         />
                         <span className='text-[10px] opacity-60 font-normal'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
@@ -647,7 +655,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                         >
                           remove
                         </span>
-                        <AnimatedCounter value={currentShift?.returns || 0} fractionDigits={0} />
+                        <AnimatedCounter value={currentShift?.returns || 0} fractionDigits={0} mode="rolling" />
                         <span className='text-[10px] opacity-60 font-normal'>
                           {language === 'AR' ? 'ج.م' : 'EGP'}
                         </span>
