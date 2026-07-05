@@ -209,7 +209,7 @@ export const useDataActions = ({
         });
 
         // Log Branch Switch (Using the session captured before clearing)
-        if (sessionBeforeClear) {
+        if (sessionBeforeClear && activeBranchId && activeBranchId !== branchId) {
           const oldBranch = allBranches.find((b) => b.id === activeBranchId);
 
           authService.logAuditEvent({

@@ -162,51 +162,77 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
         });
 
         // Remote Logout Listener
-        const currentSessionId = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
-        const channelName = currentSessionId ? `session-${currentSessionId}` : `global-session-events-${Math.random().toString(36).substring(2)}`;
-        
-        // Fix for React Strict Mode: remove any existing channel with the same name
-        // before creating a new one, to avoid 'cannot add callbacks after subscribe' error.
-        const existingChannel = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
-        if (existingChannel) {
-          supabase.removeChannel(existingChannel);
-        }
-        
-        const sessionListener = supabase
-          .channel(channelName)
-          .on(
-            'broadcast',
-            { event: 'remote-logout-named' },
-            (payload) => {
-               const currentSessionId = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
-               if (currentSessionId && payload.payload.sessionId === currentSessionId) {
-                  console.warn('Session was terminated remotely by:', payload.payload.terminatorName);
-                  setTerminatorName(payload.payload.terminatorName);
-                  handleLogout('remote');
-               }
-            }
-          )
-          .on(
-            'postgres_changes',
-            { event: 'UPDATE', schema: 'public', table: 'user_active_sessions' },
-            (payload) => {
-              const currentSessionId = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
-              if (
-                currentSessionId &&
-                payload.new.id === currentSessionId &&
-                payload.new.is_active === false
-              ) {
-                console.warn('Session was terminated remotely.');
+        let broadcastChannel: ReturnType<typeof supabase.channel> | null = null;
+        let pollingInterval: ReturnType<typeof setInterval> | null = null;
+
+        const setupRemoteLogoutDetection = () => {
+          const sid = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
+          if (!sid) return;
+
+          // --- Broadcast subscription (primary) ---
+          const bchannelName = `session-${sid}`;
+          const existingBc = supabase.getChannels().find(c => c.topic === `realtime:${bchannelName}`);
+          if (existingBc) supabase.removeChannel(existingBc);
+
+          broadcastChannel = supabase
+            .channel(bchannelName)
+            .on('broadcast', { event: 'remote-logout-named' }, (payload) => {
+              if (payload.payload?.sessionId === sid) {
+                console.warn('Session terminated remotely by:', payload.payload.terminatorName);
+                setTerminatorName(payload.payload.terminatorName || null);
                 handleLogout('remote');
               }
+            })
+            .on(
+              'postgres_changes',
+              { event: 'UPDATE', schema: 'public', table: 'user_active_sessions', filter: `id=eq.${sid}` },
+              (payload) => {
+                if (payload.new.is_active === false) {
+                  console.warn('Session terminated remotely via DB update.');
+                  handleLogout('remote');
+                }
+              }
+            )
+            .subscribe();
+
+          // --- Fallback polling every 15s ---
+          pollingInterval = setInterval(async () => {
+            try {
+              const currentSid = storage.get<string | null>(StorageKeys.ACTIVE_SESSION_ID, null);
+              if (!currentSid) return;
+              const { data } = await supabase
+                .from('user_active_sessions')
+                .select('is_active')
+                .eq('id', currentSid)
+                .single();
+              if (data && data.is_active === false) {
+                console.warn('Session terminated (detected via polling).');
+                handleLogout('remote');
+              }
+            } catch {
+              // ignore polling errors
             }
-          )
-          .subscribe();
+          }, 15000);
+        };
+
+        setupRemoteLogoutDetection();
+
+        // Re-setup if ACTIVE_SESSION_ID changes (another tab logged in)
+        const storageSync = (e: StorageEvent) => {
+          if (e.key === storage.getScopedKey(StorageKeys.ACTIVE_SESSION_ID)) {
+            if (broadcastChannel) supabase.removeChannel(broadcastChannel);
+            if (pollingInterval) clearInterval(pollingInterval);
+            setupRemoteLogoutDetection();
+          }
+        };
+        window.addEventListener('storage', storageSync);
 
         authListener = {
           unsubscribe: () => {
             data.subscription.unsubscribe();
-            supabase.removeChannel(sessionListener);
+            if (broadcastChannel) supabase.removeChannel(broadcastChannel);
+            if (pollingInterval) clearInterval(pollingInterval);
+            window.removeEventListener('storage', storageSync);
           },
         };
       });

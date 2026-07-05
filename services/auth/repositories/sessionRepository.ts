@@ -96,44 +96,36 @@ export const sessionRepository = {
   },
 
   /**
-   * Helper to broadcast without conflicting with existing subscriptions
+   * Broadcast an event to all subscribers of a session channel.
+   * Creates a transient subscription, sends the event, then tears down.
    */
   async _broadcastEvent(sessionId: string, event: string, payload: any): Promise<void> {
     try {
       const channelName = `session-${sessionId}`;
-      const existingChannel = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
-      
-      if (existingChannel) {
-        // Use existing channel (don't remove it!)
-        try {
-          await existingChannel.send({ type: 'broadcast', event, payload });
-        } catch (e) {
-          console.warn('Failed to send broadcast on existing channel', e);
-        }
-        return;
-      }
 
-      // Create temporary channel if none exists
       await new Promise<void>((resolve) => {
         const channel = supabase.channel(channelName);
         let resolved = false;
-        
-        const cleanup = () => {
+
+        const done = () => {
           if (resolved) return;
           resolved = true;
-          supabase.removeChannel(channel);
+          setTimeout(() => supabase.removeChannel(channel), 500);
           resolve();
         };
 
         channel.subscribe((status) => {
           if (status === 'SUBSCRIBED') {
-            channel.send({ type: 'broadcast', event, payload }).finally(cleanup);
+            channel
+              .send({ type: 'broadcast', event, payload })
+              .then(() => done())
+              .catch(() => done());
           } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-             cleanup();
+            done();
           }
         });
-        
-        setTimeout(cleanup, 1500);
+
+        setTimeout(done, 5000);
       });
     } catch (e) {
       console.warn('Silent failure in _broadcastEvent to prevent blocking execution:', e);
@@ -144,9 +136,8 @@ export const sessionRepository = {
    * Mark a session as logged out
    */
   async logoutSession(sessionId: string, terminatorName?: string): Promise<boolean> {
-    if (terminatorName) {
-      await this._broadcastEvent(sessionId, 'remote-logout-named', { sessionId, terminatorName });
-    }
+    const name = terminatorName || 'Admin';
+    await this._broadcastEvent(sessionId, 'remote-logout-named', { sessionId, terminatorName: name });
 
     const { error } = await supabase
       .from('user_active_sessions')

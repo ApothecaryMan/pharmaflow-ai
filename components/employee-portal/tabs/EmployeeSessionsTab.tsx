@@ -1,6 +1,7 @@
 import type React from 'react';
 import { supabase } from '../../../lib/supabase';
 import { sessionRepository, type UserActiveSession } from '../../../services/auth/repositories/sessionRepository';
+import { authService } from '../../../services/auth/authService';
 import { getDeviceName, getBrowserName, isDesktopAppUserAgent, getSessionUserAgent } from '../../../utils/platform';
 import { isSessionOnline } from '../../../hooks/infrastructure/useSessionHeartbeat';
 import { formatDateWithRelativeLabel, getRelativeTime } from '../../../utils/dateFormatter';
@@ -29,17 +30,45 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
   onReloadSessions,
 }) => {
   const currentUserAgent = typeof navigator !== 'undefined' ? getSessionUserAgent(navigator.userAgent) : '';
+  const employeeIds = workspaces.map(w => w.id);
 
   const handleLogout = async (session: UserActiveSession) => {
     try {
-      const terminatorName = profile?.name || 'User';
+      const userName = profile?.fullName || profile?.username || 'Employee';
+      // In the Employee Portal, the employee is ending their own session
+      // Check if this is a self-removal (session belongs to current user)
+      const isSelf = session.user_id === profile?.id || (!!session.employee_id && employeeIds.includes(session.employee_id));
+      
+      const sessionWorkspace = workspaces.find(w => w.id === session.employee_id);
+      const employeeId = sessionWorkspace?.id || session.employee_id;
+      const employeeCode = sessionWorkspace?.employeeCode || '';
+      const sessionEmployeeName = sessionWorkspace?.name || userName;
+
+      let auditAction: 'logout' | 'force_logout' | 'employee_logout' = isSelf ? 'logout' : 'force_logout';
+      let auditDetails = isSelf ? 'Employee signed out (Remotely)' : `Session terminated by ${userName}`;
+      let auditRole = profile?.role || 'unassigned';
+
       if (session.org_id) {
         // POS session: Just log the employee out, leaving the session active for the owner
-        await sessionRepository.logoutEmployeeFromSession(session.id, terminatorName);
+        await sessionRepository.logoutEmployeeFromSession(session.id, userName);
+        auditAction = isSelf ? 'logout' : 'employee_logout';
+        auditDetails = isSelf ? 'Employee signed out (Remotely)' : `Employee logged out by ${userName}`;
+        auditRole = sessionWorkspace?.role || auditRole;
       } else {
         // Portal session: Destroy the entire session
-        await sessionRepository.logoutSession(session.id, terminatorName);
+        await sessionRepository.logoutSession(session.id, userName);
       }
+
+      authService.logAuditEvent({
+        username: userName,
+        role: auditRole,
+        branchId: session.branch_id || '',
+        action: auditAction,
+        employeeId,
+        employeeCode,
+        employeeName: sessionEmployeeName,
+        details: auditDetails,
+      });
       await onReloadSessions();
     } catch (err) {
       console.error('Failed to logout session', err);
@@ -61,11 +90,19 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
     return isRTL ? 'مؤسسة غير معروفة' : 'Unknown Organization';
   };
 
-  const employeeIds = workspaces.map(w => w.id);
   const mySessions = sessions.filter(session => {
     if (session.user_id === profile?.id) return true;
     if (session.employee_id && employeeIds.includes(session.employee_id)) return true;
     return false;
+  }).sort((a, b) => {
+    const aCurrent = a.user_agent === currentUserAgent ? 1 : 0;
+    const bCurrent = b.user_agent === currentUserAgent ? 1 : 0;
+    const aOnline = isSessionOnline(a.last_seen_at) ? 1 : 0;
+    const bOnline = isSessionOnline(b.last_seen_at) ? 1 : 0;
+
+    return (bCurrent - aCurrent) || 
+           (bOnline - aOnline) || 
+           (new Date(b.last_seen_at).getTime() - new Date(a.last_seen_at).getTime());
   });
 
   const onlineCount = mySessions.filter(session => isSessionOnline(session.last_seen_at)).length;

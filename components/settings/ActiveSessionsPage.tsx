@@ -60,7 +60,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
       setSessions(data);
     } catch (err) {
       console.error(err);
-      setError(language === 'AR' ? 'فشل تحميل الجلسات' : 'Failed to load sessions');
+      setError(t.activeSessions.errorLoading);
     } finally {
       setLoading(false);
     }
@@ -112,8 +112,23 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
 
   const handleLogout = async (sessionId: string) => {
     try {
-      const terminatorName = currentUser?.employeeName;
+      const terminatorName = currentUser?.employeeName || 'Admin';
       await sessionRepository.logoutSession(sessionId, terminatorName);
+      const session = sessions.find(s => s.id === sessionId);
+      const targetEmp = session?.employee_id ? employees.find(e => e.id === session.employee_id) : null;
+      const targetName = targetEmp?.name || session?.employee_name || session?.user_name || session?.user_agent || 'Unknown';
+      const targetCode = targetEmp?.employeeCode;
+      const targetRole = targetEmp?.role || session?.role || 'unassigned';
+      authService.logAuditEvent({
+        username: targetName,
+        role: targetRole,
+        branchId: session?.branch_id || currentUser?.branchId || '',
+        action: 'force_logout',
+        details: `Session terminated by ${terminatorName} (Remotely)`,
+        employeeId: session?.employee_id || undefined,
+        employeeCode: targetCode || undefined,
+        employeeName: targetName,
+      });
       await refreshSessions();
     } catch (err) {
       console.error('Failed to logout session', err);
@@ -121,14 +136,21 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
   };
 
   const handleEndAllOther = async () => {
-    const confirmMsg = language === 'AR'
-      ? 'هل أنت متأكد من إنهاء جميع الجلسات الأخرى؟'
-      : 'Are you sure you want to end all other sessions?';
+    const confirmMsg = t.activeSessions.confirmEndAll;
     if (!window.confirm(confirmMsg)) return;
     setIsEndingAll(true);
     try {
       const others = sessions.filter(s => s.user_agent !== currentUserAgent);
-      await Promise.all(others.map(s => sessionRepository.logoutSession(s.id, currentUser?.employeeName)));
+      await Promise.all(others.map(async (s) => {
+        await sessionRepository.logoutSession(s.id, currentUser?.employeeName);
+        authService.logAuditEvent({
+          username: currentUser?.username || 'System',
+          role: currentUser?.role || 'unassigned',
+          branchId: s.branch_id || currentUser?.branchId || '',
+          action: 'force_logout',
+          details: `Session terminated by ${currentUser?.employeeName || 'Admin'}`,
+        });
+      }));
       await refreshSessions();
     } catch (err) {
       console.error('Failed to end other sessions', err);
@@ -230,7 +252,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
 
   const getSessionUserName = (session: UserActiveSession): string => {
     const emp = session.employee_id ? employees.find(e => e.id === session.employee_id) : null;
-    return emp?.name || emp?.en_name || (language === 'AR' ? 'غير محدد' : 'Unassigned');
+    return emp?.name || emp?.en_name || t.activeSessions.unassigned;
   };
 
   const onlineSessions = processedSessions.filter(s => isSessionOnline(s.last_seen_at));
@@ -297,17 +319,17 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                   className='hidden md:block text-2xl !font-["GraphicSansFont"] tracking-tight leading-normal text-zinc-900 dark:text-zinc-100 me-2 sm:me-4'
                   style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
                 >
-                  {language === 'AR' ? 'الأجهزة المتصلة' : 'Active Sessions'}
+                  {t.activeSessions.title}
                 </h2>
                 <div className='flex flex-wrap items-center gap-2'>
                   <Tooltip content={
                     <div className='whitespace-normal text-[11px] font-semibold'>
-                      {processedSessions.length} {language === 'AR' ? 'جلسة' : 'sessions'} · {onlineCount} {language === 'AR' ? 'متصل' : 'Online'} · {offlineCount} {language === 'AR' ? 'غير متصل' : 'Offline'}{staleCount > 0 ? ` · ${staleCount} ${language === 'AR' ? 'قديم' : 'Stale'}` : ''}
+                      {processedSessions.length} {t.activeSessions.sessionsCount} · {onlineCount} {t.activeSessions.online} · {offlineCount} {t.activeSessions.offline}{staleCount > 0 ? ` · ${staleCount} ${t.activeSessions.stale}` : ''}
                     </div>
                   } position='bottom'>
                   <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-200 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 rounded-lg text-sm font-medium'>
                     <span>{processedSessions.length}</span>
-                    <span>{language === 'AR' ? 'نشط' : 'Active'}</span>
+                    <span>{t.activeSessions.activeCount}</span>
                   </div>
                   </Tooltip>
 
@@ -317,7 +339,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                         {onlineSessions.map(s => (
                           <div key={s.id} className='flex items-center gap-1'>
                             <span className='w-1 h-1 rounded-full bg-green-400 inline-block' />
-                            {getSessionUserName(s)}{s.user_agent === currentUserAgent ? ` (${language === 'AR' ? 'هذا الجهاز' : 'this device'})` : ''}
+                            {getSessionUserName(s)}{s.user_agent === currentUserAgent ? ` (${t.activeSessions.thisDevice})` : ''}
                           </div>
                         ))}
                       </div>
@@ -325,7 +347,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                     <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-sm font-medium'>
                       <span className='w-1.5 h-1.5 rounded-full bg-green-500 inline-block' />
                       <span>{onlineCount}</span>
-                      <span>{language === 'AR' ? 'متصل' : 'Online'}</span>
+                      <span>{t.activeSessions.online}</span>
                     </div>
                     </Tooltip>
                   )}
@@ -344,7 +366,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                     <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 rounded-lg text-sm font-medium'>
                       <span className='w-1.5 h-1.5 rounded-full bg-gray-400 inline-block' />
                       <span>{offlineCount}</span>
-                      <span>{language === 'AR' ? 'غير متصل' : 'Offline'}</span>
+                      <span>{t.activeSessions.offline}</span>
                     </div>
                     </Tooltip>
                   )}
@@ -353,7 +375,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                     <Tooltip content={
                       <div className='whitespace-normal text-[11px] font-semibold'>
                         {currentSession ? `${getDeviceName(currentSession.user_agent || '', currentSession.device_info || '')} · ${getBrowserName(currentSession.user_agent || '')}` : ''}
-                        <br />{language === 'AR' ? 'جهازك الحالي' : 'Your current device'}
+                        <br />{t.activeSessions.yourCurrentDevice}
                       </div>
                     } position='bottom'>
                     <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-medium'>
@@ -361,7 +383,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                         <circle cx='5' cy='5' r='4' />
                       </svg>
                       <span>{currentCount}</span>
-                      <span>{language === 'AR' ? 'الحالي' : 'Current'}</span>
+                      <span>{t.activeSessions.current}</span>
                     </div>
                     </Tooltip>
                   )}
@@ -369,13 +391,13 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                   {staleCount > 0 && (
                     <Tooltip content={
                       <div className='whitespace-normal text-[11px] font-semibold space-y-1'>
-                        <div className='opacity-70 text-[10px]'>{language === 'AR' ? 'نشط لأكثر من 24 ساعة' : 'Running for more than 24h'}:</div>
+                        <div className='opacity-70 text-[10px]'>{t.activeSessions.runningMoreThan24h}:</div>
                         {staleSessions.map(s => {
                           const end = s.logged_out_at || s.last_seen_at;
                           const dur = getDurationStr(s.created_at, end, language === 'AR' ? 'AR' : 'EN');
                           return <div key={s.id} className='flex items-center gap-1'><span className='w-1 h-1 rounded-full bg-amber-400 inline-block' />{getSessionUserName(s)} · {dur}</div>;
                         })}
-                        <div className='opacity-70 text-[10px] pt-1 border-t border-white/20 dark:border-black/20 mt-1'>{language === 'AR' ? 'يُفضل إنهاء الجلسات القديمة' : 'Consider ending stale sessions'}</div>
+                        <div className='opacity-70 text-[10px] pt-1 border-t border-white/20 dark:border-black/20 mt-1'>{t.activeSessions.considerEndingStale}</div>
                       </div>
                     } position='bottom'>
                     <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-lg text-sm font-medium'>
@@ -383,7 +405,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                         <circle cx='5' cy='5' r='4' />
                       </svg>
                       <span>{staleCount}</span>
-                      <span>{language === 'AR' ? 'قديم' : 'Stale'}</span>
+                      <span>{t.activeSessions.stale}</span>
                     </div>
                     </Tooltip>
                   )}
@@ -394,13 +416,13 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                     compact
                     value={searchQuery}
                     onSearchChange={setSearchQuery}
-                    placeholder={language === 'AR' ? 'بحث بالاسم أو الجهاز أو IP...' : 'Search by name, device, or IP...'}
+                    placeholder={t.activeSessions.searchPlaceholder}
                     wrapperClassName='w-full'
                   />
 
                   <Tooltip content={
                     <div className='whitespace-normal text-[11px] font-semibold'>
-                      {language === 'AR' ? 'تحديث' : 'Refresh'}
+                      {t.activeSessions.refresh}
                     </div>
                   } position='bottom'>
                   <button
@@ -429,7 +451,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                       <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                         <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636' />
                       </svg>
-                      <span className='hidden sm:inline'>{language === 'AR' ? 'إنهاء الكل' : 'End All Others'}</span>
+                      <span className='hidden sm:inline'>{t.activeSessions.endAllOthers}</span>
                     </button>
                   )}
                 </div>
@@ -444,14 +466,14 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                   <table className='w-full text-sm text-left rtl:text-right block md:table'>
                     <thead className='hidden md:table-header-group md:sticky md:top-0 z-10 text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400'>
                     <tr>
-                      <SortableTh columnKey='user' className='px-6 py-4 font-medium'>{language === 'AR' ? 'المستخدم' : 'User'}</SortableTh>
-                      <SortableTh columnKey='device' className='px-6 py-4 font-medium'>{language === 'AR' ? 'الجهاز' : 'Device'}</SortableTh>
-                      <SortableTh columnKey='browser' className='px-6 py-4 font-medium'>{language === 'AR' ? 'المتصفح' : 'Browser'}</SortableTh>
-                      <SortableTh columnKey='started' className='px-6 py-4 font-medium'>{language === 'AR' ? 'البداية' : 'Started'}</SortableTh>
-                      <SortableTh columnKey='duration' className='px-6 py-4 font-medium'>{language === 'AR' ? 'المدة' : 'Duration'}</SortableTh>
-                      <SortableTh columnKey='ip' className='px-6 py-4 font-medium'>{language === 'AR' ? 'IP' : 'IP'}</SortableTh>
-                      <SortableTh columnKey='lastSeen' className='px-6 py-4 font-medium'>{language === 'AR' ? 'آخر ظهور' : 'Last Seen'}</SortableTh>
-                      <th className='px-6 py-4 text-center font-medium'>{language === 'AR' ? 'إجراء' : 'Action'}</th>
+                      <SortableTh columnKey='user' className='px-6 py-4 font-medium'>{t.activeSessions.sort.user}</SortableTh>
+                      <SortableTh columnKey='device' className='px-6 py-4 font-medium'>{t.activeSessions.sort.device}</SortableTh>
+                      <SortableTh columnKey='browser' className='px-6 py-4 font-medium'>{t.activeSessions.sort.browser}</SortableTh>
+                      <SortableTh columnKey='started' className='px-6 py-4 font-medium'>{t.activeSessions.sort.started}</SortableTh>
+                      <SortableTh columnKey='duration' className='px-6 py-4 font-medium'>{t.activeSessions.sort.duration}</SortableTh>
+                      <SortableTh columnKey='ip' className='px-6 py-4 font-medium'>{t.activeSessions.sort.ip}</SortableTh>
+                      <SortableTh columnKey='lastSeen' className='px-6 py-4 font-medium'>{t.activeSessions.sort.lastSeen}</SortableTh>
+                      <th className='px-6 py-4 text-center font-medium'>{t.activeSessions.action}</th>
                     </tr>
                   </thead>
                   <tbody className='block md:table-row-group space-y-4 md:space-y-0 md:divide-y divide-(--border-divider)'>
@@ -459,8 +481,8 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                       <tr className='block md:table-row md:h-[72px]'>
                         <td colSpan={8} className='block md:table-cell px-6 py-8 text-center text-gray-500 md:h-[72px] md:align-middle'>
                           {searchQuery
-                            ? (language === 'AR' ? 'لا توجد نتائج تطابق البحث' : 'No sessions match your search')
-                            : (language === 'AR' ? 'لا توجد جلسات نشطة' : 'No active sessions found')}
+                            ? t.activeSessions.noSearchResults
+                            : t.activeSessions.noActiveSessions}
                         </td>
                       </tr>
                     ) : (
@@ -471,7 +493,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                         
                         const sessionEmployee = session.employee_id ? employees.find(e => e.id === session.employee_id) : null;
                         const hasEmployee = !!sessionEmployee;
-                        const sessionUserName = sessionEmployee?.name || sessionEmployee?.en_name || (language === 'AR' ? 'غير محدد' : 'Unassigned');
+                        const sessionUserName = sessionEmployee?.name || sessionEmployee?.en_name || t.activeSessions.unassigned;
                         const sessionUserImage = sessionEmployee?.image || null;
                         const isOnline = isSessionOnline(session.last_seen_at);
                         
@@ -526,7 +548,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                                 <div className='md:hidden mt-0.5 text-xs'>
                                   {isOnline ? (
                                     <span className='text-green-600 dark:text-green-400 font-medium'>
-                                      {language === 'AR' ? 'متصل الآن' : 'Online Now'}
+                                      {t.activeSessions.onlineNow}
                                     </span>
                                   ) : (
                                     <span className='text-gray-500'>
@@ -544,10 +566,10 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                                 <div className={`absolute ${language === 'AR' ? 'right-0' : 'left-0'} top-full pt-1.5 z-30 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none`}>
                                   <div className='bg-(--bg-card) border border-(--border-divider) rounded-lg shadow-xl p-3 min-w-[240px] space-y-2'>
                                     <div className='text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                                      {language === 'AR' ? 'معلومات الجلسة' : 'Session Info'}
+                                      {t.activeSessions.sessionInfo}
                                     </div>
                                     <div className='text-xs text-gray-600 dark:text-gray-400'>
-                                      {language === 'AR' ? 'دخل' : 'Logged in'} {getRelativeTime(session.created_at, language) || startedLabel.label} · {startedLabel.time}
+                                      {t.activeSessions.loggedIn} {getRelativeTime(session.created_at, language) || startedLabel.label} · {startedLabel.time}
                                     </div>
                                     <div className='text-xs text-gray-500 dark:text-gray-400'>
                                       {getDeviceName(session.user_agent || '', session.device_info || '')} · {getBrowserName(session.user_agent || '')}
@@ -555,14 +577,14 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
 
                                     {prevSession && (() => {
                                       const prevEmp = prevSession.employee_id ? employees.find(e => e.id === prevSession.employee_id) : null;
-                                      const prevName = prevEmp?.name || prevEmp?.en_name || (language === 'AR' ? 'غير محدد' : 'Unassigned');
+                                      const prevName = prevEmp?.name || prevEmp?.en_name || t.activeSessions.unassigned;
                                       const prevImg = prevEmp?.image || null;
                                       const prevStartedLabel = formatDateWithRelativeLabel(prevSession.created_at, language);
                                       return (
                                         <>
                                           <div className='border-t border-(--border-divider) pt-2 mt-2'>
                                             <div className='text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
-                                              {language === 'AR' ? 'السابق' : 'Previously'}
+                                              {t.activeSessions.previously}
                                             </div>
                                             <div className='flex items-center gap-2 mt-1.5'>
                                               <div className='shrink-0'>
@@ -623,7 +645,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                         </td>
                         <td className='block md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle text-gray-600 dark:text-gray-400'>
                           <div className='flex items-center gap-2'>
-                            <span className='md:hidden text-xs font-semibold uppercase opacity-70'>{language === 'AR' ? 'البداية:' : 'Started:'}</span>
+                            <span className='md:hidden text-xs font-semibold uppercase opacity-70'>{t.activeSessions.startedLabel}</span>
                             <div className='flex items-center gap-1 md:block'>
                               <div className='text-gray-900 dark:text-gray-100 text-xs'>{startedInfo.label}</div>
                               <div className='text-xs text-gray-500 hidden md:block'>{startedInfo.time}</div>
@@ -633,7 +655,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                         </td>
                         <td className='block md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle text-gray-600 dark:text-gray-400'>
                           <div className='flex items-center gap-2'>
-                            <span className='md:hidden text-xs font-semibold uppercase opacity-70'>{language === 'AR' ? 'المدة:' : 'Duration:'}</span>
+                            <span className='md:hidden text-xs font-semibold uppercase opacity-70'>{t.activeSessions.durationLabel}</span>
                             <span>{durationStr}</span>
                           </div>
                         </td>
@@ -645,11 +667,11 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                         </td>
                         <td className='hidden md:table-cell px-4 py-1.5 md:px-6 md:h-[72px] md:overflow-hidden md:align-middle'>
                           <div className='flex items-center gap-2 md:block'>
-                            <span className='md:hidden text-xs font-semibold uppercase opacity-70'>{language === 'AR' ? 'آخر ظهور:' : 'Seen:'}</span>
+                            <span className='md:hidden text-xs font-semibold uppercase opacity-70'>{t.activeSessions.seenLabel}</span>
                             <div className='flex items-center gap-2 md:block'>
                               {isOnline ? (
                                 <div className='text-green-600 dark:text-green-400 font-medium'>
-                                  {language === 'AR' ? 'متصل الآن' : 'Online Now'}
+                                  {t.activeSessions.onlineNow}
                                 </div>
                               ) : (
                                 <>
@@ -678,17 +700,17 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                             {session.user_agent === currentUserAgent ? (
                               <span className='inline-flex items-center gap-2 text-xs font-medium text-green-600 dark:text-green-400'>
                                 <Icons.Check size={14} />
-                                {language === 'AR' ? 'الجهاز الحالي' : 'Current'}
+                                {t.activeSessions.current}
                               </span>
                             ) : (
                               <button
                                 onClick={() => handleLogout(session.id)}
                                 className='inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/60 cursor-pointer whitespace-nowrap w-full md:w-auto justify-center'
-                                title={language === 'AR' ? 'إنهاء الجلسة' : 'Terminate'}
+                                title={t.activeSessions.terminate}
                               >
                                 <Icons.Logout size={14} />
                                 <span className='text-xs font-medium'>
-                                  {language === 'AR' ? 'إنهاء' : 'End'}
+                                  {t.activeSessions.end}
                                </span>
                               </button>
                             )}

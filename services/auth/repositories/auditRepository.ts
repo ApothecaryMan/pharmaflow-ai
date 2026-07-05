@@ -37,7 +37,7 @@ export const auditRepository = {
     // Try to flush any previously queued entries first
     await this._flushQueue();
 
-    const allowedActions = ['login', 'logout', 'switch_user', 'switch_branch', 'system_login', 'system_logout'];
+    const allowedActions = ['login', 'logout', 'switch_user', 'switch_branch', 'system_login', 'system_logout', 'force_logout', 'switch_org', 'employee_logout'];
     const safeAction = allowedActions.includes(entry.action) ? entry.action : 'login';
     const finalDetails = entry.details;
 
@@ -80,7 +80,7 @@ export const auditRepository = {
 
     const results = await Promise.allSettled(
       batch.map((entry) => {
-        const allowedActions = ['login', 'logout', 'switch_user', 'switch_branch', 'system_login', 'system_logout'];
+        const allowedActions = ['login', 'logout', 'switch_user', 'switch_branch', 'system_login', 'system_logout', 'force_logout', 'switch_org', 'employee_logout'];
         const safeAction = allowedActions.includes(entry.action) ? entry.action : 'login';
         const finalDetails = entry.details;
 
