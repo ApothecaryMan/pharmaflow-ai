@@ -1686,7 +1686,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     value={invoiceNum}
                     mode="rolling"
                     minimumIntegerDigits={invoicePadLength}
-                    dir="ltr"
                   />
                 </div>
               </div>

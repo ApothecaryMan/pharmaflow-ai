@@ -435,7 +435,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                     key={s.id}
                     className='border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50'
                   >
-                    <td className='p-4 font-bold text-sm'>#{s.serialId || s.id.substring(0, 8)}</td>
+                    <td className='p-4 font-bold text-sm'><span data-no-convert="true" dir="ltr">#{s.serialId || s.id.substring(0, 8)}</span></td>
                     <td className='p-4 text-sm text-gray-500'>
                       {new Date(s.date).toLocaleTimeString()}
                     </td>
@@ -779,7 +779,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                             <td
                               className={`py-3 px-2 text-sm font-medium transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50'}`}
                             >
-                              #{sale.serialId || sale.id.substring(0, 8)}
+                              <span data-no-convert="true" dir="ltr">
+                                #{sale.serialId || sale.id.substring(0, 8)}
+                              </span>
                             </td>
                             <td
                               className={`py-3 px-2 text-sm transition-all duration-300 ${isSpecial ? 'bg-amber-100/80 dark:bg-amber-500/10' : 'border-b border-[var(--border-divider)] group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50'}`}

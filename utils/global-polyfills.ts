@@ -114,6 +114,12 @@ const processNode = (node: Node, toArabic: boolean) => {
       return;
     }
 
+    // Skip alphanumeric technical codes/IDs (e.g. HI123, SALE-2026-0001, md5 hashes)
+    // containing both English letters and digits.
+    if (/[a-zA-Z]/.test(originalValue) && /[0-9]/.test(originalValue)) {
+      return;
+    }
+
     const newValue = replaceDigits(originalValue, toArabic);
     if (originalValue !== newValue) {
       node.nodeValue = newValue;

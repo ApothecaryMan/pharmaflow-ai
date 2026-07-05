@@ -242,7 +242,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
       width: 'w-24',
       className: 'justify-center',
       render: (customer) => (
-        <span className='font-bold text-gray-500 font-mono tracking-tight'>{customer.code}</span>
+        <span data-no-convert='true' dir='ltr' className='font-bold text-gray-500 font-mono tracking-tight'>{customer.code}</span>
       ),
     },
     {
@@ -358,7 +358,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
                     {selectedCustomer.name}
                   </h3>
                   <div className='flex items-center gap-2 mt-1'>
-                    <span className='font-bold text-gray-500 font-mono tracking-tight text-xs'>
+                    <span data-no-convert='true' dir='ltr' className='font-bold text-gray-500 font-mono tracking-tight text-xs'>
                       {selectedCustomer.code}
                     </span>
                     <span

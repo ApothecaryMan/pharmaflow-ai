@@ -662,7 +662,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <div className='min-w-0 flex-1'>
                       <p className='font-bold text-(--text-primary) text-sm truncate'>
                         {sale.customerName || 'Guest Customer'}{' '}
-                        <span className='text-[10px] font-normal opacity-50'>#{sale.serialId || sale.id}</span>
+                        <span data-no-convert='true' dir='ltr' className='text-[10px] font-normal opacity-50'>#{sale.serialId || sale.id}</span>
                       </p>
                       <p className='text-[10px] text-(--text-tertiary) mt-0.5'>{sale.timeAgo}</p>
                     </div>
@@ -1066,7 +1066,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <p className='text-xs text-gray-500 flex items-center gap-2'>
                         <span className='text-(--text-tertiary)'>{sale.timeAgo}</span>
                         <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
-                        <span className='text-xs'>#{sale.serialId || sale.id}</span>
+                        <span data-no-convert='true' dir='ltr' className='text-xs'>#{sale.serialId || sale.id}</span>
                         <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
                         <span
                           className={`inline-flex items-center ${sale.paymentMethod === 'visa' ? 'text-primary-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}
