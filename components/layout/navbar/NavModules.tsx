@@ -172,7 +172,7 @@ export const NavModules: React.FC<NavModulesProps> = ({
                 </span>
 
                 {!isCompact && module.id !== 'settings' && module.id !== 'test' && (
-                  <span className='text-sm font-medium'>
+                  <span className='hidden md:inline text-sm font-medium'>
                     {getMenuTranslation(module.label, language)}
                   </span>
                 )}

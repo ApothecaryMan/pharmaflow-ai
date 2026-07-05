@@ -60,7 +60,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = memo(({
     const isPoor = latency !== undefined && latency >= 400;
 
     return {
-      icon: isPoor ? 'network_wifi_1_bar' : isFair ? 'network_wifi_2_bar' : 'wifi',
+      icon: isPoor ? 'wifi_1_bar' : isFair ? 'wifi_2_bar' : 'wifi',
       variant: isGood ? ('success' as const) : ('warning' as const),
       tooltip: `${onlineText}${latency !== undefined ? ` — ${latency}ms (${isGood ? goodText : isFair ? fairText : poorText})` : ''}`,
       label: undefined,

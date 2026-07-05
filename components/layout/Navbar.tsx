@@ -89,8 +89,18 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   const [activeOrg, setActiveOrg] = useState<Organization | null>(null);
 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showMobileSettings, setShowMobileSettings] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSwitchingOrg, setIsSwitchingOrg] = useState(false);
+
+  const [isMobileView, setIsMobileView] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobileView(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const theme = currentTheme.primary;
 
@@ -262,7 +272,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({
       {/* Logo & Title */}
       <div
         className='flex items-center gap-2 ltr:mr-6 rtl:ml-6 shrink-0 cursor-pointer hover:opacity-80'
-        onClick={onLogoClick}
+        onClick={(e) => {
+          onLogoClick?.();
+          if (isMobileView) setShowMobileSettings(true);
+        }}
       >
         {/* Dynamic Logo based on darkMode prop */}
         <img
@@ -379,22 +392,16 @@ const NavbarComponent: React.FC<NavbarProps> = ({
         cancelClose={cancelClose}
       />
 
-      {/* Mobile: Hamburger Menu & Settings */}
-      {authService.getCurrentUserSync() && (
-        <div className='md:hidden flex items-center gap-1'>
-          <SettingsMenu
-            dropDirection='down'
-            align='end'
-            triggerVariant='navbar'
-            triggerSize={'var(--icon-navbar-mobile)' as any}
-          />
-          <button
-            onClick={onMobileMenuToggle}
-            className='flex items-center justify-center w-10 h-10 text-gray-600 dark:text-gray-300'
-          >
-            <Icons.Menu size='var(--icon-navbar-mobile)' />
-          </button>
-        </div>
+      {/* Mobile: Settings overlay */}
+      {showMobileSettings && (
+        <SettingsMenu
+          dropDirection='down'
+          align='end'
+          triggerVariant='navbar'
+          showTrigger={false}
+          defaultOpen={true}
+          onClose={() => setShowMobileSettings(false)}
+        />
       )}
 
       {/* Right Side Actions (Desktop) */}

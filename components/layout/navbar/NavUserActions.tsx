@@ -53,7 +53,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
   return (
     <div className={`flex items-center ${isCompact ? 'gap-1' : 'gap-2'}`}>
       {/* Quick Attendance Action */}
-      {!isCompact && <AttendanceQuickAction language={language} />}
+      {!isCompact && <div className='hidden md:block'><AttendanceQuickAction language={language} /></div>}
 
       {/* User Profile & Settings */}
       <div className='relative' ref={profileRef}>
@@ -143,7 +143,7 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                     </div>
                   )}
                 </div>
-                <div>
+                <div className='flex-1'>
                   <h3 className='font-bold text-gray-900 dark:text-white'>
                     {currentEmployeeId
                       ? currentEmployee?.name ||
@@ -175,6 +175,26 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                     )}
                   </div>
                 </div>
+                {currentEmployeeId && (
+                  <button
+                    onClick={async () => {
+                      if (isLoggingOut) return;
+                      setIsLoggingOut(true);
+                      try {
+                        if (onLogout) await onLogout();
+                        setShowProfileMenu(false);
+                      } catch (error) {
+                        console.error('Logout failed', error);
+                      } finally {
+                        setIsLoggingOut(false);
+                      }
+                    }}
+                    disabled={isLoggingOut}
+                    className='md:hidden flex items-center justify-center w-9 h-9 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors'
+                  >
+                    {isLoggingOut ? <Icons.Loading className='animate-spin' /> : <Icons.Logout />}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -262,28 +282,13 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                       </button>
                     ))}
                   </div>
-                ) : (
-                  <div className='px-2.5 py-2 mt-1 mx-1 text-xs text-gray-500 dark:text-gray-400 bg-(--bg-page-surface) rounded-lg border border-(--border-divider) flex items-center gap-2'>
-                    <Icons.Info size={16} className='text-gray-400' />
-                    {language === 'AR' ? 'فرع واحد متاح.' : 'One branch available.'}
+                ) : branches.length === 1 ? (
+                  <div className='px-2.5 py-2 mt-1 mx-1 text-xs text-gray-700 dark:text-gray-300 bg-(--bg-page-surface) rounded-lg border border-(--border-divider) font-medium'>
+                    {branches[0].name}
                   </div>
-                )}
+                ) : null}
               </div>
             )}
-
-            {/* Print Settings (Always available for browser, or when not using Desktop integration) */}
-            <div className='p-2 border-t border-(--border-divider)'>
-              <button
-                onClick={() => {
-                  onNavigate?.('browser-settings');
-                  setShowProfileMenu(false);
-                }}
-                className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg flex items-center gap-2'
-              >
-                <Icons.List size='var(--icon-md)' />
-                {language === 'AR' ? 'إعدادات الطباعة' : 'Print Settings'}
-              </button>
-            </div>
 
             {/* Desktop Settings (Tauri Only) */}
             {isTauri() && (

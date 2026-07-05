@@ -165,6 +165,7 @@ const InternalRegistry: Record<string, any> = {
   science: Myna.FlaskConical,
   test: Myna.FlaskConical,
   hr: Myna.User,
+  Loading: Myna.Spinner,
 };
 
 /**

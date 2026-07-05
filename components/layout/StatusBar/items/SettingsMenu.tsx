@@ -52,7 +52,7 @@ const SubmenuWrapper: React.FC<{
   if (!isOpen) return null;
 
   const mobileClasses =
-    'relative w-full mt-2 p-2.5 space-y-2 rounded-xl border-none shadow-none bg-(--bg-page-surface)';
+    'relative w-full mt-2 p-2.5 space-y-2 rounded-xl bg-(--border-divider)';
 
   const desktopClasses = `absolute ${align === 'top' ? 'top-0' : 'bottom-0'} w-72 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-2.5 space-y-2 bg-(--bg-menu)`;
 
@@ -139,6 +139,8 @@ export interface SettingsMenuProps {
   align?: 'start' | 'end';
   triggerVariant?: 'statusBar' | 'navbar';
   triggerSize?: number;
+  defaultOpen?: boolean;
+  onClose?: () => void;
 }
 
 export const SettingsMenu: React.FC<SettingsMenuProps> = ({
@@ -147,6 +149,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   align = 'start',
   triggerVariant = 'statusBar',
   triggerSize = 24,
+  defaultOpen = false,
+  onClose,
 }) => {
   const settings = useSettings();
   const {
@@ -218,7 +222,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   const [localTarget, setLocalTarget] = useState(activeBranch?.monthlySalesTarget || 0);
   useEffect(() => { setLocalTarget(activeBranch?.monthlySalesTarget || 0); }, [activeBranch?.monthlySalesTarget]);
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   const [expandedSubmenu, setExpandedSubmenu] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const statusSmartPos = useSmartPosition({ requiredWidth: 256 });
@@ -226,7 +230,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   const t = TRANSLATIONS[language].settings;
 
   // Mobile Detection
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+  );
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.matchMedia('(max-width: 768px)').matches);
     checkMobile();
@@ -308,7 +314,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
           {isMobile && (
             <div
               className='fixed inset-0 bg-black/40 z-140 animate-fade-in'
-              onClick={() => setIsOpen(false)}
+              onClick={() => { setIsOpen(false); onClose?.(); }}
             />
           )}
           <div className={menuContainerClasses}>
