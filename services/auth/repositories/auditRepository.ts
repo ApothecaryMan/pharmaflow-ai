@@ -1,6 +1,9 @@
 import { supabase } from '../../../lib/supabase';
 import type { LoginAuditEntry } from '../../../types';
 
+const isValidUuid = (id: string | undefined | null) => 
+  id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) ? id : null;
+
 export const auditRepository = {
   /** Queue of entries that failed to sync to Supabase (e.g. RLS permission denied) */
   _pendingQueue: [] as Omit<LoginAuditEntry, 'id' | 'timestamp'>[],
@@ -34,13 +37,10 @@ export const auditRepository = {
     // Try to flush any previously queued entries first
     await this._flushQueue();
 
-    const isValidUuid = (id: string | undefined | null) => 
-      id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) ? id : null;
-
     const safeAction = ['login', 'logout'].includes(entry.action) ? entry.action : 'login';
     const finalDetails = entry.action === safeAction 
       ? entry.details 
-      : `[Action: ${entry.action}] ${entry.details || ''}`;
+      : entry.details;
 
     const { error } = await supabase.rpc('log_audit_event', {
       p_username: entry.username || 'System',
@@ -56,8 +56,8 @@ export const auditRepository = {
 
     if (error) {
       // Only queue for retry on network errors (5xx) or timeout.
-      // Do NOT queue 400 (Bad Request) or 401/403 (Auth issues) to prevent infinite loops.
-      const shouldRetry = error.code && !error.code.startsWith('40') && !error.message?.includes('JWT');
+      // Do NOT queue 400 (Bad Request), 42xxx (postgres errors like 42804), or 401/403 (Auth issues)
+      const shouldRetry = error.code && !error.code.startsWith('40') && !error.code.startsWith('42') && !error.message?.includes('JWT');
       
       if (shouldRetry) {
         this._pendingQueue.push(entry);
@@ -80,19 +80,24 @@ export const auditRepository = {
     this._pendingQueue = [];
 
     const results = await Promise.allSettled(
-      batch.map((entry) =>
-        supabase.rpc('log_audit_event', {
+      batch.map((entry) => {
+        const safeAction = ['login', 'logout'].includes(entry.action) ? entry.action : 'login';
+        const finalDetails = entry.action === safeAction 
+          ? entry.details 
+          : entry.details;
+
+        return supabase.rpc('log_audit_event', {
           p_username: entry.username || 'System',
-          p_employee_id: entry.employeeId || null,
+          p_employee_id: isValidUuid(entry.employeeId),
           p_employee_code: entry.employeeCode || null,
           p_employee_name: entry.employeeName || null,
           p_role: entry.role || 'unassigned',
-          p_branch_id: entry.branchId || null,
-          p_org_id: entry.orgId || null,
-          p_action: entry.action || 'login',
-          p_details: entry.details || null,
-        })
-      )
+          p_branch_id: isValidUuid(entry.branchId),
+          p_org_id: isValidUuid(entry.orgId),
+          p_action: safeAction,
+          p_details: finalDetails || null,
+        });
+      })
     );
 
     // Re-queue any that failed with recoverable errors
@@ -101,7 +106,7 @@ export const auditRepository = {
         this._pendingQueue.push(batch[i]);
       } else if (result.status === 'fulfilled' && result.value.error) {
         const error = result.value.error;
-        const shouldRetry = error.code && !error.code.startsWith('40') && !error.message?.includes('JWT');
+        const shouldRetry = error.code && !error.code.startsWith('40') && !error.code.startsWith('42') && !error.message?.includes('JWT');
         if (shouldRetry) {
           this._pendingQueue.push(batch[i]);
         }
