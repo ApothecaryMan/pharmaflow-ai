@@ -111,7 +111,7 @@ export const Tooltip: React.FC<{
   }, [show, content, position]);
 
   const hE = () => {
-    if (disabled || window.matchMedia('(hover: none) and (pointer: coarse)').matches) return;
+    if (disabled) return;
     if (timeout.current) clearTimeout(timeout.current);
     timeout.current = setTimeout(() => setShow(true), delay);
   };
