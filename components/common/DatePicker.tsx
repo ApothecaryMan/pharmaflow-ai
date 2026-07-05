@@ -203,7 +203,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   label,
   color,
   placeholder,
-  icon = 'calendar_today',
+  icon = 'edit_calendar',
   iconPosition = 'start',
   locale = 'en-US',
   translations: customTranslations,
@@ -492,7 +492,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   // Styles Map
   const styles = {
-    sm: 'px-3 py-1 text-xs h-[32px] gap-1.5',
+    sm: 'px-2 py-0.5 text-xs h-[24px] gap-0.5',
     md: 'px-4 py-2 text-sm gap-2 h-[42px]',
     lg: 'px-5 py-3 text-base gap-3 h-[48px]',
     rounded: {
@@ -500,6 +500,13 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       xl: 'rounded-xl',
       lg: 'rounded-lg',
       md: 'rounded-md',
+      none: 'rounded-none',
+    },
+    innerRounded: {
+      full: 'rounded-full',
+      xl: 'rounded-md',
+      lg: 'rounded-sm',
+      md: 'rounded-none',
       none: 'rounded-none',
     },
     dropdownRounded: {
@@ -514,19 +521,19 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   const getVariantStyles = () => {
     if (variant === 'ghost') {
       return value
-        ? 'bg-white dark:bg-(--bg-card) border-transparent text-gray-900 dark:text-white font-bold shadow-[rgba(0,0,0,0.09)_0px_3px_12px]'
+        ? 'bg-white dark:bg-(--bg-card) border-gray-200 dark:border-(--border-divider) text-gray-900 dark:text-white font-bold shadow-[rgba(0,0,0,0.09)_0px_3px_12px]'
         : 'bg-transparent border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-white/50 dark:hover:bg-(--bg-card)/50 font-bold';
     }
 
     if (variant === 'pill-dark') {
       return value
-        ? 'bg-(--bg-card) border-transparent text-(--text-primary) font-bold shadow-[rgba(0,0,0,0.09)_0px_3px_12px]'
+        ? 'bg-(--bg-card) border-gray-200 dark:border-(--border-divider) text-(--text-primary) font-bold shadow-[rgba(0,0,0,0.09)_0px_3px_12px]'
         : 'bg-transparent border-transparent text-(--text-secondary) hover:text-(--text-primary) hover:bg-white dark:hover:bg-(--bg-card)/50 font-bold';
     }
 
     // Default variant
     return value
-      ? 'bg-primary-200 dark:bg-primary-800/60 border-primary-400 dark:border-primary-600/50 text-primary-900 dark:text-primary-50 font-semibold shadow-xs'
+      ? 'bg-white dark:bg-(--bg-card) border-gray-200 dark:border-(--border-divider) text-gray-900 dark:text-white font-bold shadow-sm'
       : 'bg-(--bg-card) dark:bg-gray-900 border-gray-200 dark:border-gray-700/60 text-(--text-secondary) hover:border-gray-300 dark:hover:border-gray-600 hover:bg-(--bg-card) dark:hover:bg-gray-800';
   };
 
@@ -537,6 +544,10 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         ref={triggerRef}
         type='button'
         onClick={() => {
+          if (window.innerWidth < 640 && value) {
+            onChange('');
+            return;
+          }
           if (!isOpen && !value) {
             setTempDate(new Date());
           }
@@ -546,12 +557,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           flex items-center transition-all select-none outline-hidden focus:ring-0
           ${variant === 'default' ? 'border' : 'border'}
           ${styles[size]}
-          ${styles.rounded[rounded]}
+          ${styles.innerRounded[rounded]}
           ${getVariantStyles()}
           ${className}
         `}
       >
-        {iconPosition === 'start' && (
+        {iconPosition === 'start' && !value && (
           <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
             {icon}
           </span>
@@ -576,7 +587,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               })()
             : placeholder || label}
         </span>
-        {iconPosition === 'end' && (
+        {iconPosition === 'end' && !value && (
           <span className='material-symbols-rounded ml-1.5' style={{ fontSize: 'var(--icon-md)' }}>
             {icon}
           </span>
@@ -585,9 +596,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         {value && (
           <div
             onClick={clearSelection}
-            className={`flex items-center justify-center ml-1.5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors`}
+            className='hidden sm:flex items-center justify-center w-4 h-4 rounded -ml-[5px] text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-[#1F1F1F] transition-colors cursor-pointer'
           >
-            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>
+            <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>
               close
             </span>
           </div>
@@ -613,7 +624,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             dir={activeLocale === 'ar-EG' || activeLocale.startsWith('ar') ? 'rtl' : 'ltr'}
           >
             <div
-              className={`bg-white dark:bg-(--bg-card) ${styles.dropdownRounded[rounded]} shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-gray-200 dark:border-(--border-divider) p-5 w-[380px] select-none`}
+              className={`bg-white dark:bg-(--bg-card) ${styles.dropdownRounded[rounded]} shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-gray-200 dark:border-(--border-divider) px-5 py-3 w-[380px] select-none`}
             >
               {/* iOS Style Wheel Layout */}
               <div className='relative flex items-center justify-center gap-2 mb-4'>
@@ -680,7 +691,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               </div>
 
               {/* Footer Actions */}
-              <div className='flex items-center justify-end gap-2 border-t border-gray-100 dark:border-(--border-divider) pt-4 mt-2'>
+              <div className='flex items-center justify-end gap-1.5 border-t border-gray-100 dark:border-(--border-divider) pt-2 mt-1'>
                 <button
                   type='button'
                   onClick={(e) => {
@@ -723,6 +734,7 @@ export interface DateRangePickerProps {
   className?: string;
   color?: string;
   locale?: string;
+  rounded?: 'full' | 'xl' | 'lg' | 'md' | 'none';
 }
 
 export const DateRangePicker: React.FC<DateRangePickerProps> = ({
@@ -736,12 +748,15 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   className = '',
   color = 'primary',
   locale = 'en-US',
+  rounded = 'full',
 }) => {
   const t = DATE_PICKER_TRANSLATIONS[locale] || DATE_PICKER_TRANSLATIONS['en-US'];
 
+  const roundedClass = rounded === 'full' ? 'rounded-full' : `rounded-${rounded}`;
+
   return (
     <div
-      className={`relative inline-flex items-center p-1 gap-1 bg-gray-100/80 dark:bg-black/20 rounded-full shadow-[inset_0_0px_3px_1px_rgba(0,0,0,0.08)] dark:shadow-none ${className}`}
+      className={`relative inline-flex items-center p-1 gap-1 bg-gray-100/80 dark:bg-black/20 ${roundedClass} shadow-[inset_0_0px_3px_1px_rgba(0,0,0,0.08)] dark:shadow-none ${className}`}
     >
       <DatePicker
         value={startDate}
@@ -753,7 +768,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         locale={locale}
         translations={t}
         iconPosition='start'
-        icon='calendar_today'
+        icon='edit_calendar'
+        rounded={rounded}
       />
 
       <span className='material-symbols-rounded text-gray-400 dark:text-gray-600 px-1 text-sm rtl:rotate-180'>
@@ -770,7 +786,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         locale={locale}
         translations={t}
         iconPosition='start'
-        icon='calendar_today'
+        icon='edit_calendar'
+        rounded={rounded}
       />
     </div>
   );

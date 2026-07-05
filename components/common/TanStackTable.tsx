@@ -829,7 +829,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
       {/* Header Controls */}
       {enableTopToolbar && (
         <div
-          className={`flex flex-wrap items-center gap-4 justify-between ${enableSearch || leftCustomControls || rightCustomControls ? 'mb-4' : ''}`}
+          className={`flex flex-wrap items-center gap-2 justify-between ${enableSearch || leftCustomControls || rightCustomControls ? 'mb-3' : ''}`}
         >
           <div className='flex items-center gap-3 flex-1 min-w-0'>
             {leftCustomControls && (
@@ -891,7 +891,7 @@ export function TanStackTable<TData extends { id: string | number }, TValue>({
               </div>
             </ContextMenuTrigger>
           ) : (
-            <table className='w-full text-left border-separate border-spacing-0 table-fixed'>
+            <table className='w-full text-start border-separate border-spacing-0 table-fixed'>
               <thead ref={headerRef} className='sticky top-0 z-10 bg-(--bg-card)'>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>

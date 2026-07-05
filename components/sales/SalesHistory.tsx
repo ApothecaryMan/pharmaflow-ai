@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useSettings } from '../../context';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
 import { permissionsService } from '../../services/auth/permissionsService';
@@ -10,6 +10,7 @@ import { money } from '../../utils/money';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { DateRangePicker } from '../common/DatePicker';
 import { PageHeader } from '../common/PageHeader';
+import { SearchInput } from '../common/SearchInput';
 import { usePageHelp } from '../../context/HelpContext';
 import { TanStackTable } from '../common/TanStackTable';
 import { POSCustomerHistoryModal } from './pos/ui/POSCustomerHistoryModal';
@@ -224,19 +225,19 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             itemsText,
             '-------------------',
             sale.subtotal &&
-              `${isAr ? 'المجموع الفرعي' : 'Subtotal'}: ${formatCurrency(sale.subtotal)}`,
+            `${isAr ? 'المجموع الفرعي' : 'Subtotal'}: ${formatCurrency(sale.subtotal)}`,
             sale.globalDiscount &&
-              `${isAr ? 'الخصم' : 'Discount'}: ${sale.globalDiscount}% (-${formatCurrency(discountVal)})`,
+            `${isAr ? 'الخصم' : 'Discount'}: ${sale.globalDiscount}% (-${formatCurrency(discountVal)})`,
             sale.tax && `${isAr ? 'الضريبة' : 'Tax'}: ${formatCurrency(sale.tax)}`,
             sale.deliveryFee &&
-              `${t.headers.delivery || (isAr ? 'التوصيل' : 'Delivery')}: ${formatCurrency(sale.deliveryFee)}`,
+            `${t.headers.delivery || (isAr ? 'التوصيل' : 'Delivery')}: ${formatCurrency(sale.deliveryFee)}`,
             isReturned
               ? `${isAr ? 'المرتجع' : 'Returned'}: -${formatCurrency(returnedAmount)}\n${isAr ? 'صافي الإجمالي' : 'Net Total'}: ${formatCurrency(sale.netTotal || 0)}`
               : `${t.headers.total || (isAr ? 'الإجمالي' : 'Total')}: ${formatCurrency(sale.total)}`,
             '-------------------',
             `${isAr ? 'طريقة الدفع' : 'Payment Method'}: ${sale.paymentMethod === 'visa' ? t.visa : t.cash}`,
             sale.saleType &&
-              `${isAr ? 'نوع المعاملة' : 'Transaction Type'}: ${sale.saleType === 'delivery' ? (isAr ? 'توصيل' : 'Delivery') : isAr ? 'شراء مباشر' : 'Walk-in'}`,
+            `${isAr ? 'نوع المعاملة' : 'Transaction Type'}: ${sale.saleType === 'delivery' ? (isAr ? 'توصيل' : 'Delivery') : isAr ? 'شراء مباشر' : 'Walk-in'}`,
             sale.notes?.trim() && `${isAr ? 'ملاحظات' : 'Notes'}: ${sale.notes}`,
           ]
             .filter(Boolean)
@@ -639,56 +640,29 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   const showLoading = isLoading || isMounting || isPageLoading || isDetailLoading;
 
   return (
-    <div
-      className='h-full flex flex-col space-y-4 animate-fade-in'
-      dir={language === 'AR' ? 'rtl' : 'ltr'}
-    >
-      {/* Header */}
-      <PageHeader
-        dir={language === 'AR' ? 'rtl' : 'ltr'}
-        centerContent={
-          <div className='flex flex-col min-w-0 items-center text-center'>
-            <h1 className='text-xl md:text-2xl font-bold text-gray-900 dark:text-white truncate tracking-tight page-title'>
-              {t.title}
-            </h1>
-            <p className='text-xs text-gray-500 dark:text-gray-400 truncate font-medium page-subtitle'>
-              {t.subtitle}
-            </p>
-          </div>
-        }
-        rightContent={
-          !permissionsService.can('sale.view_assigned_only') && (
-            <div
-              className={`px-4 py-2 rounded-2xl bg-primary-50 dark:bg-primary-900/20 ${CARD_BASE} flex flex-col items-end min-w-[140px]`}
-            >
-              <span
-                className={`text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400`}
-              >
-                {t.totalRevenue}
-              </span>
-              <span className={`text-xl font-bold text-primary-900 dark:text-primary-100`}>
-                {formatCurrency(totalRevenue)}
-              </span>
-              <span className='text-[10px] text-primary-600/70 dark:text-primary-400/70 font-semibold'>
-                {language === 'AR' ? 'الصفحة الحالية' : 'current page'}
-              </span>
-            </div>
-          )
-        }
-      />
-
-      {/* Table Section */}
+    <div className='flex flex-col h-full bg-(--bg-page-surface)'>
       <div
-        className={`flex-1 flex flex-col min-h-0 transition-opacity${isMounting ? 'opacity-50' : 'opacity-100'}`}
+        className={`flex-1 pt-4 sm:pt-6 overflow-hidden flex flex-col transition-opacity duration-300 ${isMounting ? 'opacity-50' : 'opacity-100'}`}
+        dir={language === 'AR' ? 'rtl' : 'ltr'}
       >
         <TanStackTable
+          leftCustomControls={
+            <>
+              <h1 
+                className='hidden md:block text-2xl !font-["GraphicSansFont"] tracking-tight leading-normal text-gray-900 dark:text-white page-title me-2 sm:me-4 shrink-0'
+                style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+              >
+                {t.title}
+              </h1>
+            </>
+          }
           data={pagedSales}
           columns={tableColumns}
           tableId='sales_history_table'
           color={color}
           isLoading={showLoading}
           enableTopToolbar={true}
-          enableSearch={true}
+          enableSearch={false}
           searchPlaceholder={t.searchPlaceholder || 'Search sales…'}
           globalFilter={searchTerm}
           onSearchChange={handleSearchChange}
@@ -707,7 +681,21 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           enableShowAll={false}
           pendingRowIds={pendingIds}
           rightCustomControls={
-            <>
+            <div className='flex justify-center sm:justify-end w-full gap-1'>
+              <SearchInput
+                compact
+                expandable
+                value={searchTerm}
+                onSearchChange={handleSearchChange}
+                placeholder={t.searchPlaceholder || 'Search sales…'}
+                wrapperClassName='w-full sm:w-[250px] lg:w-[350px]'
+              />
+              {!permissionsService.can('sale.view_assigned_only') && (
+                <div className='hidden xl:flex px-3 py-1 rounded-xl bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800 flex-col items-end min-w-[120px]'>
+                  <span className='text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400'>{t.totalRevenue}</span>
+                  <span className='text-sm font-bold text-primary-900 dark:text-primary-100 leading-tight'>{formatCurrency(totalRevenue)}</span>
+                </div>
+              )}
               <DateRangePicker
                 startDate={startDate}
                 endDate={endDate}
@@ -715,41 +703,22 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
                 onEndDateChange={handleEndDateChange}
                 color={color}
                 locale={locale}
+                rounded='lg'
+                className='h-8'
               />
 
               <button
                 type='button'
                 onClick={exportToCSV}
                 disabled={pagedSales.length === 0}
-                className='h-9 px-3 rounded-full bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-xs font-semibold disabled:opacity-50 text-gray-700 dark:text-gray-200'
+                className='inline-flex items-center gap-2 px-3 text-sm font-medium rounded-lg bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 cursor-pointer whitespace-nowrap flex-shrink-0 text-gray-700 dark:text-gray-200 h-8'
               >
-                <span className='material-symbols-rounded text-lg'>download</span>
+                <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
+                </svg>
                 <span className='hidden lg:inline'>{t.exportCSV}</span>
               </button>
-              <div className='h-9 rounded-full border border-(--border-divider) bg-white dark:bg-gray-900 flex items-center overflow-hidden'>
-                <button
-                  type='button'
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1 || isPageLoading}
-                  className='h-full w-9 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  title={language === 'AR' ? 'السابق' : 'Previous'}
-                >
-                  <span className='material-symbols-rounded text-lg'>chevron_left</span>
-                </button>
-                <span className='px-2 text-xs font-bold tabular-nums text-gray-600 dark:text-gray-300'>
-                  {page} / {totalPages}
-                </span>
-                <button
-                  type='button'
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages || isPageLoading}
-                  className='h-full w-9 flex items-center justify-center disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  title={language === 'AR' ? 'التالي' : 'Next'}
-                >
-                  <span className='material-symbols-rounded text-lg'>chevron_right</span>
-                </button>
-              </div>
-            </>
+            </div>
           }
         />
       </div>

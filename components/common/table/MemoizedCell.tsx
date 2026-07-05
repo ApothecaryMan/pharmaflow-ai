@@ -95,7 +95,7 @@ export const MemoizedCell = React.memo(
             </span>
           )}
           <span
-            className={meta?.isFlex ? 'min-w-0 w-full block' : undefined}
+            className={meta?.isFlex ? `min-w-0 w-full block ${meta.textAlignClass || ''}` : undefined}
             dir={meta?.isId ? 'ltr' : undefined}
           >
             {content}

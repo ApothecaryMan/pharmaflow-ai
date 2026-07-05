@@ -31,6 +31,7 @@ interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
   // Compact Search Props
   compact?: boolean;
+  expandable?: boolean;
 
   // Internal Badge Logic Props
   resultsCount?: number;
@@ -60,6 +61,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
       onSuggestionAccept,
 
       compact = false,
+      expandable = false,
       resultsCount,
       isLoading = false,
       ...props
@@ -197,8 +199,121 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     };
 
     const [isFocused, setIsFocused] = useState(false);
+    const [expanded, setExpanded] = useState(false);
+    const expandRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      if (!expanded) return;
+      const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+        if (expandRef.current && !expandRef.current.contains(e.target as Node)) {
+          setExpanded(false);
+        }
+      };
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('touchstart', handleClickOutside);
+      };
+    }, [expanded]);
 
     if (compact) {
+      if (expandable) {
+        return (
+          <>
+            <div ref={expandRef} className='sm:hidden'>
+              {expanded ? (
+                <div className='fixed inset-x-0 top-0 z-[99999] bg-(--bg-page-surface) border-b border-(--border-divider) p-3'>
+                  <div className='flex items-center gap-2'>
+                    <div
+                      className='flex-1 flex items-center gap-1 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-(--bg-input) focus-within:ring-2 focus-within:ring-primary-500'
+                      dir={dir}
+                    >
+                      <span className='material-symbols-rounded text-gray-400 shrink-0' style={{ fontSize: '20px' }}>
+                        {typeof icon === 'string' ? icon : 'search'}
+                      </span>
+                      <input
+                        ref={ref}
+                        type='text'
+                        value={value}
+                        onChange={(e) => onSearchChange(e.target.value)}
+                        placeholder={placeholder}
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') setExpanded(false);
+                          props.onKeyDown?.(e);
+                        }}
+                        className='flex-1 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 outline-hidden [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-cancel-button]:hidden'
+                        spellCheck='false'
+                        autoComplete='off'
+                        autoCorrect='off'
+                        autoCapitalize='none'
+                      />
+                    </div>
+                    <button
+                      type='button'
+                      onClick={() => setExpanded(false)}
+                      className='text-sm font-medium text-gray-500 dark:text-gray-400 shrink-0 px-2'
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type='button'
+                  onClick={() => setExpanded(true)}
+                  className='flex items-center gap-2 px-3 h-8 rounded-lg bg-white dark:bg-gray-900 border border-(--border-divider) hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm'
+                >
+                  <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
+                  </svg>
+                  {t.common?.search || 'Search'}
+                </button>
+              )}
+            </div>
+            <div className='hidden sm:block'>
+              <div
+                className={`
+                  flex items-center gap-1 px-2 py-1.5 text-sm rounded-lg border
+                  border-gray-200 dark:border-gray-700
+                  bg-(--bg-input)
+                  focus-within:ring-2 focus-within:ring-primary-500
+                  ${wrapperClassName}
+                `}
+                dir={dir}
+              >
+                <span
+                  className='material-symbols-rounded text-gray-400 shrink-0'
+                  style={{ fontSize: '20px' }}
+                >
+                  {typeof icon === 'string' ? icon : 'search'}
+                </span>
+                <input
+                  ref={ref}
+                  type='text'
+                  value={value}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  onKeyDown={(e) => props.onKeyDown?.(e)}
+                  placeholder={placeholder}
+                  className={`
+                    flex-1 bg-transparent text-sm
+                    text-gray-900 dark:text-gray-100
+                    placeholder-gray-400 outline-hidden
+                    [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-cancel-button]:hidden
+                    ${className}
+                  `}
+                  spellCheck='false'
+                  autoComplete='off'
+                  autoCorrect='off'
+                  autoCapitalize='none'
+                  {...props}
+                />
+              </div>
+            </div>
+          </>
+        );
+      }
       return (
         <div
           className={`
@@ -355,11 +470,10 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
               className={`
               flex items-center h-8 px-1 ${rounded === 'full' ? 'rounded-full' : 'rounded-2xl'}
               border
-              ${
-                hasActiveFilters
+              ${hasActiveFilters
                   ? 'border-gray-200 dark:border-(--border-divider) bg-white dark:bg-(--bg-surface-neutral) shadow-xs'
                   : 'border-transparent bg-transparent hover:border-gray-200 dark:hover:border-(--border-divider) hover:bg-gray-50 dark:hover:bg-(--bg-surface-neutral)'
-              }
+                }
             `}
             >
               {hasActiveFilters && (
@@ -385,10 +499,9 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                   onClick={handleOpenFilterMenu}
                   className={`
                     flex items-center justify-center w-7 h-7 rounded-full
-                    ${
-                      hasActiveFilters
-                        ? 'text-emerald-600 dark:text-emerald-400 font-bold'
-                        : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                    ${hasActiveFilters
+                      ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                      : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                     }
                   `}
                 >
@@ -403,21 +516,21 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           {(badge ||
             isLoading ||
             (resultsCount !== undefined && (value?.trim().length ?? 0) > 0)) && (
-            <div className='pointer-events-none flex items-center ps-1 pe-0.5'>
-              {badge || (
-                <div className='flex items-center gap-2'>
-                  {isLoading && (
-                    <span className='w-3 h-3 border-2 border-primary-500 border-t-transparent rounded-full animate-spin' />
-                  )}
-                  {!isLoading && resultsCount !== undefined && (
-                    <span className='inline-flex items-center px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-(--bg-surface-neutral) text-gray-500 dark:text-gray-400 text-[11px] font-black uppercase tracking-wider animate-in zoom-in duration-200'>
-                      {resultsCount} {t.pos.resultsLabel}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+              <div className='pointer-events-none flex items-center ps-1 pe-0.5'>
+                {badge || (
+                  <div className='flex items-center gap-2'>
+                    {isLoading && (
+                      <span className='w-3 h-3 border-2 border-primary-500 border-t-transparent rounded-full animate-spin' />
+                    )}
+                    {!isLoading && resultsCount !== undefined && (
+                      <span className='inline-flex items-center px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-(--bg-surface-neutral) text-gray-500 dark:text-gray-400 text-[11px] font-black uppercase tracking-wider animate-in zoom-in duration-200'>
+                        {resultsCount} {t.pos.resultsLabel}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
           {showClear && (
             <button
