@@ -83,7 +83,7 @@ export const EditField: React.FC<EditFieldProps> = ({
   <div
     className={`${PROFILE_GLASS_CARD_NO_BORDER} flex items-center gap-2.5 ${disabled ? 'opacity-60' : ''}`}
   >
-    <span className='material-symbols-rounded text-[18px] text-primary-500 shrink-0'>{icon}</span>
+    <span className='material-symbols-rounded text-[18px] text-(--text-tertiary) shrink-0'>{icon}</span>
     <div className='min-w-0 flex-1'>
       <p className='text-[10px] text-(--text-tertiary) font-bold truncate'>{label}</p>
       {onChange && !disabled ? (
@@ -139,13 +139,21 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const [newPassword, setNewPassword] = useState('');
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [isRegisteringFingerprint, setIsRegisteringFingerprint] = useState<string | null>(null);
-  const [collapsedWorkspaces, setCollapsedWorkspaces] = useState<Set<string>>(
-    () => new Set(workspaces.map((w) => w.id))
-  );
+  const [expandedWorkspaces, setExpandedWorkspaces] = useState<Set<string>>(new Set());
   const [visibleCredentials, setVisibleCredentials] = useState<Set<string>>(new Set());
+  const [showDecorations, setShowDecorations] = useState(false);
+
+  useEffect(() => {
+    if (isEditing) {
+      const timer = setTimeout(() => setShowDecorations(true), 50);
+      return () => clearTimeout(timer);
+    } else {
+      setShowDecorations(false);
+    }
+  }, [isEditing]);
 
   const toggleWorkspace = (id: string) => {
-    setCollapsedWorkspaces((prev) => {
+    setExpandedWorkspaces((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -287,6 +295,18 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const offsetStart = useRef({ x: 0, y: 0 });
   const lastPinchDist = useRef(0);
   const readerRef = useRef<FileReader | null>(null);
+  
+  const originalDesignSettings = useRef({
+    coverStyle,
+    bannerZoom,
+    bannerOffset,
+    avatarDecoration,
+    decorationAnimated,
+    frameColor,
+    ringStyle,
+    ringThickness,
+    ringAnimated
+  });
 
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 3;
@@ -306,13 +326,38 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       if (!isDragging) return;
       const dx = (e.clientX - dragStart.current.x) / bannerZoom;
       const dy = (e.clientY - dragStart.current.y) / bannerZoom;
-      setBannerOffset({
-        x: offsetStart.current.x + dx,
-        y: offsetStart.current.y + dy,
-      });
+      
+      let newX = offsetStart.current.x + dx;
+      let newY = offsetStart.current.y + dy;
+      
+      if (bannerRef.current) {
+        const w = bannerRef.current.offsetWidth;
+        const h = bannerRef.current.offsetHeight;
+        const maxX = (w / 2) * (bannerZoom - 1) / bannerZoom;
+        const maxY = (h / 2) * (bannerZoom - 1) / bannerZoom;
+        newX = Math.max(-maxX, Math.min(maxX, newX));
+        newY = Math.max(-maxY, Math.min(maxY, newY));
+      }
+      
+      setBannerOffset({ x: newX, y: newY });
     },
     [isDragging, bannerZoom]
   );
+
+  useEffect(() => {
+    if (!bannerRef.current) return;
+    const w = bannerRef.current.offsetWidth;
+    const h = bannerRef.current.offsetHeight;
+    const maxX = (w / 2) * (bannerZoom - 1) / bannerZoom;
+    const maxY = (h / 2) * (bannerZoom - 1) / bannerZoom;
+    
+    if (bannerOffset.x < -maxX || bannerOffset.x > maxX || bannerOffset.y < -maxY || bannerOffset.y > maxY) {
+      setBannerOffset({
+        x: Math.max(-maxX, Math.min(maxX, bannerOffset.x)),
+        y: Math.max(-maxY, Math.min(maxY, bannerOffset.y)),
+      });
+    }
+  }, [bannerZoom]); // Re-bound when zoom changes
 
   const handleBannerPointerUp = useCallback(() => {
     setIsDragging(false);
@@ -382,6 +427,17 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   );
 
   const startEditing = useCallback(() => {
+    originalDesignSettings.current = {
+      coverStyle,
+      bannerZoom,
+      bannerOffset,
+      avatarDecoration,
+      decorationAnimated,
+      frameColor,
+      ringStyle,
+      ringThickness,
+      ringAnimated
+    };
     setEditFields({
       fullName: profile?.fullName || sessionName || '',
       nameArabic: profile?.nameArabic || '',
@@ -390,13 +446,29 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       licenseNumber: profile?.licenseNumber || '',
     });
     setIsEditing(true);
-  }, [profile, sessionName, setIsEditing]);
+  }, [
+    profile, sessionName, setIsEditing,
+    coverStyle, bannerZoom, bannerOffset, avatarDecoration, decorationAnimated,
+    frameColor, ringStyle, ringThickness, ringAnimated
+  ]);
 
   const cancelEditing = useCallback(() => {
     setIsEditing(false);
     setPreview(undefined);
     setRemoveImage(false);
     setEditFields({ fullName: '', nameArabic: '', email: '', phone: '', licenseNumber: '' });
+    
+    // Restore exact state from before edit was clicked
+    const orig = originalDesignSettings.current;
+    setCoverStyle(orig.coverStyle as any);
+    setBannerZoom(orig.bannerZoom);
+    setBannerOffset(orig.bannerOffset);
+    setAvatarDecoration(orig.avatarDecoration);
+    setDecorationAnimated(orig.decorationAnimated);
+    setFrameColor(orig.frameColor);
+    setRingStyle(orig.ringStyle as any);
+    setRingThickness(orig.ringThickness);
+    setRingAnimated(orig.ringAnimated);
   }, [setIsEditing]);
 
   const handleSave = useCallback(async () => {
@@ -410,10 +482,11 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
         licenseNumber: editFields.licenseNumber.trim() || null,
         ...(preview && { image: preview }),
         ...(removeImage && { image: null }),
+        coverStyle,
         designSettings: {
           avatar: {
-            decorationId: avatarDecoration,
-            decorationAnimated,
+            decoration: avatarDecoration,
+            animated: decorationAnimated,
             frameColor,
             ringStyle,
             ringThickness,
@@ -446,6 +519,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     ringStyle,
     ringThickness,
     ringAnimated,
+    coverStyle,
     bannerZoom,
     bannerOffset,
   ]);
@@ -503,12 +577,15 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
             {/* Top controls: dot picker + zoom */}
             <div className='flex items-start justify-between gap-2 p-3'>
               {/* Pattern picker */}
-              <div className='flex items-center gap-1 bg-white/80 dark:bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-white/10 pointer-events-auto'>
+              <div 
+                className='flex items-center gap-1 bg-white/80 dark:bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-white/10 pointer-events-auto max-w-[136px] sm:max-w-none overflow-x-auto scrollbar-none'
+                onPointerDown={(e) => e.stopPropagation()}
+              >
                 {BANNER_STYLES.map((b) => (
                   <button
                     key={b.id}
                     onClick={() => handleCoverChange(b.id)}
-                    className={`w-4 h-4 rounded-full border-2 transition-all hover:scale-125 ${coverStyle === b.id ? 'border-white scale-110 shadow-sm' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                    className={`cursor-default w-4 h-4 shrink-0 rounded-full border-2 transition-all hover:scale-125 ${coverStyle === b.id ? 'border-white scale-110 shadow-sm' : 'border-transparent opacity-60 hover:opacity-100'}`}
                     style={{ backgroundColor: b.accentColor }}
                     title={isRTL ? b.nameAR : b.nameEN}
                     type='button'
@@ -517,7 +594,10 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
               </div>
 
               {/* Zoom controls */}
-              <div className='flex items-center gap-1 bg-white/80 dark:bg-black/40 backdrop-blur-md px-2 py-1 rounded-xl border border-black/10 dark:border-white/10 pointer-events-auto'>
+              <div 
+                className='flex items-center gap-1 bg-white/80 dark:bg-black/40 backdrop-blur-md px-2 py-1 rounded-xl border border-black/10 dark:border-white/10 pointer-events-auto'
+                onPointerDown={(e) => e.stopPropagation()}
+              >
                 <button
                   type='button'
                   onClick={() =>
@@ -569,9 +649,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       </div>
 
       {/* Avatar & Header */}
-      <div className='relative pb-6 -mt-12'>
-        <div className='flex flex-row items-end gap-5 mb-4 px-6 max-sm:px-4 relative z-10' dir='ltr'>
-          <div className='relative shrink-0'>
+      <div className='relative pb-6 -mt-12 pointer-events-none'>
+        <div className='flex flex-row items-end gap-5 mb-4 px-6 max-sm:px-4 relative z-10 pointer-events-none' dir='ltr'>
+          <div className='relative shrink-0 pointer-events-auto'>
             {/* Avatar with image support */}
             <label
               htmlFor='avatar-upload'
@@ -586,8 +666,12 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
               }
             >
               <div
-                className='w-28 h-28 rounded-full border-4 overflow-visible bg-(--bg-secondary) shadow-md flex items-center justify-center relative'
-                style={{ borderColor: frameColor ? 'transparent' : 'var(--bg-page-surface)' }}
+                className='w-28 h-28 rounded-full border-4 overflow-visible bg-(--bg-secondary) shadow-md flex items-center justify-center relative bg-clip-padding transition-all'
+                style={{
+                  borderStyle: 'solid',
+                  borderColor: (frameColor && ringStyle === 'solid' && !ringAnimated) ? frameColor : (frameColor ? 'transparent' : 'var(--bg-page-surface)'),
+                  borderWidth: frameColor ? ringThickness : 4,
+                }}
               >
                 {/* Inner clipped container keeps image/initials inside the circle */}
                 <div className='absolute inset-0 rounded-full overflow-hidden'>
@@ -606,7 +690,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                     {getDecoration(avatarDecoration)}
                   </div>
                 )}
-                {frameColor && (
+                {frameColor && (ringStyle !== 'solid' || ringAnimated) && (
                   <div className='absolute -inset-2 pointer-events-none z-0'>
                     <AvatarRing
                       color={frameColor}
@@ -654,7 +738,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
           <div className='flex-1 min-w-0 pb-2'>
             <div className='flex items-center gap-3 flex-wrap'>
-              <h3 className='text-xl font-bold text-(--text-primary) flex items-center gap-2 flex-wrap'>
+              <h3 className='text-xl font-bold text-(--text-primary) flex items-center gap-2 flex-wrap pointer-events-auto'>
                 {displayName}
                 {displayUsername && (
                   <button
@@ -693,7 +777,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 )}
               </h3>
             </div>
-            <p className='text-xs font-semibold mt-1'>
+            <p className='text-xs font-semibold mt-1 pointer-events-auto'>
               {workspaces.length > 0 ? (
                 <span className='text-emerald-600 dark:text-emerald-400'>
                   {workspaces.length === 1
@@ -712,72 +796,80 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
           </div>
         </div>
 
-        {/* Decoration picker in edit mode */}
+        {/* Decoration and Frame pickers in edit mode */}
         {isEditing && (
-          <div className='mb-4 px-6 max-sm:px-4'>
-            <div className='flex items-center justify-between mb-2'>
-              <p className='text-[10px] font-bold uppercase tracking-wider text-(--text-tertiary)'>
-                {isRTL ? 'إطار الصورة' : 'Avatar Frame'}
-              </p>
-              <AnimationToggle
-                animating={decorationAnimated}
-                onToggle={() => setDecorationAnimated(!decorationAnimated)}
-                isRTL={isRTL}
-              />
-            </div>
-            <div
-              className={`decoration-carousel flex items-center gap-3 overflow-x-auto flex-nowrap scrollbar-none pt-8 pb-4 px-3 -mx-6 ${!decorationAnimated ? 'pause-animations' : ''}`}
-            >
-              {AVATAR_DECORATIONS.map((dec) => (
-                <button
-                  key={dec.id}
-                  type='button'
-                  onClick={() => setAvatarDecoration(dec.id)}
-                  className='w-12 h-12 flex items-center justify-center relative overflow-visible transition-transform duration-150 hover:scale-110 active:scale-95 snap-start shrink-0'
-                  title={isRTL ? dec.nameAr : dec.name}
-                >
-                  {/* Mini avatar circle */}
-                  <div
-                    className={`absolute inset-1 rounded-full overflow-hidden bg-(--bg-secondary) flex items-center justify-center transition-shadow duration-150 ${
-                      avatarDecoration === dec.id
-                        ? 'ring-2 ring-primary-500 shadow-md'
-                        : 'ring-1 ring-(--border-secondary) shadow-sm'
-                    }`}
-                  >
-                    <div className='w-full h-full bg-gradient-to-br from-primary-500/10 to-primary-600/20' />
+          <div className={`${PROFILE_GLASS_CARD_NO_BORDER} mb-4 p-4 sm:p-5 flex flex-col gap-4 pointer-events-auto`}>
+            <div>
+              <div className='flex items-center justify-between mb-2'>
+                <p className='text-[10px] font-bold uppercase tracking-wider text-gray-700 dark:text-(--text-tertiary)'>
+                  {isRTL ? 'إطار الصورة' : 'Avatar Frame'}
+                </p>
+                <AnimationToggle
+                  animating={decorationAnimated}
+                  onToggle={() => setDecorationAnimated(!decorationAnimated)}
+                  isRTL={isRTL}
+                />
+              </div>
+              <div
+                className={`decoration-carousel flex items-center gap-3 overflow-x-auto flex-nowrap scrollbar-none pt-8 pb-4 -mx-4 sm:-mx-5 px-4 sm:px-5 ${!decorationAnimated && showDecorations ? 'pause-animations' : ''}`}
+              >
+                {!showDecorations ? (
+                  <div className='w-full h-12 flex items-center justify-center opacity-80'>
+                    <div className='animate-spin rounded-full h-8 w-8 border-[3px] border-gray-200 dark:border-gray-700 border-t-gray-600 dark:border-t-gray-400'></div>
                   </div>
-                  {/* Decoration overlay matching real avatar layout */}
-                  {dec.svg ? (
-                    <div className='absolute inset-0 pointer-events-none z-[1]'>{dec.svg}</div>
-                  ) : (
-                    <span className='material-symbols-rounded text-[14px] text-(--text-tertiary) z-[1]'>
-                      close
-                    </span>
-                  )}
-                  {dec.isAnimated && (
-                    <div className='absolute inset-0 z-10 flex items-center justify-center pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'>
-                      <svg
-                        width='24'
-                        height='24'
-                        viewBox='0 0 24 24'
-                        fill='currentColor'
-                        className='text-white'
-                      >
-                        {decorationAnimated ? (
-                          <>
-                            <rect x='6' y='4' width='4' height='16' rx='1' />
-                            <rect x='14' y='4' width='4' height='16' rx='1' />
-                          </>
-                        ) : (
-                          <polygon points='5,3 19,12 5,21' />
-                        )}
-                      </svg>
+                ) : (
+                  AVATAR_DECORATIONS.map((dec) => (
+                    <button
+                      key={dec.id}
+                      type='button'
+                      onClick={() => setAvatarDecoration(dec.id)}
+                      className='w-12 h-12 flex items-center justify-center relative overflow-visible transition-transform duration-150 hover:scale-110 active:scale-95 snap-start shrink-0'
+                      title={isRTL ? dec.nameAr : dec.name}
+                    >
+                      {/* Mini avatar circle */}
+                    <div
+                      className={`absolute inset-1 rounded-full overflow-hidden bg-(--bg-secondary) flex items-center justify-center transition-shadow duration-150 ${
+                        avatarDecoration === dec.id
+                          ? 'ring-2 ring-primary-500 shadow-md'
+                          : 'ring-1 ring-(--border-secondary) shadow-sm'
+                      }`}
+                    >
+                      <div className='w-full h-full bg-gradient-to-br from-primary-500/10 to-primary-600/20' />
                     </div>
-                  )}
-                </button>
-              ))}
+                    {/* Decoration overlay matching real avatar layout */}
+                    {dec.svg ? (
+                      <div className='absolute inset-0 pointer-events-none z-[1]'>{dec.svg}</div>
+                    ) : (
+                      <span className='material-symbols-rounded text-[14px] text-(--text-tertiary) z-[1]'>
+                        close
+                      </span>
+                    )}
+                    {dec.isAnimated && (
+                      <div className='absolute inset-0 z-10 flex items-center justify-center pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'>
+                        <svg
+                          width='24'
+                          height='24'
+                          viewBox='0 0 24 24'
+                          fill='currentColor'
+                          className='text-white'
+                        >
+                          {decorationAnimated ? (
+                            <>
+                              <rect x='6' y='4' width='4' height='16' rx='1' />
+                              <rect x='14' y='4' width='4' height='16' rx='1' />
+                            </>
+                          ) : (
+                            <polygon points='5,3 19,12 5,21' />
+                          )}
+                        </svg>
+                      </div>
+                    )}
+                  </button>
+                )))}
+              </div>
             </div>
-            <div className='pt-1.5 space-y-3'>
+            
+            <div className='border-t border-black/10 dark:border-white/5 pt-4 space-y-4'>
               <ColorPicker
                 label={isRTL ? 'لون الإطار' : 'Frame Color'}
                 colors={FRAME_COLORS}
@@ -791,7 +883,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
               {frameColor && (
                 <>
                   <div className='space-y-1.5'>
-                    <p className='text-[10px] font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                    <p className='text-[10px] font-bold uppercase tracking-wider text-gray-700 dark:text-(--text-tertiary)'>
                       {isRTL ? 'نمط الإطار' : 'Ring Style'}
                     </p>
                     <div className='flex items-center gap-1.5 flex-wrap'>
@@ -820,7 +912,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   <div className='flex items-end gap-3'>
                     <div className='flex-1 space-y-1.5'>
                       <div className='flex items-center justify-between'>
-                        <p className='text-[10px] font-bold uppercase tracking-wider text-(--text-tertiary)'>
+                        <p className='text-[10px] font-bold uppercase tracking-wider text-gray-700 dark:text-(--text-tertiary)'>
                           {isRTL ? 'سماكة الإطار' : 'Ring Thickness'}
                         </p>
                         <span className='text-[11px] text-(--text-tertiary)'>{ringThickness}</span>
@@ -843,7 +935,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
         )}
 
         {/* Info Grid or Edit Form */}
-        <div className='space-y-4'>
+        <div className='space-y-4 pointer-events-auto'>
           <div className='space-y-2 pt-2'>
             <div className='flex items-center justify-between'>
               <h4 
@@ -858,7 +950,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                     <button
                       onClick={cancelEditing}
                       disabled={isSaving}
-                      className='flex items-center gap-1 px-3 py-1.5 rounded-lg bg-(--bg-secondary) hover:bg-(--color-error)/10 text-(--text-tertiary) hover:text-(--color-error) text-[11px] font-bold transition-all active:scale-95 disabled:opacity-50'
+                      className='flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white dark:bg-(--bg-secondary) border border-gray-200 dark:border-transparent hover:border-gray-300 dark:hover:border-transparent hover:bg-red-50 dark:hover:bg-(--color-error)/10 text-gray-700 dark:text-(--text-tertiary) hover:text-red-600 dark:hover:text-(--color-error) text-[11px] font-bold transition-all active:scale-95 disabled:opacity-50 shadow-sm'
                       type='button'
                     >
                       <X className='w-3 h-3' />
@@ -867,7 +959,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                     <button
                       onClick={handleSave}
                       disabled={isSaving}
-                      className='flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold transition-all active:scale-95 disabled:opacity-50'
+                      className='flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold transition-all active:scale-95 disabled:opacity-50 shadow-sm dark:shadow-none'
                       type='button'
                     >
                       {isSaving ? (
@@ -881,7 +973,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 ) : (
                   <button
                     onClick={startEditing}
-                    className='flex items-center gap-1 px-3 py-1.5 rounded-lg bg-(--bg-secondary) hover:bg-primary-500/10 text-(--text-secondary) hover:text-primary-500 text-[11px] font-bold transition-all active:scale-95 shadow-xs'
+                    className='flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white dark:bg-(--bg-secondary) border border-gray-200 dark:border-transparent hover:border-gray-300 dark:hover:border-transparent hover:bg-gray-50 dark:hover:bg-primary-500/10 text-gray-800 dark:text-(--text-secondary) hover:text-gray-900 dark:hover:text-primary-500 text-[11px] font-bold transition-all active:scale-95 shadow-sm'
                     type='button'
                   >
                     <Pencil className='w-3 h-3' />
@@ -929,7 +1021,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   dir={isRTL ? 'rtl' : 'ltr'}
                 />
                 <div className={`${PROFILE_GLASS_CARD_NO_BORDER} flex items-center gap-2.5`}>
-                  <span className='material-symbols-rounded text-[18px] text-primary-500'>
+                  <span className='material-symbols-rounded text-[18px] text-(--text-tertiary)'>
                     calendar_month
                   </span>
                   <div className='min-w-0'>
@@ -1024,7 +1116,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                       key={item.label}
                       className={`${PROFILE_GLASS_CARD_NO_BORDER.replace('rounded-xl', '').trim()} ${roundedClass} flex items-center gap-2.5`}
                     >
-                      <span className='material-symbols-rounded text-[18px] text-primary-500'>
+                      <span className='material-symbols-rounded text-[18px] text-(--text-tertiary)'>
                         {item.icon}
                       </span>
                       <div className='min-w-0'>
@@ -1095,10 +1187,10 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   workspaces.map((ws) => (
                     <div
                       key={ws.id}
-                      className={`${PROFILE_GLASS_CARD_NO_BORDER} p-5 ${collapsedWorkspaces.has(ws.id) ? '' : 'space-y-4'}`}
+                      className={`${PROFILE_GLASS_CARD_NO_BORDER} p-5 ${!expandedWorkspaces.has(ws.id) ? '' : 'space-y-4'}`}
                     >
                       <div
-                        className={`flex items-center justify-between cursor-pointer select-none group transition-colors ${collapsedWorkspaces.has(ws.id) ? '' : 'border-b border-black/10 dark:border-white/5 pb-4'}`}
+                        className={`flex items-center justify-between cursor-pointer select-none group transition-colors ${!expandedWorkspaces.has(ws.id) ? '' : 'border-b border-black/10 dark:border-white/5 pb-4'}`}
                         onClick={() => toggleWorkspace(ws.id)}
                       >
                         <span className='text-sm font-bold text-(--text-primary) flex items-center gap-2'>
@@ -1124,7 +1216,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                             </div>
                           )}
                           <div className='w-8 h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 text-(--text-tertiary) group-hover:bg-black/10 dark:group-hover:bg-white/10 group-hover:text-(--text-primary) transition-all'>
-                            {collapsedWorkspaces.has(ws.id) ? (
+                            {!expandedWorkspaces.has(ws.id) ? (
                               <ChevronDown className='w-5 h-5' />
                             ) : (
                               <ChevronUp className='w-5 h-5' />
@@ -1133,7 +1225,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                         </div>
                       </div>
 
-                      {!collapsedWorkspaces.has(ws.id) && (
+                      {expandedWorkspaces.has(ws.id) && (
                         <div className='space-y-4 animate-fade-in'>
                           <div className='grid grid-cols-2 sm:grid-cols-5 gap-y-4 gap-x-4 border-b border-black/10 dark:border-white/5 pb-4'>
                             <div>
