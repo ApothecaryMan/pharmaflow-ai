@@ -175,6 +175,15 @@ export const SecureGate: React.FC<SecureGateProps> = ({
   // Decide which state to use
   const actualIsModalOpen = standalone ? !!externalIsOpen : internalIsOpen;
 
+  useEffect(() => {
+    if (actualIsModalOpen) {
+      setShowPasswordForm(false);
+      setUsernameInput('');
+      setPasswordInput('');
+      setErrorMessage('');
+    }
+  }, [actualIsModalOpen]);
+
   // Inactivity Timeout (only if not standalone or if unlocked)
   const inactivityTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
