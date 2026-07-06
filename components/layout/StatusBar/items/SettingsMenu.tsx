@@ -214,6 +214,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setNavbarMenuLayout,
     reducedMotion,
     setReducedMotion,
+    disableCSSTransitions,
+    setDisableCSSTransitions,
   } = settings;
 
   const { activeBranchId, updateBranch, activeBranch } = useData();
@@ -385,6 +387,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   <Switch
                     checked={reducedMotion}
                     onChange={setReducedMotion}
+                    theme={currentTheme.name.toLowerCase()}
+                    activeColor={currentTheme.hex}
+                  />
+                </SettingsRow>
+                <SettingsRow icon='motion_photos_off' label={t.disableCSSTransitions}>
+                  <Switch
+                    checked={disableCSSTransitions}
+                    onChange={setDisableCSSTransitions}
                     theme={currentTheme.name.toLowerCase()}
                     activeColor={currentTheme.hex}
                   />

@@ -87,6 +87,7 @@ export interface SettingsState {
   sidebarModalWidth: 'sm' | 'md' | 'lg' | 'xl';
   navbarMenuLayout: 'single' | 'multi';
   reducedMotion: boolean;
+  disableCSSTransitions: boolean;
 }
 // Context Type
 export interface SettingsContextType extends SettingsState {
@@ -126,6 +127,7 @@ export interface SettingsContextType extends SettingsState {
   setSidebarModalWidth: (width: 'sm' | 'md' | 'lg' | 'xl') => void;
   setNavbarMenuLayout: (layout: 'single' | 'multi') => void;
   setReducedMotion: (value: boolean) => void;
+  setDisableCSSTransitions: (value: boolean) => void;
   // Helpers
   availableThemes: ThemeColor[];
   availableLanguages: { code: Language; label: string }[];
@@ -176,6 +178,7 @@ const defaultSettings: SettingsState = {
   sidebarModalWidth: 'md',
   navbarMenuLayout: 'single',
   reducedMotion: false,
+  disableCSSTransitions: true,
 };
 
 // Load settings from storage
@@ -349,14 +352,17 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, [settings.graphicFontVariant]);
 
-  // Apply Reduced Motion (disable animations)
+  // Apply Reduced Motion (disable framer-motion animations)
+  // Note: This is consumed by MotionConfig in index.tsx
+
+  // Disable CSS transitions
   useEffect(() => {
-    if (settings.reducedMotion) {
+    if (settings.disableCSSTransitions) {
       document.documentElement.classList.add('disable-animations');
     } else {
       document.documentElement.classList.remove('disable-animations');
     }
-  }, [settings.reducedMotion]);
+  }, [settings.disableCSSTransitions]);
 
   // Apply Font Settings & Load Fonts
   useEffect(() => {
@@ -642,6 +648,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, reducedMotion }));
   }, []);
 
+  const setDisableCSSTransitions = useCallback((disableCSSTransitions: boolean) => {
+    setSettings((prev) => ({ ...prev, disableCSSTransitions }));
+  }, []);
+
   // --- Centralized Locale Resolution ---
   const numeralLocale = useMemo(() => {
     const isAR = settings.language === 'AR';
@@ -702,6 +712,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setSidebarModalWidth,
       setNavbarMenuLayout,
       setReducedMotion,
+      setDisableCSSTransitions,
       availableThemes: THEMES,
       availableLanguages: LANGUAGES,
       numeralLocale,
@@ -739,6 +750,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setSidebarModalWidth,
       setNavbarMenuLayout,
       setReducedMotion,
+      setDisableCSSTransitions,
       numeralLocale,
       textLocale,
     ]
