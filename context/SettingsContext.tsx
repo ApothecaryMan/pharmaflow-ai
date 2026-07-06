@@ -349,6 +349,15 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, [settings.graphicFontVariant]);
 
+  // Apply Reduced Motion (disable animations)
+  useEffect(() => {
+    if (settings.reducedMotion) {
+      document.documentElement.classList.add('disable-animations');
+    } else {
+      document.documentElement.classList.remove('disable-animations');
+    }
+  }, [settings.reducedMotion]);
+
   // Apply Font Settings & Load Fonts
   useEffect(() => {
     // 1. Update CSS Variables
