@@ -76,7 +76,11 @@ export const inventoryRepository = {
   },
 
   async getAll(branchId?: string, orgId?: string): Promise<Drug[]> {
-    let query = supabase.from(this.tableName).select('*');
+    let query = supabase
+      .from(this.tableName)
+      .select(
+        'id, org_id, branch_id, name, name_ar, generic_name, category, public_price, unit_price, cost_price, unit_cost_price, stock, damaged_stock, expiry_date, barcode, internal_code, units_per_pack, supplier_id, max_discount, dosage_form, min_stock, origin, manufacturer, tax, status, description, additional_barcodes, item_rank'
+      );
 
     if (branchId && branchId.toLowerCase() !== 'all') {
       query = query.eq('branch_id', branchId);
@@ -89,13 +93,24 @@ export const inventoryRepository = {
   },
 
   async getById(id: string): Promise<Drug | null> {
-    const { data, error } = await supabase.from(this.tableName).select('*').eq('id', id).maybeSingle();
+    const { data, error } = await supabase
+      .from(this.tableName)
+      .select(
+        'id, org_id, branch_id, name, name_ar, generic_name, category, public_price, unit_price, cost_price, unit_cost_price, stock, damaged_stock, expiry_date, barcode, internal_code, units_per_pack, supplier_id, max_discount, dosage_form, min_stock, origin, manufacturer, tax, status, description, additional_barcodes, item_rank'
+      )
+      .eq('id', id)
+      .maybeSingle();
     if (error) throw error;
     return data ? this.mapFromDb(data) : null;
   },
 
   async getByBarcode(barcode: string, orgId?: string, branchId?: string): Promise<Drug | null> {
-    let query = supabase.from(this.tableName).select('*').eq('barcode', barcode);
+    let query = supabase
+      .from(this.tableName)
+      .select(
+        'id, org_id, branch_id, name, name_ar, generic_name, category, public_price, unit_price, cost_price, unit_cost_price, stock, damaged_stock, expiry_date, barcode, internal_code, units_per_pack, supplier_id, max_discount, dosage_form, min_stock, origin, manufacturer, tax, status, description, additional_barcodes, item_rank'
+      )
+      .eq('barcode', barcode);
 
     if (branchId && branchId.toLowerCase() !== 'all') {
       query = query.eq('branch_id', branchId);

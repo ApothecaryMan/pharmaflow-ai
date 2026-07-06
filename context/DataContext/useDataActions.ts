@@ -78,7 +78,11 @@ export const useDataActions = ({
   const rawInventoryRef = useRef(rawInventory);
   rawInventoryRef.current = rawInventory;
 
-  const refreshAll = useCallback(
+  // Coalesce concurrent refreshAll calls: if one is in-flight, subsequent callers
+  // share the same promise instead of firing redundant queries.
+  const refreshPromiseRef = useRef<Promise<void> | null>(null);
+
+  const doRefresh = useCallback(
     async (targetBranchId?: string, targetOrgId?: string) => {
       const branchId = targetBranchId !== undefined ? targetBranchId : activeBranchId;
       const orgId = targetOrgId !== undefined ? targetOrgId : activeOrgId;
@@ -175,6 +179,21 @@ export const useDataActions = ({
       setBranches,
       setActiveOrg,
     ]
+  );
+
+  const refreshAll = useCallback(
+    async (targetBranchId?: string, targetOrgId?: string) => {
+      if (refreshPromiseRef.current) {
+        return refreshPromiseRef.current;
+      }
+      refreshPromiseRef.current = doRefresh(targetBranchId, targetOrgId);
+      try {
+        await refreshPromiseRef.current;
+      } finally {
+        refreshPromiseRef.current = null;
+      }
+    },
+    [doRefresh]
   );
 
   const switchBranch = useCallback(
