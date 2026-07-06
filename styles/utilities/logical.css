@@ -59,9 +59,7 @@ html:not(.dark).none-border-mode .card-shadow {
 .disable-animations *,
 .disable-animations *::before,
 .disable-animations *::after {
-  animation: none !important;
   transition: none !important;
-  animation-duration: 0s !important;
   transition-duration: 0s !important;
   transition-delay: 0s !important;
 }

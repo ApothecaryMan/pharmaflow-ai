@@ -48,7 +48,7 @@
       *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *) {
         scrollbar-width: thin !important;
         scrollbar-color: transparent transparent !important;
-        transition: scrollbar-color 0.25s ease !important;
+        transition: scrollbar-color 0.25s ease;
       }
       *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *):hover {
         scrollbar-color: rgba(156, 163, 175, 0.3) transparent !important;
@@ -60,7 +60,7 @@
   @media (hover: hover) {
     *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *) {
       --global-scrollbar-color: rgba(156, 163, 175, 0) !important;
-      transition: --global-scrollbar-color 0.25s ease-in-out !important;
+      transition: --global-scrollbar-color 0.25s ease-in-out;
     }
 
     /* Transition to visible state when container is hovered */
