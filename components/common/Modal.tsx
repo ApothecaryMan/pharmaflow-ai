@@ -187,6 +187,11 @@ export const Modal: React.FC<ModalProps> = ({
     return zIndex || 100;
   });
 
+  const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
+  useEffect(() => {
+    if (isOpen) setIsActuallyOpen(true);
+  }, [isOpen]);
+
   // Handle ESC key listener
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -204,11 +209,9 @@ export const Modal: React.FC<ModalProps> = ({
     };
   }, [isOpen, onClose]);
 
-  // Handle Body Scroll Lock and Sidebar Active Classes
+  // Handle Sidebar/Modal Active Classes - removed immediately on isOpen change
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
-
       if (isSidebar) {
         document.body.classList.add('sidebar-modal-active');
       } else {
@@ -221,24 +224,33 @@ export const Modal: React.FC<ModalProps> = ({
         const remainingSidebars = document.querySelectorAll(
           '[data-modal-type="sidebar"][data-modal-open="true"]'
         );
-        if (remainingSidebars.length <= 1) {
+        if (remainingSidebars.length === 0) {
           document.body.classList.remove('sidebar-modal-active');
         }
       } else {
         const remainingModals = document.querySelectorAll(
           '[data-modal-type="modal"][data-modal-open="true"]'
         );
-        if (remainingModals.length <= 1) {
+        if (remainingModals.length === 0) {
           document.body.classList.remove('modal-blur-active');
         }
       }
+    };
+  }, [isOpen, isSidebar]);
 
+  // Handle Body Overflow Lock - delayed until exit animation completes
+  useEffect(() => {
+    if (isActuallyOpen) {
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
       const allOpen = document.querySelectorAll('[data-modal-open="true"]');
-      if (allOpen.length <= 1) {
+      if (allOpen.length === 0) {
         document.body.style.overflow = '';
       }
     };
-  }, [isOpen, isSidebar]);
+  }, [isActuallyOpen]);
 
   // Compute/Update z-index dynamically when the modal state changes or prop updates
   useEffect(() => {
@@ -295,11 +307,10 @@ export const Modal: React.FC<ModalProps> = ({
             key={item.key}
             onClick={() => setSidebarModalWidth?.(item.key)}
             disabled={!isSidebar}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
-              !isSidebar
-                ? 'opacity-30 cursor-not-allowed'
-                : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
-            }`}
+            className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${!isSidebar
+              ? 'opacity-30 cursor-not-allowed'
+              : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+              }`}
           >
             <span className='material-symbols-rounded text-lg'>
               {sidebarModalWidth === item.key ? 'check_circle' : 'circle'}
@@ -318,7 +329,7 @@ export const Modal: React.FC<ModalProps> = ({
     showMenu(e.clientX, e.clientY, <ContextMenuContent preventSidebar={preventSidebar} />);
   };
 
-  if (!isOpen) return null;
+  if (!isActuallyOpen) return null;
 
   const maxWidthClass = width || LAYOUT_CONFIG.MODAL_SIZES[size] || LAYOUT_CONFIG.MODAL_SIZES.lg;
 
@@ -352,13 +363,13 @@ export const Modal: React.FC<ModalProps> = ({
       className={
         isSidebar
           ? `fixed inset-0 flex md:justify-end justify-center pointer-events-none md:p-0 p-4`
-          : `fixed inset-0 flex items-center justify-center p-4`
+          : `fixed inset-0 flex items-center justify-center p-4 pointer-events-none`
       }
       style={{ zIndex: isSidebar ? 10 : actualZIndex }}
       data-modal-type={isSidebar ? 'sidebar' : 'modal'}
-      data-modal-open='true'
+      data-modal-open={isOpen ? 'true' : 'false'}
     >
-      <AnimatePresence>
+      <AnimatePresence onExitComplete={() => setIsActuallyOpen(false)}>
         {isOpen && (
           <>
             {/* Backdrop */}
@@ -381,7 +392,7 @@ export const Modal: React.FC<ModalProps> = ({
               className={
                 isSidebar
                   ? `relative w-full bg-(--bg-card) border border-zinc-400/40 dark:border-zinc-500/30 overflow-hidden flex flex-col sidebar-modal-card select-none pointer-events-auto ${className}`
-                  : `relative w-full ${maxWidthClass} bg-(--bg-card) rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col max-h-[95vh] border border-zinc-400/40 dark:border-zinc-500/30 ring-1 ring-inset ring-white/20 dark:ring-white/10 select-none ${className}`
+                  : `relative w-full ${maxWidthClass} bg-(--bg-card) rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col max-h-[95vh] border border-zinc-400/40 dark:border-zinc-500/30 ring-1 ring-inset ring-white/20 dark:ring-white/10 select-none pointer-events-auto ${className}`
               }
               style={isSidebar ? style : { height: height || 'auto', ...style }}
               onClick={(e) => e.stopPropagation()}
@@ -391,105 +402,105 @@ export const Modal: React.FC<ModalProps> = ({
               exit='exit'
               transition={{ ...cardTransition, exit: exitTransition }}
             >
-        {title || tabs || headerActions ? (
-          <div className='h-full flex flex-col overflow-hidden'>
-            {/* Header - Windows 10 Style (Compact & Functional) */}
-            <div
-              className='shrink-0 border-b border-(--border-divider)/50 bg-(--bg-card) px-4 h-11 flex items-center relative select-none'
-              onContextMenu={handleHeaderContextMenu}
-            >
-              {/* Title Section: Icon + Title */}
-              {title || icon ? (
-                <div className='flex items-center gap-2 min-w-0 pe-12'>
-                  {icon ? (
-                    <span
-                      className='material-symbols-rounded text-(--text-tertiary)'
-                      style={{
-                        fontSize: 'var(--icon-lg)',
-                        fontVariationSettings: "'FILL' 0, 'wght' 400",
-                      }}
-                    >
-                      {icon}
-                    </span>
-                  ) : null}
-                  {title ? (
-                    <h2 className='text-sm font-semibold text-(--text-primary) tracking-tight truncate py-1'>
-                      {title}
-                    </h2>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {/* Tabs Section - Strictly Centered */}
-              {tabs && activeTab && onTabChange ? (
-                <div className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-0'>
-                  <SegmentedControl
-                    options={tabs}
-                    value={activeTab}
-                    onChange={onTabChange}
-                    size='xs'
-                    fullWidth={false}
-                    iconSize='--icon-md'
-                  />
-                </div>
-              ) : null}
-
-              {/* End Section - Search + Header Actions + Close Button */}
-              <div className='flex items-center gap-2 absolute end-2 top-0 bottom-0'>
-                {searchable && (
-                  <div className='w-[300px]'>
-                    <SearchInput
-                      compact
-                      value={searchValue}
-                      onSearchChange={(val) => onSearchChange?.(val)}
-                      placeholder={searchPlaceholder}
-                      wrapperClassName='w-full'
-                    />
-                  </div>
-                )}
-                {headerActions}
-                {!hideCloseButton ? (
-                  <button
-                    onClick={onClose}
-                    className='w-8 h-8 rounded-full grid place-items-center text-(--text-tertiary) hover:text-(--text-primary) hover:bg-zinc-500/10 dark:hover:bg-zinc-400/15 active:scale-95 transition-all duration-200'
-                    aria-label='Close modal'
+              {title || tabs || headerActions ? (
+                <div className='h-full flex flex-col overflow-hidden'>
+                  {/* Header - Windows 10 Style (Compact & Functional) */}
+                  <div
+                    className='shrink-0 border-b border-(--border-divider)/50 bg-(--bg-card) px-4 h-11 flex items-center relative select-none'
+                    onContextMenu={handleHeaderContextMenu}
                   >
-                    <span
-                      className='material-symbols-rounded leading-none'
-                      style={{
-                        fontSize: '22px',
-                        fontVariationSettings: "'wght' 600",
-                        display: 'block',
-                      }}
-                    >
-                      close
-                    </span>
-                  </button>
-                ) : null}
-              </div>
-            </div>
+                    {/* Title Section: Icon + Title */}
+                    {title || icon ? (
+                      <div className='flex items-center gap-2 min-w-0 pe-12'>
+                        {icon ? (
+                          <span
+                            className='material-symbols-rounded text-(--text-tertiary)'
+                            style={{
+                              fontSize: 'var(--icon-lg)',
+                              fontVariationSettings: "'FILL' 0, 'wght' 400",
+                            }}
+                          >
+                            {icon}
+                          </span>
+                        ) : null}
+                        {title ? (
+                          <h2 className='text-sm font-semibold text-(--text-primary) tracking-tight truncate py-1'>
+                            {title}
+                          </h2>
+                        ) : null}
+                      </div>
+                    ) : null}
 
-            {/* Content - with internal padding and independent scrolling */}
-            <div
-              className={`flex-1 overflow-y-auto custom-scrollbar ${bodyClassName} content-shift-layer`}
-            >
-              {children}
-            </div>
+                    {/* Tabs Section - Strictly Centered */}
+                    {tabs && activeTab && onTabChange ? (
+                      <div className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-0'>
+                        <SegmentedControl
+                          options={tabs}
+                          value={activeTab}
+                          onChange={onTabChange}
+                          size='xs'
+                          fullWidth={false}
+                          iconSize='--icon-md'
+                        />
+                      </div>
+                    ) : null}
 
-            {/* Footer - with top border and balanced padding */}
-            {footer ? (
-              <div className='p-5 shrink-0 border-t border-(--border-divider) bg-(--bg-card)'>
-                {footer}
-              </div>
-            ) : null}
-          </div>
-        ) : (
-          children
+                    {/* End Section - Search + Header Actions + Close Button */}
+                    <div className='flex items-center gap-2 absolute end-2 top-0 bottom-0'>
+                      {searchable && (
+                        <div className='w-[300px]'>
+                          <SearchInput
+                            compact
+                            value={searchValue}
+                            onSearchChange={(val) => onSearchChange?.(val)}
+                            placeholder={searchPlaceholder}
+                            wrapperClassName='w-full'
+                          />
+                        </div>
+                      )}
+                      {headerActions}
+                      {!hideCloseButton ? (
+                        <button
+                          onClick={onClose}
+                          className='w-8 h-8 rounded-full grid place-items-center text-(--text-tertiary) hover:text-(--text-primary) hover:bg-zinc-500/10 dark:hover:bg-zinc-400/15 '
+                          aria-label='Close modal'
+                        >
+                          <span
+                            className='material-symbols-rounded leading-none'
+                            style={{
+                              fontSize: '22px',
+                              fontVariationSettings: "'wght' 600",
+                              display: 'block',
+                            }}
+                          >
+                            close
+                          </span>
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* Content - with internal padding and independent scrolling */}
+                  <div
+                    className={`flex-1 overflow-y-auto custom-scrollbar ${bodyClassName} content-shift-layer`}
+                  >
+                    {children}
+                  </div>
+
+                  {/* Footer - with top border and balanced padding */}
+                  {footer ? (
+                    <div className='p-5 shrink-0 border-t border-(--border-divider) bg-(--bg-card)'>
+                      {footer}
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                children
+              )}
+            </motion.div>
+          </>
         )}
-      </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+      </AnimatePresence>
     </div>,
     document.body
   );
