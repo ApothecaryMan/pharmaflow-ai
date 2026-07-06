@@ -212,6 +212,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setSidebarModalWidth,
     navbarMenuLayout,
     setNavbarMenuLayout,
+    reducedMotion,
+    setReducedMotion,
   } = settings;
 
   const { activeBranchId, updateBranch, activeBranch } = useData();
@@ -377,6 +379,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       { label: t.badgeStylePill, value: 'pill' },
                       { label: t.badgeStyleSlim, value: 'slim' },
                     ]}
+                  />
+                </SettingsRow>
+                <SettingsRow icon='animation' label={t.reducedMotion}>
+                  <Switch
+                    checked={reducedMotion}
+                    onChange={setReducedMotion}
+                    theme={currentTheme.name.toLowerCase()}
+                    activeColor={currentTheme.hex}
                   />
                 </SettingsRow>
                 {developerMode && (

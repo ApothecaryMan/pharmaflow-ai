@@ -86,6 +86,7 @@ export interface SettingsState {
   modalPresentationMode: 'modal' | 'sidebar';
   sidebarModalWidth: 'sm' | 'md' | 'lg' | 'xl';
   navbarMenuLayout: 'single' | 'multi';
+  reducedMotion: boolean;
 }
 // Context Type
 export interface SettingsContextType extends SettingsState {
@@ -124,6 +125,7 @@ export interface SettingsContextType extends SettingsState {
   setModalPresentationMode: (mode: 'modal' | 'sidebar') => void;
   setSidebarModalWidth: (width: 'sm' | 'md' | 'lg' | 'xl') => void;
   setNavbarMenuLayout: (layout: 'single' | 'multi') => void;
+  setReducedMotion: (value: boolean) => void;
   // Helpers
   availableThemes: ThemeColor[];
   availableLanguages: { code: Language; label: string }[];
@@ -173,6 +175,7 @@ const defaultSettings: SettingsState = {
   modalPresentationMode: 'modal',
   sidebarModalWidth: 'md',
   navbarMenuLayout: 'single',
+  reducedMotion: false,
 };
 
 // Load settings from storage
@@ -626,6 +629,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, navbarMenuLayout }));
   }, []);
 
+  const setReducedMotion = useCallback((reducedMotion: boolean) => {
+    setSettings((prev) => ({ ...prev, reducedMotion }));
+  }, []);
+
   // --- Centralized Locale Resolution ---
   const numeralLocale = useMemo(() => {
     const isAR = settings.language === 'AR';
@@ -685,6 +692,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setModalPresentationMode,
       setSidebarModalWidth,
       setNavbarMenuLayout,
+      setReducedMotion,
       availableThemes: THEMES,
       availableLanguages: LANGUAGES,
       numeralLocale,
@@ -721,6 +729,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setModalPresentationMode,
       setSidebarModalWidth,
       setNavbarMenuLayout,
+      setReducedMotion,
       numeralLocale,
       textLocale,
     ]

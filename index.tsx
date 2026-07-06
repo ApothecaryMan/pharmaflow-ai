@@ -9,12 +9,23 @@ if (!rootElement) {
   throw new Error('Could not find root element to mount to');
 }
 
+import { MotionConfig } from 'framer-motion';
 import { StatusBarProvider } from './components/layout/StatusBar';
 import { AlertProvider, SettingsProvider } from './context';
 import { DataProvider } from './context/DataContext';
 import { ShiftProvider } from './hooks/sales/useShift';
 import { LiveWidget } from './components/dashboard/LiveWidget';
 import { HelpProvider } from './context/HelpContext';
+import { useSettings } from './context';
+
+const AnimationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { reducedMotion } = useSettings();
+  return (
+    <MotionConfig reducedMotion={reducedMotion ? 'always' : 'never'}>
+      {children}
+    </MotionConfig>
+  );
+};
 
 const root = ReactDOM.createRoot(rootElement);
 
@@ -30,17 +41,19 @@ if (window.location.pathname === '/live-sales-widget') {
   root.render(
     <React.StrictMode>
       <SettingsProvider>
-        <HelpProvider>
-          <StatusBarProvider>
-            <AlertProvider>
-              <DataProvider>
-                <ShiftProvider>
-                  <App />
-                </ShiftProvider>
-              </DataProvider>
-            </AlertProvider>
-          </StatusBarProvider>
-        </HelpProvider>
+        <AnimationProvider>
+          <HelpProvider>
+            <StatusBarProvider>
+              <AlertProvider>
+                <DataProvider>
+                  <ShiftProvider>
+                    <App />
+                  </ShiftProvider>
+                </DataProvider>
+              </AlertProvider>
+            </StatusBarProvider>
+          </HelpProvider>
+        </AnimationProvider>
       </SettingsProvider>
     </React.StrictMode>
   );
