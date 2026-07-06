@@ -10,7 +10,6 @@ export const inventoryRepository = {
       orgId: db.org_id,
       branchId: db.branch_id,
       name: db.name,
-      nameAr: db.name_ar || undefined,
       genericName: db.generic_name || [],
       category: db.category,
       publicPrice: db.public_price,
@@ -43,7 +42,6 @@ export const inventoryRepository = {
     if (d.orgId !== undefined) db.org_id = d.orgId;
     if (d.branchId !== undefined) db.branch_id = d.branchId;
     if (d.name !== undefined) db.name = d.name;
-    if (d.nameAr !== undefined) db.name_ar = d.nameAr;
     if (d.genericName !== undefined) db.generic_name = d.genericName;
     if (d.category !== undefined) db.category = d.category;
     if (d.publicPrice !== undefined) db.public_price = d.publicPrice;
@@ -79,7 +77,7 @@ export const inventoryRepository = {
     let query = supabase
       .from(this.tableName)
       .select(
-        'id, org_id, branch_id, name, name_ar, generic_name, category, public_price, unit_price, cost_price, unit_cost_price, stock, damaged_stock, expiry_date, barcode, internal_code, units_per_pack, supplier_id, max_discount, dosage_form, min_stock, origin, manufacturer, tax, status, description, additional_barcodes, item_rank'
+        'id, org_id, branch_id, name, generic_name, category, public_price, unit_price, cost_price, unit_cost_price, stock, damaged_stock, expiry_date, barcode, internal_code, units_per_pack, supplier_id, max_discount, dosage_form, min_stock, origin, manufacturer, tax, status, description, additional_barcodes, item_rank'
       );
 
     if (branchId && branchId.toLowerCase() !== 'all') {
@@ -96,7 +94,7 @@ export const inventoryRepository = {
     const { data, error } = await supabase
       .from(this.tableName)
       .select(
-        'id, org_id, branch_id, name, name_ar, generic_name, category, public_price, unit_price, cost_price, unit_cost_price, stock, damaged_stock, expiry_date, barcode, internal_code, units_per_pack, supplier_id, max_discount, dosage_form, min_stock, origin, manufacturer, tax, status, description, additional_barcodes, item_rank'
+        'id, org_id, branch_id, name, generic_name, category, public_price, unit_price, cost_price, unit_cost_price, stock, damaged_stock, expiry_date, barcode, internal_code, units_per_pack, supplier_id, max_discount, dosage_form, min_stock, origin, manufacturer, tax, status, description, additional_barcodes, item_rank'
       )
       .eq('id', id)
       .maybeSingle();
@@ -108,7 +106,7 @@ export const inventoryRepository = {
     let query = supabase
       .from(this.tableName)
       .select(
-        'id, org_id, branch_id, name, name_ar, generic_name, category, public_price, unit_price, cost_price, unit_cost_price, stock, damaged_stock, expiry_date, barcode, internal_code, units_per_pack, supplier_id, max_discount, dosage_form, min_stock, origin, manufacturer, tax, status, description, additional_barcodes, item_rank'
+        'id, org_id, branch_id, name, generic_name, category, public_price, unit_price, cost_price, unit_cost_price, stock, damaged_stock, expiry_date, barcode, internal_code, units_per_pack, supplier_id, max_discount, dosage_form, min_stock, origin, manufacturer, tax, status, description, additional_barcodes, item_rank'
       )
       .eq('barcode', barcode);
 
