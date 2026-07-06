@@ -7,7 +7,7 @@ import { getDeviceName, getBrowserName, getSessionUserAgent, isDesktopAppUserAge
 import { formatDateWithRelativeLabel, getRelativeTime, getDurationMs, getDurationStr } from '../../utils/dateFormatter';
 import { authService } from '../../services/auth/authService';
 import { employeeService } from '../../services/hr/employeeService';
-import { isSessionOnline } from '../../hooks/infrastructure/useSessionHeartbeat';
+import { isSessionOnline, getSessionStatus } from '../../hooks/infrastructure/useSessionHeartbeat';
 import { Tooltip } from '../common/Tooltip';
 import { SearchInput } from '../common/SearchInput';
 
@@ -495,7 +495,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                         const hasEmployee = !!sessionEmployee;
                         const sessionUserName = sessionEmployee?.name || sessionEmployee?.en_name || t.activeSessions.unassigned;
                         const sessionUserImage = sessionEmployee?.image || null;
-                        const isOnline = isSessionOnline(session.last_seen_at);
+                        const status = getSessionStatus(session.last_seen_at);
                         
                         let IconComponent = Icons.Desktop;
                         let iconColor = 'text-primary-600';
@@ -515,7 +515,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                           iconColor = 'text-orange-600';
                         }
 
-                        const relativeTime = isOnline ? '' : getRelativeTime(session.last_seen_at, language);
+                        const relativeTime = status === 'online' ? '' : getRelativeTime(session.last_seen_at, language);
                         const startedInfo = formatDateWithRelativeLabel(session.created_at, language);
                         const lastSeenInfo = formatDateWithRelativeLabel(session.last_seen_at, language);
                         const sessionEnd = session.logged_out_at || session.last_seen_at;
@@ -529,10 +529,10 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                           <div className='group relative'>
                             <div className='flex items-center gap-3'>
                               <div className="relative shrink-0">
-                                {sessionUserImage ? (
-                                  <img src={sessionUserImage} alt={sessionUserName} className={`w-8 h-8 rounded-full object-cover ${isOnline ? 'ring-2 ring-green-500 ring-offset-2 dark:ring-offset-gray-900' : 'border border-(--border-divider)'}`} />
+                                  {sessionUserImage ? (
+                                  <img src={sessionUserImage} alt={sessionUserName} className={`w-8 h-8 rounded-full object-cover ${status === 'online' ? 'ring-2 ring-green-500 ring-offset-2 dark:ring-offset-gray-900' : status === 'stale' ? 'ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-gray-900' : 'border border-(--border-divider)'}`} />
                                 ) : (
-                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${isOnline ? 'ring-2 ring-green-500 ring-offset-2 dark:ring-offset-gray-900' : 'border border-(--border-divider)'} ${
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${status === 'online' ? 'ring-2 ring-green-500 ring-offset-2 dark:ring-offset-gray-900' : status === 'stale' ? 'ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-gray-900' : 'border border-(--border-divider)'} ${
                                     hasEmployee 
                                       ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300' 
                                       : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
@@ -546,9 +546,13 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                                   {sessionUserName}
                                 </span>
                                 <div className='md:hidden mt-0.5 text-xs'>
-                                  {isOnline ? (
+                                  {status === 'online' ? (
                                     <span className='text-green-600 dark:text-green-400 font-medium'>
                                       {t.activeSessions.onlineNow}
+                                    </span>
+                                  ) : status === 'stale' ? (
+                                    <span className='text-amber-600 dark:text-amber-400 font-medium'>
+                                      {language === 'AR' ? 'غادر لتوه' : 'Just left'} · {lastSeenInfo.time}
                                     </span>
                                   ) : (
                                     <span className='text-gray-500'>
@@ -669,9 +673,14 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                           <div className='flex items-center gap-2 md:block'>
                             <span className='md:hidden text-xs font-semibold uppercase opacity-70'>{t.activeSessions.seenLabel}</span>
                             <div className='flex items-center gap-2 md:block'>
-                              {isOnline ? (
+                              {status === 'online' ? (
                                 <div className='text-green-600 dark:text-green-400 font-medium'>
                                   {t.activeSessions.onlineNow}
+                                </div>
+                              ) : status === 'stale' ? (
+                                <div className='text-amber-600 dark:text-amber-400 font-medium'>
+                                  {language === 'AR' ? 'غادر لتوه' : 'Just left'}
+                                  <span className='text-xs text-amber-500 block'>{lastSeenInfo.time}</span>
                                 </div>
                               ) : (
                                 <>
