@@ -42,14 +42,16 @@
 }
 
 @layer base {
+
   /* Firefox specific isolation (only applied to browsers lacking webkit pseudo-elements support) */
   @supports not selector(::-webkit-scrollbar) {
     @media (hover: hover) {
       *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *) {
         scrollbar-width: thin !important;
         scrollbar-color: transparent transparent !important;
-        transition: scrollbar-color 0.25s ease;
+        transition: scrollbar-color 0.1s ease;
       }
+
       *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *):hover {
         scrollbar-color: rgba(156, 163, 175, 0.3) transparent !important;
       }
@@ -60,7 +62,7 @@
   @media (hover: hover) {
     *:not(.no-scrollbar):not(.scrollbar-hide):not(.scrollbar-sandbox):not(.scrollbar-sandbox *) {
       --global-scrollbar-color: rgba(156, 163, 175, 0) !important;
-      transition: --global-scrollbar-color 0.25s ease-in-out;
+      transition: --global-scrollbar-color 0.1s ease-in-out;
     }
 
     /* Transition to visible state when container is hovered */
@@ -96,6 +98,7 @@
 @utility scrollbar-hide {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
+
   &::-webkit-scrollbar {
     display: none !important;
   }
@@ -109,4 +112,3 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none !important;
 }
-
