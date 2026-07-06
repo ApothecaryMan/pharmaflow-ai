@@ -212,28 +212,12 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   const helpContent = REALTIME_SALES_MONITOR_HELP[language] || REALTIME_SALES_MONITOR_HELP.EN;
   usePageHelp(helpContent);
 
-  useEffect(() => {
-    if (isTauri()) {
-      const sendUpdate = () => {
-        emit('live-widget-update', { revenue, transactions, isDark: darkMode }).catch(console.warn);
-      };
-
-      sendUpdate();
-
-      let unlisten: () => void;
-      import('@tauri-apps/api/event').then(({ listen }) => {
-        listen('live-widget-ready', () => {
-          sendUpdate();
-        }).then((u) => {
-          unlisten = u;
-        });
-      });
-
-      return () => {
-        if (unlisten) unlisten();
-      };
-    }
-  }, [revenue, transactions, darkMode]);
+  const dailyTarget = useMemo(() => {
+    if (!activeBranch?.monthlySalesTarget) return 0;
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    return Math.round(activeBranch.monthlySalesTarget / daysInMonth);
+  }, [activeBranch?.monthlySalesTarget]);
 
   const alert = useAlert();
 
@@ -262,7 +246,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       } else {
         const widgetWindow = new WebviewWindow(label, {
           url: '/live-sales-widget',
-          width: 360,
+          width: 500,
           height: 72,
           alwaysOnTop: true,
           decorations: false,
@@ -276,7 +260,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
 
         widgetWindow.once('tauri://created', () => {
           setTimeout(() => {
-            emit('live-widget-update', { revenue, transactions }).catch(console.warn);
+            emit('live-widget-update', { revenue, transactions, dailyTarget }).catch(console.warn);
           }, 500);
         });
 
@@ -582,13 +566,6 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       { name: t.realTimeSales?.general || 'General', value: groups.general, color: '#94a3b8' },
     ].filter((d) => d.value > 0);
   }, [todaysSales, products, t]);
-
-  const dailyTarget = useMemo(() => {
-    if (!activeBranch?.monthlySalesTarget) return 0;
-    const now = new Date();
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    return Math.round(activeBranch.monthlySalesTarget / daysInMonth);
-  }, [activeBranch?.monthlySalesTarget]);
 
   return (
     <div

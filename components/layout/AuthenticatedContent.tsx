@@ -21,6 +21,7 @@ import { LogoutOverlay } from './LogoutOverlay';
 import { MainLayout } from './MainLayout';
 import { PageRouter } from './PageRouter';
 import { useStatusBar } from './StatusBar';
+import { WidgetUpdateEmitter } from '../dashboard/WidgetUpdateEmitter';
 
 export interface AuthenticatedContentProps extends AppState, AuthState {}
 
@@ -413,6 +414,8 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
         onSelectEmployee={handleSelectEmployee}
         onLogout={onLogoutClick}
       />
+
+      <WidgetUpdateEmitter />
 
       {/* Windowed Mode Modal */}
       <Modal

@@ -21,7 +21,9 @@ const root = ReactDOM.createRoot(rootElement);
 if (window.location.pathname === '/live-sales-widget') {
   root.render(
     <React.StrictMode>
-      <LiveWidget />
+      <SettingsProvider>
+        <LiveWidget />
+      </SettingsProvider>
     </React.StrictMode>
   );
 } else {
@@ -31,7 +33,7 @@ if (window.location.pathname === '/live-sales-widget') {
         <HelpProvider>
           <StatusBarProvider>
             <AlertProvider>
-              <DataProvider initialSuppliers={[]}>
+              <DataProvider>
                 <ShiftProvider>
                   <App />
                 </ShiftProvider>
