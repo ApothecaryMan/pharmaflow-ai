@@ -3,7 +3,7 @@ import { supabase } from '../../../lib/supabase';
 import { sessionRepository, type UserActiveSession } from '../../../services/auth/repositories/sessionRepository';
 import { authService } from '../../../services/auth/authService';
 import { getDeviceName, getBrowserName, isDesktopAppUserAgent, getSessionUserAgent } from '../../../utils/platform';
-import { isSessionOnline } from '../../../hooks/infrastructure/useSessionHeartbeat';
+import { isSessionOnline, getSessionStatus } from '../../../hooks/infrastructure/useSessionHeartbeat';
 import { formatDateWithRelativeLabel, getRelativeTime } from '../../../utils/dateFormatter';
 import { Icons } from '../../common/Icons';
 import type { Employee, UserProfile } from '../../../types';
@@ -17,6 +17,8 @@ interface EmployeeSessionsTabProps {
   loading: boolean;
   error: string | null;
   onReloadSessions: () => Promise<void>;
+  currentBranchId?: string;
+  currentOrgId?: string;
 }
 
 export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
@@ -28,6 +30,8 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
   loading,
   error,
   onReloadSessions,
+  currentBranchId,
+  currentOrgId,
 }) => {
   const currentUserAgent = typeof navigator !== 'undefined' ? getSessionUserAgent(navigator.userAgent) : '';
   const employeeIds = workspaces.map(w => w.id);
@@ -91,6 +95,9 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
   };
 
   const mySessions = sessions.filter(session => {
+    if (!session.org_id || !session.branch_id) return false;
+    if (currentOrgId && session.org_id !== currentOrgId) return false;
+    if (currentBranchId && session.branch_id !== currentBranchId) return false;
     if (session.user_id === profile?.id) return true;
     if (session.employee_id && employeeIds.includes(session.employee_id)) return true;
     return false;
@@ -156,9 +163,9 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
             const displayDeviceName = getDeviceName(session.user_agent || '', session.device_info || '');
               const displayBrowserName = getBrowserName(session.user_agent || '');
               const isDesktopAppSession = isDesktopAppUserAgent(session.user_agent || '');
-              const isOnline = isSessionOnline(session.last_seen_at);
+              const status = getSessionStatus(session.last_seen_at);
               const language = isRTL ? 'AR' : 'EN';
-              const relativeTime = isOnline ? '' : getRelativeTime(session.last_seen_at, language);
+              const relativeTime = status === 'online' ? '' : getRelativeTime(session.last_seen_at, language);
               const lastSeenInfo = formatDateWithRelativeLabel(session.last_seen_at, language);
               
               let IconComponent = Icons.Desktop;
@@ -219,10 +226,22 @@ export const EmployeeSessionsTab: React.FC<EmployeeSessionsTabProps> = ({
                           <span>{workspaceName}</span>
                         </div>
                         <div className='flex items-center gap-1.5'>
-                          <span className={`material-symbols-rounded text-[16px] ${isOnline ? 'text-green-500 dark:text-green-400' : ''}`}>schedule</span>
-                          {isOnline ? (
+                          <span className={`material-symbols-rounded text-[16px] ${status === 'online' ? 'text-green-500 dark:text-green-400' : status === 'stale' ? 'text-amber-500 dark:text-amber-400' : ''}`}>schedule</span>
+                          {status === 'online' ? (
                             <span className='text-green-600 dark:text-green-400 font-medium'>
                               {isRTL ? 'متصل الآن' : 'Online Now'}
+                            </span>
+                          ) : status === 'stale' ? (
+                            <span className='flex items-center gap-1 flex-wrap'>
+                              <span className='text-amber-600 dark:text-amber-400 font-medium'>
+                                {isRTL ? 'غادر لتوه' : 'Just left'}
+                              </span>
+                              {relativeTime && (
+                                <>
+                                  <span className='opacity-50 text-xs'>·</span>
+                                  <span className='opacity-70 text-xs'>{lastSeenInfo.time}</span>
+                                </>
+                              )}
                             </span>
                           ) : (
                             <span className='flex items-center gap-1 flex-wrap'>

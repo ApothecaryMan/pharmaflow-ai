@@ -48,6 +48,28 @@ export function useSessionHeartbeat(isAuthenticated: boolean) {
 export const ONLINE_THRESHOLD_MS = 5 * 60 * 1000;
 
 /**
+ * Threshold in milliseconds — sessions within this window are confidently
+ * online. After this but before ONLINE_THRESHOLD_MS, the session is stale
+ * (heartbeat may have been missed).
+ */
+export const STALE_THRESHOLD_MS = 2 * 60 * 1000;
+
+export type SessionStatus = 'online' | 'stale' | 'offline';
+
+/**
+ * Returns the liveliness status of a session based on its last_seen_at.
+ *  - 'online':  confidently active (within heartbeat interval)
+ *  - 'stale':   probably inactive, but still within the grace window
+ *  - 'offline': exceeded the online threshold
+ */
+export function getSessionStatus(lastSeenAt: string): SessionStatus {
+  const elapsed = Date.now() - new Date(lastSeenAt).getTime();
+  if (elapsed < STALE_THRESHOLD_MS) return 'online';
+  if (elapsed < ONLINE_THRESHOLD_MS) return 'stale';
+  return 'offline';
+}
+
+/**
  * Helper: check if a session is considered online based on its last_seen_at timestamp.
  */
 export function isSessionOnline(lastSeenAt: string): boolean {

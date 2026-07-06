@@ -21,6 +21,8 @@ interface EmployeePortalProfileProps {
   onUpdateWorkspacePassword?: (employeeId: string, newPassword: string) => Promise<void>;
   onRegisterWorkspaceFingerprint?: (employeeId: string, username: string) => Promise<void>;
   isLoading?: boolean;
+  currentBranchId?: string;
+  currentOrgId?: string;
 }
 
 export type CachedDocs = {
@@ -44,6 +46,8 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
   onUpdateProfile,
   onUpdateWorkspacePassword,
   onRegisterWorkspaceFingerprint,
+  currentBranchId,
+  currentOrgId,
 }) => {
   const [activeTab, setActiveTab] = useState<ProfileTabType>('profile');
   const [isEditing, setIsEditing] = useState(false);
@@ -114,10 +118,13 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
   const employeeIds = useMemo(() => workspaces.map(w => w.id), [workspaces]);
 
   const mySessions = useMemo(() => sessions.filter(session => {
+    if (!session.org_id || !session.branch_id) return false;
+    if (currentOrgId && session.org_id !== currentOrgId) return false;
+    if (currentBranchId && session.branch_id !== currentBranchId) return false;
     if (session.user_id === profile?.id) return true;
     if (session.employee_id && employeeIds.includes(session.employee_id)) return true;
     return false;
-  }), [sessions, profile?.id, employeeIds]);
+  }), [sessions, profile?.id, employeeIds, currentBranchId, currentOrgId]);
 
   const onlineCount = mySessions.filter(session => isSessionOnline(session.last_seen_at)).length;
   const offlineCount = mySessions.length - onlineCount;
@@ -230,6 +237,8 @@ export const EmployeePortalProfile: React.FC<EmployeePortalProfileProps> = ({
           loading={loadingSessions}
           error={sessionsError}
           onReloadSessions={reloadSessions}
+          currentBranchId={currentBranchId}
+          currentOrgId={currentOrgId}
         />
       )}
     </div>

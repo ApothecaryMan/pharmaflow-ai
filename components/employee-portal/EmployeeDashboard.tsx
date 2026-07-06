@@ -251,6 +251,8 @@ export function EmployeeDashboard({
                   onUpdateProfile={handleUpdateProfile}
                   onUpdateWorkspacePassword={handleUpdateWorkspacePassword}
                   onRegisterWorkspaceFingerprint={handleRegisterWorkspaceFingerprint}
+                  currentBranchId={session?.branchId}
+                  currentOrgId={session?.orgId}
                 />
               )}
 
