@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { intelligenceService } from '../../services/intelligence/intelligenceService';
 import type { ExpiryRiskItem, RiskSummary } from '../../types/intelligence';
@@ -19,7 +19,7 @@ interface UseRiskResult {
 }
 
 export function useRisk(): UseRiskResult {
-  const { activeBranchId } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
   const [summary, setSummary] = useState<RiskSummary | null>(null);
   const [items, setItems] = useState<ExpiryRiskItem[]>([]);
   const [loading, setLoading] = useState(true);

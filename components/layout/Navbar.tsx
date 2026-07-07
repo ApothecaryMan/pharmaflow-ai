@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { MenuItem } from '../../config/menuData';
 import { useSettings } from '../../context';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { authService } from '../../services/auth/authService';
 import { orgService } from '../../services/org/orgService';
@@ -76,14 +76,12 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
   const currentEmployee = employees.find((e) => e.id === currentEmployeeId);
 
-  const {
-    activeBranchId,
-    switchBranch,
-    activeOrgId,
-    switchOrg,
-    branches,
-    isLoading: isDataLoading,
-  } = useData();
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const switchBranch = useAuthStore((s) => s.switchBranch);
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
+  const switchOrg = useAuthStore((s) => s.switchOrg);
+  const branches = useAuthStore((s) => s.branches);
+  const isDataLoading = useAuthStore((s) => s.isLoading);
 
   const [userOrgs, setUserOrgs] = useState<Organization[]>([]);
   const [activeOrg, setActiveOrg] = useState<Organization | null>(null);

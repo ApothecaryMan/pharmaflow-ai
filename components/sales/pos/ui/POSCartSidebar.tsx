@@ -3,7 +3,7 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import React, { useCallback, useMemo } from 'react';
 import type { UserRole } from '../../../../config/permissions';
-import { useData } from '../../../../context/DataContext';
+import { useAuthStore } from '../../../../stores/authStore';
 import { useNetworkStatus } from '../../../../hooks/common/useNetworkStatus';
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import { getGroupingKey } from '../../../../services/inventory/batchService';
@@ -207,7 +207,9 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(
     setDeliveryFee,
   }) => {
     const { isOnline } = useNetworkStatus();
-    const { activeBranch } = useData();
+    const branches = useAuthStore(s => s.branches);
+    const activeBranchId = useAuthStore(s => s.activeBranchId);
+    const activeBranch = useMemo(() => branches.find(b => b.id === activeBranchId), [branches, activeBranchId]);
     const { hideMenu } = useContextMenu();
     const globalDeliveryFee = activeBranch?.deliveryFee ?? 5;
 

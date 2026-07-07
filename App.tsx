@@ -38,7 +38,7 @@ import { NotificationOverlay } from './components/features/alerts/NotificationOv
 
 import { ROUTES } from './config/routes';
 import { CatalogProvider, LANGUAGES, THEMES, useAlert, useSettings } from './context';
-import { DataProvider, useData } from './context/DataContext';
+import { useAuthStore } from './stores/authStore';
 import { type AuthState, useAuth } from './hooks/auth/useAuth';
 import { useOnboardingStatus } from './hooks/auth/useOnboardingStatus';
 import { usePreventZoom } from './hooks/infrastructure/usePreventZoom';
@@ -245,7 +245,16 @@ const App: React.FC = () => {
   // 6. Stable Login Callbacks
   const { setIsAuthenticated } = authState;
   const { setActiveModule, setView } = appState;
-  const { reinitialize } = useData();
+  const reinitialize = useAuthStore(s => s.reinitialize);
+
+  // 6.1 Initialize auth data on mount (replaces old DataProvider.initData())
+  const isInitializedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (authState.isAuthenticated && !isInitializedRef.current) {
+      isInitializedRef.current = true;
+      reinitialize();
+    }
+  }, [authState.isAuthenticated, reinitialize]);
 
   const handleLoginSuccess = useCallback(() => {
     setIsAuthenticated(true);

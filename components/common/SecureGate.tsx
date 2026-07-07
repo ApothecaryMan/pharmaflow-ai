@@ -2,7 +2,7 @@ import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { Modal } from './Modal';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { startAuthentication } from '@simplewebauthn/browser';
 import { isWebAuthnSupported } from '../../utils/webAuthnUtils';
@@ -34,7 +34,7 @@ export const SecureGate: React.FC<SecureGateProps> = ({
   standalone = false,
 }) => {
   const t = TRANSLATIONS[language];
-  const { currentEmployee } = useData();
+  const currentEmployee = useAuthStore(s => s.currentEmployee);
 
   const [isUnlocked, setIsUnlocked] = useState(() => sessionStorage.getItem(storageKey) === 'true');
   const [internalIsOpen, setInternalIsOpen] = useState(true);

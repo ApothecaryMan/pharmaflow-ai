@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Icons from '@/components/common/Icons';
 import { Map, MapClusterLayer, MapControls, type MapViewport, useMap } from '@/components/ui/map';
 import { useSettings } from '../../context';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { SegmentedControl } from '../common/SegmentedControl';
 import CustomerDeliveryView, { DELIVERY_ROUTE } from './CustomerDeliveryView';
 
@@ -129,7 +129,7 @@ function DashboardOverlay({
 // Map Component
 // ----------------------------------------------------
 export default function CustomerDensityMap({ language = 'ar' }: { language?: any }) {
-  const { activeBranch } = useData();
+  const activeBranch = useAuthStore(s => s.branches.find(b => b.id === s.activeBranchId));
   const { darkMode } = useSettings();
   const [activeTab, setActiveTab] = useState('distribution');
   const isDeliveryView = activeTab === 'delivery';

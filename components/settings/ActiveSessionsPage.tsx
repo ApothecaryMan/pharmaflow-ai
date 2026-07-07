@@ -43,6 +43,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
   const [sortKey, setSortKey] = useState<SortKey>('lastSeen');
   const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null);
   const [isEndingAll, setIsEndingAll] = useState(false);
+  const [endingSessions, setEndingSessions] = useState<Set<string>>(new Set());
   const [refreshing, setRefreshing] = useState(false);
 
   const currentUser = authService.getCurrentUserSync();
@@ -111,6 +112,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
   }, [currentUser?.userId]);
 
   const handleLogout = async (sessionId: string) => {
+    setEndingSessions(prev => new Set(prev).add(sessionId));
     try {
       const terminatorName = currentUser?.employeeName || 'Admin';
       await sessionRepository.logoutSession(sessionId, terminatorName);
@@ -132,6 +134,12 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
       await refreshSessions();
     } catch (err) {
       console.error('Failed to logout session', err);
+    } finally {
+      setEndingSessions(prev => {
+        const next = new Set(prev);
+        next.delete(sessionId);
+        return next;
+      });
     }
   };
 
@@ -714,10 +722,15 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
                             ) : (
                               <button
                                 onClick={() => handleLogout(session.id)}
-                                className='inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/60 cursor-pointer whitespace-nowrap w-full md:w-auto justify-center'
+                                disabled={endingSessions.has(session.id)}
+                                className='inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/60 disabled:opacity-50 cursor-pointer whitespace-nowrap w-full md:w-auto justify-center'
                                 title={t.activeSessions.terminate}
                               >
-                                <Icons.Logout size={14} />
+                                {endingSessions.has(session.id) ? (
+                                  <div className='animate-spin rounded-full h-3.5 w-3.5 border-2 border-gray-200 dark:border-gray-700 border-t-gray-600 dark:border-t-gray-400'></div>
+                                ) : (
+                                  <Icons.Logout size={14} />
+                                )}
                                 <span className='text-xs font-medium'>
                                   {t.activeSessions.end}
                                </span>

@@ -23,7 +23,7 @@ import { useStatusBar } from '../../components/layout/StatusBar';
 import { TabBar } from '../../components/layout/TabBar';
 import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { useLongPress } from '../../hooks/common/useLongPress';
 import { usePurchaseTabs } from '../../hooks/purchases/usePurchaseTabs';
 import { settingsService } from '../../services';
@@ -523,7 +523,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const { error: showToastError } = useAlert();
   const { showMenu } = useContextMenu();
   const { textTransform } = useSettings();
-  const { activeBranchId, activeOrgId } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeOrgId = useAuthStore(s => s.activeOrgId);
   const {
     tabs,
     activeTab,

@@ -3,7 +3,7 @@ import type React from 'react';
 import { useMemo, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { inventoryService } from '../../services/inventory/inventoryService';
 import type { Drug, StockBatch } from '../../types';
 import { formatCompactCurrencyParts, formatCurrencyParts } from '../../utils/currency';
@@ -46,7 +46,9 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
   onBatchesChanged,
 }) => {
   const { textTransform } = useSettings();
-  const { activeBranchId, activeOrgId, currentEmployee } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeOrgId = useAuthStore(s => s.activeOrgId);
+  const currentEmployee = useAuthStore(s => s.currentEmployee);
   const [loading, setLoading] = useState(true);
   const { getVerifiedDate } = useStatusBar();
   const { success, error } = useAlert();

@@ -2,7 +2,7 @@ import type React from 'react';
 import { useEffect, useState } from 'react';
 import { PERMISSIONS_MAPPING } from '../../config/permissionsMapping';
 import { useSettings } from '../../context';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { ORG_MANAGEMENT_HELP } from '../../i18n/helpInstructions';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { permissionsService } from '../../services/auth/permissionsService';
@@ -35,7 +35,7 @@ export const OrganizationManagementPage: React.FC<OrganizationManagementPageProp
   const [data, setData] = useState<OrgData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { currentEmployee } = useData();
+  const currentEmployee = useAuthStore(s => s.currentEmployee);
   const [activeMatrixTab, setActiveMatrixTab] = useState<'managers' | 'staff'>('managers');
 
   // Upgrade Transition State

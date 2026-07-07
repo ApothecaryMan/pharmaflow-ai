@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSettings } from '../../context';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { permissionsService } from '../../services/auth/permissionsService';
 import type { Drug, Employee, Purchase, PurchaseReturn, Shift, Supplier } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
@@ -53,7 +53,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
   employees,
   isLoading,
 }) => {
-  const { activeBranchId } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
   const { textTransform } = useSettings();
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});

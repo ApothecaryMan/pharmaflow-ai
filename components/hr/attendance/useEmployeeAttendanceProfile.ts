@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useData } from '../../../context/DataContext';
+import { useAuthStore } from '../../../stores/authStore';
 import { useSettings } from '../../../context/SettingsContext';
 import { TRANSLATIONS } from '../../../i18n/translations';
 import {
@@ -15,7 +15,7 @@ import { formatDuration } from '../../../utils/attendanceUtils';
  */
 export const useEmployeeAttendanceProfile = (employeeId?: string) => {
   const { language } = useSettings();
-  const { activeBranchId } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
   const isRTL = language === 'AR';
   const t = TRANSLATIONS[language];
 

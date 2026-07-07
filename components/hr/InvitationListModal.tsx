@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { TRANSLATIONS } from '../../i18n/translations';
-import { useData } from '../../services';
+import { useAuthStore } from '../../stores/authStore';
 import { employeeProfileRepository } from '../../services/hr/repositories/employeeProfileRepository';
 import { employmentRequestRepository } from '../../services/hr/repositories/employmentRequestRepository';
 import { orgService } from '../../services/org/orgService';
@@ -24,7 +24,7 @@ export function InvitationListModal({ isOpen, onClose, language }: Props) {
   const [profilesByUsername, setProfilesByUsername] = useState<Map<string, UserProfile>>(new Map());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { branches } = useData();
+  const branches = useAuthStore(s => s.branches);
 
   const t = TRANSLATIONS[language as 'EN' | 'AR'].employeeList as any;
 

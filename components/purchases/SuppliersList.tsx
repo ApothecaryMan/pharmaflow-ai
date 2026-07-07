@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { AREAS, CITIES, GOVERNORATES } from '../../data/locations';
 import { permissionsService } from '../../services/auth/permissionsService';
 import type { Supplier } from '../../types';
@@ -75,7 +75,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
   language,
 }) => {
   const { showMenu } = useContextMenu();
-  const { activeBranchId } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
   const [search, setSearch] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});

@@ -1,5 +1,9 @@
 import { useMemo } from 'react';
-import { useData } from '../../services';
+import { useAuthStore } from '../../stores/authStore';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
+import { useCustomers } from '../../hooks/queries/useCustomersQuery';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
 import { permissionsService } from '../../services/auth/permissionsService';
 
 export interface TickerData {
@@ -18,7 +22,11 @@ export interface TickerData {
 }
 
 export const useDynamicTickerData = (): TickerData => {
-  const { sales, inventory, customers, employees } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const { data: sales = [] } = useRecentSales(activeBranchId);
+  const { data: inventory = [] } = useInventory(activeBranchId);
+  const { data: customers = [] } = useCustomers(activeBranchId);
+  const { data: employees = [] } = useEmployees(activeBranchId);
 
   const metrics = useMemo(() => {
     const now = new Date();

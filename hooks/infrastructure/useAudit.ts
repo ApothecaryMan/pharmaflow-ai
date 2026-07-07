@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { intelligenceService } from '../../services/intelligence/intelligenceService';
 import type { AuditTransaction } from '../../types/intelligence';
@@ -18,7 +18,7 @@ interface UseAuditResult {
 }
 
 export function useAudit(limit: number = 100): UseAuditResult {
-  const { activeBranchId } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
   const [transactions, setTransactions] = useState<AuditTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useState } from 'react';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
 import { useSettings } from '../../context/SettingsContext';
 import { pricingService } from '../../services/sales/pricingService';
 import type { CartItem, Drug } from '../../types';
@@ -52,7 +53,8 @@ export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
   onClearCart,
   t,
 }) => {
-  const { employees } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const { data: employees = [] } = useEmployees(activeBranchId);
   const { language } = useSettings();
 
   // --- Local checkout state ---

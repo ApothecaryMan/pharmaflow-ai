@@ -2,7 +2,8 @@ import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSettings } from '../../context';
 import { TRANSLATIONS } from '../../i18n/translations';
-import { useData } from '../../services';
+import { useAuthStore } from '../../stores/authStore';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { stockMovementService } from '../../services/inventory/stockMovement/stockMovementService';
 import { DrugSearchEngine } from '../../services/search/drugSearchService';
 import type { Drug, StockMovement, StockMovementFilters, StockMovementSummary } from '../../types';
@@ -14,7 +15,9 @@ interface UseStockMovementReportProps {
 }
 
 export const useStockMovementReport = ({ onViewChange }: UseStockMovementReportProps) => {
-  const { inventory, isLoading: isDataLoading, activeBranchId } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const isDataLoading = useAuthStore(s => s.isLoading);
+  const { data: inventory = [] } = useInventory(activeBranchId);
   const { language, theme, textTransform } = useSettings();
   const themeColor = theme.primary;
   const t = TRANSLATIONS[language];

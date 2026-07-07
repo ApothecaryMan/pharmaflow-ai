@@ -26,7 +26,8 @@ import { startAuthentication } from '@simplewebauthn/browser';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { TRANSLATIONS } from '../../../i18n/translations';
-import { useData } from '../../../services';
+import { useAuthStore } from '../../../stores/authStore';
+import { useEmployees } from '../../../hooks/queries/useEmployeesQuery';
 import { permissionsService } from '../../../services/auth/permissionsService';
 import { attendanceService } from '../../../services/hr/attendanceService';
 import type { AttendanceEvent, AttendanceEventType, Employee } from '../../../types/hr';
@@ -57,7 +58,10 @@ const SESSION_TOKEN_KEY = 'attendance_terminal_token';
 
 export const AttendanceTerminal: React.FC<AttendanceTerminalProps> = ({ language }) => {
   const t = TRANSLATIONS[language];
-  const { employees, activeBranchId, activeOrgId } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeOrgId = useAuthStore(s => s.activeOrgId);
+  const { data: employeesData } = useEmployees(activeBranchId);
+  const employees = employeesData ?? [];
 
   // ─── Permission Checks ───
   const canClock = permissionsService.can('attendance.clock');

@@ -2,7 +2,7 @@ import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { PERMISSIONS_MAPPING } from '../../config/permissionsMapping';
 import { useAlert, useSettings } from '../../context';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { getLocationName } from '../../data/locations';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { permissionsService } from '../../services/auth/permissionsService';
@@ -269,7 +269,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
   onViewChange,
 }) => {
   const t = TRANSLATIONS[language];
-  const { refreshAll } = useData();
+  const refreshAll = useAuthStore(s => s.refreshAll);
   const { activeBranchId } = useSettings();
 
   const [branches, setBranches] = useState<Branch[]>([]);

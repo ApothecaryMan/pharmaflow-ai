@@ -16,7 +16,7 @@ import { emit } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useSettings, useAlert } from '../../context';
 import { isTauri } from '../../utils/platform';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { useShift } from '../../hooks/sales/useShift';
 import { REALTIME_SALES_MONITOR_HELP } from '../../i18n/helpInstructions';
 import type { Customer, Drug, Sale, ThemeColor } from '../../types';
@@ -150,7 +150,10 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   const { playHighValue } = usePosSounds();
   const [expandedView, setExpandedView] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'VIP' | 'HIGH_VALUE'>('ALL');
-  const { isLoading, branches, activeBranchId, activeBranch } = useData();
+  const isLoading = useAuthStore(s => s.isLoading);
+  const branches = useAuthStore(s => s.branches);
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeBranch = useMemo(() => branches.find(b => b.id === activeBranchId), [branches, activeBranchId]);
   const { shifts } = useShift();
   const [branchFilter, setBranchFilter] = useState<string>(activeBranchId || 'all');
 

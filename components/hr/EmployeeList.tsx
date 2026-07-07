@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { useData } from '../../services';
+import { useAuthStore } from '../../stores/authStore';
 import { authService } from '../../services/auth/authService';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { employeeService } from '../../services/hr/employeeService';
@@ -45,7 +45,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   onViewChange,
 }) => {
   // --- Data Context ---
-  const { branches } = useData();
+  const branches = useAuthStore(s => s.branches);
 
   // --- State ---
   const [isModalOpen, setIsModalOpen] = useState(false);

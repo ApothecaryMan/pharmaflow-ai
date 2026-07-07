@@ -3,7 +3,7 @@ import type React from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { UserRole } from '../../../config/permissions';
 import { useAlert, useSettings } from '../../../context';
-import { useData } from '../../../context/DataContext';
+import { useAuthStore } from '../../../stores/authStore';
 import { getLocationName } from '../../../data/locations';
 import { useInventorySearch } from '../../../hooks/inventory/useInventorySearch';
 import { useFilterDropdown } from '../../../hooks/layout/useFilterDropdown';
@@ -16,11 +16,7 @@ import { pricingService } from '../../../services/sales/pricingService';
 import { inventorySearchEngine } from '../../../services/search/drugSearchService';
 import type { CartItem, Customer, Drug, Employee, Language, Sale, Shift } from '../../../types';
 import { getArabicDisplayName, getDisplayName } from '../../../utils/drugDisplayName';
-import {
-  formatExpiryDate,
-  getExpiryColorClass,
-  parseExpiryEndOfMonth,
-} from '../../../utils/expiryUtils';
+import { formatExpiryDate, getExpiryColorClass } from '../../../utils/expiryUtils';
 import { formatStock } from '../../../utils/inventory';
 import { money } from '../../../utils/money';
 import { parseSearchTerm } from '../../../utils/searchUtils';
@@ -35,6 +31,7 @@ import { Modal } from '../../common/Modal';
 import { SearchEngineInput } from '../../common/SearchEngineInput';
 import { SegmentedControl } from '../../common/SegmentedControl';
 import { SmartAutocomplete } from '../../common/SmartInputs';
+import { HoverDropdown } from '../../common/HoverDropdown';
 import { PriceDisplay, TanStackTable } from '../../common/TanStackTable';
 import { useStatusBar } from '../../layout/StatusBar';
 import { DeliveryOrdersModal } from './DeliveryOrdersModal';
@@ -106,7 +103,8 @@ export const POS: React.FC<POSProps> = ({
   const isRTL = (t as any).direction === 'rtl' || language === 'AR' || (language as any) === 'ar';
   const currentLang = isRTL ? 'ar' : 'en';
 
-  const { activeBranchId, isLoading } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const isLoading = useAuthStore(s => s.isLoading);
 
   const {
     tabs,
@@ -714,41 +712,45 @@ export const POS: React.FC<POSProps> = ({
         meta: { align: 'center' },
         cell: (info) => {
           const row = info.row.original;
+          const hasDual = row.unitsPerPack && row.unitsPerPack > 1;
+          if (!hasDual) {
+            return (
+              <div className='w-full h-full flex items-center justify-center overflow-visible'>
+                <span className='text-sm font-bold text-gray-700 dark:text-gray-300'>{t.pack}</span>
+              </div>
+            );
+          }
           return (
             <div className='w-full h-full flex items-center justify-center overflow-visible'>
-              {row.unitsPerPack && row.unitsPerPack > 1 ? (
-                <div className='group relative inline-block'>
-                  <div className='flex items-center justify-center font-bold h-7 w-20 mx-auto px-1.5 border-2 border-gray-300 dark:border-(--border-divider) rounded-md bg-(--bg-card) group-hover:bg-gray-100 dark:group-hover:bg-gray-800/70 cursor-pointer'>
-                    <span className='text-sm text-gray-700 dark:text-gray-300'>{selectedUnits[row.id] === 'unit' ? t.unit : t.pack}</span>
+              <HoverDropdown
+                trigger={
+                  <div className='flex items-center justify-center font-bold h-7 w-20 mx-auto px-1.5 border-2 border-gray-300 dark:border-(--border-divider) rounded-md bg-(--bg-card) group-hover:bg-gray-200 dark:group-hover:bg-gray-600/80 cursor-pointer'>
+                    <span className='text-sm text-gray-700 dark:text-gray-300'>
+                      {selectedUnits[row.id] === 'unit' ? t.unit : t.pack}
+                    </span>
                   </div>
-                  <div className='absolute right-0 rtl:left-0 rtl:right-auto top-full z-60 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200'>
-                    <div className='h-1.5' />
-                    <div className='bg-(--bg-card) border border-(--border-divider) rounded-lg shadow-xl p-1 min-w-[80px]'>
-                      {['pack', 'unit'].map((opt) => {
-                        const isSelected = (selectedUnits[row.id] || 'pack') === opt;
-                        return (
-                          <div
-                            key={opt}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedUnits((prev) => ({ ...prev, [row.id]: opt as 'pack' | 'unit' }));
-                            }}
-                            className={`px-3 py-1.5 rounded-md cursor-pointer transition-colors text-sm font-bold text-center ${
-                              isSelected
-                                ? 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300'
-                                : 'hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-700 dark:text-gray-300'
-                            }`}
-                          >
-                            {opt === 'pack' ? t.pack : t.unit}
-                          </div>
-                        );
-                      })}
+                }
+              >
+                {(['pack', 'unit'] as const).map((opt) => {
+                  const isSelected = (selectedUnits[row.id] || 'pack') === opt;
+                  return (
+                    <div
+                      key={opt}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedUnits((prev) => ({ ...prev, [row.id]: opt }));
+                      }}
+                      className={`px-3 py-1.5 rounded-md cursor-pointer transition-colors text-sm font-bold text-center ${
+                        isSelected
+                          ? 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300'
+                          : 'hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      {opt === 'pack' ? t.pack : t.unit}
                     </div>
-                  </div>
-                </div>
-              ) : (
-                <span className='text-sm font-bold text-gray-700 dark:text-gray-300'>{t.pack}</span>
-              )}
+                  );
+                })}
+              </HoverDropdown>
             </div>
           );
         },
@@ -760,21 +762,21 @@ export const POS: React.FC<POSProps> = ({
         meta: { align: 'center' },
         cell: (info) => {
           const row = info.row.original;
-          if (!row.batches || row.batches.length === 0)
-            return <span className='text-xs text-gray-400'>-</span>;
-
-          const selectedBatchId = selectedBatches[row.id];
-
           const availableBatches = (row.batches || []).filter((d: Drug) => d.stock > 0);
-
-          // Auto-fallback: Prefer the selected batch IF IT HAS STOCK, otherwise pick the earliest available batch
+          const selectedBatchId = selectedBatches[row.id];
           const selectedBatchWithInventory = selectedBatchId
             ? availableBatches.find((d: Drug) => d.id === selectedBatchId)
             : null;
-
           const defaultBatch = availableBatches[0];
           const displayBatch = selectedBatchWithInventory || defaultBatch;
 
+          if (!row.batches || row.batches.length === 0) {
+            return (
+              <div className='w-full h-full flex items-center justify-center'>
+                <span className='text-xs text-gray-400'>-</span>
+              </div>
+            );
+          }
           if (availableBatches.length === 0) {
             return (
               <div className='w-full h-full flex items-center justify-center'>
@@ -782,17 +784,16 @@ export const POS: React.FC<POSProps> = ({
               </div>
             );
           }
-
           if (availableBatches.length === 1) {
-            const i = availableBatches[0];
+            const b = availableBatches[0];
             return (
               <div className='w-full h-full flex items-center justify-center'>
                 <div
-                  className={`text-sm font-bold tabular-nums ${i ? getExpiryColorClass(i.expiryDate) : 'text-gray-700 dark:text-gray-300'}`}
+                  className={`text-sm font-bold tabular-nums ${b ? getExpiryColorClass(b.expiryDate) : 'text-gray-700 dark:text-gray-300'}`}
                 >
-                  {i ? (
-                    formatExpiryDate(i.expiryDate) +
-                    ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
+                  {b ? (
+                    formatExpiryDate(b.expiryDate) +
+                    ` • ${formatStock(b.stock, b.unitsPerPack).replace(/ Packs?/g, '')}`
                   ) : (
                     <span className='badge-danger'>{t.noStock}</span>
                   )}
@@ -804,51 +805,58 @@ export const POS: React.FC<POSProps> = ({
           const colorClass = getExpiryColorClass(displayBatch.expiryDate);
           return (
             <div className='w-full h-full flex items-center justify-center overflow-visible'>
-              <div className='group relative inline-block'>
-                {/* Selected batch display — container style for multi-batch, plain for single */}
-                <div className={`flex items-center justify-center font-bold ${colorClass} h-7 w-28 mx-auto px-1.5 ${availableBatches.length > 1 ? 'border-2 border-gray-300 dark:border-(--border-divider) rounded-md bg-(--bg-card) group-hover:bg-gray-100 dark:group-hover:bg-gray-800/70 cursor-pointer' : ''}`}>
-                  <span className='flex-1 text-center text-sm'>{formatExpiryDate(displayBatch.expiryDate)}</span>
-                  <span className='w-px self-stretch bg-current opacity-20 shrink-0' />
-                  <span className='flex-1 text-center text-sm tabular-nums'>
-                    {formatStock(displayBatch.stock, displayBatch.unitsPerPack, { packs: '', outOfStock: t.outOfStockShort || 'Out' }).trim()}
-                  </span>
-                </div>
-
-                {/* Hover panel — appears from end (right in LTR / left in RTL) */}
-                <div className='absolute right-0 rtl:left-0 rtl:right-auto top-full z-60 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200'>
-                  <div className='h-1.5' />
-                  <div className='bg-(--bg-card) border border-(--border-divider) rounded-lg shadow-xl p-1.5 min-w-[180px] space-y-0.5'>
-                    <div className='text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-2 py-1'>
-                      {availableBatches.length} {t.batches || 'batches'}
-                    </div>
-                    {availableBatches.map((batch) => {
-                      const isSelected = (selectedBatchWithInventory || defaultBatch)?.id === batch.id;
-                      const c = getExpiryColorClass(batch.expiryDate);
-                      return (
-                        <div
-                          key={batch.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedBatches((prev) => ({ ...prev, [row.id]: batch.id }));
-                          }}
-                          className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors text-sm ${
-                            isSelected
-                              ? 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300'
-                              : 'hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-700 dark:text-gray-300'
-                          }`}
-                        >
-                          <span className={`font-bold w-[44px] text-center ${c}`}>
-                            {formatExpiryDate(batch.expiryDate)}
-                          </span>
-                          <span className='ml-auto rtl:mr-auto rtl:ml-0 tabular-nums font-bold'>
-                            {formatStock(batch.stock, batch.unitsPerPack, { packs: '', outOfStock: t.outOfStockShort || 'Out' }).trim()}
-                          </span>
-                        </div>
-                      );
-                    })}
+              <HoverDropdown
+                panelWidth='min-w-[180px]'
+                panelClassName='space-y-0.5 p-1.5'
+                trigger={
+                  <div
+                    className={`flex items-center justify-center font-bold ${colorClass} h-7 w-28 mx-auto px-1.5 border-2 border-gray-300 dark:border-(--border-divider) rounded-md bg-(--bg-card) group-hover:bg-gray-200 dark:group-hover:bg-gray-600/80 cursor-pointer`}
+                  >
+                    <span className='flex-1 text-center text-sm'>
+                      {formatExpiryDate(displayBatch.expiryDate)}
+                    </span>
+                    <span className='w-px self-stretch bg-current opacity-20 shrink-0' />
+                    <span className='flex-1 text-center text-sm tabular-nums'>
+                      {formatStock(displayBatch.stock, displayBatch.unitsPerPack, {
+                        packs: '',
+                        outOfStock: t.outOfStockShort || 'Out',
+                      }).trim()}
+                    </span>
                   </div>
+                }
+              >
+                <div className='text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-2 py-1'>
+                  {availableBatches.length} {t.batches || 'batches'}
                 </div>
-              </div>
+                {availableBatches.map((batch) => {
+                  const isSelected = (selectedBatchWithInventory || defaultBatch)?.id === batch.id;
+                  const c = getExpiryColorClass(batch.expiryDate);
+                  return (
+                    <div
+                      key={batch.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedBatches((prev) => ({ ...prev, [row.id]: batch.id }));
+                      }}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors text-sm ${
+                        isSelected
+                          ? 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300'
+                          : 'hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      <span className={`font-bold w-[44px] text-center ${c}`}>
+                        {formatExpiryDate(batch.expiryDate)}
+                      </span>
+                      <span className='ml-auto rtl:mr-auto rtl:ml-0 tabular-nums font-bold'>
+                        {formatStock(batch.stock, batch.unitsPerPack, {
+                          packs: '',
+                          outOfStock: t.outOfStockShort || 'Out',
+                        }).trim()}
+                      </span>
+                    </div>
+                  );
+                })}
+              </HoverDropdown>
             </div>
           );
         },

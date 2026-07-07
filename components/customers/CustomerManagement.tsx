@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import { StorageKeys } from '../../config/storageKeys';
 import { useSettings } from '../../context';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { COUNTRY_CODES } from '../../data/countryCodes';
 import { AREAS, CITIES, GOVERNORATES, getLocationName } from '../../data/locations';
 import { authService } from '../../services/auth/authService';
@@ -84,7 +84,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     }
   }, [navigationParams]);
 
-  const { activeBranchId, branches } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const branches = useAuthStore(s => s.branches);
   const { theme: currentTheme } = useSettings();
   const [showAllBranches, setShowAllBranches] = useState(false);
   const currentUser = authService.getCurrentUserSync();

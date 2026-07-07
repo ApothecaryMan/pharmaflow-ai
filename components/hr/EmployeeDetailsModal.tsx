@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { getRoleLabel } from '../../config/employeeRoles';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
 import { useEmployeeAllTimeAttendance } from '../../hooks/hr/useEmployeeAllTimeAttendance';
 import type { TRANSLATIONS } from '../../i18n/translations';
 import { permissionsService } from '../../services/auth/permissionsService';
@@ -38,7 +40,12 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<string>('page1');
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
-  const { sales, branches, activeOrg, employees } = useData();
+  const branches = useAuthStore(s => s.branches);
+  const activeOrg = useAuthStore(s => s.activeOrg);
+  const branchId = useAuthStore(s => s.activeBranchId);
+  const { data: employeesData } = useEmployees(branchId);
+  const employees = employeesData ?? [];
+  const { data: sales } = useRecentSales(branchId);
 
   const relatedEmployees = React.useMemo(() => {
     if (!employee || !employees) return employee ? [employee] : [];

@@ -2,7 +2,8 @@ import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { UserRole } from '../../config/permissions';
 import { useSettings } from '../../context';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
+import { useBatches } from '../../hooks/queries/useInventoryQuery';
 import { DASHBOARD_HELP } from '../../i18n/helpInstructions';
 import { batchService } from '../../services/inventory/batchService';
 import type { Drug, ExpandedView, Purchase, Sale } from '../../types';
@@ -208,7 +209,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [restockIsUnit, setRestockIsUnit] = useState(false);
   const [expandedView, setExpandedView] = useState<ExpandedView>(null);
   const { textTransform } = useSettings();
-  const { activeBranchId, batches, isLoading } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const isLoading = useAuthStore(s => s.isLoading);
+  const { data: batches = [] } = useBatches(activeBranchId);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [timeRange, setTimeRange] = useState('7');
 

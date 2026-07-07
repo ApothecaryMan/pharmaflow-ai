@@ -4,9 +4,6 @@
  * All services are exported from here for easy importing
  */
 
-export type { DataActions, DataContextType, DataState } from '../context/DataContext';
-// Data Context (Unified State Management)
-export { DataProvider, useData } from '../context/DataContext';
 // API Client
 export * from './api';
 // Re-export service instances for convenience

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { dateRangeService, type FinancialPeriod } from '../../services/financials/dateRangeService';
 import {
@@ -25,7 +25,7 @@ interface UseFinancialDataResult {
 }
 
 export function useFinancialData(period: FinancialPeriod = 'this_month'): UseFinancialDataResult {
-  const { activeBranchId } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
   const [summary, setSummary] = useState<FinancialSummary | null>(null);
   const [kpis, setKpis] = useState<FinancialKPIs | null>(null);
   const [daily, setDaily] = useState<DailyFinancialData[]>([]);

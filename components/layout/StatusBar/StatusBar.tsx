@@ -3,7 +3,8 @@ import { useSettings } from '../../../context';
 import { useDynamicTickerData } from '../../../hooks/layout/useDynamicTickerData';
 import { useShift } from '../../../hooks/sales/useShift';
 import packageJson from '../../../package.json';
-import { useData } from '../../../services';
+import { useAuthStore } from '../../../stores/authStore';
+import { useEmployees } from '../../../hooks/queries/useEmployeesQuery';
 import { AlertsAndAds } from '../../features/alerts/AlertsAndAds';
 import { ConnectionStatus } from './items/ConnectionStatus';
 import { DateTime } from './items/DateTime';
@@ -136,7 +137,10 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
     } = useSettings();
 
     const tickerData = useDynamicTickerData();
-    const { employees, isLoading, activeOrgId } = useData();
+    const activeBranchId = useAuthStore(s => s.activeBranchId);
+    const activeOrgId = useAuthStore(s => s.activeOrgId);
+    const isLoading = useAuthStore(s => s.isLoading);
+    const { data: employees = [] } = useEmployees(activeBranchId);
     const { currentShift, isLoading: isShiftLoading } = useShift();
 
     const isAR = language === 'AR';

@@ -2,7 +2,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { type StockMovement, stockMovementService } from '../../services/inventory';
 import { inventoryService } from '../../services/inventory/inventoryService';
@@ -64,7 +65,11 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   t,
 }) => {
   const { branchCode, language, textTransform } = useSettings();
-  const { activeBranchId, activeOrgId, branches, currentEmployee, inventory } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeOrgId = useAuthStore(s => s.activeOrgId);
+  const branches = useAuthStore(s => s.branches);
+  const currentEmployee = useAuthStore(s => s.currentEmployee);
+  const { data: inventory = [] } = useInventory(activeBranchId);
 
   // Try to get pharmacy name from active branch, then storage/organization fallbacks
   const activeBranch = branches.find((b) => b.id === activeBranchId);

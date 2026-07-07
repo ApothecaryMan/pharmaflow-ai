@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { ROUTES } from '../../config/routes';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import type { ViewState } from '../../types';
 
 export function useUrlSync(
@@ -10,7 +10,9 @@ export function useUrlSync(
   userId?: string,
   isEmployeePortalUser?: boolean
 ) {
-  const { activeOrgId, activeBranchId, branches } = useData();
+  const activeOrgId = useAuthStore(s => s.activeOrgId);
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const branches = useAuthStore(s => s.branches);
 
   useEffect(() => {
     // Helper to enforce pure HashRouter behavior (removes legacy pathnames like /login)

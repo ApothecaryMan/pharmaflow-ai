@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { DEPARTMENT_ROLES } from '../../config/employeeRoles';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { supabase } from '../../lib/supabase';
-import { useData } from '../../services';
+import { useAuthStore } from '../../stores/authStore';
 import { authService } from '../../services/auth/authService';
 import { employeeProfileRepository } from '../../services/hr/repositories/employeeProfileRepository';
 import { employmentRequestRepository } from '../../services/hr/repositories/employmentRequestRepository';
@@ -34,7 +34,7 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const { branches } = useData();
+  const branches = useAuthStore(s => s.branches);
   const { playSuccess, playError } = usePosSounds();
 
   const t = TRANSLATIONS[language as 'EN' | 'AR'].employeeList as any;

@@ -2,8 +2,11 @@ import { useCallback, useMemo, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import { StorageKeys } from '../../config/storageKeys';
 import { useShift } from '../../hooks/sales/useShift';
-import { useData } from '../../services';
 import { permissionsService } from '../../services/auth/permissionsService';
+import { useAuthStore } from '../../stores/authStore';
+import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { usePurchaseReturns } from '../../hooks/queries/useReturnsQuery';
 import { expenseService } from '../../services/financials/expenseService';
 import type { CashTransaction, CashTransactionType, Employee, Language, Shift } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
@@ -26,7 +29,12 @@ export const useCashRegister = ({
 }: UseCashRegisterProps) => {
   const { getVerifiedDate } = useStatusBar();
   const { currentShift, isLoading, startShift, endShift, addTransaction } = useShift();
-  const { purchases, purchaseReturns, sales, activeBranchId, activeOrgId, branches } = useData();
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
+  const branches = useAuthStore((s) => s.branches);
+  const { data: purchases = [] } = usePurchases(activeBranchId);
+  const { data: purchaseReturns = [] } = usePurchaseReturns(activeBranchId);
+  const { data: sales = [] } = useRecentSales(activeBranchId);
 
   // --- Local UI State ---
   const [modalMode, setModalMode] = useState<'open' | 'close' | 'in' | 'out' | null>(null);

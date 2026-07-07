@@ -2,7 +2,7 @@ import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AVAILABLE_FONTS_AR, AVAILABLE_FONTS_EN } from '../../../../config/fonts';
 import { useSettings } from '../../../../context';
-import { useData } from '../../../../context/DataContext';
+import { useAuthStore } from '../../../../stores/authStore';
 import { useSmartPosition } from '../../../../hooks/common/useSmartPosition';
 import { TRANSLATIONS } from '../../../../i18n/translations';
 import { permissionsService } from '../../../../services/auth/permissionsService';
@@ -218,7 +218,10 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setDisableCSSTransitions,
   } = settings;
 
-  const { activeBranchId, updateBranch, activeBranch } = useData();
+  const branches = useAuthStore(s => s.branches);
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const updateBranch = useAuthStore(s => s.updateBranch);
+  const activeBranch = useMemo(() => branches.find(b => b.id === activeBranchId), [branches, activeBranchId]);
   const deliveryFee = activeBranch?.deliveryFee ?? 5;
   const daysInMonth = useMemo(() => new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate(), []);
   const dailyTarget = useMemo(() => (activeBranch?.monthlySalesTarget || 0) > 0 ? Math.round((activeBranch?.monthlySalesTarget || 0) / daysInMonth) : 0, [activeBranch?.monthlySalesTarget, daysInMonth]);

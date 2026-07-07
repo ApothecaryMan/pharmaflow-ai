@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { MapMarker, MapRoute, MarkerContent } from '@/components/ui/map';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 
 // ----------------------------------------------------
 // Mock Delivery Data (Simplified per design)
@@ -109,7 +109,8 @@ interface CustomerDeliveryViewProps {
 }
 
 export default function CustomerDeliveryView({ language = 'ar' }: CustomerDeliveryViewProps) {
-  const { activeBranch, activeOrg } = useData();
+  const activeBranch = useAuthStore(s => s.branches.find(b => b.id === s.activeBranchId));
+  const activeOrg = useAuthStore(s => s.activeOrg);
 
   // Resolve store coordinates: active branch coords or fallback
   const storeLocation = useMemo<[number, number]>(() => {

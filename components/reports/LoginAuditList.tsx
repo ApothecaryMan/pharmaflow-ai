@@ -2,7 +2,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo, useState } from 'react';
 import { useSettings } from '../../context';
 import { TRANSLATIONS } from '../../i18n/translations';
-import { useData } from '../../services';
+import { useAuthStore } from '../../stores/authStore';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
 import { authService } from '../../services/auth/authService';
 import type { LoginAuditEntry } from '../../types';
 import { SearchInput } from '../common/SearchInput';
@@ -15,7 +16,10 @@ import { TanStackTable } from '../common/TanStackTable';
  */
 export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }) => {
   const t = TRANSLATIONS[language];
-  const { employees, activeBranchId, branches } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const branches = useAuthStore(s => s.branches);
+  const { data: employeesData } = useEmployees(activeBranchId);
+  const employees = employeesData ?? [];
   const { theme: currentTheme } = useSettings();
   const [showAllBranches, setShowAllBranches] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

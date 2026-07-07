@@ -1,42 +1,39 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
 import { useSettings } from '../../context';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { batchService } from '../../services/inventory/batchService';
-import type { ViewState } from '../../types';
+import type { ViewState, Customer, Employee } from '../../types';
 import { InventoryModuleShell } from '../inventory/InventoryModuleShell';
 import { LandingPage } from '../layout/LandingPage';
 import { PendingBranchAssignment } from './PendingBranchAssignment';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { PageLoader } from '../common/PageLoader';
 import { Suspense } from 'react';
+import { useAuthStore } from '../../stores/authStore';
+import { useInventory, useBatches, useSuppliers } from '../../hooks/queries/useInventoryQuery';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useCustomers } from '../../hooks/queries/useCustomersQuery';
+import { usePurchases } from '../../hooks/queries/usePurchasesQuery';
+import { useSalesReturns, usePurchaseReturns } from '../../hooks/queries/useReturnsQuery';
+import { useComputedInventory } from '../../hooks/inventory/useComputedInventory';
 
 interface PageRouterProps {
   view: ViewState;
   currentEmployeeId: string | null;
   isLoading: boolean;
   t: Translations;
-  // Navigation
   setView: (view: ViewState) => void;
   handleNavigate: (view: ViewState) => void;
   handleLoginSuccess: () => void;
   navigationParams?: any;
-  // Data Handlers
   handlers: Record<string, any>;
-  data: Record<string, any>;
   currentShift: any;
   onSelectEmployee?: (id: string | null) => void;
   onLogout?: () => Promise<void>;
 }
 
-/**
- * ARCHITECTURE NOTE:
- * PageRouter handles the dynamic injection of props into registered pages.
- * It manages RBAC (Role Based Access Control) and fallback views.
- *
- * PERFORMANCE: Wrapped with React.memo to prevent unnecessary re-renders
- * when parent state changes but PageRouter props remain stable.
- */
 const PageRouterComponent: React.FC<PageRouterProps> = ({
   view,
   currentEmployeeId,
@@ -47,22 +44,64 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   handleLoginSuccess,
   navigationParams,
   handlers,
-  data,
   currentShift,
   onSelectEmployee,
   onLogout,
 }) => {
   const { language, theme, darkMode, textTransform, developerMode } = useSettings();
 
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeOrgId = useAuthStore(s => s.activeOrgId);
+  const branches = useAuthStore(s => s.branches);
+  const isLoadingAuth = useAuthStore(s => s.isLoading);
+  const switchBranch = useAuthStore(s => s.switchBranch);
+
+  const { data: inventory = [] } = useInventory(activeBranchId);
+  const { data: sales = [] } = useRecentSales(activeBranchId);
+  const { data: employees = [] } = useEmployees(activeBranchId);
+  const { data: customers = [] } = useCustomers(activeBranchId);
+  const { data: suppliers = [] } = useSuppliers(activeBranchId);
+  const { data: purchases = [] } = usePurchases(activeBranchId);
+  const { data: purchaseReturns = [] } = usePurchaseReturns(activeBranchId);
+  const { data: returns = [] } = useSalesReturns(activeBranchId);
+  const { data: batches = [] } = useBatches(activeBranchId);
+
+  const enrichedInventory = useComputedInventory(inventory, batches, activeBranchId);
+
+  const currentEmployee = useMemo(
+    () => employees.find((e: Employee) => e.id === currentEmployeeId),
+    [employees, currentEmployeeId]
+  );
+
+  const enrichedCustomers = useMemo(() => {
+    return customers.map((customer: Customer) => {
+      const customerSales = sales.filter(
+        (s: any) => s.customerCode === customer.code && s.branchId === customer.branchId
+      );
+      const totalPurchases = customerSales.reduce((sum: number, s: any) => sum + s.total, 0);
+      const lastVisit =
+        customerSales.length > 0
+          ? Math.max(...customerSales.map((s: any) => new Date(s.date).getTime()))
+          : null;
+
+      return {
+        ...customer,
+        totalPurchases,
+        lastVisit: lastVisit ? new Date(lastVisit).toISOString() : null,
+        visitCount: customerSales.length,
+      };
+    });
+  }, [customers, sales]);
+
   if (!currentEmployeeId) {
     return <LandingPage language={language} darkMode={darkMode} />;
   }
 
-  if (!isLoading && !data?.activeBranchId) {
+  if (!isLoadingAuth && !activeBranchId) {
     return (
       <PendingBranchAssignment
-        branches={data?.branches || []}
-        switchBranch={data?.switchBranch}
+        branches={branches}
+        switchBranch={switchBranch}
         onSelectEmployee={onSelectEmployee}
         onLogout={onLogout}
         t={t}
@@ -87,7 +126,6 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     );
   }
 
-  // RBAC: Check Page Permissions
   const isDebugOverride = pageConfig.permission === 'system.debug' && developerMode;
   if (pageConfig.permission && !isDebugOverride && !permissionsService.can(pageConfig.permission)) {
     return (
@@ -121,7 +159,6 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
 
   const PageComponent = pageConfig.component;
 
-  // 1. Build base props object
   const props: any = {
     color: theme.primary,
     t: t,
@@ -129,27 +166,26 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     textTransform: textTransform,
     currentEmployeeId: currentEmployeeId,
     darkMode: darkMode,
-    employees: data.employees,
+    employees: employees,
     isLoading: isLoading,
-    activeBranchId: data.activeBranchId,
-    activeOrgId: data.activeOrgId,
+    activeBranchId: activeBranchId,
+    activeOrgId: activeOrgId,
   };
 
-  // 2. Define Data & Handler Mappings
   const dataMap: Record<string, any> = {
-    sales: data.sales,
-    inventory: data.inventory,
-    customers: data.enrichedCustomers,
-    products: data.inventory,
-    suppliers: data.suppliers,
-    purchases: data.purchases,
-    purchaseReturns: data.purchaseReturns,
-    returns: data.returns,
-    drugs: data.inventory,
-    employees: data.employees,
-    batches: data.batches,
+    sales: sales,
+    inventory: enrichedInventory,
+    customers: enrichedCustomers,
+    products: enrichedInventory,
+    suppliers: suppliers,
+    purchases: purchases,
+    purchaseReturns: purchaseReturns,
+    returns: returns,
+    drugs: enrichedInventory,
+    employees: employees,
+    batches: batches,
     currentShift: currentShift,
-    activeOrgId: data.activeOrgId,
+    activeOrgId: activeOrgId,
     navigationParams: navigationParams,
   };
 
@@ -163,7 +199,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     onDeleteDrug: handlers.handleDeleteDrug,
     onUpdateInventory: handlers.setInventory,
     onBatchesChanged: async () =>
-      handlers.setBatches(await batchService.getAllBatches(data.activeBranchId)),
+      handlers.setBatches(await batchService.getAllBatches(activeBranchId)),
     onCompleteSale: handlers.handleCompleteSale,
     onUpdateSale: handlers.handleUpdateSale,
     onProcessReturn: handlers.handleProcessReturn,
@@ -189,14 +225,12 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     getVerifiedDate: handlers.getVerifiedDate,
   };
 
-  // 3. Inject requested props based on pageConfig
   const requiredProps = pageConfig.requiredProps || [];
   requiredProps.forEach((prop: string) => {
     if (dataMap[prop] !== undefined) props[prop] = dataMap[prop];
     if (handlerMap[prop] !== undefined) props[prop] = handlerMap[prop];
   });
 
-  // Special translations mapping
   const viewTranslations: Record<string, any> = {
     dashboard: t.dashboard,
     inventory: t.inventory,
@@ -265,5 +299,4 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   );
 };
 
-// Export memoized version to prevent unnecessary re-renders
 export const PageRouter = React.memo(PageRouterComponent);

@@ -1,7 +1,8 @@
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
+import { useInventory } from '../../hooks/queries/useInventoryQuery';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { pricingService } from '../../services/sales/pricingService';
 import type { Return, ReturnItem, ReturnReason, Sale, Shift } from '../../types';
@@ -47,7 +48,9 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   // Resolve role internally
   const userRole = permissionsService.getEffectiveRole();
   const { getVerifiedDate } = useStatusBar();
-  const { activeBranchId, inventory } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const { data: inventoryData } = useInventory(activeBranchId);
+  const inventory = inventoryData ?? [];
 
   const inventoryMap = useMemo(() => {
     const map = new Map();

@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { intelligenceService } from '../../services/intelligence/intelligenceService';
 import type { ProcurementItem, ProcurementSummary } from '../../types/intelligence';
@@ -28,7 +28,7 @@ interface UseProcurementResult {
 }
 
 export function useProcurement(filters: UseProcurementFilters = {}): UseProcurementResult {
-  const { activeBranchId } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
 
   const [summary, setSummary] = useState<ProcurementSummary | null>(null);
   const [items, setItems] = useState<ProcurementItem[]>([]);

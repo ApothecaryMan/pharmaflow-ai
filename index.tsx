@@ -12,7 +12,7 @@ if (!rootElement) {
 import { MotionConfig } from 'framer-motion';
 import { StatusBarProvider } from './components/layout/StatusBar';
 import { AlertProvider, SettingsProvider } from './context';
-import { DataProvider } from './context/DataContext';
+import { QueryProvider } from './context/QueryProvider';
 import { ShiftProvider } from './hooks/sales/useShift';
 import { LiveWidget } from './components/dashboard/LiveWidget';
 import { HelpProvider } from './context/HelpContext';
@@ -45,11 +45,11 @@ if (window.location.pathname === '/live-sales-widget') {
           <HelpProvider>
             <StatusBarProvider>
               <AlertProvider>
-                <DataProvider>
+                <QueryProvider>
                   <ShiftProvider>
                     <App />
                   </ShiftProvider>
-                </DataProvider>
+                </QueryProvider>
               </AlertProvider>
             </StatusBarProvider>
           </HelpProvider>

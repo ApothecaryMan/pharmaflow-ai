@@ -4,7 +4,8 @@ import { check } from '@tauri-apps/plugin-updater';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useSettings } from '../../context';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
 import { useAuth } from '../../hooks/auth/useAuth';
 import { useAppState } from '../../hooks/layout/useAppState';
 import { useNavigation } from '../../hooks/layout/useNavigation';
@@ -61,14 +62,12 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   } = appState;
 
   const auth = useAuth({ view, setView });
-  const {
-    branches,
-    activeBranchId,
-    activeOrg,
-    switchBranch,
-    isLoading: isDataLoading,
-    employees,
-  } = useData();
+  const branches = useAuthStore((s) => s.branches);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const activeOrg = useAuthStore((s) => s.activeOrg);
+  const switchBranch = useAuthStore((s) => s.switchBranch);
+  const isDataLoading = useAuthStore((s) => s.isLoading);
+  const { data: employees = [] } = useEmployees(activeBranchId);
 
   const user = auth.user || authService.getCurrentUserSync();
   const isAuthenticated = auth.isAuthenticated;

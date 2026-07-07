@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { type AuditEntry, auditService } from '../../services/audit/auditService';
 import { permissionsService } from '../../services/auth/permissionsService';
@@ -18,7 +18,7 @@ interface OrgSettingsProps {
 
 export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => {
   const t = TRANSLATIONS[language];
-  const { refreshAll } = useData();
+  const refreshAll = useAuthStore(s => s.refreshAll);
 
   const [org, setOrg] = useState<Organization | null>(null);
   const [members, setMembers] = useState<OrgMember[]>([]);

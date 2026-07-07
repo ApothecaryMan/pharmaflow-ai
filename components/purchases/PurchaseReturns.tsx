@@ -3,7 +3,7 @@ import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
 import { useSettings } from '../../context';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { permissionsService } from '../../services/auth/permissionsService';
 import type { Drug, Purchase, PurchaseReturn, PurchaseReturnItem } from '../../types';
 import { formatCurrency } from '../../utils/currency';
@@ -51,7 +51,8 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   onCreatePurchaseReturn,
 }) => {
   const { textTransform } = useSettings();
-  const { activeBranchId, activeOrgId } = useData();
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const activeOrgId = useAuthStore(s => s.activeOrgId);
   const { showMenu } = useContextMenu();
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');

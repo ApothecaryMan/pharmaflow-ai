@@ -180,41 +180,54 @@ zinc/
 │   ├── migration/                   # Data Migration & Upgrades
 │   │   ├── migrationService.ts      # Migration logic
 │   │   └── index.ts                 # Barrel export
-│   ├── DataContext.tsx              # Unifying Data Provider
 │   ├── timeService.ts               # NTP Time Sync
 │   ├── geminiService.ts             # AI Integration
 │   ├── auditService.ts              # System audit logging
 │   └── salesHelpers.ts              # Cartesian product & cart utils
 │
 ├── hooks/
-│   ├── useAppState.ts
-│   │   └── useAppState()                # View & UI state management
-│   ├── useAuth.ts
-│   │   └── useAuth()                    # Authentication & route guards
-│   ├── useNavigation.ts
-│   │   └── useNavigation()              # Navigation handlers & menu filtering
-│   ├── useEntityHandlers.ts
-│   │   └── useEntityHandlers()          # CRUD handlers for all entities
-│   ├── useFilterDropdown.ts
-│   │   └── useFilterDropdown()          # Keyboard nav for dropdowns
-│   ├── useLongPress.ts
-│   │   └── useLongPress()               # Touch long-press detection
-│   ├── usePOSTabs.ts
-│   │   └── usePOSTabs()                 # Multi-tab POS state
-│   ├── useColumnReorder.ts
-│   │   └── useColumnReorder()           # Table column DnD
-│   ├── useDebounce.ts
-│   │   └── useDebounce()                # Debounce values
-│   ├── useTheme.ts
-│   │   └── useTheme()                   # Apply theme CSS vars
-│   ├── useShift.tsx
-│   │   └── useShift()                   # Shift management
-│   ├── usePersistedState.ts
-│   │   └── usePersistedState()          # Trusted storage hook
-│   ├── useSmartPosition.ts              # Popover positioning
-│   ├── usePrinter.ts                    # Printer hook
-│   ├── useDynamicTickerData.ts          # Ticker data hook
-│   └── useProcurement.ts                # Procurement operations
+│   ├── queries/                        # React Query domain hooks
+│   │   ├── useInventoryQuery.ts        # useInventory(), useBatches(), useSuppliers()
+│   │   ├── useSalesQuery.ts            # useRecentSales(), useTodaySales()
+│   │   ├── usePurchasesQuery.ts        # usePurchases(), usePurchase()
+│   │   ├── useCustomersQuery.ts        # useCustomers()
+│   │   ├── useEmployeesQuery.ts        # useEmployees()
+│   │   ├── useBranchesQuery.ts         # useBranches()
+│   │   ├── useReturnsQuery.ts          # useSalesReturns(), usePurchaseReturns()
+│   │   └── useOrgQuery.ts              # useActiveOrg()
+│   │
+│   ├── mutations/                      # React Query mutation hooks
+│   │   ├── useInventoryMutations.ts    # useAddProduct(), useUpdateProduct()
+│   │   ├── useSalesMutations.ts        # useCompleteSale(), useAddSale()
+│   │   ├── usePurchaseMutations.ts     # useAddPurchase(), useApprovePurchase()
+│   │   ├── useReturnsMutations.ts      # useProcessSalesReturn(), useCreatePurchaseReturn()
+│   │   ├── useCustomerMutations.ts     # useAddCustomer(), useUpdateCustomer()
+│   │   └── useEmployeeMutations.ts     # useAddEmployee(), useUpdateEmployee()
+│   │
+│   ├── realtime/
+│   │   └── useRealtimeSync.ts          # Supabase → invalidateQueries
+│   │
+│   ├── stores/                         # Zustand state management
+│   │   ├── authStore.ts                # activeBranchId, currentEmployee, switchBranch
+│   │   ├── posStore.ts                 # Cart items, checkout state
+│   │   └── uiStore.ts                  # Sidebar, theme, language
+│   │
+│   ├── useAppState.ts                  # View & UI state management
+│   ├── useAuth.ts                      # Authentication & route guards
+│   ├── useNavigation.ts                # Navigation handlers & menu filtering
+│   ├── useEntityHandlers.ts            # Legacy CRUD handlers (AuthenticatedContent only)
+│   ├── useFilterDropdown.ts            # Keyboard nav for dropdowns
+│   ├── useLongPress.ts                 # Touch long-press detection
+│   ├── usePOSTabs.ts                   # Multi-tab POS state
+│   ├── useColumnReorder.ts             # Table column DnD
+│   ├── useDebounce.ts                  # Debounce values
+│   ├── useTheme.ts                     # Apply theme CSS vars
+│   ├── useShift.tsx                    # Shift management
+│   ├── usePersistedState.ts            # Trusted storage hook
+│   ├── useSmartPosition.ts             # Popover positioning
+│   ├── usePrinter.ts                   # Printer hook
+│   ├── useDynamicTickerData.ts         # Ticker data hook
+│   └── useProcurement.ts               # Procurement operations
 │
 ├── utils/
 │   ├── searchUtils.ts                   # Search helpers
@@ -277,17 +290,27 @@ zinc/
 
 ### 1. State Management & Data Flow
 
-The application uses an **Offline-First, Hybrid State Management** approach:
+The application uses a **Cache-First Architecture** with three tiers of state:
 
-1.  **Global UI State** (`App.tsx` & `SettingsContext`):
-    - Managed via `usePersistedState` hook (auto-syncs to `localStorage`).
-    - Includes view state, active module, theme, and language preferences.
+1.  **React Query (Server State)**:
+    - All domain data is fetched, cached, and background-refetched through React Query (`@tanstack/react-query`).
+    - Cache is persisted to IndexedDB via `@tanstack/react-query-persist-client` for offline resilience.
+    - Components consume data through auto-caching domain query hooks (e.g., `useInventory(branchId)`, `useRecentSales(branchId)`, `useEmployees(orgId)`).
+    - Data flow: `Service` → `React Query Cache` → `Component` via query hook.
 
-2.  **Domain Data & Caching** (`DataContext.tsx` & Services):
-    - Entities are managed by specialized services (e.g., `inventoryService`, `salesService`) and injected via `DataContext.tsx`.
-    - **Caching**: Heavy entities (e.g., Drugs, Employees) use dedicated cache services (`drugCacheService.ts`, `employeeCacheService.ts`) for instant access.
-    - Data flows: `Service` (Fetch/Cache) → `Context` (Store) → `Component` (View/Hook).
-    - Access data via centralized hooks like `useData()`, `useAuth()`, or domain-specific hooks (e.g., `useProcurement()`).
+2.  **Zustand (UI-Only State)**:
+    - Lightweight, non-persisted stores for auth, POS cart, UI preferences, and other client-only concerns.
+    - Stores: `useAuthStore`, `usePOSStore`, `useUIStore`.
+    - ❌ Do not put domain data in Zustand — its lifecycle is local to the browser session.
+
+3.  **Mutations (Writes)**:
+    - All writes go through mutation hooks (e.g., `useCompleteSale()`, `useAddProduct()`, `useAddPurchase()`).
+    - On success, mutations auto-invalidate related React Query caches so components re-render with fresh data.
+
+4.  **Realtime Sync**:
+    - Supabase Realtime listens for database changes and calls `queryClient.invalidateQueries()` to trigger background refetches.
+    - Components remain unaware of the sync layer — they simply re-render when their query cache is invalidated.
+    - There is no monolithic `useData()` hook; each component fetches exactly the data it needs.
 
 ### 2. Service Layer & Persistence
 
@@ -511,9 +534,12 @@ When logging dynamic events (e.g., "Switched from Employee A"), **do not log tra
 
 **RULE:** Preserve the Separation of Concerns (SoC) between UI logic and Data logic.
 
+- ✅ **Reading data**: Use query hooks (`useInventory`, `useRecentSales`, etc.) — auto-cached with background refetch.
+- ✅ **Writing data**: Use mutation hooks (`useCompleteSale`, `useAddProduct`, etc.) — auto-invalidate on success.
+- ✅ **UI-only state**: Use Zustand stores (`useAuthStore`, `usePOSStore`, `useUIStore`).
+- ✅ **Legacy pass-through**: `useEntityHandlers` is used only in `AuthenticatedContent`; prefer individual mutation hooks for new code.
 - ❌ **Forbidden**: Calling `api.get()` or `api.post()` directly within a React Component `useEffect` or button handler.
-- ✅ **Required**: Use domain hooks (e.g., `useEntityHandlers`, `useProcurement`) which internally manage caching, syncing, and dispatching.
-- **Internal Component State**: Limit the use of `useState` strictly to UI-only state (e.g., modal open/close).
+- ❌ **Forbidden**: Using `useData()` — it no longer exists.
 
 ---
 
@@ -549,7 +575,7 @@ When logging dynamic events (e.g., "Switched from Employee A"), **do not log tra
 ## 🛠️ Workflow: Adding a New Page
 
 1.  **Create Component**: Build your page in `components/[module]/MyPage.tsx`.
-    - Ensure it uses `useData()` from `DataContext` for global state and `useEntityHandlers()` for domain logic.
+    - Use query hooks (`useInventory`, `useRecentSales`, etc.) for data fetching. Use mutation hooks (`useCompleteSale`, `useAddProduct`, etc.) for writes. Use Zustand stores (`useAuthStore`, `usePOSStore`) for UI state.
 2.  **Add Skeleton**: Create a loading state in `components/skeletons/` and map it in `PageSkeletonRegistry.tsx`.
 3.  **Define Permissions**: If the page is restricted, define the new permission in `config/permissions.ts`.
 4.  **Register Page**: Add it to `config/pageRegistry.ts`.
@@ -574,7 +600,7 @@ Before submitting code, ensure:
 - [ ] **Data Safety**: Using `db.ts` or `storage.ts`? (No raw `localStorage`)
 - [ ] **Offline-First**: Mutating actions are dispatched to an offline queue mechanism?
 - [ ] **Data Validation**: API boundaries and form inputs use `zod` schema validation?
-- [ ] **State Management**: Using `useData` for shared state, limiting `useState` to pure UI toggles?
+- [ ] **State Management**: Using query hooks for data, Zustand stores for UI state? (No `useState` for domain data)
 - [ ] **UI Components**:
   - Using `SmartInputs`? (No raw `<input>`)
   - Using `FilterDropdown` and `TanStackTable`?
@@ -585,13 +611,12 @@ Before submitting code, ensure:
 
 ## 📚 Reference
 
-- **Storage & IndexedDB**: See `utils/storage.ts` and `services/db.ts`.
-- **Sync Engine**: See `services/sync/syncEngine.ts` and `syncQueueService.ts`.
-- **Entity Handlers & Hooks**: See `hooks/useEntityHandlers.ts`.
-- **SmartInputs**: See `components/common/SmartInputs.tsx` for robust form docs.
-- **SegmentedControl**: See `components/common/SegmentedControl.tsx` for variant usage.
-- **Page Registry**: See `config/pageRegistry.ts` for route injection.
-- **Tailwind Config**: See `tailwind.config.js` for safelists and semantic variables.
+- **React Query & Caching**: See `hooks/queries/` and `context/QueryProvider.tsx`.
+- **Zustand Stores**: See `stores/authStore.ts`, `stores/posStore.ts`, `stores/uiStore.ts`.
+- **Mutation Hooks**: See `hooks/mutations/`.
+- **Query Hooks**: See `hooks/queries/`.
+- **Realtime Sync**: See `hooks/realtime/useRealtimeSync.ts`.
+- **Entity Handlers**: See `hooks/useEntityHandlers.ts`.
 
 ---
 

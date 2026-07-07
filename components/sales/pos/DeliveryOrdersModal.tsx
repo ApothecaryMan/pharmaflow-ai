@@ -2,7 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { isAfter, isToday, parseISO, subHours } from 'date-fns';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useAlert, useSettings } from '../../../context';
-import { useData } from '../../../context/DataContext';
+import { useAuthStore } from '../../../stores/authStore';
 import { useShift } from '../../../hooks/sales/useShift';
 import { batchService } from '../../../services/inventory/batchService';
 import { pricingService } from '../../../services/sales/pricingService';
@@ -139,7 +139,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   activeBranchId,
 }) => {
   const { currentShift } = useShift();
-  const { branches } = useData();
+  const branches = useAuthStore(s => s.branches);
   const hasOpenShift = !!currentShift;
   const [activeTab, setActiveTab] = useState<DeliveryTab>('all');
   const { error: showToastError } = useAlert();

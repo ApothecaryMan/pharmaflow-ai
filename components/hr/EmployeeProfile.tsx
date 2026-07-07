@@ -1,6 +1,8 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { COLOR_HEX_MAP } from '../../config/themeColors';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
+import { useEmployees } from '../../hooks/queries/useEmployeesQuery';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
 import { useShift } from '../../hooks/sales/useShift';
 import { permissionsService } from '../../services/auth/permissionsService';
 import { analyzeEmployeePerformance } from '../../services/geminiService';
@@ -349,7 +351,10 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   onViewChange,
 }) => {
   // --- Data Context ---
-  const { employees: contextEmployees, sales: contextSales, currentEmployee } = useData();
+  const currentEmployee = useAuthStore(s => s.currentEmployee);
+  const branchId = useAuthStore(s => s.activeBranchId);
+  const { data: contextEmployees } = useEmployees(branchId);
+  const { data: contextSales } = useRecentSales(branchId);
 
   // Prioritize props, but fallback to context
   const employees = propsEmployees || contextEmployees || [];

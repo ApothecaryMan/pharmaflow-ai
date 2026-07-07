@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { UserRole } from '../../../../config/permissions';
-import { useData } from '../../../../context/DataContext';
+import { useAuthStore } from '../../../../stores/authStore';
 import { permissionsService } from '../../../../services/auth/permissionsService';
 import type { CartItem, Customer, Sale } from '../../../../types';
 import { formatCurrency, money } from '../../../../utils/currency';
@@ -55,7 +55,9 @@ export const usePOSCheckout = ({
   sales,
   refreshShifts,
 }: UsePOSCheckoutProps) => {
-  const { activeBranch } = useData();
+  const branches = useAuthStore(s => s.branches);
+  const activeBranchIdStore = useAuthStore(s => s.activeBranchId);
+  const activeBranch = useMemo(() => branches.find(b => b.id === activeBranchIdStore), [branches, activeBranchIdStore]);
   const globalDeliveryFee = activeBranch?.deliveryFee ?? 5;
 
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'visa'>('cash');

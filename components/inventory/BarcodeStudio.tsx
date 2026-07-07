@@ -3,7 +3,7 @@ import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
 import { useSettings } from '../../context';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { useDebounce } from '../../hooks/common/useDebounce';
 import type { TRANSLATIONS } from '../../i18n/translations';
 import type { Drug } from '../../types';
@@ -46,7 +46,9 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
   const { playError } = usePosSounds();
-  const { branches, activeBranchId, updateBranch } = useData();
+  const branches = useAuthStore(s => s.branches);
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const updateBranch = useAuthStore(s => s.updateBranch);
   const { developerMode } = useSettings();
   const activeBranch = useMemo(
     () => branches?.find((b: any) => b.id === activeBranchId),

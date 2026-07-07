@@ -3,7 +3,7 @@ import { StorageKeys } from '../../../config/storageKeys';
 import { useSettings } from '../../../context';
 import { usePersistedState } from '../../../hooks/common/usePersistedState';
 import { TRANSLATIONS } from '../../../i18n/translations';
-import { useData } from '../../../services';
+import { useAuthStore } from '../../../stores/authStore';
 import {
   type AttendanceReportSummary,
   attendanceReportService,
@@ -16,7 +16,7 @@ interface UseAttendanceReportsProps {
 
 export const useAttendanceReports = ({ onViewChange }: UseAttendanceReportsProps = {}) => {
   const { language } = useSettings();
-  const { activeBranch } = useData();
+  const activeBranch = useAuthStore(s => s.branches.find(b => b.id === s.activeBranchId));
   const isRTL = language === 'AR';
   const branchId = activeBranch?.id;
   const t = TRANSLATIONS[language];

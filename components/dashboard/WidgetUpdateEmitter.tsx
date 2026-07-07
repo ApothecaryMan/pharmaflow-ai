@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { emit, listen } from '@tauri-apps/api/event';
 import { useSettings } from '../../context';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
+import { useRecentSales } from '../../hooks/queries/useSalesQuery';
 import { isTauri } from '../../utils/platform';
 
 export const WidgetUpdateEmitter = () => {
-  const { sales, activeBranch } = useData();
+  const activeBranch = useAuthStore(s => s.branches.find(b => b.id === s.activeBranchId));
+  const { data: sales = [] } = useRecentSales(activeBranch?.id ?? '');
   const { darkMode } = useSettings();
   const payloadRef = useRef<{ revenue: number; transactions: number; dailyTarget: number; isDark: boolean } | null>(null);
 

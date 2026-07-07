@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
-import { useData } from '../../context/DataContext';
+import { useAuthStore } from '../../stores/authStore';
 import { useShift } from '../../hooks/sales/useShift';
 import type { Sale, Shift } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
@@ -23,7 +23,9 @@ interface ReceiptDesignerProps {
 }
 
 export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, language }) => {
-  const { branches, activeBranchId, updateBranch } = useData();
+  const branches = useAuthStore(s => s.branches);
+  const activeBranchId = useAuthStore(s => s.activeBranchId);
+  const updateBranch = useAuthStore(s => s.updateBranch);
   const activeBranch = useMemo(
     () => branches?.find((b: any) => b.id === activeBranchId),
     [branches, activeBranchId]
