@@ -599,6 +599,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
           title={t.modal?.edit || 'Edit Supplier'}
           icon='edit'
           subtitle={t.modal?.editSubtitle || 'Update supplier information'}
+          disabled={isSaving}
         >
           {/* Form */}
           <div className='space-y-6'>
@@ -733,7 +734,6 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
             </button>
             <button
               onClick={handleSaveEdit}
-              disabled={isSaving}
               className={`px-4 py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-colors flex items-center justify-center gap-2 min-w-[120px] disabled:opacity-50`}
             >
               {isSaving ? (

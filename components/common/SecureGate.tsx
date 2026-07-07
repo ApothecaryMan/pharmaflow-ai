@@ -291,7 +291,6 @@ export const SecureGate: React.FC<SecureGateProps> = ({
                 onChange={(e) => setUsernameInput(e.target.value)}
                 placeholder={t.secureGate.usernamePlaceholder}
                 className='text-center'
-                disabled={isLoading}
                 onKeyDown={handleKeyDown}
                 autoComplete='off'
                 autoCorrect='off'
@@ -304,7 +303,6 @@ export const SecureGate: React.FC<SecureGateProps> = ({
                 onChange={(e) => setPasswordInput(e.target.value)}
                 placeholder={t.secureGate.passwordPlaceholder}
                 className='text-center'
-                disabled={isLoading}
                 onKeyDown={handleKeyDown}
                 style={{ WebkitTextSecurity: 'disc' } as React.CSSProperties}
                 autoComplete='off'
@@ -315,7 +313,6 @@ export const SecureGate: React.FC<SecureGateProps> = ({
               <button
                 type='button'
                 onClick={() => handleSubmit()}
-                disabled={isLoading}
                 className='w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 group bg-primary-500 hover:bg-primary-600 text-white disabled:opacity-50 cursor-pointer'
               >
                 <span className='material-symbols-rounded text-base'>
@@ -349,7 +346,6 @@ export const SecureGate: React.FC<SecureGateProps> = ({
               <button
                 type='button'
                 onClick={handleBiometricUnlock}
-                disabled={isLoading}
                 className='w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 group bg-primary-500 hover:bg-primary-600 text-white disabled:opacity-50 cursor-pointer'
               >
                 <span className='material-symbols-rounded text-base'>
@@ -397,6 +393,7 @@ export const SecureGate: React.FC<SecureGateProps> = ({
         onClose={handleCloseInternal}
         title={t.secureGate.identityVerification}
         className='max-w-sm'
+        disabled={isLoading}
       >
         <div className='flex flex-col items-center text-center p-3'>
           {!isAuthorized && (
@@ -467,6 +464,7 @@ export const SecureGate: React.FC<SecureGateProps> = ({
           onClose={handleCloseInternal}
           title={t.secureGate.identityVerification}
           className='max-w-sm'
+          disabled={isLoading}
         >
           <div className='flex flex-col items-center text-center p-3'>
             {!isAuthorized && (

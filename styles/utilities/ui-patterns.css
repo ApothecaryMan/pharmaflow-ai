@@ -78,6 +78,28 @@ body  {
 /* Global Disabled Button Styling */
 button:disabled, .btn-disabled  { cursor: default !important; pointer-events: none !important; opacity: 0.5; }
 
+/* Modal Body Disabled — dims all interactive children when modal is in processing state */
+[data-modal-body-disabled] button,
+[data-modal-body-disabled] input,
+[data-modal-body-disabled] select,
+[data-modal-body-disabled] textarea,
+[data-modal-body-disabled] [role="button"],
+[data-modal-body-disabled] a {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* Header actions disabled overlay */
+[data-disabled] button,
+[data-disabled] input,
+[data-disabled] [role="button"],
+[data-disabled] a {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
 /* Custom Card Shadow (User Request 2025-12-09) */
 
 html:not(.dark) .card-shadow  { box-shadow: none !important; border: 2px solid var(--border-divider) !important; }

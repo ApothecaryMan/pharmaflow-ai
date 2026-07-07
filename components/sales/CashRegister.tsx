@@ -746,6 +746,28 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           onClose={closeModal}
           size='md'
           zIndex={50}
+          disabled={isLoading}
+          footer={
+            <div className='flex gap-3'>
+              <button
+                onClick={closeModal}
+                className='flex-1 py-3 rounded-full font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors'
+              >
+                {t.cashRegister.modal.cancel}
+              </button>
+              <button
+                onClick={() => {
+                  if (modalMode === 'open') handleOpenShift();
+                  if (modalMode === 'close') handleCloseShift();
+                  if (modalMode === 'in' || modalMode === 'out') handleCashTransaction();
+                }}
+                className={`flex-1 py-3 rounded-full font-bold text-white
+                           bg-primary-600 hover:bg-primary-700 active:scale-95 transition-all`}
+              >
+                {t.cashRegister.modal.confirm}
+              </button>
+            </div>
+          }
           title={
             modalMode === 'open'
               ? t.cashRegister.modal.openTitle
@@ -845,25 +867,6 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
               </div>
             )}
 
-            <div className='flex gap-3 pt-2'>
-              <button
-                onClick={closeModal}
-                className='flex-1 py-3 rounded-xl font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors'
-              >
-                {t.cashRegister.modal.cancel}
-              </button>
-              <button
-                onClick={() => {
-                  if (modalMode === 'open') handleOpenShift();
-                  if (modalMode === 'close') handleCloseShift();
-                  if (modalMode === 'in' || modalMode === 'out') handleCashTransaction();
-                }}
-                className={`flex-1 py-3 rounded-xl font-bold text-white shadow-lg shadow-primary-500/20
-                           bg-primary-600 hover:bg-primary-700 active:scale-95 transition-all`}
-              >
-                {t.cashRegister.modal.confirm}
-              </button>
-            </div>
           </div>
         </Modal>
       )}

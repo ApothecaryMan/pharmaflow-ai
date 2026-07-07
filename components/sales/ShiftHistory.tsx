@@ -585,6 +585,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
           size='2xl'
           title={t.shiftHistory?.details?.title || 'Shift Details'}
           icon='receipt_long'
+          disabled={isLoading}
           subtitle={`${t.shiftHistory?.headers?.shiftNumber || 'Shift #'}: #${selectedShift.handoverReceiptNumber || selectedShift.id.slice(-6)} • ${new Date(selectedShift.openTime).toLocaleDateString()}`}
           headerActions={
             <button

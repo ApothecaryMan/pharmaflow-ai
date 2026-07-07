@@ -270,6 +270,7 @@ const PrescriptionPricing: React.FC = () => {
           title={language === 'AR' ? 'تفاصيل الدواء' : 'Drug Details'}
           icon='info'
           size='md'
+          disabled={isLoading}
           bodyClassName='p-0'
         >
           <div className='flex flex-col'>

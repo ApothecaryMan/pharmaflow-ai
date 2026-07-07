@@ -935,6 +935,7 @@ export const Inventory: React.FC<InventoryProps> = ({
           zIndex={50}
           title={t.actionsMenu.view}
           icon='visibility'
+          disabled={isLoading}
           tabs={[
             { label: t.generalInfo || 'معلومات عامة', value: 'general', icon: 'info' },
             { label: t.pharmacyDetails || 'تفاصيل الصيدلية', value: 'pharmacy', icon: 'storefront' }
@@ -1149,6 +1150,7 @@ export const Inventory: React.FC<InventoryProps> = ({
           size='sm'
           title={t.actionsMenu.printBarcode}
           icon='print'
+          disabled={isLoading}
         >
           <div className='space-y-4'>
             <div className='text-center'>

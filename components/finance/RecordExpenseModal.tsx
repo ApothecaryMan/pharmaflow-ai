@@ -142,13 +142,13 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({
       title={t.expenses.modal.title}
       icon='receipt_long'
       size='md'
+      disabled={isSubmitting}
       footer={
         <div className='flex justify-end gap-2' dir={isRtl ? 'rtl' : 'ltr'}>
           <button
             type='button'
             onClick={onClose}
             className='px-4 h-9 text-xs font-semibold rounded-lg border border-(--border-divider) hover:bg-zinc-500/5 transition-all text-(--text-secondary)'
-            disabled={isSubmitting}
           >
             {t.expenses.modal.cancel}
           </button>
@@ -156,7 +156,6 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({
             type='submit'
             form='record-expense-form'
             className='px-4 h-9 text-xs font-semibold rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition-all disabled:opacity-50'
-            disabled={isSubmitting}
           >
             {isSubmitting ? t.common.loading : t.expenses.modal.confirm}
           </button>

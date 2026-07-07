@@ -521,6 +521,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
           zIndex={50}
           title={t.purchaseReturns?.createReturn || 'Create Return'}
           icon='add_circle'
+          disabled={isPageLoading}
           footer={
             <div className='flex justify-end gap-3 w-full'>
               <button
@@ -872,6 +873,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
           zIndex={50}
           title={t.purchaseReturns?.returnDetails || 'Return Details'}
           icon='assignment_return'
+          disabled={isPageLoading}
           footer={
             <div className='flex justify-end'>
               <button

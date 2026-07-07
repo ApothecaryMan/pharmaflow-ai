@@ -531,6 +531,7 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
         isOpen={!!windowedView}
         onClose={() => setWindowedView(null)}
         size='full'
+        disabled={isLoading}
         title={
           windowedView
             ? (t.nav as any)[windowedView.replace(/-/, '_')] ||

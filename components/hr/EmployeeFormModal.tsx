@@ -288,6 +288,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
       height='80vh'
       hideCloseButton={true}
       bodyClassName='p-0 bg-(--bg-card)'
+      disabled={isSaving}
       style={
         {
           '--bg-card': `color-mix(in srgb, ${bannerAccent} 12%, var(--bg-card-base))`,
@@ -312,7 +313,6 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
           </button>
           <button
             onClick={handleSave}
-            disabled={isSaving}
             className={`${BUTTON_BASE} px-8 py-2.5 text-(--text-primary) font-bold flex items-center justify-center gap-2 min-w-[120px]`}
           >
             {isSaving ? (

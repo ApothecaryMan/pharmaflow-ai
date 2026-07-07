@@ -836,6 +836,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         onClose={() => setExpandedView(null)}
         title={t?.totalCustomers || 'Total Customers'}
         color={color}
+        disabled={isLoading}
         actions={
           <button
             onClick={() =>
@@ -932,6 +933,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         onClose={() => setExpandedView(null)}
         title={t?.topCustomers || 'Top Customers'}
         color={color}
+        disabled={isLoading}
         actions={
           <button
             onClick={() =>
@@ -999,6 +1001,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         onClose={() => setExpandedView(null)}
         title={t?.segmentation || 'Customer Segmentation'}
         color={color}
+        disabled={isLoading}
         t={t}
       >
         <div className='space-y-6'>
@@ -1057,6 +1060,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         onClose={() => setExpandedView(null)}
         title={t?.healthInsights || 'Health Insights'}
         color={color}
+        disabled={isLoading}
         t={t}
       >
         <div className='space-y-6'>

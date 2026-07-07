@@ -1160,6 +1160,7 @@ export const POS: React.FC<POSProps> = ({
             size='6xl'
             title={t.productDetails}
             icon='info'
+            disabled={isLoading || isProcessing}
             tabs={viewingDrugDetails.detailTabs}
             activeTab={viewingDrugTab}
             onTabChange={setViewingDrugTab}

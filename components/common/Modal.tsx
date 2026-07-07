@@ -123,6 +123,13 @@ interface ModalProps {
   searchValue?: string;
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
+
+  /**
+   * When true, disables all interactive elements inside the modal
+   * (close button, tabs, header actions, body controls, and footer buttons).
+   * Useful during async operations to prevent user interaction.
+   */
+  disabled?: boolean;
 }
 
 import ReactDOM from 'react-dom';
@@ -161,6 +168,7 @@ export const Modal: React.FC<ModalProps> = ({
   searchValue = '',
   onSearchChange,
   searchPlaceholder,
+  disabled = false,
 }) => {
   const settings = useSettings();
   const {
@@ -391,7 +399,7 @@ export const Modal: React.FC<ModalProps> = ({
               layout
               className={
                 isSidebar
-                  ? `relative w-full bg-(--bg-card) border border-zinc-400/40 dark:border-zinc-500/30 overflow-hidden flex flex-col sidebar-modal-card select-none pointer-events-auto ${className}`
+                  ? `relative w-full h-dvh bg-(--bg-card) border border-zinc-400/40 dark:border-zinc-500/30 overflow-hidden flex flex-col sidebar-modal-card select-none pointer-events-auto ${className}`
                   : `relative w-full ${maxWidthClass} bg-(--bg-card) rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col max-h-[95vh] border border-zinc-400/40 dark:border-zinc-500/30 ring-1 ring-inset ring-white/20 dark:ring-white/10 select-none pointer-events-auto ${className}`
               }
               style={isSidebar ? style : { height: height || 'auto', ...style }}
@@ -441,6 +449,7 @@ export const Modal: React.FC<ModalProps> = ({
                           size='xs'
                           fullWidth={false}
                           iconSize='--icon-md'
+                          disabled={disabled}
                         />
                       </div>
                     ) : null}
@@ -448,7 +457,7 @@ export const Modal: React.FC<ModalProps> = ({
                     {/* End Section - Search + Header Actions + Close Button */}
                     <div className='flex items-center gap-2 absolute end-2 top-0 bottom-0'>
                       {searchable && (
-                        <div className='w-[300px]'>
+                        <div className='w-[300px]' data-disabled={disabled || undefined}>
                           <SearchInput
                             compact
                             value={searchValue}
@@ -458,11 +467,14 @@ export const Modal: React.FC<ModalProps> = ({
                           />
                         </div>
                       )}
-                      {headerActions}
+                      <div data-disabled={disabled || undefined}>
+                        {headerActions}
+                      </div>
                       {!hideCloseButton ? (
                         <button
                           onClick={onClose}
-                          className='w-8 h-8 rounded-full grid place-items-center text-(--text-tertiary) hover:text-(--text-primary) hover:bg-zinc-500/10 dark:hover:bg-zinc-400/15 '
+                          disabled={disabled}
+                          className='w-8 h-8 rounded-full grid place-items-center text-(--text-tertiary) hover:text-(--text-primary) hover:bg-zinc-500/10 dark:hover:bg-zinc-400/15 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent dark:disabled:hover:bg-transparent'
                           aria-label='Close modal'
                         >
                           <span
@@ -483,19 +495,24 @@ export const Modal: React.FC<ModalProps> = ({
                   {/* Content - with internal padding and independent scrolling */}
                   <div
                     className={`flex-1 overflow-y-auto custom-scrollbar ${bodyClassName} content-shift-layer`}
+                    data-modal-body-disabled={disabled || undefined}
                   >
                     {children}
                   </div>
 
                   {/* Footer - with top border and balanced padding */}
                   {footer ? (
-                    <div className='p-5 shrink-0 border-t border-(--border-divider) bg-(--bg-card)'>
-                      {footer}
-                    </div>
+                    <fieldset disabled={disabled} className='contents'>
+                      <div className='p-5 shrink-0 border-t border-(--border-divider) bg-(--bg-card)'>
+                        {footer}
+                      </div>
+                    </fieldset>
                   ) : null}
                 </div>
               ) : (
-                children
+                <div data-modal-body-disabled={disabled || undefined}>
+                  {children}
+                </div>
               )}
             </motion.div>
           </>

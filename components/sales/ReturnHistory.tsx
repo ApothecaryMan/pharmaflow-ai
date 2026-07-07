@@ -404,6 +404,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
           title={t.modal?.title || 'Return Details'}
           icon='receipt_long'
           className='overscroll-contain'
+          disabled={isPageLoading}
         >
           <div className='flex flex-col h-full max-h-[80vh]'>
             {/* 1. Header Info Section (Fixed) */}

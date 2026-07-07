@@ -1149,6 +1149,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         views={monitorViews as any}
         onClose={() => setExpandedView(null)}
         color={color.name}
+        disabled={isLoading}
       />
     </div>
   );

@@ -378,6 +378,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
         title={t.purchaseDetails || 'Purchase Details'}
         icon='visibility'
         size='4xl'
+        disabled={isLoading}
       >
         {selectedPurchase && (
           <div className='flex flex-col h-full'>
@@ -585,6 +586,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
         onClose={() => setIsApproveModalOpen(false)}
         size='sm'
         zIndex={60}
+        disabled={isLoading}
       >
         <div className='p-6 text-center'>
           <div className='text-green-500 mx-auto mb-4 bg-green-50 dark:bg-green-900/20 w-16 h-16 rounded-full flex items-center justify-center'>
@@ -635,6 +637,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
         onClose={() => setIsRejectModalOpen(false)}
         size='sm'
         zIndex={60}
+        disabled={isLoading}
       >
         <div className='p-6 text-center'>
           <div className='text-red-500 mx-auto mb-4 bg-red-50 dark:bg-red-900/20 w-16 h-16 rounded-full flex items-center justify-center'>

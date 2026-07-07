@@ -27,6 +27,8 @@ interface SegmentedControlProps<T> {
   disableAnimation?: boolean;
   useGraphicFont?: boolean;
   dir?: 'ltr' | 'rtl';
+  /** When true, disables all options in the control */
+  disabled?: boolean;
 }
 
 const SIZES = {
@@ -48,6 +50,7 @@ export function SegmentedControl<T extends string | number | boolean>({
   disableAnimation = false,
   useGraphicFont = false,
   dir,
+  disabled = false,
 }: SegmentedControlProps<T>) {
   const ref = useRef<HTMLDivElement>(null),
     isFirst = useRef(true),
@@ -136,8 +139,8 @@ export function SegmentedControl<T extends string | number | boolean>({
           type='button'
           onClick={() => onChange(o.value)}
           data-active={value === o.value}
-          disabled={o.disabled}
-          className={`${fullWidth ? 'flex-1' : ''} ${sz.b} ${pill ? 'rounded-full' : 'rounded-lg'} z-10 relative flex items-center justify-center gap-2 whitespace-nowrap font-bold ${value === o.value ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:hover:text-white'} ${o.disabled ? 'opacity-50 pointer-events-none' : ''}`}
+          disabled={disabled || o.disabled}
+          className={`${fullWidth ? 'flex-1' : ''} ${sz.b} ${pill ? 'rounded-full' : 'rounded-lg'} z-10 relative flex items-center justify-center gap-2 whitespace-nowrap font-bold ${value === o.value ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:hover:text-white'} ${disabled || o.disabled ? 'opacity-50 pointer-events-none' : ''}`}
         >
           {o.icon && (
             <span

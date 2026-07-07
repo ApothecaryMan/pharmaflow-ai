@@ -1129,6 +1129,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           zIndex={50}
           title={t.modal.title}
           subtitle={`${getDisplayName(restockDrug, textTransform)} (${restockDrug.stock} left)`}
+          disabled={isLoading || finLoading}
         >
           <form onSubmit={handleRestockSubmit} className='space-y-5'>
             <div className='space-y-4'>
@@ -1201,6 +1202,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         views={dashboardViews as any}
         onClose={() => setExpandedView(null)}
         color={color}
+        disabled={isLoading || finLoading}
       />
 
     </div>

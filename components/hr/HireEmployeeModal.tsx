@@ -136,6 +136,32 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
       icon='person_add'
       size='sm'
       bodyClassName='p-1.5'
+      disabled={isLoading}
+      footer={
+        <div className='flex gap-1.5'>
+          <button
+            type='submit'
+            form='hire-form'
+            disabled={isLoading || !searchQuery.trim()}
+            className='flex-1 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-black rounded-full transition-all uppercase tracking-widest hover:opacity-90 active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed cursor-pointer flex items-center justify-center'
+          >
+            {isLoading ? (
+              <span className='animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mx-auto block' />
+            ) : language === 'AR' ? (
+              'إرسال الطلب'
+            ) : (
+              'Send Request'
+            )}
+          </button>
+          <button
+            type='button'
+            onClick={handleClose}
+            className='px-4 py-1.5 bg-transparent text-zinc-500 dark:text-zinc-400 text-xs font-black rounded-full transition-all uppercase tracking-widest border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 cursor-pointer'
+          >
+            {language === 'AR' ? 'إلغاء' : 'Cancel'}
+          </button>
+        </div>
+      }
     >
       <div className='flex flex-col gap-2'>
         {success ? (
@@ -155,7 +181,7 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className='flex flex-col gap-2'>
+          <form id='hire-form' onSubmit={handleSubmit} className='flex flex-col gap-2'>
             {error && (
               <div className='p-3 bg-red-500/10 border border-red-500/20 text-red-500 text-sm rounded-lg mx-1.5 mt-1.5'>
                 {error}
@@ -303,29 +329,6 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
                   ? 'بمجرد إرسال الطلب، سيظهر للموظف في حسابه الشخصي. لن يتم إضافته فعلياً للفرع إلا بعد قبوله للدعوة.'
                   : 'Once sent, the employee will see this request in their dashboard. They will not be officially added until they accept the invitation.'}
               </p>
-            </div>
-
-            <div className='flex gap-1.5 mt-2'>
-              <button
-                type='submit'
-                disabled={isLoading || !searchQuery.trim()}
-                className='flex-1 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-black rounded-lg transition-all uppercase tracking-widest hover:opacity-90 active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed cursor-pointer flex items-center justify-center'
-              >
-                {isLoading ? (
-                  <span className='animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mx-auto block' />
-                ) : language === 'AR' ? (
-                  'إرسال الطلب'
-                ) : (
-                  'Send Request'
-                )}
-              </button>
-              <button
-                type='button'
-                onClick={handleClose}
-                className='px-4 py-1.5 bg-transparent text-zinc-500 dark:text-zinc-400 text-xs font-black rounded-lg transition-all uppercase tracking-widest border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 cursor-pointer'
-              >
-                {language === 'AR' ? 'إلغاء' : 'Cancel'}
-              </button>
             </div>
           </form>
         )}

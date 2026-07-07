@@ -570,7 +570,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     const c = viewingCustomer;
 
     return (
-      <Modal isOpen={!!viewingCustomer} onClose={handleCloseProfile} size='lg' zIndex={60}>
+      <Modal isOpen={!!viewingCustomer} onClose={handleCloseProfile} size='lg' zIndex={60} disabled={isLoading}>
         <div className='w-full' onClick={(e) => e.stopPropagation()}>
           {/* Header */}
           <div
@@ -1275,6 +1275,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         onClose={handleCloseModal}
         size='2xl'
         zIndex={50}
+        disabled={isLoading}
         title={t.modal.edit}
         icon='edit'
         tabs={MODAL_TABS}
@@ -1513,7 +1514,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       </Modal>
 
       {/* Kiosk Mode - Updated with Address Form */}
-      <Modal isOpen={isKioskMode} onClose={() => setIsKioskMode(false)} size='2xl' zIndex={100}>
+      <Modal isOpen={isKioskMode} onClose={() => setIsKioskMode(false)} size='2xl' zIndex={100} disabled={isLoading}>
         <div className='w-full h-full bg-gray-50 dark:bg-gray-800 p-8 overflow-y-auto'>
           <div className='text-center mb-8'>
             <div

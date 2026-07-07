@@ -474,6 +474,7 @@ export const PurchaseHistory: React.FC<PurchaseHistoryProps> = ({
           size='4xl'
           title={t.detailsModal?.title || 'Purchase Order Details'}
           icon='receipt_long'
+          disabled={isLoading}
           subtitle={`${selectedPurchase.invoiceId} • ${new Date(selectedPurchase.date).toLocaleDateString()} ${formatTime(new Date(selectedPurchase.date))}`}
         >
           <div className='p-6 space-y-6'>

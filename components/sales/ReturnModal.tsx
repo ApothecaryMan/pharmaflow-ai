@@ -352,6 +352,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
       zIndex={100}
       title={t.returns.processReturn}
       subtitle={`${step === 1 ? t.returns.step2 : step === 2 ? t.returns.step3 : t.returns.step4}`}
+      disabled={isProcessing}
       footer={
         <div dir='ltr' className='flex gap-3'>
           {step > 1 && (
@@ -378,7 +379,6 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           ) : (
             <button
               onClick={handleConfirm}
-              disabled={isProcessing}
               className={`px-8 py-2.5 rounded-xl font-bold text-white bg-primary-600 enabled:hover:bg-primary-700 disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-lg shadow-primary-200 dark:shadow-none`}
             >
               {isProcessing ? (

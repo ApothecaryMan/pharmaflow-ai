@@ -65,6 +65,7 @@ export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose, orgId
       subtitle={t.subtitle}
       icon='person_add'
       width='max-w-md'
+      disabled={isSubmitting}
     >
       {!inviteLink ? (
         <form onSubmit={handleSubmit} className='space-y-6'>

@@ -694,7 +694,6 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
             {editingBranch?.id && (
               <button
                 onClick={handleSave}
-                disabled={isSubmitting}
                 className='px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-bold rounded-lg uppercase tracking-wider hover:opacity-90 disabled:opacity-50 transition-all'
               >
                 {isSubmitting ? '...' : t.attendance.saveTime}
@@ -915,6 +914,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
           tabs={modalTabs}
           activeTab={modalView}
           onTabChange={(val) => setModalView(val as 'general' | 'employees' | 'attendance')}
+          disabled={isSubmitting}
         >
           <div className='space-y-6 min-h-[400px] py-2'>
             {modalView === 'general'
@@ -941,7 +941,6 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
                   {language === 'AR' ? 'إلغاء' : 'Cancel'}
                 </button>
                 <button
-                  disabled={isSubmitting}
                   onClick={handleSave}
                   className='flex-1 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest text-white shadow-sm disabled:opacity-50 flex items-center justify-center transition-none'
                   style={{ backgroundColor: color }}

@@ -86,6 +86,7 @@ export function InvitationListModal({ isOpen, onClose, language }: Props) {
       icon='how_to_reg'
       size='lg'
       bodyClassName='p-1.5'
+      disabled={isLoading}
     >
       <div className='flex flex-col gap-1'>
         {isLoading ? (
