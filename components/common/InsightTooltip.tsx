@@ -1,6 +1,5 @@
 import type React from 'react';
 import { useSettings } from '../../context';
-import { formatCompactCurrencyParts } from '../../utils/currency';
 
 /**
  * @fileoverview InsightTooltip Component
@@ -86,9 +85,6 @@ interface InsightTooltipProps {
   language?: string;
 }
 
-/**
- * Formats values based on type and context, splitting the symbol for small sizing.
- */
 export const CurrencyValue: React.FC<{
   val: any;
   language?: string;
@@ -99,20 +95,36 @@ export const CurrencyValue: React.FC<{
   const currentLang = propLanguage || settingsLanguage;
 
   if (typeof val !== 'number') return <>{val}</>;
-  if (!isCurrency) return <>{val}</>;
 
-  const { amount, symbol } = formatCompactCurrencyParts(
-    val,
-    'EGP',
-    currentLang === 'AR' ? 'ar-eg' : 'en-us'
-  );
+  const locale = currentLang === 'AR' ? 'ar-eg-u-nu-latn' : 'en-us';
+  const nf = new Intl.NumberFormat(locale, {
+    notation: 'compact',
+    maximumFractionDigits: isCurrency ? 2 : 1,
+  });
+  const parts = nf.formatToParts(val);
+  const suffix = parts.find((p) => p.type === 'compact')?.value || '';
+  const amount = parts
+    .filter((p) => p.type !== 'compact')
+    .map((p) => p.value)
+    .join('')
+    .trim();
 
+  if (!isCurrency) {
+    if (!suffix) return <>{amount}</>;
+    return (
+      <span className='inline-flex items-baseline gap-0.5'>
+        <span className='leading-none'>{amount}</span>
+        <span className='text-[0.7em] opacity-50 font-medium whitespace-nowrap leading-none'>{suffix}</span>
+      </span>
+    );
+  }
+
+  const symbol = currentLang === 'AR' ? 'ج.م' : 'EGP';
   return (
     <span className='inline-flex items-baseline gap-1'>
       <span className='leading-none'>{amount}</span>
-      <span
-        className={`${isHeader ? 'text-[0.55em]' : 'text-[0.7em]'} opacity-50 font-medium whitespace-nowrap leading-none`}
-      >
+      {suffix && <span className='text-[0.7em] opacity-50 font-medium whitespace-nowrap leading-none'>{suffix}</span>}
+      <span className={`${isHeader ? 'text-[0.55em]' : 'text-[0.7em]'} opacity-50 font-medium whitespace-nowrap leading-none`}>
         {symbol}
       </span>
     </span>

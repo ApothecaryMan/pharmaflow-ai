@@ -140,11 +140,11 @@ export const Tooltip: React.FC<{
                 className='absolute inset-0 w-full h-full pointer-events-none overflow-visible'
                 style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}
               >
-                <path d={path || ''} className='fill-black dark:fill-white' />
+                <path d={path || ''} className='fill-gray-800 dark:fill-stone-50' />
               </svg>
               <div
                 ref={contentRef}
-                className='relative z-10 text-white dark:text-black text-[11px] font-semibold tracking-tight whitespace-nowrap w-max'
+                className='relative z-10 text-stone-50 dark:text-gray-800 text-[11px] font-semibold tracking-tight whitespace-nowrap w-max'
                 style={{
                   paddingTop: side === 'bottom' ? AH + 8 : 8,
                   paddingBottom: side === 'top' ? AH + 8 : 8,

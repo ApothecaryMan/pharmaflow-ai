@@ -635,20 +635,29 @@ export const Inventory: React.FC<InventoryProps> = ({
         };
 
         if (batches.length > 1) {
-          const displayBatch = drug;
+          const availableBatches = batches.filter((d: Drug) => d.stock > 0);
+          const selectedBatchId = selectedBatches[groupData.groupId];
+          const selectedBatchWithInventory = selectedBatchId
+            ? availableBatches.find((d: Drug) => d.id === selectedBatchId)
+            : null;
+          const defaultBatch = availableBatches[0] || drug;
+          const displayBatch = selectedBatchWithInventory || defaultBatch;
           const colorClass = getExpiryColorClass(displayBatch.expiryDate);
+
           return (
-            <div className='flex justify-center'>
+            <div className='flex justify-center overflow-visible'>
               <HoverDropdown
                 panelWidth='min-w-[180px]'
                 panelClassName='space-y-0.5 p-1.5'
                 trigger={
-                  <div className={`flex items-center justify-center font-bold ${colorClass} h-8 w-[120px] mx-auto px-1.5 border-2 border-gray-300 dark:border-(--border-divider) rounded-md bg-(--bg-card) cursor-pointer`}>
-                    <span className='flex-1 text-center text-[11px]'>
+                  <div
+                    className={`flex items-center justify-center font-bold ${colorClass} h-7 w-28 mx-auto px-1.5 border-2 border-gray-300 dark:border-(--border-divider) rounded-md bg-(--bg-card) group-hover:bg-gray-200 dark:group-hover:bg-gray-600/80 cursor-pointer`}
+                  >
+                    <span className='flex-1 text-center text-sm'>
                       {formatExpiryDate(displayBatch.expiryDate)}
                     </span>
                     <span className='w-px self-stretch bg-current opacity-20 shrink-0' />
-                    <span className='flex-1 text-center text-xs tabular-nums'>
+                    <span className='flex-1 text-center text-sm tabular-nums'>
                       {formatStock(displayBatch.stock, displayBatch.unitsPerPack, {
                         packs: '',
                         outOfStock: t.outOfStockShort || 'Out',
@@ -658,17 +667,17 @@ export const Inventory: React.FC<InventoryProps> = ({
                 }
               >
                 <div className='text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-2 py-1'>
-                  {batches.length} {t.batches || 'batches'}
+                  {availableBatches.length} {t.batches || 'batches'}
                 </div>
-                {batches.map((b: any) => {
-                  const isSelected = drug?.id === b.id;
-                  const c = getExpiryColorClass(b.expiryDate);
+                {availableBatches.map((batch) => {
+                  const isSelected = (selectedBatchWithInventory || defaultBatch)?.id === batch.id;
+                  const c = getExpiryColorClass(batch.expiryDate);
                   return (
                     <div
-                      key={b.id}
+                      key={batch.id}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedBatches((prev) => ({ ...prev, [groupData.groupId]: b.id }));
+                        setSelectedBatches((prev) => ({ ...prev, [groupData.groupId]: batch.id }));
                       }}
                       className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors text-sm ${
                         isSelected
@@ -677,10 +686,10 @@ export const Inventory: React.FC<InventoryProps> = ({
                       }`}
                     >
                       <span className={`font-bold w-[44px] text-center ${c}`}>
-                        {formatExpiryDate(b.expiryDate)}
+                        {formatExpiryDate(batch.expiryDate)}
                       </span>
                       <span className='ml-auto rtl:mr-auto rtl:ml-0 tabular-nums font-bold'>
-                        {formatStock(b.stock, b.unitsPerPack, {
+                        {formatStock(batch.stock, batch.unitsPerPack, {
                           packs: '',
                           outOfStock: t.outOfStockShort || 'Out',
                         }).trim()}
