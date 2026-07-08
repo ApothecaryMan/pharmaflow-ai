@@ -23,9 +23,9 @@ import {
 } from '../../utils/expiryUtils';
 import { formatStock, formatStockParts, validateStock } from '../../utils/inventory';
 import { money } from '../../utils/money';
-import { convertToPacks, resolveUnits } from '../../utils/stockUtils';
+import { convertToPacks, resolveDisplayStock, resolveUnits } from '../../utils/stockUtils';
 import { CARD_BASE, MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
-import { FilterDropdown, SegmentedControl } from '../common';
+import { HoverDropdown, SegmentedControl } from '../common';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import type { FilterConfig } from '../common/FilterPill';
 import { InteractiveCard } from '../common/InteractiveCard';
@@ -106,6 +106,7 @@ export const Inventory: React.FC<InventoryProps> = ({
   const menuRef = useRef<HTMLDivElement>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [selectedBatches, setSelectedBatches] = useState<Record<string, string>>({}); // groupId -> drugId
+  const [selectedUnits, setSelectedUnits] = useState<Record<string, string>>({});
   const [isDataSettled, setIsDataSettled] = useState(false);
 
   useEffect(() => {
@@ -508,27 +509,68 @@ export const Inventory: React.FC<InventoryProps> = ({
         header: t.headers.stock,
         meta: { align: 'start' },
         cell: ({ row }) => {
-          if (row.original.stock <= 0) {
+          const drug = row.original;
+          if (drug.stock <= 0) {
             return <span className='badge-danger'>{t.outOfStockShort || 'OUT'}</span>;
           }
 
-          const parts = formatStockParts(row.original.stock, row.original.unitsPerPack, {
-            packs: t.details?.packs || 'Packs',
-            outOfStock: t.outOfStock || 'Out of Stock',
-          });
+          const hasDual = drug.unitsPerPack && drug.unitsPerPack > 1;
+          const mode = (selectedUnits[drug.id] || 'pack') as 'pack' | 'unit';
+          const unitLabel = currentLang === 'ar' ? 'وحدات' : 'Units';
 
+          if (!hasDual) {
+            const parts = formatStockParts(drug.stock, drug.unitsPerPack, {
+              packs: t.details?.packs || 'Packs',
+              outOfStock: t.outOfStock || 'Out of Stock',
+            });
+            return (
+              <div
+                className={`font-medium text-xs ${drug.stock < (drug.unitsPerPack || 1) ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}
+              >
+                {parts.value}{' '}
+                {parts.label && (
+                  <span className='text-[10px] text-gray-400 font-normal'>{parts.label}</span>
+                )}
+              </div>
+            );
+          }
+
+          const displayValue = resolveDisplayStock(drug.stock, drug.unitsPerPack, mode);
           return (
-            <div
-              className={`font-medium text-xs ${row.original.stock < (row.original.unitsPerPack || 1) ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}
-            >
-              {parts.value}{' '}
-              {parts.label && (
-                <span className='text-[10px] text-gray-400 font-normal'>{parts.label}</span>
-              )}
+            <div className='flex items-center justify-start overflow-visible'>
+              <HoverDropdown
+                trigger={
+                  <div className='flex items-center justify-center font-bold h-7 w-16 mx-auto px-1.5 border-2 border-gray-300 dark:border-(--border-divider) rounded-md bg-(--bg-card) cursor-pointer text-xs'>
+                    <span className='text-gray-700 dark:text-gray-300'>
+                      {displayValue} {mode === 'unit' ? unitLabel : (t.details?.packs || 'Packs')}
+                    </span>
+                  </div>
+                }
+              >
+                {(['pack', 'unit'] as const).map((opt) => {
+                  const isSelected = mode === opt;
+                  return (
+                    <div
+                      key={opt}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedUnits((prev) => ({ ...prev, [drug.id]: opt }));
+                      }}
+                      className={`px-3 py-1.5 rounded-md cursor-pointer transition-colors text-sm font-bold text-center ${
+                        isSelected
+                          ? 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300'
+                          : 'hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      {opt === 'pack' ? (t.details?.packs || 'Packs') : unitLabel}
+                    </div>
+                  );
+                })}
+              </HoverDropdown>
             </div>
           );
         },
-        size: 90,
+        size: 110,
       },
       {
         accessorKey: 'publicPrice',
@@ -593,46 +635,60 @@ export const Inventory: React.FC<InventoryProps> = ({
         };
 
         if (batches.length > 1) {
+          const displayBatch = drug;
+          const colorClass = getExpiryColorClass(displayBatch.expiryDate);
           return (
             <div className='flex justify-center'>
-              <FilterDropdown
-                variant='input'
-                items={batches}
-                selectedItem={drug}
-                onSelect={(b: any) => {
-                  setSelectedBatches((prev) => ({ ...prev, [groupData.groupId]: b.id }));
-                }}
-                keyExtractor={(b: any) => b.id}
-                renderSelected={(b: any) => {
-                  const colorClass = getExpiryColorClass(b.expiryDate);
+              <HoverDropdown
+                panelWidth='min-w-[180px]'
+                panelClassName='space-y-0.5 p-1.5'
+                trigger={
+                  <div className={`flex items-center justify-center font-bold ${colorClass} h-8 w-[120px] mx-auto px-1.5 border-2 border-gray-300 dark:border-(--border-divider) rounded-md bg-(--bg-card) cursor-pointer`}>
+                    <span className='flex-1 text-center text-[11px]'>
+                      {formatExpiryDate(displayBatch.expiryDate)}
+                    </span>
+                    <span className='w-px self-stretch bg-current opacity-20 shrink-0' />
+                    <span className='flex-1 text-center text-xs tabular-nums'>
+                      {formatStock(displayBatch.stock, displayBatch.unitsPerPack, {
+                        packs: '',
+                        outOfStock: t.outOfStockShort || 'Out',
+                      }).trim()}
+                    </span>
+                  </div>
+                }
+              >
+                <div className='text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-2 py-1'>
+                  {batches.length} {t.batches || 'batches'}
+                </div>
+                {batches.map((b: any) => {
+                  const isSelected = drug?.id === b.id;
+                  const c = getExpiryColorClass(b.expiryDate);
                   return (
-                    <div className={`flex items-center w-full gap-0 font-bold ${colorClass} h-full cursor-pointer hover:opacity-70 px-1`}>
-                      <span className='flex-1 text-center text-[11px]'>{formatExpiryDate(b.expiryDate)}</span>
-                      <span className='w-px self-stretch bg-current opacity-20 shrink-0' />
-                      <span className='flex-1 text-center text-xs tabular-nums'>
-                        {formatStock(b.stock, b.unitsPerPack, { packs: '', outOfStock: t.outOfStockShort || 'Out' }).trim()}
+                    <div
+                      key={b.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedBatches((prev) => ({ ...prev, [groupData.groupId]: b.id }));
+                      }}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors text-sm ${
+                        isSelected
+                          ? 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300'
+                          : 'hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      <span className={`font-bold w-[44px] text-center ${c}`}>
+                        {formatExpiryDate(b.expiryDate)}
+                      </span>
+                      <span className='ml-auto rtl:mr-auto rtl:ml-0 tabular-nums font-bold'>
+                        {formatStock(b.stock, b.unitsPerPack, {
+                          packs: '',
+                          outOfStock: t.outOfStockShort || 'Out',
+                        }).trim()}
                       </span>
                     </div>
                   );
-                }}
-                renderItem={(b: any) => {
-                  const colorClass = getExpiryColorClass(b.expiryDate);
-                  return (
-                    <div className={`flex items-center w-full gap-0 font-bold ${colorClass} h-full px-1`}>
-                      <span className='flex-1 text-center text-[11px]'>{formatExpiryDate(b.expiryDate)}</span>
-                      <span className='w-px self-stretch bg-current opacity-20 shrink-0' />
-                      <span className='flex-1 text-center text-xs tabular-nums'>
-                        {formatStock(b.stock, b.unitsPerPack).replace(/ Packs?/g, '')}
-                      </span>
-                    </div>
-                  );
-                }}
-                className='h-8 w-[120px] mx-auto'
-                color={color}
-                floating
-                hideArrow={true}
-                minHeight={32}
-              />
+                })}
+              </HoverDropdown>
             </div>
           );
         }

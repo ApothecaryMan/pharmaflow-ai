@@ -9,6 +9,7 @@ export {
 export { DatePicker, DateRangePicker } from './DatePicker';
 export { ExpandedModal } from './ExpandedModal';
 export { FilterDropdown, type FilterDropdownProps } from './FilterDropdown';
+export { HoverDropdown } from './HoverDropdown';
 export { type FilterConfig, FilterPill } from './FilterPill';
 export { FloatingInput } from './FloatingInput';
 export { HelpModal } from './HelpModal';
