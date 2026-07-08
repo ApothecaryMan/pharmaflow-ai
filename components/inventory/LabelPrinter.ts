@@ -536,6 +536,11 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
   pageHeight: number,
   offsets: { x: number; y: number } = { x: 0, y: 0 }
 ): { css: string; bodyHTML: string } => {
+  const offsetTransform =
+    offsets.x !== 0 || offsets.y !== 0
+      ? `transform: translate(${offsets.x}mm, ${offsets.y}mm);`
+      : '';
+
   const css = `
     ${templateCSS}
     .print-container {
@@ -544,7 +549,7 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
       background: white;
       font-size: 0;
       line-height: 0;
-      transform: translate(${offsets.x}mm, ${offsets.y}mm);
+      ${offsetTransform}
       box-sizing: border-box;
     }
     .page-container {
