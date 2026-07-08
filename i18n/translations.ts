@@ -1477,6 +1477,7 @@ export const TRANSLATIONS = {
         avgPerShift: 'Avg/Shift',
       },
       details: {
+        title: 'Shift Details',
         openedBy: 'Opened By',
         cashSales: 'Cash Sales',
         cardSales: 'Card Sales',
@@ -5674,6 +5675,7 @@ export const TRANSLATIONS = {
         avgPerShift: 'متوسط/وردية',
       },
       details: {
+        title: 'تفاصيل الوردية',
         openedBy: 'فتحت بواسطة',
         cashSales: 'مبيعات نقدية',
         cardSales: 'مبيعات الكرت',

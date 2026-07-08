@@ -35,13 +35,13 @@
   /* Main card layout transformation - physical right alignment for both LTR and RTL */
   .sidebar-modal-card {
     position: absolute !important;
-    top: calc(var(--navbar-height) + 16px) !important;
-    right: 16px !important;
-    bottom: calc(var(--statusbar-height) + 16px) !important;
+    top: calc(var(--navbar-height) + var(--spacing-base)) !important;
+    right: var(--spacing-base) !important;
+    bottom: calc(var(--statusbar-height) + var(--spacing-base)) !important;
     left: auto !important;
     width: var(--sidebar-modal-width, 512px) !important;
-    height: calc(100vh - var(--navbar-height) - var(--statusbar-height) - 32px) !important;
-    max-height: calc(100vh - var(--navbar-height) - var(--statusbar-height) - 32px) !important;
+    height: calc(100vh - var(--navbar-height) - var(--statusbar-height) - calc(var(--spacing-base) * 2)) !important;
+    max-height: calc(100vh - var(--navbar-height) - var(--statusbar-height) - calc(var(--spacing-base) * 2)) !important;
     border-radius: var(--radius-2xl, 16px) !important;
     border: 1px solid var(--border-divider) !important;
   }
@@ -53,7 +53,7 @@
 
   /* Shifting activation when sidebar modal is visible - physical right padding */
   .sidebar-modal-active .main-layout-content {
-    padding-right: calc(var(--sidebar-modal-width, 512px) + 32px) !important;
+    padding-right: calc(var(--sidebar-modal-width, 512px) + var(--spacing-base)) !important;
     padding-left: 0 !important;
   }
 

@@ -45,7 +45,7 @@ export const LogoutOverlay: React.FC<LogoutOverlayProps> = ({
   const currentEmployee = employees.find((e) => e.id === currentEmployeeId);
 
   return (
-    <div className='h-screen w-screen flex flex-col items-center justify-center bg-zinc-50 dark:bg-black relative overflow-hidden'>
+    <div className='h-dvh w-screen flex flex-col items-center justify-center bg-zinc-50 dark:bg-black relative overflow-hidden'>
 
       
       <div className='flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-4 px-4 dir-auto mb-16' dir={language === 'AR' ? 'rtl' : 'ltr'}>

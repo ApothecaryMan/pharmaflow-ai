@@ -307,7 +307,7 @@ export const DrugApprovalQueue: React.FC<DrugApprovalQueueProps> = ({
             </p>
           </div>
         ) : (
-          <div className='flex-1 overflow-x-auto overflow-y-auto max-h-[calc(100vh-220px)]'>
+          <div className='flex-1 overflow-x-auto overflow-y-auto max-h-[calc(100dvh-220px)]'>
             <table className='w-full text-xs text-left border-collapse'>
               <thead>
                 <tr className='border-b border-gray-200/50 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/50'>

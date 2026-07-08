@@ -10,17 +10,6 @@ export const LAYOUT_CONFIG = {
   // Breakpoint-specific horizontal padding
   HORIZONTAL_PADDING: 'px-4',
 
-  // Page Spacing Configuration (Single source of truth)
-  // You can use any CSS value here (px, rem, %, etc.)
-  SPACING: {
-    DESKTOP_TOP: '1rem', // Previously 15px
-    DESKTOP_SIDES: '9.375rem', // Previously 150px
-    DASHBOARD_DESKTOP_SIDES: '10rem', // Previously 160px
-    DESKTOP_BOTTOM: '0.625rem', // Previously 10px
-    MOBILE: '0rem',
-    MOBILE_BOTTOM: '4.375rem', // Previously 70px
-  },
-
   // Sidebar width
   SIDEBAR_WIDTH: 'w-72',
   SIDEBAR_MINI_WIDTH: 'w-20',

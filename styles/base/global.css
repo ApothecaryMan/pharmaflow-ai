@@ -10,7 +10,7 @@ color utility to any element that depends on these defaults.
 .maplibregl-popup-content  { @apply bg-transparent! shadow-none! p-0! rounded-none!; }
 .maplibregl-popup-tip  { @apply hidden!; }
 *  { @apply border-border outline-ring/50; }
-body  { @apply bg-background text-foreground; cursor: var(--global-cursor), auto; }
+body  { @apply bg-background text-foreground overflow-hidden; cursor: var(--global-cursor), auto; }
 
 /* Apply dynamic cursor to all interactive elements */
 a, button, [role="button"], .interactive, .type-interactive  { cursor: var(--global-pointer), pointer; }

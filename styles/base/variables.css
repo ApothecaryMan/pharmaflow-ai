@@ -219,7 +219,8 @@
   --ar-offset-y: -0.05em;
 
   /* ── 3. Layout & UI Tokens ── */
-  --page-padding: 1rem;
+  --spacing-base: 1rem;
+  --page-padding: var(--spacing-base);
   --page-max-width: 1600px;
   --page-title-font-size: 1.5rem;
   --page-title-font-family: inherit;

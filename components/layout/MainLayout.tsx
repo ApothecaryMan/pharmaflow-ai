@@ -273,7 +273,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     <div className='flex-1 min-w-0'>{children}</div>
                     <div className='w-4 shrink-0' />
                   </div>
-                  <div className='h-4 shrink-0' />
+                  <div className='h-4 shrink-0 hidden md:block' />
                 </div>
               </main>
             </div>

@@ -497,7 +497,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
           </div>
 
           {/* Printable Container / A5 Realistic Paper Preview with Zoom Sandbox */}
-          <div className='w-full flex justify-center overflow-auto p-6 max-h-[calc(100vh-220px)] custom-scrollbar bg-zinc-100/50 dark:bg-zinc-900/30 rounded-3xl border border-zinc-200/50 dark:border-zinc-800/30'>
+          <div className='w-full flex justify-center overflow-auto p-6 max-h-[calc(100dvh-220px)] custom-scrollbar bg-zinc-100/50 dark:bg-zinc-900/30 rounded-3xl border border-zinc-200/50 dark:border-zinc-800/30'>
             <div
               className='zoom-wrapper shrink-0'
               style={{
@@ -1180,7 +1180,7 @@ export const A5InvoiceDesigner: React.FC<{ color?: string; t?: any; language: 'E
         {/* ========================================================
             COLUMN 2: DESIGN LAB CONTROL PANEL & EDITOR (lg:col-span-5)
             ======================================================== */}
-        <div className='lg:col-span-5 lg:h-[calc(100vh-160px)] lg:overflow-y-auto lg:pr-3 space-y-6 pb-12'>
+        <div className='lg:col-span-5 lg:h-[calc(100dvh-160px)] lg:overflow-y-auto lg:pr-3 space-y-6 pb-12'>
           {/* Action trigger block */}
           <div className='bg-gradient-to-br from-zinc-900 to-zinc-950 text-white rounded-3xl p-6 shadow-lg border border-zinc-800 flex items-center justify-between'>
             <div>

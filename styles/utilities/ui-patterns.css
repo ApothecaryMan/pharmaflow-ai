@@ -53,6 +53,9 @@ input[type="number"] {
 /* Top padding removed — handled by Navbar to keep seamless color */
 padding-bottom: env(safe-area-inset-bottom); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); } }
 
+/* Utility class for fixed elements needing safe-area bottom spacing */
+.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
 /* Prevent iOS rubber-band scrolling on the body */
 html, body  { overscroll-behavior: none; -webkit-overflow-scrolling: touch; scrollbar-gutter: auto;
 

@@ -372,7 +372,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className='h-screen flex flex-col overflow-hidden bg-[var(--bg-page-surface)]'>
+    <div className='h-dvh flex flex-col overflow-hidden bg-[var(--bg-page-surface)]'>
       <div className='flex-1 overflow-hidden relative'>
         {showNotificationOverlay !== false && <NotificationOverlay />}
         {authState.isAuthenticated ? (
