@@ -362,10 +362,13 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
     return (
       <StatusBarItem
         icon='person'
-        label={roleLabel ? `${userName} (${roleLabel})` : userName}
         tooltip={roleLabel || userName}
         variant='default'
-      />
+      >
+        <span className='!font-["GraphicSansFont"] tracking-tight pt-px' style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}>
+          {roleLabel ? `${userName} (${roleLabel})` : userName}
+        </span>
+      </StatusBarItem>
     );
   }
 
@@ -379,12 +382,18 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
         <div onContextMenu={handleContextMenu} className='h-full flex items-center'>
           <StatusBarItem
             icon='person'
-            label={loginLabel}
             tooltip={tooltipText}
             onClick={handleStartLogin}
             variant={currentEmployeeId ? 'info' : 'warning'}
             className='cursor-pointer hover:bg-black/5 dark:hover:bg-white/10'
           >
+            {currentEmployeeId ? (
+              <span className='!font-["GraphicSansFont"] tracking-tight pt-px' style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}>
+                {loginLabel}
+              </span>
+            ) : (
+              <span className='pt-px'>{loginLabel}</span>
+            )}
             {isLoading && currentEmployeeId && (
               <span className='inline-flex items-center gap-1'>
                 <span className='w-12 h-2 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full' />

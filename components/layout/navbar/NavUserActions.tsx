@@ -85,7 +85,10 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
           )}
           {!isCompact && (
             <div className='hidden md:flex flex-col items-start'>
-              <span className='text-xs font-bold text-gray-700 dark:text-gray-200 leading-none mb-0.5'>
+              <span
+                className='text-xs !font-["GraphicSansFont"] tracking-tight font-bold text-gray-700 dark:text-gray-200 leading-none mb-0.5'
+                style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+              >
                 {currentEmployeeId
                   ? currentEmployee?.name ||
                     authService.getCurrentUserSync()?.username ||
@@ -144,7 +147,10 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
                   )}
                 </div>
                 <div className='flex-1'>
-                  <h3 className='font-bold text-gray-900 dark:text-white'>
+                  <h3
+                    className='!font-["GraphicSansFont"] tracking-tight font-bold text-gray-900 dark:text-white'
+                    style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+                  >
                     {currentEmployeeId
                       ? currentEmployee?.name ||
                         authService.getCurrentUserSync()?.username ||
