@@ -6,6 +6,7 @@ import { formatCurrencyParts } from '../../utils/currency';
 import { PageHeader, SearchInput, SegmentedControl } from '../common';
 import { Modal } from '../common/Modal';
 import { useStatusBar } from '../layout/StatusBar';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 
 interface DrugApprovalQueueProps {
   color: string;
@@ -511,20 +512,14 @@ export const DrugApprovalQueue: React.FC<DrugApprovalQueueProps> = ({
             <button
               type='button'
               onClick={closeConfirmation}
-              className='px-4 h-9 border border-gray-200 dark:border-gray-800 text-xs font-semibold rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+              className={MODAL_FOOTER_BTN_CANCEL}
             >
               {t.common?.cancel || 'Cancel'}
             </button>
             <button
               type='button'
               onClick={handleExecuteAction}
-              className={`px-4 h-9 text-xs font-bold rounded-xl text-white transition-colors ${
-                confirmModal.type === 'approve'
-                  ? 'bg-green-600 hover:bg-green-700 active:bg-green-800'
-                  : confirmModal.type === 'suspend'
-                    ? 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800'
-                    : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'
-              }`}
+              className={MODAL_FOOTER_BTN_PRIMARY}
             >
               {confirmModal.type === 'approve'
                 ? t.drugApproval?.approveSelected?.replace(' Selected', '') ||

@@ -14,6 +14,7 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
 import { useSmartDirection } from '../common/SmartInputs';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 
 interface ReturnModalProps {
   isOpen: boolean;
@@ -358,7 +359,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           {step > 1 && (
             <button
               onClick={handleBack}
-              className='w-12 h-12 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-colors flex items-center justify-center'
+              className={MODAL_FOOTER_BTN_CANCEL}
               title={t.returns.back}
             >
               <span className='material-symbols-rounded text-lg'>arrow_back</span>
@@ -371,7 +372,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
             <button
               onClick={handleNext}
               disabled={step === 1 && selectedItems.size === 0}
-              className={`px-8 py-2.5 rounded-xl font-bold text-white bg-primary-600 enabled:hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 shadow-lg shadow-primary-200 dark:shadow-none`}
+              className={MODAL_FOOTER_BTN_PRIMARY}
             >
               {t.returns.next}
               <span className='material-symbols-rounded text-lg'>arrow_forward</span>
@@ -379,7 +380,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           ) : (
             <button
               onClick={handleConfirm}
-              className={`px-8 py-2.5 rounded-xl font-bold text-white bg-primary-600 enabled:hover:bg-primary-700 disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-lg shadow-primary-200 dark:shadow-none`}
+              className={MODAL_FOOTER_BTN_PRIMARY}
             >
               {isProcessing ? (
                 <span className='material-symbols-rounded text-[20px] animate-spin'>sync</span>

@@ -11,7 +11,7 @@ import { getDisplayName } from '../../utils/drugDisplayName';
 import { idGenerator } from '../../utils/idGenerator';
 import { money } from '../../utils/money';
 import { storage } from '../../utils/storage';
-import { CARD_BASE, INPUT_BASE } from '../../utils/themeStyles';
+import { CARD_BASE, INPUT_BASE, MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import {
   Modal,
   PriceDisplay,
@@ -534,18 +534,14 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                   setReturnConditions({});
                   setNotes('');
                 }}
-                className='px-6 py-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors text-sm font-medium'
+                className={MODAL_FOOTER_BTN_CANCEL}
               >
                 {t.modal?.cancel || 'Cancel'}
               </button>
               <button
                 onClick={(e) => handleSubmitReturn(e as any)}
                 disabled={calculatedTotalRefund === 0}
-                className={`px-8 py-3 rounded-xl shadow-lg transition-all font-bold flex items-center gap-2 ${
-                  calculatedTotalRefund === 0
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : `bg-primary-600 hover:bg-primary-700 text-white`
-                }`}
+                className={MODAL_FOOTER_BTN_PRIMARY}
               >
                 <span className='material-symbols-rounded'>check_circle</span>
                 {t.purchaseReturns?.submit || 'Submit Return'}
@@ -878,7 +874,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
             <div className='flex justify-end'>
               <button
                 onClick={() => setViewingReturn(null)}
-                className='px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
+                className={MODAL_FOOTER_BTN_CANCEL}
               >
                 {t.modal?.close || 'Close'}
               </button>

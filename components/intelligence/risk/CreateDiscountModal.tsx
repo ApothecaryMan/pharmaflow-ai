@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useState } from 'react';
 import { Modal } from '../../common/Modal';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../../utils/themeStyles';
 
 interface CreateDiscountModalProps {
   isOpen: boolean;
@@ -148,13 +149,13 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
           <button
             type='button'
             onClick={onClose}
-            className='px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors font-medium text-sm'
+            className={MODAL_FOOTER_BTN_CANCEL}
           >
             {t?.common?.cancel || 'Cancel'}
           </button>
           <button
             onClick={handleApply}
-            className='flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2'
+            className={MODAL_FOOTER_BTN_PRIMARY}
           >
             <span
               className='material-symbols-rounded font-icon'

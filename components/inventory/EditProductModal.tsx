@@ -13,6 +13,7 @@ import { resolveUnits } from '../../utils/stockUtils';
 import { FilterDropdown } from '../common';
 import { Modal } from '../common/Modal';
 import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 
 interface EditProductModalProps {
   isOpen: boolean;
@@ -159,14 +160,14 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
           <button
             type='button'
             onClick={onClose}
-            className='flex-1 py-3 rounded-xl font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors'
+            className={MODAL_FOOTER_BTN_CANCEL}
           >
             {t.modal.cancel}
           </button>
           <button
             type='submit'
             form='edit-drug-form'
-            className={`flex-1 py-3 rounded-xl font-medium text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all active:scale-95`}
+            className={MODAL_FOOTER_BTN_PRIMARY}
           >
             {t.modal.save}
           </button>

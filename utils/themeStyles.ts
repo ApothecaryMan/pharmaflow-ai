@@ -47,3 +47,9 @@ export const GLASS_CARD_BASE =
 // High-contrast card base for profile details to stand out clearly on tinted backgrounds
 export const PROFILE_GLASS_CARD_BASE =
   'p-2.5 rounded-xl bg-white/80 dark:bg-black/20 border border-black/10 dark:border-white/10 hover:bg-white/95 dark:hover:bg-black/30 shadow-xs transition-all duration-200';
+
+// Modal footer button shared classes (one place to update all modal footer buttons)
+export const MODAL_FOOTER_BTN = 'flex-1 py-3 rounded-full';
+export const MODAL_FOOTER_BTN_CANCEL = `${MODAL_FOOTER_BTN} font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors`;
+export const MODAL_FOOTER_BTN_PRIMARY = `${MODAL_FOOTER_BTN} font-bold text-white bg-zinc-900 hover:bg-zinc-950 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 active:scale-95 transition-all`;
+export const MODAL_FOOTER_BTN_DANGER = `${MODAL_FOOTER_BTN} font-bold text-white bg-red-500 hover:bg-red-600 active:scale-95 transition-all`;

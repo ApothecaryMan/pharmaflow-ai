@@ -10,7 +10,7 @@ import type { Drug, ExpandedView, Purchase, Sale } from '../../types';
 import { formatCompactCurrency, formatCurrency, getCurrencySymbol } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatExpiryDate, parseExpiryEndOfMonth } from '../../utils/expiryUtils';
-import { CARD_BASE } from '../../utils/themeStyles';
+import { CARD_BASE, MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { ChartWidget } from '../common/ChartWidget';
 import { ExpandedModal } from '../common/ExpandedModal';
 import { HasPermission } from '../common/HasPermission';
@@ -1180,13 +1180,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <button
                 type='button'
                 onClick={() => setRestockDrug(null)}
-                className='flex-1 py-2.5 rounded-full font-medium text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors'
+                className={MODAL_FOOTER_BTN_CANCEL}
               >
                 {t.modal.cancel}
               </button>
               <button
                 type='submit'
-                className={`flex-1 py-2.5 rounded-full font-medium text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all active:scale-95`}
+                className={MODAL_FOOTER_BTN_PRIMARY}
               >
                 {t.modal.confirm}
               </button>

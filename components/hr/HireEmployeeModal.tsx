@@ -8,10 +8,10 @@ import { authService } from '../../services/auth/authService';
 import { employeeProfileRepository } from '../../services/hr/repositories/employeeProfileRepository';
 import { employmentRequestRepository } from '../../services/hr/repositories/employmentRequestRepository';
 import { orgService } from '../../services/org/orgService';
-import { BUTTON_BASE } from '../../utils/themeStyles';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
-import { BUTTON_CLOSE_BASE, Modal } from '../common/Modal';
+import { Modal } from '../common/Modal';
 import { SmartInput } from '../common/SmartInputs';
 
 interface Props {
@@ -143,7 +143,7 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
             type='submit'
             form='hire-form'
             disabled={isLoading || !searchQuery.trim()}
-            className='flex-1 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-black rounded-full transition-all uppercase tracking-widest hover:opacity-90 active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed cursor-pointer flex items-center justify-center'
+            className={MODAL_FOOTER_BTN_PRIMARY}
           >
             {isLoading ? (
               <span className='animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mx-auto block' />
@@ -156,7 +156,7 @@ export function HireEmployeeModal({ isOpen, onClose, language }: Props) {
           <button
             type='button'
             onClick={handleClose}
-            className='px-4 py-1.5 bg-transparent text-zinc-500 dark:text-zinc-400 text-xs font-black rounded-full transition-all uppercase tracking-widest border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 cursor-pointer'
+            className={MODAL_FOOTER_BTN_CANCEL}
           >
             {language === 'AR' ? 'إلغاء' : 'Cancel'}
           </button>

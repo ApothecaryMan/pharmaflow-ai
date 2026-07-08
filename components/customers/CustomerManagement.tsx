@@ -1,4 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
@@ -570,7 +571,28 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     const c = viewingCustomer;
 
     return (
-      <Modal isOpen={!!viewingCustomer} onClose={handleCloseProfile} size='lg' zIndex={60} disabled={isLoading}>
+      <Modal isOpen={!!viewingCustomer} onClose={handleCloseProfile} size='lg' zIndex={60} disabled={isLoading}
+        footer={
+          <div className='flex gap-3'>
+            <button
+              onClick={handleCloseProfile}
+              className={MODAL_FOOTER_BTN_CANCEL}
+            >
+              {t.modal.close}
+            </button>
+            <button
+              onClick={() => {
+                handleCloseProfile();
+                handleOpenEdit(c);
+              }}
+              className={MODAL_FOOTER_BTN_PRIMARY}
+            >
+              <span className='material-symbols-rounded text-[18px]'>edit</span>
+              {t.modal.editProfile}
+            </button>
+          </div>
+        }
+      >
         <div className='w-full' onClick={(e) => e.stopPropagation()}>
           {/* Header */}
           <div
@@ -712,25 +734,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             )}
           </div>
 
-          {/* Footer */}
-          <div className='p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30 flex justify-end gap-2'>
-            <button
-              onClick={handleCloseProfile}
-              className='px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-gray-600 dark:text-gray-400 font-medium text-sm transition-colors'
-            >
-              {t.modal.close}
-            </button>
-            <button
-              onClick={() => {
-                handleCloseProfile();
-                handleOpenEdit(c);
-              }}
-              className={`px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 font-medium text-sm transition-colors flex items-center gap-2`}
-            >
-              <span className='material-symbols-rounded text-[18px]'>edit</span>
-              {t.modal.editProfile}
-            </button>
-          </div>
+
         </div>
       </Modal>
     );
@@ -1286,14 +1290,14 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             <button
               type='button'
               onClick={handleCloseModal}
-              className='px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors'
+              className={MODAL_FOOTER_BTN_CANCEL}
             >
               {t.modal.cancel}
             </button>
             <button
               type='submit'
               form='customer-edit-form'
-              className={`px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all font-medium`}
+              className={MODAL_FOOTER_BTN_PRIMARY}
             >
               {t.modal.save}
             </button>
@@ -1514,7 +1518,26 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       </Modal>
 
       {/* Kiosk Mode - Updated with Address Form */}
-      <Modal isOpen={isKioskMode} onClose={() => setIsKioskMode(false)} size='2xl' zIndex={100} disabled={isLoading}>
+      <Modal isOpen={isKioskMode} onClose={() => setIsKioskMode(false)} size='2xl' zIndex={100} disabled={isLoading}
+        footer={
+          <div className='flex gap-3'>
+            <button
+              type='button'
+              onClick={() => setIsKioskMode(false)}
+              className={MODAL_FOOTER_BTN_CANCEL}
+            >
+              {t.modal.cancel}
+            </button>
+            <button
+              type='submit'
+              form='kiosk-form'
+              className={MODAL_FOOTER_BTN_PRIMARY}
+            >
+              {t.modal.register}
+            </button>
+          </div>
+        }
+      >
         <div className='w-full h-full bg-gray-50 dark:bg-gray-800 p-8 overflow-y-auto'>
           <div className='text-center mb-8'>
             <div
@@ -1528,7 +1551,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             <p className='text-gray-500 dark:text-gray-400'>{t.modal.kioskDesc}</p>
           </div>
 
-          <form onSubmit={handleSubmit} className='space-y-6'>
+          <form id='kiosk-form' onSubmit={handleSubmit} className='space-y-6'>
             <div className='space-y-4'>
               <div>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
@@ -1621,21 +1644,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
               </div>
             </div>
 
-            <div className='flex gap-4 pt-4'>
-              <button
-                type='button'
-                onClick={() => setIsKioskMode(false)}
-                className='flex-1 px-6 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors font-medium'
-              >
-                {t.modal.cancel}
-              </button>
-              <button
-                type='submit'
-                className={`flex-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all font-bold text-lg`}
-              >
-                {t.modal.register}
-              </button>
-            </div>
+
           </form>
         </div>
       </Modal>

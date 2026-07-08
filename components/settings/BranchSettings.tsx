@@ -20,6 +20,7 @@ import { PageHeader } from '../common/PageHeader';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartInput, SmartPhoneInput } from '../common/SmartInputs';
 import { Tooltip } from '../common/Tooltip';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 
 interface BranchSettingsProps {
   language: 'EN' | 'AR';
@@ -936,13 +937,13 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({
               <div className='flex gap-3 pt-6 border-t border-zinc-100 dark:border-zinc-800/50 mt-6'>
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className='flex-1 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-none'
+                  className={MODAL_FOOTER_BTN_CANCEL}
                 >
                   {language === 'AR' ? 'إلغاء' : 'Cancel'}
                 </button>
                 <button
                   onClick={handleSave}
-                  className='flex-1 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest text-white shadow-sm disabled:opacity-50 flex items-center justify-center transition-none'
+                  className={MODAL_FOOTER_BTN_PRIMARY}
                   style={{ backgroundColor: color }}
                 >
                   {isSubmitting ? (

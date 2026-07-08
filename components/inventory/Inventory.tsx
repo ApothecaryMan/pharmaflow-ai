@@ -24,7 +24,7 @@ import {
 import { formatStock, formatStockParts, validateStock } from '../../utils/inventory';
 import { money } from '../../utils/money';
 import { convertToPacks, resolveUnits } from '../../utils/stockUtils';
-import { CARD_BASE } from '../../utils/themeStyles';
+import { CARD_BASE, MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { FilterDropdown, SegmentedControl } from '../common';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import type { FilterConfig } from '../common/FilterPill';
@@ -947,7 +947,7 @@ export const Inventory: React.FC<InventoryProps> = ({
             <div className='flex gap-3'>
               <button
                 onClick={() => handlePrintBarcode(viewingDrug)}
-                className={`flex-1 py-2.5 rounded-full font-medium text-(--text-primary) bg-(--bg-elevated) hover:bg-(--border-divider) border border-(--border-divider) shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 type-interactive`}
+                className={MODAL_FOOTER_BTN_CANCEL}
               >
                 <span className='material-symbols-rounded'>qr_code_2</span>
                 {t.actionsMenu.printBarcode}
@@ -958,7 +958,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                     setViewingDrug(null);
                     handleOpenEdit(viewingDrug);
                   }}
-                  className='flex-1 py-2.5 rounded-full font-medium text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-colors type-interactive flex items-center justify-center gap-2'
+                  className={MODAL_FOOTER_BTN_PRIMARY}
                 >
                   <span className='material-symbols-rounded'>edit</span>
                   {t.actionsMenu.edit}
@@ -966,7 +966,7 @@ export const Inventory: React.FC<InventoryProps> = ({
               )}
               <button
                 onClick={() => setViewingDrug(null)}
-                className='w-12 py-2.5 rounded-full font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors flex items-center justify-center'
+                className={MODAL_FOOTER_BTN_CANCEL}
               >
                 <span className='material-symbols-rounded'>close</span>
               </button>
@@ -1151,6 +1151,25 @@ export const Inventory: React.FC<InventoryProps> = ({
           title={t.actionsMenu.printBarcode}
           icon='print'
           disabled={isLoading}
+          footer={
+            <div className='flex gap-3'>
+              <button
+                type='button'
+                onClick={() => setPrintModalDrug(null)}
+                className={MODAL_FOOTER_BTN_CANCEL}
+              >
+                {t.modal.cancel}
+              </button>
+              <button
+                type='button'
+                onClick={handleConfirmPrint}
+                className={MODAL_FOOTER_BTN_PRIMARY}
+              >
+                <span className='material-symbols-rounded text-lg'>print</span>
+                {t.actionsMenu.printBarcode}
+              </button>
+            </div>
+          }
         >
           <div className='space-y-4'>
             <div className='text-center'>
@@ -1194,24 +1213,6 @@ export const Inventory: React.FC<InventoryProps> = ({
             </div>
 
             <p className='text-xs text-center text-gray-400'>{t.actionsMenu.printQtyPrompt}</p>
-
-            <div className='flex gap-3 pt-2'>
-              <button
-                type='button'
-                onClick={() => setPrintModalDrug(null)}
-                className='flex-1 py-3 rounded-xl font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors'
-              >
-                {t.modal.cancel}
-              </button>
-              <button
-                type='button'
-                onClick={handleConfirmPrint}
-                className={`flex-1 py-3 rounded-xl font-medium text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all active:scale-95 flex items-center justify-center gap-2`}
-              >
-                <span className='material-symbols-rounded text-lg'>print</span>
-                {t.actionsMenu.printBarcode}
-              </button>
-            </div>
           </div>
         </Modal>
       )}

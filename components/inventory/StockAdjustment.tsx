@@ -8,6 +8,7 @@ import { permissionsService } from '../../services/auth/permissionsService';
 import { type StockMovement, stockMovementService } from '../../services/inventory';
 import { inventoryService } from '../../services/inventory/inventoryService';
 import { batchService } from '../../services/inventory/batchService';
+import { MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import type { Drug, StockBatch } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName, getFullDisplayName } from '../../utils/drugDisplayName';
@@ -1397,7 +1398,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
               </button>
               <button
                 onClick={() => setEditingNoteIndex(null)}
-                className='px-6 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest text-white dark:text-black bg-black dark:bg-white hover:opacity-90 transition-all active:scale-95 cursor-pointer shadow-lg shadow-black/10 dark:shadow-white/5'
+                className={MODAL_FOOTER_BTN_PRIMARY}
               >
                 {t.common?.save || 'Save'}
               </button>

@@ -6,7 +6,7 @@ import { AREAS, CITIES, GOVERNORATES } from '../../data/locations';
 import { permissionsService } from '../../services/auth/permissionsService';
 import type { Supplier } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
-import { CARD_BASE } from '../../utils/themeStyles';
+import { CARD_BASE, MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY, MODAL_FOOTER_BTN_DANGER } from '../../utils/themeStyles';
 import { useContextMenu } from '../common/ContextMenu';
 import type { FilterConfig } from '../common/FilterPill';
 import { LocationSelector } from '../common/LocationSelector';
@@ -600,6 +600,29 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
           icon='edit'
           subtitle={t.modal?.editSubtitle || 'Update supplier information'}
           disabled={isSaving}
+          footer={
+            <div className='flex gap-3'>
+              <button
+                onClick={() => setEditingSupplier(null)}
+                className={MODAL_FOOTER_BTN_CANCEL}
+              >
+                {t.modal?.cancel || 'Cancel'}
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                className={MODAL_FOOTER_BTN_PRIMARY}
+              >
+                {isSaving ? (
+                  <>
+                    <span className='w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin' />
+                    <span>{language === 'AR' ? 'جاري الحفظ...' : 'Saving...'}</span>
+                  </>
+                ) : (
+                  <span>{t.modal?.saveChanges || 'Save Changes'}</span>
+                )}
+              </button>
+            </div>
+          }
         >
           {/* Form */}
           <div className='space-y-6'>
@@ -724,28 +747,6 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
             </div>
           </div>
 
-          {/* Footer */}
-          <div className='p-4 border-t border-gray-100 dark:border-gray-800 flex gap-3 justify-end'>
-            <button
-              onClick={() => setEditingSupplier(null)}
-              className='px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
-            >
-              {t.modal?.cancel || 'Cancel'}
-            </button>
-            <button
-              onClick={handleSaveEdit}
-              className={`px-4 py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-colors flex items-center justify-center gap-2 min-w-[120px] disabled:opacity-50`}
-            >
-              {isSaving ? (
-                <>
-                  <span className='w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin' />
-                  <span>{language === 'AR' ? 'جاري الحفظ...' : 'Saving...'}</span>
-                </>
-              ) : (
-                <span>{t.modal?.saveChanges || 'Save Changes'}</span>
-              )}
-            </button>
-          </div>
         </Modal>
       )}
 
@@ -759,26 +760,29 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
           title={t.modal?.delete || 'Delete Supplier'}
           icon='warning'
           subtitle={t.modal?.deleteSubtitle || 'This action cannot be undone'}
+          footer={
+            <div className='flex gap-3'>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className={MODAL_FOOTER_BTN_CANCEL}
+              >
+                {t.modal?.cancel || 'Cancel'}
+              </button>
+              <button
+                onClick={confirmDelete}
+                className={MODAL_FOOTER_BTN_DANGER}
+              >
+                {t.modal?.deleteBtn || 'Delete'}
+              </button>
+            </div>
+          }
         >
           <div className='space-y-4'>
             <p className='text-gray-700 dark:text-gray-300 mb-6'>
               {t.modal?.confirmDelete || 'Are you sure you want to delete'}{' '}
               <strong>{deleteConfirm.name}</strong>?
             </p>
-            <div className='flex gap-3 justify-end'>
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className='px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
-              >
-                {t.modal?.cancel || 'Cancel'}
-              </button>
-              <button
-                onClick={confirmDelete}
-                className='px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition-colors'
-              >
-                {t.modal?.deleteBtn || 'Delete'}
-              </button>
-            </div>
+
           </div>
         </Modal>
       )}
@@ -877,7 +881,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
               <div className='flex gap-3 w-full'>
                 <button
                   onClick={() => setViewingSupplier(null)}
-                  className='flex-1 py-3 rounded-full font-bold bg-transparent text-gray-500 dark:text-gray-400 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-all flex items-center justify-center gap-2 outline-hidden'
+                  className={MODAL_FOOTER_BTN_CANCEL}
                 >
                   <span
                     className='material-symbols-rounded'
@@ -895,7 +899,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                     setViewingSupplier(null);
                     handleEdit(s);
                   }}
-                  className='flex-1 py-3 rounded-full font-bold bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90 transition-opacity flex items-center justify-center gap-2 outline-hidden'
+                  className={MODAL_FOOTER_BTN_PRIMARY}
                 >
                   <span
                     className='material-symbols-rounded'

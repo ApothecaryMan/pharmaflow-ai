@@ -66,6 +66,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
+  const [shiftDetailTab, setShiftDetailTab] = useState<'details' | 'log'>('details');
   const [showSummary, setShowSummary] = useState(false);
 
   // Load shifts from useShift hook (sharded storage)
@@ -409,7 +410,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
     const rows = filteredShifts.map((shift) => {
       const duration = shift.closeTime
         ? (new Date(shift.closeTime).getTime() - new Date(shift.openTime).getTime()) /
-          (1000 * 60 * 60)
+        (1000 * 60 * 60)
         : 0;
       // BUG-SH-05: Sync CSV export math with table logic
       const expected =
@@ -581,12 +582,30 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
       {selectedShift && (
         <Modal
           isOpen={true}
-          onClose={() => setSelectedShift(null)}
+          onClose={() => {
+            setSelectedShift(null);
+            setShiftDetailTab('details');
+          }}
           size='2xl'
           title={t.shiftHistory?.details?.title || 'Shift Details'}
           icon='receipt_long'
           disabled={isLoading}
+          bodyClassName='p-4'
           subtitle={`${t.shiftHistory?.headers?.shiftNumber || 'Shift #'}: #${selectedShift.handoverReceiptNumber || selectedShift.id.slice(-6)} • ${new Date(selectedShift.openTime).toLocaleDateString()}`}
+          tabs={[
+            {
+              label: t.shiftHistory?.details?.title || 'Details',
+              value: 'details',
+              icon: 'info',
+            },
+            {
+              label: t.shiftHistory?.details?.transactionLog || 'Transaction Log',
+              value: 'log',
+              icon: 'receipt_long',
+            },
+          ]}
+          activeTab={shiftDetailTab}
+          onTabChange={(val) => setShiftDetailTab(val as 'details' | 'log')}
           headerActions={
             <button
               onClick={() => handleReprintShift(selectedShift)}
@@ -597,102 +616,115 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
             </button>
           }
         >
-          <div className='space-y-6'>
-            {/* Summary Grid */}
-            <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-              <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
-                <p className='text-[10px] font-bold uppercase text-gray-500 mb-1'>
-                  {t.shiftHistory?.details?.openedBy || 'Opened By'}
-                </p>
-                <p className='text-sm font-medium truncate'>
-                  {employees?.find((e) => e.id === selectedShift.openedBy)?.name ||
-                    selectedShift.openedBy}
-                </p>
+          {shiftDetailTab === 'details' ? (
+            <div className='space-y-6'>
+              {/* Info Section */}
+              <div className='flex flex-col gap-0.5'>
+                {[
+                  {
+                    icon: 'person',
+                    label: t.shiftHistory?.details?.openedBy || 'Opened By',
+                    value: employees?.find((e) => e.id === selectedShift.openedBy)?.name ||
+                      selectedShift.openedBy,
+                    color: '',
+                  },
+                  {
+                    icon: 'payments',
+                    label: t.shiftHistory?.details?.cashSales || 'Cash Sales',
+                    value: <PriceDisplay value={selectedShift.cashSales} />,
+                    color: 'text-green-600',
+                  },
+                  {
+                    icon: 'shopping_cart',
+                    label: t.shiftHistory?.details?.cashPurchases || 'Cash Purchases',
+                    value: <PriceDisplay value={selectedShift.cashPurchases || 0} />,
+                    color: 'text-red-600',
+                  },
+                  {
+                    icon: 'credit_card',
+                    label: t.shiftHistory?.details?.cardSales || 'Card Sales',
+                    value: <PriceDisplay value={selectedShift.cardSales || 0} />,
+                    color: 'text-violet-600',
+                  },
+                  {
+                    icon: 'receipt_long',
+                    label: t.shiftHistory?.details?.transactions || 'Transactions',
+                    value: selectedShift.transactions.length,
+                    color: '',
+                  },
+                ].map((item, i, arr) => {
+                  const isFirst = i === 0;
+                  const isLast = i === arr.length - 1;
+                  const rounding =
+                    isFirst && isLast
+                      ? 'rounded-2xl'
+                      : isFirst
+                        ? 'rounded-t-2xl rounded-b-md'
+                        : isLast
+                          ? 'rounded-b-2xl rounded-t-md'
+                          : 'rounded-md';
+                  return (
+                    <div
+                      key={i}
+                      className={`flex items-center justify-between py-3 px-4 bg-gray-50/50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 transition-all ${rounding}`}
+                    >
+                      <div className='flex items-center gap-2 shrink-0'>
+                        <span className='material-symbols-rounded text-base opacity-40'>
+                          {item.icon}
+                        </span>
+                        <span className='text-[9px] font-bold uppercase tracking-wider opacity-50'>
+                          {item.label}
+                        </span>
+                      </div>
+                      <div className={`text-[12px] font-bold text-right pl-2 ${item.color}`}>
+                        {item.value}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
-                <p className='text-[10px] font-bold uppercase text-gray-500 mb-1'>
-                  {t.shiftHistory?.details?.cashSales || 'Cash Sales'}
-                </p>
-                <p className='text-sm font-bold text-green-600'>
-                  <PriceDisplay value={selectedShift.cashSales} />
-                </p>
-              </div>
-              <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
-                <p className='text-[10px] font-bold uppercase text-gray-500 mb-1'>
-                  {t.shiftHistory?.details?.cashPurchases}
-                </p>
-                <p className='text-sm font-bold text-red-600'>
-                  <PriceDisplay value={selectedShift.cashPurchases || 0} />
-                </p>
-              </div>
-              <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
-                <p className='text-[10px] font-bold uppercase text-gray-500 mb-1'>
-                  {t.shiftHistory?.details?.cardSales || 'Card Sales'}
-                </p>
-                <p className='text-sm font-bold text-violet-600'>
-                  <PriceDisplay value={selectedShift.cardSales || 0} />
-                </p>
-              </div>
-              <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
-                <p className='text-[10px] font-bold uppercase text-gray-500 mb-1'>
-                  {t.shiftHistory?.details?.transactions || 'Transactions'}
-                </p>
-                <p className='text-sm font-bold text-gray-600 dark:text-gray-400'>
-                  {selectedShift.transactions.length}
-                </p>
-              </div>
-            </div>
 
-            {/* Balances */}
-            <div className='grid grid-cols-2 gap-4'>
-              <div
-                className={`p-4 rounded-2xl border border-(--border-divider) bg-white dark:bg-gray-900/50`}
-              >
-                <div className='flex justify-between items-start mb-2'>
-                  <p className='text-xs font-bold uppercase text-gray-400'>
-                    {t.shiftHistory?.headers?.openingBalance || 'Opening Balance'}
-                  </p>
-                  <span className='text-[10px] text-gray-400 font-medium'>
-                    {formatTime(new Date(selectedShift.openTime))}
-                  </span>
-                </div>
-                <p className='text-xl font-bold'>
-                  <PriceDisplay value={selectedShift.openingBalance} />
-                </p>
-                <p className='text-[10px] text-gray-400 mt-1'>
-                  {formatRelativeDate(new Date(selectedShift.openTime))}
-                </p>
-              </div>
-              <div
-                className={`p-4 rounded-2xl border border-(--border-divider) bg-white dark:bg-gray-900/50`}
-              >
-                <div className='flex justify-between items-start mb-2'>
-                  <p className='text-xs font-bold uppercase text-gray-400'>
-                    {t.shiftHistory?.headers?.closingBalance || 'Closing Balance'}
-                  </p>
-                  {selectedShift.closeTime && (
-                    <span className='text-[10px] text-gray-400 font-medium'>
-                      {formatTime(new Date(selectedShift.closeTime))}
+              {/* Balances */}
+              <div className='flex flex-col gap-0.5'>
+                <div className='flex items-center justify-between py-3 px-4 bg-gray-50/50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 rounded-t-2xl rounded-b-md'>
+                  <div className='flex items-center gap-2 shrink-0'>
+                    <span className='material-symbols-rounded text-base opacity-40'>account_balance</span>
+                    <span className='text-[9px] font-bold uppercase tracking-wider opacity-50'>
+                      {t.shiftHistory?.headers?.openingBalance || 'Opening Balance'}
                     </span>
-                  )}
+                  </div>
+                  <div className='flex items-center gap-3'>
+                    <span className='text-[10px] text-gray-400 font-medium'>
+                      {formatTime(new Date(selectedShift.openTime))}
+                    </span>
+                    <span className='text-[13px] font-black tabular-nums'>
+                      <PriceDisplay value={selectedShift.openingBalance} />
+                    </span>
+                  </div>
                 </div>
-                <p className='text-xl font-bold'>
-                  <PriceDisplay value={selectedShift.closingBalance || 0} />
-                </p>
-                {selectedShift.closeTime && (
-                  <p className='text-[10px] text-gray-400 mt-1'>
-                    {formatRelativeDate(new Date(selectedShift.closeTime))}
-                  </p>
-                )}
+                <div className='flex items-center justify-between py-3 px-4 bg-gray-50/50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/5 rounded-b-2xl rounded-t-md'>
+                  <div className='flex items-center gap-2 shrink-0'>
+                    <span className='material-symbols-rounded text-base opacity-40'>account_balance</span>
+                    <span className='text-[9px] font-bold uppercase tracking-wider opacity-50'>
+                      {t.shiftHistory?.headers?.closingBalance || 'Closing Balance'}
+                    </span>
+                  </div>
+                  <div className='flex items-center gap-3'>
+                    {selectedShift.closeTime && (
+                      <span className='text-[10px] text-gray-400 font-medium'>
+                        {formatTime(new Date(selectedShift.closeTime))}
+                      </span>
+                    )}
+                    <span className='text-[13px] font-black tabular-nums'>
+                      <PriceDisplay value={selectedShift.closingBalance || 0} />
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-
-            {/* Transaction Log */}
+          ) : (
             <div>
-              <h4 className='text-xs font-bold uppercase text-gray-400 mb-3 ml-1'>
-                {t.shiftHistory?.details?.transactionLog || 'Transaction Log'}
-              </h4>
-              <div className='space-y-2 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar'>
+              <div className='space-y-2'>
                 {selectedShift.transactions.length > 0 ? (
                   selectedShift.transactions.map((tx, idx) => (
                     <div
@@ -741,7 +773,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                 )}
               </div>
             </div>
-          </div>
+          )}
         </Modal>
       )}
     </div>

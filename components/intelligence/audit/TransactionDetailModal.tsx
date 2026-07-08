@@ -5,6 +5,7 @@ import type { AuditTransaction } from '../../../types/intelligence';
 import { formatCurrency } from '../../../utils/currency';
 import { getDisplayName } from '../../../utils/drugDisplayName';
 import { Modal } from '../../common/Modal';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../../utils/themeStyles';
 
 interface TransactionDetailModalProps {
   isOpen: boolean;
@@ -32,7 +33,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
       size='lg'
       icon='receipt_long'
     >
-      <div className='space-y-6'>
+      <div className='flex flex-col flex-1 gap-6'>
         {/* Header Info */}
         <div className='grid grid-cols-2 gap-4'>
           <div className='bg-gray-50 dark:bg-gray-800 p-4 rounded-xl'>
@@ -148,10 +149,10 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
         )}
 
         {/* Actions */}
-        <div className='flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700'>
+        <div className='flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 mt-auto'>
           <button
             onClick={() => console.log('Print receipt')}
-            className='px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors font-medium flex items-center gap-2 text-sm'
+            className={MODAL_FOOTER_BTN_CANCEL}
           >
             <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
               print
@@ -161,7 +162,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
           <button
             type='button'
             onClick={onClose}
-            className='px-6 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white transition-colors font-medium text-sm'
+            className={MODAL_FOOTER_BTN_PRIMARY}
           >
             {t?.common?.close || 'Close'}
           </button>

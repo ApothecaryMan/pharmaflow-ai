@@ -5,6 +5,7 @@ import type { ExpenseCategory, ExpensePaymentMethod, Shift } from '../../types';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { Modal } from '../common/Modal';
 import { SmartInput, SmartTextarea } from '../common/SmartInputs';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 
 interface RecordExpenseModalProps {
   isOpen: boolean;
@@ -148,14 +149,14 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({
           <button
             type='button'
             onClick={onClose}
-            className='px-4 h-9 text-xs font-semibold rounded-lg border border-(--border-divider) hover:bg-zinc-500/5 transition-all text-(--text-secondary)'
+            className={MODAL_FOOTER_BTN_CANCEL}
           >
             {t.expenses.modal.cancel}
           </button>
           <button
             type='submit'
             form='record-expense-form'
-            className='px-4 h-9 text-xs font-semibold rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition-all disabled:opacity-50'
+            className={MODAL_FOOTER_BTN_PRIMARY}
           >
             {isSubmitting ? t.common.loading : t.expenses.modal.confirm}
           </button>

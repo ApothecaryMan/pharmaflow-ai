@@ -160,7 +160,7 @@ export const Modal: React.FC<ModalProps> = ({
   hideCloseButton = false,
   footer,
   height,
-  bodyClassName = 'p-5',
+  bodyClassName = 'p-4',
   style,
   backdropStyle,
   preventSidebar = false,
@@ -503,7 +503,7 @@ export const Modal: React.FC<ModalProps> = ({
                   {/* Footer - with top border and balanced padding */}
                   {footer ? (
                     <fieldset disabled={disabled} className='contents'>
-                      <div className='p-5 shrink-0 border-t border-(--border-divider) bg-(--bg-card)'>
+                      <div className='p-4 shrink-0 border-t border-(--border-divider) bg-(--bg-card)'>
                         {footer}
                       </div>
                     </fieldset>

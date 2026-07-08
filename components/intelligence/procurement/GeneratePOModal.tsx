@@ -1,5 +1,6 @@
 import type React from 'react';
 import { Modal } from '../../common/Modal';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../../utils/themeStyles';
 
 // Using a standard Modal interface if available, otherwise a simple implementation
 interface GeneratePOModalProps {
@@ -25,7 +26,7 @@ export const GeneratePOModal: React.FC<GeneratePOModalProps> = ({
       size='lg'
       icon='shopping_cart'
     >
-      <div className='space-y-4'>
+      <div className='flex flex-col flex-1 gap-4'>
         {/* Info Banner */}
         <div className='bg-emerald-50 dark:bg-emerald-900/20 p-4 flex gap-3 text-emerald-700 dark:text-emerald-400 rounded-xl'>
           <span
@@ -52,10 +53,10 @@ export const GeneratePOModal: React.FC<GeneratePOModalProps> = ({
           />
         </div>
 
-        <div className='flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700'>
+        <div className='flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 mt-auto'>
           <button
             onClick={onClose}
-            className='px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors font-medium text-sm'
+            className={MODAL_FOOTER_BTN_CANCEL}
           >
             {t?.common?.cancel || 'Cancel'}
           </button>
@@ -64,11 +65,8 @@ export const GeneratePOModal: React.FC<GeneratePOModalProps> = ({
               console.log('Sending PO for:', selectedProductIds);
               onClose();
             }}
-            className='flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2'
+            className={MODAL_FOOTER_BTN_PRIMARY}
           >
-            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-base)' }}>
-              send
-            </span>
             {t?.intelligence?.procurement?.buttons?.sendPO || 'Send PO'}
           </button>
         </div>

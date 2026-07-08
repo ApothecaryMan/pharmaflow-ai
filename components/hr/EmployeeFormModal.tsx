@@ -7,7 +7,7 @@ import { permissionsService } from '../../services/auth/permissionsService';
 import type { Branch, Employee } from '../../types';
 import { BANNER_STYLES, renderBanner } from '../../utils/banners';
 import { idGenerator } from '../../utils/idGenerator';
-import { BUTTON_BASE, INPUT_BASE, PROFILE_GLASS_CARD_BASE } from '../../utils/themeStyles';
+import { INPUT_BASE, PROFILE_GLASS_CARD_BASE, MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { BUTTON_CLOSE_BASE, Modal } from '../common/Modal';
@@ -307,13 +307,13 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({
         <div className='flex items-center justify-end gap-3'>
           <button
             onClick={handleClose}
-            className={`${BUTTON_CLOSE_BASE} px-4 py-2 text-gray-600 dark:text-gray-300 rounded-lg font-medium`}
+            className={MODAL_FOOTER_BTN_CANCEL}
           >
             {t.modal.cancel}
           </button>
           <button
             onClick={handleSave}
-            className={`${BUTTON_BASE} px-8 py-2.5 text-(--text-primary) font-bold flex items-center justify-center gap-2 min-w-[120px]`}
+            className={MODAL_FOOTER_BTN_PRIMARY}
           >
             {isSaving ? (
               <>

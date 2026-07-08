@@ -9,7 +9,7 @@ import type { TRANSLATIONS } from '../../i18n/translations';
 import type { Drug } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
-import { CARD_BASE } from '../../utils/themeStyles';
+import { CARD_BASE, MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { useContextMenu } from '../common/ContextMenu';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
@@ -1560,7 +1560,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
             <button
               type='button'
               onClick={() => setShowSaveModal(false)}
-              className='flex-1 py-3 rounded-xl font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors'
+              className={MODAL_FOOTER_BTN_CANCEL}
             >
               {t.modal.cancel}
             </button>
@@ -1568,7 +1568,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
               type='button'
               onClick={saveNewTemplate}
               disabled={!newTemplateName.trim()}
-              className={`flex-1 py-3 rounded-xl font-medium text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
+              className={MODAL_FOOTER_BTN_PRIMARY}
             >
               <span className='material-symbols-rounded text-lg'>save</span>
               {t.modal.save}

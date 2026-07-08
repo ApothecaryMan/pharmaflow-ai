@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { CASH_REGISTER_HELP } from '../../i18n/helpInstructions';
 import type { CashTransaction, CashTransactionType, Employee, Language } from '../../types';
 import { formatCurrencyParts } from '../../utils/currency';
-import { CARD_BASE, INPUT_BASE } from '../../utils/themeStyles';
+import { CARD_BASE, INPUT_BASE, MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import { AnimatedCounter } from '../common/AnimatedCounter';
 import { Modal } from '../common/Modal';
 import { PageHeader } from '../common/PageHeader';
@@ -751,7 +751,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
             <div className='flex gap-3'>
               <button
                 onClick={closeModal}
-                className='flex-1 py-3 rounded-full font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors'
+                className={MODAL_FOOTER_BTN_CANCEL}
               >
                 {t.cashRegister.modal.cancel}
               </button>
@@ -761,8 +761,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   if (modalMode === 'close') handleCloseShift();
                   if (modalMode === 'in' || modalMode === 'out') handleCashTransaction();
                 }}
-                className={`flex-1 py-3 rounded-full font-bold text-white
-                           bg-primary-600 hover:bg-primary-700 active:scale-95 transition-all`}
+                className={MODAL_FOOTER_BTN_PRIMARY}
               >
                 {t.cashRegister.modal.confirm}
               </button>

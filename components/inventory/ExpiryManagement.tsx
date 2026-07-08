@@ -13,6 +13,7 @@ import { idGenerator } from '../../utils/idGenerator';
 import { formatStock } from '../../utils/inventory';
 import { storage } from '../../utils/storage';
 import { ContextMenuItem, useContextMenu } from '../common/ContextMenu';
+import { MODAL_FOOTER_BTN_CANCEL, MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 import type { FilterConfig } from '../common/FilterPill';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
@@ -535,17 +536,13 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
           <div className='flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800'>
             <button
               onClick={() => setActiveModal(null)}
-              className='px-4 py-2 font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 rounded-xl transition-colors'
+              className={MODAL_FOOTER_BTN_CANCEL}
             >
               {t.expiryManagement?.cancel || 'Cancel'}
             </button>
             <button
               onClick={handleSaveAction}
-              className={`px-4 py-2 font-medium text-white rounded-xl transition-colors ${
-                activeModal === 'damage'
-                  ? 'bg-red-600 hover:bg-red-700'
-                  : `bg-${color}-600 hover:bg-${color}-700`
-              }`}
+              className={MODAL_FOOTER_BTN_PRIMARY}
             >
               {t.expiryManagement?.confirm || 'Confirm'}
             </button>

@@ -7,6 +7,7 @@ import { orgMembersService } from '../../services/org/orgMembersService';
 import type { OrgRole } from '../../types';
 import { Modal } from '../common/Modal';
 import { SmartInput } from '../common/SmartInputs';
+import { MODAL_FOOTER_BTN_PRIMARY } from '../../utils/themeStyles';
 
 interface InviteModalProps {
   isOpen: boolean;
@@ -110,11 +111,7 @@ export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose, orgId
           <button
             type='submit'
             disabled={isSubmitting || !email}
-            className={`w-full py-4 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-black text-sm uppercase tracking-widest shadow-xl transition-all active:scale-[0.98] ${
-              isSubmitting
-                ? 'opacity-50 cursor-not-allowed'
-                : 'hover:shadow-2xl hover:-translate-y-1'
-            }`}
+            className={MODAL_FOOTER_BTN_PRIMARY}
           >
             {isSubmitting ? '...' : t.send}
           </button>
