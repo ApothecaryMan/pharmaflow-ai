@@ -714,7 +714,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // Order Serial ID (Order Number)
       columnHelper.accessor('serialId', {
         header: t.orderId || 'Order #',
-        size: 90,
+        size: 130,
         meta: { align: 'start' },
         cell: (info) => (
           <span className='font-mono font-bold text-sm text-gray-900 dark:text-gray-100'>
@@ -725,7 +725,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // Time and Date
       columnHelper.accessor('date', {
         header: t.time || 'Time',
-        size: 120,
+        size: 140,
         meta: { align: 'center' },
         cell: (info) => (
           <span className='text-sm text-gray-700 dark:text-gray-300'>
@@ -736,7 +736,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // Customer Code
       columnHelper.accessor('customerCode', {
         header: t.customerCode || 'Client ID',
-        size: 100,
+        size: 110,
         meta: { align: 'center' },
         cell: (info) => {
           const code = info.getValue() as string;
@@ -752,11 +752,10 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   onViewCustomerHistory(customer);
                 }
               }}
-              className={`font-mono font-bold text-sm select-none ${
-                isClickable
+              className={`font-mono font-bold text-sm select-none ${isClickable
                   ? 'text-primary-600 dark:text-primary-400 cursor-pointer hover:underline decoration-primary-300 dark:decoration-primary-700 underline-offset-2 transition-all active:scale-95'
                   : 'text-gray-700 dark:text-gray-300'
-              }`}
+                }`}
               title={isClickable ? t.viewCustomerHistory || 'View Customer History' : undefined}
             >
               {code || '-'}
@@ -767,7 +766,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // Customer name
       columnHelper.accessor('customerName', {
         header: t.customer || 'Customer',
-        size: 220,
+        size: 250,
         meta: { flex: true, align: 'start', dir: 'rtl' },
         cell: (info) => {
           const s = info.row.original;
@@ -815,7 +814,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // Customer address
       columnHelper.accessor('customerAddress', {
         header: t.address || 'Address',
-        size: 280,
+        size: 380,
         cell: (info) => {
           const manualAddress = info.row.original.customerStreetAddress;
           const standardAddress = info.getValue();
@@ -838,7 +837,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // Order total amount
       columnHelper.accessor('total', {
         header: t.total || 'Total',
-        size: 80,
+        size: 90,
         meta: { align: 'center' },
         cell: (info) => {
           const method = info.row.original.paymentMethod;
@@ -863,7 +862,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // Delivery driver selection
       columnHelper.accessor('deliveryEmployeeId', {
         header: t.deliveryMan || 'Delivery Man',
-        size: 150,
+        size: 170,
         meta: { align: 'center', isId: false },
         cell: (info) => {
           const s = info.row.original;
@@ -886,7 +885,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       columnHelper.display({
         id: 'actions',
         header: '',
-        size: 200,
+        size: 240,
         meta: {
           align: 'end',
         },
@@ -914,17 +913,17 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                 {(s.status === 'pending' ||
                   s.status === 'with_delivery' ||
                   s.status === 'on_way') && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOrderToCancelId(s.id);
-                    }}
-                    className='p-1 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20'
-                    title={t.cancel || 'Cancel'}
-                  >
-                    <span className='material-symbols-rounded text-[20px]'>block</span>
-                  </button>
-                )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOrderToCancelId(s.id);
+                      }}
+                      className='p-1 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20'
+                      title={t.cancel || 'Cancel'}
+                    >
+                      <span className='material-symbols-rounded text-[20px]'>block</span>
+                    </button>
+                  )}
               </div>
 
               {/* Slot 2: Main Action Button (Fixed Width) */}
@@ -1018,7 +1017,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         title={t.deliveryOrders || 'Delivery Orders'}
         icon='local_shipping'
         size='6xl'
-        width='max-w-7xl'
+        width='max-w-[95vw]'
         hideCloseButton={true}
         preventSidebar={true}
         tabs={[
@@ -1049,7 +1048,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         onSearchChange={setSearchQuery}
         searchPlaceholder={t.searchOrder || 'Search orders...'}
       >
-        <div className='flex flex-col h-[70vh]'>
+        <div className='flex flex-col h-[80vh]'>
           {selectedSaleId && selectedSale ? (
             <div className='flex-1 flex flex-col overflow-hidden'>
               {/* Inner Header - High-Density Integrated Row */}
@@ -1079,13 +1078,12 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
                   {/* 3. Status Badge (Compact) */}
                   <div
-                    className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full font-black uppercase tracking-widest border shrink-0 ${
-                      selectedSale.status === 'completed'
+                    className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full font-black uppercase tracking-widest border shrink-0 ${selectedSale.status === 'completed'
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
                         : selectedSale.status === 'cancelled'
                           ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'
                           : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20'
-                    }`}
+                      }`}
                   >
                     <span
                       className='material-symbols-rounded text-sm'
@@ -1403,22 +1401,20 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                     return (
                                       <div
                                         title={`Max: ${effectiveMax}%`}
-                                        className={`flex items-center rounded-lg border shadow-xs h-6 overflow-hidden transition-colors w-14 shrink-0 ${
-                                          currentDiscount > 0
+                                        className={`flex items-center rounded-lg border shadow-xs h-6 overflow-hidden transition-colors w-14 shrink-0 ${currentDiscount > 0
                                             ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
                                             : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'
-                                        }`}
+                                          }`}
                                       >
                                         <button
                                           onClick={() => {
                                             const newVal = currentDiscount === 0 ? effectiveMax : 0;
                                             handleDiscountChange(common.id, newVal);
                                           }}
-                                          className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${
-                                            currentDiscount > 0
+                                          className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${currentDiscount > 0
                                               ? 'text-green-600 dark:text-green-400'
                                               : 'text-gray-400'
-                                          }`}
+                                            }`}
                                         >
                                           <span
                                             className='material-symbols-rounded'
@@ -1438,11 +1434,10 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                             if (finalVal > effectiveMax) finalVal = effectiveMax;
                                             handleDiscountChange(common.id, finalVal);
                                           }}
-                                          className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                                            currentDiscount > 0
+                                          className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${currentDiscount > 0
                                               ? 'text-green-700 dark:text-green-300 placeholder-green-300'
                                               : 'text-gray-900 dark:text-gray-100 placeholder-gray-400'
-                                          }`}
+                                            }`}
                                         />
                                       </div>
                                     );
@@ -1549,15 +1544,14 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                           <div key={record.id} className='relative z-10'>
                             {/* Timeline Node */}
                             <div
-                              className={`absolute -left-[18px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-xs transition-all duration-300 ${
-                                isExpanded
+                              className={`absolute -left-[18px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-xs transition-all duration-300 ${isExpanded
                                   ? hasDeletions
                                     ? 'bg-red-500 scale-110'
                                     : 'bg-orange-500 scale-125'
                                   : hasDeletions
                                     ? 'bg-red-300'
                                     : 'bg-orange-300'
-                              }`}
+                                }`}
                             ></div>
 
                             <MaterialTabs
@@ -1620,43 +1614,43 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                         {record.modifications.some(
                                           (m) => m.type === 'item_removed'
                                         ) && (
-                                          <span
-                                            className='material-symbols-rounded text-xl text-red-600 dark:text-red-400'
-                                            title={t.deleted || 'Deleted'}
-                                          >
-                                            delete
-                                          </span>
-                                        )}
+                                            <span
+                                              className='material-symbols-rounded text-xl text-red-600 dark:text-red-400'
+                                              title={t.deleted || 'Deleted'}
+                                            >
+                                              delete
+                                            </span>
+                                          )}
                                         {record.modifications.some(
                                           (m) => m.type === 'quantity_update'
                                         ) && (
-                                          <span
-                                            className='material-symbols-rounded text-xl text-orange-600 dark:text-orange-400'
-                                            title={t.quantityUpdated || 'Quantity Updated'}
-                                          >
-                                            edit_square
-                                          </span>
-                                        )}
+                                            <span
+                                              className='material-symbols-rounded text-xl text-orange-600 dark:text-orange-400'
+                                              title={t.quantityUpdated || 'Quantity Updated'}
+                                            >
+                                              edit_square
+                                            </span>
+                                          )}
                                         {record.modifications.some(
                                           (m) => m.type === 'discount_update'
                                         ) && (
-                                          <span
-                                            className='material-symbols-rounded text-xl text-blue-600 dark:text-blue-400'
-                                            title={t.discountUpdated || 'Discount Updated'}
-                                          >
-                                            percent
-                                          </span>
-                                        )}
+                                            <span
+                                              className='material-symbols-rounded text-xl text-blue-600 dark:text-blue-400'
+                                              title={t.discountUpdated || 'Discount Updated'}
+                                            >
+                                              percent
+                                            </span>
+                                          )}
                                         {record.modifications.some(
                                           (m) => m.type === 'item_added'
                                         ) && (
-                                          <span
-                                            className='material-symbols-rounded text-xl text-green-600 dark:text-green-400'
-                                            title={t.itemAdded || 'Item Added'}
-                                          >
-                                            add_circle
-                                          </span>
-                                        )}
+                                            <span
+                                              className='material-symbols-rounded text-xl text-green-600 dark:text-green-400'
+                                              title={t.itemAdded || 'Item Added'}
+                                            >
+                                              add_circle
+                                            </span>
+                                          )}
                                         {record.modifiedBy && (
                                           <div className='flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hidden sm:flex'>
                                             <span>{record.modifiedBy}</span>
@@ -1721,15 +1715,14 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                               className='flex items-center gap-3 py-1'
                                             >
                                               <span
-                                                className={`shrink-0 ${
-                                                  isDeletion
+                                                className={`shrink-0 ${isDeletion
                                                     ? 'text-red-600 dark:text-red-400'
                                                     : isDiscount
                                                       ? 'text-blue-600 dark:text-blue-400'
                                                       : isIncrease
                                                         ? 'text-green-600 dark:text-green-400'
                                                         : 'text-orange-600 dark:text-orange-400'
-                                                }`}
+                                                  }`}
                                               >
                                                 <span className='material-symbols-rounded text-lg'>
                                                   {isDeletion ? 'delete' : 'edit_square'}
@@ -1754,15 +1747,14 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                                 </span>
                                                 <div className='flex items-center gap-2 ml-8 shrink-0'>
                                                   <div
-                                                    className={`flex items-center gap-1.5 font-bold text-xs ${
-                                                      isDeletion
+                                                    className={`flex items-center gap-1.5 font-bold text-xs ${isDeletion
                                                         ? 'text-red-600 dark:text-red-400'
                                                         : isDiscount
                                                           ? 'text-blue-600 dark:text-blue-400'
                                                           : isIncrease
                                                             ? 'text-green-600 dark:text-green-400'
                                                             : 'text-orange-600 dark:text-orange-400'
-                                                    }`}
+                                                      }`}
                                                   >
                                                     {isDiscount ? (
                                                       <>
