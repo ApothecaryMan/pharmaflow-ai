@@ -465,25 +465,23 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       />
                     </SettingsRow>
                     <SettingsRow icon='code' label={t.customCardCss}>
-                      <div className='flex flex-col gap-1.5 py-1 w-full'>
-                        <div className='flex items-center justify-end'>
-                          <Switch
-                            checked={enableCustomCardCss}
-                            onChange={setEnableCustomCardCss}
-                            theme={currentTheme.name.toLowerCase()}
-                            activeColor={currentTheme.hex}
-                          />
-                        </div>
-                        <textarea
-                          value={customCardCss || ''}
-                          onChange={(e) => setCustomCardCss?.(e.target.value)}
-                          placeholder='box-shadow: 0px 4px 6px rgba(0,0,0,0.1);'
-                          className='w-full text-xs p-2 rounded-lg bg-(--bg-input) border border-(--border-divider) text-(--text-primary) outline-hidden font-mono min-h-[60px] resize-y scrollbar-none'
-                          spellCheck={false}
-                          dir='ltr'
-                        />
-                      </div>
+                      <Switch
+                        checked={enableCustomCardCss}
+                        onChange={setEnableCustomCardCss}
+                        theme={currentTheme.name.toLowerCase()}
+                        activeColor={currentTheme.hex}
+                      />
                     </SettingsRow>
+                    <div className='px-2 pb-1.5'>
+                      <textarea
+                        value={customCardCss || ''}
+                        onChange={(e) => setCustomCardCss?.(e.target.value)}
+                        placeholder='box-shadow: 0px 4px 6px rgba(0,0,0,0.1);'
+                        className='w-full text-xs p-2 rounded-lg bg-(--bg-input) border border-(--border-divider) text-(--text-primary) outline-hidden font-mono min-h-[60px] resize-y scrollbar-none'
+                        spellCheck={false}
+                        dir='ltr'
+                      />
+                    </div>
                   </>
                 )}
                 {/* --- Background Pattern --- */}
