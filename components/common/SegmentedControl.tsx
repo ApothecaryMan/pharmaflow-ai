@@ -122,7 +122,7 @@ export function SegmentedControl<T extends string | number | boolean>({
       dir={dir}
       data-settled='false'
       data-dir-change='false'
-      className={`relative flex p-1 gap-1 bg-gray-200/50 dark:bg-black/20 ${pill ? 'rounded-full' : 'rounded-xl'} shadow-inner isolate ${className} [--itn:none] data-[settled=true]:data-[dir-change=false]:[--itn:inset-inline-start_0.2s_ease-out,width_0.2s_ease-out,height_0.2s_ease-out,top_0.2s_ease-out]`}
+      className={`relative flex p-1 gap-1 bg-gray-100 dark:bg-gray-900 ${pill ? 'rounded-full' : 'rounded-xl'} shadow-[inset_0_1px_3px_0_rgb(0_0_0/0.12)] isolate ${className} [--itn:none] data-[settled=true]:data-[dir-change=false]:[--itn:inset-inline-start_0.2s_ease-out,width_0.2s_ease-out,height_0.2s_ease-out,top_0.2s_ease-out]`}
     >
       <div
         className={`absolute bg-white dark:bg-(--bg-card) border border-transparent dark:border-(--border-divider) ${pill ? 'rounded-full' : 'rounded-lg'} z-0 shadow-sm ${disableAnimation ? '' : 'transition-[var(--itn)]'}`}
@@ -140,7 +140,7 @@ export function SegmentedControl<T extends string | number | boolean>({
           onClick={() => onChange(o.value)}
           data-active={value === o.value}
           disabled={disabled || o.disabled}
-          className={`${fullWidth ? 'flex-1' : ''} ${sz.b} ${pill ? 'rounded-full' : 'rounded-lg'} z-10 relative flex items-center justify-center gap-2 whitespace-nowrap font-bold ${value === o.value ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:hover:text-white'} ${disabled || o.disabled ? 'opacity-50 pointer-events-none' : ''}`}
+          className={`${fullWidth ? 'flex-1' : ''} ${sz.b} ${pill ? 'rounded-full' : 'rounded-lg'} z-10 relative flex items-center justify-center gap-2 whitespace-nowrap font-bold ${value === o.value ? 'text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'} ${disabled || o.disabled ? 'pointer-events-none' : ''}`}
         >
           {o.icon && (
             <span
@@ -153,14 +153,14 @@ export function SegmentedControl<T extends string | number | boolean>({
           {o.dotColor && (
             <span className='relative flex h-2.5 w-2.5'>
               {o.pulseDot && (
-                <span 
-                  className='animate-ping absolute inline-flex h-full w-full rounded-full opacity-75' 
+                <span
+                  className='animate-ping absolute inline-flex h-full w-full rounded-full opacity-75'
                   style={{ backgroundColor: o.dotColor }}
                 />
               )}
-              <span 
-                className='relative inline-flex rounded-full h-2.5 w-2.5' 
-                style={{ backgroundColor: o.dotColor }} 
+              <span
+                className='relative inline-flex rounded-full h-2.5 w-2.5'
+                style={{ backgroundColor: o.dotColor }}
               />
             </span>
           )}

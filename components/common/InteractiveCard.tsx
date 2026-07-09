@@ -105,7 +105,7 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
         {pages.map((p, i) => (
           <div
             key={i}
-            className='invisible pointer-events-none row-start-1 col-start-1 opacity-0 h-full w-full'
+            className='invisible pointer-events-none row-start-1 col-start-1 h-full w-full'
             aria-hidden='true'
           >
             {p.content}
@@ -146,7 +146,7 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
             initial='collapsed'
             whileHover='expanded'
             animate='collapsed'
-            className='flex items-center rounded-full bg-white/40 dark:bg-zinc-800/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-xs overflow-hidden'
+            className='flex items-center rounded-full bg-white/60 dark:bg-white/20 backdrop-blur-md border border-white/30 dark:border-white/10 shadow-xs overflow-hidden'
             variants={{
               collapsed: { padding: '3px 4px', gap: '2.5px' },
               expanded: { padding: '6px 8px', gap: '5px' },
@@ -165,11 +165,10 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
                   e.stopPropagation();
                   navigate(i - activePage);
                 }}
-                className={`rounded-full transition-colors duration-300 cursor-pointer ${
-                  activePage === i
+                className={`rounded-full transition-colors duration-300 cursor-pointer ${activePage === i
                     ? 'bg-primary-500'
-                    : 'bg-zinc-400/50 dark:bg-zinc-500/50 hover:bg-zinc-500/80'
-                }`}
+                    : 'bg-zinc-400/50 dark:bg-zinc-400/60 hover:bg-zinc-500/80 dark:hover:bg-zinc-300/80'
+                  }`}
                 variants={{
                   collapsed: {
                     width: activePage === i ? 10 : 3.5,

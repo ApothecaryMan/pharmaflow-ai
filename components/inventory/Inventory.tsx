@@ -819,13 +819,13 @@ export const Inventory: React.FC<InventoryProps> = ({
           className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
           pages={[
             {
-              theme: 'bg-primary-50 dark:bg-primary-900/20',
+              theme: 'bg-primary-50 dark:bg-primary-200',
               content: (
                 <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                  <span className='text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400'>
+                  <span className='text-[10px] font-bold uppercase text-primary-600 dark:text-primary-700'>
                     {t.summary?.totalItems || 'Total Items'}
                   </span>
-                  <span className='text-xl font-bold text-primary-900 dark:text-primary-100'>
+                  <span className='text-xl font-bold text-primary-900 dark:text-primary-900'>
                     {summaryStats.totalItems >= 1000
                       ? new Intl.NumberFormat('en-US', {
                         notation: 'compact',
@@ -845,13 +845,13 @@ export const Inventory: React.FC<InventoryProps> = ({
             className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
             pages={[
               {
-                theme: 'bg-green-50 dark:bg-green-900/20',
+                theme: 'bg-green-50 dark:bg-green-200',
                 content: (
                   <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                    <span className='text-[10px] font-bold uppercase text-green-600 dark:text-green-400'>
+                    <span className='text-[10px] font-bold uppercase text-green-600 dark:text-green-700'>
                       {t.summary?.totalCost || 'Inventory Cost'}
                     </span>
-                    <span className='text-xl font-bold text-green-900 dark:text-primary-100 tabular-nums'>
+                    <span className='text-xl font-bold text-green-900 dark:text-green-900 tabular-nums'>
                       <PriceDisplay
                         value={summaryStats.totalCost}
                         compact={summaryStats.totalCost >= 1000}
@@ -861,13 +861,13 @@ export const Inventory: React.FC<InventoryProps> = ({
                 ),
               },
               {
-                theme: 'bg-indigo-50 dark:bg-indigo-900/20',
+                theme: 'bg-indigo-50 dark:bg-indigo-200',
                 content: (
                   <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                    <span className='text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400'>
+                    <span className='text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-700'>
                       {t.summary?.totalSaleValue || 'Sale Value'}
                     </span>
-                    <span className='text-xl font-bold text-indigo-900 dark:text-primary-100 tabular-nums'>
+                    <span className='text-xl font-bold text-indigo-900 dark:text-indigo-900 tabular-nums'>
                       <PriceDisplay
                         value={summaryStats.totalSaleValue}
                         compact={summaryStats.totalSaleValue >= 1000}
@@ -884,39 +884,39 @@ export const Inventory: React.FC<InventoryProps> = ({
           className={`flex flex-col w-full px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
           pages={[
             {
-              theme: 'bg-red-50 dark:bg-red-900/20',
+              theme: 'bg-red-50 dark:bg-red-200',
               content: (
                 <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                  <span className='text-[10px] font-bold uppercase text-red-600 dark:text-red-400'>
+                  <span className='text-[10px] font-bold uppercase text-red-600 dark:text-red-700'>
                     {t.summary?.restock || 'Critical Restock'}
                   </span>
-                  <span className='text-xl font-bold text-red-900 dark:text-primary-100'>
+                  <span className='text-xl font-bold text-red-900 dark:text-red-900'>
                     {summaryStats.criticalRestock}
                   </span>
                 </div>
               ),
             },
             {
-              theme: 'bg-amber-50 dark:bg-amber-900/20',
+              theme: 'bg-amber-50 dark:bg-amber-200',
               content: (
                 <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                  <span className='text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400'>
+                  <span className='text-[10px] font-bold uppercase text-amber-600 dark:text-amber-700'>
                     {t.summary?.nearReorder || 'Near Reorder'}
                   </span>
-                  <span className='text-xl font-bold text-amber-900 dark:text-primary-100'>
+                  <span className='text-xl font-bold text-amber-900 dark:text-amber-900'>
                     {summaryStats.nearReorder}
                   </span>
                 </div>
               ),
             },
             {
-              theme: 'bg-gray-100 dark:bg-gray-800',
+              theme: 'bg-gray-100 dark:bg-gray-200',
               content: (
                 <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
-                  <span className='text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400'>
+                  <span className='text-[10px] font-bold uppercase text-gray-500 dark:text-gray-600'>
                     {t.summary?.discontinued || 'Discontinued'}
                   </span>
-                  <span className='text-xl font-bold text-gray-700 dark:text-gray-300'>
+                  <span className='text-xl font-bold text-gray-700 dark:text-gray-800'>
                     {summaryStats.discontinuedCount}
                   </span>
                 </div>

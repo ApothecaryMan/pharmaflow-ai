@@ -91,10 +91,8 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
             ]}
             value='staff-overview'
             onChange={(val) => onViewChange?.(val as any)}
-            color={color.name}
             size='md'
             iconSize='--icon-lg'
-            variant='onPage'
             shape='pill'
             className='w-full sm:w-[480px]'
             useGraphicFont={true}

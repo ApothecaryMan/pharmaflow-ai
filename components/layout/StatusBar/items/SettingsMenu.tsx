@@ -348,7 +348,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 onToggle={toggleSubmenu}
                 isMobile={isMobile}
               >
-                <div className='flex items-center gap-1.5'>
+                <div className='flex items-center gap-1.5 px-2'>
                   <span
                     className='material-symbols-rounded text-(--text-secondary)'
                     style={{ fontSize: 'var(--icon-settings)' }}
@@ -554,13 +554,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 <SettingsRow icon='gradient' label={t.vividBg}>
                   <SegmentedControl
                     value={vividBg}
-                    onChange={(v) => setVividBg(v as boolean)}
+                    onChange={(v) => setVividBg(v as 'muted' | 'subtle' | 'vivid')}
                     size='xs'
                     shape='pill'
                     iconSize='--icon-settings'
                     options={[
-                      { label: '', value: false, icon: 'blur_on' },
-                      { label: '', value: true, icon: 'blur_circular' },
+                      { label: '', value: 'muted', icon: 'blur_off' },
+                      { label: '', value: 'subtle', icon: 'blur_on' },
+                      { label: '', value: 'vivid', icon: 'blur_circular' },
                     ]}
                   />
                 </SettingsRow>

@@ -82,7 +82,7 @@ export interface SettingsState {
   showTickerTopSeller: boolean;
   graphicStyle: boolean;
   graphicFontVariant: 'serif' | 'sans';
-  vividBg: boolean;
+  vividBg: 'muted' | 'subtle' | 'vivid';
   // Metadata
   activeBranchId: string;
   branchCode: string;
@@ -130,7 +130,7 @@ export interface SettingsContextType extends SettingsState {
   setShowTickerTopSeller: (show: boolean) => void;
   setGraphicStyle: (graphic: boolean) => void;
   setGraphicFontVariant: (variant: 'serif' | 'sans') => void;
-  setVividBg: (vivid: boolean) => void;
+  setVividBg: (vivid: 'muted' | 'subtle' | 'vivid') => void;
   setSwitchVariant: (variant: SwitchVariant) => void;
   setBadgeStyle: (style: BadgeStyle) => void;
   setModalPresentationMode: (mode: 'modal' | 'sidebar') => void;
@@ -183,7 +183,7 @@ const defaultSettings: SettingsState = {
   showTickerTopSeller: true,
   graphicStyle: false,
   graphicFontVariant: 'sans',
-  vividBg: false,
+  vividBg: 'subtle',
   activeBranchId: '',
   branchCode: '',
   switchVariant: 'default',
@@ -276,7 +276,24 @@ const loadSettings = (): SettingsState => {
         'pharma_graphicFontVariant',
         defaultSettings.graphicFontVariant
       ),
-      vividBg: storage.get('pharma_vividBg', defaultSettings.vividBg),
+      vividBg: (() => {
+        const v = storage.get('pharma_vividBg', defaultSettings.vividBg);
+        if (v === true) return 'vivid';
+        if (v === false) return 'subtle';
+        return v;
+      })(),
+      backgroundPattern: storage.get(
+        'pharma_backgroundPattern',
+        defaultSettings.backgroundPattern
+      ) as SettingsState['backgroundPattern'],
+      backgroundPatternOpacity: storage.get(
+        'pharma_backgroundPatternOpacity',
+        defaultSettings.backgroundPatternOpacity
+      ),
+      backgroundPatternUseThemeColor: storage.get(
+        'pharma_backgroundPatternUseThemeColor',
+        defaultSettings.backgroundPatternUseThemeColor
+      ),
       activeBranchId: storage.get('pharma_activeBranchId', defaultSettings.activeBranchId),
       branchCode: storage.get('pharma_branchCode', defaultSettings.branchCode),
       numeralSystem: storage.get('pharma_numeralSystem', defaultSettings.numeralSystem) as
@@ -651,7 +668,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, graphicFontVariant }));
   }, []);
 
-  const setVividBg = useCallback((vividBg: boolean) => {
+  const setVividBg = useCallback((vividBg: 'muted' | 'subtle' | 'vivid') => {
     setSettings((prev) => ({ ...prev, vividBg }));
   }, []);
 
