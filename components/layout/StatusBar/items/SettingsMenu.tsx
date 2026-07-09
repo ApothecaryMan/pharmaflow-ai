@@ -490,7 +490,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   <span className='text-xs font-semibold text-(--text-primary)'>{t.backgroundPattern}</span>
                 </div>
                 <div className='flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none px-2'>
-                  {(['none', 'dots', 'grid', 'mesh', 'stripes'] as const).map((p) => (
+                  {(['none', 'dots', 'grid', 'mesh', 'crosshatch', 'stripes', 'noise'] as const).map((p) => (
                     <button
                       key={p}
                       onClick={() => setBackgroundPattern(p)}
@@ -504,7 +504,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                        p === 'dots' ? t.patternDots :
                        p === 'grid' ? t.patternGrid :
                        p === 'mesh' ? t.patternMesh :
-                       t.patternStripes}
+                       p === 'crosshatch' ? t.patternCrosshatch :
+                       p === 'stripes' ? t.patternStripes :
+                       t.patternNoise}
                     </button>
                   ))}
                 </div>

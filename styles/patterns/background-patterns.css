@@ -3,6 +3,7 @@
 
 .main-layout-content {
   position: relative;
+  isolation: isolate;
 }
 
 .main-layout-content::before {
@@ -11,18 +12,31 @@
   inset: 0;
   pointer-events: none;
   z-index: 0;
+  contain: strict;
   background-image: var(--bg-pattern-image, none);
   background-size: var(--bg-pattern-size, 20px 20px);
   background-repeat: var(--bg-pattern-repeat, repeat);
   background-position: var(--bg-pattern-position, 0 0);
   opacity: var(--bg-pattern-opacity, 0.3);
+  mask-image: var(--bg-pattern-mask, none);
   transition: opacity 0.3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-layout-content::before {
+    transition: none;
+  }
 }
 
 .main-layout-content > * {
   position: relative;
   z-index: 1;
 }
+
+/* ── Intensity modifiers ── */
+.bg-pattern-subtle { --bg-pattern-opacity: 0.12; }
+.bg-pattern-medium  { --bg-pattern-opacity: 0.25; }
+.bg-pattern-bold    { --bg-pattern-opacity: 0.45; }
 
 /* ── Dots Pattern ── */
 .bg-pattern-dots {
@@ -36,6 +50,15 @@
     linear-gradient(var(--bg-pattern-color, currentColor) 1px, transparent 1px),
     linear-gradient(90deg, var(--bg-pattern-color, currentColor) 1px, transparent 1px);
   --bg-pattern-size: 20px 20px;
+}
+
+/* ── Crosshatch Pattern ── */
+.bg-pattern-crosshatch {
+  --bg-pattern-image:
+    repeating-linear-gradient(45deg, var(--bg-pattern-color, currentColor) 0, var(--bg-pattern-color, currentColor) 1px, transparent 1px, transparent 12px),
+    repeating-linear-gradient(-45deg, var(--bg-pattern-color, currentColor) 0, var(--bg-pattern-color, currentColor) 1px, transparent 1px, transparent 12px);
+  --bg-pattern-size: initial;
+  --bg-pattern-opacity: 0.15;
 }
 
 /* ── Mesh Gradient Pattern ── */
@@ -60,4 +83,26 @@
     color-mix(in srgb, var(--bg-pattern-color, currentColor) 12%, transparent) 12px
   );
   --bg-pattern-size: initial;
+}
+
+/* ── Noise / Grain Pattern ── */
+.bg-pattern-noise {
+  --bg-pattern-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --bg-pattern-size: 180px 180px;
+  --bg-pattern-opacity: 0.06;
+}
+
+/* ── Fallback for browsers that don't support color-mix() ── */
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .bg-pattern-mesh,
+  .bg-pattern-stripes {
+    --bg-pattern-color: rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* ── Dark mode: same opacity reads much stronger on dark backgrounds ── */
+@media (prefers-color-scheme: dark) {
+  .main-layout-content::before {
+    opacity: calc(var(--bg-pattern-opacity, 0.3) * 0.6);
+  }
 }

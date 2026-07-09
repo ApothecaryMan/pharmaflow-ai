@@ -58,7 +58,7 @@ export interface SettingsState {
   textTransform: 'normal' | 'uppercase';
   numeralSystem: 'AR' | 'EN';
   // Background Pattern
-  backgroundPattern: 'none' | 'dots' | 'grid' | 'mesh' | 'stripes';
+  backgroundPattern: 'none' | 'dots' | 'grid' | 'mesh' | 'crosshatch' | 'stripes' | 'noise';
   backgroundPatternOpacity: number;
   // UI Preferences
   navStyle: 1 | 2 | 3;
@@ -105,7 +105,7 @@ export interface SettingsContextType extends SettingsState {
   setTextTransform: (transform: 'normal' | 'uppercase') => void;
   setNumeralSystem: (system: 'AR' | 'EN') => void;
   // Pattern Actions
-  setBackgroundPattern: (pattern: 'none' | 'dots' | 'grid' | 'mesh' | 'stripes') => void;
+  setBackgroundPattern: (pattern: 'none' | 'dots' | 'grid' | 'mesh' | 'crosshatch' | 'stripes' | 'noise') => void;
   setBackgroundPatternOpacity: (opacity: number) => void;
   // UI Actions
   setNavStyle: (style: 1 | 2 | 3) => void;
@@ -564,7 +564,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, numeralSystem }));
   }, []);
 
-  const setBackgroundPattern = useCallback((backgroundPattern: 'none' | 'dots' | 'grid' | 'mesh' | 'stripes') => {
+  const setBackgroundPattern = useCallback((backgroundPattern: 'none' | 'dots' | 'grid' | 'mesh' | 'crosshatch' | 'stripes' | 'noise') => {
     setSettings((prev) => ({ ...prev, backgroundPattern }));
   }, []);
 
