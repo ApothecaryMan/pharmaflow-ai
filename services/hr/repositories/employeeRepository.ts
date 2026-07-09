@@ -42,6 +42,7 @@ export const employeeRepository = {
       biometricPublicKey: db.biometric_public_key || undefined,
       image: db.photo || undefined,
       coverStyle: db.cover_style || undefined,
+      designSettings: db.design_settings || undefined,
       nationalIdCard: db.national_id_card || undefined,
       nationalIdCardBack: db.national_id_card_back || undefined,
       mainSyndicateCard: db.main_syndicate_card || undefined,
@@ -74,6 +75,7 @@ export const employeeRepository = {
     if (e.biometricPublicKey !== undefined) db.biometric_public_key = e.biometricPublicKey;
     if (e.image !== undefined) db.photo = e.image;
     if (e.coverStyle !== undefined) db.cover_style = e.coverStyle;
+    if (e.designSettings !== undefined) db.design_settings = e.designSettings;
     if (e.nationalIdCard !== undefined) db.national_id_card = e.nationalIdCard;
     if (e.nationalIdCardBack !== undefined) db.national_id_card_back = e.nationalIdCardBack;
     if (e.mainSyndicateCard !== undefined) db.main_syndicate_card = e.mainSyndicateCard;
@@ -82,7 +84,7 @@ export const employeeRepository = {
   },
 
   BASE_COLUMNS:
-    'id, org_id, branch_id, employee_code, name, name_arabic, phone, email, position, department, role, start_date, status, end_date, salary, notes, username, auth_user_id, password, biometric_credential_id, biometric_public_key, photo, cover_style',
+    'id, org_id, branch_id, employee_code, name, name_arabic, phone, email, position, department, role, start_date, status, end_date, salary, notes, username, auth_user_id, password, biometric_credential_id, biometric_public_key, photo, cover_style, design_settings',
 
   async getAll(orgId: string, branchId?: string): Promise<Employee[]> {
     let query = supabase.from(this.tableName).select(this.BASE_COLUMNS).eq('org_id', orgId);

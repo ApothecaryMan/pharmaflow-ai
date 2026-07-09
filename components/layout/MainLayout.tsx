@@ -194,6 +194,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 name: e.name,
                 employeeCode: e.employeeCode,
                 image: e.image,
+                designSettings: e.designSettings,
               }))}
               currentEmployeeId={currentEmployeeId}
               setCurrentEmployeeId={setCurrentEmployeeId}

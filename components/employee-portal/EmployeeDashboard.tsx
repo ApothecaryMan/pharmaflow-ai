@@ -1,6 +1,7 @@
 import { startRegistration } from '@simplewebauthn/browser';
 import { Clock, Download, Menu } from 'lucide-react';
 import { useCallback, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useUpdateCheck } from '../../hooks/infrastructure/useUpdateCheck';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { authService } from '../../services/auth/authService';
@@ -32,6 +33,7 @@ export function EmployeeDashboard({
   onLogout,
 }: Props) {
   const { language } = useSettings();
+  const queryClient = useQueryClient();
   const t = TRANSLATIONS[language];
   const session = authService.getCurrentUserSync();
   const { profile, requests, workspaces, isLoading, loadData, updateProfile, actionRequest } =
@@ -70,11 +72,12 @@ export function EmployeeDashboard({
     async (updates: Partial<UserProfile>) => {
       try {
         await updateProfile(updates);
+        queryClient.invalidateQueries({ queryKey: ['employees'] });
       } catch (err) {
         console.error(err);
       }
     },
-    [updateProfile]
+    [updateProfile, queryClient]
   );
 
   const handleActionRequest = useCallback(

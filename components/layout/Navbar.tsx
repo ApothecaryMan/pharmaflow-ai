@@ -24,7 +24,7 @@ interface NavbarProps {
   onLogoClick?: () => void;
   currentView?: ViewState;
   onNavigate?: (view: ViewState) => void;
-  employees?: Array<{ id: string; name: string; employeeCode: string; image?: string }>;
+  employees?: Array<{ id: string; name: string; employeeCode: string; image?: string; designSettings?: { avatar?: { decorationId?: string; decorationAnimated?: boolean; frameColor?: string | null; ringStyle?: string; ringThickness?: number; ringAnimated?: boolean } } }>;
   currentEmployeeId?: string | null;
   setCurrentEmployeeId?: (id: string | null) => void;
   onLogout?: () => void;

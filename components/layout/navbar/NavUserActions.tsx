@@ -6,6 +6,7 @@ import type { Language, Organization, ViewState } from '../../../types';
 import { isTauri } from '../../../utils/platform';
 import { Icons } from '../../common/Icons';
 import { AttendanceQuickAction } from '../AttendanceQuickAction';
+import { EmployeeAvatar } from '../../common/EmployeeAvatar';
 
 interface NavUserActionsProps {
   language: Language;
@@ -61,28 +62,13 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
           onClick={() => setShowProfileMenu(!showProfileMenu)}
           className={`flex items-center gap-2 py-0.5 px-1 ${!isCompact ? 'ltr:pr-3 rtl:pl-3' : ''} rounded-full border border-transparent hover:border-(--border-divider) hover:bg-(--bg-navbar-hover) ${showProfileMenu ? 'border-(--border-divider) bg-(--bg-navbar-hover)' : ''}`}
         >
-          {currentEmployee?.image ? (
-            <img
-              src={currentEmployee.image}
-              alt='Profile'
-              className={`${isCompact ? 'w-6 h-6' : 'w-8 h-8'} rounded-full object-cover border border-(--border-divider)`}
-            />
-          ) : (
-            <div
-              className='flex items-center justify-center rounded-full border border-white/20'
-              style={{
-                backgroundColor: theme.hex,
-                width: isCompact ? '24px' : '32px',
-                height: isCompact ? '24px' : '32px',
-              }}
-            >
-              <Icons.Store
-                size={isCompact ? '14px' : 'var(--icon-md)'}
-                stroke={2.5}
-                color='white'
-              />
-            </div>
-          )}
+          <EmployeeAvatar
+            image={currentEmployee?.image}
+            initials={currentEmployee?.name?.charAt(0).toUpperCase()}
+            themeHex={theme.hex}
+            size={isCompact ? 24 : 32}
+            designSettings={currentEmployee?.designSettings}
+          />
           {!isCompact && (
             <div className='hidden md:flex flex-col items-start'>
               <span
@@ -127,24 +113,13 @@ export const NavUserActions: React.FC<NavUserActionsProps> = ({
             <div className='p-4 border-b border-(--border-divider) bg-(--bg-page-surface)'>
               <div className='flex items-center gap-3'>
                 <div className='relative group'>
-                  {currentEmployee?.image ? (
-                    <img
-                      src={currentEmployee.image}
-                      alt='Profile'
-                      className='w-12 h-12 rounded-full object-cover border border-(--border-divider)'
-                    />
-                  ) : (
-                    <div
-                      className='flex items-center justify-center rounded-full border border-white/10'
-                      style={{
-                        backgroundColor: theme.hex,
-                        width: '48px',
-                        height: '48px',
-                      }}
-                    >
-                      <Icons.Store size='var(--icon-lg)' stroke={2} color='white' />
-                    </div>
-                  )}
+                  <EmployeeAvatar
+                    image={currentEmployee?.image}
+                    initials={currentEmployee?.name?.charAt(0).toUpperCase()}
+                    themeHex={theme.hex}
+                    size={48}
+                    designSettings={currentEmployee?.designSettings}
+                  />
                 </div>
                 <div className='flex-1'>
                   <h3

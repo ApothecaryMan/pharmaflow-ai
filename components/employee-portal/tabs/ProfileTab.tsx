@@ -11,7 +11,8 @@ const PROFILE_GLASS_CARD_NO_BORDER = PROFILE_GLASS_CARD_BASE
   .filter(c => c !== 'border' && !c.startsWith('border-') && !c.startsWith('dark:border-'))
   .join(' ') + ' border border-transparent';
 import { ColorPicker, FRAME_COLORS } from '../avatar-color-settings';
-import { AVATAR_DECORATIONS, DECORATION_KEYFRAMES, getDecoration } from '../avatar-decorations';
+import { AVATAR_DECORATIONS, DECORATION_KEYFRAMES } from '../avatar-decorations';
+import { EmployeeAvatar } from '../../common/EmployeeAvatar';
 import type { RingStyle } from '../avatar-ring';
 import AvatarRing, { AnimationToggle, RING_STYLES } from '../avatar-ring';
 
@@ -485,8 +486,8 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
         coverStyle,
         designSettings: {
           avatar: {
-            decoration: avatarDecoration,
-            animated: decorationAnimated,
+            decorationId: avatarDecoration,
+            decorationAnimated: decorationAnimated,
             frameColor,
             ringStyle,
             ringThickness,
@@ -665,41 +666,21 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   : undefined
               }
             >
-              <div
-                className='w-28 h-28 rounded-full border-4 overflow-visible bg-(--bg-secondary) shadow-md flex items-center justify-center relative bg-clip-padding transition-all'
-                style={{
-                  borderStyle: 'solid',
-                  borderColor: (frameColor && ringStyle === 'solid' && !ringAnimated) ? frameColor : (frameColor ? 'transparent' : 'var(--bg-page-surface)'),
-                  borderWidth: frameColor ? ringThickness : 4,
+              <EmployeeAvatar
+                image={avatarSrc}
+                initials={getInitials(displayName)}
+                size={112}
+                designSettings={{
+                  avatar: {
+                    decorationId: avatarDecoration,
+                    decorationAnimated: decorationAnimated,
+                    frameColor: frameColor,
+                    ringStyle: ringStyle,
+                    ringThickness: ringThickness,
+                    ringAnimated: ringAnimated
+                  }
                 }}
               >
-                {/* Inner clipped container keeps image/initials inside the circle */}
-                <div className='absolute inset-0 rounded-full overflow-hidden'>
-                  {avatarSrc ? (
-                    <img src={avatarSrc} alt='' className='w-full h-full object-cover' />
-                  ) : (
-                    <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-500/20 to-primary-600/30 text-primary-500 text-3xl font-bold'>
-                      {getInitials(displayName)}
-                    </div>
-                  )}
-                </div>
-                {avatarDecoration !== 'none' && (
-                  <div
-                    className={`absolute -inset-2 pointer-events-none z-[1] ${!decorationAnimated ? 'pause-animations' : ''}`}
-                  >
-                    {getDecoration(avatarDecoration)}
-                  </div>
-                )}
-                {frameColor && (ringStyle !== 'solid' || ringAnimated) && (
-                  <div className='absolute -inset-2 pointer-events-none z-0'>
-                    <AvatarRing
-                      color={frameColor}
-                      style={ringStyle}
-                      thickness={ringThickness}
-                      animated={ringAnimated}
-                    />
-                  </div>
-                )}
                 {onUpdateProfile && isEditing && (
                   <div className='absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors rounded-full flex items-center justify-center gap-3 z-[2]'>
                     <Camera className='w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity' />
@@ -717,7 +698,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                     )}
                   </div>
                 )}
-              </div>
+              </EmployeeAvatar>
               {onUpdateProfile && isEditing && (
                 <input
                   id='avatar-upload'

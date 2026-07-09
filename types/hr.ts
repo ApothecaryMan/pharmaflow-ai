@@ -52,6 +52,7 @@ export interface Employee {
   designSettings?: {
     avatar?: {
       decorationId?: string;
+      decorationAnimated?: boolean;
       frameColor?: string | null;
       ringStyle?: string;
       ringThickness?: number;
@@ -108,6 +109,7 @@ export interface UserProfile {
   designSettings?: {
     avatar?: {
       decorationId?: string;
+      decorationAnimated?: boolean;
       frameColor?: string | null;
       ringStyle?: string;
       ringThickness?: number;
