@@ -55,9 +55,9 @@
   --bg-pattern-image: repeating-linear-gradient(
     -45deg,
     transparent,
-    transparent 12px,
-    color-mix(in srgb, var(--bg-pattern-color, currentColor) 4%, transparent) 12px,
-    color-mix(in srgb, var(--bg-pattern-color, currentColor) 4%, transparent) 14px
+    transparent 10px,
+    color-mix(in srgb, var(--bg-pattern-color, currentColor) 12%, transparent) 10px,
+    color-mix(in srgb, var(--bg-pattern-color, currentColor) 12%, transparent) 12px
   );
   --bg-pattern-size: initial;
 }
