@@ -222,6 +222,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setBackgroundPattern,
     backgroundPatternOpacity,
     setBackgroundPatternOpacity,
+    backgroundPatternUseThemeColor,
+    setBackgroundPatternUseThemeColor,
   } = settings;
 
   const branches = useAuthStore(s => s.branches);
@@ -486,11 +488,21 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 )}
                 {/* --- Background Pattern --- */}
                 <div className='border-t border-(--border-divider) my-1 opacity-50' />
-                <div className='px-2 py-1'>
+                <div className='flex items-center justify-between px-2 py-1'>
                   <span className='text-xs font-semibold text-(--text-primary)'>{t.backgroundPattern}</span>
+                  {backgroundPattern !== 'none' && (
+                    <Switch
+                      checked={backgroundPatternUseThemeColor ?? true}
+                      onChange={setBackgroundPatternUseThemeColor}
+                      theme={currentTheme.name.toLowerCase()}
+                      activeColor={currentTheme.hex}
+                    />
+                  )}
                 </div>
                 <div className='flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none px-2'>
-                  {(['none', 'dots', 'grid', 'mesh', 'crosshatch', 'stripes', 'noise'] as const).map((p) => (
+                  {(['none', 'dots', 'grid', 'mesh', 'crosshatch', 'stripes', 'noise'] as const)
+                    .filter((p) => p !== 'mesh' || (backgroundPatternUseThemeColor && darkMode))
+                    .map((p) => (
                     <button
                       key={p}
                       onClick={() => setBackgroundPattern(p)}

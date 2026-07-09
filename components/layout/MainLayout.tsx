@@ -128,6 +128,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     sidebarStyle,
     backgroundPattern,
     backgroundPatternOpacity,
+    backgroundPatternUseThemeColor,
   } = useSettings();
 
   const isStandalone = STANDALONE_VIEWS.includes(view);
@@ -270,7 +271,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 className={`flex-1 h-full overflow-hidden relative main-layout-content${backgroundPattern !== 'none' && (backgroundPattern !== 'mesh' || darkMode) ? ' bg-pattern-' + backgroundPattern : ''}`}
                 style={{
                   '--bg-pattern-opacity': backgroundPatternOpacity / 100,
-                  '--bg-pattern-color': 'var(--primary-500)',
+                  '--bg-pattern-color': backgroundPatternUseThemeColor ? 'var(--primary-500)' : 'var(--text-tertiary)',
                 } as React.CSSProperties}
               >
                 <div

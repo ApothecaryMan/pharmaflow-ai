@@ -60,6 +60,7 @@ export interface SettingsState {
   // Background Pattern
   backgroundPattern: 'none' | 'dots' | 'grid' | 'mesh' | 'crosshatch' | 'stripes' | 'noise';
   backgroundPatternOpacity: number;
+  backgroundPatternUseThemeColor: boolean;
   // UI Preferences
   navStyle: 1 | 2 | 3;
   sidebarVisible: boolean;
@@ -107,6 +108,7 @@ export interface SettingsContextType extends SettingsState {
   // Pattern Actions
   setBackgroundPattern: (pattern: 'none' | 'dots' | 'grid' | 'mesh' | 'crosshatch' | 'stripes' | 'noise') => void;
   setBackgroundPatternOpacity: (opacity: number) => void;
+  setBackgroundPatternUseThemeColor: (use: boolean) => void;
   // UI Actions
   setNavStyle: (style: 1 | 2 | 3) => void;
   setSidebarVisible: (visible: boolean) => void;
@@ -162,6 +164,7 @@ const defaultSettings: SettingsState = {
   numeralSystem: 'EN',
   backgroundPattern: 'none',
   backgroundPatternOpacity: 30,
+  backgroundPatternUseThemeColor: true,
   navStyle: 2,
   sidebarVisible: false,
   sidebarStyle: 1,
@@ -572,6 +575,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, backgroundPatternOpacity }));
   }, []);
 
+  const setBackgroundPatternUseThemeColor = useCallback((backgroundPatternUseThemeColor: boolean) => {
+    setSettings((prev) => ({ ...prev, backgroundPatternUseThemeColor }));
+  }, []);
+
   const setNavStyle = useCallback((navStyle: 1 | 2 | 3) => {
     setSettings((prev) => ({ ...prev, navStyle }));
   }, []);
@@ -711,6 +718,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setTextTransform,
       setBackgroundPattern,
       setBackgroundPatternOpacity,
+      setBackgroundPatternUseThemeColor,
       setNavStyle,
       setSidebarVisible,
       setSidebarStyle,
@@ -779,6 +787,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setNavbarMenuLayout,
       setBackgroundPattern,
       setBackgroundPatternOpacity,
+      setBackgroundPatternUseThemeColor,
       setReducedMotion,
       setDisableCSSTransitions,
       numeralLocale,
