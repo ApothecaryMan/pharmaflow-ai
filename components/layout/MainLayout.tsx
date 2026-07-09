@@ -81,12 +81,12 @@ const GlobalContextMenuWrapper: React.FC<{
           },
           ...(helpContent
             ? [
-                {
-                  label: t.global?.actions?.instructions || 'التعليمات',
-                  icon: 'menu_book',
-                  action: () => setIsHelpOpen(true),
-                },
-              ]
+              {
+                label: t.global?.actions?.instructions || 'التعليمات',
+                icon: 'menu_book',
+                action: () => setIsHelpOpen(true),
+              },
+            ]
             : []),
         ]);
       }}
@@ -126,6 +126,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     navStyle,
     hideInactiveModules,
     sidebarStyle,
+    backgroundPattern,
+    backgroundPatternOpacity,
   } = useSettings();
 
   const isStandalone = STANDALONE_VIEWS.includes(view);
@@ -264,7 +266,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               />
 
               {/* Actual Page Surface */}
-              <main className='flex-1 h-full overflow-hidden relative main-layout-content'>
+              <main
+                className={`flex-1 h-full overflow-hidden relative main-layout-content${backgroundPattern !== 'none' && (backgroundPattern !== 'mesh' || darkMode) ? ' bg-pattern-' + backgroundPattern : ''}`}
+                style={{
+                  '--bg-pattern-opacity': backgroundPatternOpacity / 100,
+                  '--bg-pattern-color': 'var(--primary-500)',
+                } as React.CSSProperties}
+              >
                 <div
                   className={getContentContainerClasses(PAGE_REGISTRY[view]?.layout, isStandalone)}
                 >

@@ -1,0 +1,63 @@
+/* ── Background Pattern Overlays ── */
+/* Applied via classes on .main-layout-content (the <main> element) */
+
+.main-layout-content {
+  position: relative;
+}
+
+.main-layout-content::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: var(--bg-pattern-image, none);
+  background-size: var(--bg-pattern-size, 20px 20px);
+  background-repeat: var(--bg-pattern-repeat, repeat);
+  background-position: var(--bg-pattern-position, 0 0);
+  opacity: var(--bg-pattern-opacity, 0.3);
+  transition: opacity 0.3s ease;
+}
+
+.main-layout-content > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Dots Pattern ── */
+.bg-pattern-dots {
+  --bg-pattern-image: radial-gradient(circle, var(--bg-pattern-color, currentColor) 1px, transparent 1px);
+  --bg-pattern-size: 20px 20px;
+}
+
+/* ── Grid Pattern ── */
+.bg-pattern-grid {
+  --bg-pattern-image:
+    linear-gradient(var(--bg-pattern-color, currentColor) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bg-pattern-color, currentColor) 1px, transparent 1px);
+  --bg-pattern-size: 20px 20px;
+}
+
+/* ── Mesh Gradient Pattern ── */
+.bg-pattern-mesh {
+  --bg-pattern-image:
+    radial-gradient(ellipse at 20% 50%, color-mix(in srgb, var(--bg-pattern-color, currentColor) 12%, transparent) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, color-mix(in srgb, var(--bg-pattern-color, currentColor) 8%, transparent) 0%, transparent 50%),
+    radial-gradient(ellipse at 40% 80%, color-mix(in srgb, var(--bg-pattern-color, currentColor) 6%, transparent) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 90%, color-mix(in srgb, var(--bg-pattern-color, currentColor) 5%, transparent) 0%, transparent 50%);
+  --bg-pattern-size: 100% 100%;
+  --bg-pattern-repeat: no-repeat;
+  --bg-pattern-position: 0 0;
+}
+
+/* ── Diagonal Stripes Pattern ── */
+.bg-pattern-stripes {
+  --bg-pattern-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 12px,
+    color-mix(in srgb, var(--bg-pattern-color, currentColor) 4%, transparent) 12px,
+    color-mix(in srgb, var(--bg-pattern-color, currentColor) 4%, transparent) 14px
+  );
+  --bg-pattern-size: initial;
+}

@@ -315,7 +315,7 @@ export const ActiveSessionsPage: React.FC<ActiveSessionsPageProps> = ({
   );
 
   return (
-    <div className='flex flex-col h-full bg-(--bg-page-surface)'>
+    <div className='flex flex-col h-full'>
       <div className='flex-1 px-4 sm:px-6 pt-4 sm:pt-6 overflow-hidden flex flex-col'>
         <div className='flex flex-col h-full w-full'>
           {error ? (

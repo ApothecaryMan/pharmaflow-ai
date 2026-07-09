@@ -16,3 +16,6 @@
 @import "./styles/utilities/icons.css";
 @import "./styles/utilities/logical.css";
 @import "./styles/utilities/sidebar-modal.css";
+
+/* Background Pattern Overlays */
+@import "./styles/patterns/background-patterns.css";

@@ -66,7 +66,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   leftContent,
   centerContent,
   rightContent,
-  sticky = true,
+  sticky = false,
   border = false,
   className = '',
   dir,
@@ -83,17 +83,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
   return (
     <header className={`${baseClasses} ${stickyClasses} ${borderClasses} ${className}`} dir={dir}>
-      {/* Blurry fade-out background */}
-      {sticky && (
-        <div
-          className='absolute inset-0 -z-10 bg-(--bg-page-surface)/80 backdrop-blur-md pointer-events-none'
-          style={{
-            WebkitMaskImage:
-              'linear-gradient(to bottom, black calc(100% - 24px), transparent 100%)',
-            maskImage: 'linear-gradient(to bottom, black calc(100% - 24px), transparent 100%)',
-          }}
-        />
-      )}
       {/* Top Row: Left, Center, Right slots */}
       <div className='flex flex-wrap md:flex-nowrap items-center justify-between w-full px-page py-3 md:py-3.5 gap-y-3'>
         {/* Left Section: Actions / Title */}
@@ -151,7 +140,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               transition={{ duration: 0.3, ease: 'easeInOut' }}
               className='overflow-hidden'
             >
-              <div className='px-page pb-4 pt-2 border-t border-zinc-100 dark:border-zinc-800/50'>
+              <div className='px-page pb-4 pt-2'>
                 {bottomContent}
               </div>
             </motion.div>

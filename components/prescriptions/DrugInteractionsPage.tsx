@@ -513,7 +513,7 @@ export const DrugInteractionsPage: React.FC<DrugInteractionsPageProps> = ({
   };
 
   return (
-    <div className='h-full flex flex-col bg-(--bg-page-surface) selection:bg-(--text-primary)/10'>
+    <div className='h-full flex flex-col selection:bg-(--text-primary)/10'>
       <PageHeader
         leftContent={
           <div className='flex flex-col items-start'>

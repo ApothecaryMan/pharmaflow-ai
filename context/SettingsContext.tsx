@@ -57,6 +57,9 @@ export interface SettingsState {
   fontFamilyAR: string;
   textTransform: 'normal' | 'uppercase';
   numeralSystem: 'AR' | 'EN';
+  // Background Pattern
+  backgroundPattern: 'none' | 'dots' | 'grid' | 'mesh' | 'stripes';
+  backgroundPatternOpacity: number;
   // UI Preferences
   navStyle: 1 | 2 | 3;
   sidebarVisible: boolean;
@@ -100,6 +103,9 @@ export interface SettingsContextType extends SettingsState {
   setFontFamilyAR: (font: string) => void;
   setTextTransform: (transform: 'normal' | 'uppercase') => void;
   setNumeralSystem: (system: 'AR' | 'EN') => void;
+  // Pattern Actions
+  setBackgroundPattern: (pattern: 'none' | 'dots' | 'grid' | 'mesh' | 'stripes') => void;
+  setBackgroundPatternOpacity: (opacity: number) => void;
   // UI Actions
   setNavStyle: (style: 1 | 2 | 3) => void;
   setSidebarVisible: (visible: boolean) => void;
@@ -152,6 +158,8 @@ const defaultSettings: SettingsState = {
   fontFamilyAR: 'Ar-Firewall',
   textTransform: 'uppercase',
   numeralSystem: 'EN',
+  backgroundPattern: 'none',
+  backgroundPatternOpacity: 30,
   navStyle: 2,
   sidebarVisible: false,
   sidebarStyle: 1,
@@ -552,6 +560,14 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, numeralSystem }));
   }, []);
 
+  const setBackgroundPattern = useCallback((backgroundPattern: 'none' | 'dots' | 'grid' | 'mesh' | 'stripes') => {
+    setSettings((prev) => ({ ...prev, backgroundPattern }));
+  }, []);
+
+  const setBackgroundPatternOpacity = useCallback((backgroundPatternOpacity: number) => {
+    setSettings((prev) => ({ ...prev, backgroundPatternOpacity }));
+  }, []);
+
   const setNavStyle = useCallback((navStyle: 1 | 2 | 3) => {
     setSettings((prev) => ({ ...prev, navStyle }));
   }, []);
@@ -685,6 +701,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setDarkMode,
       setLanguage,
       setTextTransform,
+      setBackgroundPattern,
+      setBackgroundPatternOpacity,
       setNavStyle,
       setSidebarVisible,
       setSidebarStyle,
@@ -749,6 +767,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setModalPresentationMode,
       setSidebarModalWidth,
       setNavbarMenuLayout,
+      setBackgroundPattern,
+      setBackgroundPatternOpacity,
       setReducedMotion,
       setDisableCSSTransitions,
       numeralLocale,

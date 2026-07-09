@@ -205,7 +205,6 @@ export const ProfitLossPage: React.FC<{ t: Translations; language?: string }> = 
             className='min-w-[400px]'
           />
         }
-        sticky={true}
         mb='mb-4'
         showBottom={showStats}
         showStatsToggle={true}

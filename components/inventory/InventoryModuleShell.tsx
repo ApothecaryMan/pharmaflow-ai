@@ -53,7 +53,7 @@ export const InventoryModuleShell: React.FC<InventoryModuleShellProps> = ({
 
   return (
     <InventoryHeaderContext.Provider value={contextValue}>
-      <div className='h-full flex flex-col bg-(--bg-page-surface)' dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className='h-full flex flex-col' dir={isRTL ? 'rtl' : 'ltr'}>
         <PageHeader
           mb='mb-0'
           leftContent={leftContent}

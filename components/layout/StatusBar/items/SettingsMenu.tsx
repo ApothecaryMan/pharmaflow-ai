@@ -216,6 +216,10 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setReducedMotion,
     disableCSSTransitions,
     setDisableCSSTransitions,
+    backgroundPattern,
+    setBackgroundPattern,
+    backgroundPatternOpacity,
+    setBackgroundPatternOpacity,
   } = settings;
 
   const branches = useAuthStore(s => s.branches);
@@ -479,6 +483,58 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       </div>
                     </SettingsRow>
                   </>
+                )}
+                {/* --- Background Pattern --- */}
+                <div className='border-t border-(--border-divider) my-1 opacity-50' />
+                <div className='px-2 py-1'>
+                  <span className='text-xs font-semibold text-(--text-primary)'>{t.backgroundPattern}</span>
+                </div>
+                <div className='flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none px-2'>
+                  {(darkMode ? (['none', 'dots', 'grid', 'mesh', 'stripes'] as const) : (['none', 'dots', 'grid', 'stripes'] as const)).map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => setBackgroundPattern(p)}
+                      className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all whitespace-nowrap leading-tight ${
+                        backgroundPattern === p
+                          ? 'border-(--primary-500) bg-(--primary-500)/10 text-(--primary-500) font-semibold'
+                          : 'border-(--border-divider) text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-menu-hover)'
+                      }`}
+                    >
+                      {p === 'none' ? t.patternNone :
+                       p === 'dots' ? t.patternDots :
+                       p === 'grid' ? t.patternGrid :
+                       p === 'mesh' ? t.patternMesh :
+                       t.patternStripes}
+                    </button>
+                  ))}
+                </div>
+                {backgroundPattern !== 'none' && (
+                  <div className='flex items-center justify-between px-2 py-1'>
+                    <div className='flex items-center gap-2'>
+                      <span
+                        className='material-symbols-rounded text-(--text-secondary)'
+                        style={{ fontSize: 'var(--icon-settings)' }}
+                      >
+                        opacity
+                      </span>
+                      <span className='text-xs font-medium text-(--text-primary)'>{t.patternOpacity}</span>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      <input
+                        type='range'
+                        min='5'
+                        max='70'
+                        step='5'
+                        value={backgroundPatternOpacity}
+                        onChange={(e) => setBackgroundPatternOpacity(Number(e.target.value))}
+                        className='w-20 h-1.5 rounded-full appearance-none cursor-pointer bg-(--border-divider) [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-(--primary-500) [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:cursor-pointer'
+                        style={{
+                          background: `linear-gradient(90deg, var(--primary-500) ${backgroundPatternOpacity}%, var(--border-divider) ${backgroundPatternOpacity}%)`,
+                        }}
+                      />
+                      <span className='text-xs text-(--text-secondary) w-8 text-right tabular-nums'>{backgroundPatternOpacity}%</span>
+                    </div>
+                  </div>
                 )}
               </SubmenuSection>
 
