@@ -113,7 +113,7 @@ class UniversalPrinterService {
   /**
    * Universal print label function
    */
-  public async printLabel(html: string, size: { width: number; height: number; orientation?: string }): Promise<boolean> {
+  public async printLabel(html: string, size: { width: number; height: number }): Promise<boolean> {
     // Labels are more complex, QZ Tray is usually better for custom sizes unless plugin supports it
     const settings = this.loadSettings();
     const { enabled, silentMode } = settings;
