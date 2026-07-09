@@ -108,7 +108,7 @@ const COLOR_PALETTES: Record<string, Record<string, string>> = {
   },
 };
 
-export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean = false, hex?: string) => {
+export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean = false, hex?: string, vividBg: boolean = false) => {
   useEffect(() => {
     const palette = COLOR_PALETTES[color] || COLOR_PALETTES.blue;
     const root = document.documentElement;
@@ -118,10 +118,12 @@ export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean 
       root.style.setProperty(`--primary-${shade}`, value);
     });
 
-    // In light mode, subtly tint the page background with the accent color
+    // In light mode, tint the page background with the accent color
     if (!darkMode && hex) {
-      root.style.setProperty('--bg-page-surface', `color-mix(in srgb, ${hex} 6%, #f1f3f5)`);
-      root.style.setProperty('--bg-statusbar', `color-mix(in srgb, ${hex} 12%, var(--bg-secondary))`);
+      const surfacePct = vividBg ? 18 : 6;
+      const statusPct = vividBg ? 30 : 12;
+      root.style.setProperty('--bg-page-surface', `color-mix(in srgb, ${hex} ${surfacePct}%, #f1f3f5)`);
+      root.style.setProperty('--bg-statusbar', `color-mix(in srgb, ${hex} ${statusPct}%, var(--bg-secondary))`);
     } else {
       root.style.setProperty('--bg-page-surface', '');
       root.style.setProperty('--bg-statusbar', '');
@@ -132,7 +134,7 @@ export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean 
     } else {
       root.classList.remove('dark');
     }
-  }, [color, darkMode, isLoginView, hex]);
+  }, [color, darkMode, isLoginView, hex, vividBg]);
 
   // Favicon — separate effect so meta-tag cleanup doesn't affect it
   useEffect(() => {

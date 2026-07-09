@@ -216,6 +216,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setReducedMotion,
     disableCSSTransitions,
     setDisableCSSTransitions,
+    vividBg,
+    setVividBg,
     backgroundPattern,
     setBackgroundPattern,
     backgroundPatternOpacity,
@@ -490,7 +492,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   <span className='text-xs font-semibold text-(--text-primary)'>{t.backgroundPattern}</span>
                 </div>
                 <div className='flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none px-2'>
-                  {(darkMode ? (['none', 'dots', 'grid', 'mesh', 'stripes'] as const) : (['none', 'dots', 'grid', 'stripes'] as const)).map((p) => (
+                  {(['none', 'dots', 'grid', 'mesh', 'stripes'] as const).map((p) => (
                     <button
                       key={p}
                       onClick={() => setBackgroundPattern(p)}
@@ -535,6 +537,21 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       <span className='text-xs text-(--text-secondary) w-8 text-right tabular-nums'>{backgroundPatternOpacity}%</span>
                     </div>
                   </div>
+                )}
+                {!darkMode && (
+                <SettingsRow icon='gradient' label={t.vividBg}>
+                  <SegmentedControl
+                    value={vividBg}
+                    onChange={(v) => setVividBg(v as boolean)}
+                    size='xs'
+                    shape='pill'
+                    iconSize='--icon-settings'
+                    options={[
+                      { label: '', value: false, icon: 'blur_on' },
+                      { label: '', value: true, icon: 'blur_circular' },
+                    ]}
+                  />
+                </SettingsRow>
                 )}
               </SubmenuSection>
 

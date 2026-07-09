@@ -81,6 +81,7 @@ export interface SettingsState {
   showTickerTopSeller: boolean;
   graphicStyle: boolean;
   graphicFontVariant: 'serif' | 'sans';
+  vividBg: boolean;
   // Metadata
   activeBranchId: string;
   branchCode: string;
@@ -127,6 +128,7 @@ export interface SettingsContextType extends SettingsState {
   setShowTickerTopSeller: (show: boolean) => void;
   setGraphicStyle: (graphic: boolean) => void;
   setGraphicFontVariant: (variant: 'serif' | 'sans') => void;
+  setVividBg: (vivid: boolean) => void;
   setSwitchVariant: (variant: SwitchVariant) => void;
   setBadgeStyle: (style: BadgeStyle) => void;
   setModalPresentationMode: (mode: 'modal' | 'sidebar') => void;
@@ -178,6 +180,7 @@ const defaultSettings: SettingsState = {
   showTickerTopSeller: true,
   graphicStyle: false,
   graphicFontVariant: 'sans',
+  vividBg: false,
   activeBranchId: '',
   branchCode: '',
   switchVariant: 'default',
@@ -269,7 +272,8 @@ const loadSettings = (): SettingsState => {
       graphicFontVariant: storage.get(
         'pharma_graphicFontVariant',
         defaultSettings.graphicFontVariant
-      ) as 'serif' | 'sans',
+      ),
+      vividBg: storage.get('pharma_vividBg', defaultSettings.vividBg),
       activeBranchId: storage.get('pharma_activeBranchId', defaultSettings.activeBranchId),
       branchCode: storage.get('pharma_branchCode', defaultSettings.branchCode),
       numeralSystem: storage.get('pharma_numeralSystem', defaultSettings.numeralSystem) as
@@ -640,6 +644,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, graphicFontVariant }));
   }, []);
 
+  const setVividBg = useCallback((vividBg: boolean) => {
+    setSettings((prev) => ({ ...prev, vividBg }));
+  }, []);
+
   const setSwitchVariant = useCallback((switchVariant: SwitchVariant) => {
     setSettings((prev) => ({ ...prev, switchVariant }));
   }, []);
@@ -720,6 +728,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setShowTickerTopSeller,
       setGraphicStyle,
       setGraphicFontVariant,
+      setVividBg,
       setBorderRadius,
       setFontFamilyEN,
       setFontFamilyAR,
@@ -758,6 +767,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setShowTickerTopSeller,
       setGraphicStyle,
       setGraphicFontVariant,
+      setVividBg,
       setBorderRadius,
       setFontFamilyEN,
       setFontFamilyAR,

@@ -116,7 +116,7 @@ const App: React.FC = () => {
   });
 
   // 3. Settings Hook (for Language)
-  const { theme, darkMode, language, showNotificationOverlay } = useSettings();
+  const { theme, darkMode, language, showNotificationOverlay, vividBg } = useSettings();
   const t = ROOT_STRINGS[language];
 
   // 3.01 Sync System Tray Language
@@ -223,7 +223,7 @@ const App: React.FC = () => {
 
   // 5. Dynamic Theme Hook - Handles CSS variables & Global Dark Mode
   // System bars are handled separately by the automatic top-surface sampler.
-  useTheme(theme.primary, darkMode, !authState.isAuthenticated, theme.hex);
+  useTheme(theme.primary, darkMode, !authState.isAuthenticated, theme.hex, vividBg);
   useAutoSystemBarColor(
     [
       authState.isAuthenticated,
