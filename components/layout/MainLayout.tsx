@@ -277,24 +277,32 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 <div
                   className={getContentContainerClasses(PAGE_REGISTRY[view]?.layout, isStandalone)}
                 >
-                  <div className='flex flex-row h-full w-full'>
-                    <div className='w-4 shrink-0' />
-                    <div className='flex-1 min-w-0'>{children}</div>
-                    <div className='w-4 shrink-0' />
-                  </div>
-                  <div className='h-4 shrink-0 hidden md:block' />
+                  {isStandalone || PAGE_REGISTRY[view]?.layout === 'full-screen' ? (
+                    children
+                  ) : (
+                    <>
+                      <div className='flex flex-row h-full w-full'>
+                        <div className='w-4 shrink-0' />
+                        <div className='flex-1 min-w-0'>{children}</div>
+                        <div className='w-4 shrink-0' />
+                      </div>
+                      <div className='h-4 shrink-0 hidden md:block' />
+                    </>
+                  )}
                 </div>
               </main>
             </div>
           </div>
 
           {/* Status Bar */}
-          <StatusBar
-            t={t.statusBar}
-            currentEmployeeId={currentEmployeeId}
-            onSelectEmployee={setCurrentEmployeeId}
-            isRecoveringPassword={isRecoveringPassword}
-          />
+          {!isStandalone && (
+            <StatusBar
+              t={t.statusBar}
+              currentEmployeeId={currentEmployeeId}
+              onSelectEmployee={setCurrentEmployeeId}
+              isRecoveringPassword={isRecoveringPassword}
+            />
+          )}
         </div>
         {isHelpOpen && helpContent && (
           <HelpModal

@@ -11,7 +11,7 @@ import { useState } from 'react';
 
 // ── Data ──
 
-const PRICES = { pro: 199, max: 499 };
+const PRICES = { starter: 1499, pro: 3999 };
 
 interface PlanFeature {
   text: string;
@@ -26,26 +26,26 @@ interface Plan {
   featuresLabel: string;
   isFeatured?: boolean;
   badge?: string;
-  isFree?: boolean;
+  isCustomPrice?: boolean;
   cta: string;
   ctaPrimary?: boolean;
 }
 
 const PLANS: Plan[] = [
   {
-    tier: 'Free tier',
+    tier: 'Starter tier',
     formula: <>ZnO</>,
-    name: 'Zinc Oxide — Starter',
-    isFree: true,
+    name: 'Zinc Oxide — Single Pharmacy',
     cta: 'Get Started',
     ctaPrimary: true,
     featuresLabel: 'Includes',
     features: [
       { text: 'فرع واحد' },
-      { text: 'حتى 3 مستخدمين' },
-      { text: 'إدارة المخزون الأساسية' },
-      { text: 'تقارير شهرية محدودة' },
-      { text: 'دعم عبر البريد' },
+      { text: 'حتى ٣ أجهزة/مستخدمين' },
+      { text: 'نقاط البيع وإدارة المخزون الأساسية' },
+      { text: 'دعم الباركود والطابعات الحرارية' },
+      { text: 'تتبع دقيق لتواريخ الصلاحية' },
+      { text: 'دعم فني خلال أوقات العمل' },
     ],
   },
   {
@@ -55,19 +55,19 @@ const PLANS: Plan[] = [
         ZnSO<sub>4</sub>
       </>
     ),
-    name: 'Zinc Sulfate — Professional',
+    name: 'Zinc Sulfate — Multi-Branch',
     isFeatured: true,
     badge: 'Most Popular',
     cta: 'Start Free Trial',
     ctaPrimary: true,
     featuresLabel: 'Everything in ZnO, plus',
     features: [
-      { text: 'حتى 5 فروع', highlighted: true },
+      { text: 'حتى ٥ فروع', highlighted: true },
       { text: 'مستخدمين غير محدودين', highlighted: true },
+      { text: 'الذكاء الاصطناعي: توقع النواقص', highlighted: true },
+      { text: 'إدارة وحركة المخزون بين الفروع', highlighted: true },
       { text: 'تقارير وتحليلات متقدمة', highlighted: true },
-      { text: 'ربط بأجهزة الباركود', highlighted: true },
-      { text: 'دعم أولوية 24/7', highlighted: true },
-      { text: 'إشعارات انتهاء الصلاحية', highlighted: true },
+      { text: 'دعم فني أولوية ٢٤/٧', highlighted: true },
     ],
   },
   {
@@ -80,13 +80,14 @@ const PLANS: Plan[] = [
     name: 'Zinc Nitrate — Enterprise',
     cta: 'Contact Sales',
     ctaPrimary: true,
+    isCustomPrice: true,
     featuresLabel: 'Everything in ZnSO₄, plus',
     features: [
       { text: 'فروع غير محدودة' },
-      { text: 'API مفتوح للتكامل' },
-      { text: 'داشبورد تحليلي مخصص' },
+      { text: 'ربط برمجي API مع أنظمة أخرى' },
       { text: 'مدير حساب مخصص' },
-      { text: 'نسخ احتياطي يومي تلقائي' },
+      { text: 'تسجيل الدخول بالبصمة للموظفين' },
+      { text: 'نسخ احتياطي سحابي تلقائي' },
       { text: 'SLA 99.9% uptime مضمون' },
     ],
   },
@@ -231,7 +232,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange, hideBack
   };
 
   const renderPriceBlock = (plan: Plan) => {
-    if (plan.isFree) {
+    if (plan.isCustomPrice) {
       return (
         <div className='zn-price-block'>
           <div className='zn-old'>&nbsp;</div>
@@ -239,14 +240,14 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange, hideBack
             className='zn-amount-free'
             style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800 }}
           >
-            Free
+            Custom
           </div>
-          <div className='zn-period'>forever</div>
+          <div className='zn-period'>Contact sales for pricing</div>
         </div>
       );
     }
 
-    const monthlyPrice = plan.tier === 'Pro tier' ? PRICES.pro : PRICES.max;
+    const monthlyPrice = plan.tier === 'Starter tier' ? PRICES.starter : PRICES.pro;
     const displayPrice = getPrice(monthlyPrice);
 
     return (
@@ -307,6 +308,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onViewChange, hideBack
             >
               arrow_back
             </span>
+            <span className='ml-2 text-[var(--zn-text)] text-lg font-medium'>Back</span>
           </button>
         )}
 

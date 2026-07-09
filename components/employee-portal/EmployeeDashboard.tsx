@@ -27,7 +27,7 @@ interface Props {
 }
 
 export function EmployeeDashboard({
-  view = 'requests',
+  view = 'profile',
   onViewChange,
   onLogout,
 }: Props) {
@@ -40,7 +40,7 @@ export function EmployeeDashboard({
 
   // Clean fallback for view if it's not profile/requests (e.g. from appState 'landing')
   const activeView =
-    view === 'profile' || view === 'requests' || view === 'pricing' ? view : 'requests';
+    view === 'profile' || view === 'requests' || view === 'pricing' ? view : 'profile';
 
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -196,12 +196,11 @@ export function EmployeeDashboard({
               alt='Zinc'
             />
             <div>
-              <h1 className='text-sm font-bold text-(--text-primary) truncate leading-tight'>
+              <h1 className='text-sm font-bold text-(--text-primary) truncate leading-tight !font-["GraphicSansFont"]'
+                style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+              >
                 {t.login.employeePortal}
               </h1>
-              <p className='text-[10px] text-(--text-tertiary) font-medium truncate leading-tight'>
-                {t.login.manageEmployment}
-              </p>
             </div>
           </div>
 
@@ -259,7 +258,9 @@ export function EmployeeDashboard({
               {activeView === 'requests' && (
                 <section className='space-y-3 sm:space-y-4'>
                   <div className='flex items-center justify-between'>
-                    <h3 className='text-lg sm:text-xl font-semibold text-(--text-primary) flex items-center gap-2'>
+                    <h3 className='text-sm font-bold uppercase tracking-wider text-(--text-primary) flex items-center gap-2 !font-["GraphicSansFont"]'
+                style={{ fontFeatureSettings: '"jalt" 1, "dlig" 1, "ss01" 1, "ss02" 1, "ss03" 1, "swsh" 1, "cswh" 1, "salt" 1' }}
+              >
                       <Clock className='w-4 h-4 sm:w-5 sm:h-5 text-primary-500' />
                       <span className='truncate'>
                         {t.login?.pendingRequests || 'Pending Employment Requests'}
