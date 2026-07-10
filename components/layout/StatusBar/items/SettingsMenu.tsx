@@ -22,9 +22,8 @@ const SettingsRow: React.FC<{
   onClick?: () => void;
 }> = ({ icon, label, children, className = '', onClick }) => (
   <div
-    className={`flex items-center justify-between transition-colors px-2 ${
-      onClick ? 'py-1.5 cursor-pointer hover:bg-(--bg-menu-hover) rounded-lg group' : 'py-1'
-    } ${className}`}
+    className={`flex items-center justify-between transition-colors px-2 ${onClick ? 'py-1.5 cursor-pointer hover:bg-(--bg-menu-hover) rounded-lg group' : 'py-1'
+      } ${className}`}
     onClick={onClick}
   >
     <div className='flex items-center gap-2'>
@@ -101,37 +100,37 @@ const SubmenuSection: React.FC<{
   isRTL = false,
   children,
 }) => {
-  const isOpen = expandedSubmenu === id;
-  const { ref, position, checkPosition } = useSmartPosition({ requiredWidth: 256 });
+    const isOpen = expandedSubmenu === id;
+    const { ref, position, checkPosition } = useSmartPosition({ requiredWidth: 256 });
 
-  useEffect(() => {
-    if (isOpen) requestAnimationFrame(checkPosition);
-  }, [isOpen, checkPosition]);
+    useEffect(() => {
+      if (isOpen) requestAnimationFrame(checkPosition);
+    }, [isOpen, checkPosition]);
 
-  return (
-    <div className='space-y-1 relative' ref={ref}>
-      <SettingsRow icon={icon} label={label} onClick={() => onToggle(id)}>
-        {rowExtra}
-        <span
-          className={`material-symbols-rounded transition-transform text-(--text-tertiary) group-hover:text-(--text-secondary) ${isOpen ? 'rotate-180' : ''}`}
-          style={{ fontSize: 'var(--icon-settings)' }}
+    return (
+      <div className='space-y-1 relative' ref={ref}>
+        <SettingsRow icon={icon} label={label} onClick={() => onToggle(id)}>
+          {rowExtra}
+          <span
+            className={`material-symbols-rounded transition-transform text-(--text-tertiary) group-hover:text-(--text-secondary) ${isOpen ? 'rotate-180' : ''}`}
+            style={{ fontSize: 'var(--icon-settings)' }}
+          >
+            chevron_left
+          </span>
+        </SettingsRow>
+        <SubmenuWrapper
+          isOpen={isOpen}
+          isMobile={isMobile}
+          title={title}
+          side={position.side}
+          align={position.align}
+          isRTL={isRTL}
         >
-          chevron_left
-        </span>
-      </SettingsRow>
-      <SubmenuWrapper
-        isOpen={isOpen}
-        isMobile={isMobile}
-        title={title}
-        side={position.side}
-        align={position.align}
-        isRTL={isRTL}
-      >
-        {children}
-      </SubmenuWrapper>
-    </div>
-  );
-};
+          {children}
+        </SubmenuWrapper>
+      </div>
+    );
+  };
 
 export interface SettingsMenuProps {
   dropDirection?: 'up' | 'down';
@@ -499,29 +498,52 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     />
                   )}
                 </div>
-                <div className='flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none px-2'>
-                  {(['none', 'dots', 'grid', 'mesh', 'crosshatch', 'stripes', 'noise', 'mandala'] as const)
+                <div className='flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none px-2'>
+                  {(['none', 'dots', 'grid', 'mesh', 'crosshatch', 'stripes', 'noise', 'mandala', 'diamond', 'corners', 'cross', 'stars', 'bricks', 'polka', 'abstract', 'circuit', 'ornate'] as const)
                     .filter((p) => p !== 'mesh' || (backgroundPatternUseThemeColor && darkMode))
                     .map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => setBackgroundPattern(p)}
-                      className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all whitespace-nowrap leading-tight ${
-                        backgroundPattern === p
-                          ? 'border-(--primary-500) bg-(--primary-500)/10 text-(--primary-500) font-semibold'
-                          : 'border-(--border-divider) text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-menu-hover)'
-                      }`}
-                    >
-                       {p === 'none' ? t.patternNone :
-                        p === 'dots' ? t.patternDots :
-                        p === 'grid' ? t.patternGrid :
-                        p === 'mesh' ? t.patternMesh :
-                        p === 'crosshatch' ? t.patternCrosshatch :
-                        p === 'stripes' ? t.patternStripes :
-                        p === 'noise' ? t.patternNoise :
-                        t.patternMandala}
-                    </button>
-                  ))}
+                      <button
+                        key={p}
+                        onClick={() => setBackgroundPattern(p)}
+                        className={`flex flex-col items-center gap-0.5 flex-shrink-0 p-1 rounded-lg border transition-all ${backgroundPattern === p
+                          ? 'border-(--primary-500) bg-(--primary-500)/10'
+                          : 'border-(--border-divider) hover:bg-(--bg-menu-hover)'
+                          }`}
+                      >
+                        <div
+                          className={`w-10 h-10 rounded-md overflow-hidden ${p !== 'none' ? `bg-pattern-${p}` : 'border border-dashed border-(--border-divider)'}`}
+                          style={p !== 'none' ? {
+                            backgroundImage: 'var(--bg-pattern-image)',
+                            backgroundSize: ({
+                              dots: '10px 10px',
+                              grid: '10px 10px',
+                              crosshatch: '12px 12px',
+                              mesh: '100% 100%',
+                              stripes: '8px 8px',
+                              noise: '24px 24px',
+                              mandala: '18px 18px',
+                              diamond: '40px 40px',
+                              corners: '20px 20px',
+                              cross: '30px 30px',
+                              stars: '35px 35px',
+                            } as Record<string, string>)[p],
+                            backgroundRepeat: 'var(--bg-pattern-repeat)',
+                            backgroundPosition: 'var(--bg-pattern-position)',
+                            '--bg-pattern-color': 'var(--text-tertiary)',
+                          } as React.CSSProperties : undefined}
+                        />
+                        <span className='text-[9px] text-(--text-secondary) leading-none whitespace-nowrap'>
+                          {({
+                            none: t.patternNone, dots: t.patternDots, grid: t.patternGrid,
+                            mesh: t.patternMesh, crosshatch: t.patternCrosshatch, stripes: t.patternStripes,
+                            noise: t.patternNoise, diamond: t.patternDiamond, corners: t.patternCorners,
+                            cross: t.patternCross, stars: t.patternStars, bricks: t.patternBricks,
+                            polka: t.patternPolka, abstract: t.patternAbstract, circuit: t.patternCircuit,
+                            ornate: t.patternOrnate,
+                          } as Record<string, string>)[p] ?? t.patternMandala}
+                        </span>
+                      </button>
+                    ))}
                 </div>
                 {backgroundPattern !== 'none' && (
                   <div className='flex items-center justify-between px-2 py-1'>
@@ -552,20 +574,20 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   </div>
                 )}
                 {!darkMode && (
-                <SettingsRow icon='gradient' label={t.vividBg}>
-                  <SegmentedControl
-                    value={vividBg}
-                    onChange={(v) => setVividBg(v as 'muted' | 'subtle' | 'vivid')}
-                    size='xs'
-                    shape='pill'
-                    iconSize='--icon-settings'
-                    options={[
-                      { label: '', value: 'muted', icon: 'blur_off' },
-                      { label: '', value: 'subtle', icon: 'blur_on' },
-                      { label: '', value: 'vivid', icon: 'blur_circular' },
-                    ]}
-                  />
-                </SettingsRow>
+                  <SettingsRow icon='gradient' label={t.vividBg}>
+                    <SegmentedControl
+                      value={vividBg}
+                      onChange={(v) => setVividBg(v as 'muted' | 'subtle' | 'vivid')}
+                      size='xs'
+                      shape='pill'
+                      iconSize='--icon-settings'
+                      options={[
+                        { label: '', value: 'muted', icon: 'blur_off' },
+                        { label: '', value: 'subtle', icon: 'blur_on' },
+                        { label: '', value: 'vivid', icon: 'blur_circular' },
+                      ]}
+                    />
+                  </SettingsRow>
                 )}
               </SubmenuSection>
 
