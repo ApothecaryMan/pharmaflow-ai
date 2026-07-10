@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { customerService } from '../../services/customers';
 import { useAuthStore } from '../../stores/authStore';
+import { queryKeys } from '../../lib/queryKeys';
 
 export function useAddCustomer() {
   const queryClient = useQueryClient();
@@ -9,7 +10,7 @@ export function useAddCustomer() {
   return useMutation({
     mutationFn: (customer: any) => customerService.create(customer, branchId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customers', branchId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.customers });
     },
   });
 }
@@ -22,7 +23,7 @@ export function useUpdateCustomer() {
     mutationFn: ({ id, updates }: { id: string; updates: any }) =>
       customerService.update(id, updates),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customers', branchId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.customers });
     },
   });
 }
@@ -34,7 +35,7 @@ export function useDeleteCustomer() {
   return useMutation({
     mutationFn: (id: string) => customerService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customers', branchId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.customers });
     },
   });
 }

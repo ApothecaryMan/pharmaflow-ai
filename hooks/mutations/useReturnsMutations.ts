@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { transactionService } from '../../services/transactions/transactionService';
 import { useAuthStore } from '../../stores/authStore';
 import type { ActionContext, Sale } from '../../types';
+import { queryKeys } from '../../lib/queryKeys';
 
 export function useProcessSalesReturn() {
   const queryClient = useQueryClient();
@@ -18,10 +19,10 @@ export function useProcessSalesReturn() {
       context: ActionContext;
     }) => transactionService.processReturn(returnData, [], sale, context),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory', branchId] });
-      queryClient.invalidateQueries({ queryKey: ['sales', branchId] });
-      queryClient.invalidateQueries({ queryKey: ['batches', branchId] });
-      queryClient.invalidateQueries({ queryKey: ['returns', branchId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sales });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.returns });
     },
   });
 }
@@ -39,8 +40,8 @@ export function useCreatePurchaseReturn() {
       context: ActionContext;
     }) => transactionService.processPurchaseReturnTransaction(ret, context),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory', branchId] });
-      queryClient.invalidateQueries({ queryKey: ['returns', branchId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.returns });
     },
   });
 }

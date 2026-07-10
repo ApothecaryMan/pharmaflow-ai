@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventoryService } from '../../services/inventory';
 import { useAuthStore } from '../../stores/authStore';
+import { queryKeys } from '../../lib/queryKeys';
 
 export function useAddProduct() {
   const queryClient = useQueryClient();
@@ -9,7 +10,7 @@ export function useAddProduct() {
   return useMutation({
     mutationFn: (product: any) => inventoryService.create(product, branchId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory', branchId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
     },
   });
 }
@@ -22,7 +23,7 @@ export function useUpdateProduct() {
     mutationFn: ({ id, updates }: { id: string; updates: any }) =>
       inventoryService.update(id, updates),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory', branchId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
     },
   });
 }

@@ -31,7 +31,8 @@ import { useSalesReturns, usePurchaseReturns } from '../../hooks/queries/useRetu
 import { useCompleteSale } from '../../hooks/mutations/useSalesMutations';
 import { useAddPurchase, useApprovePurchase, useMarkPurchaseReceived } from '../../hooks/mutations/usePurchaseMutations';
 import { useProcessSalesReturn, useCreatePurchaseReturn } from '../../hooks/mutations/useReturnsMutations';
-import { queryClient } from '../../context/QueryProvider';
+import { queryClient } from '../../lib/queryClient';
+import { queryKeys } from '../../lib/queryKeys';
 
 export interface AuthenticatedContentProps extends AppState, AuthState {}
 
@@ -171,7 +172,7 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   // when the old setter pattern is fully removed.
   const setInventory = useCallback(
     (updater: Drug[] | ((prev: Drug[]) => Drug[])) => {
-      queryClient.setQueryData(['inventory', activeBranchId], (old: Drug[] | undefined) => {
+      queryClient.setQueryData(queryKeys.inventory.all(activeBranchId), (old: Drug[] | undefined) => {
         const prev = old || [];
         return typeof updater === 'function' ? updater(prev) : updater;
       });
@@ -181,7 +182,7 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 
   const setSales = useCallback(
     (updater: Sale[] | ((prev: Sale[]) => Sale[])) => {
-      queryClient.setQueryData(['sales', 'recent', activeBranchId, 100], (old: Sale[] | undefined) => {
+      queryClient.setQueryData(queryKeys.sales.recent(activeBranchId, 100), (old: Sale[] | undefined) => {
         const prev = old || [];
         return typeof updater === 'function' ? updater(prev) : updater;
       });
@@ -191,7 +192,7 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 
   const setSuppliersState = useCallback(
     (updater: Supplier[] | ((prev: Supplier[]) => Supplier[])) => {
-      queryClient.setQueryData(['suppliers', activeBranchId], (old: Supplier[] | undefined) => {
+      queryClient.setQueryData(queryKeys.suppliers.all(activeBranchId), (old: Supplier[] | undefined) => {
         const prev = old || [];
         return typeof updater === 'function' ? updater(prev) : updater;
       });
@@ -201,7 +202,7 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 
   const setPurchasesState = useCallback(
     (updater: Purchase[] | ((prev: Purchase[]) => Purchase[])) => {
-      queryClient.setQueryData(['purchases', activeBranchId, 100], (old: Purchase[] | undefined) => {
+      queryClient.setQueryData(queryKeys.purchases.all(activeBranchId, 100), (old: Purchase[] | undefined) => {
         const prev = old || [];
         return typeof updater === 'function' ? updater(prev) : updater;
       });
@@ -211,7 +212,7 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 
   const setPurchaseReturnsState = useCallback(
     (updater: PurchaseReturn[] | ((prev: PurchaseReturn[]) => PurchaseReturn[])) => {
-      queryClient.setQueryData(['returns', 'purchases', activeBranchId, 100], (old: PurchaseReturn[] | undefined) => {
+      queryClient.setQueryData(queryKeys.returns.purchases(activeBranchId, 100), (old: PurchaseReturn[] | undefined) => {
         const prev = old || [];
         return typeof updater === 'function' ? updater(prev) : updater;
       });
@@ -221,7 +222,7 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 
   const setReturnsState = useCallback(
     (updater: Return[] | ((prev: Return[]) => Return[])) => {
-      queryClient.setQueryData(['returns', 'sales', activeBranchId, 100], (old: Return[] | undefined) => {
+      queryClient.setQueryData(queryKeys.returns.sales(activeBranchId, 100), (old: Return[] | undefined) => {
         const prev = old || [];
         return typeof updater === 'function' ? updater(prev) : updater;
       });
@@ -231,7 +232,7 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 
   const setCustomersState = useCallback(
     (updater: Customer[] | ((prev: Customer[]) => Customer[])) => {
-      queryClient.setQueryData(['customers', activeBranchId], (old: Customer[] | undefined) => {
+      queryClient.setQueryData(queryKeys.customers.all(activeBranchId), (old: Customer[] | undefined) => {
         const prev = old || [];
         return typeof updater === 'function' ? updater(prev) : updater;
       });
@@ -241,7 +242,7 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 
   const setEmployeesState = useCallback(
     (updater: Employee[] | ((prev: Employee[]) => Employee[])) => {
-      queryClient.setQueryData(['employees', activeBranchId], (old: Employee[] | undefined) => {
+      queryClient.setQueryData(queryKeys.employees.all(activeBranchId), (old: Employee[] | undefined) => {
         const prev = old || [];
         return typeof updater === 'function' ? updater(prev) : updater;
       });
@@ -251,7 +252,7 @@ export const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 
   const setBatchesState = useCallback(
     (updater: StockBatch[] | ((prev: StockBatch[]) => StockBatch[])) => {
-      queryClient.setQueryData(['batches', activeBranchId], (old: StockBatch[] | undefined) => {
+      queryClient.setQueryData(queryKeys.batches.all(activeBranchId), (old: StockBatch[] | undefined) => {
         const prev = old || [];
         return typeof updater === 'function' ? updater(prev) : updater;
       });

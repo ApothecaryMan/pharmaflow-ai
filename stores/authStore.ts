@@ -7,7 +7,8 @@ import { permissionsService } from '../services/auth/permissionsService';
 import { settingsService } from '../services/settings/settingsService';
 import { storage } from '../utils/storage';
 import { StorageKeys } from '../config/storageKeys';
-import { queryClient } from '../context/QueryProvider';
+import { queryClient } from '../lib/queryClient';
+import { queryKeys } from '../lib/queryKeys';
 
 interface AuthState {
   activeBranchId: string;
@@ -16,6 +17,7 @@ interface AuthState {
   currentEmployee: Employee | null;
   branches: Branch[];
   isLoading: boolean;
+  _switchingBranch: boolean;
 
   setActiveBranchId: (id: string) => void;
   setActiveOrgId: (id: string) => void;
@@ -39,6 +41,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   currentEmployee: null,
   branches: [],
   isLoading: true,
+  _switchingBranch: false,
 
   setActiveBranchId: (id) => set({ activeBranchId: id }),
   setActiveOrgId: (id) => set({ activeOrgId: id }),
@@ -48,7 +51,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setIsLoading: (loading) => set({ isLoading: loading }),
 
   switchBranch: async (branchId, skipClearEmployee) => {
-    set({ isLoading: true });
+    if (get()._switchingBranch) return;
+    const prevLoading = get().isLoading;
+    set({ _switchingBranch: true, isLoading: true });
     try {
       const sessionBeforeClear = authService.getCurrentUserSync();
       const isManagerOrAdmin = permissionsService.isManager() || permissionsService.isOrgAdmin();
@@ -100,11 +105,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ activeBranchId: branchId, branches: allBranches });
       authService.updateSession({ branchId });
     } finally {
-      set({ isLoading: false });
+      set({ _switchingBranch: false, isLoading: prevLoading });
     }
   },
 
   switchOrg: async (orgId) => {
+    if (get().isLoading) return;
     set({ isLoading: true });
     try {
       set({ currentEmployee: null });
@@ -194,15 +200,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       currentEmployee: null,
       branches: [],
       isLoading: false,
+      _switchingBranch: false,
     });
   },
 
   refreshAll: async () => {
-    queryClient.invalidateQueries();
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sales }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.purchases }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.returns }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.employees }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.customers }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.suppliers }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.branches }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.org }),
+    ]);
   },
 
   updateBranch: async (id: string, updates: Partial<Branch>) => {
     await branchService.update(id, updates);
-    queryClient.invalidateQueries({ queryKey: ['branches', get().activeOrgId] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.branches });
   },
 }));

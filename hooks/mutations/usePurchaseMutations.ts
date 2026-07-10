@@ -3,6 +3,7 @@ import { purchaseService } from '../../services/purchases';
 import { transactionService } from '../../services/transactions/transactionService';
 import { useAuthStore } from '../../stores/authStore';
 import type { ActionContext } from '../../types';
+import { queryKeys } from '../../lib/queryKeys';
 
 export function useAddPurchase() {
   const queryClient = useQueryClient();
@@ -28,10 +29,10 @@ export function useAddPurchase() {
       });
     },
     onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['purchases', activeBranchId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.purchases });
       if (vars.purchase.status === 'completed') {
-        queryClient.invalidateQueries({ queryKey: ['inventory', activeBranchId] });
-        queryClient.invalidateQueries({ queryKey: ['batches', activeBranchId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
       }
     },
   });
@@ -39,7 +40,6 @@ export function useAddPurchase() {
 
 export function useApprovePurchase() {
   const queryClient = useQueryClient();
-  const branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: async ({ id, context }: { id: string; context: ActionContext }) => {
@@ -48,16 +48,15 @@ export function useApprovePurchase() {
       return result.data!;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['purchases', branchId] });
-      queryClient.invalidateQueries({ queryKey: ['inventory', branchId] });
-      queryClient.invalidateQueries({ queryKey: ['batches', branchId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.purchases });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
     },
   });
 }
 
 export function useMarkPurchaseReceived() {
   const queryClient = useQueryClient();
-  const branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: ({
@@ -72,21 +71,20 @@ export function useMarkPurchaseReceived() {
       shiftId?: string;
     }) => purchaseService.markAsReceived(id, receiverId, receiverName, shiftId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['purchases', branchId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.purchases });
     },
   });
 }
 
 export function useRejectPurchase() {
   const queryClient = useQueryClient();
-  const branchId = useAuthStore((s) => s.activeBranchId);
 
   return useMutation({
     mutationFn: (id: string) => purchaseService.reject(id, 'Rejected by manager'),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['purchases', branchId] });
-      queryClient.invalidateQueries({ queryKey: ['inventory', branchId] });
-      queryClient.invalidateQueries({ queryKey: ['batches', branchId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.purchases });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
     },
   });
 }

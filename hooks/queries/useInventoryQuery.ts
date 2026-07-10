@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { inventoryService, batchService } from '../../services/inventory';
 import type { Drug, StockBatch } from '../../types';
+import { queryKeys } from '../../lib/queryKeys';
 
 export function useInventory(branchId: string) {
   return useQuery({
-    queryKey: ['inventory', branchId],
+    queryKey: queryKeys.inventory.all(branchId),
     queryFn: () => inventoryService.getAll(branchId) as Promise<Drug[]>,
     enabled: !!branchId,
     staleTime: 5 * 60 * 1000,
@@ -13,7 +14,7 @@ export function useInventory(branchId: string) {
 
 export function useDrug(drugId: string) {
   return useQuery({
-    queryKey: ['drug', drugId],
+    queryKey: queryKeys.inventory.detail(drugId),
     queryFn: () => inventoryService.getById(drugId) as Promise<Drug | null>,
     enabled: !!drugId,
   });
@@ -21,7 +22,7 @@ export function useDrug(drugId: string) {
 
 export function useLowStock(branchId: string, threshold = 10) {
   return useQuery({
-    queryKey: ['inventory', 'low-stock', branchId, threshold],
+    queryKey: queryKeys.inventory.lowStock(branchId, threshold),
     queryFn: () => inventoryService.getLowStock(threshold, branchId) as Promise<Drug[]>,
     enabled: !!branchId,
   });
@@ -29,7 +30,7 @@ export function useLowStock(branchId: string, threshold = 10) {
 
 export function useBatches(branchId: string) {
   return useQuery({
-    queryKey: ['batches', branchId],
+    queryKey: queryKeys.batches.all(branchId),
     queryFn: () => batchService.getAllBatches(branchId) as Promise<StockBatch[]>,
     enabled: !!branchId,
     staleTime: 5 * 60 * 1000,
@@ -38,7 +39,7 @@ export function useBatches(branchId: string) {
 
 export function useBatch(batchId: string) {
   return useQuery({
-    queryKey: ['batch', batchId],
+    queryKey: queryKeys.batches.detail(batchId),
     queryFn: () => batchService.getBatchById(batchId) as Promise<StockBatch | null>,
     enabled: !!batchId,
   });
@@ -46,7 +47,7 @@ export function useBatch(batchId: string) {
 
 export function useSuppliers(branchId: string) {
   return useQuery({
-    queryKey: ['suppliers', branchId],
+    queryKey: queryKeys.suppliers.all(branchId),
     queryFn: () => import('../../services/suppliers').then((m) => m.supplierService.getAll(branchId)),
     enabled: !!branchId,
     staleTime: 10 * 60 * 1000,

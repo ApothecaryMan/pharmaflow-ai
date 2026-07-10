@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { employeeService } from '../../services/hr';
 import { useAuthStore } from '../../stores/authStore';
+import { queryKeys } from '../../lib/queryKeys';
 
 export function useAddEmployee() {
   const queryClient = useQueryClient();
@@ -10,7 +11,7 @@ export function useAddEmployee() {
     mutationFn: (employee: any) =>
       employeeService.create(employee, activeBranchId, activeOrgId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees', activeBranchId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.employees });
     },
   });
 }
@@ -23,7 +24,7 @@ export function useUpdateEmployee() {
     mutationFn: ({ id, updates }: { id: string; updates: any }) =>
       employeeService.update(id, updates),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees', branchId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.employees });
     },
   });
 }
@@ -35,7 +36,7 @@ export function useDeleteEmployee() {
   return useMutation({
     mutationFn: (id: string) => employeeService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees', branchId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.employees });
     },
   });
 }

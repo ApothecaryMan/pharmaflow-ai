@@ -2,6 +2,7 @@ import { startRegistration } from '@simplewebauthn/browser';
 import { Clock, Download, Menu } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../../lib/queryKeys';
 import { useUpdateCheck } from '../../hooks/infrastructure/useUpdateCheck';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { authService } from '../../services/auth/authService';
@@ -72,7 +73,7 @@ export function EmployeeDashboard({
     async (updates: Partial<UserProfile>) => {
       try {
         await updateProfile(updates);
-        queryClient.invalidateQueries({ queryKey: ['employees'] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.employees });
       } catch (err) {
         console.error(err);
       }

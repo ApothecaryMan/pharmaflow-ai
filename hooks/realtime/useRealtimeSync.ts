@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { inventorySearchEngine } from '../../services/search/drugSearchService';
-import { queryClient } from '../../context/QueryProvider';
+import { queryClient } from '../../lib/queryClient';
+import { queryKeys } from '../../lib/queryKeys';
 
 interface RealtimeSyncProps {
   activeBranchId: string;
@@ -19,7 +20,7 @@ export const useRealtimeSync = ({ activeBranchId }: RealtimeSyncProps) => {
         table: 'sales',
         filter: `branch_id=eq.${activeBranchId}`,
       }, () => {
-        queryClient.invalidateQueries({ queryKey: ['sales', activeBranchId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.sales });
       })
       .subscribe();
 
@@ -31,7 +32,7 @@ export const useRealtimeSync = ({ activeBranchId }: RealtimeSyncProps) => {
         table: 'returns',
         filter: `branch_id=eq.${activeBranchId}`,
       }, () => {
-        queryClient.invalidateQueries({ queryKey: ['returns', activeBranchId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.returns });
       })
       .subscribe();
 
@@ -43,7 +44,7 @@ export const useRealtimeSync = ({ activeBranchId }: RealtimeSyncProps) => {
         table: 'drugs',
         filter: `branch_id=eq.${activeBranchId}`,
       }, (payload: any) => {
-        queryClient.invalidateQueries({ queryKey: ['inventory', activeBranchId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
           inventorySearchEngine.queueUpdate(payload.new as any);
         } else if (payload.eventType === 'DELETE') {
@@ -60,8 +61,8 @@ export const useRealtimeSync = ({ activeBranchId }: RealtimeSyncProps) => {
         table: 'stock_batches',
         filter: `branch_id=eq.${activeBranchId}`,
       }, () => {
-        queryClient.invalidateQueries({ queryKey: ['batches', activeBranchId] });
-        queryClient.invalidateQueries({ queryKey: ['inventory', activeBranchId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.batches });
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.inventory });
       })
       .subscribe();
 
@@ -73,7 +74,7 @@ export const useRealtimeSync = ({ activeBranchId }: RealtimeSyncProps) => {
         table: 'purchases',
         filter: `branch_id=eq.${activeBranchId}`,
       }, () => {
-        queryClient.invalidateQueries({ queryKey: ['purchases', activeBranchId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.prefixes.purchases });
       })
       .subscribe();
 

@@ -1,0 +1,51 @@
+export const queryKeys = {
+  inventory: {
+    all: (branchId: string) => ['inventory', branchId] as const,
+    lowStock: (branchId: string, threshold: number) => ['inventory', 'low-stock', branchId, threshold] as const,
+    detail: (drugId: string) => ['drug', drugId] as const,
+  },
+  batches: {
+    all: (branchId: string) => ['batches', branchId] as const,
+    detail: (batchId: string) => ['batch', batchId] as const,
+  },
+  sales: {
+    recent: (branchId: string, limit = 100) => ['sales', 'recent', branchId, limit] as const,
+    today: (branchId: string) => ['sales', 'today', branchId] as const,
+    detail: (saleId: string) => ['sale', saleId] as const,
+  },
+  purchases: {
+    all: (branchId: string, limit = 100) => ['purchases', branchId, limit] as const,
+    detail: (purchaseId: string) => ['purchase', purchaseId] as const,
+  },
+  returns: {
+    sales: (branchId: string, limit = 100) => ['returns', 'sales', branchId, limit] as const,
+    purchases: (branchId: string, limit = 100) => ['returns', 'purchases', branchId, limit] as const,
+  },
+  employees: {
+    all: (branchId: string) => ['employees', branchId] as const,
+  },
+  customers: {
+    all: (branchId: string) => ['customers', branchId] as const,
+  },
+  suppliers: {
+    all: (branchId: string) => ['suppliers', branchId] as const,
+  },
+  org: {
+    detail: (orgId: string) => ['org', orgId] as const,
+  },
+  branches: {
+    all: (orgId: string) => ['branches', orgId] as const,
+  },
+  prefixes: {
+    inventory: ['inventory'] as const,
+    batches: ['batches'] as const,
+    sales: ['sales'] as const,
+    purchases: ['purchases'] as const,
+    returns: ['returns'] as const,
+    employees: ['employees'] as const,
+    customers: ['customers'] as const,
+    suppliers: ['suppliers'] as const,
+    branches: ['branches'] as const,
+    org: ['org'] as const,
+  },
+} as const;
