@@ -269,7 +269,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
               {/* Actual Page Surface */}
               <main
-                className={`flex-1 h-full overflow-hidden relative main-layout-content${backgroundPattern !== 'none' && (backgroundPattern !== 'mesh' || darkMode) ? ' bg-pattern-' + backgroundPattern : ''}`}
+                className={`flex-1 h-full overflow-hidden relative main-layout-content${backgroundPattern !== 'none' && (backgroundPattern !== 'mesh' || darkMode) ? ' bg-pattern-' + backgroundPattern : ''}${backgroundPattern === 'mandala' && !backgroundPatternUseThemeColor ? ' bg-pattern-mandala-accent-theme' : ''}`}
                 style={{
                   '--bg-pattern-opacity': backgroundPatternOpacity / 100,
                   '--bg-pattern-color': backgroundPatternUseThemeColor ? 'var(--primary-500)' : 'var(--text-tertiary)',

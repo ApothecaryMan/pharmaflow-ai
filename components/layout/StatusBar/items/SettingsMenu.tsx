@@ -500,7 +500,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   )}
                 </div>
                 <div className='flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none px-2'>
-                  {(['none', 'dots', 'grid', 'mesh', 'crosshatch', 'stripes', 'noise'] as const)
+                  {(['none', 'dots', 'grid', 'mesh', 'crosshatch', 'stripes', 'noise', 'mandala'] as const)
                     .filter((p) => p !== 'mesh' || (backgroundPatternUseThemeColor && darkMode))
                     .map((p) => (
                     <button
@@ -512,13 +512,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                           : 'border-(--border-divider) text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-menu-hover)'
                       }`}
                     >
-                      {p === 'none' ? t.patternNone :
-                       p === 'dots' ? t.patternDots :
-                       p === 'grid' ? t.patternGrid :
-                       p === 'mesh' ? t.patternMesh :
-                       p === 'crosshatch' ? t.patternCrosshatch :
-                       p === 'stripes' ? t.patternStripes :
-                       t.patternNoise}
+                       {p === 'none' ? t.patternNone :
+                        p === 'dots' ? t.patternDots :
+                        p === 'grid' ? t.patternGrid :
+                        p === 'mesh' ? t.patternMesh :
+                        p === 'crosshatch' ? t.patternCrosshatch :
+                        p === 'stripes' ? t.patternStripes :
+                        p === 'noise' ? t.patternNoise :
+                        t.patternMandala}
                     </button>
                   ))}
                 </div>
