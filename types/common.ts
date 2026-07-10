@@ -90,6 +90,7 @@ export type ExpandedView =
   | 'topSelling'
   | 'expiring'
   | 'recentSales'
+  | 'achievements'
   | null;
 
 /** Date range filter for reports */

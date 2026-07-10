@@ -185,6 +185,18 @@ export const useDashboardAnalytics = ({
     }));
   }, [finTopProducts]);
 
+  const topSellingByQty = useMemo(() => {
+    return [...finTopProducts]
+      .sort((a, b) => b.quantity_sold - a.quantity_sold)
+      .map((p) => ({
+        id: p.product_id,
+        name: p.product_name,
+        dosageForm: p.dosage_form,
+        qty: p.quantity_sold,
+        revenue: p.revenue,
+      }));
+  }, [finTopProducts]);
+
   // Expiring items
   const expiringItems = useMemo(
     () => DashboardService.getExpiringSoon(inventory, batches, branchId || 'all'),
@@ -482,6 +494,7 @@ export const useDashboardAnalytics = ({
     profitTooltip,
     lowStockTooltip,
     topSelling,
+    topSellingByQty,
     expiringItems,
     salesTrends,
     loading: finLoading,

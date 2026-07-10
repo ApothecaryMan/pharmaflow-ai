@@ -223,6 +223,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const { data: batches = [] } = useBatches(activeBranchId);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [timeRange, setTimeRange] = useState('7');
+  const [topSellingMode, setTopSellingMode] = useState<'revenue' | 'qty'>('revenue');
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -362,6 +363,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     profitTooltip: profitTooltipData,
     lowStockTooltip: lowStockTooltipData,
     topSelling: topSellingFull,
+    topSellingByQty: topSellingByQtyFull,
     expiringItems,
     salesTrends: salesData,
     loading: finLoading,
@@ -399,8 +401,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     [lowStockTooltipData, language]
   );
 
-  const topSelling = useMemo(() => topSellingFull.slice(0, 5), [topSellingFull]);
-  const topSelling20 = topSellingFull;
+  const activeTopSellingFull = topSellingMode === 'qty' ? topSellingByQtyFull : topSellingFull;
+  const topSelling = useMemo(() => activeTopSellingFull.slice(0, 5), [activeTopSellingFull]);
+  const topSelling20 = activeTopSellingFull;
 
   // --- RECENT TRANSACTIONS (exclude fully returned orders) ---
   const recentSales = useMemo(() => {
@@ -622,7 +625,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         ),
       },
       topSelling: {
-        title: t.dashboard?.topSelling || t.topSelling,
+        title: topSellingMode === 'revenue' ? t.dashboard?.mostProfitable : (t.dashboard?.topSelling || t.topSelling),
         actions: exportBtn('top_selling', topSelling20),
         children: (
           <div className='space-y-3'>
@@ -769,6 +772,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     netProfit,
     lowStockItems,
     topSelling20,
+    topSellingMode,
     expiringItems,
     recentSales20,
     salesData,
@@ -928,12 +932,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Top Selling Products (1 Col) */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-80 flex flex-col group`}>
-          <SectionHeader
-            icon='hotel_class'
-            title={t.topSelling}
-            onExpand={() => setExpandedView('topSelling')}
-            iconColor='text-yellow-500'
-          />
+          <div className='flex justify-between items-center mb-3'>
+            <h3 className='text-base font-semibold text-(--text-primary) flex items-center gap-2 truncate'>
+              <span className='truncate'>
+                {topSellingMode === 'revenue' 
+                  ? t.dashboard?.mostProfitable 
+                  : (t.dashboard?.topSelling || t.topSelling)}
+              </span>
+            </h3>
+            <div className='flex items-center gap-2 shrink-0'>
+              <SegmentedControl
+                options={[
+                  { label: t.dashboard?.byRevenue || t.revenue, value: 'revenue' },
+                  { label: t.dashboard?.byQuantity || 'Quantity', value: 'qty' },
+                ]}
+                value={topSellingMode}
+                onChange={(val) => setTopSellingMode(String(val) as 'revenue' | 'qty')}
+                size='sm'
+              />
+              <ExpandButton onClick={() => setExpandedView('topSelling')} />
+            </div>
+          </div>
           <div className='flex-1 overflow-y-auto space-y-1 pe-1' dir='ltr'>
             {isLoading || finLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
@@ -964,7 +983,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     </span>
                   </div>
                   <span className='badge-zinc whitespace-nowrap'>
-                    {item.qty} {t.sold}
+                    {topSellingMode === 'revenue' ? formatCurrency(item.revenue) : `${item.qty} ${t.sold}`}
                   </span>
                 </div>
               ))

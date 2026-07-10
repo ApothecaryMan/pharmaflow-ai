@@ -21,6 +21,7 @@ interface ExpandedModalProps {
    */
   activeView?: string | null;
   views?: Record<string, ViewConfig>;
+  disabled?: boolean;
 }
 
 export const ExpandedModal: React.FC<ExpandedModalProps> = ({
@@ -33,6 +34,7 @@ export const ExpandedModal: React.FC<ExpandedModalProps> = ({
   t,
   activeView,
   views,
+  disabled,
 }) => {
   // Resolve content from views registry if available
   const currentView = activeView && views ? views[activeView] : null;
@@ -49,6 +51,7 @@ export const ExpandedModal: React.FC<ExpandedModalProps> = ({
       zIndex={100}
       title={finalTitle}
       headerActions={finalActions}
+      disabled={disabled}
     >
       {/* Content */}
       <div className='h-full'>{finalChildren}</div>
