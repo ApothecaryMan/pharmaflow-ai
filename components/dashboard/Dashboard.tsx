@@ -26,6 +26,8 @@ import { PageHeader } from '../common/PageHeader';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 import { useDashboardAnalytics } from './useDashboardAnalytics';
+import { useDailyAchievements } from '../../hooks/dashboard/useDailyAchievements';
+import { MonthlyHeatmap } from '../common/MonthlyHeatmap';
 
 interface DashboardProps {
   inventory: Drug[];
@@ -221,6 +223,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const { data: batches = [] } = useBatches(activeBranchId);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [timeRange, setTimeRange] = useState('7');
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  const { data: achievements, isLoading: achievementsLoading } = useDailyAchievements(
+    activeBranchId ?? undefined,
+    currentYear,
+    currentMonth,
+    { language }
+  );
 
   const filteredData = useMemo(() => {
     if (timeRange === 'ALL') return { sales, purchases };
@@ -707,6 +719,48 @@ export const Dashboard: React.FC<DashboardProps> = ({
         actions: exportBtn('sales_trend', salesData),
         children: chartView('salesChart', filteredData.sales.length),
       },
+      achievements: achievements
+        ? {
+            title: `${t.target || 'Target'} — ${achievements.monthName} ${achievements.year}`,
+            children: (
+              <div className='space-y-6'>
+                <SummaryCard
+                  title={t.monthlyProgress || 'Monthly Progress'}
+                  value={`${achievements.overallPct}%`}
+                  colorClass={
+                    achievements.overallPct >= 100
+                      ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-100'
+                      : achievements.overallPct >= 80
+                        ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100'
+                        : achievements.overallPct >= 50
+                          ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-100'
+                          : 'bg-red-50 dark:bg-red-950/20 border-red-100'
+                  }
+                  footer={`${achievements.monthlyRevenueFormatted} / ${achievements.monthlyTargetFormatted}`}
+                />
+                <MonthlyHeatmap
+                  days={achievements.days}
+                  year={currentYear}
+                  month={currentMonth}
+                  monthlyRevenue={achievements.monthlyRevenue}
+                  monthlyTarget={achievements.monthlyTarget}
+                  overallPct={achievements.overallPct}
+                  monthlyRevenueFormatted={achievements.monthlyRevenueFormatted}
+                  monthlyTargetFormatted={achievements.monthlyTargetFormatted}
+                  language={language}
+                  isLoading={achievementsLoading}
+                />
+              </div>
+            ),
+          }
+        : {
+            title: t.target || 'Target',
+            children: (
+              <div className='flex items-center justify-center h-64 text-(--text-tertiary)'>
+                {language === 'AR' ? 'لا توجد بيانات' : 'No data available'}
+              </div>
+            ),
+          },
     };
   }, [
     filteredData,
@@ -722,6 +776,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
     t,
     language,
     textTransform,
+    achievements,
+    achievementsLoading,
+    currentYear,
+    currentMonth,
   ]);
 
   // --- CHART COLOR LOGIC ---
@@ -1022,6 +1080,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
           ))}
+
+          {/* Monthly Target Achievement Heatmap */}
+          <MonthlyHeatmap
+            days={achievements?.days ?? []}
+            year={currentYear}
+            month={currentMonth}
+            monthlyRevenue={achievements?.monthlyRevenue ?? 0}
+            monthlyTarget={achievements?.monthlyTarget ?? 0}
+            overallPct={achievements?.overallPct ?? 0}
+            monthlyRevenueFormatted={achievements?.monthlyRevenueFormatted}
+            monthlyTargetFormatted={achievements?.monthlyTargetFormatted}
+            onExpand={() => setExpandedView('achievements')}
+            language={language}
+            isLoading={isLoading || achievementsLoading}
+          />
         </div>
 
         {/* Recent Transactions */}

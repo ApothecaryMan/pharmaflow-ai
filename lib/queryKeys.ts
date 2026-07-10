@@ -1,4 +1,8 @@
 export const queryKeys = {
+  achievements: {
+    month: (branchId: string, year: number, month: number) =>
+      ['achievements', branchId, year, month] as const,
+  },
   inventory: {
     all: (branchId: string) => ['inventory', branchId] as const,
     lowStock: (branchId: string, threshold: number) =>
@@ -39,6 +43,7 @@ export const queryKeys = {
     all: (orgId: string) => ['branches', orgId] as const,
   },
   prefixes: {
+    achievements: ['achievements'] as const,
     inventory: ['inventory'] as const,
     batches: ['batches'] as const,
     sales: ['sales'] as const,
