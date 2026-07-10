@@ -24,7 +24,6 @@ const STATIC_ASSETS = [
 
 // External resources to cache
 const EXTERNAL_ASSETS = [
-  'https://fonts.googleapis.com/css2?family=Roboto+Flex:GRAD,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght@-200..150,323..603,25..135,649..854,-305..-98,560..788,416..570,528..760,8..144,-10..0,25..151,100..1000&display=swap',
   'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0',
   'https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&display=swap',
   'https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap',

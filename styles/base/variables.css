@@ -1,7 +1,7 @@
 /* ── Tailwind v4 Theme Configuration ── */
 @theme {
   /* Custom font stack */
-  --font-sans: var(--font-en), "Inter", var(--font-ar), "Cairo", -apple-system, BlinkMacSystemFont, "Roboto Flex", sans-serif;
+  --font-sans: var(--font-en), "Inter", var(--font-ar), "Cairo", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-geist: 'Geist Variable', sans-serif;
 
   /* Surface color palette - Neutral Zinc */
